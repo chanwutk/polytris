@@ -4,3 +4,6 @@
 [submodule "modules/TrackEval"]
 	path = modules/TrackEval
 	url = git@github.com:chanwutk/TrackEval.git
+[submodule "modules/b3d"]
+	path = modules/b3d
+	url = git@github.com:chanwutk/b3d.git
