@@ -1,0 +1,202 @@
+import sys
+import pathlib
+MODULES_PATH = pathlib.Path().absolute() / 'modules'
+sys.path.append(str(MODULES_PATH))
+sys.path.append(str(MODULES_PATH / 'detectron2'))
+
+
+import argparse
+import cv2
+import json
+import numpy as np
+import os
+from xml.etree import ElementTree
+import torch
+from typing import NamedTuple
+import multiprocessing as mp
+import shutil
+
+from detectron2.config import get_cfg
+from detectron2.engine import DefaultPredictor
+
+from b3d.external.nms import nms
+from b3d.external.sort import Sort
+from b3d.utils import parse_outputs, regionize_image
+
+from minivan.utils import get_mask
+
+
+CONFIG = './modules/b3d/configs/config_refined.json'
+MASK = './masks.xml'
+
+
+class Input(NamedTuple):
+    video: str
+    gpu: str
+
+
+def hex_to_rgb(hex: str) -> tuple[int, int, int]:
+    # hex in format #RRGGBB
+    return int(hex[1:3], 16), int(hex[3:5], 16), int(hex[5:7], 16)
+
+colors_ = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+*colors, = map(hex_to_rgb, colors_)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Example detection and tracking script')
+    parser.add_argument('-v', '--video', required=True,
+                        help='Input video')
+    # parser.add_argument('-c', '--config', required=True,
+    #                     help='Detection model configuration')
+    parser.add_argument('-g', '--gpu', required=True,
+                        help='GPU device')
+    # parser.add_argument('-m', '--mask', required=True,
+    #                     help='Mask for the video')
+    return parser.parse_args()
+
+
+def main(args):
+    videofilename = args.video.split('/')[-1]
+    device = f'cuda:{args.gpu}'
+
+    with open(CONFIG) as fp:
+        config = json.load(fp)
+    cfg = get_cfg()
+    cfg.merge_from_file(os.path.join('./modules/detectron2/configs', config['config']))
+    cfg.MODEL.WEIGHTS = config['weights']
+    cfg.MODEL.ROI_HEADS.NUM_CLASSES = config['num_classes']
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = config['score_threshold']
+    cfg.MODEL.RETINANET.SCORE_THRESH_TEST = config['score_threshold']
+    cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = config['nms_threshold']
+    cfg.MODEL.RETINANET.NMS_THRESH_TEST = config['nms_threshold']
+    cfg.TEST.DETECTIONS_PER_IMAGE = config['detections_per_image']
+    cfg.MODEL.ANCHOR_GENERATOR.SIZES = config['anchor_generator_sizes']
+    cfg.MODEL.DEVICE = device
+    predictor = DefaultPredictor(cfg)
+    tree = ElementTree.parse(MASK)
+    mask = tree.getroot()
+    mask = mask.find(f'.//image[@name="{videofilename[:-len('.mp4')]}.jpg"]')
+    assert isinstance(mask, ElementTree.Element)
+
+    tracker = Sort(max_age=5)
+    cap = cv2.VideoCapture(os.path.expanduser(args.video))
+    trajectories = {}
+    # rendering = {}
+    frame_index = 0
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    frame_sep = frame_count // 5
+
+    fpd = open(os.path.join('track-results', f'{videofilename}.d.jsonl'), 'w')
+    fpr = open(os.path.join('track-results', f'{videofilename}.r.jsonl'), 'w')
+
+    with torch.no_grad():
+        bmmask, btl, bbr = get_mask(mask, width, height)
+        bmmask = bmmask[btl[0]:bbr[0], btl[1]:bbr[1], :]
+        bmmask = torch.from_numpy(bmmask).to(device)
+
+        while cap.isOpened():
+            print('Parsing frame {:d} / {:d}...'.format(frame_index, frame_count))
+            success, frame = cap.read()
+            if not success:
+                break
+            # frame_masked = mask_frame(frame, mask)
+            frame_masked = frame[btl[0]:bbr[0], btl[1]:bbr[1], :]
+            frame_masked = torch.from_numpy(frame_masked).to(device) * bmmask
+            frame_masked = frame_masked.detach().cpu().numpy()
+
+            if frame_index % frame_sep == 0:
+                cv2.imwrite(os.path.join('track-results', f'{videofilename}.{frame_index}.jpg'), frame_masked)
+
+            image_regions = regionize_image(frame_masked)
+            bboxes = []
+            scores = []
+            for _image, _offset in image_regions:
+                _outputs = predictor(_image)
+                _bboxes, _scores, _ = parse_outputs(_outputs, _offset)
+                bboxes += _bboxes
+                scores += _scores
+            nms_threshold = config['nms_threshold']
+            nms_bboxes, nms_scores = nms(bboxes, scores, nms_threshold)
+            detections = np.zeros((len(nms_bboxes), 5))
+            detections[:, 0:4] = nms_bboxes
+            detections[:, 4] = nms_scores
+            fpd.write(json.dumps([frame_index, detections.tolist()]) + '\n')
+
+            tracked_objects = tracker.update(detections)
+            # rendering[frame_index] = []
+            rendering = []
+            for tracked_object in tracked_objects:
+                tl = (int(tracked_object[0]), int(tracked_object[1]))
+                br = (int(tracked_object[2]), int(tracked_object[3]))
+                object_index = int(tracked_object[4])
+                if object_index not in trajectories:
+                    trajectories[object_index] = []
+                trajectories[object_index].append([
+                    frame_index, tl[0], tl[1], br[0], br[1]])
+                rendering.append([
+                    object_index, tl[0], tl[1], br[0], br[1]])
+            fpr.write(json.dumps([frame_index, rendering]) + '\n')
+
+            if frame_index % 50 == 0:
+                fpd.flush()
+                fpr.flush()
+            
+            frame_masked_r = frame_masked.copy()
+            frame_masked_d = frame_masked.copy()
+            if frame_index % frame_sep == 0:
+                for object_index, tlx, tly, brx, bry in rendering:
+                    cv2.rectangle(frame_masked_r, (tlx, tly), (brx, bry), colors[object_index % len(colors)], 2)
+                    cv2.putText(frame_masked_r, str(object_index), (tlx, tly), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[object_index % len(colors)], 2)
+                cv2.imwrite(os.path.join('track-results', f'{videofilename}.{frame_index}.r.jpg'), frame_masked_r)
+                for bbox in nms_bboxes:
+                    tlx, tly, brx, bry = map(int, bbox)
+                    cv2.rectangle(frame_masked_d, (tlx, tly), (brx, bry), (0, 255, 0), 2)
+                cv2.imwrite(os.path.join('track-results', f'{videofilename}.{frame_index}.d.jpg'), frame_masked_d)
+
+            frame_index = frame_index + 1
+            # if cv2.waitKey(1) & 0xFF == ord('q'):
+            #     break
+        cap.release()
+        cv2.destroyAllWindows()
+
+        # scenario = args.video.replace('videos/', '').replace('.mp4', '')
+        with open(os.path.join('track-results', f'{videofilename}.t.json'), 'w') as fp:
+            json.dump(trajectories, fp)
+        # with open(os.path.join('track-results', f'{videofilename}.r.json'), 'w') as fp:
+        #     json.dump(rendering, fp)
+    
+    fpd.close()
+    fpr.close()
+
+
+if __name__ == '__main__':
+    # main(parse_args())
+
+    if os.path.exists('track-results'):
+        shutil.rmtree('track-results')
+    os.makedirs('track-results')
+
+
+    processes = []
+    try:
+        for idx, videofile in enumerate(os.listdir('videos')):
+            assert videofile.endswith('.mp4')
+
+            input = Input(os.path.join('videos', videofile), str(idx % torch.cuda.device_count()))
+            # main(input)
+            p = mp.Process(target=main, args=(input,))
+            p.start()
+            processes.append(p)
+            print(f'Processed {videofile}')
+    finally:
+        for p in processes:
+            p.join()
+            print(f'Joined {p}')
+        
+        for p in processes:
+            p.terminate()
+            print(f'Terminated {p}')

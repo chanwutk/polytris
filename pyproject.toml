@@ -1,2 +1,2 @@
 [tool.pyright]
-extraPaths = ["./modules"]
+extraPaths = ["./modules", "./modules/detectron2", "./modules/b3d"]
