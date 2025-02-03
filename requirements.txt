@@ -1,0 +1,13 @@
+torch
+opencv-python
+torchvision
+
+# b3d dependencies
+scikit-image
+filterpy
+
+# dependencies for detectron2
+fvcore>=0.1.5,<0.1.6
+cloudpickle
+omegaconf>=2.1,<2.4
+pycocotools>=2.0.2
