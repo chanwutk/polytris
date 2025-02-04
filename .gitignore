@@ -2,6 +2,7 @@
 **/__pycache__
 
 # data
-track-results
+track-results*
 videos
+videos-small
 output
