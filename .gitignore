@@ -2,6 +2,10 @@
 **/__pycache__
 
 # data
+test_frames
+train-proxy-data
+unpacked_detections
+packed_images
 track-results*
 videos
 videos-small

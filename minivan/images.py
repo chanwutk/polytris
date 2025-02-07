@@ -32,6 +32,7 @@ def isGCHW(img: torch.Tensor) -> TypeGuard[ImgGCHW]:
 def isGHWC(img: torch.Tensor) -> TypeGuard[ImgGHWC]:
     return img.dim() == 5 and img.shape[4] in {1, 3}
 
+
 def padCHW(img: ImgCHW, h: int, w: int) -> ImgCHW:
     C, H, W = img.shape
     pad_h = (h - H % h) % h
@@ -47,6 +48,7 @@ def padHWC(img: ImgHWC, h: int, w: int) -> ImgHWC:
     ret = torch.nn.functional.pad(img, (0, 0, 0, pad_w, 0, pad_h))
     assert isHWC(ret), ret.shape
     return ret
+
 
 def splitCHW(img: ImgCHW, h: int, w: int) -> ImgGCHW:
     assert img.shape[1] % h == 0
@@ -70,6 +72,7 @@ def splitHWC(img: ImgHWC, h: int, w: int) -> ImgGHWC:
     assert isGHWC(ret), ret.shape
     return ret
 
+
 def reconstructGCHW(img: ImgGCHW) -> ImgCHW:
     _img = img.permute(2, 0, 3, 1, 4)
     C, GH, H, GW, W = _img.shape
@@ -84,6 +87,7 @@ def reconstructGHWC(img: ImgGHWC) -> ImgHWC:
     assert isHWC(ret), ret.shape
     return ret
 
+
 def flatGCHW(img: ImgGCHW) -> ImgNCHW:
     GH, GW, *DIM = img.shape
     ret = img.reshape(GH * GW, *DIM)
@@ -95,6 +99,7 @@ def flatGHWC(img: ImgGHWC) -> ImgNHWC:
     ret = img.reshape(GH * GW, *DIM)
     assert isNHWC(ret), ret.shape
     return ret
+
 
 def foldNCHW(img: ImgNCHW, h: int, w: int) -> ImgGCHW:
     N, *DIM = img.shape

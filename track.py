@@ -12,13 +12,21 @@ import numpy as np
 import os
 from xml.etree import ElementTree
 import torch
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 import multiprocessing as mp
 import shutil
 import time
+from PIL import Image
+
+import torch.nn.functional as F
+
+import numpy.typing as npt
+from fvcore.transforms.transform import Transform, NoOpTransform
 
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
+from detectron2.data.transforms.augmentation import Augmentation
+from detectron2.data.transforms.augmentation_impl import ResizeShortestEdge
 
 from b3d.external.nms import nms
 from b3d.external.sort import Sort
@@ -42,6 +50,74 @@ def hex_to_rgb(hex: str) -> tuple[int, int, int]:
 
 colors_ = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
 *colors, = map(hex_to_rgb, colors_)
+
+
+def get_transform(
+    image: npt.NDArray | torch.Tensor,
+    short_edge_length: tuple[int, int],
+    max_size: int = sys.maxsize,
+    sample_style: Literal['range', 'choice'] = "range",
+    interp: Image.Resampling = Image.Resampling.BILINEAR
+):
+    is_range = sample_style == "range"
+
+    if isinstance(short_edge_length, int):
+        short_edge_length = (short_edge_length, short_edge_length)
+    if is_range:
+        assert len(short_edge_length) == 2, (
+            "short_edge_length must be two values using 'range' sample style."
+            f" Got {short_edge_length}!"
+        )
+
+    h, w = image.shape[:2]
+    if is_range:
+        size = np.random.randint(short_edge_length[0], short_edge_length[1] + 1)
+    else:
+        size = np.random.choice(short_edge_length)
+    if size == 0:
+        return NoOpTransform()
+
+    newh, neww = ResizeShortestEdge.get_output_shape(h, w, size, max_size)
+    return h, w, newh, neww, interp
+
+
+def apply_image(img, h: int, w: int, new_h: int, new_w: int, interp: Image.Resampling):
+    assert img.shape[:2] == (h, w)
+    assert len(img.shape) <= 4
+    interp_method = interp if interp is not None else self.interp
+
+    if img.dtype == np.uint8:
+        if len(img.shape) > 2 and img.shape[2] == 1:
+            pil_image = Image.fromarray(img[:, :, 0], mode="L")
+        else:
+            pil_image = Image.fromarray(img)
+        pil_image = pil_image.resize((new_w, new_h), interp_method)
+        ret = np.asarray(pil_image)
+        if len(img.shape) > 2 and img.shape[2] == 1:
+            ret = np.expand_dims(ret, -1)
+    else:
+        # PIL only supports uint8
+        if any(x < 0 for x in img.strides):
+            img = np.ascontiguousarray(img)
+        img = torch.from_numpy(img)
+        shape = list(img.shape)
+        shape_4d = shape[:2] + [1] * (4 - len(shape)) + shape[2:]
+        img = img.view(shape_4d).permute(2, 3, 0, 1)  # hw(c) -> nchw
+        _PIL_RESIZE_TO_INTERPOLATE_MODE = {
+            Image.Resampling.NEAREST: "nearest",
+            Image.Resampling.BILINEAR: "bilinear",
+            Image.Resampling.BICUBIC: "bicubic",
+        }
+        mode = _PIL_RESIZE_TO_INTERPOLATE_MODE[interp_method]
+        align_corners = None if mode == "nearest" else False
+        img = F.interpolate(
+            img, (new_h, new_w), mode=mode, align_corners=align_corners
+        )
+        shape[:2] = (new_h, new_w)
+        assert isinstance(img, torch.Tensor)
+        ret = img.permute(2, 3, 0, 1).view(shape).numpy()  # nchw -> hw(c)
+
+    return ret
 
 
 def parse_args():
@@ -140,7 +216,7 @@ def main(args):
                 resolutions = []
                 for _image, _offset in image_regions:
                     resolutions.append(_image.shape)
-                    _outputs = predictor(_image)
+                    _outputs = predictor(_image)  # TODO: new predictor with GPU image transformation
                     _bboxes, _scores, _ = parse_outputs(_outputs, _offset)
                     bboxes += _bboxes
                     scores += _scores
@@ -215,6 +291,8 @@ if __name__ == '__main__':
     try:
         for idx, videofile in enumerate(os.listdir('videos')):
             assert videofile.endswith('.mp4')
+            if videofile != 'jnc00.mp4':
+                continue
 
             input = Input(os.path.join('videos', videofile), str(idx % torch.cuda.device_count()))
             # main(input)
