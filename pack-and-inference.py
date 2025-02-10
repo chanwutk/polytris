@@ -359,7 +359,7 @@ def main():
                     # draw bounding box 
                     f = cv2.rectangle(f, (int(det[0]), int(det[1])), (int(det[2]), int(det[3]),), (0, 255, 0), 2)
                     frame_cache[int(fid)] = f
-                
+
                 for _idx, f in frame_cache.items():
                     cv2.imwrite(f'./unpacked_detections/{_idx:03d}.jpg', f)
 

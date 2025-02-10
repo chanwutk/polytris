@@ -26,12 +26,6 @@ class ClassifyRelevance(torch.nn.Module):
             torch.nn.Linear(width, 1),
         )
 
-        # self.decoder = torch.nn.Sequential(
-        #     torch.nn.Conv2d(64, 64, 4, padding='same'),
-        #     torch.nn.ReLU(),
-        #     torch.nn.Conv2d(64, 1, 4, padding='same'),
-        # )
-
     def forward(self, img: torch.Tensor) -> torch.Tensor:
         x = self.encoder(img)
         x = x.flatten(1)

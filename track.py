@@ -189,7 +189,10 @@ def main(args):
                 }) + '\n')
 
 
+            inference_time = []
             while cap.isOpened():
+                if frame_index > 512:
+                    break
                 print(f'{videofilename} -- GPU {device}' + 'Parsing frame {:d} / {:d}...'.format(frame_index, frame_count))
                 start = time.time_ns()
                 success, frame = cap.read()
@@ -220,12 +223,14 @@ def main(args):
                     _bboxes, _scores, _ = parse_outputs(_outputs, _offset)
                     bboxes += _bboxes
                     scores += _scores
+                    break
                 nms_threshold = config['nms_threshold']
                 nms_bboxes, nms_scores = nms(bboxes, scores, nms_threshold)
                 detections = np.zeros((len(nms_bboxes), 5))
                 detections[:, 0:4] = nms_bboxes
                 detections[:, 4] = nms_scores
                 end = time.time_ns()
+                inference_time.append(end-start)
                 log('detect', start, end, resolutions=resolutions, num_detections=len(detections), num_regions=len(image_regions))
 
                 fpd.write(json.dumps([frame_index, detections.tolist()]) + '\n')
@@ -273,6 +278,7 @@ def main(args):
                 json.dump(trajectories, fp)
             with open(os.path.join('track-results', f'{videofilename}.done'), 'w') as fp:
                 fp.write('done')
+            print(f'{videofilename} -- GPU {device} -- Inference time: {sum(inference_time) / 1_000_000 / 512:.2f} ms')
         finally:
             fpd.close()
             fpr.close()
