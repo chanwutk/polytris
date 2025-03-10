@@ -1,4 +1,4 @@
-# 🚐 Minivan: Minimizing Redundant Neural Network Inference in Video Analytics
+# 🚐 Minivan: Minimize Redundant Neural Network Inference in Video Analytics
 
 ## Setup Python Environment
 ```sh
