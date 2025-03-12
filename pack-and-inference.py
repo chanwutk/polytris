@@ -25,12 +25,6 @@ from detectron2.engine import DefaultPredictor
 import minivan.images
 
 
-CHUNK_SIZE = 128
-CONFIG = './modules/b3d/configs/config_refined.json'
-LIMIT = 512
-
-
-TetrominoPosition = tuple[int, int, npt.NDArray, tuple[int, int]]
 
 
 def hex_to_rgb(hex: str) -> tuple[int, int, int]:
@@ -41,17 +35,13 @@ colors_ = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e
 *colors, = map(hex_to_rgb, colors_)
 
 
-def get_bitmap(width: int, height: int, mask: ElementTree.Element):
-    """
-    Get the bitmap of the domain (relevant areas) from the mask.
-    The bitmap is a binary image where 1 represents the domain and 0 represents the background.
-    The bitmap is cropped to the minimum size that contains the domain.
+CONFIG = './modules/b3d/configs/config_refined.json'
+LIMIT = 512
+CHUNK_SIZE = 128
 
-    Args:
-    - width: width of the original image
-    - height: height of the original image
-    - mask: ElementTree.Element polygon representing the mask
-    """
+
+
+def get_bitmap(width: int, height: int, mask: ElementTree.Element):
     domain = mask.find('.//polygon[@label="domain"]')
     assert domain is not None
 
@@ -73,8 +63,41 @@ def get_bitmap(width: int, height: int, mask: ElementTree.Element):
     return bitmap, tl, br
 
 
-def mark_detections(detections: npt.NDArray, width: int, height: int):
+def overlapi(interval1: tuple[int, int], interval2: tuple[int, int]):
+    return (
+        (interval1[0] <= interval2[0] <= interval1[1]) or
+        (interval1[0] <= interval2[1] <= interval1[1]) or
+        (interval2[0] <= interval1[0] <= interval2[1]) or
+        (interval2[0] <= interval1[1] <= interval2[1])
+    )
+
+def overlap(b1, b2):
+    return overlapi((b1[0], b1[2]), (b2[0], b2[2])) and overlapi((b1[1], b1[3]), (b2[1], b2[3]))
+
+
+def render(canvas: npt.NDArray, positions: list[tuple[int, int, int, npt.NDArray, tuple[int, int]]], frame: npt.NDArray):
+    for y, x, groupid, mask, offset in positions:
+        yfrom, yto = y * CHUNK_SIZE, (y + mask.shape[0]) * CHUNK_SIZE
+        xfrom, xto = x * CHUNK_SIZE, (x + mask.shape[1]) * CHUNK_SIZE
+
+        for i in range(mask.shape[0]):
+            for j in range(mask.shape[1]):
+                if mask[i, j]:
+                    # patch = patches[i + offset[0], j + offset[1]]
+                    patch = frame[(i + offset[0]) * CHUNK_SIZE:(i + offset[0] + 1) * CHUNK_SIZE, (j + offset[1]) * CHUNK_SIZE:(j + offset[1] + 1) * CHUNK_SIZE]
+                    # frame2[(i + offset[0]) * CHUNK_SIZE:(i + offset[0] + 1) * CHUNK_SIZE, (j + offset[1]) * CHUNK_SIZE:(j + offset[1] + 1) * CHUNK_SIZE] = ((
+                    #     frame2[(i + offset[0]) * CHUNK_SIZE:(i + offset[0] + 1) * CHUNK_SIZE, (j + offset[1]) * CHUNK_SIZE:(j + offset[1] + 1) * CHUNK_SIZE].astype(np.uint32) +
+                    #     (np.ones((CHUNK_SIZE, CHUNK_SIZE, 3), dtype=np.uint8) * colors[groupid % len(colors)]).astype(np.uint32)
+                    # ) // 2).astype(np.uint8)
+                    # cv2.imwrite(f'./packed_images/{idx:03d}.{i}.{j}.{groupid}.jpg', patch)
+                    # canvas2[yfrom + (CHUNK_SIZE * i): yfrom + (CHUNK_SIZE * i) + CHUNK_SIZE, xfrom + (CHUNK_SIZE * j): xfrom + (CHUNK_SIZE * j) + CHUNK_SIZE] += (np.ones((CHUNK_SIZE, CHUNK_SIZE, 3), dtype=np.uint8) * colors[groupid % len(colors)]).astype(np.uint8)
+                    canvas[yfrom + (CHUNK_SIZE * i): yfrom + (CHUNK_SIZE * i) + CHUNK_SIZE, xfrom + (CHUNK_SIZE * j): xfrom + (CHUNK_SIZE * j) + CHUNK_SIZE] += patch  # .detach().cpu().numpy()
+    return canvas
+
+
+def mark_detections2(detections: list[list[float]], width: int, height: int):
     bitmap = np.zeros((height // CHUNK_SIZE, width // CHUNK_SIZE), dtype=np.int32)
+
     for bbox in detections:  # bboxes:
         xfrom, xto = int(bbox[0] // CHUNK_SIZE), int(bbox[2] // CHUNK_SIZE)
         yfrom, yto = int(bbox[1] // CHUNK_SIZE), int(bbox[3] // CHUNK_SIZE)
@@ -85,10 +108,6 @@ def mark_detections(detections: npt.NDArray, width: int, height: int):
 
 
 def fill_bitmap(bitmap: npt.NDArray, i: int, j: int):
-    """
-    Fill the connected component of the bitmap starting from (i, j) with the same value (value at bitmap[i, j]).
-    Return the list of filled pixels.
-    """
     value = bitmap[i, j]
     q = queue.Queue()
     q.put((i, j))
@@ -106,10 +125,6 @@ def fill_bitmap(bitmap: npt.NDArray, i: int, j: int):
 
 
 def group_tiles(bitmap: npt.NDArray):
-    """
-    Group connected tiles together to form terominoes.
-    Return a list of tuple (mask, offset) representing the tetrominoes.
-    """
     h, w = bitmap.shape
     _groups = np.arange(h * w, dtype=np.int32) + 1
     _groups = _groups.reshape(bitmap.shape)
@@ -120,7 +135,7 @@ def group_tiles(bitmap: npt.NDArray):
     groups[1:h+1, 1:w+1] = _groups
 
     visited: set[int] = set()
-    bins: list[tuple[npt.NDArray, tuple[int, int]]] = []
+    bins: list[tuple[int, npt.NDArray, tuple[int, int]]] = []
     for i in range(groups.shape[0]):
         for j in range(groups.shape[1]):
             if groups[i, j] == 0 or groups[i, j] in visited:
@@ -139,35 +154,38 @@ def group_tiles(bitmap: npt.NDArray):
             assert end.shape == (2,)
 
             mask = mask[offset[0]:end[0], offset[1]:end[1]]
-            bins.append((mask, tuple(offset - 1)))
+            bins.append((groups[i, j], mask, tuple(offset - 1)))
 
             visited.add(groups[i, j])
 
-    # bins: a list of tuple (mask, offset)
+    # bins: a list of tuple (group_id, mask, offset)
     #       mask: cropped mask of the group
-    #       offset: offset of mask from the origin of the bitmap
+    #       offset: offset of mask
     return bins
+
 
 class BitmapFullException(Exception):
     pass
 
 
-def pack_append(bins: list[tuple[npt.NDArray, tuple[int, int]]], h: int, w: int, bitmap: npt.NDArray | None = None):
+def pack_append(bins: list[tuple[int, npt.NDArray, tuple[int, int]]], h: int, w: int, bitmap: npt.NDArray | None = None):
+    newBitmap = False
     if bitmap is None:
         bitmap = np.zeros((h, w), dtype=np.bool)
+        newBitmap = True
     else:
         bitmap = bitmap.copy()
 
     if len(bins) == 0:
         return bitmap, []
 
-    positions: list[TetrominoPosition] = []
-    for mask, offset in bins:
+    positions: list[tuple[int, int, int, npt.NDArray, tuple[int, int]]] = []
+    for groupid, mask, offset in bins:
         for j in range(w - mask.shape[1] + 1):
             for i in range(h - mask.shape[0] + 1):
                 if not np.any(bitmap[i:i+mask.shape[0], j:j+mask.shape[1]] & mask):
                     bitmap[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
-                    positions.append((i, j, mask, offset))
+                    positions.append((i, j, groupid, mask, offset))
                     break
             else:
                 continue
@@ -177,42 +195,12 @@ def pack_append(bins: list[tuple[npt.NDArray, tuple[int, int]]], h: int, w: int,
     return bitmap, positions
 
 
-def render(canvas: npt.NDArray, positions: list[TetrominoPosition], frame: npt.NDArray):
-    for y, x, mask, offset in positions:
-        yfrom = y * CHUNK_SIZE
-        xfrom = x * CHUNK_SIZE
-
-        oy, ox = offset
-        _canvas = canvas[yfrom:, xfrom:]
-        for i in range(mask.shape[0]):
-            for j in range(mask.shape[1]):
-                if mask[i, j]:
-                    patch = frame[(oy + i) * CHUNK_SIZE:, (ox + j) * CHUNK_SIZE:][:CHUNK_SIZE, :CHUNK_SIZE]
-                    _canvas[(i * CHUNK_SIZE):, (j * CHUNK_SIZE):][:CHUNK_SIZE, :CHUNK_SIZE] += patch
-    return canvas
-
-
-def remap_detection(index_map: npt.NDArray, det_info: dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]], det: npt.NDArray):
-    # Get the group id and frame index of the tile that the detection belongs to.
-    gid, fid = index_map[
-        int((det[1] + det[3]) // (2 * CHUNK_SIZE)),
-        int((det[0] + det[2]) // (2 * CHUNK_SIZE)),
-    ]
-    if int(gid) == 0:
-        # Detection is on a blank tile
-        return None, None
-
-    # Get the offset of the tetromino in the original image and the packed image.
-    (y, x), offset = det_info[(int(fid), int(gid))]
-    det = det.copy()
-
-    # Recover the bounding box of the detection in the original image.
-    det[[0, 2]] += (offset[1] - x) * CHUNK_SIZE
-    det[[1, 3]] += (offset[0] - y) * CHUNK_SIZE
-    return det, fid
-
-
 def main():
+    cap = cv2.VideoCapture('./jnc00.mp4')
+    success, frame = cap.read()
+    print(frame.shape)
+    cv2.imwrite('frame.jpg', frame)
+
     with open(CONFIG) as fp:
         config = json.load(fp)
     cfg = get_cfg()
@@ -241,13 +229,15 @@ def main():
 
     if os.path.exists('./packed_images'):
         shutil.rmtree('./packed_images')
+
     os.mkdir('./packed_images')
-    if os.path.exists('./unpacked_detections'):
-        shutil.rmtree('./unpacked_detections')
-    os.mkdir('./unpacked_detections')
 
 
+
+    chunk_list = []
+    pack_values = []
     LIMIT = 512
+    pack_times = []
     num_detections = []
     num_bins = []
     bm = None
@@ -259,17 +249,20 @@ def main():
 
     frame_cache = {}
     with open('./track-results-0/jnc00.mp4.d.jsonl') as fp:
+        # lines = fp.readlines()
         for idx in range(LIMIT):
             line = fp.readline()
             findex, fdetections = json.loads(line)
-            assert findex == idx, (findex, idx)
+            # findex, fdetections = json.loads(lines[idx])
+            # assert findex == _idx, (findex, _idx)
+            # print(_idx)
 
             success, frame = cap.read()
             if not success:
                 break
 
+            # mask_frame(frame, mask)
             frame = torch.from_numpy(frame).to('cuda:1') * bitmask
-            frame = frame[mtl[0]:mbr[0], mtl[1]:mbr[1]]
             assert minivan.images.isHWC(frame), frame.shape
 
             height, width = frame.shape[:2]
@@ -285,17 +278,19 @@ def main():
 
             num_detections.append(len(fdetections))
             fdetections = np.array(fdetections)
-            # fdetections[:, 0] += mtl[1]
-            # fdetections[:, 1] += mtl[0]
-            # fdetections[:, 2] += mtl[1]
-            # fdetections[:, 3] += mtl[0]
+            fdetections[:, 0] += mtl[1]
+            fdetections[:, 1] += mtl[0]
+            fdetections[:, 2] += mtl[1]
+            fdetections[:, 3] += mtl[0]
 
-            # Place holder: TODO: replace with the proxy model
+            start = time.time()
+
+            # Place holder: TODO: need to replace with the proxy model.
             # Based on the content of the image, mark tiles in the image that contain detections.
             # Tiles do not overlap and placed in a grid.
             # Tile size is CHUNK_SIZE x CHUNK_SIZE
             # bitmap -> represent the grid of tiles, 0: tile without detection, 1: tile with detection
-            bitmap = mark_detections(fdetections, width, height)
+            bitmap = mark_detections2(fdetections, width, height)
             
             # Group tiles with detections together
             # tetrominoes -> list of tuple (group_id, mask, offset) representing the group of tiles (we will call a group of tile a tetromino)
@@ -303,13 +298,15 @@ def main():
             # - mask: masking of the tetromino. 1: tile is part of the tetromino, 0: tile is not part of the tetromino
             #         The mask is cropped to the minimum size that contains all the tiles of the tetromino
             # - offset: offset of the mask from the top left corner of the bitmap.
-            tetrominoes = group_tiles(bitmap)
+            polyominoes = group_tiles(bitmap)
 
-            num_bins.append(len(tetrominoes))
+            num_bins.append(len(polyominoes))
             frame_cache[idx] = frame
             
-            tetrominoes = sorted(tetrominoes, key=lambda x: x[0].sum(), reverse=True)
             try:
+                # Sort tetrominoes by size (descending).
+                polyominoes = sorted(polyominoes, key=lambda x: x[1].sum(), reverse=True)
+
                 # Try packing tetrominoes from our proxy model.
                 # Raise BitmapFullException if it fails.
                 # bm -> bitmap representing occupied areas of the packed image. 0: available tile in the packed image (canvas), 1: occupied tile
@@ -319,10 +316,23 @@ def main():
                 # - mask: masking of the tetromino. 1: tile is part of the tetromino, 0: tile is not part of the tetromino
                 #         The mask is cropped to the minimum size that contains all the tiles of the tetromino
                 # - offset: offset of the mask from the top left corner of the bitmap (that represents the original image -- not the packed image).
-                bm, positions = pack_append(tetrominoes, bitmap.shape[0], bitmap.shape[1], bm)
+                bm, positions = pack_append(polyominoes, bitmap.shape[0], bitmap.shape[1], bm)
+                if canvas is None:
+                    # Initialize Canvas for packed image. Initially empty (black).
+                    canvas = np.zeros((height, width, 3), dtype=np.uint8)
+                
+                # Additively render the packed image from all the tetrominoes (positions) from the current frame.
+                canvas = render(canvas, positions, frame)
+
+                # Update index_map with the packed tetrominoes, marking the group id and the frame index that each tile belongs to.
+                # Update det_info with the packed tetrominoes, storing the offset (_offset) of the tetrominoes in the original image and offset (x, y) of the tetrominoes in the packed image.
+                for gid, (y, x, _groupid, mask, _offset) in enumerate(positions):
+                    assert not np.any(index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] & mask)
+                    index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask.astype(np.int32) * (gid + 1)
+                    index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask.astype(np.int32) * idx
+                    det_info[(int(idx), int(gid + 1))] = ((y, x), _offset)
             except BitmapFullException as e:
                 # If the packed image is full, run detection on the packed image and start a new packed image.
-                assert canvas is not None
                 cv2.imwrite(f'./packed_images/{idx:03d}.jpg', canvas)
 
                 _start = time.time()
@@ -338,28 +348,36 @@ def main():
                 _end = time.time()
 
                 inference_time.append((_end - _start) * 1000)
-                # print(idx, len(detections))
+                print(idx, len(detections))
 
-                # Draw bounding boxes on the packed image.
                 for det in detections:
                     canvas = cv2.rectangle(canvas, (int(det[0]), int(det[1])), (int(det[2]), int(det[3])), (0, 255, 0), 2)
                 cv2.imwrite(f'./packed_images/{idx:03d}.d.jpg', canvas)
 
                 # Iterate through all detections from the packed image.
                 for det in detections:
-                    det, fid = remap_detection(index_map, det_info, det)
-
-                    if det is None:
-                        # det is on a blank tile. Skip.
-                        # TODO: rivisit because the object detector incorrectly detect objects on blank tiles.
+                    # Get the group id and frame index of the tile that the detection belongs to.
+                    _gid, _idx = index_map[
+                        int((det[1] + det[3]) // (2 * CHUNK_SIZE)),
+                        int((det[0] + det[2]) // (2 * CHUNK_SIZE)),
+                    ]
+                    print(det.astype(int))
+                    if int(_gid) == 0:
+                        # Blank tile
                         continue
-                    assert fid is not None
 
-                    f = frame_cache[int(fid)]
+                    # Get the offset of the tetromino in the original image and the packed image.
+                    (y, x), _offset = det_info[(int(_idx), int(_gid))]
+                    det = det.copy()
+                    # Recover the bounding box of the detection in the original image.
+                    det[[0, 2]] += (_offset[1] - x) * CHUNK_SIZE
+                    det[[1, 3]] += (_offset[0] - y) * CHUNK_SIZE
+
+                    f = frame_cache[int(_idx)]
                     # draw bounding box 
                     f = cv2.rectangle(f, (int(det[0]), int(det[1])), (int(det[2]), int(det[3]),), (0, 255, 0), 2)
-                    frame_cache[int(fid)] = f
-
+                    frame_cache[_idx] = f
+                
                 for _idx, f in frame_cache.items():
                     cv2.imwrite(f'./unpacked_detections/{_idx:03d}.jpg', f)
 
@@ -368,26 +386,55 @@ def main():
                 det_info = {}
                 frame_cache = {idx: frame_cache[idx]}
                 index_map = np.zeros((height // CHUNK_SIZE, width // CHUNK_SIZE, 2), dtype=np.int32)
+                # Done reset ------------------------------------------------------------------------
 
-                bm, positions = pack_append(tetrominoes, bitmap.shape[0], bitmap.shape[1])
+                # Redo packing + rednering canvas + updating index_map and det_info
+                bm, positions = pack_append(sorted(polyominoes, key=lambda x: x[1].sum(), reverse=True), bitmap.shape[0], bitmap.shape[1])
+                canvas = render(canvas, positions, frame)
+                for gid, (y, x, _groupid, mask, offset) in enumerate(positions):
+                    index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask.astype(np.int32) * gid
+                    index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask.astype(np.int32) * idx
+                    det_info[(int(idx), int(gid))] = ((y, x), offset)
 
-            if canvas is None:
-                # Initialize Canvas for packed image. Initially empty (black).
-                canvas = np.zeros((height, width, 3), dtype=np.uint8)
-            
-            # Additively render the packed image from all the tetrominoes (positions) from the current frame.
-            canvas = render(canvas, positions, frame)
+            end = time.time()
+            pack_times.append((end - start) * 1000)
 
-            # Update index_map with the packed tetrominoes, marking the group id and the frame index that each tile belongs to.
-            # Update det_info with the packed tetrominoes, storing the offset (_offset) of the tetrominoes in the original image and offset (x, y) of the tetrominoes in the packed image.
-            for gid, (y, x, mask, _offset) in enumerate(positions):
-                assert not np.any(index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] & mask)
-                index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask.astype(np.int32) * (gid + 1)
-                index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask.astype(np.int32) * idx
-                det_info[(int(idx), int(gid + 1))] = ((y, x), _offset)
+
+    pack_values.append(len(chunk_list))
+
+    print(pack_values)
+    print(sum(pack_times) / len(pack_times))
+
+
+    t = [*range(len(pack_times))]
+
+    fig, ax1 = plt.subplots()
+
+    color = 'tab:blue'
+    ax1.set_ylabel('# of Bins', color=color)  # we already handled the x-label with ax1
+    ax1.set_xlabel('frame')
+    ax1.plot(t, num_bins, color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+
+
+
+    ax2 = ax1.twinx()  # instantiate a second Axes that shares the same x-axis
+    color = 'tab:red'
+    ax2.set_ylabel('Packing Time (ms)', color=color)
+    ax2.plot(t, pack_times, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.show()
+
+    # plt.plot(range(len(pack_times)), pack_times)
+    # plt.plot(range(len(pack_times)), num_detections)
+    # plt.xlabel("X-axis")  # add X-axis label
+    # plt.ylabel("Y-axis")  # add Y-axis label
+    # plt.title("Any suitable title")  # add title
+    # plt.show()
+    plt.savefig('pack_times.png')
+
 
     print('inference time', sum(inference_time) / len(inference_time), 'ms')
-
-
-if __name__ == '__main__':
-    main()
