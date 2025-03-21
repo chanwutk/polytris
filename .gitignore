@@ -1,4 +1,6 @@
 .venv
+.venv.old
+venv
 **/__pycache__
 
 # data
@@ -10,3 +12,5 @@ track-results*
 videos
 videos-small
 output
+
+**/track-accuracy-*/*
