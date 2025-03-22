@@ -95,8 +95,7 @@ def main(args):
             trajectories = {}
             frame_index = 0
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(
-                cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
             frame_sep = frame_count // 5
 
