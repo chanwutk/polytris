@@ -1,44 +1,24 @@
 import sys, pathlib
 MODULES_PATH = pathlib.Path().absolute() / 'modules'
 sys.path.append(str(MODULES_PATH))
-sys.path.append(str(MODULES_PATH / 'detectron2'))
 
 
 import json
 import os
-import queue
 import shutil
-import time
 from xml.etree import ElementTree
 
 import cv2
-import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import numpy as np
-import numpy.typing as npt
 import torch
 
-from b3d.utils import parse_outputs
-from b3d.external.nms import nms
-from detectron2.config import get_cfg
-from detectron2.engine import DefaultPredictor
 import minivan.images
 
 
-
-
-def hex_to_rgb(hex: str) -> tuple[int, int, int]:
-    # hex in format #RRGGBB
-    return int(hex[1:3], 16), int(hex[3:5], 16), int(hex[5:7], 16)
-
-colors_ = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
-*colors, = map(hex_to_rgb, colors_)
-
-
 CONFIG = './modules/b3d/configs/config_refined.json'
-LIMIT = 512
-CHUNK_SIZE = 128
-
+DIR = './videos'
+MASK_DIR = os.path.join('pipeline-stages', 'video-masked')
 
 
 def get_bitmap(width: int, height: int, mask: ElementTree.Element):
@@ -61,9 +41,6 @@ def get_bitmap(width: int, height: int, mask: ElementTree.Element):
 
     bitmap = bitmap[tl[0]:br[0], tl[1]:br[1], :]
     return bitmap, tl, br
-
-
-DIR = './videos'
 
 
 def logger(queue):
@@ -92,10 +69,12 @@ def process(gpuIdx: int, file: str, mask, logger_queue):
 
     width, height = mbr[1] - mtl[1], mbr[0] - mtl[0]
     # logger_queue.put(f'Processing {file} with shape {width}x{height}')
-    writer = cv2.VideoWriter(f'./video-masked/{file}', cv2.VideoWriter.fourcc(*'mp4v'), int(30 / SAMPLE_SIZE), (width, height))
+    writer = cv2.VideoWriter(os.path.join(MASK_DIR, file), cv2.VideoWriter.fourcc(*'mp4v'), int(30 / SAMPLE_SIZE), (width, height))
 
     idx = -1
     while cap.isOpened():
+        # if idx > 5000:
+        #     break
         idx += 1
         print(idx)
         success, frame = cap.read()
@@ -126,13 +105,13 @@ def process(gpuIdx: int, file: str, mask, logger_queue):
 
 
 def main():
-    if os.path.exists('./video-masked'):
-        shutil.rmtree('./video-masked')
-    os.mkdir('./video-masked')
+    if os.path.exists(MASK_DIR):
+        shutil.rmtree(MASK_DIR)
+    os.mkdir(MASK_DIR)
 
     fc = open('crop.jsonl', 'w')
 
-    tree = ElementTree.parse('masks.xml')
+    tree = ElementTree.parse('./pipeline-stages/masks.xml')
     mask = tree.getroot()
 
     num_cuda = torch.cuda.device_count()

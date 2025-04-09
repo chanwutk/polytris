@@ -5,8 +5,10 @@ from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 
 
-DETECTRON_CONFIG_DIR = './modules/detectron2/configs'
-CONFIG = './modules/b3d/configs/config_refined.json'
+# DETECTRON_CONFIG_DIR = './modules/detectron2/configs'
+# CONFIG = './modules/b3d/configs/config_refined.json'
+CONFIG = os.path.join('/data/chanwutk/projects/minivan/modules', 'b3d/b3d/configs/config_refined.json')
+DETECTRON_CONFIG_DIR = os.path.join('/data/chanwutk/projects/minivan/modules', 'detectron2/configs')
 
 
 def get_detector(device: str, configfile: str | None = None) -> "DefaultPredictor":
