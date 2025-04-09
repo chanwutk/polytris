@@ -16,3 +16,5 @@ output
 **/track-accuracy-*/*
 **/video-masked/*
 **/*.py.log
+
+**/pipeline-*/video-masked*
