@@ -1,3 +1,4 @@
+import os
 from typing import TypeVar, TypeAlias
 from queue import Queue
 
@@ -13,6 +14,10 @@ CHUNK_SIZE = 128
 
 def uncompress(bboxQueue: "InPipe[DetArray]", mapQueue: "InPipe[PolyominoMapping]", outbboxQueue: "OutPipe[tuple[int, DetArray]]"):
     flog = open('uncompressor.py.log', 'w')
+    if os.path.exists('./unpacked_detections'):
+        os.system('rm -rf ./unpacked_detections')
+    os.makedirs('./unpacked_detections', exist_ok=True)
+
     while True:
         compress_info = mapQueue.get()
         detections = bboxQueue.get()

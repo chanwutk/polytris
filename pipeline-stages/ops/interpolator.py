@@ -34,6 +34,8 @@ def interpolate(
 ):
     trajectories: dict[int, list[tuple[int, Array[S4, np.floating]]]] = dict()
     render: dict[int, list[tuple[Array[S4, np.floating], int]]] = dict()
+    flogt = open('interpolator_t.py.log', 'w')
+    flogr = open('interpolator_r.py.log', 'w')
     while True:
         track = trackQueue.get()
         if track is None:
@@ -53,10 +55,21 @@ def interpolate(
                 if e[0] not in render:
                     render[e[0]] = []
                 render[e[0]].append((e[1], trackId))
+        flogt.write(f"{idx} {track.shape} {len(trajectories)} {len(render)}\n")
+        flogt.flush()
+    
+    flogr.write(json.dumps(sorted((idx, [[trackId, *box] for box, trackId in boxes]) for idx, boxes in render.items()), indent=2))
+    flogr.flush()
     
     with open(outFile, 'w') as f:
         prevIdx = -1
         for idx, boxes in sorted(render.items()):
+            # flogr.write(f"{idx} {boxes}\n")
+            # flogr.flush()
+            while prevIdx + 1 < idx:
+                itrackQueue.put((idx, []))
+                f.write(json.dumps((idx, [])) + '\n')
+                prevIdx += 1
             # assert idx == prevIdx + 1, (prevIdx, idx)
             boxes = [[trackId, *box] for box, trackId in boxes]
             itrackQueue.put((idx, boxes))

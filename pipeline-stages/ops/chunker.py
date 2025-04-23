@@ -124,7 +124,8 @@ def chunk(
     imgQueue: "InPipe[NPImage]",
     polyominoQueue: "OutPipe[PolyominoInfo]",
 ):
-    fp = open('./track-results-0/jnc00.mp4.d.jsonl', 'r')
+    fp = open('./tracked_groundtruth.jsonl', 'r')
+    # fp = open('./track-results-0/jnc00.mp4.d.jsonl', 'r')
     flog = open('./chunker.py.log', 'w')
     idx = 0
     while True:
@@ -152,7 +153,7 @@ def chunk(
         # chunks = split_image(frame)
 
         # num_detections.append(len(fdetections))
-        fdetections = np.array(fdetections, dtype=np.float32)
+        fdetections = np.array(fdetections, dtype=np.float32)[:, -4:]
         assert is2D(fdetections), fdetections.shape
         # fdetections[:, 0] += mtl[1]
         # fdetections[:, 1] += mtl[0]

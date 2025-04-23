@@ -1,3 +1,4 @@
+import os
 from typing import Literal, NamedTuple
 from queue import Queue
 
@@ -102,6 +103,10 @@ def compress(
     det_info: dict[FrameId_GroupId, tuple[Offset, Offset]] = dict()
     frame_cache = dict()
     start_idx = 0
+
+    if os.path.exists('./packed_images'):
+        os.system('rm -rf ./packed_images')
+    os.makedirs('./packed_images', exist_ok=True)
 
     flog = open('./compressor.py.log', 'w')
 

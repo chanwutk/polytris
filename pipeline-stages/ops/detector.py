@@ -47,8 +47,9 @@ def detect(imgQueue: "InPipe[NPImage]", bboxQueue: "OutPipe[DetArray]", device: 
         nms_threshold = config['nms_threshold']
         nms_bboxes, nms_scores = nms(bboxes, scores, nms_threshold)
         detections = np.zeros((len(nms_bboxes), 5))
-        detections[:, 0:4] = nms_bboxes
-        detections[:, 4] = nms_scores
+        if len(nms_bboxes) > 0:
+            detections[:, 0:4] = nms_bboxes
+            detections[:, 4] = nms_scores
 
         bboxQueue.put(detections)
         count += 1
