@@ -68,8 +68,8 @@ def interpolate(
             # flogr.flush()
             while prevIdx + 1 < idx:
                 if itrackQueue is not None:
-                    itrackQueue.put((idx, []))
-                f.write(json.dumps((idx, [])) + '\n')
+                    itrackQueue.put((prevIdx + 1, []))
+                f.write(json.dumps((prevIdx + 1, [])) + '\n')
                 prevIdx += 1
             # assert idx == prevIdx + 1, (prevIdx, idx)
             boxes = [[trackId, *box] for box, trackId in boxes]
