@@ -191,10 +191,10 @@ def filter_patches(
     flog.write("Filter patches finished.\n")
     flog.close()
 
-    with open(f"filter_benchmark.{iou_threshold_l}.{iou_threshold_u}.log", 'w') as f:
-        f.write(f"Max skip value: {max_skip}\n")
-        f.write(f"Pruned polyominoes count: {prune_count}\n")
-        f.flush()
+    # with open(f"filter_benchmark.{iou_threshold_l}.{iou_threshold_u}.log", 'w') as f:
+    #     f.write(f"Max skip value: {max_skip}\n")
+    #     f.write(f"Pruned polyominoes count: {prune_count}\n")
+    #     f.flush()
     
     with open(f"./tracking_results/filter_patches_benchmark_{iou_threshold_l}_{iou_threshold_u}_.json", 'w') as f:
         f.write(json.dumps({"patches_count": patches_count, "patches_dropped": patches_dropped, "evaluation_time": evaluate_time, "filter_time": filter_time}, indent=2))
