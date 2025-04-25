@@ -15,7 +15,7 @@ def interpolate_trajectory(trajectory: list[tuple[int, Array[S4, np.floating]]],
         dif_det = nxt_det - prv_det
         dif_det = dif_det.reshape(1, -1)
 
-        scale = np.arange(nxt[0] - prv[0], dtype=np.floating).reshape(-1, 1) / (nxt[0] - prv[0])
+        scale = np.arange(0, nxt[0] - prv[0], dtype=np.floating).reshape(-1, 1) / (nxt[0] - prv[0])
         
         int_dets = (scale @ dif_det) + prv_det.reshape(1, -1)
 
@@ -29,7 +29,7 @@ def interpolate_trajectory(trajectory: list[tuple[int, Array[S4, np.floating]]],
 
 def interpolate(
     trackQueue: InPipe[tuple[int, DetArray]],
-    itrackQueue: OutPipe[tuple[int, list[list[float | int]]]],
+    itrackQueue: OutPipe[tuple[int, list[list[float | int]]]] | None,
     outFile: str,
 ):
     trajectories: dict[int, list[tuple[int, Array[S4, np.floating]]]] = dict()
@@ -67,12 +67,15 @@ def interpolate(
             # flogr.write(f"{idx} {boxes}\n")
             # flogr.flush()
             while prevIdx + 1 < idx:
-                itrackQueue.put((idx, []))
+                if itrackQueue is not None:
+                    itrackQueue.put((idx, []))
                 f.write(json.dumps((idx, [])) + '\n')
                 prevIdx += 1
             # assert idx == prevIdx + 1, (prevIdx, idx)
             boxes = [[trackId, *box] for box, trackId in boxes]
-            itrackQueue.put((idx, boxes))
+            if itrackQueue is not None:
+                itrackQueue.put((idx, boxes))
             f.write(json.dumps((idx, boxes)) + '\n')
             prevIdx = idx
-    itrackQueue.put(None)
+    if itrackQueue is not None:
+        itrackQueue.put(None)

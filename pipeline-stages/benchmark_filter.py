@@ -30,7 +30,7 @@ IdPolyominoOffset = tuple[int, Array[_2D, np.bool], tuple[int, int]]
 
 
 VIDEO_MASK = './video-masked'
-LIMIT = 512
+LIMIT = 1024
 
 
 
@@ -42,10 +42,9 @@ colors_ = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e
 *colors, = map(hex_to_rgb, colors_)
 
 
-def save_track(trackQueue: queue.Queue, lu):  #, benchmarkQueue: queue.Queue):
-    l, u = lu
+def save_track(trackQueue: queue.Queue, filename: str):  #, benchmarkQueue: queue.Queue):
     idx = 0
-    with open(f'tracked_objects.{l}.{u}.jsonl', 'w') as f:
+    with open(filename, 'w') as f:
         while True:
             tracked_objects = trackQueue.get()
 
@@ -57,67 +56,12 @@ def save_track(trackQueue: queue.Queue, lu):  #, benchmarkQueue: queue.Queue):
             idx += 1
 
 
-def save_video(trackQueue: queue.Queue, infile: str, filename: str):
-    cap = cv2.VideoCapture(infile)
-    writer: cv2.VideoWriter | None = None
-    fidx = 0
-    while cap.isOpened():
-        print('------------', fidx)
-        track = trackQueue.get()
-        if track is None:
-            break
-        print(track)
-
-        try:
-            ret, frame = cap.read()
-            if not ret:
-                break
-        except:
-            break
-        print(frame.shape)
-
-        if frame is None:
-            break
-
-        # fidx, frame = frame
-        tidx, track = track
-        assert tidx == fidx, (tidx, fidx)
-
-        width, height = frame.shape[1], frame.shape[0]
-
-        if writer is None:
-            writer = cv2.VideoWriter(filename, cv2.VideoWriter.fourcc(*'mp4v'), 30, (width, height))
-
-        for oid, *box in track:
-            frame = cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), colors[oid % len(colors)], 2)
-            frame = cv2.putText(frame, str(oid), (int(box[0]), int(box[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors[oid % len(colors)], 2)
-    
-        writer.write(frame)
-        fidx += 1
-    
-    if writer is not None:
-        writer.release()
-
-
-PACK_IMG_DIR = './packed_images'
-UNPK_DET_DIR = './unpacked_detections'
-
-
 def noOp():
-    if os.path.exists(PACK_IMG_DIR + 'no_op'):
-        os.system('rm -rf ' + PACK_IMG_DIR + 'no_op')
-    os.makedirs(PACK_IMG_DIR + 'no_op', exist_ok=True)
-
-    if os.path.exists(UNPK_DET_DIR + 'no_op'):
-        os.system('rm -rf ' + UNPK_DET_DIR + 'no_op')
-    os.makedirs(UNPK_DET_DIR + 'no_op', exist_ok=True)
-
     start = time.time()
 
     imgQueue = queue.Queue(maxsize=10)
     boxQueue = queue.Queue(maxsize=10)
     trackQueue = queue.Queue(maxsize=10)
-    itrackQueue = queue.Queue()
 
 
     detectorThread = threading.Thread(
@@ -138,17 +82,11 @@ def noOp():
 
     interpolateThread = threading.Thread(
         target=ops.interpolator.interpolate,
-        args=(trackQueue, itrackQueue, './tracked_no_op.jsonl'),
+        args=(trackQueue, None, './tracking_results/tracked_no_op.jsonl'),
         daemon=True,
     )
     interpolateThread.start()
-
-    saveVideoThread = threading.Thread(
-        target=save_video,
-        args=(itrackQueue, os.path.join(VIDEO_MASK, 'jnc00.mp4'), 'tracked_no_op.mp4'),
-        daemon=True,
-    )
-    saveVideoThread.start()
+    print("Interpolate thread started")
 
     cap = cv2.VideoCapture( os.path.join(VIDEO_MASK, 'jnc00.mp4'))
     idx = 0
@@ -172,21 +110,13 @@ def noOp():
     interpolateThread.join()
     print("Interpolate thread finished")
 
-    saveVideoThread.join()
-
     end = time.time()
     print(f"Total time: {end - start:.2f} seconds")
+    with open('./tracking_results/runtime_no_op.json', 'w') as f:
+        f.write(json.dumps({"time": end - start, "fps": LIMIT / (end - start), "frames": LIMIT}))
 
 
 def op():
-    if os.path.exists(PACK_IMG_DIR + 'op'):
-        os.system('rm -rf ' +PACK_IMG_DIR + 'op')
-    os.makedirs(PACK_IMG_DIR + 'op', exist_ok=True)
-
-    if os.path.exists(UNPK_DET_DIR + 'op'):
-        os.system('rm -rf ' +UNPK_DET_DIR + 'op')
-    os.makedirs(UNPK_DET_DIR + 'op', exist_ok=True)
-
     start = time.time()
 
     imgQueue = queue.Queue(maxsize=10)
@@ -196,8 +126,6 @@ def op():
     boxQueue = queue.Queue(maxsize=10)
     outboxQueue = queue.Queue(maxsize=10)
     trackQueue = queue.Queue(maxsize=10)
-    benchmarkQueue = queue.Queue()
-    itrackQueue = queue.Queue()
 
     chunkerThread = threading.Thread(
         target=ops.chunker.chunk,
@@ -233,7 +161,7 @@ def op():
 
     trackerThread = threading.Thread(
         target=ops.tracker.track,
-        args=(outboxQueue, trackQueue, benchmarkQueue, 35),
+        args=(outboxQueue, trackQueue, None, 35),
         daemon=True,
     )
     trackerThread.start()
@@ -241,17 +169,10 @@ def op():
 
     interpolateThread = threading.Thread(
         target=ops.interpolator.interpolate,
-        args=(trackQueue, itrackQueue, './tracked_op.jsonl'),
+        args=(trackQueue, None, './tracking_results/tracked_op.jsonl'),
         daemon=True,
     )
     interpolateThread.start()
-
-    saveVideoThread = threading.Thread(
-        target=save_video,
-        args=(itrackQueue, os.path.join(VIDEO_MASK, 'jnc00.mp4'), 'tracked_op.mp4'),
-        daemon=True,
-    )
-    saveVideoThread.start()
 
     cap = cv2.VideoCapture( os.path.join(VIDEO_MASK, 'jnc00.mp4'))
     idx = 0
@@ -282,22 +203,15 @@ def op():
     print("Tracker thread finished")
 
     interpolateThread.join()
-
-    saveVideoThread.join()
+    print("Interpolate thread finished")
 
     end = time.time()
     print(f"Total time: {end - start:.2f} seconds")
+    with open('./tracking_results/runtime_op.json', 'w') as f:
+        f.write(json.dumps({"time": end - start, "fps": LIMIT / (end - start), "frames": LIMIT}))
 
 
-def opFilter():
-    if os.path.exists(PACK_IMG_DIR + 'op'):
-        os.system('rm -rf ' +PACK_IMG_DIR + 'op')
-    os.makedirs(PACK_IMG_DIR + 'op', exist_ok=True)
-
-    if os.path.exists(UNPK_DET_DIR + 'op'):
-        os.system('rm -rf ' +UNPK_DET_DIR + 'op')
-    os.makedirs(UNPK_DET_DIR + 'op', exist_ok=True)
-
+def opFilter(tl, th):
     start = time.time()
 
     imgQueue = queue.Queue(maxsize=10)
@@ -309,7 +223,6 @@ def opFilter():
     outboxQueue = queue.Queue(maxsize=10)
     trackQueue = queue.Queue(maxsize=10)
     benchmarkQueue = queue.Queue()
-    itrackQueue = queue.Queue()
 
     chunkerThread = threading.Thread(
         target=ops.chunker.chunk,
@@ -321,7 +234,7 @@ def opFilter():
 
     filterThread = threading.Thread(
         target=ops.filter_patches.filter_patches,
-        args=(benchmarkQueue, polQueue, outPolQueue),
+        args=(benchmarkQueue, polQueue, outPolQueue, (tl, th)),
         daemon=True,
     )
     filterThread.start()
@@ -361,17 +274,10 @@ def opFilter():
 
     interpolateThread = threading.Thread(
         target=ops.interpolator.interpolate,
-        args=(trackQueue, itrackQueue, './tracked_opFilter.jsonl'),
+        args=(trackQueue, None, f'./tracking_results/tracked_opFilter_{tl}_{th}_.jsonl'),
         daemon=True,
     )
     interpolateThread.start()
-
-    saveVideoThread = threading.Thread(
-        target=save_video,
-        args=(itrackQueue, os.path.join(VIDEO_MASK, 'jnc00.mp4'), 'tracked_opFilter.mp4'),
-        daemon=True,
-    )
-    saveVideoThread.start()
 
     cap = cv2.VideoCapture( os.path.join(VIDEO_MASK, 'jnc00.mp4'))
     idx = 0
@@ -407,14 +313,23 @@ def opFilter():
     interpolateThread.join()
     print("Interpolate thread finished")
 
-    saveVideoThread.join()
-    print("Save video thread finished")
-
     end = time.time()
     print(f"Total time: {end - start:.2f} seconds")
+    with open(f'./tracking_results/runtime_opFilter_{tl}_{th}_.json', 'w') as f:
+        f.write(json.dumps({"time": end - start, "fps": LIMIT / (end - start), "frames": LIMIT}))
 
 
 if __name__ == '__main__':
-    opFilter()
-    # op()
-    # noOp()
+    noOp()
+    op()
+    thresholds: list[tuple[float, float]] = [
+        (0.7, 0.9),
+        (0.4, 0.6),
+        (0.1, 0.3),
+        (0.4, 0.8),
+        (0.2, 0.6),
+    ]
+    for tl, th in thresholds:
+        print(f"Running opFilter with thresholds: {tl}, {th}")
+        opFilter(tl, th)
+        print(f"Finished opFilter with thresholds: {tl}, {th}")

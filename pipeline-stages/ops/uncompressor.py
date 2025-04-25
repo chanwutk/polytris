@@ -14,9 +14,9 @@ CHUNK_SIZE = 128
 
 def uncompress(bboxQueue: "InPipe[DetArray]", mapQueue: "InPipe[PolyominoMapping]", outbboxQueue: "OutPipe[tuple[int, DetArray]]"):
     flog = open('uncompressor.py.log', 'w')
-    if os.path.exists('./unpacked_detections'):
-        os.system('rm -rf ./unpacked_detections')
-    os.makedirs('./unpacked_detections', exist_ok=True)
+    # if os.path.exists('./unpacked_detections'):
+    #     os.system('rm -rf ./unpacked_detections')
+    # os.makedirs('./unpacked_detections', exist_ok=True)
 
     while True:
         compress_info = mapQueue.get()
@@ -32,9 +32,9 @@ def uncompress(bboxQueue: "InPipe[DetArray]", mapQueue: "InPipe[PolyominoMapping
         flog.flush()
 
 
-        for det in detections:
-            canvas = cv2.rectangle(canvas, (int(det[0]), int(det[1])), (int(det[2]), int(det[3])), (0, 255, 0), 2)
-        cv2.imwrite(f'./packed_images/{idx:03d}.d.jpg', canvas)
+        # for det in detections:
+        #     canvas = cv2.rectangle(canvas, (int(det[0]), int(det[1])), (int(det[2]), int(det[3])), (0, 255, 0), 2)
+        # cv2.imwrite(f'./packed_images/{idx:03d}.d.jpg', canvas)
 
         multiframes_detections: dict[int, list[npt.NDArray]] = {}
 
@@ -78,8 +78,8 @@ def uncompress(bboxQueue: "InPipe[DetArray]", mapQueue: "InPipe[PolyominoMapping
                 assert is_det_array(dets), dets.shape
                 outbboxQueue.put((i, dets))
         
-        for _idx, f in frame_cache.items():
-            cv2.imwrite(f'./unpacked_detections/{_idx:03d}.jpg', f)
+        # for _idx, f in frame_cache.items():
+        #     cv2.imwrite(f'./unpacked_detections/{_idx:03d}.jpg', f)
     
     outbboxQueue.put(None)
 

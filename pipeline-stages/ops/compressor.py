@@ -104,9 +104,9 @@ def compress(
     frame_cache = dict()
     start_idx = 0
 
-    if os.path.exists('./packed_images'):
-        os.system('rm -rf ./packed_images')
-    os.makedirs('./packed_images', exist_ok=True)
+    # if os.path.exists('./packed_images'):
+    #     os.system('rm -rf ./packed_images')
+    # os.makedirs('./packed_images', exist_ok=True)
 
     flog = open('./compressor.py.log', 'w')
 
@@ -159,7 +159,7 @@ def compress(
         except BitmapFullException:
             # If the packed image is full, run detection on the packed image and start a new packed image.
             assert canvas is not None
-            cv2.imwrite(f'./packed_images/{idx:03d}.jpg', canvas)
+            # cv2.imwrite(f'./packed_images/{idx:03d}.jpg', canvas)
 
             imgQueue.put(canvas)
             assert index_map is not None
@@ -183,7 +183,7 @@ def compress(
     
     assert canvas is not None
     assert last_idx is not None
-    cv2.imwrite(f'./packed_images/{last_idx+1:03d}.jpg', canvas)
+    # cv2.imwrite(f'./packed_images/{last_idx+1:03d}.jpg', canvas)
 
     imgQueue.put(canvas)
     assert index_map is not None

@@ -1,4 +1,6 @@
+import json
 from queue import Queue
+import time
 
 import cv2
 import numpy as np
@@ -64,6 +66,12 @@ def filter_patches(
     low_writer = None
     draw_low = None
 
+    patches_count = 0
+    patches_dropped = 0
+
+    evaluate_time = 0.
+    filter_time = 0.
+
     while True:
         polyomino = polyominoQueue.get()
         if polyomino is None:
@@ -87,7 +95,8 @@ def filter_patches(
         if low_writer is None:
             low_writer = cv2.VideoWriter("tmp_low.mp4", cv2.VideoWriter.fourcc(*"mp4v"), 30, (bitmap.shape[1] * PRINT_SIZE, bitmap.shape[0] * PRINT_SIZE))
         
-        if idx < 50 or idx > 1950:
+        patches_count += len(polyominoes)
+        if idx < 50:
             outPolyominoQueue.put(polyomino)
         else:
             if idx % 32 == 0:
@@ -99,6 +108,7 @@ def filter_patches(
                         break
                     benchmarks.append(benchmark)
 
+                start = time.time()
                 mask = np.zeros_like(bitmap, dtype=np.int8)
                 low = np.ones_like(bitmap, dtype=np.float32)
                 for benchmark in benchmarks:
@@ -130,7 +140,10 @@ def filter_patches(
                             (0, 255, 0),
                             2,
                         )
+                end = time.time()
+                evaluate_time += end - start
             
+            start = time.time()
             included_polyominoes = []
             for p in polyominoes:
                 pid, poly, offset = p
@@ -153,7 +166,10 @@ def filter_patches(
                         for x in range(poly.shape[1]):
                             if poly[y, x]:
                                 last_frame_map[y + _y, x + _x] = idx
+            end = time.time()
+            filter_time += end - start
             outPolyominoQueue.put((idx, frame, bitmap, included_polyominoes))
+            patches_dropped += len(polyominoes) - len(included_polyominoes)
             # outPolyominoQueue.put(polyomino)
 
         skp_writer.write(draw(skip_map, max_value=33))
@@ -179,3 +195,6 @@ def filter_patches(
         f.write(f"Max skip value: {max_skip}\n")
         f.write(f"Pruned polyominoes count: {prune_count}\n")
         f.flush()
+    
+    with open(f"./tracking_results/filter_patches_benchmark_{iou_threshold_l}_{iou_threshold_u}_.json", 'w') as f:
+        f.write(json.dumps({"patches_count": patches_count, "patches_dropped": patches_dropped, "evaluation_time": evaluate_time, "filter_time": filter_time}, indent=2))
