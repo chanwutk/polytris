@@ -13,8 +13,11 @@ videos
 videos-small
 output
 
+**/model.pth
+
 **/track-accuracy-*/*
 **/video-masked/*
 **/*.py.log
 
 **/pipeline-*/video-masked*
+**/pipeline-*/tracking_results

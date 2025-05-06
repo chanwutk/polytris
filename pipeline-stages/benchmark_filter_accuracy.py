@@ -39,7 +39,7 @@ from multiprocessing import freeze_support
 import multiprocessing as mp
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../modules/TrackEval')))
-import trackeval  # noqa: E402
+import trackeval
 
 
 PIPELINE_DIR = 'pipeline-stages'
@@ -95,7 +95,7 @@ def run_benchmark(dataset_config: dict, eval_config: dict, metrics_config: dict,
         **dataset_config,
         "output_fol": './track-accuracy-eval-pack',
         "output_sub_fol": file.split('/')[-1][:-len('.jsonl')],
-        "input_gt": './tracking_results/tracked_op.jsonl',
+        "input_gt": './tracking_results/tracked_no_op.jsonl',
         "input_track": file,
         "skip": 1,
         'tracker': 'sort',

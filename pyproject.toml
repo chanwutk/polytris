@@ -4,6 +4,7 @@ extraPaths = [
     "./modules/b3d",
     "./modules/boxmot",
     "./modules/transformers/src",
+    "./modules/TrackEval"
 ]
 
 [project]

@@ -123,6 +123,7 @@ class PolyominoInfo(NamedTuple):
 def chunk(
     imgQueue: "InPipe[NPImage]",
     polyominoQueue: "OutPipe[PolyominoInfo]",
+    inv_sampling_rate: int = 1,
 ):
     fp = open('./tracked_groundtruth.jsonl', 'r')
     # fp = open('./track-results-0/jnc00.mp4.d.jsonl', 'r')
@@ -137,6 +138,10 @@ def chunk(
         assert findex == idx, (findex, idx)
         if frame is None:
             break
+
+        if idx % inv_sampling_rate != 0:
+            idx += 1
+            continue
 
         frame = torch.from_numpy(frame).to('cuda:1')
         assert minivan.images.isHWC(frame), frame.shape

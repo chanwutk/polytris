@@ -14,7 +14,7 @@ class TrackPointAccuracyScore(NamedTuple):
 
 
 class SortWithBenchmark(Sort):
-    def __init__(self, max_age=1, min_hits=3, iou_threshold=0.3):
+    def __init__(self, max_age=1, min_hits=0, iou_threshold=0.3):
         """
         Sets key parameters for SORT
         """
@@ -104,8 +104,14 @@ def track(
         # print(f"Tracking {detections.shape}...")
         flog.write(f"Tracking {detections.shape}...\n")
         flog.flush()
+        # print('----------', idx, len(detections))
 
+        # if len(detections) != 0:
         tracked_objects = tracker.update(detections)
+        # print('--------t--', idx, len(tracked_objects))
+        #     # print("-------------------------", idx, len(tracked_objects))
+        # else:
+        #     tracked_objects = np.empty((0, 5))
         track_benchmark = tracker.benchmark.copy()
 
         trackQueue.put((idx, tracked_objects))
