@@ -10,3 +10,7 @@
 [submodule "modules/boxmot"]
 	path = modules/boxmot
 	url = git@github.com:chanwutk/boxmot.git
+[submodule "modules/darknet"]
+	path = modules/darknet
+	url = git@github.com:chanwutk/darknet.git
+	branch = otif/titan-xp
