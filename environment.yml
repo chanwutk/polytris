@@ -18,6 +18,9 @@ dependencies:
   - pycocotools>=2.0.2
   - iopath>=0.1.10,<0.1.11  # detectron2 uses >=0.1.7,<0.1.10, but this version will raise an error: "AttributeError: 'NativePathHandler' object has no attribute '_evt'"
 
+  # darknet make dependency
+  - nvidia/label/cuda-12.1.1::cuda-nvcc
+
   - pip
   - pip:
     - --index-url https://download.pytorch.org/whl/cu124

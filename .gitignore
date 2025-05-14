@@ -21,3 +21,10 @@ output
 
 **/pipeline-*/video-masked*
 **/pipeline-*/tracking_results
+**/pipeline-*/tracking_results_otif
+**/pipeline-*/track-accuracy-eval-pack*
+
+**/train-proxy-data*
+
+det/
+det_otif
