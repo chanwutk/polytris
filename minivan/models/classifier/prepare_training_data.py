@@ -84,7 +84,7 @@ def main():
             frame_masked = frame_masked.cpu().numpy()
             for det in dets:
                 cv2.rectangle(frame_masked, pt1=(int(det[0]), int(det[1])), pt2=(int(det[2]), int(det[3])), color=(255, 0, 0), thickness=2)
-            cv2.imwrite(f'./test_frames/frame_{os.path.basename(videofile)}_{i}.jpg', frame_masked)
+            cv2.imwrite(f'/data/chanwutk/projects/minivan/test_frames/frame_{os.path.basename(videofile)}_{i}.jpg', frame_masked)
         
 
 def overlapi(interval1: tuple[int, int], interval2: tuple[int, int]):

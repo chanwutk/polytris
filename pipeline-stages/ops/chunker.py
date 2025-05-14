@@ -10,15 +10,15 @@ import minivan.images
 from minivan.dtypes import InPipe, NPImage, Array, D2, IdPolyominoOffset, OutPipe, FArray
 
 
-CHUNK_SIZE = 128
+# CHUNK_SIZE = 32
 
 
-def mark_detections2(detections: "list[list[float]] | Array[*D2, np.floating]", width: int, height: int):
-    bitmap: "Array[*D2, np.int32]" = np.zeros((height // CHUNK_SIZE, width // CHUNK_SIZE), dtype=np.int32)
+def mark_detections2(detections: "list[list[float]] | Array[*D2, np.floating]", width: int, height: int, chunk_size: int):
+    bitmap: "Array[*D2, np.int32]" = np.zeros((height // chunk_size, width // chunk_size), dtype=np.int32)
 
     for bbox in detections:  # bboxes:
-        xfrom, xto = int(bbox[0] // CHUNK_SIZE), int(bbox[2] // CHUNK_SIZE)
-        yfrom, yto = int(bbox[1] // CHUNK_SIZE), int(bbox[3] // CHUNK_SIZE)
+        xfrom, xto = int(bbox[0] // chunk_size), int(bbox[2] // chunk_size)
+        yfrom, yto = int(bbox[1] // chunk_size), int(bbox[3] // chunk_size)
 
         bitmap[yfrom:yto+1, xfrom:xto+1] = 1
     
@@ -123,21 +123,23 @@ class PolyominoInfo(NamedTuple):
 def chunk(
     imgQueue: "InPipe[NPImage]",
     polyominoQueue: "OutPipe[PolyominoInfo]",
+    groundtruth: str,
+    chunk_size: int = 128,
     inv_sampling_rate: int = 1,
 ):
-    fp = open('./tracked_groundtruth.jsonl', 'r')
+    fp = open(groundtruth, 'r')
     # fp = open('./track-results-0/jnc00.mp4.d.jsonl', 'r')
     flog = open('./chunker.py.log', 'w')
     idx = 0
     while True:
         frame = imgQueue.get()
+        if frame is None:
+            break
         line = fp.readline()
         flog.flush()
         findex, fdetections = json.loads(line)
         flog.write(f"{findex} {fdetections}\n")
         assert findex == idx, (findex, idx)
-        if frame is None:
-            break
 
         if idx % inv_sampling_rate != 0:
             idx += 1
@@ -149,8 +151,8 @@ def chunk(
         height, width = frame.shape[:2]
 
         # pad so that the width and height are multiples of CHUNK_SIZE
-        frame = minivan.images.padHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
-        patches = minivan.images.splitHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
+        frame = minivan.images.padHWC(frame, chunk_size, chunk_size)
+        patches = minivan.images.splitHWC(frame, chunk_size, chunk_size)
 
 
         frame = frame.detach().cpu().numpy()#.transpose((1, 2, 0))
@@ -158,6 +160,11 @@ def chunk(
         # chunks = split_image(frame)
 
         # num_detections.append(len(fdetections))
+        if len(fdetections) == 0:
+            # No detections in the frame
+            polyominoQueue.put(PolyominoInfo(idx, frame, np.zeros((height // chunk_size, width // chunk_size), dtype=np.int32), []))
+            idx += 1
+            continue
         fdetections = np.array(fdetections, dtype=np.float32)[:, -4:]
         assert is2D(fdetections), fdetections.shape
         # fdetections[:, 0] += mtl[1]
@@ -170,7 +177,7 @@ def chunk(
         # Tiles do not overlap and placed in a grid.
         # Tile size is CHUNK_SIZE x CHUNK_SIZE
         # bitmap -> represent the grid of tiles, 0: tile without detection, 1: tile with detection
-        bitmap = mark_detections2(fdetections, width, height)
+        bitmap = mark_detections2(fdetections, width, height, chunk_size)
         
         # Group tiles with detections together
         # tetrominoes -> list of tuple (group_id, mask, offset) representing the group of tiles (we will call a group of tile a tetromino)

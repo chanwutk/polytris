@@ -12,7 +12,7 @@ from minivan.dtypes import S2, InPipe, NPImage, Array, D2, IdPolyominoOffset, Ou
 from .chunker import PolyominoInfo
 
 
-CHUNK_SIZE = 128
+# CHUNK_SIZE = 128
 
 
 class BitmapFullException(Exception):
@@ -51,30 +51,30 @@ def pack_append(
     return bitmap, positions
 
 
-def render(canvas: NPImage, positions: list[tuple[int, int, int, npt.NDArray, tuple[int, int]]], frame: NPImage):
+def render(canvas: NPImage, positions: list[tuple[int, int, int, npt.NDArray, tuple[int, int]]], frame: NPImage, chunk_size: int):
     for y, x, groupid, mask, offset in positions:
-        yfrom, yto = y * CHUNK_SIZE, (y + mask.shape[0]) * CHUNK_SIZE
-        xfrom, xto = x * CHUNK_SIZE, (x + mask.shape[1]) * CHUNK_SIZE
+        yfrom, yto = y * chunk_size, (y + mask.shape[0]) * chunk_size
+        xfrom, xto = x * chunk_size, (x + mask.shape[1]) * chunk_size
 
         for i in range(mask.shape[0]):
             for j in range(mask.shape[1]):
                 if mask[i, j]:
                     # patch = patches[i + offset[0], j + offset[1]]
                     patch = frame[
-                        (i + offset[0]) * CHUNK_SIZE:(i + offset[0] + 1) * CHUNK_SIZE,
-                        (j + offset[1]) * CHUNK_SIZE:(j + offset[1] + 1) * CHUNK_SIZE,
+                        (i + offset[0]) * chunk_size:(i + offset[0] + 1) * chunk_size,
+                        (j + offset[1]) * chunk_size:(j + offset[1] + 1) * chunk_size,
                     ]
-                    # frame2[(i + offset[0]) * CHUNK_SIZE:(i + offset[0] + 1) * CHUNK_SIZE, (j + offset[1]) * CHUNK_SIZE:(j + offset[1] + 1) * CHUNK_SIZE] = ((
-                    #     frame2[(i + offset[0]) * CHUNK_SIZE:(i + offset[0] + 1) * CHUNK_SIZE, (j + offset[1]) * CHUNK_SIZE:(j + offset[1] + 1) * CHUNK_SIZE].astype(np.uint32) +
-                    #     (np.ones((CHUNK_SIZE, CHUNK_SIZE, 3), dtype=np.uint8) * colors[groupid % len(colors)]).astype(np.uint32)
+                    # frame2[(i + offset[0]) * chunk_size:(i + offset[0] + 1) * chunk_size, (j + offset[1]) * chunk_size:(j + offset[1] + 1) * chunk_size] = ((
+                    #     frame2[(i + offset[0]) * chunk_size:(i + offset[0] + 1) * chunk_size, (j + offset[1]) * chunk_size:(j + offset[1] + 1) * chunk_size].astype(np.uint32) +
+                    #     (np.ones((chunk_size, chunk_size, 3), dtype=np.uint8) * colors[groupid % len(colors)]).astype(np.uint32)
                     # ) // 2).astype(np.uint8)
                     # cv2.imwrite(f'./packed_images/{idx:03d}.{i}.{j}.{groupid}.jpg', patch)
-                    # canvas2[yfrom + (CHUNK_SIZE * i): yfrom + (CHUNK_SIZE * i) + CHUNK_SIZE,
-                    #         xfrom + (CHUNK_SIZE * j): xfrom + (CHUNK_SIZE * j) + CHUNK_SIZE,
-                    # ] += (np.ones((CHUNK_SIZE, CHUNK_SIZE, 3), dtype=np.uint8) * colors[groupid % len(colors)]).astype(np.uint8)
+                    # canvas2[yfrom + (chunk_size * i): yfrom + (chunk_size * i) + chunk_size,
+                    #         xfrom + (chunk_size * j): xfrom + (chunk_size * j) + chunk_size,
+                    # ] += (np.ones((chunk_size, chunk_size, 3), dtype=np.uint8) * colors[groupid % len(colors)]).astype(np.uint8)
                     canvas[
-                        yfrom + (CHUNK_SIZE * i): yfrom + (CHUNK_SIZE * i) + CHUNK_SIZE,
-                        xfrom + (CHUNK_SIZE * j): xfrom + (CHUNK_SIZE * j) + CHUNK_SIZE,
+                        yfrom + (chunk_size * i): yfrom + (chunk_size * i) + chunk_size,
+                        xfrom + (chunk_size * j): xfrom + (chunk_size * j) + chunk_size,
                     ] += patch  # .detach().cpu().numpy()
     return canvas
 
@@ -96,6 +96,7 @@ def compress(
     polyominoQueue: "InPipe[PolyominoInfo]",
     imgQueue: "OutPipe[NPImage]",
     mapQueue: "OutPipe[PolyominoMapping]",
+    chunk_size: int = 128
 ):
     canvas: "NPImage | None" = None
     bm: Array[*D2, np.bool] | None = None
@@ -120,7 +121,7 @@ def compress(
         last_idx = idx
         height, width = frame.shape[:2]
         if index_map is None:
-            index_map = np.zeros((height // CHUNK_SIZE, width // CHUNK_SIZE, 2), dtype=np.int32)
+            index_map = np.zeros((height // chunk_size, width // chunk_size, 2), dtype=np.int32)
         
         flog.write(f"{idx} {bitmap.shape} {bitmap.sum()}\n")
         flog.flush()
@@ -146,7 +147,7 @@ def compress(
                 canvas = np.zeros((height, width, 3), dtype=np.uint8)
             
             # Additively render the packed image from all the tetrominoes (positions) from the current frame.
-            canvas = render(canvas, positions, frame)
+            canvas = render(canvas, positions, frame, chunk_size)
 
             # Update index_map with the packed tetrominoes, marking the group id and the frame index that each tile belongs to.
             # Update det_info with the packed tetrominoes, storing the offset (_offset) of the tetrominoes in the original image
@@ -169,13 +170,13 @@ def compress(
             canvas = np.zeros((height, width, 3), dtype=np.uint8)
             det_info = {}
             frame_cache = {idx: frame_cache[idx]}
-            index_map = np.zeros((height // CHUNK_SIZE, width // CHUNK_SIZE, 2), dtype=np.int32)
+            index_map = np.zeros((height // chunk_size, width // chunk_size, 2), dtype=np.int32)
             start_idx = idx
             # Done reset ------------------------------------------------------------------------
 
             # Redo packing + rednering canvas + updating index_map and det_info
             bm, positions = pack_append(sorted(polyominoes, key=lambda x: x[1].sum(), reverse=True), bitmap.shape[0], bitmap.shape[1])
-            canvas = render(canvas, positions, frame)
+            canvas = render(canvas, positions, frame, chunk_size)
             for gid, (y, x, _groupid, mask, offset) in enumerate(positions):
                 index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask.astype(np.int32) * gid
                 index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask.astype(np.int32) * idx

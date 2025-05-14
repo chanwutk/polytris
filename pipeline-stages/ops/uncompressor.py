@@ -9,10 +9,15 @@ import cv2
 from minivan.dtypes import S5, DetArray, InPipe, NPImage, Array, D2, IdPolyominoOffset, OutPipe, is_det_array, is_np_image
 from .compressor import PolyominoMapping
 
-CHUNK_SIZE = 128
+# CHUNK_SIZE = 128
 
 
-def uncompress(bboxQueue: "InPipe[DetArray]", mapQueue: "InPipe[PolyominoMapping]", outbboxQueue: "OutPipe[tuple[int, DetArray]]"):
+def uncompress(
+    bboxQueue: "InPipe[DetArray]",
+    mapQueue: "InPipe[PolyominoMapping]",
+    outbboxQueue: "OutPipe[tuple[int, DetArray]]",
+    chunk_size: int = 128,
+):
     flog = open('uncompressor.py.log', 'w')
     # if os.path.exists('./unpacked_detections'):
     #     os.system('rm -rf ./unpacked_detections')
@@ -42,8 +47,8 @@ def uncompress(bboxQueue: "InPipe[DetArray]", mapQueue: "InPipe[PolyominoMapping
         for det in detections:
             # Get the group id and frame index of the tile that the detection belongs to.
             _gid, _idx = index_map[
-                int((det[1] + det[3]) // (2 * CHUNK_SIZE)),
-                int((det[0] + det[2]) // (2 * CHUNK_SIZE)),
+                int((det[1] + det[3]) // (2 * chunk_size)),
+                int((det[0] + det[2]) // (2 * chunk_size)),
             ]
             _gid = int(_gid)
             _idx = int(_idx)
@@ -55,8 +60,8 @@ def uncompress(bboxQueue: "InPipe[DetArray]", mapQueue: "InPipe[PolyominoMapping
             (y, x), _offset = det_info[(_idx, _gid)]
             det = det.copy()
             # Recover the bounding box of the detection in the original image.
-            det[[0, 2]] += (_offset[1] - x) * CHUNK_SIZE
-            det[[1, 3]] += (_offset[0] - y) * CHUNK_SIZE
+            det[[0, 2]] += (_offset[1] - x) * chunk_size
+            det[[1, 3]] += (_offset[0] - y) * chunk_size
 
             if _idx not in multiframes_detections:
                 multiframes_detections[_idx] = []
