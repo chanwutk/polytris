@@ -1,0 +1,21 @@
+services:
+  minivan:
+    build: .
+    container_name: minivan
+    tty: true
+    environment:
+      - TERM=xterm-256color
+    volumes:
+      - .:/minivan
+      # Change /data/chawutk/minvan-dataset to your local path
+      - /data/chanwutk/data/minivan-data:/minivan-data
+      - /data/chanwutk/data/minivan-cache:/minivan-cache
+      - /home/eecs/chanwutk/.ssh:/root/.ssh
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    network_mode: "host"
