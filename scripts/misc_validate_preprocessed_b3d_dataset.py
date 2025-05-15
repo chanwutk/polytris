@@ -1,5 +1,4 @@
 import os
-from xml.etree import ElementTree
 import json
 import multiprocessing as mp
 import time
@@ -7,21 +6,21 @@ import time
 import cv2
 import numpy as np
 import torch
-from matplotlib.path import Path
 
-import sys, pathlib
+import sys
 sys.path.append('/data/chanwutk/projects/minivan/modules/b3d')
 sys.path.append('/data/chanwutk/projects/minivan/modules/detectron2')
 
 from b3d.external.nms import nms
 from b3d.external.sort import iou_batch, linear_assignment
-from b3d.utils import parse_outputs
-from minivan.models.predictor import get_detector
+from minivan.models.retinanet_b3d import get_detector
+
 
 VIDEOS = '/data/chanwutk/projects/minivan/videos_crop'
 VIDEOS_VALID = '/data/chanwutk/projects/minivan/videos_validate'
 
 CONFIG = os.path.join('/data/chanwutk/projects/minivan/modules', 'b3d/b3d/configs/config_refined.json')
+
 
 def parse_args():
     import argparse
@@ -50,9 +49,6 @@ def process_video(files: str, videodir, outputdir, gpuIdx):
         cap = cv2.VideoCapture(video_path)
         width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         writer = cv2.VideoWriter(os.path.join(outputdir, files, file), cv2.VideoWriter.fourcc(*'mp4v'), 15, (width, height))
-
-        # if not os.path.exists(os.path.join(outputdir, file)):
-        #     os.makedirs(os.path.join(outputdir, file))
 
         idx = 0
         while cap.isOpened():

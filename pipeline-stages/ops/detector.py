@@ -13,7 +13,7 @@ import numpy as np
 from b3d.external.nms import nms
 from b3d.utils import parse_outputs, regionize_image
 from minivan.dtypes import S5, Array, DetArray, InPipe, NPImage, OutPipe
-from minivan.models.predictor import get_detector
+from minivan.models.efficientdet import get_detector
 
 
 CONFIG = os.path.join('/data/chanwutk/projects/minivan/modules', 'b3d/b3d/configs/config_refined.json')

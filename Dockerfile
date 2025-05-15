@@ -35,3 +35,7 @@ ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
 ENV PYTHONPATH="/minivan/python:${PYTHONPATH}"
 
 RUN conda init bash
+
+COPY ./environment.yml /minivan/environment.yml
+RUN conda env update --file /minivan/environment.yml --prune --name base && \
+    conda clean --all --yes

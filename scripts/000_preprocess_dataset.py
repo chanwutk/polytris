@@ -1,3 +1,4 @@
+import argparse
 import os
 from xml.etree import ElementTree
 import multiprocessing as mp
@@ -7,26 +8,19 @@ import numpy as np
 import torch
 from matplotlib.path import Path
 
-VIDEOS = '/data/chanwutk/projects/minivan/videos'
-VIDEOS_CROP = '/data/chanwutk/projects/minivan/videos_crop'
-MASK_FILE = '/data/chanwutk/projects/minivan/masks.xml'
 
-WIDTH = 1152
-HEIGHT = 768
+DATASETS_RAW_DIR = '/minivan-data/video-datasets-raw'
+DATASETS_DIR = '/minivan-data/video-datasets'
+
 
 def parse_args():
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Example masking script')
-    parser.add_argument('-v', '--videos', required=False,
-                        default=VIDEOS,
-                        help='Video directory')
+    parser = argparse.ArgumentParser(description='Preprocess video dataset')
+    parser.add_argument('-i', '--input', required=False,
+                        default=DATASETS_RAW_DIR,
+                        help='Video Dataset directory')
     parser.add_argument('-o', '--output', required=False,
-                        default=VIDEOS_CROP,
-                        help='Output directory')
-    parser.add_argument('-m', '--mask', required=False,
-                        default=MASK_FILE,
-                        help='Specification of the mask')
+                        default=DATASETS_DIR,
+                        help='Processed Dataset directory')
     parser.add_argument('-b', '--batch_size', required=False,
                         default=256,
                         type=int,
@@ -35,10 +29,16 @@ def parse_args():
                         default=2048,
                         type=int,
                         help='Chunk size')
+    parser.add_argument('-d', '--datasets', required=False,
+                        default='b3d',
+                        help='Dataset name')
     return parser.parse_args()
 
 
 def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_size):
+    WIDTH = 1152
+    HEIGHT = 768
+
     root = ElementTree.parse(mask).getroot()
     img = root.find(f'.//image[@name="{file.replace(".mp4", ".jpg")}"]')
     assert img is not None
@@ -59,10 +59,8 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_siz
     if iwidth > iheight:
         oheight, owidth = owidth, oheight
 
-    writer: None | cv2.VideoWriter = None
-
-    if not os.path.exists(os.path.join(outputdir, file)):
-        os.makedirs(os.path.join(outputdir, file))
+    out_filename = os.path.join(outputdir, file)
+    writer = cv2.VideoWriter(out_filename, cv2.VideoWriter.fourcc(*'mp4v'), fps, (owidth, oheight))
 
     domain = img.find('.//polygon[@label="domain"]')
     assert isinstance(domain, ElementTree.Element)
@@ -79,7 +77,6 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_siz
     bitmask = torch.from_numpy(bitmap).to(f'cuda:{gpuIdx}').to(torch.bool)
 
     fidx = 0
-    written_idx = 0
     done = False
     while cap.isOpened() and not done:
         frames = []
@@ -106,25 +103,17 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_siz
 
         print('write', fidx)
         for frame in frames:
-            if written_idx % chunk_size == 0:
-                if writer is not None:
-                    writer.release()
-                out_filename = os.path.join(outputdir, file, f'{file.replace('.mp4', '')}_{written_idx // chunk_size}.mp4')
-                writer = cv2.VideoWriter(out_filename, cv2.VideoWriter.fourcc(*'mp4v'), fps, (owidth, oheight))
-            assert writer is not None
             writer.write(np.ascontiguousarray(frame))
-            written_idx += 1
         print('write done', fidx)
 
     cap.release()
-    assert writer is not None
     writer.release()
 
 
-def main(args):
-    videodir = args.videos
-    outputdir = args.output
-    mask = args.mask
+def process_b3d(args: argparse.Namespace):
+    videodir = os.path.join(args.input, 'b3d')
+    outputdir = os.path.join(args.output, 'b3d')
+    mask = os.path.join(args.input, 'b3d', 'masks.xml')
 
     root = ElementTree.parse(mask).getroot()
     assert root is not None
@@ -155,6 +144,15 @@ def main(args):
     for process in processes:
         process.join()
         process.terminate()
+
+
+def main(args):
+    datasets = args.datasets
+
+    if datasets == 'b3d':
+        process_b3d(args)
+    else:
+        raise ValueError(f'Unknown dataset: {datasets}')
 
 
 if __name__ == '__main__':
