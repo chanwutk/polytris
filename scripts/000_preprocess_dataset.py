@@ -10,7 +10,7 @@ from matplotlib.path import Path
 
 
 DATASETS_RAW_DIR = '/minivan-data/video-datasets-raw'
-DATASETS_DIR = '/minivan-data/video-datasets'
+DATASETS_DIR = '/minivan-data/video-datasets-low'
 
 
 def parse_args():
@@ -32,10 +32,11 @@ def parse_args():
     parser.add_argument('-d', '--datasets', required=False,
                         default='b3d',
                         help='Dataset name')
+    parser.add_argument('--isr', default=1, type=int)
     return parser.parse_args()
 
 
-def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_size):
+def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_size, isr):
     WIDTH = 1152
     HEIGHT = 768
 
@@ -54,13 +55,8 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_siz
     video_path = os.path.join(videodir, file)
     cap = cv2.VideoCapture(video_path)
     iwidth, iheight = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    fps = int(cap.get(cv2.CAP_PROP_FPS)) // isr
     owidth, oheight = WIDTH, HEIGHT
-    if iwidth > iheight:
-        oheight, owidth = owidth, oheight
-
-    out_filename = os.path.join(outputdir, file)
-    writer = cv2.VideoWriter(out_filename, cv2.VideoWriter.fourcc(*'mp4v'), fps, (owidth, oheight))
 
     domain = img.find('.//polygon[@label="domain"]')
     assert isinstance(domain, ElementTree.Element)
@@ -76,6 +72,13 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_siz
     bitmap = bitmap[:, top:bottom, left:right, :]
     bitmask = torch.from_numpy(bitmap).to(f'cuda:{gpuIdx}').to(torch.bool)
 
+    iheight, iwidth = bitmap.shape[1:3]
+    if iwidth < iheight:
+        oheight, owidth = owidth, oheight
+
+    out_filename = os.path.join(outputdir, file)
+    writer = cv2.VideoWriter(out_filename, cv2.VideoWriter.fourcc(*'mp4v'), fps, (owidth, oheight))
+
     fidx = 0
     done = False
     while cap.isOpened() and not done:
@@ -87,8 +90,9 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_siz
             if not ret:
                 done = True
                 break
-            frame = frame[top:bottom, left:right, :]
-            frames.append(frame)
+            if fidx % isr == 0:
+                frame = frame[top:bottom, left:right, :]
+                frames.append(frame)
 
         print('mask', fidx)
         frames_gpu = torch.from_numpy(np.array(frames)).to(f'cuda:{gpuIdx}')
@@ -114,6 +118,7 @@ def process_b3d(args: argparse.Namespace):
     videodir = os.path.join(args.input, 'b3d')
     outputdir = os.path.join(args.output, 'b3d')
     mask = os.path.join(args.input, 'b3d', 'masks.xml')
+    isr = args.isr
 
     root = ElementTree.parse(mask).getroot()
     assert root is not None
@@ -136,7 +141,7 @@ def process_b3d(args: argparse.Namespace):
             continue
 
         print(f'Processing {file}...')
-        process = mp.Process(target=process_video, args=(file, videodir, outputdir, mask, count % torch.cuda.device_count(), args.batch_size, args.chunk_size))
+        process = mp.Process(target=process_video, args=(file, videodir, outputdir, mask, count % torch.cuda.device_count(), args.batch_size, args.chunk_size, isr))
         process.start()
         processes.append(process)
         count += 1
