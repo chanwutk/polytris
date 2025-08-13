@@ -1,7 +1,7 @@
-FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:12.9.1-cudnn-devel-ubuntu24.04
 
 # Set the working directory
-WORKDIR /minivan
+WORKDIR /polyis
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -32,10 +32,10 @@ RUN apt-get -qq update -y && \
 ENV PATH="/usr/local/cuda/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
 
-ENV PYTHONPATH="/minivan/python:${PYTHONPATH}"
+ENV PYTHONPATH="/polyis/python:${PYTHONPATH}"
 
 RUN conda init bash
 
-COPY ./environment.yml /minivan/environment.yml
-RUN conda env update --file /minivan/environment.yml --prune --name base && \
+COPY ./environment.yml /polyis/environment.yml
+RUN conda env update --file /polyis/environment.yml --prune --name base && \
     conda clean --all --yes

@@ -1,15 +1,17 @@
 services:
-  minivan:
+  polyis:
     build: .
-    container_name: minivan
+    container_name: polyis
     tty: true
     environment:
       - TERM=xterm-256color
+      - POLYIS_DATA=/polyis-data
+      - POLYIS_CACHE=/polyis-cache
     volumes:
-      - .:/minivan
-      # Change /data/chawutk/minvan-dataset to your local path
-      - /data/chanwutk/data/minivan-data:/minivan-data
-      - /data/chanwutk/data/minivan-cache:/minivan-cache
+      - .:/polyis
+      # Change /data/chawutk/polyis-dataset to your local path
+      - /data/chanwutk/data/polyis-data:/polyis-data
+      - /data/chanwutk/data/polyis-cache:/polyis-cache
       - /home/eecs/chanwutk/.ssh:/root/.ssh
     deploy:
       resources:
