@@ -6,8 +6,8 @@ import shutil
 import cv2
 import torch
 
-import minivan.images
-from minivan.utils import get_mask
+import polyis.images
+from polyis.utils import get_mask
 
 
 PATCH_SIZE = 128
@@ -69,12 +69,12 @@ for i in range(0, video_length, sampling_sep):
     frame_masked = torch.from_numpy(frame_masked).to(DEVICE) * bmmask
     frame_masked = frame_masked.detach()
 
-    assert minivan.images.isHWC(frame_masked), frame_masked.shape
-    padded_frame = minivan.images.padHWC(frame_masked, PATCH_SIZE, PATCH_SIZE)
+    assert polyis.images.isHWC(frame_masked), frame_masked.shape
+    padded_frame = polyis.images.padHWC(frame_masked, PATCH_SIZE, PATCH_SIZE)
 
-    patched = minivan.images.splitHWC(padded_frame, PATCH_SIZE, PATCH_SIZE)
+    patched = polyis.images.splitHWC(padded_frame, PATCH_SIZE, PATCH_SIZE)
     patched = patched.cpu()
-    assert minivan.images.isGHWC(patched), patched.shape
+    assert polyis.images.isGHWC(patched), patched.shape
 
     _idx, dets = json.loads(detections[i])
     assert _idx == i, (_idx, i)

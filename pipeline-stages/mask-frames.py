@@ -13,7 +13,7 @@ from matplotlib.path import Path
 import numpy as np
 import torch
 
-import minivan.images
+import polyis.images
 
 
 CONFIG = './modules/b3d/configs/config_refined.json'
@@ -88,13 +88,13 @@ def process(gpuIdx: int, file: str, mask, logger_queue):
 
         # mask_frame(frame, mask)
         frame = torch.from_numpy(frame).to(f'cuda:{gpuIdx}')[mtl[0]:mbr[0], mtl[1]:mbr[1], :] * bitmask
-        assert minivan.images.isHWC(frame), frame.shape
+        assert polyis.images.isHWC(frame), frame.shape
 
         assert (height, width) == frame.shape[:2], (height, width, frame.shape[:2])
         height, width = frame.shape[:2]
 
         # pad so that the width and height are multiples of CHUNK_SIZE
-        # frame = minivan.images.padHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
+        # frame = polyis.images.padHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
 
         frame = frame.detach().cpu().numpy() #.transpose((1, 2, 0))
         frame = frame.astype(np.uint8)
@@ -151,12 +151,12 @@ def main():
 
         #     # mask_frame(frame, mask)
         #     frame = torch.from_numpy(frame).to('cuda:1') * bitmask
-        #     assert minivan.images.isHWC(frame), frame.shape
+        #     assert polyis.images.isHWC(frame), frame.shape
 
         #     height, width = frame.shape[:2]
 
         #     # pad so that the width and height are multiples of CHUNK_SIZE
-        #     frame = minivan.images.padHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
+        #     frame = polyis.images.padHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
 
         #     frame = frame.detach().cpu().numpy()#.transpose((1, 2, 0))
         #     frame = frame.astype(np.uint8)

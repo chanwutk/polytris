@@ -5,9 +5,9 @@ import shutil
 import sys
 import io
 
-sys.path.append('/data/chanwutk/projects/minivan/modules/darknet')
+sys.path.append('/data/chanwutk/projects/polyis/modules/darknet')
 cwd = os.getcwd()
-os.chdir('/minivan/modules/darknet')
+os.chdir('/polyis/modules/darknet')
 import darknet
 os.chdir(cwd)
 

@@ -9,7 +9,7 @@ from torchvision import datasets, transforms
 from torchvision.models.efficientnet import efficientnet_v2_s
 from torch.optim import Adam  # type: ignore
 
-from minivan.proxy import ClassifyRelevance
+from polyis.proxy import ClassifyRelevance
 
 from tqdm import tqdm
 

@@ -1,6 +1,6 @@
 import json
 
-from minivan.dtypes import InPipe, OutPipe
+from polyis.dtypes import InPipe, OutPipe
 
 
 CHUNK_SIZE = 128

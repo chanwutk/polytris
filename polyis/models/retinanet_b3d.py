@@ -4,8 +4,8 @@ import sys
 
 import numpy as np
 
-sys.path.append('/minivan/modules/detectron2')
-sys.path.append('/minivan/modules/b3d')
+sys.path.append('/polyis/modules/detectron2')
+sys.path.append('/polyis/modules/b3d')
 
 from b3d.external import nms
 from b3d.utils import parse_outputs
@@ -13,7 +13,7 @@ from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 
 
-MODULES = '/minivan/modules'
+MODULES = '/polyis/modules'
 CONFIG = os.path.join(MODULES, 'b3d/b3d/configs/config_refined.json')
 DETECTRON_CONFIG_DIR = os.path.join(MODULES, 'detectron2/configs')
 

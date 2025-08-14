@@ -6,9 +6,9 @@ import shutil
 import cv2
 import torch
 
-import minivan.images
+import polyis.images
 
-CACHE_DIR = '/minivan-cache'
+CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [32, 64, 128]
 
 
@@ -83,11 +83,11 @@ def main(args):
 
                         # todo: create dataset for each patch size
                         padded_frame = torch.from_numpy(frame).to('cuda:0')
-                        assert minivan.images.isHWC(padded_frame), padded_frame.shape
+                        assert polyis.images.isHWC(padded_frame), padded_frame.shape
 
-                        patched = minivan.images.splitHWC(padded_frame, tile_size, tile_size)
+                        patched = polyis.images.splitHWC(padded_frame, tile_size, tile_size)
                         patched = patched.cpu()
-                        assert minivan.images.isGHWC(patched), patched.shape
+                        assert polyis.images.isGHWC(patched), patched.shape
 
                         for y in range(patched.shape[0]):
                             for x in range(patched.shape[1]):

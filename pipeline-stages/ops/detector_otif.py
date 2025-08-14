@@ -9,15 +9,15 @@ MODULES_PATH = pathlib.Path().absolute().parent / 'modules'
 sys.path.append(str(MODULES_PATH))
 sys.path.append(str(MODULES_PATH / 'b3d'))
 
-sys.path.append('/data/chanwutk/projects/minivan/modules/darknet')
+sys.path.append('/data/chanwutk/projects/polyis/modules/darknet')
 cwd = os.getcwd()
-os.chdir('/data/chanwutk/projects/minivan/modules/darknet')
+os.chdir('/data/chanwutk/projects/polyis/modules/darknet')
 import darknet
 os.chdir(cwd)
 
 import numpy as np
 
-from minivan.dtypes import DetArray, InPipe, NPImage, OutPipe
+from polyis.dtypes import DetArray, InPipe, NPImage, OutPipe
 
 
 data_root = '/data/chanwutk/data/otif-dataset'

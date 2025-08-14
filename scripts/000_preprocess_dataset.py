@@ -9,8 +9,8 @@ import torch
 from matplotlib.path import Path
 
 
-DATASETS_RAW_DIR = '/minivan-data/video-datasets-raw'
-DATASETS_DIR = '/minivan-data/video-datasets-low'
+DATASETS_RAW_DIR = '/polyis-data/video-datasets-raw'
+DATASETS_DIR = '/polyis-data/video-datasets-low'
 
 
 def parse_args():

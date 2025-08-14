@@ -2,7 +2,7 @@ from queue import Queue
 
 import numpy as np
 
-from minivan.dtypes import NPImage, Array, D2, IdPolyominoOffset
+from polyis.dtypes import NPImage, Array, D2, IdPolyominoOffset
 
 
 def filter_frames(

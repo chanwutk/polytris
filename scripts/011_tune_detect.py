@@ -4,9 +4,9 @@ import os
 
 import cv2
 
-import minivan.models.retinanet_b3d
+import polyis.models.retinanet_b3d
 
-CACHE_DIR = '/minivan-cache'
+CACHE_DIR = '/polyis-cache'
 
 
 def parse_args():
@@ -21,7 +21,7 @@ def parse_args():
 
 
 def detect_retina(dataset_dir: str):
-    detector = minivan.models.retinanet_b3d.get_detector(device='cuda:0')
+    detector = polyis.models.retinanet_b3d.get_detector(device='cuda:0')
 
     for video in os.listdir(dataset_dir):
         video_path = os.path.join(dataset_dir, video)
@@ -52,7 +52,7 @@ def detect_retina(dataset_dir: str):
                         break
 
                     # Detect objects in the frame
-                    outputs = minivan.models.retinanet_b3d.detect(frame, detector)
+                    outputs = polyis.models.retinanet_b3d.detect(frame, detector)
 
                     f.write(json.dumps([idx, outputs[:, :4].tolist()]) + '\n')
 

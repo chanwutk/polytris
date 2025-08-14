@@ -42,7 +42,7 @@ from b3d.external.nms import nms
 from b3d.external.sort import Sort
 from b3d.utils import parse_outputs, regionize_image
 
-# from minivan.utils import get_mask
+# from polyis.utils import get_mask
 from boxmot.tracker_zoo import get_tracker_config, create_tracker
 from boxmot.trackers.deepocsort.deepocsort import DeepOcSort
 from boxmot.utils import WEIGHTS

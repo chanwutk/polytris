@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 
 from b3d.external.sort import Sort, KalmanBoxTracker, iou_batch, associate_detections_to_trackers
-from minivan.dtypes import S5, DetArray, IntDetArray, NPImage, Array, IdPolyominoOffset, Pipe, InPipe, OutPipe, is_det_array
+from polyis.dtypes import S5, DetArray, IntDetArray, NPImage, Array, IdPolyominoOffset, Pipe, InPipe, OutPipe, is_det_array
 
 
 class TrackPointAccuracyScore(NamedTuple):

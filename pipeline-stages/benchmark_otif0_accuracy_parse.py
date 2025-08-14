@@ -3,7 +3,7 @@ import json
 import shutil
 
 OTIF_RES_DIR = '/data/chanwutk/projects/otif/pipeline2/outputs/caldot1/ours-simple'
-OTIF_OUT_DIR = '/data/chanwutk/projects/minivan/det_otif'
+OTIF_OUT_DIR = '/data/chanwutk/projects/polyis/det_otif'
 
 if os.path.exists(OTIF_OUT_DIR):
     shutil.rmtree(OTIF_OUT_DIR)

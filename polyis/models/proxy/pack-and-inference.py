@@ -22,7 +22,7 @@ from b3d.utils import parse_outputs
 from b3d.external.nms import nms
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
-import minivan.images
+import polyis.images
 
 
 
@@ -263,13 +263,13 @@ def main():
 
             # mask_frame(frame, mask)
             frame = torch.from_numpy(frame).to('cuda:1') * bitmask
-            assert minivan.images.isHWC(frame), frame.shape
+            assert polyis.images.isHWC(frame), frame.shape
 
             height, width = frame.shape[:2]
 
             # pad so that the width and height are multiples of CHUNK_SIZE
-            frame = minivan.images.padHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
-            patches = minivan.images.splitHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
+            frame = polyis.images.padHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
+            patches = polyis.images.splitHWC(frame, CHUNK_SIZE, CHUNK_SIZE)
 
 
             frame = frame.detach().cpu().numpy()#.transpose((1, 2, 0))

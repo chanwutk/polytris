@@ -35,7 +35,7 @@ from b3d.external.nms import nms
 from b3d.external.sort import Sort
 from b3d.utils import parse_outputs, regionize_image
 
-# from minivan.utils import get_mask
+# from polyis.utils import get_mask
 
 
 CONFIG = './modules/b3d/configs/config_refined.json'

@@ -7,8 +7,8 @@ import shutil
 import cv2
 import torch
 
-import minivan.images
-from minivan.utils import get_mask
+import polyis.images
+from polyis.utils import get_mask
 
 
 # PATCH_SIZE = 128
@@ -19,7 +19,7 @@ from minivan.utils import get_mask
 def parseargs():
     parser = argparse.ArgumentParser(description='Prepare data for training')
     parser.add_argument('--videos', type=str, default='/data/chanwutk/data/otif-dataset/dataset/caldot1/test/video/', help='Input video file / directory')
-    parser.add_argument('--det', type=str, default='/data/chanwutk/projects/minivan/det', help='Input detection file')
+    parser.add_argument('--det', type=str, default='/data/chanwutk/projects/polyis/det', help='Input detection file')
     parser.add_argument('--patch-size', type=int, default=32, help='Patch size')
     parser.add_argument('--output', type=str, default='train-proxy-data-1', help='Output directory')
     return parser.parse_args()
@@ -56,12 +56,12 @@ def main():
             frame_masked = torch.from_numpy(frame).to('cuda:0')
             frame_masked = frame_masked.detach()
 
-            assert minivan.images.isHWC(frame_masked), frame_masked.shape
-            padded_frame = minivan.images.padHWC(frame_masked, patch_size, patch_size)
+            assert polyis.images.isHWC(frame_masked), frame_masked.shape
+            padded_frame = polyis.images.padHWC(frame_masked, patch_size, patch_size)
 
-            patched = minivan.images.splitHWC(padded_frame, patch_size, patch_size)
+            patched = polyis.images.splitHWC(padded_frame, patch_size, patch_size)
             patched = patched.cpu()
-            assert minivan.images.isGHWC(patched), patched.shape
+            assert polyis.images.isGHWC(patched), patched.shape
 
             _idx, dets = json.loads(detections[i])
             assert _idx == i, (_idx, i)
@@ -84,7 +84,7 @@ def main():
             frame_masked = frame_masked.cpu().numpy()
             for det in dets:
                 cv2.rectangle(frame_masked, pt1=(int(det[0]), int(det[1])), pt2=(int(det[2]), int(det[3])), color=(255, 0, 0), thickness=2)
-            cv2.imwrite(f'/data/chanwutk/projects/minivan/test_frames/frame_{os.path.basename(videofile)}_{i}.jpg', frame_masked)
+            cv2.imwrite(f'/data/chanwutk/projects/polyis/test_frames/frame_{os.path.basename(videofile)}_{i}.jpg', frame_masked)
         
 
 def overlapi(interval1: tuple[int, int], interval2: tuple[int, int]):

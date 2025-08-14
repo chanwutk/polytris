@@ -2,7 +2,7 @@ import json
 
 import numpy as np
 
-from minivan.dtypes import DetArray, InPipe, Array, S4, OutPipe
+from polyis.dtypes import DetArray, InPipe, Array, S4, OutPipe
 
 
 def interpolate_trajectory(trajectory: list[tuple[int, Array[S4, np.floating]]], nxt: tuple[int, Array[S4, np.floating]]):

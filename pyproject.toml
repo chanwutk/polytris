@@ -9,7 +9,7 @@ extraPaths = [
 ]
 
 [project]
-name = "minivan"
+name = "polyis"
 version = "0.1.0"
 description = ""
 authors = [ { name = "Chanwut (Mick) Kittivorawong", email = "chanwutk@gmail.com" } ]

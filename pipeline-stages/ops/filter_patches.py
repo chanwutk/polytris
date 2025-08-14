@@ -5,7 +5,7 @@ import time
 import cv2
 import numpy as np
 
-from minivan.dtypes import NPImage, Array, D2, IdPolyominoOffset
+from polyis.dtypes import NPImage, Array, D2, IdPolyominoOffset
 
 
 CHUNK_SIZE = 128

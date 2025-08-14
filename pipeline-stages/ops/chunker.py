@@ -6,8 +6,8 @@ import numpy as np
 import numpy.typing as npt
 import torch
 
-import minivan.images
-from minivan.dtypes import InPipe, NPImage, Array, D2, IdPolyominoOffset, OutPipe, FArray
+import polyis.images
+from polyis.dtypes import InPipe, NPImage, Array, D2, IdPolyominoOffset, OutPipe, FArray
 
 
 # CHUNK_SIZE = 32
@@ -146,13 +146,13 @@ def chunk(
             continue
 
         frame = torch.from_numpy(frame).to('cuda:1')
-        assert minivan.images.isHWC(frame), frame.shape
+        assert polyis.images.isHWC(frame), frame.shape
 
         height, width = frame.shape[:2]
 
         # pad so that the width and height are multiples of CHUNK_SIZE
-        frame = minivan.images.padHWC(frame, chunk_size, chunk_size)
-        patches = minivan.images.splitHWC(frame, chunk_size, chunk_size)
+        frame = polyis.images.padHWC(frame, chunk_size, chunk_size)
+        patches = polyis.images.splitHWC(frame, chunk_size, chunk_size)
 
 
         frame = frame.detach().cpu().numpy()#.transpose((1, 2, 0))

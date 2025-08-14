@@ -11,8 +11,8 @@ DIFF_THRESHOLDS = [10, 20, 30]
 DIFF_SCALE = [1, 2, 4]
 
 
-DATASET_DIR = '/minivan-data/video-datasets-low'
-CACHE_DIR = '/minivan-cache'
+DATASET_DIR = '/polyis-data/video-datasets-low'
+CACHE_DIR = '/polyis-cache'
 
 
 def parse_args():

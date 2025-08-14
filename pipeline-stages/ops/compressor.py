@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-from minivan.dtypes import S2, InPipe, NPImage, Array, D2, IdPolyominoOffset, OutPipe
+from polyis.dtypes import S2, InPipe, NPImage, Array, D2, IdPolyominoOffset, OutPipe
 
 from .chunker import PolyominoInfo
 

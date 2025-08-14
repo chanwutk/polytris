@@ -166,7 +166,7 @@ def op(filename: str, isr: int = 1):
 
     chunkerThread = threading.Thread(
         target=ops.chunker.chunk,
-        args=(imgQueue, polQueue, os.path.join('/data/chanwutk/projects/minivan/det/', f'{filename}.jsonl'), 32, isr),
+        args=(imgQueue, polQueue, os.path.join('/data/chanwutk/projects/polyis/det/', f'{filename}.jsonl'), 32, isr),
         daemon=True,
     )
     chunkerThread.start()

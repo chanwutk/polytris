@@ -1,7 +1,7 @@
 import sys
 import os
 
-sys.path.append('/data/chanwutk/projects/minivan/modules/darknet')
+sys.path.append('/data/chanwutk/projects/polyis/modules/darknet')
 
 import json
 import numpy
@@ -12,7 +12,7 @@ import cv2
 import sys
 
 cwd = os.getcwd()
-os.chdir('/data/chanwutk/projects/minivan/modules/darknet')
+os.chdir('/data/chanwutk/projects/polyis/modules/darknet')
 import darknet
 os.chdir(cwd)
 
@@ -22,7 +22,7 @@ def parse_args():
     import argparse
     parser = argparse.ArgumentParser(description='Example detection and tracking script')
     parser.add_argument('-v', '--videos', required=True, help='Input video files / directory')
-    parser.add_argument('-o', '--output', default='/data/chanwutk/projects/minivan/det', help='Path to output detections')
+    parser.add_argument('-o', '--output', default='/data/chanwutk/projects/polyis/det', help='Path to output detections')
     return parser.parse_args()
 
 

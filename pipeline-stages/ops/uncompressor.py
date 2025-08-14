@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 import cv2
 
-from minivan.dtypes import S5, DetArray, InPipe, NPImage, Array, D2, IdPolyominoOffset, OutPipe, is_det_array, is_np_image
+from polyis.dtypes import S5, DetArray, InPipe, NPImage, Array, D2, IdPolyominoOffset, OutPipe, is_det_array, is_np_image
 from .compressor import PolyominoMapping
 
 # CHUNK_SIZE = 128
