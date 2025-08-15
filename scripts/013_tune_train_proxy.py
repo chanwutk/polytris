@@ -81,8 +81,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         model.train()
         for x_batch, y_batch in tqdm(train_loader, total=len(train_loader)): # iterate ove batches
             x_batch = x_batch.to(device) # move to gpu
-            y_batch = y_batch.unsqueeze(1).float() # convert target to same nn output shape
-            y_batch = y_batch.to(device) # move to gpu
+            y_batch = y_batch.to(device).unsqueeze(1).float() # convert target to same nn output shape
+            # y_batch = y_batch # move to gpu
 
             loss = train_step(model, loss_fn, optimizer, x_batch, y_batch)
 
@@ -98,11 +98,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             cumulative_loss = 0
             for x_batch, y_batch in test_loader:
                 x_batch = x_batch.to(device)
-                y_batch = y_batch.unsqueeze(1).float() # convert target to same nn output shape
-                y_batch = y_batch.to(device)
-
-                # model to eval mode
-                model.eval()
+                y_batch = y_batch.to(device).unsqueeze(1).float() # convert target to same nn output shape
+                # y_batch = y_batch.to(device)
 
                 yhat = model(x_batch)
                 val_loss = loss_fn(yhat,y_batch)
@@ -110,10 +107,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
                 val_losses.append(val_loss.item())
                 
-                ans = torch.sigmoid(yhat)
-                ans = ans > 0.5
-                misc = torch.sum(ans == y_batch)
-                print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
+                # ans = torch.sigmoid(yhat)
+                # ans = ans > 0.5
+                # misc = torch.sum(ans == y_batch)
+                # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
             epoch_test_losses.append(cumulative_loss)
             print('Epoch : {}, val loss : {}\n'.format(epoch+1,cumulative_loss))  

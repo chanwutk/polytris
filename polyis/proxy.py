@@ -2,7 +2,7 @@ import torch
 
 
 class ClassifyRelevance(torch.nn.Module):
-    def __init__(self, img_size: int, width=128):
+    def __init__(self, img_size: int, width=64):
         super().__init__()
         features = [3]
         while img_size > 1:
