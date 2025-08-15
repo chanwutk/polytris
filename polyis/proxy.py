@@ -2,9 +2,14 @@ import torch
 
 
 class ClassifyRelevance(torch.nn.Module):
-    def __init__(self, width=128):
+    def __init__(self, img_size: int, width=128):
         super().__init__()
-        features = [3, 32, 64, 64, 64, 64, 64, 64]
+        features = [3]
+        while img_size > 1:
+            if img_size % 2 != 0:
+                raise ValueError(f"img_size must be 2^x, got {img_size}")
+            features.append(width)
+            img_size //= 2
         inOutFeatures = zip(features[:-1], features[1:])
         sequential = []
         for inFeatures, outFeatures in inOutFeatures:
@@ -20,7 +25,7 @@ class ClassifyRelevance(torch.nn.Module):
         self.encoder = torch.nn.Sequential(*sequential)
 
         self.decoder = torch.nn.Sequential(
-            torch.nn.Linear(64, width),
+            torch.nn.Linear(width, width),
             torch.nn.ReLU(),
             torch.nn.Linear(width, width),
             torch.nn.Linear(width, 1),

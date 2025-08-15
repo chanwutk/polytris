@@ -15,7 +15,6 @@ from torch.optim import Adam
 
 from polyis.proxy import ClassifyRelevance
 
-import polyis.images
 
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [32, 64, 128]
@@ -45,15 +44,15 @@ def overlap(b1, b2):
 
 def train_step(
     model: "torch.nn.Module",
-    loss_fn: torch.nn.modules.loss._Loss,
-    optimizer,
-    inputs,
-    labels
+    loss_fn: "torch.nn.modules.loss._Loss",
+    optimizer: "torch.optim.Optimizer",
+    inputs: "torch.Tensor",
+    labels: "torch.Tensor"
 ):
     optimizer.zero_grad()
 
-    outputs = model(inputs)
-    loss = loss_fn(outputs, labels)
+    outputs: "torch.Tensor" = model(inputs)
+    loss: "torch.Tensor" = loss_fn(outputs, labels)
 
     loss.backward()
     optimizer.step()
@@ -61,20 +60,29 @@ def train_step(
     return loss.item()
 
 
-def train(model: "torch.nn.Module", loss_fn, optimizer, train_loader, test_loader, n_epochs):
+def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
+    optimizer: "torch.optim.Optimizer", train_loader: "torch.utils.data.DataLoader",
+    test_loader: "torch.utils.data.DataLoader", n_epochs: int, device: str = 'cuda'):
     losses = []
     val_losses = []
+
+    early_stopping_tolerance = 3
+    early_stopping_threshold = 0.001
 
     epoch_train_losses = []
     epoch_test_losses = []
 
+    best_model_wts: "dict[str, torch.Tensor] | None" = None
+    best_loss = float('inf')
+    early_stopping_counter = 0
+
     for epoch in range(n_epochs):
         epoch_loss = 0
         model.train()
-        for x_batch, y_batch in tqdm(train_loader, total=len(train_loader)): #iterate ove batches
-            x_batch = x_batch.to(device) #move to gpu
-            y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
-            y_batch = y_batch.to(device) #move to gpu
+        for x_batch, y_batch in tqdm(train_loader, total=len(train_loader)): # iterate ove batches
+            x_batch = x_batch.to(device) # move to gpu
+            y_batch = y_batch.unsqueeze(1).float() # convert target to same nn output shape
+            y_batch = y_batch.to(device) # move to gpu
 
             loss = train_step(model, loss_fn, optimizer, x_batch, y_batch)
 
@@ -82,111 +90,89 @@ def train(model: "torch.nn.Module", loss_fn, optimizer, train_loader, test_loade
             losses.append(loss)
         
         epoch_train_losses.append(epoch_loss)
-        fpp.write('\nEpoch : {}, train loss : {}\n'.format(epoch+1,epoch_loss))
+        print('\nEpoch : {}, train loss : {}\n'.format(epoch+1,epoch_loss))
 
-        #validation doesnt requires gradient
+        # validation doesnt requires gradient
         with torch.no_grad():
             model.eval()
             cumulative_loss = 0
             for x_batch, y_batch in test_loader:
-                # print(y_batch)
                 x_batch = x_batch.to(device)
-                y_batch = y_batch.unsqueeze(1).float() #convert target to same nn output shape
+                y_batch = y_batch.unsqueeze(1).float() # convert target to same nn output shape
                 y_batch = y_batch.to(device)
 
-                #model to eval mode
+                # model to eval mode
                 model.eval()
 
                 yhat = model(x_batch)
                 val_loss = loss_fn(yhat,y_batch)
-                cumulative_loss += loss / len(test_loader)
+                cumulative_loss += val_loss / len(test_loader)
 
                 val_losses.append(val_loss.item())
                 
                 ans = torch.sigmoid(yhat)
-                # ans = yhat
                 ans = ans > 0.5
                 misc = torch.sum(ans == y_batch)
-                fpp.write(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
+                print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
             epoch_test_losses.append(cumulative_loss)
-            fpp.write('Epoch : {}, val loss : {}\n'.format(epoch+1,cumulative_loss))  
-            fpp.flush()
+            print('Epoch : {}, val loss : {}\n'.format(epoch+1,cumulative_loss))  
             
-            best_loss = min(epoch_test_losses)
-            
-            #save best model
-            if cumulative_loss <= best_loss:
+            # save best model
+            if cumulative_loss < best_loss:
                 best_model_wts = model.state_dict()
-            
-            # #early stopping
-            # early_stopping_counter = 0
-            # if cum_loss > best_loss:
-            #   early_stopping_counter +=1
+                best_loss = cumulative_loss
+                early_stopping_counter = 0
+            else:
+                early_stopping_counter += 1
 
-            # if (early_stopping_counter == early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
-            #   print("/nTerminating: early stopping")
-            #   break #terminate training
+            if (early_stopping_counter >= early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
+                print("/nTerminating: early stopping")
+                break # terminate training
     
     return best_model_wts, epoch_test_losses, epoch_train_losses, losses, val_losses
 
 
-def train_cnn(width: int):
-    start = time.time()
+def train_cnn(width: int, proxy_data_path: str):
+    print(f'Training Small CNN (width={width})\n')
+    model = ClassifyRelevance(width).to('cuda')
+    loss_fn = torch.nn.BCEWithLogitsLoss()
+    optimizer = Adam(model.parameters(), lr=0.001)
 
-    try:
-        fpp.write(f'Training Small CNN (width={width})\n')
-        model = ClassifyRelevance(width).to(device)
-        loss_fn = torch.nn.BCEWithLogitsLoss()
-        optimizer = Adam(model.parameters(), lr=0.001)
-        running_loss = 0.0
+    train_data = datasets.ImageFolder(proxy_data_path, transform=transforms.ToTensor())
 
+    generator = torch.Generator().manual_seed(42)
+    split = int(0.8 * len(train_data))
+    train_data, test_data = torch.utils.data.random_split(
+        dataset=train_data,
+        lengths=[split, len(train_data) - split],
+        generator=generator
+    )
 
-        train_data = datasets.ImageFolder('./train-proxy-data', transform=transforms.ToTensor())
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=512, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=512, shuffle=True)
 
-        generator = torch.Generator().manual_seed(42)
-        split = int(0.8 * len(train_data))
-        train_data, test_data = torch.utils.data.random_split(
-            dataset=train_data,
-            lengths=[split, len(train_data) - split],
-            generator=generator
-        )
+    # print("Training FC")
+    best_model_wts, test_losses, train_losses, losses, val_losses = train(model, loss_fn, optimizer, train_loader, test_loader, n_epochs=20, device='cuda')
 
-        train_loader = torch.utils.data.DataLoader(train_data, batch_size=512, shuffle=True)
-        test_loader = torch.utils.data.DataLoader(test_data, batch_size=512, shuffle=True)
+    assert best_model_wts is not None
 
-        losses = []
-        val_losses = []
+    # Load best model
+    model.load_state_dict(best_model_wts)
 
-        epoch_train_losses = []
-        epoch_test_losses = []
+    print(str(test_losses) + '\n')
+    print(str(train_losses) + '\n')
 
-        n_epochs = 10
-        early_stopping_tolerance = 3
-        early_stopping_threshold = 0.03
+    import json
 
-        # print("Training FC")
-        best_model_wts, epoch_test_losses, epoch_train_losses, losses, val_losses = train(model, loss_fn, optimizer, train_loader, test_loader, n_epochs=20)
-        model.load_state_dict(best_model_wts)
+    with open(os.path.join(proxy_data_path, f'cnn{width}_model.pth'), 'wb') as f:
+        torch.save(model, f)
 
-        #load best model
-        model.load_state_dict(best_model_wts)
+    with open(os.path.join(proxy_data_path, f'cnn{width}_test_losses.json'), 'w') as f:
+        f.write(json.dumps(test_losses))
 
-        fpp.write(str(epoch_test_losses) + '\n')
-        fpp.write(str(epoch_train_losses) + '\n')
-
-        import json
-
-        with open(f'cnn{width}_model.pth', 'wb') as f:
-            torch.save(model, f)
-
-        with open(f'cnn{width}_epoch_test_losses.json', 'w') as f:
-            f.write(json.dumps(epoch_test_losses))
-
-        with open(f'cnn{width}_epoch_train_losses.json', 'w') as f:
-            f.write(json.dumps(epoch_train_losses))
-    finally:
-        fpp.write(f'Time cnn{width}:{time.time() - start}')
+    with open(os.path.join(proxy_data_path, f'cnn{width}_train_losses.json'), 'w') as f:
+        f.write(json.dumps(train_losses))
 
 
 def main(args):
@@ -201,69 +187,8 @@ def main(args):
 
         for tile_size in TILE_SIZES:
             proxy_data_path = os.path.join(video_path, 'training', f'proxy_{tile_size}')
-            if os.path.exists(proxy_data_path):
-                # remove the existing proxy data
-                shutil.rmtree(proxy_data_path)
-            os.makedirs(proxy_data_path, exist_ok=True)
-            if not os.path.exists(os.path.join(proxy_data_path, 'pos')):
-                os.makedirs(os.path.join(proxy_data_path, 'pos'), exist_ok=True)
-            if not os.path.exists(os.path.join(proxy_data_path, 'neg')):
-                os.makedirs(os.path.join(proxy_data_path, 'neg'), exist_ok=True)
-        
 
-        for snippet in os.listdir(video_path):
-            snippet_path = os.path.join(video_path, snippet)
-            if not os.path.isfile(snippet_path) or not snippet.startswith('d_') or not snippet.endswith('.mp4'):
-                continue
-
-            # Process the snippet
-            print(f"Processing {snippet_path}")
-
-            meta = snippet.split('.')[0].split('_')
-            start = int(meta[2])
-            end = int(meta[3])
-
-            with open(snippet_path[:-len('.mp4')] + '.jsonl', 'r') as f:
-                # Read the video
-                cap = cv2.VideoCapture(snippet_path)
-                idx = start
-                while cap.isOpened():
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
-
-                    _idx, dets = json.loads(f.readline())
-                    assert idx == _idx, (idx, _idx)
-
-                    for tile_size in [32, 64, 128]:
-                        proxy_data_path = os.path.join(video_path, 'training', f'proxy_{tile_size}')
-
-                        # todo: create dataset for each patch size
-                        padded_frame = torch.from_numpy(frame).to('cuda:0')
-                        assert polyis.images.isHWC(padded_frame), padded_frame.shape
-
-                        patched = polyis.images.splitHWC(padded_frame, tile_size, tile_size)
-                        patched = patched.cpu()
-                        assert polyis.images.isGHWC(patched), patched.shape
-
-                        for y in range(patched.shape[0]):
-                            for x in range(patched.shape[1]):
-                                # check if the patch contains any detections
-                                fromx, fromy = x * tile_size, y * tile_size
-                                tox, toy = fromx + tile_size, fromy + tile_size
-
-                                filename = f'{idx}.{y}.{x}.jpg'
-                                patch = patched[y, x].contiguous().numpy()
-
-                                if any(overlap(det, (fromx, fromy, tox, toy)) for det in dets):
-                                    cv2.imwrite(os.path.join(proxy_data_path, 'pos', filename), patch)
-                                else:
-                                    # For visualizing the negative patches
-                                    # frame[fromy:toy, fromx:tox] //= 2
-                                    if not patched[y, x].any():  # do not save if the patch is completely black
-                                        continue
-                                    cv2.imwrite(os.path.join(proxy_data_path, 'neg', filename), patch)
-                    idx += 1
+            train_cnn(tile_size, proxy_data_path)
 
 
 if __name__ == '__main__':

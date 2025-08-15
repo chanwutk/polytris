@@ -5,6 +5,7 @@ import shutil
 
 import cv2
 import torch
+import tqdm
 
 import polyis.images
 
@@ -54,17 +55,17 @@ def main(args):
                 os.makedirs(os.path.join(proxy_data_path, 'neg'), exist_ok=True)
         
 
-        for snippet in os.listdir(video_path):
+        for snippet in tqdm.tqdm(os.listdir(video_path)):
             snippet_path = os.path.join(video_path, snippet)
             if not os.path.isfile(snippet_path) or not snippet.startswith('d_') or not snippet.endswith('.mp4'):
                 continue
 
-            # Process the snippet
-            print(f"Processing {snippet_path}")
+            # # Process the snippet
+            # print(f"Processing {snippet_path}")
 
             meta = snippet.split('.')[0].split('_')
             start = int(meta[2])
-            end = int(meta[3])
+            # end = int(meta[3])
 
             with open(snippet_path[:-len('.mp4')] + '.jsonl', 'r') as f:
                 # Read the video
@@ -75,7 +76,7 @@ def main(args):
                     if not ret:
                         break
 
-                    _idx, dets = json.loads(f.readline())
+                    _idx, dets, *_ = json.loads(f.readline())
                     assert idx == _idx, (idx, _idx)
 
                     for tile_size in [32, 64, 128]:
