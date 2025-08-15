@@ -1,12 +1,18 @@
 import argparse
 import json
 import os
+import time
 
 import cv2
+import tqdm
 
 import polyis.models.retinanet_b3d
 
 CACHE_DIR = '/polyis-cache'
+
+
+def format_time(**kwargs):
+    return [{ 'op': op, 'time': time } for op, time in kwargs.items()]
 
 
 def parse_args():
@@ -30,31 +36,35 @@ def detect_retina(dataset_dir: str):
 
         print(f"Processing video {video_path}")
 
-        for snippet in os.listdir(video_path):
+        for snippet in tqdm.tqdm(os.listdir(video_path)):
             snippet_path = os.path.join(video_path, snippet)
             if not os.path.isfile(snippet_path) or not snippet.startswith('d_') or not snippet.endswith('.mp4'):
                 continue
 
-            # Process the snippet
-            print(f"Processing {snippet_path}")
 
             meta = snippet.split('.')[0].split('_')
             start = int(meta[2])
-            end = int(meta[3])
 
             with open(snippet_path[:-len('.mp4')] + '.jsonl', 'w') as f:
                 # Read the video
                 cap = cv2.VideoCapture(snippet_path)
                 idx = start
                 while cap.isOpened():
+                    start_time = time.time_ns()
                     ret, frame = cap.read()
+                    end_time = time.time_ns()
+                    read_time = end_time - start_time
+
                     if not ret:
                         break
 
                     # Detect objects in the frame
+                    start_time = time.time_ns()
                     outputs = polyis.models.retinanet_b3d.detect(frame, detector)
+                    end_time = time.time_ns()
+                    detect_time = end_time - start_time
 
-                    f.write(json.dumps([idx, outputs[:, :4].tolist()]) + '\n')
+                    f.write(json.dumps([idx, outputs[:, :4].tolist(), format_time(read=read_time, detect=detect_time)]) + '\n')
 
                     idx += 1
 

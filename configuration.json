@@ -1,0 +1,23 @@
+[
+    {
+        "name": "b3d",
+        "preprocess_dataset": {
+            "input": "/polyis-data/video-datasets-raw",
+            "output": "/polyis-data/video-datasets-low",
+            "batch_size": 256,
+            "datasets": "b3d",
+            "isr": 2
+        },
+        "tune_split_data": {
+            "num_snippets": 50,
+            "tracking_selectivity_multiplier": 4,
+            "selectivity": 0.05,
+            "datasets": "b3d",
+            "datasets_dir": "/polyis-data/video-datasets-low"
+        },
+        "tune_detect": {
+            "detector": "retina",
+            "dataset": "b3d"
+        }
+    }
+]
