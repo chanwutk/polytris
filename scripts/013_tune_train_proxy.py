@@ -69,8 +69,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     early_stopping_tolerance = 3
     early_stopping_threshold = 0.001
 
-    epoch_train_losses = []
-    epoch_test_losses = []
+    epoch_train_losses: list[float] = []
+    epoch_test_losses: list[float] = []
 
     best_model_wts: "dict[str, torch.Tensor] | None" = None
     best_loss = float('inf')
@@ -89,7 +89,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             epoch_loss += loss / len(train_loader)
             losses.append(loss)
         
-        epoch_train_losses.append(epoch_loss)
+        epoch_train_losses.append(float(epoch_loss))
         print('\nEpoch : {}, train loss : {}\n'.format(epoch+1,epoch_loss))
 
         # validation doesnt requires gradient
@@ -112,8 +112,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 # misc = torch.sum(ans == y_batch)
                 # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
-            epoch_test_losses.append(cumulative_loss)
-            print('Epoch : {}, val loss : {}\n'.format(epoch+1,cumulative_loss))  
+            epoch_test_losses.append(float(cumulative_loss))
+            print('Epoch : {}, val loss : {}\n'.format(epoch + 1, cumulative_loss))  
             
             # save best model
             if cumulative_loss < best_loss:
@@ -150,7 +150,8 @@ def train_cnn(width: int, proxy_data_path: str):
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=512, shuffle=True)
 
     # print("Training FC")
-    best_model_wts, test_losses, train_losses, losses, val_losses = train(model, loss_fn, optimizer, train_loader, test_loader, n_epochs=20, device='cuda')
+    best_model_wts, test_losses, train_losses, losses, val_losses = train(
+        model, loss_fn, optimizer, train_loader, test_loader, n_epochs=10, device='cuda')
 
     assert best_model_wts is not None
 

@@ -37,12 +37,3 @@ class ClassifyRelevance(torch.nn.Module):
         x = self.decoder(x)
         # return torch.sigmoid(x)
         return x
-
-
-def train():
-    model = ClassifyRelevance()
-    model.train()
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    criterion = torch.nn.BCELoss()
-
