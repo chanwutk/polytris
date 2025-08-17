@@ -1,0 +1,32 @@
+#! /bin/python3
+
+import argparse
+import os
+import sys
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Run python script in polyis container')
+    parser.add_argument('args', nargs='*', help='Arguments to pass to the python script')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    
+    cmd = ['docker', 'exec', '-it', 'polyis', 'bash', '-c']
+    arg_str = ' '.join(args.args).replace('"', '\\"')
+    cmd.append(f'"python {arg_str}"')
+
+    print('Running command:', ' '.join(cmd))
+    print()
+    
+    try:
+        os.system(' '.join(cmd))
+    except Exception as e:
+        print(f"Error running command: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

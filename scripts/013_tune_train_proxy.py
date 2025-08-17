@@ -150,12 +150,13 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     return best_model_wts, epoch_test_losses, epoch_train_losses, losses, val_losses
 
 
-def train_cnn(width: int, proxy_data_path: str):
+def train_cnn(width: int, proxy_training_path: str, tile_size: int):
     print(f'Training Small CNN (width={width})\n')
     model = ClassifyRelevance(width).to('cuda')
     loss_fn = torch.nn.BCEWithLogitsLoss()
     optimizer = Adam(model.parameters(), lr=0.001)
 
+    proxy_data_path = os.path.join(proxy_training_path, 'data', f'proxy_{tile_size}')
     train_data = datasets.ImageFolder(proxy_data_path, transform=transforms.ToTensor())
 
     generator = torch.Generator().manual_seed(42)
@@ -191,7 +192,7 @@ def train_cnn(width: int, proxy_data_path: str):
     import json
 
     # Create results directory
-    results_dir = os.path.join(proxy_data_path, 'results', f'proxy_{width}')
+    results_dir = os.path.join(proxy_training_path, 'results', f'proxy_{width}')
     os.makedirs(results_dir, exist_ok=True)
 
     with open(os.path.join(results_dir, 'model.pth'), 'wb') as f:
@@ -215,9 +216,9 @@ def main(args):
         print(f"Processing video {video_path}")
 
         for tile_size in TILE_SIZES:
-            proxy_data_path = os.path.join(video_path, 'training', 'data', f'proxy_{tile_size}')
+            proxy_training_path = os.path.join(video_path, 'training') 
 
-            train_cnn(tile_size, proxy_data_path)
+            train_cnn(tile_size, proxy_training_path, tile_size)
 
 
 if __name__ == '__main__':
