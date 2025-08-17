@@ -1,3 +1,5 @@
+#!/usr/local/bin/python
+
 import os
 import json
 import multiprocessing as mp

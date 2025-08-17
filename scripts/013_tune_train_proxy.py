@@ -1,7 +1,7 @@
+#!/usr/local/bin/python
+
 import argparse
-import json
 import os
-import shutil
 import time
 
 import cv2
@@ -25,8 +25,6 @@ def parse_args():
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--tile_size', type=int, choices=TILE_SIZES, default=64,
-                        help='Tile size as the smallest unit of video frame compression')
     return parser.parse_args()
 
 
@@ -69,8 +67,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     early_stopping_tolerance = 3
     early_stopping_threshold = 0.001
 
-    epoch_train_losses: list[float] = []
-    epoch_test_losses: list[float] = []
+    epoch_train_losses: list[dict] = []
+    epoch_test_losses: list[dict] = []
 
     best_model_wts: "dict[str, torch.Tensor] | None" = None
     best_loss = float('inf')
@@ -78,6 +76,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
     for epoch in range(n_epochs):
         epoch_loss = 0
+        
+        # Record training start time
+        train_start_time = time.time()
+        
         model.train()
         for x_batch, y_batch in tqdm(train_loader, total=len(train_loader)): # iterate ove batches
             x_batch = x_batch.to(device) # move to gpu
@@ -89,13 +91,24 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             epoch_loss += loss / len(train_loader)
             losses.append(loss)
         
-        epoch_train_losses.append(float(epoch_loss))
-        print('\nEpoch : {}, train loss : {}\n'.format(epoch+1,epoch_loss))
+        # Record training end time
+        train_end_time = time.time()
+        train_time = train_end_time - train_start_time
+        
+        epoch_train_losses.append({
+            'loss': float(epoch_loss),
+            'time': train_time
+        })
+        print('\nEpoch : {}, train loss : {}, train time : {:.2f}s\n'.format(epoch+1, epoch_loss, train_time))
 
         # validation doesnt requires gradient
         with torch.no_grad():
-            model.eval()
             cumulative_loss = 0
+            
+            # Record validation start time
+            val_start_time = time.time()
+
+            model.eval()
             for x_batch, y_batch in test_loader:
                 x_batch = x_batch.to(device)
                 y_batch = y_batch.to(device).unsqueeze(1).float() # convert target to same nn output shape
@@ -112,8 +125,15 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 # misc = torch.sum(ans == y_batch)
                 # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
-            epoch_test_losses.append(float(cumulative_loss))
-            print('Epoch : {}, val loss : {}\n'.format(epoch + 1, cumulative_loss))  
+            # Record validation end time
+            val_end_time = time.time()
+            val_time = val_end_time - val_start_time
+            
+            epoch_test_losses.append({
+                'loss': float(cumulative_loss),
+                'time': val_time
+            })
+            print('Epoch : {}, val loss : {}, val time : {:.2f}s\n'.format(epoch + 1, cumulative_loss, val_time))  
             
             # save best model
             if cumulative_loss < best_loss:
@@ -161,15 +181,26 @@ def train_cnn(width: int, proxy_data_path: str):
     print(str(test_losses) + '\n')
     print(str(train_losses) + '\n')
 
+    # Calculate total training and validation times
+    total_train_time = sum(epoch['time'] for epoch in train_losses)
+    total_val_time = sum(epoch['time'] for epoch in test_losses)
+    print(f'Total training time: {total_train_time:.2f}s')
+    print(f'Total validation time: {total_val_time:.2f}s')
+    print(f'Total time: {total_train_time + total_val_time:.2f}s')
+
     import json
 
-    with open(os.path.join(proxy_data_path, f'cnn{width}_model.pth'), 'wb') as f:
+    # Create results directory
+    results_dir = os.path.join(proxy_data_path, 'results', f'proxy_{width}')
+    os.makedirs(results_dir, exist_ok=True)
+
+    with open(os.path.join(results_dir, 'model.pth'), 'wb') as f:
         torch.save(model, f)
 
-    with open(os.path.join(proxy_data_path, f'cnn{width}_test_losses.json'), 'w') as f:
+    with open(os.path.join(results_dir, 'test_losses.json'), 'w') as f:
         f.write(json.dumps(test_losses))
 
-    with open(os.path.join(proxy_data_path, f'cnn{width}_train_losses.json'), 'w') as f:
+    with open(os.path.join(results_dir, 'train_losses.json'), 'w') as f:
         f.write(json.dumps(train_losses))
 
 
@@ -184,7 +215,7 @@ def main(args):
         print(f"Processing video {video_path}")
 
         for tile_size in TILE_SIZES:
-            proxy_data_path = os.path.join(video_path, 'training', f'proxy_{tile_size}')
+            proxy_data_path = os.path.join(video_path, 'training', 'data', f'proxy_{tile_size}')
 
             train_cnn(tile_size, proxy_data_path)
 

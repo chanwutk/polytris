@@ -1,3 +1,5 @@
+#!/usr/local/bin/python
+
 import argparse
 import json
 import os
@@ -43,8 +45,11 @@ def main(args):
 
         print(f"Processing video {video_path}")
 
+        if os.path.exists(os.path.join(video_path, 'training')):
+            shutil.rmtree(os.path.join(video_path, 'training'))
+
         for tile_size in TILE_SIZES:
-            proxy_data_path = os.path.join(video_path, 'training', f'proxy_{tile_size}')
+            proxy_data_path = os.path.join(video_path, 'training', 'data', f'proxy_{tile_size}')
             if os.path.exists(proxy_data_path):
                 # remove the existing proxy data
                 shutil.rmtree(proxy_data_path)
@@ -80,7 +85,7 @@ def main(args):
                     assert idx == _idx, (idx, _idx)
 
                     for tile_size in [32, 64, 128]:
-                        proxy_data_path = os.path.join(video_path, 'training', f'proxy_{tile_size}')
+                        proxy_data_path = os.path.join(video_path, 'training', 'data', f'proxy_{tile_size}')
 
                         # todo: create dataset for each patch size
                         padded_frame = torch.from_numpy(frame).to('cuda:0')
