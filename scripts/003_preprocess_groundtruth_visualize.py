@@ -33,11 +33,14 @@ def parse_args():
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
+            - speed_up (int): Speed up factor for visualization (default: 4)
     """
     parser = argparse.ArgumentParser(description='Visualize tracking results on original videos')
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
+    parser.add_argument('--speed_up', type=int, default=4,
+                        help='Speed up factor for visualization (process every Nth frame)')
     return parser.parse_args()
 
 
@@ -91,7 +94,8 @@ def get_track_color(track_id: int) -> tuple[int, int, int]:
 
 
 def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]], 
-                             frame_idx: int, trajectory_history: dict[int, list[tuple[int, int, int]]]) -> np.ndarray:
+                             frame_idx: int, trajectory_history: dict[int, list[tuple[int, int, int]]], 
+                             speed_up: int) -> np.ndarray | None:
     """
     Create a visualization frame by drawing bounding boxes and trajectories for all tracks.
     
@@ -100,14 +104,33 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
         tracks (list[list[float]]): list of tracks for this frame
         frame_idx (int): Frame index for logging
         trajectory_history (dict[int, list[tuple[int, int, int]]]): History of track centers with frame timestamps
+        speed_up (int): Speed up factor (process every Nth frame)
         
     Returns:
-        np.ndarray: Frame with bounding boxes and trajectories drawn
+        np.ndarray | None: Frame with bounding boxes and trajectories drawn, or None if frame should be skipped
     """
+    # First loop: Update trajectory history for all tracks
+    for track in tracks:
+        if len(track) >= 5:  # Ensure we have track_id, x1, y1, x2, y2
+            track_id, x1, y1, x2, y2 = track[:5]
+            track_id = int(track_id)
+            
+            # Calculate center of bounding box
+            center_x = int((x1 + x2) // 2)
+            center_y = int((y1 + y2) // 2)
+            
+            # Update trajectory history with frame timestamp
+            if track_id not in trajectory_history:
+                trajectory_history[track_id] = []
+            trajectory_history[track_id].append((center_x, center_y, frame_idx))
+
+    if frame_idx % speed_up != 0:
+        return None
+    
     # Create a copy of the frame for visualization
     vis_frame = frame.copy()
     
-    # Draw bounding boxes and trajectories for each track
+    # Second loop: Draw bounding boxes and labels for current tracks
     for track in tracks:
         if len(track) >= 5:  # Ensure we have track_id, x1, y1, x2, y2
             track_id, x1, y1, x2, y2 = track[:5]
@@ -118,15 +141,6 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
             
             # Get color for this track
             color = get_track_color(track_id)
-            
-            # Calculate center of bounding box
-            center_x = (x1 + x2) // 2
-            center_y = (y1 + y2) // 2
-            
-            # Update trajectory history with frame timestamp
-            if track_id not in trajectory_history:
-                trajectory_history[track_id] = []
-            trajectory_history[track_id].append((center_x, center_y, frame_idx))
             
             # Draw bounding box
             cv2.rectangle(vis_frame, (x1, y1), (x2, y2), color, 2)
@@ -192,9 +206,9 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
                     cv2.line(vis_frame, (prev_center[0], prev_center[1]), 
                              (curr_center[0], curr_center[1]), line_color, 2)
                     
-                    # # Draw trajectory points
-                    # point_radius = max(1, int(3 * alpha))
-                    # cv2.circle(vis_frame, (prev_center[0], prev_center[1]), point_radius, point_color, -1)
+                    # Draw trajectory points
+                    point_radius = max(1, int(3 * alpha))
+                    cv2.circle(vis_frame, (prev_center[0], prev_center[1]), point_radius, point_color, -1)
                 
                 # Draw final point
                 final_center = trajectory[-1]
@@ -204,7 +218,7 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
 
 
 def create_tracking_visualization(video_path: str, tracking_results: dict[int, list[list[float]]], 
-                                 output_path: str):
+                                 output_path: str, speed_up: int, process_id: int):
     """
     Create a visualization video showing tracking results overlaid on the original video.
     
@@ -247,30 +261,42 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
     # Initialize trajectory history for all tracks with frame timestamps
     trajectory_history: dict[int, list[tuple[int, int, int]]] = {}  # track_id -> [(x, y, frame_idx), ...]
     
+    # Initialize frame_idx for exception handling
+    frame_idx = 0
+    
     # Process each frame
-    for frame_idx in tqdm(range(frame_count), desc="Creating visualization"):
-        # Read frame
-        ret, frame = cap.read()
-        if not ret:
-            break
-        
-        # Get tracking results for this frame
-        tracks = tracking_results.get(frame_idx, [])
-        
-        # Create visualization frame with trajectory history
-        vis_frame = create_visualization_frame(frame, tracks, frame_idx, trajectory_history)
-        
-        # Write frame to video
-        writer.write(vis_frame)
+    try:
+        for frame_idx in tqdm(range(frame_count), desc=f"Process {process_id} - Creating visualization", position=process_id):
+            # Read frame
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            # Get tracking results for this frame
+            tracks = tracking_results.get(frame_idx, [])
+            
+            # Create visualization frame with trajectory history
+            vis_frame = create_visualization_frame(frame, tracks, frame_idx, trajectory_history, speed_up)
+            
+            # Write frame to video
+            if vis_frame is not None:
+                writer.write(vis_frame)
     
-    # Release resources
-    cap.release()
-    writer.release()
+    except KeyboardInterrupt:
+        print(f"\nProcess {process_id}: KeyboardInterrupt detected. Stopping video writing...")
+        print(f"Process {process_id}: Video writing stopped at frame {frame_idx}")
+    except Exception as e:
+        print(f"\nProcess {process_id}: Error during video processing: {e}")
+    finally:
+        # Release resources
+        cap.release()
+        writer.release()
+        print(f"Process {process_id}: Resources released")
     
-    print(f"Tracking visualization saved to: {output_path}")
+    print(f"Process {process_id}: Tracking visualization completed")
 
 
-def process_video_visualization(video_file: str, cache_dir: str, dataset: str):
+def process_video_visualization(video_file: str, cache_dir: str, dataset: str, speed_up: int, process_id: int):
     """
     Process visualization for a single video file.
     
@@ -293,7 +319,7 @@ def process_video_visualization(video_file: str, cache_dir: str, dataset: str):
         output_path = os.path.join(cache_dir, dataset, video_file, 'groundtruth', 'visualization.mp4')
         
         # Create visualization
-        create_tracking_visualization(video_path, tracking_results, output_path)
+        create_tracking_visualization(video_path, tracking_results, output_path, speed_up, process_id)
         
         print(f"Completed visualization for video: {video_file}")
         
@@ -325,6 +351,7 @@ def main(args):
         - Processing is parallelized for improved performance
     """
     print(f"Processing dataset: {args.dataset}")
+    print(f"Speed up factor: {args.speed_up} (processing every {args.speed_up}th frame)")
     
     # Find all videos with tracking results
     dataset_cache_dir = os.path.join(CACHE_DIR, args.dataset)
@@ -355,9 +382,10 @@ def main(args):
     
     # Prepare arguments for each video
     video_args = []
-    for video_file in video_dirs:
-        video_args.append((video_file, CACHE_DIR, args.dataset))
-        print(f"Prepared video: {video_file}")
+    for i, video_file in enumerate(video_dirs):
+        process_id = i % num_processes  # Assign process ID in round-robin fashion
+        video_args.append((video_file, CACHE_DIR, args.dataset, args.speed_up, process_id))
+        print(f"Prepared video: {video_file} for process {process_id}")
     
     # Use process pool to execute video visualization
     with mp.Pool(processes=num_processes) as pool:
