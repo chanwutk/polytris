@@ -216,13 +216,12 @@ def main(args):
     video_args = []
     for i, video_file in enumerate(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
-        video_file_name = os.path.splitext(video_file)[0]
         
         # Assign GPU ID (round-robin assignment)
         process_id = process_ids[i % len(process_ids)]
         
         # Create output path for detection results
-        output_path = os.path.join(CACHE_DIR, args.dataset, video_file_name, 'groundtruth', 'detection.jsonl')
+        output_path = os.path.join(CACHE_DIR, args.dataset, video_file, 'groundtruth', 'detection.jsonl')
         
         video_args.append((video_file_path, args.detector, output_path, process_id))
         print(f"Prepared video: {video_file} for GPU {process_id}")
