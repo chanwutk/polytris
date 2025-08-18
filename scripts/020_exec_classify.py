@@ -6,12 +6,15 @@ import os
 import cv2
 import torch
 import numpy as np
+import time
 from tqdm import tqdm
+import shutil
 
 from polyis.proxy import ClassifyRelevance
 from polyis.images import splitHWC, padHWC
 
 
+DATA_DIR = '/polyis-data/video-datasets-low'
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [32, 64, 128]
 
@@ -29,7 +32,7 @@ def parse_args():
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], required=True,
+    parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     return parser.parse_args()
 
@@ -57,19 +60,19 @@ def load_model_for_video(video_path: str, tile_size: int) -> ClassifyRelevance:
     
     if os.path.exists(model_path):
         print(f"Loading model for tile size {tile_size} from {model_path}")
-        model = torch.load(model_path, map_location='cuda')
+        model = torch.load(model_path, map_location='cuda', weights_only=False)
         model.eval()
         return model
     
     raise FileNotFoundError(f"No trained model found for tile size {tile_size} in {video_path}")
 
 
-def process_frame_tiles(frame: np.ndarray, model: ClassifyRelevance, tile_size: int) -> list[list[float]]:
+def process_frame_tiles(frame: np.ndarray, model: ClassifyRelevance, tile_size: int) -> tuple[list[list[float]], float]:
     """
-    Process a single video frame with the specified tile size and return relevance scores.
+    Process a single video frame with the specified tile size and return relevance scores and runtime.
     
     This function splits the input frame into tiles of the specified size, runs inference
-    with the trained model, and returns relevance scores for each tile.
+    with the trained model, and returns relevance scores for each tile along with the runtime.
     
     Args:
         frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3)
@@ -78,14 +81,16 @@ def process_frame_tiles(frame: np.ndarray, model: ClassifyRelevance, tile_size: 
         tile_size (int): Size of tiles to use for processing (32, 64, or 128)
             
     Returns:
-        list[list[float]]: 2D grid of relevance scores where each element represents
-            the relevance score (probability between 0 and 1) for the corresponding
-            tile in the frame. The grid dimensions depend on the frame size and tile size.
+        tuple[list[list[float]], float]: A tuple containing:
+            - 2D grid of relevance scores where each element represents the relevance score
+              (probability between 0 and 1) for the corresponding tile in the frame
+            - Runtime in seconds for the ClassifyRelevance model inference
             
     Note:
         - Frame is padded if necessary to ensure divisibility by tile size
         - Input frame is normalized to [0, 1] range before inference
         - Model is expected to output logits, which are converted to probabilities using sigmoid
+        - Runtime measurement includes only the model inference time, not preprocessing
     """
     # Convert frame to tensor and ensure it's in HWC format
     frame_tensor = torch.from_numpy(frame).float().to('cuda')
@@ -106,17 +111,23 @@ def process_frame_tiles(frame: np.ndarray, model: ClassifyRelevance, tile_size: 
     # Convert to NCHW format for the model
     tiles_nchw = tiles_flat.permute(0, 3, 1, 2)
     
+    # Measure runtime for ClassifyRelevance model inference
+    start_time = time.time()
+    
     # Run inference
     with torch.no_grad():
         predictions = model(tiles_nchw)
         # Apply sigmoid to get probabilities
         probabilities = torch.sigmoid(predictions).cpu().numpy().flatten()
     
+    end_time = time.time()
+    runtime = end_time - start_time
+    
     # Reshape back to grid format
     grid_height, grid_width = tiles.shape[:2]
     relevance_grid = probabilities.reshape(grid_height, grid_width)
     
-    return relevance_grid.tolist()
+    return relevance_grid.tolist(), runtime
 
 
 def process_video(video_path: str, model: ClassifyRelevance, tile_size: int, output_path: str):
@@ -126,7 +137,7 @@ def process_video(video_path: str, model: ClassifyRelevance, tile_size: int, out
     This function reads a video file frame by frame, processes each frame to classify
     tiles using the trained proxy model for the specified tile size, and saves the
     results in JSONL format. Each line in the output file represents one frame with
-    its tile classifications.
+    its tile classifications and runtime measurement.
     
     Args:
         video_path (str): Path to the input video file to process
@@ -139,7 +150,7 @@ def process_video(video_path: str, model: ClassifyRelevance, tile_size: int, out
         - Progress is displayed using a progress bar
         - Results are flushed to disk after each frame for safety
         - Video metadata (FPS, dimensions, frame count) is extracted and logged
-        - Each frame entry includes frame index, timestamp, frame dimensions, and tile classifications
+        - Each frame entry includes frame index, timestamp, frame dimensions, tile classifications, and runtime
         - The function handles various video formats (.mp4, .avi, .mov, .mkv)
         
     Output Format:
@@ -149,6 +160,7 @@ def process_video(video_path: str, model: ClassifyRelevance, tile_size: int, out
         - frame_size (list[int]): [height, width] of the frame
         - tile_size (int): Tile size used for processing (32, 64, or 128)
         - tile_classifications (list[list[float]]): Relevance scores grid for the specified tile size
+        - runtime (float): Runtime in seconds for the ClassifyRelevance model inference
     """
     print(f"Processing video: {video_path}")
     
@@ -174,7 +186,7 @@ def process_video(video_path: str, model: ClassifyRelevance, tile_size: int, out
                     break
                 
                 # Process frame with the model
-                relevance_grid = process_frame_tiles(frame, model, tile_size)
+                relevance_grid, runtime = process_frame_tiles(frame, model, tile_size)
                 
                 # Create result entry for this frame
                 frame_entry = {
@@ -182,7 +194,8 @@ def process_video(video_path: str, model: ClassifyRelevance, tile_size: int, out
                     "timestamp": frame_idx / fps if fps > 0 else 0,
                     "frame_size": [height, width],
                     "tile_size": tile_size,
-                    "tile_classifications": relevance_grid
+                    "tile_classifications": relevance_grid,
+                    "runtime": runtime
                 }
                 
                 # Write to JSONL file
@@ -206,7 +219,7 @@ def main(args):
     
     This function serves as the entry point for the script. It:
     1. Validates the dataset directory exists
-    2. Iterates through all videos in the dataset
+    2. Iterates through all videos in the dataset directory
     3. For each video, loads the appropriate trained proxy model(s) for the specified tile size(s)
     4. Processes each video and saves classification results
     
@@ -217,15 +230,16 @@ def main(args):
             
     Note:
         - The script expects a specific directory structure:
-          {CACHE_DIR}/{dataset}/{video_name}/training/results/proxy_{tile_size}/model.pth
+          {DATA_DIR}/{dataset}/ - contains video files
+          {DATA_CACHE}/{dataset}/{video_file_name}/training/results/proxy_{tile_size}/model.pth - contains trained models
+          where DATA_DIR and DATA_CACHE are both /polyis-data/video-datasets-low
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - A separate model is loaded for each video directory
         - When tile_size is 'all', all three tile sizes (32, 64, 128) are processed
-        - Output files are saved in the same directory as the input video with
-          the naming pattern: {video_name}_tile{tile_size}_classifications.jsonl
+        - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/relevancy/score/proxy_{tile_size}/score.jsonl
         - If no trained model is found for a video, that video is skipped with a warning
     """
-    dataset_dir = os.path.join(CACHE_DIR, args.dataset)
+    dataset_dir = os.path.join(DATA_DIR, args.dataset)
     
     if not os.path.exists(dataset_dir):
         raise FileNotFoundError(f"Dataset directory {dataset_dir} does not exist")
@@ -238,39 +252,51 @@ def main(args):
         tile_sizes_to_process = [int(args.tile_size)]
         print(f"Processing tile size: {tile_sizes_to_process[0]}")
     
-    # Process each video in the dataset
-    for video in os.listdir(dataset_dir):
-        video_path = os.path.join(dataset_dir, video)
-        if not os.path.isdir(video_path):
-            continue
+    # Get all video files from the dataset directory
+    video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+    
+    if not video_files:
+        print(f"No video files found in {dataset_dir}")
+        return
+    
+    print(f"Found {len(video_files)} video files to process")
+    
+    # Process each video file
+    for video_file in video_files:
+        video_file_path = os.path.join(dataset_dir, video_file)
         
-        # Look for video files
-        video_files = [f for f in os.listdir(video_path) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-        
-        if not video_files:
-            print(f"No video files found in {video_path}, skipping...")
-            continue
+        print(f"\nProcessing video file: {video_file}")
         
         # Process each tile size for this video
         for tile_size in tile_sizes_to_process:
-            print(f"\nProcessing video directory: {video} with tile size {tile_size}")
+            print(f"Processing tile size: {tile_size}")
+            
+            # Look for the trained model in the expected cache directory structure
+            cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
             
             # Load the trained model for this specific video and tile size
             try:
-                model = load_model_for_video(video_path, tile_size)
+                model = load_model_for_video(cache_video_dir, tile_size)
                 print(f"Successfully loaded model for tile size {tile_size}")
             except FileNotFoundError as e:
-                print(f"Warning: {e}, skipping tile size {tile_size} for video {video}")
+                print(f"Warning: {e}, skipping tile size {tile_size} for video {video_file}")
                 continue
             
-            # Process each video file in this directory
-            for video_file in video_files:
-                full_video_path = os.path.join(video_path, video_file)
-                output_path = os.path.join(video_path, f'{video_file}_tile{tile_size}_classifications.jsonl')
-                
-                print(f"Processing video file: {video_file}")
-                process_video(full_video_path, model, tile_size, output_path)
-
+            # Create output directory structure
+            output_dir = os.path.join(cache_video_dir, 'relevancy')
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Create score directory for this tile size
+            score_dir = os.path.join(output_dir, 'score', f'proxy_{tile_size}')
+            if os.path.exists(score_dir):
+                # Remove the entire directory
+                shutil.rmtree(score_dir)
+            os.makedirs(score_dir)
+            output_path = os.path.join(score_dir, 'score.jsonl')
+            
+            # Process the video
+            process_video(video_file_path, model, tile_size, output_path)
+            
 
 if __name__ == '__main__':
     main(parse_args())
