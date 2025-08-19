@@ -8,7 +8,7 @@ from torchvision import datasets, transforms
 from torchvision.models.efficientnet import efficientnet_v2_s
 from torch.optim import Adam  # type: ignore
 
-from polyis.proxy import ClassifyRelevance
+from polyis.proxy import SimpleCNN
 
 from tqdm import tqdm
 
@@ -113,7 +113,7 @@ def train_cnn(width: int):
 
     try:
         fpp.write(f'Training Small CNN (width={width})\n')
-        model = ClassifyRelevance(width).to(device)
+        model = SimpleCNN(width).to(device)
         loss_fn = torch.nn.BCEWithLogitsLoss()
         optimizer = Adam(model.parameters(), lr=0.001)
         running_loss = 0.0

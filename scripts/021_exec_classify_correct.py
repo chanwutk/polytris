@@ -4,14 +4,10 @@ import argparse
 import json
 import os
 import cv2
-import torch
 import numpy as np
 import time
 from tqdm import tqdm
 import shutil
-
-from polyis.models.classifier.simple_cnn import SimpleCNN
-from polyis.images import splitHWC, padHWC
 
 
 DATA_DIR = '/polyis-data/video-datasets-low'
@@ -37,111 +33,125 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_model_for_video(video_path: str, tile_size: int) -> SimpleCNN:
+def load_groundtruth_tracking(video_path: str) -> dict[int, list[list[float]]]:
     """
-    Load trained proxy model for the specified tile size from a specific video directory.
+    Load groundtruth tracking results from the JSONL file.
     
-    This function searches for a trained model in the expected directory structure:
-    {video_path}/training/results/proxy_{tile_size}/model.pth
+    This function reads the tracking results file and organizes them by frame index.
     
     Args:
-        video_path (str): Path to the specific video directory
-        tile_size (int): Tile size for which to load the model (32, 64, or 128)
+        video_path (str): Path to the video directory containing groundtruth tracking results
         
     Returns:
-        ClassifyRelevance: The loaded trained model for the specified tile size.
-            The model is loaded to CUDA and set to evaluation mode.
+        dict[int, list[list[float]]]: Dictionary mapping frame indices to lists of bounding boxes
+            Each bounding box is formatted as [tracking_id, x1, y1, x2, y2]
             
     Raises:
-        FileNotFoundError: If no trained model is found for the specified tile size
+        FileNotFoundError: If no tracking results file is found
     """
-    results_path = os.path.join(video_path, 'training', 'results', f'proxy_{tile_size}')
-    model_path = os.path.join(results_path, 'model.pth')
+    tracking_path = os.path.join(video_path, 'groundtruth', 'tracking.jsonl')
     
-    if os.path.exists(model_path):
-        print(f"Loading model for tile size {tile_size} from {model_path}")
-        model = torch.load(model_path, map_location='cuda', weights_only=False)
-        model.eval()
-        return model
+    if not os.path.exists(tracking_path):
+        raise FileNotFoundError(f"Tracking results not found: {tracking_path}")
     
-    raise FileNotFoundError(f"No trained model found for tile size {tile_size} in {video_path}")
+    print(f"Loading groundtruth tracking results from {tracking_path}")
+    
+    frame_detections = {}
+    with open(tracking_path, 'r') as f:
+        for line in f:
+            if line.strip():
+                frame_data = json.loads(line)
+                frame_idx = frame_data['frame_idx']
+                tracks = frame_data['tracks']
+                frame_detections[frame_idx] = tracks
+    
+    print(f"Loaded tracking results for {len(frame_detections)} frames")
+    return frame_detections
 
 
-def process_frame_tiles(frame: np.ndarray, model: SimpleCNN, tile_size: int) -> tuple[list[list[float]], float]:
+def mark_detections(detections: list[list[float]], width: int, height: int, chunk_size: int) -> np.ndarray:
     """
-    Process a single video frame with the specified tile size and return relevance scores and runtime.
+    Mark tiles as relevant based on groundtruth detections.
     
-    This function splits the input frame into tiles of the specified size, runs inference
-    with the trained model, and returns relevance scores for each tile along with the runtime.
+    This function creates a bitmap where 1 indicates a tile with detection and 0 indicates no detection.
+    Based on the mark_detections2 function from chunker.py.
+    
+    Args:
+        detections (list[list[float]]): List of bounding boxes, each formatted as [tracking_id, x1, y1, x2, y2]
+        width (int): Frame width
+        height (int): Frame height
+        chunk_size (int): Size of each tile
+        
+    Returns:
+        np.ndarray: 2D array representing the grid of tiles, where 1 indicates relevant tiles
+    """
+    bitmap = np.zeros((height // chunk_size, width // chunk_size), dtype=np.int32)
+    
+    for bbox in detections:
+        # Extract bounding box coordinates (ignore tracking_id)
+        x1, y1, x2, y2 = bbox[1:5]  # Skip tracking_id at index 0
+        
+        # Convert to tile coordinates
+        xfrom, xto = int(x1 // chunk_size), int(x2 // chunk_size)
+        yfrom, yto = int(y1 // chunk_size), int(y2 // chunk_size)
+        
+        # Mark all tiles that overlap with the bounding box
+        bitmap[yfrom:yto+1, xfrom:xto+1] = 1
+    
+    return bitmap
+
+
+def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_size: int) -> tuple[list[list[float]], float]:
+    """
+    Process a single video frame with groundtruth detections and return relevance scores.
+    
+    This function uses groundtruth bounding boxes to determine which tiles are relevant,
+    rather than running inference with a trained model.
     
     Args:
         frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3)
-            where H and W are the frame height and width, and 3 represents RGB channels
-        model (ClassifyRelevance): Trained model for the specified tile size
+        detections (list[list[float]]): List of bounding boxes for this frame
         tile_size (int): Size of tiles to use for processing (32, 64, or 128)
             
     Returns:
         tuple[list[list[float]], float]: A tuple containing:
-            - 2D grid of relevance scores where each element represents the relevance score
-              (probability between 0 and 1) for the corresponding tile in the frame
-            - Runtime in seconds for the ClassifyRelevance model inference
+            - 2D grid of relevance scores where each element is 1.0 for relevant tiles and 0.0 for irrelevant tiles
+            - Runtime in seconds (always 0.0 since no model inference is performed)
             
     Note:
-        - Frame is padded if necessary to ensure divisibility by tile size
-        - Input frame is normalized to [0, 1] range before inference
-        - Model is expected to output logits, which are converted to probabilities using sigmoid
-        - Runtime measurement includes only the model inference time, not preprocessing
+        - Frame dimensions are used to create the tile grid
+        - Bounding boxes are converted to tile coordinates
+        - Tiles overlapping with detections are marked as relevant (1.0)
+        - Tiles without detections are marked as irrelevant (0.0)
     """
-    # Convert frame to tensor and ensure it's in HWC format
-    frame_tensor = torch.from_numpy(frame).float().to('cuda')
-    
-    # Pad frame to be divisible by tile_size
-    padded_frame = padHWC(frame_tensor, tile_size, tile_size)  # type: ignore
-    
-    # Split frame into tiles
-    tiles = splitHWC(padded_frame, tile_size, tile_size)  # type: ignore
-    
-    # Flatten tiles for batch processing
-    num_tiles = tiles.shape[0] * tiles.shape[1]
-    tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
-    
-    # Normalize to [0, 1] range
-    tiles_flat = tiles_flat / 255.0
-    
-    # Convert to NCHW format for the model
-    tiles_nchw = tiles_flat.permute(0, 3, 1, 2)
-    
-    # Measure runtime for ClassifyRelevance model inference
     start_time = time.time()
     
-    # Run inference
-    with torch.no_grad():
-        predictions = model(tiles_nchw)
-        # Apply sigmoid to get probabilities
-        probabilities = torch.sigmoid(predictions).cpu().numpy().flatten()
+    # Get frame dimensions
+    height, width = frame.shape[:2]
+    
+    # Create bitmap marking relevant tiles
+    bitmap = mark_detections(detections, width, height, tile_size)
+    
+    # Convert bitmap to relevance scores (0.0 or 1.0)
+    relevance_grid = bitmap.astype(np.float32)
     
     end_time = time.time()
     runtime = end_time - start_time
     
-    # Reshape back to grid format
-    grid_height, grid_width = tiles.shape[:2]
-    relevance_grid = probabilities.reshape(grid_height, grid_width)
-    
     return relevance_grid.tolist(), runtime
 
 
-def process_video(video_path: str, model: SimpleCNN, tile_size: int, output_path: str):
+def process_video(video_path: str, frame_detections: dict[int, list[list[float]]], tile_size: int, output_path: str):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
     This function reads a video file frame by frame, processes each frame to classify
-    tiles using the trained proxy model for the specified tile size, and saves the
-    results in JSONL format. Each line in the output file represents one frame with
-    its tile classifications and runtime measurement.
+    tiles using groundtruth detection data, and saves the results in JSONL format.
+    Each line in the output file represents one frame with its tile classifications.
     
     Args:
         video_path (str): Path to the input video file to process
-        model (ClassifyRelevance): Trained model for the specified tile size
+        frame_detections (dict[int, list[list[float]]]): Dictionary mapping frame indices to detection lists
         tile_size (int): Tile size used for processing (32, 64, or 128)
         output_path (str): Path where the output JSONL file will be saved
             
@@ -160,7 +170,7 @@ def process_video(video_path: str, model: SimpleCNN, tile_size: int, output_path
         - frame_size (list[int]): [height, width] of the frame
         - tile_size (int): Tile size used for processing (32, 64, or 128)
         - tile_classifications (list[list[float]]): Relevance scores grid for the specified tile size
-        - runtime (float): Runtime in seconds for the ClassifyRelevance model inference
+        - runtime (float): Runtime in seconds (always 0.0 for groundtruth-based processing)
     """
     print(f"Processing video: {video_path}")
     
@@ -185,8 +195,11 @@ def process_video(video_path: str, model: SimpleCNN, tile_size: int, output_path
                 if not ret:
                     break
                 
-                # Process frame with the model
-                relevance_grid, runtime = process_frame_tiles(frame, model, tile_size)
+                # Get detections for this frame (empty list if no detections)
+                detections = frame_detections.get(frame_idx, [])
+                
+                # Process frame with groundtruth detections
+                relevance_grid, runtime = process_frame_tiles(frame, detections, tile_size)
                 
                 # Create result entry for this frame
                 frame_entry = {
@@ -231,13 +244,13 @@ def main(args):
     Note:
         - The script expects a specific directory structure:
           {DATA_DIR}/{dataset}/ - contains video files
-          {DATA_CACHE}/{dataset}/{video_file_name}/training/results/proxy_{tile_size}/model.pth - contains trained models
-          where DATA_DIR and DATA_CACHE are both /polyis-data/video-datasets-low
+          {CACHE_DIR}/{dataset}/{video_file}/groundtruth/tracking.jsonl - contains groundtruth tracking results
+          where DATA_DIR is /polyis-data/video-datasets-low and CACHE_DIR is /polyis-cache
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
-        - A separate model is loaded for each video directory
+        - Groundtruth tracking results are loaded for each video
         - When tile_size is 'all', all three tile sizes (32, 64, 128) are processed
-        - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/relevancy/score/proxy_{tile_size}/score.jsonl
-        - If no trained model is found for a video, that video is skipped with a warning
+        - Output files are saved in {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/proxy_{tile_size}/score_correct.jsonl
+        - If no tracking results are found for a video, that video is skipped with a warning
     """
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
     
@@ -271,13 +284,13 @@ def main(args):
         for tile_size in tile_sizes_to_process:
             print(f"Processing tile size: {tile_size}")
             
-            # Look for the trained model in the expected cache directory structure
+            # Look for the groundtruth tracking results in the cache directory structure
             cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
             
-            # Load the trained model for this specific video and tile size
+            # Load the groundtruth tracking results for this video
             try:
-                model = load_model_for_video(cache_video_dir, tile_size)
-                print(f"Successfully loaded model for tile size {tile_size}")
+                frame_detections = load_groundtruth_tracking(cache_video_dir)
+                print(f"Successfully loaded groundtruth tracking for tile size {tile_size}")
             except FileNotFoundError as e:
                 print(f"Warning: {e}, skipping tile size {tile_size} for video {video_file}")
                 continue
@@ -292,10 +305,10 @@ def main(args):
                 # Remove the entire directory
                 shutil.rmtree(score_dir)
             os.makedirs(score_dir)
-            output_path = os.path.join(score_dir, 'score.jsonl')
+            output_path = os.path.join(score_dir, 'score_correct.jsonl')
             
             # Process the video
-            process_video(video_file_path, model, tile_size, output_path)
+            process_video(video_file_path, frame_detections, tile_size, output_path)
             
 
 if __name__ == '__main__':

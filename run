@@ -12,10 +12,10 @@ def parse_args():
 
 
 def main():
-    args = parse_args()
-    
+    args = sys.argv[1:]
+
     cmd = ['docker', 'exec', '-it', 'polyis', 'bash', '-c']
-    arg_str = ' '.join(args.args).replace('"', '\\"')
+    arg_str = ' '.join(args).replace('"', '\\"')
     cmd.append(f'"python {arg_str}"')
 
     print('Running command:', ' '.join(cmd))

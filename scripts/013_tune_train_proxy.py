@@ -4,7 +4,6 @@ import argparse
 import os
 import time
 
-import cv2
 import torch
 import torch.utils.data
 import torch.optim
@@ -13,7 +12,7 @@ from tqdm import tqdm
 from torchvision import datasets, transforms
 from torch.optim import Adam
 
-from polyis.proxy import ClassifyRelevance
+from polyis.models.classifier.simple_cnn import SimpleCNN
 
 
 CACHE_DIR = '/polyis-cache'
@@ -153,9 +152,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     return best_model_wts, epoch_test_losses, epoch_train_losses, losses, val_losses
 
 
-def train_cnn(width: int, proxy_training_path: str, tile_size: int):
+def train_classifier(width: int, proxy_training_path: str, tile_size: int):
     print(f'Training Small CNN (width={width})\n')
-    model = ClassifyRelevance(width).to('cuda')
+    model = SimpleCNN(width).to('cuda')
     loss_fn = torch.nn.BCEWithLogitsLoss()
     optimizer = Adam(model.parameters(), lr=0.001)
 
@@ -221,7 +220,7 @@ def main(args):
         for tile_size in TILE_SIZES:
             proxy_training_path = os.path.join(video_path, 'training') 
 
-            train_cnn(tile_size, proxy_training_path, tile_size)
+            train_classifier(tile_size, proxy_training_path, tile_size)
 
 
 if __name__ == '__main__':

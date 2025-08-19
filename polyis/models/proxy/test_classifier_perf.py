@@ -9,7 +9,7 @@ from torchvision import datasets, transforms
 from torchvision.models.efficientnet import efficientnet_v2_s
 from torch.optim import Adam  # type: ignore
 
-from polyis.proxy import ClassifyRelevance
+from polyis.proxy import SimpleCNN
 
 from tqdm import tqdm
 
@@ -23,7 +23,7 @@ fpp.write('[{}')
 def train_cnn(width: int, record=True):
     with torch.no_grad():
         # fpp.write(f'Testing Small CNN (width={width})\n')
-        model = ClassifyRelevance(width).to(device)
+        model = SimpleCNN(width).to(device)
         # model.load_state_dict(torch.load(f'cnn{width}_model.pth', weights_only=True))
         model.eval()
         # model = torch.compile(model)

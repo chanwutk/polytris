@@ -1,7 +1,7 @@
 import torch
 
 
-class ClassifyRelevance(torch.nn.Module):
+class SimpleCNN(torch.nn.Module):
     def __init__(self, img_size: int, width=128, dropout=0.2):
         super().__init__()
         features = [3]
