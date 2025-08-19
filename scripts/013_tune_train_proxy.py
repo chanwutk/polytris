@@ -108,6 +108,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             # Record validation start time
             val_start_time = time.time()
 
+            misc_sum = 0
             model.eval()
             for x_batch, y_batch in test_loader:
                 x_batch = x_batch.to(device)
@@ -120,9 +121,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
                 val_losses.append(val_loss.item())
                 
-                # ans = torch.sigmoid(yhat)
-                # ans = ans > 0.5
-                # misc = torch.sum(ans == y_batch)
+                ans = torch.sigmoid(yhat)
+                ans = ans > 0.5
+                misc = torch.sum(ans == y_batch)
+                misc_sum += misc.item()
                 # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
             # Record validation end time
@@ -133,7 +135,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 'loss': float(cumulative_loss),
                 'time': val_time
             })
-            print('Epoch : {}, val loss : {}, val time : {:.2f}s\n'.format(epoch + 1, cumulative_loss, val_time))  
+            print('Epoch : {}, val loss : {}, val time : {:.2f}s'.format(epoch + 1, cumulative_loss, val_time))  
+            print(f"Accuracy: {misc_sum * 100 / len(test_loader)} %\n")
             
             # save best model
             if cumulative_loss < best_loss:
@@ -172,7 +175,7 @@ def train_cnn(width: int, proxy_training_path: str, tile_size: int):
 
     # print("Training FC")
     best_model_wts, test_losses, train_losses, losses, val_losses = train(
-        model, loss_fn, optimizer, train_loader, test_loader, n_epochs=10, device='cuda')
+        model, loss_fn, optimizer, train_loader, test_loader, n_epochs=100, device='cuda')
 
     assert best_model_wts is not None
 

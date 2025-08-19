@@ -2,7 +2,7 @@ import torch
 
 
 class ClassifyRelevance(torch.nn.Module):
-    def __init__(self, img_size: int, width=64):
+    def __init__(self, img_size: int, width=128, dropout=0.2):
         super().__init__()
         features = [3]
         while img_size > 1:
@@ -21,13 +21,19 @@ class ClassifyRelevance(torch.nn.Module):
                 padding=1,
                 # padding='same'
             ))
+            sequential.append(torch.nn.BatchNorm2d(outFeatures))
             sequential.append(torch.nn.ReLU())
         self.encoder = torch.nn.Sequential(*sequential)
 
         self.decoder = torch.nn.Sequential(
             torch.nn.Linear(width, width),
+            torch.nn.BatchNorm1d(width),
             torch.nn.ReLU(),
+            torch.nn.Dropout(dropout),
             torch.nn.Linear(width, width),
+            torch.nn.BatchNorm1d(width),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(dropout),
             torch.nn.Linear(width, 1),
         )
 
