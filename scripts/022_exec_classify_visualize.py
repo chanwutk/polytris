@@ -327,20 +327,30 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     # 1. Overall classification error summary
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
     
-    # Confusion matrix
-    confusion_matrix = np.array([[total_tn, total_fp], [total_fn, total_tp]])
-    # Use matplotlib heatmap
-    ax1.imshow(confusion_matrix, cmap='Blues', interpolation='nearest')
-    for i in range(confusion_matrix.shape[0]):
-        for j in range(confusion_matrix.shape[1]):
-            ax1.text(j, i, str(confusion_matrix[i, j]), 
-                    ha='center', va='center', color='white', fontweight='bold')
-    ax1.set_xticks(range(confusion_matrix.shape[1]))
-    ax1.set_yticks(range(confusion_matrix.shape[0]))
-    ax1.set_xticklabels(['Predicted Negative', 'Predicted Positive'])
-    ax1.set_yticklabels(['Actual Negative', 'Actual Positive'])
+    # First stacked bar chart: x-axis is Predicted, color is Actual
+    x_labels = ['Predicted Negative', 'Predicted Positive']
+    actual_negative_values = [total_tn, total_fp]  # TN, FP
+    actual_positive_values = [total_fn, total_tp]  # FN, TP
     
-    ax1.set_title(f'Confusion Matrix (Tile Size: {tile_size})')
+    bars1 = ax1.bar(x_labels, actual_negative_values, label='Actual Negative', color='lightblue', alpha=0.8)
+    bars2 = ax1.bar(x_labels, actual_positive_values, bottom=actual_negative_values, label='Actual Positive', color='lightcoral', alpha=0.8)
+    
+    # Add value labels on bars
+    for i, (bar1, bar2) in enumerate(zip(bars1, bars2)):
+        # Label for Actual Negative (bottom)
+        if actual_negative_values[i] > 0:
+            ax1.text(bar1.get_x() + bar1.get_width()/2, bar1.get_height()/2, 
+                    str(actual_negative_values[i]), ha='center', va='center', fontweight='bold')
+        
+        # Label for Actual Positive (top)
+        if actual_positive_values[i] > 0:
+            ax1.text(bar2.get_x() + bar2.get_width()/2, bar2.get_y() + bar2.get_height()/2, 
+                    str(actual_positive_values[i]), ha='center', va='center', fontweight='bold')
+    
+    ax1.set_ylabel('Count')
+    ax1.set_title(f'Classification Results by Prediction (Tile Size: {tile_size})')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3, axis='y')
     
     # Metrics bar chart
     metrics = ['Precision', 'Recall', 'Accuracy', 'F1-Score']
@@ -354,12 +364,30 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01, 
                 f'{value:.3f}', ha='center', va='bottom')
     
-    # Error distribution pie chart
-    error_labels = ['True Positive', 'True Negative', 'False Positive', 'False Negative']
-    error_values = [total_tp, total_tn, total_fp, total_fn]
-    error_colors = ['green', 'blue', 'red', 'orange']
-    ax3.pie(error_values, labels=error_labels, colors=error_colors, autopct='%1.1f%%', startangle=90)
-    ax3.set_title(f'Classification Results Distribution (Tile Size: {tile_size})')
+    # Second stacked bar chart: x-axis is Actual, color is Predicted
+    x_labels2 = ['Actual Negative', 'Actual Positive']
+    predicted_negative_values = [total_tn, total_fn]  # TN, FN
+    predicted_positive_values = [total_fp, total_tp]  # FP, TP
+    
+    bars3 = ax3.bar(x_labels2, predicted_negative_values, label='Predicted Negative', color='lightgreen', alpha=0.8)
+    bars4 = ax3.bar(x_labels2, predicted_positive_values, bottom=predicted_negative_values, label='Predicted Positive', color='lightcoral', alpha=0.8)
+    
+    # Add value labels on bars
+    for i, (bar3, bar4) in enumerate(zip(bars3, bars4)):
+        # Label for Predicted Negative (bottom)
+        if predicted_negative_values[i] > 0:
+            ax3.text(bar3.get_x() + bar3.get_width()/2, bar3.get_height()/2, 
+                    str(predicted_negative_values[i]), ha='center', va='center', fontweight='bold')
+        
+        # Label for Predicted Positive (top)
+        if predicted_positive_values[i] > 0:
+            ax3.text(bar4.get_x() + bar4.get_width()/2, bar4.get_y() + bar4.get_height()/2, 
+                    str(predicted_positive_values[i]), ha='center', va='center', fontweight='bold')
+    
+    ax3.set_ylabel('Count')
+    ax3.set_title(f'Classification Results by Actual (Tile Size: {tile_size})')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3, axis='y')
     
     # Statistics table
     stats_text = f"""
