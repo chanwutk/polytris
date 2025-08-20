@@ -128,50 +128,7 @@ def load_groundtruth_detections(cache_dir: str, dataset: str, video_file: str) -
     return detections
 
 
-def calculate_tile_overlap(tile_x: int, tile_y: int, tile_size: int, 
-                          detections: list[list[float]]) -> float:
-    """
-    Calculate the overlap ratio between a tile and groundtruth detections.
-    
-    Args:
-        tile_x (int): X coordinate of tile (in tile grid)
-        tile_y (int): Y coordinate of tile (in tile grid)
-        tile_size (int): Size of each tile
-        detections (list[dict]): list of detection dictionaries with 'bbox' key
-        
-    Returns:
-        float: Overlap ratio (0.0 to 1.0) where 0 is no overlap, 1 is full coverage
-    """
-    if not detections:
-        return 0.0
-    
-    # Convert tile coordinates to pixel coordinates
-    tile_pixel_x1 = tile_x * tile_size
-    tile_pixel_y1 = tile_y * tile_size
-    tile_pixel_x2 = tile_pixel_x1 + tile_size
-    tile_pixel_y2 = tile_pixel_y1 + tile_size
-    
-    total_overlap_area = 0.0
-    tile_area = tile_size * tile_size
-    
-    for detection in detections:
-        if len(detection) != 5:
-            continue
-            
-        # bbox format: [track_id, x1, y1, x2, y2]
-        _track_id, det_x1, det_y1, det_x2, det_y2 = detection
-        
-        # Calculate intersection
-        intersect_x1 = max(tile_pixel_x1, det_x1)
-        intersect_y1 = max(tile_pixel_y1, det_y1)
-        intersect_x2 = min(tile_pixel_x2, det_x2)
-        intersect_y2 = min(tile_pixel_y2, det_y2)
-        
-        if intersect_x2 > intersect_x1 and intersect_y2 > intersect_y1:
-            intersection_area = (intersect_x2 - intersect_x1) * (intersect_y2 - intersect_y1)
-            total_overlap_area += intersection_area
-    
-    return min(total_overlap_area / tile_area, 1.0)
+
 
 
 def evaluate_classification_accuracy(classifications: list[list[float]], 
@@ -197,15 +154,50 @@ def evaluate_classification_accuracy(classifications: list[list[float]],
     tn = 0  # True Negative: predicted below threshold, no detection overlap
     fp = 0  # False Positive: predicted above threshold, no detection overlap
     fn = 0  # False Negative: predicted below threshold, has detection overlap
+
+    # Create a bitmap for all detections first
+    # Calculate the total image dimensions based on grid and tile size
+    total_height = grid_height * tile_size
+    total_width = grid_width * tile_size
+    detection_bitmap = np.zeros((total_height, total_width), dtype=np.uint8)
+    
+    # Mark all detections on the bitmap
+    for detection in detections:
+        if len(detection) != 5:
+            continue
+            
+        # bbox format: [track_id, x1, y1, x2, y2]
+        _track_id, det_x1, det_y1, det_x2, det_y2 = detection
+        
+        # Convert to integer coordinates and ensure they're within bitmap bounds
+        det_x1 = max(0, int(det_x1))
+        det_y1 = max(0, int(det_y1))
+        det_x2 = min(total_width, int(det_x2))
+        det_y2 = min(total_height, int(det_y2))
+        
+        assert det_x2 > det_x1 and det_y2 > det_y1, f"Invalid detection: {detection}"
+        detection_bitmap[det_y1:det_y2, det_x1:det_x2] = 1
     
     error_map = np.zeros((grid_height, grid_width), dtype=int)
     overlap_ratios = []
     classification_scores = []
     
+    # Extract tile regions from the detection bitmap and calculate overlap ratios
     for i in range(grid_height):
         for j in range(grid_width):
             score = classifications[i][j]
-            overlap = calculate_tile_overlap(j, i, tile_size, detections)
+            
+            # Calculate tile boundaries in the bitmap
+            tile_start_y = i * tile_size
+            tile_end_y = tile_start_y + tile_size
+            tile_start_x = j * tile_size
+            tile_end_x = tile_start_x + tile_size
+            
+            # Extract tile region from detection bitmap
+            tile_region = detection_bitmap[tile_start_y:tile_end_y, tile_start_x:tile_end_x]
+            
+            # Calculate overlap ratio: count of 1s divided by total pixels
+            overlap = float(np.sum(tile_region)) / (tile_size * tile_size)
             
             # Store data for scatter plot
             overlap_ratios.append(overlap)
