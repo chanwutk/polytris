@@ -159,7 +159,7 @@ def evaluate_classification_accuracy(classifications: list[list[float]],
     # Calculate the total image dimensions based on grid and tile size
     total_height = grid_height * tile_size
     total_width = grid_width * tile_size
-    detection_bitmap = np.zeros((total_height, total_width), dtype=np.uint8)
+    detection_bitmap = np.zeros((total_height, total_width), dtype=np.uint32)
     
     # Mark all detections on the bitmap
     for detection in detections:
@@ -415,7 +415,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     ax4.axis('off')
     
     plt.tight_layout()
-    overall_summary_path = os.path.join(output_dir, f'overall_summary_tile{tile_size}.png')
+    overall_summary_path = os.path.join(output_dir, f'010_overall_summary_tile{tile_size}.png')
     plt.savefig(overall_summary_path, dpi=300, bbox_inches='tight')
     plt.close()
     
@@ -449,7 +449,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    time_series_path = os.path.join(output_dir, f'time_series_tile{tile_size}.png')
+    time_series_path = os.path.join(output_dir, f'020_time_series_tile{tile_size}.png')
     plt.savefig(time_series_path, dpi=300, bbox_inches='tight')
     plt.close()
     
@@ -475,7 +475,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.xlabel('Tile X Position')
     plt.ylabel('Tile Y Position')
     
-    error_heatmap_path = os.path.join(output_dir, f'error_heatmap_tile{tile_size}.png')
+    error_heatmap_path = os.path.join(output_dir, f'030_error_heatmap_tile{tile_size}.png')
     plt.savefig(error_heatmap_path, dpi=300, bbox_inches='tight')
     plt.close()
     
@@ -546,7 +546,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         plt.title(f'Incorrect Predictions (Tile Size: {tile_size})')
     
     plt.tight_layout()
-    scatter_path = os.path.join(output_dir, f'heatmap_overlap_tile{tile_size}.png')
+    scatter_path = os.path.join(output_dir, f'040_heatmap_overlap_tile{tile_size}.png')
     plt.savefig(scatter_path, dpi=300, bbox_inches='tight')
     plt.close()
     
@@ -600,7 +600,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     ax4.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    detailed_metrics_path = os.path.join(output_dir, f'detailed_metrics_tile{tile_size}.png')
+    detailed_metrics_path = os.path.join(output_dir, f'050_detailed_metrics_tile{tile_size}.png')
     plt.savefig(detailed_metrics_path, dpi=300, bbox_inches='tight')
     plt.close()
     
