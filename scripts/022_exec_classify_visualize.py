@@ -7,6 +7,9 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from typing import Any
+import multiprocessing as mp
+from functools import partial
 
 
 DATA_DIR = '/polyis-data/video-datasets-low'
@@ -24,6 +27,7 @@ def parse_args():
             - tile_size (int | str): Tile size to use for classification (choices: 32, 64, 128, 'all')
             - threshold (float): Threshold for classification visualization (default: 0.5)
             - groundtruth (bool): Whether to use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)
+            - statistics (bool): Whether to compare classification results with groundtruth and generate statistics
     """
     parser = argparse.ArgumentParser(description='Visualize video tile classification results')
     parser.add_argument('--dataset', required=False,
@@ -35,6 +39,8 @@ def parse_args():
                         help='Threshold for classification visualization (0.0 to 1.0)')
     parser.add_argument('--groundtruth', action='store_true',
                         help='Use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)')
+    parser.add_argument('--statistics', action='store_true',
+                        help='Compare classification results with groundtruth and generate statistics (no video output, ignores --groundtruth flag)')
     return parser.parse_args()
 
 
@@ -50,7 +56,7 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str, t
         groundtruth (bool): Whether to use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)
         
     Returns:
-        list: List of frame classification results, each containing frame data and classifications
+        list: list of frame classification results, each containing frame data and classifications
         
     Raises:
         FileNotFoundError: If no classification results file is found
@@ -62,7 +68,12 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str, t
     if groundtruth:
         expected_filename = 'score_correct.jsonl'
     else:
-        expected_filename = 'score.jsonl'
+        # Find any file that starts with "score", ends with ".jsonl", but is not "score_correct.jsonl"
+        possible_files = [f for f in os.listdir(score_dir)
+                          if f.startswith('score') and f.endswith('.jsonl') and f != 'score_correct.jsonl']
+        if not possible_files:
+            raise FileNotFoundError(f"No classification results file found in {score_dir} (excluding score_correct.jsonl)")
+        expected_filename = possible_files[0]
     
     # Look for the specific results file
     results_file = os.path.join(score_dir, expected_filename)
@@ -80,6 +91,469 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str, t
     
     print(f"Loaded {len(results)} frame classifications")
     return results
+
+
+def load_groundtruth_detections(cache_dir: str, dataset: str, video_file: str) -> list[dict]:
+    """
+    Load groundtruth detection annotations for a video.
+    
+    Args:
+        cache_dir (str): Cache directory path
+        dataset (str): Dataset name
+        video_file (str): Video file name
+        
+    Returns:
+        list[list[dict]]: list of frame detections, each frame containing a list of detection dictionaries
+                          with 'bbox' (x1, y1, x2, y2) and other annotation data
+        
+    Raises:
+        FileNotFoundError: If no groundtruth file is found
+    """
+    # Look for groundtruth annotations file
+    gt_dir = os.path.join(cache_dir, dataset, video_file, 'groundtruth')
+    gt_file = os.path.join(gt_dir, 'tracking.jsonl')
+    
+    if not os.path.exists(gt_file):
+        raise FileNotFoundError(f"Groundtruth file not found: {gt_file}")
+    
+    print(f"Loading groundtruth detections from: {gt_file}")
+    
+    detections = []
+    with open(gt_file, 'r') as f:
+        for line in f:
+            if line.strip():
+                detections.append(json.loads(line))
+    
+    print(f"Loaded {len(detections)} frame detections")
+    return detections
+
+
+def calculate_tile_overlap(tile_x: int, tile_y: int, tile_size: int, 
+                          detections: list[list[float]]) -> float:
+    """
+    Calculate the overlap ratio between a tile and groundtruth detections.
+    
+    Args:
+        tile_x (int): X coordinate of tile (in tile grid)
+        tile_y (int): Y coordinate of tile (in tile grid)
+        tile_size (int): Size of each tile
+        detections (list[dict]): list of detection dictionaries with 'bbox' key
+        
+    Returns:
+        float: Overlap ratio (0.0 to 1.0) where 0 is no overlap, 1 is full coverage
+    """
+    if not detections:
+        return 0.0
+    
+    # Convert tile coordinates to pixel coordinates
+    tile_pixel_x1 = tile_x * tile_size
+    tile_pixel_y1 = tile_y * tile_size
+    tile_pixel_x2 = tile_pixel_x1 + tile_size
+    tile_pixel_y2 = tile_pixel_y1 + tile_size
+    
+    total_overlap_area = 0.0
+    tile_area = tile_size * tile_size
+    
+    for detection in detections:
+        if len(detection) != 5:
+            continue
+            
+        # bbox format: [track_id, x1, y1, x2, y2]
+        _track_id, det_x1, det_y1, det_x2, det_y2 = detection
+        
+        # Calculate intersection
+        intersect_x1 = max(tile_pixel_x1, det_x1)
+        intersect_y1 = max(tile_pixel_y1, det_y1)
+        intersect_x2 = min(tile_pixel_x2, det_x2)
+        intersect_y2 = min(tile_pixel_y2, det_y2)
+        
+        if intersect_x2 > intersect_x1 and intersect_y2 > intersect_y1:
+            intersection_area = (intersect_x2 - intersect_x1) * (intersect_y2 - intersect_y1)
+            total_overlap_area += intersection_area
+    
+    return min(total_overlap_area / tile_area, 1.0)
+
+
+def evaluate_classification_accuracy(classifications: list[list[float]], 
+                                   detections: list[list[float]], 
+                                   tile_size: int, threshold: float) -> dict[str, Any]:
+    """
+    Evaluate classification accuracy by comparing predictions with groundtruth detections.
+    
+    Args:
+        classifications (list[list[float]]): 2D grid of classification scores
+        detections (list[dict]): list of detection dictionaries
+        tile_size (int): Size of each tile
+        threshold (float): Classification threshold
+        
+    Returns:
+        dict: dictionary containing evaluation metrics and error details
+    """
+    grid_height = len(classifications)
+    grid_width = len(classifications[0]) if grid_height > 0 else 0
+    
+    # Initialize counters
+    tp = 0  # True Positive: predicted above threshold, has detection overlap
+    tn = 0  # True Negative: predicted below threshold, no detection overlap
+    fp = 0  # False Positive: predicted above threshold, no detection overlap
+    fn = 0  # False Negative: predicted below threshold, has detection overlap
+    
+    error_map = np.zeros((grid_height, grid_width), dtype=int)
+    overlap_ratios = []
+    classification_scores = []
+    
+    for i in range(grid_height):
+        for j in range(grid_width):
+            score = classifications[i][j]
+            overlap = calculate_tile_overlap(j, i, tile_size, detections)
+            
+            # Store data for scatter plot
+            overlap_ratios.append(overlap)
+            classification_scores.append(score)
+            
+            # Determine prediction
+            predicted_positive = score >= threshold
+            actual_positive = overlap > 0.0
+            
+            # Count metrics
+            if predicted_positive and actual_positive:
+                tp += 1
+            elif predicted_positive and not actual_positive:
+                fp += 1
+                error_map[i, j] = 1  # False positive error
+            elif not predicted_positive and actual_positive:
+                fn += 1
+                error_map[i, j] = 2  # False negative error
+            else:
+                tn += 1
+    
+    # Calculate precision, recall, and accuracy
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0.0
+    f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+    
+    return {
+        'tp': tp, 'tn': tn, 'fp': fp, 'fn': fn,
+        'precision': precision, 'recall': recall, 'accuracy': accuracy, 'f1_score': f1_score,
+        'error_map': error_map,
+        'overlap_ratios': overlap_ratios,
+        'classification_scores': classification_scores,
+        'total_tiles': grid_height * grid_width
+    }
+
+
+def _evaluate_frame_worker(args):
+    """
+    Worker function to evaluate a single frame for multiprocessing.
+    
+    Args:
+        args: Tuple containing (frame_result, frame_detections, tile_size, threshold)
+        
+    Returns:
+        dict: Frame evaluation results
+    """
+    frame_result, frame_detections, tile_size, threshold = args
+    
+    # Validate frame data
+    assert 'tracks' in frame_detections, f"tracks not in frame_detections: {frame_detections}"
+    
+    classifications = frame_result['tile_classifications']
+    
+    # Evaluate this frame
+    frame_eval = evaluate_classification_accuracy(
+        classifications, frame_detections['tracks'], tile_size, threshold
+    )
+    
+    return frame_eval
+
+
+def create_statistics_visualizations(video_file: str, results: list[dict], 
+                                   groundtruth_detections: list[dict], 
+                                   tile_size: int, threshold: float, 
+                                   output_dir: str):
+    """
+    Create comprehensive statistics visualizations comparing classification results with groundtruth.
+    
+    Args:
+        video_file (str): Name of the video file
+        results (list[dict]): Classification results
+        groundtruth_detections (list[list[dict]]): Groundtruth detections per frame
+        tile_size (int): Tile size used for classification
+        threshold (float): Classification threshold
+        output_dir (str): Directory to save visualizations
+    """
+    print(f"Creating statistics visualizations for {video_file}")
+    
+    # Create output directory
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Collect frame-by-frame metrics
+    frame_metrics = []
+    all_overlap_ratios = []
+    all_classification_scores = []
+    all_error_counts = []
+    
+    print(f"Evaluating {len(results)} frames using multiprocessing")
+    
+    # Prepare arguments for parallel processing
+    # Validate frame indices first
+    for frame_idx, (frame_result, frame_detections) in enumerate(zip(results, groundtruth_detections)):
+        assert frame_idx == frame_result['frame_idx'], f"frame_idx mismatch: {frame_idx} != {frame_result['frame_idx']}"
+    
+    # Create arguments for worker function
+    worker_args = [(frame_result, frame_detections, tile_size, threshold) 
+                   for frame_result, frame_detections in zip(results, groundtruth_detections)]
+    
+    # Use multiprocessing to evaluate frames in parallel
+    num_processes = min(mp.cpu_count(), len(results))
+    with mp.Pool(processes=num_processes) as pool:
+        frame_evals = list(tqdm(
+            pool.imap(_evaluate_frame_worker, worker_args),
+            total=len(results),
+            desc="Evaluating frames"
+        ))
+    
+    # Collect results from parallel processing
+    for frame_eval in frame_evals:
+        frame_metrics.append(frame_eval)
+        all_overlap_ratios.extend(frame_eval['overlap_ratios'])
+        all_classification_scores.extend(frame_eval['classification_scores'])
+        all_error_counts.append(frame_eval['error_map'])
+    
+    # Aggregate overall metrics
+    total_tp = sum(m['tp'] for m in frame_metrics)
+    total_tn = sum(m['tn'] for m in frame_metrics)
+    total_fp = sum(m['fp'] for m in frame_metrics)
+    total_fn = sum(m['fn'] for m in frame_metrics)
+    
+    overall_precision = total_tp / (total_tp + total_fp) if (total_tp + total_fp) > 0 else 0.0
+    overall_recall = total_tp / (total_tp + total_fn) if (total_tp + total_fn) > 0 else 0.0
+    overall_accuracy = (total_tp + total_tn) / (total_tp + total_tn + total_fp + total_fn) if (total_tp + total_tn + total_fp + total_fn) > 0 else 0.0
+    overall_f1 = 2 * (overall_precision * overall_recall) / (overall_precision + overall_recall) if (overall_precision + overall_recall) > 0 else 0.0
+    
+    # 1. Overall classification error summary
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+    
+    # Confusion matrix
+    confusion_matrix = np.array([[total_tn, total_fp], [total_fn, total_tp]])
+    # Use matplotlib heatmap
+    ax1.imshow(confusion_matrix, cmap='Blues', interpolation='nearest')
+    for i in range(confusion_matrix.shape[0]):
+        for j in range(confusion_matrix.shape[1]):
+            ax1.text(j, i, str(confusion_matrix[i, j]), 
+                    ha='center', va='center', color='white', fontweight='bold')
+    ax1.set_xticks(range(confusion_matrix.shape[1]))
+    ax1.set_yticks(range(confusion_matrix.shape[0]))
+    ax1.set_xticklabels(['Predicted Negative', 'Predicted Positive'])
+    ax1.set_yticklabels(['Actual Negative', 'Actual Positive'])
+    
+    ax1.set_title(f'Confusion Matrix (Tile Size: {tile_size})')
+    
+    # Metrics bar chart
+    metrics = ['Precision', 'Recall', 'Accuracy', 'F1-Score']
+    values = [overall_precision, overall_recall, overall_accuracy, overall_f1]
+    colors = ['skyblue', 'lightgreen', 'lightcoral', 'gold']
+    bars = ax2.bar(metrics, values, color=colors, alpha=0.7)
+    ax2.set_ylabel('Score')
+    ax2.set_title(f'Overall Classification Metrics (Tile Size: {tile_size})')
+    ax2.set_ylim(0, 1)
+    for bar, value in zip(bars, values):
+        ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01, 
+                f'{value:.3f}', ha='center', va='bottom')
+    
+    # Error distribution pie chart
+    error_labels = ['True Positive', 'True Negative', 'False Positive', 'False Negative']
+    error_values = [total_tp, total_tn, total_fp, total_fn]
+    error_colors = ['green', 'blue', 'red', 'orange']
+    ax3.pie(error_values, labels=error_labels, colors=error_colors, autopct='%1.1f%%', startangle=90)
+    ax3.set_title(f'Classification Results Distribution (Tile Size: {tile_size})')
+    
+    # Statistics table
+    stats_text = f"""
+    Total Tiles: {sum(m['total_tiles'] for m in frame_metrics):,}
+    
+    True Positives: {total_tp:,}
+    True Negatives: {total_tn:,}
+    False Positives: {total_fp:,}
+    False Negatives: {total_fn:,}
+    
+    Precision: {overall_precision:.4f}
+    Recall: {overall_recall:.4f}
+    Accuracy: {overall_accuracy:.4f}
+    F1-Score: {overall_f1:.4f}
+    
+    Threshold: {threshold}
+    """
+    
+    ax4.text(0.1, 0.9, stats_text, transform=ax4.transAxes, fontsize=10,
+             verticalalignment='top', fontfamily='monospace',
+             bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.8))
+    ax4.set_xlim(0, 1)
+    ax4.set_ylim(0, 1)
+    ax4.set_title(f'Overall Statistics Summary (Tile Size: {tile_size})')
+    ax4.axis('off')
+    
+    plt.tight_layout()
+    overall_summary_path = os.path.join(output_dir, f'overall_summary_tile{tile_size}.png')
+    plt.savefig(overall_summary_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # 2. Classification error over time
+    plt.figure(figsize=(15, 8))
+    
+    frame_indices = list(range(len(frame_metrics)))
+    error_rates = [(m['fp'] + m['fn']) / m['total_tiles'] for m in frame_metrics]
+    precision_rates = [m['precision'] for m in frame_metrics]
+    recall_rates = [m['recall'] for m in frame_metrics]
+    
+    plt.subplot(2, 1, 1)
+    plt.plot(frame_indices, error_rates, 'r-', linewidth=2, label='Error Rate')
+    mean_error = float(np.mean(error_rates))
+    plt.axhline(y=mean_error, color='red', linestyle='--', alpha=0.7, label=f'Mean Error: {mean_error:.3f}')
+    plt.xlabel('Frame Index')
+    plt.ylabel('Error Rate')
+    plt.title(f'Classification Error Rate Over Time (Tile Size: {tile_size})')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    plt.subplot(2, 1, 2)
+    plt.plot(frame_indices, precision_rates, 'g-', linewidth=2, label='Precision')
+    plt.plot(frame_indices, recall_rates, 'b-', linewidth=2, label='Recall')
+    plt.axhline(y=float(overall_precision), color='green', linestyle='--', alpha=0.7, label=f'Overall Precision: {overall_precision:.3f}')
+    plt.axhline(y=float(overall_recall), color='blue', linestyle='--', alpha=0.7, label=f'Overall Recall: {overall_recall:.3f}')
+    plt.xlabel('Frame Index')
+    plt.ylabel('Score')
+    plt.title(f'Precision and Recall Over Time (Tile Size: {tile_size})')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    time_series_path = os.path.join(output_dir, f'time_series_tile{tile_size}.png')
+    plt.savefig(time_series_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # 3. Heatmap of error count for each tile
+    # Aggregate error maps across all frames
+    grid_height = len(frame_metrics[0]['error_map'])
+    grid_width = len(frame_metrics[0]['error_map'][0])
+    aggregated_error_map = np.zeros((grid_height, grid_width), dtype=int)
+    
+    for error_map in all_error_counts:
+        aggregated_error_map += error_map
+    
+    plt.figure(figsize=(12, 8))
+    # Use matplotlib heatmap
+    plt.imshow(aggregated_error_map, cmap='Reds', interpolation='nearest')
+    for i in range(aggregated_error_map.shape[0]):
+        for j in range(aggregated_error_map.shape[1]):
+            plt.text(j, i, str(aggregated_error_map[i, j]), 
+                    ha='center', va='center', color='black', fontweight='bold')
+    plt.colorbar(label='Error Count')
+    
+    plt.title(f'Cumulative Error Count per Tile (Tile Size: {tile_size})\nRed: False Positive, Orange: False Negative')
+    plt.xlabel('Tile X Position')
+    plt.ylabel('Tile Y Position')
+    
+    error_heatmap_path = os.path.join(output_dir, f'error_heatmap_tile{tile_size}.png')
+    plt.savefig(error_heatmap_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # 4. Scatter plot: threshold vs overlap ratio
+    plt.figure(figsize=(12, 8))
+    
+    # Create scatter plot with color coding based on classification correctness
+    correct_predictions: list[int] = []
+    incorrect_predictions: list[int] = []
+    for i, (score, overlap) in enumerate(zip(all_classification_scores, all_overlap_ratios)):
+        predicted_positive = score >= threshold
+        actual_positive = overlap > 0.0
+        if predicted_positive == actual_positive:
+            correct_predictions.append(i)
+        else:
+            incorrect_predictions.append(i)
+    
+    # correct_predictions = np.array(correct_predictions)
+    # incorrect_predictions = np.array(incorrect_predictions)
+    np_all_classification_scores = np.array(all_classification_scores)
+    np_all_overlap_ratios = np.array(all_overlap_ratios)
+    
+    plt.scatter(np_all_classification_scores[correct_predictions], 
+                np_all_overlap_ratios[correct_predictions], 
+                c='green', alpha=0.6, s=20, label='Correct Predictions')
+    plt.scatter(np_all_classification_scores[incorrect_predictions], 
+                np_all_overlap_ratios[incorrect_predictions], 
+                c='red', alpha=0.6, s=20, label='Incorrect Predictions')
+    
+    plt.axvline(x=threshold, color='black', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
+    plt.axhline(y=0.0, color='gray', linestyle='-', alpha=0.5)
+    
+    plt.xlabel('Classification Score')
+    plt.ylabel('Detection Overlap Ratio')
+    plt.title(f'Classification Score vs Detection Overlap (Tile Size: {tile_size})\nGreen: Correct, Red: Incorrect')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    scatter_path = os.path.join(output_dir, f'scatter_overlap_tile{tile_size}.png')
+    plt.savefig(scatter_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # 5. Detailed metrics plot
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+    
+    # Precision, Recall, F1 over time
+    ax1.plot(frame_indices, precision_rates, 'g-', linewidth=2, label='Precision')
+    ax1.plot(frame_indices, recall_rates, 'b-', linewidth=2, label='Recall')
+    ax1.plot(frame_indices, [m['f1_score'] for m in frame_metrics], 'orange', linewidth=2, label='F1-Score')
+    ax1.axhline(y=float(overall_precision), color='green', linestyle='--', alpha=0.7)
+    ax1.axhline(y=float(overall_recall), color='blue', linestyle='--', alpha=0.7)
+    ax1.axhline(y=float(overall_f1), color='orange', linestyle='--', alpha=0.7)
+    ax1.set_xlabel('Frame Index')
+    ax1.set_ylabel('Score')
+    ax1.set_title(f'Precision, Recall, F1 Over Time (Tile Size: {tile_size})')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    
+    # True Positive, True Negative over time
+    tp_counts = [m['tp'] for m in frame_metrics]
+    tn_counts = [m['tn'] for m in frame_metrics]
+    ax2.plot(frame_indices, tp_counts, 'g-', linewidth=2, label='True Positives')
+    ax2.plot(frame_indices, tn_counts, 'b-', linewidth=2, label='True Negatives')
+    ax2.set_xlabel('Frame Index')
+    ax2.set_ylabel('Count')
+    ax2.set_title(f'True Positives and Negatives Over Time (Tile Size: {tile_size})')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    
+    # False Positive, False Negative over time
+    fp_counts = [m['fp'] for m in frame_metrics]
+    fn_counts = [m['fn'] for m in frame_metrics]
+    ax3.plot(frame_indices, fp_counts, 'r-', linewidth=2, label='False Positives')
+    ax3.plot(frame_indices, fn_counts, 'orange', linewidth=2, label='False Negatives')
+    ax3.set_xlabel('Frame Index')
+    ax3.set_ylabel('Count')
+    ax3.set_title(f'False Positives and Negatives Over Time (Tile Size: {tile_size})')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+    
+    # Error rate breakdown
+    fp_rates = [m['fp'] / m['total_tiles'] for m in frame_metrics]
+    fn_rates = [m['fn'] / m['total_tiles'] for m in frame_metrics]
+    ax4.plot(frame_indices, fp_rates, 'r-', linewidth=2, label='False Positive Rate')
+    ax4.plot(frame_indices, fn_rates, 'orange', linewidth=2, label='False Negative Rate')
+    ax4.set_xlabel('Frame Index')
+    ax4.set_ylabel('Rate')
+    ax4.set_title(f'False Positive and Negative Rates Over Time (Tile Size: {tile_size})')
+    ax4.legend()
+    ax4.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    detailed_metrics_path = os.path.join(output_dir, f'detailed_metrics_tile{tile_size}.png')
+    plt.savefig(detailed_metrics_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    print(f"Saved statistics visualizations to: {output_dir}")
+    print(f"Overall Metrics - Precision: {overall_precision:.3f}, Recall: {overall_recall:.3f}, F1: {overall_f1:.3f}")
 
 
 def create_visualization_frame(frame: np.ndarray, classifications: list[list[float]], 
@@ -222,7 +696,7 @@ def save_visualization_frames(video_path: str, results: list, tile_size: int,
     
     Args:
         video_path (str): Path to the input video file
-        results (list): List of classification results from load_classification_results
+        results (list): list of classification results from load_classification_results
         tile_size (int): Tile size used for classification
         threshold (float): Threshold value for visualization
         output_dir (str): Directory to save visualization video
@@ -300,7 +774,7 @@ def create_summary_visualization(results: list, tile_size: int, threshold: float
     Create a summary visualization showing classification statistics.
     
     Args:
-        results (list): List of classification results
+        results (list): list of classification results
         tile_size (int): Tile size used for classification
         threshold (float): Threshold value for visualization
         output_dir (str): Directory to save summary visualization
@@ -392,6 +866,7 @@ def main(args):
     2. Iterates through all videos in the dataset directory
     3. For each video, loads the classification results for the specified tile size(s)
     4. Creates visualizations showing tile classifications and brightness adjustments
+    5. If --statistics flag is set, compares results with groundtruth and generates statistics
     
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
@@ -399,6 +874,7 @@ def main(args):
             - tile_size (str): Tile size to use for classification ('32', '64', '128', or 'all')
             - threshold (float): Threshold value for visualization (0.0 to 1.0)
             - groundtruth (bool): Whether to use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)
+            - statistics (bool): Whether to compare classification results with groundtruth and generate statistics
             
          Note:
          - The script expects classification results from 020_exec_classify.py in:
@@ -409,6 +885,8 @@ def main(args):
          - Visualizations are saved to {CACHE_DIR}/{dataset}/{video_file}/relevancy/proxy_{tile_size}/
          - The script creates a video file (visualization.mp4) showing brightness-adjusted frames
          - Summary statistics and plots are also generated
+         - When --statistics is set, groundtruth comparison visualizations are generated instead of video output
+         - When --statistics is set, the --groundtruth flag is automatically ignored (always uses model predictions)
     """
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
     
@@ -429,6 +907,13 @@ def main(args):
     
     print(f"Using threshold: {args.threshold}")
     
+    if args.statistics:
+        print("Running in statistics mode - comparing classification results with groundtruth")
+        print("Note: --groundtruth flag is ignored in statistics mode (using model predictions)")
+        use_model_scores = False
+    else:
+        use_model_scores = args.groundtruth
+    
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
     
@@ -436,7 +921,7 @@ def main(args):
         print(f"No video files found in {dataset_dir}")
         return
     
-    print(f"Found {len(video_files)} video files to visualize")
+    print(f"Found {len(video_files)} video files to process")
     
     # Process each video file
     for video_file in video_files:
@@ -449,26 +934,48 @@ def main(args):
             print(f"Processing tile size: {tile_size}")
             
             try:
-                # Load classification results
-                results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, args.groundtruth)
+                # Load classification results (model predictions for statistics mode)
+                results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, use_model_scores)
                 
-                # Create output directory for visualizations
-                vis_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'proxy_{tile_size}')
-                
-                # Create visualizations
-                save_visualization_frames(video_file_path, results, tile_size, args.threshold, vis_output_dir)
-                
-                # Create summary visualization
-                create_summary_visualization(results, tile_size, args.threshold, vis_output_dir)
-                
-                print(f"Completed visualizations for tile size {tile_size}")
+                if args.statistics:
+                    # Load groundtruth detections for comparison
+                    try:
+                        groundtruth_detections = load_groundtruth_detections(CACHE_DIR, args.dataset, video_file)
+                        
+                        # Create output directory for statistics visualizations
+                        stats_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'proxy_{tile_size}', 'statistics')
+                        
+                        # Create statistics visualizations
+                        create_statistics_visualizations(
+                            video_file, results, groundtruth_detections, 
+                            tile_size, args.threshold, stats_output_dir
+                        )
+                        
+                        print(f"Completed statistics analysis for tile size {tile_size}")
+                        
+                    except FileNotFoundError as e:
+                        print(f"Warning: Could not load groundtruth for statistics: {e}")
+                        print(f"Skipping statistics mode for tile size {tile_size}")
+                        continue
+                        
+                else:
+                    # Create output directory for visualizations
+                    vis_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'proxy_{tile_size}')
+                    
+                    # Create visualizations
+                    save_visualization_frames(video_file_path, results, tile_size, args.threshold, vis_output_dir)
+                    
+                    # Create summary visualization
+                    create_summary_visualization(results, tile_size, args.threshold, vis_output_dir)
+                    
+                    print(f"Completed visualizations for tile size {tile_size}")
                 
             except FileNotFoundError as e:
                 print(f"Warning: {e}, skipping tile size {tile_size} for video {video_file}")
-                continue
+                raise e
             except Exception as e:
                 print(f"Error processing tile size {tile_size} for video {video_file}: {e}")
-                continue
+                raise e
 
 
 if __name__ == '__main__':
