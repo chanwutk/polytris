@@ -427,26 +427,61 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     precision_rates = [m['precision'] for m in frame_metrics]
     recall_rates = [m['recall'] for m in frame_metrics]
     
+    # Calculate number of objects per frame (detections with overlap > 0)
+    objects_per_frame = []
+    for frame_detection in groundtruth_detections:
+        assert 'tracks' in frame_detection, f"Frame detection does not contain tracks: {frame_detection}"
+        # Count detections that have any overlap with tiles
+        object_count = len([det for det in frame_detection['tracks'] if len(det) == 5])
+        objects_per_frame.append(object_count)
+    
     plt.subplot(2, 1, 1)
-    plt.plot(frame_indices, error_rates, 'r-', linewidth=2, label='Error Rate')
+    ax1 = plt.gca()
+    ax2 = ax1.twinx()
+    
+    # Plot error rate on primary y-axis
+    line1 = ax1.plot(frame_indices, error_rates, 'r-', linewidth=2, label='Error Rate')
     mean_error = float(np.mean(error_rates))
-    plt.axhline(y=mean_error, color='red', linestyle='--', alpha=0.7, label=f'Mean Error: {mean_error:.3f}')
-    plt.xlabel('Frame Index')
-    plt.ylabel('Error Rate')
-    plt.title(f'Classification Error Rate Over Time (Tile Size: {tile_size})')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
+    ax1.axhline(y=mean_error, color='red', linestyle='--', alpha=0.7, label=f'Mean Error: {mean_error:.3f}')
+    ax1.set_xlabel('Frame Index')
+    ax1.set_ylabel('Error Rate', color='red')
+    ax1.tick_params(axis='y', labelcolor='red')
+    ax1.set_title(f'Classification Error Rate Over Time (Tile Size: {tile_size})')
+    ax1.grid(True, alpha=0.3)
+    
+    # Plot object count on secondary y-axis
+    line2 = ax2.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
+    ax2.set_ylabel('Object Count', color='purple')
+    ax2.tick_params(axis='y', labelcolor='purple')
+    
+    # Combine legends
+    lines = line1 + line2
+    labels = [str(l.get_label()) for l in lines]
+    ax1.legend(lines, labels, loc='upper right')
     
     plt.subplot(2, 1, 2)
-    plt.plot(frame_indices, precision_rates, 'g-', linewidth=2, label='Precision')
-    plt.plot(frame_indices, recall_rates, 'b-', linewidth=2, label='Recall')
-    plt.axhline(y=float(overall_precision), color='green', linestyle='--', alpha=0.7, label=f'Overall Precision: {overall_precision:.3f}')
-    plt.axhline(y=float(overall_recall), color='blue', linestyle='--', alpha=0.7, label=f'Overall Recall: {overall_recall:.3f}')
-    plt.xlabel('Frame Index')
-    plt.ylabel('Score')
-    plt.title(f'Precision and Recall Over Time (Tile Size: {tile_size})')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
+    ax3 = plt.gca()
+    ax4 = ax3.twinx()
+    
+    # Plot precision and recall on primary y-axis
+    line3 = ax3.plot(frame_indices, precision_rates, 'g-', linewidth=2, label='Precision')
+    line4 = ax3.plot(frame_indices, recall_rates, 'b-', linewidth=2, label='Recall')
+    ax3.axhline(y=float(overall_precision), color='green', linestyle='--', alpha=0.7, label=f'Overall Precision: {overall_precision:.3f}')
+    ax3.axhline(y=float(overall_recall), color='blue', linestyle='--', alpha=0.7, label=f'Overall Recall: {overall_recall:.3f}')
+    ax3.set_xlabel('Frame Index')
+    ax3.set_ylabel('Score')
+    ax3.set_title(f'Precision and Recall Over Time (Tile Size: {tile_size})')
+    ax3.grid(True, alpha=0.3)
+    
+    # Plot object count on secondary y-axis
+    line5 = ax4.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
+    ax4.set_ylabel('Object Count', color='purple')
+    ax4.tick_params(axis='y', labelcolor='purple')
+    
+    # Combine legends
+    lines = line3 + line4 + line5
+    labels = [str(l.get_label()) for l in lines]
+    ax3.legend(lines, labels, loc='upper right')
     
     plt.tight_layout()
     time_series_path = os.path.join(output_dir, f'020_time_series_tile{tile_size}.png')
@@ -559,50 +594,90 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
     
     # Precision, Recall, F1 over time
-    ax1.plot(frame_indices, precision_rates, 'g-', linewidth=2, label='Precision')
-    ax1.plot(frame_indices, recall_rates, 'b-', linewidth=2, label='Recall')
-    ax1.plot(frame_indices, [m['f1_score'] for m in frame_metrics], 'orange', linewidth=2, label='F1-Score')
+    ax1_twin = ax1.twinx()
+    line1 = ax1.plot(frame_indices, precision_rates, 'g-', linewidth=2, label='Precision')
+    line2 = ax1.plot(frame_indices, recall_rates, 'b-', linewidth=2, label='Recall')
+    line3 = ax1.plot(frame_indices, [m['f1_score'] for m in frame_metrics], 'orange', linewidth=2, label='F1-Score')
     ax1.axhline(y=float(overall_precision), color='green', linestyle='--', alpha=0.7)
     ax1.axhline(y=float(overall_recall), color='blue', linestyle='--', alpha=0.7)
     ax1.axhline(y=float(overall_f1), color='orange', linestyle='--', alpha=0.7)
     ax1.set_xlabel('Frame Index')
     ax1.set_ylabel('Score')
     ax1.set_title(f'Precision, Recall, F1 Over Time (Tile Size: {tile_size})')
-    ax1.legend()
     ax1.grid(True, alpha=0.3)
+    
+    # Object count on secondary y-axis
+    line4 = ax1_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
+    ax1_twin.set_ylabel('Object Count', color='purple')
+    ax1_twin.tick_params(axis='y', labelcolor='purple')
+    
+    # Combine legends
+    lines = line1 + line2 + line3 + line4
+    labels = [str(l.get_label()) for l in lines]
+    ax1.legend(lines, labels, loc='upper right')
     
     # True Positive, True Negative over time
     tp_counts = [m['tp'] for m in frame_metrics]
     tn_counts = [m['tn'] for m in frame_metrics]
-    ax2.plot(frame_indices, tp_counts, 'g-', linewidth=2, label='True Positives')
-    ax2.plot(frame_indices, tn_counts, 'b-', linewidth=2, label='True Negatives')
+    ax2_twin = ax2.twinx()
+    line5 = ax2.plot(frame_indices, tp_counts, 'g-', linewidth=2, label='True Positives')
+    line6 = ax2.plot(frame_indices, tn_counts, 'b-', linewidth=2, label='True Negatives')
     ax2.set_xlabel('Frame Index')
     ax2.set_ylabel('Count')
     ax2.set_title(f'True Positives and Negatives Over Time (Tile Size: {tile_size})')
-    ax2.legend()
     ax2.grid(True, alpha=0.3)
+    
+    # Object count on secondary y-axis
+    line7 = ax2_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
+    ax2_twin.set_ylabel('Object Count', color='purple')
+    ax2_twin.tick_params(axis='y', labelcolor='purple')
+    
+    # Combine legends
+    lines = line5 + line6 + line7
+    labels = [str(l.get_label()) for l in lines]
+    ax2.legend(lines, labels, loc='upper right')
     
     # False Positive, False Negative over time
     fp_counts = [m['fp'] for m in frame_metrics]
     fn_counts = [m['fn'] for m in frame_metrics]
-    ax3.plot(frame_indices, fp_counts, 'r-', linewidth=2, label='False Positives')
-    ax3.plot(frame_indices, fn_counts, 'orange', linewidth=2, label='False Negatives')
+    ax3_twin = ax3.twinx()
+    line8 = ax3.plot(frame_indices, fp_counts, 'r-', linewidth=2, label='False Positives')
+    line9 = ax3.plot(frame_indices, fn_counts, 'orange', linewidth=2, label='False Negatives')
     ax3.set_xlabel('Frame Index')
     ax3.set_ylabel('Count')
     ax3.set_title(f'False Positives and Negatives Over Time (Tile Size: {tile_size})')
-    ax3.legend()
     ax3.grid(True, alpha=0.3)
+    
+    # Object count on secondary y-axis
+    line10 = ax3_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
+    ax3_twin.set_ylabel('Object Count', color='purple')
+    ax3_twin.tick_params(axis='y', labelcolor='purple')
+    
+    # Combine legends
+    lines = line8 + line9 + line10
+    labels = [str(l.get_label()) for l in lines]
+    ax3.legend(lines, labels, loc='upper right')
     
     # Error rate breakdown
     fp_rates = [m['fp'] / m['total_tiles'] for m in frame_metrics]
     fn_rates = [m['fn'] / m['total_tiles'] for m in frame_metrics]
-    ax4.plot(frame_indices, fp_rates, 'r-', linewidth=2, label='False Positive Rate')
-    ax4.plot(frame_indices, fn_rates, 'orange', linewidth=2, label='False Negative Rate')
+    ax4_twin = ax4.twinx()
+    line11 = ax4.plot(frame_indices, fp_rates, 'r-', linewidth=2, label='False Positive Rate')
+    line12 = ax4.plot(frame_indices, fn_rates, 'orange', linewidth=2, label='False Negative Rate')
     ax4.set_xlabel('Frame Index')
     ax4.set_ylabel('Rate')
     ax4.set_title(f'False Positive and Negative Rates Over Time (Tile Size: {tile_size})')
-    ax4.legend()
     ax4.grid(True, alpha=0.3)
+    
+    # Object count on secondary y-axis
+    line13 = ax4_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
+    ax4_twin.set_ylabel('Object Count', color='purple')
+    ax4_twin.tick_params(axis='y', labelcolor='purple')
+    
+    # Combine legends
+    lines = line11 + line12 + line13
+    labels = [str(l.get_label()) for l in lines]
+    ax4.legend(lines, labels, loc='upper right')
     
     plt.tight_layout()
     detailed_metrics_path = os.path.join(output_dir, f'050_detailed_metrics_tile{tile_size}.png')
