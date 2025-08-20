@@ -332,8 +332,8 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     actual_negative_values = [total_tn, total_fp]  # TN, FP
     actual_positive_values = [total_fn, total_tp]  # FN, TP
     
-    bars1 = ax1.bar(x_labels, actual_negative_values, label='Actual Negative', color='lightblue', alpha=0.8)
-    bars2 = ax1.bar(x_labels, actual_positive_values, bottom=actual_negative_values, label='Actual Positive', color='lightcoral', alpha=0.8)
+    bars1 = ax1.bar(x_labels, actual_negative_values, label='Actual Negative', color='lightcoral', alpha=0.8)
+    bars2 = ax1.bar(x_labels, actual_positive_values, bottom=actual_negative_values, label='Actual Positive', color='lightgreen', alpha=0.8)
     
     # Add value labels on bars
     for i, (bar1, bar2) in enumerate(zip(bars1, bars2)):
@@ -369,8 +369,8 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     predicted_negative_values = [total_tn, total_fn]  # TN, FN
     predicted_positive_values = [total_fp, total_tp]  # FP, TP
     
-    bars3 = ax3.bar(x_labels2, predicted_negative_values, label='Predicted Negative', color='lightgreen', alpha=0.8)
-    bars4 = ax3.bar(x_labels2, predicted_positive_values, bottom=predicted_negative_values, label='Predicted Positive', color='lightcoral', alpha=0.8)
+    bars3 = ax3.bar(x_labels2, predicted_negative_values, label='Predicted Negative', color='lightcoral', alpha=0.8)
+    bars4 = ax3.bar(x_labels2, predicted_positive_values, bottom=predicted_negative_values, label='Predicted Positive', color='lightgreen', alpha=0.8)
     
     # Add value labels on bars
     for i, (bar3, bar4) in enumerate(zip(bars3, bars4)):
@@ -479,42 +479,74 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.savefig(error_heatmap_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    # 4. Scatter plot: threshold vs overlap ratio
-    plt.figure(figsize=(12, 8))
+    # 4. Heatmaps: Classification Score vs Detection Overlap (split by correctness)
     
-    # Create scatter plot with color coding based on classification correctness
-    correct_predictions: list[int] = []
-    incorrect_predictions: list[int] = []
-    for i, (score, overlap) in enumerate(zip(all_classification_scores, all_overlap_ratios)):
+    # Separate data for correct and incorrect predictions
+    correct_scores = []
+    correct_overlaps = []
+    incorrect_scores = []
+    incorrect_overlaps = []
+    
+    for score, overlap in zip(all_classification_scores, all_overlap_ratios):
         predicted_positive = score >= threshold
         actual_positive = overlap > 0.0
         if predicted_positive == actual_positive:
-            correct_predictions.append(i)
+            correct_scores.append(score)
+            correct_overlaps.append(overlap)
         else:
-            incorrect_predictions.append(i)
+            incorrect_scores.append(score)
+            incorrect_overlaps.append(overlap)
     
-    # correct_predictions = np.array(correct_predictions)
-    # incorrect_predictions = np.array(incorrect_predictions)
-    np_all_classification_scores = np.array(all_classification_scores)
-    np_all_overlap_ratios = np.array(all_overlap_ratios)
+    # Create heatmap for correct predictions
+    plt.figure(figsize=(12, 5))
     
-    plt.scatter(np_all_classification_scores[correct_predictions], 
-                np_all_overlap_ratios[correct_predictions], 
-                c='green', alpha=0.6, s=20, label='Correct Predictions')
-    plt.scatter(np_all_classification_scores[incorrect_predictions], 
-                np_all_overlap_ratios[incorrect_predictions], 
-                c='red', alpha=0.6, s=20, label='Incorrect Predictions')
+    plt.subplot(1, 2, 1)
+    if correct_scores and correct_overlaps:
+        # Create 2D histogram for correct predictions
+        H_correct, xedges_correct, yedges_correct = np.histogram2d(
+            correct_scores, correct_overlaps, bins=50, 
+            range=[[0, 1], [0, 1]]
+        )
+        
+        # Plot heatmap
+        plt.imshow(H_correct.T, origin='lower', extent=(0, 1, 0, 1), 
+                   cmap='Greens', aspect='auto', interpolation='nearest')
+        plt.colorbar(label='Point Count')
+        plt.axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
+        plt.axhline(y=0.0, color='red', linestyle='--', linewidth=1, alpha=0.7)
+        plt.xlabel('Classification Score')
+        plt.ylabel('Detection Overlap Ratio')
+        plt.title(f'Correct Predictions (Tile Size: {tile_size})\nTotal: {len(correct_scores):,}')
+        plt.legend()
+    else:
+        plt.text(0.5, 0.5, 'No correct predictions', ha='center', va='center', transform=plt.gca().transAxes)
+        plt.title(f'Correct Predictions (Tile Size: {tile_size})')
     
-    plt.axvline(x=threshold, color='black', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-    plt.axhline(y=0.0, color='gray', linestyle='-', alpha=0.5)
+    # Create heatmap for incorrect predictions
+    plt.subplot(1, 2, 2)
+    if incorrect_scores and incorrect_overlaps:
+        # Create 2D histogram for incorrect predictions
+        H_incorrect, xedges_incorrect, yedges_incorrect = np.histogram2d(
+            incorrect_scores, incorrect_overlaps, bins=50, 
+            range=[[0, 1], [0, 1]]
+        )
+        
+        # Plot heatmap
+        plt.imshow(H_incorrect.T, origin='lower', extent=(0, 1, 0, 1), 
+                   cmap='Reds', aspect='auto', interpolation='nearest')
+        plt.colorbar(label='Point Count')
+        plt.axvline(x=threshold, color='blue', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
+        plt.axhline(y=0.0, color='blue', linestyle='--', linewidth=1, alpha=0.7)
+        plt.xlabel('Classification Score')
+        plt.ylabel('Detection Overlap Ratio')
+        plt.title(f'Incorrect Predictions (Tile Size: {tile_size})\nTotal: {len(incorrect_scores):,}')
+        plt.legend()
+    else:
+        plt.text(0.5, 0.5, 'No incorrect predictions', ha='center', va='center', transform=plt.gca().transAxes)
+        plt.title(f'Incorrect Predictions (Tile Size: {tile_size})')
     
-    plt.xlabel('Classification Score')
-    plt.ylabel('Detection Overlap Ratio')
-    plt.title(f'Classification Score vs Detection Overlap (Tile Size: {tile_size})\nGreen: Correct, Red: Incorrect')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    
-    scatter_path = os.path.join(output_dir, f'scatter_overlap_tile{tile_size}.png')
+    plt.tight_layout()
+    scatter_path = os.path.join(output_dir, f'heatmap_overlap_tile{tile_size}.png')
     plt.savefig(scatter_path, dpi=300, bbox_inches='tight')
     plt.close()
     
@@ -944,7 +976,7 @@ def main(args):
     print(f"Found {len(video_files)} video files to process")
     
     # Process each video file
-    for video_file in video_files:
+    for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
         
         print(f"\nProcessing video file: {video_file}")
