@@ -325,7 +325,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     overall_f1 = 2 * (overall_precision * overall_recall) / (overall_precision + overall_recall) if (overall_precision + overall_recall) > 0 else 0.0
     
     # 1. Overall classification error summary
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+    fig, ((ax1, ax3), (ax2, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
     
     # First stacked bar chart: x-axis is Predicted, color is Actual
     x_labels = ['Predicted Negative', 'Predicted Positive']
@@ -508,10 +508,12 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
             range=[[0, 1], [0, 1]]
         )
         
-        # Plot heatmap
-        plt.imshow(H_correct.T, origin='lower', extent=(0, 1, 0, 1), 
+        # Plot heatmap with log scale
+        # Add small value to avoid log(0)
+        H_correct_log = np.log10(H_correct + 1)
+        plt.imshow(H_correct_log.T, origin='lower', extent=(0, 1, 0, 1), 
                    cmap='Greens', aspect='auto', interpolation='nearest')
-        plt.colorbar(label='Point Count')
+        plt.colorbar(label='Log10(Point Count + 1)')
         plt.axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         plt.axhline(y=0.0, color='red', linestyle='--', linewidth=1, alpha=0.7)
         plt.xlabel('Classification Score')
@@ -531,10 +533,12 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
             range=[[0, 1], [0, 1]]
         )
         
-        # Plot heatmap
-        plt.imshow(H_incorrect.T, origin='lower', extent=(0, 1, 0, 1), 
+        # Plot heatmap with log scale
+        # Add small value to avoid log(0)
+        H_incorrect_log = np.log10(H_incorrect + 1)
+        plt.imshow(H_incorrect_log.T, origin='lower', extent=(0, 1, 0, 1), 
                    cmap='Reds', aspect='auto', interpolation='nearest')
-        plt.colorbar(label='Point Count')
+        plt.colorbar(label='Log10(Point Count + 1)')
         plt.axvline(x=threshold, color='blue', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         plt.axhline(y=0.0, color='blue', linestyle='--', linewidth=1, alpha=0.7)
         plt.xlabel('Classification Score')
