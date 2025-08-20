@@ -467,8 +467,9 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.imshow(aggregated_error_map, cmap='Reds', interpolation='nearest')
     for i in range(aggregated_error_map.shape[0]):
         for j in range(aggregated_error_map.shape[1]):
-            plt.text(j, i, str(aggregated_error_map[i, j]), 
-                    ha='center', va='center', color='black', fontweight='bold')
+            if aggregated_error_map[i, j] == 0:
+                plt.text(j, i, str(aggregated_error_map[i, j]), 
+                         ha='center', va='center', color='black', fontweight='bold')
     plt.colorbar(label='Error Count')
     
     plt.title(f'Cumulative Error Count per Tile (Tile Size: {tile_size})\nRed: False Positive, Orange: False Negative')
