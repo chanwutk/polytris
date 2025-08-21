@@ -615,6 +615,9 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     lines = line1 + line2 + line3 + line4
     labels = [str(l.get_label()) for l in lines]
     ax1.legend(lines, labels, loc='upper right')
+
+    # Get number of tiles per frame
+    num_tiles_per_frame = frame_metrics[0]['total_tiles']
     
     # True Positive, True Negative over time
     tp_counts = [m['tp'] for m in frame_metrics]
@@ -622,8 +625,9 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     ax2_twin = ax2.twinx()
     line5 = ax2.plot(frame_indices, tp_counts, 'g-', linewidth=2, label='True Positives')
     line6 = ax2.plot(frame_indices, tn_counts, 'b-', linewidth=2, label='True Negatives')
+    ax2.set_yticklabels([f'{int(v)}\n({v * 100 / num_tiles_per_frame:.1f}%)' for v in ax2.get_yticks()])
     ax2.set_xlabel('Frame Index')
-    ax2.set_ylabel('Count')
+    ax2.set_ylabel('Count (% of Tiles)')
     ax2.set_title(f'True Positives and Negatives Over Time (Tile Size: {tile_size})')
     ax2.grid(True, alpha=0.3)
     
@@ -643,8 +647,9 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     ax3_twin = ax3.twinx()
     line8 = ax3.plot(frame_indices, fp_counts, 'r-', linewidth=2, label='False Positives')
     line9 = ax3.plot(frame_indices, fn_counts, 'orange', linewidth=2, label='False Negatives')
+    ax3.set_yticklabels([f'{int(v)}\n({v * 100 / num_tiles_per_frame:.1f}%)' for v in ax3.get_yticks()])
     ax3.set_xlabel('Frame Index')
-    ax3.set_ylabel('Count')
+    ax3.set_ylabel('Count (% of Tiles)')
     ax3.set_title(f'False Positives and Negatives Over Time (Tile Size: {tile_size})')
     ax3.grid(True, alpha=0.3)
     
