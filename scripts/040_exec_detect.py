@@ -4,13 +4,15 @@ import argparse
 import json
 import os
 import time
-
+import numpy as np
 import cv2
 import tqdm
 
 import polyis.models.retinanet_b3d
 
 CACHE_DIR = '/polyis-cache'
+# TILE_SIZES = [32, 64, 128]
+TILE_SIZES = [64]
 
 
 def format_time(**kwargs):
@@ -76,8 +78,10 @@ def detect_retina_packed_images(dataset_dir: str, tile_size: int, dataset_name: 
 
         print(f"Found {len(image_files)} packed images to process")
 
+        runtimes = []
         for image_file in tqdm.tqdm(image_files, desc=f"Processing packed images for tile size {tile_size}"):
             image_path = os.path.join(packing_dir, image_file)
+            runtime: dict = { 'image_file': image_file }
             
             # Read the packed image
             start_time = time.time_ns()
@@ -86,13 +90,13 @@ def detect_retina_packed_images(dataset_dir: str, tile_size: int, dataset_name: 
                 print(f"Warning: Could not read image {image_path}, skipping...")
                 continue
             end_time = time.time_ns()
-            read_time = end_time - start_time
+            runtime['read_time'] = end_time - start_time
 
             # Detect objects in the frame
             start_time = time.time_ns()
             outputs = polyis.models.retinanet_b3d.detect(frame, detector)
             end_time = time.time_ns()
-            detect_time = end_time - start_time
+            runtime['detect_time'] = end_time - start_time
 
             # Extract bounding boxes (x1, y1, x2, y2 format)
             bounding_boxes = outputs[:, :4].tolist()
@@ -102,8 +106,13 @@ def detect_retina_packed_images(dataset_dir: str, tile_size: int, dataset_name: 
             with open(output_file, 'w') as f:
                 for bbox in bounding_boxes:
                     f.write(json.dumps(bbox) + '\n')
+            runtimes.append(runtime)
 
-            print(f"Saved {len(bounding_boxes)} detections to {output_file}")
+            # print(f"Saved {len(bounding_boxes)} detections to {output_file}")
+
+        with open(os.path.join(detections_output_dir, '..', 'runtimes.jsonl'), 'w') as f:
+            for l in runtimes:
+                f.write(json.dumps(l) + '\n')
 
 
 def main(args):
@@ -139,26 +148,7 @@ def main(args):
     
     # Determine which tile sizes to process
     if args.tile_size == 'all':
-        # Check what tile sizes are available by looking at existing packing directories
-        available_tile_sizes = []
-        for video in os.listdir(dataset_dir):
-            video_path = os.path.join(dataset_dir, video)
-            if not os.path.isdir(video_path):
-                continue
-            
-            # Check what tile sizes have packing directories
-            for tile_size in [64, 128]:
-                packing_dir = os.path.join(CACHE_DIR, args.dataset, video, 'packing', f'proxy_{tile_size}', 'images')
-                if os.path.exists(packing_dir):
-                    available_tile_sizes.append(tile_size)
-        
-        # Remove duplicates and sort
-        available_tile_sizes = sorted(list(set(available_tile_sizes)))
-        if not available_tile_sizes:
-            print("No packing directories found for any tile size")
-            return
-        
-        tile_sizes_to_process = available_tile_sizes
+        tile_sizes_to_process = TILE_SIZES
         print(f"Processing all available tile sizes: {tile_sizes_to_process}")
     else:
         tile_sizes_to_process = [int(args.tile_size)]
@@ -193,7 +183,7 @@ def main(args):
                 
             except Exception as e:
                 print(f"Error processing tile size {tile_size} for video {video_file}: {e}")
-                continue
+                raise e
 
 
 if __name__ == '__main__':
