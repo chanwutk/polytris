@@ -8,7 +8,7 @@ import time
 import numpy as np
 import cv2
 import tqdm
-from typing import Dict, List, Tuple, Any
+from typing import Any
 
 CACHE_DIR = '/polyis-cache'
 # TILE_SIZES = [32, 64, 128]
@@ -37,7 +37,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_mapping_file(mapping_path: str) -> Dict[str, Any]:
+def load_mapping_file(mapping_path: str) -> dict[str, Any]:
     """
     Load mapping file that contains the index_map and det_info for unpacking.
     
@@ -45,7 +45,7 @@ def load_mapping_file(mapping_path: str) -> Dict[str, Any]:
         mapping_path (str): Path to the mapping file
         
     Returns:
-        Dict[str, Any]: Mapping information containing index_map, det_info, frame_range, etc.
+        dict[str, Any]: Mapping information containing index_map, det_info, frame_range, etc.
         
     Raises:
         FileNotFoundError: If mapping file doesn't exist
@@ -74,7 +74,7 @@ def load_mapping_file(mapping_path: str) -> Dict[str, Any]:
     return mapping_data
 
 
-def load_detection_file(detection_path: str) -> List[List[float]]:
+def load_detection_file(detection_path: str) -> list[list[float]]:
     """
     Load detection results from a JSONL file.
     
@@ -82,7 +82,7 @@ def load_detection_file(detection_path: str) -> List[List[float]]:
         detection_path (str): Path to the detection file
         
     Returns:
-        List[List[float]]: List of bounding boxes, each as [x1, y1, x2, y2]
+        list[list[float]]: list of bounding boxes, each as [x1, y1, x2, y2]
         
     Raises:
         FileNotFoundError: If detection file doesn't exist
@@ -101,19 +101,19 @@ def load_detection_file(detection_path: str) -> List[List[float]]:
     return detections
 
 
-def unpack_detections(detections: List[List[float]], 
-                     mapping_data: Dict[str, Any], 
-                     tile_size: int) -> Dict[int, List[List[float]]]:
+def unpack_detections(detections: list[list[float]], 
+                     mapping_data: dict[str, Any], 
+                     tile_size: int) -> dict[int, list[list[float]]]:
     """
     Unpack detections from packed coordinates back to original frame coordinates.
     
     Args:
-        detections (List[List[float]]): List of bounding boxes in packed coordinates [x1, y1, x2, y2]
-        mapping_data (Dict[str, Any]): Mapping information from the mapping file
+        detections (list[list[float]]): list of bounding boxes in packed coordinates [x1, y1, x2, y2]
+        mapping_data (dict[str, Any]): Mapping information from the mapping file
         tile_size (int): Size of tiles used for packing
         
     Returns:
-        Dict[int, List[List[float]]]: Dictionary mapping frame indices to lists of bounding boxes
+        dict[int, list[list[float]]]: dictionary mapping frame indices to lists of bounding boxes
                                      in original frame coordinates
     """
     index_map = mapping_data['index_map']
@@ -121,7 +121,7 @@ def unpack_detections(detections: List[List[float]],
     frame_range = mapping_data['frame_range']
     
     # Initialize dictionary to store detections per frame
-    frame_detections: Dict[int, List[List[float]]] = {}
+    frame_detections: dict[int, list[list[float]]] = {}
     
     # Process each detection
     for det in detections:
@@ -210,8 +210,8 @@ def process_video_unpacking(video_file_path: str, tile_size: int, dataset_name: 
     
     print(f"Found {len(detection_files)} detection files to unpack")
     
-    # Dictionary to store all frame detections
-    all_frame_detections: Dict[int, List[List[float]]] = {}
+    # dictionary to store all frame detections
+    all_frame_detections: dict[int, list[list[float]]] = {}
     
     # Process each detection file
     for detection_file in tqdm.tqdm(detection_files, desc=f"Unpacking detections for tile size {tile_size}"):

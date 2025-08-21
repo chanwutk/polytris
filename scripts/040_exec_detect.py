@@ -5,7 +5,6 @@ import json
 import os
 import shutil
 import time
-import numpy as np
 import cv2
 import tqdm
 
@@ -14,10 +13,6 @@ import polyis.models.retinanet_b3d
 CACHE_DIR = '/polyis-cache'
 # TILE_SIZES = [32, 64, 128]
 TILE_SIZES = [64]
-
-
-def format_time(**kwargs):
-    return [{ 'op': op, 'time': time } for op, time in kwargs.items()]
 
 
 def parse_args():

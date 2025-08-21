@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 import shutil
 import time
-from typing import NamedTuple, Tuple
+from typing import NamedTuple
 from queue import Queue
 
 
@@ -96,7 +96,7 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str, t
     return results
 
 
-def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[Tuple[int, int]]:
+def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, int]]:
     """
     Find all connected tiles in the bitmap starting from the tile at (i, j).
     
@@ -107,7 +107,7 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[Tuple[int, 
         j: column index of the starting tile
         
     Returns:
-        list[Tuple[int, int]]: List of tuples representing the coordinates of all connected tiles
+        list[tuple[int, int]]: List of tuples representing the coordinates of all connected tiles
     """
     value = bitmap[i, j]
     q = Queue()
@@ -125,7 +125,7 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[Tuple[int, 
     return filled
 
 
-def group_tiles(bitmap: np.ndarray) -> list[Tuple[int, np.ndarray, Tuple[int, int]]]:
+def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, int]]]:
     """
     Group groups of connected tiles into polyominoes.
     
@@ -134,7 +134,7 @@ def group_tiles(bitmap: np.ndarray) -> list[Tuple[int, np.ndarray, Tuple[int, in
                 where 1 indicates a tile with detection and 0 indicates no detection
                 
     Returns:
-        list[Tuple[int, np.ndarray, Tuple[int, int]]]: List of polyominoes, where each polyomino is:
+        list[tuple[int, np.ndarray, tuple[int, int]]]: List of polyominoes, where each polyomino is:
             - group_id: unique id of the group
             - mask: masking of the polyomino as a 2D numpy array
             - offset: offset of the mask from the top left corner of the bitmap
@@ -149,7 +149,7 @@ def group_tiles(bitmap: np.ndarray) -> list[Tuple[int, np.ndarray, Tuple[int, in
     groups[1:h+1, 1:w+1] = _groups
     
     visited: set[int] = set()
-    bins: list[Tuple[int, np.ndarray, Tuple[int, int]]] = []
+    bins: list[tuple[int, np.ndarray, tuple[int, int]]] = []
     
     for i in range(groups.shape[0]):
         for j in range(groups.shape[1]):
@@ -179,9 +179,8 @@ class PackingFailedException(Exception):
 
 
 
-def pack_append(bins: list[Tuple[int, np.ndarray, Tuple[int, int]]], 
-                h: int, w: int, 
-                bitmap: np.ndarray | None = None) -> Tuple[np.ndarray, list] | None:
+def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]], h: int, w: int, 
+                occupied_tiles: np.ndarray | None = None) -> tuple[np.ndarray, list] | None:
     """
     Pack polyominoes into a bitmap.
     
@@ -192,25 +191,25 @@ def pack_append(bins: list[Tuple[int, np.ndarray, Tuple[int, int]]],
         bitmap: Existing bitmap to append to (None for new)
         
     Returns:
-        Tuple[np.ndarray, list]: (bitmap, positions) where positions contains packing info
+        tuple[np.ndarray, list]: (bitmap, positions) where positions contains packing info
     """
     new_bitmap = False
-    if bitmap is None:
-        bitmap = np.zeros((h, w), dtype=np.bool)
+    if occupied_tiles is None:
+        occupied_tiles = np.zeros((h, w), dtype=np.bool)
         new_bitmap = True
     else:
-        bitmap = bitmap.copy()
+        occupied_tiles = occupied_tiles.copy()
     
-    if len(bins) == 0:
-        return bitmap, []
+    if len(poliominoes) == 0:
+        return occupied_tiles, []
     
-    positions: list[Tuple[int, int, int, np.ndarray, Tuple[int, int]]] = []
+    positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]] = []
     
-    for groupid, mask, offset in bins:
+    for groupid, mask, offset in poliominoes:
         for j in range(w - mask.shape[1] + 1):
             for i in range(h - mask.shape[0] + 1):
-                if not np.any(bitmap[i:i+mask.shape[0], j:j+mask.shape[1]] & mask):
-                    bitmap[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
+                if not np.any(occupied_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] & mask):
+                    occupied_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
                     positions.append((i, j, groupid, mask, offset))
                     break
             else:
@@ -219,10 +218,10 @@ def pack_append(bins: list[Tuple[int, np.ndarray, Tuple[int, int]]],
         else:
             return None
     
-    return bitmap, positions
+    return occupied_tiles, positions
 
 
-def render(canvas: np.ndarray, positions: list[Tuple[int, int, int, np.ndarray, Tuple[int, int]]], 
+def render(canvas: np.ndarray, positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]], 
            frame: np.ndarray, chunk_size: int) -> np.ndarray:
     """
     Render packed polyominoes onto the canvas.
@@ -255,7 +254,7 @@ def render(canvas: np.ndarray, positions: list[Tuple[int, int, int, np.ndarray, 
     return canvas
 
 
-def apply_pack(pack_results: Tuple[np.ndarray, list], canvas: np.ndarray, index_map: np.ndarray,
+def apply_pack(pack_results: tuple[np.ndarray, list], canvas: np.ndarray, index_map: np.ndarray,
                det_info: dict, frame_idx: int, frame: np.ndarray, tile_size: int, step_times: dict):
     bitmap, positions = pack_results
     
@@ -307,7 +306,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
     # Initialize packing variables
             
     canvas = np.zeros((height, width, 3), dtype=np.uint8)
-    bitmap: np.ndarray | None = None
+    occupied_tiles: np.ndarray | None = None
     index_map = np.zeros((grid_height, grid_width, 2), dtype=np.int32)
     det_info: dict = {}
     frame_cache = {}
@@ -355,7 +354,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
         
         # Profile: Group connected tiles into polyominoes
         step_start = time.time()
-        polyominoes = group_tiles(bitmap_frame.copy())
+        polyominoes = group_tiles(bitmap_frame)
         step_times['group_tiles'] = time.time() - step_start
         
         # Profile: Sort polyominoes by size
@@ -365,12 +364,12 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
         
         # Profile: Try packing polyominoes
         step_start = time.time()
-        pack_results = pack_append(polyominoes, grid_height, grid_width, bitmap)
+        pack_results = pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
 
         if pack_results is not None:
             step_times['pack_append'] = time.time() - step_start
-            bitmap, canvas = apply_pack(pack_results, canvas, index_map, det_info,
-                                        frame_idx, frame, tile_size, step_times)
+            occupied_tiles, canvas = apply_pack(pack_results, canvas, index_map, det_info,
+                                                frame_idx, frame, tile_size, step_times)
         else:
             # If packing fails, save current packed image and start new one
             step_times['pack_failed'] = True
@@ -384,24 +383,12 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
             cv2.imwrite(img_path, canvas)
             step_times['save_canvas'] = time.time() - step_start
 
-            # Save mapping
-            mapping = PolyominoMapping(
-                index_map=index_map,
-                det_info=det_info,
-                frame_idx=frame_idx,
-                frame_cache=frame_cache,
-                canvas=canvas,
-                frame_range=slice(start_idx, frame_idx)
-            )
-
             # Profile: Convert numpy arrays to lists for JSON serialization
             step_start = time.time()
             mapping_dict = {
                 'index_map': index_map.tolist(),
                 'det_info': {str(k): v for k, v in det_info.items()},
-                'frame_idx': mapping.frame_idx,
-                'frame_cache_keys': list(mapping.frame_cache.keys()),
-                'frame_range': [mapping.frame_range.start, mapping.frame_range.stop]
+                'frame_range': (start_idx, frame_idx)
             }
             step_times['convert_to_dict'] = time.time() - step_start
 
@@ -418,10 +405,10 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
             # Profile: Reset variables
             step_start = time.time()
             canvas = np.zeros((height, width, 3), dtype=np.uint8)
-            bitmap = None
+            occupied_tiles = None
             index_map = np.zeros((grid_height, grid_width, 2), dtype=np.int32)
             det_info = {}
-            frame_cache = {frame_idx: frame_cache.get(frame_idx, np.zeros((height, width, 3), dtype=np.uint8))}
+            frame_cache = {frame_idx: frame}
             start_idx = frame_idx
             step_times['reset_variables'] = time.time() - step_start
 
@@ -430,7 +417,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
             pack_results = pack_append(polyominoes, grid_height, grid_width)
             if pack_results is not None:
                 step_times['pack_append'] = time.time() - step_start
-                bitmap, canvas = apply_pack(pack_results, canvas, index_map, det_info,
+                occupied_tiles, canvas = apply_pack(pack_results, canvas, index_map, det_info,
                                             frame_idx, frame, tile_size, step_times)
             else:
                 step_times['pack_failed_retry'] = True
@@ -438,17 +425,13 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
 
                 # If retry packing fails, save the entire frame as a single polyomino
                 print(f"Failed to pack frame {frame_idx} even after reset, saving entire frame as single polyomino")
-
-                # Create a single polyomino covering the entire frame
-                # full_frame_mask = np.ones((grid_height, grid_width), dtype=np.bool)
                 
                 # Render the entire frame onto canvas
-                # canvas = render(canvas, [(0, 0, 1, full_frame_mask, (0, 0))], frame_cache[frame_idx], tile_size)
-                canvas = frame_cache[frame_idx]
+                canvas = frame
 
                 # Profile: Update index_map and det_info for the full frame polyomino
                 step_start = time.time()
-                bitmap = np.ones((grid_height, grid_width), dtype=np.bool)
+                occupied_tiles = np.ones((grid_height, grid_width), dtype=np.bool)
                 index_map[0:grid_height, 0:grid_width, 0] = 1
                 index_map[0:grid_height, 0:grid_width, 1] = frame_idx
                 det_info[(int(frame_idx), int(1))] = ((0, 0), (0, 0))
@@ -476,21 +459,10 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
         img_path = os.path.join(output_dir, f'img_{pack_idx:03d}.jpg')
         cv2.imwrite(img_path, canvas)
         
-        mapping = PolyominoMapping(
-            index_map=index_map,
-            det_info=det_info,
-            frame_idx=len(results),
-            frame_cache=frame_cache,
-            canvas=canvas,
-            frame_range=slice(start_idx, len(results))
-        )
-        
         mapping_dict = {
             'index_map': index_map.tolist(),
             'det_info': {str(k): v for k, v in det_info.items()},
-            'frame_idx': mapping.frame_idx,
-            'frame_cache_keys': list(mapping.frame_cache.keys()),
-            'frame_range': [mapping.frame_range.start, mapping.frame_range.stop]
+            'frame_range': (start_idx, len(results))
         }
         
         mapping_path = os.path.join(output_dir, f'mapping_{pack_idx:03d}.json')
