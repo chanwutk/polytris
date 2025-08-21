@@ -68,12 +68,7 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str, t
     if groundtruth:
         expected_filename = 'score_correct.jsonl'
     else:
-        # Find any file that starts with "score", ends with ".jsonl", but is not "score_correct.jsonl"
-        possible_files = [f for f in os.listdir(score_dir)
-                          if f.startswith('score') and f.endswith('.jsonl') and f != 'score_correct.jsonl']
-        if not possible_files:
-            raise FileNotFoundError(f"No classification results file found in {score_dir} (excluding score_correct.jsonl)")
-        expected_filename = possible_files[0]
+        expected_filename = 'score.jsonl'
     
     # Look for the specific results file
     results_file = os.path.join(score_dir, expected_filename)

@@ -301,10 +301,10 @@ def main(args):
             
             # Create score directory for this tile size
             score_dir = os.path.join(output_dir, 'score', f'proxy_{tile_size}')
-            if os.path.exists(score_dir):
-                # Remove the entire directory
-                shutil.rmtree(score_dir)
-            os.makedirs(score_dir)
+            # if os.path.exists(score_dir):
+            #     # Remove the entire directory
+            #     shutil.rmtree(score_dir)
+            os.makedirs(score_dir, exist_ok=True)
             output_path = os.path.join(score_dir, 'score_correct.jsonl')
             
             # Process the video

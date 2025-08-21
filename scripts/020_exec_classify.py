@@ -194,8 +194,8 @@ def process_video(video_path: str, model: SimpleCNN, tile_size: int, output_path
                     "timestamp": frame_idx / fps if fps > 0 else 0,
                     "frame_size": [height, width],
                     "tile_size": tile_size,
+                    "runtime": runtime,
                     "tile_classifications": relevance_grid,
-                    "runtime": runtime
                 }
                 
                 # Write to JSONL file
@@ -288,10 +288,7 @@ def main(args):
             
             # Create score directory for this tile size
             score_dir = os.path.join(output_dir, 'score', f'proxy_{tile_size}')
-            if os.path.exists(score_dir):
-                # Remove the entire directory
-                shutil.rmtree(score_dir)
-            os.makedirs(score_dir)
+            os.makedirs(score_dir, exist_ok=True)
             output_path = os.path.join(score_dir, 'score.jsonl')
             
             # Process the video
