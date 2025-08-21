@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import shutil
 import time
 import numpy as np
 import cv2
@@ -41,44 +42,38 @@ def parse_args():
     return parser.parse_args()
 
 
-def detect_retina_packed_images(dataset_dir: str, tile_size: int, dataset_name: str):
+def detect_retina_packed_images(video_file_path: str, tile_size: int):
     """
     Detect objects from packed images using RetinaNet detector.
     
     Args:
-        dataset_dir (str): Directory containing video files
+        video_file_path (str): Path to the video file
         tile_size (int): Tile size used for packing
-        dataset_name (str): Name of the dataset
     """
     detector = polyis.models.retinanet_b3d.get_detector(device='cuda:0')
 
-    for video in os.listdir(dataset_dir):
-        video_path = os.path.join(dataset_dir, video)
-        if not os.path.isdir(video_path):
-            continue
+    print(f"Processing video {video_file_path}")
 
-        print(f"Processing video {video_path}")
+    # Check if packing directory exists for this tile size
+    packing_dir = os.path.join(video_file_path, 'packing', f'proxy_{tile_size}', 'images')
+    if not os.path.exists(packing_dir):
+        raise FileNotFoundError(f"Packing directory not found for video {video_file_path} and tile size {tile_size}")
 
-        # Check if packing directory exists for this tile size
-        packing_dir = os.path.join(CACHE_DIR, dataset_name, video, 'packing', f'proxy_{tile_size}', 'images')
-        if not os.path.exists(packing_dir):
-            print(f"Packing directory not found for video {video} and tile size {tile_size}, skipping...")
-            continue
+    # Create output directory for detections
+    detections_output_dir = os.path.join(video_file_path, 'packed_detections', f'proxy_{tile_size}')
+    if os.path.exists(detections_output_dir):
+        # Remove the entire directory
+        shutil.rmtree(detections_output_dir)
+    os.makedirs(detections_output_dir, exist_ok=True)
 
-        # Create output directory for detections
-        detections_output_dir = os.path.join(CACHE_DIR, dataset_name, video, 'packed_detections', f'proxy_{tile_size}', 'detections')
-        os.makedirs(detections_output_dir, exist_ok=True)
+    # Get all packed image files
+    image_files = [f for f in os.listdir(packing_dir) if f.endswith('.jpg')]
+    
+    if not image_files:
+        raise FileNotFoundError(f"No packed images found in {packing_dir}")
 
-        # Get all packed image files
-        image_files = [f for f in os.listdir(packing_dir) if f.endswith('.jpg')]
-        
-        if not image_files:
-            print(f"No packed images found in {packing_dir}")
-            continue
-
-        print(f"Found {len(image_files)} packed images to process")
-
-        runtimes = []
+    with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
+          open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
         for image_file in tqdm.tqdm(image_files, desc=f"Processing packed images for tile size {tile_size}"):
             image_path = os.path.join(packing_dir, image_file)
             runtime: dict = { 'image_file': image_file }
@@ -87,8 +82,7 @@ def detect_retina_packed_images(dataset_dir: str, tile_size: int, dataset_name: 
             start_time = time.time_ns()
             frame = cv2.imread(image_path)
             if frame is None:
-                print(f"Warning: Could not read image {image_path}, skipping...")
-                continue
+                raise ValueError(f"Could not read image {image_path}")
             end_time = time.time_ns()
             runtime['read_time'] = end_time - start_time
 
@@ -102,17 +96,8 @@ def detect_retina_packed_images(dataset_dir: str, tile_size: int, dataset_name: 
             bounding_boxes = outputs[:, :4].tolist()
 
             # Save detection results
-            output_file = os.path.join(detections_output_dir, f"{image_file}.jsonl")
-            with open(output_file, 'w') as f:
-                for bbox in bounding_boxes:
-                    f.write(json.dumps(bbox) + '\n')
-            runtimes.append(runtime)
-
-            # print(f"Saved {len(bounding_boxes)} detections to {output_file}")
-
-        with open(os.path.join(detections_output_dir, '..', 'runtimes.jsonl'), 'w') as f:
-            for l in runtimes:
-                f.write(json.dumps(l) + '\n')
+            f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
+            fr.write(json.dumps(runtime) + '\n')
 
 
 def main(args):
@@ -149,19 +134,14 @@ def main(args):
     # Determine which tile sizes to process
     if args.tile_size == 'all':
         tile_sizes_to_process = TILE_SIZES
-        print(f"Processing all available tile sizes: {tile_sizes_to_process}")
     else:
         tile_sizes_to_process = [int(args.tile_size)]
-        print(f"Processing tile size: {tile_sizes_to_process[0]}")
     
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, f))]
     
     if not video_files:
-        print(f"No video directories found in {dataset_dir}")
-        return
-    
-    print(f"Found {len(video_files)} video directories to process")
+        raise FileNotFoundError(f"No video directories found in {dataset_dir}")
     
     # Process each video file
     for video_file in sorted(video_files):
@@ -171,19 +151,10 @@ def main(args):
         
         # Process each tile size for this video
         for tile_size in tile_sizes_to_process:
-            print(f"Processing tile size: {tile_size}")
-            
-            try:
-                if args.detector == 'retina':
-                    detect_retina_packed_images(dataset_dir, tile_size, args.dataset)
-                else:
-                    raise ValueError(f"Unknown detector: {args.detector}")
-                
-                print(f"Completed detection for tile size {tile_size}")
-                
-            except Exception as e:
-                print(f"Error processing tile size {tile_size} for video {video_file}: {e}")
-                raise e
+            if args.detector == 'retina':
+                detect_retina_packed_images(video_file_path, tile_size)
+            else:
+                raise ValueError(f"Unknown detector: {args.detector}")
 
 
 if __name__ == '__main__':
