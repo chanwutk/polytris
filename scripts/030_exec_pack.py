@@ -14,7 +14,8 @@ from queue import Queue
 
 DATA_DIR = '/polyis-data/video-datasets-low'
 CACHE_DIR = '/polyis-cache'
-TILE_SIZES = [64, 128]
+# TILE_SIZES = [32, 64, 128]
+TILE_SIZES = [64]
 
 
 class PolyominoMapping(NamedTuple):
@@ -268,7 +269,7 @@ def apply_pack(pack_results: Tuple[np.ndarray, list], canvas: np.ndarray, index_
     # Profile: Update index_map and det_info
     step_start = time.time()
     for gid, (y, x, _groupid, mask, _offset) in enumerate(positions):
-        assert not np.any(index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] & mask)
+        assert not np.any(index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] & mask), (index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0], mask)
         index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask.astype(np.int32) * (gid + 1)
         index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask.astype(np.int32) * frame_idx
         det_info[(int(frame_idx), int(gid + 1))] = ((y, x), _offset)
@@ -379,7 +380,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
 
             # Profile: Save current packed image
             step_start = time.time()
-            img_path = os.path.join(output_dir, f'img_{pack_idx:03d}.jpg')
+            img_path = os.path.join(output_dir, f'img_{pack_idx:08d}.jpg')
             cv2.imwrite(img_path, canvas)
             step_times['save_canvas'] = time.time() - step_start
 
@@ -406,7 +407,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
 
             # Profile: Save mapping to file
             step_start = time.time()
-            mapping_path = os.path.join(output_dir, f'mapping_{pack_idx:03d}.json')
+            mapping_path = os.path.join(output_dir, f'mapping_{pack_idx:08d}.json')
             with open(mapping_path, 'w') as f:
                 json.dump(mapping_dict, f, indent=2)
             step_times['save_mapping_file'] = time.time() - step_start
@@ -447,6 +448,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
 
                 # Profile: Update index_map and det_info for the full frame polyomino
                 step_start = time.time()
+                bitmap = np.ones((grid_height, grid_width), dtype=np.bool)
                 index_map[0:grid_height, 0:grid_width, 0] = 1
                 index_map[0:grid_height, 0:grid_width, 1] = frame_idx
                 det_info[(int(frame_idx), int(1))] = ((0, 0), (0, 0))
@@ -575,6 +577,9 @@ def main(args):
                 os.makedirs(packing_output_dir)
 
                 packing_output_dir = os.path.join(packing_output_dir, 'images')
+                if os.path.exists(packing_output_dir):
+                    # Remove the entire directory
+                    shutil.rmtree(packing_output_dir)
                 os.makedirs(packing_output_dir)
                 
                 # Process the video for packing
@@ -584,10 +589,10 @@ def main(args):
                 
             except FileNotFoundError as e:
                 print(f"Warning: {e}, skipping tile size {tile_size} for video {video_file}")
-                continue
+                raise e
             except Exception as e:
                 print(f"Error processing tile size {tile_size} for video {video_file}: {e}")
-                continue
+                raise e
 
 
 if __name__ == '__main__':

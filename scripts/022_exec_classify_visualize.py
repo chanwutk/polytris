@@ -390,7 +390,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.close()
     
     # 2. Classification error over time
-    plt.figure(figsize=(15, 8))
+    plt.figure(figsize=(20, 8))
     
     frame_indices = list(range(len(frame_metrics)))
     error_rates = [(m['fp'] + m['fn']) / m['total_tiles'] for m in frame_metrics]
@@ -561,7 +561,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.close()
     
     # 5. Detailed metrics plot
-    fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(15, 12))
+    fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(25, 12))
     
     # Precision, Recall, F1 over time
     ax1_twin = ax1.twinx()
