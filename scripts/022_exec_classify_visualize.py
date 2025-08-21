@@ -325,7 +325,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     overall_f1 = 2 * (overall_precision * overall_recall) / (overall_precision + overall_recall) if (overall_precision + overall_recall) > 0 else 0.0
     
     # 1. Overall classification error summary
-    fig, ((ax1, ax3), (ax2, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+    fig, ((ax1, ax3, ax2)) = plt.subplots(1, 3, figsize=(15, 6))
     
     # First stacked bar chart: x-axis is Predicted, color is Actual
     x_labels = ['Predicted Negative', 'Predicted Positive']
@@ -388,31 +388,6 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     ax3.set_title(f'Classification Results by Actual (Tile Size: {tile_size})')
     ax3.legend()
     ax3.grid(True, alpha=0.3, axis='y')
-    
-    # Statistics table
-    stats_text = f"""
-    Total Tiles: {sum(m['total_tiles'] for m in frame_metrics):,}
-    
-    True Positives: {total_tp:,}
-    True Negatives: {total_tn:,}
-    False Positives: {total_fp:,}
-    False Negatives: {total_fn:,}
-    
-    Precision: {overall_precision:.4f}
-    Recall: {overall_recall:.4f}
-    Accuracy: {overall_accuracy:.4f}
-    F1-Score: {overall_f1:.4f}
-    
-    Threshold: {threshold}
-    """
-    
-    ax4.text(0.1, 0.9, stats_text, transform=ax4.transAxes, fontsize=10,
-             verticalalignment='top', fontfamily='monospace',
-             bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.8))
-    ax4.set_xlim(0, 1)
-    ax4.set_ylim(0, 1)
-    ax4.set_title(f'Overall Statistics Summary (Tile Size: {tile_size})')
-    ax4.axis('off')
     
     plt.tight_layout()
     overall_summary_path = os.path.join(output_dir, f'010_overall_summary_tile{tile_size}.png')
@@ -591,7 +566,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.close()
     
     # 5. Detailed metrics plot
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+    fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(15, 12))
     
     # Precision, Recall, F1 over time
     ax1_twin = ax1.twinx()
@@ -662,27 +637,6 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     lines = line8 + line9 + line10
     labels = [str(l.get_label()) for l in lines]
     ax3.legend(lines, labels, loc='upper right')
-    
-    # Error rate breakdown
-    fp_rates = [m['fp'] / m['total_tiles'] for m in frame_metrics]
-    fn_rates = [m['fn'] / m['total_tiles'] for m in frame_metrics]
-    ax4_twin = ax4.twinx()
-    line11 = ax4.plot(frame_indices, fp_rates, 'r-', linewidth=2, label='False Positive Rate')
-    line12 = ax4.plot(frame_indices, fn_rates, 'orange', linewidth=2, label='False Negative Rate')
-    ax4.set_xlabel('Frame Index')
-    ax4.set_ylabel('Rate')
-    ax4.set_title(f'False Positive and Negative Rates Over Time (Tile Size: {tile_size})')
-    ax4.grid(True, alpha=0.3)
-    
-    # Object count on secondary y-axis
-    line13 = ax4_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
-    ax4_twin.set_ylabel('Object Count', color='purple')
-    ax4_twin.tick_params(axis='y', labelcolor='purple')
-    
-    # Combine legends
-    lines = line11 + line12 + line13
-    labels = [str(l.get_label()) for l in lines]
-    ax4.legend(lines, labels, loc='upper right')
     
     plt.tight_layout()
     detailed_metrics_path = os.path.join(output_dir, f'050_detailed_metrics_tile{tile_size}.png')
