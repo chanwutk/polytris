@@ -485,79 +485,52 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.savefig(error_heatmap_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    # 4. Heatmaps: Classification Score vs Detection Overlap (split by correctness)
+    # 4. Histograms: Classification Score distribution (split by correctness)
     
     # Separate data for correct and incorrect predictions
     correct_scores = []
-    correct_overlaps = []
     incorrect_scores = []
-    incorrect_overlaps = []
     
     for score, overlap in zip(all_classification_scores, all_overlap_ratios):
         predicted_positive = score >= threshold
         actual_positive = overlap > 0.0
         if predicted_positive == actual_positive:
             correct_scores.append(score)
-            correct_overlaps.append(overlap)
         else:
             incorrect_scores.append(score)
-            incorrect_overlaps.append(overlap)
     
-    # Create heatmap for correct predictions
+    # Create histograms for correct and incorrect predictions
     plt.figure(figsize=(12, 5))
     
     plt.subplot(1, 2, 1)
-    if correct_scores and correct_overlaps:
-        # Create 2D histogram for correct predictions
-        H_correct, xedges_correct, yedges_correct = np.histogram2d(
-            correct_scores, correct_overlaps, bins=50, 
-            range=[[0, 1], [0, 1]]
-        )
-        
-        # Plot heatmap with log scale
-        # Add small value to avoid log(0)
-        H_correct_log = np.log10(H_correct + 1)
-        plt.imshow(H_correct_log.T, origin='lower', extent=(0, 1, 0, 1), 
-                   cmap='Greens', aspect='auto', interpolation='nearest')
-        plt.colorbar(label='Log10(Point Count + 1)')
+    if correct_scores:
+        plt.hist(correct_scores, bins=50, alpha=0.7, color='lightgreen', edgecolor='darkgreen')
         plt.axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        plt.axhline(y=0.0, color='red', linestyle='--', linewidth=1, alpha=0.7)
         plt.xlabel('Classification Score')
-        plt.ylabel('Detection Overlap Ratio')
+        plt.ylabel('Count')
         plt.title(f'Correct Predictions (Tile Size: {tile_size})\nTotal: {len(correct_scores):,}')
         plt.legend()
+        plt.grid(True, alpha=0.3)
     else:
         plt.text(0.5, 0.5, 'No correct predictions', ha='center', va='center', transform=plt.gca().transAxes)
         plt.title(f'Correct Predictions (Tile Size: {tile_size})')
     
-    # Create heatmap for incorrect predictions
     plt.subplot(1, 2, 2)
-    if incorrect_scores and incorrect_overlaps:
-        # Create 2D histogram for incorrect predictions
-        H_incorrect, xedges_incorrect, yedges_incorrect = np.histogram2d(
-            incorrect_scores, incorrect_overlaps, bins=50, 
-            range=[[0, 1], [0, 1]]
-        )
-        
-        # Plot heatmap with log scale
-        # Add small value to avoid log(0)
-        H_incorrect_log = np.log10(H_incorrect + 1)
-        plt.imshow(H_incorrect_log.T, origin='lower', extent=(0, 1, 0, 1), 
-                   cmap='Reds', aspect='auto', interpolation='nearest')
-        plt.colorbar(label='Log10(Point Count + 1)')
+    if incorrect_scores:
+        plt.hist(incorrect_scores, bins=50, alpha=0.7, color='lightcoral', edgecolor='darkred')
         plt.axvline(x=threshold, color='blue', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        plt.axhline(y=0.0, color='blue', linestyle='--', linewidth=1, alpha=0.7)
         plt.xlabel('Classification Score')
-        plt.ylabel('Detection Overlap Ratio')
+        plt.ylabel('Count')
         plt.title(f'Incorrect Predictions (Tile Size: {tile_size})\nTotal: {len(incorrect_scores):,}')
         plt.legend()
+        plt.grid(True, alpha=0.3)
     else:
         plt.text(0.5, 0.5, 'No incorrect predictions', ha='center', va='center', transform=plt.gca().transAxes)
         plt.title(f'Incorrect Predictions (Tile Size: {tile_size})')
     
     plt.tight_layout()
-    scatter_path = os.path.join(output_dir, f'040_heatmap_overlap_tile{tile_size}.png')
-    plt.savefig(scatter_path, dpi=300, bbox_inches='tight')
+    histogram_path = os.path.join(output_dir, f'040_histogram_scores_tile{tile_size}.png')
+    plt.savefig(histogram_path, dpi=300, bbox_inches='tight')
     plt.close()
     
     # 5. Detailed metrics plot

@@ -165,7 +165,7 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     print(f"Processing {len(detection_results)} frames for tracking...")
     
     # Create runtime output file
-    runtime_path = output_path.replace('tracks.jsonl', 'runtimes.jsonl')
+    runtime_path = output_path.replace('tracking.jsonl', 'runtimes.jsonl')
     runtime_dir = os.path.dirname(runtime_path)
     os.makedirs(runtime_dir, exist_ok=True)
     
@@ -260,8 +260,14 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     os.makedirs(output_dir, exist_ok=True)
     
     with open(output_path, 'w') as f:
-        # Sort frames and write results
-        for frame_idx in sorted(frame_tracks.keys()):
+        frame_ids = frame_tracks.keys()
+        first_idx = min(frame_ids)
+        last_idx = max(frame_ids)
+
+        for frame_idx in range(first_idx, last_idx + 1):
+            if frame_idx not in frame_tracks:
+                frame_tracks[frame_idx] = []
+                
             frame_data = {
                 "frame_idx": frame_idx,
                 "tracks": frame_tracks[frame_idx]

@@ -191,14 +191,13 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
                 # Add to frame tracks
                 if frame_idx not in frame_tracks:
                     frame_tracks[frame_idx] = []
-                frame_tracks[frame_idx].append(detection)
-                
-                # Add to trajectories for interpolation
+                # frame_tracks[frame_idx].append(detection)
+
                 if track_id not in trajectories:
                     trajectories[track_id] = []
-                
-                # Convert to numpy array for interpolation
                 box_array = np.array([x1, y1, x2, y2], dtype=np.float32)
+
+                
                 extend = interpolate_trajectory(trajectories[track_id], (frame_idx, box_array))
                 
                 # Add interpolated points to frame tracks
@@ -228,8 +227,14 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     os.makedirs(output_dir, exist_ok=True)
     
     with open(output_path, 'w') as f:
-        # Sort frames and write results
-        for frame_idx in sorted(frame_tracks.keys()):
+        frame_ids = frame_tracks.keys()
+        first_idx = min(frame_ids)
+        last_idx = max(frame_ids)
+
+        for frame_idx in range(first_idx, last_idx + 1):
+            if frame_idx not in frame_tracks:
+                frame_tracks[frame_idx] = []
+                
             frame_data = {
                 "frame_idx": frame_idx,
                 "tracks": frame_tracks[frame_idx]

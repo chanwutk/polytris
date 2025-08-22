@@ -3,25 +3,23 @@
 import argparse
 import json
 import os
-import sys
-import numpy as np
 import multiprocessing as mp
-from typing import Dict, List, Tuple, Any
 import tempfile
+import sys
+from typing import Dict, List, Tuple, Any
 
-# Add TrackEval to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'modules', 'TrackEval')))
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+sys.path.append('/polyis/modules/TrackEval')
 import trackeval
 from trackeval.datasets import B3D
 from trackeval.metrics import HOTA, CLEAR, Identity
 
-# Optional imports for visualization
-import matplotlib.pyplot as plt
-import pandas as pd
-VISUALIZATION_AVAILABLE = True
-
 CACHE_DIR = '/polyis-cache'
 OUTPUT_DIR = 'pipeline-stages/track-accuracy-results'
+TILE_SIZES = [64]
 
 
 def parse_args():
@@ -36,7 +34,6 @@ def parse_args():
             - output_dir (str): Output directory for results (default: 'pipeline-stages/track-accuracy-results')
             - parallel (bool): Whether to use parallel processing (default: True)
             - num_cores (int): Number of parallel cores to use (default: 8)
-            - create_plots (bool): Whether to create visualization plots (default: False)
     """
     parser = argparse.ArgumentParser(description='Evaluate tracking accuracy using TrackEval and create visualizations')
     parser.add_argument('--dataset', required=False, default='b3d',
@@ -47,12 +44,10 @@ def parse_args():
                         help='Comma-separated list of metrics to evaluate')
     parser.add_argument('--output_dir', type=str, default=OUTPUT_DIR,
                         help='Output directory for results')
-    parser.add_argument('--parallel', action='store_true', default=True,
+    parser.add_argument('--parallel', action='store_true', default=False,
                         help='Whether to use parallel processing')
     parser.add_argument('--num_cores', type=int, default=8,
                         help='Number of parallel cores to use')
-    parser.add_argument('--create_plots', action='store_true', default=False,
-                        help='Whether to create visualization plots (requires matplotlib/seaborn)')
     return parser.parse_args()
 
 
@@ -69,28 +64,26 @@ def find_tracking_results(cache_dir: str, dataset: str, tile_size: str) -> List[
         List[Tuple[str, int]]: List of (video_name, tile_size) tuples
     """
     dataset_cache_dir = os.path.join(cache_dir, dataset)
-    if not os.path.exists(dataset_cache_dir):
-        print(f"Dataset cache directory {dataset_cache_dir} does not exist")
-        return []
-    
-    video_tile_combinations = []
+    assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
     
     # Determine which tile sizes to process
     if tile_size == 'all':
-        tile_sizes_to_process = [64, 128]
+        tile_sizes_to_process = TILE_SIZES
     else:
         tile_sizes_to_process = [int(tile_size)]
     
-    for item in os.listdir(dataset_cache_dir):
-        item_path = os.path.join(dataset_cache_dir, item)
-        if os.path.isdir(item_path):
-            for ts in tile_sizes_to_process:
-                tracking_path = os.path.join(item_path, 'uncompressed_tracking', f'proxy_{ts}', 'tracking.jsonl')
-                groundtruth_path = os.path.join(item_path, 'groundtruth', 'tracking.jsonl')
-                
-                if os.path.exists(tracking_path) and os.path.exists(groundtruth_path):
-                    video_tile_combinations.append((item, ts))
-                    print(f"Found tracking results: {item} with tile size {ts}")
+    video_tile_combinations = []
+    for video_filename in os.listdir(dataset_cache_dir):
+        video_dir = os.path.join(dataset_cache_dir, video_filename)
+        assert os.path.isdir(video_dir), f"Video directory {video_dir} does not exist"
+        
+        for ts in tile_sizes_to_process:
+            tracking_path = os.path.join(video_dir, 'uncompressed_tracking', f'proxy_{ts}', 'tracking.jsonl')
+            groundtruth_path = os.path.join(video_dir, 'groundtruth', 'tracking.jsonl')
+            
+            if os.path.exists(tracking_path) and os.path.exists(groundtruth_path):
+                video_tile_combinations.append((video_filename, ts))
+                print(f"Found tracking results: {video_filename} with tile size {ts}")
     
     return video_tile_combinations
 
@@ -158,17 +151,7 @@ def convert_to_trackeval_format(frame_data: Dict[int, List[List[float]]], is_gt:
     # Sort frames and write data
     for frame_idx in sorted(frame_data.keys()):
         detections = frame_data[frame_idx]
-        
-        if is_gt:
-            # Groundtruth format: [track_id, x1, y1, x2, y2]
-            formatted_dets = detections
-        else:
-            # Tracking format: [track_id, x1, y1, x2, y2]
-            formatted_dets = detections
-        
-        # Write in TrackEval format: [frame_idx, detections]
-        line_data = [frame_idx, formatted_dets]
-        temp_file.write(json.dumps(line_data) + '\n')
+        temp_file.write(json.dumps([frame_idx, detections]) + '\n')
     
     temp_file.close()
     return temp_file.name
@@ -193,83 +176,73 @@ def evaluate_tracking_accuracy(video_name: str, tile_size: int, tracking_path: s
     """
     print(f"Evaluating {video_name} with tile size {tile_size}")
     
-    try:
-        # Load data
-        tracking_data = load_tracking_data(tracking_path)
-        groundtruth_data = load_groundtruth_data(groundtruth_path)
-        
-        # Convert to TrackEval format
-        temp_tracking_file = convert_to_trackeval_format(tracking_data, is_gt=False)
-        temp_groundtruth_file = convert_to_trackeval_format(groundtruth_data, is_gt=True)
-        
-        # Create dataset configuration
-        dataset_config = {
-            'output_fol': output_dir,
-            'output_sub_fol': f'{video_name}_tile{tile_size}',
-            'input_gt': temp_groundtruth_file,
-            'input_track': temp_tracking_file,
-            'skip': 1,  # Process every frame
-            'tracker': f'tile{tile_size}'
-        }
-        
-        # Create evaluator configuration
-        eval_config = {
-            'USE_PARALLEL': False,
-            'NUM_PARALLEL_CORES': 1,
-            'BREAK_ON_ERROR': False,
-            'PRINT_RESULTS': False,
-            'OUTPUT_SUMMARY': True,
-            'OUTPUT_DETAILED': True,
-            'PLOT_CURVES': False
-        }
-        
-        # Create metrics
-        metrics = []
-        for metric_name in metrics_list:
-            if metric_name == 'HOTA':
-                metrics.append(HOTA({'THRESHOLD': 0.5}))
-            elif metric_name == 'CLEAR':
-                metrics.append(CLEAR({'THRESHOLD': 0.5}))
-            elif metric_name == 'Identity':
-                metrics.append(Identity({'THRESHOLD': 0.5}))
-        
-        # Create dataset and evaluator
-        dataset = B3D(dataset_config)
-        evaluator = trackeval.Evaluator(eval_config)
-        
-        # Run evaluation
-        results = evaluator.evaluate([dataset], metrics)
-        
-        # Clean up temporary files
-        os.unlink(temp_tracking_file)
-        os.unlink(temp_groundtruth_file)
-        
-        # Extract summary results
-        summary_results = {}
-        for metric in metrics:
-            metric_name = metric.get_name()
-            if metric_name in results:
-                metric_results = results[metric_name]
-                if 'COMBINED_SEQ' in metric_results:
-                    combined = metric_results['COMBINED_SEQ']
-                    if 'car' in combined:  # B3D uses 'car' class
-                        summary_results[metric_name] = combined['car']
-        
-        return {
-            'video_name': video_name,
-            'tile_size': tile_size,
-            'metrics': summary_results,
-            'success': True
-        }
-        
-    except Exception as e:
-        print(f"Error evaluating {video_name} with tile size {tile_size}: {str(e)}")
-        return {
-            'video_name': video_name,
-            'tile_size': tile_size,
-            'error': str(e),
-            'success': False
-        }
+    # Load data
+    tracking_data = load_tracking_data(tracking_path)
+    groundtruth_data = load_groundtruth_data(groundtruth_path)
+    
+    # Convert to TrackEval format
+    temp_tracking_file = convert_to_trackeval_format(tracking_data, is_gt=False)
+    temp_groundtruth_file = convert_to_trackeval_format(groundtruth_data, is_gt=True)
+    
+    # Create dataset configuration
+    dataset_config = {
+        'output_fol': output_dir,
+        'output_sub_fol': f'{video_name}_tile{tile_size}',
+        'input_gt': temp_groundtruth_file,
+        'input_track': temp_tracking_file,
+        'skip': 1,  # Process every frame
+        'tracker': f'tile{tile_size}'
+    }
+    
+    # Create evaluator configuration
+    eval_config = {
+        'USE_PARALLEL': False,
+        'NUM_PARALLEL_CORES': 1,
+        'BREAK_ON_ERROR': False,
+        'PRINT_RESULTS': False,
+        'OUTPUT_SUMMARY': True,
+        'OUTPUT_DETAILED': True,
+        'PLOT_CURVES': False
+    }
+    
+    # Create metrics
+    metrics = []
+    for metric_name in metrics_list:
+        if metric_name == 'HOTA':
+            metrics.append(HOTA({'THRESHOLD': 0.5}))
+        elif metric_name == 'CLEAR':
+            metrics.append(CLEAR({'THRESHOLD': 0.5}))
+        elif metric_name == 'Identity':
+            metrics.append(Identity({'THRESHOLD': 0.5}))
+    
+    # Create dataset and evaluator
+    dataset = B3D(dataset_config)
+    evaluator = trackeval.Evaluator(eval_config)
+    
+    # Run evaluation
+    results = evaluator.evaluate([dataset], metrics)
+    
+    # Clean up temporary files
+    os.unlink(temp_tracking_file)
+    os.unlink(temp_groundtruth_file)
+    
+    # Extract summary results
+    summary_results = {}
+    for metric in metrics:
+        metric_name = metric.get_name()
+        if metric_name in results:
+            metric_results = results[metric_name]
+            if 'COMBINED_SEQ' in metric_results:
+                combined = metric_results['COMBINED_SEQ']
+                if 'car' in combined:  # B3D uses 'car' class
+                    summary_results[metric_name] = combined['car']
+    
+    return {
+        'video_name': video_name,
+        'tile_size': tile_size,
+        'metrics': summary_results,
+        'success': True
+    }
 
 
 def create_simple_summary(results: List[Dict[str, Any]], output_dir: str) -> None:
@@ -404,7 +377,7 @@ def main(args):
         
         # Prepare arguments for parallel processing
         eval_args = []
-        for video_name, tile_size in video_tile_combinations:
+        for video_name, tile_size in sorted(video_tile_combinations):
             tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
                                        'uncompressed_tracking', f'proxy_{tile_size}', 'tracking.jsonl')
             groundtruth_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
@@ -420,7 +393,8 @@ def main(args):
         print("Using sequential processing")
         
         # Run evaluation sequentially
-        for video_name, tile_size in video_tile_combinations:
+        for video_name, tile_size in sorted(video_tile_combinations):
+            print(f"Evaluating {video_name} with tile size {tile_size}")
             tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
                                        'uncompressed_tracking', f'proxy_{tile_size}', 'tracking.jsonl')
             groundtruth_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
@@ -464,20 +438,12 @@ def main(args):
                 print(f"  {metric_name}: Mean={np.mean(scores):.4f}, Std={np.std(scores):.4f}")
         
         # Optionally create plots if requested
-        if args.create_plots:
-            print("\nAttempting to create visualization plots...")
-            if VISUALIZATION_AVAILABLE:
-                print("Visualization libraries available. Creating plots...")
-                create_matplotlib_visualizations(successful_results, args.output_dir)
-            else:
-                print("Visualization libraries not available.")
-                print("Install matplotlib and pandas to enable plotting.")
-                print("Required: pip install matplotlib pandas")
+        create_visualizations(successful_results, args.output_dir)
     
     print(f"\nResults saved to: {args.output_dir}")
 
 
-def create_matplotlib_visualizations(results: List[Dict[str, Any]], output_dir: str) -> None:
+def create_visualizations(results: List[Dict[str, Any]], output_dir: str) -> None:
     """
     Create visualizations for tracking accuracy results using matplotlib.
     
@@ -485,10 +451,6 @@ def create_matplotlib_visualizations(results: List[Dict[str, Any]], output_dir: 
         results (List[Dict[str, Any]]): List of evaluation results
         output_dir (str): Output directory for visualizations
     """
-    if not VISUALIZATION_AVAILABLE:
-        print("Visualization libraries not available. Skipping plots.")
-        return
-        
     print("Creating matplotlib visualizations...")
     
     # Filter successful results
