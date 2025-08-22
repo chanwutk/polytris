@@ -4,19 +4,12 @@ import argparse
 import json
 import os
 import shutil
-import time
 import numpy as np
-import cv2
 import tqdm
-from typing import Any
 
 CACHE_DIR = '/polyis-cache'
 # TILE_SIZES = [32, 64, 128]
 TILE_SIZES = [64]
-
-
-def format_time(**kwargs):
-    return [{ 'op': op, 'time': time } for op, time in kwargs.items()]
 
 
 def parse_args():
@@ -37,89 +30,57 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_mapping_file(mapping_path: str) -> dict[str, Any]:
+def load_mapping_file(index_map_path: str, offset_lookup_path: str):
     """
-    Load mapping file that contains the index_map and det_info for unpacking.
+    Load mapping file that contains the index_map and offset_lookup for unpacking.
     
     Args:
-        mapping_path (str): Path to the mapping file
+        index_map_path (str): Path to the index map file
+        offset_lookup_path (str): Path to the offset lookup file
         
     Returns:
-        dict[str, Any]: Mapping information containing index_map, det_info, frame_range, etc.
+        tuple[np.ndarray, dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]]]: Mapping information containing index_map, offset_lookup, etc.
         
     Raises:
-        FileNotFoundError: If mapping file doesn't exist
-        json.JSONDecodeError: If mapping file is invalid JSON
+        FileNotFoundError: If index map or offset lookup file doesn't exist
+        json.JSONDecodeError: If offset lookup file is invalid JSON
     """
-    if not os.path.exists(mapping_path):
-        raise FileNotFoundError(f"Mapping file not found: {mapping_path}")
+    if not os.path.exists(index_map_path):
+        raise FileNotFoundError(f"Index map file not found: {index_map_path}")
+    if not os.path.exists(offset_lookup_path):
+        raise FileNotFoundError(f"Offset lookup file not found: {offset_lookup_path}")
     
-    with open(mapping_path, 'r') as f:
-        mapping_data = json.load(f)
+    index_map = np.load(index_map_path)
+    with open(offset_lookup_path, 'r') as f:
+        offset_lookup_str: dict = json.load(f)
     
-    # Convert lists back to numpy arrays for index_map
-    if 'index_map' in mapping_data:
-        mapping_data['index_map'] = np.array(mapping_data['index_map'], dtype=np.int32)
+    # Convert offset_lookup_str keys back to tuples
+    offset_lookup_tuple: dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]] = {}
+    for k_str, v in offset_lookup_str.items():
+        # Parse the string key back to tuple (frame_idx, group_id)
+        k_str = k_str.strip('()')
+        frame_idx, group_id = map(int, k_str.split(','))
+        offset_lookup_tuple[(frame_idx, group_id)] = v
     
-    # Convert det_info keys back to tuples
-    if 'det_info' in mapping_data:
-        det_info = {}
-        for k_str, v in mapping_data['det_info'].items():
-            # Parse the string key back to tuple (frame_idx, group_id)
-            k_str = k_str.strip('()')
-            frame_idx, group_id = map(int, k_str.split(','))
-            det_info[(frame_idx, group_id)] = v
-        mapping_data['det_info'] = det_info
-    
-    return mapping_data
+    return index_map, offset_lookup_tuple
 
 
-def load_detection_file(detection_path: str) -> list[list[float]]:
-    """
-    Load detection results from a JSONL file.
-    
-    Args:
-        detection_path (str): Path to the detection file
-        
-    Returns:
-        list[list[float]]: list of bounding boxes, each as [x1, y1, x2, y2]
-        
-    Raises:
-        FileNotFoundError: If detection file doesn't exist
-        json.JSONDecodeError: If detection file contains invalid JSON
-    """
-    if not os.path.exists(detection_path):
-        raise FileNotFoundError(f"Detection file not found: {detection_path}")
-    
-    detections = []
-    with open(detection_path, 'r') as f:
-        for line in f:
-            if line.strip():
-                bbox = json.loads(line)
-                detections.append(bbox)
-    
-    return detections
-
-
-def unpack_detections(detections: list[list[float]], 
-                     mapping_data: dict[str, Any], 
-                     tile_size: int) -> dict[int, list[list[float]]]:
+def unpack_detections(detections: list[list[float]], index_map: np.ndarray, 
+                      offset_lookup: dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]], 
+                      tile_size: int) -> dict[int, list[list[float]]]:
     """
     Unpack detections from packed coordinates back to original frame coordinates.
     
     Args:
         detections (list[list[float]]): list of bounding boxes in packed coordinates [x1, y1, x2, y2]
-        mapping_data (dict[str, Any]): Mapping information from the mapping file
+        index_map (np.ndarray): Index map from the mapping file
+        offset_lookup (dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]]): Offset lookup from the mapping file
         tile_size (int): Size of tiles used for packing
         
     Returns:
         dict[int, list[list[float]]]: dictionary mapping frame indices to lists of bounding boxes
                                      in original frame coordinates
     """
-    index_map = mapping_data['index_map']
-    det_info = mapping_data['det_info']
-    frame_range = mapping_data['frame_range']
-    
     # Initialize dictionary to store detections per frame
     frame_detections: dict[int, list[list[float]]] = {}
     
@@ -147,10 +108,10 @@ def unpack_detections(detections: list[list[float]],
             raise ValueError(f"Tile {tile_x}, {tile_y} has no group")
         
         # Get the offset information for this group
-        if (frame_idx, group_id) not in det_info:
+        if (frame_idx, group_id) not in offset_lookup:
             raise ValueError(f"No mapping info for frame {frame_idx}, group {group_id}")
         
-        (packed_y, packed_x), (original_offset_y, original_offset_x) = det_info[(frame_idx, group_id)]
+        (packed_y, packed_x), (original_offset_y, original_offset_x) = offset_lookup[(frame_idx, group_id)]
         
         # Calculate the offset to convert from packed to original coordinates
         # The offset represents how much the tile was moved during packing
@@ -173,69 +134,59 @@ def unpack_detections(detections: list[list[float]],
     return frame_detections
 
 
-def process_video_unpacking(video_file_path: str, tile_size: int, dataset_name: str):
+def process_video_unpacking(video_file_path: str, tile_size: int):
     """
     Process a single video for unpacking detection results.
     
     Args:
         video_file_path (str): Path to the video file directory
         tile_size (int): Tile size used for packing
-        dataset_name (str): Name of the dataset
     """
     print(f"Processing video {video_file_path} for unpacking")
     
-    # Check if packed detections directory exists
-    detections_dir = os.path.join(video_file_path, 'packed_detections', f'proxy_{tile_size}', 'detections')
-    if not os.path.exists(detections_dir):
-        raise FileNotFoundError(f"Packed detections directory not found: {detections_dir}")
+    detections_file = os.path.join(video_file_path, 'packed_detections', f'proxy_{tile_size}', 'detections.jsonl')
     
-    # Check if packing directory exists for mapping files
     packing_dir = os.path.join(video_file_path, 'packing', f'proxy_{tile_size}', 'images')
     if not os.path.exists(packing_dir):
         raise FileNotFoundError(f"Packing directory not found: {packing_dir}")
     
-    # Create output directory for unpacked detections
     unpacked_output_dir = os.path.join(video_file_path, 'unpacked_detections', f'proxy_{tile_size}')
     if os.path.exists(unpacked_output_dir):
-        # Remove the entire directory
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
     print(f"Saving unpacked detections to {unpacked_output_dir}")
     
-    # Get all detection files
-    detection_files = [f for f in os.listdir(detections_dir) if f.endswith('.jsonl')]
-    
-    if not detection_files:
-        raise FileNotFoundError(f"No detection files found in {detections_dir}")
-    
-    print(f"Found {len(detection_files)} detection files to unpack")
-    
     # dictionary to store all frame detections
     all_frame_detections: dict[int, list[list[float]]] = {}
     
-    # Process each detection file
-    for detection_file in tqdm.tqdm(detection_files, desc=f"Unpacking detections for tile size {tile_size}"):
-        # Extract the image number from the filename (e.g., "img_00000001.jpg.jsonl" -> "00000001")
-        img_num = detection_file.replace('img_', '').replace('.jpg.jsonl', '')
-        
-        # Construct paths
-        detection_path = os.path.join(detections_dir, detection_file)
-        mapping_path = os.path.join(packing_dir, f'mapping_{img_num}.json')
-        
-        # Load detection results
-        detections = load_detection_file(detection_path)
-        
-        # Load corresponding mapping file
-        mapping_data = load_mapping_file(mapping_path)
-        
-        # Unpack detections
-        frame_detections = unpack_detections(detections, mapping_data, tile_size)
-        
-        # Merge with existing frame detections
-        for frame_idx, bboxes in frame_detections.items():
-            if frame_idx not in all_frame_detections:
-                all_frame_detections[frame_idx] = []
-            all_frame_detections[frame_idx].extend(bboxes)
+    with open(detections_file, 'r') as f:
+        # Process each detection file
+        for line in tqdm.tqdm(f, desc=f"Unpacking detections for tile size {tile_size}"):
+            content = json.loads(line)
+            image_file: str = content['image_file']
+
+            from_idx, to_idx = image_file.split('.')[0].split('_')
+            from_idx = int(from_idx)
+            to_idx = int(to_idx)
+
+            # Construct paths
+            index_map_path = os.path.join(packing_dir, 'index_map', f'{from_idx}_{to_idx}.npy')
+            offset_lookup_path = os.path.join(packing_dir, 'offset_lookup', f'{from_idx}_{to_idx}.json')
+            
+            # Load detection results
+            detections: list[list[float]] = content['bboxes']
+            
+            # Load corresponding mapping file
+            index_map, offset_lookup = load_mapping_file(index_map_path, offset_lookup_path)
+            
+            # Unpack detections
+            frame_detections = unpack_detections(detections, index_map, offset_lookup, tile_size)
+            
+            # Merge with existing frame detections
+            for frame_idx, bboxes in frame_detections.items():
+                if frame_idx not in all_frame_detections:
+                    all_frame_detections[frame_idx] = []
+                all_frame_detections[frame_idx].extend(bboxes)
     
     # Save unpacked detections organized by frame
     # Sort frames by index
@@ -315,7 +266,7 @@ def main(args):
             print(f"Processing tile size: {tile_size}")
             
             try:
-                process_video_unpacking(video_file_path, tile_size, args.dataset)
+                process_video_unpacking(video_file_path, tile_size)
                 print(f"Completed unpacking for tile size {tile_size}")
                 
             except Exception as e:
