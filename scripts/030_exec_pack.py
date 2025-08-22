@@ -179,8 +179,8 @@ class PackingFailedException(Exception):
 
 
 
-def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]], h: int, w: int, 
-                occupied_tiles: np.ndarray | None = None) -> tuple[np.ndarray, list] | None:
+def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
+                h: int, w: int, occupied_tiles: np.ndarray):
     """
     Pack polyominoes into a bitmap.
     
@@ -193,18 +193,9 @@ def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]], h: i
     Returns:
         tuple[np.ndarray, list]: (bitmap, positions) where positions contains packing info
     """
-    new_bitmap = False
-    if occupied_tiles is None:
-        occupied_tiles = np.zeros((h, w), dtype=np.bool)
-        new_bitmap = True
-    else:
-        occupied_tiles = occupied_tiles.copy()
-    
-    if len(poliominoes) == 0:
-        return occupied_tiles, []
+    occupied_tiles = occupied_tiles.copy()
     
     positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]] = []
-    
     for groupid, mask, offset in poliominoes:
         for j in range(w - mask.shape[1] + 1):
             for i in range(h - mask.shape[0] + 1):
@@ -255,7 +246,7 @@ def render(canvas: np.ndarray, positions: list[tuple[int, int, int, np.ndarray, 
 
 
 def apply_pack(pack_results: tuple[np.ndarray, list], canvas: np.ndarray, index_map: np.ndarray,
-               det_info: dict, frame_idx: int, frame: np.ndarray, tile_size: int, step_times: dict):
+               offset_lookup: dict, frame_idx: int, frame: np.ndarray, tile_size: int, step_times: dict):
     bitmap, positions = pack_results
     
     # Profile: Render packed polyominoes onto canvas
@@ -271,10 +262,37 @@ def apply_pack(pack_results: tuple[np.ndarray, list], canvas: np.ndarray, index_
         assert not np.any(index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] & mask), (index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0], mask)
         index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask.astype(np.int32) * (gid + 1)
         index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask.astype(np.int32) * frame_idx
-        det_info[(int(frame_idx), int(gid + 1))] = ((y, x), _offset)
+        offset_lookup[(int(frame_idx), int(gid + 1))] = ((y, x), _offset)
     step_times['update_mapping'] = time.time() - step_start
 
     return bitmap, canvas
+
+
+def save_packed_image(canvas: np.ndarray, index_map: np.ndarray, offset_lookup: dict,
+                      start_idx: int, frame_idx: int, output_dir: str, step_times: dict):
+    image_dir = os.path.join(output_dir, 'images')
+    index_map_dir = os.path.join(output_dir, 'index_maps')
+    offset_lookup_dir = os.path.join(output_dir, 'offset_lookups')
+
+    # Profile: Save canvas
+    step_start = time.time()
+    img_path = os.path.join(image_dir, f'{start_idx:08d}_{frame_idx:08d}.jpg')
+    cv2.imwrite(img_path, canvas)
+    step_times['save_canvas'] = time.time() - step_start
+
+    # Profile: Save index_map and offset_lookup
+    step_start = time.time()
+    index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}.npy')
+    np.save(index_map_path, index_map)
+    index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}_disp.txt')
+    with open(index_map_path, 'w') as f:
+        for i in range(index_map.shape[0]):
+            f.write(''.join(map(str, index_map[i, :, 0])) + '\n')
+
+    offset_lookup_path = os.path.join(offset_lookup_dir, f'{start_idx:08d}_{frame_idx:08d}.json')
+    with open(offset_lookup_path, 'w') as f:
+        json.dump({str(k): v for k, v in offset_lookup.items()}, f, indent=2)
+    step_times['save_mapping_files'] = time.time() - step_start
 
 
 def process_video_packing(video_path: str, results: list, tile_size: int, output_dir: str, threshold: float = 0.5):
@@ -298,180 +316,159 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
     
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    image_dir = os.path.join(output_dir, 'images')
+    if os.path.exists(image_dir):
+        shutil.rmtree(image_dir)
+    os.makedirs(image_dir)
+
+    index_map_dir = os.path.join(output_dir, 'index_maps')
+    if os.path.exists(index_map_dir):
+        shutil.rmtree(index_map_dir)
+    os.makedirs(index_map_dir)
+
+    offset_lookup_dir = os.path.join(output_dir, 'offset_lookups')
+    if os.path.exists(offset_lookup_dir):
+        shutil.rmtree(offset_lookup_dir)
+    os.makedirs(offset_lookup_dir)
     
     # Calculate grid dimensions
     grid_height = height // tile_size
     grid_width = width // tile_size
+
+    def init_packing_variables():
+        canvas = np.zeros((height, width, 3), dtype=np.uint8)
+        occupied_tiles = np.zeros((grid_height, grid_width), dtype=np.bool)
+        index_map = np.zeros((grid_height, grid_width, 2), dtype=np.int32)
+        offset_lookup: dict = {}
+        return canvas, occupied_tiles, index_map, offset_lookup, True
     
     # Initialize packing variables
-            
-    canvas = np.zeros((height, width, 3), dtype=np.uint8)
-    occupied_tiles: np.ndarray | None = None
-    index_map = np.zeros((grid_height, grid_width, 2), dtype=np.int32)
-    det_info: dict = {}
+    canvas, occupied_tiles, index_map, offset_lookup, clean = init_packing_variables()
     frame_cache = {}
     start_idx = 0
-    pack_idx = 0
     last_frame_idx = -1
     read_frame_idx = -1
     
     # Initialize profiling output file
-    runtime_file = os.path.join(output_dir, '..', 'runtime.jsonl')
+    runtime_file = os.path.join(output_dir, 'runtime.jsonl')
     
     print(f"Processing {len(results)} frames with tile size {tile_size}")
-    
-    # Process each frame
-    for frame_idx, frame_result in enumerate(tqdm(results, desc="Packing frames")):
-        # Start profiling for this frame
-        frame_start_time = time.time()
-        step_times = {}
-        
-        # Assert that frame_idx is increasing
-        assert frame_idx > last_frame_idx, f"Frame index must be increasing, got {frame_idx} after {last_frame_idx}"
-        last_frame_idx = frame_idx
+
+    with open(runtime_file, 'w') as f:
+        # Process each frame
+        for frame_idx, frame_result in enumerate(tqdm(results, desc="Packing frames")):
+            # Start profiling for this frame
+            frame_start_time = time.time()
+            step_times = {}
             
-        # Profile: Read frame from video
-        step_start = time.time()
-        ret = False
-        frame = None
-        while read_frame_idx < frame_idx:
-            ret, frame = cap.read()
-            read_frame_idx += 1
-        assert ret and frame is not None
-        frame_cache[frame_idx] = frame
-        step_times['read_frame'] = time.time() - step_start
-        
-        # Profile: Get classification results
-        step_start = time.time()
-        classifications = frame_result['tile_classifications']
-        step_times['get_classifications'] = time.time() - step_start
-        
-        # Profile: Create bitmap from classifications
-        step_start = time.time()
-        bitmap_frame = np.array(classifications) > threshold
-        bitmap_frame = bitmap_frame.astype(np.int32)
-        step_times['create_bitmap'] = time.time() - step_start
-        
-        # Profile: Group connected tiles into polyominoes
-        step_start = time.time()
-        polyominoes = group_tiles(bitmap_frame)
-        step_times['group_tiles'] = time.time() - step_start
-        
-        # Profile: Sort polyominoes by size
-        step_start = time.time()
-        polyominoes = sorted(polyominoes, key=lambda x: x[1].sum(), reverse=True)
-        step_times['sort_polyominoes'] = time.time() - step_start
-        
-        # Profile: Try packing polyominoes
-        step_start = time.time()
-        pack_results = pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
-
-        if pack_results is not None:
-            step_times['pack_append'] = time.time() - step_start
-            occupied_tiles, canvas = apply_pack(pack_results, canvas, index_map, det_info,
-                                                frame_idx, frame, tile_size, step_times)
-        else:
-            # If packing fails, save current packed image and start new one
-            step_times['pack_failed'] = True
-            step_times['pack_append_failed'] = time.time() - step_start
+            # Assert that frame_idx is increasing
+            assert frame_idx > last_frame_idx, f"Frame index must be increasing, got {frame_idx} after {last_frame_idx}"
+            last_frame_idx = frame_idx
+                
+            # Profile: Read frame from video
+            step_start = time.time()
+            ret = False
+            frame = None
+            while read_frame_idx < frame_idx:
+                ret, frame = cap.read()
+                read_frame_idx += 1
+            assert ret and frame is not None
+            frame_cache[frame_idx] = frame
+            step_times['read_frame'] = time.time() - step_start
             
-            assert canvas is not None and index_map is not None
-
-            # Profile: Save current packed image
+            # Profile: Get classification results
             step_start = time.time()
-            img_path = os.path.join(output_dir, f'img_{pack_idx:08d}.jpg')
-            cv2.imwrite(img_path, canvas)
-            step_times['save_canvas'] = time.time() - step_start
-
-            # Profile: Convert numpy arrays to lists for JSON serialization
+            classifications = frame_result['tile_classifications']
+            step_times['get_classifications'] = time.time() - step_start
+            
+            # Profile: Create bitmap from classifications
             step_start = time.time()
-            mapping_dict = {
-                'index_map': index_map.tolist(),
-                'det_info': {str(k): v for k, v in det_info.items()},
-                'frame_range': (start_idx, frame_idx)
-            }
-            step_times['convert_to_dict'] = time.time() - step_start
-
-            # Profile: Save mapping to file
+            bitmap_frame = np.array(classifications) > threshold
+            bitmap_frame = bitmap_frame.astype(np.int32)
+            step_times['create_bitmap'] = time.time() - step_start
+            
+            # Profile: Group connected tiles into polyominoes
             step_start = time.time()
-            mapping_path = os.path.join(output_dir, f'mapping_{pack_idx:08d}.json')
-            with open(mapping_path, 'w') as f:
-                json.dump(mapping_dict, f, indent=2)
-            step_times['save_mapping_file'] = time.time() - step_start
-
-            # Reset for next packed image
-            pack_idx += 1
-
-            # Profile: Reset variables
+            polyominoes = group_tiles(bitmap_frame)
+            step_times['group_tiles'] = time.time() - step_start
+            
+            # Profile: Sort polyominoes by size
             step_start = time.time()
-            canvas = np.zeros((height, width, 3), dtype=np.uint8)
-            occupied_tiles = None
-            index_map = np.zeros((grid_height, grid_width, 2), dtype=np.int32)
-            det_info = {}
-            frame_cache = {frame_idx: frame}
-            start_idx = frame_idx
-            step_times['reset_variables'] = time.time() - step_start
-
-            # Profile: Retry packing for current frame
+            polyominoes = sorted(polyominoes, key=lambda x: x[1].sum(), reverse=True)
+            step_times['sort_polyominoes'] = time.time() - step_start
+            
+            # Profile: Try packing polyominoes
             step_start = time.time()
-            pack_results = pack_append(polyominoes, grid_height, grid_width)
+            pack_results = pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
+
             if pack_results is not None:
                 step_times['pack_append'] = time.time() - step_start
-                occupied_tiles, canvas = apply_pack(pack_results, canvas, index_map, det_info,
-                                            frame_idx, frame, tile_size, step_times)
+                occupied_tiles, canvas = apply_pack(pack_results, canvas, index_map, offset_lookup,
+                                                    frame_idx, frame, tile_size, step_times)
+                clean = False
             else:
-                step_times['pack_failed_retry'] = True
-                step_times['pack_append_failed_retry'] = time.time() - step_start
-
-                # If retry packing fails, save the entire frame as a single polyomino
-                print(f"Failed to pack frame {frame_idx} even after reset, saving entire frame as single polyomino")
+                # If packing fails, save current packed image and start new one
+                step_times['pack_failed'] = True
+                step_times['pack_append'] = time.time() - step_start
                 
-                # Render the entire frame onto canvas
-                canvas = frame
-
-                # Profile: Update index_map and det_info for the full frame polyomino
+                # Profile: Save packed image
+                save_packed_image(canvas, index_map, offset_lookup, start_idx, frame_idx, output_dir, step_times)
+                
+                # Profile: Reset variables
                 step_start = time.time()
-                occupied_tiles = np.ones((grid_height, grid_width), dtype=np.bool)
-                index_map[0:grid_height, 0:grid_width, 0] = 1
-                index_map[0:grid_height, 0:grid_width, 1] = frame_idx
-                det_info[(int(frame_idx), int(1))] = ((0, 0), (0, 0))
-                step_times['update_mapping'] = time.time() - step_start
+                canvas, occupied_tiles, index_map, offset_lookup, clean = init_packing_variables()
+                frame_cache = {frame_idx: frame}
+                start_idx = frame_idx
+                step_times['reset_variables'] = time.time() - step_start
 
-        # Calculate total frame processing time
-        step_times['total_frame_time'] = time.time() - frame_start_time
-        
-        # Save profiling data for this frame
-        profiling_data = {
-            'frame_idx': frame_idx,
-            'step_times': step_times,
-            'num_polyominoes': len(polyominoes) if 'polyominoes' in locals() else 0,
-            'packing_success': 'handle_packing_failure' not in step_times
-        }
-        
-        with open(runtime_file, 'a') as f:
+                # Profile: Retry packing for current frame
+                step_start = time.time()
+                pack_results = pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
+                if pack_results is not None:
+                    step_times['pack_append_retry'] = time.time() - step_start
+                    occupied_tiles, canvas = apply_pack(pack_results, canvas, index_map, offset_lookup,
+                                                        frame_idx, frame, tile_size, step_times)
+                    clean = False
+                else:
+                    step_times['pack_failed_retry'] = True
+                    step_times['pack_append_retry'] = time.time() - step_start
+
+                    # If retry packing fails, save the entire frame as a single polyomino
+                    print(f"Failed to pack frame {frame_idx} even after reset, saving entire frame as single polyomino")
+                    
+                    # Render the entire frame onto canvas
+                    canvas = frame
+                    step_times['render_canvas'] = 0
+
+                    # Profile: Update index_map and det_info for the full frame polyomino
+                    step_start = time.time()
+                    occupied_tiles = np.ones((grid_height, grid_width), dtype=np.bool)
+                    index_map[0:grid_height, 0:grid_width, 0] = 1
+                    index_map[0:grid_height, 0:grid_width, 1] = frame_idx
+                    offset_lookup[(int(frame_idx), int(1))] = ((0, 0), (0, 0))
+                    step_times['update_mapping'] = time.time() - step_start
+
+            # Calculate total frame processing time
+            step_times['total_frame_time'] = time.time() - frame_start_time
+            
+            # Save profiling data for this frame
+            profiling_data = {
+                'frame_idx': frame_idx,
+                'step_times': step_times,
+                'num_polyominoes': len(polyominoes),
+            }
+            
             f.write(json.dumps(profiling_data) + '\n')
     
     # Release video capture
     cap.release()
     
     # Save final packed image if exists
-    if canvas is not None and index_map is not None:
-        img_path = os.path.join(output_dir, f'img_{pack_idx:03d}.jpg')
-        cv2.imwrite(img_path, canvas)
-        
-        mapping_dict = {
-            'index_map': index_map.tolist(),
-            'det_info': {str(k): v for k, v in det_info.items()},
-            'frame_range': (start_idx, len(results))
-        }
-        
-        mapping_path = os.path.join(output_dir, f'mapping_{pack_idx:03d}.json')
-        with open(mapping_path, 'w') as f:
-            json.dump(mapping_dict, f, indent=2)
-        
-        # print(f"Saved final packed image {pack_idx} with {len(det_info)} polyominoes")
-    
-    print(f"Completed packing for video. Created {pack_idx + 1} packed images.")
+    if not clean:
+        save_packed_image(canvas, index_map, offset_lookup, start_idx, len(results), output_dir, {})
+
+    print(f"Completed packing for video. Created {len(results) - start_idx} packed images.")
     print(f"Runtime profiling data saved to: {runtime_file}")
 
 
@@ -543,12 +540,6 @@ def main(args):
                 
                 # Create output directory for packing results
                 packing_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'packing', f'proxy_{tile_size}')
-                if os.path.exists(packing_output_dir):
-                    # Remove the entire directory
-                    shutil.rmtree(packing_output_dir)
-                os.makedirs(packing_output_dir)
-
-                packing_output_dir = os.path.join(packing_output_dir, 'images')
                 if os.path.exists(packing_output_dir):
                     # Remove the entire directory
                     shutil.rmtree(packing_output_dir)
