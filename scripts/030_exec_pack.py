@@ -286,8 +286,7 @@ def save_packed_image(canvas: np.ndarray, index_map: np.ndarray, offset_lookup: 
     np.save(index_map_path, index_map)
     index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}_disp.txt')
     with open(index_map_path, 'w') as f:
-        for i in range(index_map.shape[0]):
-            f.write(''.join(map(str, index_map[i, :, 0])) + '\n')
+        f.write(str(index_map[:, :, 0]))
 
     offset_lookup_path = os.path.join(offset_lookup_dir, f'{start_idx:08d}_{frame_idx:08d}.json')
     with open(offset_lookup_path, 'w') as f:
