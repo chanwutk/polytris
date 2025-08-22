@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<annotations>
+  <version>1.1</version>
+  <meta>
+    <job>
+      <id>2462446</id>
+      <size>15</size>
+      <mode>annotation</mode>
+      <overlap>0</overlap>
+      <bugtracker></bugtracker>
+      <created>2025-05-14 02:38:59.580351+00:00</created>
+      <updated>2025-08-22 05:19:28.007620+00:00</updated>
+      <subset>default</subset>
+      <start_frame>0</start_frame>
+      <stop_frame>14</stop_frame>
+      <frame_filter></frame_filter>
+      <segments>
+        <segment>
+          <id>2464724</id>
+          <start>0</start>
+          <stop>14</stop>
+          <url>https://app.cvat.ai/api/jobs/2462446</url>
+        </segment>
+      </segments>
+      <owner>
+        <username>chanwut_mick</username>
+        <email>chanwutk@berkeley.edu</email>
+      </owner>
+      <assignee></assignee>
+      <labels>
+        <label>
+          <name>domain</name>
+          <color>#612d6e</color>
+          <type>polygon</type>
+          <attributes>
+          </attributes>
+        </label>
+        <label>
+          <name>crop</name>
+          <color>#2a00ff</color>
+          <type>rectangle</type>
+          <attributes>
+          </attributes>
+        </label>
+      </labels>
+    </job>
+    <dumped>2025-08-22 05:19:37.321756+00:00</dumped>
+  </meta>
+  <image id="0" name="hwy00.jpg" width="3840" height="2160">
+  </image>
+  <image id="1" name="hwy01.jpg" width="3840" height="2160">
+  </image>
+  <image id="2" name="hwy02.jpg" width="3840" height="2160">
+  </image>
+  <image id="3" name="hwy03.jpg" width="3840" height="2160">
+  </image>
+  <image id="4" name="hwy04.jpg" width="3840" height="2160">
+  </image>
+  <image id="5" name="hwy05.jpg" width="3840" height="2160">
+  </image>
+  <image id="6" name="hwy06.jpg" width="3840" height="2160">
+  </image>
+  <image id="7" name="hwy07.jpg" width="3840" height="2160">
+  </image>
+  <image id="8" name="hwy08.jpg" width="3840" height="2160">
+  </image>
+  <image id="9" name="jnc00.jpg" width="3840" height="2160">
+    <box label="crop" source="manual" occluded="0" xtl="1374.19" ytl="625.28" xbr="2656.89" ybr="1772.10" z_order="0">
+    </box>
+    <polygon label="domain" source="manual" occluded="0" points="1315.90,797.90;1310.50,1278.60;1691.85,1383.31;1901.31,1477.30;2140.30,1595.45;2553.80,1794.20;2698.80,1418.20;2701.50,1356.50;2626.30,1275.90;2614.20,1203.90;2619.20,1126.60;2639.77,1053.02;2711.60,952.70;2710.90,633.10;2708.60,591.60;2301.42,690.50;2027.52,736.15;1745.56,768.37" z_order="0">
+    </polygon>
+  </image>
+  <image id="10" name="jnc01.jpg" width="3840" height="2160">
+  </image>
+  <image id="11" name="jnc02.jpg" width="3840" height="2160">
+    <box label="crop" source="manual" occluded="0" xtl="1240.70" ytl="419.29" xbr="2392.70" ybr="1700.19" z_order="0">
+    </box>
+    <polygon label="domain" source="manual" occluded="0" points="1203.10,822.10;1412.58,760.32;1511.94,685.13;1622.04,566.98;1678.43,459.56;1699.90,354.80;2188.60,349.50;2191.32,491.79;2212.81,569.66;2266.51,647.54;2438.40,768.40;2438.40,1359.10;2279.94,1396.74;2191.32,1426.28;2142.99,1471.93;2108.08,1541.75;2083.91,1638.42;2086.60,1761.90;1788.50,1756.60;1780.47,1600.82;1750.93,1509.52;1694.54,1447.76;1627.41,1396.74;1533.42,1372.57;1423.32,1361.83;1211.20,1359.10" z_order="0">
+    </polygon>
+  </image>
+  <image id="12" name="jnc05.jpg" width="3840" height="2160">
+  </image>
+  <image id="13" name="jnc06.jpg" width="3840" height="2160">
+    <polygon label="domain" source="manual" occluded="0" points="1732.30,1002.00;1723.00,1034.98;1182.04,772.13;1187.79,741.11" z_order="0">
+    </polygon>
+    <polygon label="domain" source="manual" occluded="0" points="1200.24,706.13;1426.84,726.87;1508.22,726.87;1576.83,717.30;1627.90,699.75;1672.58,675.81;1704.49,650.28;1759.54,600.81;1793.05,553.74;1816.19,520.23;1831.35,498.69;2168.84,510.65;2173.63,560.12;2189.59,615.97;2211.13,656.66;2247.04,698.95;2298.90,754.00;2339.59,780.33;2369.83,801.39;2407.64,809.53;2468.44,815.52;2528.52,818.47;2536.42,1423.32;2448.10,1411.60;2415.70,1410.96;2319.88,1408.88;2244.00,1434.42;2183.29,1464.73;2110.92,1519.23;2072.14,1556.97;2041.67,1606.83;2007.52,1676.01;1989.01,1730.50;1569.89,1736.01;1573.88,1652.87;1554.81,1563.75;1517.23,1495.77;1436.33,1410.72;1357.02,1359.26;1269.42,1327.82;1199.92,1323.67;1201.70,769.50;1726.10,1020.80;1723.10,1039.90;1720.60,1065.50;1721.56,1106.26;1740.47,1173.12;1760.10,1209.02;1791.06,1245.64;1823.85,1272.05;1871.10,1294.10;1935.10,1305.70;1992.76,1301.65;2043.66,1285.06;2086.59,1260.08;2110.20,1235.91;2140.12,1196.81;2161.11,1149.66;2173.47,1088.14;2171.96,1045.14;2160.71,1002.93;2141.48,961.76;2115.31,926.50;2083.23,897.70;2046.37,873.44;2012.15,859.16;1968.74,851.50;1915.84,854.05;1874.51,863.31;1830.87,884.05;1791.62,912.93;1776.20,929.10;1756.91,951.63;1744.60,972.50;1736.48,992.16;1728.00,1014.80;1203.20,762.14" z_order="0">
+    </polygon>
+    <box label="crop" source="manual" occluded="0" xtl="1221.91" ytl="542.60" xbr="2502.81" ybr="1694.60" z_order="0">
+    </box>
+  </image>
+  <image id="14" name="jnc07.jpg" width="3840" height="2160">
+    <polygon label="domain" source="manual" occluded="0" points="1869.10,341.40;1855.66,424.65;1818.06,491.79;1748.25,583.09;1670.37,631.42;1549.53,647.54;1388.40,652.90;1388.40,1426.30;1530.74,1423.59;1616.67,1428.96;1732.13,1469.24;1804.64,1560.54;1826.12,1654.53;1826.10,1802.20;2043.60,1807.60;2046.32,1630.36;2081.22,1536.37;2164.47,1474.61;2253.08,1445.07;2365.87,1431.65;2513.60,1431.60;2519.00,636.80;2376.60,642.20;2304.10,636.80;2234.30,615.30;2185.95,575.03;2142.99,521.33;2110.76,448.82;2083.90,341.40" z_order="0">
+    </polygon>
+    <box label="crop" source="manual" occluded="0" xtl="1426.01" ytl="362.91" xbr="2478.65" ybr="1772.68" z_order="0">
+    </box>
+  </image>
+</annotations>

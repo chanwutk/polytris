@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import numpy as np
+import cv2
 import tqdm
 
 CACHE_DIR = '/polyis-cache'
@@ -67,7 +68,7 @@ def load_mapping_file(index_map_path: str, offset_lookup_path: str):
 
 def unpack_detections(detections: list[list[float]], index_map: np.ndarray, 
                       offset_lookup: dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]], 
-                      tile_size: int) -> dict[int, list[list[float]]]:
+                      tile_size: int) -> tuple[dict[int, list[list[float]]], list[list[float]], list[list[float]]]:
     """
     Unpack detections from packed coordinates back to original frame coordinates.
     
@@ -78,35 +79,54 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         tile_size (int): Size of tiles used for packing
         
     Returns:
-        dict[int, list[list[float]]]: dictionary mapping frame indices to lists of bounding boxes
-                                     in original frame coordinates
+        tuple[dict[int, list[list[float]]], list[list[float]], list[list[float]]]: dictionary mapping frame indices to lists of bounding boxes
+                                                                                    in original frame coordinates, and list of detections that are not in any tile
     """
     # Initialize dictionary to store detections per frame
     frame_detections: dict[int, list[list[float]]] = {}
-    
+    not_in_any_tile_detections: list[list[float]] = []
+    center_not_in_any_tile_detections: list[list[float]] = []
+
     # Process each detection
-    for det in detections:
+    for x1, y1, x2, y2 in detections:
         # Get the center point of the detection in packed coordinates
-        center_x = (det[0] + det[2]) / 2.0
-        center_y = (det[1] + det[3]) / 2.0
+        center_x = (x1 + x2) / 2.0
+        center_y = (y1 + y2) / 2.0
         
-        # Convert to tile coordinates in the packed image
-        tile_x = int(center_x // tile_size)
-        tile_y = int(center_y // tile_size)
+        # center, top-left, top-right, bottom-left, bottom-right
+        xs = [center_x, x1, x2, x1, x2]
+        ys = [center_y, y1, y1, y2, y2]
+
+        group_id: int | None = None
+        frame_idx: int | None = None
+        center_in_any_tile: bool = True
+        for x, y in zip(xs, ys):
+            # Convert to tile coordinates in the packed image
+            tile_x = int(x // tile_size)
+            tile_y = int(y // tile_size)
+            
+            # Ensure tile coordinates are within bounds
+            if (tile_y < 0 or tile_y >= index_map.shape[0] or 
+                tile_x < 0 or tile_x >= index_map.shape[1]):
+                continue
+            
+            # Get the group ID and frame index for this tile
+            group_id_ = int(index_map[tile_y, tile_x, 0])
+            frame_idx_ = int(index_map[tile_y, tile_x, 1])
+            
+            if group_id_ != 0:
+                group_id = group_id_
+                frame_idx = frame_idx_
+                break
+            center_in_any_tile = False
         
-        # Ensure tile coordinates are within bounds
-        if (tile_y < 0 or tile_y >= index_map.shape[0] or 
-            tile_x < 0 or tile_x >= index_map.shape[1]):
-            raise ValueError(f"Detection {det} is outside tile bounds")
+        if not center_in_any_tile:
+            center_not_in_any_tile_detections.append([x1, y1, x2, y2])
         
-        # Get the group ID and frame index for this tile
-        group_id = int(index_map[tile_y, tile_x, 0])
-        frame_idx = int(index_map[tile_y, tile_x, 1])
-        
-        # Skip if this tile has no group (group_id == 0)
-        if group_id == 0:
-            raise ValueError(f"Tile {tile_x}, {tile_y} has no group")
-        
+        if group_id is None or frame_idx is None:
+            not_in_any_tile_detections.append([x1, y1, x2, y2])
+            continue
+
         # Get the offset information for this group
         if (frame_idx, group_id) not in offset_lookup:
             raise ValueError(f"No mapping info for frame {frame_idx}, group {group_id}")
@@ -120,10 +140,10 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         
         # Convert detection back to original frame coordinates
         original_det = [
-            det[0] + offset_x,  # x1
-            det[1] + offset_y,  # y1
-            det[2] + offset_x,  # x2
-            det[3] + offset_y   # y2
+            x1 + offset_x,
+            y1 + offset_y,
+            x2 + offset_x,
+            y2 + offset_y,
         ]
         
         # Add to frame detections
@@ -131,7 +151,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
             frame_detections[frame_idx] = []
         frame_detections[frame_idx].append(original_det)
     
-    return frame_detections
+    return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
 def process_video_unpacking(video_file_path: str, tile_size: int):
@@ -146,7 +166,7 @@ def process_video_unpacking(video_file_path: str, tile_size: int):
     
     detections_file = os.path.join(video_file_path, 'packed_detections', f'proxy_{tile_size}', 'detections.jsonl')
     
-    packing_dir = os.path.join(video_file_path, 'packing', f'proxy_{tile_size}', 'images')
+    packing_dir = os.path.join(video_file_path, 'packing', f'proxy_{tile_size}')
     if not os.path.exists(packing_dir):
         raise FileNotFoundError(f"Packing directory not found: {packing_dir}")
     
@@ -156,6 +176,14 @@ def process_video_unpacking(video_file_path: str, tile_size: int):
     os.makedirs(unpacked_output_dir, exist_ok=True)
     print(f"Saving unpacked detections to {unpacked_output_dir}")
     
+    images_not_in_any_tile_dir = os.path.join(unpacked_output_dir, 'images_not_in_any_tile')
+    os.makedirs(images_not_in_any_tile_dir, exist_ok=True)
+    print(f"Saving images not in any tile to {images_not_in_any_tile_dir}")
+
+    images_center_not_in_any_tile_dir = os.path.join(unpacked_output_dir, 'images_center_not_in_any_tile')
+    os.makedirs(images_center_not_in_any_tile_dir, exist_ok=True)
+    print(f"Saving images center not in any tile to {images_center_not_in_any_tile_dir}")
+
     # dictionary to store all frame detections
     all_frame_detections: dict[int, list[list[float]]] = {}
     
@@ -170,8 +198,8 @@ def process_video_unpacking(video_file_path: str, tile_size: int):
             to_idx = int(to_idx)
 
             # Construct paths
-            index_map_path = os.path.join(packing_dir, 'index_map', f'{from_idx}_{to_idx}.npy')
-            offset_lookup_path = os.path.join(packing_dir, 'offset_lookup', f'{from_idx}_{to_idx}.json')
+            index_map_path = os.path.join(packing_dir, 'index_maps', f'{from_idx:08d}_{to_idx:08d}.npy')
+            offset_lookup_path = os.path.join(packing_dir, 'offset_lookups', f'{from_idx:08d}_{to_idx:08d}.json')
             
             # Load detection results
             detections: list[list[float]] = content['bboxes']
@@ -180,7 +208,44 @@ def process_video_unpacking(video_file_path: str, tile_size: int):
             index_map, offset_lookup = load_mapping_file(index_map_path, offset_lookup_path)
             
             # Unpack detections
-            frame_detections = unpack_detections(detections, index_map, offset_lookup, tile_size)
+            frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections = unpack_detections(detections, index_map, offset_lookup, tile_size)
+
+            # save not_in_any_tile_detections and center_not_in_any_tile_detections
+            if len(not_in_any_tile_detections) > 0:
+                # load the image
+                image_path = os.path.join(packing_dir, 'images', image_file)
+                image = cv2.imread(image_path)
+                assert image is not None, f"Image not found: {image_path}"
+
+                # draw the detections
+                for det in not_in_any_tile_detections:
+                    x1, y1, x2, y2 = det
+                    image = cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
+
+                    center_x = (x1 + x2) / 2
+                    center_y = (y1 + y2) / 2
+                    image = cv2.circle(image, (int(center_x), int(center_y)), 5, (0, 0, 255), -1)
+                
+                # save the image
+                cv2.imwrite(os.path.join(images_not_in_any_tile_dir, image_file), image)
+
+            if len(center_not_in_any_tile_detections) > 0:
+                # load the image
+                image_path = os.path.join(packing_dir, 'images', image_file)
+                image = cv2.imread(image_path)
+                assert image is not None, f"Image not found: {image_path}"
+
+                # draw the detections
+                for det in center_not_in_any_tile_detections:
+                    x1, y1, x2, y2 = det
+                    image = cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
+
+                    center_x = (x1 + x2) / 2
+                    center_y = (y1 + y2) / 2
+                    image = cv2.circle(image, (int(center_x), int(center_y)), 5, (0, 0, 255), -1)
+                
+                # save the image
+                cv2.imwrite(os.path.join(images_center_not_in_any_tile_dir, image_file), image)
             
             # Merge with existing frame detections
             for frame_idx, bboxes in frame_detections.items():
@@ -259,14 +324,8 @@ def main(args):
         # Process each tile size for this video
         for tile_size in tile_sizes_to_process:
             print(f"Processing tile size: {tile_size}")
-            
-            try:
-                process_video_unpacking(video_file_path, tile_size)
-                print(f"Completed unpacking for tile size {tile_size}")
+            process_video_unpacking(video_file_path, tile_size)
                 
-            except Exception as e:
-                print(f"Error processing tile size {tile_size} for video {video_file}: {e}")
-                continue
 
 
 if __name__ == '__main__':

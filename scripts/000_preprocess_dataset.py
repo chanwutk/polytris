@@ -60,17 +60,24 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_siz
     fps = int(cap.get(cv2.CAP_PROP_FPS)) // isr
     owidth, oheight = WIDTH, HEIGHT
 
-    domain = img.find('.//polygon[@label="domain"]')
-    assert isinstance(domain, ElementTree.Element)
-    domain = domain.attrib['points']
-    domain = domain.replace(';', ',')
-    domain = np.array([float(pt) for pt in domain.split(',')]).reshape((-1, 2))
-    domain_poly = Path(domain)
-    x, y = np.meshgrid(np.arange(iwidth), np.arange(iheight))
-    x, y = x.flatten(), y.flatten()
-    pixel_points = np.vstack((x, y)).T
-    bitmap = domain_poly.contains_points(pixel_points)
-    bitmap = bitmap.reshape((1, iheight, iwidth, 1))
+    domains = img.findall('.//polygon[@label="domain"]')
+    bitmaps = []
+    for domain in domains:
+        assert isinstance(domain, ElementTree.Element)
+        domain = domain.attrib['points']
+        domain = domain.replace(';', ',')
+        domain = np.array([float(pt) for pt in domain.split(',')]).reshape((-1, 2))
+        domain_poly = Path(domain)
+        x, y = np.meshgrid(np.arange(iwidth), np.arange(iheight))
+        x, y = x.flatten(), y.flatten()
+        pixel_points = np.vstack((x, y)).T
+        bitmap = domain_poly.contains_points(pixel_points)
+        bitmap = bitmap.reshape((1, iheight, iwidth, 1))
+        bitmaps.append(bitmap)
+    bitmap = bitmaps[0]
+    for b in bitmaps[1:]:
+        bitmap |= b
+    bitmap = bitmap.astype(np.uint8) * 255
     bitmap = bitmap[:, top:bottom, left:right, :]
     bitmask = torch.from_numpy(bitmap).to(f'cuda:{gpuIdx}').to(torch.bool)
 

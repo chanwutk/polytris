@@ -366,6 +366,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
     start_idx = 0
     last_frame_idx = -1
     read_frame_idx = -1
+    frame_idx = -1
     
     # Initialize profiling output file
     runtime_file = os.path.join(output_dir, 'runtime.jsonl')
@@ -484,7 +485,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
     
     # Save final packed image if exists
     if not clean:
-        save_packed_image(canvas, index_map, offset_lookup, start_idx, len(results), output_dir, {})
+        save_packed_image(canvas, index_map, offset_lookup, start_idx, frame_idx, output_dir, {})
 
     print(f"Completed packing for video. Created {len(results) - start_idx} packed images.")
     print(f"Runtime profiling data saved to: {runtime_file}")
