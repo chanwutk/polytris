@@ -150,7 +150,7 @@ def process_video_unpacking(video_file_path: str, tile_size: int):
     if not os.path.exists(packing_dir):
         raise FileNotFoundError(f"Packing directory not found: {packing_dir}")
     
-    unpacked_output_dir = os.path.join(video_file_path, 'unpacked_detections', f'proxy_{tile_size}')
+    unpacked_output_dir = os.path.join(video_file_path, 'uncompressed_detections', f'proxy_{tile_size}')
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -193,15 +193,10 @@ def process_video_unpacking(video_file_path: str, tile_size: int):
     sorted_frames = sorted(all_frame_detections.keys())
     
     # Save each frame's detections
-    for frame_idx in sorted_frames:
-        bboxes = all_frame_detections[frame_idx]
-        
-        # Create frame-specific output file
-        frame_output_file = os.path.join(unpacked_output_dir, f'frame_{frame_idx:08d}.jsonl')
-        
-        with open(frame_output_file, 'w') as f:
-            for bbox in bboxes:
-                f.write(json.dumps(bbox) + '\n')
+    with open(os.path.join(unpacked_output_dir, 'detections.jsonl'), 'w') as f:
+        for frame_idx in sorted_frames:
+            bboxes = all_frame_detections[frame_idx]
+            f.write(json.dumps({ 'frame_idx': frame_idx, 'bboxes': bboxes }) + '\n')
     
     print(f"Saved unpacked detections for {len(sorted_frames)} frames")
 
