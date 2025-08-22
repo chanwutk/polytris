@@ -18,16 +18,6 @@ CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [64]
 
 
-class PolyominoMapping(NamedTuple):
-    """Mapping information for packed polyominoes."""
-    index_map: np.ndarray  # Shape: (height//chunk_size, width//chunk_size, 2)
-    det_info: dict  # Maps (frame_idx, group_id) to ((y, x), offset)
-    frame_idx: int
-    frame_cache: dict  # Maps frame_idx to frame
-    canvas: np.ndarray  # The packed image
-    frame_range: slice  # Range of frames in this packed image
-
-
 def parse_args():
     """
     Parse command line arguments for the script.
@@ -247,6 +237,22 @@ def render(canvas: np.ndarray, positions: list[tuple[int, int, int, np.ndarray, 
 
 def apply_pack(pack_results: tuple[np.ndarray, list], canvas: np.ndarray, index_map: np.ndarray,
                offset_lookup: dict, frame_idx: int, frame: np.ndarray, tile_size: int, step_times: dict):
+    """
+    Apply packed results to the canvas, index_map, and offset_lookup.
+    
+    Args:
+        pack_results: Tuple of (bitmap, positions)
+        canvas: The canvas to render onto
+        index_map: The index map to update
+        offset_lookup: The offset lookup to update
+        frame_idx: The index of the frame
+        frame: The frame to render
+        tile_size: The size of the tile
+        step_times: The step times to update
+        
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Tuple of (bitmap, canvas)
+    """
     bitmap, positions = pack_results
     
     # Profile: Render packed polyominoes onto canvas
@@ -270,6 +276,18 @@ def apply_pack(pack_results: tuple[np.ndarray, list], canvas: np.ndarray, index_
 
 def save_packed_image(canvas: np.ndarray, index_map: np.ndarray, offset_lookup: dict,
                       start_idx: int, frame_idx: int, output_dir: str, step_times: dict):
+    """
+    Save the packed image, index_map, and offset_lookup.
+    
+    Args:
+        canvas: The canvas to save
+        index_map: The index map to save
+        offset_lookup: The offset lookup to save
+        start_idx: The start index of the packed image
+        frame_idx: The end index of the packed image
+        output_dir: The directory to save the files
+        step_times: The step times to update
+    """
     image_dir = os.path.join(output_dir, 'images')
     index_map_dir = os.path.join(output_dir, 'index_maps')
     offset_lookup_dir = os.path.join(output_dir, 'offset_lookups')
@@ -284,9 +302,9 @@ def save_packed_image(canvas: np.ndarray, index_map: np.ndarray, offset_lookup: 
     step_start = time.time()
     index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}.npy')
     np.save(index_map_path, index_map)
-    index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}_disp.txt')
-    with open(index_map_path, 'w') as f:
-        f.write(str(index_map[:, :, 0]))
+    # index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}_disp.txt')
+    # with open(index_map_path, 'w') as f:
+    #     f.write(str(index_map[:, :, 0]))
 
     offset_lookup_path = os.path.join(offset_lookup_dir, f'{start_idx:08d}_{frame_idx:08d}.json')
     with open(offset_lookup_path, 'w') as f:
@@ -340,10 +358,10 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
         occupied_tiles = np.zeros((grid_height, grid_width), dtype=np.bool)
         index_map = np.zeros((grid_height, grid_width, 2), dtype=np.int32)
         offset_lookup: dict = {}
-        return canvas, occupied_tiles, index_map, offset_lookup, True
+        return canvas, occupied_tiles, index_map, offset_lookup, True, False
     
     # Initialize packing variables
-    canvas, occupied_tiles, index_map, offset_lookup, clean = init_packing_variables()
+    canvas, occupied_tiles, index_map, offset_lookup, clean, full = init_packing_variables()
     frame_cache = {}
     start_idx = 0
     last_frame_idx = -1
@@ -399,7 +417,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
             
             # Profile: Try packing polyominoes
             step_start = time.time()
-            pack_results = pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
+            pack_results = None if full else pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
 
             if pack_results is not None:
                 step_times['pack_append'] = time.time() - step_start
@@ -416,7 +434,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
                 
                 # Profile: Reset variables
                 step_start = time.time()
-                canvas, occupied_tiles, index_map, offset_lookup, clean = init_packing_variables()
+                canvas, occupied_tiles, index_map, offset_lookup, clean, full = init_packing_variables()
                 frame_cache = {frame_idx: frame}
                 start_idx = frame_idx
                 step_times['reset_variables'] = time.time() - step_start
@@ -446,6 +464,7 @@ def process_video_packing(video_path: str, results: list, tile_size: int, output
                     index_map[0:grid_height, 0:grid_width, 0] = 1
                     index_map[0:grid_height, 0:grid_width, 1] = frame_idx
                     offset_lookup[(int(frame_idx), int(1))] = ((0, 0), (0, 0))
+                    full = True
                     step_times['update_mapping'] = time.time() - step_start
 
             # Calculate total frame processing time
