@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import time
 import numpy as np
 import tqdm
 import multiprocessing as mp
@@ -25,9 +26,10 @@ def parse_args():
             - max_age (int): Maximum age for SORT tracker (default: 10)
             - min_hits (int): Minimum hits for SORT tracker (default: 3)
             - iou_threshold (float): IOU threshold for SORT tracker (default: 0.3)
-            - interpolate (bool): Whether to perform trajectory interpolation (default: False)
+            - no_interpolate (bool): Whether to not perform trajectory interpolation (default: False)
     """
-    parser = argparse.ArgumentParser(description='Execute object tracking on uncompressed detection results from 050_exec_uncompress.py')
+    parser = argparse.ArgumentParser(description='Execute object tracking on uncompressed '
+                                                 'detection results from 050_exec_uncompress.py')
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
@@ -43,8 +45,8 @@ def parse_args():
                         help='Minimum hits for SORT tracker')
     parser.add_argument('--iou_threshold', type=float, default=0.3,
                         help='IOU threshold for SORT tracker')
-    parser.add_argument('--interpolate', action='store_true',
-                        help='Whether to perform trajectory interpolation')
+    parser.add_argument('--no_interpolate', action='store_true',
+                        help='Whether to not perform trajectory interpolation')
     return parser.parse_args()
 
 
@@ -106,14 +108,14 @@ def create_tracker(tracker_name: str, max_age: int = 10, min_hits: int = 3, iou_
 
 def interpolate_trajectory(trajectory: list[tuple[int, np.ndarray]], nxt: tuple[int, np.ndarray]) -> list[tuple[int, np.ndarray]]:
     """
-    Perform linear interpolation between two trajectory points.
+    Perform linear interpolation between two trajectory points except the last point (nxt).
     
     Args:
         trajectory (list[tuple[int, np.ndarray]]): list of (frame_idx, detection) tuples
         nxt (tuple[int, np.ndarray]): Next detection point (frame_idx, detection)
         
     Returns:
-        list[tuple[int, np.ndarray]]: list of interpolated points including the next point
+        list[tuple[int, np.ndarray]]: list of interpolated points
     """
     extend: list[tuple[int, np.ndarray]] = []
     
@@ -131,14 +133,13 @@ def interpolate_trajectory(trajectory: list[tuple[int, np.ndarray]], nxt: tuple[
 
         for idx, int_det in enumerate(int_dets[:-1]):
             extend.append((prv[0] + idx + 1, int_det))
-    
-    extend.append(nxt)
+
     return extend
 
 
 def track_objects_in_video(video_file: str, detection_results: list[dict], tracker_name: str, 
                            max_age: int, min_hits: int, iou_threshold: float, 
-                           interpolate: bool, output_path: str):
+                           no_interpolate: bool, output_path: str):
     """
     Execute object tracking on detection results and save tracking results to JSONL.
     
@@ -149,7 +150,7 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
         max_age (int): Maximum age for SORT tracker
         min_hits (int): Minimum hits for SORT tracker
         iou_threshold (float): IOU threshold for SORT tracker
-        interpolate (bool): Whether to perform trajectory interpolation
+        no_interpolate (bool): Whether to not perform trajectory interpolation
         output_path (str): Path where the output JSONL file will be saved
     """
     print(f"Processing video: {video_file}")
@@ -163,77 +164,91 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     
     print(f"Processing {len(detection_results)} frames for tracking...")
     
-    # Process each frame
-    for frame_result in tqdm.tqdm(detection_results, desc="Tracking objects"):
-        frame_idx = frame_result['frame_idx']
-        bboxes = frame_result['bboxes']
-        
-        # Convert detections to numpy array format expected by SORT
-        if bboxes:
-            # SORT expects format: [[x1, y1, x2, y2, score], ...]
+    # Create runtime output file
+    runtime_path = output_path.replace('tracks.jsonl', 'runtimes.jsonl')
+    runtime_dir = os.path.dirname(runtime_path)
+    os.makedirs(runtime_dir, exist_ok=True)
+    
+    with open(runtime_path, 'w') as runtime_file:
+        # Process each frame
+        for frame_result in tqdm.tqdm(detection_results, desc="Tracking objects"):
+            frame_idx = frame_result['frame_idx']
+            bboxes = frame_result['bboxes']
+            
+            # Start timing for this frame
+            frame_start_time = time.time()
+            step_times = {}
+            
+            # Profile: Convert detections to numpy array
+            step_start = time.time()
             dets = np.array(bboxes)
             if dets.size > 0:
-                # Ensure we have the right format
-                if dets.shape[1] >= 5:
-                    dets = dets[:, :5]  # Take first 5 columns: x1, y1, x2, y2, score
-                else:
-                    # If we don't have scores, add default score of 1.0
-                    dets = np.column_stack([dets, np.ones(dets.shape[0])])
+                dets = dets[:, :5]  # Take first 5 columns: x1, y1, x2, y2, score
             else:
                 dets = np.empty((0, 5))
-        else:
-            dets = np.empty((0, 5))
-        
-        # Update tracker
-        trackers = tracker.update(dets)
-        
-        # Process tracking results
-        if trackers.size > 0:
-            for track in trackers:
-                # SORT returns: [x1, y1, x2, y2, track_id]
-                x1, y1, x2, y2, track_id = track
-                track_id = int(track_id)
-                
-                # Convert to detection format: [track_id, x1, y1, x2, y2]
-                detection = [track_id, x1, y1, x2, y2]
-                
-                # Add to frame tracks
-                if frame_idx not in frame_tracks:
-                    frame_tracks[frame_idx] = []
-                frame_tracks[frame_idx].append(detection)
-                
-                # Add to trajectories for interpolation (if enabled)
-                if interpolate:
-                    if track_id not in trajectories:
-                        trajectories[track_id] = []
+            step_times['convert_detections'] = time.time() - step_start
+            
+            # Profile: Update tracker
+            step_start = time.time()
+            trackers = tracker.update(dets)
+            step_times['tracker_update'] = time.time() - step_start
+            
+            # Profile: Process tracking results
+            step_start = time.time()
+            if trackers.size > 0:
+                for track in trackers:
+                    # SORT returns: [x1, y1, x2, y2, track_id]
+                    x1, y1, x2, y2, track_id = track
+                    track_id = int(track_id)
                     
-                    # Convert to numpy array for interpolation
-                    box_array = np.array([x1, y1, x2, y2], dtype=np.float32)
-                    extend = interpolate_trajectory(trajectories[track_id], (frame_idx, box_array))
+                    # Convert to detection format: [track_id, x1, y1, x2, y2]
+                    detection = [track_id, x1, y1, x2, y2]
                     
-                    # Add interpolated points to frame tracks
-                    for e in extend:
-                        e_frame_idx, e_box = e
-                        if e_frame_idx not in frame_tracks:
-                            frame_tracks[e_frame_idx] = []
-                        
-                        # Convert back to list format: [track_id, x1, y1, x2, y2]
-                        e_detection = [track_id, *e_box.tolist()]
-                        frame_tracks[e_frame_idx].append(e_detection)
+                    # Add to frame tracks
+                    if frame_idx not in frame_tracks:
+                        frame_tracks[frame_idx] = []
+                    frame_tracks[frame_idx].append(detection)
 
-                        # Add interpolated points to trajectories
-                        trajectories[track_id].append((e_frame_idx, e_box))
-                else:
-                    # Without interpolation, just add to trajectories for tracking
                     if track_id not in trajectories:
                         trajectories[track_id] = []
-                    
                     box_array = np.array([x1, y1, x2, y2], dtype=np.float32)
+                    
+                    # Add to trajectories for interpolation (if enabled)
+                    if not no_interpolate:
+                        extend = interpolate_trajectory(trajectories[track_id], (frame_idx, box_array))
+                        
+                        # Add interpolated points to frame tracks
+                        for e in extend:
+                            e_frame_idx, e_box = e
+                            if e_frame_idx not in frame_tracks:
+                                frame_tracks[e_frame_idx] = []
+                            
+                            # Convert back to list format: [track_id, x1, y1, x2, y2]
+                            e_detection = [track_id, *e_box.tolist()]
+                            frame_tracks[e_frame_idx].append(e_detection)
+
+                            # Add interpolated points to trajectories
+                            trajectories[track_id].append((e_frame_idx, e_box))
+
                     trajectories[track_id].append((frame_idx, box_array))
 
-        # Handle frames with no detections
-        if frame_idx not in frame_tracks:
-            frame_tracks[frame_idx] = []
+            # Handle frames with no detections
+            if frame_idx not in frame_tracks:
+                frame_tracks[frame_idx] = []
+            
+            step_times['process_results'] = time.time() - step_start
+            
+            # Calculate total frame processing time
+            step_times['total_frame_time'] = time.time() - frame_start_time
+            
+            # Save runtime data for this frame
+            runtime_data = {
+                'frame_idx': frame_idx,
+                'step_times': step_times,
+                'num_detections': len(bboxes),
+                'num_tracks': trackers.size if trackers.size > 0 else 0
+            }
+            runtime_file.write(json.dumps(runtime_data) + '\n')
     
     print(f"Tracking completed. Found {len(trajectories)} unique tracks.")
     
@@ -254,6 +269,7 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
             f.write(json.dumps(frame_data) + '\n')
     
     print(f"Tracking results saved successfully. Total frames: {len(frame_tracks)}")
+    print(f"Runtime data saved to: {runtime_path}")
 
 
 def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, tile_size: int):
@@ -267,25 +283,16 @@ def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, 
         dataset (str): Dataset name
         tile_size (int): Tile size used for detections
     """
-    try:
-        # Load detection results
-        detection_results = load_detection_results(cache_dir, dataset, video_file, tile_size)
-        
-        # Create output path for tracking results
-        output_path = os.path.join(cache_dir, dataset, video_file, 'uncompressed_tracking', f'proxy_{tile_size}', 'tracks.jsonl')
-        
-        # Execute tracking
-        track_objects_in_video(
-            video_file, detection_results, args.tracker,
-            args.max_age, args.min_hits, args.iou_threshold, 
-            args.interpolate, output_path
-        )
-        
-        print(f"Completed tracking for video: {video_file} with tile size: {tile_size}")
-        
-    except Exception as e:
-        print(f"Error processing video {video_file} with tile size {tile_size}: {e}")
-        raise e
+    # Load detection results
+    detection_results = load_detection_results(cache_dir, dataset, video_file, tile_size)
+    
+    # Create output path for tracking results
+    output_path = os.path.join(cache_dir, dataset, video_file, 'uncompressed_tracking',
+                               f'proxy_{tile_size}', 'tracking.jsonl')
+    
+    # Execute tracking
+    track_objects_in_video(video_file, detection_results, args.tracker, args.max_age, args.min_hits,
+                           args.iou_threshold, args.no_interpolate, output_path)
 
 
 def main(args):
@@ -305,15 +312,15 @@ def main(args):
         - The script expects uncompressed detection results from 050_exec_uncompress.py in:
           {CACHE_DIR}/{dataset}/{video_file}/uncompressed_detections/proxy_{tile_size}/detections.jsonl
         - Tracking results are saved to:
-          {CACHE_DIR}/{dataset}/{video_file}/tracking/proxy_{tile_size}/tracks.jsonl
-        - Linear interpolation is optional and controlled by the --interpolate flag
+          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_tracking/proxy_{tile_size}/tracks.jsonl
+        - Linear interpolation is optional and controlled by the --no_interpolate flag
         - Processing is parallelized for improved performance
         - When tile_size is 'all', all available tile sizes are processed
     """
     print(f"Processing dataset: {args.dataset}")
     print(f"Using tracker: {args.tracker}")
     print(f"Tracker parameters: max_age={args.max_age}, min_hits={args.min_hits}, iou_threshold={args.iou_threshold}")
-    print(f"Interpolation: {'enabled' if args.interpolate else 'disabled'}")
+    print(f"Interpolation: {'enabled' if not args.no_interpolate else 'disabled'}")
     
     # Determine which tile sizes to process
     if args.tile_size == 'all':
