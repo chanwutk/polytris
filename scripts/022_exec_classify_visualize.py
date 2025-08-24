@@ -506,61 +506,71 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
             actual_negative_scores.append(score)
 
     # Create histograms for correct and incorrect predictions, plus actual positive/negative
-    plt.figure(figsize=(15, 10))
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    axes = axes.flatten()  # Flatten to 1D array for easier indexing
 
     # Correct vs Incorrect predictions
-    plt.subplot(2, 2, 1)
     if correct_scores:
-        plt.hist(correct_scores, bins=50, alpha=0.7, color='lightgreen', edgecolor='darkgreen')
-        plt.axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        plt.xlabel('Classification Score')
-        plt.ylabel('Count')
-        plt.title(f'Correct Predictions (Tile Size: {tile_size})\nTotal: {len(correct_scores):,}')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
+        axes[0].hist(correct_scores, bins=50, alpha=0.7, color='lightgreen', edgecolor='darkgreen')
+        axes[0].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
+        axes[0].set_xlabel('Classification Score')
+        axes[0].set_ylabel('Count')
+        axes[0].set_title(f'Correct Predictions (Tile Size: {tile_size})\nTotal: {len(correct_scores):,}')
+        axes[0].legend()
+        axes[0].grid(True, alpha=0.3)
     else:
-        plt.text(0.5, 0.5, 'No correct predictions', ha='center', va='center', transform=plt.gca().transAxes)
-        plt.title(f'Correct Predictions (Tile Size: {tile_size})')
+        axes[0].text(0.5, 0.5, 'No correct predictions', ha='center', va='center', transform=axes[0].transAxes)
+        axes[0].set_title(f'Correct Predictions (Tile Size: {tile_size})')
 
-    plt.subplot(2, 2, 2)
     if incorrect_scores:
-        plt.hist(incorrect_scores, bins=50, alpha=0.7, color='lightcoral', edgecolor='darkred')
-        plt.axvline(x=threshold, color='blue', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        plt.xlabel('Classification Score')
-        plt.ylabel('Count')
-        plt.title(f'Incorrect Predictions (Tile Size: {tile_size})\nTotal: {len(incorrect_scores):,}')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
+        axes[1].hist(incorrect_scores, bins=50, alpha=0.7, color='lightcoral', edgecolor='darkred')
+        axes[1].axvline(x=threshold, color='blue', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
+        axes[1].set_xlabel('Classification Score')
+        axes[1].set_ylabel('Count')
+        axes[1].set_title(f'Incorrect Predictions (Tile Size: {tile_size})\nTotal: {len(incorrect_scores):,}')
+        axes[1].legend()
+        axes[1].grid(True, alpha=0.3)
     else:
-        plt.text(0.5, 0.5, 'No incorrect predictions', ha='center', va='center', transform=plt.gca().transAxes)
-        plt.title(f'Incorrect Predictions (Tile Size: {tile_size})')
+        axes[1].text(0.5, 0.5, 'No incorrect predictions', ha='center', va='center', transform=axes[1].transAxes)
+        axes[1].set_title(f'Incorrect Predictions (Tile Size: {tile_size})')
 
     # Actual positive vs negative scores
-    plt.subplot(2, 2, 3)
     if actual_positive_scores:
-        plt.hist(actual_positive_scores, bins=50, alpha=0.7, color='lightblue', edgecolor='darkblue')
-        plt.axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        plt.xlabel('Classification Score')
-        plt.ylabel('Count')
-        plt.title(f'Actual Positive Scores (Tile Size: {tile_size})\nTotal: {len(actual_positive_scores):,}')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
+        axes[2].hist(actual_positive_scores, bins=50, alpha=0.7, color='lightblue', edgecolor='darkblue')
+        axes[2].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
+        axes[2].set_xlabel('Classification Score')
+        axes[2].set_ylabel('Count')
+        axes[2].set_title(f'Actual Positive Scores (Tile Size: {tile_size})\nTotal: {len(actual_positive_scores):,}')
+        axes[2].legend()
+        axes[2].grid(True, alpha=0.3)
     else:
-        plt.text(0.5, 0.5, 'No actual positive scores', ha='center', va='center', transform=plt.gca().transAxes)
-        plt.title(f'Actual Positive Scores (Tile Size: {tile_size})')
+        axes[2].text(0.5, 0.5, 'No actual positive scores', ha='center', va='center', transform=axes[2].transAxes)
+        axes[2].set_title(f'Actual Positive Scores (Tile Size: {tile_size})')
 
-    plt.subplot(2, 2, 4)
     if actual_negative_scores:
-        plt.hist(actual_negative_scores, bins=50, alpha=0.7, color='lightyellow', edgecolor='darkgoldenrod')
-        plt.axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        plt.xlabel('Classification Score')
-        plt.ylabel('Count')
-        plt.title(f'Actual Negative Scores (Tile Size: {tile_size})\nTotal: {len(actual_negative_scores):,}')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
+        axes[3].hist(actual_negative_scores, bins=50, alpha=0.7, color='lightyellow', edgecolor='darkgoldenrod')
+        axes[3].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
+        axes[3].set_xlabel('Classification Score')
+        axes[3].set_ylabel('Count')
+        axes[3].set_title(f'Actual Negative Scores (Tile Size: {tile_size})\nTotal: {len(actual_negative_scores):,}')
+        axes[3].legend()
+        axes[3].grid(True, alpha=0.3)
     else:
-        plt.text(0.5, 0.5, 'No actual negative scores', ha='center', va='center', transform=plt.gca().transAxes)
-        plt.title(f'Actual Negative Scores (Tile Size: {tile_size})')
+        axes[3].text(0.5, 0.5, 'No actual negative scores', ha='center', va='center', transform=axes[3].transAxes)
+        axes[3].set_title(f'Actual Negative Scores (Tile Size: {tile_size})')
+
+    # Sync y-axes across all subplots
+    y_min = float('inf')
+    y_max = float('-inf')
+    
+    for ax in axes:
+        if ax.get_children():  # Check if subplot has content
+            y_min = min(y_min, ax.get_ylim()[0])
+            y_max = max(y_max, ax.get_ylim()[1])
+    
+    # Set the same y-limits for all subplots
+    for ax in axes:
+        ax.set_ylim(y_min, y_max)
 
     plt.tight_layout()
     histogram_path = os.path.join(output_dir, f'040_histogram_scores_tile{tile_size}.png')
