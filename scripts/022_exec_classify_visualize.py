@@ -41,6 +41,8 @@ def parse_args():
                         help='Use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)')
     parser.add_argument('--statistics', action='store_true',
                         help='Compare classification results with groundtruth and generate statistics (no video output, ignores --groundtruth flag)')
+    parser.add_argument('--processes', type=int, default=None,
+                        help='Number of processes to use for parallel processing (default: number of CPU cores)')
     return parser.parse_args()
 
 
@@ -517,12 +519,12 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     
     # Define consistent colors for original axes (left y-axis) and synchronized axes (right y-axis)
     original_colors = '#4682B4'  # SteelBlue
-    sync_colors = '#FF6B6B'     # LightCoral
+    sync_colors = '#66BB6A'     # Green
     
     # Correct vs Incorrect predictions
     if correct_scores:
         # Plot on original axis with original color
-        axes[0].hist(correct_scores, bins=50, alpha=0.7, color=original_colors, edgecolor=original_colors)
+        axes[0].hist(correct_scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
         axes[0].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         axes[0].set_xlabel('Classification Score')
         axes[0].set_ylabel('Count', color=original_colors)
@@ -532,7 +534,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         axes[0].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[0].hist(correct_scores, bins=50, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[0].hist(correct_scores, bins=100, color=sync_colors, edgecolor=sync_colors)
         twin_axes[0].set_ylabel('Count (Synchronized)', color=sync_colors)
         twin_axes[0].tick_params(axis='y', labelcolor=sync_colors)
     else:
@@ -541,7 +543,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
 
     if incorrect_scores:
         # Plot on original axis with original color
-        axes[1].hist(incorrect_scores, bins=50, alpha=0.7, color=original_colors, edgecolor=original_colors)
+        axes[1].hist(incorrect_scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
         axes[1].axvline(x=threshold, color='blue', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         axes[1].set_xlabel('Classification Score')
         axes[1].set_ylabel('Count', color=original_colors)
@@ -551,7 +553,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         axes[1].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[1].hist(incorrect_scores, bins=50, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[1].hist(incorrect_scores, bins=100, color=sync_colors, edgecolor=sync_colors)
         twin_axes[1].set_ylabel('Count (Synchronized)', color=sync_colors)
         twin_axes[1].tick_params(axis='y', labelcolor=sync_colors)
     else:
@@ -561,7 +563,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     # Actual positive vs negative scores
     if actual_positive_scores:
         # Plot on original axis with original color
-        axes[2].hist(actual_positive_scores, bins=50, alpha=0.7, color=original_colors, edgecolor=original_colors)
+        axes[2].hist(actual_positive_scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
         axes[2].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         axes[2].set_xlabel('Classification Score')
         axes[2].set_ylabel('Count', color=original_colors)
@@ -571,7 +573,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         axes[2].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[2].hist(actual_positive_scores, bins=50, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[2].hist(actual_positive_scores, bins=100, color=sync_colors, edgecolor=sync_colors)
         twin_axes[2].set_ylabel('Count (Synchronized)', color=sync_colors)
         twin_axes[2].tick_params(axis='y', labelcolor=sync_colors)
     else:
@@ -580,7 +582,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
 
     if actual_negative_scores:
         # Plot on original axis with original color
-        axes[3].hist(actual_negative_scores, bins=50, alpha=0.7, color=original_colors, edgecolor=original_colors)
+        axes[3].hist(actual_negative_scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
         axes[3].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         axes[3].set_xlabel('Classification Score')
         axes[3].set_ylabel('Count', color=original_colors)
@@ -590,7 +592,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         axes[3].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[3].hist(actual_negative_scores, bins=50, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[3].hist(actual_negative_scores, bins=100, color=sync_colors, edgecolor=sync_colors)
         twin_axes[3].set_ylabel('Count (Synchronized)', color=sync_colors)
         twin_axes[3].tick_params(axis='y', labelcolor=sync_colors)
     else:
