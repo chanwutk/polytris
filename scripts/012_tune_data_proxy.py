@@ -99,7 +99,7 @@ def main(args):
                             for x in range(patched.shape[1]):
                                 # check if the patch contains any detections
                                 fromx, fromy = x * tile_size, y * tile_size
-                                tox, toy = fromx + tile_size, fromy + tile_size
+                                tox, toy = fromx + tile_size - 1, fromy + tile_size - 1
 
                                 filename = f'{idx}.{y}.{x}.jpg'
                                 patch = patched[y, x].contiguous().numpy()
