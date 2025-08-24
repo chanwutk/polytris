@@ -499,77 +499,56 @@ def create_visualizations(results: List[Dict[str, Any]], output_dir: str) -> Non
     plt.style.use('default')
     
     # 1. Overall accuracy comparison
-    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+    fig, (*axes, ) = plt.subplots(1, 3, figsize=(15, 8))
     fig.suptitle('Tracking Accuracy Comparison Across Videos', fontsize=16, fontweight='bold')
     
     # HOTA scores
-    bars1 = axes[0, 0].bar(range(len(video_names)), hota_scores, color='skyblue', alpha=0.7, edgecolor='navy', linewidth=0.5)
-    axes[0, 0].set_title('HOTA Scores', fontsize=14, fontweight='bold')
-    axes[0, 0].set_xlabel('Video', fontsize=12)
-    axes[0, 0].set_ylabel('HOTA Score', fontsize=12)
-    axes[0, 0].set_xticks(range(len(video_names)))
-    axes[0, 0].set_xticklabels(video_names, rotation=45, ha='right')
-    axes[0, 0].grid(True, alpha=0.3, linestyle='--')
-    axes[0, 0].set_ylim(0, 1.1)
+    bars1 = axes[0].bar(range(len(video_names)), hota_scores, color='skyblue', alpha=0.7, edgecolor='navy', linewidth=0.5)
+    axes[0].set_title('HOTA Scores', fontsize=14, fontweight='bold')
+    axes[0].set_xlabel('Video', fontsize=12)
+    axes[0].set_ylabel('HOTA Score', fontsize=12)
+    axes[0].set_xticks(range(len(video_names)))
+    axes[0].set_xticklabels(video_names, rotation=45, ha='right')
+    axes[0].grid(True, alpha=0.3, linestyle='--')
+    axes[0].set_ylim(0, 1.1)
     
     # Add value labels on bars
     for bar in bars1:
         height = bar.get_height()
-        axes[0, 0].text(bar.get_x() + bar.get_width()/2., height + 0.01,
+        axes[0].text(bar.get_x() + bar.get_width()/2., height + 0.01,
                         f'{height:.3f}', ha='center', va='bottom', fontsize=10)
     
     # MOTA scores
-    bars2 = axes[0, 1].bar(range(len(video_names)), clear_scores, color='lightcoral', alpha=0.7, edgecolor='darkred', linewidth=0.5)
-    axes[0, 1].set_title('MOTA Scores', fontsize=14, fontweight='bold')
-    axes[0, 1].set_xlabel('Video', fontsize=12)
-    axes[0, 1].set_ylabel('MOTA Score', fontsize=12)
-    axes[0, 1].set_xticks(range(len(video_names)))
-    axes[0, 1].set_xticklabels(video_names, rotation=45, ha='right')
-    axes[0, 1].grid(True, alpha=0.3, linestyle='--')
-    axes[0, 1].set_ylim(0, 1.1)
+    bars2 = axes[1].bar(range(len(video_names)), clear_scores, color='lightcoral', alpha=0.7, edgecolor='darkred', linewidth=0.5)
+    axes[1].set_title('MOTA Scores', fontsize=14, fontweight='bold')
+    axes[1].set_xlabel('Video', fontsize=12)
+    axes[1].set_ylabel('MOTA Score', fontsize=12)
+    axes[1].set_xticks(range(len(video_names)))
+    axes[1].set_xticklabels(video_names, rotation=45, ha='right')
+    axes[1].grid(True, alpha=0.3, linestyle='--')
+    axes[1].set_ylim(0, 1.1)
     
     # Add value labels on bars
     for bar in bars2:
         height = bar.get_height()
-        axes[0, 1].text(bar.get_x() + bar.get_width()/2., height + 0.01,
+        axes[1].text(bar.get_x() + bar.get_width()/2., height + 0.01,
                         f'{height:.3f}', ha='center', va='bottom', fontsize=10)
     
     # IDF1 scores
-    bars3 = axes[1, 0].bar(range(len(video_names)), identity_scores, color='lightgreen', alpha=0.7, edgecolor='darkgreen', linewidth=0.5)
-    axes[1, 0].set_title('IDF1 Scores', fontsize=14, fontweight='bold')
-    axes[1, 0].set_xlabel('Video', fontsize=12)
-    axes[1, 0].set_ylabel('IDF1 Score', fontsize=12)
-    axes[1, 0].set_xticks(range(len(video_names)))
-    axes[1, 0].set_xticklabels(video_names, rotation=45, ha='right')
-    axes[1, 0].grid(True, alpha=0.3, linestyle='--')
-    axes[1, 0].set_ylim(0, 1.1)
+    bars3 = axes[2].bar(range(len(video_names)), identity_scores, color='lightgreen', alpha=0.7, edgecolor='darkgreen', linewidth=0.5)
+    axes[2].set_title('IDF1 Scores', fontsize=14, fontweight='bold')
+    axes[2].set_xlabel('Video', fontsize=12)
+    axes[2].set_ylabel('IDF1 Score', fontsize=12)
+    axes[2].set_xticks(range(len(video_names)))
+    axes[2].set_xticklabels(video_names, rotation=45, ha='right')
+    axes[2].grid(True, alpha=0.3, linestyle='--')
+    axes[2].set_ylim(0, 1.1)
     
     # Add value labels on bars
     for bar in bars3:
         height = bar.get_height()
-        axes[1, 0].text(bar.get_x() + bar.get_width()/2., height + 0.01,
+        axes[2].text(bar.get_x() + bar.get_width()/2., height + 0.01,
                         f'{height:.3f}', ha='center', va='bottom', fontsize=10)
-    
-    # Combined scores heatmap
-    score_matrix = np.array([hota_scores, clear_scores, identity_scores])
-    im = axes[1, 1].imshow(score_matrix, cmap='RdYlGn', aspect='auto', vmin=0, vmax=1)
-    axes[1, 1].set_title('Score Heatmap', fontsize=14, fontweight='bold')
-    axes[1, 1].set_xlabel('Video', fontsize=12)
-    axes[1, 1].set_ylabel('Metric', fontsize=12)
-    axes[1, 1].set_xticks(range(len(video_names)))
-    axes[1, 1].set_xticklabels(video_names, rotation=45, ha='right')
-    axes[1, 1].set_yticks(range(3))
-    axes[1, 1].set_yticklabels(['HOTA', 'MOTA', 'IDF1'])
-    
-    # Add colorbar
-    cbar = plt.colorbar(im, ax=axes[1, 1])
-    cbar.set_label('Score', fontsize=12)
-    
-    # Add text annotations to heatmap
-    for i in range(3):
-        for j in range(len(video_names)):
-            text = axes[1, 1].text(j, i, f'{score_matrix[i, j]:.3f}',
-                                   ha="center", va="center", color="black", fontsize=10, fontweight='bold')
     
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'accuracy_comparison.png'), dpi=300, bbox_inches='tight')
@@ -608,105 +587,11 @@ def create_visualizations(results: List[Dict[str, Any]], output_dir: str) -> Non
         plt.savefig(os.path.join(output_dir, 'tile_size_comparison.png'), dpi=300, bbox_inches='tight')
         plt.close()
     
-    # 3. Metric correlation analysis
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-    fig.suptitle('Metric Correlation Analysis', fontsize=16, fontweight='bold')
-    
-    # HOTA vs MOTA
-    scatter1 = axes[0].scatter(hota_scores, clear_scores, alpha=0.7, s=100, c='blue', edgecolors='navy', linewidth=1)
-    axes[0].set_xlabel('HOTA Score', fontsize=12)
-    axes[0].set_ylabel('MOTA Score', fontsize=12)
-    axes[0].set_title('HOTA vs MOTA', fontsize=14, fontweight='bold')
-    axes[0].grid(True, alpha=0.3, linestyle='--')
-    axes[0].set_xlim(0, 1.1)
-    axes[0].set_ylim(0, 1.1)
-    
-    # Add correlation coefficient
-    corr = np.corrcoef(hota_scores, clear_scores)[0, 1]
-    axes[0].text(0.05, 0.95, f'Correlation: {corr:.3f}', transform=axes[0].transAxes, 
-                 fontsize=12, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-    
-    # HOTA vs IDF1
-    scatter2 = axes[1].scatter(hota_scores, identity_scores, alpha=0.7, s=100, c='green', edgecolors='darkgreen', linewidth=1)
-    axes[1].set_xlabel('HOTA Score', fontsize=12)
-    axes[1].set_ylabel('IDF1 Score', fontsize=12)
-    axes[1].set_title('HOTA vs IDF1', fontsize=14, fontweight='bold')
-    axes[1].grid(True, alpha=0.3, linestyle='--')
-    axes[1].set_xlim(0, 1.1)
-    axes[1].set_ylim(0, 1.1)
-    
-    # Add correlation coefficient
-    corr = np.corrcoef(hota_scores, identity_scores)[0, 1]
-    axes[1].text(0.05, 0.95, f'Correlation: {corr:.3f}', transform=axes[1].transAxes, 
-                 fontsize=12, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-    
-    # MOTA vs IDF1
-    scatter3 = axes[2].scatter(clear_scores, identity_scores, alpha=0.7, s=100, c='red', edgecolors='darkred', linewidth=1)
-    axes[2].set_xlabel('MOTA Score', fontsize=12)
-    axes[2].set_ylabel('IDF1 Score', fontsize=12)
-    axes[2].set_title('MOTA vs IDF1', fontsize=14, fontweight='bold')
-    axes[2].grid(True, alpha=0.3, linestyle='--')
-    axes[2].set_xlim(0, 1.1)
-    axes[2].set_ylim(0, 1.1)
-    
-    # Add correlation coefficient
-    corr = np.corrcoef(clear_scores, identity_scores)[0, 1]
-    axes[2].text(0.05, 0.95, f'Correlation: {corr:.3f}', transform=axes[2].transAxes, 
-                 fontsize=12, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-    
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'metric_correlation.png'), dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    # 4. Summary statistics table
-    fig, ax = plt.subplots(figsize=(12, 8))
-    ax.axis('tight')
-    ax.axis('off')
-    
-    # Calculate summary statistics
-    summary_data = []
-    for metric_name, scores in [('HOTA', hota_scores), ('MOTA', clear_scores), ('IDF1', identity_scores)]:
-        summary_data.append([
-            metric_name,
-            f"{np.mean(scores):.4f}",
-            f"{np.std(scores):.4f}",
-            f"{np.min(scores):.4f}",
-            f"{np.max(scores):.4f}",
-            f"{np.median(scores):.4f}"
-        ])
-    
-    table = ax.table(cellText=summary_data,
-                    colLabels=['Metric', 'Mean', 'Std', 'Min', 'Max', 'Median'],
-                    cellLoc='center',
-                    loc='center')
-    
-    # Style the table
-    table.auto_set_font_size(False)
-    table.set_fontsize(12)
-    table.scale(1.2, 1.5)
-    
-    # Color the header row
-    for i in range(len(summary_data[0])):
-        table[(0, i)].set_facecolor('#4CAF50')
-        table[(0, i)].set_text_props(weight='bold', color='white')
-    
-    # Color alternating rows
-    for i in range(1, len(summary_data) + 1):
-        for j in range(len(summary_data[0])):
-            if i % 2 == 0:
-                table[(i, j)].set_facecolor('#f0f0f0')
-    
-    ax.set_title('Accuracy Metrics Summary Statistics', fontsize=16, fontweight='bold', pad=20)
-    plt.savefig(os.path.join(output_dir, 'summary_statistics.png'), dpi=300, bbox_inches='tight')
-    plt.close()
-    
     print(f"Matplotlib visualizations saved to {output_dir}")
     print("Generated files:")
     print("  - accuracy_comparison.png")
     if len(set(tile_sizes)) > 1:
         print("  - tile_size_comparison.png")
-    print("  - metric_correlation.png")
-    print("  - summary_statistics.png")
     print("  - accuracy_results.csv")
 
 
