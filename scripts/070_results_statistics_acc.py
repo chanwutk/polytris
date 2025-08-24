@@ -18,7 +18,6 @@ from trackeval.datasets import B3D
 from trackeval.metrics import HOTA, CLEAR, Identity
 
 CACHE_DIR = '/polyis-cache'
-OUTPUT_DIR = 'pipeline-stages/track-accuracy-results'
 TILE_SIZES = [64]
 
 
@@ -31,7 +30,6 @@ def parse_args():
             - dataset (str): Dataset name to process (default: 'b3d')
             - tile_size (str): Tile size to use for evaluation (choices: '64', '128', 'all')
             - metrics (str): Comma-separated list of metrics to evaluate (default: 'HOTA,CLEAR,Identity')
-            - output_dir (str): Output directory for results (default: 'pipeline-stages/track-accuracy-results')
             - parallel (bool): Whether to use parallel processing (default: True)
             - num_cores (int): Number of parallel cores to use (default: 8)
     """
@@ -42,8 +40,6 @@ def parse_args():
                         help='Tile size to use for evaluation (or "all" for all tile sizes)')
     parser.add_argument('--metrics', type=str, default='HOTA,CLEAR,Identity',
                         help='Comma-separated list of metrics to evaluate')
-    parser.add_argument('--output_dir', type=str, default=OUTPUT_DIR,
-                        help='Output directory for results')
     parser.add_argument('--parallel', action='store_true', default=False,
                         help='Whether to use parallel processing')
     parser.add_argument('--num_cores', type=int, default=8,
@@ -196,13 +192,13 @@ def evaluate_tracking_accuracy(video_name: str, tile_size: int, tracking_path: s
     
     # Create evaluator configuration
     eval_config = {
-        'USE_PARALLEL': False,
-        'NUM_PARALLEL_CORES': 1,
-        'BREAK_ON_ERROR': False,
-        'PRINT_RESULTS': False,
+        'USE_PARALLEL': True,
+        'NUM_PARALLEL_CORES': mp.cpu_count(),
+        'BREAK_ON_ERROR': True,
+        'PRINT_RESULTS': True,
         'OUTPUT_SUMMARY': True,
         'OUTPUT_DETAILED': True,
-        'PLOT_CURVES': False
+        'PLOT_CURVES': True
     }
     
     # Create metrics
@@ -241,7 +237,9 @@ def evaluate_tracking_accuracy(video_name: str, tile_size: int, tracking_path: s
         'video_name': video_name,
         'tile_size': tile_size,
         'metrics': summary_results,
-        'success': True
+        'results': results,
+        'success': True,
+        'output_dir': output_dir,
     }
 
 
@@ -345,13 +343,11 @@ def main(args):
           {CACHE_DIR}/{dataset}/{video_file}/uncompressed_tracking/proxy_{tile_size}/tracking.jsonl
         - Groundtruth data should be in:
           {CACHE_DIR}/{dataset}/{video_file}/groundtruth/tracking.jsonl
-        - Results are saved to the specified output directory
         - Multiple metrics are evaluated: HOTA, CLEAR (MOTA), and Identity (IDF1)
     """
     print(f"Starting tracking accuracy evaluation for dataset: {args.dataset}")
     print(f"Tile size(s): {args.tile_size}")
     print(f"Metrics: {args.metrics}")
-    print(f"Output directory: {args.output_dir}")
     
     # Parse metrics
     metrics_list = [m.strip() for m in args.metrics.split(',')]
@@ -366,47 +362,45 @@ def main(args):
     
     print(f"Found {len(video_tile_combinations)} video-tile size combinations to evaluate")
     
-    # Create output directory
-    os.makedirs(args.output_dir, exist_ok=True)
-    
-    # Evaluate tracking accuracy
-    results = []
-    
-    if args.parallel and len(video_tile_combinations) > 1:
-        print(f"Using parallel processing with {args.num_cores} cores")
+    # Prepare arguments for parallel processing if requested
+    eval_args = []
+    for video_name, tile_size in sorted(video_tile_combinations):
+        tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 'uncompressed_tracking',
+                                     f'proxy_{tile_size}', 'tracking.jsonl')
+        groundtruth_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
+                                        'groundtruth', 'tracking.jsonl')
         
-        # Prepare arguments for parallel processing
-        eval_args = []
-        for video_name, tile_size in sorted(video_tile_combinations):
-            tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
-                                       'uncompressed_tracking', f'proxy_{tile_size}', 'tracking.jsonl')
-            groundtruth_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
-                                          'groundtruth', 'tracking.jsonl')
-            
-            eval_args.append((video_name, tile_size, tracking_path, groundtruth_path, 
-                            metrics_list, args.output_dir))
-        
+        output_dir = os.path.join(CACHE_DIR, args.dataset, video_name, 'results',
+                                  f'proxy_{tile_size}', 'accuracy')
+        eval_args.append((video_name, tile_size, tracking_path, groundtruth_path, 
+                         metrics_list, output_dir))
+    
+    if args.parallel:
         # Run evaluation in parallel
-        with mp.Pool(processes=args.num_cores) as pool:
+        with mp.Pool(processes=mp.cpu_count()) as pool:
             results = pool.starmap(evaluate_tracking_accuracy, eval_args)
     else:
-        print("Using sequential processing")
-        
-        # Run evaluation sequentially
-        for video_name, tile_size in sorted(video_tile_combinations):
-            print(f"Evaluating {video_name} with tile size {tile_size}")
-            tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
-                                       'uncompressed_tracking', f'proxy_{tile_size}', 'tracking.jsonl')
-            groundtruth_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
-                                          'groundtruth', 'tracking.jsonl')
-            
-            result = evaluate_tracking_accuracy(video_name, tile_size, tracking_path, 
-                                             groundtruth_path, metrics_list, args.output_dir)
-            results.append(result)
+        results = []
+        for eval_arg in eval_args:
+            results.append(evaluate_tracking_accuracy(*eval_arg))
     
     # Print summary
     successful_results = [r for r in results if r['success']]
     failed_results = [r for r in results if not r['success']]
+
+    for result in results:
+        print('save results to', result['output_dir'])
+        class NumpyEncoder(json.JSONEncoder):
+            def default(self, o):
+                if isinstance(o, np.ndarray):
+                    return o.tolist()
+                if isinstance(o, np.floating):
+                    return float(o)
+                if isinstance(o, np.integer):
+                    return int(o)
+                return super().default(o)
+        with open(os.path.join(result['output_dir'], 'detailed_results.json'), 'w') as f:
+            json.dump(result, f, indent=2, cls=NumpyEncoder)
     
     print(f"\nEvaluation completed:")
     print(f"  Successful evaluations: {len(successful_results)}")
@@ -418,8 +412,10 @@ def main(args):
             print(f"  {result['video_name']} (tile size {result['tile_size']}): {result['error']}")
     
     if successful_results:
+        output_dir = os.path.join(CACHE_DIR, args.dataset, 'results', 'accuracy')
+
         # Create summary
-        create_simple_summary(successful_results, args.output_dir)
+        create_simple_summary(successful_results, output_dir)
         
         # Print summary statistics
         print("\nSummary Statistics:")
@@ -438,9 +434,8 @@ def main(args):
                 print(f"  {metric_name}: Mean={np.mean(scores):.4f}, Std={np.std(scores):.4f}")
         
         # Optionally create plots if requested
-        create_visualizations(successful_results, args.output_dir)
-    
-    print(f"\nResults saved to: {args.output_dir}")
+        create_visualizations(successful_results, output_dir)
+        print(f"\nResults saved to: {output_dir}")
 
 
 def create_visualizations(results: List[Dict[str, Any]], output_dir: str) -> None:
