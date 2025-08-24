@@ -21,6 +21,17 @@ CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [64]
 
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        if isinstance(o, np.floating):
+            return float(o)
+        if isinstance(o, np.integer):
+            return int(o)
+        return super().default(o)
+
+
 def parse_args():
     """
     Parse command line arguments for the script.
@@ -224,20 +235,27 @@ def evaluate_tracking_accuracy(video_name: str, tile_size: int, tracking_path: s
     
     # Extract summary results
     summary_results = {}
-    for metric in metrics:
-        metric_name = metric.get_name()
-        if metric_name in results:
-            metric_results = results[metric_name]
-            if 'COMBINED_SEQ' in metric_results:
-                combined = metric_results['COMBINED_SEQ']
-                if 'car' in combined:  # B3D uses 'car' class
-                    summary_results[metric_name] = combined['car']
+    
+    # The actual structure is: results[0]["B3D"]["xsort"]["COMBINED_SEQ"]["car"]
+    if results and len(results) > 0:
+        # Get the first result which contains the B3D evaluation
+        b3d_result = results[0].get('B3D', {})
+        xsort_result = b3d_result.get('xsort', {})
+        
+        # Look for the COMBINED_SEQ results which contain the car class
+        if 'COMBINED_SEQ' in xsort_result and 'car' in xsort_result['COMBINED_SEQ']:
+            car_results = xsort_result['COMBINED_SEQ']['car']
+            
+            # Extract metrics from the car results
+            for metric in metrics:
+                metric_name = metric.get_name()
+                if metric_name in car_results:
+                    summary_results[metric_name] = car_results[metric_name]
     
     return {
         'video_name': video_name,
         'tile_size': tile_size,
         'metrics': summary_results,
-        'results': results,
         'success': True,
         'output_dir': output_dir,
     }
@@ -281,7 +299,7 @@ def create_simple_summary(results: List[Dict[str, Any]], output_dir: str) -> Non
     
     # Save detailed results to JSON
     with open(os.path.join(output_dir, 'detailed_results.json'), 'w') as f:
-        json.dump(results, f, indent=2)
+        json.dump(results, f, indent=2, cls=NumpyEncoder)
     
     # Create text summary
     summary_file = os.path.join(output_dir, 'accuracy_summary.txt')
@@ -390,15 +408,6 @@ def main(args):
 
     for result in results:
         print('save results to', result['output_dir'])
-        class NumpyEncoder(json.JSONEncoder):
-            def default(self, o):
-                if isinstance(o, np.ndarray):
-                    return o.tolist()
-                if isinstance(o, np.floating):
-                    return float(o)
-                if isinstance(o, np.integer):
-                    return int(o)
-                return super().default(o)
         with open(os.path.join(result['output_dir'], 'detailed_results.json'), 'w') as f:
             json.dump(result, f, indent=2, cls=NumpyEncoder)
     
