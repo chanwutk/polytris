@@ -156,7 +156,8 @@ def evaluate_classification_accuracy(classifications: list[list[float]],
     # Calculate the total image dimensions based on grid and tile size
     total_height = grid_height * tile_size
     total_width = grid_width * tile_size
-    detection_bitmap = np.zeros((total_height, total_width), dtype=np.uint32)
+    # detection_bitmap = np.zeros((total_height, total_width), dtype=np.uint32)
+    detection_bitmap = np.zeros((grid_height, grid_width), dtype=np.uint32)
 
     # Mark all detections on the bitmap
     for detection in detections:
@@ -167,16 +168,17 @@ def evaluate_classification_accuracy(classifications: list[list[float]],
         _track_id, det_x1, det_y1, det_x2, det_y2 = detection
 
         # Convert to integer coordinates and ensure they're within bitmap bounds
-        det_x1 = max(0, int(det_x1))
-        det_y1 = max(0, int(det_y1))
-        det_x2 = min(total_width, int(det_x2))
-        det_y2 = min(total_height, int(det_y2))
+        det_x1 = max(0, int(det_x1)) // tile_size
+        det_y1 = max(0, int(det_y1)) // tile_size
+        det_x2 = min(total_width, int(det_x2) + 1) // tile_size
+        det_y2 = min(total_height, int(det_y2) + 1) // tile_size
 
-        assert det_x2 > det_x1 and det_y2 > det_y1, f"Invalid detection: {detection}"
+        assert det_x2 >= det_x1 and det_y2 >= det_y1, f"Invalid detection: {detection}"
         detection_bitmap[det_y1:det_y2, det_x1:det_x2] = 1
 
     error_map = np.zeros((grid_height, grid_width), dtype=int)
-    overlap_ratios = []
+    # overlap_ratios = []
+    actual_positives = []
     classification_scores = []
 
     # Extract tile regions from the detection bitmap and calculate overlap ratios
@@ -185,24 +187,27 @@ def evaluate_classification_accuracy(classifications: list[list[float]],
             score = classifications[i][j]
 
             # Calculate tile boundaries in the bitmap
-            tile_start_y = i * tile_size
-            tile_end_y = tile_start_y + tile_size
-            tile_start_x = j * tile_size
-            tile_end_x = tile_start_x + tile_size
+            # tile_start_y = i * tile_size
+            # tile_end_y = tile_start_y + tile_size
+            # tile_start_x = j * tile_size
+            # tile_end_x = tile_start_x + tile_size
 
             # Extract tile region from detection bitmap
-            tile_region = detection_bitmap[tile_start_y:tile_end_y, tile_start_x:tile_end_x]
+            # tile_region = detection_bitmap[tile_start_y:tile_end_y, tile_start_x:tile_end_x]
+            # tile_region = detection_bitmap[i, j]
 
             # Calculate overlap ratio: count of 1s divided by total pixels
-            overlap = float(np.sum(tile_region)) / (tile_size * tile_size)
+            # overlap = float(np.sum(tile_region)) / (tile_size * tile_size)
 
             # Store data for scatter plot
-            overlap_ratios.append(overlap)
+            # overlap_ratios.append(overlap)
             classification_scores.append(score)
 
             # Determine prediction
             predicted_positive = score >= threshold
-            actual_positive = overlap > 0.0
+            # actual_positive = overlap > 0.0
+            actual_positive = detection_bitmap[i, j] > 0
+            actual_positives.append(actual_positive)
 
             # Count metrics
             if predicted_positive and actual_positive:
@@ -226,8 +231,9 @@ def evaluate_classification_accuracy(classifications: list[list[float]],
         'tp': tp, 'tn': tn, 'fp': fp, 'fn': fn,
         'precision': precision, 'recall': recall, 'accuracy': accuracy, 'f1_score': f1_score,
         'error_map': error_map,
-        'overlap_ratios': overlap_ratios,
+        # 'overlap_ratios': overlap_ratios,
         'classification_scores': classification_scores,
+        'actual_positives': actual_positives,
         'total_tiles': grid_height * grid_width
     }
 
@@ -279,7 +285,8 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
 
     # Collect frame-by-frame metrics
     frame_metrics = []
-    all_overlap_ratios = []
+    # all_overlap_ratios = []
+    all_actual_positives = []
     all_classification_scores = []
     all_error_counts = []
 
@@ -306,7 +313,8 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     # Collect results from parallel processing
     for frame_eval in frame_evals:
         frame_metrics.append(frame_eval)
-        all_overlap_ratios.extend(frame_eval['overlap_ratios'])
+        # all_overlap_ratios.extend(frame_eval['overlap_ratios'])
+        all_actual_positives.extend(frame_eval['actual_positives'])
         all_classification_scores.extend(frame_eval['classification_scores'])
         all_error_counts.append(frame_eval['error_map'])
 
@@ -495,9 +503,11 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     actual_positive_scores = []
     actual_negative_scores = []
 
-    for score, overlap in zip(all_classification_scores, all_overlap_ratios):
+    # for score, overlap in zip(all_classification_scores, all_overlap_ratios):
+    #     predicted_positive = score >= threshold
+    #     actual_positive = overlap > 0.0
+    for score, actual_positive in zip(all_classification_scores, all_actual_positives):
         predicted_positive = score >= threshold
-        actual_positive = overlap > 0.0
         if predicted_positive == actual_positive:
             correct_scores.append(score)
         else:
@@ -519,7 +529,8 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     
     # Define consistent colors for original axes (left y-axis) and synchronized axes (right y-axis)
     original_colors = '#4682B4'  # SteelBlue
-    sync_colors = '#66BB6A'     # Green
+    sync_colors = '#FFD700'     # Yellow
+    sync_colors_edge = '#B8860B'  # Darker yellow for edge color
     
     # Correct vs Incorrect predictions
     if correct_scores:
@@ -534,7 +545,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         axes[0].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[0].hist(correct_scores, bins=100, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[0].hist(correct_scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
         twin_axes[0].set_ylabel('Count (Synchronized)', color=sync_colors)
         twin_axes[0].tick_params(axis='y', labelcolor=sync_colors)
     else:
@@ -553,7 +564,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         axes[1].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[1].hist(incorrect_scores, bins=100, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[1].hist(incorrect_scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
         twin_axes[1].set_ylabel('Count (Synchronized)', color=sync_colors)
         twin_axes[1].tick_params(axis='y', labelcolor=sync_colors)
     else:
@@ -573,7 +584,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         axes[2].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[2].hist(actual_positive_scores, bins=100, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[2].hist(actual_positive_scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
         twin_axes[2].set_ylabel('Count (Synchronized)', color=sync_colors)
         twin_axes[2].tick_params(axis='y', labelcolor=sync_colors)
     else:
@@ -592,7 +603,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         axes[3].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[3].hist(actual_negative_scores, bins=100, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[3].hist(actual_negative_scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
         twin_axes[3].set_ylabel('Count (Synchronized)', color=sync_colors)
         twin_axes[3].tick_params(axis='y', labelcolor=sync_colors)
     else:
