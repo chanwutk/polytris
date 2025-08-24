@@ -516,44 +516,44 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         twin_axes.append(twin_ax)
     
     # Define consistent colors for original axes (left y-axis) and synchronized axes (right y-axis)
-    original_colors = ['#2E8B57', '#CD5C5C', '#4682B4', '#DAA520']  # SeaGreen, IndianRed, SteelBlue, GoldenRod
-    sync_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4']     # LightCoral, Turquoise, SkyBlue, LightGreen
+    original_colors = '#4682B4'  # SteelBlue
+    sync_colors = '#FF6B6B'     # LightCoral
     
     # Correct vs Incorrect predictions
     if correct_scores:
         # Plot on original axis with original color
-        axes[0].hist(correct_scores, bins=50, alpha=0.7, color=original_colors[0], edgecolor='darkgreen')
+        axes[0].hist(correct_scores, bins=50, alpha=0.7, color=original_colors, edgecolor=original_colors)
         axes[0].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         axes[0].set_xlabel('Classification Score')
-        axes[0].set_ylabel('Count', color=original_colors[0])
-        axes[0].tick_params(axis='y', labelcolor=original_colors[0])
+        axes[0].set_ylabel('Count', color=original_colors)
+        axes[0].tick_params(axis='y', labelcolor=original_colors)
         axes[0].set_title(f'Correct Predictions (Tile Size: {tile_size})\nTotal: {len(correct_scores):,}')
         axes[0].legend()
         axes[0].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[0].hist(correct_scores, bins=50, alpha=0.3, color=sync_colors[0], edgecolor=sync_colors[0])
-        twin_axes[0].set_ylabel('Count (Synchronized)', color=sync_colors[0])
-        twin_axes[0].tick_params(axis='y', labelcolor=sync_colors[0])
+        twin_axes[0].hist(correct_scores, bins=50, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[0].set_ylabel('Count (Synchronized)', color=sync_colors)
+        twin_axes[0].tick_params(axis='y', labelcolor=sync_colors)
     else:
         axes[0].text(0.5, 0.5, 'No correct predictions', ha='center', va='center', transform=axes[0].transAxes)
         axes[0].set_title(f'Correct Predictions (Tile Size: {tile_size})')
 
     if incorrect_scores:
         # Plot on original axis with original color
-        axes[1].hist(incorrect_scores, bins=50, alpha=0.7, color=original_colors[1], edgecolor='darkred')
+        axes[1].hist(incorrect_scores, bins=50, alpha=0.7, color=original_colors, edgecolor=original_colors)
         axes[1].axvline(x=threshold, color='blue', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         axes[1].set_xlabel('Classification Score')
-        axes[1].set_ylabel('Count', color=original_colors[1])
-        axes[1].tick_params(axis='y', labelcolor=original_colors[1])
+        axes[1].set_ylabel('Count', color=original_colors)
+        axes[1].tick_params(axis='y', labelcolor=original_colors)
         axes[1].set_title(f'Incorrect Predictions (Tile Size: {tile_size})\nTotal: {len(incorrect_scores):,}')
         axes[1].legend()
         axes[1].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[1].hist(incorrect_scores, bins=50, alpha=0.3, color=sync_colors[1], edgecolor=sync_colors[1])
-        twin_axes[1].set_ylabel('Count (Synchronized)', color=sync_colors[1])
-        twin_axes[1].tick_params(axis='y', labelcolor=sync_colors[1])
+        twin_axes[1].hist(incorrect_scores, bins=50, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[1].set_ylabel('Count (Synchronized)', color=sync_colors)
+        twin_axes[1].tick_params(axis='y', labelcolor=sync_colors)
     else:
         axes[1].text(0.5, 0.5, 'No incorrect predictions', ha='center', va='center', transform=axes[1].transAxes)
         axes[1].set_title(f'Incorrect Predictions (Tile Size: {tile_size})')
@@ -561,55 +561,42 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     # Actual positive vs negative scores
     if actual_positive_scores:
         # Plot on original axis with original color
-        axes[2].hist(actual_positive_scores, bins=50, alpha=0.7, color=original_colors[2], edgecolor='darkblue')
+        axes[2].hist(actual_positive_scores, bins=50, alpha=0.7, color=original_colors, edgecolor=original_colors)
         axes[2].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         axes[2].set_xlabel('Classification Score')
-        axes[2].set_ylabel('Count', color=original_colors[2])
-        axes[2].tick_params(axis='y', labelcolor=original_colors[2])
+        axes[2].set_ylabel('Count', color=original_colors)
+        axes[2].tick_params(axis='y', labelcolor=original_colors)
         axes[2].set_title(f'Actual Positive Scores (Tile Size: {tile_size})\nTotal: {len(actual_positive_scores):,}')
         axes[2].legend()
         axes[2].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[2].hist(actual_positive_scores, bins=50, alpha=0.3, color=sync_colors[2], edgecolor=sync_colors[2])
-        twin_axes[2].set_ylabel('Count (Synchronized)', color=sync_colors[2])
-        twin_axes[2].tick_params(axis='y', labelcolor=sync_colors[2])
+        twin_axes[2].hist(actual_positive_scores, bins=50, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[2].set_ylabel('Count (Synchronized)', color=sync_colors)
+        twin_axes[2].tick_params(axis='y', labelcolor=sync_colors)
     else:
         axes[2].text(0.5, 0.5, 'No actual positive scores', ha='center', va='center', transform=axes[2].transAxes)
         axes[2].set_title(f'Actual Positive Scores (Tile Size: {tile_size})')
 
     if actual_negative_scores:
         # Plot on original axis with original color
-        axes[3].hist(actual_negative_scores, bins=50, alpha=0.7, color=original_colors[3], edgecolor='darkgoldenrod')
+        axes[3].hist(actual_negative_scores, bins=50, alpha=0.7, color=original_colors, edgecolor=original_colors)
         axes[3].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
         axes[3].set_xlabel('Classification Score')
-        axes[3].set_ylabel('Count', color=original_colors[3])
-        axes[3].tick_params(axis='y', labelcolor=original_colors[3])
+        axes[3].set_ylabel('Count', color=original_colors)
+        axes[3].tick_params(axis='y', labelcolor=original_colors)
         axes[3].set_title(f'Actual Negative Scores (Tile Size: {tile_size})\nTotal: {len(actual_negative_scores):,}')
         axes[3].legend()
         axes[3].grid(True, alpha=0.3)
         
         # Plot on twin axis with synchronized color
-        twin_axes[3].hist(actual_negative_scores, bins=50, alpha=0.3, color=sync_colors[3], edgecolor=sync_colors[3])
-        twin_axes[3].set_ylabel('Count (Synchronized)', color=sync_colors[3])
-        twin_axes[3].tick_params(axis='y', labelcolor=sync_colors[3])
+        twin_axes[3].hist(actual_negative_scores, bins=50, color=sync_colors, edgecolor=sync_colors)
+        twin_axes[3].set_ylabel('Count (Synchronized)', color=sync_colors)
+        twin_axes[3].tick_params(axis='y', labelcolor=sync_colors)
     else:
         axes[3].text(0.5, 0.5, 'No actual negative scores', ha='center', va='center', transform=axes[3].transAxes)
         axes[3].set_title(f'Actual Negative Scores (Tile Size: {tile_size})')
 
-    # Sync y-axes across all subplots for original axes (left y-axis)
-    y_min_original = float('inf')
-    y_max_original = float('-inf')
-    
-    for ax in axes:
-        if ax.get_children():  # Check if subplot has content
-            y_min_original = min(y_min_original, ax.get_ylim()[0])
-            y_max_original = max(y_max_original, ax.get_ylim()[1])
-    
-    # Set the same y-limits for all original axes (left y-axis)
-    for ax in axes:
-        ax.set_ylim(y_min_original, y_max_original)
-    
     # Sync y-axes across all subplots for synchronized axes (right y-axis)
     y_min_sync = float('inf')
     y_max_sync = float('-inf')
@@ -1087,49 +1074,34 @@ def main(args):
         for tile_size in tile_sizes_to_process:
             print(f"Processing tile size: {tile_size}")
 
-            try:
-                # Load classification results (model predictions for statistics mode)
-                results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, use_model_scores)
+            # Load classification results (model predictions for statistics mode)
+            results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, use_model_scores)
 
-                if args.statistics:
-                    # Load groundtruth detections for comparison
-                    try:
-                        groundtruth_detections = load_groundtruth_detections(CACHE_DIR, args.dataset, video_file)
+            if args.statistics:
+                # Load groundtruth detections for comparison
+                groundtruth_detections = load_groundtruth_detections(CACHE_DIR, args.dataset, video_file)
 
-                        # Create output directory for statistics visualizations
-                        stats_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'proxy_{tile_size}', 'statistics')
+                # Create output directory for statistics visualizations
+                stats_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'proxy_{tile_size}', 'statistics')
 
-                        # Create statistics visualizations
-                        create_statistics_visualizations(
-                            video_file, results, groundtruth_detections,
-                            tile_size, args.threshold, stats_output_dir
-                        )
+                # Create statistics visualizations
+                create_statistics_visualizations(
+                    video_file, results, groundtruth_detections,
+                    tile_size, args.threshold, stats_output_dir
+                )
 
-                        print(f"Completed statistics analysis for tile size {tile_size}")
+                print(f"Completed statistics analysis for tile size {tile_size}")
+            else:
+                # Create output directory for visualizations
+                vis_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'proxy_{tile_size}')
 
-                    except FileNotFoundError as e:
-                        print(f"Warning: Could not load groundtruth for statistics: {e}")
-                        print(f"Skipping statistics mode for tile size {tile_size}")
-                        continue
+                # Create visualizations
+                save_visualization_frames(video_file_path, results, tile_size, args.threshold, vis_output_dir)
 
-                else:
-                    # Create output directory for visualizations
-                    vis_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'proxy_{tile_size}')
+                # Create summary visualization
+                create_summary_visualization(results, tile_size, args.threshold, vis_output_dir)
 
-                    # Create visualizations
-                    save_visualization_frames(video_file_path, results, tile_size, args.threshold, vis_output_dir)
-
-                    # Create summary visualization
-                    create_summary_visualization(results, tile_size, args.threshold, vis_output_dir)
-
-                    print(f"Completed visualizations for tile size {tile_size}")
-
-            except FileNotFoundError as e:
-                print(f"Warning: {e}, skipping tile size {tile_size} for video {video_file}")
-                raise e
-            except Exception as e:
-                print(f"Error processing tile size {tile_size} for video {video_file}: {e}")
-                raise e
+                print(f"Completed visualizations for tile size {tile_size}")
 
 
 if __name__ == '__main__':
