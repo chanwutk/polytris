@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import json
 import os
 import time
 
@@ -83,7 +84,6 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         for x_batch, y_batch in tqdm(train_loader, total=len(train_loader)): # iterate ove batches
             x_batch = x_batch.to(device) # move to gpu
             y_batch = y_batch.to(device).unsqueeze(1).float() # convert target to same nn output shape
-            # y_batch = y_batch # move to gpu
 
             loss = train_step(model, loss_fn, optimizer, x_batch, y_batch)
 
@@ -95,6 +95,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         train_time = train_end_time - train_start_time
         
         epoch_train_losses.append({
+            'op': 'train',
             'loss': float(epoch_loss),
             'time': train_time
         })
@@ -131,6 +132,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             val_time = val_end_time - val_start_time
             
             epoch_test_losses.append({
+                'op': 'test',
                 'loss': float(cumulative_loss),
                 'time': val_time
             })
@@ -152,16 +154,16 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     return best_model_wts, epoch_test_losses, epoch_train_losses, losses, val_losses
 
 
-def train_classifier(width: int, proxy_training_path: str, tile_size: int):
+def train_classifier(width: int, training_path: str, tile_size: int):
     print(f'Training Small CNN (width={width})\n')
     model = SimpleCNN(width).to('cuda')
-    loss_fn = torch.nn.BCEWithLogitsLoss()
+    loss_fn = torch.nn.BCEWithLogitsLoss().to('cuda')
     optimizer = Adam(model.parameters(), lr=0.001)
 
-    proxy_data_path = os.path.join(proxy_training_path, 'data', f'proxy_{tile_size}')
-    train_data = datasets.ImageFolder(proxy_data_path, transform=transforms.ToTensor())
+    training_data_path = os.path.join(training_path, 'data', f'tilesize_{tile_size}')
+    train_data = datasets.ImageFolder(training_data_path, transform=transforms.ToTensor())
 
-    generator = torch.Generator().manual_seed(42)
+    generator = torch.Generator().manual_seed(0)
     split = int(0.8 * len(train_data))
     train_data, test_data = torch.utils.data.random_split(
         dataset=train_data,
@@ -191,10 +193,8 @@ def train_classifier(width: int, proxy_training_path: str, tile_size: int):
     print(f'Total validation time: {total_val_time:.2f}s')
     print(f'Total time: {total_train_time + total_val_time:.2f}s')
 
-    import json
-
     # Create results directory
-    results_dir = os.path.join(proxy_training_path, 'results', f'proxy_{width}')
+    results_dir = os.path.join(training_path, 'results', f'tilesize_{tile_size}', f'width_{width}')
     os.makedirs(results_dir, exist_ok=True)
 
     with open(os.path.join(results_dir, 'model.pth'), 'wb') as f:
@@ -210,7 +210,7 @@ def train_classifier(width: int, proxy_training_path: str, tile_size: int):
 def main(args):
     dataset_dir = os.path.join(CACHE_DIR, args.dataset)
 
-    for video in os.listdir(dataset_dir):
+    for video in sorted(os.listdir(dataset_dir)):
         video_path = os.path.join(dataset_dir, video)
         if not os.path.isdir(video_path):
             continue
@@ -218,9 +218,9 @@ def main(args):
         print(f"Processing video {video_path}")
 
         for tile_size in TILE_SIZES:
-            proxy_training_path = os.path.join(video_path, 'training') 
+            training_path = os.path.join(video_path, 'training') 
 
-            train_classifier(tile_size, proxy_training_path, tile_size)
+            train_classifier(tile_size, training_path, tile_size)
 
 
 if __name__ == '__main__':
