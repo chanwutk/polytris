@@ -19,6 +19,23 @@ CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [32, 64, 128]
 
 
+def format_time(**kwargs):
+    """
+    Format timing information into a list of dictionaries.
+    
+    Args:
+        **kwargs: Keyword arguments where keys are operation names and values are timing values
+        
+    Returns:
+        list: List of dictionaries with 'op' (operation) and 'time' keys for each input argument
+        
+    Example:
+        >>> format_time(read=1.5, detect=2.3)
+        [{'op': 'read', 'time': 1.5}, {'op': 'detect', 'time': 2.3}]
+    """
+    return [{ 'op': op, 'time': time } for op, time in kwargs.items()]
+
+
 def get_classifier_class(classifier_name: str):
     """
     Get the classifier class based on the classifier name.
@@ -59,7 +76,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_model_for_video(video_path: str, tile_size: int, classifier_name: str = 'SimpleCNN'):
+def load_model(video_path: str, tile_size: int, classifier_name: str) -> "torch.nn.Module":
     """
     Load trained classifier model for the specified tile size from a specific video directory.
     
@@ -91,67 +108,66 @@ def load_model_for_video(video_path: str, tile_size: int, classifier_name: str =
     raise FileNotFoundError(f"No trained model found for tile size {tile_size} in {video_path}")
 
 
-def process_frame_tiles(frame: np.ndarray, model, tile_size: int) -> tuple[list[list[float]], float]:
+def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int) -> tuple[np.ndarray, list[dict[str, float]]]:
     """
-    Process a single video frame with the specified tile size and return relevance scores and runtime.
+    Process a single video frame with the specified tile size and return relevance scores and timing information.
     
     This function splits the input frame into tiles of the specified size, runs inference
-    with the trained model, and returns relevance scores for each tile along with the runtime.
+    with the trained model, and returns relevance scores for each tile along with timing information.
     
     Args:
         frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3)
             where H and W are the frame height and width, and 3 represents RGB channels
-        model (ClassifyRelevance): Trained model for the specified tile size
+        model (torch.nn.Module): Trained model for the specified tile size
         tile_size (int): Size of tiles to use for processing (32, 64, or 128)
             
     Returns:
-        tuple[list[list[float]], float]: A tuple containing:
+        tuple[np.ndarray, list[dict[str, float]]]: A tuple containing:
             - 2D grid of relevance scores where each element represents the relevance score
               (probability between 0 and 1) for the corresponding tile in the frame
-            - Runtime in seconds for the ClassifyRelevance model inference
+            - List of dictionaries with 'op' (operation) and 'time' keys for preprocessing and model inference
             
     Note:
         - Frame is padded if necessary to ensure divisibility by tile size
         - Input frame is normalized to [0, 1] range before inference
         - Model is expected to output logits, which are converted to probabilities using sigmoid
-        - Runtime measurement includes only the model inference time, not preprocessing
+        - Timing information includes preprocessing and model inference times
     """
-    # Convert frame to tensor and ensure it's in HWC format
-    frame_tensor = torch.from_numpy(frame).float().to('cuda')
-    
-    # Pad frame to be divisible by tile_size
-    padded_frame = padHWC(frame_tensor, tile_size, tile_size)  # type: ignore
-    
-    # Split frame into tiles
-    tiles = splitHWC(padded_frame, tile_size, tile_size)  # type: ignore
-    
-    # Flatten tiles for batch processing
-    num_tiles = tiles.shape[0] * tiles.shape[1]
-    tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
-    
-    # Normalize to [0, 1] range
-    tiles_flat = tiles_flat / 255.0
-    
-    # Convert to NCHW format for the model
-    tiles_nchw = tiles_flat.permute(0, 3, 1, 2)
-    
-    # Measure runtime for ClassifyRelevance model inference
-    start_time = time.time()
-    
-    # Run inference
     with torch.no_grad():
+        start_time = time.time()
+        # Convert frame to tensor and ensure it's in HWC format
+        frame_tensor = torch.from_numpy(frame).to('cuda').float()
+        
+        # Pad frame to be divisible by tile_size
+        padded_frame = padHWC(frame_tensor, tile_size, tile_size)  # type: ignore
+        
+        # Split frame into tiles
+        tiles = splitHWC(padded_frame, tile_size, tile_size)
+        
+        # Flatten tiles for batch processing
+        num_tiles = tiles.shape[0] * tiles.shape[1]
+        tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
+        
+        # Normalize to [0, 1] range
+        tiles_flat = tiles_flat / 255.0
+        
+        # Convert to NCHW format for the model
+        tiles_nchw = tiles_flat.permute(0, 3, 1, 2)
+        transform_runtime = time.time() - start_time
+        
+        # Run inference
+        start_time = time.time()
         predictions = model(tiles_nchw)
         # Apply sigmoid to get probabilities
-        probabilities = torch.sigmoid(predictions).cpu().numpy().flatten()
+        probabilities = (torch.sigmoid(predictions) * 255).to(torch.uint8).cpu().numpy().flatten()
     
-    end_time = time.time()
-    runtime = end_time - start_time
+        # Reshape back to grid format
+        grid_height, grid_width = tiles.shape[:2]
+        relevance_grid = probabilities.reshape(grid_height, grid_width)
+        end_time = time.time()
+        inference_runtime = end_time - start_time
     
-    # Reshape back to grid format
-    grid_height, grid_width = tiles.shape[:2]
-    relevance_grid = probabilities.reshape(grid_height, grid_width)
-    
-    return relevance_grid.tolist(), runtime
+    return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
 
 
 def process_video(video_path: str, model, tile_size: int, output_path: str):
@@ -200,7 +216,7 @@ def process_video(video_path: str, model, tile_size: int, output_path: str):
     print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f:
         frame_idx = 0
-        with tqdm(total=frame_count, desc="Processing frames") as pbar:
+        with tqdm(total=frame_count, desc=f"{video_path} (tile:{tile_size})") as pbar:
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
@@ -216,19 +232,17 @@ def process_video(video_path: str, model, tile_size: int, output_path: str):
                     "frame_size": [height, width],
                     "tile_size": tile_size,
                     "runtime": runtime,
-                    "tile_classifications": relevance_grid,
+                    "classification_size": relevance_grid.shape,
+                    "classification_hex": relevance_grid.flatten().tobytes().hex(),
                 }
                 
                 # Write to JSONL file
                 f.write(json.dumps(frame_entry) + '\n')
-                f.flush()
+                if frame_idx % 100 == 0:
+                    f.flush()
                 
                 frame_idx += 1
                 pbar.update(1)
-                
-                # Optional: limit processing for testing
-                # if frame_idx > 100:
-                #     break
     
     cap.release()
     print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
@@ -291,7 +305,7 @@ def main(args):
             cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
             
             # Load the trained model for this specific video and tile size
-            model = load_model_for_video(cache_video_dir, tile_size, args.classifier)
+            model = load_model(cache_video_dir, tile_size, args.classifier)
             
             # Create output directory structure
             output_dir = os.path.join(cache_video_dir, 'relevancy')

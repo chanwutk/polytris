@@ -112,7 +112,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             misc_sum = 0
             num_samples = 0
             model.eval()
-            for x_batch, y_batch in test_loader:
+            for x_batch, y_batch in tqdm(test_loader, total=len(test_loader)):
                 x_batch = x_batch.to(device)
                 y_batch = y_batch.to(device).unsqueeze(1).float() # convert target to same nn output shape
                 # y_batch = y_batch.to(device)
