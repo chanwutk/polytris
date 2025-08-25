@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import shutil
 import time
 
 import torch
@@ -156,9 +157,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     return best_model_wts, epoch_test_losses, epoch_train_losses, losses, val_losses
 
 
-def train_classifier(width: int, training_path: str, tile_size: int):
-    print(f'Training Small CNN (width={width})\n')
-    model = SimpleCNN(width).to('cuda')
+def train_classifier(training_path: str, tile_size: int):
+    print(f'Training Small CNN (width={tile_size})\n')
+    model = SimpleCNN(tile_size).to('cuda')
     loss_fn = torch.nn.BCEWithLogitsLoss().to('cuda')
     optimizer = Adam(model.parameters(), lr=0.001)
 
@@ -196,8 +197,10 @@ def train_classifier(width: int, training_path: str, tile_size: int):
     print(f'Total time: {total_train_time + total_val_time:.2f}s')
 
     # Create results directory
-    results_dir = os.path.join(training_path, 'results', f'tilesize_{tile_size}', f'width_{width}')
-    os.makedirs(results_dir, exist_ok=True)
+    results_dir = os.path.join(training_path, 'results', f'SimpleCNN_{tile_size}')
+    if os.path.exists(results_dir):
+        shutil.rmtree(results_dir)
+    os.makedirs(results_dir)
 
     with open(os.path.join(results_dir, 'model.pth'), 'wb') as f:
         torch.save(model, f)
@@ -218,11 +221,9 @@ def main(args):
             continue
 
         print(f"Processing video {video_path}")
-
         for tile_size in TILE_SIZES:
             training_path = os.path.join(video_path, 'training') 
-
-            train_classifier(tile_size, training_path, tile_size)
+            train_classifier(training_path, tile_size)
 
 
 if __name__ == '__main__':

@@ -19,6 +19,25 @@ CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [32, 64, 128]
 
 
+def get_classifier_class(classifier_name: str):
+    """
+    Get the classifier class based on the classifier name.
+    
+    Args:
+        classifier_name (str): Name of the classifier to use
+        
+    Returns:
+        The classifier class
+        
+    Raises:
+        ValueError: If the classifier is not supported
+    """
+    if classifier_name == 'SimpleCNN':
+        return SimpleCNN
+    else:
+        raise ValueError(f"Unsupported classifier: {classifier_name}")
+
+
 def parse_args():
     """
     Parse command line arguments for the script.
@@ -27,39 +46,44 @@ def parse_args():
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
             - tile_size (int | str): Tile size to use for classification (choices: 32, 64, 128, 'all')
+            - classifier (str): Classifier model to use (default: 'SimpleCNN')
     """
-    parser = argparse.ArgumentParser(description='Execute trained proxy models to classify video tiles')
+    parser = argparse.ArgumentParser(description='Execute trained classifier models to classify video tiles')
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
     parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
+    parser.add_argument('--classifier', type=str, default='SimpleCNN',
+                        help='Classifier model to use (default: SimpleCNN)')
     return parser.parse_args()
 
 
-def load_model_for_video(video_path: str, tile_size: int) -> SimpleCNN:
+def load_model_for_video(video_path: str, tile_size: int, classifier_name: str = 'SimpleCNN'):
     """
-    Load trained proxy model for the specified tile size from a specific video directory.
+    Load trained classifier model for the specified tile size from a specific video directory.
     
     This function searches for a trained model in the expected directory structure:
-    {video_path}/training/results/proxy_{tile_size}/model.pth
+    {video_path}/training/results/{classifier_name}_{tile_size}/model.pth
     
     Args:
         video_path (str): Path to the specific video directory
         tile_size (int): Tile size for which to load the model (32, 64, or 128)
+        classifier_name (str): Name of the classifier model to use (default: 'SimpleCNN')
         
     Returns:
-        ClassifyRelevance: The loaded trained model for the specified tile size.
+        The loaded trained model for the specified tile size.
             The model is loaded to CUDA and set to evaluation mode.
             
     Raises:
         FileNotFoundError: If no trained model is found for the specified tile size
+        ValueError: If the classifier is not supported
     """
-    results_path = os.path.join(video_path, 'training', 'results', f'proxy_{tile_size}')
+    results_path = os.path.join(video_path, 'training', 'results', f'{classifier_name}_{tile_size}')
     model_path = os.path.join(results_path, 'model.pth')
     
     if os.path.exists(model_path):
-        print(f"Loading model for tile size {tile_size} from {model_path}")
+        print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
         model = torch.load(model_path, map_location='cuda', weights_only=False)
         model.eval()
         return model
@@ -67,7 +91,7 @@ def load_model_for_video(video_path: str, tile_size: int) -> SimpleCNN:
     raise FileNotFoundError(f"No trained model found for tile size {tile_size} in {video_path}")
 
 
-def process_frame_tiles(frame: np.ndarray, model: SimpleCNN, tile_size: int) -> tuple[list[list[float]], float]:
+def process_frame_tiles(frame: np.ndarray, model, tile_size: int) -> tuple[list[list[float]], float]:
     """
     Process a single video frame with the specified tile size and return relevance scores and runtime.
     
@@ -130,12 +154,12 @@ def process_frame_tiles(frame: np.ndarray, model: SimpleCNN, tile_size: int) -> 
     return relevance_grid.tolist(), runtime
 
 
-def process_video(video_path: str, model: SimpleCNN, tile_size: int, output_path: str):
+def process_video(video_path: str, model, tile_size: int, output_path: str):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
     This function reads a video file frame by frame, processes each frame to classify
-    tiles using the trained proxy model for the specified tile size, and saves the
+    tiles using the trained classifier model for the specified tile size, and saves the
     results in JSONL format. Each line in the output file represents one frame with
     its tile classifications and runtime measurement.
     
@@ -166,8 +190,7 @@ def process_video(video_path: str, model: SimpleCNN, tile_size: int, output_path
     
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        print(f"Error: Could not open video {video_path}")
-        return
+        raise FileNotFoundError(f"Could not open video {video_path}")
     
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -175,10 +198,8 @@ def process_video(video_path: str, model: SimpleCNN, tile_size: int, output_path
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
     print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
-    
     with open(output_path, 'w') as f:
         frame_idx = 0
-        
         with tqdm(total=frame_count, desc="Processing frames") as pbar:
             while cap.isOpened():
                 ret, frame = cap.read()
@@ -220,23 +241,24 @@ def main(args):
     This function serves as the entry point for the script. It:
     1. Validates the dataset directory exists
     2. Iterates through all videos in the dataset directory
-    3. For each video, loads the appropriate trained proxy model(s) for the specified tile size(s)
+    3. For each video, loads the appropriate trained classifier model(s) for the specified tile size(s)
     4. Processes each video and saves classification results
     
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
             - tile_size (str): Tile size to use for classification ('32', '64', '128', or 'all')
+            - classifier (str): Classifier model to use (default: 'SimpleCNN')
             
     Note:
         - The script expects a specific directory structure:
           {DATA_DIR}/{dataset}/ - contains video files
-          {DATA_CACHE}/{dataset}/{video_file_name}/training/results/proxy_{tile_size}/model.pth - contains trained models
+          {DATA_CACHE}/{dataset}/{video_file_name}/training/results/{classifier_name}_{tile_size}/model.pth - contains trained models
           where DATA_DIR and DATA_CACHE are both /polyis-data/video-datasets-low
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - A separate model is loaded for each video directory
         - When tile_size is 'all', all three tile sizes (32, 64, 128) are processed
-        - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/relevancy/score/proxy_{tile_size}/score.jsonl
+        - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/relevancy/score/{classifier_name}_{tile_size}/score.jsonl
         - If no trained model is found for a video, that video is skipped with a warning
     """
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
@@ -255,12 +277,6 @@ def main(args):
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
     
-    if not video_files:
-        print(f"No video files found in {dataset_dir}")
-        return
-    
-    print(f"Found {len(video_files)} video files to process")
-    
     # Process each video file
     for video_file in video_files:
         video_file_path = os.path.join(dataset_dir, video_file)
@@ -275,20 +291,25 @@ def main(args):
             cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
             
             # Load the trained model for this specific video and tile size
-            try:
-                model = load_model_for_video(cache_video_dir, tile_size)
-                print(f"Successfully loaded model for tile size {tile_size}")
-            except FileNotFoundError as e:
-                print(f"Warning: {e}, skipping tile size {tile_size} for video {video_file}")
-                continue
+            model = load_model_for_video(cache_video_dir, tile_size, args.classifier)
             
             # Create output directory structure
             output_dir = os.path.join(cache_video_dir, 'relevancy')
-            os.makedirs(output_dir, exist_ok=True)
+            if os.path.exists(output_dir):
+                shutil.rmtree(output_dir)
+            os.makedirs(output_dir)
+
+            # Create score directory for this tile size
+            classifier_dir = os.path.join(output_dir, f'{args.classifier}_{tile_size}')
+            if os.path.exists(classifier_dir):
+                shutil.rmtree(classifier_dir)
+            os.makedirs(classifier_dir)
             
             # Create score directory for this tile size
-            score_dir = os.path.join(output_dir, 'score', f'proxy_{tile_size}')
-            os.makedirs(score_dir, exist_ok=True)
+            score_dir = os.path.join(classifier_dir, 'score')
+            if os.path.exists(score_dir):
+                shutil.rmtree(score_dir)
+            os.makedirs(score_dir)
             output_path = os.path.join(score_dir, 'score.jsonl')
             
             # Process the video

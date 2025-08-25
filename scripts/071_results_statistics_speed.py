@@ -3,12 +3,11 @@
 import argparse
 import json
 import os
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import multiprocessing as mp
-from typing import Dict, List, Tuple, Any
+from typing import Any
 from pathlib import Path
 
 CACHE_DIR = '/polyis-cache'
@@ -40,7 +39,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def find_tracking_results(cache_dir: str, dataset: str, tile_size: str) -> List[Tuple[str, int]]:
+def find_tracking_results(cache_dir: str, dataset: str, tile_size: str) -> list[tuple[str, int]]:
     """
     Find all video files with tracking results and runtime data for the specified dataset and tile size.
     
@@ -50,18 +49,16 @@ def find_tracking_results(cache_dir: str, dataset: str, tile_size: str) -> List[
         tile_size (str): Tile size to look for ('64', '128', or 'all')
         
     Returns:
-        List[Tuple[str, int]]: List of (video_name, tile_size) tuples
+        list[tuple[str, int]]: list of (video_name, tile_size) tuples
     """
     dataset_cache_dir = os.path.join(cache_dir, dataset)
     if not os.path.exists(dataset_cache_dir):
-        print(f"Dataset cache directory {dataset_cache_dir} does not exist")
-        return []
-    
-    video_tile_combinations = []
+        raise ValueError(f"Dataset cache directory {dataset_cache_dir} does not exist")
     
     # Determine which tile sizes to process
     tile_sizes_to_process = TILE_SIZES if tile_size == 'all' else [int(tile_size)]
     
+    video_tile_combinations = []
     for item in os.listdir(dataset_cache_dir):
         item_path = os.path.join(dataset_cache_dir, item)
         if os.path.isdir(item_path):
@@ -76,7 +73,7 @@ def find_tracking_results(cache_dir: str, dataset: str, tile_size: str) -> List[
     return video_tile_combinations
 
 
-def load_runtime_data(file_path: str) -> List[Dict[str, Any]]:
+def load_runtime_data(file_path: str) -> list[dict[str, Any]]:
     """
     Load runtime data from JSONL file.
     
@@ -84,7 +81,7 @@ def load_runtime_data(file_path: str) -> List[Dict[str, Any]]:
         file_path (str): Path to the runtime JSONL file
         
     Returns:
-        List[Dict[str, Any]]: List of runtime data for each frame
+        list[dict[str, Any]]: List of runtime data for each frame
     """
     runtime_data = []
     
@@ -98,7 +95,7 @@ def load_runtime_data(file_path: str) -> List[Dict[str, Any]]:
 
 
 def analyze_runtime_performance(video_name: str, tile_size: int, runtime_path: str, 
-                               output_dir: str) -> Dict[str, Any]:
+                               output_dir: str) -> dict[str, Any]:
     """
     Analyze runtime performance for a single video.
     
@@ -109,7 +106,7 @@ def analyze_runtime_performance(video_name: str, tile_size: int, runtime_path: s
         output_dir (str): Output directory for results
         
     Returns:
-        Dict[str, Any]: Runtime performance analysis results
+        dict[str, Any]: Runtime performance analysis results
     """
     print(f"Analyzing runtime performance for {video_name} with tile size {tile_size}")
     
@@ -203,12 +200,12 @@ def analyze_runtime_performance(video_name: str, tile_size: int, runtime_path: s
         }
 
 
-def create_speed_summary(results: List[Dict[str, Any]], output_dir: str) -> None:
+def create_speed_summary(results: list[dict[str, Any]], output_dir: str) -> None:
     """
     Create a simple text summary of the speed performance results.
     
     Args:
-        results (List[Dict[str, Any]]): List of performance analysis results
+        results (list[dict[str, Any]]): List of performance analysis results
         output_dir (str): Output directory for results
     """
     print("Creating speed performance summary...")
@@ -278,12 +275,12 @@ def create_speed_summary(results: List[Dict[str, Any]], output_dir: str) -> None
     print(f"Summary saved to {summary_file}")
 
 
-def create_speed_visualizations(results: List[Dict[str, Any]], output_dir: str) -> None:
+def create_speed_visualizations(results: list[dict[str, Any]], output_dir: str) -> None:
     """
     Create visualizations for tracking speed performance results using matplotlib.
     
     Args:
-        results (List[Dict[str, Any]]): List of performance analysis results
+        results (list[dict[str, Any]]): List of performance analysis results
         output_dir (str): Output directory for visualizations
     """
     print("Creating matplotlib speed visualizations...")
