@@ -13,6 +13,7 @@ import tqdm
 import polyis.images
 
 CACHE_DIR = '/polyis-cache'
+DATA_DIR = '/polyis-data/video-datasets-low'
 TILE_SIZES = [32, 64, 128]
 
 
@@ -37,20 +38,22 @@ def overlap(b1, b2):
 
 
 def main(args):
-    dataset_dir = os.path.join(CACHE_DIR, args.dataset)
+    cache_dir = os.path.join(CACHE_DIR, args.dataset)
+    dataset_dir = os.path.join(DATA_DIR, args.dataset)
 
-    for video in os.listdir(dataset_dir):
+    for video in sorted(os.listdir(cache_dir)):
+        video_dir = os.path.join(cache_dir, video)
         video_path = os.path.join(dataset_dir, video)
-        if not os.path.isdir(video_path):
+        if not os.path.isdir(video_dir):
             continue
 
-        print(f"Processing video {video_path}")
+        print(f"Processing video {video_dir}")
 
-        if os.path.exists(os.path.join(video_path, 'training')):
-            shutil.rmtree(os.path.join(video_path, 'training'))
+        if os.path.exists(os.path.join(video_dir, 'training')):
+            shutil.rmtree(os.path.join(video_dir, 'training'))
 
         for tile_size in TILE_SIZES:
-            proxy_data_path = os.path.join(video_path, 'training', 'data', f'tilesize_{tile_size}')
+            proxy_data_path = os.path.join(video_dir, 'training', 'data', f'tilesize_{tile_size}')
             if os.path.exists(proxy_data_path):
                 # remove the existing proxy data
                 shutil.rmtree(proxy_data_path)
@@ -61,33 +64,44 @@ def main(args):
                 os.makedirs(os.path.join(proxy_data_path, 'neg'), exist_ok=True)
         
         frs = {
-            tile_size: open(os.path.join(video_path, 'training', 'runtime', f'tilesize_{tile_size}', 'create_training_data.jsonl'), 'w')
+            tile_size: open(os.path.join(video_dir, 'training', 'runtime', f'tilesize_{tile_size}', 'create_training_data.jsonl'), 'w')
             for tile_size in TILE_SIZES
         }
-        for snippet in tqdm.tqdm(os.listdir(video_path)):
-            snippet_path = os.path.join(video_path, snippet)
-            if not os.path.isfile(snippet_path) or not snippet.startswith('d_') or not snippet.endswith('.mp4'):
-                continue
 
-            meta = snippet.split('.')[0].split('_')
-            start = int(meta[2])
-            # end = int(meta[3])
+        # Read segments to get frame ranges
+        segments_path = os.path.join(video_dir, 'segments', 'detection', 'segments.jsonl')
+        detections_path = os.path.join(video_dir, 'segments', 'detection', 'detections.jsonl')
+        
+        if not os.path.exists(segments_path) or not os.path.exists(detections_path):
+            print(f"Skipping {video_dir} - missing segments or detections files")
+            continue
 
-            with open(snippet_path[:-len('.mp4')] + '.jsonl', 'r') as f:
-                # Read the video
-                cap = cv2.VideoCapture(snippet_path)
-                idx = start
-                while cap.isOpened():
+        # Construct the path to the video file in the dataset directory
+        dataset_video_path = os.path.join(dataset_dir, video)
+        cap = cv2.VideoCapture(dataset_video_path)
+
+        with open(segments_path, 'r') as segments_f, open(detections_path, 'r') as detections_f:
+            segments_lines = [*segments_f.readlines()]
+            # detections_lines = [*detections_f.readlines()]
+
+            for segment in tqdm.tqdm(segments_lines):
+                segment_json = json.loads(segment)
+                segment_idx = segment_json['idx']
+                start = segment_json['start']
+                end = segment_json['end']
+
+                cap.set(cv2.CAP_PROP_POS_FRAMES, start)
+                for frame_idx in range(start, end):
                     ret, frame = cap.read()
-                    if not ret:
-                        break
+                    assert ret, f"Failed to read frame {frame_idx}"
 
-                    _idx, dets, *_ = json.loads(f.readline())
-                    assert idx == _idx, (idx, _idx)
+                    frame_idx_, dets, segment_idx_, time = json.loads(detections_f.readline())
+                    assert frame_idx_ == frame_idx, f"Frame index mismatch: {frame_idx_} != {frame_idx}"
+                    assert segment_idx_ == segment_idx, f"Segment index mismatch: {segment_idx_} != {segment_idx}"
 
-                    for tile_size in [32, 64, 128]:
+                    for tile_size in TILE_SIZES:
                         split_start_time = time.time()
-                        proxy_data_path = os.path.join(video_path, 'training', 'data', f'tilesize_{tile_size}')
+                        proxy_data_path = os.path.join(video_dir, 'training', 'data', f'tilesize_{tile_size}')
 
                         padded_frame = torch.from_numpy(frame).to('cuda:0')
                         assert polyis.images.isHWC(padded_frame), padded_frame.shape
@@ -99,7 +113,7 @@ def main(args):
                         frs[tile_size].write(json.dumps({
                             'op': 'split',
                             'time': split_time,
-                            'frame': idx,
+                            'frame': frame_idx,
                             'tile_size': tile_size,
                             'frame_shape': frame.shape,
                             'patched_shape': patched.shape,
@@ -112,7 +126,7 @@ def main(args):
                                 fromx, fromy = x * tile_size, y * tile_size
                                 tox, toy = fromx + tile_size - 1, fromy + tile_size - 1
 
-                                filename = f'{idx}.{y}.{x}.jpg'
+                                filename = f'{frame_idx}.{y}.{x}.jpg'
                                 patch = patched[y, x].contiguous().numpy()
 
                                 if any(overlap(det, (fromx, fromy, tox, toy)) for det in dets):
@@ -120,19 +134,19 @@ def main(args):
                                 else:
                                     # For visualizing the negative patches
                                     # frame[fromy:toy, fromx:tox] //= 2
-                                    if not patched[y, x].any():  # do not save if the patch is completely black
-                                        continue
-                                    cv2.imwrite(os.path.join(proxy_data_path, 'neg', filename), patch)
+                                    if patched[y, x].any():  # do not save if the patch is completely black
+                                        cv2.imwrite(os.path.join(proxy_data_path, 'neg', filename), patch)
                         save_time = time.time() - save_start_time
                         frs[tile_size].write(json.dumps({
                             'op': 'save',
                             'time': save_time,
-                            'frame': idx,
+                            'frame': frame_idx,
                             'tile_size': tile_size,
                             'frame_shape': frame.shape,
                             'patched_shape': patched.shape,
                         }) + '\n')
-                    idx += 1
+
+        cap.release()
         for fr in frs.values():
             fr.close()
 
