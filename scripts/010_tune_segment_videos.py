@@ -55,32 +55,32 @@ def parse_args():
     return parser.parse_args()
 
 
-def save_snippet(input_video, output_video, start, end):
-    cap = cv2.VideoCapture(input_video)
-    cap.set(cv2.CAP_PROP_POS_FRAMES, start)
-    width, height, fps = (
-        int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-        int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-        int(cap.get(cv2.CAP_PROP_FPS)),
-    )
-    # print(input_video, output_video, start, end)
-
-    writer = cv2.VideoWriter(output_video, cv2.VideoWriter.fourcc(*"mp4v"), fps, (width, height))
-
-    idx = start
-    while cap.isOpened():
-        ret, frame = cap.read()
-        # print(idx)
-        if not ret or idx > end:
-            break
-        writer.write(frame)
-        idx += 1
-    
-    cap.release()
-    writer.release()
-
-
 def main(args):
+    """
+    Main function to process videos and create detection and tracking segments.
+    
+    This function:
+    1. Iterates through all MP4 videos in the specified dataset directory
+    2. Calculates snippet sizes for detection and tracking based on selectivity parameters
+    3. Creates segment metadata files (segments.jsonl) for both detection and tracking
+    4. Sets up directory structure in the cache directory
+    
+    Args:
+        args (argparse.Namespace): Parsed command line arguments containing:
+            - datasets_dir: Directory containing the dataset
+            - dataset: Name of the specific dataset to process
+            - selectivity: Selectivity parameter for tuning
+            - num_snippets: Number of snippets to extract
+            - tracking_selectivity_multiplier: Multiplier for tracking snippet size
+    
+    Note:
+        The function creates two types of segments:
+        - Detection segments: Smaller snippets for object detection
+        - Tracking segments: Larger snippets for object tracking (multiplied by tracking_selectivity_multiplier)
+        
+        Segment metadata is saved as JSONL files with frame start/end positions.
+        Video files are not actually extracted (commented out) - only metadata is generated.
+    """
     datasets_dir = args.datasets_dir
     dataset = args.dataset
     selectivity = args.selectivity

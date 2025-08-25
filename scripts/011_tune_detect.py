@@ -15,6 +15,19 @@ DATA_DIR = '/polyis-data/video-datasets-low'
 
 
 def format_time(**kwargs):
+    """
+    Format timing information into a list of dictionaries.
+    
+    Args:
+        **kwargs: Keyword arguments where keys are operation names and values are timing values
+        
+    Returns:
+        list: List of dictionaries with 'op' (operation) and 'time' keys for each input argument
+        
+    Example:
+        >>> format_time(read=1.5, detect=2.3)
+        [{'op': 'read', 'time': 1.5}, {'op': 'detect', 'time': 2.3}]
+    """
     return [{ 'op': op, 'time': time } for op, time in kwargs.items()]
 
 
@@ -30,6 +43,31 @@ def parse_args():
 
 
 def detect_retina(cache_dir: str, dataset_dir: str):
+    """
+    Perform object detection on video segments using RetinaNet B3D model.
+    
+    This function:
+    1. Loads a RetinaNet B3D detector on CUDA device
+    2. Iterates through each video in the dataset directory
+    3. Reads detection segments from the cache
+    4. Processes each frame in each segment to detect objects
+    5. Saves detection results with timing information to detections.jsonl
+    
+    Args:
+        cache_dir (str): Path to the cache directory containing video segments
+        dataset_dir (str): Path to the dataset directory containing original video files
+        
+    Note:
+        The function expects the cache directory to have a specific structure:
+        - cache_dir/video_name/segments/detection/segments.jsonl (input segments)
+        - cache_dir/video_name/segments/detection/detections.jsonl (output detections)
+        
+        Detection results are saved in JSONL format with:
+        - frame_idx: Current frame index
+        - bounding_boxes: Detected object bounding boxes (first 4 columns of outputs)
+        - segment_idx: Index of the current segment
+        - timing: Dictionary with read and detection timing information
+    """
     detector = polyis.models.retinanet_b3d.get_detector(device='cuda:0')
 
     for video in sorted(os.listdir(dataset_dir)):
@@ -78,6 +116,27 @@ def detect_retina(cache_dir: str, dataset_dir: str):
 
 
 def main(args):
+    """
+    Main function to run object detection on video segments.
+    
+    This function:
+    1. Sets up paths for cache and dataset directories based on command line arguments
+    2. Routes to the appropriate detector based on the detector argument
+    3. Currently supports 'retina' detector (RetinaNet B3D)
+    
+    Args:
+        args (argparse.Namespace): Parsed command line arguments containing:
+            - dataset: Name of the dataset to process
+            - detector: Type of detector to use (currently only 'retina' supported)
+            
+    Raises:
+        ValueError: If an unknown detector is specified
+        
+    Note:
+        The function expects the following directory structure:
+        - CACHE_DIR/dataset_name/ (for processed segments and results)
+        - DATA_DIR/dataset_name/ (for original video files)
+    """
     cache_dir = os.path.join(CACHE_DIR, args.dataset)
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
     detector = args.detector

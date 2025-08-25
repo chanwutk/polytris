@@ -109,6 +109,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             val_start_time = time.time()
 
             misc_sum = 0
+            num_samples = 0
             model.eval()
             for x_batch, y_batch in test_loader:
                 x_batch = x_batch.to(device)
@@ -125,6 +126,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 ans = ans > 0.5
                 misc = torch.sum(ans == y_batch)
                 misc_sum += misc.item()
+                num_samples += len(y_batch)
                 # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
             # Record validation end time
@@ -137,7 +139,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 'time': val_time
             })
             print('Epoch : {}, val loss : {}, val time : {:.2f}s'.format(epoch + 1, cumulative_loss, val_time))  
-            print(f"Accuracy: {misc_sum * 100 / len(test_loader)} %\n")
+            print(f"Accuracy: {misc_sum * 100 / num_samples} %\n")
             
             # save best model
             if cumulative_loss < best_loss:

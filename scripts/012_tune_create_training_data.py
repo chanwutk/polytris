@@ -26,6 +26,16 @@ def parse_args():
 
 
 def overlapi(interval1: tuple[int, int], interval2: tuple[int, int]):
+    """
+    Check if two 1D intervals overlap.
+    
+    Args:
+        interval1 (tuple[int, int]): First interval as (start, end)
+        interval2 (tuple[int, int]): Second interval as (start, end)
+        
+    Returns:
+        bool: True if the intervals overlap, False otherwise
+    """
     return (
         (interval1[0] <= interval2[0] <= interval1[1]) or
         (interval1[0] <= interval2[1] <= interval1[1]) or
@@ -34,10 +44,49 @@ def overlapi(interval1: tuple[int, int], interval2: tuple[int, int]):
     )
 
 def overlap(b1, b2):
+    """
+    Check if two 2D bounding boxes overlap.
+    
+    Args:
+        b1: First bounding box as (x1, y1, x2, y2) where (x1, y1) is top-left and (x2, y2) is bottom-right
+        b2: Second bounding box as (x1, y1, x2, y2) where (x1, y1) is top-left and (x2, y2) is bottom-right
+        
+    Returns:
+        bool: True if the bounding boxes overlap in both x and y dimensions, False otherwise
+    """
     return overlapi((b1[0], b1[2]), (b2[0], b2[2])) and overlapi((b1[1], b1[3]), (b2[1], b2[3]))
 
 
 def main(args):
+    """
+    Main function to create training data from video segments and detections.
+    
+    This function:
+    1. Iterates through each video in the cache directory
+    2. Creates training data directories for different tile sizes (32, 64, 128)
+    3. Processes each frame in detection segments
+    4. Splits frames into tiles of specified sizes
+    5. Saves positive tiles (containing detections) and negative tiles (no detections)
+    6. Records runtime performance metrics for each operation
+    
+    Args:
+        args (argparse.Namespace): Parsed command line arguments containing:
+            - dataset: Name of the dataset to process
+            
+    Note:
+        The function expects the following directory structure:
+        - CACHE_DIR/dataset_name/video_name/segments/detection/segments.jsonl (input segments)
+        - CACHE_DIR/dataset_name/video_name/segments/detection/detections.jsonl (input detections)
+        - DATA_DIR/dataset_name/video_name (original video file)
+        
+        Output structure created:
+        - CACHE_DIR/dataset_name/video_name/training/data/tilesize_X/pos/ (positive tiles)
+        - CACHE_DIR/dataset_name/video_name/training/data/tilesize_X/neg/ (negative tiles)
+        - CACHE_DIR/dataset_name/video_name/training/runtime/tilesize_X/create_training_data.jsonl (performance metrics)
+        
+        Tiles are saved as JPG images with naming format: frame_idx.y.x.jpg
+        Performance metrics include timing for split and save operations.
+    """
     cache_dir = os.path.join(CACHE_DIR, args.dataset)
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
 
