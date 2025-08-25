@@ -13,6 +13,8 @@ from pathlib import Path
 
 CACHE_DIR = '/polyis-cache'
 OUTPUT_DIR = 'pipeline-stages/track-speed-results'
+# TILE_SIZES = [32, 64, 128]
+TILE_SIZES = [64]
 
 
 def parse_args():
@@ -24,8 +26,6 @@ def parse_args():
             - dataset (str): Dataset name to process (default: 'b3d')
             - tile_size (str): Tile size to use for evaluation (choices: '64', '128', 'all')
             - output_dir (str): Output directory for results (default: 'pipeline-stages/track-speed-results')
-            - parallel (bool): Whether to use parallel processing (default: True)
-            - num_cores (int): Number of parallel cores to use (default: 8)
             - create_plots (bool): Whether to create visualization plots (default: False)
     """
     parser = argparse.ArgumentParser(description='Analyze tracking speed and performance statistics from runtime data')
@@ -35,10 +35,6 @@ def parse_args():
                         help='Tile size to use for evaluation (or "all" for all tile sizes)')
     parser.add_argument('--output_dir', type=str, default=OUTPUT_DIR,
                         help='Output directory for results')
-    parser.add_argument('--parallel', action='store_true', default=True,
-                        help='Whether to use parallel processing')
-    parser.add_argument('--num_cores', type=int, default=8,
-                        help='Number of parallel cores to use')
     parser.add_argument('--create_plots', action='store_true', default=False,
                         help='Whether to create visualization plots')
     return parser.parse_args()
@@ -64,10 +60,7 @@ def find_tracking_results(cache_dir: str, dataset: str, tile_size: str) -> List[
     video_tile_combinations = []
     
     # Determine which tile sizes to process
-    if tile_size == 'all':
-        tile_sizes_to_process = [64, 128]
-    else:
-        tile_sizes_to_process = [int(tile_size)]
+    tile_sizes_to_process = TILE_SIZES if tile_size == 'all' else [int(tile_size)]
     
     for item in os.listdir(dataset_cache_dir):
         item_path = os.path.join(dataset_cache_dir, item)
@@ -553,30 +546,16 @@ def main(args):
     # Analyze runtime performance
     results = []
     
-    if args.parallel and len(video_tile_combinations) > 1:
-        print(f"Using parallel processing with {args.num_cores} cores")
-        
-        # Prepare arguments for parallel processing
-        analysis_args = []
-        for video_name, tile_size in video_tile_combinations:
-            runtime_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
-                                      'uncompressed_tracking', f'proxy_{tile_size}', 'runtimes.jsonl')
-            
-            analysis_args.append((video_name, tile_size, runtime_path, args.output_dir))
-        
-        # Run analysis in parallel
-        with mp.Pool(processes=args.num_cores) as pool:
-            results = pool.starmap(analyze_runtime_performance, analysis_args)
-    else:
-        print("Using sequential processing")
-        
-        # Run analysis sequentially
-        for video_name, tile_size in video_tile_combinations:
-            runtime_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
-                                      'uncompressed_tracking', f'proxy_{tile_size}', 'runtimes.jsonl')
-            
-            result = analyze_runtime_performance(video_name, tile_size, runtime_path, args.output_dir)
-            results.append(result)
+    # Prepare arguments for parallel processing
+    analysis_args = []
+    for video_name, tile_size in video_tile_combinations:
+        runtime_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
+                                    'uncompressed_tracking', f'proxy_{tile_size}', 'runtimes.jsonl')
+        analysis_args.append((video_name, tile_size, runtime_path, args.output_dir))
+    
+    # Run analysis in parallel
+    with mp.Pool(processes=mp.cpu_count()) as pool:
+        results = pool.starmap(analyze_runtime_performance, analysis_args)
     
     # Print summary
     successful_results = [r for r in results if r['success']]
