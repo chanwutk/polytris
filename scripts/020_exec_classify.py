@@ -134,7 +134,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
         - Timing information includes preprocessing and model inference times
     """
     with torch.no_grad():
-        start_time = time.time()
+        start_time = (time.time_ns() / 1e6)
         # Convert frame to tensor and ensure it's in HWC format
         frame_tensor = torch.from_numpy(frame).to('cuda').float()
         
@@ -153,10 +153,10 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
         
         # Convert to NCHW format for the model
         tiles_nchw = tiles_flat.permute(0, 3, 1, 2)
-        transform_runtime = time.time() - start_time
+        transform_runtime = (time.time_ns() / 1e6) - start_time
         
         # Run inference
-        start_time = time.time()
+        start_time = (time.time_ns() / 1e6)
         predictions = model(tiles_nchw)
         # Apply sigmoid to get probabilities
         probabilities = (torch.sigmoid(predictions) * 255).to(torch.uint8).cpu().numpy().flatten()
@@ -164,7 +164,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
         # Reshape back to grid format
         grid_height, grid_width = tiles.shape[:2]
         relevance_grid = probabilities.reshape(grid_height, grid_width)
-        end_time = time.time()
+        end_time = (time.time_ns() / 1e6)
         inference_runtime = end_time - start_time
     
     return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)

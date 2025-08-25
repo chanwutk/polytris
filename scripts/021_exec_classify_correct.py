@@ -8,6 +8,8 @@ import numpy as np
 import time
 from tqdm import tqdm
 import shutil
+import multiprocessing as mp
+from functools import partial
 
 
 DATA_DIR = '/polyis-data/video-datasets-low'
@@ -23,6 +25,7 @@ def parse_args():
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
             - tile_size (int | str): Tile size to use for classification (choices: 32, 64, 128, 'all')
+            - classifier (str): Classifier name to use (default: 'proxy')
     """
     parser = argparse.ArgumentParser(description='Execute trained proxy models to classify video tiles')
     parser.add_argument('--dataset', required=False,
@@ -30,6 +33,8 @@ def parse_args():
                         help='Dataset name')
     parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
+    parser.add_argument('--classifier', type=str, default='proxy',
+                        help='Classifier name to use (default: proxy)')
     return parser.parse_args()
 
 
@@ -85,7 +90,7 @@ def mark_detections(detections: list[list[float]], width: int, height: int, chun
     Returns:
         np.ndarray: 2D array representing the grid of tiles, where 1 indicates relevant tiles
     """
-    bitmap = np.zeros((height // chunk_size, width // chunk_size), dtype=np.int32)
+    bitmap = np.zeros((height // chunk_size, width // chunk_size), dtype=np.uint8)
     
     for bbox in detections:
         # Extract bounding box coordinates (ignore tracking_id)
@@ -96,12 +101,12 @@ def mark_detections(detections: list[list[float]], width: int, height: int, chun
         yfrom, yto = int(y1 // chunk_size), int(y2 // chunk_size)
         
         # Mark all tiles that overlap with the bounding box
-        bitmap[yfrom:yto+1, xfrom:xto+1] = 1
+        bitmap[yfrom:yto, xfrom:xto] = 1
     
     return bitmap
 
 
-def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_size: int) -> tuple[list[list[float]], float]:
+def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_size: int) -> tuple[np.ndarray, float]:
     """
     Process a single video frame with groundtruth detections and return relevance scores.
     
@@ -114,8 +119,8 @@ def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_s
         tile_size (int): Size of tiles to use for processing (32, 64, or 128)
             
     Returns:
-        tuple[list[list[float]], float]: A tuple containing:
-            - 2D grid of relevance scores where each element is 1.0 for relevant tiles and 0.0 for irrelevant tiles
+        tuple[np.ndarray, float]: A tuple containing:
+            - 2D grid of relevance scores where each element is 1 for relevant tiles and 0 for irrelevant tiles
             - Runtime in seconds (always 0.0 since no model inference is performed)
             
     Note:
@@ -124,24 +129,21 @@ def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_s
         - Tiles overlapping with detections are marked as relevant (1.0)
         - Tiles without detections are marked as irrelevant (0.0)
     """
-    start_time = time.time()
+    start_time = (time.time_ns() / 1e6)
     
     # Get frame dimensions
     height, width = frame.shape[:2]
     
     # Create bitmap marking relevant tiles
-    bitmap = mark_detections(detections, width, height, tile_size)
+    relevance_grid = mark_detections(detections, width, height, tile_size)
     
-    # Convert bitmap to relevance scores (0.0 or 1.0)
-    relevance_grid = bitmap.astype(np.float32)
-    
-    end_time = time.time()
+    end_time = (time.time_ns() / 1e6)
     runtime = end_time - start_time
     
-    return relevance_grid.tolist(), runtime
+    return relevance_grid, runtime
 
 
-def process_video(video_path: str, frame_detections: dict[int, list[list[float]]], tile_size: int, output_path: str):
+def process_video(video_path: str, frame_detections: dict[int, list[list[float]]], tile_size: int, output_path: str, idx: int):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
@@ -154,7 +156,7 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
         frame_detections (dict[int, list[list[float]]]): Dictionary mapping frame indices to detection lists
         tile_size (int): Tile size used for processing (32, 64, or 128)
         output_path (str): Path where the output JSONL file will be saved
-            
+        idx (int): Index of the video/tile size combination
     Note:
         - Video is processed frame by frame to minimize memory usage
         - Progress is displayed using a progress bar
@@ -171,6 +173,7 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
         - tile_size (int): Tile size used for processing (32, 64, or 128)
         - tile_classifications (list[list[float]]): Relevance scores grid for the specified tile size
         - runtime (float): Runtime in seconds (always 0.0 for groundtruth-based processing)
+        - idx (int): Index of the video/tile size combination
     """
     print(f"Processing video: {video_path}")
     
@@ -189,7 +192,7 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
     with open(output_path, 'w') as f:
         frame_idx = 0
         
-        with tqdm(total=frame_count, desc="Processing frames") as pbar:
+        with tqdm(total=frame_count, desc="Processing frames", position=idx) as pbar:
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
@@ -207,23 +210,64 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
                     "timestamp": frame_idx / fps if fps > 0 else 0,
                     "frame_size": [height, width],
                     "tile_size": tile_size,
-                    "tile_classifications": relevance_grid,
-                    "runtime": runtime
+                    "runtime": runtime,
+                    "classification_size": relevance_grid.shape,
+                    "classification_hex": relevance_grid.flatten().tobytes().hex(),
                 }
                 
                 # Write to JSONL file
                 f.write(json.dumps(frame_entry) + '\n')
-                f.flush()
+                if frame_idx % 100 == 0:
+                    f.flush()
                 
                 frame_idx += 1
                 pbar.update(1)
-                
-                # Optional: limit processing for testing
-                # if frame_idx > 100:
-                #     break
     
     cap.release()
     print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
+
+
+def process_video_tile_combination(video_file_path: str, video_file: str, tile_size: int,
+                                   dataset: str, classifier: str, idx: int) -> str:
+    """
+    Worker function to process a single video/tile size combination.
+    
+    This function is designed to be used with multiprocessing.Pool to enable
+    parallel processing of different video/tile size combinations.
+    
+    Args:
+        video_file_path (str): Full path to the video file
+        video_file (str): Video filename
+        tile_size (int): Tile size to process
+        dataset (str): Dataset name
+        classifier (str): Classifier name
+        idx (int): Index of the video/tile size combination
+            
+    Returns:
+        str: Success message indicating completion
+    """
+    # Look for the groundtruth tracking results in the cache directory structure
+    cache_video_dir = os.path.join(CACHE_DIR, dataset, video_file)
+    
+    # Load the groundtruth tracking results for this video
+    frame_detections = load_groundtruth_tracking(cache_video_dir)
+    
+    # Create output directory structure
+    output_dir = os.path.join(cache_video_dir, 'relevancy')
+    os.makedirs(output_dir, exist_ok=True)
+
+    classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}')
+    os.makedirs(classifier_dir, exist_ok=True)
+    
+    # Create score directory for this tile size
+    score_dir = os.path.join(classifier_dir, 'score')
+    os.makedirs(score_dir, exist_ok=True)
+    output_path = os.path.join(score_dir, 'score_correct.jsonl')
+    
+    # Process the video
+    process_video(video_file_path, frame_detections, tile_size, output_path, idx)
+    
+    return f"Successfully processed {video_file} with tile size {tile_size}"
 
 
 def main(args):
@@ -268,48 +312,24 @@ def main(args):
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
     
-    if not video_files:
-        print(f"No video files found in {dataset_dir}")
-        return
-    
-    print(f"Found {len(video_files)} video files to process")
-    
-    # Process each video file
+    # Create list of tasks for parallel processing
+    idx = 1
+    tasks = []
     for video_file in video_files:
         video_file_path = os.path.join(dataset_dir, video_file)
-        
-        print(f"\nProcessing video file: {video_file}")
-        
-        # Process each tile size for this video
         for tile_size in tile_sizes_to_process:
-            print(f"Processing tile size: {tile_size}")
-            
-            # Look for the groundtruth tracking results in the cache directory structure
-            cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
-            
-            # Load the groundtruth tracking results for this video
-            try:
-                frame_detections = load_groundtruth_tracking(cache_video_dir)
-                print(f"Successfully loaded groundtruth tracking for tile size {tile_size}")
-            except FileNotFoundError as e:
-                print(f"Warning: {e}, skipping tile size {tile_size} for video {video_file}")
-                continue
-            
-            # Create output directory structure
-            output_dir = os.path.join(cache_video_dir, 'relevancy')
-            os.makedirs(output_dir, exist_ok=True)
-            
-            # Create score directory for this tile size
-            score_dir = os.path.join(output_dir, 'score', f'proxy_{tile_size}')
-            # if os.path.exists(score_dir):
-            #     # Remove the entire directory
-            #     shutil.rmtree(score_dir)
-            os.makedirs(score_dir, exist_ok=True)
-            output_path = os.path.join(score_dir, 'score_correct.jsonl')
-            
-            # Process the video
-            process_video(video_file_path, frame_detections, tile_size, output_path)
-            
+            tasks.append((video_file_path, video_file, tile_size, args.dataset, args.classifier, idx))
+            idx += 1
+    
+    # Process tasks in parallel using multiprocessing Pool
+    with mp.Pool(processes=mp.cpu_count()) as pool:
+        results = pool.starmap(process_video_tile_combination, tasks)
+    
+    # Print results summary
+    print("Processing completed. Results summary:")
+    for result in results:
+        print(f"  - {result}")
+
 
 if __name__ == '__main__':
     main(parse_args())

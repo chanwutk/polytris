@@ -27,6 +27,7 @@ def parse_args():
             - min_hits (int): Minimum hits for SORT tracker (default: 3)
             - iou_threshold (float): IOU threshold for SORT tracker (default: 0.3)
             - no_interpolate (bool): Whether to not perform trajectory interpolation (default: False)
+            - classifier (str): Classifier name to use (default: 'SimpleCNN')
     """
     parser = argparse.ArgumentParser(description='Execute object tracking on uncompressed '
                                                  'detection results from 050_exec_uncompress.py')
@@ -47,10 +48,12 @@ def parse_args():
                         help='IOU threshold for SORT tracker')
     parser.add_argument('--no_interpolate', action='store_true',
                         help='Whether to not perform trajectory interpolation')
+    parser.add_argument('--classifier', type=str, default='SimpleCNN',
+                        help='Classifier name to use (default: SimpleCNN)')
     return parser.parse_args()
 
 
-def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_size: int) -> list[dict]:
+def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_size: int, classifier: str) -> list[dict]:
     """
     Load detection results from the uncompressed detections JSONL file.
     
@@ -59,6 +62,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
         dataset (str): Dataset name
         video_file (str): Video file name
         tile_size (int): Tile size used for detections
+        classifier (str): Classifier name used for detections
         
     Returns:
         list[dict]: list of frame detection results
@@ -66,7 +70,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     Raises:
         FileNotFoundError: If no detection results file is found
     """
-    detection_path = os.path.join(cache_dir, dataset, video_file, 'uncompressed_detections', f'proxy_{tile_size}', 'detections.jsonl')
+    detection_path = os.path.join(cache_dir, dataset, video_file, 'uncompressed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
     
     if not os.path.exists(detection_path):
         raise FileNotFoundError(f"Detection results not found: {detection_path}")
@@ -278,7 +282,7 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     print(f"Runtime data saved to: {runtime_path}")
 
 
-def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, tile_size: int):
+def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, tile_size: int, classifier: str):
     """
     Process tracking for a single video file.
     
@@ -288,13 +292,14 @@ def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, 
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
         tile_size (int): Tile size used for detections
+        classifier (str): Classifier name used for detections
     """
     # Load detection results
-    detection_results = load_detection_results(cache_dir, dataset, video_file, tile_size)
+    detection_results = load_detection_results(cache_dir, dataset, video_file, tile_size, classifier)
     
     # Create output path for tracking results
     output_path = os.path.join(cache_dir, dataset, video_file, 'uncompressed_tracking',
-                               f'proxy_{tile_size}', 'tracking.jsonl')
+                               f'{classifier}_{tile_size}', 'tracking.jsonl')
     
     # Execute tracking
     track_objects_in_video(video_file, detection_results, args.tracker, args.max_age, args.min_hits,
@@ -316,9 +321,9 @@ def main(args):
         
     Note:
         - The script expects uncompressed detection results from 050_exec_uncompress.py in:
-          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_detections/proxy_{tile_size}/detections.jsonl
+          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
         - Tracking results are saved to:
-          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_tracking/proxy_{tile_size}/tracks.jsonl
+          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_tracking/{classifier}_{tile_size}/tracking.jsonl
         - Linear interpolation is optional and controlled by the --no_interpolate flag
         - Processing is parallelized for improved performance
         - When tile_size is 'all', all available tile sizes are processed
@@ -347,7 +352,7 @@ def main(args):
         item_path = os.path.join(dataset_cache_dir, item)
         if os.path.isdir(item_path):
             for tile_size in tile_sizes_to_process:
-                detection_path = os.path.join(item_path, 'uncompressed_detections', f'proxy_{tile_size}', 'detections.jsonl')
+                detection_path = os.path.join(item_path, 'uncompressed_detections', f'{args.classifier}_{tile_size}', 'detections.jsonl')
                 if os.path.exists(detection_path):
                     video_tile_combinations.append((item, tile_size))
     
@@ -367,17 +372,13 @@ def main(args):
     # Prepare arguments for each video-tile combination
     video_args = []
     for video_file, tile_size in video_tile_combinations:
-        video_args.append((video_file, args, CACHE_DIR, args.dataset, tile_size))
+        video_args.append((video_file, args, CACHE_DIR, args.dataset, tile_size, args.classifier))
         print(f"Prepared video: {video_file} with tile size: {tile_size}")
     
     # Use process pool to execute video tracking
     with mp.Pool(processes=num_processes) as pool:
         print(f"Starting video tracking with {num_processes} parallel workers...")
-        
-        # Map the work to the pool
         results = pool.starmap(process_video_tracking, video_args)
-        
-        print("All videos tracked successfully!")
 
 
 if __name__ == '__main__':

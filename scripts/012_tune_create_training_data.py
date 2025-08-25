@@ -154,7 +154,7 @@ def main(args):
                     assert segment_idx_ == segment_idx, f"Segment index mismatch: {segment_idx_} != {segment_idx}"
 
                     for tile_size in TILE_SIZES:
-                        split_start_time = time.time()
+                        split_start_time = time.time_ns() / 1e6
                         training_data_path = os.path.join(video_dir, 'training', 'data', f'tilesize_{tile_size}')
 
                         padded_frame = torch.from_numpy(frame).to('cuda:0')
@@ -163,7 +163,7 @@ def main(args):
                         patched = polyis.images.splitHWC(padded_frame, tile_size, tile_size)
                         patched = patched.cpu()
                         assert polyis.images.isGHWC(patched), patched.shape
-                        split_time = time.time() - split_start_time
+                        split_time = (time.time_ns() / 1e6) - split_start_time
                         frs[tile_size].write(json.dumps({
                             'op': 'split',
                             'time': split_time,
@@ -173,7 +173,7 @@ def main(args):
                             'patched_shape': patched.shape,
                         }) + '\n')
 
-                        save_start_time = time.time()
+                        save_start_time = time.time_ns() / 1e6
                         for y in range(patched.shape[0]):
                             for x in range(patched.shape[1]):
                                 # check if the patch contains any detections
@@ -190,7 +190,7 @@ def main(args):
                                     # frame[fromy:toy, fromx:tox] //= 2
                                     if patched[y, x].any():  # do not save if the patch is completely black
                                         cv2.imwrite(os.path.join(training_data_path, 'neg', filename), patch)
-                        save_time = time.time() - save_start_time
+                        save_time = (time.time_ns() / 1e6) - save_start_time
                         frs[tile_size].write(json.dumps({
                             'op': 'save',
                             'time': save_time,

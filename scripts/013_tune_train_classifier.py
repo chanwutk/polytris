@@ -29,25 +29,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def overlapi(interval1: tuple[int, int], interval2: tuple[int, int]):
-    return (
-        (interval1[0] <= interval2[0] <= interval1[1]) or
-        (interval1[0] <= interval2[1] <= interval1[1]) or
-        (interval2[0] <= interval1[0] <= interval2[1]) or
-        (interval2[0] <= interval1[1] <= interval2[1])
-    )
-
-def overlap(b1, b2):
-    return overlapi((b1[0], b1[2]), (b2[0], b2[2])) and overlapi((b1[1], b1[3]), (b2[1], b2[3]))
-
-
-def train_step(
-    model: "torch.nn.Module",
-    loss_fn: "torch.nn.modules.loss._Loss",
-    optimizer: "torch.optim.Optimizer",
-    inputs: "torch.Tensor",
-    labels: "torch.Tensor"
-):
+def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
+               optimizer: "torch.optim.Optimizer", inputs: "torch.Tensor", labels: "torch.Tensor"):
     optimizer.zero_grad()
 
     outputs: "torch.Tensor" = model(inputs)
@@ -60,8 +43,8 @@ def train_step(
 
 
 def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
-    optimizer: "torch.optim.Optimizer", train_loader: "torch.utils.data.DataLoader",
-    test_loader: "torch.utils.data.DataLoader", n_epochs: int, device: str = 'cuda'):
+          optimizer: "torch.optim.Optimizer", train_loader: "torch.utils.data.DataLoader",
+          test_loader: "torch.utils.data.DataLoader", n_epochs: int, device: str = 'cuda'):
     losses = []
     val_losses = []
 
@@ -79,7 +62,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         epoch_loss = 0
         
         # Record training start time
-        train_start_time = time.time()
+        train_start_time = time.time_ns() / 1e6
         
         model.train()
         for x_batch, y_batch in tqdm(train_loader, total=len(train_loader)): # iterate ove batches
@@ -92,7 +75,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             losses.append(loss)
         
         # Record training end time
-        train_end_time = time.time()
+        train_end_time = time.time_ns() / 1e6
         train_time = train_end_time - train_start_time
         
         epoch_train_losses.append({
@@ -107,7 +90,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             cumulative_loss = 0
             
             # Record validation start time
-            val_start_time = time.time()
+            val_start_time = time.time_ns() / 1e6
 
             misc_sum = 0
             num_samples = 0
@@ -131,7 +114,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
             # Record validation end time
-            val_end_time = time.time()
+            val_end_time = time.time_ns() / 1e6
             val_time = val_end_time - val_start_time
             
             epoch_test_losses.append({
@@ -217,7 +200,7 @@ def main(args):
 
     for video in sorted(os.listdir(dataset_dir)):
         video_path = os.path.join(dataset_dir, video)
-        if not os.path.isdir(video_path):
+        if not os.path.isdir(video_path) or video.endswith('.mp4'):
             continue
 
         print(f"Processing video {video_path}")
