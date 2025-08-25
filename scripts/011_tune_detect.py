@@ -11,6 +11,7 @@ import tqdm
 import polyis.models.retinanet_b3d
 
 CACHE_DIR = '/polyis-cache'
+DATA_DIR = '/polyis-data/video-datasets-low'
 
 
 def format_time(**kwargs):
@@ -28,57 +29,61 @@ def parse_args():
     return parser.parse_args()
 
 
-def detect_retina(dataset_dir: str):
+def detect_retina(cache_dir: str, dataset_dir: str):
     detector = polyis.models.retinanet_b3d.get_detector(device='cuda:0')
 
-    for video in os.listdir(dataset_dir):
-        video_path = os.path.join(dataset_dir, video)
+    for video in sorted(os.listdir(dataset_dir)):
+        video_path = os.path.join(cache_dir, video)
         if not os.path.isdir(video_path):
             continue
 
         print(f"Processing video {video_path}")
 
-        for snippet in tqdm.tqdm(os.listdir(video_path)):
-            snippet_path = os.path.join(video_path, snippet)
-            if not os.path.isfile(snippet_path) or not snippet.startswith('d_') or not snippet.endswith('.mp4'):
-                continue
+        with (open(os.path.join(video_path, 'segments', 'detection', 'segments.jsonl'), 'r') as f,
+              open(os.path.join(video_path, 'segments', 'detection', 'detections.jsonl'), 'w') as fd):
+            lines = [*f.readlines()]
 
+            # Construct the path to the video file in the dataset directory
+            dataset_video_path = os.path.join(dataset_dir, video)
+            cap = cv2.VideoCapture(dataset_video_path)
 
-            meta = snippet.split('.')[0].split('_')
-            start = int(meta[2])
+            for line in tqdm.tqdm(lines):
+                snippet = json.loads(line)
+                idx = snippet['idx']
+                start = snippet['start']
+                end = snippet['end']
 
-            with open(snippet_path[:-len('.mp4')] + '.jsonl', 'w') as f:
-                # Read the video
-                cap = cv2.VideoCapture(snippet_path)
-                idx = start
-                while cap.isOpened():
-                    start_time = time.time_ns()
+                frame_idx = start
+                # set cap to the start frame
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+
+                while cap.isOpened() and frame_idx < end:
+                    start_time = time.time_ns() / 1e6
                     ret, frame = cap.read()
-                    end_time = time.time_ns()
+                    end_time = time.time_ns() / 1e6
                     read_time = end_time - start_time
 
-                    if not ret:
-                        break
+                    assert ret, "Failed to read frame"
 
                     # Detect objects in the frame
-                    start_time = time.time_ns()
+                    start_time = time.time_ns() / 1e6
                     outputs = polyis.models.retinanet_b3d.detect(frame, detector)
-                    end_time = time.time_ns()
+                    end_time = time.time_ns() / 1e6
                     detect_time = end_time - start_time
 
-                    f.write(json.dumps([idx, outputs[:, :4].tolist(), format_time(read=read_time, detect=detect_time)]) + '\n')
+                    fd.write(json.dumps([frame_idx, outputs[:, :4].tolist(), idx, format_time(read=read_time, detect=detect_time)]) + '\n')
 
-                    idx += 1
-
-                cap.release()
+                    frame_idx += 1
+            cap.release()
 
 
 def main(args):
-    dataset_dir = os.path.join(CACHE_DIR, args.dataset)
+    cache_dir = os.path.join(CACHE_DIR, args.dataset)
+    dataset_dir = os.path.join(DATA_DIR, args.dataset)
     detector = args.detector
 
     if detector == 'retina':
-        detect_retina(dataset_dir)
+        detect_retina(cache_dir, dataset_dir)
     else:
         raise ValueError(f"Unknown detector: {detector}")
 

@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import json
 import os
 import shutil
 
@@ -54,12 +55,6 @@ def parse_args():
     return parser.parse_args()
 
 
-# todo: cut snippet of videos for tuning
-# todo: run detector
-# todo: split dataset
-# todo: train classifier
-
-
 def save_snippet(input_video, output_video, start, end):
     cap = cv2.VideoCapture(input_video)
     cap.set(cv2.CAP_PROP_POS_FRAMES, start)
@@ -94,7 +89,7 @@ def main(args):
         if not input_video.endswith(".mp4"):
             continue
 
-        output_dir = os.path.join(dataset, input_video)
+        output_dir = os.path.join(dataset, input_video, 'segments')
         input_video = os.path.join(datasets_dir, dataset, input_video)
         print(input_video)
 
@@ -124,20 +119,39 @@ def main(args):
             shutil.rmtree(os.path.join(CACHE_DIR, output_dir))
         os.makedirs(os.path.join(CACHE_DIR, output_dir))
 
+        if os.path.exists(os.path.join(CACHE_DIR, output_dir, 'detection')):
+            shutil.rmtree(os.path.join(CACHE_DIR, output_dir, 'detection'))
+        os.makedirs(os.path.join(CACHE_DIR, output_dir, 'detection'))
+        if os.path.exists(os.path.join(CACHE_DIR, output_dir, 'tracking')):
+            shutil.rmtree(os.path.join(CACHE_DIR, output_dir, 'tracking'))
+        os.makedirs(os.path.join(CACHE_DIR, output_dir, 'tracking'))
+
         # find largest digit of ends
         max_digit = len(str(max([*ends_d, *ends_t])))
 
-        for i, (start, end) in tqdm.tqdm(enumerate(zip(starts_d, ends_d)), total=num_snippets):
-            # pad start and end with zeros
-            str_start = str(start).zfill(max_digit)
-            str_end = str(end).zfill(max_digit)
-            save_snippet(input_video, os.path.join(CACHE_DIR, output_dir, f"d_{i}_{str_start}_{str_end}.mp4"), start, end)
-        
-        for i, (start, end) in tqdm.tqdm(enumerate(zip(starts_t, ends_t)), total=num_snippets):
-            # pad start and end with zeros
-            str_start = str(start).zfill(max_digit)
-            str_end = str(end).zfill(max_digit)
-            save_snippet(input_video, os.path.join(CACHE_DIR, output_dir, f"t_{i}_{str_start}_{str_end}.mp4"), start, end)
+        with (open(os.path.join(CACHE_DIR, output_dir, 'detection', 'segments.jsonl'), 'w') as fd,
+              open(os.path.join(CACHE_DIR, output_dir, 'tracking', 'segments.jsonl'), 'w') as ft):
+            for i, (start, end) in tqdm.tqdm(enumerate(zip(starts_d, ends_d)), total=num_snippets):
+                # # pad start and end with zeros
+                # str_start = str(start).zfill(max_digit)
+                # str_end = str(end).zfill(max_digit)
+                # save_snippet(input_video, os.path.join(CACHE_DIR, output_dir, 'detection', f"d_{i}_{str_start}_{str_end}.mp4"), start, end)
+                fd.write(json.dumps({
+                    'idx': i,
+                    'start': start,
+                    'end': end,
+                }) + '\n')
+            
+            for i, (start, end) in tqdm.tqdm(enumerate(zip(starts_t, ends_t)), total=num_snippets):
+                # # pad start and end with zeros
+                # str_start = str(start).zfill(max_digit)
+                # str_end = str(end).zfill(max_digit)
+                # save_snippet(input_video, os.path.join(CACHE_DIR, output_dir, 'tracking', f"t_{i}_{str_start}_{str_end}.mp4"), start, end)
+                ft.write(json.dumps({
+                    'idx': i,
+                    'start': start,
+                    'end': end,
+                }) + '\n')
 
 
 if __name__ == "__main__":

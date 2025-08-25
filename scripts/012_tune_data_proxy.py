@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import shutil
+import time
 
 import cv2
 import torch
@@ -49,7 +50,7 @@ def main(args):
             shutil.rmtree(os.path.join(video_path, 'training'))
 
         for tile_size in TILE_SIZES:
-            proxy_data_path = os.path.join(video_path, 'training', 'data', f'proxy_{tile_size}')
+            proxy_data_path = os.path.join(video_path, 'training', 'data', f'tilesize_{tile_size}')
             if os.path.exists(proxy_data_path):
                 # remove the existing proxy data
                 shutil.rmtree(proxy_data_path)
@@ -59,14 +60,14 @@ def main(args):
             if not os.path.exists(os.path.join(proxy_data_path, 'neg')):
                 os.makedirs(os.path.join(proxy_data_path, 'neg'), exist_ok=True)
         
-
+        frs = {
+            tile_size: open(os.path.join(video_path, 'training', 'runtime', f'tilesize_{tile_size}', 'create_training_data.jsonl'), 'w')
+            for tile_size in TILE_SIZES
+        }
         for snippet in tqdm.tqdm(os.listdir(video_path)):
             snippet_path = os.path.join(video_path, snippet)
             if not os.path.isfile(snippet_path) or not snippet.startswith('d_') or not snippet.endswith('.mp4'):
                 continue
-
-            # # Process the snippet
-            # print(f"Processing {snippet_path}")
 
             meta = snippet.split('.')[0].split('_')
             start = int(meta[2])
@@ -85,16 +86,26 @@ def main(args):
                     assert idx == _idx, (idx, _idx)
 
                     for tile_size in [32, 64, 128]:
-                        proxy_data_path = os.path.join(video_path, 'training', 'data', f'proxy_{tile_size}')
+                        split_start_time = time.time()
+                        proxy_data_path = os.path.join(video_path, 'training', 'data', f'tilesize_{tile_size}')
 
-                        # todo: create dataset for each patch size
                         padded_frame = torch.from_numpy(frame).to('cuda:0')
                         assert polyis.images.isHWC(padded_frame), padded_frame.shape
 
                         patched = polyis.images.splitHWC(padded_frame, tile_size, tile_size)
                         patched = patched.cpu()
                         assert polyis.images.isGHWC(patched), patched.shape
+                        split_time = time.time() - split_start_time
+                        frs[tile_size].write(json.dumps({
+                            'op': 'split',
+                            'time': split_time,
+                            'frame': idx,
+                            'tile_size': tile_size,
+                            'frame_shape': frame.shape,
+                            'patched_shape': patched.shape,
+                        }) + '\n')
 
+                        save_start_time = time.time()
                         for y in range(patched.shape[0]):
                             for x in range(patched.shape[1]):
                                 # check if the patch contains any detections
@@ -112,7 +123,18 @@ def main(args):
                                     if not patched[y, x].any():  # do not save if the patch is completely black
                                         continue
                                     cv2.imwrite(os.path.join(proxy_data_path, 'neg', filename), patch)
+                        save_time = time.time() - save_start_time
+                        frs[tile_size].write(json.dumps({
+                            'op': 'save',
+                            'time': save_time,
+                            'frame': idx,
+                            'tile_size': tile_size,
+                            'frame_shape': frame.shape,
+                            'patched_shape': patched.shape,
+                        }) + '\n')
                     idx += 1
+        for fr in frs.values():
+            fr.close()
 
 
 if __name__ == '__main__':
