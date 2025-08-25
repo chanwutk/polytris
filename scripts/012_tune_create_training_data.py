@@ -53,15 +53,20 @@ def main(args):
             shutil.rmtree(os.path.join(video_dir, 'training'))
 
         for tile_size in TILE_SIZES:
-            proxy_data_path = os.path.join(video_dir, 'training', 'data', f'tilesize_{tile_size}')
-            if os.path.exists(proxy_data_path):
-                # remove the existing proxy data
-                shutil.rmtree(proxy_data_path)
-            os.makedirs(proxy_data_path, exist_ok=True)
-            if not os.path.exists(os.path.join(proxy_data_path, 'pos')):
-                os.makedirs(os.path.join(proxy_data_path, 'pos'), exist_ok=True)
-            if not os.path.exists(os.path.join(proxy_data_path, 'neg')):
-                os.makedirs(os.path.join(proxy_data_path, 'neg'), exist_ok=True)
+            runtime_path = os.path.join(video_dir, 'training', 'runtime', f'tilesize_{tile_size}')
+            if os.path.exists(runtime_path):
+                shutil.rmtree(runtime_path)
+            os.makedirs(runtime_path, exist_ok=True)
+
+            training_data_path = os.path.join(video_dir, 'training', 'data', f'tilesize_{tile_size}')
+            if os.path.exists(training_data_path):
+                # remove the existing training data
+                shutil.rmtree(training_data_path)
+            os.makedirs(training_data_path, exist_ok=True)
+            if not os.path.exists(os.path.join(training_data_path, 'pos')):
+                os.makedirs(os.path.join(training_data_path, 'pos'), exist_ok=True)
+            if not os.path.exists(os.path.join(training_data_path, 'neg')):
+                os.makedirs(os.path.join(training_data_path, 'neg'), exist_ok=True)
         
         frs = {
             tile_size: open(os.path.join(video_dir, 'training', 'runtime', f'tilesize_{tile_size}', 'create_training_data.jsonl'), 'w')
@@ -95,13 +100,13 @@ def main(args):
                     ret, frame = cap.read()
                     assert ret, f"Failed to read frame {frame_idx}"
 
-                    frame_idx_, dets, segment_idx_, time = json.loads(detections_f.readline())
+                    frame_idx_, dets, segment_idx_, _ = json.loads(detections_f.readline())
                     assert frame_idx_ == frame_idx, f"Frame index mismatch: {frame_idx_} != {frame_idx}"
                     assert segment_idx_ == segment_idx, f"Segment index mismatch: {segment_idx_} != {segment_idx}"
 
                     for tile_size in TILE_SIZES:
                         split_start_time = time.time()
-                        proxy_data_path = os.path.join(video_dir, 'training', 'data', f'tilesize_{tile_size}')
+                        training_data_path = os.path.join(video_dir, 'training', 'data', f'tilesize_{tile_size}')
 
                         padded_frame = torch.from_numpy(frame).to('cuda:0')
                         assert polyis.images.isHWC(padded_frame), padded_frame.shape
@@ -130,12 +135,12 @@ def main(args):
                                 patch = patched[y, x].contiguous().numpy()
 
                                 if any(overlap(det, (fromx, fromy, tox, toy)) for det in dets):
-                                    cv2.imwrite(os.path.join(proxy_data_path, 'pos', filename), patch)
+                                    cv2.imwrite(os.path.join(training_data_path, 'pos', filename), patch)
                                 else:
                                     # For visualizing the negative patches
                                     # frame[fromy:toy, fromx:tox] //= 2
                                     if patched[y, x].any():  # do not save if the patch is completely black
-                                        cv2.imwrite(os.path.join(proxy_data_path, 'neg', filename), patch)
+                                        cv2.imwrite(os.path.join(training_data_path, 'neg', filename), patch)
                         save_time = time.time() - save_start_time
                         frs[tile_size].write(json.dumps({
                             'op': 'save',
