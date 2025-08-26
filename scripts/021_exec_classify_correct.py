@@ -7,13 +7,11 @@ import cv2
 import numpy as np
 import time
 from tqdm import tqdm
-import shutil
 import multiprocessing as mp
-from functools import partial
+
+from scripts.utilities import CACHE_DIR, DATA_DIR, load_tracking_results
 
 
-DATA_DIR = '/polyis-data/video-datasets-low'
-CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [32, 64, 128]
 
 
@@ -33,42 +31,6 @@ def parse_args():
     parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     return parser.parse_args()
-
-
-def load_groundtruth_tracking(video_path: str) -> dict[int, list[list[float]]]:
-    """
-    Load groundtruth tracking results from the JSONL file.
-    
-    This function reads the tracking results file and organizes them by frame index.
-    
-    Args:
-        video_path (str): Path to the video directory containing groundtruth tracking results
-        
-    Returns:
-        dict[int, list[list[float]]]: Dictionary mapping frame indices to lists of bounding boxes
-            Each bounding box is formatted as [tracking_id, x1, y1, x2, y2]
-            
-    Raises:
-        FileNotFoundError: If no tracking results file is found
-    """
-    tracking_path = os.path.join(video_path, 'groundtruth', 'tracking.jsonl')
-    
-    if not os.path.exists(tracking_path):
-        raise FileNotFoundError(f"Tracking results not found: {tracking_path}")
-    
-    print(f"Loading groundtruth tracking results from {tracking_path}")
-    
-    frame_detections = {}
-    with open(tracking_path, 'r') as f:
-        for line in f:
-            if line.strip():
-                frame_data = json.loads(line)
-                frame_idx = frame_data['frame_idx']
-                tracks = frame_data['tracks']
-                frame_detections[frame_idx] = tracks
-    
-    print(f"Loaded tracking results for {len(frame_detections)} frames")
-    return frame_detections
 
 
 def mark_detections(detections: list[list[float]], width: int, height: int, chunk_size: int) -> np.ndarray:
@@ -242,14 +204,11 @@ def process_video_tile_combination(video_file_path: str, video_file: str, tile_s
     Returns:
         str: Success message indicating completion
     """
-    # Look for the groundtruth tracking results in the cache directory structure
-    cache_video_dir = os.path.join(CACHE_DIR, dataset, video_file)
-    
     # Load the groundtruth tracking results for this video
-    frame_detections = load_groundtruth_tracking(cache_video_dir)
+    frame_detections = load_tracking_results(CACHE_DIR, dataset, video_file)
     
     # Create output directory structure
-    output_dir = os.path.join(cache_video_dir, 'relevancy')
+    output_dir = os.path.join(CACHE_DIR, dataset, video_file, 'relevancy')
     os.makedirs(output_dir, exist_ok=True)
 
     classifier_dir = os.path.join(output_dir, f'groundtruth_{tile_size}')

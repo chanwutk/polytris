@@ -8,16 +8,14 @@ import shutil
 import cv2
 import tqdm
 
+from scripts.utilities import CACHE_DIR, DATA_DIR
+
 
 SELECTIVITY = 0.05
 CLASSIFIER_SIZES = [32, 64, 128]
 PADDING_SIZES = [0, 1, 2]
 DIFF_THRESHOLDS = [10, 20, 30]
 DIFF_SCALE = [1, 2, 4]
-
-
-DATASET_DIR = '/polyis-data/video-datasets-low'
-CACHE_DIR = '/polyis-cache'
 
 
 def parse_args():
@@ -49,7 +47,7 @@ def parse_args():
     parser.add_argument(
         "--datasets_dir",
         type=str,
-        default=DATASET_DIR,
+        default=DATA_DIR,
         help="Directory containing the dataset.",
     )
     return parser.parse_args()

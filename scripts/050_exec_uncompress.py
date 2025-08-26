@@ -8,7 +8,9 @@ import numpy as np
 import cv2
 import tqdm
 
-CACHE_DIR = '/polyis-cache'
+from scripts.utilities import CACHE_DIR
+
+
 # TILE_SIZES = [32, 64, 128]
 TILE_SIZES = [64]
 

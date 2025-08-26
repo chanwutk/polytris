@@ -12,8 +12,8 @@ import tqdm
 
 import polyis.images
 
-CACHE_DIR = '/polyis-cache'
-DATA_DIR = '/polyis-data/video-datasets-low'
+from scripts.utilities import CACHE_DIR, DATA_DIR, overlap
+
 TILE_SIZES = [32, 64, 128]
 
 
@@ -23,38 +23,6 @@ def parse_args():
                         default='b3d',
                         help='Dataset name')
     return parser.parse_args()
-
-
-def overlapi(interval1: tuple[int, int], interval2: tuple[int, int]):
-    """
-    Check if two 1D intervals overlap.
-    
-    Args:
-        interval1 (tuple[int, int]): First interval as (start, end)
-        interval2 (tuple[int, int]): Second interval as (start, end)
-        
-    Returns:
-        bool: True if the intervals overlap, False otherwise
-    """
-    return (
-        (interval1[0] <= interval2[0] <= interval1[1]) or
-        (interval1[0] <= interval2[1] <= interval1[1]) or
-        (interval2[0] <= interval1[0] <= interval2[1]) or
-        (interval2[0] <= interval1[1] <= interval2[1])
-    )
-
-def overlap(b1, b2):
-    """
-    Check if two 2D bounding boxes overlap.
-    
-    Args:
-        b1: First bounding box as (x1, y1, x2, y2) where (x1, y1) is top-left and (x2, y2) is bottom-right
-        b2: Second bounding box as (x1, y1, x2, y2) where (x1, y1) is top-left and (x2, y2) is bottom-right
-        
-    Returns:
-        bool: True if the bounding boxes overlap in both x and y dimensions, False otherwise
-    """
-    return overlapi((b1[0], b1[2]), (b2[0], b2[2])) and overlapi((b1[1], b1[3]), (b2[1], b2[3]))
 
 
 def main(args):

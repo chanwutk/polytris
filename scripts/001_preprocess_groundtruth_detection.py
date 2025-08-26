@@ -10,14 +10,7 @@ import multiprocessing as mp
 import torch
 
 import polyis.models.retinanet_b3d
-
-CACHE_DIR = '/polyis-cache'
-DATA_DIR = '/polyis-data/video-datasets-low'
-
-
-def format_time(**kwargs):
-    """Format timing information into a list of dictionaries."""
-    return [{'op': op, 'time': time} for op, time in kwargs.items()]
+from scripts.utilities import CACHE_DIR, DATA_DIR, format_time
 
 
 def parse_args():

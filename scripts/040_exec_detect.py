@@ -9,8 +9,9 @@ import cv2
 import tqdm
 
 import polyis.models.retinanet_b3d
+from scripts.utilities import CACHE_DIR, DATA_DIR
 
-CACHE_DIR = '/polyis-cache'
+
 # TILE_SIZES = [32, 64, 128]
 TILE_SIZES = [64]
 
@@ -132,10 +133,7 @@ def main(args):
         raise FileNotFoundError(f"Dataset directory {dataset_dir} does not exist")
     
     # Determine which tile sizes to process
-    if args.tile_size == 'all':
-        tile_sizes_to_process = TILE_SIZES
-    else:
-        tile_sizes_to_process = [int(args.tile_size)]
+    tile_sizes_to_process = TILE_SIZES if args.tile_size == 'all' else [int(args.tile_size)]
     
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, f))]
@@ -144,7 +142,7 @@ def main(args):
     for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
         
-        print(f"\nProcessing video file: {video_file}")
+        print(f"Processing video file: {video_file}")
         
         # Process each tile size for this video
         for tile_size in tile_sizes_to_process:

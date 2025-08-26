@@ -8,23 +8,10 @@ import numpy as np
 from tqdm import tqdm
 import multiprocessing as mp
 
-CACHE_DIR = '/polyis-cache'
-DATA_DIR = '/polyis-data/video-datasets-low'
-TILE_SIZES = [64]
+from scripts.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization
 
-# Define 10 distinct colors for track visualization (BGR format for OpenCV)
-TRACK_COLORS = [
-    (255, 0, 0),    # Blue
-    (0, 255, 0),    # Green
-    (0, 0, 255),    # Red
-    (255, 255, 0),  # Cyan
-    (255, 0, 255),  # Magenta
-    (0, 255, 255),  # Yellow
-    (128, 0, 255),  # Purple
-    (255, 128, 0),  # Orange
-    (0, 128, 255),  # Light Blue
-    (255, 0, 128),  # Pink
-]
+
+TILE_SIZES = [64]
 
 
 def parse_args():
@@ -85,224 +72,6 @@ def load_tracking_results(cache_dir: str, dataset: str, video_file: str, tile_si
     return frame_tracks
 
 
-def get_track_color(track_id: int) -> tuple[int, int, int]:
-    """
-    Get a color for a track ID by cycling through the predefined colors.
-    
-    Args:
-        track_id (int): Track ID
-        
-    Returns:
-        tuple[int, int, int]: BGR color tuple
-    """
-    color_index = track_id % len(TRACK_COLORS)
-    return TRACK_COLORS[color_index]
-
-
-def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]], 
-                             frame_idx: int, trajectory_history: dict[int, list[tuple[int, int, int]]], 
-                             speed_up: int) -> np.ndarray | None:
-    """
-    Create a visualization frame by drawing bounding boxes and trajectories for all tracks.
-    
-    Args:
-        frame (np.ndarray): Original video frame (H, W, 3)
-        tracks (list[list[float]]): list of tracks for this frame
-        frame_idx (int): Frame index for logging
-        trajectory_history (dict[int, list[tuple[int, int, int]]]): History of track centers with frame timestamps
-        speed_up (int): Speed up factor (process every Nth frame)
-        
-    Returns:
-        np.ndarray | None: Frame with bounding boxes and trajectories drawn, or None if frame should be skipped
-    """
-    # First loop: Update trajectory history for all tracks
-    for track in tracks:
-        if len(track) >= 5:  # Ensure we have track_id, x1, y1, x2, y2
-            track_id, x1, y1, x2, y2 = track[:5]
-            track_id = int(track_id)
-            
-            # Calculate center of bounding box
-            center_x = int((x1 + x2) // 2)
-            center_y = int((y1 + y2) // 2)
-            
-            # Update trajectory history with frame timestamp
-            if track_id not in trajectory_history:
-                trajectory_history[track_id] = []
-            trajectory_history[track_id].append((center_x, center_y, frame_idx))
-
-    if frame_idx % speed_up != 0:
-        return None
-    
-    # Create a copy of the frame for visualization
-    vis_frame = frame.copy()
-    
-    # Second loop: Draw bounding boxes and labels for current tracks
-    for track in tracks:
-        if len(track) >= 5:  # Ensure we have track_id, x1, y1, x2, y2
-            track_id, x1, y1, x2, y2 = track[:5]
-            
-            # Convert to integers for drawing
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-            track_id = int(track_id)
-            
-            # Get color for this track
-            color = get_track_color(track_id)
-            
-            # Draw bounding box
-            cv2.rectangle(vis_frame, (x1, y1), (x2, y2), color, 2)
-            
-            # Draw track ID label
-            label = f"ID: {track_id}"
-            font_scale = 0.6
-            font_thickness = 2
-            
-            # Calculate text size and position
-            (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 
-                                                                 font_scale, font_thickness)
-            
-            # Position text above the bounding box
-            text_x = x1
-            text_y = max(y1 - 10, text_height + 5)
-            
-            # Draw text background for better visibility
-            cv2.rectangle(vis_frame, (text_x - 2, text_y - text_height - 2), 
-                         (text_x + text_width + 2, text_y + baseline + 2), 
-                         color, -1)
-            
-            # Draw text
-            cv2.putText(vis_frame, label, (text_x, text_y), 
-                       cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness)
-    
-    # Draw all trajectories with gradual fading
-    for track_id, trajectory in trajectory_history.items():
-        if len(trajectory) > 1:
-            color = get_track_color(track_id)
-            
-            # Calculate fade parameters
-            max_fade_frames = 30  # Number of frames for complete fade after track ends
-            current_time = frame_idx
-            
-            # Check if track is still active (within last 5 frames)
-            track_is_active = trajectory and current_time - trajectory[-1][2] <= 5
-            
-            # Calculate fade alpha for the entire trajectory
-            if track_is_active:
-                # Track is active - full opacity
-                alpha = 1.0
-            else:
-                # Track has ended - calculate fade based on time since last detection
-                time_since_end = current_time - trajectory[-1][2]
-                if time_since_end >= max_fade_frames:
-                    alpha = 0.0  # Completely faded
-                else:
-                    alpha = 1.0 - (time_since_end / max_fade_frames)
-            
-            # Only draw if trajectory is still visible
-            if alpha > 0.01:
-                # Apply alpha to color for the entire trajectory
-                line_color = tuple(int(c * alpha) for c in color)
-                point_color = tuple(int(c * alpha) for c in color)
-                
-                # Draw trajectory lines
-                for i in range(1, len(trajectory)):
-                    prev_center = trajectory[i-1]
-                    curr_center = trajectory[i]
-                    
-                    # Draw line
-                    cv2.line(vis_frame, (prev_center[0], prev_center[1]), 
-                             (curr_center[0], curr_center[1]), line_color, 2)
-                    
-                    # Draw trajectory points
-                    point_radius = max(1, int(3 * alpha))
-                    cv2.circle(vis_frame, (prev_center[0], prev_center[1]), point_radius, point_color, -1)
-                
-                # Draw final point
-                final_center = trajectory[-1]
-                cv2.circle(vis_frame, (final_center[0], final_center[1]), 3, point_color, -1)
-    
-    return vis_frame
-
-
-def create_tracking_visualization(video_path: str, tracking_results: dict[int, list[list[float]]], 
-                                 output_path: str, speed_up: int, process_id: int):
-    """
-    Create a visualization video showing tracking results overlaid on the original video.
-    
-    Args:
-        video_path (str): Path to the input video file
-        tracking_results (dict[int, list[list[float]]]): Tracking results from load_tracking_results
-        output_path (str): Path where the output visualization video will be saved
-        speed_up (int): Speed up factor for visualization
-        process_id (int): Process ID for logging
-    """
-    print(f"Creating tracking visualization for video: {video_path}")
-    
-    # Open video
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        print(f"Error: Could not open video {video_path}")
-        return
-    
-    # Get video properties
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    
-    print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
-    
-    # Create output directory if it doesn't exist
-    output_dir = os.path.dirname(output_path)
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Create video writer
-    fourcc = cv2.VideoWriter.fourcc('m', 'p', '4', 'v')
-    writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-    
-    if not writer.isOpened():
-        print(f"Error: Could not create video writer for {output_path}")
-        cap.release()
-        return
-    
-    print(f"Creating visualization video with {frame_count} frames at {fps} FPS")
-    
-    # Initialize trajectory history for all tracks with frame timestamps
-    trajectory_history: dict[int, list[tuple[int, int, int]]] = {}  # track_id -> [(x, y, frame_idx), ...]
-    
-    # Initialize frame_idx for exception handling
-    frame_idx = 0
-    
-    # Process each frame
-    try:
-        for frame_idx in tqdm(range(frame_count), desc=f"Process {process_id} - Creating visualization", position=process_id):
-            # Read frame
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            # Get tracking results for this frame
-            tracks = tracking_results.get(frame_idx, [])
-            
-            # Create visualization frame with trajectory history
-            vis_frame = create_visualization_frame(frame, tracks, frame_idx, trajectory_history, speed_up)
-            
-            # Write frame to video
-            if vis_frame is not None:
-                writer.write(vis_frame)
-    
-    except KeyboardInterrupt:
-        print(f"\nProcess {process_id}: KeyboardInterrupt detected. Stopping video writing...")
-        print(f"Process {process_id}: Video writing stopped at frame {frame_idx}")
-    except Exception as e:
-        print(f"\nProcess {process_id}: Error during video processing: {e}")
-    finally:
-        # Release resources
-        cap.release()
-        writer.release()
-        print(f"Process {process_id}: Resources released")
-    
-    print(f"Process {process_id}: Tracking visualization completed")
-
 
 def process_video_visualization(video_file: str, tile_size: int, cache_dir: str, dataset: str, speed_up: int, process_id: int):
     """
@@ -316,28 +85,21 @@ def process_video_visualization(video_file: str, tile_size: int, cache_dir: str,
         speed_up (int): Speed up factor for visualization
         process_id (int): Process ID for logging
     """
-    try:
-        # Load tracking results
-        tracking_results = load_tracking_results(cache_dir, dataset, video_file, tile_size)
-        
-        # Get path to original video
-        video_path = os.path.join(DATA_DIR, dataset, video_file)
-        
-        if not os.path.exists(video_path):
-            raise FileNotFoundError(f"Original video not found for {video_file}")
-        
-        # Create output path for visualization
-        output_path = os.path.join(cache_dir, dataset, video_file, 'uncompressed_tracking',
-                                  f'proxy_{tile_size}', 'visualization.mp4')
-        
-        # Create visualization
-        create_tracking_visualization(video_path, tracking_results, output_path, speed_up, process_id)
-        
-        print(f"Completed visualization for video: {video_file} with tile size: {tile_size}")
-        
-    except Exception as e:
-        print(f"Error processing video {video_file} with tile size {tile_size}: {e}")
-        raise e
+    # Load tracking results
+    tracking_results = load_tracking_results(cache_dir, dataset, video_file, tile_size)
+    
+    # Get path to original video
+    video_path = os.path.join(DATA_DIR, dataset, video_file)
+    
+    if not os.path.exists(video_path):
+        raise FileNotFoundError(f"Original video not found for {video_file}")
+    
+    # Create output path for visualization
+    output_path = os.path.join(cache_dir, dataset, video_file, 'uncompressed_tracking',
+                                f'proxy_{tile_size}', 'visualization.mp4')
+    
+    # Create visualization
+    create_tracking_visualization(video_path, tracking_results, output_path, speed_up, process_id)
 
 
 def main(args):
@@ -368,17 +130,10 @@ def main(args):
     print(f"Speed up factor: {args.speed_up} (processing every {args.speed_up}th frame)")
     
     # Determine which tile sizes to process
-    if args.tile_size == 'all':
-        tile_sizes_to_process = TILE_SIZES
-        print(f"Processing all available tile sizes: {tile_sizes_to_process}")
-    else:
-        tile_sizes_to_process = [int(args.tile_size)]
-        print(f"Processing tile size: {tile_sizes_to_process[0]}")
+    tile_sizes_to_process = TILE_SIZES if args.tile_size == 'all' else [int(args.tile_size)]
     
     # Find all videos with tracking results
     dataset_cache_dir = os.path.join(CACHE_DIR, args.dataset)
-    if not os.path.exists(dataset_cache_dir):
-        raise FileNotFoundError(f"Dataset cache directory {dataset_cache_dir} does not exist")
     
     # Look for directories that contain tracking results
     video_tile_combinations = []
@@ -398,10 +153,6 @@ def main(args):
     
     # Determine number of processes to use
     num_processes = min(mp.cpu_count(), len(video_tile_combinations), 20)  # Cap at 20 processes
-    print(f"Using {num_processes} processes for parallel processing")
-    
-    # Create a pool of workers
-    print(f"Creating process pool with {num_processes} workers...")
     
     # Prepare arguments for each video-tile combination
     video_args = []

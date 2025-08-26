@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import multiprocessing as mp
 from typing import Any
-from pathlib import Path
 
-CACHE_DIR = '/polyis-cache'
+from scripts.utilities import CACHE_DIR
+
+
 OUTPUT_DIR = 'pipeline-stages/track-speed-results'
 # TILE_SIZES = [32, 64, 128]
 TILE_SIZES = [64]

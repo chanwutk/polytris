@@ -9,6 +9,7 @@ import tqdm
 import multiprocessing as mp
 
 from modules.b3d.b3d.external.sort import Sort
+from scripts.utilities import create_tracker, interpolate_trajectory
 
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [64]
@@ -85,60 +86,6 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     
     print(f"Loaded {len(results)} frame detections")
     return results
-
-
-def create_tracker(tracker_name: str, max_age: int = 10, min_hits: int = 3, iou_threshold: float = 0.3):
-    """
-    Create a tracker instance based on the specified algorithm.
-    
-    Args:
-        tracker_name (str): Name of the tracking algorithm
-        max_age (int): Maximum age for SORT tracker
-        min_hits (int): Minimum hits for SORT tracker
-        iou_threshold (float): IOU threshold for SORT tracker
-        
-    Returns:
-        Tracker instance
-        
-    Raises:
-        ValueError: If the tracker name is not supported
-    """
-    if tracker_name == 'sort':
-        print(f"Creating SORT tracker with max_age={max_age}, min_hits={min_hits}, iou_threshold={iou_threshold}")
-        return Sort(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
-    else:
-        raise ValueError(f"Unknown tracker: {tracker_name}")
-
-
-def interpolate_trajectory(trajectory: list[tuple[int, np.ndarray]], nxt: tuple[int, np.ndarray]) -> list[tuple[int, np.ndarray]]:
-    """
-    Perform linear interpolation between two trajectory points except the last point (nxt).
-    
-    Args:
-        trajectory (list[tuple[int, np.ndarray]]): list of (frame_idx, detection) tuples
-        nxt (tuple[int, np.ndarray]): Next detection point (frame_idx, detection)
-        
-    Returns:
-        list[tuple[int, np.ndarray]]: list of interpolated points
-    """
-    extend: list[tuple[int, np.ndarray]] = []
-    
-    if len(trajectory) != 0:
-        prv = trajectory[-1]
-        assert prv[0] < nxt[0]
-        prv_det = prv[1]
-        nxt_det = nxt[1]
-        dif_det = nxt_det - prv_det
-        dif_det = dif_det.reshape(1, -1)
-
-        scale = np.arange(0, nxt[0] - prv[0], dtype=np.float32).reshape(-1, 1) / (nxt[0] - prv[0])
-        
-        int_dets = (scale @ dif_det) + prv_det.reshape(1, -1)
-
-        for idx, int_det in enumerate(int_dets[:-1]):
-            extend.append((prv[0] + idx + 1, int_det))
-
-    return extend
 
 
 def track_objects_in_video(video_file: str, detection_results: list[dict], tracker_name: str, 

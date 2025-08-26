@@ -13,27 +13,10 @@ import shutil
 from polyis.models.classifier.simple_cnn import SimpleCNN
 from polyis.images import splitHWC, padHWC
 
+from scripts.utilities import CACHE_DIR, DATA_DIR, format_time
 
-DATA_DIR = '/polyis-data/video-datasets-low'
-CACHE_DIR = '/polyis-cache'
+
 TILE_SIZES = [32, 64, 128]
-
-
-def format_time(**kwargs):
-    """
-    Format timing information into a list of dictionaries.
-    
-    Args:
-        **kwargs: Keyword arguments where keys are operation names and values are timing values
-        
-    Returns:
-        list: List of dictionaries with 'op' (operation) and 'time' keys for each input argument
-        
-    Example:
-        >>> format_time(read=1.5, detect=2.3)
-        [{'op': 'read', 'time': 1.5}, {'op': 'detect', 'time': 2.3}]
-    """
-    return [{ 'op': op, 'time': time } for op, time in kwargs.items()]
 
 
 def get_classifier_class(classifier_name: str):

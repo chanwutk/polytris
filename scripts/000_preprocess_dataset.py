@@ -10,18 +10,16 @@ import numpy as np
 import torch
 from matplotlib.path import Path
 
-
-DATASETS_RAW_DIR = '/polyis-data/video-datasets-raw'
-DATASETS_DIR = '/polyis-data/video-datasets-low'
+from scripts.utilities import DATA_RAW_DIR, DATA_DIR
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Preprocess video dataset')
     parser.add_argument('-i', '--input', required=False,
-                        default=DATASETS_RAW_DIR,
+                        default=DATA_RAW_DIR,
                         help='Video Dataset directory')
     parser.add_argument('-o', '--output', required=False,
-                        default=DATASETS_DIR,
+                        default=DATA_DIR,
                         help='Processed Dataset directory')
     parser.add_argument('-b', '--batch_size', required=False,
                         default=256,

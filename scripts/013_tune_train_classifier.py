@@ -15,9 +15,9 @@ from torchvision import datasets, transforms
 from torch.optim import Adam
 
 from polyis.models.classifier.simple_cnn import SimpleCNN
+from scripts.utilities import CACHE_DIR
 
 
-CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [32, 64, 128]
 
 
