@@ -26,7 +26,9 @@ dependencies = [
     "scikit-learn (>=1.6.1,<2.0.0)",
     "pandas (>=2.2.3,<3.0.0)",
     "ftfy (>=6.3.1,<7.0.0)",
-    "gitpython (>=3.1.44,<4.0.0)"
+    "gitpython (>=3.1.44,<4.0.0)",
+    "seaborn (>=0.13.2)",
+    "matplotlib (>=3.10.5,<4.0.0)"
 ]
 
 [build-system]
