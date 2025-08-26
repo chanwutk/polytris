@@ -292,26 +292,26 @@ def main(args):
     video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
     
     # Process each video file
-    for video_file in video_files:
+    for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
         
         print(f"\nProcessing video file: {video_file}")
+        
+        # Look for the trained model in the expected cache directory structure
+        cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
+        
+        # Create output directory structure
+        output_dir = os.path.join(cache_video_dir, 'relevancy')
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir)
         
         # Process each tile size for this video
         for tile_size in tile_sizes_to_process:
             print(f"Processing tile size: {tile_size}")
             
-            # Look for the trained model in the expected cache directory structure
-            cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
-            
             # Load the trained model for this specific video and tile size
             model = load_model(cache_video_dir, tile_size, args.classifier)
-            
-            # Create output directory structure
-            output_dir = os.path.join(cache_video_dir, 'relevancy')
-            if os.path.exists(output_dir):
-                shutil.rmtree(output_dir)
-            os.makedirs(output_dir)
 
             # Create score directory for this tile size
             classifier_dir = os.path.join(output_dir, f'{args.classifier}_{tile_size}')

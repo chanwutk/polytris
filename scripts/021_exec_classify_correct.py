@@ -25,7 +25,6 @@ def parse_args():
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
             - tile_size (int | str): Tile size to use for classification (choices: 32, 64, 128, 'all')
-            - classifier (str): Classifier name to use (default: 'proxy')
     """
     parser = argparse.ArgumentParser(description='Execute trained proxy models to classify video tiles')
     parser.add_argument('--dataset', required=False,
@@ -33,8 +32,6 @@ def parse_args():
                         help='Dataset name')
     parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
-    parser.add_argument('--classifier', type=str, default='proxy',
-                        help='Classifier name to use (default: proxy)')
     return parser.parse_args()
 
 
@@ -228,7 +225,7 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
 
 
 def process_video_tile_combination(video_file_path: str, video_file: str, tile_size: int,
-                                   dataset: str, classifier: str, idx: int) -> str:
+                                   dataset: str, idx: int) -> str:
     """
     Worker function to process a single video/tile size combination.
     
@@ -240,7 +237,6 @@ def process_video_tile_combination(video_file_path: str, video_file: str, tile_s
         video_file (str): Video filename
         tile_size (int): Tile size to process
         dataset (str): Dataset name
-        classifier (str): Classifier name
         idx (int): Index of the video/tile size combination
             
     Returns:
@@ -256,13 +252,13 @@ def process_video_tile_combination(video_file_path: str, video_file: str, tile_s
     output_dir = os.path.join(cache_video_dir, 'relevancy')
     os.makedirs(output_dir, exist_ok=True)
 
-    classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}')
+    classifier_dir = os.path.join(output_dir, f'groundtruth_{tile_size}')
     os.makedirs(classifier_dir, exist_ok=True)
     
     # Create score directory for this tile size
     score_dir = os.path.join(classifier_dir, 'score')
     os.makedirs(score_dir, exist_ok=True)
-    output_path = os.path.join(score_dir, 'score_correct.jsonl')
+    output_path = os.path.join(score_dir, 'score.jsonl')
     
     # Process the video
     process_video(video_file_path, frame_detections, tile_size, output_path, idx)
@@ -293,7 +289,7 @@ def main(args):
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - Groundtruth tracking results are loaded for each video
         - When tile_size is 'all', all three tile sizes (32, 64, 128) are processed
-        - Output files are saved in {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/proxy_{tile_size}/score_correct.jsonl
+        - Output files are saved in {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/groundtruth_{tile_size}/score.jsonl
         - If no tracking results are found for a video, that video is skipped with a warning
     """
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
@@ -318,7 +314,7 @@ def main(args):
     for video_file in video_files:
         video_file_path = os.path.join(dataset_dir, video_file)
         for tile_size in tile_sizes_to_process:
-            tasks.append((video_file_path, video_file, tile_size, args.dataset, args.classifier, idx))
+            tasks.append((video_file_path, video_file, tile_size, args.dataset, idx))
             idx += 1
     
     # Process tasks in parallel using multiprocessing Pool

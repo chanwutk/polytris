@@ -401,12 +401,13 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
             
             # Profile: Get classification results
             step_start = (time.time_ns() / 1e6)
-            classifications: str = frame_result['tile_classifications']
+            classifications: str = frame_result['classification_hex']
+            classification_size: tuple[int, int] = frame_result['classification_size']
             step_times['get_classifications'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Create bitmap from classifications
             step_start = (time.time_ns() / 1e6)
-            bitmap_frame = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(grid_height, grid_width)
+            bitmap_frame = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size)
             bitmap_frame = bitmap_frame > (threshold * 255)
             bitmap_frame = bitmap_frame.astype(np.int32)
             step_times['create_bitmap'] = (time.time_ns() / 1e6) - step_start
