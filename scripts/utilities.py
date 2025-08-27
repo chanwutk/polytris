@@ -5,8 +5,6 @@ import cv2
 import numpy as np
 import tqdm
 
-from modules.b3d.b3d.external.sort import Sort
-
 DATA_RAW_DIR = '/polyis-data/video-datasets-raw'
 DATA_DIR = '/polyis-data/video-datasets-low'
 CACHE_DIR = '/polyis-cache'
@@ -252,6 +250,7 @@ def create_tracker(tracker_name: str, max_age: int = 1, min_hits: int = 3, iou_t
     """
     if tracker_name == 'sort':
         print(f"Creating SORT tracker with max_age={max_age}, min_hits={min_hits}, iou_threshold={iou_threshold}")
+        from modules.b3d.b3d.external.sort import Sort
         return Sort(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
     else:
         raise ValueError(f"Unknown tracker: {tracker_name}")

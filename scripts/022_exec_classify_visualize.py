@@ -45,14 +45,14 @@ def parse_args():
     return parser.parse_args()
 
 
-def evaluate_classification_accuracy(classifications: list[list[float]],
+def evaluate_classification_accuracy(classifications: np.ndarray,
                                      detections: list[list[float]], tile_size: int,
                                      threshold: float) -> dict[str, Any]:
     """
     Evaluate classification accuracy by comparing predictions with groundtruth detections.
 
     Args:
-        classifications (list[list[float]]): 2D grid of classification scores
+        classifications (np.ndarray): 2D grid of classification scores
         detections (list[dict]): list of detection dictionaries
         tile_size (int): Size of each tile
         threshold (float): Classification threshold
@@ -60,8 +60,8 @@ def evaluate_classification_accuracy(classifications: list[list[float]],
     Returns:
         dict: dictionary containing evaluation metrics and error details
     """
-    grid_height = len(classifications)
-    grid_width = len(classifications[0]) if grid_height > 0 else 0
+    grid_height = classifications.shape[0]
+    grid_width = classifications.shape[1] if grid_height > 0 else 0
 
     # Initialize counters
     tp = 0  # True Positive: predicted above threshold, has detection overlap
@@ -170,7 +170,9 @@ def _evaluate_frame_worker(args):
     # Validate frame data
     assert 'tracks' in frame_detections, f"tracks not in frame_detections: {frame_detections}"
 
-    classifications = frame_result['tile_classifications']
+    classifications = frame_result['classification_hex']
+    classification_size = frame_result['classification_size']
+    classifications = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size).astype(np.float32) / 255.0
 
     # Evaluate this frame
     frame_eval = evaluate_classification_accuracy(
@@ -316,8 +318,8 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.savefig(overall_summary_path, dpi=300, bbox_inches='tight')
     plt.close()
 
-    # 2. Classification error over time - ENHANCED with 4 subplots
-    fig, ((ax1, ax2, ax3, ax4),) = plt.subplots(1, 4, figsize=(25, 12))
+    # 2. Classification error over time - with 4 subplots
+    fig, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, figsize=(25, 12))
 
     frame_indices = list(range(len(frame_metrics)))
     error_rates = [(m['fp'] + m['fn']) / m['total_tiles'] for m in frame_metrics]
@@ -670,14 +672,14 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     print(f"Overall Metrics - Precision: {overall_precision:.3f}, Recall: {overall_recall:.3f}, F1: {overall_f1:.3f}")
 
 
-def create_visualization_frame(frame: np.ndarray, classifications: list[list[float]],
+def create_visualization_frame(frame: np.ndarray, classifications: np.ndarray,
                               tile_size: int, threshold: float) -> np.ndarray:
     """
     Create a visualization frame by adjusting tile brightness based on classification scores.
 
     Args:
         frame (np.ndarray): Original video frame (H, W, 3)
-        classifications (list[list[float]]): 2D grid of classification scores
+        classifications (np.ndarray): 2D grid of classification scores
         tile_size (int): Size of tiles used for classification
         threshold (float): Threshold value for visualization
 
@@ -731,14 +733,14 @@ def create_visualization_frame(frame: np.ndarray, classifications: list[list[flo
     return vis_frame
 
 
-def create_overlay_frame(frame: np.ndarray, classifications: list[list[float]],
+def create_overlay_frame(frame: np.ndarray, classifications: np.ndarray,
                         tile_size: int, threshold: float) -> np.ndarray:
     """
     Create an overlay frame showing tile boundaries and classification scores.
 
     Args:
         frame (np.ndarray): Original video frame (H, W, 3)
-        classifications (list[list[float]]): 2D grid of classification scores
+        classifications (np.ndarray): 2D grid of classification scores
         tile_size (int): Size of tiles used for classification
         threshold (float): Threshold value for visualization
 
@@ -867,7 +869,9 @@ def save_visualization_frames(video_path: str, results: list, tile_size: int,
 
         # Get classification results for this frame
         frame_result = results[frame_idx]
-        classifications = frame_result['tile_classifications']
+        classifications = frame_result['classification_hex']
+        classification_size = frame_result['classification_size']
+        classifications = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size).astype(np.float32) / 255.0
 
         # Create brightness visualization frame
         brightness_frame = create_visualization_frame(frame, classifications, tile_size, threshold)
@@ -898,9 +902,10 @@ def create_summary_visualization(results: list, tile_size: int, threshold: float
     # Collect all scores
     all_scores = []
     for result in results:
-        classifications = result['tile_classifications']
-        for row in classifications:
-            all_scores.extend(row)
+        classifications = result['classification_hex']
+        classification_size = result['classification_size']
+        classifications = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size).astype(np.float32) / 255.0
+        all_scores.extend(classifications.flatten())
 
     all_scores = np.array(all_scores)
 
@@ -927,11 +932,10 @@ def create_summary_visualization(results: list, tile_size: int, threshold: float
     # Frame-by-frame average scores
     frame_avg_scores = []
     for result in results:
-        classifications = result['tile_classifications']
-        frame_scores = []
-        for row in classifications:
-            frame_scores.extend(row)
-        frame_avg_scores.append(np.mean(frame_scores))
+        classifications = result['classification_hex']
+        classification_size = result['classification_size']
+        classifications = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size).astype(np.float32) / 255.0
+        frame_avg_scores.append(np.mean(classifications.flatten()))
 
     ax3.plot(frame_avg_scores, color='blue', linewidth=2)
     ax3.axhline(y=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
@@ -1043,19 +1047,27 @@ def main(args):
 
         print(f"\nProcessing video file: {video_file}")
 
+        classifier_tilesizes: list[tuple[str, int]] = []
+        for file in os.listdir(os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy')):
+            classifier_name = file.split('_')[0]
+            tile_size = int(file.split('_')[1])
+            classifier_tilesizes.append((classifier_name, tile_size))
+        classifier_tilesizes = sorted(classifier_tilesizes)
+        print(f"Found {len(classifier_tilesizes)} classifier tile sizes: {classifier_tilesizes}")
+
         # Process each tile size for this video
-        for tile_size in tile_sizes_to_process:
+        for classifier_name, tile_size in classifier_tilesizes:
             print(f"Processing tile size: {tile_size}")
 
             # Load classification results (model predictions for statistics mode)
-            results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, 'proxy', use_model_scores)
+            results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, classifier_name, use_model_scores)
 
             if args.statistics:
                 # Load groundtruth detections for comparison
                 groundtruth_detections = load_detection_results(CACHE_DIR, args.dataset, video_file, tracking=True)
 
                 # Create output directory for statistics visualizations
-                stats_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'proxy_{tile_size}', 'statistics')
+                stats_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
 
                 # Create statistics visualizations
                 create_statistics_visualizations(
@@ -1066,7 +1078,7 @@ def main(args):
                 print(f"Completed statistics analysis for tile size {tile_size}")
             else:
                 # Create output directory for visualizations
-                vis_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'proxy_{tile_size}')
+                vis_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'{classifier_name}_{tile_size}')
 
                 # Create visualizations
                 save_visualization_frames(video_file_path, results, tile_size, args.threshold, vis_output_dir)
