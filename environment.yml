@@ -4,8 +4,7 @@ channels:
   - nvidia
 dependencies:
   - python=3.13
-  - opencv
-  - poetry=2.1.1
+  # - poetry=2.1.1
 
   # b3d dependencies
   - scikit-image
@@ -26,4 +25,3 @@ dependencies:
     - --index-url https://download.pytorch.org/whl/cu124
     - torch
     - torchvision
-    # - lap

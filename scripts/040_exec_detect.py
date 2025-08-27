@@ -50,7 +50,7 @@ def detect_retina_packed_images(video_file_path: str, tile_size: int, classifier
         tile_size (int): Tile size used for packing
         classifier (str): Classifier name used for packing
     """
-    detector = polyis.models.retinanet_b3d.get_detector(device='cuda:0')
+    detector = polyis.models.retinanet_b3d.get_detector(device='cuda')
 
     print(f"Processing video {video_file_path}")
 

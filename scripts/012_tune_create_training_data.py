@@ -125,7 +125,7 @@ def main(args):
                         split_start_time = time.time_ns() / 1e6
                         training_data_path = os.path.join(video_dir, 'training', 'data', f'tilesize_{tile_size}')
 
-                        padded_frame = torch.from_numpy(frame).to('cuda:0')
+                        padded_frame = torch.from_numpy(frame).to('cuda')
                         assert polyis.images.isHWC(padded_frame), padded_frame.shape
 
                         patched = polyis.images.splitHWC(padded_frame, tile_size, tile_size)

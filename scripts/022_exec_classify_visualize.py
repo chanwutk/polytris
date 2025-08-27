@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import shutil
 import cv2
 import numpy as np
 from tqdm import tqdm
@@ -74,7 +75,7 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
     total_height = grid_height * tile_size
     total_width = grid_width * tile_size
     # detection_bitmap = np.zeros((total_height, total_width), dtype=np.uint32)
-    detection_bitmap = np.zeros((grid_height, grid_width), dtype=np.uint32)
+    detection_bitmap = np.zeros((grid_height, grid_width), dtype=np.uint8)
 
     # Mark all detections on the bitmap
     for detection in detections:
@@ -85,16 +86,15 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
         _track_id, det_x1, det_y1, det_x2, det_y2 = detection
 
         # Convert to integer coordinates and ensure they're within bitmap bounds
-        det_x1 = max(0, int(det_x1)) // tile_size
-        det_y1 = max(0, int(det_y1)) // tile_size
-        det_x2 = min(total_width, int(det_x2) + 1) // tile_size
-        det_y2 = min(total_height, int(det_y2) + 1) // tile_size
+        det_x1 = int(max(0, det_x1) // tile_size)
+        det_y1 = int(max(0, det_y1) // tile_size)
+        det_x2 = int(min(total_width - 1, det_x2) // tile_size)
+        det_y2 = int(min(total_height - 1, det_y2) // tile_size)
 
         assert det_x2 >= det_x1 and det_y2 >= det_y1, f"Invalid detection: {detection}"
-        detection_bitmap[det_y1:det_y2, det_x1:det_x2] = 1
+        detection_bitmap[det_y1:det_y2+1, det_x1:det_x2+1] = 1
 
     error_map = np.zeros((grid_height, grid_width), dtype=int)
-    # overlap_ratios = []
     actual_positives = []
     classification_scores = []
 
@@ -103,21 +103,7 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
         for j in range(grid_width):
             score = classifications[i][j]
 
-            # Calculate tile boundaries in the bitmap
-            # tile_start_y = i * tile_size
-            # tile_end_y = tile_start_y + tile_size
-            # tile_start_x = j * tile_size
-            # tile_end_x = tile_start_x + tile_size
-
-            # Extract tile region from detection bitmap
-            # tile_region = detection_bitmap[tile_start_y:tile_end_y, tile_start_x:tile_end_x]
-            # tile_region = detection_bitmap[i, j]
-
-            # Calculate overlap ratio: count of 1s divided by total pixels
-            # overlap = float(np.sum(tile_region)) / (tile_size * tile_size)
-
             # Store data for scatter plot
-            # overlap_ratios.append(overlap)
             classification_scores.append(score)
 
             # Determine prediction
@@ -200,11 +186,12 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     print(f"Creating statistics visualizations for {video_file}")
 
     # Create output directory
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
 
     # Collect frame-by-frame metrics
     frame_metrics = []
-    # all_overlap_ratios = []
     all_actual_positives = []
     all_classification_scores = []
     all_error_counts = []
@@ -232,7 +219,6 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     # Collect results from parallel processing
     for frame_eval in frame_evals:
         frame_metrics.append(frame_eval)
-        # all_overlap_ratios.extend(frame_eval['overlap_ratios'])
         all_actual_positives.extend(frame_eval['actual_positives'])
         all_classification_scores.extend(frame_eval['classification_scores'])
         all_error_counts.append(frame_eval['error_map'])
@@ -354,7 +340,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     ax1.set_title(f'Error Rate and F1-Score Over Time (Tile Size: {tile_size})')
     ax1.grid(True, alpha=0.3)
 
-    # Object count on secondary y-axis
+    # Object count on secondary y-axis (only for the first subplot)
     line3 = ax1_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
     ax1_twin.set_ylabel('Object Count', color='purple')
     ax1_twin.tick_params(axis='y', labelcolor='purple')
@@ -364,8 +350,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     labels = [str(l.get_label()) for l in lines]
     ax1.legend(lines, labels, loc='upper right')
 
-    # Second subplot: Precision and Recall over time
-    ax2_twin = ax2.twinx()
+    # Second subplot: Precision and Recall over time (no object count)
     line4 = ax2.plot(frame_indices, precision_rates, 'g-', linewidth=2, label='Precision')
     line5 = ax2.plot(frame_indices, recall_rates, 'b-', linewidth=2, label='Recall')
     ax2.axhline(y=float(overall_precision), color='green', linestyle='--', alpha=0.7, label=f'Overall Precision: {overall_precision:.3f}')
@@ -374,19 +359,9 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     ax2.set_ylabel('Score')
     ax2.set_title(f'Precision and Recall Over Time (Tile Size: {tile_size})')
     ax2.grid(True, alpha=0.3)
+    ax2.legend(loc='upper right')
 
-    # Object count on secondary y-axis
-    line6 = ax2_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
-    ax2_twin.set_ylabel('Object Count', color='purple')
-    ax2_twin.tick_params(axis='y', labelcolor='purple')
-
-    # Combine legends
-    lines = line4 + line5 + line6
-    labels = [str(l.get_label()) for l in lines]
-    ax2.legend(lines, labels, loc='upper right')
-
-    # Third subplot: True Positive and True Negative over time
-    ax3_twin = ax3.twinx()
+    # Third subplot: True Positive and True Negative over time (no object count)
     line7 = ax3.plot(frame_indices, tp_counts, 'g-', linewidth=2, label='True Positives')
     line8 = ax3.plot(frame_indices, tn_counts, 'b-', linewidth=2, label='True Negatives')
     ax3.set_yticklabels([f'{int(v)}\n({v * 100 / num_tiles_per_frame:.1f}%)' for v in ax3.get_yticks()])
@@ -394,19 +369,9 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     ax3.set_ylabel('Count (% of Tiles)')
     ax3.set_title(f'True Positives and Negatives Over Time (Tile Size: {tile_size})')
     ax3.grid(True, alpha=0.3)
+    ax3.legend(loc='upper right')
 
-    # Object count on secondary y-axis
-    line9 = ax3_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
-    ax3_twin.set_ylabel('Object Count', color='purple')
-    ax3_twin.tick_params(axis='y', labelcolor='purple')
-
-    # Combine legends
-    lines = line7 + line8 + line9
-    labels = [str(l.get_label()) for l in lines]
-    ax3.legend(lines, labels, loc='upper right')
-
-    # Fourth subplot: False Positive and False Negative over time
-    ax4_twin = ax4.twinx()
+    # Fourth subplot: False Positive and False Negative over time (no object count)
     line10 = ax4.plot(frame_indices, fp_counts, 'r-', linewidth=2, label='False Positives')
     line11 = ax4.plot(frame_indices, fn_counts, 'orange', linewidth=2, label='False Negatives')
     ax4.set_yticklabels([f'{int(v)}\n({v * 100 / num_tiles_per_frame:.1f}%)' for v in ax4.get_yticks()])
@@ -414,16 +379,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     ax4.set_ylabel('Count (% of Tiles)')
     ax4.set_title(f'False Positives and Negatives Over Time (Tile Size: {tile_size})')
     ax4.grid(True, alpha=0.3)
-
-    # Object count on secondary y-axis
-    line12 = ax4_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
-    ax4_twin.set_ylabel('Object Count', color='purple')
-    ax4_twin.tick_params(axis='y', labelcolor='purple')
-
-    # Combine legends
-    lines = line10 + line11 + line12
-    labels = [str(l.get_label()) for l in lines]
-    ax4.legend(lines, labels, loc='upper right')
+    ax4.legend(loc='upper right')
 
     plt.tight_layout()
     time_series_path = os.path.join(output_dir, f'020_time_series_tile{tile_size}.png')
@@ -494,83 +450,34 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     sync_colors = '#FFD700'     # Yellow
     sync_colors_edge = '#B8860B'  # Darker yellow for edge color
     
-    # Correct vs Incorrect predictions
-    if correct_scores:
-        # Plot on original axis with original color
-        axes[0].hist(correct_scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
-        axes[0].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        axes[0].set_xlabel('Classification Score')
-        axes[0].set_ylabel('Count', color=original_colors)
-        axes[0].tick_params(axis='y', labelcolor=original_colors)
-        axes[0].set_title(f'Correct Predictions (Tile Size: {tile_size})\nTotal: {len(correct_scores):,}')
-        axes[0].legend()
-        axes[0].grid(True, alpha=0.3)
-        
-        # Plot on twin axis with synchronized color
-        twin_axes[0].hist(correct_scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
-        twin_axes[0].set_ylabel('Count (Synchronized)', color=sync_colors)
-        twin_axes[0].tick_params(axis='y', labelcolor=sync_colors)
-    else:
-        axes[0].text(0.5, 0.5, 'No correct predictions', ha='center', va='center', transform=axes[0].transAxes)
-        axes[0].set_title(f'Correct Predictions (Tile Size: {tile_size})')
-
-    if incorrect_scores:
-        # Plot on original axis with original color
-        axes[1].hist(incorrect_scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
-        axes[1].axvline(x=threshold, color='blue', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        axes[1].set_xlabel('Classification Score')
-        axes[1].set_ylabel('Count', color=original_colors)
-        axes[1].tick_params(axis='y', labelcolor=original_colors)
-        axes[1].set_title(f'Incorrect Predictions (Tile Size: {tile_size})\nTotal: {len(incorrect_scores):,}')
-        axes[1].legend()
-        axes[1].grid(True, alpha=0.3)
-        
-        # Plot on twin axis with synchronized color
-        twin_axes[1].hist(incorrect_scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
-        twin_axes[1].set_ylabel('Count (Synchronized)', color=sync_colors)
-        twin_axes[1].tick_params(axis='y', labelcolor=sync_colors)
-    else:
-        axes[1].text(0.5, 0.5, 'No incorrect predictions', ha='center', va='center', transform=axes[1].transAxes)
-        axes[1].set_title(f'Incorrect Predictions (Tile Size: {tile_size})')
-
-    # Actual positive vs negative scores
-    if actual_positive_scores:
-        # Plot on original axis with original color
-        axes[2].hist(actual_positive_scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
-        axes[2].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        axes[2].set_xlabel('Classification Score')
-        axes[2].set_ylabel('Count', color=original_colors)
-        axes[2].tick_params(axis='y', labelcolor=original_colors)
-        axes[2].set_title(f'Actual Positive Scores (Tile Size: {tile_size})\nTotal: {len(actual_positive_scores):,}')
-        axes[2].legend()
-        axes[2].grid(True, alpha=0.3)
-        
-        # Plot on twin axis with synchronized color
-        twin_axes[2].hist(actual_positive_scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
-        twin_axes[2].set_ylabel('Count (Synchronized)', color=sync_colors)
-        twin_axes[2].tick_params(axis='y', labelcolor=sync_colors)
-    else:
-        axes[2].text(0.5, 0.5, 'No actual positive scores', ha='center', va='center', transform=axes[2].transAxes)
-        axes[2].set_title(f'Actual Positive Scores (Tile Size: {tile_size})')
-
-    if actual_negative_scores:
-        # Plot on original axis with original color
-        axes[3].hist(actual_negative_scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
-        axes[3].axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-        axes[3].set_xlabel('Classification Score')
-        axes[3].set_ylabel('Count', color=original_colors)
-        axes[3].tick_params(axis='y', labelcolor=original_colors)
-        axes[3].set_title(f'Actual Negative Scores (Tile Size: {tile_size})\nTotal: {len(actual_negative_scores):,}')
-        axes[3].legend()
-        axes[3].grid(True, alpha=0.3)
-        
-        # Plot on twin axis with synchronized color
-        twin_axes[3].hist(actual_negative_scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
-        twin_axes[3].set_ylabel('Count (Synchronized)', color=sync_colors)
-        twin_axes[3].tick_params(axis='y', labelcolor=sync_colors)
-    else:
-        axes[3].text(0.5, 0.5, 'No actual negative scores', ha='center', va='center', transform=axes[3].transAxes)
-        axes[3].set_title(f'Actual Negative Scores (Tile Size: {tile_size})')
+    # Define plot configurations as tuples: (scores, title)
+    plot_configs = [
+        (correct_scores, 'Correct Predictions'),
+        (incorrect_scores, 'Incorrect Predictions'),
+        (actual_positive_scores, 'Actual Positive Scores'),
+        (actual_negative_scores, 'Actual Negative Scores')
+    ]
+    
+    # Create plots for each configuration
+    for ax, twin_ax, (scores, title) in zip(axes, twin_axes, plot_configs):
+        if len(scores) > 0:
+            # Plot on original axis with original color
+            ax.hist(scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
+            ax.axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
+            ax.set_xlabel('Classification Score')
+            ax.set_ylabel('Count', color=original_colors)
+            ax.tick_params(axis='y', labelcolor=original_colors)
+            ax.set_title(f'{title} (Tile Size: {tile_size})\nTotal: {len(scores):,}')
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            
+            # Plot on twin axis with synchronized color
+            twin_ax.hist(scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
+            twin_ax.set_ylabel('Count (Synchronized)', color=sync_colors)
+            twin_ax.tick_params(axis='y', labelcolor=sync_colors)
+        else:
+            ax.text(0.5, 0.5, f'No {title.lower()}', ha='center', va='center', transform=ax.transAxes)
+            ax.set_title(f'{title} (Tile Size: {tile_size})')
 
     # Sync y-axes across all subplots for synchronized axes (right y-axis)
     y_min_sync = float('inf')
@@ -588,84 +495,6 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     plt.tight_layout()
     histogram_path = os.path.join(output_dir, f'040_histogram_scores_tile{tile_size}.png')
     plt.savefig(histogram_path, dpi=300, bbox_inches='tight')
-    plt.close()
-
-    # 5. Detailed metrics plot
-    fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(25, 12))
-
-    # Precision, Recall, F1 over time
-    ax1_twin = ax1.twinx()
-    line1 = ax1.plot(frame_indices, precision_rates, 'g-', linewidth=2, label='Precision')
-    line2 = ax1.plot(frame_indices, recall_rates, 'b-', linewidth=2, label='Recall')
-    line3 = ax1.plot(frame_indices, [m['f1_score'] for m in frame_metrics], 'orange', linewidth=2, label='F1-Score')
-    ax1.axhline(y=float(overall_precision), color='green', linestyle='--', alpha=0.7)
-    ax1.axhline(y=float(overall_recall), color='blue', linestyle='--', alpha=0.7)
-    ax1.axhline(y=float(overall_f1), color='orange', linestyle='--', alpha=0.7)
-    ax1.set_xlabel('Frame Index')
-    ax1.set_ylabel('Score')
-    ax1.set_title(f'Precision, Recall, F1 Over Time (Tile Size: {tile_size})')
-    ax1.grid(True, alpha=0.3)
-
-    # Object count on secondary y-axis
-    line4 = ax1_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
-    ax1_twin.set_ylabel('Object Count', color='purple')
-    ax1_twin.tick_params(axis='y', labelcolor='purple')
-
-    # Combine legends
-    lines = line1 + line2 + line3 + line4
-    labels = [str(l.get_label()) for l in lines]
-    ax1.legend(lines, labels, loc='upper right')
-
-    # Get number of tiles per frame
-    num_tiles_per_frame = frame_metrics[0]['total_tiles']
-
-    # True Positive, True Negative over time
-    tp_counts = [m['tp'] for m in frame_metrics]
-    tn_counts = [m['tn'] for m in frame_metrics]
-    ax2_twin = ax2.twinx()
-    line5 = ax2.plot(frame_indices, tp_counts, 'g-', linewidth=2, label='True Positives')
-    line6 = ax2.plot(frame_indices, tn_counts, 'b-', linewidth=2, label='True Negatives')
-    ax2.set_yticklabels([f'{int(v)}\n({v * 100 / num_tiles_per_frame:.1f}%)' for v in ax2.get_yticks()])
-    ax2.set_xlabel('Frame Index')
-    ax2.set_ylabel('Count (% of Tiles)')
-    ax2.set_title(f'True Positives and Negatives Over Time (Tile Size: {tile_size})')
-    ax2.grid(True, alpha=0.3)
-
-    # Object count on secondary y-axis
-    line7 = ax2_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
-    ax2_twin.set_ylabel('Object Count', color='purple')
-    ax2_twin.tick_params(axis='y', labelcolor='purple')
-
-    # Combine legends
-    lines = line5 + line6 + line7
-    labels = [str(l.get_label()) for l in lines]
-    ax2.legend(lines, labels, loc='upper right')
-
-    # False Positive, False Negative over time
-    fp_counts = [m['fp'] for m in frame_metrics]
-    fn_counts = [m['fn'] for m in frame_metrics]
-    ax3_twin = ax3.twinx()
-    line8 = ax3.plot(frame_indices, fp_counts, 'r-', linewidth=2, label='False Positives')
-    line9 = ax3.plot(frame_indices, fn_counts, 'orange', linewidth=2, label='False Negatives')
-    ax3.set_yticklabels([f'{int(v)}\n({v * 100 / num_tiles_per_frame:.1f}%)' for v in ax3.get_yticks()])
-    ax3.set_xlabel('Frame Index')
-    ax3.set_ylabel('Count (% of Tiles)')
-    ax3.set_title(f'False Positives and Negatives Over Time (Tile Size: {tile_size})')
-    ax3.grid(True, alpha=0.3)
-
-    # Object count on secondary y-axis
-    line10 = ax3_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
-    ax3_twin.set_ylabel('Object Count', color='purple')
-    ax3_twin.tick_params(axis='y', labelcolor='purple')
-
-    # Combine legends
-    lines = line8 + line9 + line10
-    labels = [str(l.get_label()) for l in lines]
-    ax3.legend(lines, labels, loc='upper right')
-
-    plt.tight_layout()
-    detailed_metrics_path = os.path.join(output_dir, f'050_detailed_metrics_tile{tile_size}.png')
-    plt.savefig(detailed_metrics_path, dpi=300, bbox_inches='tight')
     plt.close()
 
     print(f"Saved statistics visualizations to: {output_dir}")

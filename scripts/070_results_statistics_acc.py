@@ -41,57 +41,46 @@ def parse_args():
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
-            - tile_size (str): Tile size to use for evaluation (choices: '64', '128', 'all')
             - metrics (str): Comma-separated list of metrics to evaluate (default: 'HOTA,CLEAR,Identity')
             - parallel (bool): Whether to use parallel processing (default: True)
-            - num_cores (int): Number of parallel cores to use (default: 8)
     """
     parser = argparse.ArgumentParser(description='Evaluate tracking accuracy using TrackEval and create visualizations')
     parser.add_argument('--dataset', required=False, default='b3d',
                         help='Dataset name to process')
-    parser.add_argument('--tile_size', type=str, choices=['64', '128', 'all'], default='all',
-                        help='Tile size to use for evaluation (or "all" for all tile sizes)')
     parser.add_argument('--metrics', type=str, default='HOTA,CLEAR,Identity',
                         help='Comma-separated list of metrics to evaluate')
     parser.add_argument('--parallel', action='store_true', default=False,
                         help='Whether to use parallel processing')
-    parser.add_argument('--num_cores', type=int, default=8,
-                        help='Number of parallel cores to use')
     return parser.parse_args()
 
 
-def find_tracking_results(cache_dir: str, dataset: str, tile_size: str) -> List[Tuple[str, int]]:
+def find_tracking_results(cache_dir: str, dataset: str) -> List[Tuple[str, str, int]]:
     """
     Find all video files with tracking results for the specified dataset and tile size.
     
     Args:
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
-        tile_size (str): Tile size to look for ('64', '128', or 'all')
         
     Returns:
-        List[Tuple[str, int]]: List of (video_name, tile_size) tuples
+        List[Tuple[str, str, int]]: List of (video_name, classifier, tile_size) tuples
     """
     dataset_cache_dir = os.path.join(cache_dir, dataset)
     assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
     
-    # Determine which tile sizes to process
-    if tile_size == 'all':
-        tile_sizes_to_process = TILE_SIZES
-    else:
-        tile_sizes_to_process = [int(tile_size)]
-    
-    video_tile_combinations = []
+    video_tile_combinations: list[tuple[str, str, int]] = []
     for video_filename in os.listdir(dataset_cache_dir):
         video_dir = os.path.join(dataset_cache_dir, video_filename)
         assert os.path.isdir(video_dir), f"Video directory {video_dir} does not exist"
-        
-        for ts in tile_sizes_to_process:
-            tracking_path = os.path.join(video_dir, 'uncompressed_tracking', f'proxy_{ts}', 'tracking.jsonl')
+
+        for classifier_tilesize in os.listdir(video_dir):
+            classifier, tilesize = classifier_tilesize.split('_')
+            ts = int(tilesize)
+            tracking_path = os.path.join(video_dir, 'uncompressed_tracking', f'{classifier}_{ts}', 'tracking.jsonl')
             groundtruth_path = os.path.join(video_dir, 'groundtruth', 'tracking.jsonl')
             
             if os.path.exists(tracking_path) and os.path.exists(groundtruth_path):
-                video_tile_combinations.append((video_filename, ts))
+                video_tile_combinations.append((video_filename, classifier, ts))
                 print(f"Found tracking results: {video_filename} with tile size {ts}")
     
     return video_tile_combinations
@@ -166,7 +155,7 @@ def convert_to_trackeval_format(frame_data: Dict[int, List[List[float]]], is_gt:
     return temp_file.name
 
 
-def evaluate_tracking_accuracy(video_name: str, tile_size: int, tracking_path: str, 
+def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int, tracking_path: str, 
                               groundtruth_path: str, metrics_list: List[str], 
                               output_dir: str) -> Dict[str, Any]:
     """
@@ -174,6 +163,7 @@ def evaluate_tracking_accuracy(video_name: str, tile_size: int, tracking_path: s
     
     Args:
         video_name (str): Name of the video
+        classifier (str): Classifier used
         tile_size (int): Tile size used
         tracking_path (str): Path to tracking results
         groundtruth_path (str): Path to groundtruth data
@@ -196,11 +186,11 @@ def evaluate_tracking_accuracy(video_name: str, tile_size: int, tracking_path: s
     # Create dataset configuration
     dataset_config = {
         'output_fol': output_dir,
-        'output_sub_fol': f'{video_name}_tile{tile_size}',
+        'output_sub_fol': f'{video_name}_{classifier}_{tile_size}',
         'input_gt': temp_groundtruth_file,
         'input_track': temp_tracking_file,
         'skip': 1,  # Process every frame
-        'tracker': f'tile{tile_size}'
+        'tracker': f'{classifier}_{tile_size}'
     }
     
     # Create evaluator configuration
@@ -366,7 +356,6 @@ def main(args):
         - Multiple metrics are evaluated: HOTA, CLEAR (MOTA), and Identity (IDF1)
     """
     print(f"Starting tracking accuracy evaluation for dataset: {args.dataset}")
-    print(f"Tile size(s): {args.tile_size}")
     print(f"Metrics: {args.metrics}")
     
     # Parse metrics
@@ -374,7 +363,7 @@ def main(args):
     print(f"Evaluating metrics: {metrics_list}")
     
     # Find tracking results
-    video_tile_combinations = find_tracking_results(CACHE_DIR, args.dataset, args.tile_size)
+    video_tile_combinations = find_tracking_results(CACHE_DIR, args.dataset)
     
     if not video_tile_combinations:
         print("No tracking results found. Please ensure 060_exec_track.py has been run first.")
@@ -384,15 +373,15 @@ def main(args):
     
     # Prepare arguments for parallel processing if requested
     eval_args = []
-    for video_name, tile_size in sorted(video_tile_combinations):
+    for video_name, classifier, tile_size in sorted(video_tile_combinations):
         tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 'uncompressed_tracking',
-                                     f'proxy_{tile_size}', 'tracking.jsonl')
+                                     f'{classifier}_{tile_size}', 'tracking.jsonl')
         groundtruth_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
                                         'groundtruth', 'tracking.jsonl')
         
-        output_dir = os.path.join(CACHE_DIR, args.dataset, video_name, 'results',
-                                  f'proxy_{tile_size}', 'accuracy')
-        eval_args.append((video_name, tile_size, tracking_path, groundtruth_path, 
+        output_dir = os.path.join(CACHE_DIR, args.dataset, video_name, 'evaluation',
+                                  f'{classifier}_{tile_size}', 'accuracy')
+        eval_args.append((video_name, classifier, tile_size, tracking_path, groundtruth_path, 
                          metrics_list, output_dir))
     
     if args.parallel:
@@ -423,7 +412,7 @@ def main(args):
             print(f"  {result['video_name']} (tile size {result['tile_size']}): {result['error']}")
     
     if successful_results:
-        output_dir = os.path.join(CACHE_DIR, args.dataset, 'results', 'accuracy')
+        output_dir = os.path.join(CACHE_DIR, 'evaluation', args.dataset, 'accuracy')
 
         # Create summary
         create_simple_summary(successful_results, output_dir)

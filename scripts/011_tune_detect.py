@@ -49,7 +49,7 @@ def detect_retina(cache_dir: str, dataset_dir: str):
         - segment_idx: Index of the current segment
         - timing: Dictionary with read and detection timing information
     """
-    detector = polyis.models.retinanet_b3d.get_detector(device='cuda:0')
+    detector = polyis.models.retinanet_b3d.get_detector(device='cuda')
 
     for video in sorted(os.listdir(dataset_dir)):
         video_path = os.path.join(cache_dir, video)

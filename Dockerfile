@@ -41,3 +41,5 @@ RUN conda init bash
 COPY ./environment.yml /polyis/environment.yml
 RUN conda env update --file /polyis/environment.yml --prune --name base && \
     conda clean --all --yes
+
+RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/g' ~/.bashrc
