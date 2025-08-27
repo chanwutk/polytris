@@ -9,7 +9,7 @@ import time
 from tqdm import tqdm
 import multiprocessing as mp
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, load_tracking_results
+from scripts.utilities import CACHE_DIR, DATA_DIR, load_tracking_results, mark_detections
 
 
 TILE_SIZES = [32, 64, 128]
@@ -31,38 +31,6 @@ def parse_args():
     parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     return parser.parse_args()
-
-
-def mark_detections(detections: list[list[float]], width: int, height: int, chunk_size: int) -> np.ndarray:
-    """
-    Mark tiles as relevant based on groundtruth detections.
-    
-    This function creates a bitmap where 1 indicates a tile with detection and 0 indicates no detection.
-    Based on the mark_detections2 function from chunker.py.
-    
-    Args:
-        detections (list[list[float]]): List of bounding boxes, each formatted as [tracking_id, x1, y1, x2, y2]
-        width (int): Frame width
-        height (int): Frame height
-        chunk_size (int): Size of each tile
-        
-    Returns:
-        np.ndarray: 2D array representing the grid of tiles, where 1 indicates relevant tiles
-    """
-    bitmap = np.zeros((height // chunk_size, width // chunk_size), dtype=np.uint8)
-    
-    for bbox in detections:
-        # Extract bounding box coordinates (ignore tracking_id)
-        x1, y1, x2, y2 = bbox[1:5]  # Skip tracking_id at index 0
-        
-        # Convert to tile coordinates
-        xfrom, xto = int(x1 // chunk_size), int(x2 // chunk_size)
-        yfrom, yto = int(y1 // chunk_size), int(y2 // chunk_size)
-        
-        # Mark all tiles that overlap with the bounding box
-        bitmap[yfrom:yto, xfrom:xto] = 1
-    
-    return bitmap
 
 
 def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_size: int) -> tuple[np.ndarray, float]:
@@ -94,7 +62,7 @@ def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_s
     height, width = frame.shape[:2]
     
     # Create bitmap marking relevant tiles
-    relevance_grid = mark_detections(detections, width, height, tile_size)
+    relevance_grid = mark_detections(detections, width, height, tile_size) * 255
     
     end_time = (time.time_ns() / 1e6)
     runtime = end_time - start_time

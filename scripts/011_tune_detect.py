@@ -66,7 +66,7 @@ def detect_retina(cache_dir: str, dataset_dir: str):
             dataset_video_path = os.path.join(dataset_dir, video)
             cap = cv2.VideoCapture(dataset_video_path)
 
-            for line in tqdm.tqdm(lines):
+            for line in tqdm.tqdm(lines, position=0, leave=True):
                 snippet = json.loads(line)
                 idx = snippet['idx']
                 start = snippet['start']
@@ -76,6 +76,7 @@ def detect_retina(cache_dir: str, dataset_dir: str):
                 # set cap to the start frame
                 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
 
+                pbar = tqdm.tqdm(total=end - start, desc=f"Processing video {video_path}", position=1, leave=True)
                 while cap.isOpened() and frame_idx < end:
                     start_time = time.time_ns() / 1e6
                     ret, frame = cap.read()
@@ -93,6 +94,8 @@ def detect_retina(cache_dir: str, dataset_dir: str):
                     fd.write(json.dumps([frame_idx, outputs[:, :4].tolist(), idx, format_time(read=read_time, detect=detect_time)]) + '\n')
 
                     frame_idx += 1
+                    pbar.update(1)
+                pbar.close()
             cap.release()
 
 

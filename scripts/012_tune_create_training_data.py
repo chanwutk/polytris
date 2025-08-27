@@ -12,7 +12,7 @@ import tqdm
 
 import polyis.images
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, overlap
+from scripts.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap
 
 TILE_SIZES = [32, 64, 128]
 
@@ -106,14 +106,14 @@ def main(args):
             segments_lines = [*segments_f.readlines()]
             # detections_lines = [*detections_f.readlines()]
 
-            for segment in tqdm.tqdm(segments_lines):
+            for segment in tqdm.tqdm(segments_lines, position=0, leave=True):
                 segment_json = json.loads(segment)
                 segment_idx = segment_json['idx']
                 start = segment_json['start']
                 end = segment_json['end']
 
                 cap.set(cv2.CAP_PROP_POS_FRAMES, start)
-                for frame_idx in range(start, end):
+                for frame_idx in tqdm.tqdm(range(start, end), position=1, leave=True):
                     ret, frame = cap.read()
                     assert ret, f"Failed to read frame {frame_idx}"
 
@@ -131,6 +131,7 @@ def main(args):
                         patched = polyis.images.splitHWC(padded_frame, tile_size, tile_size)
                         patched = patched.cpu()
                         assert polyis.images.isGHWC(patched), patched.shape
+                        patched = patched.contiguous().numpy()
                         split_time = (time.time_ns() / 1e6) - split_start_time
                         frs[tile_size].write(json.dumps({
                             'op': 'split',
@@ -142,21 +143,16 @@ def main(args):
                         }) + '\n')
 
                         save_start_time = time.time_ns() / 1e6
+                        relevancy_bitmap = mark_detections(dets, frame.shape[1], frame.shape[0], tile_size)
                         for y in range(patched.shape[0]):
                             for x in range(patched.shape[1]):
-                                # check if the patch contains any detections
-                                fromx, fromy = x * tile_size, y * tile_size
-                                tox, toy = fromx + tile_size - 1, fromy + tile_size - 1
-
                                 filename = f'{frame_idx}.{y}.{x}.jpg'
-                                patch = patched[y, x].contiguous().numpy()
+                                patch = patched[y, x]
 
-                                if any(overlap(det, (fromx, fromy, tox, toy)) for det in dets):
+                                if relevancy_bitmap[y, x]:
                                     cv2.imwrite(os.path.join(training_data_path, 'pos', filename), patch)
                                 else:
-                                    # For visualizing the negative patches
-                                    # frame[fromy:toy, fromx:tox] //= 2
-                                    if patched[y, x].any():  # do not save if the patch is completely black
+                                    if patched[y, x].any():
                                         cv2.imwrite(os.path.join(training_data_path, 'neg', filename), patch)
                         save_time = (time.time_ns() / 1e6) - save_start_time
                         frs[tile_size].write(json.dumps({

@@ -124,32 +124,13 @@ def main(args):
             shutil.rmtree(os.path.join(CACHE_DIR, output_dir, 'tracking'))
         os.makedirs(os.path.join(CACHE_DIR, output_dir, 'tracking'))
 
-        # find largest digit of ends
-        max_digit = len(str(max([*ends_d, *ends_t])))
-
         with (open(os.path.join(CACHE_DIR, output_dir, 'detection', 'segments.jsonl'), 'w') as fd,
               open(os.path.join(CACHE_DIR, output_dir, 'tracking', 'segments.jsonl'), 'w') as ft):
             for i, (start, end) in tqdm.tqdm(enumerate(zip(starts_d, ends_d)), total=num_snippets):
-                # # pad start and end with zeros
-                # str_start = str(start).zfill(max_digit)
-                # str_end = str(end).zfill(max_digit)
-                # save_snippet(input_video, os.path.join(CACHE_DIR, output_dir, 'detection', f"d_{i}_{str_start}_{str_end}.mp4"), start, end)
-                fd.write(json.dumps({
-                    'idx': i,
-                    'start': start,
-                    'end': end,
-                }) + '\n')
+                fd.write(json.dumps({ 'idx': i, 'start': start, 'end': end }) + '\n')
             
             for i, (start, end) in tqdm.tqdm(enumerate(zip(starts_t, ends_t)), total=num_snippets):
-                # # pad start and end with zeros
-                # str_start = str(start).zfill(max_digit)
-                # str_end = str(end).zfill(max_digit)
-                # save_snippet(input_video, os.path.join(CACHE_DIR, output_dir, 'tracking', f"t_{i}_{str_start}_{str_end}.mp4"), start, end)
-                ft.write(json.dumps({
-                    'idx': i,
-                    'start': start,
-                    'end': end,
-                }) + '\n')
+                ft.write(json.dumps({ 'idx': i, 'start': start, 'end': end }) + '\n')
 
 
 if __name__ == "__main__":

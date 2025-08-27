@@ -9,7 +9,7 @@ import tqdm
 import multiprocessing as mp
 
 from modules.b3d.b3d.external.sort import Sort
-from scripts.utilities import create_tracker, interpolate_trajectory
+from scripts.utilities import create_tracker, format_time, interpolate_trajectory
 
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [64]
@@ -127,25 +127,24 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
             bboxes = frame_result['bboxes']
             
             # Start timing for this frame
-            frame_start_time = time.time()
             step_times = {}
             
             # Profile: Convert detections to numpy array
-            step_start = time.time()
+            step_start = (time.time_ns() / 1e6)
             dets = np.array(bboxes)
             if dets.size > 0:
                 dets = dets[:, :5]  # Take first 5 columns: x1, y1, x2, y2, score
             else:
                 dets = np.empty((0, 5))
-            step_times['convert_detections'] = time.time() - step_start
+            step_times['convert_detections'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Update tracker
-            step_start = time.time()
+            step_start = (time.time_ns() / 1e6)
             trackers = tracker.update(dets)
-            step_times['tracker_update'] = time.time() - step_start
+            step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Process tracking results
-            step_start = time.time()
+            step_start = (time.time_ns() / 1e6)
             if trackers.size > 0:
                 for track in trackers:
                     # SORT returns: [x1, y1, x2, y2, track_id]
@@ -187,15 +186,12 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
             if frame_idx not in frame_tracks:
                 frame_tracks[frame_idx] = []
             
-            step_times['process_results'] = time.time() - step_start
-            
-            # Calculate total frame processing time
-            step_times['total_frame_time'] = time.time() - frame_start_time
+            step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
             
             # Save runtime data for this frame
             runtime_data = {
                 'frame_idx': frame_idx,
-                'step_times': step_times,
+                'runtime': format_time(**step_times),
                 'num_detections': len(bboxes),
                 'num_tracks': trackers.size if trackers.size > 0 else 0
             }

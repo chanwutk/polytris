@@ -173,6 +173,7 @@ def overlapi(interval1: tuple[int, int], interval2: tuple[int, int]):
         (interval2[0] <= interval1[1] <= interval2[1])
     )
 
+
 def overlap(b1, b2):
     """
     Check if two 2D bounding boxes overlap.
@@ -229,6 +230,7 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str, t
                 results.append(json.loads(line))
     
     print(f"Loaded {len(results)} frame classifications")
+    print(results[:2])
     return results
 
 
@@ -440,7 +442,7 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
             
             # Create visualization frame with trajectory history
             vis_frame = create_visualization_frame(frame, tracks, frame_idx, trajectory_history, speed_up)
-            
+
             # Write frame to video
             if vis_frame is not None:
                 writer.write(vis_frame)
@@ -457,3 +459,35 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         print(f"Process {process_id}: Resources released")
     
     print(f"Process {process_id}: Tracking visualization completed")
+
+
+def mark_detections(detections: list[list[float]], width: int, height: int, chunk_size: int) -> np.ndarray:
+    """
+    Mark tiles as relevant based on groundtruth detections.
+    
+    This function creates a bitmap where 1 indicates a tile with detection and 0 indicates no detection.
+    Based on the mark_detections2 function from chunker.py.
+    
+    Args:
+        detections (list[list[float]]): List of bounding boxes, each formatted as [tracking_id, x1, y1, x2, y2]
+        width (int): Frame width
+        height (int): Frame height
+        chunk_size (int): Size of each tile
+        
+    Returns:
+        np.ndarray: 2D array representing the grid of tiles, where 1 indicates relevant tiles
+    """
+    bitmap = np.zeros((height // chunk_size, width // chunk_size), dtype=np.uint8)
+    
+    for bbox in detections:
+        # Extract bounding box coordinates (ignore tracking_id)
+        x1, y1, x2, y2 = bbox[-4:]  # Skip tracking_id at index 0
+        
+        # Convert to tile coordinates
+        xfrom, xto = int(x1 // chunk_size), int(x2 // chunk_size)
+        yfrom, yto = int(y1 // chunk_size), int(y2 // chunk_size)
+        
+        # Mark all tiles that overlap with the bounding box
+        bitmap[yfrom:yto+1, xfrom:xto+1] = 1
+    
+    return bitmap

@@ -10,7 +10,7 @@ import shutil
 import time
 from queue import Queue
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, load_classification_results
+from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_classification_results
 
 
 # TILE_SIZES = [32, 64, 128]
@@ -386,7 +386,6 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
                 clean = False
             else:
                 # If packing fails, save current packed image and start new one
-                step_times['pack_failed'] = True
                 step_times['pack_append'] = (time.time_ns() / 1e6) - step_start
                 
                 # Profile: Save packed image
@@ -408,7 +407,6 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
                                                         frame_idx, frame, tile_size, step_times)
                     clean = False
                 else:
-                    step_times['pack_failed_retry'] = True
                     step_times['pack_append_retry'] = (time.time_ns() / 1e6) - step_start
 
                     # If retry packing fails, save the entire frame as a single polyomino
@@ -433,7 +431,7 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
             # Save profiling data for this frame
             profiling_data = {
                 'frame_idx': frame_idx,
-                'step_times': step_times,
+                'runtime': format_time(**step_times),
                 'num_polyominoes': len(polyominoes),
             }
             

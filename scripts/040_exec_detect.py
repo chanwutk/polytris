@@ -9,7 +9,7 @@ import cv2
 import tqdm
 
 import polyis.models.retinanet_b3d
-from scripts.utilities import CACHE_DIR, DATA_DIR
+from scripts.utilities import CACHE_DIR, DATA_DIR, format_time
 
 
 # TILE_SIZES = [32, 64, 128]
@@ -97,7 +97,7 @@ def detect_retina_packed_images(video_file_path: str, tile_size: int, classifier
 
             # Save detection results
             f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
-            fr.write(json.dumps(runtime) + '\n')
+            fr.write(json.dumps(format_time(**runtime)) + '\n')
 
 
 def main(args):

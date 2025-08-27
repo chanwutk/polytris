@@ -134,7 +134,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 early_stopping_counter += 1
 
             if (early_stopping_counter >= early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
-                print("/nTerminating: early stopping")
+                print("Terminating: early stopping")
                 break # terminate training
     
     return best_model_wts, epoch_test_losses, epoch_train_losses, losses, val_losses
@@ -200,7 +200,7 @@ def main(args):
 
     for video in sorted(os.listdir(dataset_dir)):
         video_path = os.path.join(dataset_dir, video)
-        if not os.path.isdir(video_path) or video.endswith('.mp4'):
+        if not os.path.isdir(video_path) and not video.endswith('.mp4'):
             continue
 
         print(f"Processing video {video_path}")
