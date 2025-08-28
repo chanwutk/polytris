@@ -39,7 +39,7 @@ PIPELINE_STAGES = {
         'data_format': 'runtime_in_frames'
     },
     'compress': {
-        'path_template': '{dataset}/{video_file}/packing/SimpleCNN_{tile_size}/runtime.jsonl',
+        'path_template': '{dataset}/{video_file}/packing/SimpleCNN_{tile_size}/runtimes.jsonl',
         'description': 'Video compression/packing (030_exec_compress.py)',
         'data_format': 'jsonl_operations'
     },
@@ -596,18 +596,18 @@ def create_pipeline_visualizations(results: list[dict[str, Any]], output_dir: st
     # Extract data for visualization
     video_names = []
     tile_sizes = []
-    fps_values = []
-    frame_times = []
-    total_times = []
-    total_frames = []
+    # fps_values = []
+    # frame_times = []
+    # total_times = []
+    # total_frames = []
     
     for result in successful_results:
         video_names.append(result['video_name'])
         tile_sizes.append(result['tile_size'])
-        fps_values.append(result['fps'])
-        frame_times.append(result['avg_frame_time'])
-        total_times.append(result['total_processing_time'])
-        total_frames.append(result['total_frames'])
+        # fps_values.append(result['fps'])
+        # frame_times.append(result['avg_frame_time'])
+        # total_times.append(result['total_processing_time'])
+        # total_frames.append(result['total_frames'])
     
     # Create DataFrame for pipeline results
     pipeline_data = []
