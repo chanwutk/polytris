@@ -8,11 +8,7 @@ import numpy as np
 import tqdm
 import multiprocessing as mp
 
-from modules.b3d.b3d.external.sort import Sort
-from scripts.utilities import create_tracker, format_time, interpolate_trajectory
-
-CACHE_DIR = '/polyis-cache'
-TILE_SIZES = [64]
+from scripts.utilities import create_tracker, format_time, interpolate_trajectory, CACHE_DIR
 
 
 def parse_args():
@@ -22,21 +18,17 @@ def parse_args():
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
-            - tile_size (str): Tile size to use for tracking (choices: '64', '128', 'all')
             - tracker (str): Tracking algorithm to use (default: 'sort')
             - max_age (int): Maximum age for SORT tracker (default: 10)
             - min_hits (int): Minimum hits for SORT tracker (default: 3)
             - iou_threshold (float): IOU threshold for SORT tracker (default: 0.3)
             - no_interpolate (bool): Whether to not perform trajectory interpolation (default: False)
-            - classifier (str): Classifier name to use (default: 'SimpleCNN')
     """
     parser = argparse.ArgumentParser(description='Execute object tracking on uncompressed '
                                                  'detection results from 050_exec_uncompress.py')
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--tile_size', type=str, choices=['64', '128', 'all'], default='all',
-                        help='Tile size to use for tracking (or "all" for all tile sizes)')
     parser.add_argument('--tracker', required=False,
                         default='sort',
                         choices=['sort'],
@@ -49,8 +41,6 @@ def parse_args():
                         help='IOU threshold for SORT tracker')
     parser.add_argument('--no_interpolate', action='store_true',
                         help='Whether to not perform trajectory interpolation')
-    parser.add_argument('--classifier', type=str, default='SimpleCNN',
-                        help='Classifier name to use (default: SimpleCNN)')
     return parser.parse_args()
 
 
@@ -90,7 +80,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
 
 def track_objects_in_video(video_file: str, detection_results: list[dict], tracker_name: str, 
                            max_age: int, min_hits: int, iou_threshold: float, 
-                           no_interpolate: bool, output_path: str):
+                           no_interpolate: bool, output_path: str, i: int):
     """
     Execute object tracking on detection results and save tracking results to JSONL.
     
@@ -103,6 +93,7 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
         iou_threshold (float): IOU threshold for SORT tracker
         no_interpolate (bool): Whether to not perform trajectory interpolation
         output_path (str): Path where the output JSONL file will be saved
+        i (int): Index of the video-tile combination
     """
     print(f"Processing video: {video_file}")
     
@@ -122,7 +113,8 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     
     with open(runtime_path, 'w') as runtime_file:
         # Process each frame
-        for frame_result in tqdm.tqdm(detection_results, desc="Tracking objects"):
+        for frame_result in tqdm.tqdm(detection_results, desc=f"Tracking objects ({i})",
+                                      position=i, leave=False):
             frame_idx = frame_result['frame_idx']
             bboxes = frame_result['bboxes']
             
@@ -225,7 +217,7 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     print(f"Runtime data saved to: {runtime_path}")
 
 
-def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, tile_size: int, classifier: str):
+def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, tile_size: int, classifier: str, i: int):
     """
     Process tracking for a single video file.
     
@@ -236,6 +228,7 @@ def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, 
         dataset (str): Dataset name
         tile_size (int): Tile size used for detections
         classifier (str): Classifier name used for detections
+        i (int): Index of the video-tile combination
     """
     # Load detection results
     detection_results = load_detection_results(cache_dir, dataset, video_file, tile_size, classifier)
@@ -246,7 +239,7 @@ def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, 
     
     # Execute tracking
     track_objects_in_video(video_file, detection_results, args.tracker, args.max_age, args.min_hits,
-                           args.iou_threshold, args.no_interpolate, output_path)
+                           args.iou_threshold, args.no_interpolate, output_path, i)
 
 
 def main(args):
@@ -276,14 +269,6 @@ def main(args):
     print(f"Tracker parameters: max_age={args.max_age}, min_hits={args.min_hits}, iou_threshold={args.iou_threshold}")
     print(f"Interpolation: {'enabled' if not args.no_interpolate else 'disabled'}")
     
-    # Determine which tile sizes to process
-    if args.tile_size == 'all':
-        tile_sizes_to_process = TILE_SIZES
-        print(f"Processing all available tile sizes: {tile_sizes_to_process}")
-    else:
-        tile_sizes_to_process = [int(args.tile_size)]
-        print(f"Processing tile size: {tile_sizes_to_process[0]}")
-    
     # Find all videos with uncompressed detection results
     dataset_cache_dir = os.path.join(CACHE_DIR, args.dataset)
     if not os.path.exists(dataset_cache_dir):
@@ -294,10 +279,11 @@ def main(args):
     for item in os.listdir(dataset_cache_dir):
         item_path = os.path.join(dataset_cache_dir, item)
         if os.path.isdir(item_path):
-            for tile_size in tile_sizes_to_process:
-                detection_path = os.path.join(item_path, 'uncompressed_detections', f'{args.classifier}_{tile_size}', 'detections.jsonl')
-                if os.path.exists(detection_path):
-                    video_tile_combinations.append((item, tile_size))
+            uncompressed_detections_dir = os.path.join(item_path, 'uncompressed_detections')
+            for classifier_tilesize in sorted(os.listdir(uncompressed_detections_dir)):
+                classifier, tile_size = classifier_tilesize.split('_')
+                tile_size = int(tile_size)
+                video_tile_combinations.append((item, tile_size, classifier))
     
     if not video_tile_combinations:
         print(f"No videos with uncompressed detection results found in {dataset_cache_dir}")
@@ -314,9 +300,9 @@ def main(args):
     
     # Prepare arguments for each video-tile combination
     video_args = []
-    for video_file, tile_size in video_tile_combinations:
-        video_args.append((video_file, args, CACHE_DIR, args.dataset, tile_size, args.classifier))
-        print(f"Prepared video: {video_file} with tile size: {tile_size}")
+    for i, (video_file, tile_size, classifier) in enumerate(video_tile_combinations):
+        video_args.append((video_file, args, CACHE_DIR, args.dataset, tile_size, classifier, i))
+        print(f"Prepared video: {video_file} with tile size: {tile_size} and classifier: {classifier} ({i+1}/{len(video_tile_combinations)})")
     
     # Use process pool to execute video tracking
     with mp.Pool(processes=num_processes) as pool:
