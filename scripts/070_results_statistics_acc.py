@@ -72,11 +72,13 @@ def find_tracking_results(cache_dir: str, dataset: str) -> List[Tuple[str, str, 
     for video_filename in os.listdir(dataset_cache_dir):
         video_dir = os.path.join(dataset_cache_dir, video_filename)
         assert os.path.isdir(video_dir), f"Video directory {video_dir} does not exist"
+        tracking_dir = os.path.join(video_dir, 'uncompressed_tracking')
+        assert os.path.isdir(tracking_dir), f"Tracking directory {tracking_dir} does not exist"
 
-        for classifier_tilesize in os.listdir(video_dir):
+        for classifier_tilesize in os.listdir(tracking_dir):
             classifier, tilesize = classifier_tilesize.split('_')
             ts = int(tilesize)
-            tracking_path = os.path.join(video_dir, 'uncompressed_tracking', f'{classifier}_{ts}', 'tracking.jsonl')
+            tracking_path = os.path.join(tracking_dir, f'{classifier}_{ts}', 'tracking.jsonl')
             groundtruth_path = os.path.join(video_dir, 'groundtruth', 'tracking.jsonl')
             
             if os.path.exists(tracking_path) and os.path.exists(groundtruth_path):

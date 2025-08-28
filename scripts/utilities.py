@@ -57,7 +57,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tracki
     Raises:
         FileNotFoundError: If no detection results file is found
     """
-    file = 'tracking.jsonl' if tracking else 'detections.jsonl'
+    file = 'tracking.jsonl' if tracking else 'detection.jsonl'
     detection_path = os.path.join(cache_dir, dataset, video_file, 'groundtruth', file)
     
     if not os.path.exists(detection_path):
@@ -230,7 +230,6 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str, t
                 results.append(json.loads(line))
     
     print(f"Loaded {len(results)} frame classifications")
-    print(results[:2])
     return results
 
 
