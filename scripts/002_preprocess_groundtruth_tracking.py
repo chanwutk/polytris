@@ -71,12 +71,14 @@ def interpolate_trajectory(trajectory: list[tuple[int, np.ndarray]], nxt: tuple[
     return extend
 
 
-def track_objects_in_video(video_file: str, detection_results: list[dict], tracker_name: str, 
-                           max_age: int, min_hits: int, iou_threshold: float, output_path: str):
+def track_objects_in_video(video_index: int, video_file: str, detection_results: list[dict],
+                           tracker_name: str, max_age: int, min_hits: int, iou_threshold: float,
+                           output_path: str):
     """
     Execute object tracking on detection results and save tracking results to JSONL.
     
     Args:
+        video_index (int): Index of the video (0-based)
         video_file (str): Name of the video file being processed
         detection_results (list[dict]): list of detection results from load_detection_results
         tracker_name (str): Name of the tracking algorithm
@@ -97,7 +99,8 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     print(f"Processing {len(detection_results)} frames for tracking...")
     
     # Process each frame
-    for frame_result in tqdm(detection_results, desc="Tracking objects"):
+    for frame_result in tqdm(detection_results, desc="Tracking objects",
+                             position=video_index, leave=False):
         frame_idx = frame_result['frame_idx']
         detections = frame_result['detections']
         
@@ -186,34 +189,30 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     print(f"Tracking results saved successfully. Total frames: {len(frame_tracks)}")
 
 
-def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str):
+def process_video_tracking(video_index: int, video_file: str, args, cache_dir: str, dataset: str):
     """
     Process tracking for a single video file.
     
     Args:
+        video_index (int): Index of the video (0-based)
         video_file (str): Name of the video file to process
         args: Command line arguments
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
     """
-    try:
-        # Load detection results
-        detection_results = load_detection_results(cache_dir, dataset, video_file)
-        
-        # Create output path for tracking results
-        output_path = os.path.join(cache_dir, dataset, video_file, 'groundtruth', 'tracking.jsonl')
-        
-        # Execute tracking
-        track_objects_in_video(
-            video_file, detection_results, args.tracker,
-            args.max_age, args.min_hits, args.iou_threshold, output_path
-        )
-        
-        print(f"Completed tracking for video: {video_file}")
-        
-    except Exception as e:
-        print(f"Error processing video {video_file}: {e}")
-        raise e
+    # Load detection results
+    detection_results = load_detection_results(cache_dir, dataset, video_file)
+    
+    # Create output path for tracking results
+    output_path = os.path.join(cache_dir, dataset, video_file, 'groundtruth', 'tracking.jsonl')
+    
+    # Execute tracking
+    track_objects_in_video(
+        video_index, video_file, detection_results, args.tracker,
+        args.max_age, args.min_hits, args.iou_threshold, output_path
+    )
+    
+    print(f"Completed tracking for video: {video_file}")
 
 
 def main(args):
@@ -270,9 +269,9 @@ def main(args):
     
     # Prepare arguments for each video
     video_args = []
-    for video_file in video_dirs:
-        video_args.append((video_file, args, CACHE_DIR, args.dataset))
-        print(f"Prepared video: {video_file}")
+    for i, video_file in enumerate(video_dirs):
+        video_args.append((i, video_file, args, CACHE_DIR, args.dataset))
+        print(f"Prepared video {i}: {video_file}")
     
     # Use process pool to execute video tracking
     with mp.Pool(processes=num_processes) as pool:

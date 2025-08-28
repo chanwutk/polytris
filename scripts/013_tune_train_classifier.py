@@ -83,7 +83,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             'loss': float(epoch_loss),
             'time': train_time
         })
-        print('\nEpoch : {}, train loss : {}, train time : {:.2f}s\n'.format(epoch+1, epoch_loss, train_time))
+        print('Epoch : {}, train loss : {}, train time : {:.2f}s\n'.format(epoch+1, epoch_loss, train_time))
 
         # validation doesnt requires gradient
         with torch.no_grad():

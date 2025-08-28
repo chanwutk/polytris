@@ -278,7 +278,7 @@ def main(args):
     for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
         
-        print(f"\nProcessing video file: {video_file}")
+        print(f"Processing video file: {video_file}")
         
         # Look for the trained model in the expected cache directory structure
         cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
