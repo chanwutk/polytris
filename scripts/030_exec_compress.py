@@ -334,7 +334,7 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
         # Process each frame
         for frame_idx, frame_result in enumerate(tqdm(results, desc="Packing frames")):
             # Start profiling for this frame
-            frame_start_time = (time.time_ns() / 1e6)
+            # frame_start_time = (time.time_ns() / 1e6)
             step_times = {}
             
             # Assert that frame_idx is increasing
@@ -425,8 +425,8 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
                     full = True
                     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
 
-            # Calculate total frame processing time
-            step_times['total_frame_time'] = (time.time_ns() / 1e6) - frame_start_time
+            # # Calculate total frame processing time
+            # step_times['total_frame_time'] = (time.time_ns() / 1e6) - frame_start_time
             
             # Save profiling data for this frame
             profiling_data = {

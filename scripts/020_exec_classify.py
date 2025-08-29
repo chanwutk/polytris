@@ -91,7 +91,7 @@ def load_model(video_path: str, tile_size: int, classifier_name: str) -> "torch.
     raise FileNotFoundError(f"No trained model found for tile size {tile_size} in {video_path}")
 
 
-def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int) -> tuple[np.ndarray, list[dict[str, float]]]:
+def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int) -> tuple[np.ndarray, list[dict]]:
     """
     Process a single video frame with the specified tile size and return relevance scores and timing information.
     

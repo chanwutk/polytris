@@ -87,6 +87,21 @@ def gather_query_execution_data():
     query_data = []
     
     for dataset, video in DATASETS_VIDEOS:
+        query_data.append({
+            'dataset/video': f"{dataset}/{video}",
+            'classifier': 'groundtruth',
+            'tile_size': 0,
+            'runtime_files': [('001_preprocess_groundtruth_detection',
+                               os.path.join(CACHE_DIR, dataset, video, 'groundtruth', 'detection.jsonl'))]
+        })
+        query_data.append({
+            'dataset/video': f"{dataset}/{video}",
+            'classifier': 'groundtruth',
+            'tile_size': 0,
+            'runtime_files': [('002_preprocess_groundtruth_tracking',
+                               os.path.join(CACHE_DIR, dataset, video, 'groundtruth', 'tracking_runtimes.jsonl'))]
+        })
+
         for classifier in EXEC_CLASSIFIERS:
             for tile_size in TILE_SIZES:
                 runtime_files = []

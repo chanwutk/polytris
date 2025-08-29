@@ -76,7 +76,7 @@ def detect_retina_packed_images(video_file_path: str, tile_size: int, classifier
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
         for image_file in tqdm.tqdm(image_files, desc=f"Processing packed images for tile size {tile_size}"):
             image_path = os.path.join(packing_dir, image_file)
-            runtime: dict = { 'image_file': image_file }
+            runtime = dict()
             
             # Read the packed image
             start_time = (time.time_ns() / 1e6)
@@ -84,13 +84,13 @@ def detect_retina_packed_images(video_file_path: str, tile_size: int, classifier
             if frame is None:
                 raise ValueError(f"Could not read image {image_path}")
             end_time = (time.time_ns() / 1e6)
-            runtime['read_time'] = end_time - start_time
+            runtime['read'] = end_time - start_time
 
             # Detect objects in the frame
             start_time = (time.time_ns() / 1e6)
             outputs = polyis.models.retinanet_b3d.detect(frame, detector)
             end_time = (time.time_ns() / 1e6)
-            runtime['detect_time'] = end_time - start_time
+            runtime['detect'] = end_time - start_time
 
             # Extract bounding boxes (x1, y1, x2, y2 format)
             bounding_boxes = outputs[:, :4].tolist()

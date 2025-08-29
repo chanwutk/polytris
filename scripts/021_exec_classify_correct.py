@@ -9,7 +9,7 @@ import time
 from tqdm import tqdm
 import multiprocessing as mp
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, load_tracking_results, mark_detections
+from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections
 
 
 TILE_SIZES = [32, 64, 128]
@@ -33,7 +33,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_size: int) -> tuple[np.ndarray, float]:
+def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_size: int) -> tuple[np.ndarray, list[dict]]:
     """
     Process a single video frame with groundtruth detections and return relevance scores.
     
@@ -46,7 +46,7 @@ def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_s
         tile_size (int): Size of tiles to use for processing (32, 64, or 128)
             
     Returns:
-        tuple[np.ndarray, float]: A tuple containing:
+        tuple[np.ndarray, list[dict]]: A tuple containing:
             - 2D grid of relevance scores where each element is 1 for relevant tiles and 0 for irrelevant tiles
             - Runtime in seconds (always 0.0 since no model inference is performed)
             
@@ -67,7 +67,7 @@ def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_s
     end_time = (time.time_ns() / 1e6)
     runtime = end_time - start_time
     
-    return relevance_grid, runtime
+    return relevance_grid, format_time(inference=runtime)
 
 
 def process_video(video_path: str, frame_detections: dict[int, list[list[float]]], tile_size: int, output_path: str, idx: int):

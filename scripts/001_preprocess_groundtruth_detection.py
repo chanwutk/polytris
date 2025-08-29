@@ -83,18 +83,18 @@ def detect_objects_in_video(video_path: str, detector_name: str, output_path: st
                   position=gpu_id if gpu_id is not None else None) as pbar:
             while cap.isOpened():
                 # Measure frame reading time
-                start_time = time.time_ns()
+                start_time = (time.time_ns() / 1e6)
                 ret, frame = cap.read()
-                end_time = time.time_ns()
+                end_time = (time.time_ns() / 1e6)
                 read_time = end_time - start_time
                 
                 if not ret:
                     break
                 
                 # Measure object detection time
-                start_time = time.time_ns()
+                start_time = (time.time_ns() / 1e6)
                 detections = polyis.models.retinanet_b3d.detect(frame, detector)
-                end_time = time.time_ns()
+                end_time = (time.time_ns() / 1e6)
                 detect_time = end_time - start_time
                 
                 # Create result entry for this frame
@@ -110,10 +110,6 @@ def detect_objects_in_video(video_path: str, detector_name: str, output_path: st
                 
                 frame_idx += 1
                 pbar.update(1)
-                
-                # Optional: limit processing for testing
-                # if frame_idx > 100:
-                #     break
     
     cap.release()
     print(f"GPU {gpu_id}: Completed processing {frame_idx} frames. Results saved to {output_path}")
