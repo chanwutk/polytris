@@ -1,0 +1,61 @@
+Tracking Accuracy Summary
+==================================================
+
+Individual Video Results:
+------------------------------
+Video: jnc00.mp4
+  Tile Size: 64
+  HOTA: 0.6810
+  MOTA: 0.6203
+  IDF1: 0.6949
+
+Video: jnc00.mp4
+  Tile Size: 64
+  HOTA: 0.9490
+  MOTA: 0.9337
+  IDF1: 0.9605
+
+Video: jnc02.mp4
+  Tile Size: 64
+  HOTA: 0.8689
+  MOTA: 0.8794
+  IDF1: 0.8723
+
+Video: jnc02.mp4
+  Tile Size: 64
+  HOTA: 0.9573
+  MOTA: 0.9764
+  IDF1: 0.9484
+
+Video: jnc06.mp4
+  Tile Size: 64
+  HOTA: 0.6951
+  MOTA: 0.6358
+  IDF1: 0.7031
+
+Video: jnc06.mp4
+  Tile Size: 64
+  HOTA: 0.9778
+  MOTA: 0.9775
+  IDF1: 0.9870
+
+Video: jnc07.mp4
+  Tile Size: 64
+  HOTA: 0.8519
+  MOTA: 0.8443
+  IDF1: 0.8628
+
+Video: jnc07.mp4
+  Tile Size: 64
+  HOTA: 0.9627
+  MOTA: 0.9529
+  IDF1: 0.9753
+
+Summary Statistics:
+--------------------
+HOTA - Mean: 0.8679, Std: 0.1122
+      Min: 0.6810, Max: 0.9778
+MOTA - Mean: 0.8525, Std: 0.1366
+      Min: 0.6203, Max: 0.9775
+IDF1 - Mean: 0.8755, Std: 0.1104
+      Min: 0.6949, Max: 0.9870

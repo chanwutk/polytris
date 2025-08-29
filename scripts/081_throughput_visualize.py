@@ -17,11 +17,14 @@ from scripts.utilities import CACHE_DIR
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Visualize runtime breakdown of training configurations')
+    parser.add_argument('--dataset', type=str, 
+                        default='b3d',
+                        help='Dataset name to process')
     parser.add_argument('--data_dir', type=str, 
                         default='/polyis-cache/summary/b3d/throughput',
                         help='Directory containing the throughput data tables')
     parser.add_argument('--output_dir', type=str, 
-                        default='summary/throughput-visualization',
+                        default='summary',
                         help='Output directory for visualizations')
     parser.add_argument('--show_plots', action='store_true',
                         help='Display plots interactively')
@@ -214,7 +217,7 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
     }
 
 
-def create_query_execution_visualizations(query_timings: Dict[str, Any], output_dir: str, show_plots: bool = False):
+def create_query_execution_visualizations(query_timings: Dict[str, Any], output_dir: str, dataset: str = 'b3d', show_plots: bool = False):
     """Create visualizations for query execution runtime breakdown."""
     os.makedirs(output_dir, exist_ok=True)
     
@@ -243,7 +246,7 @@ def create_query_execution_visualizations(query_timings: Dict[str, Any], output_
         
         for classifier in classifiers:
             for tile_size in tile_sizes:
-                config_key = f"b3d/jnc00.mp4_{classifier}_{tile_size}"  # Use one video as example
+                config_key = f"{dataset}/jnc00.mp4_{classifier}_{tile_size}"  # Use one video as example
                 config_labels.append(f"{classifier}\n{tile_size}")
                 
                 # Get individual timings for this config to group by operation
@@ -504,7 +507,15 @@ def main():
     """Main function to create runtime breakdown visualizations."""
     args = parse_args()
     
-    print("Loading throughput data tables...")
+    # Update data_dir to use dataset if default path is used
+    data_dir = f'/polyis-cache/summary/{args.dataset}/throughput'
+    
+    # Update output_dir to be dataset-specific if default is used
+    output_dir = f'summary/{args.dataset}/throughput-visualization'
+    
+    print(f"Loading throughput data tables for dataset: {args.dataset}")
+    print(f"Data directory: {args.data_dir}")
+    print(f"Output directory: {args.output_dir}")
     index_data, query_data = load_data_tables(args.data_dir)
     
     print("Parsing index construction timing data...")
@@ -514,7 +525,7 @@ def main():
     query_timings = parse_query_execution_timings(query_data)
     
     print("Creating query execution visualizations...")
-    create_query_execution_visualizations(query_timings, args.output_dir, args.show_plots)
+    create_query_execution_visualizations(query_timings, args.output_dir, args.dataset, args.show_plots)
     
     print("Creating comparative analysis...")
     create_comparative_analysis(index_timings, query_timings, args.output_dir, args.show_plots)

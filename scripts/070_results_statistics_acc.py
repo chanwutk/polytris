@@ -43,6 +43,7 @@ def parse_args():
             - dataset (str): Dataset name to process (default: 'b3d')
             - metrics (str): Comma-separated list of metrics to evaluate (default: 'HOTA,CLEAR,Identity')
             - parallel (bool): Whether to use parallel processing (default: True)
+            - no_recompute (bool): Whether to use saved results instead of recomputing (default: False)
     """
     parser = argparse.ArgumentParser(description='Evaluate tracking accuracy using TrackEval and create visualizations')
     parser.add_argument('--dataset', required=False, default='b3d',
@@ -51,6 +52,8 @@ def parse_args():
                         help='Comma-separated list of metrics to evaluate')
     parser.add_argument('--parallel', action='store_true', default=False,
                         help='Whether to use parallel processing')
+    parser.add_argument('--no_recompute', action='store_true', default=False,
+                        help='Use saved accuracy results from detailed_results.json instead of recomputing')
     return parser.parse_args()
 
 
@@ -249,10 +252,35 @@ def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int,
     return {
         'video_name': video_name,
         'tile_size': tile_size,
+        'classifier': classifier,
         'metrics': summary_results,
         'success': True,
         'output_dir': output_dir,
     }
+
+
+def load_saved_results(dataset: str) -> List[Dict[str, Any]]:
+    """
+    Load saved accuracy results from detailed_results.json.
+    
+    Args:
+        dataset (str): Dataset name
+        
+    Returns:
+        List[Dict[str, Any]]: List of evaluation results
+    """
+    results_file = os.path.join('./summary', dataset, 'accuracy', 'detailed_results.json')
+    
+    if not os.path.exists(results_file):
+        print(f"No saved results found at {results_file}")
+        return []
+    
+    print(f"Loading saved results from {results_file}")
+    with open(results_file, 'r') as f:
+        results = json.load(f)
+    
+    print(f"Loaded {len(results)} saved evaluation results")
+    return results
 
 
 def create_simple_summary(results: List[Dict[str, Any]], output_dir: str) -> None:
@@ -358,51 +386,62 @@ def main(args):
         - Multiple metrics are evaluated: HOTA, CLEAR (MOTA), and Identity (IDF1)
     """
     print(f"Starting tracking accuracy evaluation for dataset: {args.dataset}")
-    print(f"Metrics: {args.metrics}")
     
-    # Parse metrics
+    # Parse metrics (needed for both compute and no_recompute modes)
     metrics_list = [m.strip() for m in args.metrics.split(',')]
-    print(f"Evaluating metrics: {metrics_list}")
     
-    # Find tracking results
-    video_tile_combinations = find_tracking_results(CACHE_DIR, args.dataset)
-    
-    if not video_tile_combinations:
-        print("No tracking results found. Please ensure 060_exec_track.py has been run first.")
-        return
-    
-    print(f"Found {len(video_tile_combinations)} video-tile size combinations to evaluate")
-    
-    # Prepare arguments for parallel processing if requested
-    eval_args = []
-    for video_name, classifier, tile_size in sorted(video_tile_combinations):
-        tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 'uncompressed_tracking',
-                                     f'{classifier}_{tile_size}', 'tracking.jsonl')
-        groundtruth_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
-                                        'groundtruth', 'tracking.jsonl')
-        
-        output_dir = os.path.join(CACHE_DIR, args.dataset, video_name, 'evaluation',
-                                  f'{classifier}_{tile_size}', 'accuracy')
-        eval_args.append((video_name, classifier, tile_size, tracking_path, groundtruth_path, 
-                         metrics_list, output_dir))
-    
-    if args.parallel:
-        # Run evaluation in parallel
-        with mp.Pool(processes=mp.cpu_count()) as pool:
-            results = pool.starmap(evaluate_tracking_accuracy, eval_args)
+    # Check if we should use saved results instead of recomputing
+    if args.no_recompute:
+        print("Using saved accuracy results...")
+        results = load_saved_results(args.dataset)
+        if not results:
+            print("No saved results found. Please run without --no_recompute first to generate results.")
+            return
     else:
-        results = []
-        for eval_arg in eval_args:
-            results.append(evaluate_tracking_accuracy(*eval_arg))
+        print(f"Metrics: {args.metrics}")
+        print(f"Evaluating metrics: {metrics_list}")
+        
+        # Find tracking results
+        video_tile_combinations = find_tracking_results(CACHE_DIR, args.dataset)
+        
+        if not video_tile_combinations:
+            print("No tracking results found. Please ensure 060_exec_track.py has been run first.")
+            return
+        
+        print(f"Found {len(video_tile_combinations)} video-tile size combinations to evaluate")
+        
+        # Prepare arguments for parallel processing if requested
+        eval_args = []
+        for video_name, classifier, tile_size in sorted(video_tile_combinations):
+            tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 'uncompressed_tracking',
+                                         f'{classifier}_{tile_size}', 'tracking.jsonl')
+            groundtruth_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
+                                            'groundtruth', 'tracking.jsonl')
+            
+            output_dir = os.path.join(CACHE_DIR, args.dataset, video_name, 'evaluation',
+                                      f'{classifier}_{tile_size}', 'accuracy')
+            eval_args.append((video_name, classifier, tile_size, tracking_path, groundtruth_path, 
+                             metrics_list, output_dir))
+        
+        if args.parallel:
+            # Run evaluation in parallel
+            with mp.Pool(processes=mp.cpu_count()) as pool:
+                results = pool.starmap(evaluate_tracking_accuracy, eval_args)
+        else:
+            results = []
+            for eval_arg in eval_args:
+                results.append(evaluate_tracking_accuracy(*eval_arg))
     
     # Print summary
     successful_results = [r for r in results if r['success']]
     failed_results = [r for r in results if not r['success']]
 
-    for result in results:
-        print('save results to', result['output_dir'])
-        with open(os.path.join(result['output_dir'], 'detailed_results.json'), 'w') as f:
-            json.dump(result, f, indent=2, cls=NumpyEncoder)
+    # Save individual results only when computing (not when using saved results)
+    if not args.no_recompute:
+        for result in results:
+            print('save results to', result['output_dir'])
+            with open(os.path.join(result['output_dir'], 'detailed_results.json'), 'w') as f:
+                json.dump(result, f, indent=2, cls=NumpyEncoder)
     
     print(f"\nEvaluation completed:")
     print(f"  Successful evaluations: {len(successful_results)}")
@@ -411,10 +450,11 @@ def main(args):
     if failed_results:
         print("\nFailed evaluations:")
         for result in failed_results:
-            print(f"  {result['video_name']} (tile size {result['tile_size']}): {result['error']}")
+            error_msg = result.get('error', 'Unknown error')
+            print(f"  {result['video_name']} (tile size {result['tile_size']}): {error_msg}")
     
     if successful_results:
-        output_dir = os.path.join(CACHE_DIR, 'evaluation', args.dataset, 'accuracy')
+        output_dir = os.path.join('./summary', args.dataset, 'accuracy')
 
         # Create summary
         create_simple_summary(successful_results, output_dir)
@@ -463,6 +503,8 @@ def create_visualizations(results: List[Dict[str, Any]], output_dir: str) -> Non
     # Extract data for visualization
     video_names = []
     tile_sizes = []
+    classifiers = []
+    combined_labels = []
     hota_scores = []
     clear_scores = []
     identity_scores = []
@@ -470,6 +512,11 @@ def create_visualizations(results: List[Dict[str, Any]], output_dir: str) -> Non
     for result in successful_results:
         video_names.append(result['video_name'])
         tile_sizes.append(result['tile_size'])
+        classifiers.append(result['classifier'])
+        
+        # Create combined label with video name, classifier, and tile size
+        combined_label = f"{result['video_name']}\n{result['classifier']}"
+        combined_labels.append(combined_label)
         
         metrics = result['metrics']
         hota_scores.append(metrics.get('HOTA', {}).get('HOTA(0)', 0.0))
@@ -479,6 +526,7 @@ def create_visualizations(results: List[Dict[str, Any]], output_dir: str) -> Non
     # Create DataFrame for easier plotting
     df = pd.DataFrame({
         'Video': video_names,
+        'Classifier': classifiers,
         'Tile_Size': tile_sizes,
         'HOTA': hota_scores,
         'MOTA': clear_scores,
@@ -491,57 +539,63 @@ def create_visualizations(results: List[Dict[str, Any]], output_dir: str) -> Non
     # Set matplotlib style
     plt.style.use('default')
     
-    # 1. Overall accuracy comparison
-    fig, (*axes, ) = plt.subplots(1, 3, figsize=(15, 8))
-    fig.suptitle('Tracking Accuracy Comparison Across Videos', fontsize=16, fontweight='bold')
+    # 1. Overall accuracy comparison - arranged vertically with flipped axes
+    fig, axes = plt.subplots(3, 1, figsize=(12, 16))
+    fig.suptitle('Tracking Accuracy Comparison Across Configurations', fontsize=16, fontweight='bold')
     
     # HOTA scores
-    bars1 = axes[0].bar(range(len(video_names)), hota_scores, color='skyblue', alpha=0.7, edgecolor='navy', linewidth=0.5)
-    axes[0].set_title('HOTA Scores', fontsize=14, fontweight='bold')
-    axes[0].set_xlabel('Video', fontsize=12)
-    axes[0].set_ylabel('HOTA Score', fontsize=12)
-    axes[0].set_xticks(range(len(video_names)))
-    axes[0].set_xticklabels(video_names, rotation=45, ha='right')
+    bars1 = axes[0].barh(range(len(combined_labels)), hota_scores, color='skyblue', alpha=0.7, edgecolor='navy', linewidth=0.5)
+    # axes[0].set_title('HOTA Scores', fontsize=14, fontweight='bold')
+    axes[0].set_xlabel('HOTA Score', fontsize=12)
+    axes[0].set_ylabel('Video / Classifier / Tile Size', fontsize=12)
+    axes[0].set_yticks(range(len(combined_labels)))
+    axes[0].set_yticklabels(combined_labels, fontsize=9, ha='left')
+    axes[0].tick_params(axis='y', length=0)  # Remove y-axis ticks
+    axes[0].yaxis.set_tick_params(pad=-5)    # Add 10 padding to y-axis labels
     axes[0].grid(True, alpha=0.3, linestyle='--')
-    axes[0].set_ylim(0, 1.1)
+    axes[0].set_xlim(0, 1.0)  # Stretch x-axis so 1.0 is at the end
     
-    # Add value labels on bars
-    for bar in bars1:
-        height = bar.get_height()
-        axes[0].text(bar.get_x() + bar.get_width()/2., height + 0.01,
-                        f'{height:.3f}', ha='center', va='bottom', fontsize=10)
+    # Add value labels inside bars
+    for i, (bar, score) in enumerate(zip(bars1, hota_scores)):
+        width = bar.get_width()
+        axes[0].text(width * .98, bar.get_y() + bar.get_height()/2.,
+                        f'{score:.3f}', ha='right', va='center', fontsize=10, fontweight='bold', color='navy')
     
     # MOTA scores
-    bars2 = axes[1].bar(range(len(video_names)), clear_scores, color='lightcoral', alpha=0.7, edgecolor='darkred', linewidth=0.5)
-    axes[1].set_title('MOTA Scores', fontsize=14, fontweight='bold')
-    axes[1].set_xlabel('Video', fontsize=12)
-    axes[1].set_ylabel('MOTA Score', fontsize=12)
-    axes[1].set_xticks(range(len(video_names)))
-    axes[1].set_xticklabels(video_names, rotation=45, ha='right')
+    bars2 = axes[1].barh(range(len(combined_labels)), clear_scores, color='lightcoral', alpha=0.7, edgecolor='darkred', linewidth=0.5)
+    # axes[1].set_title('MOTA Scores', fontsize=14, fontweight='bold')
+    axes[1].set_xlabel('MOTA Score', fontsize=12)
+    axes[1].set_ylabel('Video / Classifier / Tile Size', fontsize=12)
+    axes[1].set_yticks(range(len(combined_labels)))
+    axes[1].set_yticklabels(combined_labels, fontsize=9, ha='left')
+    axes[1].tick_params(axis='y', length=0)  # Remove y-axis ticks
+    axes[1].yaxis.set_tick_params(pad=-5)    # Add 10 padding to y-axis labels
     axes[1].grid(True, alpha=0.3, linestyle='--')
-    axes[1].set_ylim(0, 1.1)
+    axes[1].set_xlim(0, 1.0)  # Stretch x-axis so 1.0 is at the end
     
-    # Add value labels on bars
-    for bar in bars2:
-        height = bar.get_height()
-        axes[1].text(bar.get_x() + bar.get_width()/2., height + 0.01,
-                        f'{height:.3f}', ha='center', va='bottom', fontsize=10)
+    # Add value labels inside bars
+    for i, (bar, score) in enumerate(zip(bars2, clear_scores)):
+        width = bar.get_width()
+        axes[1].text(width * .98, bar.get_y() + bar.get_height()/2.,
+                        f'{score:.3f}', ha='right', va='center', fontsize=10, fontweight='bold', color='darkred')
     
     # IDF1 scores
-    bars3 = axes[2].bar(range(len(video_names)), identity_scores, color='lightgreen', alpha=0.7, edgecolor='darkgreen', linewidth=0.5)
-    axes[2].set_title('IDF1 Scores', fontsize=14, fontweight='bold')
-    axes[2].set_xlabel('Video', fontsize=12)
-    axes[2].set_ylabel('IDF1 Score', fontsize=12)
-    axes[2].set_xticks(range(len(video_names)))
-    axes[2].set_xticklabels(video_names, rotation=45, ha='right')
+    bars3 = axes[2].barh(range(len(combined_labels)), identity_scores, color='lightgreen', alpha=0.7, edgecolor='darkgreen', linewidth=0.5)
+    # axes[2].set_title('IDF1 Scores', fontsize=14, fontweight='bold')
+    axes[2].set_xlabel('IDF1 Score', fontsize=12)
+    axes[2].set_ylabel('Video / Classifier / Tile Size', fontsize=12)
+    axes[2].set_yticks(range(len(combined_labels)))
+    axes[2].set_yticklabels(combined_labels, fontsize=9, ha='left')
+    axes[2].tick_params(axis='y', length=0)  # Remove y-axis ticks
+    axes[2].yaxis.set_tick_params(pad=-5)    # Add 10 padding to y-axis labels
     axes[2].grid(True, alpha=0.3, linestyle='--')
-    axes[2].set_ylim(0, 1.1)
+    axes[2].set_xlim(0, 1.0)  # Stretch x-axis so 1.0 is at the end
     
-    # Add value labels on bars
-    for bar in bars3:
-        height = bar.get_height()
-        axes[2].text(bar.get_x() + bar.get_width()/2., height + 0.01,
-                        f'{height:.3f}', ha='center', va='bottom', fontsize=10)
+    # Add value labels inside bars
+    for i, (bar, score) in enumerate(zip(bars3, identity_scores)):
+        width = bar.get_width()
+        axes[2].text(width * .98, bar.get_y() + bar.get_height()/2.,
+                        f'{score:.3f}', ha='right', va='center', fontsize=10, fontweight='bold', color='darkgreen')
     
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'accuracy_comparison.png'), dpi=300, bbox_inches='tight')
