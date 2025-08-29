@@ -1,5 +1,7 @@
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04
 
+RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/g' ~/.bashrc
+
 # Set the working directory
 WORKDIR /polyis
 
@@ -42,4 +44,5 @@ COPY ./environment.yml /polyis/environment.yml
 RUN conda env update --file /polyis/environment.yml --prune --name base && \
     conda clean --all --yes
 
-RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/g' ~/.bashrc
+COPY ./requirements.txt /polyis/requirements.txt
+RUN pip install -r /polyis/requirements.txt
