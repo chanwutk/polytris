@@ -5,7 +5,6 @@ import json
 import os
 import cv2
 import numpy as np
-import torch
 from tqdm import tqdm
 import shutil
 import time
@@ -74,7 +73,7 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, 
     return filled
 
 
-def group_tiles(bitmap: np.ndarray) -> list[tuple[int, torch.Tensor, tuple[int, int]]]:
+def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, int]]]:
     """
     Group groups of connected tiles into polyominoes.
     
@@ -83,9 +82,9 @@ def group_tiles(bitmap: np.ndarray) -> list[tuple[int, torch.Tensor, tuple[int, 
                 where 1 indicates a tile with detection and 0 indicates no detection
                 
     Returns:
-        list[tuple[int, torch.Tensor, tuple[int, int]]]: List of polyominoes, where each polyomino is:
+        list[tuple[int, np.ndarray, tuple[int, int]]]: List of polyominoes, where each polyomino is:
             - group_id: unique id of the group
-            - mask: masking of the polyomino as a 2D torch tensor
+            - mask: masking of the polyomino as a 2D numpy array
             - offset: offset of the mask from the top left corner of the bitmap
     """
     h, w = bitmap.shape
@@ -98,7 +97,7 @@ def group_tiles(bitmap: np.ndarray) -> list[tuple[int, torch.Tensor, tuple[int, 
     groups[1:h+1, 1:w+1] = _groups
     
     visited: set[int] = set()
-    bins: list[tuple[int, torch.Tensor, tuple[int, int]]] = []
+    bins: list[tuple[int, np.ndarray, tuple[int, int]]] = []
     
     for i in range(groups.shape[0]):
         for j in range(groups.shape[1]):
@@ -110,8 +109,8 @@ def group_tiles(bitmap: np.ndarray) -> list[tuple[int, torch.Tensor, tuple[int, 
                 continue
                 
             connected_tiles = np.array(connected_tiles, dtype=int).T
-            mask = torch.zeros((h + 1, w + 1), dtype=torch.bool, device='cuda:0')
-            mask[connected_tiles[0], connected_tiles[1]] = True
+            mask = np.zeros((h + 1, w + 1), dtype=np.bool)
+            mask[*connected_tiles] = True
             
             offset = np.min(connected_tiles, axis=1)
             end = np.max(connected_tiles, axis=1) + 1
@@ -127,8 +126,8 @@ class PackingFailedException(Exception):
     """Exception raised when packing fails."""
 
 
-def pack_append(poliominoes: list[tuple[int, torch.Tensor, tuple[int, int]]],
-                h: int, w: int, occupied_tiles: torch.Tensor):
+def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
+                h: int, w: int, occupied_tiles: np.ndarray):
     """
     Pack polyominoes into a bitmap.
     
@@ -139,17 +138,18 @@ def pack_append(poliominoes: list[tuple[int, torch.Tensor, tuple[int, int]]],
         bitmap: Existing bitmap to append to (None for new)
         
     Returns:
-        tuple[torch.Tensor, list]: (bitmap, positions) where positions contains packing info
+        tuple[np.ndarray, list]: (bitmap, positions) where positions contains packing info
     """
-    appending_tiles = torch.zeros_like(occupied_tiles, device='cuda:0', requires_grad=False)
-    positions: list[tuple[int, int, int, torch.Tensor, tuple[int, int]]] = []
+    # occupied_tiles = occupied_tiles.copy()
+    appending_tiles = np.zeros((h, w), dtype=np.bool)
+    
+    positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]] = []
     for groupid, mask, offset in poliominoes:
         for j in range(w - mask.shape[1] + 1):
             for i in range(h - mask.shape[0] + 1):
-                occupied_slice = occupied_tiles[i:i+mask.shape[0], j:j+mask.shape[1]]
-                if not torch.any(occupied_slice & mask):
-                    appending_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
+                if not np.any(occupied_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] & mask):
                     occupied_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
+                    appending_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
                     positions.append((i, j, groupid, mask, offset))
                     break
             else:
@@ -162,8 +162,8 @@ def pack_append(poliominoes: list[tuple[int, torch.Tensor, tuple[int, int]]],
     return occupied_tiles, positions
 
 
-def render(canvas: torch.Tensor, positions: list[tuple[int, int, int, torch.Tensor, tuple[int, int]]], 
-           frame: torch.Tensor, chunk_size: int) -> torch.Tensor:
+def render(canvas: np.ndarray, positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]], 
+           frame: np.ndarray, chunk_size: int) -> np.ndarray:
     """
     Render packed polyominoes onto the canvas.
     
@@ -174,27 +174,28 @@ def render(canvas: torch.Tensor, positions: list[tuple[int, int, int, torch.Tens
         chunk_size: Size of each tile/chunk
         
     Returns:
-        torch.Tensor: Updated canvas
+        np.ndarray: Updated canvas
     """
-    for y, x, _groupid, mask, offset in positions:
-        yfrom = y * chunk_size
-        xfrom = x * chunk_size
-
+    for y, x, groupid, mask, offset in positions:
+        yfrom, yto = y * chunk_size, (y + mask.shape[0]) * chunk_size
+        xfrom, xto = x * chunk_size, (x + mask.shape[1]) * chunk_size
+        
         # Get mask indices where True
-        for i, j in torch.nonzero(mask, as_tuple=True):
-            canvas[
-                yfrom + (chunk_size * i): yfrom + (chunk_size * i) + chunk_size,
-                xfrom + (chunk_size * j): xfrom + (chunk_size * j) + chunk_size,
-            ] = frame[
+        for i, j in zip(*np.nonzero(mask)):
+            patch = frame[
                 (i + offset[0]) * chunk_size:(i + offset[0] + 1) * chunk_size,
                 (j + offset[1]) * chunk_size:(j + offset[1] + 1) * chunk_size,
             ]
+            canvas[
+                yfrom + (chunk_size * i): yfrom + (chunk_size * i) + chunk_size,
+                xfrom + (chunk_size * j): xfrom + (chunk_size * j) + chunk_size,
+            ] = patch
     
     return canvas
 
 
-def apply_pack(pack_results: tuple[torch.Tensor, list], canvas: torch.Tensor, index_map: torch.Tensor,
-               offset_lookup: dict, frame_idx: int, frame: torch.Tensor, tile_size: int, step_times: dict):
+def apply_pack(pack_results: tuple[np.ndarray, list], canvas: np.ndarray, index_map: np.ndarray,
+               offset_lookup: dict, frame_idx: int, frame: np.ndarray, tile_size: int, step_times: dict):
     """
     Apply packed results to the canvas, index_map, and offset_lookup.
     
@@ -209,7 +210,7 @@ def apply_pack(pack_results: tuple[torch.Tensor, list], canvas: torch.Tensor, in
         step_times: The step times to update
         
     Returns:
-        tuple[torch.Tensor, torch.Tensor]: Tuple of (bitmap, canvas)
+        tuple[np.ndarray, np.ndarray]: Tuple of (bitmap, canvas)
     """
     bitmap, positions = pack_results
     
@@ -223,17 +224,16 @@ def apply_pack(pack_results: tuple[torch.Tensor, list], canvas: torch.Tensor, in
     # Profile: Update index_map and det_info
     step_start = (time.time_ns() / 1e6)
     for gid, (y, x, _groupid, mask, _offset) in enumerate(positions):
-        index_map_slice_0 = index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0]
-        assert not torch.any(index_map_slice_0 & mask), (index_map_slice_0, mask)
-        index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask.to(torch.int32) * (gid + 1)
-        index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask.to(torch.int32) * frame_idx
+        assert not np.any(index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] & mask), (index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0], mask)
+        index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask.astype(np.int32) * (gid + 1)
+        index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask.astype(np.int32) * frame_idx
         offset_lookup[(int(frame_idx), int(gid + 1))] = ((y, x), _offset)
     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
 
     return bitmap, canvas
 
 
-def save_packed_image(canvas: torch.Tensor | np.ndarray, index_map: torch.Tensor | np.ndarray, offset_lookup: dict,
+def save_packed_image(canvas: np.ndarray, index_map: np.ndarray, offset_lookup: dict,
                       start_idx: int, frame_idx: int, output_dir: str, step_times: dict):
     """
     Save the packed image, index_map, and offset_lookup.
@@ -254,16 +254,12 @@ def save_packed_image(canvas: torch.Tensor | np.ndarray, index_map: torch.Tensor
     # Profile: Save canvas
     step_start = (time.time_ns() / 1e6)
     img_path = os.path.join(image_dir, f'{start_idx:08d}_{frame_idx:08d}.jpg')
-    if isinstance(canvas, torch.Tensor):
-        canvas = canvas.cpu().numpy()
     cv2.imwrite(img_path, canvas)
     step_times['save_canvas'] = (time.time_ns() / 1e6) - step_start
 
     # Profile: Save index_map and offset_lookup
     step_start = (time.time_ns() / 1e6)
     index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}.npy')
-    if isinstance(index_map, torch.Tensor):
-        index_map = index_map.cpu().numpy()
     np.save(index_map_path, index_map)
     # index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}_disp.txt')
     # with open(index_map_path, 'w') as f:
@@ -317,9 +313,9 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
     grid_width = width // tile_size
 
     def init_packing_variables():
-        canvas = torch.zeros((height, width, 3), dtype=torch.uint8, device='cuda:0', requires_grad=False)
-        occupied_tiles = torch.zeros((grid_height, grid_width), dtype=torch.bool, device='cuda:0', requires_grad=False)
-        index_map = torch.zeros((grid_height, grid_width, 2), dtype=torch.int32, device='cuda:0', requires_grad=False)
+        canvas = np.zeros((height, width, 3), dtype=np.uint8)
+        occupied_tiles = np.zeros((grid_height, grid_width), dtype=np.bool)
+        index_map = np.zeros((grid_height, grid_width, 2), dtype=np.int32)
         offset_lookup: dict = {}
         return canvas, occupied_tiles, index_map, offset_lookup, True, False
     
@@ -336,7 +332,7 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
     
     print(f"Processing {len(results)} frames with tile size {tile_size}")
 
-    with torch.no_grad(), open(runtime_file, 'w') as f:
+    with open(runtime_file, 'w') as f:
         # Process each frame
         for frame_idx, frame_result in enumerate(tqdm(results, desc="Packing frames")):
             # Start profiling for this frame
@@ -355,9 +351,8 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
                 ret = cap.grab()
                 read_frame_idx += 1
             assert ret
-            ret, frame_np = cap.retrieve()
+            ret, frame = cap.retrieve()
             assert ret
-            frame = torch.from_numpy(frame_np).to('cuda:0')
             frame_cache[frame_idx] = frame
             step_times['read_frame'] = (time.time_ns() / 1e6) - step_start
             
@@ -381,7 +376,7 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
             
             # Profile: Sort polyominoes by size
             step_start = (time.time_ns() / 1e6)
-            polyominoes = sorted(polyominoes, key=lambda x: x[1].sum().item(), reverse=True)
+            polyominoes = sorted(polyominoes, key=lambda x: x[1].sum(), reverse=True)
             step_times['sort_polyominoes'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Try packing polyominoes
@@ -420,6 +415,10 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
 
                     # If retry packing fails, save the entire frame as a single polyomino
                     print(f"Failed to pack frame {frame_idx} even after reset, saving entire frame as single polyomino")
+                    
+                    # Render the entire frame onto canvas
+                    # canvas = frame
+                    # step_times['render_canvas'] = 0
 
                     # Profile: Update index_map and det_info for the full frame polyomino
                     step_start = (time.time_ns() / 1e6)
@@ -428,7 +427,7 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
                     _offset_lookup = {(frame_idx, 1): ((0, 0), (0, 0)) }
                     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
                     
-                    save_packed_image(frame_np, _index_map, _offset_lookup, start_idx, frame_idx, output_dir, step_times)
+                    save_packed_image(frame, _index_map, _offset_lookup, start_idx, frame_idx, output_dir, step_times)
 
             # # Calculate total frame processing time
             # step_times['total_frame_time'] = (time.time_ns() / 1e6) - frame_start_time
@@ -506,11 +505,6 @@ def main(args):
         video_file_path = os.path.join(dataset_dir, video_file)
 
         print(f"Processing video file: {video_file}")
-
-        packing_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'packing')
-        if os.path.exists(packing_dir):
-            shutil.rmtree(packing_dir)
-        os.makedirs(packing_dir)
         
         # Process each tile size for this video
         for tile_size in tile_sizes_to_process:
