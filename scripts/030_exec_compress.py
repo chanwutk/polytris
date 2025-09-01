@@ -13,6 +13,7 @@ from queue import Queue
 from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_classification_results
 # from lib.python_wrapper_cython import pack_append as _fast_pack_append
 from lib.pack_append import pack_append as _fast_pack_append
+from lib.group_tiles import group_tiles as _fast_group_tiles
 
 
 # TILE_SIZES = [32, 64, 128]
@@ -82,6 +83,8 @@ def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, in
     """
     Group groups of connected tiles into polyominoes.
     
+    Uses fast Cython implementation when available.
+    
     Args:
         bitmap: 2D numpy array representing the grid of tiles,
                 where 1 indicates a tile with detection and 0 indicates no detection
@@ -91,6 +94,13 @@ def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, in
             - group_id: unique id of the group
             - mask: masking of the polyomino as a 2D numpy array
             - offset: offset of the mask from the top left corner of the bitmap
+    """
+    return _fast_group_tiles(bitmap.astype(np.uint8))
+
+
+def _group_tiles_original(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, int]]]:
+    """
+    Original Python implementation of group_tiles (backup).
     """
     h, w = bitmap.shape
     _groups = np.arange(h * w, dtype=np.int16) + 1

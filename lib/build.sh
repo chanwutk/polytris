@@ -17,7 +17,8 @@ echo "Building Cython extension..."
 python setup.py build_ext --inplace
 
 echo "Build completed successfully!"
-echo "You can now import the fast Cython implementation:"
+echo "You can now import the fast Cython implementations:"
 echo "  from lib.pack_append import pack_append"
+echo "  from lib.group_tiles import group_tiles"
 echo ""
 echo "Run tests with: pytest tests/ -v"
