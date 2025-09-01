@@ -67,7 +67,7 @@ def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_s
     end_time = (time.time_ns() / 1e6)
     runtime = end_time - start_time
     
-    return relevance_grid, format_time(inference=runtime)
+    return relevance_grid, format_time(inference=runtime, transform=0)
 
 
 def process_video(video_path: str, frame_detections: dict[int, list[list[float]]], tile_size: int, output_path: str, idx: int):

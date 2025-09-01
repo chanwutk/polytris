@@ -28,6 +28,7 @@ def parse_args():
             - groundtruth (bool): Whether to use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)
             - threshold (float): Threshold for classification probability (default: 0.5)
             - classifier (str): Classifier name to use (default: 'SimpleCNN')
+            - clear (bool): Whether to remove and recreate the packing folder (default: False)
     """
     parser = argparse.ArgumentParser(description='Execute packing of video tiles into images based on classification results')
     parser.add_argument('--dataset', required=False,
@@ -41,6 +42,8 @@ def parse_args():
                         help='Threshold for classification probability (0.0 to 1.0)')
     parser.add_argument('--classifier', type=str, default='SimpleCNN',
                         help='Classifier name to use (default: SimpleCNN)')
+    parser.add_argument('--clear', action='store_true',
+                        help='Remove and recreate the packing folder')
     return parser.parse_args()
 
 
@@ -147,7 +150,8 @@ def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
     for groupid, mask, offset in poliominoes:
         for j in range(w - mask.shape[1] + 1):
             for i in range(h - mask.shape[0] + 1):
-                if not np.any(occupied_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] & mask):
+                if (not np.any(occupied_tiles[i, j:j+mask.shape[1]] & mask[0])
+                and (mask.shape[0] == 1 or not np.any(occupied_tiles[i+1:i+mask.shape[0], j:j+mask.shape[1]] & mask[1:]))):
                     occupied_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
                     appending_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
                     positions.append((i, j, groupid, mask, offset))
@@ -470,6 +474,7 @@ def main(args):
             - groundtruth (bool): Whether to use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)
             - threshold (float): Threshold for classification probability (0.0 to 1.0)
             - classifier (str): Classifier name to use (default: 'SimpleCNN')
+            - clear (bool): Whether to remove and recreate the packing folder
             
     Note:
         - The script expects classification results from 020_exec_classify.py in:
@@ -506,6 +511,13 @@ def main(args):
 
         print(f"Processing video file: {video_file}")
         
+        # Clear packing folder once per video if --clear flag is set
+        if args.clear:
+            packing_base_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'packing')
+            if os.path.exists(packing_base_dir):
+                shutil.rmtree(packing_base_dir)
+                print(f"Cleared existing packing folder: {packing_base_dir}")
+        
         # Process each tile size for this video
         for tile_size in tile_sizes_to_process:
             print(f"Processing tile size: {tile_size}")
@@ -518,7 +530,7 @@ def main(args):
             if os.path.exists(packing_output_dir):
                 # Remove the entire directory
                 shutil.rmtree(packing_output_dir)
-            os.makedirs(packing_output_dir)
+            os.makedirs(packing_output_dir, exist_ok=True)
             
             # Process the video for packing
             compress_video(video_file_path, results, tile_size, packing_output_dir, args.threshold)

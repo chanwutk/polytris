@@ -5,13 +5,13 @@ import json
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-# Removed seaborn dependency - using matplotlib for all visualizations
-import pandas as pd
 from typing import Callable, Dict, List, Tuple, Any
 from collections import defaultdict
-import glob
+import tqdm
 
 from scripts.utilities import CACHE_DIR
+
+FORMATS = ['png']
 
 
 def parse_args():
@@ -217,15 +217,142 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
     }
 
 
+def extract_videos_from_data(query_timings: Dict[str, Any]) -> List[str]:
+    """Extract unique video names from the query timing data."""
+    videos = set()
+    for stage_timings in query_timings['timings'].values():
+        for config_key in stage_timings.keys():
+            # config_key format: dataset/video_classifier_tilesize
+            parts = config_key.split('_')
+            if len(parts) >= 3:
+                # Extract video name (everything before the last two underscores)
+                video_part = '_'.join(parts[:-2])  # Remove classifier and tilesize
+                videos.add(video_part)
+    return sorted(list(videos))
+
+
 def create_query_execution_visualizations(query_timings: Dict[str, Any], output_dir: str, dataset: str = 'b3d', show_plots: bool = False):
     """Create visualizations for query execution runtime breakdown."""
     os.makedirs(output_dir, exist_ok=True)
     
     summaries = query_timings['summaries']
     
-    # 1. Query Execution Pipeline Overview
-    plt.figure(figsize=(16, 10))
+    # Extract all videos from the data
+    videos = extract_videos_from_data(query_timings)
+    print(f"Found {len(videos)} videos: {videos}")
     
+    # Create average visualization across all videos
+    create_average_query_execution_visualization(query_timings, output_dir, dataset, videos, show_plots)
+    
+    # Create per-video visualizations
+    for video in videos:
+        video_name = video.split('/')[-1] if '/' in video else video  # Extract just the filename
+        create_per_video_query_execution_visualization(query_timings, output_dir, dataset, video, video_name, show_plots)
+
+
+def create_average_query_execution_visualization(query_timings: Dict[str, Any], output_dir: str, dataset: str, videos: List[str], show_plots: bool = False):
+    """Create average query execution visualization across all videos."""
+    # Prepare data for pipeline visualization
+    stages = ['020_exec_classify', '030_exec_compress', '040_exec_detect', '060_exec_track']
+    stage_names = ['Classify', 'Compress', 'Detect', 'Track']
+    
+    # Group by classifier and tile size 
+    classifiers = ['SimpleCNN', 'groundtruth']
+    tile_sizes = [32, 64, 128]
+    
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    axes = axes.flatten()
+    
+    for i, (stage, stage_name) in enumerate(tqdm.tqdm(zip(stages, stage_names), total=len(stages))):
+        ax = axes[i]
+        
+        # Collect data for this stage grouped by operation
+        config_labels = []
+        op_data = defaultdict(list)  # op_name -> list of values for each config
+        
+        for classifier in classifiers:
+            for tile_size in tile_sizes:
+                
+                # Average across all videos for this classifier/tile_size combination
+                config_ops = defaultdict(list)  # op_name -> list of times across videos
+                
+                for video in videos:
+                    config_key = f"{video}_{classifier}_{tile_size}"
+                    if config_key in query_timings['timings'][stage]:
+                        video_ops = defaultdict(float)
+                        for timing in query_timings['timings'][stage][config_key]:
+                            op_name = timing.get('op', 'unknown')
+                            video_ops[op_name] += timing['time']
+                        
+                        # Add this video's operation times to the list
+                        for op_name, time_val in video_ops.items():
+                            config_ops[op_name].append(time_val)
+                
+                if len(config_ops) == 0:
+                    continue
+
+                config_labels.append(f"{classifier}\n{tile_size}")
+                # Calculate average for each operation across videos
+                for op_name, times in config_ops.items():
+                    avg_time = np.mean(times) if times else 0
+                    if op_name not in op_data:
+                        op_data[op_name] = []
+                    op_data[op_name].append(avg_time)
+                
+                # Ensure all operations have a value for this config (0 if not present)
+                all_ops = set()
+                for other_video in videos:
+                    other_config_key = f"{other_video}_{classifier}_{tile_size}"
+                    if other_config_key in query_timings['timings'][stage]:
+                        for timing in query_timings['timings'][stage][other_config_key]:
+                            all_ops.add(timing.get('op', 'unknown'))
+                
+                for op_name in all_ops:
+                    if op_name not in config_ops:
+                        if op_name not in op_data:
+                            op_data[op_name] = []
+                        op_data[op_name].append(0)
+        
+        if config_labels and op_data:
+            # Create stacked bar chart
+            x = np.arange(len(config_labels))
+            width = 0.6
+            bottom = np.zeros(len(config_labels))
+            
+            # Color palette for different operations
+            colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+            
+            # Plot each operation as a layer in the stacked bar
+            for j, (op_name, values) in enumerate(sorted(op_data.items())):
+                if any(v > 0 for v in values):  # Only plot if there are non-zero values
+                    color = colors[j % len(colors)]
+                    ax.bar(x, values, width, bottom=bottom, label=op_name, color=color, alpha=0.8)
+                    bottom += np.array(values)
+            
+            ax.set_title(f'{stage_name} Runtime by Operation (Average)')
+            ax.set_ylabel('Runtime (seconds)')
+            ax.set_xticks(x)
+            ax.set_xticklabels(config_labels, rotation=45)
+            ax.grid(True, alpha=0.3)
+            
+            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
+    
+    plt.suptitle('Query Execution Pipeline Runtime Breakdown (Average Across All Videos)', fontsize=16)
+    plt.tight_layout()
+    
+    # Save plot
+    for fmt in FORMATS:
+        plt.savefig(os.path.join(output_dir, f'query_execution_pipeline_average.{fmt}'), 
+                   dpi=300, bbox_inches='tight')
+    
+    if show_plots:
+        plt.show()
+    else:
+        plt.close()
+
+
+def create_per_video_query_execution_visualization(query_timings: Dict[str, Any], output_dir: str, dataset: str, video: str, video_name: str, show_plots: bool = False):
+    """Create query execution visualization for a specific video."""
     # Prepare data for pipeline visualization
     stages = ['020_exec_classify', '030_exec_compress', '040_exec_detect', '060_exec_track']
     stage_names = ['Classify', 'Compress', 'Detect', 'Track']
@@ -246,7 +373,7 @@ def create_query_execution_visualizations(query_timings: Dict[str, Any], output_
         
         for classifier in classifiers:
             for tile_size in tile_sizes:
-                config_key = f"{dataset}/jnc00.mp4_{classifier}_{tile_size}"  # Use one video as example
+                config_key = f"{video}_{classifier}_{tile_size}"
                 config_labels.append(f"{classifier}\n{tile_size}")
                 
                 # Get individual timings for this config to group by operation
@@ -258,9 +385,12 @@ def create_query_execution_visualizations(query_timings: Dict[str, Any], output_
                 
                 # Ensure all operations have a value for this config (0 if not present)
                 all_ops = set()
-                for other_config in query_timings['timings'][stage].values():
-                    for timing in other_config:
-                        all_ops.add(timing.get('op', 'unknown'))
+                for other_classifier in classifiers:
+                    for other_tile_size in tile_sizes:
+                        other_config_key = f"{video}_{other_classifier}_{other_tile_size}"
+                        if other_config_key in query_timings['timings'][stage]:
+                            for timing in query_timings['timings'][stage][other_config_key]:
+                                all_ops.add(timing.get('op', 'unknown'))
                 
                 for op_name in all_ops:
                     op_data[op_name].append(config_ops.get(op_name, 0))
@@ -287,16 +417,19 @@ def create_query_execution_visualizations(query_timings: Dict[str, Any], output_
             ax.set_xticklabels(config_labels, rotation=45)
             ax.grid(True, alpha=0.3)
             
-            # # Add legend only to the first subplot to avoid clutter
-            # if i == 0:
             ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
     
-    plt.suptitle('Query Execution Pipeline Runtime Breakdown', fontsize=16)
+    plt.suptitle(f'Query Execution Pipeline Runtime Breakdown - {video_name}', fontsize=16)
     plt.tight_layout()
     
+    # Create per-video subdirectory
+    video_output_dir = os.path.join(output_dir, 'per_video')
+    os.makedirs(video_output_dir, exist_ok=True)
+    
     # Save plot
-    for fmt in ['png', 'pdf']:
-        plt.savefig(os.path.join(output_dir, f'query_execution_pipeline.{fmt}'), 
+    safe_video_name = video_name.replace('/', '_').replace('.', '_')
+    for fmt in FORMATS:
+        plt.savefig(os.path.join(video_output_dir, f'query_execution_pipeline_{safe_video_name}.{fmt}'), 
                    dpi=300, bbox_inches='tight')
     
     if show_plots:
@@ -310,7 +443,39 @@ def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Di
     """Create comparative analysis between index construction and query execution."""
     os.makedirs(output_dir, exist_ok=True)
     
-    # 1. Total Runtime Comparison
+    # Extract all videos from the data
+    videos = extract_videos_from_data(query_timings)
+    print(f"Creating comparative analysis for {len(videos)} videos: {videos}")
+    
+    # Create average comparative analysis across all videos
+    create_average_comparative_analysis(index_timings, query_timings, output_dir, videos, show_plots)
+    
+    # Create per-video comparative analyses
+    for video in videos:
+        video_name = video.split('/')[-1] if '/' in video else video  # Extract just the filename
+        create_per_video_comparative_analysis(index_timings, query_timings, output_dir, video, video_name, show_plots)
+
+
+def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
+                                    output_dir: str, videos: List[str] | None = None, video: str | None = None, 
+                                    video_name: str | None = None, show_plots: bool = False):
+    """Create comparative analysis between index construction and query execution.
+    
+    Args:
+        index_timings: Index construction timing data
+        query_timings: Query execution timing data
+        output_dir: Output directory for saving plots
+        videos: List of videos for average analysis (if None, creates per-video analysis)
+        video: Specific video for per-video analysis (used when videos is None)
+        video_name: Display name for the video (used when videos is None)
+        show_plots: Whether to display plots interactively
+    """
+    assert (videos is None) != (video is None), "Either videos or video must be provided"
+
+    # Determine if this is average or per-video analysis
+    is_average = videos is not None
+    target_videos = videos if is_average else [video]
+    
     plt.figure(figsize=(14, 8))
     
     # Calculate breakdown for index construction stages
@@ -324,6 +489,9 @@ def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Di
     for stage_name, stage_summaries in index_timings['summaries'].items():
         stage_total = 0
         for k, times in stage_summaries.items():
+            # For per-video analysis, only include configs for this video
+            if video is not None and not k.startswith(video + '_'):
+                continue
             if times:
                 stage_total += np.sum(times)
         
@@ -336,10 +504,10 @@ def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Di
     
     # Calculate breakdown for query execution stages
     query_stages = {
-        'Classify': 0,
-        'Compress': 0,
-        'Detect': 0,
-        'Track': 0
+        'Classify': 0.0 if is_average else 0,
+        'Compress': 0.0 if is_average else 0,
+        'Detect': 0.0 if is_average else 0,
+        'Track': 0.0 if is_average else 0
     }
     
     # Query execution stage breakdown (exclude preprocessing stages and groundtruth classifier)
@@ -347,53 +515,95 @@ def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Di
     for stage_name, stage_summaries in query_timings['summaries'].items():
         if stage_name in excluded_stages:
             continue
-            
-        stage_total = 0
-        for config_key, times in stage_summaries.items():
-            # Exclude groundtruth classifier (config_key format: dataset/video_classifier_tilesize)
-            if '_groundtruth_' in config_key:
-                continue
-            if times:
-                stage_total += np.mean(times)
         
+        if is_average:
+            # Average across videos
+            stage_video_totals = []  # Collect totals for each video
+            for target_video in target_videos:
+                video_total = 0
+                for config_key, times in stage_summaries.items():
+                    # Only include configs for this video and exclude groundtruth classifier
+                    assert target_video is not None
+                    if not config_key.startswith(target_video + '_') or '_groundtruth_' in config_key:
+                        continue
+                    if times:
+                        video_total += np.mean(times)
+                if video_total > 0:
+                    stage_video_totals.append(video_total)
+            
+            # Average across videos
+            stage_total = np.mean(stage_video_totals) if stage_video_totals else 0
+        else:
+            # Per-video analysis
+            stage_total = 0
+            for config_key, times in stage_summaries.items():
+                # Only include configs for this video and exclude groundtruth classifier
+                assert video is not None
+                if not config_key.startswith(video + '_') or '_groundtruth_' in config_key:
+                    continue
+                if times:
+                    stage_total += np.mean(times)
+        
+        assert isinstance(stage_total, (int, float))
         if '020_exec_classify' in stage_name:
-            query_stages['Classify'] += stage_total
+            query_stages['Classify'] += float(stage_total) if is_average else stage_total
         elif '030_exec_compress' in stage_name:
-            query_stages['Compress'] += stage_total
+            query_stages['Compress'] += float(stage_total) if is_average else stage_total
         elif '040_exec_detect' in stage_name:
-            query_stages['Detect'] += stage_total
+            query_stages['Detect'] += float(stage_total) if is_average else stage_total
         elif '060_exec_track' in stage_name:
-            query_stages['Track'] += stage_total
+            query_stages['Track'] += float(stage_total) if is_average else stage_total
     
     # Calculate breakdown for query execution stages with groundtruth classifier only
     query_groundtruth_stages = {
-        'Classify': 0,
-        'Compress': 0,
-        'Detect': 0,
-        'Track': 0
+        'Classify': 0.0 if is_average else 0,
+        'Compress': 0.0 if is_average else 0,
+        'Detect': 0.0 if is_average else 0,
+        'Track': 0.0 if is_average else 0
     }
     
     # Query execution stage breakdown for groundtruth classifier only
     for stage_name, stage_summaries in query_timings['summaries'].items():
         if stage_name in excluded_stages:
             continue
-            
-        stage_total = 0
-        for config_key, times in stage_summaries.items():
-            # Include only groundtruth classifier (config_key format: dataset/video_classifier_tilesize)
-            if '_groundtruth_' not in config_key:
-                continue
-            if times:
-                stage_total += np.mean(times)
         
+        if is_average:
+            # Average across videos
+            stage_video_totals = []  # Collect totals for each video
+            for target_video in target_videos:
+                video_total = 0
+                for config_key, times in stage_summaries.items():
+                    # Only include configs for this video and only groundtruth classifier
+                    assert target_video is not None
+                    if not config_key.startswith(target_video + '_') or '_groundtruth_' not in config_key:
+                        continue
+                    if times:
+                        video_total += np.mean(times)
+                if video_total > 0:
+                    stage_video_totals.append(video_total)
+            
+            # Average across videos
+            stage_total = np.mean(stage_video_totals) if stage_video_totals else 0
+        else:
+            # Per-video analysis
+            stage_total = 0
+            for config_key, times in stage_summaries.items():
+                # Only include configs for this video and only groundtruth classifier
+                assert video is not None
+                if not config_key.startswith(video + '_') or '_groundtruth_' not in config_key:
+                    continue
+                if times:
+                    stage_total += np.mean(times)
+        
+        assert isinstance(stage_total, (int, float))
         if '020_exec_classify' in stage_name:
-            query_groundtruth_stages['Classify'] += stage_total
+            query_groundtruth_stages['Classify'] += float(stage_total) if is_average else stage_total
         elif '030_exec_compress' in stage_name:
-            query_groundtruth_stages['Compress'] += stage_total
+            query_groundtruth_stages['Compress'] += float(stage_total) if is_average else stage_total
         elif '040_exec_detect' in stage_name:
-            query_groundtruth_stages['Detect'] += stage_total
+            query_groundtruth_stages['Detect'] += float(stage_total) if is_average else stage_total
         elif '060_exec_track' in stage_name:
-            query_groundtruth_stages['Track'] += stage_total
+            query_groundtruth_stages['Track'] += float(stage_total) if is_average else stage_total
     
     # Calculate breakdown for preprocessing stages only
     preprocessing_stages = {
@@ -406,16 +616,37 @@ def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Di
     for stage_name, stage_summaries in query_timings['summaries'].items():
         if stage_name not in preprocessing_stage_names:
             continue
+        
+        if is_average:
+            # Average across videos
+            stage_video_totals = []  # Collect totals for each video
+            for target_video in target_videos:
+                video_total = 0
+                for config_key, times in stage_summaries.items():
+                    assert target_video is not None
+                    if not config_key.startswith(target_video + '_'):
+                        continue
+                    if times:
+                        video_total += np.mean(times)
+                if video_total > 0:
+                    stage_video_totals.append(video_total)
             
-        stage_total = 0
-        for config_key, times in stage_summaries.items():
-            if times:
-                stage_total += np.mean(times)
+            # Average across videos
+            stage_total = np.mean(stage_video_totals) if stage_video_totals else 0
+        else:
+            # Per-video analysis
+            stage_total = 0
+            for config_key, times in stage_summaries.items():
+                assert video is not None
+                if not config_key.startswith(video + '_'):
+                    continue
+                if times:
+                    stage_total += np.mean(times)
         
         if '001_preprocess_groundtruth_detection' in stage_name:
-            preprocessing_stages['Detect'] += (stage_total / 1e6)
+            preprocessing_stages['Detect'] += float(stage_total / 1e6)
         elif '002_preprocess_groundtruth_tracking' in stage_name:
-            preprocessing_stages['Track'] += stage_total
+            preprocessing_stages['Track'] += float(stage_total)
     
     # Prepare data for stacked bar chart
     categories = ['Index Construction', 'Query Execution\n(Classifier: SimpleCNN)', 'Query Execution\n(Classifier: Groundtruth)', 'Naive']
@@ -479,7 +710,13 @@ def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Di
             bottom_preprocessing += value
     
     plt.ylabel('Runtime (seconds)')
-    plt.title('Index Construction vs Query Execution Runtime Breakdown')
+    
+    # Set title based on analysis type
+    if is_average:
+        plt.title('Index Construction vs Query Execution Runtime Breakdown (Average Across All Videos)')
+    else:
+        plt.title(f'Index Construction vs Query Execution Runtime Breakdown - {video_name}')
+    
     plt.xticks(x, categories)
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True, alpha=0.3)
@@ -487,15 +724,29 @@ def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Di
     # Add total value labels on top of bars
     totals = [bottom_index, bottom_query, bottom_query_groundtruth, bottom_preprocessing]
     for i, total in enumerate(totals):
-        plt.text(x[i], total + max(totals)*0.01, f'{total:.1f}s', 
-                ha='center', va='bottom', fontweight='bold')
+        if total > 0 or is_average:  # Only add label if there's a value (or for average analysis)
+            plt.text(x[i], total + max(totals)*0.01, f'{total:.1f}s', 
+                    ha='center', va='bottom', fontweight='bold')
     
     plt.tight_layout()
     
-    # Save plot
-    for fmt in ['png', 'pdf']:
-        plt.savefig(os.path.join(output_dir, f'index_vs_query_comparison.{fmt}'), 
-                   dpi=300, bbox_inches='tight')
+    # Save plot with appropriate naming and directory structure
+    if is_average:
+        # Save in main output directory for average analysis
+        for fmt in FORMATS:
+            plt.savefig(os.path.join(output_dir, f'index_vs_query_comparison_average.{fmt}'), 
+                       dpi=300, bbox_inches='tight')
+    else:
+        # Create per-video subdirectory for per-video analysis
+        video_output_dir = os.path.join(output_dir, 'per_video')
+        os.makedirs(video_output_dir, exist_ok=True)
+        
+        # Save plot with safe filename
+        assert video_name is not None
+        safe_video_name = video_name.replace('/', '_').replace('.', '_')
+        for fmt in FORMATS:
+            plt.savefig(os.path.join(video_output_dir, f'index_vs_query_comparison_{safe_video_name}.{fmt}'), 
+                       dpi=300, bbox_inches='tight')
     
     if show_plots:
         plt.show()
@@ -503,15 +754,23 @@ def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Di
         plt.close()
 
 
+def create_average_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
+                                      output_dir: str, videos: List[str], show_plots: bool = False):
+    """Create average comparative analysis between index construction and query execution."""
+    create_comparative_analysis_chart(index_timings, query_timings, output_dir, 
+                                    videos=videos, show_plots=show_plots)
+
+
+def create_per_video_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
+                                        output_dir: str, video: str, video_name: str, show_plots: bool = False):
+    """Create comparative analysis between index construction and query execution for a specific video."""
+    create_comparative_analysis_chart(index_timings, query_timings, output_dir, 
+                                    video=video, video_name=video_name, show_plots=show_plots)
+
+
 def main():
     """Main function to create runtime breakdown visualizations."""
     args = parse_args()
-    
-    # Update data_dir to use dataset if default path is used
-    data_dir = f'/polyis-cache/summary/{args.dataset}/throughput'
-    
-    # Update output_dir to be dataset-specific if default is used
-    output_dir = f'summary/{args.dataset}/throughput-visualization'
     
     print(f"Loading throughput data tables for dataset: {args.dataset}")
     print(f"Data directory: {args.data_dir}")
@@ -525,12 +784,14 @@ def main():
     query_timings = parse_query_execution_timings(query_data)
     
     print("Creating query execution visualizations...")
-    create_query_execution_visualizations(query_timings, args.output_dir, args.dataset, args.show_plots)
+    create_query_execution_visualizations(query_timings, os.path.join(args.output_dir, args.dataset), args.dataset, args.show_plots)
     
     print("Creating comparative analysis...")
-    create_comparative_analysis(index_timings, query_timings, args.output_dir, args.show_plots)
+    create_comparative_analysis(index_timings, query_timings, os.path.join(args.output_dir, args.dataset), args.show_plots)
     
     print(f"\nVisualization complete! Results saved to: {args.output_dir}")
+    print("- Average visualizations saved as *_average.png/pdf")
+    print("- Per-video visualizations saved in per_video/ subdirectory")
 
 
 if __name__ == '__main__':

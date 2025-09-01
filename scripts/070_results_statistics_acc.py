@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple, Any
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
+import csv
 
 sys.path.append('/polyis/modules/TrackEval')
 import trackeval
@@ -523,18 +523,22 @@ def create_visualizations(results: List[Dict[str, Any]], output_dir: str) -> Non
         clear_scores.append(metrics.get('CLEAR', {}).get('MOTA', 0.0))
         identity_scores.append(metrics.get('Identity', {}).get('IDF1', 0.0))
     
-    # Create DataFrame for easier plotting
-    df = pd.DataFrame({
-        'Video': video_names,
-        'Classifier': classifiers,
-        'Tile_Size': tile_sizes,
-        'HOTA': hota_scores,
-        'MOTA': clear_scores,
-        'IDF1': identity_scores
-    })
-    
-    # Save results to CSV
-    df.to_csv(os.path.join(output_dir, 'accuracy_results.csv'), index=False)
+    # Save results to CSV using native Python csv module
+    csv_file_path = os.path.join(output_dir, 'accuracy_results.csv')
+    with open(csv_file_path, 'w', newline='') as csvfile:
+        fieldnames = ['Video', 'Classifier', 'Tile_Size', 'HOTA', 'MOTA', 'IDF1']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        for i in range(len(video_names)):
+            writer.writerow({
+                'Video': video_names[i],
+                'Classifier': classifiers[i],
+                'Tile_Size': tile_sizes[i],
+                'HOTA': hota_scores[i],
+                'MOTA': clear_scores[i],
+                'IDF1': identity_scores[i]
+            })
     
     # Set matplotlib style
     plt.style.use('default')
