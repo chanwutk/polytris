@@ -8,12 +8,14 @@ cimport numpy as cnp
 from libc.stdlib cimport malloc, free
 cimport cython
 
-ctypedef cnp.int16_t GROUP_t
+
+ctypedef cnp.uint16_t GROUP_t
 ctypedef cnp.uint8_t MASK_t
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef list find_connected_tiles_fast(GROUP_t[:, :] bitmap, int start_i, int start_j):
+cdef list find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
     """
     Fast Cython implementation of find_connected_tiles using a manual stack.
     
@@ -54,24 +56,26 @@ cdef list find_connected_tiles_fast(GROUP_t[:, :] bitmap, int start_i, int start
             _i = i + directions_i[di]
             _j = j + directions_j[di]
             
-            # Add neighbors that are non-zero and different from current value
-            # (meaning they haven't been visited yet)
-            if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
-                stack.append((_i, _j))
+            if 0 <= _i < h and 0 <= _j < w:
+                # Add neighbors that are non-zero and different from current value
+                # (meaning they haven't been visited yet)
+                if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
+                    stack.append((_i, _j))
     
     return filled
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def group_tiles(bitmap_input):
+def group_tiles(cnp.uint8_t[:, :] bitmap_input):
     """
     Fast Cython implementation of group_tiles.
     
     Groups connected tiles into polyominoes.
     
     Args:
-        bitmap: 2D numpy array representing the grid of tiles,
-                where 1 indicates a tile with detection and 0 indicates no detection
+        bitmap_input: 2D numpy array memoryview (uint8) representing the grid of tiles,
+                     where 1 indicates a tile with detection and 0 indicates no detection
                 
     Returns:
         list: List of polyominoes, where each polyomino is:
@@ -79,39 +83,36 @@ def group_tiles(bitmap_input):
             - mask: masking of the polyomino as a 2D numpy array
             - offset: offset of the mask from the top left corner of the bitmap
     """
-    # Convert input to numpy array if needed
+    # Convert to numpy array for operations that need it
     bitmap_np = np.asarray(bitmap_input, dtype=np.uint8)
-    cdef cnp.uint8_t[:, :] bitmap = bitmap_np
     
-    cdef int h = bitmap.shape[0]
-    cdef int w = bitmap.shape[1]
+    cdef int h = bitmap_np.shape[0]
+    cdef int w = bitmap_np.shape[1]
     cdef int i, j, group_id, min_i, min_j, max_i, max_j, mask_i, mask_j
     cdef list connected_tiles, bins = []
-    cdef set visited = set()
+    # cdef set visited = set()
     
     # Create groups array with unique IDs
-    _groups = np.arange(h * w, dtype=np.int16).reshape((h, w)) + 1
-    _groups = _groups * bitmap_np.astype(np.int16)
-    
-    # Padding with size=1 on all sides
-    groups = np.zeros((h + 2, w + 2), dtype=np.int16)
-    groups[1:h+1, 1:w+1] = _groups
+    groups = np.arange(1, h * w + 1, dtype=np.uint16).reshape((h, w))
+    # Mask groups by bitmap - only keep group IDs where bitmap has 1s
+    groups = np.where(bitmap_np, groups, 0)
     cdef GROUP_t[:, :] groups_view = groups
     
     # Process each cell
     for i in range(groups.shape[0]):
         for j in range(groups.shape[1]):
             group_id = groups_view[i, j]
-            if group_id == 0 or group_id in visited:
+            # if group_id == 0 or group_id in visited:
+            if group_id == 0 or bitmap_np[(group_id - 1) // w, (group_id - 1) % w] == 0:
                 continue
             
             # Find connected tiles
-            connected_tiles = find_connected_tiles_fast(groups_view, i, j)
+            connected_tiles = find_connected_tiles(groups_view, i, j)
             if not connected_tiles:
                 continue
             
             # Convert to numpy array and find bounds
-            connected_array = np.array(connected_tiles, dtype=np.int32)
+            connected_array = np.array(connected_tiles, dtype=np.uint8)
             if connected_array.size == 0:
                 continue
                 
@@ -130,10 +131,8 @@ def group_tiles(bitmap_input):
             for tile_i, tile_j in connected_tiles:
                 mask[tile_i - min_i, tile_j - min_j] = 1
             
-            # Calculate offset (subtract 1 because of padding)
-            offset = (min_i - 1, min_j - 1)
-            
-            bins.append((group_id, mask, offset))
-            visited.add(group_id)
+            bins.append((group_id, mask, (min_i, min_j)))
+            # visited.add(group_id)
+            bitmap_np[i, j] = 0
     
     return bins
