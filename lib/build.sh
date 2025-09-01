@@ -28,14 +28,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo "Building Cython polyomino packing library..."
-
-# Check if Cython is installed
-if ! python -c "import Cython" 2>/dev/null; then
-    echo "Installing Cython..."
-    pip install Cython
-fi
-
 # Build the Cython extension
 echo "Building Cython extension..."
 python setup.py build_ext --inplace
@@ -44,18 +36,12 @@ echo "Build completed successfully!"
 echo "You can now import the fast Cython implementations:"
 echo "  from lib.pack_append import pack_append"
 echo "  from lib.group_tiles import group_tiles"
+echo ""
 
 # Run tests by default unless disabled
 if [ "$RUN_TESTS" = true ]; then
-    echo ""
     echo "Running tests..."
-    if command -v pytest >/dev/null 2>&1; then
-        pytest tests/ -v
-    else
-        echo "pytest not found, skipping tests"
-        echo "Install pytest and run: pytest tests/ -v"
-    fi
+    pytest tests/ -v
 else
-    echo ""
     echo "Tests skipped (use pytest tests/ -v to run manually)"
 fi
