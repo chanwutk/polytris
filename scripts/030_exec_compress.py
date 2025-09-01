@@ -11,6 +11,8 @@ import time
 from queue import Queue
 
 from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_classification_results
+# from lib.python_wrapper_cython import pack_append as _fast_pack_append
+from lib.pack_append import pack_append as _fast_pack_append
 
 
 # TILE_SIZES = [32, 64, 128]
@@ -112,7 +114,7 @@ def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, in
                 continue
                 
             connected_tiles = np.array(connected_tiles, dtype=int).T
-            mask = np.zeros((h + 1, w + 1), dtype=np.bool)
+            mask = np.zeros((h + 1, w + 1), dtype=np.uint8)
             mask[*connected_tiles] = True
             
             offset = np.min(connected_tiles, axis=1)
@@ -134,17 +136,38 @@ def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
     """
     Pack polyominoes into a bitmap.
     
+    Uses fast Cython implementation when available.
+    
     Args:
-        bins: List of polyominoes to pack
+        poliominoes: List of polyominoes to pack
         h: Height of the bitmap
         w: Width of the bitmap
-        bitmap: Existing bitmap to append to (None for new)
+        occupied_tiles: Existing bitmap to append to (modified in-place)
         
     Returns:
-        tuple[np.ndarray, list]: (bitmap, positions) where positions contains packing info
+        list: positions where positions contains packing info
+        or None if packing fails
     """
-    # occupied_tiles = occupied_tiles.copy()
-    appending_tiles = np.zeros((h, w), dtype=np.bool)
+    return _fast_pack_append(poliominoes, h, w, occupied_tiles)
+    # return _pack_append(poliominoes, h, w, occupied_tiles)
+
+
+def _pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
+                        h: int, w: int, occupied_tiles: np.ndarray):
+    """
+    Implementation of pack_append.
+    
+    Args:
+        poliominoes: List of polyominoes to pack
+        h: Height of the bitmap
+        w: Width of the bitmap
+        occupied_tiles: Existing bitmap to append to (modified in-place)
+        
+    Returns:
+        list: positions where positions contains packing info
+        or None if packing fails
+    """
+    appending_tiles = np.zeros((h, w), dtype=np.uint8)
     
     positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]] = []
     for groupid, mask, offset in poliominoes:
@@ -163,7 +186,7 @@ def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
             occupied_tiles ^= appending_tiles
             return None
     
-    return occupied_tiles, positions
+    return positions
 
 
 def render(canvas: np.ndarray, positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]], 
@@ -318,7 +341,7 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
 
     def init_packing_variables():
         canvas = np.zeros((height, width, 3), dtype=np.uint8)
-        occupied_tiles = np.zeros((grid_height, grid_width), dtype=np.bool)
+        occupied_tiles = np.zeros((grid_height, grid_width), dtype=np.uint8)
         index_map = np.zeros((grid_height, grid_width, 2), dtype=np.int32)
         offset_lookup: dict = {}
         return canvas, occupied_tiles, index_map, offset_lookup, True, False
@@ -385,10 +408,11 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
             
             # Profile: Try packing polyominoes
             step_start = (time.time_ns() / 1e6)
-            pack_results = None if full else pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
+            positions = None if full else pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
 
-            if pack_results is not None:
+            if positions is not None:
                 step_times['pack_append'] = (time.time_ns() / 1e6) - step_start
+                pack_results = (occupied_tiles, positions)  # Create tuple for apply_pack
                 occupied_tiles, canvas = apply_pack(pack_results, canvas, index_map, offset_lookup,
                                                     frame_idx, frame, tile_size, step_times)
                 clean = False
@@ -408,9 +432,10 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
 
                 # Profile: Retry packing for current frame
                 step_start = (time.time_ns() / 1e6)
-                pack_results = pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
-                if pack_results is not None:
+                positions = pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
+                if positions is not None:
                     step_times['pack_append_retry'] = (time.time_ns() / 1e6) - step_start
+                    pack_results = (occupied_tiles, positions)  # Create tuple for apply_pack
                     occupied_tiles, canvas = apply_pack(pack_results, canvas, index_map, offset_lookup,
                                                         frame_idx, frame, tile_size, step_times)
                     clean = False

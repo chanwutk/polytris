@@ -784,10 +784,10 @@ def main():
     query_timings = parse_query_execution_timings(query_data)
     
     print("Creating query execution visualizations...")
-    create_query_execution_visualizations(query_timings, os.path.join(args.output_dir, args.dataset), args.dataset, args.show_plots)
+    create_query_execution_visualizations(query_timings, os.path.join(args.output_dir, args.dataset, 'throughput'), args.dataset, args.show_plots)
     
     print("Creating comparative analysis...")
-    create_comparative_analysis(index_timings, query_timings, os.path.join(args.output_dir, args.dataset), args.show_plots)
+    create_comparative_analysis(index_timings, query_timings, os.path.join(args.output_dir, args.dataset, 'throughput'), args.show_plots)
     
     print(f"\nVisualization complete! Results saved to: {args.output_dir}")
     print("- Average visualizations saved as *_average.png/pdf")
