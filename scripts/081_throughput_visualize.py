@@ -200,6 +200,7 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
         
         for stage, file_path in entry['runtime_files']:
             file_timings = parse_runtime_file(file_path, stage, accessors[stage])
+            print(dataset_video, classifier, tile_size, stage, file_path, len(file_timings))
             
             if not file_timings:
                 continue
@@ -258,7 +259,7 @@ def create_average_query_execution_visualization(query_timings: Dict[str, Any], 
     
     # Group by classifier and tile size 
     classifiers = ['SimpleCNN', 'groundtruth']
-    tile_sizes = [32, 64, 128]
+    tile_sizes = [30, 60, 120]
     
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     axes = axes.flatten()
@@ -359,7 +360,7 @@ def create_per_video_query_execution_visualization(query_timings: Dict[str, Any]
     
     # Group by classifier and tile size 
     classifiers = ['SimpleCNN', 'groundtruth']
-    tile_sizes = [32, 64, 128]
+    tile_sizes = [30, 60, 120]
     
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     axes = axes.flatten()
@@ -644,7 +645,7 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
                     stage_total += np.mean(times)
         
         if '001_preprocess_groundtruth_detection' in stage_name:
-            preprocessing_stages['Detect'] += float(stage_total / 1e6)
+            preprocessing_stages['Detect'] += float(stage_total)
         elif '002_preprocess_groundtruth_tracking' in stage_name:
             preprocessing_stages['Track'] += float(stage_total)
     

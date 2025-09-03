@@ -16,7 +16,7 @@ from polyis.images import splitHWC, padHWC
 from scripts.utilities import CACHE_DIR, DATA_DIR, format_time
 
 
-TILE_SIZES = [32, 64, 128]
+TILE_SIZES = [30, 60, 120]
 
 
 def get_classifier_class(classifier_name: str):
@@ -45,14 +45,14 @@ def parse_args():
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
-            - tile_size (int | str): Tile size to use for classification (choices: 32, 64, 128, 'all')
+            - tile_size (int | str): Tile size to use for classification (choices: 30, 60, 120, 'all')
             - classifier (str): Classifier model to use (default: 'SimpleCNN')
     """
     parser = argparse.ArgumentParser(description='Execute trained classifier models to classify video tiles')
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], default='all',
+    parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     parser.add_argument('--classifier', type=str, default='SimpleCNN',
                         help='Classifier model to use (default: SimpleCNN)')
@@ -68,7 +68,7 @@ def load_model(video_path: str, tile_size: int, classifier_name: str) -> "torch.
     
     Args:
         video_path (str): Path to the specific video directory
-        tile_size (int): Tile size for which to load the model (32, 64, or 128)
+        tile_size (int): Tile size for which to load the model (30, 60, or 120)
         classifier_name (str): Name of the classifier model to use (default: 'SimpleCNN')
         
     Returns:
@@ -102,7 +102,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
         frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3)
             where H and W are the frame height and width, and 3 represents RGB channels
         model (torch.nn.Module): Trained model for the specified tile size
-        tile_size (int): Size of tiles to use for processing (32, 64, or 128)
+        tile_size (int): Size of tiles to use for processing (30, 60, or 120)
             
     Returns:
         tuple[np.ndarray, list[dict[str, float]]]: A tuple containing:
@@ -181,7 +181,7 @@ def process_video(video_path: str, model, tile_size: int, output_path: str):
         - frame_idx (int): Zero-based frame index
         - timestamp (float): Frame timestamp in seconds
         - frame_size (list[int]): [height, width] of the frame
-        - tile_size (int): Tile size used for processing (32, 64, or 128)
+        - tile_size (int): Tile size used for processing (30, 60, or 120)
         - tile_classifications (list[list[float]]): Relevance scores grid for the specified tile size
         - runtime (float): Runtime in seconds for the ClassifyRelevance model inference
     """
@@ -244,7 +244,7 @@ def main(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
-            - tile_size (str): Tile size to use for classification ('32', '64', '128', or 'all')
+            - tile_size (str): Tile size to use for classification ('30', '60', '120', or 'all')
             - classifier (str): Classifier model to use (default: 'SimpleCNN')
             
     Note:
@@ -254,7 +254,7 @@ def main(args):
           where DATA_DIR and DATA_CACHE are both /polyis-data/video-datasets-low
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - A separate model is loaded for each video directory
-        - When tile_size is 'all', all three tile sizes (32, 64, 128) are processed
+        - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
         - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/relevancy/score/{classifier_name}_{tile_size}/score.jsonl
         - If no trained model is found for a video, that video is skipped with a warning
     """

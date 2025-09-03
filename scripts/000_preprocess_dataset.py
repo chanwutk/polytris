@@ -22,23 +22,19 @@ def parse_args():
                         default=DATA_DIR,
                         help='Processed Dataset directory')
     parser.add_argument('-b', '--batch_size', required=False,
-                        default=256,
+                        default=128,
                         type=int,
                         help='Batch size')
-    parser.add_argument('-c', '--chunk_size', required=False,
-                        default=2048,
-                        type=int,
-                        help='Chunk size')
     parser.add_argument('-d', '--datasets', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--isr', default=1, type=int)
+    parser.add_argument('--isr', default=2, type=int)
     return parser.parse_args()
 
 
-def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_size, isr):
-    WIDTH = 1152
-    HEIGHT = 768
+def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, isr):
+    WIDTH = 1080
+    HEIGHT = 720
 
     root = ElementTree.parse(mask).getroot()
     img = root.find(f'.//image[@name="{file.replace(".mp4", ".jpg")}"]')
@@ -88,34 +84,35 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_siz
 
     fidx = 0
     done = False
-    while cap.isOpened() and not done:
-        frames = []
-        print('start', fidx)
-        for i in range(batch_size):
-            ret, frame = cap.read()
-            fidx += 1
-            if not ret:
-                done = True
-                break
-            if fidx % isr == 0:
-                frame = frame[top:bottom, left:right, :]
-                frames.append(frame)
+    with torch.no_grad():
+        while cap.isOpened() and not done:
+            frames = []
+            print('start', fidx)
+            for i in range(batch_size):
+                ret, frame = cap.read()
+                fidx += 1
+                if not ret:
+                    done = True
+                    break
+                if fidx % isr == 0:
+                    frame = frame[top:bottom, left:right, :]
+                    frames.append(frame)
 
-        print('mask', fidx)
-        frames_gpu = torch.from_numpy(np.array(frames)).to(f'cuda:{gpuIdx}')
-        frames_gpu = frames_gpu * bitmask
+            print('mask', fidx)
+            frames_gpu = torch.from_numpy(np.array(frames)).to(f'cuda:{gpuIdx}')
+            frames_gpu = frames_gpu * bitmask
 
-        print('scale', fidx)
-        frames_gpu = frames_gpu.permute(0, 3, 1, 2)
-        frames_gpu = torch.nn.functional.interpolate(frames_gpu.float(), size=(oheight, owidth), mode='bilinear', align_corners=False)
-        assert isinstance(frames_gpu, torch.Tensor)
-        frames_gpu = frames_gpu.permute(0, 2, 3, 1)
-        frames = frames_gpu.detach().to(torch.uint8).cpu().numpy()
+            print('scale', fidx)
+            frames_gpu = frames_gpu.permute(0, 3, 1, 2)
+            frames_gpu = torch.nn.functional.interpolate(frames_gpu.float(), size=(oheight, owidth), mode='bilinear', align_corners=False)
+            assert isinstance(frames_gpu, torch.Tensor)
+            frames_gpu = frames_gpu.permute(0, 2, 3, 1)
+            frames = frames_gpu.detach().to(torch.uint8).cpu().numpy()
 
-        print('write', fidx)
-        for frame in frames:
-            writer.write(np.ascontiguousarray(frame))
-        print('write done', fidx)
+            print('write', fidx)
+            for frame in frames:
+                writer.write(np.ascontiguousarray(frame))
+            print('write done', fidx)
 
     cap.release()
     writer.release()
@@ -124,7 +121,7 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, chunk_siz
 def process_b3d(args: argparse.Namespace):
     videodir = os.path.join(args.input, 'b3d')
     outputdir = os.path.join(args.output, 'b3d')
-    mask = os.path.join(args.input, 'b3d', 'masks.xml')
+    mask = os.path.join(args.input, 'b3d', 'annotations.xml')
     isr = args.isr
 
     root = ElementTree.parse(mask).getroot()
@@ -148,7 +145,7 @@ def process_b3d(args: argparse.Namespace):
             continue
 
         print(f'Processing {file}...')
-        process = mp.Process(target=process_video, args=(file, videodir, outputdir, mask, count % torch.cuda.device_count(), args.batch_size, args.chunk_size, isr))
+        process = mp.Process(target=process_video, args=(file, videodir, outputdir, mask, count % torch.cuda.device_count(), args.batch_size, isr))
         process.start()
         processes.append(process)
         count += 1

@@ -51,7 +51,7 @@ def process_video_visualization(video_file: str, cache_dir: str, dataset: str, s
         raise FileNotFoundError(f"Original video not found for {video_file}")
     
     # Create output path for visualization
-    output_path = os.path.join(cache_dir, dataset, video_file, 'groundtruth', 'visualization.mp4')
+    output_path = os.path.join(cache_dir, dataset, video_file, 'groundtruth', f'annotated.groundtruth{video_file}')
     
     # Create visualization
     create_tracking_visualization(video_path, tracking_results, output_path, speed_up, process_id)

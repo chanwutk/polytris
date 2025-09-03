@@ -11,8 +11,8 @@ import tqdm
 from scripts.utilities import CACHE_DIR
 
 
-# TILE_SIZES = [32, 64, 128]
-TILE_SIZES = [64]
+# TILE_SIZES = [30, 60, 120]
+TILE_SIZES = [60]
 
 
 def parse_args():

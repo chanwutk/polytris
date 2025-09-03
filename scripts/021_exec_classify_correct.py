@@ -12,7 +12,7 @@ import multiprocessing as mp
 from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections
 
 
-TILE_SIZES = [32, 64, 128]
+TILE_SIZES = [30, 60, 120]
 
 
 def parse_args():
@@ -22,13 +22,13 @@ def parse_args():
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
-            - tile_size (int | str): Tile size to use for classification (choices: 32, 64, 128, 'all')
+            - tile_size (int | str): Tile size to use for classification (choices: 30, 60, 120, 'all')
     """
     parser = argparse.ArgumentParser(description='Execute trained proxy models to classify video tiles')
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], default='all',
+    parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     return parser.parse_args()
 
@@ -43,7 +43,7 @@ def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_s
     Args:
         frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3)
         detections (list[list[float]]): List of bounding boxes for this frame
-        tile_size (int): Size of tiles to use for processing (32, 64, or 128)
+        tile_size (int): Size of tiles to use for processing (30, 60, or 120)
             
     Returns:
         tuple[np.ndarray, list[dict]]: A tuple containing:
@@ -81,7 +81,7 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
     Args:
         video_path (str): Path to the input video file to process
         frame_detections (dict[int, list[list[float]]]): Dictionary mapping frame indices to detection lists
-        tile_size (int): Tile size used for processing (32, 64, or 128)
+        tile_size (int): Tile size used for processing (30, 60, or 120)
         output_path (str): Path where the output JSONL file will be saved
         idx (int): Index of the video/tile size combination
     Note:
@@ -97,7 +97,7 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
         - frame_idx (int): Zero-based frame index
         - timestamp (float): Frame timestamp in seconds
         - frame_size (list[int]): [height, width] of the frame
-        - tile_size (int): Tile size used for processing (32, 64, or 128)
+        - tile_size (int): Tile size used for processing (30, 60, or 120)
         - tile_classifications (list[list[float]]): Relevance scores grid for the specified tile size
         - runtime (float): Runtime in seconds (always 0.0 for groundtruth-based processing)
         - idx (int): Index of the video/tile size combination
@@ -206,7 +206,7 @@ def main(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
-            - tile_size (str): Tile size to use for classification ('32', '64', '128', or 'all')
+            - tile_size (str): Tile size to use for classification ('30', '60', '120', or 'all')
             
     Note:
         - The script expects a specific directory structure:
@@ -215,7 +215,7 @@ def main(args):
           where DATA_DIR is /polyis-data/video-datasets-low and CACHE_DIR is /polyis-cache
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - Groundtruth tracking results are loaded for each video
-        - When tile_size is 'all', all three tile sizes (32, 64, 128) are processed
+        - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
         - Output files are saved in {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/groundtruth_{tile_size}/score.jsonl
         - If no tracking results are found for a video, that video is skipped with a warning
     """

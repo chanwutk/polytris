@@ -14,7 +14,7 @@ import polyis.images
 
 from scripts.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap
 
-TILE_SIZES = [32, 64, 128]
+TILE_SIZES = [30, 60, 120]
 
 
 def parse_args():

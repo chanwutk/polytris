@@ -18,7 +18,7 @@ from polyis.models.classifier.simple_cnn import SimpleCNN
 from scripts.utilities import CACHE_DIR
 
 
-TILE_SIZES = [32, 64, 128]
+TILE_SIZES = [30, 60, 120]
 
 
 def parse_args():
@@ -48,7 +48,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     losses = []
     val_losses = []
 
-    early_stopping_tolerance = 3
+    early_stopping_tolerance = 10
     early_stopping_threshold = 0.001
 
     epoch_train_losses: list[dict] = []

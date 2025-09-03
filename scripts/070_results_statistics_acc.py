@@ -224,7 +224,7 @@ def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int,
     evaluator = trackeval.Evaluator(eval_config)
     
     # Run evaluation
-    results = evaluator.evaluate([dataset], metrics)
+    results = evaluator.evaluate([dataset], metrics, show_progressbar=True)
     
     # Clean up temporary files
     os.unlink(temp_tracking_file)

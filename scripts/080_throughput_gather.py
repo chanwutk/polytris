@@ -14,7 +14,7 @@ DATASETS_VIDEOS = [
 
 CLASSIFIERS = ['SimpleCNN']
 EXEC_CLASSIFIERS = ['SimpleCNN', 'groundtruth']
-TILE_SIZES = [32, 64, 128]
+TILE_SIZES = [30, 60, 120]
 
 
 def gather_index_construction_data():

@@ -14,7 +14,7 @@ import multiprocessing as mp
 from scripts.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results
 
 
-TILE_SIZES = [32, 64, 128]
+TILE_SIZES = [30, 60, 120]
 
 
 def parse_args():
@@ -24,21 +24,18 @@ def parse_args():
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
-            - tile_size (int | str): Tile size to use for classification (choices: 32, 64, 128, 'all')
+            - tile_size (int | str): Tile size to use for classification (choices: 30, 60, 120, 'all')
             - threshold (float): Threshold for classification visualization (default: 0.5)
-            - groundtruth (bool): Whether to use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)
             - statistics (bool): Whether to compare classification results with groundtruth and generate statistics
     """
     parser = argparse.ArgumentParser(description='Visualize video tile classification results')
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--tile_size', type=str, choices=['32', '64', '128', 'all'], default='all',
+    parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification visualization (0.0 to 1.0)')
-    parser.add_argument('--groundtruth', action='store_true',
-                        help='Use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)')
     parser.add_argument('--statistics', action='store_true',
                         help='Compare classification results with groundtruth and generate statistics (no video output, ignores --groundtruth flag)')
     parser.add_argument('--processes', type=int, default=None,
@@ -171,7 +168,7 @@ def _evaluate_frame_worker(args):
 def create_statistics_visualizations(video_file: str, results: list[dict],
                                    groundtruth_detections: list[dict],
                                    tile_size: int, threshold: float,
-                                   output_dir: str):
+                                   output_dir: str, idx: int):
     """
     Create comprehensive statistics visualizations comparing classification results with groundtruth.
 
@@ -208,12 +205,14 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
                    for frame_result, frame_detections in zip(results, groundtruth_detections)]
 
     # Use multiprocessing to evaluate frames in parallel
-    num_processes = min(mp.cpu_count(), len(results))
+    num_processes = min(mp.cpu_count() - 10, len(results))
     with mp.Pool(processes=num_processes) as pool:
         frame_evals = list(tqdm(
             pool.imap(_evaluate_frame_worker, worker_args),
             total=len(results),
-            desc="Evaluating frames"
+            desc=f"Evaluating frames {idx + 1}",
+            position=idx + 1,
+            leave=True,
         ))
 
     # Collect results from parallel processing
@@ -635,7 +634,7 @@ def create_overlay_frame(frame: np.ndarray, classifications: np.ndarray,
 
 
 def save_visualization_frames(video_path: str, results: list, tile_size: int,
-                            threshold: float, output_dir: str):
+                            threshold: float, output_dir: str, idx: int):
     """
     Save visualization frames for a video as a video file.
 
@@ -690,7 +689,7 @@ def save_visualization_frames(video_path: str, results: list, tile_size: int,
     print(f"Creating visualization video with {video_frame_count} frames at {fps} FPS")
 
     # Process all frames
-    for frame_idx in tqdm(range(video_frame_count), desc="Creating visualization video"):
+    for frame_idx in tqdm(range(video_frame_count), desc=f"Creating visualization video {idx + 1}", position=idx + 1, leave=True):
         # Get frame from video
         ret, frame = cap.read()
         if not ret:
@@ -805,6 +804,65 @@ def create_summary_visualization(results: list, tile_size: int, threshold: float
     print(f"Saved summary visualization to: {summary_path}")
 
 
+def _process_classifier_tile_worker(args):
+    """
+    Worker function to process a single classifier-tile size combination for multiprocessing.
+    
+    Args:
+        args: Tuple containing (video_file, video_file_path, dataset_name, classifier_name, tile_size, threshold, statistics_mode, num_processes)
+    
+    Returns:
+        str: Status message about processing completion
+    """
+    video_file, video_file_path, dataset_name, classifier_name, tile_size, threshold, statistics_mode, num_processes, idx = args
+
+    # Load classification results
+    results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier_name)
+    
+    if statistics_mode:
+        # Load groundtruth detections for comparison
+        groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
+        
+        # Create output directory for statistics visualizations
+        stats_output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
+        
+        # Create statistics visualizations
+        create_statistics_visualizations(
+            video_file, results, groundtruth_detections,
+            tile_size, threshold, stats_output_dir, idx
+        )
+        
+        return f"Completed statistics analysis for {video_file} {classifier_name} tile size {tile_size}"
+    else:
+        # Create output directory for visualizations
+        vis_output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}')
+        
+        # Create visualizations
+        save_visualization_frames(video_file_path, results, tile_size, threshold, vis_output_dir, idx)
+        
+        # Create summary visualization
+        create_summary_visualization(results, tile_size, threshold, vis_output_dir)
+        
+        return f"Completed visualizations for {video_file} {classifier_name} tile size {tile_size}"
+
+
+def _process_frame_visualization_worker(args):
+    """
+    Worker function to process a single frame for visualization.
+    
+    Args:
+        args: Tuple containing (frame, classifications, tile_size, threshold, frame_idx)
+    
+    Returns:
+        tuple: (frame_idx, brightness_frame) for maintaining order
+    """
+    frame, classifications, tile_size, threshold, frame_idx = args
+    
+    # Create brightness visualization frame
+    brightness_frame = create_visualization_frame(frame, classifications, tile_size, threshold)
+    return frame_idx, brightness_frame
+
+
 def main(args):
     """
     Main function that orchestrates the video tile classification visualization process.
@@ -818,22 +876,19 @@ def main(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
-            - tile_size (str): Tile size to use for classification ('32', '64', '128', or 'all')
+            - tile_size (str): Tile size to use for classification ('30', '60', '120', or 'all')
             - threshold (float): Threshold value for visualization (0.0 to 1.0)
-            - groundtruth (bool): Whether to use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)
             - statistics (bool): Whether to compare classification results with groundtruth and generate statistics
 
          Note:
          - The script expects classification results from 020_exec_classify.py in:
            {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/proxy_{tile_size}/
-         - When groundtruth=True, looks for score_correct.jsonl files
-         - When groundtruth=False, looks for score.jsonl files
+         - Looks for score.jsonl files
          - Videos are read from {DATA_DIR}/{dataset}/
          - Visualizations are saved to {CACHE_DIR}/{dataset}/{video_file}/relevancy/proxy_{tile_size}/
          - The script creates a video file (visualization.mp4) showing brightness-adjusted frames
          - Summary statistics and plots are also generated
          - When --statistics is set, groundtruth comparison visualizations are generated instead of video output
-         - When --statistics is set, the --groundtruth flag is automatically ignored (always uses model predictions)
     """
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
 
@@ -854,13 +909,6 @@ def main(args):
 
     print(f"Using threshold: {args.threshold}")
 
-    if args.statistics:
-        print("Running in statistics mode - comparing classification results with groundtruth")
-        print("Note: --groundtruth flag is ignored in statistics mode (using model predictions)")
-        use_model_scores = False
-    else:
-        use_model_scores = args.groundtruth
-
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
 
@@ -870,52 +918,66 @@ def main(args):
 
     print(f"Found {len(video_files)} video files to process")
 
-    # Process each video file
+    # Determine number of processes to use
+    if args.processes is None:
+        num_processes = mp.cpu_count()
+    else:
+        num_processes = args.processes
+    
+    print(f"Using {num_processes} processes for parallel processing")
+
+    # Collect all video-classifier-tile combinations for parallel processing
+    all_tasks = []
+    
     for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
-
-        print(f"\nProcessing video file: {video_file}")
-
+        
+        # Get classifier tile sizes for this video
+        relevancy_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy')
+        if not os.path.exists(relevancy_dir):
+            print(f"Skipping {video_file}: No relevancy directory found")
+            continue
+            
         classifier_tilesizes: list[tuple[str, int]] = []
-        for file in os.listdir(os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy')):
-            classifier_name = file.split('_')[0]
-            tile_size = int(file.split('_')[1])
-            classifier_tilesizes.append((classifier_name, tile_size))
+        for file in os.listdir(relevancy_dir):
+            if '_' in file:
+                classifier_name = file.split('_')[0]
+                tile_size = int(file.split('_')[1])
+                classifier_tilesizes.append((classifier_name, tile_size))
+        
         classifier_tilesizes = sorted(classifier_tilesizes)
-        print(f"Found {len(classifier_tilesizes)} classifier tile sizes: {classifier_tilesizes}")
+        
+        if not classifier_tilesizes:
+            print(f"Skipping {video_file}: No classifier tile sizes found")
+            continue
+            
+        print(f"Found {len(classifier_tilesizes)} classifier tile sizes for {video_file}: {classifier_tilesizes}")
+        
+        # Add tasks for each classifier-tile size combination
+        for idx, (classifier_name, tile_size) in enumerate(classifier_tilesizes):
+            task_args = (video_file, video_file_path, args.dataset, classifier_name, tile_size, args.threshold, args.statistics, num_processes, idx)
+            all_tasks.append(task_args)
 
-        # Process each tile size for this video
-        for classifier_name, tile_size in classifier_tilesizes:
-            print(f"Processing tile size: {tile_size}")
+    if not all_tasks:
+        print("No tasks to process")
+        return
 
-            # Load classification results (model predictions for statistics mode)
-            results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, classifier_name, use_model_scores)
+    print(f"Processing {len(all_tasks)} tasks in parallel using {num_processes} processes...")
 
-            if args.statistics:
-                # Load groundtruth detections for comparison
-                groundtruth_detections = load_detection_results(CACHE_DIR, args.dataset, video_file, tracking=True)
+    # Process all tasks in parallel
+    with mp.Pool(processes=num_processes) as pool:
+        task_results = list(tqdm(
+            pool.imap(_process_classifier_tile_worker, all_tasks),
+            total=len(all_tasks),
+            desc="Processing tasks",
+            position=0,
+            leave=True,
+        ))
 
-                # Create output directory for statistics visualizations
-                stats_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
-
-                # Create statistics visualizations
-                create_statistics_visualizations(
-                    video_file, results, groundtruth_detections,
-                    tile_size, args.threshold, stats_output_dir
-                )
-
-                print(f"Completed statistics analysis for tile size {tile_size}")
-            else:
-                # Create output directory for visualizations
-                vis_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy', f'{classifier_name}_{tile_size}')
-
-                # Create visualizations
-                save_visualization_frames(video_file_path, results, tile_size, args.threshold, vis_output_dir)
-
-                # Create summary visualization
-                create_summary_visualization(results, tile_size, args.threshold, vis_output_dir)
-
-                print(f"Completed visualizations for tile size {tile_size}")
+    # Print results
+    print("\n=== Processing Results ===")
+    for result in task_results:
+        print(result)
 
 
 if __name__ == '__main__':

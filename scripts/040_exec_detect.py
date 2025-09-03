@@ -12,8 +12,8 @@ import polyis.models.retinanet_b3d
 from scripts.utilities import CACHE_DIR, DATA_DIR, format_time
 
 
-# TILE_SIZES = [32, 64, 128]
-TILE_SIZES = [64]
+# TILE_SIZES = [30, 60, 120]
+TILE_SIZES = [60]
 
 
 def parse_args():
@@ -23,7 +23,7 @@ def parse_args():
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
-            - tile_size (str): Tile size to use for detection (choices: '64', '128', 'all')
+            - tile_size (str): Tile size to use for detection (choices: '30', '60', '120', 'all')
             - detector (str): Detector name to use (default: 'retina')
             - classifier (str): Classifier name to use (choices: 'SimpleCNN', 'groundtruth', 'all'; default: 'SimpleCNN')
             - clear (bool): Whether to remove and recreate the packed_detections folder for each video (default: False)
@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--tile_size', type=str, choices=['64', '128', 'all'], default='all',
+    parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for detection (or "all" for all tile sizes)')
     parser.add_argument('--detector', required=False,
                         default='retina',
@@ -117,7 +117,7 @@ def main(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
-            - tile_size (str): Tile size to use for detection ('64', '128', or 'all')
+            - tile_size (str): Tile size to use for detection ('30', '60', '120', or 'all')
             - detector (str): Name of the detector to use
             - classifier (str): Classifier name to use ('SimpleCNN', 'groundtruth', or 'all')
             - clear (bool): Whether to remove and recreate the packed_detections folder for each video

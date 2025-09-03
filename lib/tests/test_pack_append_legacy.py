@@ -53,7 +53,7 @@ def original_pack_append(polyominoes, h, w, occupied_tiles):
     return positions
 
 
-def test_implementations():
+def run_implementation_comparison():
     """Test the Cython implementation against the original Python version."""
     
     # Import Cython implementation
@@ -156,10 +156,10 @@ def test_implementations():
 
 def test_implementations_pytest():
     """Pytest wrapper for the legacy test function."""
-    success = test_implementations()
+    success = run_implementation_comparison()
     assert success, "Legacy test implementation should pass"
 
 
 if __name__ == "__main__":
-    success = test_implementations()
+    success = run_implementation_comparison()
     sys.exit(0 if success else 1)

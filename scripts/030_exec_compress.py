@@ -16,8 +16,8 @@ from lib.pack_append import pack_append as _fast_pack_append
 from lib.group_tiles import group_tiles as _fast_group_tiles
 
 
-# TILE_SIZES = [32, 64, 128]
-TILE_SIZES = [64]
+# TILE_SIZES = [30, 60, 120]
+TILE_SIZES = [60]
 
 
 def parse_args():
@@ -27,8 +27,7 @@ def parse_args():
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
-            - tile_size (int | str): Tile size to use for packing (choices: 64, 128, 'all')
-            - groundtruth (bool): Whether to use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)
+            - tile_size (int | str): Tile size to use for packing (choices: 30, 60, 120, 'all')
             - threshold (float): Threshold for classification probability (default: 0.5)
             - classifier (str): Classifier name to use (default: 'SimpleCNN')
             - clear (bool): Whether to remove and recreate the packing folder (default: False)
@@ -37,10 +36,9 @@ def parse_args():
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--tile_size', type=str, choices=['64', '128', 'all'], default='all',
+    parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for packing (or "all" for all tile sizes)')
-    parser.add_argument('--groundtruth', action='store_true',
-                        help='Use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)')
+
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification probability (0.0 to 1.0)')
     parser.add_argument('--classifier', type=str, default='SimpleCNN',
@@ -506,7 +504,6 @@ def main(args):
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
             - tile_size (str): Tile size to use for packing ('64', '128', or 'all')
-            - groundtruth (bool): Whether to use groundtruth scores (score_correct.jsonl) instead of model scores (score.jsonl)
             - threshold (float): Threshold for classification probability (0.0 to 1.0)
             - classifier (str): Classifier name to use (default: 'SimpleCNN')
             - clear (bool): Whether to remove and recreate the packing folder
@@ -514,13 +511,12 @@ def main(args):
     Note:
         - The script expects classification results from 020_exec_classify.py in:
           {CACHE_DIR}/{dataset}/{video_file}/relevancy/{classifier}_{tile_size}/score/
-        - When groundtruth=True, looks for score_correct.jsonl files
-        - When groundtruth=False, looks for score.jsonl files
+        - Looks for score.jsonl files
         - Videos are read from {DATA_DIR}/{dataset}/
         - Packed images are saved to {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/images/
         - Mappings are saved to {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/index_maps/
         - Mappings are saved to {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/offset_lookups/
-        - When tile_size is 'all', all two tile sizes (64, 128) are processed
+        - When tile_size is 'all', all two tile sizes (30, 60, 120) are processed
         - If no classification results are found for a video, that video is skipped with a warning
         - Tiles with classification probability > threshold are considered relevant for packing
     """
@@ -558,7 +554,7 @@ def main(args):
             print(f"Processing tile size: {tile_size}")
             
             # Load classification results
-            results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, args.classifier, args.groundtruth)
+            results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, args.classifier)
             
             # Create output directory for packing results
             packing_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'packing', f'{args.classifier}_{tile_size}')
