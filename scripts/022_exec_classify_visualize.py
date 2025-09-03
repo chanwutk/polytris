@@ -205,7 +205,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
                    for frame_result, frame_detections in zip(results, groundtruth_detections)]
 
     # Use multiprocessing to evaluate frames in parallel
-    num_processes = min(mp.cpu_count() - 10, len(results))
+    num_processes = min(mp.cpu_count() - 1, len(results))
     with mp.Pool(processes=num_processes) as pool:
         frame_evals = list(tqdm(
             pool.imap(_evaluate_frame_worker, worker_args),
@@ -965,14 +965,21 @@ def main(args):
     print(f"Processing {len(all_tasks)} tasks in parallel using {num_processes} processes...")
 
     # Process all tasks in parallel
-    with mp.Pool(processes=num_processes) as pool:
-        task_results = list(tqdm(
-            pool.imap(_process_classifier_tile_worker, all_tasks),
-            total=len(all_tasks),
-            desc="Processing tasks",
-            position=0,
-            leave=True,
-        ))
+    # with mp.Pool(processes=num_processes) as pool:
+    #     task_results = list(tqdm(
+    #         pool.imap(_process_classifier_tile_worker, all_tasks),
+    #         total=len(all_tasks),
+    #         desc="Processing tasks",
+    #         position=0,
+    #         leave=True,
+    #     ))
+    task_results = list(tqdm(
+        map(_process_classifier_tile_worker, all_tasks),
+        total=len(all_tasks),
+        desc="Processing tasks",
+        position=0,
+        leave=True,
+    ))
 
     # Print results
     print("\n=== Processing Results ===")
