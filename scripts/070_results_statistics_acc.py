@@ -269,7 +269,7 @@ def load_saved_results(dataset: str) -> List[Dict[str, Any]]:
     Returns:
         List[Dict[str, Any]]: List of evaluation results
     """
-    results_file = os.path.join('./summary', dataset, 'accuracy', 'detailed_results.json')
+    results_file = os.path.join(CACHE_DIR, 'summary', dataset, 'accuracy', 'detailed_results.json')
     
     if not os.path.exists(results_file):
         print(f"No saved results found at {results_file}")
@@ -454,7 +454,7 @@ def main(args):
             print(f"  {result['video_name']} (tile size {result['tile_size']}): {error_msg}")
     
     if successful_results:
-        output_dir = os.path.join('./summary', args.dataset, 'accuracy')
+        output_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'accuracy')
 
         # Create summary
         create_simple_summary(successful_results, output_dir)

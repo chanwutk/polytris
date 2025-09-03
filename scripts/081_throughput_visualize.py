@@ -20,17 +20,6 @@ def parse_args():
     parser.add_argument('--dataset', type=str, 
                         default='b3d',
                         help='Dataset name to process')
-    parser.add_argument('--data_dir', type=str, 
-                        default='/polyis-cache/summary/b3d/throughput',
-                        help='Directory containing the throughput data tables')
-    parser.add_argument('--output_dir', type=str, 
-                        default='summary',
-                        help='Output directory for visualizations')
-    parser.add_argument('--show_plots', action='store_true',
-                        help='Display plots interactively')
-    parser.add_argument('--export_formats', nargs='+', 
-                        default=['png'],
-                        help='Export formats for plots')
     return parser.parse_args()
 
 
@@ -232,7 +221,7 @@ def extract_videos_from_data(query_timings: Dict[str, Any]) -> List[str]:
     return sorted(list(videos))
 
 
-def create_query_execution_visualizations(query_timings: Dict[str, Any], output_dir: str, dataset: str = 'b3d', show_plots: bool = False):
+def create_query_execution_visualizations(query_timings: Dict[str, Any], output_dir: str, dataset: str = 'b3d'):
     """Create visualizations for query execution runtime breakdown."""
     os.makedirs(output_dir, exist_ok=True)
     
@@ -243,15 +232,15 @@ def create_query_execution_visualizations(query_timings: Dict[str, Any], output_
     print(f"Found {len(videos)} videos: {videos}")
     
     # Create average visualization across all videos
-    create_average_query_execution_visualization(query_timings, output_dir, dataset, videos, show_plots)
+    create_average_query_execution_visualization(query_timings, output_dir, dataset, videos)
     
     # Create per-video visualizations
     for video in videos:
         video_name = video.split('/')[-1] if '/' in video else video  # Extract just the filename
-        create_per_video_query_execution_visualization(query_timings, output_dir, dataset, video, video_name, show_plots)
+        create_per_video_query_execution_visualization(query_timings, output_dir, dataset, video, video_name)
 
 
-def create_average_query_execution_visualization(query_timings: Dict[str, Any], output_dir: str, dataset: str, videos: List[str], show_plots: bool = False):
+def create_average_query_execution_visualization(query_timings: Dict[str, Any], output_dir: str, dataset: str, videos: List[str]):
     """Create average query execution visualization across all videos."""
     # Prepare data for pipeline visualization
     stages = ['020_exec_classify', '030_exec_compress', '040_exec_detect', '060_exec_track']
@@ -346,13 +335,10 @@ def create_average_query_execution_visualization(query_timings: Dict[str, Any], 
         plt.savefig(os.path.join(output_dir, f'query_execution_pipeline_average.{fmt}'), 
                    dpi=300, bbox_inches='tight')
     
-    if show_plots:
-        plt.show()
-    else:
-        plt.close()
+    plt.close()
 
 
-def create_per_video_query_execution_visualization(query_timings: Dict[str, Any], output_dir: str, dataset: str, video: str, video_name: str, show_plots: bool = False):
+def create_per_video_query_execution_visualization(query_timings: Dict[str, Any], output_dir: str, dataset: str, video: str, video_name: str):
     """Create query execution visualization for a specific video."""
     # Prepare data for pipeline visualization
     stages = ['020_exec_classify', '030_exec_compress', '040_exec_detect', '060_exec_track']
@@ -433,14 +419,11 @@ def create_per_video_query_execution_visualization(query_timings: Dict[str, Any]
         plt.savefig(os.path.join(video_output_dir, f'query_execution_pipeline_{safe_video_name}.{fmt}'), 
                    dpi=300, bbox_inches='tight')
     
-    if show_plots:
-        plt.show()
-    else:
-        plt.close()
+    plt.close()
 
 
 def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
-                               output_dir: str, show_plots: bool = False):
+                               output_dir: str):
     """Create comparative analysis between index construction and query execution."""
     os.makedirs(output_dir, exist_ok=True)
     
@@ -449,17 +432,17 @@ def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Di
     print(f"Creating comparative analysis for {len(videos)} videos: {videos}")
     
     # Create average comparative analysis across all videos
-    create_average_comparative_analysis(index_timings, query_timings, output_dir, videos, show_plots)
+    create_average_comparative_analysis(index_timings, query_timings, output_dir, videos)
     
     # Create per-video comparative analyses
     for video in videos:
         video_name = video.split('/')[-1] if '/' in video else video  # Extract just the filename
-        create_per_video_comparative_analysis(index_timings, query_timings, output_dir, video, video_name, show_plots)
+        create_per_video_comparative_analysis(index_timings, query_timings, output_dir, video, video_name)
 
 
 def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
                                     output_dir: str, videos: List[str] | None = None, video: str | None = None, 
-                                    video_name: str | None = None, show_plots: bool = False):
+                                    video_name: str | None = None):
     """Create comparative analysis between index construction and query execution.
     
     Args:
@@ -469,7 +452,6 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
         videos: List of videos for average analysis (if None, creates per-video analysis)
         video: Specific video for per-video analysis (used when videos is None)
         video_name: Display name for the video (used when videos is None)
-        show_plots: Whether to display plots interactively
     """
     assert (videos is None) != (video is None), "Either videos or video must be provided"
 
@@ -749,24 +731,21 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
             plt.savefig(os.path.join(video_output_dir, f'index_vs_query_comparison_{safe_video_name}.{fmt}'), 
                        dpi=300, bbox_inches='tight')
     
-    if show_plots:
-        plt.show()
-    else:
-        plt.close()
+    plt.close()
 
 
 def create_average_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
-                                      output_dir: str, videos: List[str], show_plots: bool = False):
+                                      output_dir: str, videos: List[str]):
     """Create average comparative analysis between index construction and query execution."""
     create_comparative_analysis_chart(index_timings, query_timings, output_dir, 
-                                    videos=videos, show_plots=show_plots)
+                                    videos=videos)
 
 
 def create_per_video_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
-                                        output_dir: str, video: str, video_name: str, show_plots: bool = False):
+                                        output_dir: str, video: str, video_name: str):
     """Create comparative analysis between index construction and query execution for a specific video."""
     create_comparative_analysis_chart(index_timings, query_timings, output_dir, 
-                                    video=video, video_name=video_name, show_plots=show_plots)
+                                    video=video, video_name=video_name)
 
 
 def main():
@@ -774,9 +753,9 @@ def main():
     args = parse_args()
     
     print(f"Loading throughput data tables for dataset: {args.dataset}")
-    print(f"Data directory: {args.data_dir}")
-    print(f"Output directory: {args.output_dir}")
-    index_data, query_data = load_data_tables(args.data_dir)
+    data_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput')
+    print(f"Data directory: {data_dir}")
+    index_data, query_data = load_data_tables(data_dir)
     
     print("Parsing index construction timing data...")
     index_timings = parse_index_construction_timings(index_data)
@@ -785,12 +764,13 @@ def main():
     query_timings = parse_query_execution_timings(query_data)
     
     print("Creating query execution visualizations...")
-    create_query_execution_visualizations(query_timings, os.path.join(args.output_dir, args.dataset, 'throughput'), args.dataset, args.show_plots)
+    throughput_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput')
+    create_query_execution_visualizations(query_timings, throughput_dir, args.dataset)
     
     print("Creating comparative analysis...")
-    create_comparative_analysis(index_timings, query_timings, os.path.join(args.output_dir, args.dataset, 'throughput'), args.show_plots)
+    create_comparative_analysis(index_timings, query_timings, throughput_dir)
     
-    print(f"\nVisualization complete! Results saved to: {args.output_dir}")
+    print(f"\nVisualization complete! Results saved to: {throughput_dir}")
     print("- Average visualizations saved as *_average.png/pdf")
     print("- Per-video visualizations saved in per_video/ subdirectory")
 

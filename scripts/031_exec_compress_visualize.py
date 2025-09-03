@@ -11,11 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from scripts.utilities import CACHE_DIR, DATA_DIR
-
-
-# Project root (repo root) inferred from scripts directory
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+from scripts.utilities import CACHE_DIR
 
 
 def parse_args() -> argparse.Namespace:
@@ -123,7 +119,7 @@ def compute_content_ratio(index_map: np.ndarray) -> float:
 
 
 def ensure_summary_dirs(dataset: str) -> Tuple[str, str]:
-    base = os.path.join(ROOT_DIR, "summary", dataset, "compression")
+    base = os.path.join(CACHE_DIR, "summary", dataset, "compression")
     each = os.path.join(base, "each")
     os.makedirs(each, exist_ok=True)
     return base, each
