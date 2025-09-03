@@ -76,8 +76,7 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, isr):
     bitmask = torch.from_numpy(bitmap).to(f'cuda:{gpuIdx}').to(torch.bool)
 
     iheight, iwidth = bitmap.shape[1:3]
-    if iwidth < iheight:
-        oheight, owidth = owidth, oheight
+    is_vertical = iwidth < iheight
 
     out_filename = os.path.join(outputdir, file)
     writer = cv2.VideoWriter(out_filename, cv2.VideoWriter.fourcc(*'mp4v'), fps, (owidth, oheight))
@@ -101,6 +100,10 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, isr):
             print('mask', fidx)
             frames_gpu = torch.from_numpy(np.array(frames)).to(f'cuda:{gpuIdx}')
             frames_gpu = frames_gpu * bitmask
+
+            if is_vertical:
+                # Rotate frames: (batch, height, width, channels) -> (batch, width, height, channels)
+                frames_gpu = torch.rot90(frames_gpu, k=-1, dims=(1, 2))  # k=-1 for clockwise
 
             print('scale', fidx)
             frames_gpu = frames_gpu.permute(0, 3, 1, 2)

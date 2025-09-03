@@ -4,7 +4,6 @@ import argparse
 import os
 import re
 import json
-from typing import List, Tuple, Dict
 from multiprocessing import Pool, cpu_count
 
 import numpy as np
@@ -27,31 +26,15 @@ def parse_args() -> argparse.Namespace:
         default="b3d",
         help="Dataset name (matches directory in DATA_DIR and CACHE_DIR)",
     )
-    parser.add_argument(
-        "--save_json",
-        action="store_true",
-        help="Save per-series metrics (ratios, averages) as JSON next to plots",
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Overwrite existing outputs (plots and JSON)",
-    )
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=cpu_count(),
-        help=f"Number of parallel workers (default: {cpu_count()})",
-    )
     return parser.parse_args()
 
 
-def list_video_dirs(dataset: str) -> List[str]:
+def list_video_dirs(dataset: str) -> list[str]:
     dataset_cache_dir = os.path.join(CACHE_DIR, dataset)
     if not os.path.isdir(dataset_cache_dir):
         raise FileNotFoundError(f"Dataset cache dir does not exist: {dataset_cache_dir}")
     # Only directories that contain a packing folder are relevant
-    video_dirs: List[str] = []
+    video_dirs: list[str] = []
     for entry in os.listdir(dataset_cache_dir):
         full_path = os.path.join(dataset_cache_dir, entry)
         if os.path.isdir(full_path) and os.path.isdir(os.path.join(full_path, "packing")):
@@ -59,11 +42,11 @@ def list_video_dirs(dataset: str) -> List[str]:
     return sorted(video_dirs)
 
 
-def list_classifier_tile_dirs(video_cache_dir: str) -> List[str]:
+def list_classifier_tile_dirs(video_cache_dir: str) -> list[str]:
     packing_dir = os.path.join(video_cache_dir, "packing")
     if not os.path.isdir(packing_dir):
         return []
-    dirs: List[str] = []
+    dirs: list[str] = []
     for entry in os.listdir(packing_dir):
         full_path = os.path.join(packing_dir, entry)
         if os.path.isdir(full_path):
@@ -73,7 +56,7 @@ def list_classifier_tile_dirs(video_cache_dir: str) -> List[str]:
     return sorted(dirs)
 
 
-def parse_classifier_and_tile(dir_name: str) -> Tuple[str, int]:
+def parse_classifier_and_tile(dir_name: str) -> tuple[str, int]:
     # dir_name is like "SimpleCNN_64" or possibly classifier names with underscores
     # Split on the last underscore
     if "_" not in dir_name:
@@ -86,7 +69,7 @@ def parse_classifier_and_tile(dir_name: str) -> Tuple[str, int]:
     return classifier, tile_size
 
 
-def list_index_map_files(classifier_tile_dir: str) -> List[str]:
+def list_index_map_files(classifier_tile_dir: str) -> list[str]:
     index_dir = os.path.join(classifier_tile_dir, "index_maps")
     if not os.path.isdir(index_dir):
         return []
@@ -98,7 +81,7 @@ def list_index_map_files(classifier_tile_dir: str) -> List[str]:
     return sorted(files)
 
 
-def parse_start_end_from_filename(npy_path: str) -> Tuple[int, int]:
+def parse_start_end_from_filename(npy_path: str) -> tuple[int, int]:
     base = os.path.basename(npy_path)
     name, _ = os.path.splitext(base)
     # Expected: 00000000_00000099.npy
@@ -118,7 +101,7 @@ def compute_content_ratio(index_map: np.ndarray) -> float:
     return float(filled_tiles) / float(total_tiles) if total_tiles > 0 else 0.0
 
 
-def ensure_summary_dirs(dataset: str) -> Tuple[str, str]:
+def ensure_summary_dirs(dataset: str) -> tuple[str, str]:
     base = os.path.join(CACHE_DIR, "summary", dataset, "compression")
     each = os.path.join(base, "each")
     os.makedirs(each, exist_ok=True)
@@ -126,8 +109,8 @@ def ensure_summary_dirs(dataset: str) -> Tuple[str, str]:
 
 
 def plot_series(
-    x_values: List[int],
-    y_values: List[float],
+    x_values: list[int],
+    y_values: list[float],
     avg_value: float,
     title: str,
     output_png_path: str,
@@ -146,7 +129,7 @@ def plot_series(
     plt.close()
 
 
-def plot_violin(labels: List[str], datasets: List[List[float]], title: str, output_png_path: str) -> None:
+def plot_violin(labels: list[str], datasets: list[list[float]], title: str, output_png_path: str) -> None:
     if not datasets:
         return
     plt.figure(figsize=(max(10, len(labels) * 0.5), 6))
@@ -161,13 +144,13 @@ def plot_violin(labels: List[str], datasets: List[List[float]], title: str, outp
 
 
 def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_dir: str,
-                           save_json: bool, overwrite: bool, idx: int) -> Tuple[str, List[int], List[float], float, str, int]:
+                           idx: int) -> tuple[str, list[int], list[float], float, str, int]:
     npy_files = list_index_map_files(classifier_tile_dir)
     if not npy_files:
         return "", [], [], 0.0, "", -1
 
     # Build time series
-    time_to_ratio: List[Tuple[int, float]] = []
+    time_to_ratio: list[tuple[int, float]] = []
     for npy_path in tqdm(npy_files, desc=f"Reading index_maps ({os.path.basename(classifier_tile_dir)})", leave=False, position=idx):
         try:
             start_idx, end_idx = parse_start_end_from_filename(npy_path)
@@ -200,34 +183,30 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
     plot_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tile_size}__compress_content_ratio.png")
     json_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tile_size}__compress_content_ratio.json")
 
-    if (not overwrite) and os.path.exists(plot_path):
-        print(f"Plot exists, skipping (use --overwrite to replace): {plot_path}")
-    else:
-        title = f"{video_name} | {classifier} | tile {tile_size}"
-        plot_series(x_values, y_values, avg_value, title, plot_path)
-        print(f"Saved plot: {plot_path}")
+    title = f"{video_name} | {classifier} | tile {tile_size}"
+    plot_series(x_values, y_values, avg_value, title, plot_path)
+    print(f"Saved plot: {plot_path}")
 
-    if save_json:
-        metrics = {
-            "dataset": dataset,
-            "video": video_name,
-            "series": series_name,
-            "classifier": classifier,
-            "tile_size": tile_size,
-            "x_values": x_values,
-            "content_ratios": y_values,
-            "average_content_ratio": avg_value,
-            "note": "Content ratio = fraction of tiles with index_map[:,:,0] > 0",
-        }
-        with open(json_path, "w") as f:
-            json.dump(metrics, f, indent=2)
-        print(f"Saved metrics: {json_path}")
+    metrics = {
+        "dataset": dataset,
+        "video": video_name,
+        "series": series_name,
+        "classifier": classifier,
+        "tile_size": tile_size,
+        "x_values": x_values,
+        "content_ratios": y_values,
+        "average_content_ratio": avg_value,
+        "note": "Content ratio = fraction of tiles with index_map[:,:,0] > 0",
+    }
+    with open(json_path, "w") as f:
+        json.dump(metrics, f, indent=2)
+    print(f"Saved metrics: {json_path}")
 
     label = f"{video_name}|{classifier}|{tile_size}"
     return label, x_values, y_values, avg_value, classifier, tile_size
 
 
-def process_video_worker(args_tuple: Tuple[str, str, bool, bool, int]) -> List[Tuple[str, List[int], List[float], float, str, int]]:
+def process_video_worker(args_tuple: tuple[str, str, int]) -> list[tuple[str, list[int], list[float], float, str, int]]:
     """
     Worker function for multiprocessing that processes a single video directory.
     
@@ -235,7 +214,7 @@ def process_video_worker(args_tuple: Tuple[str, str, bool, bool, int]) -> List[T
         List of tuples containing (label, x_values, y_values, avg_value, classifier, tile_size)
         for each classifier/tile combination in the video.
     """
-    dataset, video_cache_dir, save_json, overwrite, idx = args_tuple
+    dataset, video_cache_dir, idx = args_tuple
     results = []
     
     classifier_tile_dirs = list_classifier_tile_dirs(video_cache_dir)
@@ -244,7 +223,7 @@ def process_video_worker(args_tuple: Tuple[str, str, bool, bool, int]) -> List[T
     
     for classifier_tile_dir in classifier_tile_dirs:
         label, xs, ys, avg, clf, tile = process_series_for_dir(
-            dataset, video_cache_dir, classifier_tile_dir, save_json, overwrite, idx
+            dataset, video_cache_dir, classifier_tile_dir, idx
         )
         if label and ys:
             results.append((label, xs, ys, avg, clf, tile))
@@ -262,14 +241,13 @@ def main(args: argparse.Namespace) -> None:
 
     # Prepare worker arguments
     worker_args = [
-        (dataset, video_cache_dir, args.save_json, args.overwrite, idx)
+        (dataset, video_cache_dir, idx)
         for idx, video_cache_dir in enumerate(video_dirs)
     ]
 
     # Process videos in parallel
-    print(f"Processing {len(video_dirs)} videos using {args.workers} workers...")
-    combined_labels: List[str] = []
-    combined_datasets: List[List[float]] = []
+    combined_labels: list[str] = []
+    combined_datasets: list[list[float]] = []
 
     with Pool(processes=cpu_count()) as pool:
         # Use tqdm to show progress

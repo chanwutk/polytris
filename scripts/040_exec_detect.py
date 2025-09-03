@@ -37,8 +37,8 @@ def parse_args():
     parser.add_argument('--detector', required=False,
                         default='retina',
                         help='Detector name')
-    parser.add_argument('--classifier', type=str, choices=['SimpleCNN', 'groundtruth', 'all'], default='SimpleCNN',
-                        help='Classifier name to use (default: SimpleCNN, or "all" for both SimpleCNN and groundtruth)')
+    parser.add_argument('--classifier', type=str, choices=['SimpleCNN', 'groundtruth', 'all'], default='all',
+                        help='Classifier name to use (default: all, or "all" for both SimpleCNN and groundtruth)')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the packed_detections folder for each video')
     return parser.parse_args()
