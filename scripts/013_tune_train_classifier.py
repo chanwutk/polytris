@@ -23,13 +23,16 @@ from scripts.utilities import CACHE_DIR, format_time
 TILE_SIZES = [30, 60, 120]
 
 
-def plot_training_progress(train_losses, train_accuracies, val_losses, val_accuracies, 
-                          train_times, val_times, results_dir, epoch):
+def plot_training_progress(train_losses: list[float], train_accuracies: list[float],
+                           val_losses: list[float], val_accuracies: list[float], 
+                           train_times: list[float], val_times: list[float],
+                           results_dir: str, epoch: int, train_images_processed: int,
+                           val_images_processed: int):
     """Plot training progress with time on x-axis and loss/accuracy on y-axis"""
     # Calculate cumulative times
-    cumulative_train_times = []
-    cumulative_val_times = []
-    total_time = 0
+    cumulative_train_times: list[float] = []
+    cumulative_val_times: list[float] = []
+    total_time: float = 0
     
     for i in range(len(train_times)):
         total_time += train_times[i]
@@ -38,24 +41,23 @@ def plot_training_progress(train_losses, train_accuracies, val_losses, val_accur
         cumulative_val_times.append(total_time / 1000)  # Convert to seconds
     
     # Convert accuracies from percentage to [0, 1] scale
-    train_accuracies_scaled = [acc / 100.0 for acc in train_accuracies]
-    val_accuracies_scaled = [acc / 100.0 for acc in val_accuracies]
+    train_accuracies_scaled: list[float] = [acc / 100.0 for acc in train_accuracies]
+    val_accuracies_scaled: list[float] = [acc / 100.0 for acc in val_accuracies]
     
-    # Calculate throughput (epochs per second)
+    # Calculate throughput (images per second)
     total_train_time = sum(train_times) / 1000  # Convert to seconds
     total_val_time = sum(val_times) / 1000  # Convert to seconds
-    current_epoch = epoch + 1
     
-    train_throughput = current_epoch / total_train_time if total_train_time > 0 else 0
-    val_throughput = current_epoch / total_val_time if total_val_time > 0 else 0
+    train_throughput: float = train_images_processed / total_train_time if total_train_time > 0 else 0
+    val_throughput: float = val_images_processed / total_val_time if total_val_time > 0 else 0
     
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    _fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
     
     # Left subplot: Loss and accuracy progress
     ax1.plot(cumulative_train_times, train_losses, 'b-', label='Train Loss', marker='o', linewidth=2)
     ax1.plot(cumulative_val_times, val_losses, 'r-', label='Validation Loss', marker='s', linewidth=2)
-    ax1.plot(cumulative_train_times, train_accuracies_scaled, 'g-', label='Train Accuracy', marker='^', linewidth=2)
-    ax1.plot(cumulative_val_times, val_accuracies_scaled, 'm-', label='Validation Accuracy', marker='d', linewidth=2)
+    ax1.plot(cumulative_train_times, train_accuracies_scaled, 'b--', label='Train Accuracy', marker='^', linewidth=2)
+    ax1.plot(cumulative_val_times, val_accuracies_scaled, 'r--', label='Validation Accuracy', marker='d', linewidth=2)
     
     ax1.set_xlabel('Time (seconds)')
     ax1.set_ylabel('Loss / Accuracy')
@@ -70,7 +72,7 @@ def plot_training_progress(train_losses, train_accuracies, val_losses, val_accur
     colors = ['skyblue', 'lightcoral']
     
     bars = ax2.bar(throughput_labels, throughput_values, color=colors, alpha=0.7, edgecolor='black')
-    ax2.set_ylabel('Throughput (epochs/second)')
+    ax2.set_ylabel('Throughput (images/second)')
     ax2.set_title('Training & Validation Throughput')
     ax2.grid(True, alpha=0.3, axis='y')
     
@@ -132,18 +134,22 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     epoch_test_losses: list[dict] = []
     
     # Track accuracies and times for plotting
-    train_loss_history = []
-    val_loss_history = []
-    train_accuracy_history = []
-    val_accuracy_history = []
-    train_time_history = []
-    val_time_history = []
+    train_loss_history: list[float] = []
+    val_loss_history: list[float] = []
+    train_accuracy_history: list[float] = []
+    val_accuracy_history: list[float] = []
+    train_time_history: list[float] = []
+    val_time_history: list[float] = []
+    
+    # Track cumulative images processed for throughput calculation
+    cumulative_train_images: int = 0
+    cumulative_val_images: int = 0
 
     best_model_wts: "dict[str, torch.Tensor] | None" = None
-    best_loss = float('inf')
-    early_stopping_counter = 0
+    best_loss: float = float('inf')
+    early_stopping_counter: int = 0
 
-    throughput_per_epoch = []
+    throughput_per_epoch: list[list[dict[str, float | int | str]]] = []
 
     for epoch in range(n_epochs):
         epoch_loss = 0
@@ -151,16 +157,16 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # Record training start time
         train_start_time = time.time_ns() / 1e6
 
-        throughput = []
+        throughput: list[dict[str, float | int | str]] = []
         
         # Initialize timing accumulators for this epoch
-        total_data_loading_time = 0.
-        total_gpu_transfer_time = 0.
-        total_train_step_time = 0.
+        total_data_loading_time: float = 0.
+        total_gpu_transfer_time: float = 0.
+        total_train_step_time: float = 0.
         
         # Track training accuracy
-        train_correct = 0
-        train_total = 0
+        train_correct: int = 0
+        train_total: int = 0
         
         model.train()
         
@@ -190,7 +196,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                     if y_hat.dim() == 1:
                         y_hat = y_hat.unsqueeze(1)
                 predictions = y_hat > 0.5
-                train_correct += torch.sum(predictions == y_batch).item()
+                train_correct += int(torch.sum(predictions == y_batch).item())
                 train_total += len(y_batch)
             
             # Start timing for next batch data loading
@@ -214,6 +220,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         train_loss_history.append(float(epoch_loss))
         train_accuracy_history.append(float(train_accuracy))
         train_time_history.append(train_time)
+        
+        # Update cumulative training images
+        cumulative_train_images += train_total
         
         # Print detailed timing information
         print('Epoch : {}, train loss : {:.4f}, train accuracy: {:.1f}%'.format(epoch+1, epoch_loss, train_accuracy))
@@ -297,6 +306,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             val_loss_history.append(float(cumulative_loss))
             val_accuracy_history.append(float(val_accuracy))
             val_time_history.append(val_time)
+            
+            # Update cumulative validation images
+            cumulative_val_images += num_samples
 
             # Print detailed validation timing information
             print('Validation - Loss: {:.4f}, Accuracy: {:.1f}%'.format(cumulative_loss, val_accuracy))
@@ -311,7 +323,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 plot_training_progress(train_loss_history, train_accuracy_history, 
                                      val_loss_history, val_accuracy_history,
                                      train_time_history, val_time_history, 
-                                     results_dir, epoch)
+                                     results_dir, epoch, cumulative_train_images, cumulative_val_images)
             
             # save best model
             if cumulative_loss < best_loss:

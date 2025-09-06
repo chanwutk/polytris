@@ -24,7 +24,7 @@ TRACK_COLORS = [
 ]
 
 
-def format_time(**kwargs):
+def format_time(**kwargs: float | int) -> list[dict[str, float | int | str]]:
     """
     Format timing information into a list of dictionaries.
     
