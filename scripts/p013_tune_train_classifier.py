@@ -17,7 +17,56 @@ from torch.optim import Adam
 
 from polyis.models.classifier.simple_cnn import SimpleCNN
 from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
+from polyis.models.classifier.shufflenet import ShuffleNet05Q, ShuffleNet05, ShuffleNet20
+from polyis.models.classifier.mobilenet import MobileNetL, MobileNetLQ, MobileNetS
+from polyis.models.classifier.wide_resnet import WideResNet50, WideResNet101
+from polyis.models.classifier.resnet import ResNet152, ResNet101, ResNet18, ResNet18Q
+from polyis.models.classifier.efficientnet import EfficientNetS, EfficientNetL
 from scripts.utilities import CACHE_DIR, format_time
+
+
+# Factory functions for models that don't accept tile_size parameter
+def ShuffleNet05Q_factory(_tile_size: int):
+    return ShuffleNet05Q()
+
+def ShuffleNet05_factory(_tile_size: int):
+    return ShuffleNet05()
+
+def ShuffleNet20_factory(_tile_size: int):
+    return ShuffleNet20()
+
+def MobileNetL_factory(_tile_size: int):
+    return MobileNetL()
+
+def MobileNetLQ_factory(_tile_size: int):
+    return MobileNetLQ()
+
+def MobileNetS_factory(_tile_size: int):
+    return MobileNetS()
+
+def WideResNet50_factory(_tile_size: int):
+    return WideResNet50()
+
+def WideResNet101_factory(_tile_size: int):
+    return WideResNet101()
+
+def ResNet152_factory(_tile_size: int):
+    return ResNet152()
+
+def ResNet101_factory(_tile_size: int):
+    return ResNet101()
+
+def ResNet18_factory(_tile_size: int):
+    return ResNet18()
+
+def ResNet18Q_factory(_tile_size: int):
+    return ResNet18Q()
+
+def EfficientNetS_factory(_tile_size: int):
+    return EfficientNetS()
+
+def EfficientNetL_factory(_tile_size: int):
+    return EfficientNetL()
 
 
 TILE_SIZES = [30, 60, 120]
@@ -30,9 +79,18 @@ def parse_args():
                         help='Dataset name')
     parser.add_argument('--classifier', required=False,
                         default=['SimpleCNN'],
-                        choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL', 'YoloX'],
+                        choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL', 'YoloX',
+                                'ShuffleNet05Q', 'ShuffleNet05', 'ShuffleNet20',
+                                'MobileNetL', 'MobileNetLQ', 'MobileNetS',
+                                'WideResNet50', 'WideResNet101',
+                                'ResNet152', 'ResNet101', 'ResNet18', 'ResNet18Q',
+                                'EfficientNetS', 'EfficientNetL'],
                         nargs='+',
-                        help='Model types to train (can specify multiple): SimpleCNN, YoloN, YoloS, YoloM, YoloL, YoloX')
+                        help='Model types to train (can specify multiple): SimpleCNN, '
+                             'YoloN, YoloS, YoloM, YoloL, YoloX, ShuffleNet05Q, ShuffleNet05, '
+                             'ShuffleNet20, MobileNetL, MobileNetLQ, MobileNetS, WideResNet50, '
+                             'WideResNet101, ResNet152, ResNet101, ResNet18, ResNet18Q, '
+                             'EfficientNetS, EfficientNetL')
     return parser.parse_args()
 
 
@@ -369,6 +427,20 @@ MODEL_ZOO = {
     'YoloM': YoloM,
     'YoloL': YoloL,
     'YoloX': YoloX,
+    'ShuffleNet05Q': ShuffleNet05Q_factory,
+    'ShuffleNet05': ShuffleNet05_factory,
+    'ShuffleNet20': ShuffleNet20_factory,
+    'MobileNetL': MobileNetL_factory,
+    'MobileNetLQ': MobileNetLQ_factory,
+    'MobileNetS': MobileNetS_factory,
+    'WideResNet50': WideResNet50_factory,
+    'WideResNet101': WideResNet101_factory,
+    'ResNet152': ResNet152_factory,
+    'ResNet101': ResNet101_factory,
+    'ResNet18': ResNet18_factory,
+    'ResNet18Q': ResNet18Q_factory,
+    'EfficientNetS': EfficientNetS_factory,
+    'EfficientNetL': EfficientNetL_factory,
 }
 
 
