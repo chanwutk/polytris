@@ -23,6 +23,19 @@ from scripts.utilities import CACHE_DIR, format_time
 TILE_SIZES = [30, 60, 120]
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Preprocess video dataset')
+    parser.add_argument('--dataset', required=False,
+                        default='b3d',
+                        help='Dataset name')
+    parser.add_argument('--classifier', required=False,
+                        default=['SimpleCNN'],
+                        choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL', 'YoloX'],
+                        nargs='+',
+                        help='Model types to train (can specify multiple): SimpleCNN, YoloN, YoloS, YoloM, YoloL, YoloX')
+    return parser.parse_args()
+
+
 def plot_training_progress(train_losses: list[float], train_accuracies: list[float],
                            val_losses: list[float], val_accuracies: list[float], 
                            train_times: list[float], val_times: list[float],
@@ -88,18 +101,6 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
     plot_path = os.path.join(results_dir, 'training_progress.png')
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
     plt.close()  # Close to free memory
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Preprocess video dataset')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
-    parser.add_argument('--classifier', required=False,
-                        default='SimpleCNN',
-                        choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL', 'YoloX'],
-                        help='Model type to train: SimpleCNN or YoloN, YoloS, YoloM, YoloL, YoloX')
-    return parser.parse_args()
 
 
 def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
@@ -424,7 +425,8 @@ def main(args):
         print(f"Processing video {video_path}")
         for tile_size in TILE_SIZES:
             training_path = os.path.join(video_path, 'training') 
-            train_classifier(training_path, tile_size, args.classifier)
+            for classifier in args.classifier:
+                train_classifier(training_path, tile_size, classifier)
 
 
 if __name__ == '__main__':
