@@ -5,11 +5,13 @@ import json
 import os
 import shutil
 import time
+import multiprocessing as mp
 
 import torch
 import torch.utils.data
 import torch.optim
 from rich.progress import track
+from rich import progress
 import matplotlib.pyplot as plt
 
 from torchvision import datasets, transforms
@@ -17,18 +19,15 @@ from torch.optim import Adam
 
 from polyis.models.classifier.simple_cnn import SimpleCNN
 from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
-from polyis.models.classifier.shufflenet import ShuffleNet05Q, ShuffleNet05, ShuffleNet20
-from polyis.models.classifier.mobilenet import MobileNetL, MobileNetLQ, MobileNetS
+from polyis.models.classifier.shufflenet import ShuffleNet05, ShuffleNet20
+from polyis.models.classifier.mobilenet import MobileNetL, MobileNetS
 from polyis.models.classifier.wide_resnet import WideResNet50, WideResNet101
-from polyis.models.classifier.resnet import ResNet152, ResNet101, ResNet18, ResNet18Q
+from polyis.models.classifier.resnet import ResNet152, ResNet101, ResNet18
 from polyis.models.classifier.efficientnet import EfficientNetS, EfficientNetL
 from scripts.utilities import CACHE_DIR, format_time
 
 
 # Factory functions for models that don't accept tile_size parameter
-def ShuffleNet05Q_factory(_tile_size: int):
-    return ShuffleNet05Q()
-
 def ShuffleNet05_factory(_tile_size: int):
     return ShuffleNet05()
 
@@ -37,9 +36,6 @@ def ShuffleNet20_factory(_tile_size: int):
 
 def MobileNetL_factory(_tile_size: int):
     return MobileNetL()
-
-def MobileNetLQ_factory(_tile_size: int):
-    return MobileNetLQ()
 
 def MobileNetS_factory(_tile_size: int):
     return MobileNetS()
@@ -59,9 +55,6 @@ def ResNet101_factory(_tile_size: int):
 def ResNet18_factory(_tile_size: int):
     return ResNet18()
 
-def ResNet18Q_factory(_tile_size: int):
-    return ResNet18Q()
-
 def EfficientNetS_factory(_tile_size: int):
     return EfficientNetS()
 
@@ -78,18 +71,20 @@ def parse_args():
                         default='b3d',
                         help='Dataset name')
     parser.add_argument('--classifier', required=False,
-                        default=['SimpleCNN'],
-                        choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL', 'YoloX',
-                                'ShuffleNet05Q', 'ShuffleNet05', 'ShuffleNet20',
-                                'MobileNetL', 'MobileNetLQ', 'MobileNetS',
-                                'WideResNet50', 'WideResNet101',
-                                'ResNet152', 'ResNet101', 'ResNet18', 'ResNet18Q',
-                                'EfficientNetS', 'EfficientNetL'],
+                        default=[ 'ResNet18', 'ResNet152', 'ResNet101',
+                                 'EfficientNetS', 'EfficientNetL',
+                                 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
+                                 'MobileNetS',], # 'WideResNet50', 'WideResNet101',
+                        choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL',
+                                 'YoloX', 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
+                                 'MobileNetS', 'WideResNet50', 'WideResNet101',
+                                 'ResNet152', 'ResNet101', 'ResNet18', 'EfficientNetS',
+                                 'EfficientNetL'],
                         nargs='+',
                         help='Model types to train (can specify multiple): SimpleCNN, '
-                             'YoloN, YoloS, YoloM, YoloL, YoloX, ShuffleNet05Q, ShuffleNet05, '
-                             'ShuffleNet20, MobileNetL, MobileNetLQ, MobileNetS, WideResNet50, '
-                             'WideResNet101, ResNet152, ResNet101, ResNet18, ResNet18Q, '
+                             'YoloN, YoloS, YoloM, YoloL, YoloX, ShuffleNet05, '
+                             'ShuffleNet20, MobileNetL, MobileNetS, WideResNet50, '
+                             'WideResNet101, ResNet152, ResNet101, ResNet18, '
                              'EfficientNetS, EfficientNetL')
     return parser.parse_args()
 
@@ -185,7 +180,7 @@ def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
           optimizer: "torch.optim.Optimizer", train_loader: "torch.utils.data.DataLoader",
           test_loader: "torch.utils.data.DataLoader", n_epochs: int, results_dir: str,
-          model_type: str = 'SimpleCNN', device: str = 'cuda'):
+          model_type: str, device: str, command_queue: mp.Queue, training_path: str, tile_size: int):
     early_stopping_tolerance = 10
     early_stopping_threshold = 0.001
 
@@ -232,7 +227,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # Measure data loading time by tracking iterator timing
         batch_start_time = time.time_ns() / 1e6
         
-        for x_batch, y_batch in track(train_loader, description=f"Training Epoch {epoch+1}", total=len(train_loader)): # iterate over batches
+        description = f"{training_path.split('/')[-2].split('.')[0]} {tile_size:>3} {model_type:>15} {'{}'} {epoch:>3}"
+        command_queue.put((device, { 'description': description.format('T'), 'total': len(train_loader), 'completed': 0 }))
+        for x_batch, y_batch in train_loader:
             # Data loading time (time since last batch completed or epoch started)
             total_data_loading_time += (time.time_ns() / 1e6) - batch_start_time
             
@@ -260,7 +257,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             
             # Start timing for next batch data loading
             batch_start_time = time.time_ns() / 1e6
-        
+
+            command_queue.put((device, { 'advance': 1 }))
+            # break
+
         # Record training end time
         train_time = (time.time_ns() / 1e6) - train_start_time
         train_accuracy = 100 * train_correct / train_total if train_total > 0 else 0
@@ -283,13 +283,13 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # Update cumulative training images
         cumulative_train_images += train_total
         
-        # Print detailed timing information
-        print('Epoch : {}, train loss : {:.4f}, train accuracy: {:.1f}%'.format(epoch+1, epoch_loss, train_accuracy))
-        print('  Total time: {:.2f}s'.format(train_time))
-        print('  Data loading: {:.2f}s ({:.1f}%)'.format(total_data_loading_time, 100 * total_data_loading_time / train_time))
-        print('  GPU transfer: {:.2f}s ({:.1f}%)'.format(total_gpu_transfer_time, 100 * total_gpu_transfer_time / train_time))
-        print('  Train step: {:.2f}s ({:.1f}%)'.format(total_train_step_time, 100 * total_train_step_time / train_time))
-        print()
+        # # Print detailed timing information
+        # print('Epoch : {}, train loss : {:.4f}, train accuracy: {:.1f}%'.format(epoch+1, epoch_loss, train_accuracy))
+        # print('  Total time: {:.2f}s'.format(train_time))
+        # print('  Data loading: {:.2f}s ({:.1f}%)'.format(total_data_loading_time, 100 * total_data_loading_time / train_time))
+        # print('  GPU transfer: {:.2f}s ({:.1f}%)'.format(total_gpu_transfer_time, 100 * total_gpu_transfer_time / train_time))
+        # print('  Train step: {:.2f}s ({:.1f}%)'.format(total_train_step_time, 100 * total_train_step_time / train_time))
+        # print()
 
         # validation doesnt requires gradient
         with torch.no_grad():
@@ -302,6 +302,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             val_total_data_loading_time = 0
             val_total_gpu_transfer_time = 0
             val_total_inference_time = 0
+            val_total_loss_time = 0
 
             misc_sum = 0
             num_samples = 0
@@ -310,7 +311,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             # Measure validation data loading time
             val_batch_start_time = time.time_ns() / 1e6
             
-            for x_batch, y_batch in track(test_loader, description=f"Validation Epoch {epoch+1}", total=len(test_loader)):
+            command_queue.put((device, { 'description': description.format('V'), 'total': len(test_loader), 'completed': 0 }))
+            for x_batch, y_batch in test_loader:
                 # Validation data loading time
                 val_total_data_loading_time += (time.time_ns() / 1e6) - val_batch_start_time
                 
@@ -329,10 +331,12 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                     # YOLO outputs probabilities directly, ensure they're in the right shape
                     if yhat.dim() == 1:
                         yhat = yhat.unsqueeze(1)
+                val_total_inference_time += (time.time_ns() / 1e6) - val_inference_start_time
                 
+                val_loss_start_time = time.time_ns() / 1e6
                 val_loss = loss_fn(yhat,y_batch)
                 cumulative_loss += val_loss / len(test_loader)
-                val_total_inference_time += (time.time_ns() / 1e6) - val_inference_start_time
+                val_total_loss_time += (time.time_ns() / 1e6) - val_loss_start_time
 
                 # Apply appropriate activation function based on model type
                 ans = yhat
@@ -344,6 +348,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 
                 # Start timing for next validation batch data loading
                 val_batch_start_time = time.time_ns() / 1e6
+
+                command_queue.put((device, { 'advance': 1 }))
 
             # Record validation end time
             val_time = (time.time_ns() / 1e6) - val_start_time # no need to add to total time
@@ -357,7 +363,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             throughput.extend(format_time(
                 test_load_data=val_total_data_loading_time,
                 test_gpu_transfer=val_total_gpu_transfer_time,
-                test_inference=val_total_inference_time))
+                test_inference=val_total_inference_time,
+                test_loss=val_total_loss_time))
 
             throughput_per_epoch.append(throughput)
 
@@ -369,13 +376,13 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             # Update cumulative validation images
             cumulative_val_images += num_samples
 
-            # Print detailed validation timing information
-            print('Validation - Loss: {:.4f}, Accuracy: {:.1f}%'.format(cumulative_loss, val_accuracy))
-            print('  Total time: {:.2f}s'.format(val_time))
-            print('  Data loading: {:.2f}s ({:.1f}%)'.format(val_total_data_loading_time, 100 * val_total_data_loading_time / val_time))
-            print('  GPU transfer: {:.2f}s ({:.1f}%)'.format(val_total_gpu_transfer_time, 100 * val_total_gpu_transfer_time / val_time))
-            print('  Inference: {:.2f}s ({:.1f}%)'.format(val_total_inference_time, 100 * val_total_inference_time / val_time))
-            print()
+            # # Print detailed validation timing information
+            # print('Validation - Loss: {:.4f}, Accuracy: {:.1f}%'.format(cumulative_loss, val_accuracy))
+            # print('  Total time: {:.2f}s'.format(val_time))
+            # print('  Data loading: {:.2f}s ({:.1f}%)'.format(val_total_data_loading_time, 100 * val_total_data_loading_time / val_time))
+            # print('  GPU transfer: {:.2f}s ({:.1f}%)'.format(val_total_gpu_transfer_time, 100 * val_total_gpu_transfer_time / val_time))
+            # print('  Inference: {:.2f}s ({:.1f}%)'.format(val_total_inference_time, 100 * val_total_inference_time / val_time))
+            # print()
             
             # Generate plot at the end of each epoch
             if results_dir:
@@ -393,19 +400,19 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 early_stopping_counter += 1
 
             if (early_stopping_counter >= early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
-                print("Terminating: early stopping")
+                # print("Terminating: early stopping")
                 break # terminate training
 
 
-    print(str(epoch_test_losses) + '\n')
-    print(str(epoch_train_losses) + '\n')
+    # print(str(epoch_test_losses) + '\n')
+    # print(str(epoch_train_losses) + '\n')
 
-    # Calculate total training and validation times
-    total_train_time = sum(epoch['time'] for epoch in epoch_train_losses)
-    total_val_time = sum(epoch['time'] for epoch in epoch_test_losses)
+    # # Calculate total training and validation times
+    # total_train_time = sum(epoch['time'] for epoch in epoch_train_losses)
+    # total_val_time = sum(epoch['time'] for epoch in epoch_test_losses)
 
-    print(f'Total validation time: {total_val_time:.2f}s')
-    print(f'Total time: {total_train_time + total_val_time:.2f}s')
+    # print(f'Total validation time: {total_val_time:.2f}s')
+    # print(f'Total time: {total_train_time + total_val_time:.2f}s')
 
     with open(os.path.join(results_dir, 'test_losses.json'), 'w') as f:
         f.write(json.dumps(epoch_test_losses))
@@ -427,25 +434,26 @@ MODEL_ZOO = {
     'YoloM': YoloM,
     'YoloL': YoloL,
     'YoloX': YoloX,
-    'ShuffleNet05Q': ShuffleNet05Q_factory,
+    # 'ShuffleNet05Q': ShuffleNet05Q_factory,
     'ShuffleNet05': ShuffleNet05_factory,
     'ShuffleNet20': ShuffleNet20_factory,
     'MobileNetL': MobileNetL_factory,
-    'MobileNetLQ': MobileNetLQ_factory,
+    # 'MobileNetLQ': MobileNetLQ_factory,
     'MobileNetS': MobileNetS_factory,
     'WideResNet50': WideResNet50_factory,
     'WideResNet101': WideResNet101_factory,
     'ResNet152': ResNet152_factory,
     'ResNet101': ResNet101_factory,
     'ResNet18': ResNet18_factory,
-    'ResNet18Q': ResNet18Q_factory,
+    # 'ResNet18Q': ResNet18Q_factory,
     'EfficientNetS': EfficientNetS_factory,
     'EfficientNetL': EfficientNetL_factory,
 }
 
 
-def train_classifier(training_path: str, tile_size: int, model_type: str = 'SimpleCNN'):
-    print(f'Training {model_type} (tile_size={tile_size})\n')
+def train_classifier(training_path: str, tile_size: int, model_type: str,
+                     device: str, command_queue: mp.Queue):
+    # print(f'Training {model_type} (tile_size={tile_size}) on {device}\n')
     
     # Create results directory early so we can save plots during training
     results_dir = os.path.join(training_path, 'results', f'{model_type}_{tile_size}')
@@ -456,8 +464,8 @@ def train_classifier(training_path: str, tile_size: int, model_type: str = 'Simp
     # Instantiate the correct model based on model_type
     if model_type not in MODEL_ZOO:
         raise ValueError(f"Unsupported model type: {model_type}")
-    model = MODEL_ZOO[model_type](tile_size).to('cuda')
-    loss_fn = torch.nn.BCELoss().to('cuda')
+    model = MODEL_ZOO[model_type](tile_size).to(device)
+    loss_fn = torch.nn.BCELoss().to(device)
     
     optimizer = Adam(model.parameters(), lr=0.001)
 
@@ -476,8 +484,9 @@ def train_classifier(training_path: str, tile_size: int, model_type: str = 'Simp
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=512, shuffle=True)
 
     # print(f"Training {model_type} (tile_size={tile_size})")
-    best_model_wts = train(model, loss_fn, optimizer, train_loader, test_loader, n_epochs=100,
-                           results_dir=results_dir, model_type=model_type, device='cuda')
+    best_model_wts = train(model, loss_fn, optimizer, train_loader, test_loader, n_epochs=50,
+                           results_dir=results_dir, model_type=model_type, device=device,
+                           command_queue=command_queue, training_path=training_path, tile_size=tile_size)
     assert best_model_wts is not None
 
     # Load best model
@@ -486,19 +495,78 @@ def train_classifier(training_path: str, tile_size: int, model_type: str = 'Simp
         torch.save(model, f)
 
 
+def progress_bars(command_queue: mp.Queue, num_tasks: int):
+    with progress.Progress(
+        "[progress.description]{task.description}",
+        progress.BarColumn(),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        # progress.TimeRemainingColumn(),
+        progress.TimeElapsedColumn(),
+        refresh_per_second=1,  # bit slower updates
+    ) as p:
+        bars: dict[str, progress.TaskID] = {}
+        overall_progress = p.add_task(f"[green]Training {num_tasks} models", total=num_tasks)
+        bars['overall'] = overall_progress
+        for gpu_id in range(torch.cuda.device_count()):
+            bars[f'cuda:{gpu_id}'] = p.add_task(f"jnc00  30 model t 0")
+
+        while True:
+            val = command_queue.get()
+            if val is None: break
+            progress_id, kwargs = val
+            p.update(bars[progress_id], **kwargs)
+
+
+def dispatch_task(training_path: str, tile_size: int, classifier: str, gpu_id: int, queue: mp.Queue, command_queue: mp.Queue):
+    try:
+        train_classifier(training_path, tile_size, classifier, device=f'cuda:{gpu_id}', command_queue=command_queue)
+    except Exception as e:
+        queue.put(gpu_id)
+        raise e
+
+
 def main(args):
+    mp.set_start_method('spawn', force=True)
+
     dataset_dir = os.path.join(CACHE_DIR, args.dataset)
 
+    tasks: list[tuple[str, int, str]] = []
     for video in sorted(os.listdir(dataset_dir)):
         video_path = os.path.join(dataset_dir, video)
         if not os.path.isdir(video_path) and not video.endswith('.mp4'):
             continue
 
-        print(f"Processing video {video_path}")
+        # print(f"Processing video {video_path}")
         for tile_size in TILE_SIZES:
             training_path = os.path.join(video_path, 'training') 
             for classifier in args.classifier:
-                train_classifier(training_path, tile_size, classifier)
+                tasks.append((training_path, tile_size, classifier))
+    
+    num_gpus = torch.cuda.device_count()
+    gpu_id_queue = mp.Queue(maxsize=num_gpus)
+    for gpu_id in range(num_gpus):
+        gpu_id_queue.put(gpu_id)
+    
+    command_queue = mp.Queue()
+    progress_process = mp.Process(target=progress_bars, args=(command_queue, len(tasks)))
+    progress_process.start()
+
+    processes: list[mp.Process] = []
+    for task in tasks:
+        # print(task)
+        gpu_id = gpu_id_queue.get()
+        command_queue.put(( 'overall', { 'advance': 1 } ))
+        process = mp.Process(target=dispatch_task, args=(*task, gpu_id, gpu_id_queue, command_queue))
+        process.start()
+        processes.append(process)
+
+    for process in processes:
+        process.join()
+        process.terminate()
+    
+    command_queue.put(None)
+    progress_process.join()
+    progress_process.terminate()
 
 
 if __name__ == '__main__':
