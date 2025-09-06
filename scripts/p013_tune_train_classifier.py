@@ -71,7 +71,7 @@ def parse_args():
                         default='b3d',
                         help='Dataset name')
     parser.add_argument('--classifier', required=False,
-                        default=[ 'ResNet18', 'ResNet152', 'ResNet101',
+                        default=['ResNet18', 'ResNet152', 'ResNet101',
                                  'EfficientNetS', 'EfficientNetL',
                                  'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
                                  'MobileNetS',], # 'WideResNet50', 'WideResNet101',
@@ -90,66 +90,89 @@ def parse_args():
 
 
 def plot_training_progress(train_losses: list[float], train_accuracies: list[float],
-                           val_losses: list[float], val_accuracies: list[float], 
+                           val_losses: list[float], val_accuracies: list[float],
                            train_times: list[float], val_times: list[float],
                            results_dir: str, epoch: int, train_images_processed: int,
-                           val_images_processed: int):
+                           val_images_processed: int, throughput_per_epoch: list[list[dict[str, float | int | str]]]):
     """Plot training progress with time on x-axis and loss/accuracy on y-axis"""
     # Calculate cumulative times
     cumulative_train_times: list[float] = []
     cumulative_val_times: list[float] = []
     total_time: float = 0
-    
+
     for i in range(len(train_times)):
         total_time += train_times[i]
         cumulative_train_times.append(total_time / 1000)  # Convert to seconds
         total_time += val_times[i]
         cumulative_val_times.append(total_time / 1000)  # Convert to seconds
-    
+
     # Convert accuracies from percentage to [0, 1] scale
     train_accuracies_scaled: list[float] = [acc / 100.0 for acc in train_accuracies]
     val_accuracies_scaled: list[float] = [acc / 100.0 for acc in val_accuracies]
-    
-    # Calculate throughput (images per second)
-    total_train_time = sum(train_times) / 1000  # Convert to seconds
-    total_val_time = sum(val_times) / 1000  # Convert to seconds
-    
-    train_throughput: float = train_images_processed / total_train_time if total_train_time > 0 else 0
-    val_throughput: float = val_images_processed / total_val_time if total_val_time > 0 else 0
-    
+
     _fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-    
+
     # Left subplot: Loss and accuracy progress
     ax1.plot(cumulative_train_times, train_losses, 'b-', label='Train Loss', marker='o', linewidth=2)
     ax1.plot(cumulative_val_times, val_losses, 'r-', label='Validation Loss', marker='s', linewidth=2)
     ax1.plot(cumulative_train_times, train_accuracies_scaled, 'b--', label='Train Accuracy', marker='^', linewidth=2)
     ax1.plot(cumulative_val_times, val_accuracies_scaled, 'r--', label='Validation Accuracy', marker='d', linewidth=2)
-    
+
     ax1.set_xlabel('Time (seconds)')
     ax1.set_ylabel('Loss / Accuracy')
     ax1.set_title(f'Training Progress - Epoch {epoch + 1}')
     ax1.legend()
     ax1.grid(True, alpha=0.3)
     ax1.set_ylim(0, 1)  # Set y-axis limits to [0, 1] since both metrics are in this range
-    
-    # Right subplot: Throughput bar chart
-    throughput_labels = ['Training', 'Validation']
-    throughput_values = [train_throughput, val_throughput]
-    colors = ['skyblue', 'lightcoral']
-    
-    bars = ax2.bar(throughput_labels, throughput_values, color=colors, alpha=0.7, edgecolor='black')
-    ax2.set_ylabel('Throughput (images/second)')
-    ax2.set_title('Training & Validation Throughput')
+
+    # Right subplot: Runtimes stacked bar chart
+    train_op_times: dict[str, float] = {}
+    val_op_times: dict[str, float] = {}
+    all_ops: set[str] = set()
+
+    for epoch_throughput in throughput_per_epoch:
+        for op_data in epoch_throughput:
+            op_name = str(op_data['op'])
+            op_time = float(op_data['time'])  # in ms
+            all_ops.add(op_name)
+            if op_name.startswith('train'):
+                train_op_times[op_name] = train_op_times.get(op_name, 0) + op_time
+            else:
+                val_op_times[op_name] = val_op_times.get(op_name, 0) + op_time
+
+    # Prepare for plotting
+    op_names = sorted(list(all_ops))
+    legend_labels = {op: op.replace('train_', '').replace('test_', '') for op in op_names}
+
+    # Using a colormap that is visually distinct
+    colors = plt.cm.get_cmap('tab10', len(op_names))
+    color_map = {op: colors(i) for i, op in enumerate(op_names)}
+
+    bottom_train = 0.0
+    for op in op_names:
+        if op in train_op_times:
+            time_s = train_op_times[op] / 1000.0 # convert to seconds
+            ax2.bar('Training', time_s, bottom=bottom_train, label=legend_labels[op], color=color_map[op])
+            bottom_train += time_s
+
+    bottom_val = 0.0
+    for op in op_names:
+        if op in val_op_times:
+            time_s = val_op_times[op] / 1000.0 # convert to seconds
+            ax2.bar('Validation', time_s, bottom=bottom_val, color=color_map[op])
+            bottom_val += time_s
+
+    ax2.set_ylabel('Cumulative Time (seconds)')
+    ax2.set_title('Cumulative Runtimes by Operation')
     ax2.grid(True, alpha=0.3, axis='y')
-    
-    # Add value labels on top of bars
-    for bar, value in zip(bars, throughput_values):
-        height = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width()/2., height + max(throughput_values)*0.01,
-                f'{value:.3f}', ha='center', va='bottom', fontweight='bold')
-    
+
+    # To avoid duplicate labels in legend
+    handles, labels = ax2.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax2.legend(by_label.values(), by_label.keys())
+
     plt.tight_layout()
-    
+
     # Save the plot
     plot_path = os.path.join(results_dir, 'training_progress.png')
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
@@ -162,13 +185,13 @@ def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     optimizer.zero_grad()
 
     outputs: "torch.Tensor" = model(inputs)
-    
+
     # Handle different output formats
     if model_type.startswith('Yolo'):
         # YOLO outputs probabilities directly, ensure they're in the right shape
         if outputs.dim() == 1:
             outputs = outputs.unsqueeze(1)
-    
+
     loss: "torch.Tensor" = loss_fn(outputs, labels)
 
     loss.backward()
@@ -186,7 +209,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
     epoch_train_losses: list[dict] = []
     epoch_test_losses: list[dict] = []
-    
+
     # Track accuracies and times for plotting
     train_loss_history: list[float] = []
     val_loss_history: list[float] = []
@@ -194,7 +217,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     val_accuracy_history: list[float] = []
     train_time_history: list[float] = []
     val_time_history: list[float] = []
-    
+
     # Track cumulative images processed for throughput calculation
     cumulative_train_images: int = 0
     cumulative_val_images: int = 0
@@ -207,32 +230,34 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
     for epoch in range(n_epochs):
         epoch_loss = 0
-        
+
         # Record training start time
         train_start_time = time.time_ns() / 1e6
 
         throughput: list[dict[str, float | int | str]] = []
-        
+
         # Initialize timing accumulators for this epoch
         total_data_loading_time: float = 0.
         total_gpu_transfer_time: float = 0.
         total_train_step_time: float = 0.
-        
+
         # Track training accuracy
         train_correct: int = 0
         train_total: int = 0
-        
+
         model.train()
-        
+
         # Measure data loading time by tracking iterator timing
         batch_start_time = time.time_ns() / 1e6
-        
-        description = f"{training_path.split('/')[-2].split('.')[0]} {tile_size:>3} {model_type:>15} {'{}'} {epoch:>3}"
+
+        video_filename = training_path.split('/')[-2].split('.')[0]
+        max_model_name_length = max(len(name) for name in MODEL_ZOO)
+        description = f"{video_filename} {tile_size:>3} {model_type:>{max_model_name_length}} {'{}'} {epoch:>3}"
         command_queue.put((device, { 'description': description.format('T'), 'total': len(train_loader), 'completed': 0 }))
         for x_batch, y_batch in train_loader:
             # Data loading time (time since last batch completed or epoch started)
             total_data_loading_time += (time.time_ns() / 1e6) - batch_start_time
-            
+
             # Measure GPU transfer time
             gpu_transfer_start_time = time.time_ns() / 1e6
             x_batch = x_batch.to(device) # move to gpu
@@ -245,7 +270,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             total_train_step_time += (time.time_ns() / 1e6) - train_step_start_time
 
             epoch_loss += loss / len(train_loader)
-            
+
             # Calculate training accuracy
             with torch.no_grad():
                 if model_type.startswith('Yolo'):
@@ -254,7 +279,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 predictions = y_hat > 0.5
                 train_correct += int(torch.sum(predictions == y_batch).item())
                 train_total += len(y_batch)
-            
+
             # Start timing for next batch data loading
             batch_start_time = time.time_ns() / 1e6
 
@@ -264,7 +289,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # Record training end time
         train_time = (time.time_ns() / 1e6) - train_start_time
         train_accuracy = 100 * train_correct / train_total if train_total > 0 else 0
-        
+
         epoch_train_losses.append({
             'op': 'train',
             'loss': float(epoch_loss),
@@ -274,15 +299,15 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             train_load_data=total_data_loading_time,
             train_gpu_transfer=total_gpu_transfer_time,
             train_step=total_train_step_time))
-        
+
         # Store for plotting
         train_loss_history.append(float(epoch_loss))
         train_accuracy_history.append(float(train_accuracy))
         train_time_history.append(train_time)
-        
+
         # Update cumulative training images
         cumulative_train_images += train_total
-        
+
         # # Print detailed timing information
         # print('Epoch : {}, train loss : {:.4f}, train accuracy: {:.1f}%'.format(epoch+1, epoch_loss, train_accuracy))
         # print('  Total time: {:.2f}s'.format(train_time))
@@ -294,10 +319,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # validation doesnt requires gradient
         with torch.no_grad():
             cumulative_loss = 0
-            
+
             # Record validation start time
             val_start_time = time.time_ns() / 1e6
-            
+
             # Initialize timing accumulators for validation
             val_total_data_loading_time = 0
             val_total_gpu_transfer_time = 0
@@ -307,15 +332,15 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             misc_sum = 0
             num_samples = 0
             model.eval()
-            
+
             # Measure validation data loading time
             val_batch_start_time = time.time_ns() / 1e6
-            
+
             command_queue.put((device, { 'description': description.format('V'), 'total': len(test_loader), 'completed': 0 }))
             for x_batch, y_batch in test_loader:
                 # Validation data loading time
                 val_total_data_loading_time += (time.time_ns() / 1e6) - val_batch_start_time
-                
+
                 # Measure validation GPU transfer time
                 val_gpu_transfer_start_time = time.time_ns() / 1e6
                 x_batch = x_batch.to(device)
@@ -325,14 +350,14 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 # Measure inference time
                 val_inference_start_time = time.time_ns() / 1e6
                 yhat = model(x_batch)
-                
+
                 # Handle different output formats
                 if model_type.startswith('Yolo'):
                     # YOLO outputs probabilities directly, ensure they're in the right shape
                     if yhat.dim() == 1:
                         yhat = yhat.unsqueeze(1)
                 val_total_inference_time += (time.time_ns() / 1e6) - val_inference_start_time
-                
+
                 val_loss_start_time = time.time_ns() / 1e6
                 val_loss = loss_fn(yhat,y_batch)
                 cumulative_loss += val_loss / len(test_loader)
@@ -345,7 +370,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 misc_sum += misc.item()
                 num_samples += len(y_batch)
                 # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
-                
+
                 # Start timing for next validation batch data loading
                 val_batch_start_time = time.time_ns() / 1e6
 
@@ -354,7 +379,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             # Record validation end time
             val_time = (time.time_ns() / 1e6) - val_start_time # no need to add to total time
             val_accuracy = misc_sum * 100 / num_samples if num_samples > 0 else 0
-            
+
             epoch_test_losses.append({
                 'op': 'test',
                 'loss': float(cumulative_loss),
@@ -372,7 +397,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             val_loss_history.append(float(cumulative_loss))
             val_accuracy_history.append(float(val_accuracy))
             val_time_history.append(val_time)
-            
+
             # Update cumulative validation images
             cumulative_val_images += num_samples
 
@@ -383,14 +408,15 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             # print('  GPU transfer: {:.2f}s ({:.1f}%)'.format(val_total_gpu_transfer_time, 100 * val_total_gpu_transfer_time / val_time))
             # print('  Inference: {:.2f}s ({:.1f}%)'.format(val_total_inference_time, 100 * val_total_inference_time / val_time))
             # print()
-            
+
             # Generate plot at the end of each epoch
             if results_dir:
-                plot_training_progress(train_loss_history, train_accuracy_history, 
+                plot_training_progress(train_loss_history, train_accuracy_history,
                                      val_loss_history, val_accuracy_history,
-                                     train_time_history, val_time_history, 
-                                     results_dir, epoch, cumulative_train_images, cumulative_val_images)
-            
+                                     train_time_history, val_time_history,
+                                     results_dir, epoch, cumulative_train_images, cumulative_val_images,
+                                     throughput_per_epoch)
+
             # save best model
             if cumulative_loss < best_loss:
                 best_model_wts = model.state_dict()
@@ -423,7 +449,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     with open(os.path.join(results_dir, 'throughput_per_epoch.jsonl'), 'w') as f:
         for t in throughput_per_epoch:
             f.write(json.dumps(t) + '\n')
-    
+
     return best_model_wts
 
 
@@ -454,7 +480,7 @@ MODEL_ZOO = {
 def train_classifier(training_path: str, tile_size: int, model_type: str,
                      device: str, command_queue: mp.Queue):
     # print(f'Training {model_type} (tile_size={tile_size}) on {device}\n')
-    
+
     # Create results directory early so we can save plots during training
     results_dir = os.path.join(training_path, 'results', f'{model_type}_{tile_size}')
     if os.path.exists(results_dir):
@@ -466,7 +492,7 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
         raise ValueError(f"Unsupported model type: {model_type}")
     model = MODEL_ZOO[model_type](tile_size).to(device)
     loss_fn = torch.nn.BCELoss().to(device)
-    
+
     optimizer = Adam(model.parameters(), lr=0.001)
 
     training_data_path = os.path.join(training_path, 'data', f'tilesize_{tile_size}')
@@ -508,7 +534,7 @@ def progress_bars(command_queue: mp.Queue, num_tasks: int):
         overall_progress = p.add_task(f"[green]Training {num_tasks} models", total=num_tasks)
         bars['overall'] = overall_progress
         for gpu_id in range(torch.cuda.device_count()):
-            bars[f'cuda:{gpu_id}'] = p.add_task(f"jnc00  30 model t 0")
+            bars[f'cuda:{gpu_id}'] = p.add_task("jnc00  30 model t 0")
 
         while True:
             val = command_queue.get()
@@ -518,11 +544,8 @@ def progress_bars(command_queue: mp.Queue, num_tasks: int):
 
 
 def dispatch_task(training_path: str, tile_size: int, classifier: str, gpu_id: int, queue: mp.Queue, command_queue: mp.Queue):
-    try:
-        train_classifier(training_path, tile_size, classifier, device=f'cuda:{gpu_id}', command_queue=command_queue)
-    except Exception as e:
-        queue.put(gpu_id)
-        raise e
+    try: train_classifier(training_path, tile_size, classifier, device=f'cuda:{gpu_id}', command_queue=command_queue)
+    finally: queue.put(gpu_id)
 
 
 def main(args):
@@ -538,15 +561,15 @@ def main(args):
 
         # print(f"Processing video {video_path}")
         for tile_size in TILE_SIZES:
-            training_path = os.path.join(video_path, 'training') 
+            training_path = os.path.join(video_path, 'training')
             for classifier in args.classifier:
                 tasks.append((training_path, tile_size, classifier))
-    
+
     num_gpus = torch.cuda.device_count()
     gpu_id_queue = mp.Queue(maxsize=num_gpus)
     for gpu_id in range(num_gpus):
         gpu_id_queue.put(gpu_id)
-    
+
     command_queue = mp.Queue()
     progress_process = mp.Process(target=progress_bars, args=(command_queue, len(tasks)))
     progress_process.start()
@@ -563,7 +586,7 @@ def main(args):
     for process in processes:
         process.join()
         process.terminate()
-    
+
     command_queue.put(None)
     progress_process.join()
     progress_process.terminate()
