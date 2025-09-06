@@ -6,7 +6,7 @@ import os
 import shutil
 import cv2
 import numpy as np
-from tqdm import tqdm
+from rich.progress import track
 import matplotlib.pyplot as plt
 from typing import Any
 import multiprocessing as mp
@@ -207,12 +207,10 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     # Use multiprocessing to evaluate frames in parallel
     num_processes = min(mp.cpu_count() - 1, len(results))
     with mp.Pool(processes=num_processes) as pool:
-        frame_evals = list(tqdm(
+        frame_evals = list(track(
             pool.imap(_evaluate_frame_worker, worker_args),
             total=len(results),
-            desc=f"Evaluating frames {idx + 1}",
-            position=idx + 1,
-            leave=True,
+            description=f"Evaluating frames {idx + 1}"
         ))
 
     # Collect results from parallel processing
@@ -544,16 +542,25 @@ def create_visualization_frame(frame: np.ndarray, classifications: np.ndarray,
             # Get classification score for this tile
             score = classifications[i][j]
 
-            # Calculate brightness factor based on threshold
-            if score < threshold:
-                # Reduce brightness for tiles below threshold
-                brightness_factor = 0.3 + (score / threshold) * 0.4  # Range: 0.3 to 0.7
-            else:
-                # Keep normal brightness for tiles above threshold
-                brightness_factor = 1.0
-
-            # Apply brightness adjustment
-            vis_frame[y_start:y_end, x_start:x_end] *= brightness_factor
+            # Only apply red tint if score is below threshold
+            if score <= threshold:
+                # Calculate red tint factor based on score (lower score = more red)
+                # Normalize score to 0-1 range, then invert so low scores get high red values
+                red_intensity = 1.0 - score  # Higher red for lower probability
+                
+                # Get the tile region
+                tile_region = vis_frame[y_start:y_end, x_start:x_end]
+                
+                # Apply red tint: reduce green and blue channels, enhance red channel
+                if red_intensity > 0:
+                    # Reduce green and blue channels based on red intensity
+                    tile_region[:, :, :2] = tile_region[:, :, :2] * (1.0 - red_intensity * 0.7)  # Blue and Green
+                    # Optionally enhance red channel slightly
+                    tile_region[:, :, 2] = np.minimum(255, tile_region[:, :, 2] * (1.0 + red_intensity * 0.3))  # Red
+                
+                # # Update the frame
+                # vis_frame[y_start:y_end, x_start:x_end] = tile_region
+            # If score > threshold, leave the tile unchanged (same as original image)
 
     # Clip values to valid range and convert back to uint8
     vis_frame = np.clip(vis_frame, 0, 255).astype(np.uint8)
@@ -689,7 +696,7 @@ def save_visualization_frames(video_path: str, results: list, tile_size: int,
     print(f"Creating visualization video with {video_frame_count} frames at {fps} FPS")
 
     # Process all frames
-    for frame_idx in tqdm(range(video_frame_count), desc=f"Creating visualization video {idx + 1}", position=idx + 1, leave=True):
+    for frame_idx in track(range(video_frame_count), description=f"Creating visualization video {idx + 1}"):
         # Get frame from video
         ret, frame = cap.read()
         if not ret:
@@ -973,12 +980,10 @@ def main(args):
     #         position=0,
     #         leave=True,
     #     ))
-    task_results = list(tqdm(
+    task_results = list(track(
         map(_process_classifier_tile_worker, all_tasks),
         total=len(all_tasks),
-        desc="Processing tasks",
-        position=0,
-        leave=True,
+        description="Processing tasks"
     ))
 
     # Print results

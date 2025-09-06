@@ -22,3 +22,5 @@ opencv-python
 tqdm
 numpy>=2.3.2,<3.0.0
 Cython
+ultralytics
+rich

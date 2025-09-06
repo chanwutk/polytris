@@ -10,7 +10,6 @@ import time
 from tqdm import tqdm
 import shutil
 
-from polyis.models.classifier.simple_cnn import SimpleCNN
 from polyis.images import splitHWC, padHWC
 
 from scripts.utilities import CACHE_DIR, DATA_DIR, format_time
@@ -33,7 +32,11 @@ def get_classifier_class(classifier_name: str):
         ValueError: If the classifier is not supported
     """
     if classifier_name == 'SimpleCNN':
+        from polyis.models.classifier.simple_cnn import SimpleCNN
         return SimpleCNN
+    elif classifier_name == 'YOLOv11':
+        from polyis.models.classifier.yolo import YOLOv11Classifier
+        return YOLOv11Classifier
     else:
         raise ValueError(f"Unsupported classifier: {classifier_name}")
 
@@ -142,7 +145,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
         start_time = (time.time_ns() / 1e6)
         predictions = model(tiles_nchw)
         # Apply sigmoid to get probabilities
-        probabilities = (torch.sigmoid(predictions) * 255).to(torch.uint8).cpu().numpy().flatten()
+        probabilities = (predictions * 255).to(torch.uint8).cpu().numpy().flatten()
     
         # Reshape back to grid format
         grid_height, grid_width = tiles.shape[:2]

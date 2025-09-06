@@ -87,9 +87,14 @@ class SimpleCNN(torch.nn.Module):
             current_size = target_size
         return torch.nn.Sequential(*sequential)
 
-    def forward(self, img: torch.Tensor) -> torch.Tensor:
-        x = self.encoder(img)
+    def forward(self, imgs: torch.Tensor) -> torch.Tensor:
+        """Forward pass through the SimpleCNN classifier.
+        Args:
+            imgs: Input image tensor of shape (batch_size, 3, height, width)
+        Returns:
+            Logits for binary classification (car vs no car). Shape (batch_size, 1)
+        """
+        x = self.encoder(imgs)
         x = x.flatten(1)
         x = self.decoder(x)
-        # return torch.sigmoid(x)
-        return x
+        return torch.sigmoid(x)

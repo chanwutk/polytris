@@ -5,7 +5,7 @@ import json
 import os
 import cv2
 import numpy as np
-from tqdm import tqdm
+from rich.progress import track
 import shutil
 import time
 from queue import Queue
@@ -93,7 +93,7 @@ def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, in
             - mask: masking of the polyomino as a 2D numpy array
             - offset: offset of the mask from the top left corner of the bitmap
     """
-    return _fast_group_tiles(bitmap.astype(np.uint8))
+    return _fast_group_tiles(bitmap)
 
 
 def _group_tiles_original(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, int]]]:
@@ -157,7 +157,6 @@ def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
         or None if packing fails
     """
     return _fast_pack_append(poliominoes, h, w, occupied_tiles)
-    # return _pack_append(poliominoes, h, w, occupied_tiles)
 
 
 def _pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
@@ -369,7 +368,7 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
 
     with open(runtime_file, 'w') as f:
         # Process each frame
-        for frame_idx, frame_result in enumerate(tqdm(results, desc="Packing frames")):
+        for frame_idx, frame_result in enumerate(track(results, description="Packing frames")):
             # Start profiling for this frame
             # frame_start_time = (time.time_ns() / 1e6)
             step_times = {}
@@ -401,7 +400,7 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
             step_start = (time.time_ns() / 1e6)
             bitmap_frame = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size)
             bitmap_frame = bitmap_frame > (threshold * 255)
-            bitmap_frame = bitmap_frame.astype(np.int32)
+            bitmap_frame = bitmap_frame.astype(np.uint8)
             step_times['create_bitmap'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Group connected tiles into polyominoes

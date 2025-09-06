@@ -189,7 +189,6 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
         
         for stage, file_path in entry['runtime_files']:
             file_timings = parse_runtime_file(file_path, stage, accessors[stage])
-            print(dataset_video, classifier, tile_size, stage, file_path, len(file_timings))
             
             if not file_timings:
                 continue
@@ -459,7 +458,8 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
     is_average = videos is not None
     target_videos = videos if is_average else [video]
     
-    plt.figure(figsize=(14, 8))
+    # Create figure with two subplots side by side
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
     
     # Calculate breakdown for index construction stages
     index_stages = {
@@ -632,9 +632,7 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
             preprocessing_stages['Track'] += float(stage_total)
     
     # Prepare data for stacked bar chart
-    categories = ['Index Construction', 'Query Execution\n(Classifier: SimpleCNN)', 'Query Execution\n(Classifier: Groundtruth)', 'Naive']
     width = 0.6
-    x = np.arange(len(categories))
     
     # Colors for different operations
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2']
@@ -653,12 +651,15 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
 
     assert query_labels == query_groundtruth_labels
 
-    
     # Preprocessing stack
     preprocessing_values = list(preprocessing_stages.values())
     preprocessing_labels = list(preprocessing_stages.keys())
     
-    # Create stacked bars
+    # === SUBPLOT 1: With Index Construction ===
+    categories_with_index = ['Index Construction', 'Query Execution\n(Classifier: SimpleCNN)', 'Query Execution\n(Classifier: Groundtruth)', 'Naive']
+    x1 = np.arange(len(categories_with_index))
+    
+    # Create stacked bars for subplot 1
     bottom_index = 0
     bottom_query = 0
     bottom_query_groundtruth = 0
@@ -667,49 +668,94 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
     # Plot index construction stages
     for i, (value, label) in enumerate(zip(index_values, index_labels)):
         if value > 0:
-            plt.bar(x[0], value, width, bottom=bottom_index, 
+            ax1.bar(x1[0], value, width, bottom=bottom_index, 
                    label=f'Index: {label}', color=colors[i], alpha=0.8)
             bottom_index += value
     
     # Plot query execution stages (SimpleCNN)
     for i, (value, label) in enumerate(zip(query_values, query_labels)):
         if value > 0:
-            plt.bar(x[1], value, width, bottom=bottom_query, 
+            ax1.bar(x1[1], value, width, bottom=bottom_query, 
                    label=f'Query: {label}', color=colors[i+len(index_values)], alpha=0.8)
             bottom_query += value
     
     # Plot query execution stages (Groundtruth)
     for i, (value, label) in enumerate(zip(query_groundtruth_values, query_groundtruth_labels)):
         if value > 0:
-            plt.bar(x[2], value, width, bottom=bottom_query_groundtruth, 
+            ax1.bar(x1[2], value, width, bottom=bottom_query_groundtruth, 
                    color=colors[i+len(index_values)], alpha=0.8)
             bottom_query_groundtruth += value
     
     # Plot preprocessing stages
     for i, (value, label) in enumerate(zip(preprocessing_values, preprocessing_labels)):
         if value > 0:
-            plt.bar(x[3], value, width, bottom=bottom_preprocessing, 
+            ax1.bar(x1[3], value, width, bottom=bottom_preprocessing, 
                    label=f'Naive: {label}', color=colors[(i+len(index_values)+len(query_values)) % len(colors)], alpha=0.8)
             bottom_preprocessing += value
     
-    plt.ylabel('Runtime (seconds)')
+    ax1.set_ylabel('Runtime (seconds)')
+    ax1.set_title('With Index Construction')
+    ax1.set_xticks(x1)
+    ax1.set_xticklabels(categories_with_index)
+    ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
+    ax1.grid(True, alpha=0.3)
     
-    # Set title based on analysis type
+    # Add total value labels on top of bars for subplot 1
+    totals1 = [bottom_index, bottom_query, bottom_query_groundtruth, bottom_preprocessing]
+    for i, total in enumerate(totals1):
+        if total > 0 or is_average:
+            ax1.text(x1[i], total + max(totals1)*0.01, f'{total:.1f}s', 
+                    ha='center', va='bottom', fontweight='bold', fontsize='small')
+    
+    # === SUBPLOT 2: Without Index Construction ===
+    categories_without_index = ['Query Execution\n(Classifier: SimpleCNN)', 'Query Execution\n(Classifier: Groundtruth)', 'Naive']
+    x2 = np.arange(len(categories_without_index))
+    
+    # Create stacked bars for subplot 2 (excluding index construction)
+    bottom_query2 = 0
+    bottom_query_groundtruth2 = 0
+    bottom_preprocessing2 = 0
+    
+    # Plot query execution stages (SimpleCNN)
+    for i, (value, label) in enumerate(zip(query_values, query_labels)):
+        if value > 0:
+            ax2.bar(x2[0], value, width, bottom=bottom_query2, 
+                   label=f'Query: {label}', color=colors[i+len(index_values)], alpha=0.8)
+            bottom_query2 += value
+    
+    # Plot query execution stages (Groundtruth)
+    for i, (value, label) in enumerate(zip(query_groundtruth_values, query_groundtruth_labels)):
+        if value > 0:
+            ax2.bar(x2[1], value, width, bottom=bottom_query_groundtruth2, 
+                   color=colors[i+len(index_values)], alpha=0.8)
+            bottom_query_groundtruth2 += value
+    
+    # Plot preprocessing stages
+    for i, (value, label) in enumerate(zip(preprocessing_values, preprocessing_labels)):
+        if value > 0:
+            ax2.bar(x2[2], value, width, bottom=bottom_preprocessing2, 
+                   label=f'Naive: {label}', color=colors[(i+len(index_values)+len(query_values)) % len(colors)], alpha=0.8)
+            bottom_preprocessing2 += value
+    
+    ax2.set_ylabel('Runtime (seconds)')
+    ax2.set_title('Without Index Construction')
+    ax2.set_xticks(x2)
+    ax2.set_xticklabels(categories_without_index)
+    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
+    ax2.grid(True, alpha=0.3)
+    
+    # Add total value labels on top of bars for subplot 2
+    totals2 = [bottom_query2, bottom_query_groundtruth2, bottom_preprocessing2]
+    for i, total in enumerate(totals2):
+        if total > 0 or is_average:
+            ax2.text(x2[i], total + max(totals2)*0.01, f'{total:.1f}s', 
+                    ha='center', va='bottom', fontweight='bold', fontsize='small')
+    
+    # Set overall title based on analysis type
     if is_average:
-        plt.title('Index Construction vs Query Execution Runtime Breakdown (Average Across All Videos)')
+        fig.suptitle('Index Construction vs Query Execution Runtime Breakdown (Average Across All Videos)', fontsize=16)
     else:
-        plt.title(f'Index Construction vs Query Execution Runtime Breakdown - {video_name}')
-    
-    plt.xticks(x, categories)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(True, alpha=0.3)
-    
-    # Add total value labels on top of bars
-    totals = [bottom_index, bottom_query, bottom_query_groundtruth, bottom_preprocessing]
-    for i, total in enumerate(totals):
-        if total > 0 or is_average:  # Only add label if there's a value (or for average analysis)
-            plt.text(x[i], total + max(totals)*0.01, f'{total:.1f}s', 
-                    ha='center', va='bottom', fontweight='bold')
+        fig.suptitle(f'Index Construction vs Query Execution Runtime Breakdown - {video_name}', fontsize=16)
     
     plt.tight_layout()
     
@@ -717,7 +763,7 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
     if is_average:
         # Save in main output directory for average analysis
         for fmt in FORMATS:
-            plt.savefig(os.path.join(output_dir, f'index_vs_query_comparison_average.{fmt}'), 
+            fig.savefig(os.path.join(output_dir, f'index_vs_query_comparison_average.{fmt}'), 
                        dpi=300, bbox_inches='tight')
     else:
         # Create per-video subdirectory for per-video analysis
@@ -728,10 +774,10 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
         assert video_name is not None
         safe_video_name = video_name.replace('/', '_').replace('.', '_')
         for fmt in FORMATS:
-            plt.savefig(os.path.join(video_output_dir, f'index_vs_query_comparison_{safe_video_name}.{fmt}'), 
+            fig.savefig(os.path.join(video_output_dir, f'index_vs_query_comparison_{safe_video_name}.{fmt}'), 
                        dpi=300, bbox_inches='tight')
     
-    plt.close()
+    plt.close(fig)
 
 
 def create_average_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
