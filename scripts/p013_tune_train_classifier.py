@@ -74,7 +74,7 @@ def parse_args():
                         default=['ResNet18', 'ResNet152', 'ResNet101',
                                  'EfficientNetS', 'EfficientNetL',
                                  'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
-                                 'MobileNetS',], # 'WideResNet50', 'WideResNet101',
+                                 'MobileNetS', 'WideResNet50',], # 'WideResNet101',
                         choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL',
                                  'YoloX', 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
                                  'MobileNetS', 'WideResNet50', 'WideResNet101',
@@ -113,19 +113,24 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
     _fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
 
     # Left subplot: Loss and accuracy progress
-    ax1.plot(cumulative_train_times, train_losses, 'b-', label='Train Loss', marker='o', linewidth=2)
-    ax1.plot(cumulative_val_times, val_losses, 'r-', label='Validation Loss', marker='s', linewidth=2)
-    ax1.plot(cumulative_train_times, train_accuracies_scaled, 'b--', label='Train Accuracy', marker='^', linewidth=2)
-    ax1.plot(cumulative_val_times, val_accuracies_scaled, 'r--', label='Validation Accuracy', marker='d', linewidth=2)
+    epoch_range = list(range(len(train_losses)))
+    ax1.plot(epoch_range, train_losses,
+             'b-', label='Train Loss', marker='o', linewidth=2)
+    ax1.plot(epoch_range, val_losses,
+             'r-', label='Validation Loss', marker='s', linewidth=2)
+    ax1.plot(epoch_range, train_accuracies_scaled,
+             'b--', label='Train Accuracy', marker='^', linewidth=2)
+    ax1.plot(epoch_range, val_accuracies_scaled,
+             'r--', label='Validation Accuracy', marker='d', linewidth=2)
 
-    ax1.set_xlabel('Time (seconds)')
+    ax1.set_xlabel('Epoch')
     ax1.set_ylabel('Loss / Accuracy')
     ax1.set_title(f'Training Progress - Epoch {epoch + 1}')
     ax1.legend()
     ax1.grid(True, alpha=0.3)
-    ax1.set_ylim(0, 1)  # Set y-axis limits to [0, 1] since both metrics are in this range
+    ax1.set_ylim(0, 1)
 
-    # Right subplot: Runtimes stacked bar chart
+    # Right subplot: ms/frame stacked bar chart
     train_op_times: dict[str, float] = {}
     val_op_times: dict[str, float] = {}
     all_ops: set[str] = set()
@@ -142,28 +147,41 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
 
     # Prepare for plotting
     op_names = sorted(list(all_ops))
-    legend_labels = {op: op.replace('train_', '').replace('test_', '') for op in op_names}
+    legend_labels = { op: op.replace('train_', '').replace('test_', '')
+                      for op in op_names }
+    op_names = sorted(op_names,
+                      key=lambda op:
+                        op.replace('test_', 'train_') in train_op_times and
+                        op.replace('train_', 'test_') in val_op_times,
+                      reverse=True)
 
     # Using a colormap that is visually distinct
     colors = plt.cm.get_cmap('tab10', len(op_names))
-    color_map = {op: colors(i) for i, op in enumerate(op_names)}
+    color_label_map = {op: colors(i) for i, op in enumerate(legend_labels.values())}
+    color_map = {op: color_label_map[legend_labels[op]] for op in op_names}
 
+    # Calculate ms per frame for each operation
+    # ms/frame for op = (total op time in ms) / (images processed)
     bottom_train = 0.0
     for op in op_names:
         if op in train_op_times:
-            time_s = train_op_times[op] / 1000.0 # convert to seconds
-            ax2.bar('Training', time_s, bottom=bottom_train, label=legend_labels[op], color=color_map[op])
-            bottom_train += time_s
+            op_time_ms = train_op_times[op]
+            op_ms_per_frame = (op_time_ms / train_images_processed)
+            ax2.bar('Training', op_ms_per_frame, bottom=bottom_train,
+                    label=legend_labels[op], color=color_map[op])
+            bottom_train += op_ms_per_frame
 
     bottom_val = 0.0
     for op in op_names:
         if op in val_op_times:
-            time_s = val_op_times[op] / 1000.0 # convert to seconds
-            ax2.bar('Validation', time_s, bottom=bottom_val, color=color_map[op])
-            bottom_val += time_s
+            op_time_ms = val_op_times[op]
+            op_ms_per_frame = (op_time_ms / val_images_processed)
+            ax2.bar('Validation', op_ms_per_frame, bottom=bottom_val,
+                    label=legend_labels[op], color=color_map[op])
+            bottom_val += op_ms_per_frame
 
-    ax2.set_ylabel('Cumulative Time (seconds)')
-    ax2.set_title('Cumulative Runtimes by Operation')
+    ax2.set_ylabel('ms per frame')
+    ax2.set_title('Milliseconds per Frame by Operation')
     ax2.grid(True, alpha=0.3, axis='y')
 
     # To avoid duplicate labels in legend
@@ -176,7 +194,7 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
     # Save the plot
     plot_path = os.path.join(results_dir, 'training_progress.png')
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
-    plt.close()  # Close to free memory
+    plt.close()
 
 
 def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
@@ -204,6 +222,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
           optimizer: "torch.optim.Optimizer", train_loader: "torch.utils.data.DataLoader",
           test_loader: "torch.utils.data.DataLoader", n_epochs: int, results_dir: str,
           model_type: str, device: str, command_queue: mp.Queue, training_path: str, tile_size: int):
+    grey = "[grey50]"
+    newline = " ┗━"
+
     early_stopping_tolerance = 10
     early_stopping_threshold = 0.001
 
@@ -228,6 +249,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
     throughput_per_epoch: list[list[dict[str, float | int | str]]] = []
 
+    video_filename = training_path.split('/')[-2].split('.')[0]
+    max_model_name_length = max(len(name) for name in MODEL_ZOO)
+    description = f"{video_filename} {tile_size:>3} {model_type:>{max_model_name_length}}"
+    command_queue.put((device + ':epoch', { 'description': description, 'total': n_epochs, 'completed': 0 }))
     for epoch in range(n_epochs):
         epoch_loss = 0
 
@@ -250,10 +275,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # Measure data loading time by tracking iterator timing
         batch_start_time = time.time_ns() / 1e6
 
-        video_filename = training_path.split('/')[-2].split('.')[0]
-        max_model_name_length = max(len(name) for name in MODEL_ZOO)
-        description = f"{video_filename} {tile_size:>3} {model_type:>{max_model_name_length}} {'{}'} {epoch:>3}"
-        command_queue.put((device, { 'description': description.format('T'), 'total': len(train_loader), 'completed': 0 }))
+        train_description = ' Training'
+        dash = '━' * (len(description) - len(newline) - len(train_description))
+        command_queue.put((device, { 'description': grey + newline + dash + train_description,
+                                     'total': len(train_loader), 'completed': 0 }))
         for x_batch, y_batch in train_loader:
             # Data loading time (time since last batch completed or epoch started)
             total_data_loading_time += (time.time_ns() / 1e6) - batch_start_time
@@ -280,10 +305,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 train_correct += int(torch.sum(predictions == y_batch).item())
                 train_total += len(y_batch)
 
+            command_queue.put((device, { 'advance': 1 }))
+
             # Start timing for next batch data loading
             batch_start_time = time.time_ns() / 1e6
-
-            command_queue.put((device, { 'advance': 1 }))
             # break
 
         # Record training end time
@@ -336,7 +361,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             # Measure validation data loading time
             val_batch_start_time = time.time_ns() / 1e6
 
-            command_queue.put((device, { 'description': description.format('V'), 'total': len(test_loader), 'completed': 0 }))
+            val_description = " Validation"
+            dash = '━' * (len(description) - len(newline) - len(val_description))
+            command_queue.put((device, { 'description': grey + newline + dash + val_description,
+                                         'total': len(test_loader), 'completed': 0 }))
             for x_batch, y_batch in test_loader:
                 # Validation data loading time
                 val_total_data_loading_time += (time.time_ns() / 1e6) - val_batch_start_time
@@ -350,13 +378,13 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 # Measure inference time
                 val_inference_start_time = time.time_ns() / 1e6
                 yhat = model(x_batch)
+                val_total_inference_time += (time.time_ns() / 1e6) - val_inference_start_time
 
                 # Handle different output formats
                 if model_type.startswith('Yolo'):
                     # YOLO outputs probabilities directly, ensure they're in the right shape
                     if yhat.dim() == 1:
                         yhat = yhat.unsqueeze(1)
-                val_total_inference_time += (time.time_ns() / 1e6) - val_inference_start_time
 
                 val_loss_start_time = time.time_ns() / 1e6
                 val_loss = loss_fn(yhat,y_batch)
@@ -371,10 +399,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 num_samples += len(y_batch)
                 # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
+                command_queue.put((device, { 'advance': 1 }))
+
                 # Start timing for next validation batch data loading
                 val_batch_start_time = time.time_ns() / 1e6
-
-                command_queue.put((device, { 'advance': 1 }))
 
             # Record validation end time
             val_time = (time.time_ns() / 1e6) - val_start_time # no need to add to total time
@@ -428,7 +456,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             if (early_stopping_counter >= early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
                 # print("Terminating: early stopping")
                 break # terminate training
-
+        
+        command_queue.put((device + ':epoch', { 'advance': 1 }))
 
     # print(str(epoch_test_losses) + '\n')
     # print(str(epoch_train_losses) + '\n')
@@ -527,24 +556,35 @@ def progress_bars(command_queue: mp.Queue, num_tasks: int):
         progress.BarColumn(),
         "[progress.percentage]{task.percentage:>3.0f}%",
         # progress.TimeRemainingColumn(),
+        progress.MofNCompleteColumn(),
         progress.TimeElapsedColumn(),
-        refresh_per_second=1,  # bit slower updates
+        refresh_per_second=0.5,
     ) as p:
         bars: dict[str, progress.TaskID] = {}
         overall_progress = p.add_task(f"[green]Training {num_tasks} models", total=num_tasks)
         bars['overall'] = overall_progress
         for gpu_id in range(torch.cuda.device_count()):
-            bars[f'cuda:{gpu_id}'] = p.add_task("jnc00  30 model t 0")
+            bars[f'cuda:{gpu_id}:epoch'] = p.add_task("jnc00  30 model")
+            bars[f'cuda:{gpu_id}'] = p.add_task("  Training")
 
         while True:
             val = command_queue.get()
             if val is None: break
             progress_id, kwargs = val
             p.update(bars[progress_id], **kwargs)
+        
+        # remove all tasks
+        for _, task_id in bars.items():
+            p.remove_task(task_id)
+        bars.clear()
 
 
-def dispatch_task(training_path: str, tile_size: int, classifier: str, gpu_id: int, queue: mp.Queue, command_queue: mp.Queue):
-    try: train_classifier(training_path, tile_size, classifier, device=f'cuda:{gpu_id}', command_queue=command_queue)
+
+def dispatch_task(training_path: str, tile_size: int, classifier: str,
+                  gpu_id: int, queue: mp.Queue, command_queue: mp.Queue):
+    try:
+        train_classifier(training_path, tile_size, classifier,
+                         device=f'cuda:{gpu_id}', command_queue=command_queue)
     finally: queue.put(gpu_id)
 
 
@@ -571,7 +611,9 @@ def main(args):
         gpu_id_queue.put(gpu_id)
 
     command_queue = mp.Queue()
-    progress_process = mp.Process(target=progress_bars, args=(command_queue, len(tasks)))
+    progress_process = mp.Process(target=progress_bars,
+                                  args=(command_queue, len(tasks)),
+                                  daemon=True)
     progress_process.start()
 
     processes: list[mp.Process] = []
@@ -579,7 +621,8 @@ def main(args):
         # print(task)
         gpu_id = gpu_id_queue.get()
         command_queue.put(( 'overall', { 'advance': 1 } ))
-        process = mp.Process(target=dispatch_task, args=(*task, gpu_id, gpu_id_queue, command_queue))
+        process = mp.Process(target=dispatch_task,
+                             args=(*task, gpu_id, gpu_id_queue, command_queue))
         process.start()
         processes.append(process)
 
