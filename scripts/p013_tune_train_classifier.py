@@ -24,7 +24,7 @@ from polyis.models.classifier.mobilenet import MobileNetL, MobileNetS
 from polyis.models.classifier.wide_resnet import WideResNet50, WideResNet101
 from polyis.models.classifier.resnet import ResNet152, ResNet101, ResNet18
 from polyis.models.classifier.efficientnet import EfficientNetS, EfficientNetL
-from scripts.utilities import CACHE_DIR, format_time
+from scripts.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, format_time, progress_bars
 
 
 # Factory functions for models that don't accept tile_size parameter
@@ -62,7 +62,7 @@ def EfficientNetL_factory(_tile_size: int):
     return EfficientNetL()
 
 
-TILE_SIZES = [30, 60, 120]
+TILE_SIZES = [30, 60]  #, 120]
 
 
 def parse_args():
@@ -71,10 +71,7 @@ def parse_args():
                         default='b3d',
                         help='Dataset name')
     parser.add_argument('--classifier', required=False,
-                        default=['ResNet18', 'ResNet152', 'ResNet101',
-                                 'EfficientNetS', 'EfficientNetL',
-                                 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
-                                 'MobileNetS', 'WideResNet50',], # 'WideResNet101',
+                        default=CLASSIFIERS_TO_TEST,
                         choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL',
                                  'YoloX', 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
                                  'MobileNetS', 'WideResNet50', 'WideResNet101',
@@ -566,37 +563,7 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
         torch.save(model, f)
 
 
-def progress_bars(command_queue: mp.Queue, num_tasks: int):
-    with progress.Progress(
-        "[progress.description]{task.description}",
-        progress.BarColumn(),
-        "[progress.percentage]{task.percentage:>3.0f}%",
-        # progress.TimeRemainingColumn(),
-        progress.MofNCompleteColumn(),
-        progress.TimeElapsedColumn(),
-        refresh_per_second=0.5,
-    ) as p:
-        bars: dict[str, progress.TaskID] = {}
-        overall_progress = p.add_task(f"[green]Training {num_tasks} models", total=num_tasks)
-        bars['overall'] = overall_progress
-        for gpu_id in range(torch.cuda.device_count()):
-            bars[f'cuda:{gpu_id}:'] = p.add_task("video tilesize model T/V")
-            # bars[f'cuda:{gpu_id}'] = p.add_task("  Training")
-
-        while True:
-            val = command_queue.get()
-            if val is None: break
-            progress_id, kwargs = val
-            p.update(bars[progress_id], **kwargs)
-        
-        # remove all tasks
-        for _, task_id in bars.items():
-            p.remove_task(task_id)
-        bars.clear()
-
-
-
-def dispatch_task(training_path: str, tile_size: int, classifier: str,
+def _train_classifier(training_path: str, tile_size: int, classifier: str,
                   gpu_id: int, queue: mp.Queue, command_queue: mp.Queue):
     try:
         train_classifier(training_path, tile_size, classifier,
@@ -628,7 +595,7 @@ def main(args):
 
     command_queue = mp.Queue()
     progress_process = mp.Process(target=progress_bars,
-                                  args=(command_queue, len(tasks)),
+                                  args=(command_queue, num_gpus, len(tasks)),
                                   daemon=True)
     progress_process.start()
 
@@ -637,7 +604,7 @@ def main(args):
         # print(task)
         gpu_id = gpu_id_queue.get()
         command_queue.put(( 'overall', { 'advance': 1 } ))
-        process = mp.Process(target=dispatch_task,
+        process = mp.Process(target=_train_classifier,
                              args=(*task, gpu_id, gpu_id_queue, command_queue))
         process.start()
         processes.append(process)

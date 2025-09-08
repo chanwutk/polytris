@@ -15,7 +15,7 @@ class ResNet152(torch.nn.Module):
 class ResNet101(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT, progress=False)
+        self.model = models.resnet101(weights=models.ResNet101_Weights.DEFAULT, progress=False)
         self.model.fc = torch.nn.Linear(self.model.fc.in_features, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
