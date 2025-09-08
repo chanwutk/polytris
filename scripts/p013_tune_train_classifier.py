@@ -222,9 +222,6 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
           optimizer: "torch.optim.Optimizer", train_loader: "torch.utils.data.DataLoader",
           test_loader: "torch.utils.data.DataLoader", n_epochs: int, results_dir: str,
           model_type: str, device: str, command_queue: mp.Queue, training_path: str, tile_size: int):
-    grey = "[grey50]"
-    newline = " ┗━"
-
     early_stopping_tolerance = 10
     early_stopping_threshold = 0.001
 
@@ -251,8 +248,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
     video_filename = training_path.split('/')[-2].split('.')[0]
     max_model_name_length = max(len(name) for name in MODEL_ZOO)
-    description = f"{video_filename} {tile_size:>3} {model_type:>{max_model_name_length}}"
-    command_queue.put((device + ':epoch', { 'description': description, 'total': n_epochs, 'completed': 0 }))
+    description = f"{video_filename} {tile_size:>3} {model_type:>{max_model_name_length}} {'{}'}"
+    command_queue.put((device, { 'description': description.format('T'),
+                                 'total': n_epochs, 'completed': 0 }))
     for epoch in range(n_epochs):
         epoch_loss = 0
 
@@ -275,10 +273,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # Measure data loading time by tracking iterator timing
         batch_start_time = time.time_ns() / 1e6
 
-        train_description = ' Training'
-        dash = '━' * (len(description) - len(newline) - len(train_description))
-        command_queue.put((device, { 'description': grey + newline + dash + train_description,
-                                     'total': len(train_loader), 'completed': 0 }))
+        command_queue.put((device, { 'description': description.format('T') }))
         for x_batch, y_batch in train_loader:
             # Data loading time (time since last batch completed or epoch started)
             total_data_loading_time += (time.time_ns() / 1e6) - batch_start_time
@@ -305,11 +300,8 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 train_correct += int(torch.sum(predictions == y_batch).item())
                 train_total += len(y_batch)
 
-            command_queue.put((device, { 'advance': 1 }))
-
             # Start timing for next batch data loading
             batch_start_time = time.time_ns() / 1e6
-            # break
 
         # Record training end time
         train_time = (time.time_ns() / 1e6) - train_start_time
@@ -318,6 +310,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         epoch_train_losses.append({
             'op': 'train',
             'loss': float(epoch_loss),
+            'accuracy': float(train_accuracy),
             'time': train_time,
         })
         throughput.extend(format_time(
@@ -361,10 +354,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             # Measure validation data loading time
             val_batch_start_time = time.time_ns() / 1e6
 
-            val_description = " Validation"
-            dash = '━' * (len(description) - len(newline) - len(val_description))
-            command_queue.put((device, { 'description': grey + newline + dash + val_description,
-                                         'total': len(test_loader), 'completed': 0 }))
+            command_queue.put((device, { 'description': description.format('V') }))
             for x_batch, y_batch in test_loader:
                 # Validation data loading time
                 val_total_data_loading_time += (time.time_ns() / 1e6) - val_batch_start_time
@@ -399,8 +389,6 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 num_samples += len(y_batch)
                 # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
-                command_queue.put((device, { 'advance': 1 }))
-
                 # Start timing for next validation batch data loading
                 val_batch_start_time = time.time_ns() / 1e6
 
@@ -411,6 +399,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             epoch_test_losses.append({
                 'op': 'test',
                 'loss': float(cumulative_loss),
+                'accuracy': float(val_accuracy),
                 'time': val_time,
             })
             throughput.extend(format_time(
@@ -457,7 +446,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 # print("Terminating: early stopping")
                 break # terminate training
         
-        command_queue.put((device + ':epoch', { 'advance': 1 }))
+        command_queue.put((device, { 'completed': epoch + 1 }))
 
     # print(str(epoch_test_losses) + '\n')
     # print(str(epoch_train_losses) + '\n')
@@ -535,14 +524,41 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
         generator=generator
     )
 
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=512, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=512, shuffle=True)
+    # Try-Catch to lower the batch size if fails.
+    batch_size = 512
+    max_retries = 4
+    retry_count = 0
+    best_model_wts = None
+    
+    while retry_count <= max_retries:
+        try:
+            train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
+            test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True)
 
-    # print(f"Training {model_type} (tile_size={tile_size})")
-    best_model_wts = train(model, loss_fn, optimizer, train_loader, test_loader, n_epochs=50,
-                           results_dir=results_dir, model_type=model_type, device=device,
-                           command_queue=command_queue, training_path=training_path, tile_size=tile_size)
-    assert best_model_wts is not None
+            # print(f"Training {model_type} (tile_size={tile_size}) with batch_size={batch_size}")
+            best_model_wts = train(model, loss_fn, optimizer, train_loader, test_loader, n_epochs=50,
+                                   results_dir=results_dir, model_type=model_type, device=device,
+                                   command_queue=command_queue, training_path=training_path, tile_size=tile_size)
+            break  # Success, exit the retry loop
+            
+        except Exception as e:
+            retry_count += 1
+            if retry_count > max_retries:
+                print(f"Training failed after {max_retries} retries for {model_type} (tile_size={tile_size}): {e}")
+                raise e
+            
+            # Reduce batch size by half for next attempt
+            batch_size = batch_size // 2
+            if batch_size < 1:
+                print(f"Batch size reduced to minimum (1) for {model_type} (tile_size={tile_size}), but still failing")
+                raise e
+            
+            # Clear GPU memory before retry (only for the current device)
+            if torch.cuda.is_available() and device.startswith('cuda:'):
+                with torch.cuda.device(device):
+                    torch.cuda.empty_cache()
+                    
+    assert best_model_wts is not None, f"Training failed after {max_retries} retries for {model_type} (tile_size={tile_size})"
 
     # Load best model
     model.load_state_dict(best_model_wts)
@@ -564,8 +580,8 @@ def progress_bars(command_queue: mp.Queue, num_tasks: int):
         overall_progress = p.add_task(f"[green]Training {num_tasks} models", total=num_tasks)
         bars['overall'] = overall_progress
         for gpu_id in range(torch.cuda.device_count()):
-            bars[f'cuda:{gpu_id}:epoch'] = p.add_task("jnc00  30 model")
-            bars[f'cuda:{gpu_id}'] = p.add_task("  Training")
+            bars[f'cuda:{gpu_id}:'] = p.add_task("video tilesize model T/V")
+            # bars[f'cuda:{gpu_id}'] = p.add_task("  Training")
 
         while True:
             val = command_queue.get()
