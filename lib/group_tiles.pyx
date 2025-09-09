@@ -5,19 +5,75 @@
 
 import numpy as np
 cimport numpy as cnp
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport malloc, free, realloc
 cimport cython
 
 
 ctypedef cnp.uint16_t GROUP_t
 ctypedef cnp.uint8_t MASK_t
 
+# C Stack structure for flood-fill algorithm
+cdef struct IntVector:
+    int *data
+    int top
+    int capacity
+
+cdef int IntVector_init(IntVector *int_vector, int initial_capacity):
+    """Initialize an integer vector with initial capacity"""
+    if not int_vector:
+        return -1
+    
+    int_vector.data = <int*>malloc(initial_capacity * sizeof(int))
+    if not int_vector.data:
+        return -1
+    
+    int_vector.top = 0
+    int_vector.capacity = initial_capacity
+    return 0
+
+cdef int IntVector_push(IntVector *int_vector, int value):
+    """Push a value onto the vector, expanding if necessary"""
+    cdef int new_capacity
+    cdef int *new_data
+    
+    if not int_vector:
+        return -1
+    
+    # Check if we need to expand
+    if int_vector.top >= int_vector.capacity:
+        new_capacity = int_vector.capacity * 2
+        new_data = <int*>realloc(int_vector.data, new_capacity * sizeof(int))
+        if not new_data:
+            return -1  # Memory allocation failed
+        
+        int_vector.data = new_data
+        int_vector.capacity = new_capacity
+    
+    # Push the value
+    int_vector.data[int_vector.top] = value
+    int_vector.top += 1
+    return 0
+
+cdef int IntVector_pop(IntVector *int_vector):
+    """Pop a value from the vector"""
+    if not int_vector or int_vector.top <= 0:
+        return -1  # Stack is empty or invalid
+    
+    int_vector.top -= 1
+    return int_vector.data[int_vector.top]
+
+cdef void IntVector_cleanup(IntVector *int_vector):
+    """Free the stack's data array (stack itself is on stack memory)"""
+    if int_vector and int_vector.data:
+        free(int_vector.data)
+        int_vector.data = NULL
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef list find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
     """
-    Fast Cython implementation of find_connected_tiles using a manual stack.
+    Fast Cython implementation of find_connected_tiles using a C-based stack.
 
     This function modifies the bitmap in-place to mark visited tiles.
     The algorithm uses flood fill: it starts with a unique value at (start_i, start_j)
@@ -35,17 +91,26 @@ cdef list find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
     cdef int w = bitmap.shape[1]
     cdef GROUP_t value = bitmap[start_i, start_j]
     cdef list filled = []
-    cdef list stack = [(start_i, start_j)]
+    
+    # Create C stack for coordinates on stack memory
+    cdef IntVector stack
+    if IntVector_init(&stack, 16):  # Initial capacity of 16
+        # Initialization failed
+        return filled
+    
     cdef int i, j, _i, _j, di
-    cdef tuple pos
 
     # Directions: up, left, down, right
     cdef int[4] directions_i = [-1, 0, 1, 0]
     cdef int[4] directions_j = [0, -1, 0, 1]
 
-    while stack:
-        pos = stack.pop()
-        i, j = pos[0], pos[1]
+    # Push initial coordinates
+    IntVector_push(&stack, start_i)
+    IntVector_push(&stack, start_j)
+
+    while stack.top > 0:
+        j = IntVector_pop(&stack)
+        i = IntVector_pop(&stack)
 
         # Mark current position as visited and add to result
         bitmap[i, j] = value
@@ -60,8 +125,14 @@ cdef list find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
                 # Add neighbors that are non-zero and different from current value
                 # (meaning they haven't been visited yet)
                 if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
-                    stack.append((_i, _j))
+                    # If either push failed, we have a memory issue
+                    if IntVector_push(&stack, _i) or IntVector_push(&stack, _j):
+                        # Clean up and return what we have
+                        IntVector_cleanup(&stack)
+                        return filled
 
+    # Free the stack's data before returning
+    IntVector_cleanup(&stack)
     return filled
 
 
@@ -99,8 +170,8 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
     cdef GROUP_t[:, :] groups_view = groups
 
     # Process each cell
-    for i in range(groups.shape[0]):
-        for j in range(groups.shape[1]):
+    for i in range(h):
+        for j in range(w):
             group_id = groups_view[i, j]
             # if group_id == 0 or group_id in visited:
             if group_id == 0 or bitmap_np[(group_id - 1) // w, (group_id - 1) % w] == 0:

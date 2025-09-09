@@ -5,10 +5,10 @@ import json
 import os
 import time
 import numpy as np
-from tqdm import tqdm
 import multiprocessing as mp
+from multiprocessing import Queue
 
-from scripts.utilities import CACHE_DIR, create_tracker, format_time, interpolate_trajectory, load_detection_results
+from scripts.utilities import CACHE_DIR, create_tracker, format_time, interpolate_trajectory, load_detection_results, progress_bars
 
 
 def parse_args():
@@ -42,7 +42,7 @@ def parse_args():
 
 def track_objects_in_video(video_index: int, video_file: str, detection_results: list[dict],
                            tracker_name: str, max_age: int, min_hits: int, iou_threshold: float,
-                           output_path: str):
+                           output_path: str, progress_queue: Queue):
     """
     Execute object tracking on detection results and save tracking results to JSONL.
     
@@ -67,11 +67,17 @@ def track_objects_in_video(video_index: int, video_file: str, detection_results:
     
     print(f"Processing {len(detection_results)} frames for tracking...")
     
+    # Send initial progress update
+    progress_queue.put((f'cuda:{video_index}', {
+        'description': video_file,
+        'completed': 0,
+        'total': len(detection_results)
+    }))
+    
     runtime_path = output_path.replace('tracking.jsonl', 'tracking_runtimes.jsonl')
     with open(runtime_path, 'w') as runtime_file:
         # Process each frame
-        for frame_result in tqdm(detection_results, desc="Tracking objects",
-                                position=video_index, leave=False):
+        for fidx, frame_result in enumerate(detection_results):
             frame_idx = frame_result['frame_idx']
             detections = frame_result['detections']
                 
@@ -149,6 +155,9 @@ def track_objects_in_video(video_index: int, video_file: str, detection_results:
                 'num_tracks': trackers.size if trackers.size > 0 else 0
             }
             runtime_file.write(json.dumps(runtime_data) + '\n')
+            
+            # Send progress update
+            progress_queue.put((f'cuda:{video_index}', {'completed': fidx + 1}))
     
     print(f"Tracking completed. Found {len(trajectories)} unique tracks.")
     
@@ -177,7 +186,7 @@ def track_objects_in_video(video_index: int, video_file: str, detection_results:
     print(f"Tracking results saved successfully. Total frames: {len(frame_tracks)}")
 
 
-def process_video_tracking(video_index: int, video_file: str, args, cache_dir: str, dataset: str):
+def process_video_tracking(video_index: int, video_file: str, args, cache_dir: str, dataset: str, progress_queue: Queue):
     """
     Process tracking for a single video file.
     
@@ -197,7 +206,7 @@ def process_video_tracking(video_index: int, video_file: str, args, cache_dir: s
     # Execute tracking
     track_objects_in_video(
         video_index, video_file, detection_results, args.tracker,
-        args.max_age, args.min_hits, args.iou_threshold, output_path
+        args.max_age, args.min_hits, args.iou_threshold, output_path, progress_queue
     )
     
     print(f"Completed tracking for video: {video_file}")
@@ -261,14 +270,31 @@ def main(args):
         video_args.append((i, video_file, args, CACHE_DIR, args.dataset))
         print(f"Prepared video {i}: {video_file}")
     
-    # Use process pool to execute video tracking
-    with mp.Pool(processes=num_processes) as pool:
-        print(f"Starting video tracking with {num_processes} parallel workers...")
-        
-        # Map the work to the pool
-        results = pool.starmap(process_video_tracking, video_args)
-        
-        print("All videos tracked successfully!")
+    # Create progress queue and start progress display
+    progress_queue = Queue()
+    
+    # Start progress display in a separate process
+    progress_process = mp.Process(target=progress_bars, args=(progress_queue, num_processes, len(video_dirs)))
+    progress_process.start()
+    
+    # Create and start video processing processes
+    processes: list[mp.Process] = []
+    for i, (video_index, video_file, args, cache_dir, dataset) in enumerate(video_args):
+        process = mp.Process(target=process_video_tracking, 
+                           args=(video_index, video_file, args, cache_dir, dataset, progress_queue))
+        process.start()
+        processes.append(process)
+    
+    # Wait for all video processing to complete
+    for process in processes:
+        process.join()
+        process.terminate()
+    
+    # Signal progress display to stop and wait for it
+    progress_queue.put(None)
+    progress_process.join()
+    
+    print("All videos tracked successfully!")
 
 
 if __name__ == '__main__':

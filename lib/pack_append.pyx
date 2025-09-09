@@ -46,7 +46,8 @@ def pack_append(
         groupid, mask, offset = polyomino_data
         mask_np = np.asarray(mask, dtype=np.uint8)
         mask_view = mask_np
-        mask_h, mask_w = mask_np.shape[0], mask_np.shape[1]
+        mask_h = mask_np.shape[0]
+        mask_w = mask_np.shape[1]
         
         placed = False
         

@@ -384,7 +384,7 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
 
 
 def create_tracking_visualization(video_path: str, tracking_results: dict[int, list[list[float]]], 
-                                 output_path: str, speed_up: int, process_id: int):
+                                 output_path: str, speed_up: int, process_id: int, progress_queue=None):
     """
     Create a visualization video showing tracking results overlaid on the original video.
     
@@ -430,9 +430,17 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
     # Initialize frame_idx for exception handling
     frame_idx = 0
     
+    # Send initial progress update
+    if progress_queue is not None:
+        progress_queue.put((f'cuda:{process_id}', {
+            'description': os.path.basename(video_path),
+            'completed': 0,
+            'total': frame_count
+        }))
+    
     # Process each frame
     try:
-        for frame_idx in tqdm.tqdm(range(frame_count), desc=f"Process {process_id} - Creating visualization", position=process_id):
+        for frame_idx in range(frame_count):
             # Read frame
             ret, frame = cap.read()
             if not ret:
@@ -447,6 +455,10 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
             # Write frame to video
             if vis_frame is not None:
                 writer.write(vis_frame)
+            
+            # Send progress update
+            if progress_queue is not None:
+                progress_queue.put((f'cuda:{process_id}', {'completed': frame_idx + 1}))
     
     except KeyboardInterrupt:
         print(f"\nProcess {process_id}: KeyboardInterrupt detected. Stopping video writing...")
@@ -530,16 +542,16 @@ CLASSIFIERS_TO_TEST = [
     # 'YoloS',
     'YoloM',
     # 'YoloL',
-    # 'YoloX',
+    'YoloX',
     'ShuffleNet05',
     'ShuffleNet20',
     'MobileNetL',
     'MobileNetS',
     'WideResNet50',
-    # 'WideResNet101',
+    'WideResNet101',
     'ResNet18', 
     'ResNet101',
-    # 'ResNet152',
+    'ResNet152',
     'EfficientNetS',
-    # 'EfficientNetL',
+    'EfficientNetL',
 ]
