@@ -495,7 +495,7 @@ def mark_detections(detections: list[list[float]], width: int, height: int, chun
 
 
 def progress_bars(command_queue: "Queue", num_gpus: int, num_tasks: int,
-                  refresh_per_second: float = 0.5):
+                  refresh_per_second: float = 1):
     with progress.Progress(
         "[progress.description]{task.description}",
         progress.BarColumn(),
@@ -525,10 +525,10 @@ def progress_bars(command_queue: "Queue", num_gpus: int, num_tasks: int,
 
 
 CLASSIFIERS_TO_TEST = [
-    # 'SimpleCNN',
-    # 'YoloN',
+    'SimpleCNN',
+    'YoloN',
     # 'YoloS',
-    # 'YoloM',
+    'YoloM',
     # 'YoloL',
     # 'YoloX',
     'ShuffleNet05',
