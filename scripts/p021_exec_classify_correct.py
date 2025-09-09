@@ -6,10 +6,9 @@ import os
 import cv2
 import numpy as np
 import time
-from tqdm import tqdm
 import multiprocessing as mp
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections
+from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars
 
 
 TILE_SIZES = [30, 60, 120]
@@ -70,7 +69,7 @@ def process_frame_tiles(frame: np.ndarray, detections: list[list[float]], tile_s
     return relevance_grid, format_time(inference=runtime, transform=0)
 
 
-def process_video(video_path: str, frame_detections: dict[int, list[list[float]]], tile_size: int, output_path: str, idx: int):
+def process_video(video_path: str, frame_detections: dict[int, list[list[float]]], tile_size: int, output_path: str, command_queue: mp.Queue, device: str):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
@@ -83,7 +82,8 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
         frame_detections (dict[int, list[list[float]]]): Dictionary mapping frame indices to detection lists
         tile_size (int): Tile size used for processing (30, 60, or 120)
         output_path (str): Path where the output JSONL file will be saved
-        idx (int): Index of the video/tile size combination
+        command_queue (mp.Queue): Queue for progress updates
+        device (str): Device identifier for progress tracking
     Note:
         - Video is processed frame by frame to minimize memory usage
         - Progress is displayed using a progress bar
@@ -100,7 +100,8 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
         - tile_size (int): Tile size used for processing (30, 60, or 120)
         - tile_classifications (list[list[float]]): Relevance scores grid for the specified tile size
         - runtime (float): Runtime in seconds (always 0.0 for groundtruth-based processing)
-        - idx (int): Index of the video/tile size combination
+        - command_queue (mp.Queue): Queue for progress updates
+        - device (str): Device identifier for progress tracking
     """
     print(f"Processing video: {video_path}")
     
@@ -118,44 +119,45 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
     
     with open(output_path, 'w') as f:
         frame_idx = 0
+        command_queue.put((device, {'description': f"{video_path.split('/')[-1]} {tile_size:>3} groundtruth",
+                                    'completed': 0, 'total': frame_count}))
         
-        with tqdm(total=frame_count, desc="Processing frames", position=idx) as pbar:
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    break
-                
-                # Get detections for this frame (empty list if no detections)
-                detections = frame_detections.get(frame_idx, [])
-                
-                # Process frame with groundtruth detections
-                relevance_grid, runtime = process_frame_tiles(frame, detections, tile_size)
-                
-                # Create result entry for this frame
-                frame_entry = {
-                    "frame_idx": frame_idx,
-                    "timestamp": frame_idx / fps if fps > 0 else 0,
-                    "frame_size": [height, width],
-                    "tile_size": tile_size,
-                    "runtime": runtime,
-                    "classification_size": relevance_grid.shape,
-                    "classification_hex": relevance_grid.flatten().tobytes().hex(),
-                }
-                
-                # Write to JSONL file
-                f.write(json.dumps(frame_entry) + '\n')
-                if frame_idx % 100 == 0:
-                    f.flush()
-                
-                frame_idx += 1
-                pbar.update(1)
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            # Get detections for this frame (empty list if no detections)
+            detections = frame_detections.get(frame_idx, [])
+            
+            # Process frame with groundtruth detections
+            relevance_grid, runtime = process_frame_tiles(frame, detections, tile_size)
+            
+            # Create result entry for this frame
+            frame_entry = {
+                "frame_idx": frame_idx,
+                "timestamp": frame_idx / fps if fps > 0 else 0,
+                "frame_size": [height, width],
+                "tile_size": tile_size,
+                "runtime": runtime,
+                "classification_size": relevance_grid.shape,
+                "classification_hex": relevance_grid.flatten().tobytes().hex(),
+            }
+            
+            # Write to JSONL file
+            f.write(json.dumps(frame_entry) + '\n')
+            if frame_idx % 100 == 0:
+                f.flush()
+            
+            frame_idx += 1
+            command_queue.put((device, {'completed': frame_idx}))
     
     cap.release()
     print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
 
 
 def process_video_tile_combination(video_file_path: str, video_file: str, tile_size: int,
-                                   dataset: str, idx: int) -> str:
+                                   dataset: str, gpu_id: int, command_queue: mp.Queue) -> str:
     """
     Worker function to process a single video/tile size combination.
     
@@ -167,7 +169,8 @@ def process_video_tile_combination(video_file_path: str, video_file: str, tile_s
         video_file (str): Video filename
         tile_size (int): Tile size to process
         dataset (str): Dataset name
-        idx (int): Index of the video/tile size combination
+        gpu_id (int): GPU ID to use for processing
+        command_queue (mp.Queue): Queue for progress updates
             
     Returns:
         str: Success message indicating completion
@@ -188,19 +191,33 @@ def process_video_tile_combination(video_file_path: str, video_file: str, tile_s
     output_path = os.path.join(score_dir, 'score.jsonl')
     
     # Process the video
-    process_video(video_file_path, frame_detections, tile_size, output_path, idx)
+    device = f'cuda:{gpu_id}'
+    process_video(video_file_path, frame_detections, tile_size, output_path, command_queue, device)
     
-    return f"Successfully processed {video_file} with tile size {tile_size}"
+    return f"Successfully processed {video_file} with tile_size {tile_size}"
+
+
+def _process_video_tile_combination(video_file_path: str, video_file: str, tile_size: int,
+                                   dataset: str, gpu_id: int, gpu_id_queue: mp.Queue,
+                                   command_queue: mp.Queue):
+    """
+    Wrapper function for process_video_tile_combination that handles GPU queue management.
+    """
+    try:
+        process_video_tile_combination(video_file_path, video_file, tile_size,
+                                      dataset, gpu_id, command_queue)
+    finally:
+        gpu_id_queue.put(gpu_id)
 
 
 def main(args):
     """
-    Main function that orchestrates the video tile classification process.
+    Main function that orchestrates the video tile classification process using parallel processing.
     
     This function serves as the entry point for the script. It:
     1. Validates the dataset directory exists
-    2. Iterates through all videos in the dataset directory
-    3. For each video, loads the appropriate trained proxy model(s) for the specified tile size(s)
+    2. Creates a list of all video/tile_size combinations to process
+    3. Uses multiprocessing to process tasks in parallel across available CPUs
     4. Processes each video and saves classification results
     
     Args:
@@ -216,9 +233,10 @@ def main(args):
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - Groundtruth tracking results are loaded for each video
         - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
-        - Output files are saved in {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/groundtruth_{tile_size}/score.jsonl
+        - Output files are saved in {CACHE_DIR}/{dataset}/{video_file}/relevancy/groundtruth_{tile_size}/score/score.jsonl
         - If no tracking results are found for a video, that video is skipped with a warning
     """
+    mp.set_start_method('spawn', force=True)
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
     
     if not os.path.exists(dataset_dir):
@@ -235,23 +253,46 @@ def main(args):
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
     
-    # Create list of tasks for parallel processing
-    idx = 1
-    tasks = []
-    for video_file in video_files:
+    # Create tasks list with all video/tile_size combinations
+    tasks: list[tuple[str, str, int, str]] = []
+    for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
         for tile_size in tile_sizes_to_process:
-            tasks.append((video_file_path, video_file, tile_size, args.dataset, idx))
-            idx += 1
+            tasks.append((video_file_path, video_file, tile_size, args.dataset))
     
-    # Process tasks in parallel using multiprocessing Pool
-    with mp.Pool(processes=mp.cpu_count()) as pool:
-        results = pool.starmap(process_video_tile_combination, tasks)
+    print(f"Created {len(tasks)} tasks to process")
     
-    # Print results summary
-    print("Processing completed. Results summary:")
-    for result in results:
-        print(f"  - {result}")
+    # Set up multiprocessing - use CPU count as we don't need GPUs for groundtruth processing
+    num_workers = min(mp.cpu_count(), len(tasks))
+    
+    gpu_id_queue = mp.Queue(maxsize=num_workers)
+    for worker_id in range(num_workers):
+        gpu_id_queue.put(worker_id)
+    
+    command_queue = mp.Queue()
+    progress_process = mp.Process(target=progress_bars,
+                                  args=(command_queue, num_workers, len(tasks)),
+                                  daemon=True)
+    progress_process.start()
+    
+    processes: list[mp.Process] = []
+    for task in tasks:
+        worker_id = gpu_id_queue.get()
+        command_queue.put(('overall', {'advance': 1}))
+        process = mp.Process(target=_process_video_tile_combination,
+                             args=(*task, worker_id, gpu_id_queue, command_queue))
+        process.start()
+        processes.append(process)
+    
+    for process in processes:
+        process.join()
+        process.terminate()
+    
+    command_queue.put(None)
+    progress_process.join()
+    progress_process.terminate()
+    
+    print("All tasks completed!")
 
 
 if __name__ == '__main__':

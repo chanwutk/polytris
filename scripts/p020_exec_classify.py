@@ -7,7 +7,6 @@ import cv2
 import torch
 import numpy as np
 import time
-from tqdm import tqdm
 import shutil
 import multiprocessing as mp
 
@@ -146,7 +145,7 @@ def load_model(video_path: str, tile_size: int, classifier_name: str) -> "torch.
     raise FileNotFoundError(f"No trained model found for tile size {tile_size} in {video_path}")
 
 
-def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int) -> tuple[np.ndarray, list[dict]]:
+def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int, device: str) -> tuple[np.ndarray, list[dict]]:
     """
     Process a single video frame with the specified tile size and return relevance scores and timing information.
     
@@ -158,6 +157,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
             where H and W are the frame height and width, and 3 represents RGB channels
         model (torch.nn.Module): Trained model for the specified tile size
         tile_size (int): Size of tiles to use for processing (30, 60, or 120)
+        device (str): Device to use for processing
             
     Returns:
         tuple[np.ndarray, list[dict[str, float]]]: A tuple containing:
@@ -174,7 +174,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
     with torch.no_grad():
         start_time = (time.time_ns() / 1e6)
         # Convert frame to tensor and ensure it's in HWC format
-        frame_tensor = torch.from_numpy(frame).to('cuda').float()
+        frame_tensor = torch.from_numpy(frame).to(device).float()
         
         # Pad frame to be divisible by tile_size
         padded_frame = padHWC(frame_tensor, tile_size, tile_size)  # type: ignore
@@ -208,7 +208,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
     return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
 
 
-def process_video(video_path: str, model, tile_size: int, output_path: str, command_queue: mp.Queue, gpu_id: int, classifier: str):
+def process_video(video_path: str, model, tile_size: int, output_path: str, command_queue: mp.Queue, device: str, classifier: str):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
@@ -223,7 +223,7 @@ def process_video(video_path: str, model, tile_size: int, output_path: str, comm
         tile_size (int): Tile size used for processing (32, 64, or 128)
         output_path (str): Path where the output JSONL file will be saved
         command_queue (mp.Queue): Queue for progress updates
-        gpu_id (int): GPU ID to use for processing
+        device (str): Device to use for processing
         classifier (str): Classifier name to use
             
     Note:
@@ -253,19 +253,19 @@ def process_video(video_path: str, model, tile_size: int, output_path: str, comm
     fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    
+
     print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f:
         frame_idx = 0
-        command_queue.put((f'cuda:{gpu_id}:', {'description': f"{video_path.split('/')[-1]} {tile_size:>3} {classifier}",
-                                               'completed': 0, 'total': frame_count}))
+        command_queue.put((device, {'description': f"{video_path.split('/')[-1]} {tile_size:>3} {classifier}",
+                                    'completed': 0, 'total': frame_count}))
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
             
             # Process frame with the model
-            relevance_grid, runtime = process_frame_tiles(frame, model, tile_size)
+            relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, device)
             
             # Create result entry for this frame
             frame_entry = {
@@ -284,7 +284,7 @@ def process_video(video_path: str, model, tile_size: int, output_path: str, comm
                 f.flush()
             
             frame_idx += 1
-            command_queue.put((f'cuda:{gpu_id}:', {'completed': frame_idx}))
+            command_queue.put((device, {'completed': frame_idx}))
 
     cap.release()
     print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
@@ -305,7 +305,7 @@ def process_video_task(video_file_path: str, cache_video_dir: str, classifier: s
         command_queue: Queue for progress updates
     """
     try:
-        device = f'cuda:{gpu_id}' if torch.cuda.is_available() else 'cpu'
+        device = f'cuda:{gpu_id}'
         
         # Load the trained model for this specific video, classifier, and tile size
         model = load_model(cache_video_dir, tile_size, classifier)
@@ -328,7 +328,7 @@ def process_video_task(video_file_path: str, cache_video_dir: str, classifier: s
         output_path = os.path.join(score_dir, 'score.jsonl')
         
         # Process the video
-        process_video(video_file_path, model, tile_size, output_path, command_queue, gpu_id, classifier)
+        process_video(video_file_path, model, tile_size, output_path, command_queue, device, classifier)
         
     except Exception as e:
         print(f"Error processing {video_file_path} with {classifier} (tile_size={tile_size}): {e}")
@@ -410,7 +410,7 @@ def main(args):
     print(f"Created {len(tasks)} tasks to process")
     
     # Set up multiprocessing
-    num_gpus = torch.cuda.device_count()
+    num_gpus = 1
     assert num_gpus > 0, "No GPUs available"
     
     gpu_id_queue = mp.Queue(maxsize=num_gpus)

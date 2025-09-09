@@ -71,7 +71,8 @@ def parse_args():
                         default='b3d',
                         help='Dataset name')
     parser.add_argument('--classifier', required=False,
-                        default=CLASSIFIERS_TO_TEST,
+                        default=['SimpleCNN', 'YoloN'],
+                        # default=CLASSIFIERS_TO_TEST,
                         choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL',
                                  'YoloX', 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
                                  'MobileNetS', 'WideResNet50', 'WideResNet101',
