@@ -21,6 +21,8 @@ iopath>=0.1.10,<0.1.11
 opencv-python
 tqdm
 numpy>=2.3.2,<3.0.0
+pandas
 Cython
 ultralytics
 rich
+seaborn

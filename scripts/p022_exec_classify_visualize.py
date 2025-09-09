@@ -166,9 +166,9 @@ def _evaluate_frame_worker(args):
 
 
 def create_statistics_visualizations(video_file: str, results: list[dict],
-                                   groundtruth_detections: list[dict],
-                                   tile_size: int, threshold: float,
-                                   output_dir: str, idx: int):
+                                     groundtruth_detections: list[dict],
+                                     tile_size: int, threshold: float,
+                                     output_dir: str, idx: int):
     """
     Create comprehensive statistics visualizations comparing classification results with groundtruth.
 
@@ -207,11 +207,13 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     # Use multiprocessing to evaluate frames in parallel
     num_processes = min(mp.cpu_count() - 1, len(results))
     with mp.Pool(processes=num_processes) as pool:
-        frame_evals = list(track(
-            pool.imap(_evaluate_frame_worker, worker_args),
-            total=len(results),
-            description=f"Evaluating frames {idx + 1}"
-        ))
+        frame_evals = list(
+            # track(
+                pool.imap(_evaluate_frame_worker, worker_args),
+            #     total=len(results),
+            #     description=f"Evaluating frames {idx + 1}"
+            # )
+        )
 
     # Collect results from parallel processing
     for frame_eval in frame_evals:
@@ -418,15 +420,16 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     actual_positive_scores = []
     actual_negative_scores = []
 
-    # for score, overlap in zip(all_classification_scores, all_overlap_ratios):
-    #     predicted_positive = score >= threshold
-    #     actual_positive = overlap > 0.0
     for score, actual_positive in zip(all_classification_scores, all_actual_positives):
         predicted_positive = score >= threshold
+
+        # Count metrics
         if predicted_positive == actual_positive:
             correct_scores.append(score)
         else:
             incorrect_scores.append(score)
+
+        # Count actual positive/negative scores
         if actual_positive:
             actual_positive_scores.append(score)
         else:
@@ -721,96 +724,6 @@ def save_visualization_frames(video_path: str, results: list, tile_size: int,
     print(f"Saved visualization video to: {brightness_video_path}")
 
 
-def create_summary_visualization(results: list, tile_size: int, threshold: float,
-                               output_dir: str):
-    """
-    Create a summary visualization showing classification statistics.
-
-    Args:
-        results (list): list of classification results
-        tile_size (int): Tile size used for classification
-        threshold (float): Threshold value for visualization
-        output_dir (str): Directory to save summary visualization
-    """
-    print("Creating summary visualization...")
-
-    # Collect all scores
-    all_scores = []
-    for result in results:
-        classifications = result['classification_hex']
-        classification_size = result['classification_size']
-        classifications = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size).astype(np.float32) / 255.0
-        all_scores.extend(classifications.flatten())
-
-    all_scores = np.array(all_scores)
-
-    # Create summary plots
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
-
-    # Histogram of all scores
-    ax1.hist(all_scores, bins=50, alpha=0.7, color='skyblue', edgecolor='black')
-    ax1.axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-    ax1.set_xlabel('Classification Score')
-    ax1.set_ylabel('Frequency')
-    ax1.set_title(f'Distribution of Classification Scores (Tile Size: {tile_size})')
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
-
-    # Box plot
-    ax2.boxplot(all_scores)
-    ax2.axhline(y=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-    ax2.set_ylabel('Classification Score')
-    ax2.set_title(f'Box Plot of Classification Scores (Tile Size: {tile_size})')
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
-
-    # Frame-by-frame average scores
-    frame_avg_scores = []
-    for result in results:
-        classifications = result['classification_hex']
-        classification_size = result['classification_size']
-        classifications = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size).astype(np.float32) / 255.0
-        frame_avg_scores.append(np.mean(classifications.flatten()))
-
-    ax3.plot(frame_avg_scores, color='blue', linewidth=2)
-    ax3.axhline(y=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-    ax3.set_xlabel('Frame Index')
-    ax3.set_ylabel('Average Classification Score')
-    ax3.set_title(f'Frame-by-Frame Average Scores (Tile Size: {tile_size})')
-    ax3.legend()
-    ax3.grid(True, alpha=0.3)
-
-    # Statistics table
-    stats_text = f"""
-    Total Tiles: {len(all_scores):,}
-    Mean Score: {np.mean(all_scores):.4f}
-    Median Score: {np.median(all_scores):.4f}
-    Std Dev: {np.std(all_scores):.4f}
-    Min Score: {np.min(all_scores):.4f}
-    Max Score: {np.max(all_scores):.4f}
-
-    Above Threshold: {np.sum(all_scores >= threshold):,} ({(np.sum(all_scores >= threshold) / len(all_scores) * 100):.1f}%)
-    Below Threshold: {np.sum(all_scores < threshold):,} ({(np.sum(all_scores < threshold) / len(all_scores) * 100):.1f}%)
-    """
-
-    ax4.text(0.1, 0.9, stats_text, transform=ax4.transAxes, fontsize=10,
-             verticalalignment='top', fontfamily='monospace',
-             bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.8))
-    ax4.set_xlim(0, 1)
-    ax4.set_ylim(0, 1)
-    ax4.set_title(f'Statistics Summary (Tile Size: {tile_size})')
-    ax4.axis('off')
-
-    plt.tight_layout()
-
-    # Save summary plot
-    summary_path = os.path.join(output_dir, f'summary_tile{tile_size}.png')
-    plt.savefig(summary_path, dpi=300, bbox_inches='tight')
-    plt.close()
-
-    print(f"Saved summary visualization to: {summary_path}")
-
-
 def _process_classifier_tile_worker(args):
     """
     Worker function to process a single classifier-tile size combination for multiprocessing.
@@ -847,27 +760,7 @@ def _process_classifier_tile_worker(args):
         # Create visualizations
         save_visualization_frames(video_file_path, results, tile_size, threshold, vis_output_dir, idx)
         
-        # Create summary visualization
-        create_summary_visualization(results, tile_size, threshold, vis_output_dir)
-        
         return f"Completed visualizations for {video_file} {classifier_name} tile size {tile_size}"
-
-
-def _process_frame_visualization_worker(args):
-    """
-    Worker function to process a single frame for visualization.
-    
-    Args:
-        args: Tuple containing (frame, classifications, tile_size, threshold, frame_idx)
-    
-    Returns:
-        tuple: (frame_idx, brightness_frame) for maintaining order
-    """
-    frame, classifications, tile_size, threshold, frame_idx = args
-    
-    # Create brightness visualization frame
-    brightness_frame = create_visualization_frame(frame, classifications, tile_size, threshold)
-    return frame_idx, brightness_frame
 
 
 def main(args):
