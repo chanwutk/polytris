@@ -12,12 +12,13 @@ cimport cython
 ctypedef cnp.uint16_t GROUP_t
 ctypedef cnp.uint8_t MASK_t
 
-# C Stack structure for flood-fill algorithm
 cdef struct IntVector:
     int *data
     int top
     int capacity
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef int IntVector_init(IntVector *int_vector, int initial_capacity):
     """Initialize an integer vector with initial capacity"""
     if not int_vector:
@@ -31,6 +32,8 @@ cdef int IntVector_init(IntVector *int_vector, int initial_capacity):
     int_vector.capacity = initial_capacity
     return 0
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef int IntVector_push(IntVector *int_vector, int value):
     """Push a value onto the vector, expanding if necessary"""
     cdef int new_capacity
@@ -54,6 +57,8 @@ cdef int IntVector_push(IntVector *int_vector, int value):
     int_vector.top += 1
     return 0
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef int IntVector_pop(IntVector *int_vector):
     """Pop a value from the vector"""
     if not int_vector or int_vector.top <= 0:
@@ -62,16 +67,21 @@ cdef int IntVector_pop(IntVector *int_vector):
     int_vector.top -= 1
     return int_vector.data[int_vector.top]
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef void IntVector_cleanup(IntVector *int_vector):
     """Free the stack's data array (stack itself is on stack memory)"""
-    if int_vector and int_vector.data:
-        free(int_vector.data)
-        int_vector.data = NULL
+    if int_vector:
+        if int_vector.data:
+            free(int_vector.data)
+            int_vector.data = NULL
+        int_vector.top = 0
+        int_vector.capacity = 0
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef list find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
+cdef IntVector find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
     """
     Fast Cython implementation of find_connected_tiles using a C-based stack.
 
@@ -85,17 +95,25 @@ cdef list find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
         start_j: Starting column index
 
     Returns:
-        list: List of (i, j) tuples for connected tiles
+        IntVector: IntVector containing coordinate pairs for connected tiles
     """
     cdef int h = bitmap.shape[0]
     cdef int w = bitmap.shape[1]
     cdef GROUP_t value = bitmap[start_i, start_j]
-    cdef list filled = []
+    
+    # Create IntVector for filled coordinates on stack memory
+    cdef IntVector filled
+    if IntVector_init(&filled, 16):  # Initial capacity of 32 (16 coordinate pairs)
+        # Return empty IntVector on initialization failure
+        IntVector_cleanup(&filled)
+        return filled
     
     # Create C stack for coordinates on stack memory
     cdef IntVector stack
     if IntVector_init(&stack, 16):  # Initial capacity of 16
-        # Initialization failed
+        # Initialization failed, cleanup filled and return empty
+        IntVector_cleanup(&stack)
+        IntVector_cleanup(&filled)
         return filled
     
     cdef int i, j, _i, _j, di
@@ -114,7 +132,9 @@ cdef list find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
 
         # Mark current position as visited and add to result
         bitmap[i, j] = value
-        filled.append((i, j))
+        if IntVector_push(&filled, i) or IntVector_push(&filled, j):
+            # Memory allocation failed
+            break
 
         # Check all 4 directions for unvisited connected tiles
         for di in range(4):
@@ -127,8 +147,9 @@ cdef list find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
                 if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
                     # If either push failed, we have a memory issue
                     if IntVector_push(&stack, _i) or IntVector_push(&stack, _j):
-                        # Clean up and return what we have
+                        # Memory allocation failed
                         IntVector_cleanup(&stack)
+                        IntVector_cleanup(&filled)
                         return filled
 
     # Free the stack's data before returning
@@ -159,8 +180,9 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
 
     cdef int h = bitmap_np.shape[0]
     cdef int w = bitmap_np.shape[1]
-    cdef int i, j, group_id, min_i, min_j, max_i, max_j, mask_i, mask_j
-    cdef list connected_tiles, bins = []
+    cdef int i, j, k, group_id, min_i, min_j, max_i, max_j, mask_i, mask_j, tile_i, tile_j, num_pairs
+    cdef IntVector connected_tiles
+    cdef list bins = []
     # cdef set visited = set()
 
     # Create groups array with unique IDs
@@ -177,30 +199,49 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
             if group_id == 0 or bitmap_np[(group_id - 1) // w, (group_id - 1) % w] == 0:
                 continue
 
-            # Find connected tiles
+            # Find connected tiles - returns IntVector
             connected_tiles = find_connected_tiles(groups_view, i, j)
-            if not connected_tiles:
+            if connected_tiles.top == 0:
+                # Clean up empty IntVector
+                IntVector_cleanup(&connected_tiles)
                 continue
-
-            # Convert to numpy array and find bounds
-            connected_array = np.array(connected_tiles, dtype=np.uint8)
-            if connected_array.size == 0:
-                continue
-
-            # Find bounding box
-            min_i = np.min(connected_array[:, 0])
-            max_i = np.max(connected_array[:, 0])
-            min_j = np.min(connected_array[:, 1])
-            max_j = np.max(connected_array[:, 1])
+            
+            # Find bounding box directly from IntVector data
+            num_pairs = connected_tiles.top // 2
+            
+            # Initialize with first coordinate pair
+            min_i = connected_tiles.data[0]
+            max_i = connected_tiles.data[0]
+            min_j = connected_tiles.data[1]
+            max_j = connected_tiles.data[1]
+            
+            # Find min/max through all coordinate pairs
+            for k in range(1, num_pairs):
+                tile_i = connected_tiles.data[k << 1]        # i coordinate
+                tile_j = connected_tiles.data[(k << 1) + 1]  # j coordinate
+                
+                if tile_i < min_i:
+                    min_i = tile_i
+                elif tile_i > max_i:
+                    max_i = tile_i
+                    
+                if tile_j < min_j:
+                    min_j = tile_j
+                elif tile_j > max_j:
+                    max_j = tile_j
 
             # Create mask
             mask_h = max_i - min_i + 1
             mask_w = max_j - min_j + 1
             mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
 
-            # Fill mask
-            for tile_i, tile_j in connected_tiles:
+            # Fill mask - iterate through IntVector data directly
+            for k in range(num_pairs):
+                tile_i = connected_tiles.data[k << 1]        # i coordinate
+                tile_j = connected_tiles.data[(k << 1) + 1]  # j coordinate
                 mask[tile_i - min_i, tile_j - min_j] = 1
+            # Clean up IntVector memory
+            IntVector_cleanup(&connected_tiles)
 
             bins.append((group_id, mask, (min_i, min_j)))
             # visited.add(group_id)
