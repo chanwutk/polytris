@@ -30,3 +30,5 @@ det/
 det_otif
 
 **/*.pt
+
+**/.pytest_cache/
