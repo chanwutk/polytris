@@ -1,9 +1,14 @@
 import json
 import os
+import typing
 
 import cv2
 import numpy as np
+from rich import progress
 import tqdm
+
+if typing.TYPE_CHECKING:
+    from multiprocessing import Queue
 
 DATA_RAW_DIR = '/polyis-data/video-datasets-raw'
 DATA_DIR = '/polyis-data/video-datasets-low'
@@ -24,7 +29,7 @@ TRACK_COLORS = [
 ]
 
 
-def format_time(**kwargs):
+def format_time(**kwargs: float | int) -> list[dict[str, float | int | str]]:
     """
     Format timing information into a list of dictionaries.
     
@@ -487,3 +492,54 @@ def mark_detections(detections: list[list[float]], width: int, height: int, chun
         bitmap[yfrom:yto+1, xfrom:xto+1] = 1
     
     return bitmap
+
+
+def progress_bars(command_queue: "Queue", num_gpus: int, num_tasks: int,
+                  refresh_per_second: float = 0.5):
+    with progress.Progress(
+        "[progress.description]{task.description}",
+        progress.BarColumn(),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        # progress.TimeRemainingColumn(),
+        progress.MofNCompleteColumn(),
+        progress.TimeElapsedColumn(),
+        refresh_per_second=refresh_per_second,
+    ) as p:
+        bars: dict[str, progress.TaskID] = {}
+        overall_progress = p.add_task(f"[green]Processing {num_tasks} tasks",
+                                      total=num_tasks)
+        bars['overall'] = overall_progress
+        for gpu_id in range(num_gpus):
+            bars[f'cuda:{gpu_id}'] = p.add_task("video tilesize model T/V")
+
+        while True:
+            val = command_queue.get()
+            if val is None: break
+            progress_id, kwargs = val
+            p.update(bars[progress_id], **kwargs)
+        
+        # remove all tasks
+        for _, task_id in bars.items():
+            p.remove_task(task_id)
+        bars.clear()
+
+
+CLASSIFIERS_TO_TEST = [
+    # 'SimpleCNN',
+    # 'YoloN',
+    # 'YoloS',
+    # 'YoloM',
+    # 'YoloL',
+    # 'YoloX',
+    'ShuffleNet05',
+    'ShuffleNet20',
+    'MobileNetL',
+    'MobileNetS',
+    'WideResNet50',
+    # 'WideResNet101',
+    'ResNet18', 
+    'ResNet101',
+    # 'ResNet152',
+    'EfficientNetS',
+    # 'EfficientNetL',
+]

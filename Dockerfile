@@ -46,3 +46,5 @@ RUN conda env update --file /polyis/environment.yml --prune --name base && \
 
 COPY ./requirements.txt /polyis/requirements.txt
 RUN pip install -r /polyis/requirements.txt
+
+RUN echo "127.0.0.1 host.docker.internal" | tee -a /etc/hosts

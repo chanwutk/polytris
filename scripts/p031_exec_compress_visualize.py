@@ -132,12 +132,13 @@ def plot_series(
 def plot_violin(labels: list[str], datasets: list[list[float]], title: str, output_png_path: str) -> None:
     if not datasets:
         return
-    plt.figure(figsize=(max(10, len(labels) * 0.5), 6))
-    parts = plt.violinplot(datasets, showmedians=True, quantiles=[(0.25, 0.75)] * len(datasets))
-    plt.xticks(ticks=list(range(1, len(labels) + 1)), labels=labels, rotation=45, ha='right')
-    plt.ylabel("Content ratio")
+    plt.figure(figsize=(12, max(10, len(labels) * 0.5)))
+    parts = plt.violinplot([[*filter(lambda x: x < 1, d)] for d in datasets], positions=list(range(1, len(labels) + 1)), 
+                           showmedians=True, vert=False)
+    plt.yticks(ticks=list(range(1, len(labels) + 1)), labels=labels)
+    plt.xlabel("Content ratio")
     plt.title(title)
-    plt.grid(True, linestyle=":", linewidth=0.5, alpha=0.8, axis='y')
+    plt.grid(True, linestyle=":", linewidth=0.5, alpha=0.8, axis='x')
     plt.tight_layout()
     plt.savefig(output_png_path)
     plt.close()
