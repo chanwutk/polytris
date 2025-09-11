@@ -8,12 +8,10 @@ import numpy as np
 from rich.progress import track
 import shutil
 import time
-from queue import Queue
 
 from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_classification_results
-# from lib.python_wrapper_cython import pack_append as _fast_pack_append
-from lib.pack_append import pack_append as _fast_pack_append
-from lib.group_tiles import group_tiles as _fast_group_tiles
+from lib.pack_append import pack_append
+from lib.group_tiles import group_tiles
 
 
 # TILE_SIZES = [30, 60, 120]
@@ -48,154 +46,6 @@ def parse_args():
     return parser.parse_args()
 
 
-def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, int]]:
-    """
-    Find all connected tiles in the bitmap starting from the tile at (i, j).
-    
-    Args:
-        bitmap: 2D numpy array representing the grid of tiles,
-                where 1 indicates a tile with detection and 0 indicates no detection
-        i: row index of the starting tile
-        j: column index of the starting tile
-        
-    Returns:
-        list[tuple[int, int]]: List of tuples representing the coordinates of all connected tiles
-    """
-    value = bitmap[i, j]
-    q = Queue()
-    q.put((i, j))
-    filled: list[tuple[int, int]] = []
-    while not q.empty():
-        i, j = q.get()
-        bitmap[i, j] = value
-        filled.append((i, j))
-        for _i, _j in [(-1, 0), (0, -1), (+1, 0), (0, +1)]:
-            _i += i
-            _j += j
-            if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
-                q.put((_i, _j))
-    return filled
-
-
-def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, int]]]:
-    """
-    Group groups of connected tiles into polyominoes.
-    
-    Uses fast Cython implementation when available.
-    
-    Args:
-        bitmap: 2D numpy array representing the grid of tiles,
-                where 1 indicates a tile with detection and 0 indicates no detection
-                
-    Returns:
-        list[tuple[int, np.ndarray, tuple[int, int]]]: List of polyominoes, where each polyomino is:
-            - group_id: unique id of the group
-            - mask: masking of the polyomino as a 2D numpy array
-            - offset: offset of the mask from the top left corner of the bitmap
-    """
-    return _fast_group_tiles(bitmap)
-
-
-def _group_tiles_original(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, int]]]:
-    """
-    Original Python implementation of group_tiles (backup).
-    """
-    h, w = bitmap.shape
-    _groups = np.arange(h * w, dtype=np.int16) + 1
-    _groups = _groups.reshape(bitmap.shape)
-    _groups = _groups * bitmap
-    
-    # Padding with size=1 on all sides
-    groups = np.zeros((h + 2, w + 2), dtype=np.int16)
-    groups[1:h+1, 1:w+1] = _groups
-    
-    visited: set[int] = set()
-    bins: list[tuple[int, np.ndarray, tuple[int, int]]] = []
-    
-    for i in range(groups.shape[0]):
-        for j in range(groups.shape[1]):
-            if groups[i, j] == 0 or groups[i, j] in visited:
-                continue
-            
-            connected_tiles = find_connected_tiles(groups, i, j)
-            if not connected_tiles:
-                continue
-                
-            connected_tiles = np.array(connected_tiles, dtype=int).T
-            mask = np.zeros((h + 1, w + 1), dtype=np.uint8)
-            mask[*connected_tiles] = True
-            
-            offset = np.min(connected_tiles, axis=1)
-            end = np.max(connected_tiles, axis=1) + 1
-            
-            mask = mask[offset[0]:end[0], offset[1]:end[1]]
-            bins.append((groups[i, j], mask, (int(offset[0] - 1), int(offset[1] - 1))))
-            visited.add(groups[i, j])
-    
-    return bins
-
-
-class PackingFailedException(Exception):
-    """Exception raised when packing fails."""
-
-
-def pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
-                h: int, w: int, occupied_tiles: np.ndarray):
-    """
-    Pack polyominoes into a bitmap.
-    
-    Uses fast Cython implementation when available.
-    
-    Args:
-        poliominoes: List of polyominoes to pack
-        h: Height of the bitmap
-        w: Width of the bitmap
-        occupied_tiles: Existing bitmap to append to (modified in-place)
-        
-    Returns:
-        list: positions where positions contains packing info
-        or None if packing fails
-    """
-    return _fast_pack_append(poliominoes, h, w, occupied_tiles)
-
-
-def _pack_append(poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
-                        h: int, w: int, occupied_tiles: np.ndarray):
-    """
-    Implementation of pack_append.
-    
-    Args:
-        poliominoes: List of polyominoes to pack
-        h: Height of the bitmap
-        w: Width of the bitmap
-        occupied_tiles: Existing bitmap to append to (modified in-place)
-        
-    Returns:
-        list: positions where positions contains packing info
-        or None if packing fails
-    """
-    appending_tiles = np.zeros((h, w), dtype=np.uint8)
-    
-    positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]] = []
-    for groupid, mask, offset in poliominoes:
-        for j in range(w - mask.shape[1] + 1):
-            for i in range(h - mask.shape[0] + 1):
-                if (not np.any(occupied_tiles[i, j:j+mask.shape[1]] & mask[0])
-                and (mask.shape[0] == 1 or not np.any(occupied_tiles[i+1:i+mask.shape[0], j:j+mask.shape[1]] & mask[1:]))):
-                    occupied_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
-                    appending_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
-                    positions.append((i, j, groupid, mask, offset))
-                    break
-            else:
-                continue
-            break
-        else:
-            occupied_tiles ^= appending_tiles
-            return None
-    
-    return positions
-
-
 def render(canvas: np.ndarray, positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]], 
            frame: np.ndarray, chunk_size: int) -> np.ndarray:
     """
@@ -210,9 +60,9 @@ def render(canvas: np.ndarray, positions: list[tuple[int, int, int, np.ndarray, 
     Returns:
         np.ndarray: Updated canvas
     """
-    for y, x, groupid, mask, offset in positions:
-        yfrom, yto = y * chunk_size, (y + mask.shape[0]) * chunk_size
-        xfrom, xto = x * chunk_size, (x + mask.shape[1]) * chunk_size
+    for y, x, _groupid, mask, offset in positions:
+        yfrom = y * chunk_size
+        xfrom = x * chunk_size
         
         # Get mask indices where True
         for i, j in zip(*np.nonzero(mask)):
@@ -295,9 +145,6 @@ def save_packed_image(canvas: np.ndarray, index_map: np.ndarray, offset_lookup: 
     step_start = (time.time_ns() / 1e6)
     index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}.npy')
     np.save(index_map_path, index_map)
-    # index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}_disp.txt')
-    # with open(index_map_path, 'w') as f:
-    #     f.write(str(index_map[:, :, 0]))
 
     offset_lookup_path = os.path.join(offset_lookup_dir, f'{start_idx:08d}_{frame_idx:08d}.json')
     with open(offset_lookup_path, 'w') as f:
@@ -464,9 +311,6 @@ def compress_video(video_path: str, results: list, tile_size: int, output_dir: s
                     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
                     
                     save_packed_image(frame, _index_map, _offset_lookup, start_idx, frame_idx, output_dir, step_times)
-
-            # # Calculate total frame processing time
-            # step_times['total_frame_time'] = (time.time_ns() / 1e6) - frame_start_time
             
             # Save profiling data for this frame
             profiling_data = {

@@ -68,8 +68,9 @@ def parse_args():
     parser.add_argument('--dataset', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--classifier', required=False,
-                        default=CLASSIFIERS_TO_TEST,
+    parser.add_argument('--classifiers', required=False,
+                        default=['WideResNet50'],
+                        # default=CLASSIFIERS_TO_TEST,
                         choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL',
                                  'YoloX', 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
                                  'MobileNetS', 'WideResNet50', 'WideResNet101',
@@ -80,7 +81,8 @@ def parse_args():
                              'YoloN, YoloS, YoloM, YoloL, YoloX, ShuffleNet05, '
                              'ShuffleNet20, MobileNetL, MobileNetS, WideResNet50, '
                              'WideResNet101, ResNet152, ResNet101, ResNet18, '
-                             'EfficientNetS, EfficientNetL')
+                             'EfficientNetS, EfficientNetL. For example: '
+                             '--classifiers YoloN ShuffleNet05 ResNet18')
     parser.add_argument('--clear', action='store_true',
                         help='Clear existing results directories before training')
     return parser.parse_args()
@@ -261,9 +263,13 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         total_gpu_transfer_time: float = 0.
         total_train_step_time: float = 0.
 
-        # Track training accuracy
+        # Track training accuracy and confusion matrix metrics
         train_correct: int = 0
         train_total: int = 0
+        train_tp: int = 0
+        train_tn: int = 0
+        train_fp: int = 0
+        train_fn: int = 0
 
         model.train()
 
@@ -288,7 +294,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
             epoch_loss += loss / len(train_loader)
 
-            # Calculate training accuracy
+            # Calculate training accuracy and confusion matrix metrics
             with torch.no_grad():
                 if model_type.startswith('Yolo'):
                     if y_hat.dim() == 1:
@@ -296,6 +302,18 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 predictions = y_hat > 0.5
                 train_correct += int(torch.sum(predictions == y_batch).item())
                 train_total += len(y_batch)
+
+                # Calculate confusion matrix metrics
+                batch_tp = torch.sum((predictions == 1) & (y_batch == 1)).item()
+                batch_tn = torch.sum((predictions == 0) & (y_batch == 0)).item()
+                batch_fp = torch.sum((predictions == 1) & (y_batch == 0)).item()
+                batch_fn = torch.sum((predictions == 0) & (y_batch == 1)).item()
+
+                # Accumulate confusion matrix metrics
+                train_tp += int(batch_tp)
+                train_tn += int(batch_tn)
+                train_fp += int(batch_fp)
+                train_fn += int(batch_fn)
 
             # Start timing for next batch data loading
             batch_start_time = time.time_ns() / 1e6
@@ -311,6 +329,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             'loss': float(epoch_loss),
             'accuracy': float(train_accuracy),
             'time': train_time,
+            'tp': train_tp,
+            'tn': train_tn,
+            'fp': train_fp,
+            'fn': train_fn,
         })
         throughput.extend(format_time(
             train_load_data=total_data_loading_time,
@@ -348,6 +370,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
             misc_sum = 0
             num_samples = 0
+            val_tp = 0
+            val_tn = 0
+            val_fp = 0
+            val_fn = 0
             model.eval()
 
             # Measure validation data loading time
@@ -381,11 +407,21 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 val_total_loss_time += (time.time_ns() / 1e6) - val_loss_start_time
 
                 # Apply appropriate activation function based on model type
-                ans = yhat
-                ans = ans > 0.5
+                ans = yhat > 0.5
                 misc = torch.sum(ans == y_batch)
                 misc_sum += misc.item()
                 num_samples += len(y_batch)
+
+                # Calculate confusion matrix metrics for validation
+                batch_tp = torch.sum((ans == 1) & (y_batch == 1)).item()
+                batch_tn = torch.sum((ans == 0) & (y_batch == 0)).item()
+                batch_fp = torch.sum((ans == 1) & (y_batch == 0)).item()
+                batch_fn = torch.sum((ans == 0) & (y_batch == 1)).item()
+
+                val_tp += int(batch_tp)
+                val_tn += int(batch_tn)
+                val_fp += int(batch_fp)
+                val_fn += int(batch_fn)
                 # print(f"Accuracy: {misc.item() * 100 / len(y_batch)} %\n")
 
                 # Start timing for next validation batch data loading
@@ -402,6 +438,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 'loss': float(cumulative_loss),
                 'accuracy': float(val_accuracy),
                 'time': val_time,
+                'tp': val_tp,
+                'tn': val_tn,
+                'fp': val_fp,
+                'fn': val_fn,
             })
             throughput.extend(format_time(
                 test_load_data=val_total_data_loading_time,
@@ -446,7 +486,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             if (early_stopping_counter >= early_stopping_tolerance) or (best_loss <= early_stopping_threshold):
                 # print("Terminating: early stopping")
                 break # terminate training
-        
+
         command_queue.put((device, { 'completed': epoch + 1 }))
 
     # print(str(epoch_test_losses) + '\n')
@@ -528,7 +568,7 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
     max_retries = 4
     retry_count = 0
     best_model_wts = None
-    
+
     while retry_count <= max_retries:
         try:
             train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
@@ -539,24 +579,24 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
                                    results_dir=results_dir, model_type=model_type, device=device,
                                    command_queue=command_queue, training_path=training_path, tile_size=tile_size)
             break  # Success, exit the retry loop
-            
+
         except Exception as e:
             retry_count += 1
             if retry_count > max_retries:
                 print(f"Training failed after {max_retries} retries for {model_type} (tile_size={tile_size}): {e}")
                 raise e
-            
+
             # Reduce batch size by half for next attempt
             batch_size = batch_size // 2
             if batch_size < 1:
                 print(f"Batch size reduced to minimum (1) for {model_type} (tile_size={tile_size}), but still failing")
                 raise e
-            
+
             # Clear GPU memory before retry (only for the current device)
             if torch.cuda.is_available() and device.startswith('cuda:'):
                 with torch.cuda.device(device):
                     torch.cuda.empty_cache()
-                    
+
     assert best_model_wts is not None, f"Training failed after {max_retries} retries for {model_type} (tile_size={tile_size})"
 
     # Load best model
@@ -570,6 +610,9 @@ def _train_classifier(training_path: str, tile_size: int, classifier: str,
     try:
         train_classifier(training_path, tile_size, classifier,
                          device=f'cuda:{gpu_id}', command_queue=command_queue)
+    except Exception as e:
+        print(e, '\n\n\n\n\n\n\n\n')
+        raise e
     finally: queue.put(gpu_id)
 
 
@@ -584,15 +627,14 @@ def main(args):
         if not os.path.isdir(video_path) and not video.endswith('.mp4'):
             continue
 
-        # print(f"Processing video {video_path}")
-        for tile_size in TILE_SIZES:
-            training_path = os.path.join(video_path, 'training')
-            results_dir = os.path.join(training_path, 'results')
-            if args.clear and os.path.exists(results_dir):
-                shutil.rmtree(results_dir)
-            os.makedirs(results_dir, exist_ok=True)
+        training_path = os.path.join(video_path, 'training')
+        results_dir = os.path.join(training_path, 'results')
+        if args.clear and os.path.exists(results_dir):
+            shutil.rmtree(results_dir)
+        os.makedirs(results_dir, exist_ok=True)
 
-            for classifier in args.classifier:
+        for classifier in args.classifiers:
+            for tile_size in TILE_SIZES:
                 tasks.append((training_path, tile_size, classifier))
 
     num_gpus = torch.cuda.device_count()
@@ -615,6 +657,9 @@ def main(args):
                              args=(*task, gpu_id, gpu_id_queue, command_queue))
         process.start()
         processes.append(process)
+    
+    for _ in range(num_gpus):
+        gpu_id_queue.get()
 
     for process in processes:
         process.join()

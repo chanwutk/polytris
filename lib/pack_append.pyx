@@ -35,19 +35,18 @@ def pack_append(
     cdef cnp.uint8_t[:, :] mask_view
     cdef cnp.uint8_t[:, :] appending_tiles_view
     cdef bint valid, placed
+    cdef list positions = []
     
     # Create appending tiles tracker
-    appending_tiles = np.zeros((h, w), dtype=np.uint8)
-    appending_tiles_view = appending_tiles
-    
-    positions = []
+    appending_tiles_view = np.zeros((h, w), dtype=np.uint8)
     
     for polyomino_data in polyominoes:
-        groupid, mask, offset = polyomino_data
-        mask_np = np.asarray(mask, dtype=np.uint8)
-        mask_view = mask_np
-        mask_h = mask_np.shape[0]
-        mask_w = mask_np.shape[1]
+        groupid = polyomino_data[0]
+        mask = polyomino_data[1]
+        offset = polyomino_data[2]
+        mask_view = mask
+        mask_h = mask.shape[0]
+        mask_w = mask.shape[1]
         
         placed = False
         

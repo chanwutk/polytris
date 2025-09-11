@@ -6,6 +6,7 @@
 import numpy as np
 cimport numpy as cnp
 from libc.stdlib cimport malloc, free, realloc
+from cython.view cimport array as cvarray
 cimport cython
 
 
@@ -13,18 +14,18 @@ ctypedef cnp.uint16_t GROUP_t
 ctypedef cnp.uint8_t MASK_t
 
 cdef struct IntVector:
-    int *data
+    unsigned short *data
     int top
     int capacity
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int IntVector_init(IntVector *int_vector, int initial_capacity):
+cdef int IntVector_init(IntVector *int_vector, int initial_capacity) noexcept nogil:
     """Initialize an integer vector with initial capacity"""
     if not int_vector:
         return -1
     
-    int_vector.data = <int*>malloc(initial_capacity * sizeof(int))
+    int_vector.data = <unsigned short*>malloc(initial_capacity * sizeof(unsigned short))
     if not int_vector.data:
         return -1
     
@@ -34,10 +35,10 @@ cdef int IntVector_init(IntVector *int_vector, int initial_capacity):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int IntVector_push(IntVector *int_vector, int value):
+cdef int IntVector_push(IntVector *int_vector, unsigned short value) noexcept nogil:
     """Push a value onto the vector, expanding if necessary"""
     cdef int new_capacity
-    cdef int *new_data
+    cdef unsigned short *new_data
     
     if not int_vector:
         return -1
@@ -45,7 +46,7 @@ cdef int IntVector_push(IntVector *int_vector, int value):
     # Check if we need to expand
     if int_vector.top >= int_vector.capacity:
         new_capacity = int_vector.capacity * 2
-        new_data = <int*>realloc(int_vector.data, new_capacity * sizeof(int))
+        new_data = <unsigned short*>realloc(int_vector.data, new_capacity * sizeof(unsigned short))
         if not new_data:
             return -1  # Memory allocation failed
         
@@ -57,19 +58,19 @@ cdef int IntVector_push(IntVector *int_vector, int value):
     int_vector.top += 1
     return 0
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef int IntVector_pop(IntVector *int_vector):
-    """Pop a value from the vector"""
-    if not int_vector or int_vector.top <= 0:
-        return -1  # Stack is empty or invalid
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# cdef unsigned short IntVector_pop(IntVector *int_vector) noexcept:
+#     """Pop a value from the vector"""
+#     if not int_vector or int_vector.top <= 0:
+#         return -1  # Stack is empty or invalid
     
-    int_vector.top -= 1
-    return int_vector.data[int_vector.top]
+#     int_vector.top -= 1
+#     return int_vector.data[int_vector.top]
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void IntVector_cleanup(IntVector *int_vector):
+cdef void IntVector_cleanup(IntVector *int_vector) noexcept nogil:
     """Free the stack's data array (stack itself is on stack memory)"""
     if int_vector:
         if int_vector.data:
@@ -81,7 +82,11 @@ cdef void IntVector_cleanup(IntVector *int_vector):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef IntVector find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start_j):
+cdef IntVector find_connected_tiles(
+    GROUP_t[:, :] bitmap,
+    unsigned short start_i,
+    unsigned short start_j
+) noexcept nogil:
     """
     Fast Cython implementation of find_connected_tiles using a C-based stack.
 
@@ -97,13 +102,13 @@ cdef IntVector find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start
     Returns:
         IntVector: IntVector containing coordinate pairs for connected tiles
     """
-    cdef int h = bitmap.shape[0]
-    cdef int w = bitmap.shape[1]
+    cdef unsigned short h = bitmap.shape[0]
+    cdef unsigned short w = bitmap.shape[1]
     cdef GROUP_t value = bitmap[start_i, start_j]
     
     # Create IntVector for filled coordinates on stack memory
     cdef IntVector filled
-    if IntVector_init(&filled, 16):  # Initial capacity of 32 (16 coordinate pairs)
+    if IntVector_init(&filled, 16) == -1:  # Initial capacity of 32 (16 coordinate pairs)
         # Return empty IntVector on initialization failure
         IntVector_cleanup(&filled)
         return filled
@@ -116,19 +121,22 @@ cdef IntVector find_connected_tiles(GROUP_t[:, :] bitmap, int start_i, int start
         IntVector_cleanup(&filled)
         return filled
     
-    cdef int i, j, _i, _j, di
+    cdef unsigned short i, j, _i, _j, di
 
     # Directions: up, left, down, right
-    cdef int[4] directions_i = [-1, 0, 1, 0]
-    cdef int[4] directions_j = [0, -1, 0, 1]
+    cdef unsigned short[4] directions_i = [-1, 0, 1, 0]
+    cdef unsigned short[4] directions_j = [0, -1, 0, 1]
 
     # Push initial coordinates
     IntVector_push(&stack, start_i)
     IntVector_push(&stack, start_j)
 
     while stack.top > 0:
-        j = IntVector_pop(&stack)
-        i = IntVector_pop(&stack)
+        j = stack.data[stack.top - 1]
+        i = stack.data[stack.top - 2]
+        stack.top -= 2
+        # j = IntVector_pop(&stack)
+        # i = IntVector_pop(&stack)
 
         # Mark current position as visited and add to result
         bitmap[i, j] = value
@@ -175,12 +183,9 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
             - mask: masking of the polyomino as a 2D numpy array
             - offset: offset of the mask from the top left corner of the bitmap
     """
-    # Convert to numpy array for operations that need it
-    bitmap_np = np.asarray(bitmap_input, dtype=np.uint8)
-
-    cdef int h = bitmap_np.shape[0]
-    cdef int w = bitmap_np.shape[1]
-    cdef int i, j, k, group_id, min_i, min_j, max_i, max_j, mask_i, mask_j, tile_i, tile_j, num_pairs
+    cdef unsigned short h = bitmap_input.shape[0]
+    cdef unsigned short w = bitmap_input.shape[1]
+    cdef unsigned short i, j, k, group_id, min_i, min_j, max_i, max_j, mask_i, mask_j, tile_i, tile_j, num_pairs
     cdef IntVector connected_tiles
     cdef list bins = []
     # cdef set visited = set()
@@ -188,15 +193,16 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
     # Create groups array with unique IDs
     groups = np.arange(1, h * w + 1, dtype=np.uint16).reshape((h, w))
     # Mask groups by bitmap - only keep group IDs where bitmap has 1s
-    groups = np.where(bitmap_np, groups, 0)
+    groups = np.where(bitmap_input, groups, 0)
     cdef GROUP_t[:, :] groups_view = groups
+    cdef MASK_t[:, :] mask_view
 
     # Process each cell
     for i in range(h):
         for j in range(w):
             group_id = groups_view[i, j]
             # if group_id == 0 or group_id in visited:
-            if group_id == 0 or bitmap_np[(group_id - 1) // w, (group_id - 1) % w] == 0:
+            if group_id == 0 or bitmap_input[(group_id - 1) // w, (group_id - 1) % w] == 0:
                 continue
 
             # Find connected tiles - returns IntVector
@@ -234,17 +240,18 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
             mask_h = max_i - min_i + 1
             mask_w = max_j - min_j + 1
             mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
+            mask_view = mask
 
             # Fill mask - iterate through IntVector data directly
             for k in range(num_pairs):
                 tile_i = connected_tiles.data[k << 1]        # i coordinate
                 tile_j = connected_tiles.data[(k << 1) + 1]  # j coordinate
-                mask[tile_i - min_i, tile_j - min_j] = 1
+                mask_view[tile_i - min_i, tile_j - min_j] = 1
             # Clean up IntVector memory
             IntVector_cleanup(&connected_tiles)
 
             bins.append((group_id, mask, (min_i, min_j)))
             # visited.add(group_id)
-            bitmap_np[i, j] = 0
+            bitmap_input[i, j] = 0
 
     return bins

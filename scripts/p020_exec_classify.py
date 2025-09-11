@@ -410,7 +410,7 @@ def main(args):
     print(f"Created {len(tasks)} tasks to process")
     
     # Set up multiprocessing
-    num_gpus = 1
+    num_gpus = torch.cuda.device_count()
     assert num_gpus > 0, "No GPUs available"
     
     gpu_id_queue = mp.Queue(maxsize=num_gpus)

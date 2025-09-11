@@ -1,3 +1,4 @@
 #! /bin/bash
 
-docker exec -it polyis bash
+CONTAINER_NAME=${1:-$(basename "$PWD")}
+docker exec -it "$CONTAINER_NAME" bash

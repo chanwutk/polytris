@@ -10,7 +10,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-from scripts.utilities import CACHE_DIR
+from scripts.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
 
 
 def load_training_results(dataset_dir: str, classifiers_filter: List[str] | None = None) -> List[Dict[str, Any]]:
@@ -76,6 +76,7 @@ def load_training_results(dataset_dir: str, classifiers_filter: List[str] | None
                 # Extract key metrics
                 num_epochs = len(test_losses)
                 best_val_loss = min(epoch['loss'] for epoch in test_losses)
+                best_val_accuracy = max(epoch['accuracy'] for epoch in test_losses)
                 total_train_time = sum(epoch['time'] for epoch in train_losses)
                 total_val_time = sum(epoch['time'] for epoch in test_losses)
                 
@@ -99,11 +100,11 @@ def load_training_results(dataset_dir: str, classifiers_filter: List[str] | None
                     'tile_size': tile_size,
                     'num_epochs': num_epochs,
                     'best_val_loss': best_val_loss,
+                    'best_val_accuracy': best_val_accuracy,
                     'total_train_time': total_train_time,
                     'total_val_time': total_val_time,
                     'avg_train_step_time': avg_train_step_time,
                     'avg_inference_time': avg_inference_time,
-                    # 'final_val_accuracy': test_losses[-1]['accuracy'] if test_losses else 0
                 })
                 
             except (json.JSONDecodeError, KeyError, ValueError) as e:
@@ -128,43 +129,43 @@ def create_scatterplots(df: pd.DataFrame, output_dir: str, title_suffix: str = "
     plots = [
         {
             'x': 'num_epochs',
-            'y': 'best_val_loss',
-            'title': f'Number of Epochs vs Best Validation Loss{title_suffix}',
+            'y': 'best_val_accuracy',
+            'title': f'Number of Epochs vs Best Validation Accuracy{title_suffix}',
             'xlabel': 'Number of Epochs',
-            'ylabel': 'Best Validation Loss',
-            'filename': 'epochs_vs_val_loss.png'
+            'ylabel': 'Best Validation Accuracy',
+            'filename': 'epochs_vs_val_accuracy.png'
         },
         {
             'x': 'total_train_time',
-            'y': 'best_val_loss',
-            'title': f'Total Training Time vs Validation Loss{title_suffix}',
+            'y': 'best_val_accuracy',
+            'title': f'Total Training Time vs Validation Accuracy{title_suffix}',
             'xlabel': 'Total Training Time (ms)',
-            'ylabel': 'Best Validation Loss',
-            'filename': 'train_time_vs_val_loss.png'
+            'ylabel': 'Best Validation Accuracy',
+            'filename': 'train_time_vs_val_accuracy.png'
         },
         {
             'x': 'total_val_time',
-            'y': 'best_val_loss',
-            'title': f'Total Validation Time vs Validation Loss{title_suffix}',
+            'y': 'best_val_accuracy',
+            'title': f'Total Validation Time vs Validation Accuracy{title_suffix}',
             'xlabel': 'Total Validation Time (ms)',
-            'ylabel': 'Best Validation Loss',
-            'filename': 'val_time_vs_val_loss.png'
+            'ylabel': 'Best Validation Accuracy',
+            'filename': 'val_time_vs_val_accuracy.png'
         },
         {
             'x': 'avg_train_step_time',
-            'y': 'best_val_loss',
-            'title': f'Average Train Step Time vs Validation Loss{title_suffix}',
+            'y': 'best_val_accuracy',
+            'title': f'Average Train Step Time vs Validation Accuracy{title_suffix}',
             'xlabel': 'Average Train Step Time (ms)',
-            'ylabel': 'Best Validation Loss',
-            'filename': 'train_step_time_vs_val_loss.png'
+            'ylabel': 'Best Validation Accuracy',
+            'filename': 'train_step_time_vs_val_accuracy.png'
         },
         {
             'x': 'avg_inference_time',
-            'y': 'best_val_loss',
-            'title': f'Average Inference Time vs Validation Loss{title_suffix}',
+            'y': 'best_val_accuracy',
+            'title': f'Average Inference Time vs Validation Accuracy{title_suffix}',
             'xlabel': 'Average Inference Time (ms)',
-            'ylabel': 'Best Validation Loss',
-            'filename': 'inference_time_vs_val_loss.png'
+            'ylabel': 'Best Validation Accuracy',
+            'filename': 'inference_time_vs_val_accuracy.png'
         }
     ]
     
@@ -177,13 +178,19 @@ def create_scatterplots(df: pd.DataFrame, output_dir: str, title_suffix: str = "
             x=plot_config['x'],
             y=plot_config['y'],
             hue='classifier',
+            palette='tab20',
             size='tile_size',
             sizes=(50, 200),
             alpha=0.7
         )
         
         # Draw lines connecting the same classifier across tile sizes (smallest to largest)
-        for classifier in df['classifier'].unique():
+        # Get the color mapping from the scatter plot
+        unique_classifiers = df['classifier'].unique()
+        tab20_colors = sns.color_palette('tab20', len(unique_classifiers))
+        classifier_color_map = dict(zip(unique_classifiers, tab20_colors))
+        
+        for classifier in unique_classifiers:
             classifier_data = df[df['classifier'] == classifier]
             if len(classifier_data) > 1:
                 # Convert to numpy arrays and sort by tile_size
@@ -196,7 +203,9 @@ def create_scatterplots(df: pd.DataFrame, output_dir: str, title_suffix: str = "
                 x_sorted = x_values[sorted_indices]
                 y_sorted = y_values[sorted_indices]
                 
-                plt.plot(x_sorted, y_sorted, '--', alpha=0.5, linewidth=1)
+                # Use the same color as the scatter points for this classifier
+                color = classifier_color_map[classifier]
+                plt.plot(x_sorted, y_sorted, '--', alpha=0.5, linewidth=1, color=color)
         
         plt.title(plot_config['title'], fontsize=14, fontweight='bold')
         plt.xlabel(plot_config['xlabel'], fontsize=12)
@@ -250,11 +259,11 @@ def create_average_plots(results: List[Dict[str, Any]], output_dir: str):
             'tile_size': tile_size,
             'num_epochs': np.mean([r['num_epochs'] for r in group_results]),
             'best_val_loss': np.mean([r['best_val_loss'] for r in group_results]),
+            'best_val_accuracy': np.mean([r['best_val_accuracy'] for r in group_results]),
             'total_train_time': np.mean([r['total_train_time'] for r in group_results]),
             'total_val_time': np.mean([r['total_val_time'] for r in group_results]),
             'avg_train_step_time': np.mean([r['avg_train_step_time'] for r in group_results]),
             'avg_inference_time': np.mean([r['avg_inference_time'] for r in group_results]),
-            # 'final_val_accuracy': np.mean([r['final_val_accuracy'] for r in group_results])
         }
         averaged_results.append(avg_result)
     
@@ -289,10 +298,7 @@ def parse_args():
     parser.add_argument('--dataset', required=False, default='b3d',
                         help='Dataset name')
     parser.add_argument('--classifiers', required=False, nargs='+',
-                        default=['ResNet18', 'ResNet152', 'ResNet101',
-                                 'EfficientNetS', # 'EfficientNetL',
-                                 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
-                                 'MobileNetS', 'WideResNet50',], # 'WideResNet101',
+                        default=CLASSIFIERS_TO_TEST,
                         choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL',
                                  'YoloX', 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
                                  'MobileNetS', 'WideResNet50', 'WideResNet101',
