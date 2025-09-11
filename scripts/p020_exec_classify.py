@@ -188,6 +188,13 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
         num_tiles = tiles.shape[0] * tiles.shape[1]
         tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
 
+         # TODO: list of entry tiles hard coded for now 
+        manually_include = [] # TODO: enter tile numbers you want to include here! 
+        manual_filter = np.zeros(num_tiles, dtype=np.uint8)
+        if manually_include:
+            manual_filter[manually_include] = 1
+
+    
         if filter is None:
             tiles_to_process = tiles_flat
             relevant_indices = np.arange(num_tiles)
@@ -196,16 +203,17 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
             filter_flat = filter.reshape(-1)
             relevant_indices = np.where(filter_flat == 1)[0]
 
-            # Check if there are any relevant tiles to process
-            if len(relevant_indices) == 0:
-                transform_runtime = (time.time_ns() / 1e6) - start_time
-                inference_runtime = 0.0
-                # Return an all-zero grid if no relevant tiles are found
-                relevance_grid = np.zeros((tiles.shape[0], tiles.shape[1]), dtype=np.uint8)
-                return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
+        relevant_indices = np.logical_or(relevant_indices, manually_include)
+        # Check if there are any relevant tiles to process
+        if len(relevant_indices) == 0:
+            transform_runtime = (time.time_ns() / 1e6) - start_time
+            inference_runtime = 0.0
+            # Return an all-zero grid if no relevant tiles are found
+            relevance_grid = np.zeros((tiles.shape[0], tiles.shape[1]), dtype=np.uint8)
+            return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
             
-            # Select only the relevant tiles for inference
-            tiles_to_process = tiles_flat[relevant_indices]
+        # Select only the relevant tiles for inference
+        tiles_to_process = tiles_flat[relevant_indices]
 
         # Normalize to [0, 1] range
         tiles_to_process = tiles_to_process / 255.0
