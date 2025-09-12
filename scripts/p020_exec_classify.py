@@ -142,7 +142,7 @@ def load_model(video_path: str, tile_size: int, classifier_name: str) -> "torch.
         model.eval()
         return model
     
-    raise FileNotFoundError(f"No trained model found for tile size {tile_size} in {video_path}")
+    raise FileNotFoundError(f"No trained model found for {classifier_name} tile size {tile_size} in {video_path}")
 
 
 def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int, device: str) -> tuple[np.ndarray, list[dict]]:

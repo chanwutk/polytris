@@ -82,7 +82,7 @@ cdef void IntVector_cleanup(IntVector *int_vector) noexcept nogil:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef IntVector find_connected_tiles(
+cdef IntVector _find_connected_tiles(
     GROUP_t[:, :] bitmap,
     unsigned short start_i,
     unsigned short start_j
@@ -206,7 +206,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
                 continue
 
             # Find connected tiles - returns IntVector
-            connected_tiles = find_connected_tiles(groups_view, i, j)
+            connected_tiles = _find_connected_tiles(groups_view, i, j)
             if connected_tiles.top == 0:
                 # Clean up empty IntVector
                 IntVector_cleanup(&connected_tiles)
