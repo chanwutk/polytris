@@ -28,3 +28,9 @@ output
 
 det/
 det_otif
+
+**/*.pt
+
+**/.pytest_cache/
+
+.cursor/mcp.json

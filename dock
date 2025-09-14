@@ -1,0 +1,4 @@
+#! /bin/bash
+
+CONTAINER_NAME=${1:-$(basename "$PWD")}
+docker exec -it "$CONTAINER_NAME" bash

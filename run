@@ -1,0 +1,44 @@
+#! /bin/python3
+
+import argparse
+import os
+import sys
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Run python script in polyis container')
+    parser.add_argument('args', nargs='*', help='Arguments to pass to the python script')
+    return parser.parse_args()
+
+
+def main():
+    args = sys.argv[1:]
+
+    cmd = ['docker', 'exec', '-it', 'polyis', 'bash', '-c']
+    arg_str = ' '.join(args).replace('"', '\\"')
+    cmd.append(f'"python {arg_str}"')
+
+    print(f'{bcolors.OKGREEN}Running:{bcolors.ENDC}', ' '.join(cmd))
+    print()
+    
+    try:
+        os.system(' '.join(cmd))
+    except Exception as e:
+        print(f"Error running command: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

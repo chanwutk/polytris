@@ -1,6 +1,6 @@
 import cv2
 
-image = cv2.imread('/data/chanwutk/projects/minivan/track-results-0/jnc00.mp4.0.0.jpg')
+image = cv2.imread('/data/chanwutk/projects/polyis/track-results-0/jnc00.mp4.0.0.jpg')
 
 for i  in range(1, 20):
     # draw a vertical line

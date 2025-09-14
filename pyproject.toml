@@ -7,28 +7,3 @@ extraPaths = [
     "./modules/TrackEval",
     "./modules/darknet"
 ]
-
-[project]
-name = "minivan"
-version = "0.1.0"
-description = ""
-authors = [ { name = "Chanwut (Mick) Kittivorawong", email = "chanwutk@gmail.com" } ]
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "filterpy (>=1.4.5,<2.0.0)",
-    "gdown (>=5.2.0,<6.0.0)",
-    "lapx (>=0.5.11.post1,<0.6.0)",
-    "numpy (>=2.2.3,<3.0.0)",
-    "pyyaml (>=6.0.2,<7.0.0)",
-    "regex (>=2024.11.6,<2025.0.0)",
-    "yacs (>=0.1.8,<0.2.0)",
-    "scikit-learn (>=1.6.1,<2.0.0)",
-    "pandas (>=2.2.3,<3.0.0)",
-    "ftfy (>=6.3.1,<7.0.0)",
-    "gitpython (>=3.1.44,<4.0.0)"
-]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"

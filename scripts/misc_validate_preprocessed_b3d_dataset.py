@@ -1,3 +1,5 @@
+#!/usr/local/bin/python
+
 import os
 import json
 import multiprocessing as mp
@@ -8,18 +10,18 @@ import numpy as np
 import torch
 
 import sys
-sys.path.append('/data/chanwutk/projects/minivan/modules/b3d')
-sys.path.append('/data/chanwutk/projects/minivan/modules/detectron2')
+sys.path.append('/data/chanwutk/projects/polyis/modules/b3d')
+sys.path.append('/data/chanwutk/projects/polyis/modules/detectron2')
 
 from b3d.external.nms import nms
 from b3d.external.sort import iou_batch, linear_assignment
-from minivan.models.retinanet_b3d import get_detector
+from polyis.models.retinanet_b3d import get_detector
 
 
-VIDEOS = '/data/chanwutk/projects/minivan/videos_crop'
-VIDEOS_VALID = '/data/chanwutk/projects/minivan/videos_validate'
+VIDEOS = '/data/chanwutk/projects/polyis/videos_crop'
+VIDEOS_VALID = '/data/chanwutk/projects/polyis/videos_validate'
 
-CONFIG = os.path.join('/data/chanwutk/projects/minivan/modules', 'b3d/b3d/configs/config_refined.json')
+CONFIG = os.path.join('/data/chanwutk/projects/polyis/modules', 'b3d/b3d/configs/config_refined.json')
 
 
 def parse_args():
