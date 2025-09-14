@@ -1,13 +1,18 @@
 """Type stubs for group_tiles module."""
 
+import typing
+
 import numpy as np
-import numpy.typing as npt
 
 
-Polyomino = tuple[npt.NDArray[np.uint8], tuple[int, int]]
+if typing.TYPE_CHECKING:
+    from polyis.dtypes import Array, D2
 
 
-def group_tiles(bitmap_input: npt.NDArray[np.uint8]) -> list[Polyomino]:
+Polyomino = tuple[Array[*D2, np.uint8], tuple[int, int]]
+
+
+def group_tiles(bitmap_input: Array[*D2, np.uint8]) -> list[Polyomino]:
     """
     Fast Cython implementation of group_tiles.
 

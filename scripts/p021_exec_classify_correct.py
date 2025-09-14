@@ -272,7 +272,8 @@ def main(args):
             worker_id = pb.get_worker_id()
             pb.update_overall_progress(advance=1)
             process = mp.Process(target=_process_video_tile_combination,
-                                 args=(*task, worker_id, pb.worker_id_queue, pb.command_queue))
+                                 args=(*task, worker_id, pb.worker_id_queue,
+                                       pb.command_queue))
             process.start()
             processes.append(process)
 

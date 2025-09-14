@@ -1,18 +1,19 @@
 """Type stubs for pack_append module."""
 
+import typing
+
 import numpy as np
-import numpy.typing as npt
 
 
-Polyomino = tuple[npt.NDArray[np.uint8], tuple[int, int]]
-PolyominoPositions = tuple[int, int, npt.NDArray[np.uint8], tuple[int, int]]
+if typing.TYPE_CHECKING:
+    from polyis.dtypes import Array, D2, PolyominoPositions, Polyomino
 
 
 def pack_append(
     polyominoes: list[Polyomino],
     h: int,
     w: int,
-    occupied_tiles: npt.NDArray[np.uint8]
+    occupied_tiles: Array[*D2, np.uint8]
 ) -> list[PolyominoPositions] | None:
     """
     Fast Cython implementation of pack_append.

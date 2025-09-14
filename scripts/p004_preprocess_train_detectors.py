@@ -45,7 +45,7 @@ def parse_args():
 
 
 def extract_frames_with_detections(video_path: str, tracking_data: Dict[int, List[List[float]]], 
-                                  output_dir: str) -> List[str]:
+                                   output_dir: str) -> List[str]:
     """
     Extract frames from video that contain object detections.
     
@@ -92,8 +92,8 @@ def extract_frames_with_detections(video_path: str, tracking_data: Dict[int, Lis
 
 
 def create_yolo_annotations(tracking_data: Dict[int, List[List[float]]], 
-                           extracted_frames: List[str], output_dir: str, 
-                           frame_width: int, frame_height: int) -> List[str]:
+                            extracted_frames: List[str], output_dir: str, 
+                            frame_width: int, frame_height: int) -> List[str]:
     """
     Create YOLO format annotation files for the extracted frames.
     

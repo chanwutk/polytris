@@ -33,7 +33,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, isr, progress_queue: mp.Queue):
+def process_video(file: str, videodir: str, outputdir: str, mask: str, gpuIdx: int,
+                  batch_size: int, isr: int, progress_queue: mp.Queue):
     WIDTH = 1080
     HEIGHT = 720
 

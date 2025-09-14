@@ -559,29 +559,23 @@ class ProgressBar:
         self.refresh_per_second = refresh_per_second
         
         # Initialize queues
-        self.command_queue: "mp.Queue[tuple[str, dict] | None] | None" = None
-        self.worker_id_queue: "mp.Queue[int] | None" = None
-        self.progress_process: mp.Process | None = None
-    
-    def __enter__(self):
-        """Enter the context manager - set up queues and start progress process."""
-        import multiprocessing as mp
-        
-        # Create command queue for progress updates
-        self.command_queue = mp.Queue()
-        
-        # Create worker ID queue and populate it
-        self.worker_id_queue = mp.Queue(maxsize=self.num_workers)
-        for worker_id in range(self.num_workers):
-            self.worker_id_queue.put(worker_id)
-        
-        # Start progress bars process
-        self.progress_process = mp.Process(
+        self.command_queue: "mp.Queue[tuple[str, dict] | None]" = mp.Queue()
+        self.worker_id_queue: "mp.Queue[int]" = mp.Queue(maxsize=num_workers)
+        self.progress_process: mp.Process = mp.Process(
             target=progress_bars,
             args=(self.command_queue, self.num_workers,
                   self.num_tasks, self.refresh_per_second),
             daemon=True
         )
+    
+    def __enter__(self):
+        """Enter the context manager - set up queues and start progress process."""
+
+        # Populate worker ID queue
+        for worker_id in range(self.num_workers):
+            self.worker_id_queue.put(worker_id)
+        
+        # Start progress bars process
         self.progress_process.start()
         
         return self
@@ -590,38 +584,29 @@ class ProgressBar:
         """Exit the context manager - clean up progress bars and terminate process."""
         try:
             # Signal progress bars to stop
-            if self.command_queue is not None:
-                self.command_queue.put(None)
+            self.command_queue.put(None)
             
             # Wait for progress process to finish and terminate it
-            if self.progress_process is not None:
-                self.progress_process.join(timeout=5)  # Wait up to 5 seconds
-                if self.progress_process.is_alive():
-                    self.progress_process.terminate()
-                    self.progress_process.join(timeout=2)  # Give it time to terminate
-                
-                # Force kill if still alive
-                if self.progress_process.is_alive():
-                    self.progress_process.kill()
-                    self.progress_process.join()
+            self.progress_process.join(timeout=5)  # Wait up to 5 seconds
+            if self.progress_process.is_alive():
+                self.progress_process.terminate()
+                self.progress_process.join(timeout=2)  # Give it time to terminate
+            
+            # Force kill if still alive
+            if self.progress_process.is_alive():
+                self.progress_process.kill()
+                self.progress_process.join()
         except Exception as e:
-            print(f"Warning: Error during progress bar cleanup: {e}")
-        finally:
-            # Clear references
-            self.command_queue = None
-            self.worker_id_queue = None
-            self.progress_process = None
+            print(f"Error during progress bar cleanup: {e}")
+            raise e
     
     def update_overall_progress(self, advance: int = 1):
         """Update the overall progress bar."""
-        if self.command_queue is not None:
-            self.command_queue.put(('overall', {'advance': advance}))
+        self.command_queue.put(('overall', {'advance': advance}))
 
     def get_worker_id(self):
         """Get a worker ID from the worker ID queue."""
-        if self.worker_id_queue is not None:
-            return self.worker_id_queue.get()
-        return None
+        return self.worker_id_queue.get()
 
 
 CLASSIFIERS_TO_TEST = [

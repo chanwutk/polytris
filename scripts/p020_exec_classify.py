@@ -12,7 +12,7 @@ import multiprocessing as mp
 
 from polyis.images import splitHWC, padHWC
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, progress_bars
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar
 
 
 TILE_SIZES = [30, 60]  #, 120]
@@ -336,16 +336,15 @@ def process_video_task(video_file_path: str, cache_video_dir: str, classifier: s
 
 
 def _process_video_task(video_file_path: str, cache_video_dir: str, classifier: str, 
-                       tile_size: int, gpu_id: int, gpu_id_queue: mp.Queue, 
-                       command_queue: mp.Queue):
+                       tile_size: int, gpu_id: int, progress_bar: ProgressBar):
     """
     Wrapper function for process_video_task that handles GPU queue management.
     """
     try:
         process_video_task(video_file_path, cache_video_dir, classifier, 
-                          tile_size, gpu_id, command_queue)
+                          tile_size, gpu_id, progress_bar.command_queue)
     finally:
-        gpu_id_queue.put(gpu_id)
+        progress_bar.worker_id_queue.put(gpu_id)
 
 
 def main(args):
@@ -409,36 +408,24 @@ def main(args):
     
     print(f"Created {len(tasks)} tasks to process")
     
-    # Set up multiprocessing
+    # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()
     assert num_gpus > 0, "No GPUs available"
     
-    gpu_id_queue = mp.Queue(maxsize=num_gpus)
-    for gpu_id in range(num_gpus):
-        gpu_id_queue.put(gpu_id)
-    
-    command_queue = mp.Queue()
-    progress_process = mp.Process(target=progress_bars,
-                                  args=(command_queue, num_gpus, len(tasks)),
-                                  daemon=True)
-    progress_process.start()
-    
-    processes: list[mp.Process] = []
-    for task in tasks:
-        gpu_id = gpu_id_queue.get()
-        command_queue.put(('overall', {'advance': 1}))
-        process = mp.Process(target=_process_video_task,
-                             args=(*task, gpu_id, gpu_id_queue, command_queue))
-        process.start()
-        processes.append(process)
-    
-    for process in processes:
-        process.join()
-        process.terminate()
-    
-    command_queue.put(None)
-    progress_process.join()
-    progress_process.terminate()
+    with ProgressBar(num_workers=num_gpus, num_tasks=len(tasks)) as pb:
+        processes: list[mp.Process] = []
+        for task in tasks:
+            gpu_id = pb.get_worker_id()
+            pb.update_overall_progress(1)
+            process = mp.Process(target=_process_video_task,
+                                 args=(*task, gpu_id, pb.worker_id_queue,
+                                       pb.command_queue))
+            process.start()
+            processes.append(process)
+        
+        for process in processes:
+            process.join()
+            process.terminate()
     
     print("All tasks completed!")
             
