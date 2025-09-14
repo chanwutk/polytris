@@ -6,17 +6,17 @@
 import numpy as np
 cimport numpy as cnp
 from libc.stdlib cimport malloc, free, realloc
-from cython.view cimport array as cvarray
-cimport cython
 
 
 ctypedef cnp.uint16_t GROUP_t
 ctypedef cnp.uint8_t MASK_t
 
+
 cdef struct IntVector:
     unsigned short *data
     int top
     int capacity
+
 
 # @cython.boundscheck(False)
 # @cython.wraparound(False)
@@ -32,6 +32,7 @@ cdef int IntVector_init(IntVector *int_vector, int initial_capacity) noexcept no
     int_vector.top = 0
     int_vector.capacity = initial_capacity
     return 0
+
 
 # @cython.boundscheck(False)
 # @cython.wraparound(False)
@@ -58,6 +59,7 @@ cdef int IntVector_push(IntVector *int_vector, unsigned short value) noexcept no
     int_vector.top += 1
     return 0
 
+
 # @cython.boundscheck(False)
 # @cython.wraparound(False)
 # cdef unsigned short IntVector_pop(IntVector *int_vector) noexcept:
@@ -67,6 +69,7 @@ cdef int IntVector_push(IntVector *int_vector, unsigned short value) noexcept no
     
 #     int_vector.top -= 1
 #     return int_vector.data[int_vector.top]
+
 
 # @cython.boundscheck(False)
 # @cython.wraparound(False)
@@ -78,6 +81,7 @@ cdef void IntVector_cleanup(IntVector *int_vector) noexcept nogil:
             int_vector.data = NULL
         int_vector.top = 0
         int_vector.capacity = 0
+
 
 
 # @cython.boundscheck(False)

@@ -13,7 +13,7 @@ import multiprocessing as mp
 
 from ultralytics import YOLO
 
-from scripts.utilities import DATA_DIR, CACHE_DIR, format_time, load_tracking_results, progress_bars
+from polyis.utilities import DATA_DIR, CACHE_DIR, format_time, load_tracking_results, progress_bars
 
 
 def parse_args():

@@ -5,7 +5,7 @@ import os
 import multiprocessing as mp
 from multiprocessing import Queue
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization, load_tracking_results, progress_bars
+from polyis.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization, load_tracking_results, progress_bars
 
 
 def parse_args():

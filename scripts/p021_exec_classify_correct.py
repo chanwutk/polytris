@@ -8,7 +8,7 @@ import numpy as np
 import time
 import multiprocessing as mp
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar
 
 
 TILE_SIZES = [30, 60]  #, 120]

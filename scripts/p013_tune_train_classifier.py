@@ -19,7 +19,7 @@ from torch.optim import Adam
 
 from polyis.models.classifier.simple_cnn import SimpleCNN
 from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
-from scripts.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, format_time, progress_bars
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, format_time, progress_bars
 
 # Factory functions for models that don't accept tile_size parameter
 def ShuffleNet05_factory(_tile_size: int):

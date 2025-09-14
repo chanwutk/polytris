@@ -17,7 +17,7 @@ import trackeval
 from trackeval.datasets import B3D
 from trackeval.metrics import HOTA, CLEAR, Identity
 
-from scripts.utilities import CACHE_DIR
+from polyis.utilities import CACHE_DIR
 
 
 TILE_SIZES = [64]

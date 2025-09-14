@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from scripts.utilities import CACHE_DIR
+from polyis.utilities import CACHE_DIR
 
 
 def parse_args() -> argparse.Namespace:

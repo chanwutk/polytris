@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 import multiprocessing as mp
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization
+from polyis.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization
 
 
 TILE_SIZES = [64]

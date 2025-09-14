@@ -10,7 +10,7 @@ from multiprocessing import Queue
 import torch
 
 import polyis.models.retinanet_b3d
-from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, progress_bars
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, progress_bars
 
 
 def parse_args():

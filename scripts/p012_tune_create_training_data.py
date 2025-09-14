@@ -13,7 +13,7 @@ from rich.progress import track
 
 import polyis.images
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap
+from polyis.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap
 
 TILE_SIZES = [30, 60, 120]
 

@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from matplotlib.path import Path
 
-from scripts.utilities import DATA_RAW_DIR, DATA_DIR, progress_bars
+from polyis.utilities import DATA_RAW_DIR, DATA_DIR, progress_bars
 
 
 def parse_args():

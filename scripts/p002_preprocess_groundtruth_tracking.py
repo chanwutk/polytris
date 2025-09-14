@@ -8,7 +8,7 @@ import numpy as np
 import multiprocessing as mp
 from multiprocessing import Queue
 
-from scripts.utilities import CACHE_DIR, create_tracker, format_time, interpolate_trajectory, load_detection_results, progress_bars
+from polyis.utilities import CACHE_DIR, create_tracker, format_time, interpolate_trajectory, load_detection_results, progress_bars
 
 
 def parse_args():

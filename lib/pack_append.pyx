@@ -5,10 +5,10 @@
 
 import numpy as np
 cimport numpy as cnp
-from libc.stdlib cimport malloc, free
-cimport cython
+
 
 ctypedef cnp.uint8_t DTYPE_t
+
 
 # @cython.boundscheck(False)
 # @cython.wraparound(False)

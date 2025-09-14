@@ -9,7 +9,7 @@ from rich.progress import track
 import shutil
 import time
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_classification_results
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, load_classification_results
 from lib.pack_append import pack_append
 from lib.group_tiles import group_tiles
 

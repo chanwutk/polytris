@@ -12,7 +12,7 @@ import multiprocessing as mp
 
 from polyis.images import splitHWC, padHWC
 
-from scripts.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, progress_bars
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, progress_bars
 
 
 TILE_SIZES = [30, 60]  #, 120]

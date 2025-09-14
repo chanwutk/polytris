@@ -9,7 +9,7 @@ import cv2
 import tqdm
 
 import polyis.models.retinanet_b3d
-from scripts.utilities import CACHE_DIR, DATA_DIR, format_time
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time
 
 
 # TILE_SIZES = [30, 60, 120]
