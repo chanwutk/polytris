@@ -1,4 +1,4 @@
-# Polyis: Playing (Poly)~Tetr~is to Accelerate Video Processing
+# Polyis: Efficient Object Tracking through Relevant Pixel Compression
 
 ## Development Setup
 
