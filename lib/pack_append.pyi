@@ -4,8 +4,8 @@ import numpy as np
 import numpy.typing as npt
 
 
-Polyomino = tuple[int, npt.NDArray[np.uint8], tuple[int, int]]
-PolyominoPositions = tuple[int, int, int, npt.NDArray[np.uint8], tuple[int, int]]
+Polyomino = tuple[npt.NDArray[np.uint8], tuple[int, int]]
+PolyominoPositions = tuple[int, int, npt.NDArray[np.uint8], tuple[int, int]]
 
 
 def pack_append(
@@ -18,7 +18,7 @@ def pack_append(
     Fast Cython implementation of pack_append.
     
     Args:
-        polyominoes: list of (groupid, mask, offset) tuples
+        polyominoes: list of (mask, offset) tuples
         h: Height of the bitmap
         w: Width of the bitmap
         occupied_tiles: Existing bitmap to append to (modified in-place)

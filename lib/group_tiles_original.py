@@ -31,7 +31,7 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, 
     return filled
 
 
-def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, int]]]:
+def group_tiles(bitmap: np.ndarray) -> list[tuple[np.ndarray, tuple[int, int]]]:
     """
     Original Python implementation of group_tiles (backup).
     """
@@ -45,7 +45,7 @@ def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, in
     groups[1:h+1, 1:w+1] = _groups
     
     visited: set[int] = set()
-    bins: list[tuple[int, np.ndarray, tuple[int, int]]] = []
+    bins: list[tuple[np.ndarray, tuple[int, int]]] = []
     
     for i in range(groups.shape[0]):
         for j in range(groups.shape[1]):
@@ -64,7 +64,7 @@ def group_tiles(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, in
             end = np.max(connected_tiles, axis=1) + 1
             
             mask = mask[offset[0]:end[0], offset[1]:end[1]]
-            bins.append((groups[i, j], mask, (int(offset[0] - 1), int(offset[1] - 1))))
+            bins.append((mask, (int(offset[0] - 1), int(offset[1] - 1))))
             visited.add(groups[i, j])
     
     return bins

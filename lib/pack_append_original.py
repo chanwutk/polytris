@@ -2,11 +2,11 @@ import numpy as np
 
 
 def pack_append(
-    poliominoes: list[tuple[int, np.ndarray, tuple[int, int]]],
+    poliominoes: list[tuple[np.ndarray, tuple[int, int]]],
     h: int,
     w: int,
     occupied_tiles: np.ndarray
-) -> list[tuple[int, int, int, np.ndarray, tuple[int, int]]] | None:
+) -> list[tuple[int, int, np.ndarray, tuple[int, int]]] | None:
     """
     Implementation of pack_append.
     
@@ -22,8 +22,8 @@ def pack_append(
     """
     appending_tiles = np.zeros((h, w), dtype=np.uint8)
     
-    positions: list[tuple[int, int, int, np.ndarray, tuple[int, int]]] = []
-    for groupid, mask, offset in poliominoes:
+    positions: list[tuple[int, int, np.ndarray, tuple[int, int]]] = []
+    for mask, offset in poliominoes:
         for j in range(w - mask.shape[1] + 1):
             for i in range(h - mask.shape[0] + 1):
                 if (
@@ -35,7 +35,7 @@ def pack_append(
                 ):
                     occupied_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
                     appending_tiles[i:i+mask.shape[0], j:j+mask.shape[1]] |= mask
-                    positions.append((i, j, groupid, mask, offset))
+                    positions.append((i, j, mask, offset))
                     break
             else:
                 continue

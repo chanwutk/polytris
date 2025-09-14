@@ -18,8 +18,8 @@ cdef struct IntVector:
     int top
     int capacity
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef int IntVector_init(IntVector *int_vector, int initial_capacity) noexcept nogil:
     """Initialize an integer vector with initial capacity"""
     if not int_vector:
@@ -33,8 +33,8 @@ cdef int IntVector_init(IntVector *int_vector, int initial_capacity) noexcept no
     int_vector.capacity = initial_capacity
     return 0
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef int IntVector_push(IntVector *int_vector, unsigned short value) noexcept nogil:
     """Push a value onto the vector, expanding if necessary"""
     cdef int new_capacity
@@ -68,20 +68,20 @@ cdef int IntVector_push(IntVector *int_vector, unsigned short value) noexcept no
 #     int_vector.top -= 1
 #     return int_vector.data[int_vector.top]
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef void IntVector_cleanup(IntVector *int_vector) noexcept nogil:
     """Free the stack's data array (stack itself is on stack memory)"""
     if int_vector:
         if int_vector.data:
-            free(int_vector.data)
+            free(<void*>int_vector.data)
             int_vector.data = NULL
         int_vector.top = 0
         int_vector.capacity = 0
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef IntVector _find_connected_tiles(
     GROUP_t[:, :] bitmap,
     unsigned short start_i,
@@ -165,8 +165,8 @@ cdef IntVector _find_connected_tiles(
     return filled
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def group_tiles(cnp.uint8_t[:, :] bitmap_input):
     """
     Fast Cython implementation of group_tiles.
@@ -249,9 +249,8 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
                 mask_view[tile_i - min_i, tile_j - min_j] = 1
             # Clean up IntVector memory
             IntVector_cleanup(&connected_tiles)
-
-            bins.append((group_id, mask, (min_i, min_j)))
-            # visited.add(group_id)
             bitmap_input[i, j] = 0
+
+            bins.append((mask, (min_i, min_j)))
 
     return bins

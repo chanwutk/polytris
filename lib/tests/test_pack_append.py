@@ -166,7 +166,7 @@ def test_return_format():
     """Test the return format of pack_append_fast."""
     # Create simple test case
     polyomino_mask = np.array([[1, 1]], dtype=np.uint8)
-    polyominoes = [(1, polyomino_mask, (0, 0))]
+    polyominoes = [(polyomino_mask, (0, 0))]
     h, w = 3, 3
     occupied_tiles = np.zeros((h, w), dtype=np.uint8)
     
@@ -177,7 +177,7 @@ def test_return_format():
     assert len(result) == 1, "Should return one position"
     
     position = result[0]
-    assert len(position) == 5, "Position should have 5 elements: (i, j, groupid, mask, offset)"
+    assert len(position) == 4, "Position should have 4 elements: (i, j, mask, offset)"
     assert isinstance(position[0], int), "Row should be integer"
     assert isinstance(position[1], int), "Column should be integer"
 

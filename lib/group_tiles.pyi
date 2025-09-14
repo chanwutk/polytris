@@ -4,7 +4,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-Polyomino = tuple[int, npt.NDArray[np.uint8], tuple[int, int]]
+Polyomino = tuple[npt.NDArray[np.uint8], tuple[int, int]]
 
 
 def group_tiles(bitmap_input: npt.NDArray[np.uint8]) -> list[Polyomino]:
@@ -19,7 +19,6 @@ def group_tiles(bitmap_input: npt.NDArray[np.uint8]) -> list[Polyomino]:
 
     Returns:
         list: List of polyominoes, where each polyomino is:
-            - group_id: unique id of the group
             - mask: masking of the polyomino as a 2D numpy array
             - offset: offset of the mask from the top left corner of the bitmap
     """

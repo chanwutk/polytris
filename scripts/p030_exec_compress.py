@@ -107,7 +107,7 @@ def apply_pack(pack_results: tuple[np.ndarray, list], canvas: np.ndarray, index_
     
     # Profile: Update index_map and det_info
     step_start = (time.time_ns() / 1e6)
-    for gid, (y, x, _groupid, mask, _offset) in enumerate(positions):
+    for gid, (y, x, mask, _offset) in enumerate(positions):
         assert not np.any(index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] & mask), (index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0], mask)
         index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask.astype(np.int32) * (gid + 1)
         index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask.astype(np.int32) * frame_idx
