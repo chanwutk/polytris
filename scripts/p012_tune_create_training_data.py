@@ -9,10 +9,11 @@ import time
 import cv2
 import torch
 import tqdm
+from rich.progress import track
 
 import polyis.images
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap
+from polyis.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap
 
 TILE_SIZES = [30, 60, 120]
 
@@ -106,14 +107,14 @@ def main(args):
             segments_lines = [*segments_f.readlines()]
             # detections_lines = [*detections_f.readlines()]
 
-            for segment in tqdm.tqdm(segments_lines, position=0, leave=True):
+            for segment in track(segments_lines):
                 segment_json = json.loads(segment)
                 segment_idx = segment_json['idx']
                 start = segment_json['start']
                 end = segment_json['end']
 
                 cap.set(cv2.CAP_PROP_POS_FRAMES, start)
-                for frame_idx in tqdm.tqdm(range(start, end), position=1, leave=True):
+                for frame_idx in range(start, end):
                     ret, frame = cap.read()
                     assert ret, f"Failed to read frame {frame_idx}"
 

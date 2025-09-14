@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 from typing import Any
 import multiprocessing as mp
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results
+from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results
 
 
-TILE_SIZES = [30, 60, 120]
+TILE_SIZES = [30, 60]  #, 120]
 
 
 def parse_args():
@@ -717,6 +717,9 @@ def save_visualization_frames(video_path: str, results: list, tile_size: int,
         # Write frame to video
         brightness_writer.write(brightness_frame)
 
+        if frame_idx > 128:
+            break
+
     # Release resources
     cap.release()
     brightness_writer.release()
@@ -842,6 +845,8 @@ def main(args):
         for file in os.listdir(relevancy_dir):
             if '_' in file:
                 classifier_name = file.split('_')[0]
+                if classifier_name != 'groundtruth':
+                    continue
                 tile_size = int(file.split('_')[1])
                 classifier_tilesizes.append((classifier_name, tile_size))
         

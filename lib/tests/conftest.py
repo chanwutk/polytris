@@ -22,9 +22,9 @@ def sample_polyominoes():
     rect_v = np.array([[True], [True]], dtype=np.uint8)
     
     return {
-        'square': (1, square, (0, 0)),
-        'rect_h': (2, rect_h, (0, 0)),
-        'rect_v': (3, rect_v, (0, 0))
+        'square': (square, (0, 0)),
+        'rect_h': (rect_h, (0, 0)),
+        'rect_v': (rect_v, (0, 0))
     }
 
 

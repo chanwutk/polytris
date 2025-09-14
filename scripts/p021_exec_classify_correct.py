@@ -8,10 +8,10 @@ import numpy as np
 import time
 import multiprocessing as mp
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar
 
 
-TILE_SIZES = [30, 60, 120]
+TILE_SIZES = [30, 60]  #, 120]
 
 
 def parse_args():
@@ -153,7 +153,7 @@ def process_video(video_path: str, frame_detections: dict[int, list[list[float]]
             command_queue.put((device, {'completed': frame_idx}))
     
     cap.release()
-    print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
+    # print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
 
 
 def process_video_tile_combination(video_file_path: str, video_file: str, tile_size: int,
@@ -265,32 +265,21 @@ def main(args):
     # Set up multiprocessing - use CPU count as we don't need GPUs for groundtruth processing
     num_workers = min(mp.cpu_count(), len(tasks))
     
-    gpu_id_queue = mp.Queue(maxsize=num_workers)
-    for worker_id in range(num_workers):
-        gpu_id_queue.put(worker_id)
-    
-    command_queue = mp.Queue()
-    progress_process = mp.Process(target=progress_bars,
-                                  args=(command_queue, num_workers, len(tasks)),
-                                  daemon=True)
-    progress_process.start()
-    
-    processes: list[mp.Process] = []
-    for task in tasks:
-        worker_id = gpu_id_queue.get()
-        command_queue.put(('overall', {'advance': 1}))
-        process = mp.Process(target=_process_video_tile_combination,
-                             args=(*task, worker_id, gpu_id_queue, command_queue))
-        process.start()
-        processes.append(process)
-    
-    for process in processes:
-        process.join()
-        process.terminate()
-    
-    command_queue.put(None)
-    progress_process.join()
-    progress_process.terminate()
+    # Use the ProgressBar context manager
+    with ProgressBar(num_workers=num_workers, num_tasks=len(tasks)) as pb:
+        processes: list[mp.Process] = []
+        for task in tasks:
+            worker_id = pb.get_worker_id()
+            pb.update_overall_progress(advance=1)
+            process = mp.Process(target=_process_video_tile_combination,
+                                 args=(*task, worker_id, pb.worker_id_queue,
+                                       pb.command_queue))
+            process.start()
+            processes.append(process)
+
+        for process in processes:
+            process.join()
+            process.terminate()
     
     print("All tasks completed!")
 

@@ -3,7 +3,7 @@
 
 import os
 import json
-from scripts.utilities import CACHE_DIR
+from polyis.utilities import CACHE_DIR
 
 DATASETS_VIDEOS = [
     ('b3d', 'jnc00.mp4'),

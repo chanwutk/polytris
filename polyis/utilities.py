@@ -1,14 +1,12 @@
 import json
 import os
 import typing
+import multiprocessing as mp
 
 import cv2
 import numpy as np
 from rich import progress
-import tqdm
 
-if typing.TYPE_CHECKING:
-    from multiprocessing import Queue
 
 DATA_RAW_DIR = '/polyis-data/video-datasets-raw'
 DATA_DIR = '/polyis-data/video-datasets-low'
@@ -384,7 +382,7 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
 
 
 def create_tracking_visualization(video_path: str, tracking_results: dict[int, list[list[float]]], 
-                                 output_path: str, speed_up: int, process_id: int):
+                                 output_path: str, speed_up: int, process_id: int, progress_queue=None):
     """
     Create a visualization video showing tracking results overlaid on the original video.
     
@@ -430,9 +428,17 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
     # Initialize frame_idx for exception handling
     frame_idx = 0
     
+    # Send initial progress update
+    if progress_queue is not None:
+        progress_queue.put((f'cuda:{process_id}', {
+            'description': os.path.basename(video_path),
+            'completed': 0,
+            'total': frame_count
+        }))
+    
     # Process each frame
     try:
-        for frame_idx in tqdm.tqdm(range(frame_count), desc=f"Process {process_id} - Creating visualization", position=process_id):
+        for frame_idx in range(frame_count):
             # Read frame
             ret, frame = cap.read()
             if not ret:
@@ -447,6 +453,10 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
             # Write frame to video
             if vis_frame is not None:
                 writer.write(vis_frame)
+            
+            # Send progress update
+            if progress_queue is not None:
+                progress_queue.put((f'cuda:{process_id}', {'completed': frame_idx + 1}))
     
     except KeyboardInterrupt:
         print(f"\nProcess {process_id}: KeyboardInterrupt detected. Stopping video writing...")
@@ -494,8 +504,8 @@ def mark_detections(detections: list[list[float]], width: int, height: int, chun
     return bitmap
 
 
-def progress_bars(command_queue: "Queue", num_gpus: int, num_tasks: int,
-                  refresh_per_second: float = 0.5):
+def progress_bars(command_queue: "mp.Queue", num_gpus: int, num_tasks: int,
+                  refresh_per_second: float = 1):
     with progress.Progress(
         "[progress.description]{task.description}",
         progress.BarColumn(),
@@ -524,22 +534,97 @@ def progress_bars(command_queue: "Queue", num_gpus: int, num_tasks: int,
         bars.clear()
 
 
+class ProgressBar:
+    """
+    Context manager for handling progress bars with multiprocessing support.
+    
+    Usage:
+        with ProgressBar(num_workers=4, num_tasks=100) as pb:
+            # Use pb.command_queue to send progress updates
+            # Use pb.worker_id_queue to manage worker IDs
+            pass
+    """
+    
+    def __init__(self, num_workers: int, num_tasks: int, refresh_per_second: float = 1):
+        """
+        Initialize the progress bar manager.
+        
+        Args:
+            num_workers (int): Number of worker processes/GPUs
+            num_tasks (int): Total number of tasks to process
+            refresh_per_second (float): Refresh rate for progress bars
+        """
+        self.num_workers = num_workers
+        self.num_tasks = num_tasks
+        self.refresh_per_second = refresh_per_second
+        
+        # Initialize queues
+        self.command_queue: "mp.Queue[tuple[str, dict] | None]" = mp.Queue()
+        self.worker_id_queue: "mp.Queue[int]" = mp.Queue(maxsize=num_workers)
+        self.progress_process: mp.Process = mp.Process(
+            target=progress_bars,
+            args=(self.command_queue, self.num_workers,
+                  self.num_tasks, self.refresh_per_second),
+            daemon=True
+        )
+    
+    def __enter__(self):
+        """Enter the context manager - set up queues and start progress process."""
+
+        # Populate worker ID queue
+        for worker_id in range(self.num_workers):
+            self.worker_id_queue.put(worker_id)
+        
+        # Start progress bars process
+        self.progress_process.start()
+        
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the context manager - clean up progress bars and terminate process."""
+        try:
+            # Signal progress bars to stop
+            self.command_queue.put(None)
+            
+            # Wait for progress process to finish and terminate it
+            self.progress_process.join(timeout=5)  # Wait up to 5 seconds
+            if self.progress_process.is_alive():
+                self.progress_process.terminate()
+                self.progress_process.join(timeout=2)  # Give it time to terminate
+            
+            # Force kill if still alive
+            if self.progress_process.is_alive():
+                self.progress_process.kill()
+                self.progress_process.join()
+        except Exception as e:
+            print(f"Error during progress bar cleanup: {e}")
+            raise e
+    
+    def update_overall_progress(self, advance: int = 1):
+        """Update the overall progress bar."""
+        self.command_queue.put(('overall', {'advance': advance}))
+
+    def get_worker_id(self):
+        """Get a worker ID from the worker ID queue."""
+        return self.worker_id_queue.get()
+
+
 CLASSIFIERS_TO_TEST = [
-    # 'SimpleCNN',
-    # 'YoloN',
+    'SimpleCNN',
+    'YoloN',
     # 'YoloS',
-    # 'YoloM',
+    'YoloM',
     # 'YoloL',
-    # 'YoloX',
+    'YoloX',
     'ShuffleNet05',
     'ShuffleNet20',
     'MobileNetL',
     'MobileNetS',
     'WideResNet50',
-    # 'WideResNet101',
+    'WideResNet101',
     'ResNet18', 
     'ResNet101',
-    # 'ResNet152',
+    'ResNet152',
     'EfficientNetS',
-    # 'EfficientNetL',
+    'EfficientNetL',
 ]

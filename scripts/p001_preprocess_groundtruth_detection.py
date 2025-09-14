@@ -5,12 +5,12 @@ import json
 import os
 import time
 import cv2
-from tqdm import tqdm
 import multiprocessing as mp
+from multiprocessing import Queue
 import torch
 
 import polyis.models.retinanet_b3d
-from scripts.utilities import CACHE_DIR, DATA_DIR, format_time
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, progress_bars
 
 
 def parse_args():
@@ -32,7 +32,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def detect_objects_in_video(video_path: str, detector_name: str, output_path: str, gpu_id: int | None):
+def detect_objects_in_video(video_path: str, detector_name: str, output_path: str,
+                            gpu_id: int | None, progress_queue: Queue):
     """
     Execute object detection on a single video file and save results to JSONL.
     
@@ -79,37 +80,42 @@ def detect_objects_in_video(video_path: str, detector_name: str, output_path: st
     with open(output_path, 'w') as f:
         frame_idx = 0
         
-        with tqdm(total=frame_count, desc=f"GPU {gpu_id} - Processing frames",
-                  position=gpu_id if gpu_id is not None else None) as pbar:
-            while cap.isOpened():
-                # Measure frame reading time
-                start_time = (time.time_ns() / 1e6)
-                ret, frame = cap.read()
-                end_time = (time.time_ns() / 1e6)
-                read_time = end_time - start_time
-                
-                if not ret:
-                    break
-                
-                # Measure object detection time
-                start_time = (time.time_ns() / 1e6)
-                detections = polyis.models.retinanet_b3d.detect(frame, detector)
-                end_time = (time.time_ns() / 1e6)
-                detect_time = end_time - start_time
-                
-                # Create result entry for this frame
-                frame_entry = {
-                    "frame_idx": frame_idx,
-                    "detections": detections.tolist() if detections is not None else [],
-                    "runtime": format_time(read=read_time, detect=detect_time)
-                }
-                
-                # Write to JSONL file
-                f.write(json.dumps(frame_entry) + '\n')
-                f.flush()
-                
-                frame_idx += 1
-                pbar.update(1)
+        progress_queue.put(('cuda:' + str(gpu_id), {
+            'description': os.path.basename(video_path),
+            'completed': 0,
+            'total': frame_count
+        }))
+        while cap.isOpened():
+            # Measure frame reading time
+            start_time = (time.time_ns() / 1e6)
+            ret, frame = cap.read()
+            end_time = (time.time_ns() / 1e6)
+            read_time = end_time - start_time
+            
+            if not ret:
+                break
+            
+            # Measure object detection time
+            start_time = (time.time_ns() / 1e6)
+            detections = polyis.models.retinanet_b3d.detect(frame, detector)
+            end_time = (time.time_ns() / 1e6)
+            detect_time = end_time - start_time
+            
+            # Create result entry for this frame
+            frame_entry = {
+                "frame_idx": frame_idx,
+                "detections": detections.tolist() if detections is not None else [],
+                "runtime": format_time(read=read_time, detect=detect_time)
+            }
+            
+            # Write to JSONL file
+            f.write(json.dumps(frame_entry) + '\n')
+            f.flush()
+            
+            frame_idx += 1
+            
+            # Send progress update
+            progress_queue.put(('cuda:' + str(gpu_id), { 'completed': frame_idx }))
     
     cap.release()
     print(f"GPU {gpu_id}: Completed processing {frame_idx} frames. Results saved to {output_path}")
@@ -215,14 +221,33 @@ def main(args):
         video_args.append((video_file_path, args.detector, output_path, process_id))
         print(f"Prepared video: {video_file} for GPU {process_id}")
     
-    # Use process pool to execute video processing
-    with mp.Pool(processes=max_processes) as pool:
-        print(f"Starting video processing with {max_processes} parallel workers...")
-        
-        # Map the work to the pool - this will automatically distribute work across workers
-        results = pool.starmap(detect_objects_in_video, video_args)
-        
-        print("All videos processed successfully!")
+    # Create progress queue and start progress display
+    progress_queue = Queue()
+    num_gpus = max_processes
+    
+    # Start progress display in a separate process
+    progress_process = mp.Process(target=progress_bars, args=(progress_queue, num_gpus, len(video_files)))
+    progress_process.start()
+    
+    # Create and start video processing processes
+    processes: list[mp.Process] = []
+    for i, (video_file_path, detector_name, output_path, process_id) in enumerate(video_args):
+        # TODO: use queue of gpu ids to ensure that one video is processed in one gpu at a time.
+        process = mp.Process(target=detect_objects_in_video, 
+                           args=(video_file_path, detector_name, output_path, process_id, progress_queue))
+        process.start()
+        processes.append(process)
+    
+    # Wait for all video processing to complete
+    for process in processes:
+        process.join()
+        process.terminate()
+    
+    # Signal progress display to stop and wait for it
+    progress_queue.put(None)
+    progress_process.join()
+    
+    print("All videos processed successfully!")
 
 
 if __name__ == '__main__':

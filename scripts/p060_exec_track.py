@@ -8,7 +8,7 @@ import numpy as np
 import tqdm
 import multiprocessing as mp
 
-from scripts.utilities import create_tracker, format_time, interpolate_trajectory, CACHE_DIR
+from polyis.utilities import create_tracker, format_time, interpolate_trajectory, CACHE_DIR
 
 
 def parse_args():
