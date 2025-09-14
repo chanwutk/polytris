@@ -472,31 +472,38 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
     print(f"Process {process_id}: Tracking visualization completed")
 
 
-def mark_detections(detections: list[list[float]], width: int, height: int, chunk_size: int) -> np.ndarray:
+def mark_detections(
+    detections: list[list[float]],
+    width: int,
+    height: int,
+    tile_size: int,
+    detection_slice: slice = slice(-4, None)
+) -> np.ndarray:
     """
     Mark tiles as relevant based on groundtruth detections.
-    
     This function creates a bitmap where 1 indicates a tile with detection and 0 indicates no detection.
-    Based on the mark_detections2 function from chunker.py.
     
     Args:
         detections (list[list[float]]): List of bounding boxes, each formatted as [tracking_id, x1, y1, x2, y2]
         width (int): Frame width
         height (int): Frame height
-        chunk_size (int): Size of each tile
+        tile_size (int): Size of each tile
+        detection_slice (slice): Slice of the bounding box to use for marking detections
         
     Returns:
         np.ndarray: 2D array representing the grid of tiles, where 1 indicates relevant tiles
     """
-    bitmap = np.zeros((height // chunk_size, width // chunk_size), dtype=np.uint8)
+    bitmap = np.zeros((height // tile_size, width // tile_size), dtype=np.uint8)
     
     for bbox in detections:
         # Extract bounding box coordinates (ignore tracking_id)
-        x1, y1, x2, y2 = bbox[-4:]  # Skip tracking_id at index 0
+        x1, y1, x2, y2 = bbox[detection_slice]  # Skip tracking_id at index 0
         
         # Convert to tile coordinates
-        xfrom, xto = int(x1 // chunk_size), int(x2 // chunk_size)
-        yfrom, yto = int(y1 // chunk_size), int(y2 // chunk_size)
+        xfrom = int(max(0, x1) // tile_size)
+        xto = int(min(width - 1, x2) // tile_size)
+        yfrom = int(max(0, y1) // tile_size)
+        yto = int(min(height - 1, y2) // tile_size)
         
         # Mark all tiles that overlap with the bounding box
         bitmap[yfrom:yto+1, xfrom:xto+1] = 1
