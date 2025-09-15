@@ -166,11 +166,10 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap, offset
     step_times['save_mapping_files'] = (time.time_ns() / 1e6) - step_start
 
 
-def process_video_task(video_file_path: str, cache_video_dir: str, classifier: str, 
-                      tile_size: int, threshold: float, gpu_id: int, command_queue: mp.Queue):
+def compress(video_file_path: str, cache_video_dir: str, classifier: str, 
+             tile_size: int, threshold: float, gpu_id: int, command_queue: mp.Queue):
     """
-    Process a single video with a specific classifier and tile size for compression.
-    This function is designed to be called in parallel.
+    Compress a single video with a specific classifier and tile size.
     
     Args:
         video_file_path: Path to the video file
@@ -178,7 +177,7 @@ def process_video_task(video_file_path: str, cache_video_dir: str, classifier: s
         classifier: Classifier name to use
         tile_size: Tile size to use
         threshold: Threshold for classification probability
-        gpu_id: GPU ID to use for processing (not used in this function but kept for consistency)
+        gpu_id: GPU ID to use for processing
         command_queue: Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
@@ -455,7 +454,7 @@ def main(args):
                     print(f"No score file found for {video_file} {classifier} {tile_size}, skipping")
                     continue
 
-                funcs.append(partial(process_video_task, video_file_path,
+                funcs.append(partial(compress, video_file_path,
                                      cache_video_dir, classifier, tile_size, args.threshold))
     
     print(f"Created {len(funcs)} tasks to process")

@@ -144,6 +144,70 @@ def interpolate_trajectory(trajectory: list[tuple[int, np.ndarray]], nxt: tuple[
     return extend
 
 
+def register_tracked_detections(
+    tracked_dets: np.ndarray,
+    frame_idx: int,
+    frame_tracks: dict[int, list[list[float]]],
+    trajectories: dict[int, list[tuple[int, np.ndarray]]],
+    no_interpolate: bool
+):
+    """
+    Register tracked detections to frame tracks and trajectories.
+
+    Args:
+        tracked_dets (np.ndarray): Tracked detections
+        frame_idx (int): Frame index
+        frame_tracks (dict[int, list[list[float]]]): Frame tracks
+        trajectories (dict[int, list[tuple[int, np.ndarray]]]): Trajectories
+        no_interpolate (bool): Whether to not perform trajectory interpolation
+    """
+
+    if tracked_dets.size == 0:
+        return
+
+    if frame_idx not in frame_tracks:
+        frame_tracks[frame_idx] = []
+
+    for track in tracked_dets:
+        # SORT returns: [x1, y1, x2, y2, track_id]
+        x1, y1, x2, y2, track_id = track
+        track_id = int(track_id)
+        
+        # # Convert to detection format: [track_id, x1, y1, x2, y2]
+        # detection = [track_id, x1, y1, x2, y2]
+        
+        # # Add to frame tracks
+        # if frame_idx not in frame_tracks:
+        #     frame_tracks[frame_idx] = []
+        # frame_tracks[frame_idx].append(detection)
+
+        if track_id not in trajectories:
+            trajectories[track_id] = []
+        box_array = np.array([x1, y1, x2, y2], dtype=np.float16)
+        
+        # Add to trajectories for interpolation (if enabled)
+        if no_interpolate:
+            continue
+
+        extend = interpolate_trajectory(trajectories[track_id],
+                                        (frame_idx, box_array))
+        
+        # Add interpolated points to frame tracks
+        for e in extend + [(frame_idx, box_array)]:
+            e_frame_idx, e_box = e
+            if e_frame_idx not in frame_tracks:
+                frame_tracks[e_frame_idx] = []
+            
+            # Convert back to list format: [track_id, x1, y1, x2, y2]
+            e_detection = [track_id, *e_box.tolist()]
+            frame_tracks[e_frame_idx].append(e_detection)
+
+            # Add interpolated points to trajectories
+            trajectories[track_id].append((e_frame_idx, e_box))
+
+        # trajectories[track_id].append((frame_idx, box_array))
+
+
 def get_track_color(track_id: int) -> tuple[int, int, int]:
     """
     Get a color for a track ID by cycling through the predefined colors.

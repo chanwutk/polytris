@@ -133,15 +133,71 @@ def plot_violin(labels: list[str], datasets: list[list[float]], title: str, outp
     if not datasets:
         return
     plt.figure(figsize=(12, max(10, len(labels) * 0.5)))
-    parts = plt.violinplot([[*filter(lambda x: x < 1, d)] for d in datasets], positions=list(range(1, len(labels) + 1)), 
-                           showmedians=True, vert=False)
-    plt.yticks(ticks=list(range(1, len(labels) + 1)), labels=labels)
+    y = [[*filter(lambda x: x < 1, d)] for d in datasets]
+    x = list(range(1, len(labels) + 1))
+
+    x = [_x for i, _x in enumerate(x) if len(y[i]) > 0]
+    labels = [_label for i, _label in enumerate(labels) if len(y[i]) > 0]
+    y = [_y for _y in y if len(_y) > 0]
+
+    parts = plt.violinplot(y, positions=x, showmedians=True, vert=False)
+    plt.yticks(ticks=x, labels=labels)
     plt.xlabel("Content ratio")
     plt.title(title)
     plt.grid(True, linestyle=":", linewidth=0.5, alpha=0.8, axis='x')
     plt.tight_layout()
     plt.savefig(output_png_path)
     plt.close()
+
+
+def plot_violin_per_video(video_name: str, video_data: list[tuple[str, list[float], float]], 
+                         dataset: str, output_dir: str) -> None:
+    """
+    Create a violin plot for a single video, sorted by average content ratio.
+    
+    Args:
+        video_name: Name of the video
+        video_data: List of tuples (label, y_values, avg_value) for each classifier/tile combination
+        dataset: Dataset name
+        output_dir: Directory to save the plot
+    """
+    if not video_data:
+        return
+    
+    # Sort by average content ratio (descending)
+    video_data.sort(key=lambda x: x[2], reverse=True)
+    
+    labels = [item[0] for item in video_data]
+    datasets = [item[1] for item in video_data]
+    
+    # Filter out empty datasets and values >= 1
+    filtered_data = []
+    filtered_labels = []
+    for i, (label, data) in enumerate(zip(labels, datasets)):
+        filtered_data_points = [x for x in data if x < 1]
+        if filtered_data_points:
+            filtered_data.append(filtered_data_points)
+            filtered_labels.append(label)
+    
+    if not filtered_data:
+        print(f"No valid data for video {video_name}")
+        return
+    
+    plt.figure(figsize=(12, max(8, len(filtered_labels) * 0.6)))
+    x = list(range(1, len(filtered_labels) + 1))
+    
+    parts = plt.violinplot(filtered_data, positions=x, showmedians=True, vert=False)
+    plt.yticks(ticks=x, labels=filtered_labels)
+    plt.xlabel("Content ratio")
+    plt.title(f"Content ratios by classifier/tile - {video_name} ({dataset})")
+    plt.grid(True, linestyle=":", linewidth=0.5, alpha=0.8, axis='x')
+    plt.tight_layout()
+    
+    # Save the plot
+    plot_path = os.path.join(output_dir, f"{video_name}_compress_content_ratio_violin.png")
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Saved violin plot for {video_name}: {plot_path}")
 
 
 def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_dir: str,
@@ -247,9 +303,6 @@ def main(args: argparse.Namespace) -> None:
     ]
 
     # Process videos in parallel
-    combined_labels: list[str] = []
-    combined_datasets: list[list[float]] = []
-
     with Pool(processes=cpu_count()) as pool:
         # Use tqdm to show progress
         results = list(tqdm(
@@ -258,25 +311,23 @@ def main(args: argparse.Namespace) -> None:
             desc="Processing videos"
         ))
 
-    # Flatten results and collect for combined plot
-    for video_results in results:
-        for label, _xs, ys, _avg, _clf, _tile in video_results:
-            combined_labels.append(label)
-            combined_datasets.append(ys)
-
-    # Save combined violin plot
+    # Create individual violin plots for each video
     base_dir, _each_dir = ensure_summary_dirs(dataset)
-    combined_plot_path = os.path.join(base_dir, "compress_content_ratio_violin.png")
-    if combined_labels and combined_datasets:
-        plot_violin(
-            labels=combined_labels,
-            datasets=combined_datasets,
-            title=f"Content ratios across all series ({dataset})",
-            output_png_path=combined_plot_path,
-        )
-        print(f"Saved combined violin plot: {combined_plot_path}")
-    else:
-        print("No data available to create combined violin plot.")
+    
+    for video_results in results:
+        if not video_results:
+            continue
+            
+        # Extract video name from the first result
+        video_name = video_results[0][0].split('|')[0]  # Extract video name from label
+        
+        # Prepare data for this video (label, y_values, avg_value)
+        video_data = []
+        for label, _xs, ys, avg, _clf, _tile in video_results:
+            video_data.append((label, ys, avg))
+        
+        # Create violin plot for this video
+        plot_violin_per_video(video_name, video_data, dataset, base_dir)
 
 
 if __name__ == "__main__":

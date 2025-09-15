@@ -8,7 +8,7 @@ import numpy as np
 import multiprocessing as mp
 from multiprocessing import Queue
 
-from polyis.utilities import CACHE_DIR, create_tracker, format_time, interpolate_trajectory, load_detection_results, progress_bars
+from polyis.utilities import CACHE_DIR, create_tracker, format_time, interpolate_trajectory, load_detection_results, progress_bars, register_tracked_detections
 
 
 def parse_args():
@@ -104,55 +104,18 @@ def track_objects_in_video(video_index: int, video_file: str, detection_results:
             
             # Update tracker
             step_start = (time.time_ns() / 1e6)
-            trackers = tracker.update(dets)
+            tracked_dets = tracker.update(dets)
             step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
             
             # Process tracking results
             step_start = (time.time_ns() / 1e6)
-            if trackers.size > 0:
-                for track in trackers:
-                    # SORT returns: [x1, y1, x2, y2, track_id]
-                    x1, y1, x2, y2, track_id = track
-                    track_id = int(track_id)
-                    
-                    # Convert to detection format: [track_id, x1, y1, x2, y2]
-                    detection = [track_id, x1, y1, x2, y2]
-                    
-                    # Add to frame tracks
-                    if frame_idx not in frame_tracks:
-                        frame_tracks[frame_idx] = []
-                    # frame_tracks[frame_idx].append(detection)
-
-                    if track_id not in trajectories:
-                        trajectories[track_id] = []
-                    box_array = np.array([x1, y1, x2, y2], dtype=np.float32)
-
-                    
-                    extend = interpolate_trajectory(trajectories[track_id], (frame_idx, box_array))
-                    
-                    # Add interpolated points to frame tracks
-                    for e in [*extend, (frame_idx, box_array)]:
-                        e_frame_idx, e_box = e
-                        if e_frame_idx not in frame_tracks:
-                            frame_tracks[e_frame_idx] = []
-                        
-                        # Convert back to list format: [track_id, x1, y1, x2, y2]
-                        e_detection = [track_id, *e_box.tolist()]
-                        frame_tracks[e_frame_idx].append(e_detection)
-
-                        # Add interpolated points to trajectories
-                        trajectories[track_id].append((e_frame_idx, e_box))
-
-            # Handle frames with no detections
-            if frame_idx not in frame_tracks:
-                frame_tracks[frame_idx] = []
-
+            register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories, False)
             step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
             runtime_data = {
                 'frame_idx': frame_idx,
                 'runtime': format_time(**step_times),
                 'num_detections': len(dets),
-                'num_tracks': trackers.size if trackers.size > 0 else 0
+                'num_tracks': tracked_dets.size if tracked_dets.size > 0 else 0
             }
             runtime_file.write(json.dumps(runtime_data) + '\n')
             

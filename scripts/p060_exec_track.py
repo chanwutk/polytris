@@ -3,12 +3,16 @@
 import argparse
 import json
 import os
+import shutil
 import time
 import numpy as np
 import tqdm
 import multiprocessing as mp
+from functools import partial
+from typing import Callable
+import torch
 
-from polyis.utilities import create_tracker, format_time, interpolate_trajectory, CACHE_DIR
+from polyis.utilities import create_tracker, format_time, interpolate_trajectory, CACHE_DIR, ProgressBar, register_tracked_detections
 
 
 def parse_args():
@@ -61,7 +65,10 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     Raises:
         FileNotFoundError: If no detection results file is found
     """
-    detection_path = os.path.join(cache_dir, dataset, video_file, 'uncompressed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
+    detection_path = os.path.join(cache_dir, dataset, video_file,
+                                  'uncompressed_detections',
+                                  f'{classifier}_{tile_size}',
+                                  'detections.jsonl')
     
     if not os.path.exists(detection_path):
         raise FileNotFoundError(f"Detection results not found: {detection_path}")
@@ -78,24 +85,40 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     return results
 
 
-def track_objects_in_video(video_file: str, detection_results: list[dict], tracker_name: str, 
-                           max_age: int, min_hits: int, iou_threshold: float, 
-                           no_interpolate: bool, output_path: str, i: int):
+def process_tracking_task(video_file: str, tile_size: int, classifier: str, 
+                          args: argparse.Namespace, gpu_id: int, command_queue: mp.Queue):
     """
-    Execute object tracking on detection results and save tracking results to JSONL.
+    Process tracking for a single video/classifier/tile_size combination.
+    This function is designed to be called in parallel.
     
     Args:
-        video_file (str): Name of the video file being processed
-        detection_results (list[dict]): list of detection results from load_detection_results
-        tracker_name (str): Name of the tracking algorithm
-        max_age (int): Maximum age for SORT tracker
-        min_hits (int): Minimum hits for SORT tracker
-        iou_threshold (float): IOU threshold for SORT tracker
-        no_interpolate (bool): Whether to not perform trajectory interpolation
-        output_path (str): Path where the output JSONL file will be saved
-        i (int): Index of the video-tile combination
+        video_file (str): Name of the video file to process
+        tile_size (int): Tile size used for detections
+        classifier (str): Classifier name used for detections
+        gpu_id (int): GPU ID to use for processing
+        command_queue (mp.Queue): Queue for progress updates
+        args: Command line arguments
     """
-    print(f"Processing video: {video_file}")
+    device = f'cuda:{gpu_id}'
+    video_name = os.path.basename(video_file)
+    tracker_name = args.tracker
+    max_age = args.max_age
+    min_hits = args.min_hits
+    iou_threshold = args.iou_threshold
+    no_interpolate = args.no_interpolate
+    
+    # Check if uncompressed detections exist
+    detection_path = os.path.join(CACHE_DIR, args.dataset, video_file,
+                                  'uncompressed_detections', f'{classifier}_{tile_size}',
+                                  'detections.jsonl')
+    assert os.path.exists(detection_path)
+
+    # Load detection results
+    detection_results = load_detection_results(CACHE_DIR, args.dataset, video_file, tile_size, classifier)
+
+    # Create output path for tracking results
+    uncompressed_tracking_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'uncompressed_tracking')
+    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tile_size}', 'tracking.jsonl')
     
     # Create tracker
     tracker = create_tracker(tracker_name, max_age, min_hits, iou_threshold)
@@ -106,6 +129,13 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     
     print(f"Processing {len(detection_results)} frames for tracking...")
     
+    # Send initial progress update
+    command_queue.put((device, {
+        'description': f"{video_name} {tracker_name} {classifier} {tile_size}",
+        'completed': 0,
+        'total': len(detection_results)
+    }))
+    
     # Create runtime output file
     runtime_path = output_path.replace('tracking.jsonl', 'runtimes.jsonl')
     runtime_dir = os.path.dirname(runtime_path)
@@ -113,8 +143,7 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     
     with open(runtime_path, 'w') as runtime_file:
         # Process each frame
-        for frame_result in tqdm.tqdm(detection_results, desc=f"Tracking objects ({i})",
-                                      position=i, leave=False):
+        for frame_result in detection_results:
             frame_idx = frame_result['frame_idx']
             bboxes = frame_result['bboxes']
             
@@ -132,52 +161,13 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
             
             # Profile: Update tracker
             step_start = (time.time_ns() / 1e6)
-            trackers = tracker.update(dets)
+            tracked_dets = tracker.update(dets)
             step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Process tracking results
             step_start = (time.time_ns() / 1e6)
-            if trackers.size > 0:
-                for track in trackers:
-                    # SORT returns: [x1, y1, x2, y2, track_id]
-                    x1, y1, x2, y2, track_id = track
-                    track_id = int(track_id)
-                    
-                    # Convert to detection format: [track_id, x1, y1, x2, y2]
-                    detection = [track_id, x1, y1, x2, y2]
-                    
-                    # Add to frame tracks
-                    if frame_idx not in frame_tracks:
-                        frame_tracks[frame_idx] = []
-                    frame_tracks[frame_idx].append(detection)
-
-                    if track_id not in trajectories:
-                        trajectories[track_id] = []
-                    box_array = np.array([x1, y1, x2, y2], dtype=np.float32)
-                    
-                    # Add to trajectories for interpolation (if enabled)
-                    if not no_interpolate:
-                        extend = interpolate_trajectory(trajectories[track_id], (frame_idx, box_array))
-                        
-                        # Add interpolated points to frame tracks
-                        for e in extend:
-                            e_frame_idx, e_box = e
-                            if e_frame_idx not in frame_tracks:
-                                frame_tracks[e_frame_idx] = []
-                            
-                            # Convert back to list format: [track_id, x1, y1, x2, y2]
-                            e_detection = [track_id, *e_box.tolist()]
-                            frame_tracks[e_frame_idx].append(e_detection)
-
-                            # Add interpolated points to trajectories
-                            trajectories[track_id].append((e_frame_idx, e_box))
-
-                    trajectories[track_id].append((frame_idx, box_array))
-
-            # Handle frames with no detections
-            if frame_idx not in frame_tracks:
-                frame_tracks[frame_idx] = []
-            
+            register_tracked_detections(tracked_dets, frame_idx, frame_tracks,
+                                        trajectories, no_interpolate)
             step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
             
             # Save runtime data for this frame
@@ -185,9 +175,12 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
                 'frame_idx': frame_idx,
                 'runtime': format_time(**step_times),
                 'num_detections': len(bboxes),
-                'num_tracks': trackers.size if trackers.size > 0 else 0
+                'num_tracks': tracked_dets.size if tracked_dets.size > 0 else 0
             }
             runtime_file.write(json.dumps(runtime_data) + '\n')
+            
+            # Send progress update
+            command_queue.put((device, {'completed': frame_idx + 1}))
     
     print(f"Tracking completed. Found {len(trajectories)} unique tracks.")
     
@@ -217,40 +210,15 @@ def track_objects_in_video(video_file: str, detection_results: list[dict], track
     print(f"Runtime data saved to: {runtime_path}")
 
 
-def process_video_tracking(video_file: str, args, cache_dir: str, dataset: str, tile_size: int, classifier: str, i: int):
+def main(args: argparse.Namespace):
     """
-    Process tracking for a single video file.
-    
-    Args:
-        video_file (str): Name of the video file to process
-        args: Command line arguments
-        cache_dir (str): Cache directory path
-        dataset (str): Dataset name
-        tile_size (int): Tile size used for detections
-        classifier (str): Classifier name used for detections
-        i (int): Index of the video-tile combination
-    """
-    # Load detection results
-    detection_results = load_detection_results(cache_dir, dataset, video_file, tile_size, classifier)
-    
-    # Create output path for tracking results
-    output_path = os.path.join(cache_dir, dataset, video_file, 'uncompressed_tracking',
-                               f'{classifier}_{tile_size}', 'tracking.jsonl')
-    
-    # Execute tracking
-    track_objects_in_video(video_file, detection_results, args.tracker, args.max_age, args.min_hits,
-                           args.iou_threshold, args.no_interpolate, output_path, i)
-
-
-def main(args):
-    """
-    Main function that orchestrates the object tracking process.
+    Main function that orchestrates the object tracking process using parallel processing.
     
     This function serves as the entry point for the script. It:
     1. Validates the dataset directory exists
-    2. Finds all videos with uncompressed detection results for the specified tile size(s)
-    3. Creates a process pool for parallel processing
-    4. Executes tracking on each video and saves results
+    2. Creates a list of all video/classifier/tile_size combinations to process
+    3. Uses multiprocessing to process tasks in parallel across available GPUs
+    4. Processes each video and saves tracking results
     
     Args:
         args (argparse.Namespace): Parsed command line arguments
@@ -262,8 +230,10 @@ def main(args):
           {CACHE_DIR}/{dataset}/{video_file}/uncompressed_tracking/{classifier}_{tile_size}/tracking.jsonl
         - Linear interpolation is optional and controlled by the --no_interpolate flag
         - Processing is parallelized for improved performance
-        - When tile_size is 'all', all available tile sizes are processed
+        - The number of processes equals the number of available GPUs
     """
+    mp.set_start_method('spawn', force=True)
+    
     print(f"Processing dataset: {args.dataset}")
     print(f"Using tracker: {args.tracker}")
     print(f"Tracker parameters: max_age={args.max_age}, min_hits={args.min_hits}, iou_threshold={args.iou_threshold}")
@@ -274,40 +244,37 @@ def main(args):
     if not os.path.exists(dataset_cache_dir):
         raise FileNotFoundError(f"Dataset cache directory {dataset_cache_dir} does not exist")
     
-    # Look for directories that contain uncompressed detection results
-    video_tile_combinations = []
+    # Create tasks list with all video/classifier/tile_size combinations
+    funcs: list[Callable[[int, mp.Queue], None]] = []
     for item in os.listdir(dataset_cache_dir):
         item_path = os.path.join(dataset_cache_dir, item)
-        if os.path.isdir(item_path):
-            uncompressed_detections_dir = os.path.join(item_path, 'uncompressed_detections')
-            for classifier_tilesize in sorted(os.listdir(uncompressed_detections_dir)):
-                classifier, tile_size = classifier_tilesize.split('_')
-                tile_size = int(tile_size)
-                video_tile_combinations.append((item, tile_size, classifier))
+        if not os.path.isdir(item_path):
+            continue
+
+        uncompressed_detections_dir = os.path.join(item_path, 'uncompressed_detections')
+        if not os.path.exists(uncompressed_detections_dir):
+            continue
+
+        uncompressed_tracking_dir = os.path.join(item_path, 'uncompressed_tracking')
+        if os.path.exists(uncompressed_tracking_dir):
+            shutil.rmtree(uncompressed_tracking_dir)
+
+        for classifier_tilesize in sorted(os.listdir(uncompressed_detections_dir)):
+            classifier, tile_size = classifier_tilesize.split('_')
+            tile_size = int(tile_size)
+            funcs.append(partial(process_tracking_task, item, tile_size, classifier, args))
     
-    if not video_tile_combinations:
-        print(f"No videos with uncompressed detection results found in {dataset_cache_dir}")
-        return
+    print(f"Created {len(funcs)} tasks to process")
     
-    print(f"Found {len(video_tile_combinations)} video-tile size combinations to process")
+    # Set up multiprocessing with ProgressBar
+    num_processes = int(mp.cpu_count() * 0.8)
+    print(f"Using {num_processes} CPUs for parallel processing")
     
-    # Determine number of processes to use
-    num_processes = min(mp.cpu_count(), len(video_tile_combinations), 40)  # Cap at 40 processes
-    print(f"Using {num_processes} processes for parallel processing")
+    if len(funcs) < num_processes:
+        num_processes = len(funcs)
     
-    # Create a pool of workers
-    print(f"Creating process pool with {num_processes} workers...")
-    
-    # Prepare arguments for each video-tile combination
-    video_args = []
-    for i, (video_file, tile_size, classifier) in enumerate(video_tile_combinations):
-        video_args.append((video_file, args, CACHE_DIR, args.dataset, tile_size, classifier, i))
-        print(f"Prepared video: {video_file} with tile size: {tile_size} and classifier: {classifier} ({i+1}/{len(video_tile_combinations)})")
-    
-    # Use process pool to execute video tracking
-    with mp.Pool(processes=num_processes) as pool:
-        print(f"Starting video tracking with {num_processes} parallel workers...")
-        results = pool.starmap(process_video_tracking, video_args)
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs)).run_all(funcs)
+    print("All tasks completed!")
 
 
 if __name__ == '__main__':
