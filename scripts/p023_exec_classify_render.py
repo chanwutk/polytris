@@ -204,8 +204,8 @@ def _render_scores(video_file: str, video_file_path: str, dataset_name: str,
     """
     try:
         render_scores(video_file, video_file_path, dataset_name, 
-                                   classifier_name, tile_size, threshold, 
-                                   frame_limit, worker_id, progress_bar.command_queue)
+                      classifier_name, tile_size, threshold, 
+                      frame_limit, worker_id, progress_bar.command_queue)
     finally:
         progress_bar.worker_id_queue.put(worker_id)
 

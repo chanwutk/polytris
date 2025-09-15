@@ -4,7 +4,6 @@ import argparse
 import json
 import os
 import shutil
-import cv2
 import numpy as np
 from rich.progress import track
 import matplotlib.pyplot as plt
@@ -178,8 +177,9 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
 
     # Prepare arguments for parallel processing
     # Validate frame indices first
-    for frame_idx, (frame_result, frame_detections) in enumerate(zip(results, groundtruth_detections)):
-        assert frame_idx == frame_result['frame_idx'], f"frame_idx mismatch: {frame_idx} != {frame_result['frame_idx']}"
+    for frame_idx, frame_result in enumerate(results):
+        assert frame_idx == frame_result['frame_idx'], \
+            f"frame_idx mismatch: {frame_idx} != {frame_result['frame_idx']}"
 
     # Create arguments for worker function
     worker_args = [(frame_result, frame_detections, tile_size, threshold)
@@ -215,23 +215,23 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     overall_f1 = 2 * (overall_precision * overall_recall) / (overall_precision + overall_recall) if (overall_precision + overall_recall) > 0 else 0.0
 
     # Create individual visualizations
-    create_overall_summary_visualization(
+    visualize_error_summary(
         total_tp, total_tn, total_fp, total_fn,
         overall_precision, overall_recall, overall_accuracy, overall_f1,
         tile_size, output_dir
     )
     
-    create_time_series_visualization(
+    visualize_error_over_time(
         frame_metrics, groundtruth_detections,
         overall_precision, overall_recall, overall_f1,
         tile_size, output_dir
     )
     
-    create_error_heatmap_visualization(
+    visualize_spatial_misclassification(
         all_error_counts, tile_size, output_dir
     )
     
-    create_histogram_visualization(
+    visualize_score_distribution(
         all_classification_scores, all_actual_positives,
         threshold, tile_size, output_dir
     )
@@ -240,10 +240,10 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     print(f"Overall Metrics - Precision: {overall_precision:.3f}, Recall: {overall_recall:.3f}, F1: {overall_f1:.3f}")
 
 
-def create_overall_summary_visualization(total_tp: int, total_tn: int, total_fp: int, total_fn: int,
-                                        overall_precision: float, overall_recall: float, 
-                                        overall_accuracy: float, overall_f1: float,
-                                        tile_size: int, output_dir: str) -> str:
+def visualize_error_summary(total_tp: int, total_tn: int, total_fp: int, total_fn: int,
+                            overall_precision: float, overall_recall: float, 
+                            overall_accuracy: float, overall_f1: float,
+                            tile_size: int, output_dir: str) -> str:
     """
     Create overall classification error summary visualization with stacked bar charts and metrics.
     
@@ -334,9 +334,9 @@ def create_overall_summary_visualization(total_tp: int, total_tn: int, total_fp:
     return overall_summary_path
 
 
-def create_time_series_visualization(frame_metrics: list[dict], groundtruth_detections: list[dict],
-                                   overall_precision: float, overall_recall: float, overall_f1: float,
-                                   tile_size: int, output_dir: str) -> str:
+def visualize_error_over_time(frame_metrics: list[dict], groundtruth_detections: list[dict],
+                              overall_precision: float, overall_recall: float, overall_f1: float,
+                              tile_size: int, output_dir: str) -> str:
     """
     Create classification error over time visualization with 4 subplots.
     
@@ -436,7 +436,7 @@ def create_time_series_visualization(frame_metrics: list[dict], groundtruth_dete
     return time_series_path
 
 
-def create_error_heatmap_visualization(all_error_counts: list[np.ndarray], tile_size: int, output_dir: str) -> str:
+def visualize_spatial_misclassification(all_error_counts: list[np.ndarray], tile_size: int, output_dir: str) -> str:
     """
     Create heatmap visualization of error count for each tile.
     
@@ -477,7 +477,7 @@ def create_error_heatmap_visualization(all_error_counts: list[np.ndarray], tile_
     return error_heatmap_path
 
 
-def create_histogram_visualization(all_classification_scores: list[float], all_actual_positives: list[bool],
+def visualize_score_distribution(all_classification_scores: list[float], all_actual_positives: list[bool],
                                  threshold: float, tile_size: int, output_dir: str) -> str:
     """
     Create histograms for classification score distribution split by correctness.

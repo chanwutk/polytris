@@ -61,12 +61,12 @@ def is_np_image(x: npt.NDArray) -> TypeGuard[NPImage]:
 
 Bitmap2D = Array[*D2, np.uint8]
 
-def is_bitmap(x: np.ndarray[np._AnyShapeT, np.dtype[NPDType]]) -> TypeGuard[Bitmap2D]:
+def is_bitmap(x: np.ndarray[tuple, np.dtype[NPDType]]) -> TypeGuard[Bitmap2D]:
     return x.ndim == 2
 
 IndexMap = Array[tuple[int, int, Literal[2]], np.int32]
 
-def is_index_map(x: np.ndarray[np._AnyShapeT, np.dtype[NPDType]]) -> TypeGuard[IndexMap]:
+def is_index_map(x: np.ndarray[tuple, np.dtype[NPDType]]) -> TypeGuard[IndexMap]:
     return x.ndim == 3 and x.shape[2] == 2 and x.dtype == np.int32
 
 Polyomino = tuple[Bitmap2D, tuple[int, int]]

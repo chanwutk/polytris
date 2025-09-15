@@ -12,7 +12,7 @@ import multiprocessing as mp
 
 from polyis.images import splitHWC, padHWC
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar
 
 
 TILE_SIZES = [30, 60]  #, 120]
@@ -104,11 +104,7 @@ def parse_args():
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     parser.add_argument('--classifiers', required=False, nargs='+',
                         default=CLASSIFIERS_TO_TEST,
-                        choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL',
-                                 'YoloX', 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
-                                 'MobileNetS', 'WideResNet50', 'WideResNet101',
-                                 'ResNet152', 'ResNet101', 'ResNet18', 'EfficientNetS',
-                                 'EfficientNetL'],
+                        choices=CLASSIFIERS_CHOICES,
                         help='Specific classifiers to analyze (if not specified, all classifiers will be analyzed)')
     return parser.parse_args()
 
@@ -336,15 +332,15 @@ def process_video_task(video_file_path: str, cache_video_dir: str, classifier: s
 
 
 def _process_video_task(video_file_path: str, cache_video_dir: str, classifier: str, 
-                       tile_size: int, gpu_id: int, progress_bar: ProgressBar):
+                       tile_size: int, gpu_id: int, worker_id_queue: mp.Queue, command_queue: mp.Queue):
     """
     Wrapper function for process_video_task that handles GPU queue management.
     """
     try:
         process_video_task(video_file_path, cache_video_dir, classifier, 
-                          tile_size, gpu_id, progress_bar.command_queue)
+                          tile_size, gpu_id, command_queue)
     finally:
-        progress_bar.worker_id_queue.put(gpu_id)
+        worker_id_queue.put(gpu_id)
 
 
 def main(args):

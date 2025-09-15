@@ -19,7 +19,7 @@ from torch.optim import Adam
 
 from polyis.models.classifier.simple_cnn import SimpleCNN
 from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, format_time, progress_bars
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, format_time, progress_bars
 
 # Factory functions for models that don't accept tile_size parameter
 def ShuffleNet05_factory(_tile_size: int):
@@ -76,13 +76,9 @@ def parse_args():
                         default='b3d',
                         help='Dataset name')
     parser.add_argument('--classifiers', required=False,
-                        default=['WideResNet50'],
-                        # default=CLASSIFIERS_TO_TEST,
-                        choices=['SimpleCNN', 'YoloN', 'YoloS', 'YoloM', 'YoloL',
-                                 'YoloX', 'ShuffleNet05', 'ShuffleNet20', 'MobileNetL',
-                                 'MobileNetS', 'WideResNet50', 'WideResNet101',
-                                 'ResNet152', 'ResNet101', 'ResNet18', 'EfficientNetS',
-                                 'EfficientNetL'],
+                        # default=['WideResNet50'],
+                        default=CLASSIFIERS_TO_TEST,
+                        choices=CLASSIFIERS_CHOICES,
                         nargs='+',
                         help='Model types to train (can specify multiple): SimpleCNN, '
                              'YoloN, YoloS, YoloM, YoloL, YoloX, ShuffleNet05, '

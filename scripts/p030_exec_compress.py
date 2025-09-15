@@ -3,20 +3,22 @@
 import argparse
 import json
 import os
+from typing import Callable
 import cv2
 import numpy as np
-from rich.progress import track
 import shutil
 import time
+import multiprocessing as mp
+from functools import partial
 
 from polyis import dtypes
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, load_classification_results
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, DATA_DIR, format_time, load_classification_results, CLASSIFIERS_TO_TEST, ProgressBar
 from lib.pack_append import pack_append
 from lib.group_tiles import group_tiles
 
 
 # TILE_SIZES = [30, 60, 120]
-TILE_SIZES = [60]
+TILE_SIZES = [30, 60]
 
 
 def parse_args():
@@ -28,7 +30,7 @@ def parse_args():
             - dataset (str): Dataset name to process (default: 'b3d')
             - tile_size (int | str): Tile size to use for packing (choices: 30, 60, 120, 'all')
             - threshold (float): Threshold for classification probability (default: 0.5)
-            - classifier (str): Classifier name to use (default: 'SimpleCNN')
+            - classifiers (str): Classifier names to use
             - clear (bool): Whether to remove and recreate the packing folder (default: False)
     """
     parser = argparse.ArgumentParser(description='Execute packing of video tiles into images based on classification results')
@@ -37,11 +39,15 @@ def parse_args():
                         help='Dataset name')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for packing (or "all" for all tile sizes)')
-
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification probability (0.0 to 1.0)')
-    parser.add_argument('--classifier', type=str, default='SimpleCNN',
-                        help='Classifier name to use (default: SimpleCNN)')
+    parser.add_argument('--classifiers', required=False,
+                        default=CLASSIFIERS_TO_TEST,
+                        choices=CLASSIFIERS_CHOICES,
+                        nargs='+',
+                        help='Classifier names to use (can specify multiple): '
+                             f'{", ".join(CLASSIFIERS_CHOICES)}. For example: '
+                             '--classifiers YoloN ShuffleNet05 ResNet18')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the packing folder')
     return parser.parse_args()
@@ -156,27 +162,58 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap, offset
 
     offset_lookup_path = os.path.join(offset_lookup_dir, f'{start_idx:08d}_{frame_idx:08d}.json')
     with open(offset_lookup_path, 'w') as f:
-        json.dump({str(k): v for k, v in offset_lookup.items()}, f, indent=2)
+        json.dump({str(k): v for k, v in offset_lookup.items()}, f)
     step_times['save_mapping_files'] = (time.time_ns() / 1e6) - step_start
 
 
-def compress_video(video_path: str, results: list[dict], tile_size: int, output_dir: str, threshold: float = 0.5):
+def process_video_task(video_file_path: str, cache_video_dir: str, classifier: str, 
+                      tile_size: int, threshold: float, gpu_id: int, command_queue: mp.Queue):
     """
-    Process a single video for packing based on classification results.
+    Process a single video with a specific classifier and tile size for compression.
+    This function is designed to be called in parallel.
     
     Args:
-        video_path (str): Path to the input video file
-        results (list): List of classification results
-        tile_size (int): Tile size used for processing
-        output_dir (str): Directory to save packing results
-        threshold (float): Threshold for classification probability (0.0 to 1.0)
+        video_file_path: Path to the video file
+        cache_video_dir: Path to the cache directory for this video
+        classifier: Classifier name to use
+        tile_size: Tile size to use
+        threshold: Threshold for classification probability
+        gpu_id: GPU ID to use for processing (not used in this function but kept for consistency)
+        command_queue: Queue for progress updates
     """
-    print(f"Processing video for packing: {video_path}")
+    device = f'cuda:{gpu_id}'
+    video_name = os.path.basename(video_file_path)
+    
+    # Load classification results
+    dataset = os.path.basename(os.path.dirname(cache_video_dir))
+    video_file = os.path.basename(cache_video_dir)
+    try:
+        results = load_classification_results(CACHE_DIR, dataset, video_file, tile_size, classifier)
+    except FileNotFoundError:
+        print(f"No classification results found for classifier {classifier} with tile size {tile_size}, skipping")
+        return
+    
+    # Create output directory for packing results
+    output_dir = os.path.join(cache_video_dir, 'packing', f'{classifier}_{tile_size}')
+    if os.path.exists(output_dir):
+        # Remove the entire directory
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Send initial progress update
+    command_queue.put((device, {
+        'description': f"{video_name} {tile_size:>3} {classifier}",
+        'completed': 0,
+        'total': len(results)
+    }))
+    
+    # # Process the video for packing
+    # print(f"Processing video for packing: {video_file_path}")
     
     # Open video to get dimensions and initialize capture
-    cap = cv2.VideoCapture(video_path)
+    cap = cv2.VideoCapture(video_file_path)
     if not cap.isOpened():
-        print(f"Error: Could not open video {video_path}")
+        print(f"Error: Could not open video {video_file_path}")
         return
     
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -218,15 +255,16 @@ def compress_video(video_path: str, results: list[dict], tile_size: int, output_
     last_frame_idx = -1
     read_frame_idx = -1
     frame_idx = -1
+    count_packed_images = 0
     
     # Initialize profiling output file
     runtime_file = os.path.join(output_dir, 'runtime.jsonl')
     
-    print(f"Processing {len(results)} frames with tile size {tile_size}")
+    # print(f"Processing {len(results)} frames with tile size {tile_size}")
 
     with open(runtime_file, 'w') as f:
         # Process each frame
-        for frame_idx, frame_result in enumerate(track(results, description="Packing frames")):
+        for frame_idx, frame_result in enumerate(results):
             # Start profiling for this frame
             # frame_start_time = (time.time_ns() / 1e6)
             step_times = {}
@@ -288,6 +326,7 @@ def compress_video(video_path: str, results: list[dict], tile_size: int, output_
                 
                 # Profile: Save packed image
                 save_packed_image(canvas, index_map, offset_lookup, start_idx, frame_idx, output_dir, step_times)
+                count_packed_images += 1
                 
                 # Profile: Reset variables
                 step_start = (time.time_ns() / 1e6)
@@ -323,7 +362,8 @@ def compress_video(video_path: str, results: list[dict], tile_size: int, output_
                     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
                     
                     save_packed_image(frame, _index_map, _offset_lookup, start_idx, frame_idx, output_dir, step_times)
-            
+                    count_packed_images += 1
+
             # Save profiling data for this frame
             profiling_data = {
                 'frame_idx': frame_idx,
@@ -332,6 +372,7 @@ def compress_video(video_path: str, results: list[dict], tile_size: int, output_
             }
             
             f.write(json.dumps(profiling_data) + '\n')
+            command_queue.put((device, {'completed': frame_idx}))
     
     # Release video capture
     cap.release()
@@ -339,28 +380,28 @@ def compress_video(video_path: str, results: list[dict], tile_size: int, output_
     # Save final packed image if exists
     if not clean:
         save_packed_image(canvas, index_map, offset_lookup, start_idx, frame_idx, output_dir, {})
+        count_packed_images += 1
 
-    print(f"Completed packing for video. Created {len(results) - start_idx} packed images.")
-    print(f"Runtime profiling data saved to: {runtime_file}")
+    # print(f"Completed packing for video. Created {count_packed_images} packed images.")
+    # print(f"Runtime profiling data saved to: {runtime_file}")
 
 
 def main(args):
     """
-    Main function that orchestrates the video tile packing process.
+    Main function that orchestrates the video tile packing process using parallel processing.
     
     This function serves as the entry point for the script. It:
     1. Validates the dataset directory exists
-    2. Iterates through all videos in the dataset directory
-    3. For each video, loads classification results for the specified tile size(s)
-    4. Groups connected tiles into polyominoes and packs them into images
-    5. Saves packed images and their mappings
+    2. Creates a list of all video/classifier/tile_size combinations to process
+    3. Uses multiprocessing to process tasks in parallel across available GPUs
+    4. Processes each video and saves packing results
     
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
-            - tile_size (str): Tile size to use for packing ('64', '128', or 'all')
+            - tile_size (str): Tile size to use for packing ('30', '60', '120', or 'all')
             - threshold (float): Threshold for classification probability (0.0 to 1.0)
-            - classifier (str): Classifier name to use (default: 'SimpleCNN')
+            - classifiers (list): List of classifier names to use (default: CLASSIFIERS_TO_TEST)
             - clear (bool): Whether to remove and recreate the packing folder
             
     Note:
@@ -371,10 +412,13 @@ def main(args):
         - Packed images are saved to {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/images/
         - Mappings are saved to {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/index_maps/
         - Mappings are saved to {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/offset_lookups/
-        - When tile_size is 'all', all two tile sizes (30, 60, 120) are processed
+        - When tile_size is 'all', all tile sizes (30, 60, 120) are processed
+        - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST are processed
         - If no classification results are found for a video, that video is skipped with a warning
         - Tiles with classification probability > threshold are considered relevant for packing
     """
+    mp.set_start_method('spawn', force=True)
+    
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
     
     if not os.path.exists(dataset_dir):
@@ -391,37 +435,38 @@ def main(args):
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
     
-    # Process each video file
+    # Create tasks list with all video/classifier/tile_size combinations
+    funcs: list[Callable[[int, mp.Queue], None]] = []
     for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
+        cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
 
-        print(f"Processing video file: {video_file}")
+        packing_base_dir = os.path.join(cache_video_dir, 'packing')
+        if args.clear and os.path.exists(packing_base_dir):
+            shutil.rmtree(packing_base_dir)
+            print(f"Cleared existing packing folder: {packing_base_dir}")
         
-        # Clear packing folder once per video if --clear flag is set
-        if args.clear:
-            packing_base_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'packing')
-            if os.path.exists(packing_base_dir):
-                shutil.rmtree(packing_base_dir)
-                print(f"Cleared existing packing folder: {packing_base_dir}")
-        
-        # Process each tile size for this video
-        for tile_size in tile_sizes_to_process:
-            print(f"Processing tile size: {tile_size}")
-            
-            # Load classification results
-            results = load_classification_results(CACHE_DIR, args.dataset, video_file, tile_size, args.classifier)
-            
-            # Create output directory for packing results
-            packing_output_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'packing', f'{args.classifier}_{tile_size}')
-            if os.path.exists(packing_output_dir):
-                # Remove the entire directory
-                shutil.rmtree(packing_output_dir)
-            os.makedirs(packing_output_dir, exist_ok=True)
-            
-            # Process the video for packing
-            compress_video(video_file_path, results, tile_size, packing_output_dir, args.threshold)
-            
-            print(f"Completed packing for tile size {tile_size}")
+        for classifier in args.classifiers:
+            for tile_size in tile_sizes_to_process:
+
+                score_file = os.path.join(cache_video_dir, 'relevancy',
+                                          f'{classifier}_{tile_size}', 'score', 'score.jsonl')
+                if not os.path.exists(score_file):
+                    print(f"No score file found for {video_file} {classifier} {tile_size}, skipping")
+                    continue
+
+                funcs.append(partial(process_video_task, video_file_path,
+                                     cache_video_dir, classifier, tile_size, args.threshold))
+    
+    print(f"Created {len(funcs)} tasks to process")
+    
+    # Set up multiprocessing with ProgressBar
+    num_processes = int(mp.cpu_count() * 0.8)
+    if len(funcs) < num_processes:
+        num_processes = len(funcs)
+    
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs)).run_all(funcs)
+    print("All tasks completed!")
 
 
 if __name__ == '__main__':
