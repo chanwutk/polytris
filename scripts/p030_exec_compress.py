@@ -42,8 +42,8 @@ def parse_args():
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification probability (0.0 to 1.0)')
     parser.add_argument('--classifiers', required=False,
-                        default=CLASSIFIERS_TO_TEST,
-                        choices=CLASSIFIERS_CHOICES,
+                        default=CLASSIFIERS_TO_TEST + ['groundtruth'],
+                        choices=CLASSIFIERS_CHOICES + ['groundtruth'],
                         nargs='+',
                         help='Classifier names to use (can specify multiple): '
                              f'{", ".join(CLASSIFIERS_CHOICES)}. For example: '
@@ -67,6 +67,7 @@ def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions],
     Returns:
         np.ndarray: Updated canvas
     """
+    # TODO: use Torch, Cython, or Numba.
     for y, x, mask, offset in positions:
         yfrom = y * chunk_size
         xfrom = x * chunk_size
@@ -263,6 +264,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
 
     with open(runtime_file, 'w') as f:
         # Process each frame
+        mod = int(len(results) * 0.05)
         for frame_idx, frame_result in enumerate(results):
             # Start profiling for this frame
             # frame_start_time = (time.time_ns() / 1e6)
@@ -371,7 +373,8 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
             }
             
             f.write(json.dumps(profiling_data) + '\n')
-            command_queue.put((device, {'completed': frame_idx}))
+            if frame_idx % mod == 0:
+                command_queue.put((device, {'completed': frame_idx}))
     
     # Release video capture
     cap.release()
@@ -461,6 +464,7 @@ def main(args):
     
     # Set up multiprocessing with ProgressBar
     num_processes = int(mp.cpu_count() * 0.8)
+    num_processes = 8
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     

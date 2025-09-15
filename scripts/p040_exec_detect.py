@@ -42,7 +42,8 @@ def parse_args():
                         default='retina',
                         help='Detector name')
     parser.add_argument('--classifiers', required=False,
-                        default=CLASSIFIERS_TO_TEST + ['groundtruth'],
+                        # default=CLASSIFIERS_TO_TEST + ['groundtruth'],
+                        default=['groundtruth'],
                         choices=CLASSIFIERS_CHOICES + ['groundtruth'],
                         nargs='+',
                         help='Classifier names to use (can specify multiple): '

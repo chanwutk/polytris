@@ -9,7 +9,7 @@ from typing import Callable, Dict, List, Tuple, Any
 from collections import defaultdict
 import tqdm
 
-from polyis.utilities import CACHE_DIR
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
 
 FORMATS = ['png']
 
@@ -246,8 +246,9 @@ def create_average_query_execution_visualization(query_timings: Dict[str, Any], 
     stage_names = ['Classify', 'Compress', 'Detect', 'Track']
     
     # Group by classifier and tile size 
-    classifiers = ['SimpleCNN', 'groundtruth']
-    tile_sizes = [30, 60, 120]
+    # classifiers = ['SimpleCNN', 'groundtruth']
+    classifiers = CLASSIFIERS_TO_TEST + ['groundtruth']
+    tile_sizes = [30, 60]  #, 120]
     
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     axes = axes.flatten()
@@ -280,7 +281,7 @@ def create_average_query_execution_visualization(query_timings: Dict[str, Any], 
                 if len(config_ops) == 0:
                     continue
 
-                config_labels.append(f"{classifier}\n{tile_size}")
+                config_labels.append(f"{classifier} {tile_size}")
                 # Calculate average for each operation across videos
                 for op_name, times in config_ops.items():
                     avg_time = np.mean(times) if times else 0
@@ -303,25 +304,40 @@ def create_average_query_execution_visualization(query_timings: Dict[str, Any], 
                         op_data[op_name].append(0)
         
         if config_labels and op_data:
-            # Create stacked bar chart
-            x = np.arange(len(config_labels))
-            width = 0.6
-            bottom = np.zeros(len(config_labels))
+            # Calculate total values for each config to sort by bar size
+            config_totals = []
+            for i in range(len(config_labels)):
+                total = sum(op_data[op_name][i] for op_name in op_data.keys() if i < len(op_data[op_name]))
+                config_totals.append(total)
+            
+            # Sort configs by total value (descending)
+            sorted_indices = sorted(range(len(config_labels)), key=lambda i: config_totals[i], reverse=True)
+            sorted_config_labels = [config_labels[i] for i in sorted_indices]
+            
+            # Sort operation data to match the sorted config order
+            sorted_op_data = {}
+            for op_name, values in op_data.items():
+                sorted_op_data[op_name] = [values[i] for i in sorted_indices]
+            
+            # Create stacked horizontal bar chart
+            y = np.arange(len(sorted_config_labels))
+            height = 0.6
+            left = np.zeros(len(sorted_config_labels))
             
             # Color palette for different operations
             colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
             
-            # Plot each operation as a layer in the stacked bar
-            for j, (op_name, values) in enumerate(sorted(op_data.items())):
+            # Plot each operation as a layer in the stacked horizontal bar
+            for j, (op_name, values) in enumerate(sorted(sorted_op_data.items())):
                 if any(v > 0 for v in values):  # Only plot if there are non-zero values
                     color = colors[j % len(colors)]
-                    ax.bar(x, values, width, bottom=bottom, label=op_name, color=color, alpha=0.8)
-                    bottom += np.array(values)
+                    ax.barh(y, values, height, left=left, label=op_name, color=color, alpha=0.8)
+                    left += np.array(values)
             
             ax.set_title(f'{stage_name} Runtime by Operation (Average)')
-            ax.set_ylabel('Runtime (seconds)')
-            ax.set_xticks(x)
-            ax.set_xticklabels(config_labels, rotation=45)
+            ax.set_xlabel('Runtime (seconds)')
+            ax.set_yticks(y)
+            ax.set_yticklabels(sorted_config_labels)
             ax.grid(True, alpha=0.3)
             
             ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
@@ -344,8 +360,10 @@ def create_per_video_query_execution_visualization(query_timings: Dict[str, Any]
     stage_names = ['Classify', 'Compress', 'Detect', 'Track']
     
     # Group by classifier and tile size 
-    classifiers = ['SimpleCNN', 'groundtruth']
-    tile_sizes = [30, 60, 120]
+    # classifiers = ['SimpleCNN', 'groundtruth']
+    # tile_sizes = [30, 60, 120]
+    classifiers = CLASSIFIERS_TO_TEST + ['groundtruth']
+    tile_sizes = [30, 60]  #, 120]
     
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     axes = axes.flatten()
@@ -360,7 +378,7 @@ def create_per_video_query_execution_visualization(query_timings: Dict[str, Any]
         for classifier in classifiers:
             for tile_size in tile_sizes:
                 config_key = f"{video}_{classifier}_{tile_size}"
-                config_labels.append(f"{classifier}\n{tile_size}")
+                config_labels.append(f"{classifier} {tile_size}")
                 
                 # Get individual timings for this config to group by operation
                 config_ops = defaultdict(float)
@@ -382,25 +400,40 @@ def create_per_video_query_execution_visualization(query_timings: Dict[str, Any]
                     op_data[op_name].append(config_ops.get(op_name, 0))
         
         if config_labels and op_data:
-            # Create stacked bar chart
-            x = np.arange(len(config_labels))
-            width = 0.6
-            bottom = np.zeros(len(config_labels))
+            # Calculate total values for each config to sort by bar size
+            config_totals = []
+            for i in range(len(config_labels)):
+                total = sum(op_data[op_name][i] for op_name in op_data.keys() if i < len(op_data[op_name]))
+                config_totals.append(total)
+            
+            # Sort configs by total value (descending)
+            sorted_indices = sorted(range(len(config_labels)), key=lambda i: config_totals[i], reverse=True)
+            sorted_config_labels = [config_labels[i] for i in sorted_indices]
+            
+            # Sort operation data to match the sorted config order
+            sorted_op_data = {}
+            for op_name, values in op_data.items():
+                sorted_op_data[op_name] = [values[i] for i in sorted_indices]
+            
+            # Create stacked horizontal bar chart
+            y = np.arange(len(sorted_config_labels))
+            height = 0.6
+            left = np.zeros(len(sorted_config_labels))
             
             # Color palette for different operations
             colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
             
-            # Plot each operation as a layer in the stacked bar
-            for j, (op_name, values) in enumerate(sorted(op_data.items())):
+            # Plot each operation as a layer in the stacked horizontal bar
+            for j, (op_name, values) in enumerate(sorted(sorted_op_data.items())):
                 if any(v > 0 for v in values):  # Only plot if there are non-zero values
                     color = colors[j % len(colors)]
-                    ax.bar(x, values, width, bottom=bottom, label=op_name, color=color, alpha=0.8)
-                    bottom += np.array(values)
+                    ax.barh(y, values, height, left=left, label=op_name, color=color, alpha=0.8)
+                    left += np.array(values)
             
             ax.set_title(f'{stage_name} Runtime by Operation')
-            ax.set_ylabel('Runtime (seconds)')
-            ax.set_xticks(x)
-            ax.set_xticklabels(config_labels, rotation=45)
+            ax.set_xlabel('Runtime (seconds)')
+            ax.set_yticks(y)
+            ax.set_yticklabels(sorted_config_labels)
             ax.grid(True, alpha=0.3)
             
             ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
@@ -421,27 +454,9 @@ def create_per_video_query_execution_visualization(query_timings: Dict[str, Any]
     plt.close()
 
 
-def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
-                               output_dir: str):
-    """Create comparative analysis between index construction and query execution."""
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Extract all videos from the data
-    videos = extract_videos_from_data(query_timings)
-    print(f"Creating comparative analysis for {len(videos)} videos: {videos}")
-    
-    # Create average comparative analysis across all videos
-    create_average_comparative_analysis(index_timings, query_timings, output_dir, videos)
-    
-    # Create per-video comparative analyses
-    for video in videos:
-        video_name = video.split('/')[-1] if '/' in video else video  # Extract just the filename
-        create_per_video_comparative_analysis(index_timings, query_timings, output_dir, video, video_name)
-
-
-def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
-                                    output_dir: str, videos: List[str] | None = None, video: str | None = None, 
-                                    video_name: str | None = None):
+def visualize_overall_runtime(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
+                              output_dir: str, videos: List[str] | None = None,
+                              video: str | None = None, video_name: str | None = None):
     """Create comparative analysis between index construction and query execution.
     
     Args:
@@ -457,9 +472,6 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
     # Determine if this is average or per-video analysis
     is_average = videos is not None
     target_videos = videos if is_average else [video]
-    
-    # Create figure with two subplots side by side
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
     
     # Calculate breakdown for index construction stages
     index_stages = {
@@ -485,108 +497,100 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
         elif '013_tune_train_classifier' in stage_name:
             index_stages['Classifier Training'] += stage_total
     
-    # Calculate breakdown for query execution stages
-    query_stages = {
-        'Classify': 0.0 if is_average else 0,
-        'Compress': 0.0 if is_average else 0,
-        'Detect': 0.0 if is_average else 0,
-        'Track': 0.0 if is_average else 0
-    }
+    # Discover all classifiers present in the query timing data
+    all_classifiers = set()
+    for stage_name, stage_summaries in query_timings['summaries'].items():
+        for config_key in stage_summaries.keys():
+            # Extract classifier from config key format: video_classifier_tilesize
+            parts = config_key.split('_')
+            if len(parts) >= 3:
+                # Find classifier part (between video and tile size)
+                video_part = parts[0]
+                if video is None or config_key.startswith(video + '_'):
+                    # Extract classifier by removing video prefix and tile size suffix
+                    remaining = '_'.join(parts[1:])
+                    # Remove tile size suffix (last part if it's numeric)
+                    if remaining.split('_')[-1].isdigit():
+                        classifier = '_'.join(remaining.split('_')[:-1])
+                    else:
+                        classifier = remaining
+                    all_classifiers.add(classifier)
     
-    # Query execution stage breakdown (exclude preprocessing stages and groundtruth classifier)
+    # Sort classifiers for consistent ordering, with 'groundtruth' last
+    sorted_classifiers = sorted([c for c in all_classifiers if c != 'groundtruth'])
+    if 'groundtruth' in all_classifiers:
+        sorted_classifiers.append('groundtruth')
+    
+    # Calculate breakdown for query execution stages per classifier
+    classifier_query_stages = {}
+    for classifier in sorted_classifiers:
+        classifier_query_stages[classifier] = {
+            'Classify': 0.0 if is_average else 0,
+            'Compress': 0.0 if is_average else 0,
+            'Detect': 0.0 if is_average else 0,
+            'Track': 0.0 if is_average else 0
+        }
+    
+    # Query execution stage breakdown per classifier
     excluded_stages = ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking']
     for stage_name, stage_summaries in query_timings['summaries'].items():
         if stage_name in excluded_stages:
             continue
         
-        if is_average:
-            # Average across videos
-            stage_video_totals = []  # Collect totals for each video
-            for target_video in target_videos:
-                video_total = 0
+        for classifier in sorted_classifiers:
+            if is_average:
+                # Average across videos
+                stage_video_totals = []  # Collect totals for each video
+                for target_video in target_videos:
+                    video_total = 0
+                    for config_key, times in stage_summaries.items():
+                        # Only include configs for this video and this classifier
+                        assert target_video is not None
+                        if not config_key.startswith(target_video + '_'):
+                            continue
+                        # Extract classifier from config key
+                        parts = config_key.split('_')
+                        if len(parts) >= 3:
+                            remaining = '_'.join(parts[1:])
+                            if remaining.split('_')[-1].isdigit():
+                                config_classifier = '_'.join(remaining.split('_')[:-1])
+                            else:
+                                config_classifier = remaining
+                            if config_classifier == classifier and times:
+                                video_total += np.mean(times)
+                    if video_total > 0:
+                        stage_video_totals.append(video_total)
+                
+                # Average across videos
+                stage_total = np.mean(stage_video_totals) if stage_video_totals else 0
+            else:
+                # Per-video analysis
+                stage_total = 0
                 for config_key, times in stage_summaries.items():
-                    # Only include configs for this video and exclude groundtruth classifier
-                    assert target_video is not None
-                    if not config_key.startswith(target_video + '_') or '_groundtruth_' in config_key:
+                    # Only include configs for this video and this classifier
+                    assert video is not None
+                    if not config_key.startswith(video + '_'):
                         continue
-                    if times:
-                        video_total += np.mean(times)
-                if video_total > 0:
-                    stage_video_totals.append(video_total)
+                    # Extract classifier from config key
+                    parts = config_key.split('_')
+                    if len(parts) >= 3:
+                        remaining = '_'.join(parts[1:])
+                        if remaining.split('_')[-1].isdigit():
+                            config_classifier = '_'.join(remaining.split('_')[:-1])
+                        else:
+                            config_classifier = remaining
+                        if config_classifier == classifier and times:
+                            stage_total += np.mean(times)
             
-            # Average across videos
-            stage_total = np.mean(stage_video_totals) if stage_video_totals else 0
-        else:
-            # Per-video analysis
-            stage_total = 0
-            for config_key, times in stage_summaries.items():
-                # Only include configs for this video and exclude groundtruth classifier
-                assert video is not None
-                if not config_key.startswith(video + '_') or '_groundtruth_' in config_key:
-                    continue
-                if times:
-                    stage_total += np.mean(times)
-        
-        assert isinstance(stage_total, (int, float))
-        if '020_exec_classify' in stage_name:
-            query_stages['Classify'] += float(stage_total) if is_average else stage_total
-        elif '030_exec_compress' in stage_name:
-            query_stages['Compress'] += float(stage_total) if is_average else stage_total
-        elif '040_exec_detect' in stage_name:
-            query_stages['Detect'] += float(stage_total) if is_average else stage_total
-        elif '060_exec_track' in stage_name:
-            query_stages['Track'] += float(stage_total) if is_average else stage_total
-    
-    # Calculate breakdown for query execution stages with groundtruth classifier only
-    query_groundtruth_stages = {
-        'Classify': 0.0 if is_average else 0,
-        'Compress': 0.0 if is_average else 0,
-        'Detect': 0.0 if is_average else 0,
-        'Track': 0.0 if is_average else 0
-    }
-    
-    # Query execution stage breakdown for groundtruth classifier only
-    for stage_name, stage_summaries in query_timings['summaries'].items():
-        if stage_name in excluded_stages:
-            continue
-        
-        if is_average:
-            # Average across videos
-            stage_video_totals = []  # Collect totals for each video
-            for target_video in target_videos:
-                video_total = 0
-                for config_key, times in stage_summaries.items():
-                    # Only include configs for this video and only groundtruth classifier
-                    assert target_video is not None
-                    if not config_key.startswith(target_video + '_') or '_groundtruth_' not in config_key:
-                        continue
-                    if times:
-                        video_total += np.mean(times)
-                if video_total > 0:
-                    stage_video_totals.append(video_total)
-            
-            # Average across videos
-            stage_total = np.mean(stage_video_totals) if stage_video_totals else 0
-        else:
-            # Per-video analysis
-            stage_total = 0
-            for config_key, times in stage_summaries.items():
-                # Only include configs for this video and only groundtruth classifier
-                assert video is not None
-                if not config_key.startswith(video + '_') or '_groundtruth_' not in config_key:
-                    continue
-                if times:
-                    stage_total += np.mean(times)
-        
-        assert isinstance(stage_total, (int, float))
-        if '020_exec_classify' in stage_name:
-            query_groundtruth_stages['Classify'] += float(stage_total) if is_average else stage_total
-        elif '030_exec_compress' in stage_name:
-            query_groundtruth_stages['Compress'] += float(stage_total) if is_average else stage_total
-        elif '040_exec_detect' in stage_name:
-            query_groundtruth_stages['Detect'] += float(stage_total) if is_average else stage_total
-        elif '060_exec_track' in stage_name:
-            query_groundtruth_stages['Track'] += float(stage_total) if is_average else stage_total
+            assert isinstance(stage_total, (int, float))
+            if '020_exec_classify' in stage_name:
+                classifier_query_stages[classifier]['Classify'] += float(stage_total) if is_average else stage_total
+            elif '030_exec_compress' in stage_name:
+                classifier_query_stages[classifier]['Compress'] += float(stage_total) if is_average else stage_total
+            elif '040_exec_detect' in stage_name:
+                classifier_query_stages[classifier]['Detect'] += float(stage_total) if is_average else stage_total
+            elif '060_exec_track' in stage_name:
+                classifier_query_stages[classifier]['Track'] += float(stage_total) if is_average else stage_total
     
     # Calculate breakdown for preprocessing stages only
     preprocessing_stages = {
@@ -634,122 +638,150 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
     # Prepare data for stacked bar chart
     width = 0.6
     
-    # Colors for different operations
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2']
+    # Colors for different operations - expand palette for more classifiers
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', 
+              '#7f7f7f', '#bcbd22', '#17becf', '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', 
+              '#c5b0d5', '#c49c94', '#f7b6d3', '#c7c7c7', '#dbdb8d', '#9edae5']
     
     # Index construction stack
     index_values = list(index_stages.values())
     index_labels = list(index_stages.keys())
     
-    # Query execution stack  
-    query_labels = tuple(sorted(query_stages.keys()))
-    query_values = [query_stages[label] for label in query_labels]
-    
-    # Query execution groundtruth stack
-    query_groundtruth_labels = tuple(sorted(query_groundtruth_stages.keys()))
-    query_groundtruth_values = [query_groundtruth_stages[label] for label in query_groundtruth_labels]
-
-    assert query_labels == query_groundtruth_labels
-
-    # Preprocessing stack
+    # Get preprocessing values first (needed for category totals calculation)
     preprocessing_values = list(preprocessing_stages.values())
     preprocessing_labels = list(preprocessing_stages.keys())
     
-    # === SUBPLOT 1: With Index Construction ===
-    categories_with_index = ['Index Construction', 'Query Execution\n(Classifier: SimpleCNN)', 'Query Execution\n(Classifier: Groundtruth)', 'Naive']
-    x1 = np.arange(len(categories_with_index))
+    # Build categories dynamically based on available classifiers
+    categories_with_index = ['Index Construction']
+    categories_without_index = []
     
-    # Create stacked bars for subplot 1
-    bottom_index = 0
-    bottom_query = 0
-    bottom_query_groundtruth = 0
-    bottom_preprocessing = 0
+    # Add query execution categories for each classifier
+    for classifier in sorted_classifiers:
+        display_name = classifier.title() if classifier != 'groundtruth' else 'Groundtruth'
+        categories_with_index.append(f'Query Execution\n(Classifier: {display_name})')
+        categories_without_index.append(f'Query Execution\n(Classifier: {display_name})')
+    
+    # Add naive category
+    categories_with_index.append('Naive')
+    categories_without_index.append('Naive')
+    
+    # Create figure with dynamic width based on number of classifiers
+    fig_width = max(20, 8 + 2 * len(sorted_classifiers))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(fig_width, 8))
+    
+    # Calculate totals for each category to sort by bar size
+    category_totals = [float(sum(index_values))]  # Index Construction
+    for classifier in sorted_classifiers:
+        category_totals.append(float(sum(classifier_query_stages[classifier].values())))
+    category_totals.append(float(sum(preprocessing_values)))  # Naive
+    
+    # Sort categories by total value (descending)
+    sorted_indices1 = sorted(range(len(categories_with_index)), key=lambda i: category_totals[i], reverse=True)
+    sorted_categories_with_index = [categories_with_index[i] for i in sorted_indices1]
+    y1 = np.arange(len(sorted_categories_with_index))
+    
+    # Create stacked horizontal bars for subplot 1
+    left_values = [0.0] * len(sorted_categories_with_index)
+    
+    # Map original indices to sorted positions
+    pos_map = {orig_idx: sorted_indices1.index(orig_idx) for orig_idx in range(len(categories_with_index))}
     
     # Plot index construction stages
     for i, (value, label) in enumerate(zip(index_values, index_labels)):
         if value > 0:
-            ax1.bar(x1[0], value, width, bottom=bottom_index, 
+            pos = pos_map[0]  # Index Construction is at position 0
+            ax1.barh(y1[pos], value, width, left=left_values[pos], 
                    label=f'Index: {label}', color=colors[i], alpha=0.8)
-            bottom_index += value
+            left_values[pos] += value
     
-    # Plot query execution stages (SimpleCNN)
-    for i, (value, label) in enumerate(zip(query_values, query_labels)):
-        if value > 0:
-            ax1.bar(x1[1], value, width, bottom=bottom_query, 
-                   label=f'Query: {label}', color=colors[i+len(index_values)], alpha=0.8)
-            bottom_query += value
-    
-    # Plot query execution stages (Groundtruth)
-    for i, (value, label) in enumerate(zip(query_groundtruth_values, query_groundtruth_labels)):
-        if value > 0:
-            ax1.bar(x1[2], value, width, bottom=bottom_query_groundtruth, 
-                   color=colors[i+len(index_values)], alpha=0.8)
-            bottom_query_groundtruth += value
+    # Plot query execution stages for each classifier
+    stage_labels = ['Classify', 'Compress', 'Detect', 'Track']
+    for classifier_idx, classifier in enumerate(sorted_classifiers):
+        query_values = [classifier_query_stages[classifier][label] for label in stage_labels]
+        for i, (value, label) in enumerate(zip(query_values, stage_labels)):
+            if value > 0:
+                pos = pos_map[1 + classifier_idx]  # Query Execution classifiers start at position 1
+                color_idx = (i + len(index_values)) % len(colors)
+                ax1.barh(y1[pos], value, width, left=left_values[pos], 
+                       label=f'Query: {label}' if classifier_idx == 0 else '', 
+                       color=colors[color_idx], alpha=0.8)
+                left_values[pos] += value
     
     # Plot preprocessing stages
     for i, (value, label) in enumerate(zip(preprocessing_values, preprocessing_labels)):
         if value > 0:
-            ax1.bar(x1[3], value, width, bottom=bottom_preprocessing, 
-                   label=f'Naive: {label}', color=colors[(i+len(index_values)+len(query_values)) % len(colors)], alpha=0.8)
-            bottom_preprocessing += value
+            pos = pos_map[len(categories_with_index) - 1]  # Naive is at last position
+            color_idx = (i + len(index_values) + len(stage_labels)) % len(colors)
+            ax1.barh(y1[pos], value, width, left=left_values[pos], 
+                   label=f'Naive: {label}', color=colors[color_idx], alpha=0.8)
+            left_values[pos] += value
     
-    ax1.set_ylabel('Runtime (seconds)')
+    ax1.set_xlabel('Runtime (seconds)')
     ax1.set_title('With Index Construction')
-    ax1.set_xticks(x1)
-    ax1.set_xticklabels(categories_with_index)
+    ax1.set_yticks(y1)
+    ax1.set_yticklabels(sorted_categories_with_index)
     ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
     ax1.grid(True, alpha=0.3)
     
-    # Add total value labels on top of bars for subplot 1
-    totals1 = [bottom_index, bottom_query, bottom_query_groundtruth, bottom_preprocessing]
-    for i, total in enumerate(totals1):
+    # Add total value labels at the end of bars for subplot 1
+    for i, total in enumerate(left_values):
         if total > 0 or is_average:
-            ax1.text(x1[i], total + max(totals1)*0.01, f'{total:.1f}s', 
-                    ha='center', va='bottom', fontweight='bold', fontsize='small')
+            ax1.text(total + max(left_values)*0.01, y1[i], f'{total:.1f}s', 
+                    ha='left', va='center', fontweight='bold', fontsize='small')
     
     # === SUBPLOT 2: Without Index Construction ===
-    categories_without_index = ['Query Execution\n(Classifier: SimpleCNN)', 'Query Execution\n(Classifier: Groundtruth)', 'Naive']
-    x2 = np.arange(len(categories_without_index))
     
-    # Create stacked bars for subplot 2 (excluding index construction)
-    bottom_query2 = 0
-    bottom_query_groundtruth2 = 0
-    bottom_preprocessing2 = 0
+    # Calculate totals for each category to sort by bar size (excluding index construction)
+    category_totals2 = []
+    for classifier in sorted_classifiers:
+        category_totals2.append(float(sum(classifier_query_stages[classifier].values())))
+    category_totals2.append(float(sum(preprocessing_values)))  # Naive
     
-    # Plot query execution stages (SimpleCNN)
-    for i, (value, label) in enumerate(zip(query_values, query_labels)):
-        if value > 0:
-            ax2.bar(x2[0], value, width, bottom=bottom_query2, 
-                   label=f'Query: {label}', color=colors[i+len(index_values)], alpha=0.8)
-            bottom_query2 += value
+    # Sort categories by total value (descending)
+    sorted_indices2 = sorted(range(len(categories_without_index)), key=lambda i: category_totals2[i], reverse=True)
+    sorted_categories_without_index = [categories_without_index[i] for i in sorted_indices2]
+    y2 = np.arange(len(sorted_categories_without_index))
     
-    # Plot query execution stages (Groundtruth)
-    for i, (value, label) in enumerate(zip(query_groundtruth_values, query_groundtruth_labels)):
-        if value > 0:
-            ax2.bar(x2[1], value, width, bottom=bottom_query_groundtruth2, 
-                   color=colors[i+len(index_values)], alpha=0.8)
-            bottom_query_groundtruth2 += value
+    # Create stacked horizontal bars for subplot 2 (excluding index construction)
+    left_values2 = [0.0] * len(sorted_categories_without_index)
+    
+    # Map original indices to sorted positions
+    pos_map2 = {orig_idx: sorted_indices2.index(orig_idx) for orig_idx in range(len(categories_without_index))}
+    
+    # Plot query execution stages for each classifier
+    for classifier_idx, classifier in enumerate(sorted_classifiers):
+        query_values = [classifier_query_stages[classifier][label] for label in stage_labels]
+        for i, (value, label) in enumerate(zip(query_values, stage_labels)):
+            if value > 0:
+                pos = pos_map2[classifier_idx]  # Query Execution classifiers
+                color_idx = (i + len(index_values)) % len(colors)
+                ax2.barh(y2[pos], value, width, left=left_values2[pos], 
+                       label=f'Query: {label}' if classifier_idx == 0 else '', 
+                       color=colors[color_idx], alpha=0.8)
+                left_values2[pos] += value
     
     # Plot preprocessing stages
     for i, (value, label) in enumerate(zip(preprocessing_values, preprocessing_labels)):
         if value > 0:
-            ax2.bar(x2[2], value, width, bottom=bottom_preprocessing2, 
-                   label=f'Naive: {label}', color=colors[(i+len(index_values)+len(query_values)) % len(colors)], alpha=0.8)
-            bottom_preprocessing2 += value
+            pos = pos_map2[len(categories_without_index) - 1]  # Naive is at last position
+            color_idx = (i + len(index_values) + len(stage_labels)) % len(colors)
+            ax2.barh(y2[pos], value, width, left=left_values2[pos], 
+                   label=f'Naive: {label}' if i == 0 else '', 
+                   color=colors[color_idx], alpha=0.8)
+            left_values2[pos] += value
     
-    ax2.set_ylabel('Runtime (seconds)')
+    ax2.set_xlabel('Runtime (seconds)')
     ax2.set_title('Without Index Construction')
-    ax2.set_xticks(x2)
-    ax2.set_xticklabels(categories_without_index)
+    ax2.set_yticks(y2)
+    ax2.set_yticklabels(sorted_categories_without_index)
     ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
     ax2.grid(True, alpha=0.3)
     
-    # Add total value labels on top of bars for subplot 2
-    totals2 = [bottom_query2, bottom_query_groundtruth2, bottom_preprocessing2]
-    for i, total in enumerate(totals2):
+    # Add total value labels at the end of bars for subplot 2
+    for i, total in enumerate(left_values2):
         if total > 0 or is_average:
-            ax2.text(x2[i], total + max(totals2)*0.01, f'{total:.1f}s', 
-                    ha='center', va='bottom', fontweight='bold', fontsize='small')
+            ax2.text(total + max(left_values2)*0.01, y2[i], f'{total:.1f}s', 
+                    ha='left', va='center', fontweight='bold', fontsize='small')
     
     # Set overall title based on analysis type
     if is_average:
@@ -780,18 +812,28 @@ def create_comparative_analysis_chart(index_timings: Dict[str, Any], query_timin
     plt.close(fig)
 
 
-def create_average_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
-                                      output_dir: str, videos: List[str]):
-    """Create average comparative analysis between index construction and query execution."""
-    create_comparative_analysis_chart(index_timings, query_timings, output_dir, 
-                                    videos=videos)
+def create_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
+                               output_dir: str):
+    """Create comparative analysis between index construction and query execution."""
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Extract all videos from the data
+    videos = extract_videos_from_data(query_timings)
+    print(f"Creating comparative analysis for {len(videos)} videos: {videos}")
 
-
-def create_per_video_comparative_analysis(index_timings: Dict[str, Any], query_timings: Dict[str, Any], 
-                                        output_dir: str, video: str, video_name: str):
-    """Create comparative analysis between index construction and query execution for a specific video."""
-    create_comparative_analysis_chart(index_timings, query_timings, output_dir, 
-                                    video=video, video_name=video_name)
+    from functools import partial
+    visualize = partial(visualize_overall_runtime,
+                        index_timings=index_timings,
+                        query_timings=query_timings,
+                        output_dir=output_dir)
+    
+    # Create average comparative analysis across all videos
+    visualize(videos=videos)
+    
+    # Create per-video comparative analyses
+    for video in videos:
+        video_name = video.split('/')[-1] if '/' in video else video  # Extract just the filename
+        visualize(video=video, video_name=video_name)
 
 
 def main():

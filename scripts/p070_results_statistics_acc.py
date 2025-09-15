@@ -1,16 +1,19 @@
 #!/usr/local/bin/python
 
 import argparse
+from functools import partial
 import json
 import os
 import multiprocessing as mp
 import tempfile
 import sys
-from typing import Dict, List, Tuple, Any
+from typing import Callable, Dict, List, Tuple, Any
 
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
+
+from rich.progress import track
 
 sys.path.append('/polyis/modules/TrackEval')
 import trackeval
@@ -201,12 +204,15 @@ def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int,
     # Create evaluator configuration
     eval_config = {
         'USE_PARALLEL': True,
-        'NUM_PARALLEL_CORES': mp.cpu_count(),
+        'NUM_PARALLEL_CORES': int(mp.cpu_count() * 0.8),
         'BREAK_ON_ERROR': True,
-        'PRINT_RESULTS': True,
-        'OUTPUT_SUMMARY': True,
-        'OUTPUT_DETAILED': True,
-        'PLOT_CURVES': True
+        'PRINT_RESULTS': False,
+        'PRINT_CONFIG': False,
+        'TIME_PROGRESS': False,
+        'OUTPUT_SUMMARY': False,
+        'OUTPUT_DETAILED': False,
+        'PLOT_CURVES': False,
+        'OUTPUT_EMPTY_CLASSES': False,
     }
     
     # Create metrics
@@ -224,7 +230,7 @@ def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int,
     evaluator = trackeval.Evaluator(eval_config)
     
     # Run evaluation
-    results = evaluator.evaluate([dataset], metrics, show_progressbar=True)
+    results = evaluator.evaluate([dataset], metrics)
     
     # Clean up temporary files
     os.unlink(temp_tracking_file)
@@ -365,6 +371,11 @@ def create_simple_summary(results: List[Dict[str, Any]], output_dir: str) -> Non
     print(f"Summary saved to {summary_file}")
 
 
+def get_results(eval_task: Callable[[], dict], res_queue: "mp.Queue[tuple[int, dict]]", worker_id: int):
+    result = eval_task()
+    res_queue.put((worker_id, result))
+
+
 def main(args):
     """
     Main function that orchestrates the tracking accuracy evaluation process.
@@ -412,6 +423,7 @@ def main(args):
         
         # Prepare arguments for parallel processing if requested
         eval_args = []
+        eval_tasks: list[Callable[[], dict]] = []
         for video_name, classifier, tile_size in sorted(video_tile_combinations):
             tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 'uncompressed_tracking',
                                          f'{classifier}_{tile_size}', 'tracking.jsonl')
@@ -422,14 +434,33 @@ def main(args):
                                       f'{classifier}_{tile_size}', 'accuracy')
             eval_args.append((video_name, classifier, tile_size, tracking_path, groundtruth_path, 
                              metrics_list, output_dir))
+            eval_tasks.append(partial(evaluate_tracking_accuracy, video_name, classifier,
+                                     tile_size, tracking_path, groundtruth_path, metrics_list, output_dir))
+        
         
         if args.parallel:
-            # Run evaluation in parallel
-            with mp.Pool(processes=mp.cpu_count()) as pool:
-                results = pool.starmap(evaluate_tracking_accuracy, eval_args)
+            # # Run evaluation in parallel
+            # with mp.Pool(processes=mp.cpu_count()) as pool:
+            #     results = pool.starmap(evaluate_tracking_accuracy, eval_args)
+
+            res_queue = mp.Queue()
+            processes: list[mp.Process] = []
+            for worker_id, eval_task in enumerate(eval_tasks):
+                process = mp.Process(target=get_results, args=(eval_task, res_queue, worker_id))
+                process.start()
+                processes.append(process)
+
+            for process in track(processes):
+                process.join()
+                process.terminate()
+            
+            results = []
+            for _ in range(len(eval_tasks)):
+                results.append(res_queue.get())
+            results = [result for _, result in sorted(results)]
         else:
             results = []
-            for eval_arg in eval_args:
+            for eval_arg in track(eval_args):
                 results.append(evaluate_tracking_accuracy(*eval_arg))
     
     # Print summary

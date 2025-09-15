@@ -10,10 +10,8 @@ import tqdm
 import multiprocessing as mp
 from functools import partial
 from typing import Callable
-import torch
 
-from polyis.utilities import CACHE_DIR, ProgressBar
-
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar
 
 # TILE_SIZES = [30, 60, 120]
 TILE_SIZES = [60]
@@ -163,7 +161,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
 
 def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str, 
-                          gpu_id: int, command_queue: mp.Queue):
+                           gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tile_size combination.
     This function is designed to be called in parallel.
@@ -176,7 +174,6 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    video_name = os.path.basename(video_file_path)
     
     # Check if packed detections exist
     detections_file = os.path.join(video_file_path, 'packed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
@@ -186,27 +183,23 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
     packing_dir = os.path.join(video_file_path, 'packing', f'{classifier}_{tile_size}')
     assert os.path.exists(packing_dir)
     
-    print(f"Processing video {video_file_path} for unpacking")
+    # print(f"Processing video {video_file_path} for unpacking")
     
     detections_file = os.path.join(video_file_path, 'packed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
-    
-    packing_dir = os.path.join(video_file_path, 'packing', f'{classifier}_{tile_size}')
-    if not os.path.exists(packing_dir):
-        raise FileNotFoundError(f"Packing directory not found: {packing_dir}")
     
     unpacked_output_dir = os.path.join(video_file_path, 'uncompressed_detections', f'{classifier}_{tile_size}')
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
-    print(f"Saving unpacked detections to {unpacked_output_dir}")
+    # print(f"Saving unpacked detections to {unpacked_output_dir}")
     
     images_not_in_any_tile_dir = os.path.join(unpacked_output_dir, 'images_not_in_any_tile')
     os.makedirs(images_not_in_any_tile_dir, exist_ok=True)
-    print(f"Saving images not in any tile to {images_not_in_any_tile_dir}")
+    # print(f"Saving images not in any tile to {images_not_in_any_tile_dir}")
 
     images_center_not_in_any_tile_dir = os.path.join(unpacked_output_dir, 'images_center_not_in_any_tile')
     os.makedirs(images_center_not_in_any_tile_dir, exist_ok=True)
-    print(f"Saving images center not in any tile to {images_center_not_in_any_tile_dir}")
+    # print(f"Saving images center not in any tile to {images_center_not_in_any_tile_dir}")
 
     # dictionary to store all frame detections
     all_frame_detections: dict[int, list[list[float]]] = {}
@@ -214,9 +207,9 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
     with open(detections_file, 'r') as f:
         # Process each detection file
         contents = f.readlines()
-        kwargs = {'completed': 0,
-                  'total': len(contents),
-                  'description': f"{video_file_path} {tile_size:>3} {classifier}"}
+        description = f"{video_file_path} {tile_size:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}}"
+        kwargs = {'completed': 0, 'total': len(contents), 'description': description}
+        mod = max(1, int(len(contents) * 0.05))
         command_queue.put((device, kwargs))
         for idx, line in enumerate(contents):
             content = json.loads(line)
@@ -286,7 +279,10 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
                     all_frame_detections[frame_idx] = []
                 all_frame_detections[frame_idx].extend(bboxes)
 
-            command_queue.put((device, {'completed': idx + 1}))
+            if idx % mod == 0:
+                command_queue.put((device, {'completed': idx + 1,
+                                            'description': description,
+                                            'total': len(contents)}))
     
     # Save unpacked detections organized by frame
     # Sort frames by index
@@ -297,8 +293,8 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
         for frame_idx in sorted_frames:
             bboxes = all_frame_detections[frame_idx]
             f.write(json.dumps({ 'frame_idx': frame_idx, 'bboxes': bboxes }) + '\n')
-    
-    print(f"Saved unpacked detections for {len(sorted_frames)} frames")
+
+    # print(f"Saved unpacked detections for {len(sorted_frames)} frames")
 
 
 def main(args):
@@ -327,7 +323,7 @@ def main(args):
         - If no packed detections are found for a video/tile_size/classifier combination, that combination is skipped
         - The number of processes equals the number of available GPUs
     """
-    mp.set_start_method('spawn', force=True)
+    # mp.set_start_method('spawn', force=True)
     
     dataset_dir = os.path.join(CACHE_DIR, args.dataset)
     
@@ -361,11 +357,13 @@ def main(args):
     
     # Set up multiprocessing with ProgressBar
     # Use number of available CPUs as the number of processes
-    num_processes = int(mp.cpu_count() * 0.8)
+    num_processes = int(mp.cpu_count() * 0.5)
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    ProgressBar(num_workers=num_processes, num_tasks=len(funcs)).run_all(funcs)
+    # num_processes = 10
+    
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
     print("All tasks completed!")
 
 
