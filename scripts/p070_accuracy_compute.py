@@ -263,11 +263,8 @@ def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int,
     }
 
 
-def get_results(eval_task: Callable[[], dict],
-                res_queue: "mp.Queue[tuple[int, dict]]",
-                worker_id: int):
-    result = eval_task()
-    res_queue.put((worker_id, result))
+def get_results(eval_task: Callable[[], dict], res_queue: "mp.Queue[dict]"):
+    res_queue.put(eval_task())
 
 
 def main(args):
@@ -335,16 +332,14 @@ def main(args):
 
         res_queue = mp.Queue()
         processes: list[mp.Process] = []
-        for worker_id, eval_task in enumerate(eval_tasks):
-            process = mp.Process(target=get_results,
-                                    args=(eval_task, res_queue, worker_id))
+        for eval_task in eval_tasks:
+            process = mp.Process(target=get_results, args=(eval_task, res_queue))
             process.start()
             processes.append(process)
         
         results = []
         for _ in track(range(len(eval_tasks)), total=len(eval_tasks)):
             results.append(res_queue.get())
-        results = [result for _, result in sorted(results)]
 
         for process in track(processes):
             process.join()
