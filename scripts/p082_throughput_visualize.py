@@ -5,11 +5,11 @@ import json
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Callable, Dict, List, Tuple, Any
 from collections import defaultdict
+from typing import Dict, List, Any, Tuple
 import tqdm
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
+from polyis.utilities import CACHE_DIR
 
 FORMATS = ['png']
 
@@ -23,201 +23,36 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_data_tables(data_dir: str) -> Tuple[List[Dict], List[Dict]]:
-    """Load the index construction and query execution data tables."""
-    index_file = os.path.join(data_dir, 'index_construction.json')
-    query_file = os.path.join(data_dir, 'query_execution.json')
+def load_measurements(measurements_dir: str) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+    """Load the processed measurement data."""
+    index_file = os.path.join(measurements_dir, 'index_construction_measurements.json')
+    query_timings_file = os.path.join(measurements_dir, 'query_execution_timings.json')
+    query_summaries_file = os.path.join(measurements_dir, 'query_execution_summaries.json')
+    metadata_file = os.path.join(measurements_dir, 'metadata.json')
     
     with open(index_file, 'r') as f:
-        index_data = json.load(f)
+        index_timings = json.load(f)
     
-    with open(query_file, 'r') as f:
-        query_data = json.load(f)
+    with open(query_timings_file, 'r') as f:
+        query_timings_data = json.load(f)
     
-    print(f"Loaded {len(index_data)} index construction entries")
-    print(f"Loaded {len(query_data)} query execution entries")
+    with open(query_summaries_file, 'r') as f:
+        query_summaries_data = json.load(f)
     
-    return index_data, query_data
-
-
-def parse_runtime_file(file_path: str, stage: str, accessor: Callable[[Dict], List[Dict]] | None = None) -> List[Dict]:
-    """Parse a runtime file and extract timing data."""
-    if not os.path.exists(file_path):
-        return []
-    
-    timings = []
-    ignored_ops = ['total_frame_time', 'read_frame', 'save_canvas', 'save_mapping_files']
-    
-    with open(file_path, 'r') as f:
-        if file_path.endswith('.jsonl'):
-            # JSONL format - one JSON object per line
-            for line in f:
-                line = line.strip()
-                if line:
-                    data = json.loads(line)
-                    if accessor is not None:
-                        data = accessor(data)
-                    if isinstance(data, dict):
-                        data = [data]
-                    assert isinstance(data, list), f"Expected a list of dictionaries, got {type(data)}, {stage}, {file_path}"
-                    for item in data:
-                        if 'time' in item and isinstance(item['time'], (int, float)):
-                            # Convert from milliseconds to seconds
-                            item_copy = item.copy()
-                            item_copy['time'] = item['time'] / 1000.0
-                            if item_copy['op'] in ignored_ops:
-                                continue
-                            timings.append({'stage': stage, 'time': item_copy['time'], 'op': item_copy['op']})
-        elif file_path.endswith('.json'):
-            # JSON format - array of objects
-            data = json.load(f)
-            assert isinstance(data, list), f"Expected a list of objects, got {type(data)}, {stage}, {stage}"
-            for entry in data:
-                if accessor is not None:
-                    entry = accessor(entry)
-                if isinstance(entry, dict):
-                    entry = [entry]
-
-                assert isinstance(entry, list), f"Expected a list of dictionaries, got {type(entry)}, {stage}"
-                for item in entry:
-                    if 'time' in item and isinstance(item['time'], (int, float)):
-                        # Convert from milliseconds to seconds
-                        item_copy = item.copy()
-                        item_copy['time'] = item['time'] / 1000.0
-                        if item_copy['op'] in ignored_ops:
-                            continue
-                        timings.append({'stage': stage, 'time': item_copy['time'], 'op': item_copy['op']})
-    
-    return timings
-
-
-def parse_index_construction_timings(index_data: List[Dict]) -> Dict[str, Any]:
-    """Parse timing data for index construction stages."""
-    timings = {
-        '011_tune_detect': defaultdict(list),
-        '012_tune_create_training_data': defaultdict(list),
-        '013_tune_train_classifier': defaultdict(list)
+    # Reconstruct the query_timings structure
+    query_timings = {
+        'timings': query_timings_data,
+        'summaries': query_summaries_data
     }
     
-    stage_summaries = {
-        '011_tune_detect': defaultdict(list),
-        '012_tune_create_training_data': defaultdict(list),
-        '013_tune_train_classifier': defaultdict(list)
-    }
-
-    accessors = {
-        '011_tune_detect': lambda row: row[3],
-        '012_tune_create_training_data': lambda row: row,
-        '013_tune_train_classifier': lambda row: row
-    }
+    with open(metadata_file, 'r') as f:
+        metadata = json.load(f)
     
-    for entry in index_data:
-        dataset_video = entry['dataset/video']
-        classifier = entry['classifier']
-        config_key = f"{dataset_video}_{classifier}"
-        
-        for stage, file_path in entry['runtime_files']:
-            file_timings = parse_runtime_file(file_path, stage, accessors[stage])
-            
-            if not file_timings:
-                continue
-            
-            # Store individual timings
-            timings[stage][config_key].extend(file_timings)
-            
-            # Calculate stage summary
-            if stage == '011_tune_detect':
-                # Detection stage - sum all operations
-                total_time = sum(t['time'] for t in file_timings if isinstance(t['time'], (int, float)))
-                stage_summaries[stage][config_key].append(total_time)
-            
-            elif stage == '012_tune_create_training_data':
-                # Training data creation - group by operation and tile size
-                for timing in file_timings:
-                    op = timing.get('op', 'unknown')
-                    tile_size = timing.get('tile_size', 'unknown')
-                    time_val = timing.get('time', 0)
-                    
-                    op_key = f"{config_key}_{tile_size}_{op}"
-                    stage_summaries[stage][op_key].append(time_val)
-            
-            elif stage == '013_tune_train_classifier':
-                # Classifier training and testing - sum all training and testing epochs
-                total_time = sum(t['time'] for t in file_timings)
-                stage_summaries[stage][config_key].append(total_time)
+    print(f"Loaded index construction measurements")
+    print(f"Loaded query execution timings and summaries")
+    print(f"Loaded metadata for {len(metadata['videos'])} videos")
     
-    return {
-        'timings': timings,
-        'summaries': stage_summaries
-    }
-
-
-def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
-    """Parse timing data for query execution stages."""
-    timings = {
-        '001_preprocess_groundtruth_detection': defaultdict(list),
-        '002_preprocess_groundtruth_tracking': defaultdict(list),
-        '020_exec_classify': defaultdict(list),
-        '030_exec_compress': defaultdict(list),
-        '040_exec_detect': defaultdict(list),
-        '060_exec_track': defaultdict(list)
-    }
-    
-    stage_summaries = {
-        '001_preprocess_groundtruth_detection': defaultdict(list),
-        '002_preprocess_groundtruth_tracking': defaultdict(list),
-        '020_exec_classify': defaultdict(list),
-        '030_exec_compress': defaultdict(list),
-        '040_exec_detect': defaultdict(list),
-        '060_exec_track': defaultdict(list)
-    }
-
-    accessors = {
-        '001_preprocess_groundtruth_detection': lambda row: row['runtime'],
-        '002_preprocess_groundtruth_tracking': lambda row: row['runtime'],
-        '020_exec_classify': lambda row: row['runtime'],
-        '030_exec_compress': lambda row: row['runtime'],
-        '040_exec_detect': lambda row: row,
-        '060_exec_track': lambda row: row['runtime']
-    }
-    
-    for entry in query_data:
-        dataset_video = entry['dataset/video']
-        classifier = entry['classifier']
-        tile_size = entry['tile_size']
-        config_key = f"{dataset_video}_{classifier}_{tile_size}"
-        
-        for stage, file_path in entry['runtime_files']:
-            file_timings = parse_runtime_file(file_path, stage, accessors[stage])
-            
-            if not file_timings:
-                continue
-            
-            # Store individual timings
-            timings[stage][config_key].extend(file_timings)
-            
-            # Calculate stage summary
-            total_time = sum(t['time'] for t in file_timings if isinstance(t['time'], (int, float)))
-            stage_summaries[stage][config_key].append(total_time)
-    
-    return {
-        'timings': timings,
-        'summaries': stage_summaries
-    }
-
-
-def extract_videos_from_data(query_timings: Dict[str, Any]) -> List[str]:
-    """Extract unique video names from the query timing data."""
-    videos = set()
-    for stage_timings in query_timings['timings'].values():
-        for config_key in stage_timings.keys():
-            # config_key format: dataset/video_classifier_tilesize
-            parts = config_key.split('_')
-            if len(parts) >= 3:
-                # Extract video name (everything before the last two underscores)
-                video_part = '_'.join(parts[:-2])  # Remove classifier and tilesize
-                videos.add(video_part)
-    return sorted(list(videos))
+    return index_timings, query_timings, metadata
 
 
 def create_query_execution_visualizations(query_timings: Dict[str, Any], output_dir: str, dataset: str = 'b3d'):
@@ -239,6 +74,20 @@ def create_query_execution_visualizations(query_timings: Dict[str, Any], output_
         create_per_video_query_execution_visualization(query_timings, output_dir, dataset, video, video_name)
 
 
+def extract_videos_from_data(query_timings: Dict[str, Any]) -> List[str]:
+    """Extract unique video names from the query timing data."""
+    videos = set()
+    for stage_timings in query_timings['timings'].values():
+        for config_key in stage_timings.keys():
+            # config_key format: dataset/video_classifier_tilesize
+            parts = config_key.split('_')
+            if len(parts) >= 3:
+                # Extract video name (everything before the last two underscores)
+                video_part = '_'.join(parts[:-2])  # Remove classifier and tilesize
+                videos.add(video_part)
+    return sorted(list(videos))
+
+
 def create_average_query_execution_visualization(query_timings: Dict[str, Any], output_dir: str, dataset: str, videos: List[str]):
     """Create average query execution visualization across all videos."""
     # Prepare data for pipeline visualization
@@ -246,9 +95,8 @@ def create_average_query_execution_visualization(query_timings: Dict[str, Any], 
     stage_names = ['Classify', 'Compress', 'Detect', 'Track']
     
     # Group by classifier and tile size 
-    # classifiers = ['SimpleCNN', 'groundtruth']
-    classifiers = CLASSIFIERS_TO_TEST + ['groundtruth']
-    tile_sizes = [30, 60]  #, 120]
+    classifiers = ['SimpleCNN', 'groundtruth']  # Default classifiers
+    tile_sizes = [30, 60]
     
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     axes = axes.flatten()
@@ -360,10 +208,8 @@ def create_per_video_query_execution_visualization(query_timings: Dict[str, Any]
     stage_names = ['Classify', 'Compress', 'Detect', 'Track']
     
     # Group by classifier and tile size 
-    # classifiers = ['SimpleCNN', 'groundtruth']
-    # tile_sizes = [30, 60, 120]
-    classifiers = CLASSIFIERS_TO_TEST + ['groundtruth']
-    tile_sizes = [30, 60]  #, 120]
+    classifiers = ['SimpleCNN', 'groundtruth']  # Default classifiers
+    tile_sizes = [30, 60]
     
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     axes = axes.flatten()
@@ -840,16 +686,16 @@ def main():
     """Main function to create runtime breakdown visualizations."""
     args = parse_args()
     
-    print(f"Loading throughput data tables for dataset: {args.dataset}")
-    data_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput')
-    print(f"Data directory: {data_dir}")
-    index_data, query_data = load_data_tables(data_dir)
+    print(f"Loading processed measurements for dataset: {args.dataset}")
+    measurements_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput', 'measurements')
+    print(f"Measurements directory: {measurements_dir}")
     
-    print("Parsing index construction timing data...")
-    index_timings = parse_index_construction_timings(index_data)
+    if not os.path.exists(measurements_dir):
+        print(f"Error: Measurements directory {measurements_dir} does not exist.")
+        print("Please run scripts/p081_throughput_compute.py first to generate the measurements.")
+        return
     
-    print("Parsing query execution timing data...")
-    query_timings = parse_query_execution_timings(query_data)
+    index_timings, query_timings, metadata = load_measurements(measurements_dir)
     
     print("Creating query execution visualizations...")
     throughput_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput')

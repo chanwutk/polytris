@@ -12,7 +12,12 @@ import multiprocessing as mp
 from functools import partial
 
 from polyis import dtypes
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, DATA_DIR, format_time, load_classification_results, CLASSIFIERS_TO_TEST, ProgressBar
+from polyis.utilities import (
+    CACHE_DIR, CLASSIFIERS_CHOICES,
+    DATA_DIR, format_time,
+    load_classification_results,
+    CLASSIFIERS_TO_TEST, ProgressBar
+)
 from lib.pack_append import pack_append
 from lib.group_tiles import group_tiles
 
@@ -122,10 +127,12 @@ def apply_pack(
     # Profile: Update index_map and det_info
     step_start = (time.time_ns() / 1e6)
     for gid, (y, x, mask, offset) in enumerate(positions):
-        assert not np.any(index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] & mask), (index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0], mask)
+        h = mask.shape[0]
+        w = mask.shape[1]
+        assert not np.any(index_map[y:y+h, x:x+w, 0] & mask), (index_map[y:y+h, x:x+w, 0], mask)
         mask = mask.astype(np.int32)
-        index_map[y:y+mask.shape[0], x:x+mask.shape[1], 0] += mask * (gid + 1)
-        index_map[y:y+mask.shape[0], x:x+mask.shape[1], 1] += mask * frame_idx
+        index_map[y:y+h, x:x+w, 0] += mask * (gid + 1)
+        index_map[y:y+h, x:x+w, 1] += mask * frame_idx
         offset_lookup[(int(frame_idx), int(gid + 1))] = ((y, x), offset)
     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
 
