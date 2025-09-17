@@ -16,9 +16,8 @@ from scipy.ndimage import binary_dilation # check this import later
 from scripts.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, progress_bars
 
 
-TILE_SIZES = [30, 60]  #, 120]
-
-
+TILE_SIZES = [60]  #, 30, 120]
+MANUALLY_INCLUDE = {"jnc00.mp4": [18, 36, 54, 72, 90, 17, 35, 53, 133, 134, 152, 161, 179, 197, 215, 22, 23, 24, 25, 26]} # comment this out if not needed
 def get_classifier_class(classifier_name: str):
     """
     Get the classifier class based on the classifier name.
@@ -146,94 +145,55 @@ def load_model(video_path: str, tile_size: int, classifier_name: str) -> "torch.
     raise FileNotFoundError(f"No trained model found for tile size {tile_size} in {video_path}")
 
 
-def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int, filter: np.ndarray, device: str) -> tuple[np.ndarray, list[dict]]:
+def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int, relevant_indices: np.ndarray, device: str) -> tuple[np.ndarray, list[dict]]:
     """
     Process a single video frame with the specified tile size and return relevance scores and timing information.
-    
-    This function splits the input frame into tiles of the specified size, runs inference
-    with the trained model, and returns relevance scores for each tile along with timing information.
-    
+
     Args:
-        frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3)
-            where H and W are the frame height and width, and 3 represents RGB channels
-        model (torch.nn.Module): Trained model for the specified tile size
-        tile_size (int): Size of tiles to use for processing (30, 60, or 120)
-        filter (np.ndarray): Filters out tiles with filter[i][j] = 0
-        device (str): Device to use for processing
-            
+        frame (np.ndarray): The video frame to process.
+        model (torch.nn.Module): The classification model.
+        tile_size (int): The size of the square tiles.
+        relevant_indices (np.ndarray): A 1D array of indices for the tiles to be processed.
+        device (str): The device ('cuda' or 'cpu') to run the model on.
+
     Returns:
-        tuple[np.ndarray, list[dict[str, float]]]: A tuple containing:
-            - 2D grid of relevance scores where each element represents the relevance score
-              (probability between 0 and 1) for the corresponding tile in the frame
-            - List of dictionaries with 'op' (operation) and 'time' keys for preprocessing and model inference
-            
-    Note:
-        - Frame is padded if necessary to ensure divisibility by tile size
-        - Input frame is normalized to [0, 1] range before inference
-        - Model is expected to output logits, which are converted to probabilities using sigmoid
-        - Timing information includes preprocessing and model inference times
+        tuple[np.ndarray, list[dict]]: A tuple containing:
+            - A 2D array of relevance scores.
+            - A dictionary of runtime metrics.
     """
     with torch.no_grad():
         start_time = (time.time_ns() / 1e6)
-        # Convert frame to tensor and ensure it's in HWC format
+        
         frame_tensor = torch.from_numpy(frame).to(device).float()
-        
-        # Pad frame to be divisible by tile_size
-        padded_frame = padHWC(frame_tensor, tile_size, tile_size)  # type: ignore
-        
-        # Split frame into tiles
+        padded_frame = padHWC(frame_tensor, tile_size, tile_size)
         tiles = splitHWC(padded_frame, tile_size, tile_size)
         
-        # Flatten tiles for batch processing
         num_tiles = tiles.shape[0] * tiles.shape[1]
-        tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
-
-         # TODO: list of entry tiles hard coded for now 
-        manually_include = [] # TODO: enter tile numbers you want to include here! 
-        manual_filter = np.zeros(num_tiles, dtype=np.uint8)
-        if manually_include:
-            manual_filter[manually_include] = 1
-
-    
-        if filter is None:
-            tiles_to_process = tiles_flat
+        # tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
+        tiles_flat = torch.flatten(tiles)
+        
+        if relevant_indices is None:
             relevant_indices = np.arange(num_tiles)
-        else:
-            # Flaten filter and obtain relevant indices 
-            filter_flat = filter.reshape(-1)
-            relevant_indices = np.where(filter_flat == 1)[0]
-
-        relevant_indices = np.logical_or(relevant_indices, manually_include)
-        # Check if there are any relevant tiles to process
         if len(relevant_indices) == 0:
             transform_runtime = (time.time_ns() / 1e6) - start_time
             inference_runtime = 0.0
-            # Return an all-zero grid if no relevant tiles are found
             relevance_grid = np.zeros((tiles.shape[0], tiles.shape[1]), dtype=np.uint8)
             return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
             
-        # Select only the relevant tiles for inference
-        tiles_to_process = tiles_flat[relevant_indices]
-
-        # Normalize to [0, 1] range
+            
+        # tiles_to_process = tiles_flat[relevant_indices]
+        tiles_to_process = torch.index_select(tiles_flat, 0, relevant_indices)
         tiles_to_process = tiles_to_process / 255.0
-        # Convert to NCHW format for the model
         tiles_nchw = tiles_to_process.permute(0, 3, 1, 2)
         transform_runtime = (time.time_ns() / 1e6) - start_time
         
-        # Run inference
         start_time = (time.time_ns() / 1e6)
         predictions = model(tiles_nchw)
-        # Apply sigmoid to get probabilities
         probabilities = (predictions * 255).to(torch.uint8).cpu().numpy().flatten()
     
-        # Reshape back to grid format
         grid_height, grid_width = tiles.shape[:2]
-
-        # Create an empty grid for the final relevance scores
         relevance_grid = np.zeros((grid_height * grid_width), dtype=np.uint8)
 
-        # Place the predicted probabilities back into their correct positions in the grid
         relevance_grid[relevant_indices] = probabilities
 
         relevance_grid = relevance_grid.reshape(grid_height, grid_width)
@@ -254,7 +214,7 @@ def mark_neighbor_tiles(relevance_grid, threshold):
 
     Returns:
         np.ndarray: A new 2D array of 0s and 1s, where 1s indicate
-                    relevant tiles or their neighbors.
+                    relevant tiles or their neighbors. (Mask)
     """
     # Create a boolean mask for tiles above the threshold
     relevant_mask = (relevance_grid >= threshold)
@@ -263,9 +223,11 @@ def mark_neighbor_tiles(relevance_grid, threshold):
     kernel = np.ones((3, 3), dtype=np.uint8)
 
     # Apply dilation to expand the mask to include neighbors
-    dilated_mask = binary_dilation(relevant_mask, structure=kernel).astype(np.uint8)
+    dilated_mask = binary_dilation(relevant_mask, structure=kernel)
 
-    return dilated_mask
+    # convert to list of relevant indices
+    relevant_indices = np.where(dilated_mask.flatten())[0]
+    return relevant_indices
 
 def process_video(video_path: str, model, tile_size: int, output_path: str, command_queue: mp.Queue, device: str, classifier: str):
     """
@@ -316,23 +278,32 @@ def process_video(video_path: str, model, tile_size: int, output_path: str, comm
     print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f:
         frame_idx = 0
-        relevance_grid = None # not sure where to put this 
-        threshold = 0.5 # not sure where to put this
         command_queue.put((device, {'description': f"{video_path.split('/')[-1]} {tile_size:>3} {classifier}",
                                     'completed': 0, 'total': frame_count}))
+        prev_relevance_grid = None # no previous frame yet
+        threshold = 0.5 # modify if necessary
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
             
-            if relevance_grid:
-                prev_relevance_grid_filter = mark_neighbor_tiles(relevance_grid, threshold)
-            else:
-                prev_relevance_grid_filter = None
+            if frame_idx == 0:
+                # process entire first frame
+                current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, None, device)
 
-            # Process frame with the model
-            relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, prev_relevance_grid_filter, device)
+            else:
+                # we know prev_relevance_grid is not none 
+                relevant_indices = mark_neighbor_tiles(prev_relevance_grid, threshold)
+                manual_include = np.array([18, 36, 54, 72, 90, 17, 35, 53, 133, 134, 152, 161, 179, 197, 215, 22, 23, 24, 25, 26])
+                relevant_indices = np.union1d(relevant_indices, manual_include) # manual include
+                current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, relevant_indices, device)
+
             
+            # Update the relevance grid for the next loop iteration
+            prev_relevance_grid = current_relevance_grid
+            
+
+
             # Create result entry for this frame
             frame_entry = {
                 "frame_idx": frame_idx,
@@ -340,8 +311,8 @@ def process_video(video_path: str, model, tile_size: int, output_path: str, comm
                 "frame_size": [height, width],
                 "tile_size": tile_size,
                 "runtime": runtime,
-                "classification_size": relevance_grid.shape,
-                "classification_hex": relevance_grid.flatten().tobytes().hex(),
+                "classification_size": current_relevance_grid.shape,
+                "classification_hex": current_relevance_grid.flatten().tobytes().hex(),
             }
             
             # Write to JSONL file

@@ -14,7 +14,7 @@ import multiprocessing as mp
 from scripts.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results
 
 
-TILE_SIZES = [30, 60, 120]
+TILE_SIZES = [60] # 30, 120
 
 
 def parse_args():
