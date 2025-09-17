@@ -7,8 +7,12 @@ import shutil
 import numpy as np
 import cv2
 import tqdm
+import multiprocessing as mp
+from functools import partial
+from typing import Callable
+import torch
 
-from scripts.utilities import CACHE_DIR
+from polyis.utilities import CACHE_DIR, ProgressBar
 
 
 # TILE_SIZES = [30, 60, 120]
@@ -158,15 +162,30 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
     return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
-def process_video_unpacking(video_file_path: str, tile_size: int, classifier: str):
+def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str, 
+                          gpu_id: int, command_queue: mp.Queue):
     """
-    Process a single video for unpacking detection results.
+    Process unpacking for a single video/classifier/tile_size combination.
+    This function is designed to be called in parallel.
     
     Args:
         video_file_path (str): Path to the video file directory
         tile_size (int): Tile size used for packing
         classifier (str): Classifier name used for packing and detection
+        gpu_id (int): GPU ID to use for processing
+        command_queue (mp.Queue): Queue for progress updates
     """
+    device = f'cuda:{gpu_id}'
+    video_name = os.path.basename(video_file_path)
+    
+    # Check if packed detections exist
+    detections_file = os.path.join(video_file_path, 'packed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
+    assert os.path.exists(detections_file)
+    
+    # Check if packing directory exists
+    packing_dir = os.path.join(video_file_path, 'packing', f'{classifier}_{tile_size}')
+    assert os.path.exists(packing_dir)
+    
     print(f"Processing video {video_file_path} for unpacking")
     
     detections_file = os.path.join(video_file_path, 'packed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
@@ -194,7 +213,12 @@ def process_video_unpacking(video_file_path: str, tile_size: int, classifier: st
     
     with open(detections_file, 'r') as f:
         # Process each detection file
-        for line in tqdm.tqdm(f, desc=f"Unpacking detections for tile size {tile_size}"):
+        contents = f.readlines()
+        kwargs = {'completed': 0,
+                  'total': len(contents),
+                  'description': f"{video_file_path} {tile_size:>3} {classifier}"}
+        command_queue.put((device, kwargs))
+        for idx, line in enumerate(contents):
             content = json.loads(line)
             image_file: str = content['image_file']
 
@@ -261,6 +285,8 @@ def process_video_unpacking(video_file_path: str, tile_size: int, classifier: st
                 if frame_idx not in all_frame_detections:
                     all_frame_detections[frame_idx] = []
                 all_frame_detections[frame_idx].extend(bboxes)
+
+            command_queue.put((device, {'completed': idx + 1}))
     
     # Save unpacked detections organized by frame
     # Sort frames by index
@@ -277,32 +303,32 @@ def process_video_unpacking(video_file_path: str, tile_size: int, classifier: st
 
 def main(args):
     """
-    Main function that orchestrates the detection unpacking process.
+    Main function that orchestrates the detection unpacking process using parallel processing.
     
     This function serves as the entry point for the script. It:
     1. Validates the dataset directory exists
-    2. Iterates through all videos in the dataset directory
-    3. For each video, finds packed detection files for the specified tile size(s)
-    4. Loads corresponding mapping files and unpacks detections back to original frame coordinates
-    5. Saves unpacked detections organized by frame
+    2. Creates a list of all video/classifier/tile_size combinations to process
+    3. Uses multiprocessing to process tasks in parallel across available GPUs
+    4. Processes each video and saves unpacked detection results
     
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
-            - tile_size (str): Tile size to use for unpacking ('64', '128', or 'all')
-            - classifier (str): Classifier name to use (default: 'SimpleCNN')
             
     Note:
         - The script expects packed detections from 040_exec_detect.py in:
           {CACHE_DIR}/{dataset}/{video_file}/packed_detections/{classifier}_{tile_size}/detections.jsonl
-        - The script expects mapping files from 030_exec_pack.py in:
+        - The script expects mapping files from 030_exec_compress.py in:
           {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/
         - Unpacked detections are saved to:
           {CACHE_DIR}/{dataset}/{video_file}/uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
         - Each line in the output JSONL file contains one bounding box [x1, y1, x2, y2] in original frame coordinates
-        - When tile_size is 'all', all available tile sizes are processed
-        - If no packed detections are found for a video/tile_size combination, that combination is skipped
+        - All available video/classifier/tile_size combinations are processed
+        - If no packed detections are found for a video/tile_size/classifier combination, that combination is skipped
+        - The number of processes equals the number of available GPUs
     """
+    mp.set_start_method('spawn', force=True)
+    
     dataset_dir = os.path.join(CACHE_DIR, args.dataset)
     
     if not os.path.exists(dataset_dir):
@@ -311,19 +337,36 @@ def main(args):
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, f))]
     
-    # Process each video file
+    # Create tasks list with all video/classifier/tile_size combinations
+    funcs: list[Callable[[int, mp.Queue], None]] = []
     for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
         
-        print(f"Processing video file: {video_file}")
-
         packed_detections_dir = os.path.join(video_file_path, 'packed_detections')
+        if not os.path.exists(packed_detections_dir):
+            print(f"No packed detections directory found for {video_file}, skipping")
+            continue
+    
+        uncompressed_detections_dir = os.path.join(video_file_path, 'uncompressed_detections')
+        if os.path.exists(uncompressed_detections_dir):
+            shutil.rmtree(uncompressed_detections_dir)
+            
         for classifier_tilesize in sorted(os.listdir(packed_detections_dir)):
             classifier, tile_size = classifier_tilesize.split('_')
             tile_size = int(tile_size)
-
-            print(f"Processing classifier: {classifier}, tile size: {tile_size}")
-            process_video_unpacking(video_file_path, tile_size, classifier)
+            
+            funcs.append(partial(process_unpacking_task, video_file_path, tile_size, classifier))
+    
+    print(f"Created {len(funcs)} tasks to process")
+    
+    # Set up multiprocessing with ProgressBar
+    # Use number of available CPUs as the number of processes
+    num_processes = int(mp.cpu_count() * 0.8)
+    if len(funcs) < num_processes:
+        num_processes = len(funcs)
+    
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs)).run_all(funcs)
+    print("All tasks completed!")
 
 
 if __name__ == '__main__':

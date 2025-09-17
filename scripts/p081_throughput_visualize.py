@@ -9,7 +9,7 @@ from typing import Callable, Dict, List, Tuple, Any
 from collections import defaultdict
 import tqdm
 
-from scripts.utilities import CACHE_DIR
+from polyis.utilities import CACHE_DIR
 
 FORMATS = ['png']
 

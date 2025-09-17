@@ -5,18 +5,11 @@ channels:
 dependencies:
   - python=3.13
 
-  # detectron2 dependencies
-  - fvcore>=0.1.5,<0.1.6
-  - cloudpickle
-  - omegaconf>=2.1,<2.4
-  - pycocotools>=2.0.2
-  - iopath>=0.1.10,<0.1.11  # detectron2 uses >=0.1.7,<0.1.10, but this version will raise an error: "AttributeError: 'NativePathHandler' object has no attribute '_evt'"
-
   # darknet make dependency
   - nvidia/label/cuda-12.1.1::cuda-nvcc
 
   - pip
-  - pip:
+  - pip:  # Need to install torch and torchvision separately because of index url
     - --index-url https://download.pytorch.org/whl/cu124
     - torch
     - torchvision

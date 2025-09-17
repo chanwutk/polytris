@@ -4,14 +4,13 @@ import argparse
 import json
 import os
 import shutil
-import cv2
 import numpy as np
 from rich.progress import track
 import matplotlib.pyplot as plt
 from typing import Any
 import multiprocessing as mp
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results
+from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections
 
 
 TILE_SIZES = [60] # 30, 120
@@ -26,7 +25,6 @@ def parse_args():
             - dataset (str): Dataset name to process (default: 'b3d')
             - tile_size (int | str): Tile size to use for classification (choices: 30, 60, 120, 'all')
             - threshold (float): Threshold for classification visualization (default: 0.5)
-            - statistics (bool): Whether to compare classification results with groundtruth and generate statistics
     """
     parser = argparse.ArgumentParser(description='Visualize video tile classification results')
     parser.add_argument('--dataset', required=False,
@@ -36,10 +34,6 @@ def parse_args():
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification visualization (0.0 to 1.0)')
-    parser.add_argument('--statistics', action='store_true',
-                        help='Compare classification results with groundtruth and generate statistics (no video output, ignores --groundtruth flag)')
-    parser.add_argument('--processes', type=int, default=None,
-                        help='Number of processes to use for parallel processing (default: number of CPU cores)')
     return parser.parse_args()
 
 
@@ -71,25 +65,9 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
     # Calculate the total image dimensions based on grid and tile size
     total_height = grid_height * tile_size
     total_width = grid_width * tile_size
-    # detection_bitmap = np.zeros((total_height, total_width), dtype=np.uint32)
-    detection_bitmap = np.zeros((grid_height, grid_width), dtype=np.uint8)
 
-    # Mark all detections on the bitmap
-    for detection in detections:
-        if len(detection) != 5:
-            continue
-
-        # bbox format: [track_id, x1, y1, x2, y2]
-        _track_id, det_x1, det_y1, det_x2, det_y2 = detection
-
-        # Convert to integer coordinates and ensure they're within bitmap bounds
-        det_x1 = int(max(0, det_x1) // tile_size)
-        det_y1 = int(max(0, det_y1) // tile_size)
-        det_x2 = int(min(total_width - 1, det_x2) // tile_size)
-        det_y2 = int(min(total_height - 1, det_y2) // tile_size)
-
-        assert det_x2 >= det_x1 and det_y2 >= det_y1, f"Invalid detection: {detection}"
-        detection_bitmap[det_y1:det_y2+1, det_x1:det_x2+1] = 1
+    detection_bitmap = mark_detections(detections, total_width, total_height,
+                                       tile_size, slice(-4, None))
 
     error_map = np.zeros((grid_height, grid_width), dtype=int)
     actual_positives = []
@@ -155,7 +133,9 @@ def _evaluate_frame_worker(args):
 
     classifications = frame_result['classification_hex']
     classification_size = frame_result['classification_size']
-    classifications = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size).astype(np.float32) / 255.0
+    classifications = (np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8)
+        .reshape(classification_size)
+        .astype(np.float32) / 255.0)
 
     # Evaluate this frame
     frame_eval = evaluate_classification_accuracy(
@@ -168,7 +148,7 @@ def _evaluate_frame_worker(args):
 def create_statistics_visualizations(video_file: str, results: list[dict],
                                      groundtruth_detections: list[dict],
                                      tile_size: int, threshold: float,
-                                     output_dir: str, idx: int):
+                                     output_dir: str):
     """
     Create comprehensive statistics visualizations comparing classification results with groundtruth.
 
@@ -197,8 +177,9 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
 
     # Prepare arguments for parallel processing
     # Validate frame indices first
-    for frame_idx, (frame_result, frame_detections) in enumerate(zip(results, groundtruth_detections)):
-        assert frame_idx == frame_result['frame_idx'], f"frame_idx mismatch: {frame_idx} != {frame_result['frame_idx']}"
+    for frame_idx, frame_result in enumerate(results):
+        assert frame_idx == frame_result['frame_idx'], \
+            f"frame_idx mismatch: {frame_idx} != {frame_result['frame_idx']}"
 
     # Create arguments for worker function
     worker_args = [(frame_result, frame_detections, tile_size, threshold)
@@ -233,7 +214,54 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     overall_accuracy = (total_tp + total_tn) / (total_tp + total_tn + total_fp + total_fn) if (total_tp + total_tn + total_fp + total_fn) > 0 else 0.0
     overall_f1 = 2 * (overall_precision * overall_recall) / (overall_precision + overall_recall) if (overall_precision + overall_recall) > 0 else 0.0
 
-    # 1. Overall classification error summary
+    # Create individual visualizations
+    visualize_error_summary(
+        total_tp, total_tn, total_fp, total_fn,
+        overall_precision, overall_recall, overall_accuracy, overall_f1,
+        tile_size, output_dir
+    )
+    
+    visualize_error_over_time(
+        frame_metrics, groundtruth_detections,
+        overall_precision, overall_recall, overall_f1,
+        tile_size, output_dir
+    )
+    
+    visualize_spatial_misclassification(
+        all_error_counts, tile_size, output_dir
+    )
+    
+    visualize_score_distribution(
+        all_classification_scores, all_actual_positives,
+        threshold, tile_size, output_dir
+    )
+
+    print(f"Saved statistics visualizations to: {output_dir}")
+    print(f"Overall Metrics - Precision: {overall_precision:.3f}, Recall: {overall_recall:.3f}, F1: {overall_f1:.3f}")
+
+
+def visualize_error_summary(total_tp: int, total_tn: int, total_fp: int, total_fn: int,
+                            overall_precision: float, overall_recall: float, 
+                            overall_accuracy: float, overall_f1: float,
+                            tile_size: int, output_dir: str) -> str:
+    """
+    Create overall classification error summary visualization with stacked bar charts and metrics.
+    
+    Args:
+        total_tp (int): Total true positives
+        total_tn (int): Total true negatives
+        total_fp (int): Total false positives
+        total_fn (int): Total false negatives
+        overall_precision (float): Overall precision score
+        overall_recall (float): Overall recall score
+        overall_accuracy (float): Overall accuracy score
+        overall_f1 (float): Overall F1 score
+        tile_size (int): Tile size used for classification
+        output_dir (str): Directory to save visualization
+        
+    Returns:
+        str: Path to saved visualization file
+    """
     fig, ((ax1, ax3, ax2)) = plt.subplots(1, 3, figsize=(15, 6))
 
     # First stacked bar chart: x-axis is Predicted, color is Actual
@@ -302,8 +330,28 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     overall_summary_path = os.path.join(output_dir, f'010_overall_summary_tile{tile_size}.png')
     plt.savefig(overall_summary_path, dpi=300, bbox_inches='tight')
     plt.close()
+    
+    return overall_summary_path
 
-    # 2. Classification error over time - with 4 subplots
+
+def visualize_error_over_time(frame_metrics: list[dict], groundtruth_detections: list[dict],
+                              overall_precision: float, overall_recall: float, overall_f1: float,
+                              tile_size: int, output_dir: str) -> str:
+    """
+    Create classification error over time visualization with 4 subplots.
+    
+    Args:
+        frame_metrics (list[dict]): Frame-by-frame evaluation metrics
+        groundtruth_detections (list[dict]): Groundtruth detections per frame
+        overall_precision (float): Overall precision score
+        overall_recall (float): Overall recall score
+        overall_f1 (float): Overall F1 score
+        tile_size (int): Tile size used for classification
+        output_dir (str): Directory to save visualization
+        
+    Returns:
+        str: Path to saved visualization file
+    """
     fig, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, figsize=(25, 12))
 
     frame_indices = list(range(len(frame_metrics)))
@@ -384,11 +432,25 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     time_series_path = os.path.join(output_dir, f'020_time_series_tile{tile_size}.png')
     plt.savefig(time_series_path, dpi=300, bbox_inches='tight')
     plt.close()
+    
+    return time_series_path
 
-    # 3. Heatmap of error count for each tile
+
+def visualize_spatial_misclassification(all_error_counts: list[np.ndarray], tile_size: int, output_dir: str) -> str:
+    """
+    Create heatmap visualization of error count for each tile.
+    
+    Args:
+        all_error_counts (list[np.ndarray]): Error maps from all frames
+        tile_size (int): Tile size used for classification
+        output_dir (str): Directory to save visualization
+        
+    Returns:
+        str: Path to saved visualization file
+    """
     # Aggregate error maps across all frames
-    grid_height = len(frame_metrics[0]['error_map'])
-    grid_width = len(frame_metrics[0]['error_map'][0])
+    grid_height = len(all_error_counts[0])
+    grid_width = len(all_error_counts[0][0])
     aggregated_error_map = np.zeros((grid_height, grid_width), dtype=int)
 
     for error_map in all_error_counts:
@@ -411,9 +473,25 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     error_heatmap_path = os.path.join(output_dir, f'030_error_heatmap_tile{tile_size}.png')
     plt.savefig(error_heatmap_path, dpi=300, bbox_inches='tight')
     plt.close()
+    
+    return error_heatmap_path
 
-    # 4. Histograms: Classification Score distribution (split by correctness)
 
+def visualize_score_distribution(all_classification_scores: list[float], all_actual_positives: list[bool],
+                                 threshold: float, tile_size: int, output_dir: str) -> str:
+    """
+    Create histograms for classification score distribution split by correctness.
+    
+    Args:
+        all_classification_scores (list[float]): All classification scores
+        all_actual_positives (list[bool]): All actual positive labels
+        threshold (float): Classification threshold
+        tile_size (int): Tile size used for classification
+        output_dir (str): Directory to save visualization
+        
+    Returns:
+        str: Path to saved visualization file
+    """
     # Separate data for correct and incorrect predictions
     correct_scores = []
     incorrect_scores = []
@@ -496,232 +574,8 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     histogram_path = os.path.join(output_dir, f'040_histogram_scores_tile{tile_size}.png')
     plt.savefig(histogram_path, dpi=300, bbox_inches='tight')
     plt.close()
-
-    print(f"Saved statistics visualizations to: {output_dir}")
-    print(f"Overall Metrics - Precision: {overall_precision:.3f}, Recall: {overall_recall:.3f}, F1: {overall_f1:.3f}")
-
-
-def create_visualization_frame(frame: np.ndarray, classifications: np.ndarray,
-                              tile_size: int, threshold: float) -> np.ndarray:
-    """
-    Create a visualization frame by adjusting tile brightness based on classification scores.
-
-    Args:
-        frame (np.ndarray): Original video frame (H, W, 3)
-        classifications (np.ndarray): 2D grid of classification scores
-        tile_size (int): Size of tiles used for classification
-        threshold (float): Threshold value for visualization
-
-    Returns:
-        np.ndarray: Visualization frame with adjusted tile brightness
-    """
-    # Create a copy of the frame for visualization
-    vis_frame = frame.copy().astype(np.float32)
-
-    # Get grid dimensions
-    grid_height = len(classifications)
-    grid_width = len(classifications[0]) if grid_height > 0 else 0
-
-    # Calculate frame dimensions after padding
-    vis_height = grid_height * tile_size
-    vis_width = grid_width * tile_size
-
-    # Ensure frame is large enough (handle padding)
-    if frame.shape[0] < vis_height or frame.shape[1] < vis_width:
-        # Pad frame if necessary
-        pad_height = max(0, vis_height - frame.shape[0])
-        pad_width = max(0, vis_width - frame.shape[1])
-        vis_frame = np.pad(vis_frame, ((0, pad_height), (0, pad_width), (0, 0)), mode='constant')
-
-    # Apply brightness adjustments to each tile
-    for i in range(grid_height):
-        for j in range(grid_width):
-            # Get tile coordinates
-            y_start = i * tile_size
-            y_end = min(y_start + tile_size, vis_frame.shape[0])
-            x_start = j * tile_size
-            x_end = min(x_start + tile_size, vis_frame.shape[1])
-
-            # Get classification score for this tile
-            score = classifications[i][j]
-
-            # Only apply red tint if score is below threshold
-            if score <= threshold:
-                # Calculate red tint factor based on score (lower score = more red)
-                # Normalize score to 0-1 range, then invert so low scores get high red values
-                red_intensity = 1.0 - score  # Higher red for lower probability
-                
-                # Get the tile region
-                tile_region = vis_frame[y_start:y_end, x_start:x_end]
-                
-                # Apply red tint: reduce green and blue channels, enhance red channel
-                if red_intensity > 0:
-                    # Reduce green and blue channels based on red intensity
-                    tile_region[:, :, :2] = tile_region[:, :, :2] * (1.0 - red_intensity * 0.7)  # Blue and Green
-                    # Optionally enhance red channel slightly
-                    tile_region[:, :, 2] = np.minimum(255, tile_region[:, :, 2] * (1.0 + red_intensity * 0.3))  # Red
-                
-                # # Update the frame
-                # vis_frame[y_start:y_end, x_start:x_end] = tile_region
-            # If score > threshold, leave the tile unchanged (same as original image)
-
-    # Clip values to valid range and convert back to uint8
-    vis_frame = np.clip(vis_frame, 0, 255).astype(np.uint8)
-
-    return vis_frame
-
-
-def create_overlay_frame(frame: np.ndarray, classifications: np.ndarray,
-                        tile_size: int, threshold: float) -> np.ndarray:
-    """
-    Create an overlay frame showing tile boundaries and classification scores.
-
-    Args:
-        frame (np.ndarray): Original video frame (H, W, 3)
-        classifications (np.ndarray): 2D grid of classification scores
-        tile_size (int): Size of tiles used for classification
-        threshold (float): Threshold value for visualization
-
-    Returns:
-        np.ndarray: Overlay frame with tile boundaries and scores
-    """
-    # Create a copy of the frame for overlay
-    overlay_frame = frame.copy()
-
-    # Get grid dimensions
-    grid_height = len(classifications)
-    grid_width = len(classifications[0]) if grid_height > 0 else 0
-
-    # Calculate frame dimensions after padding
-    vis_height = grid_height * tile_size
-    vis_width = grid_width * tile_size
-
-    # Ensure frame is large enough (handle padding)
-    if frame.shape[0] < vis_height or frame.shape[1] < vis_width:
-        # Pad frame if necessary
-        pad_height = max(0, vis_height - frame.shape[0])
-        pad_width = max(0, vis_width - frame.shape[1])
-        overlay_frame = np.pad(overlay_frame, ((0, pad_height), (0, pad_width), (0, 0)), mode='constant')
-
-    # Draw tile boundaries and add score text
-    for i in range(grid_height):
-        for j in range(grid_width):
-            # Get tile coordinates
-            y_start = i * tile_size
-            y_end = min(y_start + tile_size, overlay_frame.shape[0])
-            x_start = j * tile_size
-            x_end = min(x_start + tile_size, overlay_frame.shape[1])
-
-            # Get classification score for this tile
-            score = classifications[i][j]
-
-            # Determine color based on threshold
-            if score < threshold:
-                color = (0, 0, 255)  # Red for below threshold
-            else:
-                color = (0, 255, 0)  # Green for above threshold
-
-            # Draw tile boundary
-            cv2.rectangle(overlay_frame, (x_start, y_start), (x_end, y_end), color, 2)
-
-            # Add score text (scaled for readability)
-            score_text = f"{score:.2f}"
-            font_scale = min(tile_size / 50.0, 0.8)  # Scale font based on tile size
-            font_thickness = max(1, int(tile_size / 32))
-
-            # Calculate text position (centered in tile)
-            text_size = cv2.getTextSize(score_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness)[0]
-            text_x = x_start + (tile_size - text_size[0]) // 2
-            text_y = y_start + (tile_size + text_size[1]) // 2
-
-            # Draw text with background for better visibility
-            cv2.putText(overlay_frame, score_text, (text_x, text_y),
-                       cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness + 1)
-            cv2.putText(overlay_frame, score_text, (text_x, text_y),
-                       cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, font_thickness)
-
-    return overlay_frame
-
-
-def save_visualization_frames(video_path: str, results: list, tile_size: int,
-                            threshold: float, output_dir: str, idx: int):
-    """
-    Save visualization frames for a video as a video file.
-
-    Args:
-        video_path (str): Path to the input video file
-        results (list): list of classification results from load_classification_results
-        tile_size (int): Tile size used for classification
-        threshold (float): Threshold value for visualization
-        output_dir (str): Directory to save visualization video
-
-    Raises:
-        ValueError: If the number of video frames doesn't match the length of results
-    """
-    print(f"Creating visualizations for video: {video_path}")
-
-    # Open video
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        print(f"Error: Could not open video {video_path}")
-        return
-
-    # Get actual video frame count and properties
-    video_frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    results_frame_count = len(results)
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    # Validate that video frame count matches results length
-    if video_frame_count != results_frame_count:
-        cap.release()
-        raise ValueError(
-            f"Frame count mismatch: Video has {video_frame_count} frames, "
-            f"but results contain {results_frame_count} frames. "
-            f"This suggests the classification results don't match the video file."
-        )
-
-    # Create output directory
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Create video writer for brightness visualization
-    brightness_video_path = os.path.join(output_dir, 'visualization.mp4')
-    # Use MP4V codec for compatibility
-    fourcc = cv2.VideoWriter.fourcc('m', 'p', '4', 'v')
-    brightness_writer = cv2.VideoWriter(brightness_video_path, fourcc, fps, (width, height))
-
-    if not brightness_writer.isOpened():
-        print(f"Error: Could not create video writer for {brightness_video_path}")
-        cap.release()
-        return
-
-    print(f"Creating visualization video with {video_frame_count} frames at {fps} FPS")
-
-    # Process all frames
-    for frame_idx in track(range(video_frame_count), description=f"Creating visualization video {idx + 1}"):
-        # Get frame from video
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        # Get classification results for this frame
-        frame_result = results[frame_idx]
-        classifications = frame_result['classification_hex']
-        classification_size = frame_result['classification_size']
-        classifications = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size).astype(np.float32) / 255.0
-
-        # Create brightness visualization frame
-        brightness_frame = create_visualization_frame(frame, classifications, tile_size, threshold)
-
-        # Write frame to video
-        brightness_writer.write(brightness_frame)
-
-    # Release resources
-    cap.release()
-    brightness_writer.release()
-
-    print(f"Saved visualization video to: {brightness_video_path}")
+    
+    return histogram_path
 
 
 def _process_classifier_tile_worker(args):
@@ -729,38 +583,29 @@ def _process_classifier_tile_worker(args):
     Worker function to process a single classifier-tile size combination for multiprocessing.
     
     Args:
-        args: Tuple containing (video_file, video_file_path, dataset_name, classifier_name, tile_size, threshold, statistics_mode, num_processes)
+        args: Tuple containing (video_file, dataset_name, classifier_name, tile_size, threshold)
     
     Returns:
         str: Status message about processing completion
     """
-    video_file, video_file_path, dataset_name, classifier_name, tile_size, threshold, statistics_mode, num_processes, idx = args
+    video_file, dataset_name, classifier_name, tile_size, threshold = args
 
     # Load classification results
     results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier_name)
     
-    if statistics_mode:
-        # Load groundtruth detections for comparison
-        groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
-        
-        # Create output directory for statistics visualizations
-        stats_output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
-        
-        # Create statistics visualizations
-        create_statistics_visualizations(
-            video_file, results, groundtruth_detections,
-            tile_size, threshold, stats_output_dir, idx
-        )
-        
-        return f"Completed statistics analysis for {video_file} {classifier_name} tile size {tile_size}"
-    else:
-        # Create output directory for visualizations
-        vis_output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}')
-        
-        # Create visualizations
-        save_visualization_frames(video_file_path, results, tile_size, threshold, vis_output_dir, idx)
-        
-        return f"Completed visualizations for {video_file} {classifier_name} tile size {tile_size}"
+    # Load groundtruth detections for comparison
+    groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
+    
+    # Create output directory for statistics visualizations
+    stats_output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
+    
+    # Create statistics visualizations
+    create_statistics_visualizations(
+        video_file, results, groundtruth_detections,
+        tile_size, threshold, stats_output_dir
+    )
+    
+    return f"Completed statistics analysis for {video_file} {classifier_name} tile size {tile_size}"
 
 
 def main(args):
@@ -770,25 +615,21 @@ def main(args):
     This function serves as the entry point for the script. It: 1. Validates the dataset directory exists
     2. Iterates through all videos in the dataset directory
     3. For each video, loads the classification results for the specified tile size(s)
-    4. Creates visualizations showing tile classifications and brightness adjustments
-    5. If --statistics flag is set, compares results with groundtruth and generates statistics
+    4. Creates visualizations showing tile classifications and statistics for each tile size
 
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
             - tile_size (str): Tile size to use for classification ('30', '60', '120', or 'all')
             - threshold (float): Threshold value for visualization (0.0 to 1.0)
-            - statistics (bool): Whether to compare classification results with groundtruth and generate statistics
 
          Note:
          - The script expects classification results from 020_exec_classify.py in:
-           {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/proxy_{tile_size}/
+           {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/proxy_{tile_size}/score.jsonl
          - Looks for score.jsonl files
          - Videos are read from {DATA_DIR}/{dataset}/
-         - Visualizations are saved to {CACHE_DIR}/{dataset}/{video_file}/relevancy/proxy_{tile_size}/
-         - The script creates a video file (visualization.mp4) showing brightness-adjusted frames
+         - Visualizations are saved to {CACHE_DIR}/{dataset}/{video_file}/relevancy/proxy_{tile_size}/statistics/
          - Summary statistics and plots are also generated
-         - When --statistics is set, groundtruth comparison visualizations are generated instead of video output
     """
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
 
@@ -819,10 +660,7 @@ def main(args):
     print(f"Found {len(video_files)} video files to process")
 
     # Determine number of processes to use
-    if args.processes is None:
-        num_processes = mp.cpu_count()
-    else:
-        num_processes = args.processes
+    num_processes = mp.cpu_count()
     
     print(f"Using {num_processes} processes for parallel processing")
 
@@ -843,6 +681,8 @@ def main(args):
             if '_' in file:
                 classifier_name = file.split('_')[0]
                 tile_size = int(file.split('_')[1])
+                if classifier_name != 'groundtruth':
+                    continue
                 classifier_tilesizes.append((classifier_name, tile_size))
         
         classifier_tilesizes = sorted(classifier_tilesizes)
@@ -854,8 +694,8 @@ def main(args):
         print(f"Found {len(classifier_tilesizes)} classifier tile sizes for {video_file}: {classifier_tilesizes}")
         
         # Add tasks for each classifier-tile size combination
-        for idx, (classifier_name, tile_size) in enumerate(classifier_tilesizes):
-            task_args = (video_file, video_file_path, args.dataset, classifier_name, tile_size, args.threshold, args.statistics, num_processes, idx)
+        for classifier_name, tile_size in classifier_tilesizes:
+            task_args = (video_file, args.dataset, classifier_name, tile_size, args.threshold)
             all_tasks.append(task_args)
 
     if not all_tasks:
@@ -864,15 +704,6 @@ def main(args):
 
     print(f"Processing {len(all_tasks)} tasks in parallel using {num_processes} processes...")
 
-    # Process all tasks in parallel
-    # with mp.Pool(processes=num_processes) as pool:
-    #     task_results = list(tqdm(
-    #         pool.imap(_process_classifier_tile_worker, all_tasks),
-    #         total=len(all_tasks),
-    #         desc="Processing tasks",
-    #         position=0,
-    #         leave=True,
-    #     ))
     task_results = list(track(
         map(_process_classifier_tile_worker, all_tasks),
         total=len(all_tasks),

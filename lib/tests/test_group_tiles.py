@@ -42,7 +42,7 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, 
     return filled
 
 
-def _group_tiles_original(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tuple[int, int]]]:
+def _group_tiles_original(bitmap: np.ndarray) -> list[tuple[np.ndarray, tuple[int, int]]]:
     """
     Original Python implementation of group_tiles (backup).
     """
@@ -56,7 +56,7 @@ def _group_tiles_original(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tup
     groups[1:h+1, 1:w+1] = _groups
     
     visited: set[int] = set()
-    bins: list[tuple[int, np.ndarray, tuple[int, int]]] = []
+    bins: list[tuple[np.ndarray, tuple[int, int]]] = []
     
     for i in range(groups.shape[0]):
         for j in range(groups.shape[1]):
@@ -75,7 +75,7 @@ def _group_tiles_original(bitmap: np.ndarray) -> list[tuple[int, np.ndarray, tup
             end = np.max(connected_tiles, axis=1) + 1
             
             mask = mask[offset[0]:end[0], offset[1]:end[1]]
-            bins.append((groups[i, j], mask, (int(offset[0] - 1), int(offset[1] - 1))))
+            bins.append((mask, (int(offset[0] - 1), int(offset[1] - 1))))
             visited.add(groups[i, j])
     
     return bins
@@ -101,11 +101,11 @@ class TestGroupTiles:
         # Compare results
         assert len(result_cython) == len(result_original), f"Different number of polyominoes: Cython={len(result_cython)}, Original={len(result_original)}"
         
-        # Sort results by group_id for consistent comparison
-        result_cython_sorted = sorted(result_cython, key=lambda x: x[0])
-        result_original_sorted = sorted(result_original, key=lambda x: x[0])
+        # Sort results by offset for consistent comparison
+        result_cython_sorted = sorted(result_cython, key=lambda x: (x[1][0], x[1][1]))
+        result_original_sorted = sorted(result_original, key=lambda x: (x[1][0], x[1][1]))
         
-        for i, ((cython_id, cython_mask, cython_offset), (orig_id, orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
+        for i, ((cython_mask, cython_offset), (orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
             # Masks should have the same shape and content
             assert cython_mask.shape == orig_mask.shape, f"Polyomino {i}: Different mask shapes"
             np.testing.assert_array_equal(cython_mask, orig_mask, f"Polyomino {i}: Different mask content")
@@ -129,11 +129,11 @@ class TestGroupTiles:
         # Compare results
         assert len(result_cython) == len(result_original), f"Different number of polyominoes: Cython={len(result_cython)}, Original={len(result_original)}"
         
-        # Sort results by group_id for consistent comparison
-        result_cython_sorted = sorted(result_cython, key=lambda x: x[0])
-        result_original_sorted = sorted(result_original, key=lambda x: x[0])
+        # Sort results by offset for consistent comparison
+        result_cython_sorted = sorted(result_cython, key=lambda x: (x[1][0], x[1][1]))
+        result_original_sorted = sorted(result_original, key=lambda x: (x[1][0], x[1][1]))
         
-        for i, ((cython_id, cython_mask, cython_offset), (orig_id, orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
+        for i, ((cython_mask, cython_offset), (orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
             assert cython_mask.shape == orig_mask.shape, f"Polyomino {i}: Different mask shapes"
             np.testing.assert_array_equal(cython_mask, orig_mask, f"Polyomino {i}: Different mask content")
             assert cython_offset == orig_offset, f"Polyomino {i}: Different offsets"
@@ -162,8 +162,8 @@ class TestGroupTiles:
         assert len(result_cython) == 1, "Fully connected bitmap should produce one polyomino"
         
         # Compare the single polyomino
-        cython_id, cython_mask, cython_offset = result_cython[0]
-        orig_id, orig_mask, orig_offset = result_original[0]
+        cython_mask, cython_offset = result_cython[0]
+        orig_mask, orig_offset = result_original[0]
         
         assert cython_mask.shape == orig_mask.shape, "Masks should have same shape"
         np.testing.assert_array_equal(cython_mask, orig_mask, "Masks should be identical")
@@ -186,8 +186,8 @@ class TestGroupTiles:
         assert len(result_cython) == 1, "Should find one polyomino"
         
         # Compare the single polyomino
-        cython_id, cython_mask, cython_offset = result_cython[0]
-        orig_id, orig_mask, orig_offset = result_original[0]
+        cython_mask, cython_offset = result_cython[0]
+        orig_mask, orig_offset = result_original[0]
         
         assert cython_mask.shape == orig_mask.shape, "Masks should have same shape"
         np.testing.assert_array_equal(cython_mask, orig_mask, "Masks should be identical")
@@ -211,8 +211,8 @@ class TestGroupTiles:
         assert len(result_cython) == 1, "L-shape should be one connected component"
         
         # Compare the L-shaped polyomino
-        cython_id, cython_mask, cython_offset = result_cython[0]
-        orig_id, orig_mask, orig_offset = result_original[0]
+        cython_mask, cython_offset = result_cython[0]
+        orig_mask, orig_offset = result_original[0]
         
         assert cython_mask.shape == orig_mask.shape, "Masks should have same shape"
         np.testing.assert_array_equal(cython_mask, orig_mask, "Masks should be identical")
@@ -236,10 +236,10 @@ class TestGroupTiles:
         assert len(result_cython) == 3, "Diagonal tiles should be separate components"
         
         # Sort results for consistent comparison
-        result_cython_sorted = sorted(result_cython, key=lambda x: (x[2][0], x[2][1]))  # Sort by offset
-        result_original_sorted = sorted(result_original, key=lambda x: (x[2][0], x[2][1]))
+        result_cython_sorted = sorted(result_cython, key=lambda x: (x[1][0], x[1][1]))  # Sort by offset
+        result_original_sorted = sorted(result_original, key=lambda x: (x[1][0], x[1][1]))
         
-        for i, ((cython_id, cython_mask, cython_offset), (orig_id, orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
+        for i, ((cython_mask, cython_offset), (orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
             assert cython_mask.shape == orig_mask.shape, f"Component {i}: Different mask shapes"
             np.testing.assert_array_equal(cython_mask, orig_mask, f"Component {i}: Different mask content")
             assert cython_offset == orig_offset, f"Component {i}: Different offsets"
@@ -281,10 +281,10 @@ class TestGroupTilesPerformance:
         assert len(result_cython) == len(result_original), f"Different number of polyominoes: Cython={len(result_cython)}, Original={len(result_original)}"
         
         # Sort results for comparison
-        result_cython_sorted = sorted(result_cython, key=lambda x: (x[2][0], x[2][1]))
-        result_original_sorted = sorted(result_original, key=lambda x: (x[2][0], x[2][1]))
+        result_cython_sorted = sorted(result_cython, key=lambda x: (x[1][0], x[1][1]))
+        result_original_sorted = sorted(result_original, key=lambda x: (x[1][0], x[1][1]))
         
-        for i, ((cython_id, cython_mask, cython_offset), (orig_id, orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
+        for i, ((cython_mask, cython_offset), (orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
             assert cython_mask.shape == orig_mask.shape, f"Polyomino {i}: Different mask shapes"
             np.testing.assert_array_equal(cython_mask, orig_mask, f"Polyomino {i}: Different mask content")
             assert cython_offset == orig_offset, f"Polyomino {i}: Different offsets"
@@ -322,10 +322,9 @@ def test_return_format():
     
     for item in result:
         assert isinstance(item, tuple), "Each item should be a tuple"
-        assert len(item) == 3, "Each tuple should have 3 elements"
+        assert len(item) == 2, "Each tuple should have 2 elements"
         
-        group_id, mask, offset = item
-        assert isinstance(group_id, (int, np.integer)), "Group ID should be integer"
+        mask, offset = item
         assert isinstance(mask, np.ndarray), "Mask should be numpy array"
         assert mask.dtype == np.uint8, "Mask should be uint8"
         assert isinstance(offset, tuple), "Offset should be tuple"
@@ -364,10 +363,10 @@ def test_comprehensive_comparison():
         
         if len(result_cython) > 0:
             # Sort for consistent comparison
-            result_cython_sorted = sorted(result_cython, key=lambda x: (x[2][0], x[2][1]))
-            result_original_sorted = sorted(result_original, key=lambda x: (x[2][0], x[2][1]))
+            result_cython_sorted = sorted(result_cython, key=lambda x: (x[1][0], x[1][1]))
+            result_original_sorted = sorted(result_original, key=lambda x: (x[1][0], x[1][1]))
             
-            for j, ((cython_id, cython_mask, cython_offset), (orig_id, orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
+            for j, ((cython_mask, cython_offset), (orig_mask, orig_offset)) in enumerate(zip(result_cython_sorted, result_original_sorted)):
                 assert cython_mask.shape == orig_mask.shape, f"Test {i}, Polyomino {j}: Different mask shapes"
                 np.testing.assert_array_equal(cython_mask, orig_mask, f"Test {i}, Polyomino {j}: Different mask content")
                 assert cython_offset == orig_offset, f"Test {i}, Polyomino {j}: Different offsets"

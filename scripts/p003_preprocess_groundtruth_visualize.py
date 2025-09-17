@@ -1,14 +1,11 @@
 #!/usr/local/bin/python
 
 import argparse
-import json
 import os
-import cv2
-import numpy as np
-from tqdm import tqdm
 import multiprocessing as mp
+from multiprocessing import Queue
 
-from scripts.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization, load_tracking_results
+from polyis.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization, load_tracking_results, progress_bars
 
 
 def parse_args():
@@ -30,7 +27,7 @@ def parse_args():
 
 
 
-def process_video_visualization(video_file: str, cache_dir: str, dataset: str, speed_up: int, process_id: int):
+def process_video_visualization(video_file: str, cache_dir: str, dataset: str, speed_up: int, process_id: int, progress_queue: Queue):
     """
     Process visualization for a single video file.
     
@@ -54,7 +51,7 @@ def process_video_visualization(video_file: str, cache_dir: str, dataset: str, s
     output_path = os.path.join(cache_dir, dataset, video_file, 'groundtruth', f'annotated.groundtruth{video_file}')
     
     # Create visualization
-    create_tracking_visualization(video_path, tracking_results, output_path, speed_up, process_id)
+    create_tracking_visualization(video_path, tracking_results, output_path, speed_up, process_id, progress_queue)
 
 
 def main(args):
@@ -110,14 +107,31 @@ def main(args):
         video_args.append((video_file, CACHE_DIR, args.dataset, args.speed_up, process_id))
         print(f"Prepared video: {video_file} for process {process_id}")
     
-    # Use process pool to execute video visualization
-    with mp.Pool(processes=num_processes) as pool:
-        print(f"Starting video visualization with {num_processes} parallel workers...")
-        
-        # Map the work to the pool
-        results = pool.starmap(process_video_visualization, video_args)
-        
-        print("All videos visualized successfully!")
+    # Create progress queue and start progress display
+    progress_queue = Queue()
+    
+    # Start progress display in a separate process
+    progress_process = mp.Process(target=progress_bars, args=(progress_queue, num_processes, len(video_dirs)))
+    progress_process.start()
+    
+    # Create and start video processing processes
+    processes: list[mp.Process] = []
+    for i, (video_file, cache_dir, dataset, speed_up, process_id) in enumerate(video_args):
+        process = mp.Process(target=process_video_visualization, 
+                           args=(video_file, cache_dir, dataset, speed_up, process_id, progress_queue))
+        process.start()
+        processes.append(process)
+    
+    # Wait for all video processing to complete
+    for process in processes:
+        process.join()
+        process.terminate()
+    
+    # Signal progress display to stop and wait for it
+    progress_queue.put(None)
+    progress_process.join()
+    
+    print("All videos visualized successfully!")
 
 
 if __name__ == '__main__':

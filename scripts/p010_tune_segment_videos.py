@@ -8,7 +8,7 @@ import shutil
 import cv2
 import tqdm
 
-from scripts.utilities import CACHE_DIR, DATA_DIR
+from polyis.utilities import CACHE_DIR, DATA_DIR
 
 
 SELECTIVITY = 0.05

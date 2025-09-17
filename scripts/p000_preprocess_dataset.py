@@ -4,13 +4,14 @@ import argparse
 import os
 from xml.etree import ElementTree
 import multiprocessing as mp
+from multiprocessing import Queue
 
 import cv2
 import numpy as np
 import torch
 from matplotlib.path import Path
 
-from scripts.utilities import DATA_RAW_DIR, DATA_DIR
+from polyis.utilities import DATA_RAW_DIR, DATA_DIR, progress_bars
 
 
 def parse_args():
@@ -32,7 +33,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, isr):
+def process_video(file: str, videodir: str, outputdir: str, mask: str, gpuIdx: int,
+                  batch_size: int, isr: int, progress_queue: mp.Queue):
     WIDTH = 1080
     HEIGHT = 720
 
@@ -53,6 +55,10 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, isr):
     iwidth, iheight = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS)) // isr
     owidth, oheight = WIDTH, HEIGHT
+    
+    # Get total frame count for progress tracking
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    processed_frames = 0
 
     domains = img.findall('.//polygon[@label="domain"]')
     bitmaps = []
@@ -84,9 +90,14 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, isr):
     fidx = 0
     done = False
     with torch.no_grad():
+        progress_queue.put(('cuda:' + str(gpuIdx), {
+            'description': f'{file}',
+            'completed': 0,
+            'total': total_frames
+        }))
         while cap.isOpened() and not done:
             frames = []
-            print('start', fidx)
+            # print('start', fidx)
             for i in range(batch_size):
                 ret, frame = cap.read()
                 fidx += 1
@@ -97,7 +108,7 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, isr):
                     frame = frame[top:bottom, left:right, :]
                     frames.append(frame)
 
-            print('mask', fidx)
+            # print('mask', fidx)
             frames_gpu = torch.from_numpy(np.array(frames)).to(f'cuda:{gpuIdx}')
             frames_gpu = frames_gpu * bitmask
 
@@ -105,16 +116,20 @@ def process_video(file, videodir, outputdir, mask, gpuIdx, batch_size, isr):
                 # Rotate frames: (batch, height, width, channels) -> (batch, width, height, channels)
                 frames_gpu = torch.rot90(frames_gpu, k=-1, dims=(1, 2))  # k=-1 for clockwise
 
-            print('scale', fidx)
+            # print('scale', fidx)
             frames_gpu = frames_gpu.permute(0, 3, 1, 2)
             frames_gpu = torch.nn.functional.interpolate(frames_gpu.float(), size=(oheight, owidth), mode='bilinear', align_corners=False)
             assert isinstance(frames_gpu, torch.Tensor)
             frames_gpu = frames_gpu.permute(0, 2, 3, 1)
             frames = frames_gpu.detach().to(torch.uint8).cpu().numpy()
 
-            print('write', fidx)
+            # print('write', fidx)
             for frame in frames:
                 writer.write(np.ascontiguousarray(frame))
+                processed_frames += 1
+                
+                # Send progress update
+                progress_queue.put(('cuda:' + str(gpuIdx), { 'completed': processed_frames }))
             print('write done', fidx)
 
     cap.release()
@@ -133,8 +148,8 @@ def process_b3d(args: argparse.Namespace):
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
     
-    processes: list[mp.Process] = []
-    count = 0
+    # Collect all valid video files first
+    video_files = []
     for file in os.listdir(videodir):
         if not file.endswith('.mp4'):
             continue
@@ -146,16 +161,38 @@ def process_b3d(args: argparse.Namespace):
         domain = img.find('.//polygon[@label="domain"]')
         if domain is None:
             continue
-
+        
+        video_files.append(file)
+    
+    if not video_files:
+        print("No valid video files found to process.")
+        return
+    
+    # Create progress queue and start progress display
+    progress_queue = Queue()
+    num_gpus = min(len(video_files), torch.cuda.device_count())
+    
+    # Start progress display in a separate process
+    progress_process = mp.Process(target=progress_bars, args=(progress_queue, num_gpus, len(video_files)))
+    progress_process.start()
+    
+    processes: list[mp.Process] = []
+    count = 0
+    for file in video_files:
         print(f'Processing {file}...')
-        process = mp.Process(target=process_video, args=(file, videodir, outputdir, mask, count % torch.cuda.device_count(), args.batch_size, isr))
+        process = mp.Process(target=process_video, args=(file, videodir, outputdir, mask, count % num_gpus, args.batch_size, isr, progress_queue))
         process.start()
         processes.append(process)
         count += 1
     
+    # Wait for all video processing to complete
     for process in processes:
         process.join()
         process.terminate()
+    
+    # Signal progress display to stop and wait for it
+    progress_queue.put(None)
+    progress_process.join()
 
 
 def main(args):

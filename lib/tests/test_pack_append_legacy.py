@@ -17,7 +17,7 @@ def original_pack_append(polyominoes, h, w, occupied_tiles):
     # The actual algorithm details may differ from the optimized Cython version
     
     positions = []
-    for groupid, mask, offset in polyominoes:
+    for mask, offset in polyominoes:
         placed = False
         mask = np.asarray(mask, dtype=np.uint8)
         
@@ -41,7 +41,7 @@ def original_pack_append(polyominoes, h, w, occupied_tiles):
                             if mask[row, col]:
                                 occupied_tiles[i + row, j + col] = 1
                     
-                    positions.append((i, j, groupid, mask, offset))
+                    positions.append((i, j, mask, offset))
                     placed = True
                     break
             if placed:
@@ -69,7 +69,7 @@ def run_implementation_comparison():
     # Test case 1: Simple single polyomino
     print("\nTest 1: Single 2x2 square polyomino")
     polyomino_mask = np.array([[True, True], [True, True]], dtype=np.bool_)
-    polyominoes = [(1, polyomino_mask, (0, 0))]
+    polyominoes = [(polyomino_mask, (0, 0))]
     h, w = 4, 4
     occupied = np.zeros((h, w), dtype=np.bool_)
     test_cases.append(("Single 2x2 square", polyominoes, h, w, occupied.copy()))
@@ -78,7 +78,7 @@ def run_implementation_comparison():
     print("Test 2: Multiple small polyominoes")
     poly1 = np.array([[True, True]], dtype=np.bool_)  # 1x2 rectangle
     poly2 = np.array([[True], [True]], dtype=np.bool_)  # 2x1 rectangle
-    polyominoes = [(1, poly1, (0, 0)), (2, poly2, (0, 0))]
+    polyominoes = [(poly1, (0, 0)), (poly2, (0, 0))]
     h, w = 3, 3
     occupied = np.zeros((h, w), dtype=np.bool_)
     test_cases.append(("Multiple small polyominoes", polyominoes, h, w, occupied.copy()))
@@ -86,7 +86,7 @@ def run_implementation_comparison():
     # Test case 3: Impossible packing
     print("Test 3: Impossible packing scenario")
     large_poly = np.ones((5, 5), dtype=np.bool_)  # 5x5 square
-    polyominoes = [(1, large_poly, (0, 0))]
+    polyominoes = [(large_poly, (0, 0))]
     h, w = 3, 3  # Too small to fit
     occupied = np.zeros((h, w), dtype=np.bool_)
     test_cases.append(("Impossible packing", polyominoes, h, w, occupied.copy()))
@@ -94,7 +94,7 @@ def run_implementation_comparison():
     # Test case 4: Pre-occupied space
     print("Test 4: Packing with pre-occupied space")
     poly = np.array([[True, True]], dtype=np.bool_)
-    polyominoes = [(1, poly, (0, 0))]
+    polyominoes = [(poly, (0, 0))]
     h, w = 3, 3
     occupied = np.zeros((h, w), dtype=np.bool_)
     occupied[0, 0] = True  # Block top-left corner
