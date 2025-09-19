@@ -5,6 +5,7 @@ import os
 import cv2
 import numpy as np
 import multiprocessing as mp
+from functools import partial
 
 from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, ProgressBar
 
@@ -195,21 +196,6 @@ def render_scores(video_file: str, video_file_path: str, dataset_name: str,
     brightness_writer.release()
 
 
-def _render_scores(video_file: str, video_file_path: str, dataset_name: str, 
-                                 classifier_name: str, tile_size: int, threshold: float, 
-                                 frame_limit: int | None, worker_id: int,
-                                 progress_bar: ProgressBar):
-    """
-    Wrapper function for render_scores that handles worker ID management.
-    """
-    try:
-        render_scores(video_file, video_file_path, dataset_name, 
-                      classifier_name, tile_size, threshold, 
-                      frame_limit, worker_id, progress_bar.command_queue)
-    finally:
-        progress_bar.worker_id_queue.put(worker_id)
-
-
 def main(args):
     """
     Main function that orchestrates the video tile classification rendering process.
@@ -239,13 +225,11 @@ def main(args):
     mp.set_start_method('spawn', force=True)
     
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
-
-    if not os.path.exists(dataset_dir):
-        raise FileNotFoundError(f"Dataset directory {dataset_dir} does not exist")
+    assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
 
     # Validate threshold
-    if not 0.0 <= args.threshold <= 1.0:
-        raise ValueError("Threshold must be between 0.0 and 1.0")
+    assert 0.0 <= args.threshold <= 1.0, "Threshold must be between 0.0 and 1.0"
+    print(f"Using threshold: {args.threshold}")
 
     # Determine which tile sizes to process
     if args.tile_size == 'all':
@@ -259,16 +243,11 @@ def main(args):
 
     # Get all video files from the dataset directory
     video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-
-    if not video_files:
-        print(f"No video files found in {dataset_dir}")
-        return
-
+    assert len(video_files) > 0, f"No video files found in {dataset_dir}"
     print(f"Found {len(video_files)} video files to process")
 
     # Collect all video-classifier-tile combinations for parallel processing
-    all_tasks = []
-    
+    funcs = []
     for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
         
@@ -295,39 +274,17 @@ def main(args):
         
         # Add tasks for each classifier-tile size combination
         for classifier_name, tile_size in classifier_tilesizes:
-            all_tasks.append((video_file, video_file_path, args.dataset,
-                              classifier_name, tile_size, args.threshold,
-                              args.frame_limit))
+            funcs.append(partial(render_scores, video_file, video_file_path, args.dataset, 
+                                classifier_name, tile_size, args.threshold, args.frame_limit))
 
-    if not all_tasks:
-        print("No tasks to process")
-        return
-
-    # Determine number of processes to use
-    num_processes = mp.cpu_count()
-    print(f"Processing {len(all_tasks)} tasks in parallel using {num_processes} processes...")
-
-    # Set up multiprocessing with ProgressBar
-    with ProgressBar(num_workers=num_processes, num_tasks=len(all_tasks)) as pb:
-        processes: list[mp.Process] = []
-        for task in all_tasks:
-            # Get a worker ID
-            worker_id = pb.get_worker_id()
-            
-            # Update overall progress
-            pb.update_overall_progress(1)
-            
-            # Start the worker process
-            process = mp.Process(target=_render_scores, args=(*task, worker_id, pb))
-            process.start()
-            processes.append(process)
-        
-        # Wait for all processes to complete
-        for process in processes:
-            process.join()
-            process.terminate()
+    assert len(funcs) > 0, "No tasks to process"
     
-    print(f"\nCompleted processing {len(all_tasks)} tasks")
+    # Set up multiprocessing with ProgressBar
+    num_processes = int(mp.cpu_count() * 0.8)
+    if len(funcs) < num_processes:
+        num_processes = len(funcs)
+    
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs)).run_all(funcs)
 
 
 if __name__ == '__main__':
