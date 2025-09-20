@@ -197,6 +197,9 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
     
     with open(output_path, 'w') as f:
         frame_ids = frame_tracks.keys()
+        if len(frame_ids) == 0:
+            return
+        
         first_idx = min(frame_ids)
         last_idx = max(frame_ids)
 
