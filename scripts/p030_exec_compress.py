@@ -95,7 +95,7 @@ def apply_pack(
     positions: list[dtypes.PolyominoPositions],
     canvas: dtypes.NPImage,
     index_map: dtypes.IndexMap,
-    offset_lookup: dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]],
+    offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]],
     frame_idx: int,
     frame: dtypes.NPImage,
     tile_size: int,
@@ -126,20 +126,23 @@ def apply_pack(
     
     # Profile: Update index_map and det_info
     step_start = (time.time_ns() / 1e6)
-    for gid, (y, x, mask, offset) in enumerate(positions):
+    # Start gid from the current length of offset_lookup
+    start_gid = len(offset_lookup)
+    for i, (y, x, mask, offset) in enumerate(positions):
+        gid = start_gid + i + 1
         h = mask.shape[0]
         w = mask.shape[1]
-        assert not np.any(index_map[y:y+h, x:x+w, 0] & mask), (index_map[y:y+h, x:x+w, 0], mask)
-        mask = mask.astype(np.int32)
-        index_map[y:y+h, x:x+w, 0] += mask * (gid + 1)
-        index_map[y:y+h, x:x+w, 1] += mask * frame_idx
-        offset_lookup[(int(frame_idx), int(gid + 1))] = ((y, x), offset)
+        # assert not np.any(index_map[y:y+h, x:x+w] & mask), \
+        #     (index_map[y:y+h, x:x+w], mask)
+        index_map[y:y+h, x:x+w] += mask.astype(np.uint16) * gid
+        offset_lookup.append(((y, x), offset, frame_idx))
     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
 
     return canvas
 
 
-def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap, offset_lookup: dict,
+def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap,
+                      offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]],
                       start_idx: int, frame_idx: int, output_dir: str, step_times: dict):
     """
     Save the packed image, index_map, and offset_lookup.
@@ -168,9 +171,10 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap, offset
     index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}.npy')
     np.save(index_map_path, index_map)
 
-    offset_lookup_path = os.path.join(offset_lookup_dir, f'{start_idx:08d}_{frame_idx:08d}.json')
+    offset_lookup_path = os.path.join(offset_lookup_dir, f'{start_idx:08d}_{frame_idx:08d}.jsonl')
     with open(offset_lookup_path, 'w') as f:
-        json.dump({str(k): v for k, v in offset_lookup.items()}, f)
+        for offset in offset_lookup:
+            f.write(json.dumps(offset) + '\n')
     step_times['save_mapping_files'] = (time.time_ns() / 1e6) - step_start
 
 
@@ -250,14 +254,13 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
         assert dtypes.is_np_image(canvas), canvas.shape
         occupied_tiles = np.zeros((grid_height, grid_width), dtype=np.uint8)
         assert dtypes.is_bitmap(occupied_tiles), occupied_tiles.shape
-        index_map = np.zeros((grid_height, grid_width, 2), dtype=np.int32)
+        index_map = np.zeros((grid_height, grid_width), dtype=np.uint16)
         assert dtypes.is_index_map(index_map), index_map.shape
-        offset_lookup: dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]] = {}
+        offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]] = []
         return canvas, occupied_tiles, index_map, offset_lookup, True, False
     
     # Initialize packing variables
     canvas, occupied_tiles, index_map, offset_lookup, clean, full = init_packing_variables()
-    frame_cache: dict[int, dtypes.NPImage] = {}
     start_idx = 0
     last_frame_idx = -1
     read_frame_idx = -1
@@ -292,7 +295,6 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
             ret, frame = cap.retrieve()
             assert ret
             assert dtypes.is_np_image(frame), frame.shape
-            frame_cache[frame_idx] = frame
             step_times['read_frame'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Get classification results
@@ -339,7 +341,6 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
                 # Profile: Reset variables
                 step_start = (time.time_ns() / 1e6)
                 canvas, occupied_tiles, index_map, offset_lookup, clean, full = init_packing_variables()
-                frame_cache = {frame_idx: frame}
                 start_idx = frame_idx
                 step_times['reset_variables'] = (time.time_ns() / 1e6) - step_start
 
@@ -363,10 +364,12 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
 
                     # Profile: Update index_map and det_info for the full frame polyomino
                     step_start = (time.time_ns() / 1e6)
-                    _index_map = np.ones((grid_height, grid_width, 2), dtype=np.int32)
+                    # Use the next available group ID
+                    # TODO: on this case, save index_map as something recognizable like ([0]),
+                    # uncompresser should by pass uncompressing and use detection as is.
+                    _index_map = np.ones((grid_height, grid_width), dtype=np.uint16)
                     assert dtypes.is_index_map(_index_map), _index_map.shape
-                    _index_map[0:grid_height, 0:grid_width, 1] = frame_idx
-                    _offset_lookup = {(frame_idx, 1): ((0, 0), (0, 0)) }
+                    _offset_lookup = [((0, 0), (0, 0), frame_idx)]
                     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
                     
                     save_packed_image(frame, _index_map, _offset_lookup, start_idx, frame_idx, output_dir, step_times)

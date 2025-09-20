@@ -6,6 +6,8 @@ import os
 import shutil
 import time
 import multiprocessing as mp
+from functools import partial
+from typing import Callable
 
 import torch
 import torch.utils.data
@@ -19,7 +21,7 @@ from torch.optim import Adam
 
 from polyis.models.classifier.simple_cnn import SimpleCNN
 from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, format_time, progress_bars
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, format_time, ProgressBar
 
 # Factory functions for models that don't accept tile_size parameter
 def ShuffleNet05_factory(_tile_size: int):
@@ -536,7 +538,18 @@ MODEL_ZOO = {
 
 
 def train_classifier(training_path: str, tile_size: int, model_type: str,
-                     device: str, command_queue: mp.Queue):
+                     gpu_id: int, command_queue: mp.Queue):
+    """
+    Train a classifier model for a specific video, tile size, and model type.
+    
+    Args:
+        training_path: Path to the training data directory
+        tile_size: Tile size for the model
+        model_type: Model type to use
+        gpu_id: GPU ID to use for training
+        command_queue: Queue for progress updates
+    """
+    device = f'cuda:{gpu_id}'
     # print(f'Training {model_type} (tile_size={tile_size}) on {device}\n')
 
     # Create results directory early so we can save plots during training
@@ -604,23 +617,12 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
         torch.save(model, f)
 
 
-def _train_classifier(training_path: str, tile_size: int, classifier: str,
-                  gpu_id: int, queue: mp.Queue, command_queue: mp.Queue):
-    try:
-        train_classifier(training_path, tile_size, classifier,
-                         device=f'cuda:{gpu_id}', command_queue=command_queue)
-    except Exception as e:
-        print(e, '\n\n\n\n\n\n\n\n')
-        raise e
-    finally: queue.put(gpu_id)
-
-
 def main(args):
     mp.set_start_method('spawn', force=True)
 
     dataset_dir = os.path.join(CACHE_DIR, args.dataset)
 
-    tasks: list[tuple[str, int, str]] = []
+    funcs: list[Callable[[int, mp.Queue], None]] = []
     for video in sorted(os.listdir(dataset_dir)):
         video_path = os.path.join(dataset_dir, video)
         if not os.path.isdir(video_path) and not video.endswith('.mp4'):
@@ -634,39 +636,14 @@ def main(args):
 
         for classifier in args.classifiers:
             for tile_size in TILE_SIZES:
-                tasks.append((training_path, tile_size, classifier))
-
-    num_gpus = torch.cuda.device_count()
-    gpu_id_queue = mp.Queue(maxsize=num_gpus)
-    for gpu_id in range(num_gpus):
-        gpu_id_queue.put(gpu_id)
-
-    command_queue = mp.Queue()
-    progress_process = mp.Process(target=progress_bars,
-                                  args=(command_queue, num_gpus, len(tasks)),
-                                  daemon=True)
-    progress_process.start()
-
-    processes: list[mp.Process] = []
-    for task in tasks:
-        # print(task)
-        gpu_id = gpu_id_queue.get()
-        command_queue.put(( 'overall', { 'advance': 1 } ))
-        process = mp.Process(target=_train_classifier,
-                             args=(*task, gpu_id, gpu_id_queue, command_queue))
-        process.start()
-        processes.append(process)
+                func = partial(train_classifier, training_path, tile_size, classifier)
+                funcs.append(func)
     
-    for _ in range(num_gpus):
-        gpu_id_queue.get()
-
-    for process in processes:
-        process.join()
-        process.terminate()
-
-    command_queue.put(None)
-    progress_process.join()
-    progress_process.terminate()
+    # Set up multiprocessing with ProgressBar
+    num_gpus = torch.cuda.device_count()
+    assert num_gpus > 0, "No GPUs available"
+    
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
 
 
 if __name__ == '__main__':

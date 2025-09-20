@@ -7,10 +7,11 @@ import shutil
 import numpy as np
 from rich.progress import track
 import matplotlib.pyplot as plt
-from typing import Any
+from typing import Any, Callable
 import multiprocessing as mp
+from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections
+from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar
 
 
 TILE_SIZES = [30, 60]  #, 120]
@@ -69,35 +70,32 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
     detection_bitmap = mark_detections(detections, total_width, total_height,
                                        tile_size, slice(-4, None))
 
+    # Vectorized operations for much better performance
+    # Flatten arrays for easier processing
+    classification_scores = classifications.flatten()
+    actual_positives = (detection_bitmap > 0).flatten()
+    
+    # Create boolean masks for predictions
+    predicted_positives = classification_scores >= threshold
+    
+    # Calculate confusion matrix components using vectorized operations
+    tp = np.sum(predicted_positives & actual_positives)
+    fp = np.sum(predicted_positives & ~actual_positives)
+    fn = np.sum(~predicted_positives & actual_positives)
+    tn = np.sum(~predicted_positives & ~actual_positives)
+    
+    # Create error map using vectorized operations
     error_map = np.zeros((grid_height, grid_width), dtype=int)
-    actual_positives = []
-    classification_scores = []
-
-    # Extract tile regions from the detection bitmap and calculate overlap ratios
-    for i in range(grid_height):
-        for j in range(grid_width):
-            score = classifications[i][j]
-
-            # Store data for scatter plot
-            classification_scores.append(score)
-
-            # Determine prediction
-            predicted_positive = score >= threshold
-            # actual_positive = overlap > 0.0
-            actual_positive = detection_bitmap[i, j] > 0
-            actual_positives.append(actual_positive)
-
-            # Count metrics
-            if predicted_positive and actual_positive:
-                tp += 1
-            elif predicted_positive and not actual_positive:
-                fp += 1
-                error_map[i, j] = 1  # False positive error
-            elif not predicted_positive and actual_positive:
-                fn += 1
-                error_map[i, j] = 2  # False negative error
-            else:
-                tn += 1
+    
+    # Reshape predictions back to 2D for error mapping
+    predicted_positives_2d = predicted_positives.reshape(grid_height, grid_width)
+    actual_positives_2d = actual_positives.reshape(grid_height, grid_width)
+    
+    # False positives: predicted positive but actual negative
+    error_map[predicted_positives_2d & ~actual_positives_2d] = 1
+    
+    # False negatives: predicted negative but actual positive  
+    error_map[~predicted_positives_2d & actual_positives_2d] = 2
 
     # Calculate precision, recall, and accuracy
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
@@ -147,8 +145,8 @@ def _evaluate_frame_worker(args):
 
 def create_statistics_visualizations(video_file: str, results: list[dict],
                                      groundtruth_detections: list[dict],
-                                     tile_size: int, threshold: float,
-                                     output_dir: str):
+                                     tile_size: int, threshold: float, output_dir: str,
+                                     gpu_id: int, command_queue: mp.Queue):
     """
     Create comprehensive statistics visualizations comparing classification results with groundtruth.
 
@@ -159,8 +157,10 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         tile_size (int): Tile size used for classification
         threshold (float): Classification threshold
         output_dir (str): Directory to save visualizations
+        gpu_id (int): GPU ID (unused but required for ProgressBar compatibility)
+        command_queue (mp.Queue): Queue for progress updates
     """
-    print(f"Creating statistics visualizations for {video_file}")
+    # print(f"Creating statistics visualizations for {video_file}")
 
     # Create output directory
     if os.path.exists(output_dir):
@@ -173,7 +173,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     all_classification_scores = []
     all_error_counts = []
 
-    print(f"Evaluating {len(results)} frames using multiprocessing")
+    # print(f"Evaluating {len(results)} frames using multiprocessing")
 
     # Prepare arguments for parallel processing
     # Validate frame indices first
@@ -181,20 +181,28 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         assert frame_idx == frame_result['frame_idx'], \
             f"frame_idx mismatch: {frame_idx} != {frame_result['frame_idx']}"
 
-    # Create arguments for worker function
-    worker_args = [(frame_result, frame_detections, tile_size, threshold)
-                   for frame_result, frame_detections in zip(results, groundtruth_detections)]
+    # # Create arguments for worker function
+    # worker_args = [(frame_result, frame_detections, tile_size, threshold)
+    #                for frame_result, frame_detections in zip(results, groundtruth_detections)]
 
-    # Use multiprocessing to evaluate frames in parallel
-    num_processes = min(mp.cpu_count() - 1, len(results))
-    with mp.Pool(processes=num_processes) as pool:
-        frame_evals = list(
-            # track(
-                pool.imap(_evaluate_frame_worker, worker_args),
-            #     total=len(results),
-            #     description=f"Evaluating frames {idx + 1}"
-            # )
-        )
+    # # Use multiprocessing to evaluate frames in parallel
+    # num_processes = min(mp.cpu_count() - 1, len(results))
+    # with mp.Pool(processes=num_processes) as pool:
+    #     frame_evals = list(
+    #         # track(
+    #             pool.imap(_evaluate_frame_worker, worker_args),
+    #         #     total=len(results),
+    #         #     description=f"Evaluating frames {idx + 1}"
+    #         # )
+    #     )
+    frame_evals: list[dict] = []
+    command_queue.put((f'cuda:{gpu_id}', { 'completed': 0, 'total': len(results) }))
+    mod = int(len(results) * 0.05)
+    for frame_idx, (frame_result, frame_detections) in enumerate(zip(results, groundtruth_detections)):
+        frame_eval = _evaluate_frame_worker((frame_result, frame_detections, tile_size, threshold))
+        frame_evals.append(frame_eval)
+        if frame_idx % mod == 0:
+            command_queue.put((f'cuda:{gpu_id}', { 'completed': frame_idx + 1 }))
 
     # Collect results from parallel processing
     for frame_eval in frame_evals:
@@ -231,13 +239,13 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
         all_error_counts, tile_size, output_dir
     )
     
-    visualize_score_distribution(
-        all_classification_scores, all_actual_positives,
-        threshold, tile_size, output_dir
-    )
+    # visualize_score_distribution(
+    #     all_classification_scores, all_actual_positives,
+    #     threshold, tile_size, output_dir
+    # )
 
-    print(f"Saved statistics visualizations to: {output_dir}")
-    print(f"Overall Metrics - Precision: {overall_precision:.3f}, Recall: {overall_recall:.3f}, F1: {overall_f1:.3f}")
+    # print(f"Saved statistics visualizations to: {output_dir}")
+    # print(f"Overall Metrics - Precision: {overall_precision:.3f}, Recall: {overall_recall:.3f}, F1: {overall_f1:.3f}")
 
 
 def visualize_error_summary(total_tp: int, total_tn: int, total_fp: int, total_fn: int,
@@ -578,17 +586,28 @@ def visualize_score_distribution(all_classification_scores: list[float], all_act
     return histogram_path
 
 
-def _process_classifier_tile_worker(args):
+def _process_classifier_tile_worker(video_file: str, dataset_name: str, classifier_name: str, 
+                                   tile_size: int, threshold: float, gpu_id: int, command_queue: mp.Queue):
     """
     Worker function to process a single classifier-tile size combination for multiprocessing.
     
     Args:
-        args: Tuple containing (video_file, dataset_name, classifier_name, tile_size, threshold)
-    
-    Returns:
-        str: Status message about processing completion
+        video_file (str): Name of the video file
+        dataset_name (str): Name of the dataset
+        classifier_name (str): Name of the classifier
+        tile_size (int): Tile size to use
+        threshold (float): Classification threshold
+        gpu_id (int): GPU ID (unused but required for ProgressBar compatibility)
+        command_queue (mp.Queue): Queue for progress updates
     """
-    video_file, dataset_name, classifier_name, tile_size, threshold = args
+    device = f'cuda:{gpu_id}'
+    
+    # Send initial progress update
+    command_queue.put((device, {
+        'description': f"{video_file} {tile_size:>3} {classifier_name}",
+        'completed': 0,
+        'total': 1
+    }))
 
     # Load classification results
     results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier_name)
@@ -602,10 +621,8 @@ def _process_classifier_tile_worker(args):
     # Create statistics visualizations
     create_statistics_visualizations(
         video_file, results, groundtruth_detections,
-        tile_size, threshold, stats_output_dir
+        tile_size, threshold, stats_output_dir, gpu_id, command_queue
     )
-    
-    return f"Completed statistics analysis for {video_file} {classifier_name} tile size {tile_size}"
 
 
 def main(args):
@@ -631,6 +648,8 @@ def main(args):
          - Visualizations are saved to {CACHE_DIR}/{dataset}/{video_file}/relevancy/proxy_{tile_size}/statistics/
          - Summary statistics and plots are also generated
     """
+    mp.set_start_method('spawn', force=True)
+    
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
 
     if not os.path.exists(dataset_dir):
@@ -659,11 +678,6 @@ def main(args):
 
     print(f"Found {len(video_files)} video files to process")
 
-    # Determine number of processes to use
-    num_processes = mp.cpu_count()
-    
-    print(f"Using {num_processes} processes for parallel processing")
-
     # Collect all video-classifier-tile combinations for parallel processing
     all_tasks = []
     
@@ -681,8 +695,6 @@ def main(args):
             if '_' in file:
                 classifier_name = file.split('_')[0]
                 tile_size = int(file.split('_')[1])
-                if classifier_name != 'groundtruth':
-                    continue
                 classifier_tilesizes.append((classifier_name, tile_size))
         
         classifier_tilesizes = sorted(classifier_tilesizes)
@@ -702,18 +714,24 @@ def main(args):
         print("No tasks to process")
         return
 
-    print(f"Processing {len(all_tasks)} tasks in parallel using {num_processes} processes...")
+    print(f"Processing {len(all_tasks)} tasks in parallel...")
 
-    task_results = list(track(
-        map(_process_classifier_tile_worker, all_tasks),
-        total=len(all_tasks),
-        description="Processing tasks"
-    ))
-
-    # Print results
-    print("\n=== Processing Results ===")
-    for result in task_results:
-        print(result)
+    # Create worker functions for ProgressBar
+    funcs: list[Callable[[int, mp.Queue], None]] = []
+    for video_file, dataset_name, classifier_name, tile_size, threshold in all_tasks:
+        funcs.append(partial(_process_classifier_tile_worker, video_file, dataset_name, 
+                            classifier_name, tile_size, threshold))
+    
+    # Set up multiprocessing with ProgressBar
+    num_processes = int(mp.cpu_count() * 0.5)
+    if len(funcs) < num_processes:
+        num_processes = len(funcs)
+    
+    print(f"Using {num_processes} processes for parallel processing")
+    
+    # Run all tasks with ProgressBar
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs)).run_all(funcs)
+    print("All tasks completed!")
 
 
 if __name__ == '__main__':
