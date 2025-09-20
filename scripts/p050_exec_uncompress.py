@@ -6,7 +6,6 @@ import os
 import shutil
 import numpy as np
 import cv2
-import tqdm
 import multiprocessing as mp
 from functools import partial
 from typing import Callable
@@ -41,7 +40,7 @@ def load_mapping_file(index_map_path: str, offset_lookup_path: str):
         offset_lookup_path (str): Path to the offset lookup file
         
     Returns:
-        tuple[np.ndarray, dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]]]: Mapping information containing index_map, offset_lookup, etc.
+        tuple[np.ndarray, list[tuple[tuple[int, int], tuple[int, int], int]]]: Mapping information containing index_map, offset_lookup, etc.
         
     Raises:
         FileNotFoundError: If index map or offset lookup file doesn't exist
@@ -53,29 +52,21 @@ def load_mapping_file(index_map_path: str, offset_lookup_path: str):
     
     index_map = np.load(index_map_path)
     with open(offset_lookup_path, 'r') as f:
-        offset_lookup_str: dict = json.load(f)
+        offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]] = [json.loads(line) for line in f]
     
-    # Convert offset_lookup_str keys back to tuples
-    offset_lookup_tuple: dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]] = {}
-    for k_str, v in offset_lookup_str.items():
-        # Parse the string key back to tuple (frame_idx, group_id)
-        k_str = k_str.strip('()')
-        frame_idx, group_id = map(int, k_str.split(','))
-        offset_lookup_tuple[(frame_idx, group_id)] = v
-    
-    return index_map, offset_lookup_tuple
+    return index_map, offset_lookup
 
 
 def unpack_detections(detections: list[list[float]], index_map: np.ndarray, 
-                      offset_lookup: dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]], 
+                      offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]], 
                       tile_size: int) -> tuple[dict[int, list[list[float]]], list[list[float]], list[list[float]]]:
     """
     Unpack detections from packed coordinates back to original frame coordinates.
     
     Args:
         detections (list[list[float]]): list of bounding boxes in packed coordinates [x1, y1, x2, y2]
-        index_map (np.ndarray): Index map from the mapping file
-        offset_lookup (dict[tuple[int, int], tuple[tuple[int, int], tuple[int, int]]]): Offset lookup from the mapping file
+        index_map (np.ndarray): Index map from the mapping file (2D array with group_ids)
+        offset_lookup (list[tuple[tuple[int, int], tuple[int, int], int]]): Offset lookup from the mapping file
         tile_size (int): Size of tiles used for packing
         
     Returns:
@@ -116,28 +107,27 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
                 tile_x < 0 or tile_x >= index_map.shape[1]):
                 continue
             
-            # Get the group ID and frame index for this tile
-            group_id_ = int(index_map[tile_y, tile_x, 0])
-            frame_idx_ = int(index_map[tile_y, tile_x, 1])
+            # Get the group ID for this tile
+            group_id_ = int(index_map[tile_y, tile_x])
             
             if group_id_ != 0:
                 group_id = group_id_
-                frame_idx = frame_idx_
                 break
             center_in_any_tile = False
         
         if not center_in_any_tile:
             center_not_in_any_tile_detections.append([x1, y1, x2, y2])
         
-        if group_id is None or frame_idx is None:
+        if group_id is None:
             not_in_any_tile_detections.append([x1, y1, x2, y2])
             continue
 
+        # Convert group_id to 0-based index
+        group_id -= 1
+
         # Get the offset information for this group
-        if (frame_idx, group_id) not in offset_lookup:
-            raise ValueError(f"No mapping info for frame {frame_idx}, group {group_id}")
-        
-        (packed_y, packed_x), (original_offset_y, original_offset_x) = offset_lookup[(frame_idx, group_id)]
+        assert 0 <= group_id < len(offset_lookup), f"Group {group_id} not found in offset lookup"
+        (packed_y, packed_x), (original_offset_y, original_offset_x), frame_idx = offset_lookup[group_id]
         
         # Calculate the offset to convert from packed to original coordinates
         # The offset represents how much the tile was moved during packing
@@ -221,7 +211,7 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
 
             # Construct paths
             index_map_path = os.path.join(packing_dir, 'index_maps', f'{from_idx:08d}_{to_idx:08d}.npy')
-            offset_lookup_path = os.path.join(packing_dir, 'offset_lookups', f'{from_idx:08d}_{to_idx:08d}.json')
+            offset_lookup_path = os.path.join(packing_dir, 'offset_lookups', f'{from_idx:08d}_{to_idx:08d}.jsonl')
             
             # Load detection results
             detections: list[list[float]] = content['bboxes']

@@ -248,11 +248,11 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
     # Load the trained model for this specific video, classifier, and tile size
     model = load_model(cache_video_dir, tile_size, classifier)
     model = model.to(device)
-    try:
-        model.compile()
-        # model = torch.compile(model)
-    except Exception as e:
-        print(f"Failed to compile model: {e}")
+    # try:
+    #     model.compile()
+    #     # model = torch.compile(model)
+    # except Exception as e:
+    #     print(f"Failed to compile model: {e}")
     
     # Create output directory structure
     output_dir = os.path.join(cache_video_dir, 'relevancy')
