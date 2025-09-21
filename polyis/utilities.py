@@ -582,7 +582,7 @@ def mark_detections(
     return bitmap
 
 
-def progress_bars(command_queue: "mp.Queue", num_gpus: int, num_tasks: int,
+def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
                   refresh_per_second: float = 1):
     with progress.Progress(
         "[progress.description]{task.description}",
@@ -595,9 +595,9 @@ def progress_bars(command_queue: "mp.Queue", num_gpus: int, num_tasks: int,
     ) as p:
         bars: dict[str, progress.TaskID] = {}
         overall_progress = p.add_task(f"[green]Processing {num_tasks} tasks",
-                                      total=num_tasks, completed=-num_gpus)
+                                      total=num_tasks, completed=-num_workers)
         bars['overall'] = overall_progress
-        for gpu_id in range(num_gpus):
+        for gpu_id in range(num_workers):
             bars[f'cuda:{gpu_id}'] = p.add_task("video tilesize model T/V")
 
         while True:
@@ -636,7 +636,7 @@ class ProgressBar:
             num_tasks (int): Total number of tasks to process
             refresh_per_second (float): Refresh rate for progress bars
         """
-        self.num_workers = num_workers
+        self.num_workers = min(num_workers, num_tasks)
         self.num_tasks = num_tasks
         self.refresh_per_second = refresh_per_second
         
