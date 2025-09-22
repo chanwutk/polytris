@@ -54,8 +54,11 @@ class YoloClassifier(torch.nn.Module):
         self.classify = classifier.model[-1]
         assert isinstance(self.classify, ultralytics.nn.modules.head.Classify)
 
-        self.classify.linear = torch.nn.Linear(self.classify.linear.in_features, 1)
-
+        linear = self.classify.linear
+        self.classify.linear = torch.nn.Linear(linear.in_features, 1,
+                                               bias=linear.bias is not None,
+                                               device=linear.weight.device,
+                                               dtype=linear.weight.dtype)
         self.train()
         
         # Store model configuration

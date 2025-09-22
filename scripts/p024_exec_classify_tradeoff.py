@@ -276,7 +276,7 @@ def create_tradeoff_visualizations(video_file: str, results: List[Dict], output_
     plt.tight_layout()
     
     # Save the plot
-    plot_path = os.path.join(output_dir, f'tradeoff_analysis_{video_file}.png')
+    plot_path = os.path.join(output_dir, f'classification_accuracy_tradeoff_{video_file}.png')
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close()
     
@@ -325,7 +325,8 @@ def _process_video_worker(args):
         ))
     
     # Create output directory for this video
-    output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'tradeoff_analysis')
+    output_dir = os.path.join(CACHE_DIR, 'summary', dataset_name, 'classifiers', 'tradeoff')
+    os.makedirs(output_dir, exist_ok=True)
     
     # Create visualizations
     create_tradeoff_visualizations(video_file, results, output_dir)

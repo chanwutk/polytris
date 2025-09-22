@@ -48,7 +48,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_size: int, classifier: str) -> list[dict]:
+def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_size: int, classifier: str, verbose: bool = False) -> list[dict]:
     """
     Load detection results from the uncompressed detections JSONL file.
     
@@ -58,7 +58,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
         video_file (str): Video file name
         tile_size (int): Tile size used for detections
         classifier (str): Classifier name used for detections
-        
+        verbose (bool): Whether to print verbose output
     Returns:
         list[dict]: list of frame detection results
         
@@ -73,7 +73,8 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     if not os.path.exists(detection_path):
         raise FileNotFoundError(f"Detection results not found: {detection_path}")
     
-    print(f"Loading detection results from: {detection_path}")
+    if verbose:
+        print(f"Loading detection results from: {detection_path}")
     
     results = []
     with open(detection_path, 'r') as f:
@@ -81,7 +82,8 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
             if line.strip():
                 results.append(json.loads(line))
     
-    print(f"Loaded {len(results)} frame detections")
+    if verbose:
+        print(f"Loaded {len(results)} frame detections")
     return results
 
 
@@ -127,7 +129,7 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
     frame_tracks: dict[int, list[list[float]]] = {}
     
-    print(f"Processing {len(detection_results)} frames for tracking...")
+    # print(f"Processing {len(detection_results)} frames for tracking...")
     
     # Send initial progress update
     command_queue.put((device, {
@@ -143,6 +145,7 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
     
     with open(runtime_path, 'w') as runtime_file:
         # Process each frame
+        mod = max(1, int(len(detection_results) * 0.05))
         for frame_result in detection_results:
             frame_idx = frame_result['frame_idx']
             bboxes = frame_result['bboxes']
@@ -180,12 +183,13 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
             runtime_file.write(json.dumps(runtime_data) + '\n')
             
             # Send progress update
-            command_queue.put((device, {'completed': frame_idx + 1}))
+            if frame_idx % mod == 0:
+                command_queue.put((device, {'completed': frame_idx + 1}))
     
-    print(f"Tracking completed. Found {len(trajectories)} unique tracks.")
+    # print(f"Tracking completed. Found {len(trajectories)} unique tracks.")
     
-    # Save tracking results
-    print(f"Saving tracking results to: {output_path}")
+    # # Save tracking results
+    # print(f"Saving tracking results to: {output_path}")
     
     # Create output directory if it doesn't exist
     output_dir = os.path.dirname(output_path)
@@ -206,8 +210,8 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
             }
             f.write(json.dumps(frame_data) + '\n')
     
-    print(f"Tracking results saved successfully. Total frames: {len(frame_tracks)}")
-    print(f"Runtime data saved to: {runtime_path}")
+    # print(f"Tracking results saved successfully. Total frames: {len(frame_tracks)}")
+    # print(f"Runtime data saved to: {runtime_path}")
 
 
 def main(args: argparse.Namespace):

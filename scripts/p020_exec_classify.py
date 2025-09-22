@@ -3,12 +3,14 @@
 import argparse
 import json
 import os
+from typing import Callable
 import cv2
 import torch
 import numpy as np
 import time
 import shutil
 import multiprocessing as mp
+from functools import partial
 
 from polyis.images import splitHWC, padHWC
 from scipy.ndimage import binary_dilation 
@@ -106,6 +108,8 @@ def parse_args():
                         default=CLASSIFIERS_TO_TEST,
                         choices=CLASSIFIERS_CHOICES,
                         help='Specific classifiers to analyze (if not specified, all classifiers will be analyzed)')
+    parser.add_argument('--clear', action='store_true',
+                        help='Clear the output directory before processing')
     return parser.parse_args()
 
 
@@ -226,7 +230,8 @@ def mark_neighbor_tiles(relevance_grid, threshold):
     relevant_indices = np.where(dilated_mask.flatten())[0]
     return relevant_indices
 
-def process_video(video_path: str, model, tile_size: int, output_path: str, command_queue: mp.Queue, device: str, classifier: str):
+def process_video_task(video_path: str, cache_video_dir: str, classifier: str, 
+                      tile_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
@@ -236,13 +241,12 @@ def process_video(video_path: str, model, tile_size: int, output_path: str, comm
     its tile classifications and runtime measurement.
     
     Args:
-        video_path (str): Path to the input video file to process
-        model (ClassifyRelevance): Trained model for the specified tile size
-        tile_size (int): Tile size used for processing (32, 64, or 128)
-        output_path (str): Path where the output JSONL file will be saved
-        command_queue (mp.Queue): Queue for progress updates
-        device (str): Device to use for processing
-        classifier (str): Classifier name to use
+        video_path: Path to the video file
+        cache_video_dir: Path to the cache directory for this video
+        classifier: Classifier name to use
+        tile_size: Tile size to use
+        gpu_id: GPU ID to use for processing
+        command_queue: Queue for progress updates
             
     Note:
         - Video is processed frame by frame to minimize memory usage
@@ -261,21 +265,48 @@ def process_video(video_path: str, model, tile_size: int, output_path: str, comm
         - tile_classifications (list[list[float]]): Relevance scores grid for the specified tile size
         - runtime (float): Runtime in seconds for the ClassifyRelevance model inference
     """
-    print(f"Processing video: {video_path}")
+    device = f'cuda:{gpu_id}'
+    
+    # Load the trained model for this specific video, classifier, and tile size
+    model = load_model(cache_video_dir, tile_size, classifier)
+    model = model.to(device)
+    # try:
+    #     model.compile()
+    #     # model = torch.compile(model)
+    # except Exception as e:
+    #     print(f"Failed to compile model: {e}")
+    
+    # Create output directory structure
+    output_dir = os.path.join(cache_video_dir, 'relevancy')
+    
+    # Create score directory for this classifier and tile size
+    classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}')
+    if os.path.exists(classifier_dir):
+        shutil.rmtree(classifier_dir)
+    os.makedirs(classifier_dir)
+    
+    # Create score directory for this tile size
+    score_dir = os.path.join(classifier_dir, 'score')
+    if os.path.exists(score_dir):
+        shutil.rmtree(score_dir)
+    os.makedirs(score_dir)
+    output_path = os.path.join(score_dir, 'score.jsonl')
+    
+    # print(f"Processing video: {video_path}")
     
     cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        raise FileNotFoundError(f"Could not open video {video_path}")
+    assert cap.isOpened(), f"Could not open video {video_path}"
     
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
+    # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f:
         frame_idx = 0
-        command_queue.put((device, {'description': f"{video_path.split('/')[-1]} {tile_size:>3} {classifier}",
+        description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier}"
+        command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': frame_count}))
         prev_relevance_grid = None # no previous frame yet
         threshold = 0.5 # modify if necessary
@@ -321,64 +352,7 @@ def process_video(video_path: str, model, tile_size: int, output_path: str, comm
             command_queue.put((device, {'completed': frame_idx}))
 
     cap.release()
-    print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
-
-
-def process_video_task(video_file_path: str, cache_video_dir: str, classifier: str, 
-                      tile_size: int, gpu_id: int, command_queue: mp.Queue):
-    """
-    Process a single video with a specific classifier and tile size.
-    This function is designed to be called in parallel.
-    
-    Args:
-        video_file_path: Path to the video file
-        cache_video_dir: Path to the cache directory for this video
-        classifier: Classifier name to use
-        tile_size: Tile size to use
-        gpu_id: GPU ID to use for processing
-        command_queue: Queue for progress updates
-    """
-    try:
-        device = f'cuda:{gpu_id}'
-        
-        # Load the trained model for this specific video, classifier, and tile size
-        model = load_model(cache_video_dir, tile_size, classifier)
-        model = model.to(device)
-        
-        # Create output directory structure
-        output_dir = os.path.join(cache_video_dir, 'relevancy')
-        
-        # Create score directory for this classifier and tile size
-        classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}')
-        if os.path.exists(classifier_dir):
-            shutil.rmtree(classifier_dir)
-        os.makedirs(classifier_dir)
-        
-        # Create score directory for this tile size
-        score_dir = os.path.join(classifier_dir, 'score')
-        if os.path.exists(score_dir):
-            shutil.rmtree(score_dir)
-        os.makedirs(score_dir)
-        output_path = os.path.join(score_dir, 'score.jsonl')
-        
-        # Process the video
-        process_video(video_file_path, model, tile_size, output_path, command_queue, device, classifier)
-        
-    except Exception as e:
-        print(f"Error processing {video_file_path} with {classifier} (tile_size={tile_size}): {e}")
-        raise e
-
-
-def _process_video_task(video_file_path: str, cache_video_dir: str, classifier: str, 
-                       tile_size: int, gpu_id: int, worker_id_queue: mp.Queue, command_queue: mp.Queue):
-    """
-    Wrapper function for process_video_task that handles GPU queue management.
-    """
-    try:
-        process_video_task(video_file_path, cache_video_dir, classifier, 
-                          tile_size, gpu_id, command_queue)
-    finally:
-        worker_id_queue.put(gpu_id)
+    # print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
 
 
 def main(args):
@@ -412,8 +386,7 @@ def main(args):
     
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
     
-    if not os.path.exists(dataset_dir):
-        raise FileNotFoundError(f"Dataset directory {dataset_dir} does not exist")
+    assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
     
     # Determine which tile sizes to process
     if args.tile_size == 'all':
@@ -427,41 +400,30 @@ def main(args):
     video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
     
     # Create tasks list with all video/classifier/tile_size combinations
-    tasks: list[tuple[str, str, str, int]] = []
+    funcs: list[Callable[[int, mp.Queue], None]] = []
     for video_file in sorted(video_files):
         video_file_path = os.path.join(dataset_dir, video_file)
         cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
 
         output_dir = os.path.join(cache_video_dir, 'relevancy')
-        # TODO: Remove the dir if exists when the user specify the flag --clear
+        
+        # Clear output directory if --clear flag is specified
+        if args.clear and os.path.exists(output_dir):
+            print(f"Clearing output directory: {output_dir}")
+            shutil.rmtree(output_dir)
         os.makedirs(output_dir, exist_ok=True)
         
         for classifier in args.classifiers:
             for tile_size in tile_sizes_to_process:
-                tasks.append((video_file_path, cache_video_dir, classifier, tile_size))
-    
-    print(f"Created {len(tasks)} tasks to process")
+                func = partial(process_video_task, video_file_path,
+                               cache_video_dir, classifier, tile_size)
+                funcs.append(func)
     
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()
     assert num_gpus > 0, "No GPUs available"
     
-    with ProgressBar(num_workers=num_gpus, num_tasks=len(tasks)) as pb:
-        processes: list[mp.Process] = []
-        for task in tasks:
-            gpu_id = pb.get_worker_id()
-            pb.update_overall_progress(1)
-            process = mp.Process(target=_process_video_task,
-                                 args=(*task, gpu_id, pb.worker_id_queue,
-                                       pb.command_queue))
-            process.start()
-            processes.append(process)
-        
-        for process in processes:
-            process.join()
-            process.terminate()
-    
-    print("All tasks completed!")
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
             
 
 if __name__ == '__main__':

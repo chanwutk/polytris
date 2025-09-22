@@ -3,7 +3,7 @@
 
 import os
 import json
-from polyis.utilities import CACHE_DIR
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
 
 DATASETS_VIDEOS = [
     ('b3d', 'jnc00.mp4'),
@@ -12,9 +12,11 @@ DATASETS_VIDEOS = [
     ('b3d', 'jnc07.mp4'),
 ]
 
-CLASSIFIERS = ['SimpleCNN']
-EXEC_CLASSIFIERS = ['SimpleCNN', 'groundtruth']
-TILE_SIZES = [30, 60, 120]
+# CLASSIFIERS = ['SimpleCNN']
+CLASSIFIERS = CLASSIFIERS_TO_TEST
+# EXEC_CLASSIFIERS = ['SimpleCNN', 'groundtruth']
+EXEC_CLASSIFIERS = CLASSIFIERS_TO_TEST + ['groundtruth']
+TILE_SIZES = [30, 60]  #, 120]
 
 
 def gather_index_construction_data():

@@ -64,10 +64,10 @@ Bitmap2D = Array[*D2, np.uint8]
 def is_bitmap(x: np.ndarray[tuple, np.dtype[NPDType]]) -> TypeGuard[Bitmap2D]:
     return x.ndim == 2
 
-IndexMap = Array[tuple[int, int, Literal[2]], np.int32]
+IndexMap = Array[tuple[int, int], np.uint16]
 
 def is_index_map(x: np.ndarray[tuple, np.dtype[NPDType]]) -> TypeGuard[IndexMap]:
-    return x.ndim == 3 and x.shape[2] == 2 and x.dtype == np.int32
+    return x.ndim == 2 and x.dtype == np.uint16
 
 Polyomino = tuple[Bitmap2D, tuple[int, int]]
 PolyominoPositions = tuple[int, int, Bitmap2D, tuple[int, int]]
