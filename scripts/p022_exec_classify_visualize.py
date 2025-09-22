@@ -142,7 +142,7 @@ def _evaluate_frame_worker(args):
         classifications, frame_detections['tracks'], tile_size, threshold
     )
 
-    return frame_eval
+    return frame_eval       
 
 
 def create_statistics_visualizations(video_file: str, results: list[dict],

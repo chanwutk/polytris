@@ -11,7 +11,7 @@ import shutil
 import multiprocessing as mp
 
 from polyis.images import splitHWC, padHWC
-from scipy.ndimage import binary_dilation # check this import later
+from scipy.ndimage import binary_dilation 
 
 from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar
 
@@ -166,7 +166,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
         
         num_tiles = tiles.shape[0] * tiles.shape[1]
         # tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
-        tiles_flat = torch.flatten(tiles)
+        tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
         
         if relevant_indices is None:
             relevant_indices = np.arange(num_tiles)
@@ -178,7 +178,8 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
             
             
         # tiles_to_process = tiles_flat[relevant_indices]
-        tiles_to_process = torch.index_select(tiles_flat, 0, relevant_indices)
+        relevant_indices_tensor = torch.from_numpy(relevant_indices).to(device)
+        tiles_to_process = torch.index_select(tiles_flat, 0, relevant_indices_tensor)
         tiles_to_process = tiles_to_process / 255.0
         tiles_nchw = tiles_to_process.permute(0, 3, 1, 2)
         transform_runtime = (time.time_ns() / 1e6) - start_time
