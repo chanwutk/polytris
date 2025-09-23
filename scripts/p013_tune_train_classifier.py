@@ -12,8 +12,7 @@ from typing import Callable
 import torch
 import torch.utils.data
 import torch.optim
-import matplotlib.pyplot as plt
-import seaborn as sns
+import altair as alt
 import pandas as pd
 
 from torchvision import datasets, transforms
@@ -100,9 +99,6 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
                            val_images_processed: int,
                            throughput_per_epoch: list[list[dict[str, float | int | str]]]):
     """Plot training progress with time on x-axis and loss/accuracy on y-axis"""
-    # Set seaborn style
-    sns.set_style("whitegrid")
-    
     # Calculate cumulative times
     cumulative_train_times: list[float] = []
     cumulative_val_times: list[float] = []
@@ -118,10 +114,7 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
     train_accuracies_scaled: list[float] = [acc / 100.0 for acc in train_accuracies]
     val_accuracies_scaled: list[float] = [acc / 100.0 for acc in val_accuracies]
 
-    # Create figure with subplots
-    _fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
-
-    # Prepare data for seaborn line plot
+    # Prepare data for loss and accuracy plot
     epoch_range = list(range(len(train_losses)))
     
     # Create DataFrame for loss and accuracy data
@@ -136,17 +129,19 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
     
     df = pd.DataFrame(plot_data)
     
-    # Left subplot: Loss and accuracy progress using seaborn
-    sns.lineplot(data=df, x='Epoch', y='Value', hue='Metric', style='Type', 
-                markers=True, linewidth=2, ax=ax1)
-    
-    ax1.set_xlabel('Epoch')
-    ax1.set_ylabel('Loss / Accuracy')
-    ax1.set_title(f'Training Progress - Epoch {epoch + 1}')
-    ax1.set_ylim(0, 1)
-    ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    # Left chart: Loss and accuracy progress
+    chart1 = alt.Chart(df).mark_line(point=True).encode(
+        x='Epoch:Q',
+        y=alt.Y('Value:Q', scale=alt.Scale(domain=[0, 1])),
+        color='Metric:N',
+        strokeDash='Type:N'
+    ).properties(
+        title=f'Training Progress - Epoch {epoch + 1}',
+        width=400,
+        height=300
+    )
 
-    # Right subplot: ms/frame stacked bar chart
+    # Right chart: ms/frame stacked bar chart
     train_op_times: dict[str, float] = {}
     val_op_times: dict[str, float] = {}
     all_ops: set[str] = set()
@@ -161,7 +156,7 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
             else:
                 val_op_times[op_name] = val_op_times.get(op_name, 0) + op_time
 
-    # Prepare data for seaborn stacked bar chart
+    # Prepare data for stacked bar chart
     op_names = sorted(list(all_ops))
     legend_labels = { op: op.replace('train_', '').replace('test_', '')
                       for op in op_names }
@@ -194,33 +189,26 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
     if bar_data:  # Only create the plot if we have data
         bar_df = pd.DataFrame(bar_data)
         
-        # Create stacked bar chart using seaborn
-        # Group by Phase and Operation to get the data in the right format
-        pivot_df = bar_df.pivot_table(index='Phase', columns='Operation', 
-                                    values='ms_per_frame', fill_value=0)
-        
         # Create stacked bar chart
-        bottom_values = [0] * len(pivot_df.index)
-        colors = sns.color_palette("tab10", n_colors=len(pivot_df.columns))
+        chart2 = alt.Chart(bar_df).mark_bar().encode(
+            x='Phase:N',
+            y='ms_per_frame:Q',
+            color='Operation:N',
+            tooltip=['Phase', 'Operation', alt.Tooltip('ms_per_frame:Q', format='.2f')]
+        ).properties(
+            title='Milliseconds per Frame by Operation',
+            width=400,
+            height=300
+        )
         
-        for i, operation in enumerate(pivot_df.columns):
-            ax2.bar(pivot_df.index, pivot_df[operation], 
-                   bottom=bottom_values, label=operation, color=colors[i])
-            # Update bottom values for stacking
-            bottom_values = [bottom_values[j] + pivot_df[operation].iloc[j] 
-                           for j in range(len(bottom_values))]
-    
-    ax2.set_ylabel('ms per frame')
-    ax2.set_title('Milliseconds per Frame by Operation')
-    ax2.grid(True, alpha=0.3, axis='y')
-    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-
-    plt.tight_layout()
+        # Combine charts horizontally
+        combined_chart = alt.hconcat(chart1, chart2, spacing=20)
+    else:
+        combined_chart = chart1
 
     # Save the plot
     plot_path = os.path.join(results_dir, 'training_progress.png')
-    plt.savefig(plot_path, dpi=150, bbox_inches='tight')
-    plt.close()
+    combined_chart.save(plot_path, scale_factor=2)
 
 
 def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",

@@ -10,8 +10,6 @@ import sys
 from typing import Callable, Dict, List, Tuple, Any
 
 import numpy as np
-import matplotlib.pyplot as plt
-import csv
 
 from rich.progress import track
 

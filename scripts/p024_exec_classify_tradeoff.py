@@ -5,9 +5,8 @@ import json
 import os
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import altair as alt
 from rich.progress import track
-import seaborn as sns
 from typing import Any, Dict, List, Tuple
 import multiprocessing as mp
 
@@ -234,51 +233,65 @@ def create_tradeoff_visualizations(video_file: str, results: List[Dict], output_
     # Convert to DataFrame
     df = pd.DataFrame(valid_results)
     
-    # Set seaborn style
-    sns.set_style("whitegrid")
-    
-    # Create 4 subplots for different metrics
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-    axes = axes.flatten()
-    
+    # Create individual charts for each metric
     metrics = ['precision', 'recall', 'accuracy', 'f1_score']
     titles = ['Precision vs Throughput', 'Recall vs Throughput', 'Accuracy vs Throughput', 'F1-Score vs Throughput']
     
-    for i, (metric, title) in enumerate(zip(metrics, titles)):
-        ax = axes[i]
-        
-        # Get unique classifiers and create color mapping
-        unique_classifiers = df['classifier'].unique()
-        colors = sns.color_palette('tab20', n_colors=len(unique_classifiers))
-        color_map = dict(zip(unique_classifiers, colors))
-        
+    charts = []
+    for metric, title in zip(metrics, titles):
         # Create scatter plot with lines connecting same classifier
-        sns.scatterplot(data=df, x='throughput_fps', y=metric, 
-                       hue='classifier', size='tile_size', 
-                       sizes=(50, 200), alpha=0.7, ax=ax,
-                       palette=color_map)
+        scatter = alt.Chart(df).mark_circle().encode(
+            x='throughput_fps:Q',
+            y=f'{metric}:Q',
+            color='classifier:N',
+            size=alt.Size('tile_size:O', scale=alt.Scale(range=[50, 200])),
+            tooltip=['classifier', 'tile_size', 'throughput_fps', metric]
+        ).properties(
+            title=f'{title} - {video_file}',
+            width=300,
+            height=250
+        )
         
-        # Add lines connecting points with same classifier using matching colors
+        # Add lines connecting points with same classifier
+        line_data = []
         for classifier in df['classifier'].unique():
-            classifier_data = df[df['classifier'] == classifier].sort_values('tile_size')  # type: ignore
+            classifier_data = df[df['classifier'] == classifier]
+            assert isinstance(classifier_data, pd.DataFrame)
+            classifier_data = classifier_data.sort_values('tile_size')
             if len(classifier_data) > 1:
-                ax.plot(classifier_data['throughput_fps'], classifier_data[metric], 
-                       '--', alpha=0.5, linewidth=1, color=color_map[classifier])
+                for i in range(len(classifier_data) - 1):
+                    line_data.append({
+                        'x1': classifier_data.iloc[i]['throughput_fps'],
+                        'y1': classifier_data.iloc[i][metric],
+                        'x2': classifier_data.iloc[i+1]['throughput_fps'],
+                        'y2': classifier_data.iloc[i+1][metric],
+                        'classifier': classifier
+                    })
         
-        ax.set_xlabel('Throughput (FPS)')
-        ax.set_ylabel(metric.title())
-        ax.set_title(f'{title} - {video_file}')
-        ax.grid(True, alpha=0.3)
+        if line_data:
+            line_df = pd.DataFrame(line_data)
+            lines = alt.Chart(line_df).mark_rule(strokeDash=[5, 5], opacity=0.5).encode(
+                x='x1:Q',
+                y='y1:Q',
+                x2='x2:Q',
+                y2='y2:Q',
+                color='classifier:N'
+            )
+            chart = scatter + lines
+        else:
+            chart = scatter
         
-        # Move legend outside the plot
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        charts.append(chart)
     
-    plt.tight_layout()
+    # Combine charts in a 2x2 grid
+    combined_chart = alt.vconcat(
+        alt.hconcat(charts[0], charts[1]),
+        alt.hconcat(charts[2], charts[3])
+    )
     
     # Save the plot
     plot_path = os.path.join(output_dir, f'classification_accuracy_tradeoff_{video_file}.png')
-    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
-    plt.close()
+    combined_chart.save(plot_path, scale_factor=2)
     
     print(f"Saved tradeoff visualizations to: {plot_path}")
 

@@ -92,10 +92,10 @@ def parse_start_end_from_filename(npy_path: str) -> tuple[int, int]:
 
 
 def compute_content_ratio(index_map: np.ndarray) -> float:
-    # index_map shape: (grid_h, grid_w, 2); channel 0 marks filled tiles (>0)
-    if index_map.ndim != 3 or index_map.shape[2] < 1:
+    # index_map shape: (grid_h, grid_w)
+    if index_map.ndim != 2:
         raise ValueError(f"Unexpected index_map shape: {index_map.shape}")
-    occupancy = index_map[:, :, 0]
+    occupancy = index_map[:, :]
     total_tiles = occupancy.size
     filled_tiles = np.count_nonzero(occupancy > 0)
     return float(filled_tiles) / float(total_tiles) if total_tiles > 0 else 0.0

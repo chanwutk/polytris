@@ -22,3 +22,6 @@ seaborn
 pytest
 
 git+https://github.com/facebookresearch/detectron2.git
+
+vl-convert-python
+altair

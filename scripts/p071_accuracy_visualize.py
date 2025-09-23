@@ -7,9 +7,8 @@ import multiprocessing as mp
 from typing import Callable, Dict, List, Tuple, Any
 
 import numpy as np
-import matplotlib.pyplot as plt
+import altair as alt
 import pandas as pd
-import seaborn as sns
 
 from polyis.utilities import CACHE_DIR
 
@@ -186,21 +185,10 @@ def visualize_compared_accuracy_bar(video_tile_groups: Dict[str, Dict[int, Dict[
         xlabel: Label for x-axis
         output_path: Path to save the plot
     """
-    fig, axes = plt.subplots(num_videos, num_tile_sizes, figsize=(4 * num_tile_sizes, 3 * num_videos))
-    if num_videos == 1 and num_tile_sizes == 1:
-        axes = [[axes]]  # Make it a 2D array for single subplot
-    elif num_videos == 1:
-        axes = [axes]  # Make it a 2D array for single row
-    elif num_tile_sizes == 1:
-        axes = [[ax] for ax in axes]  # Make it a 2D array for single column
-    
-    fig.suptitle(f'{metric_name} Scores Comparison by Video and Tile Size')
-    
-    for row, video_name in enumerate(sorted_videos):
-        for col, tile_size in enumerate(sorted_tile_sizes):
-            ax = axes[row][col]
-            
-            # Check if this video has data for this tile size
+    # Prepare data for the chart
+    chart_data = []
+    for video_name in sorted_videos:
+        for tile_size in sorted_tile_sizes:
             if tile_size in video_tile_groups[video_name]:
                 group_data = video_tile_groups[video_name][tile_size]
                 
@@ -211,44 +199,66 @@ def visualize_compared_accuracy_bar(video_tile_groups: Dict[str, Dict[int, Dict[
                 sorted_labels = [group_data['labels'][idx] for idx in sorted_indices]
                 sorted_scores = [group_data[score_field][idx] for idx in sorted_indices]
                 
-                bars = ax.barh(range(len(sorted_labels)), sorted_scores, color='cornflowerblue')
-                
-                # Add labels inside bars (to the right) with dark blue text
-                for bar, label, score in zip(bars, sorted_labels, sorted_scores):
-                    # Label inside the bar (to the right)
-                    ax.text(bar.get_width() * 0.02, bar.get_y() + bar.get_height()/2.,
-                           label, ha='left', va='center', color='darkblue', fontweight='bold')
-                    
-                    # Score at the end of the bar (only if score is not 0)
-                    if score != 0:
-                        ax.text(bar.get_width() * 0.98, bar.get_y() + bar.get_height()/2.,
-                               f'{score:.2f}', ha='right', va='center', color='darkblue', fontweight='bold')
-                
-                # Remove y-axis ticks
-                ax.set_yticks([])
-            else:
-                # No data for this video/tile size combination
-                ax.text(0.5, 0.5, 'No Data', ha='center', va='center', 
-                       transform=ax.transAxes)
-            
-            # Set titles and labels
-            if row == 0:
-                ax.set_title(f'Tile Size {tile_size}')
-            if col == 0:
-                ax.set_ylabel(video_name)
-            if row == num_videos - 1:
-                ax.set_xlabel(xlabel)
-            
-            ax.set_xlim(0, 1.0)
+                for label, score in zip(sorted_labels, sorted_scores):
+                    chart_data.append({
+                        'Video': video_name,
+                        'Tile_Size': tile_size,
+                        'Classifier': label,
+                        'Score': score
+                    })
     
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
+    df = pd.DataFrame(chart_data)
+    
+    # Create horizontal bar chart with text labels inside bars
+    bars = alt.Chart(df).mark_bar().encode(
+        x=alt.X('Score:Q', title=xlabel, scale=alt.Scale(domain=[0, 1])),
+        # y=alt.Y('Classifier:N', sort='-x', axis=alt.Axis(labels=False, ticks=False, title=None)),
+        tooltip=['Video', 'Tile_Size', 'Classifier', alt.Tooltip('Score:Q', format='.2f')]
+    ).properties(
+        width=200,
+        height=200
+    )
+    
+    # Add text labels inside the bars
+    text = alt.Chart(df).mark_text(
+        align='right',
+        baseline='middle',
+        dx=-3,  # Small offset from the left edge of the bar
+        color='white'
+    ).transform_calculate(text='datum.Score > 0.01 ? format(datum.Score, ".2f") : ""').encode(
+        x=alt.X('Score:Q'),
+        # y=alt.Y('Classifier:N', sort='-x', axis=alt.Axis(labels=False, ticks=False, title=None)),
+        text=alt.Text('text:N'),
+    )
+
+    labels = alt.Chart(df).mark_text(
+        align='left',
+        baseline='middle',
+        dx=3,
+        fontWeight='bold',
+        color='black'
+    ).transform_calculate(Score2='datum.Score * 0.0001').encode(
+        x=alt.X('Score2:Q'),
+        text=alt.Text('Classifier:N'),
+        # white if score > 0, red if score < 0
+        color=alt.condition(alt.datum.Score > 0.1, alt.value('white'), alt.value('black'))
+    )
+    
+    # Layer the charts first, then apply faceting
+    chart = (bars + labels + text).encode(
+        y=alt.Y('Classifier:N', sort='-x', axis=alt.Axis(labels=False, ticks=False, title=None)),
+    ).resolve_scale(y='independent').facet(
+        row=alt.Row('Tile_Size:O', title='Tile Size'),
+        column=alt.Column('Video:N', title=None)
+    ).resolve_scale(y='independent').properties(padding=0)
+    
+    # Save the chart
+    chart.save(output_path, scale_factor=2)
 
 
 def visualize_tracking_accuracy(results: List[Dict[str, Any]], output_dir: str) -> None:
     """
-    Create visualizations for tracking accuracy results using seaborn and matplotlib.
+    Create visualizations for tracking accuracy results using altair.
     
     Args:
         results (List[Dict[str, Any]]): List of evaluation results
@@ -320,23 +330,35 @@ def visualize_tracking_accuracy(results: List[Dict[str, Any]], output_dir: str) 
         os.path.join(output_dir, 'mota_comparison.png')
     )
     
-    # Tile size comparison using seaborn (if multiple tile sizes exist)
+    # Tile size comparison using altair (if multiple tile sizes exist)
     if len(df['Tile_Size'].unique()) > 1:
-        _, axes = plt.subplots(1, 2, figsize=(5, 5))
-        
         # HOTA comparison
-        sns.boxplot(data=df, x='Tile_Size', y='HOTA', ax=axes[0])
-        axes[0].set_title('HOTA by Tile Size')
-        axes[0].set_ylabel('HOTA Score')
+        hota_chart = alt.Chart(df).mark_boxplot().encode(
+            x='Tile_Size:O',
+            y='HOTA:Q',
+            color='Tile_Size:O'
+        ).properties(
+            title='HOTA by Tile Size',
+            width=250,
+            height=300
+        )
         
         # MOTA comparison
-        sns.boxplot(data=df, x='Tile_Size', y='MOTA', ax=axes[1])
-        axes[1].set_title('MOTA by Tile Size')
-        axes[1].set_ylabel('MOTA Score')
+        mota_chart = alt.Chart(df).mark_boxplot().encode(
+            x='Tile_Size:O',
+            y='MOTA:Q',
+            color='Tile_Size:O'
+        ).properties(
+            title='MOTA by Tile Size',
+            width=250,
+            height=300
+        )
         
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'tile_size_comparison.png'), dpi=300, bbox_inches='tight')
-        plt.close()
+        # Combine charts horizontally
+        combined_chart = alt.hconcat(hota_chart, mota_chart, spacing=20)
+        
+        # Save the chart
+        combined_chart.save(os.path.join(output_dir, 'tile_size_comparison.png'), scale_factor=2)
 
 
 if __name__ == '__main__':

@@ -4,14 +4,12 @@ import os
 import json
 import argparse
 import numpy as np
-import matplotlib.pyplot as plt
+import altair as alt
+import pandas as pd
 from collections import defaultdict
 from typing import Any
-import tqdm
 
-from polyis.utilities import CACHE_DIR
-
-FORMATS = ['png']
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
 
 
 def parse_args():
@@ -72,15 +70,13 @@ def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, da
     stage_names = ['Classify', 'Compress', 'Detect', 'Track']
     
     # Group by classifier and tile size 
-    classifiers = ['SimpleCNN', 'groundtruth']  # Default classifiers
+    classifiers = CLASSIFIERS_TO_TEST
     tile_sizes = [30, 60]
     
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-    axes = axes.flatten()
+    # Prepare data for all charts
+    chart_data = []
     
-    for i, (stage, stage_name) in enumerate(tqdm.tqdm(zip(stages, stage_names), total=len(stages))):
-        ax = axes[i]
-        
+    for stage, stage_name in zip(stages, stage_names):
         # Collect data for this stage grouped by operation
         config_labels = []
         op_data = defaultdict(list)  # op_name -> list of values for each config
@@ -126,129 +122,70 @@ def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, da
             for op_name, values in op_data.items():
                 sorted_op_data[op_name] = [values[i] for i in sorted_indices]
             
-            # Create stacked horizontal bar chart
-            y = np.arange(len(sorted_config_labels))
-            height = 0.6
-            left = np.zeros(len(sorted_config_labels))
-            
-            # Color palette for different operations
-            colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-            
-            # Plot each operation as a layer in the stacked horizontal bar
-            for j, (op_name, values) in enumerate(sorted(sorted_op_data.items())):
-                if any(v > 0 for v in values):  # Only plot if there are non-zero values
-                    color = colors[j % len(colors)]
-                    ax.barh(y, values, height, left=left, label=op_name, color=color, alpha=0.8)
-                    left += np.array(values)
-            
-            # Set title
-            ax.set_title(f'{stage_name} Runtime by Operation')
-            ax.set_xlabel('Runtime (seconds)')
-            ax.set_yticks(y)
-            ax.set_yticklabels(sorted_config_labels)
-            ax.grid(True, alpha=0.3)
-            
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
+            # Prepare data for this stage
+            for op_name, values in sorted(sorted_op_data.items()):
+                if any(v > 0 for v in values):  # Only include if there are non-zero values
+                    for i, value in enumerate(values):
+                        chart_data.append({
+                            'Stage': stage_name,
+                            'Config': sorted_config_labels[i],
+                            'Operation': op_name,
+                            'Runtime': value
+                        })
+    
+    if not chart_data:
+        return
+    
+    df = pd.DataFrame(chart_data)
+    
+    # Create individual charts for each stage
+    charts = []
+    for stage_name in stage_names:
+        stage_data = df[df['Stage'] == stage_name]
+        assert isinstance(stage_data, pd.DataFrame)
+        if len(stage_data) > 0:
+            chart = alt.Chart(stage_data).mark_bar().encode(
+                x='Runtime:Q',
+                y=alt.Y('Config:N',
+                        sort=alt.SortField(field='Runtime', order='descending'),
+                        axis=alt.Axis(labelExpr="split(datum.label, ' ')",
+                                      labelBaseline='alphabetic', labelLineHeight=9)),
+                color=alt.Color('Operation:N', legend=alt.Legend(
+                    orient='bottom',
+                    columns=3,
+                )),
+                tooltip=['Config', 'Operation', alt.Tooltip('Runtime:Q', format='.2f')]
+            ).properties(
+                title=f'{stage_name} Runtime by Operation',
+                width=300,
+                height=220
+            )
+            charts.append(chart)
+    
+    # Combine charts in a 2x2 grid
+    if len(charts) >= 4:
+        combined_chart = alt.vconcat(
+            alt.hconcat(charts[0], charts[1]).resolve_scale(
+                color='independent'
+            ),
+            alt.hconcat(charts[2], charts[3]).resolve_scale(
+                color='independent'
+            )
+        )
+    elif len(charts) >= 2:
+        combined_chart = alt.hconcat(charts[0], charts[1]).resolve_scale(
+            color='independent'
+        )
+    else:
+        combined_chart = charts[0] if charts else alt.Chart().mark_text(text='No data')
     
     # Save plot with appropriate naming and directory structure
-    subtitle = video_name
     output_dir = os.path.join(output_dir, 'per_video')
     os.makedirs(output_dir, exist_ok=True)
     suffix = video_name.replace('/', '_').replace('.', '_') if video_name else 'unknown'
 
-    plt.suptitle(f'Query Execution Pipeline Runtime Breakdown ({subtitle})', fontsize=16)
-    plt.tight_layout()
-
-    for fmt in FORMATS:
-        plt.savefig(os.path.join(output_dir, f'query_execution_pipeline_{suffix}.{fmt}'), 
-                    dpi=300, bbox_inches='tight')
-    
-    plt.close()
-
-
-def plot_stacked_bars(ax, categories, category_totals, sorted_classifiers, 
-                     classifier_query_stages_by_tile, tile_size, stage_labels,
-                     preprocessing_values, preprocessing_labels, index_values, 
-                     index_labels, colors, width, include_index_construction=False):
-    """Plot stacked horizontal bars for runtime breakdown.
-    
-    Args:
-        ax: Matplotlib axis to plot on
-        categories: List of category names
-        category_totals: List of total values for each category (for sorting)
-        sorted_classifiers: List of classifiers in sorted order
-        classifier_query_stages_by_tile: Nested dict of query stages by tile size and classifier
-        tile_size: Current tile size being plotted
-        stage_labels: List of stage names for query execution
-        preprocessing_values: List of preprocessing stage values
-        preprocessing_labels: List of preprocessing stage names
-        index_values: List of index construction stage values (only used if include_index_construction=True)
-        index_labels: List of index construction stage names (only used if include_index_construction=True)
-        colors: List of colors for plotting
-        width: Bar width
-        include_index_construction: Whether to include index construction in the plot
-    """
-    # Sort categories by total value (descending)
-    sorted_indices = sorted(range(len(categories)), key=lambda i: category_totals[i], reverse=True)
-    sorted_categories = [categories[i] for i in sorted_indices]
-    y = np.arange(len(sorted_categories))
-    
-    # Create stacked horizontal bars
-    left_values = [0.0] * len(sorted_categories)
-    
-    # Map original indices to sorted positions
-    pos_map = {orig_idx: sorted_indices.index(orig_idx) for orig_idx in range(len(categories))}
-    
-    # Plot index construction stages (only if included)
-    if include_index_construction and index_values:
-        for i, (value, label) in enumerate(zip(index_values, index_labels)):
-            if value > 0:
-                pos = pos_map[0]  # Index Construction is at position 0
-                ax.barh(y[pos], value, width, left=left_values[pos], 
-                       label=f'Index: {label}', color=colors[i], alpha=0.8)
-                left_values[pos] += value
-    
-    # Plot query execution stages for each classifier
-    for classifier_idx, classifier in enumerate(sorted_classifiers):
-        query_values = [classifier_query_stages_by_tile[tile_size][classifier][label] for label in stage_labels]
-        for i, (value, label) in enumerate(zip(query_values, stage_labels)):
-            if value > 0:
-                if include_index_construction:
-                    pos = pos_map[1 + classifier_idx]  # Query Execution classifiers start at position 1
-                else:
-                    pos = pos_map[classifier_idx]  # Query Execution classifiers
-                color_idx = (i + len(index_values)) % len(colors)
-                ax.barh(y[pos], value, width, left=left_values[pos], 
-                       label=f'Query: {label}' if classifier_idx == 0 else '', 
-                       color=colors[color_idx], alpha=0.8)
-                left_values[pos] += value
-    
-    # Plot preprocessing stages
-    for i, (value, label) in enumerate(zip(preprocessing_values, preprocessing_labels)):
-        if value > 0:
-            if include_index_construction:
-                pos = pos_map[len(categories) - 1]  # Naive is at last position
-            else:
-                pos = pos_map[len(categories) - 1]  # Naive is at last position
-            color_idx = (i + len(index_values) + len(stage_labels)) % len(colors)
-            ax.barh(y[pos], value, width, left=left_values[pos], 
-                   label=f'Query: {label}' if i == 0 else '', 
-                   color=colors[color_idx], alpha=0.8)
-            left_values[pos] += value
-    
-    # Set axis properties
-    ax.set_xlabel('Runtime (seconds)')
-    ax.set_yticks(y)
-    ax.set_yticklabels(sorted_categories)
-    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
-    ax.grid(True, alpha=0.3)
-    
-    # Add total value labels at the end of bars
-    for i, total in enumerate(left_values):
-        if total <= 0:
-            continue
-        ax.text(total + max(left_values)*0.01, y[i], f'{total:.1f}s', 
-                ha='left', va='center', fontweight='bold', fontsize='small')
+    # Save the chart
+    combined_chart.save(os.path.join(output_dir, f'breakdown_{suffix}.png'), scale_factor=2)
 
 
 def visualize_overall_runtime(index_timings: dict, query_timings: dict, 
@@ -457,14 +394,6 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
     
     # Create separate plots for each tile size
     for tile_size in sorted_tile_sizes:
-        # Prepare data for stacked bar chart for this tile size
-        width = 0.6
-        
-        # Colors for different operations - expand palette for more classifiers
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', 
-                  '#7f7f7f', '#bcbd22', '#17becf', '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', 
-                  '#c5b0d5', '#c49c94', '#f7b6d3', '#c7c7c7', '#dbdb8d', '#9edae5']
-        
         # Index construction stack for this tile size
         index_values = list(index_stages_by_tile[tile_size].values())
         index_labels = list(index_stages_by_tile[tile_size].keys())
@@ -473,68 +402,99 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
         preprocessing_values = list(preprocessing_stages_by_tile[tile_size].values())
         preprocessing_labels = list(preprocessing_stages_by_tile[tile_size].keys())
         
-        # Build categories dynamically based on available classifiers
-        categories_with_index = ['Index Construction']
-        categories_without_index = []
-        
-        # Add query execution categories for each classifier
-        for classifier in sorted_classifiers:
-            display_name = classifier.title() if classifier != 'groundtruth' else 'Groundtruth'
-            categories_with_index.append(f'Query Execution\n(Classifier: {display_name})')
-            categories_without_index.append(f'Query Execution\n(Classifier: {display_name})')
-        
-        # Add naive query execution category if data is available
-        if has_naive_query_data and any(naive_query_stages.values()):
-            categories_with_index.append('Naive Query Execution')
-            categories_without_index.append('Naive Query Execution')
-        
-        # Add naive category (preprocessing)
-        categories_with_index.append('Naive')
-        categories_without_index.append('Naive')
-        
-        # Create figure with dynamic width based on number of classifiers
-        fig_width = max(20, 8 + 2 * len(sorted_classifiers))
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(fig_width, 8))
-    
-        # Calculate totals for each category to sort by bar size
-        category_totals = [float(sum(index_values))]  # Index Construction
-        for classifier in sorted_classifiers:
-            category_totals.append(float(sum(classifier_query_stages_by_tile[tile_size][classifier].values())))
-        # Add naive query execution total if available
-        if has_naive_query_data and any(naive_query_stages.values()):
-            category_totals.append(float(sum(naive_query_stages.values())))
-        category_totals.append(float(sum(preprocessing_values)))  # Naive
-        
-        # Plot subplot 1 with index construction
+        # Define stage labels for query execution
         stage_labels = ['Classify', 'Compress', 'Detect', 'Track']
-        plot_stacked_bars(ax1, categories_with_index, category_totals, sorted_classifiers,
-                         classifier_query_stages_by_tile, tile_size, stage_labels,
-                         preprocessing_values, preprocessing_labels, index_values, 
-                         index_labels, colors, width, include_index_construction=True)
-        ax1.set_title('With Index Construction')
-    
-        # === SUBPLOT 2: Without Index Construction ===
         
-        # Calculate totals for each category to sort by bar size (excluding index construction)
-        category_totals2 = []
+        # Prepare data for altair charts
+        chart_data = []
+        
+        # Add index construction data
+        for value, label in zip(index_values, index_labels):
+            chart_data.append({
+                'Category': 'Index Constr.',
+                'Operation': f'Index: {label}',
+                'Runtime': value,
+                'Chart': 'With Index Construction'
+            })
+        
+        # Add query execution data for each classifier
         for classifier in sorted_classifiers:
-            category_totals2.append(float(sum(classifier_query_stages_by_tile[tile_size][classifier].values())))
-        # Add naive query execution total if available
-        if has_naive_query_data and any(naive_query_stages.values()):
-            category_totals2.append(float(sum(naive_query_stages.values())))
-        category_totals2.append(float(sum(preprocessing_values)))  # Naive
-        
-        # Plot subplot 2 without index construction
-        plot_stacked_bars(ax2, categories_without_index, category_totals2, sorted_classifiers,
-                         classifier_query_stages_by_tile, tile_size, stage_labels,
-                         preprocessing_values, preprocessing_labels, index_values, 
-                         index_labels, colors, width, include_index_construction=False)
-        ax2.set_title('Without Index Construction')
+            query_values = [classifier_query_stages_by_tile[tile_size][classifier][label] for label in stage_labels]
+            for value, label in zip(query_values, stage_labels):
+                chart_data.append({
+                    'Category': f'Query Exec.\n({classifier.title()})',
+                    'Operation': f'Query: {label}',
+                    'Runtime': value,
+                    'Chart': 'With Index Construction'
+                })
     
-        # Set overall title
-        fig.suptitle(f'Index Construction vs Query Execution Runtime Breakdown - {video_name} (Tile Size: {tile_size})', fontsize=16)
+        # Add preprocessing data
+        for value, label in zip(preprocessing_values, preprocessing_labels):
+            chart_data.append({
+                'Category': 'Naive',
+                'Operation': f'Query: {label}',
+                'Runtime': value,
+                'Chart': 'With Index Construction'
+            })
         
-        plt.tight_layout()
+        # Create second chart data (without index construction)
+        chart_data2 = []
+        for classifier in sorted_classifiers:
+            query_values = [classifier_query_stages_by_tile[tile_size][classifier][label] for label in stage_labels]
+            for value, label in zip(query_values, stage_labels):
+                chart_data2.append({
+                    'Category': f'Query Exec.\n({classifier.title()})',
+                    'Operation': f'Query: {label}',
+                    'Runtime': value,
+                    'Chart': 'Without Index Construction'
+                })
+        
+        # Add preprocessing data
+        for value, label in zip(preprocessing_values, preprocessing_labels):
+            chart_data2.append({
+                'Category': 'Naive',
+                'Operation': f'Query: {label}',
+                'Runtime': value,
+                'Chart': 'Without Index Construction'
+            })
+        
+        # Create charts
+        df1 = pd.DataFrame(chart_data)
+        df2 = pd.DataFrame(chart_data2)
+        
+        chart1 = alt.Chart(df1).mark_bar().encode(
+            x='Runtime:Q',
+            y=alt.Y('Category:N',
+                    sort=alt.SortField(field='Runtime', order='descending'),
+                    axis=alt.Axis(labelExpr="split(datum.label, '\\n')",
+                                  labelBaseline='alphabetic')),
+            color=alt.Color('Operation:N', legend=alt.Legend(orient='top')),
+            tooltip=['Category', 'Operation', alt.Tooltip('Runtime:Q', format='.2f')]
+        ).properties(
+            title='With Index Construction',
+            width=400,
+            height=400
+        )
+        
+        chart2 = alt.Chart(df2).mark_bar().encode(
+            x='Runtime:Q',
+            y=alt.Y('Category:N',
+                    sort=alt.SortField(field='Runtime', order='descending'),
+                    axis=alt.Axis(labelExpr="split(datum.label, '\\n')",
+                                  labelBaseline='alphabetic')),
+            color=alt.Color('Operation:N', legend=alt.Legend(orient='top')),
+            tooltip=['Category', 'Operation', alt.Tooltip('Runtime:Q', format='.2f')]
+        ).properties(
+            title='Without Index Construction',
+            width=400,
+            height=400
+        )
+        
+        # Combine charts horizontally
+        combined_chart = alt.hconcat(chart1, chart2, spacing=20).properties(
+            title='Index Construction vs Query Execution Runtime Breakdown '
+                  f'- {video_name} (Tile Size: {tile_size})'
+        )
         
         # Save plot with appropriate naming and directory structure
         # Create per-video subdirectory for per-video analysis
@@ -542,12 +502,10 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
         os.makedirs(video_output_dir, exist_ok=True)
         
         # Save plot with safe filename including tile size
-        safe_video_name = video_name.replace('/', '_').replace('.', '_')
-        for fmt in FORMATS:
-            fig.savefig(os.path.join(video_output_dir, f'index_vs_query_comparison_{safe_video_name}_tile{tile_size}.{fmt}'), 
-                       dpi=300, bbox_inches='tight')
-        
-        plt.close(fig)
+        safe_video_name = video_name.replace('/', '_').split('.')[0]
+        file_name = f'overall_{safe_video_name}_tile{tile_size}.png'
+        combined_chart.save(os.path.join(video_output_dir, file_name), 
+                            scale_factor=2)
 
 
 def extract_video_names(query_timings: dict) -> list[str]:
@@ -611,7 +569,7 @@ def main():
     print("Creating comparative analysis...")
     visualize_overal_runtime_all(index_timings, query_timings, throughput_dir)
     
-    print(f"\nVisualization complete! Results saved to: {throughput_dir}")
+    print(f"Visualization complete! Results saved to: {throughput_dir}")
     print("- Per-video visualizations saved in per_video/ subdirectory")
 
 
