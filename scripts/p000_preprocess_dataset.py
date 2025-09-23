@@ -29,12 +29,25 @@ def parse_args():
     parser.add_argument('-d', '--datasets', required=False,
                         default='b3d',
                         help='Dataset name')
-    parser.add_argument('--isr', default=2, type=int)
-    return parser.parse_args()
+    
+    # Create mutually exclusive group for isr and fps
+    frame_group = parser.add_mutually_exclusive_group()
+    frame_group.add_argument('--isr', default=2, type=int,
+                            help='Frame sampling rate (every nth frame)')
+    frame_group.add_argument('--fps', type=int,
+                            help='Target FPS for output video')
+    
+    args = parser.parse_args()
+    
+    # Validate that at least one of isr or fps is provided
+    if args.isr is None and args.fps is None:
+        parser.error("Either --isr or --fps must be specified")
+    
+    return args
 
 
 def process_video(file: str, videodir: str, outputdir: str, mask: str, gpuIdx: int,
-                  batch_size: int, isr: int, progress_queue: mp.Queue):
+                  batch_size: int, isr: int, target_fps: int, progress_queue: mp.Queue):
     WIDTH = 1080
     HEIGHT = 720
 
@@ -53,7 +66,16 @@ def process_video(file: str, videodir: str, outputdir: str, mask: str, gpuIdx: i
     video_path = os.path.join(videodir, file)
     cap = cv2.VideoCapture(video_path)
     iwidth, iheight = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(cap.get(cv2.CAP_PROP_FPS)) // isr
+    
+    # Calculate output fps and frame sampling based on whether isr or target_fps was provided
+    original_fps = int(cap.get(cv2.CAP_PROP_FPS))
+    if target_fps is None:
+        fps = original_fps // isr
+    else:
+        fps = target_fps
+        # Calculate isr based on target fps
+        isr = max(1, round(original_fps / target_fps))
+    
     owidth, oheight = WIDTH, HEIGHT
     
     # Get total frame count for progress tracking
@@ -141,6 +163,7 @@ def process_b3d(args: argparse.Namespace):
     outputdir = os.path.join(args.output, 'b3d')
     mask = os.path.join(args.input, 'b3d', 'annotations.xml')
     isr = args.isr
+    target_fps = args.fps
 
     root = ElementTree.parse(mask).getroot()
     assert root is not None
@@ -180,7 +203,7 @@ def process_b3d(args: argparse.Namespace):
     count = 0
     for file in video_files:
         print(f'Processing {file}...')
-        process = mp.Process(target=process_video, args=(file, videodir, outputdir, mask, count % num_gpus, args.batch_size, isr, progress_queue))
+        process = mp.Process(target=process_video, args=(file, videodir, outputdir, mask, count % num_gpus, args.batch_size, isr, target_fps, progress_queue))
         process.start()
         processes.append(process)
         count += 1
