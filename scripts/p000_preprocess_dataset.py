@@ -1,17 +1,19 @@
 #!/usr/local/bin/python
 
 import argparse
+from functools import partial
 import os
+import shutil
 from xml.etree import ElementTree
-import multiprocessing as mp
-from multiprocessing import Queue
+from multiprocessing import Queue, cpu_count
 
 import cv2
 import numpy as np
 import torch
+import torch.nn.functional as F
 from matplotlib.path import Path
 
-from polyis.utilities import DATA_RAW_DIR, DATA_DIR, progress_bars
+from polyis.utilities import DATA_RAW_DIR, DATA_DIR, ProgressBar
 
 
 def parse_args():
@@ -27,8 +29,9 @@ def parse_args():
                         type=int,
                         help='Batch size')
     parser.add_argument('-d', '--datasets', required=False,
-                        default='b3d',
-                        help='Dataset name')
+                        default=['caldot1', 'caldot2'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     
     # Create mutually exclusive group for isr and fps
     frame_group = parser.add_mutually_exclusive_group()
@@ -46,8 +49,8 @@ def parse_args():
     return args
 
 
-def process_video(file: str, videodir: str, outputdir: str, mask: str, gpuIdx: int,
-                  batch_size: int, isr: int, target_fps: int, progress_queue: mp.Queue):
+def process_b3d_video(file: str, videodir: str, outputdir: str, mask: str, batch_size: int,
+                      isr: int, target_fps: int, gpuIdx: int, command_queue: Queue):
     WIDTH = 1080
     HEIGHT = 720
 
@@ -112,7 +115,7 @@ def process_video(file: str, videodir: str, outputdir: str, mask: str, gpuIdx: i
     fidx = 0
     done = False
     with torch.no_grad():
-        progress_queue.put(('cuda:' + str(gpuIdx), {
+        command_queue.put(('cuda:' + str(gpuIdx), {
             'description': f'{file}',
             'completed': 0,
             'total': total_frames
@@ -140,7 +143,8 @@ def process_video(file: str, videodir: str, outputdir: str, mask: str, gpuIdx: i
 
             # print('scale', fidx)
             frames_gpu = frames_gpu.permute(0, 3, 1, 2)
-            frames_gpu = torch.nn.functional.interpolate(frames_gpu.float(), size=(oheight, owidth), mode='bilinear', align_corners=False)
+            frames_gpu = F.interpolate(frames_gpu.float(), size=(oheight, owidth),
+                                       mode='bilinear', align_corners=False)
             assert isinstance(frames_gpu, torch.Tensor)
             frames_gpu = frames_gpu.permute(0, 2, 3, 1)
             frames = frames_gpu.detach().to(torch.uint8).cpu().numpy()
@@ -151,7 +155,7 @@ def process_video(file: str, videodir: str, outputdir: str, mask: str, gpuIdx: i
                 processed_frames += 1
                 
                 # Send progress update
-                progress_queue.put(('cuda:' + str(gpuIdx), { 'completed': processed_frames }))
+                command_queue.put(('cuda:' + str(gpuIdx), { 'completed': processed_frames }))
             print('write done', fidx)
 
     cap.release()
@@ -172,7 +176,7 @@ def process_b3d(args: argparse.Namespace):
         os.makedirs(outputdir)
     
     # Collect all valid video files first
-    video_files = []
+    funcs = []
     for file in os.listdir(videodir):
         if not file.endswith('.mp4'):
             continue
@@ -185,46 +189,95 @@ def process_b3d(args: argparse.Namespace):
         if domain is None:
             continue
         
-        video_files.append(file)
+        funcs.append(partial(process_b3d_video, file, videodir,
+                             outputdir, mask, args.batch_size, isr, target_fps))
     
-    if not video_files:
-        print("No valid video files found to process.")
-        return
+    assert len(funcs) > 0
     
-    # Create progress queue and start progress display
-    progress_queue = Queue()
-    num_gpus = min(len(video_files), torch.cuda.device_count())
+    # Determine number of available GPUs
+    num_gpus = torch.cuda.device_count()
+    print(f"Available GPUs: {num_gpus}")
     
-    # Start progress display in a separate process
-    progress_process = mp.Process(target=progress_bars, args=(progress_queue, num_gpus, len(video_files)))
-    progress_process.start()
+    # Limit the number of processes to the number of available GPUs
+    max_processes = min(len(funcs), num_gpus)
+    print(f"Using {max_processes} processes (limited by {num_gpus} GPUs)")
     
-    processes: list[mp.Process] = []
-    count = 0
-    for file in video_files:
-        print(f'Processing {file}...')
-        process = mp.Process(target=process_video, args=(file, videodir, outputdir, mask, count % num_gpus, args.batch_size, isr, target_fps, progress_queue))
-        process.start()
-        processes.append(process)
-        count += 1
+    # Use ProgressBar for parallel processing
+    ProgressBar(num_workers=max_processes, num_tasks=len(funcs)).run_all(funcs)
+
+
+def process_caldot_video(video_file: str, videodir: str, outputdir: str, isr: int, target_fps: int, worker_id: int, command_queue: Queue):
+    video_path = os.path.join(videodir, video_file)
+    cap = cv2.VideoCapture(video_path)
+    iwidth, iheight = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
-    # Wait for all video processing to complete
-    for process in processes:
-        process.join()
-        process.terminate()
-    
-    # Signal progress display to stop and wait for it
-    progress_queue.put(None)
-    progress_process.join()
+    # Calculate output fps and frame sampling based on whether isr or target_fps was provided
+    original_fps = int(cap.get(cv2.CAP_PROP_FPS))
+    if target_fps is not None:
+        fps = target_fps
+        # Calculate isr based on target fps
+        isr = max(1, round(original_fps / target_fps))
+    assert isr is not None
+
+    out_filename = os.path.join(outputdir, video_file)
+    writer = cv2.VideoWriter(out_filename, cv2.VideoWriter.fourcc(*'mp4v'), fps, (iwidth, iheight))
+
+    fidx = 0
+    done = False
+    with torch.no_grad():
+        command_queue.put(('cuda:' + str(worker_id), {
+            'description': f'{video_file}',
+            'completed': 0,
+            'total': int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        }))
+        while cap.isOpened() and not done:
+            ret, frame = cap.read()
+            fidx += 1
+            if not ret:
+                break
+            if fidx % isr != 0:
+                continue
+
+            writer.write(np.ascontiguousarray(frame))
+            command_queue.put(('cuda:' + str(worker_id), { 'completed': fidx }))
+
+    cap.release()
+    writer.release()
+
+
+def process_caldot(args: argparse.Namespace, dataset: str):
+    videodir = os.path.join(args.input, dataset)
+    outputdir = os.path.join(args.output, dataset)
+    isr = args.isr
+    target_fps = args.fps
+
+    if os.path.exists(outputdir):
+        shutil.rmtree(outputdir)
+    os.makedirs(outputdir, exist_ok=True)
+
+    video_files = os.listdir(videodir)
+    assert len(video_files) > 0
+
+    num_workers = min(int(cpu_count() * 0.8), len(video_files), 20)
+
+    funcs = []
+    for video_file in video_files:
+        funcs.append(partial(process_caldot_video, video_file, videodir, outputdir, isr, target_fps))
+
+    ProgressBar(num_workers=num_workers, num_tasks=len(video_files)).run_all(funcs)
 
 
 def main(args):
     datasets = args.datasets
 
-    if datasets == 'b3d':
-        process_b3d(args)
-    else:
-        raise ValueError(f'Unknown dataset: {datasets}')
+    for dataset in datasets:
+        print(f"Processing dataset: {dataset}")
+        if dataset == 'b3d':
+            process_b3d(args)
+        elif dataset.startswith('caldot'):
+            process_caldot(args, dataset)
+        else:
+            raise ValueError(f'Unknown dataset: {dataset}')
 
 
 if __name__ == '__main__':

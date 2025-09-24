@@ -13,6 +13,7 @@ from typing import Callable
 import torch
 
 import polyis.models.retinanet_b3d
+import polyis.models.detector
 from polyis.utilities import CACHE_DIR, format_time, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, ProgressBar
 
 
@@ -28,7 +29,7 @@ def parse_args():
         argparse.Namespace: Parsed command line arguments containing:
             - dataset (str): Dataset name to process (default: 'b3d')
             - tile_size (str): Tile size to use for detection (choices: '30', '60', '120', 'all')
-            - detector (str): Detector name to use (default: 'retina')
+            - detector: Detector is auto-selected based on dataset name
             - classifiers (list): Classifier names to use (default: CLASSIFIERS_TO_TEST + ['groundtruth'])
             - clear (bool): Whether to remove and recreate the packed_detections folder for each video (default: False)
     """
@@ -38,9 +39,7 @@ def parse_args():
                         help='Dataset name')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for detection (or "all" for all tile sizes)')
-    parser.add_argument('--detector', required=False,
-                        default='retina',
-                        help='Detector name')
+    # Detector selection is now automatic based on dataset name
     parser.add_argument('--classifiers', required=False,
                         default=CLASSIFIERS_TO_TEST + ['groundtruth'],
                         # default=['groundtruth'],
@@ -54,15 +53,16 @@ def parse_args():
     return parser.parse_args()
 
 
-def detect_retina(video_file_path: str, tile_size: int, classifier: str, 
-                  gpu_id: int, command_queue: mp.Queue):
+def detect_objects(video_file_path: str, tile_size: int, classifier: str, 
+                  dataset_name: str, gpu_id: int, command_queue: mp.Queue):
     """
-    Detect objects in packed images using RetinaNet detector.
+    Detect objects in packed images using auto-selected detector.
     
     Args:
         video_file_path (str): Path to the video file
         tile_size (int): Tile size used for packing
         classifier (str): Classifier name used for packing
+        dataset_name (str): Name of the dataset (used to auto-select detector)
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
@@ -72,7 +72,7 @@ def detect_retina(video_file_path: str, tile_size: int, classifier: str,
     packing_dir = os.path.join(video_file_path, 'packing', f'{classifier}_{tile_size}', 'images')
     assert os.path.exists(packing_dir)
 
-    detector = polyis.models.retinanet_b3d.get_detector(device=device)
+    detector = polyis.models.detector.get_detector(dataset_name, gpu_id)
 
     print(f"Processing video {video_file_path}")
 
@@ -109,7 +109,7 @@ def detect_retina(video_file_path: str, tile_size: int, classifier: str,
 
             # Detect objects in the frame
             start_time = (time.time_ns() / 1e6)
-            outputs = polyis.models.retinanet_b3d.detect(frame, detector)
+            outputs = polyis.models.detector.detect(frame, detector)
             end_time = (time.time_ns() / 1e6)
             runtime['detect'] = end_time - start_time
 
@@ -137,7 +137,7 @@ def main(args):
         args (argparse.Namespace): Parsed command line arguments containing:
             - dataset (str): Name of the dataset to process
             - tile_size (str): Tile size to use for detection ('30', '60', '120', or 'all')
-            - detector (str): Name of the detector to use
+            - detector: Detector is auto-selected based on dataset name
             - classifiers (list): List of classifier names to use (default: CLASSIFIERS_TO_TEST + ['groundtruth'])
             - clear (bool): Whether to remove and recreate the packed_detections folder for each video
             
@@ -193,10 +193,7 @@ def main(args):
                     print(f"No packing directory found for {video_file} {classifier} {tile_size}, skipping")
                     continue
                 
-                if args.detector == 'retina':
-                    funcs.append(partial(detect_retina, video_file_path, tile_size, classifier))
-                else:
-                    raise ValueError(f"Unknown detector: {args.detector}")
+                funcs.append(partial(detect_objects, video_file_path, tile_size, classifier, args.dataset))
     
     print(f"Created {len(funcs)} tasks to process")
     

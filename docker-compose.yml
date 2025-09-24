@@ -12,6 +12,7 @@ services:
       # Change /data/chawutk/polyis-dataset to your local path
       - /data/chanwutk/data/polyis-data:/polyis-data
       - /data/chanwutk/data/polyis-cache:/polyis-cache
+      - /data/chanwutk/data/otif-dataset:/otif-dataset
       - /home/eecs/chanwutk/.ssh:/root/.ssh
     deploy:
       resources:

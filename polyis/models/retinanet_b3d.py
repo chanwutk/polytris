@@ -4,6 +4,8 @@ import sys
 
 import numpy as np
 
+import polyis.dtypes
+
 sys.path.append('/polyis/modules/detectron2')
 sys.path.append('/polyis/modules/b3d')
 
@@ -42,6 +44,7 @@ def detect(image: np.ndarray, detector: "DefaultPredictor", nms_threshold: float
     bboxes, scores, _ = parse_outputs(_outputs, (0, 0))
     nms_bboxes, nms_scores = nms.nms(bboxes, scores, nms_threshold)
     detections = np.zeros((len(nms_bboxes), 5))
+    assert polyis.dtypes.is_det_array(detections)
     if len(nms_bboxes) == 0:
         return detections
 
