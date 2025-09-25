@@ -73,9 +73,10 @@ TILE_SIZES = [30, 60]  #, 120]
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Preprocess video dataset')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
+    parser.add_argument('--datasets', required=False,
+                        default=['caldot1', 'caldot2'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     parser.add_argument('--classifiers', required=False,
                         # default=['WideResNet50'],
                         default=CLASSIFIERS_TO_TEST,
@@ -116,7 +117,7 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
 
     # Prepare data for loss and accuracy plot
     epoch_range = list(range(len(train_losses)))
-    
+
     # Create DataFrame for loss and accuracy data
     plot_data = []
     for i, epoch_num in enumerate(epoch_range):
@@ -126,9 +127,9 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
             {'Epoch': epoch_num, 'Value': train_accuracies_scaled[i], 'Metric': 'Train Accuracy', 'Type': 'Accuracy'},
             {'Epoch': epoch_num, 'Value': val_accuracies_scaled[i], 'Metric': 'Validation Accuracy', 'Type': 'Accuracy'}
         ])
-    
+
     df = pd.DataFrame(plot_data)
-    
+
     # Left chart: Loss and accuracy progress
     chart1 = alt.Chart(df).mark_line(point=True).encode(
         x='Epoch:Q',
@@ -160,10 +161,10 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
     op_names = sorted(list(all_ops))
     legend_labels = { op: op.replace('train_', '').replace('test_', '')
                       for op in op_names }
-    
+
     # Create data for stacked bar chart
     bar_data = []
-    
+
     # Training data
     for op in op_names:
         if op in train_op_times and not op.endswith('load_data'):
@@ -174,7 +175,7 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
                 'Operation': legend_labels[op],
                 'ms_per_frame': op_ms_per_frame
             })
-    
+
     # Validation data
     for op in op_names:
         if op in val_op_times and not op.endswith('load_data'):
@@ -185,10 +186,10 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
                 'Operation': legend_labels[op],
                 'ms_per_frame': op_ms_per_frame
             })
-    
+
     if bar_data:  # Only create the plot if we have data
         bar_df = pd.DataFrame(bar_data)
-        
+
         # Create stacked bar chart
         chart2 = alt.Chart(bar_df).mark_bar().encode(
             x='Phase:N',
@@ -200,7 +201,7 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
             width=400,
             height=300
         )
-        
+
         # Combine charts horizontally
         combined_chart = alt.hconcat(chart1, chart2, spacing=20)
     else:
@@ -260,9 +261,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
     throughput_per_epoch: list[list[dict[str, float | int | str]]] = []
 
-    video_filename = training_path.split('/')[-2].split('.')[0]
+    # Extract dataset name from training path for description
+    dataset_name = training_path.split('/')[-3]  # indexing/training -> dataset_name
     max_model_name_length = max(len(name) for name in MODEL_ZOO)
-    description = f"{video_filename} {tile_size:>3} {model_type:>{max_model_name_length}} {'{}'}"
+    description = f"{dataset_name} {tile_size:>3} {model_type:>{max_model_name_length}} {'{}'}"
     command_queue.put((device, { 'description': description.format('T'),
                                  'total': n_epochs, 'completed': 0 }))
     for epoch in range(n_epochs):
@@ -529,7 +531,7 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
                      gpu_id: int, command_queue: mp.Queue):
     """
     Train a classifier model for a specific video, tile size, and model type.
-    
+
     Args:
         training_path: Path to the training data directory
         tile_size: Tile size for the model
@@ -553,6 +555,11 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
     optimizer = Adam(model.parameters(), lr=0.001)
 
     training_data_path = os.path.join(training_path, 'data', f'tilesize_{tile_size}')
+
+    if not os.path.exists(training_data_path):
+        raise FileNotFoundError(f"Training data directory {training_data_path} does not exist. "
+                                "Please run p012_tune_create_training_data.py first.")
+
     train_data = datasets.ImageFolder(training_data_path, transform=transforms.ToTensor())
 
     generator = torch.Generator().manual_seed(0)
@@ -608,16 +615,19 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
 def main(args):
     mp.set_start_method('spawn', force=True)
 
-    dataset_dir = os.path.join(CACHE_DIR, args.dataset)
-
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for video in sorted(os.listdir(dataset_dir)):
-        video_path = os.path.join(dataset_dir, video)
-        if not os.path.isdir(video_path) and not video.endswith('.mp4'):
+
+    for dataset_name in args.datasets:
+        dataset_dir = os.path.join(CACHE_DIR, dataset_name)
+
+        if not os.path.exists(dataset_dir):
+            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
             continue
 
-        training_path = os.path.join(video_path, 'training')
+        # Use dataset-level training data instead of video-level
+        training_path = os.path.join(dataset_dir, 'indexing', 'training')
         results_dir = os.path.join(training_path, 'results')
+
         if args.clear and os.path.exists(results_dir):
             shutil.rmtree(results_dir)
         os.makedirs(results_dir, exist_ok=True)
@@ -626,11 +636,11 @@ def main(args):
             for tile_size in TILE_SIZES:
                 func = partial(train_classifier, training_path, tile_size, classifier)
                 funcs.append(func)
-    
+
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()
     assert num_gpus > 0, "No GPUs available"
-    
+
     ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
 
 

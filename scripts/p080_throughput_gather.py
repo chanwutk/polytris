@@ -94,7 +94,7 @@ def gather_query_execution_data():
             'classifier': 'groundtruth',
             'tile_size': 0,
             'runtime_files': [('001_preprocess_groundtruth_detection',
-                               os.path.join(CACHE_DIR, dataset, video, 'groundtruth', 'detection.jsonl'))]
+                               os.path.join(CACHE_DIR, dataset, video, 'groundtruth', 'detections.jsonl'))]
         })
         query_data.append({
             'dataset/video': f"{dataset}/{video}",

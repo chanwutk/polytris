@@ -60,7 +60,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tracki
     Raises:
         FileNotFoundError: If no detection results file is found
     """
-    file = 'tracking.jsonl' if tracking else 'detection.jsonl'
+    file = 'tracking.jsonl' if tracking else 'detections.jsonl'
     detection_path = os.path.join(cache_dir, dataset, 'execution', video_file, 'groundtruth', file)
     
     if not os.path.exists(detection_path):

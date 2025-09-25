@@ -5,6 +5,9 @@ from pathlib import Path
 import shutil
 import sys
 import numpy as np
+from contextlib import redirect_stdout, redirect_stderr
+from io import StringIO
+import subprocess
 
 import polyis.dtypes
 
@@ -147,9 +150,21 @@ def get_detector(gpu_id: int, config_path: str | None = None, model_path: str | 
         # Load YOLOv3 network
         batch_size = DEFAULT_BATCH_SIZE
         darknet.set_gpu(gpu_id)
-        net, class_names, _ = darknet.load_network(
-            tmp_config_path, tmp_obj_meta, model_path, batch_size=batch_size
-        )
+        # Suppress architecture output from load_network
+        # Use file descriptor redirection for C-level output
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        old_stdout = os.dup(1)
+        old_stderr = os.dup(2)
+        try:
+            os.dup2(devnull, 1)
+            os.dup2(devnull, 2)
+            net, class_names, _ = darknet.load_network(
+                tmp_config_path, tmp_obj_meta, model_path, batch_size=batch_size
+            )
+        finally:
+            os.dup2(old_stdout, 1)
+            os.dup2(old_stderr, 2)
+            os.close(devnull)
         
         if len(class_names) != 1:
             raise ValueError(f'Expected 1 class, but got {len(class_names)}')

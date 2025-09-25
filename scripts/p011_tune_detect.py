@@ -6,6 +6,7 @@ import json
 import os
 import time
 from multiprocessing import Queue
+from pathlib import Path
 
 import cv2
 import torch
@@ -15,22 +16,30 @@ from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Preprocess video dataset')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
+    parser = argparse.ArgumentParser(description='Execute object detection on video segments')
+    parser.add_argument('--datasets', required=False,
+                        default=['caldot1', 'caldot2'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     return parser.parse_args()
 
 
-def detect_objects(video_path: str, dataset_dir: str, video: str, dataset_name: str, gpu_id: int, command_queue: Queue):
+def detect_objects(video: str, dataset_name: str, gpu_id: int, command_queue: Queue):
+    # Get detector based on detector_name parameter
     detector = polyis.models.detector.get_detector(dataset_name, gpu_id)
 
-    with (open(os.path.join(video_path, 'segments', 'detection', 'segments.jsonl'), 'r') as f,
-            open(os.path.join(video_path, 'segments', 'detection', 'detections.jsonl'), 'w') as fd):
+    # New output path structure
+    output_path = Path(CACHE_DIR) / dataset_name / 'indexing' / 'segment' / 'detection' / f'{video}.detections.jsonl'
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Input segments path
+    segments_path = Path(CACHE_DIR) / dataset_name / 'indexing' / 'segment' / 'detection' / f'{video}.segments.jsonl'
+
+    with (open(segments_path, 'r') as f, open(output_path, 'w') as fd):
         lines = [*f.readlines()]
 
         # Construct the path to the video file in the dataset directory
-        dataset_video_path = os.path.join(dataset_dir, video)
+        dataset_video_path = os.path.join(DATA_DIR, dataset_name, video)
         cap = cv2.VideoCapture(dataset_video_path)
 
         # Calculate total frames across all segments for progress tracking
@@ -39,7 +48,7 @@ def detect_objects(video_path: str, dataset_dir: str, video: str, dataset_name: 
 
         # Send initial progress update
         command_queue.put((f'cuda:{gpu_id}', {
-            'description': video,
+            'description': f'{dataset_name}/{video}',
             'completed': 0,
             'total': total_frames
         }))
@@ -80,69 +89,83 @@ def detect_objects(video_path: str, dataset_dir: str, video: str, dataset_name: 
 
 def main(args):
     """
-    Main function to run object detection on video segments using auto-selected detector.
-    
+    Main function to run object detection on video segments.
+
     This function:
-    1. Sets up paths for cache and dataset directories based on command line arguments
-    2. Automatically selects the appropriate detector based on the dataset name
-    3. Iterates through each video in the dataset directory
-    4. Reads detection segments from the cache
-    5. Processes each frame in each segment to detect objects using multiprocessing
-    6. Saves detection results with timing information to detections.jsonl
-    7. Supports both RetinaNet and YOLOv3 detectors
-    
+    1. Processes multiple datasets in sequence
+    2. For each dataset, sets up paths for cache and dataset directories
+    3. Selects the appropriate detector (based on dataset name)
+    4. Iterates through each video in the dataset directory
+    5. Reads detection segments from the cache
+    6. Processes each frame in each segment to detect objects using multiprocessing
+    7. Saves detection results with timing information to detections.jsonl
+
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
-            - dataset: Name of the dataset to process (detector auto-selected)
-            
+            - datasets: List of dataset names to process
+
     Raises:
         ValueError: If dataset is not found in configuration
-        
+
     Note:
         The function expects the following directory structure:
-        - CACHE_DIR/dataset_name/ (for processed segments and results)
+        - CACHE_DIR/dataset_name/indexing/segments/detection/ (for processed segments and results)
         - DATA_DIR/dataset_name/ (for original video files)
-        
+
         Detection results are saved in JSONL format with:
         - frame_idx: Current frame index
         - bounding_boxes: Detected object bounding boxes (first 4 columns of outputs)
         - segment_idx: Index of the current segment
         - timing: Dictionary with read and detection timing information
     """
-    cache_dir = os.path.join(CACHE_DIR, args.dataset)
-    dataset_dir = os.path.join(DATA_DIR, args.dataset)
-    
-    # Show detector info for this dataset
-    detector_info = polyis.models.detector.get_detector_info(args.dataset)
-    print(f"Using detector: {detector_info['detector']} ({detector_info['description']})")
-    
-    dataset_name = args.dataset
-    
-    # Get list of videos to process
-    videos = [v for v in sorted(os.listdir(dataset_dir)) 
-              if os.path.isdir(os.path.join(cache_dir, v))]
-    
-    assert len(videos) > 0, "No videos found to process"
+    datasets = args.datasets
 
-    print(f"Found {len(videos)} videos to process")
+    # Show detector info
+    print(f"Using detector: {datasets}")
+
+    # Create task functions
+    funcs = []
+    for dataset_name in datasets:
+        cache_dir = Path(CACHE_DIR) / dataset_name
+        dataset_dir = Path(DATA_DIR) / dataset_name
+
+        if not dataset_dir.exists():
+            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
+            continue
+
+        # Get list of videos to process
+        videos = [
+            v.name[:-len('.segments.jsonl')]
+            for v in (cache_dir / 'indexing' / 'segment' / 'detection').iterdir()
+            if v.is_file()
+        ]
+
+        if len(videos) == 0:
+            print(f"No videos with segments found in {cache_dir}")
+            continue
+
+        print(f"Found {len(videos)} videos to process in dataset {dataset_name}")
+
+        funcs.extend(
+            partial(detect_objects, video, dataset_name)
+            for video in videos
+        )
+
+    if len(funcs) == 0:
+        print("No videos found to process across all datasets")
+        return
 
     # Determine number of available GPUs
     num_gpus = torch.cuda.device_count()
     print(f"Available GPUs: {num_gpus}")
-    
+
     # Limit the number of processes to the number of available GPUs
-    max_processes = min(len(videos), num_gpus)
+    max_processes = min(len(funcs), num_gpus)
     print(f"Using {max_processes} processes (limited by {num_gpus} GPUs)")
-    
-    # Create task functions
-    funcs = []
-    for video in videos:
-        funcs.append(partial(detect_objects,
-                     os.path.join(cache_dir, video), dataset_dir, video, dataset_name))
-    
+
     # Use ProgressBar for parallel processing
-    ProgressBar(num_workers=max_processes, num_tasks=len(videos)).run_all(funcs)
-    
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
+
     print("All videos processed successfully!")
 
 
