@@ -40,17 +40,46 @@ def parse_args():
     frame_group.add_argument('--fps', type=int,
                             help='Target FPS for output video')
     
+    parser.add_argument('--portion', type=str,
+                        help='Portion of video to process in format <start-percent>:<end-percent> (e.g., "10:90" or "0:50" or "25:")')
+    
     args = parser.parse_args()
     
     # Validate that at least one of isr or fps is provided
     if args.isr is None and args.fps is None:
         parser.error("Either --isr or --fps must be specified")
     
+    # Parse portion argument
+    if args.portion:
+        try:
+            if ':' in args.portion:
+                start_str, end_str = args.portion.split(':', 1)
+                start_percent = float(start_str) if start_str else 0.0
+                end_percent = float(end_str) if end_str else 100.0
+            else:
+                # If no colon, treat as end percentage
+                start_percent = 0.0
+                end_percent = float(args.portion)
+            
+            if not (0 <= start_percent <= 100 and 0 <= end_percent <= 100):
+                parser.error("Portion percentages must be between 0 and 100")
+            if start_percent >= end_percent:
+                parser.error("Start percentage must be less than end percentage")
+            
+            args.start_percent = start_percent
+            args.end_percent = end_percent
+        except ValueError:
+            parser.error("Portion must be in format <start-percent>:<end-percent> (e.g., '10:90')")
+    else:
+        args.start_percent = 0.0
+        args.end_percent = 100.0
+    
     return args
 
 
 def process_b3d_video(file: str, videodir: str, outputdir: str, mask: str, batch_size: int,
-                      isr: int, target_fps: int, gpuIdx: int, command_queue: Queue):
+                      isr: int, target_fps: int | None, start_percent: float, end_percent: float,
+                      gpuIdx: int, command_queue: Queue):
     WIDTH = 1080
     HEIGHT = 720
 
@@ -84,6 +113,13 @@ def process_b3d_video(file: str, videodir: str, outputdir: str, mask: str, batch
     # Get total frame count for progress tracking
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     processed_frames = 0
+    
+    # Calculate start and end frame indices based on percentage
+    start_frame = int(total_frames * start_percent / 100.0)
+    end_frame = int(total_frames * end_percent / 100.0)
+    
+    # Seek to start frame
+    cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
 
     domains = img.findall('.//polygon[@label="domain"]')
     bitmaps = []
@@ -112,13 +148,13 @@ def process_b3d_video(file: str, videodir: str, outputdir: str, mask: str, batch
     out_filename = os.path.join(outputdir, file)
     writer = cv2.VideoWriter(out_filename, cv2.VideoWriter.fourcc(*'mp4v'), fps, (owidth, oheight))
 
-    fidx = 0
+    fidx = start_frame
     done = False
     with torch.no_grad():
         command_queue.put(('cuda:' + str(gpuIdx), {
             'description': f'{file}',
             'completed': 0,
-            'total': total_frames
+            'total': end_frame - start_frame
         }))
         while cap.isOpened() and not done:
             frames = []
@@ -126,7 +162,7 @@ def process_b3d_video(file: str, videodir: str, outputdir: str, mask: str, batch
             for i in range(batch_size):
                 ret, frame = cap.read()
                 fidx += 1
-                if not ret:
+                if not ret or fidx > end_frame:
                     done = True
                     break
                 if fidx % isr == 0:
@@ -190,7 +226,8 @@ def process_b3d(args: argparse.Namespace):
             continue
         
         funcs.append(partial(process_b3d_video, file, videodir,
-                             outputdir, mask, args.batch_size, isr, target_fps))
+                             outputdir, mask, args.batch_size, isr, target_fps,
+                             args.start_percent, args.end_percent))
     
     assert len(funcs) > 0
     
@@ -206,14 +243,17 @@ def process_b3d(args: argparse.Namespace):
     ProgressBar(num_workers=max_processes, num_tasks=len(funcs)).run_all(funcs)
 
 
-def process_caldot_video(video_file: str, videodir: str, outputdir: str, isr: int, target_fps: int, worker_id: int, command_queue: Queue):
+def process_caldot_video(video_file: str, videodir: str, outputdir: str, isr: int, target_fps: int | None,
+                         start_percent: float, end_percent: float, worker_id: int, command_queue: Queue):
     video_path = os.path.join(videodir, video_file)
     cap = cv2.VideoCapture(video_path)
     iwidth, iheight = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
     # Calculate output fps and frame sampling based on whether isr or target_fps was provided
     original_fps = int(cap.get(cv2.CAP_PROP_FPS))
-    if target_fps is not None:
+    if target_fps is None:
+        fps = original_fps // isr
+    else:
         fps = target_fps
         # Calculate isr based on target fps
         isr = max(1, round(original_fps / target_fps))
@@ -222,24 +262,32 @@ def process_caldot_video(video_file: str, videodir: str, outputdir: str, isr: in
     out_filename = os.path.join(outputdir, video_file)
     writer = cv2.VideoWriter(out_filename, cv2.VideoWriter.fourcc(*'mp4v'), fps, (iwidth, iheight))
 
-    fidx = 0
+    # Calculate start and end frame indices based on percentage
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    start_frame = int(total_frames * start_percent / 100.0)
+    end_frame = int(total_frames * end_percent / 100.0)
+    
+    # Seek to start frame
+    cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+
+    fidx = start_frame
     done = False
     with torch.no_grad():
         command_queue.put(('cuda:' + str(worker_id), {
             'description': f'{video_file}',
             'completed': 0,
-            'total': int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            'total': end_frame - start_frame
         }))
         while cap.isOpened() and not done:
             ret, frame = cap.read()
             fidx += 1
-            if not ret:
+            if not ret or fidx > end_frame:
                 break
             if fidx % isr != 0:
                 continue
 
             writer.write(np.ascontiguousarray(frame))
-            command_queue.put(('cuda:' + str(worker_id), { 'completed': fidx }))
+            command_queue.put(('cuda:' + str(worker_id), { 'completed': fidx - start_frame }))
 
     cap.release()
     writer.release()
@@ -262,7 +310,8 @@ def process_caldot(args: argparse.Namespace, dataset: str):
 
     funcs = []
     for video_file in video_files:
-        funcs.append(partial(process_caldot_video, video_file, videodir, outputdir, isr, target_fps))
+        funcs.append(partial(process_caldot_video, video_file, videodir, outputdir, isr, target_fps,
+                             args.start_percent, args.end_percent))
 
     ProgressBar(num_workers=num_workers, num_tasks=len(video_files)).run_all(funcs)
 

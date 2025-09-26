@@ -32,16 +32,17 @@ def parse_args():
     
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
+            - datasets (List[str]): Dataset names to process (default: ['b3d'])
             - tile_size (int | str): Tile size to use for packing (choices: 30, 60, 120, 'all')
             - threshold (float): Threshold for classification probability (default: 0.5)
             - classifiers (str): Classifier names to use
             - clear (bool): Whether to remove and recreate the packing folder (default: False)
     """
     parser = argparse.ArgumentParser(description='Execute packing of video tiles into images based on classification results')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
+    parser.add_argument('--datasets', required=False,
+                        default=['b3d'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for packing (or "all" for all tile sizes)')
     parser.add_argument('--threshold', type=float, default=0.5,
@@ -196,13 +197,10 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
     video_name = os.path.basename(video_file_path)
     
     # Load classification results
-    dataset = os.path.basename(os.path.dirname(cache_video_dir))
+    dataset = os.path.basename(os.path.dirname(os.path.dirname(cache_video_dir)))
     video_file = os.path.basename(cache_video_dir)
-    try:
-        results = load_classification_results(CACHE_DIR, dataset, video_file, tile_size, classifier)
-    except FileNotFoundError:
-        print(f"No classification results found for classifier {classifier} with tile size {tile_size}, skipping")
-        return
+    results = load_classification_results(CACHE_DIR, dataset, video_file,
+                                          tile_size, classifier, execution_dir=True)
     
     # Create output directory for packing results
     output_dir = os.path.join(cache_video_dir, 'packing', f'{classifier}_{tile_size}')
@@ -403,14 +401,14 @@ def main(args):
     Main function that orchestrates the video tile packing process using parallel processing.
     
     This function serves as the entry point for the script. It:
-    1. Validates the dataset directory exists
+    1. Validates the dataset directories exist
     2. Creates a list of all video/classifier/tile_size combinations to process
     3. Uses multiprocessing to process tasks in parallel across available GPUs
     4. Processes each video and saves packing results
     
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
-            - dataset (str): Name of the dataset to process
+            - datasets (List[str]): Names of the datasets to process
             - tile_size (str): Tile size to use for packing ('30', '60', '120', or 'all')
             - threshold (float): Threshold for classification probability (0.0 to 1.0)
             - classifiers (list): List of classifier names to use (default: CLASSIFIERS_TO_TEST)
@@ -418,23 +416,18 @@ def main(args):
             
     Note:
         - The script expects classification results from 020_exec_classify.py in:
-          {CACHE_DIR}/{dataset}/{video_file}/relevancy/{classifier}_{tile_size}/score/
+          {CACHE_DIR}/{dataset}/execution/{video_file}/relevancy/{classifier}_{tile_size}/score/
         - Looks for score.jsonl files
         - Videos are read from {DATA_DIR}/{dataset}/
-        - Packed images are saved to {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/images/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/index_maps/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/{video_file}/packing/{classifier}_{tile_size}/offset_lookups/
+        - Packed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/packing/{classifier}_{tile_size}/images/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/packing/{classifier}_{tile_size}/index_maps/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/packing/{classifier}_{tile_size}/offset_lookups/
         - When tile_size is 'all', all tile sizes (30, 60, 120) are processed
         - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST are processed
         - If no classification results are found for a video, that video is skipped with a warning
         - Tiles with classification probability > threshold are considered relevant for packing
     """
     mp.set_start_method('spawn', force=True)
-    
-    dataset_dir = os.path.join(DATA_DIR, args.dataset)
-    
-    if not os.path.exists(dataset_dir):
-        raise FileNotFoundError(f"Dataset directory {dataset_dir} does not exist")
     
     # Determine which tile sizes to process
     if args.tile_size == 'all':
@@ -444,31 +437,39 @@ def main(args):
         tile_sizes_to_process = [int(args.tile_size)]
         print(f"Processing tile size: {tile_sizes_to_process[0]}")
     
-    # Get all video files from the dataset directory
-    video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-    
     # Create tasks list with all video/classifier/tile_size combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for video_file in sorted(video_files):
-        video_file_path = os.path.join(dataset_dir, video_file)
-        cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
-
-        packing_base_dir = os.path.join(cache_video_dir, 'packing')
-        if args.clear and os.path.exists(packing_base_dir):
-            shutil.rmtree(packing_base_dir)
-            print(f"Cleared existing packing folder: {packing_base_dir}")
+    
+    for dataset_name in args.datasets:
+        dataset_dir = os.path.join(DATA_DIR, dataset_name)
         
-        for classifier in args.classifiers:
-            for tile_size in tile_sizes_to_process:
+        if not os.path.exists(dataset_dir):
+            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
+            continue
+        
+        # Get all video files from the dataset directory
+        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        
+        for video_file in sorted(video_files):
+            video_file_path = os.path.join(dataset_dir, video_file)
+            cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-                score_file = os.path.join(cache_video_dir, 'relevancy',
-                                          f'{classifier}_{tile_size}', 'score', 'score.jsonl')
-                if not os.path.exists(score_file):
-                    print(f"No score file found for {video_file} {classifier} {tile_size}, skipping")
-                    continue
+            packing_base_dir = os.path.join(cache_video_dir, 'packing')
+            if args.clear and os.path.exists(packing_base_dir):
+                shutil.rmtree(packing_base_dir)
+                print(f"Cleared existing packing folder: {packing_base_dir}")
+            
+            for classifier in args.classifiers:
+                for tile_size in tile_sizes_to_process:
 
-                funcs.append(partial(compress, video_file_path,
-                                     cache_video_dir, classifier, tile_size, args.threshold))
+                    score_file = os.path.join(cache_video_dir, 'relevancy',
+                                              f'{classifier}_{tile_size}', 'score', 'score.jsonl')
+                    if not os.path.exists(score_file):
+                        print(f"No score file found for {video_file} {classifier} {tile_size}, skipping")
+                        continue
+
+                    funcs.append(partial(compress, video_file_path, cache_video_dir,
+                                         classifier, tile_size, args.threshold))
     
     print(f"Created {len(funcs)} tasks to process")
     

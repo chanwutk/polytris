@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 import shutil
 import sys
+import cv2
 import numpy as np
 from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
@@ -43,9 +44,9 @@ class YOLOv3Detector:
 
 
 def get_detector(gpu_id: int, config_path: str | None = None, model_path: str | None = None,
-                data_root: str | None = None, detector_label: str | None = None,
-                width: int | None = None, height: int | None = None,
-                threshold: float = 0.25, nms_threshold: float = 0.45):
+                 data_root: str | None = None, detector_label: str | None = None,
+                 width: int | None = None, height: int | None = None,
+                 threshold: float = 0.25, nms_threshold: float = 0.45):
     """
     Load YOLOv3 detector with configurable parameters.
     
@@ -202,6 +203,10 @@ def detect(image: np.ndarray, detector: YOLOv3Detector, threshold: float | None 
         threshold = detector.threshold
     
     # Prepare image for darknet
+    oheight, owidth = image.shape[:2]
+    image = cv2.resize(image, (detector.width, detector.height),
+                       interpolation=cv2.INTER_LINEAR)
+    # image = image[:detector.height, :detector.width, :]
     arr = np.array([image], dtype=np.uint8)
     arr = arr.transpose((0, 3, 1, 2))
     arr = np.ascontiguousarray(arr.flat, dtype=np.float32) / 255.0
@@ -232,9 +237,16 @@ def detect(image: np.ndarray, detector: YOLOv3Detector, threshold: float | None 
                 continue
             predictions.append((int(cx-w/2), int(cy-h/2), int(cx+w/2),
                                 int(cy+h/2), det.prob[0]))
+    # predictions = []
+    # for _cls, score, (cx, cy, w, h) in raw_dlist:
+    #     predictions.append((int(cx-w/2), int(cy-h/2), int(cx+w/2),
+    #                         int(cy+h/2), score))
     
-    detections = np.array(predictions) if predictions else np.empty((0, 5))
+    detections = np.array(predictions) if len(predictions) > 0 else np.empty((0, 5))
     darknet.free_batch_detections(raw_detections, detector.batch_size)
+
+    detections[:, [0, 2]] = detections[:, [0, 2]] * owidth / detector.width
+    detections[:, [1, 3]] = detections[:, [1, 3]] * oheight / detector.height
 
     assert polyis.dtypes.is_det_array(detections)
     return detections

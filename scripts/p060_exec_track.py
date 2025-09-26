@@ -6,13 +6,11 @@ import os
 import shutil
 import time
 import numpy as np
-import tqdm
 import multiprocessing as mp
 from functools import partial
 from typing import Callable
-import torch
 
-from polyis.utilities import create_tracker, format_time, interpolate_trajectory, CACHE_DIR, ProgressBar, register_tracked_detections
+from polyis.utilities import create_tracker, format_time, CACHE_DIR, ProgressBar, register_tracked_detections
 
 
 def parse_args():
@@ -21,7 +19,7 @@ def parse_args():
     
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
+            - datasets (List[str]): Dataset names to process (default: ['b3d'])
             - tracker (str): Tracking algorithm to use (default: 'sort')
             - max_age (int): Maximum age for SORT tracker (default: 10)
             - min_hits (int): Minimum hits for SORT tracker (default: 3)
@@ -30,9 +28,10 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Execute object tracking on uncompressed '
                                                  'detection results from 050_exec_uncompress.py')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
+    parser.add_argument('--datasets', required=False,
+                        default=['b3d'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     parser.add_argument('--tracker', required=False,
                         default='sort',
                         choices=['sort'],
@@ -48,7 +47,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_size: int, classifier: str, verbose: bool = False) -> list[dict]:
+def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_size: int,
+                           classifier: str, verbose: bool = False) -> list[dict]:
     """
     Load detection results from the uncompressed detections JSONL file.
     
@@ -65,7 +65,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     Raises:
         FileNotFoundError: If no detection results file is found
     """
-    detection_path = os.path.join(cache_dir, dataset, video_file,
+    detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
                                   'uncompressed_detections',
                                   f'{classifier}_{tile_size}',
                                   'detections.jsonl')
@@ -87,7 +87,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     return results
 
 
-def process_tracking_task(video_file: str, tile_size: int, classifier: str, 
+def process_tracking_task(video_file: str, tile_size: int, classifier: str, dataset_name: str,
                           args: argparse.Namespace, gpu_id: int, command_queue: mp.Queue):
     """
     Process tracking for a single video/classifier/tile_size combination.
@@ -97,6 +97,7 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
         video_file (str): Name of the video file to process
         tile_size (int): Tile size used for detections
         classifier (str): Classifier name used for detections
+        dataset_name (str): Name of the dataset
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
         args: Command line arguments
@@ -110,16 +111,16 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
     no_interpolate = args.no_interpolate
     
     # Check if uncompressed detections exist
-    detection_path = os.path.join(CACHE_DIR, args.dataset, video_file,
+    detection_path = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file,
                                   'uncompressed_detections', f'{classifier}_{tile_size}',
                                   'detections.jsonl')
     assert os.path.exists(detection_path)
 
     # Load detection results
-    detection_results = load_detection_results(CACHE_DIR, args.dataset, video_file, tile_size, classifier)
+    detection_results = load_detection_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier)
 
     # Create output path for tracking results
-    uncompressed_tracking_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'uncompressed_tracking')
+    uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, 'uncompressed_tracking')
     output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tile_size}', 'tracking.jsonl')
     
     # Create tracker
@@ -222,7 +223,7 @@ def main(args: argparse.Namespace):
     Main function that orchestrates the object tracking process using parallel processing.
     
     This function serves as the entry point for the script. It:
-    1. Validates the dataset directory exists
+    1. Validates the dataset directories exist
     2. Creates a list of all video/classifier/tile_size combinations to process
     3. Uses multiprocessing to process tasks in parallel across available GPUs
     4. Processes each video and saves tracking results
@@ -232,44 +233,48 @@ def main(args: argparse.Namespace):
         
     Note:
         - The script expects uncompressed detection results from 050_exec_uncompress.py in:
-          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
         - Tracking results are saved to:
-          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_tracking/{classifier}_{tile_size}/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/uncompressed_tracking/{classifier}_{tile_size}/tracking.jsonl
         - Linear interpolation is optional and controlled by the --no_interpolate flag
         - Processing is parallelized for improved performance
         - The number of processes equals the number of available GPUs
     """
     mp.set_start_method('spawn', force=True)
     
-    print(f"Processing dataset: {args.dataset}")
     print(f"Using tracker: {args.tracker}")
     print(f"Tracker parameters: max_age={args.max_age}, min_hits={args.min_hits}, iou_threshold={args.iou_threshold}")
     print(f"Interpolation: {'enabled' if not args.no_interpolate else 'disabled'}")
     
-    # Find all videos with uncompressed detection results
-    dataset_cache_dir = os.path.join(CACHE_DIR, args.dataset)
-    if not os.path.exists(dataset_cache_dir):
-        raise FileNotFoundError(f"Dataset cache directory {dataset_cache_dir} does not exist")
-    
     # Create tasks list with all video/classifier/tile_size combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for item in os.listdir(dataset_cache_dir):
-        item_path = os.path.join(dataset_cache_dir, item)
-        if not os.path.isdir(item_path):
+    
+    for dataset_name in args.datasets:
+        print(f"Processing dataset: {dataset_name}")
+        
+        # Find all videos with uncompressed detection results
+        dataset_cache_dir = os.path.join(CACHE_DIR, dataset_name, 'execution')
+        if not os.path.exists(dataset_cache_dir):
+            print(f"Dataset cache directory {dataset_cache_dir} does not exist, skipping...")
             continue
+        
+        for item in os.listdir(dataset_cache_dir):
+            item_path = os.path.join(dataset_cache_dir, item)
+            if not os.path.isdir(item_path):
+                continue
 
-        uncompressed_detections_dir = os.path.join(item_path, 'uncompressed_detections')
-        if not os.path.exists(uncompressed_detections_dir):
-            continue
+            uncompressed_detections_dir = os.path.join(item_path, 'uncompressed_detections')
+            if not os.path.exists(uncompressed_detections_dir):
+                continue
 
-        uncompressed_tracking_dir = os.path.join(item_path, 'uncompressed_tracking')
-        if os.path.exists(uncompressed_tracking_dir):
-            shutil.rmtree(uncompressed_tracking_dir)
+            uncompressed_tracking_dir = os.path.join(item_path, 'uncompressed_tracking')
+            if os.path.exists(uncompressed_tracking_dir):
+                shutil.rmtree(uncompressed_tracking_dir)
 
-        for classifier_tilesize in sorted(os.listdir(uncompressed_detections_dir)):
-            classifier, tile_size = classifier_tilesize.split('_')
-            tile_size = int(tile_size)
-            funcs.append(partial(process_tracking_task, item, tile_size, classifier, args))
+            for classifier_tilesize in sorted(os.listdir(uncompressed_detections_dir)):
+                classifier, tile_size = classifier_tilesize.split('_')
+                tile_size = int(tile_size)
+                funcs.append(partial(process_tracking_task, item, tile_size, classifier, dataset_name, args))
     
     print(f"Created {len(funcs)} tasks to process")
     
@@ -286,3 +291,4 @@ def main(args: argparse.Namespace):
 
 if __name__ == '__main__':
     main(parse_args())
+

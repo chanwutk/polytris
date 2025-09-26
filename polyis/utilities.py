@@ -514,7 +514,7 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
 
 
 def create_tracking_visualization(video_path: str, tracking_results: dict[int, list[list[float]]], 
-                                 output_path: str, speed_up: int, process_id: int, progress_queue=None):
+                                  output_path: str, speed_up: int, process_id: int, progress_queue=None):
     """
     Create a visualization video showing tracking results overlaid on the original video.
     
@@ -523,13 +523,11 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         tracking_results (dict[int, list[list[float]]]): Tracking results from load_tracking_results
         output_path (str): Path where the output visualization video will be saved
     """
-    print(f"Creating tracking visualization for video: {video_path}")
+    # print(f"Creating tracking visualization for video: {video_path}")
     
     # Open video
     cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        print(f"Error: Could not open video {video_path}")
-        return
+    assert cap.isOpened(), f"Could not open video {video_path}"
     
     # Get video properties
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -537,7 +535,7 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
-    print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
+    # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     
     # Create output directory if it doesn't exist
     output_dir = os.path.dirname(output_path)
@@ -552,7 +550,7 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         cap.release()
         return
     
-    print(f"Creating visualization video with {frame_count} frames at {fps} FPS")
+    # print(f"Creating visualization video with {frame_count} frames at {fps} FPS")
     
     # Initialize trajectory history for all tracks with frame timestamps
     trajectory_history: dict[int, list[tuple[int, int, int]]] = {}  # track_id -> [(x, y, frame_idx), ...]
@@ -569,39 +567,25 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         }))
     
     # Process each frame
-    try:
-        for frame_idx in range(frame_count):
-            # Read frame
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            # Get tracking results for this frame
-            tracks = tracking_results.get(frame_idx, [])
-            
-            # Create visualization frame with trajectory history
-            vis_frame = create_visualization_frame(frame, tracks, frame_idx, trajectory_history, speed_up)
+    for frame_idx in range(frame_count):
+        # Read frame
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        # Get tracking results for this frame
+        tracks = tracking_results.get(frame_idx, [])
+        
+        # Create visualization frame with trajectory history
+        vis_frame = create_visualization_frame(frame, tracks, frame_idx, trajectory_history, speed_up)
 
-            # Write frame to video
-            if vis_frame is not None:
-                writer.write(vis_frame)
-            
-            # Send progress update
-            if progress_queue is not None:
-                progress_queue.put((f'cuda:{process_id}', {'completed': frame_idx + 1}))
-    
-    except KeyboardInterrupt:
-        print(f"\nProcess {process_id}: KeyboardInterrupt detected. Stopping video writing...")
-        print(f"Process {process_id}: Video writing stopped at frame {frame_idx}")
-    except Exception as e:
-        print(f"\nProcess {process_id}: Error during video processing: {e}")
-    finally:
-        # Release resources
-        cap.release()
-        writer.release()
-        print(f"Process {process_id}: Resources released")
-    
-    print(f"Process {process_id}: Tracking visualization completed")
+        # Write frame to video
+        if vis_frame is not None:
+            writer.write(vis_frame)
+        
+        # Send progress update
+        if progress_queue is not None:
+            progress_queue.put((f'cuda:{process_id}', {'completed': frame_idx + 1}))
 
 
 def mark_detections(
@@ -688,7 +672,7 @@ class ProgressBar:
             pass
     """
     
-    def __init__(self, num_workers: int, num_tasks: int, refresh_per_second: float = 1):
+    def __init__(self, num_workers: int, num_tasks: int, refresh_per_second: float = 1, off: bool = False):
         """
         Initialize the progress bar manager.
         
@@ -704,12 +688,14 @@ class ProgressBar:
         # Initialize queues
         self.command_queue: "mp.Queue[tuple[str, dict] | None]" = mp.Queue()
         self.worker_id_queue: "mp.Queue[int]" = mp.Queue(maxsize=num_workers)
-        self.progress_process: mp.Process = mp.Process(
-            target=progress_bars,
-            args=(self.command_queue, self.num_workers,
-                  self.num_tasks, self.refresh_per_second),
-            daemon=True
-        )
+        self.progress_process: mp.Process | None = None
+        if not off:
+            self.progress_process = mp.Process(
+                target=progress_bars,
+                args=(self.command_queue, self.num_workers,
+                    self.num_tasks, self.refresh_per_second),
+                daemon=True
+            )
     
     def __enter__(self):
         """Enter the context manager - set up queues and start progress process."""
@@ -719,7 +705,8 @@ class ProgressBar:
             self.worker_id_queue.put(worker_id)
         
         # Start progress bars process
-        self.progress_process.start()
+        if self.progress_process is not None:
+            self.progress_process.start()
         
         return self
     
@@ -729,16 +716,17 @@ class ProgressBar:
             # Signal progress bars to stop
             self.command_queue.put(None)
             
-            # Wait for progress process to finish and terminate it
-            self.progress_process.join(timeout=5)  # Wait up to 5 seconds
-            if self.progress_process.is_alive():
-                self.progress_process.terminate()
-                self.progress_process.join(timeout=2)  # Give it time to terminate
-            
-            # Force kill if still alive
-            if self.progress_process.is_alive():
-                self.progress_process.kill()
-                self.progress_process.join()
+            if self.progress_process is not None:
+                # Wait for progress process to finish and terminate it
+                self.progress_process.join(timeout=5)  # Wait up to 5 seconds
+                if self.progress_process.is_alive():
+                    self.progress_process.terminate()
+                    self.progress_process.join(timeout=2)  # Give it time to terminate
+                
+                # Force kill if still alive
+                if self.progress_process.is_alive():
+                    self.progress_process.kill()
+                    self.progress_process.join()
         except Exception as e:
             print(f"Error during progress bar cleanup: {e}")
             raise e
