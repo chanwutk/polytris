@@ -17,18 +17,11 @@ TILE_SIZES = [30, 60]  #, 120]
 
 
 def parse_args():
-    """
-    Parse command line arguments for the script.
-    
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
-            - tile_size (int | str): Tile size to use for classification (choices: 30, 60, 120, 'all')
-    """
     parser = argparse.ArgumentParser(description='Execute trained proxy models to classify video tiles')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
+    parser.add_argument('--datasets', required=False,
+                        default=['caldot1', 'caldot2'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     return parser.parse_args()
@@ -110,7 +103,7 @@ def process_video(video_path: str, video_file: str, tile_size: int,
     frame_detections = load_tracking_results(CACHE_DIR, dataset, video_file)
     
     # Create output directory structure
-    output_dir = os.path.join(CACHE_DIR, dataset, video_file, 'relevancy')
+    output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_file, 'relevancy')
     os.makedirs(output_dir, exist_ok=True)
 
     classifier_dir = os.path.join(output_dir, f'groundtruth_{tile_size}')
@@ -140,6 +133,7 @@ def process_video(video_path: str, video_file: str, tile_size: int,
         command_queue.put((device, {'description': f"{video_path.split('/')[-1]} {tile_size:>3} groundtruth",
                                     'completed': 0, 'total': frame_count}))
         
+        mod = int(max(1, frame_count * 0.02))
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -168,7 +162,8 @@ def process_video(video_path: str, video_file: str, tile_size: int,
                 f.flush()
             
             frame_idx += 1
-            command_queue.put((device, {'completed': frame_idx}))
+            if frame_idx % mod == 0:
+                command_queue.put((device, {'completed': frame_idx}))
     
     cap.release()
     # print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
@@ -179,14 +174,14 @@ def main(args):
     Main function that orchestrates the video tile classification process using parallel processing.
     
     This function serves as the entry point for the script. It:
-    1. Validates the dataset directory exists
+    1. Validates the dataset directories exist
     2. Creates a list of all video/tile_size combinations to process
     3. Uses multiprocessing to process tasks in parallel across available CPUs
     4. Processes each video and saves classification results
     
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
-            - dataset (str): Name of the dataset to process
+            - datasets (List[str]): Names of the datasets to process
             - tile_size (str): Tile size to use for classification ('30', '60', '120', or 'all')
             
     Note:
@@ -201,10 +196,6 @@ def main(args):
         - If no tracking results are found for a video, that video is skipped with a warning
     """
     mp.set_start_method('spawn', force=True)
-    dataset_dir = os.path.join(DATA_DIR, args.dataset)
-    
-    if not os.path.exists(dataset_dir):
-        raise FileNotFoundError(f"Dataset directory {dataset_dir} does not exist")
     
     # Determine which tile sizes to process
     if args.tile_size == 'all':
@@ -214,21 +205,29 @@ def main(args):
         tile_sizes_to_process = [int(args.tile_size)]
         print(f"Processing tile size: {tile_sizes_to_process[0]}")
     
-    # Get all video files from the dataset directory
-    video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-    
     # Create functions list with all video/tile_size combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for video_file in sorted(video_files):
-        video_file_path = os.path.join(dataset_dir, video_file)
-        for tile_size in tile_sizes_to_process:
-            funcs.append(partial(process_video, video_file_path,
-                         video_file, tile_size, args.dataset))
+    
+    for dataset_name in args.datasets:
+        dataset_dir = os.path.join(DATA_DIR, dataset_name)
+        
+        if not os.path.exists(dataset_dir):
+            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
+            continue
+        
+        # Get all video files from the dataset directory
+        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        
+        for video_file in sorted(video_files):
+            video_file_path = os.path.join(dataset_dir, video_file)
+            for tile_size in tile_sizes_to_process:
+                funcs.append(partial(process_video, video_file_path,
+                             video_file, tile_size, dataset_name))
     
     print(f"Created {len(funcs)} tasks to process")
     
     # Set up multiprocessing with ProgressBar - use CPU count as we don't need GPUs for groundtruth processing
-    ProgressBar(num_workers=mp.cpu_count(), num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=mp.cpu_count(), num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
     
     print("All tasks completed!")
 

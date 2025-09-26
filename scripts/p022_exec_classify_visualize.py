@@ -1,12 +1,11 @@
 #!/usr/local/bin/python
 
 import argparse
-import json
 import os
 import shutil
 import numpy as np
 import altair as alt
-from typing import Any, Callable
+from typing import Callable
 import multiprocessing as mp
 from functools import partial
 import pandas as pd
@@ -23,14 +22,15 @@ def parse_args():
 
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
+            - datasets (List[str]): Dataset names to process (default: ['b3d'])
             - tile_size (int | str): Tile size to use for classification (choices: 30, 60, 120, 'all')
             - threshold (float): Threshold for classification visualization (default: 0.5)
     """
     parser = argparse.ArgumentParser(description='Visualize video tile classification results')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
+    parser.add_argument('--datasets', required=False,
+                        default=['b3d'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     parser.add_argument('--threshold', type=float, default=0.5,
@@ -38,21 +38,27 @@ def parse_args():
     return parser.parse_args()
 
 
-def evaluate_classification_accuracy(classifications: np.ndarray,
-                                     detections: list[list[float]], tile_size: int,
-                                     threshold: float) -> dict[str, Any]:
+def evaluate_classification_accuracy(args):
     """
     Evaluate classification accuracy by comparing predictions with groundtruth detections.
 
     Args:
-        classifications (np.ndarray): 2D grid of classification scores
-        detections (list[dict]): list of detection dictionaries
-        tile_size (int): Size of each tile
-        threshold (float): Classification threshold
+        args: Tuple containing (frame_result, frame_detections, tile_size, threshold)
 
     Returns:
         dict: dictionary containing evaluation metrics and error details
     """
+    frame_result, frame_detections, tile_size, threshold = args
+
+    # Validate frame data
+    assert 'tracks' in frame_detections, f"tracks not in frame_detections: {frame_detections}"
+
+    classifications = frame_result['classification_hex']
+    classification_size = frame_result['classification_size']
+    classifications = (np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8)
+        .reshape(classification_size)
+        .astype(np.float32) / 255.0)
+
     grid_height = classifications.shape[0]
     grid_width = classifications.shape[1] if grid_height > 0 else 0
 
@@ -67,14 +73,14 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
     total_height = grid_height * tile_size
     total_width = grid_width * tile_size
 
-    detection_bitmap = mark_detections(detections, total_width, total_height,
-                                       tile_size, slice(-4, None))
+    detection_bitmap = mark_detections(frame_detections['tracks'], total_width,
+                                       total_height, tile_size, slice(-4, None))
 
     # Vectorized operations for much better performance
     # Flatten arrays for easier processing
     classification_scores = classifications.flatten()
     actual_positives = (detection_bitmap > 0).flatten()
-    
+
     # Create boolean masks for predictions
     predicted_positives = classification_scores >= threshold
     
@@ -114,37 +120,7 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
     }
 
 
-def _evaluate_frame_worker(args):
-    """
-    Worker function to evaluate a single frame for multiprocessing.
-
-    Args:
-        args: Tuple containing (frame_result, frame_detections, tile_size, threshold)
-
-    Returns:
-        dict: Frame evaluation results
-    """
-    frame_result, frame_detections, tile_size, threshold = args
-
-    # Validate frame data
-    assert 'tracks' in frame_detections, f"tracks not in frame_detections: {frame_detections}"
-
-    classifications = frame_result['classification_hex']
-    classification_size = frame_result['classification_size']
-    classifications = (np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8)
-        .reshape(classification_size)
-        .astype(np.float32) / 255.0)
-
-    # Evaluate this frame
-    frame_eval = evaluate_classification_accuracy(
-        classifications, frame_detections['tracks'], tile_size, threshold
-    )
-
-    return frame_eval
-
-
-def create_statistics_visualizations(video_file: str, results: list[dict],
-                                     groundtruth_detections: list[dict],
+def create_statistics_visualizations(results: list[dict], groundtruth_detections: list[dict],
                                      tile_size: int, threshold: float, output_dir: str,
                                      gpu_id: int, command_queue: mp.Queue):
     """
@@ -199,7 +175,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     command_queue.put((f'cuda:{gpu_id}', { 'completed': 0, 'total': len(results) }))
     mod = int(len(results) * 0.05)
     for frame_idx, (frame_result, frame_detections) in enumerate(zip(results, groundtruth_detections)):
-        frame_eval = _evaluate_frame_worker((frame_result, frame_detections, tile_size, threshold))
+        frame_eval = evaluate_classification_accuracy((frame_result, frame_detections, tile_size, threshold))
         frame_evals.append(frame_eval)
         if frame_idx % mod == 0:
             command_queue.put((f'cuda:{gpu_id}', { 'completed': frame_idx + 1 }))
@@ -231,7 +207,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     
     visualize_error_over_time(
         frame_metrics, groundtruth_detections,
-        overall_precision, overall_recall, overall_f1,
+        # overall_precision, overall_recall, overall_f1,
         tile_size, output_dir
     )
     
@@ -340,7 +316,7 @@ def visualize_error_summary(total_tp: int, total_tn: int, total_fp: int, total_f
 
 
 def visualize_error_over_time(frame_metrics: list[dict], groundtruth_detections: list[dict],
-                              overall_precision: float, overall_recall: float, overall_f1: float,
+                              # overall_precision: float, overall_recall: float, overall_f1: float,
                               tile_size: int, output_dir: str) -> str:
     """
     Create classification error over time visualization with 4 subplots.
@@ -372,7 +348,7 @@ def visualize_error_over_time(frame_metrics: list[dict], groundtruth_detections:
         objects_per_frame.append(object_count)
 
     # Get number of tiles per frame and metrics data
-    num_tiles_per_frame = frame_metrics[0]['total_tiles']
+    # num_tiles_per_frame = frame_metrics[0]['total_tiles']
     tp_counts = [m['tp'] for m in frame_metrics]
     tn_counts = [m['tn'] for m in frame_metrics]
     fp_counts = [m['fp'] for m in frame_metrics]
@@ -570,6 +546,7 @@ def visualize_score_distribution(all_classification_scores: list[float], all_act
     for category in categories:
         category_data = df[df['Category'] == category]
         if len(category_data) > 0:
+            assert isinstance(category_data, pd.DataFrame)
             chart = alt.Chart(category_data).mark_bar().encode(
                 alt.X('Score:Q', bin=alt.Bin(maxbins=100), title='Classification Score'),
                 y='count():Q',
@@ -578,8 +555,8 @@ def visualize_score_distribution(all_classification_scores: list[float], all_act
                 title=f'{category} (Tile Size: {tile_size}) - Total: {len(category_data):,}',
                 width=300,
                 height=200
-            ).add_selection(
-                alt.selection_interval()
+            # ).add_selection(
+            #     alt.selection_interval()
             ).add_layer(
                 alt.Chart(pd.DataFrame([{'threshold': threshold}])).mark_rule(
                     color='red', strokeDash=[5, 5], strokeWidth=2
@@ -634,52 +611,47 @@ def _process_classifier_tile_worker(video_file: str, dataset_name: str, classifi
         'total': 1
     }))
 
-    # Load classification results
-    results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier_name)
+    # Load classification results from execution directory
+    results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size,
+                                          classifier_name, execution_dir=True)
     
     # Load groundtruth detections for comparison
     groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
     
     # Create output directory for statistics visualizations
-    stats_output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
+    stats_output_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file,
+                                    'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
     
     # Create statistics visualizations
-    create_statistics_visualizations(
-        video_file, results, groundtruth_detections,
-        tile_size, threshold, stats_output_dir, gpu_id, command_queue
-    )
+    create_statistics_visualizations(results, groundtruth_detections, tile_size,
+                                     threshold, stats_output_dir, gpu_id, command_queue)
 
 
 def main(args):
     """
     Main function that orchestrates the video tile classification visualization process.
 
-    This function serves as the entry point for the script. It: 1. Validates the dataset directory exists
-    2. Iterates through all videos in the dataset directory
+    This function serves as the entry point for the script. It: 1. Validates the dataset directories exist
+    2. Iterates through all videos in each dataset directory
     3. For each video, loads the classification results for the specified tile size(s)
     4. Creates visualizations showing tile classifications and statistics for each tile size
 
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
-            - dataset (str): Name of the dataset to process
+            - datasets (List[str]): Names of the datasets to process
             - tile_size (str): Tile size to use for classification ('30', '60', '120', or 'all')
             - threshold (float): Threshold value for visualization (0.0 to 1.0)
 
          Note:
-         - The script expects classification results from 020_exec_classify.py in:
-           {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/proxy_{tile_size}/score.jsonl
+         - The script expects classification results from 021_exec_classify_correct.py in:
+           {CACHE_DIR}/{dataset}/execution/{video_file}/relevancy/{classifier_name}_{tile_size}/score/score.jsonl
          - Looks for score.jsonl files
          - Videos are read from {DATA_DIR}/{dataset}/
-         - Visualizations are saved to {CACHE_DIR}/{dataset}/{video_file}/relevancy/proxy_{tile_size}/statistics/
+         - Visualizations are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/relevancy/{classifier_name}_{tile_size}/statistics/
          - Summary statistics and plots are also generated
     """
     mp.set_start_method('spawn', force=True)
     
-    dataset_dir = os.path.join(DATA_DIR, args.dataset)
-
-    if not os.path.exists(dataset_dir):
-        raise FileNotFoundError(f"Dataset directory {dataset_dir} does not exist")
-
     # Validate threshold
     if not 0.0 <= args.threshold <= 1.0:
         raise ValueError("Threshold must be between 0.0 and 1.0")
@@ -694,50 +666,53 @@ def main(args):
 
     print(f"Using threshold: {args.threshold}")
 
-    # Get all video files from the dataset directory
-    video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-
-    if not video_files:
-        print(f"No video files found in {dataset_dir}")
-        return
-
-    print(f"Found {len(video_files)} video files to process")
-
     # Collect all video-classifier-tile combinations for parallel processing
     all_tasks = []
     
-    for video_file in sorted(video_files):
-        video_file_path = os.path.join(dataset_dir, video_file)
+    for dataset_name in args.datasets:
+        dataset_dir = os.path.join(DATA_DIR, dataset_name)
         
-        # Get classifier tile sizes for this video
-        relevancy_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy')
-        if not os.path.exists(relevancy_dir):
-            print(f"Skipping {video_file}: No relevancy directory found")
+        if not os.path.exists(dataset_dir):
+            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
             continue
-            
-        classifier_tilesizes: list[tuple[str, int]] = []
-        for file in os.listdir(relevancy_dir):
-            if '_' in file:
-                classifier_name = file.split('_')[0]
-                tile_size = int(file.split('_')[1])
-                classifier_tilesizes.append((classifier_name, tile_size))
         
-        classifier_tilesizes = sorted(classifier_tilesizes)
+        # Get all video files from the dataset directory
+        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
         
-        if not classifier_tilesizes:
-            print(f"Skipping {video_file}: No classifier tile sizes found")
+        if not video_files:
+            print(f"No video files found in {dataset_dir}")
             continue
-            
-        print(f"Found {len(classifier_tilesizes)} classifier tile sizes for {video_file}: {classifier_tilesizes}")
         
-        # Add tasks for each classifier-tile size combination
-        for classifier_name, tile_size in classifier_tilesizes:
-            task_args = (video_file, args.dataset, classifier_name, tile_size, args.threshold)
-            all_tasks.append(task_args)
+        print(f"Found {len(video_files)} video files in dataset {dataset_name}")
+        
+        for video_file in sorted(video_files):
+            # Get classifier tile sizes for this video from execution directory
+            relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, 'relevancy')
+            if not os.path.exists(relevancy_dir):
+                print(f"Skipping {video_file}: No relevancy directory found in execution folder")
+                continue
+                
+            classifier_tilesizes: list[tuple[str, int]] = []
+            for file in os.listdir(relevancy_dir):
+                if '_' in file:
+                    classifier_name = file.split('_')[0]
+                    tile_size = int(file.split('_')[1])
+                    classifier_tilesizes.append((classifier_name, tile_size))
+            
+            classifier_tilesizes = sorted(classifier_tilesizes)
+            
+            if not classifier_tilesizes:
+                print(f"Skipping {video_file}: No classifier tile sizes found")
+                continue
+                
+            print(f"Found {len(classifier_tilesizes)} classifier tile sizes for {video_file}: {classifier_tilesizes}")
+            
+            # Add tasks for each classifier-tile size combination
+            for classifier_name, tile_size in classifier_tilesizes:
+                task_args = (video_file, dataset_name, classifier_name, tile_size, args.threshold)
+                all_tasks.append(task_args)
 
-    if not all_tasks:
-        print("No tasks to process")
-        return
+    assert len(all_tasks) > 0, 'No tasks to process'
 
     print(f"Processing {len(all_tasks)} tasks in parallel...")
 
