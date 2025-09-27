@@ -58,7 +58,7 @@ def track(video_file: str, args, cache_dir: str, dataset: str, gpu_id: int, comm
     detection_results = load_detection_results(cache_dir, dataset, video_file)
 
     # Create output path for tracking results
-    output_path = os.path.join(cache_dir, dataset, 'execution', video_file, 'groundtruth', 'tracking.jsonl')
+    output_path = os.path.join(cache_dir, dataset, 'execution', video_file, '000_groundtruth', 'tracking.jsonl')
 
     tracker_name = args.tracker
     max_age = args.max_age
@@ -182,9 +182,9 @@ def main(args):
 
     Note:
         - The script expects detection results from 001_preprocess_groundtruth_detection.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/groundtruth/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/detections.jsonl
         - Tracking results are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/groundtruth/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl
         - Linear interpolation is performed to fill missing detections in tracks
         - Processing is parallelized across available GPUs for improved performance
     """
@@ -214,7 +214,7 @@ def main(args):
         for item in os.listdir(execution_dir):
             item_path = os.path.join(execution_dir, item)
             if os.path.isdir(item_path):
-                detection_path = os.path.join(item_path, 'groundtruth', 'detections.jsonl')
+                detection_path = os.path.join(item_path, '000_groundtruth', 'detections.jsonl')
                 if os.path.exists(detection_path):
                     video_dirs.append(item)
 

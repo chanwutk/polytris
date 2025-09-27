@@ -6,14 +6,12 @@ import os
 import cv2
 import shutil
 import time
-from pathlib import Path
 import yaml
 from typing import Dict, List, Tuple
-import multiprocessing as mp
 
 from ultralytics import YOLO
 
-from polyis.utilities import DATA_DIR, CACHE_DIR, format_time, load_tracking_results, progress_bars
+from polyis.utilities import DATA_DIR, CACHE_DIR, format_time, load_tracking_results
 
 
 def parse_args():
@@ -387,7 +385,7 @@ def main(args):
     Note:
         - The script expects the following directory structure:
           {DATA_DIR}/{dataset}/ - contains video files (.mp4, .avi, .mov, .mkv)
-          {CACHE_DIR}/{dataset}/{video_file}/groundtruth/tracking.jsonl - contains tracking data
+          {CACHE_DIR}/{dataset}/{video_file}/000_groundtruth/tracking.jsonl - contains tracking data
         - For each video, creates a YOLO dataset from frames containing detections
         - Uses single-class detection (class 0 for all objects)
         - Splits dataset 80/20 for train/validation

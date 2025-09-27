@@ -173,7 +173,7 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
     device = f'cuda:{gpu_id}'
     
     # Check if packed detections exist
-    detections_file = os.path.join(video_file_path, 'packed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
+    detections_file = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
     assert os.path.exists(detections_file)
     
     # Check if packing directory exists
@@ -182,9 +182,9 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
     
     # print(f"Processing video {video_file_path} for unpacking")
     
-    detections_file = os.path.join(video_file_path, 'packed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
+    detections_file = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
     
-    unpacked_output_dir = os.path.join(video_file_path, 'uncompressed_detections', f'{classifier}_{tile_size}')
+    unpacked_output_dir = os.path.join(video_file_path, '050_uncompressed_detections', f'{classifier}_{tile_size}')
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -310,11 +310,11 @@ def main(args):
             
     Note:
         - The script expects packed detections from 040_exec_detect.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/packed_detections/{classifier}_{tile_size}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tile_size}/detections.jsonl
         - The script expects mapping files from 030_exec_compress.py in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/packing/{classifier}_{tile_size}/
         - Unpacked detections are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
         - Each line in the output JSONL file contains one bounding box [x1, y1, x2, y2] in original frame coordinates
         - All available video/classifier/tile_size combinations are processed
         - If no packed detections are found for a video/tile_size/classifier combination, that combination is skipped
@@ -338,12 +338,12 @@ def main(args):
         for video_file in sorted(video_files):
             video_file_path = os.path.join(dataset_dir, video_file)
             
-            packed_detections_dir = os.path.join(video_file_path, 'packed_detections')
+            packed_detections_dir = os.path.join(video_file_path, '040_compressed_detections')
             if not os.path.exists(packed_detections_dir):
                 print(f"No packed detections directory found for {video_file}, skipping")
                 continue
         
-            uncompressed_detections_dir = os.path.join(video_file_path, 'uncompressed_detections')
+            uncompressed_detections_dir = os.path.join(video_file_path, '050_uncompressed_detections')
             if os.path.exists(uncompressed_detections_dir):
                 shutil.rmtree(uncompressed_detections_dir)
                 

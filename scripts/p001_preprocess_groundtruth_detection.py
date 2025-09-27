@@ -137,7 +137,7 @@ def main(args):
           {DATA_DIR}/{dataset}/
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - Object detection results are saved to:
-          {CACHE_DIR}/{dataset}/{video_file}/groundtruth/detections.jsonl
+          {CACHE_DIR}/{dataset}/{video_file}/000_groundtruth/detections.jsonl
         - The detector model is automatically selected based on the dataset name
         - Runtime measurements include frame reading and object detection times
         - Processing is parallelized across available GPUs for improved performance
@@ -160,7 +160,7 @@ def main(args):
         
         for video_file in video_files:
             video_file_path = os.path.join(dataset_dir, video_file)
-            output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, 'groundtruth', 'detections.jsonl')
+            output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '000_groundtruth', 'detections.jsonl')
             funcs.append(partial(detect_objects, video_file_path, dataset, output_path))
             # detect_objects(video_file_path, dataset, output_path, 0, Queue())
     

@@ -620,7 +620,8 @@ def _process_classifier_tile_worker(video_file: str, dataset_name: str, classifi
     
     # Create output directory for statistics visualizations
     stats_output_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file,
-                                    'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
+                                    '020_relevancy', f'{classifier_name}_{tile_size}',
+                                    'statistics')
     
     # Create statistics visualizations
     create_statistics_visualizations(results, groundtruth_detections, tile_size,
@@ -644,10 +645,10 @@ def main(args):
 
          Note:
          - The script expects classification results from 021_exec_classify_correct.py in:
-           {CACHE_DIR}/{dataset}/execution/{video_file}/relevancy/{classifier_name}_{tile_size}/score/score.jsonl
+           {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier_name}_{tile_size}/score/score.jsonl
          - Looks for score.jsonl files
          - Videos are read from {DATA_DIR}/{dataset}/
-         - Visualizations are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/relevancy/{classifier_name}_{tile_size}/statistics/
+         - Visualizations are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier_name}_{tile_size}/statistics/
          - Summary statistics and plots are also generated
     """
     mp.set_start_method('spawn', force=True)
@@ -687,7 +688,7 @@ def main(args):
         
         for video_file in sorted(video_files):
             # Get classifier tile sizes for this video from execution directory
-            relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, 'relevancy')
+            relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '020_relevancy')
             if not os.path.exists(relevancy_dir):
                 print(f"Skipping {video_file}: No relevancy directory found in execution folder")
                 continue

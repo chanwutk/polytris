@@ -189,7 +189,7 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
     #     print(f"Failed to compile model: {e}")
 
     # Create output directory structure
-    output_dir = os.path.join(cache_video_dir, 'relevancy')
+    output_dir = os.path.join(cache_video_dir, '020_relevancy')
 
     # Create score directory for this classifier and tile size
     classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}')
@@ -275,7 +275,7 @@ def main(args):
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - A separate model is loaded for each video directory, classifier, and tile size combination
         - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
-        - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/relevancy/score/{classifier_name}_{tile_size}/score.jsonl
+        - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/020_relevancy/score/{classifier_name}_{tile_size}/score.jsonl
         - If no trained model is found for a video, that video is skipped with a warning
     """
     mp.set_start_method('spawn', force=True)
@@ -305,7 +305,7 @@ def main(args):
             video_file_path = os.path.join(dataset_dir, video_file)
             cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-            output_dir = os.path.join(cache_video_dir, 'relevancy')
+            output_dir = os.path.join(cache_video_dir, '020_relevancy')
 
             # Clear output directory if --clear flag is specified
             if args.clear and os.path.exists(output_dir):

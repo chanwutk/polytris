@@ -66,7 +66,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
         FileNotFoundError: If no detection results file is found
     """
     detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
-                                  'uncompressed_detections',
+                                  '050_uncompressed_detections',
                                   f'{classifier}_{tile_size}',
                                   'detections.jsonl')
     
@@ -112,7 +112,7 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str, data
     
     # Check if uncompressed detections exist
     detection_path = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file,
-                                  'uncompressed_detections', f'{classifier}_{tile_size}',
+                                  '050_uncompressed_detections', f'{classifier}_{tile_size}',
                                   'detections.jsonl')
     assert os.path.exists(detection_path)
 
@@ -120,7 +120,7 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str, data
     detection_results = load_detection_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier)
 
     # Create output path for tracking results
-    uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, 'uncompressed_tracking')
+    uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '060_uncompressed_tracks')
     output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tile_size}', 'tracking.jsonl')
     
     # Create tracker
@@ -233,9 +233,9 @@ def main(args: argparse.Namespace):
         
     Note:
         - The script expects uncompressed detection results from 050_exec_uncompress.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
         - Tracking results are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/uncompressed_tracking/{classifier}_{tile_size}/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tile_size}/tracking.jsonl
         - Linear interpolation is optional and controlled by the --no_interpolate flag
         - Processing is parallelized for improved performance
         - The number of processes equals the number of available GPUs
@@ -263,11 +263,11 @@ def main(args: argparse.Namespace):
             if not os.path.isdir(item_path):
                 continue
 
-            uncompressed_detections_dir = os.path.join(item_path, 'uncompressed_detections')
+            uncompressed_detections_dir = os.path.join(item_path, '050_uncompressed_detections')
             if not os.path.exists(uncompressed_detections_dir):
                 continue
 
-            uncompressed_tracking_dir = os.path.join(item_path, 'uncompressed_tracking')
+            uncompressed_tracking_dir = os.path.join(item_path, '060_uncompressed_tracks')
             if os.path.exists(uncompressed_tracking_dir):
                 shutil.rmtree(uncompressed_tracking_dir)
 

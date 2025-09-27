@@ -114,7 +114,7 @@ def load_throughput_data(cache_dir: str, dataset: str, video_file: str,
         tuple[float, float, int]: Average throughput in frames per second,
                                   total runtime in milliseconds, number of frames
     """
-    score_file = os.path.join(cache_dir, dataset, 'execution', video_file, 'relevancy', 
+    score_file = os.path.join(cache_dir, dataset, 'execution', video_file, '020_relevancy', 
                                 f'{classifier}_{tile_size}', 'score', 'score.jsonl')
     
     if not os.path.exists(score_file):
@@ -321,7 +321,7 @@ def process_dataset(args):
     classifier_tilesizes: set[tuple[str, int]] | None = None
     for video_file in video_files:
         # Get all classifier-tile combinations for this video
-        relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, 'relevancy')
+        relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '020_relevancy')
         if not os.path.exists(relevancy_dir):
             return f"Skipping {video_file}: No relevancy directory found"
         

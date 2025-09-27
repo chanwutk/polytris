@@ -203,7 +203,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
                                           tile_size, classifier, execution_dir=True)
     
     # Create output directory for packing results
-    output_dir = os.path.join(cache_video_dir, 'packing', f'{classifier}_{tile_size}')
+    output_dir = os.path.join(cache_video_dir, '030_compressed_frames', f'{classifier}_{tile_size}')
     if os.path.exists(output_dir):
         # Remove the entire directory
         shutil.rmtree(output_dir)
@@ -416,12 +416,12 @@ def main(args):
             
     Note:
         - The script expects classification results from 020_exec_classify.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/relevancy/{classifier}_{tile_size}/score/
+          {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tile_size}/score/
         - Looks for score.jsonl files
         - Videos are read from {DATA_DIR}/{dataset}/
-        - Packed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/packing/{classifier}_{tile_size}/images/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/packing/{classifier}_{tile_size}/index_maps/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/packing/{classifier}_{tile_size}/offset_lookups/
+        - Packed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tile_size}/images/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tile_size}/index_maps/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tile_size}/offset_lookups/
         - When tile_size is 'all', all tile sizes (30, 60, 120) are processed
         - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST are processed
         - If no classification results are found for a video, that video is skipped with a warning
@@ -454,7 +454,7 @@ def main(args):
             video_file_path = os.path.join(dataset_dir, video_file)
             cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-            packing_base_dir = os.path.join(cache_video_dir, 'packing')
+            packing_base_dir = os.path.join(cache_video_dir, '030_compressed_frames')
             if args.clear and os.path.exists(packing_base_dir):
                 shutil.rmtree(packing_base_dir)
                 print(f"Cleared existing packing folder: {packing_base_dir}")
@@ -462,7 +462,7 @@ def main(args):
             for classifier in args.classifiers:
                 for tile_size in tile_sizes_to_process:
 
-                    score_file = os.path.join(cache_video_dir, 'relevancy',
+                    score_file = os.path.join(cache_video_dir, '020_relevancy',
                                               f'{classifier}_{tile_size}', 'score', 'score.jsonl')
                     if not os.path.exists(score_file):
                         print(f"No score file found for {video_file} {classifier} {tile_size}, skipping")

@@ -57,7 +57,7 @@ def visualize_video(video_file: str, cache_dir: str, dataset: str,
     
     # Create output path for visualization
     output_path = os.path.join(cache_dir, dataset, 'execution', video_file,
-                               'groundtruth', f'annotated_groundtruth_{video_file}')
+                               '000_groundtruth', f'annotated_{video_file}')
     
     # Create visualization
     create_tracking_visualization(video_path, tracking_results, output_path,
@@ -82,10 +82,10 @@ def main(args):
         
     Note:
         - The script expects tracking results from p002_preprocess_groundtruth_tracking.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/groundtruth/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl
         - Original videos are read from {DATA_DIR}/{dataset}/
         - Visualization videos are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/groundtruth/annotated_groundtruth_{video_file}
+          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/annotated_{video_file}
         - Each track ID gets a unique color from a predefined palette
         - Processing is parallelized for improved performance
     """
@@ -114,7 +114,7 @@ def main(args):
         for item in os.listdir(execution_dir):
             item_path = os.path.join(execution_dir, item)
             if os.path.isdir(item_path):
-                tracking_path = os.path.join(item_path, 'groundtruth', 'tracking.jsonl')
+                tracking_path = os.path.join(item_path, '000_groundtruth', 'tracking.jsonl')
                 if os.path.exists(tracking_path):
                     video_dirs.append(item)
         

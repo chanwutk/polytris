@@ -130,7 +130,7 @@ def render_scores(video_file: str, video_file_path: str, dataset_name: str,
     
     # Create output directory for visualizations
     vis_output_dir = os.path.join(
-        CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}')
+        CACHE_DIR, dataset_name, video_file, '020_relevancy', f'{classifier_name}_{tile_size}')
     os.makedirs(vis_output_dir, exist_ok=True)
 
     # Open video
@@ -215,10 +215,10 @@ def main(args):
 
          Note:
          - The script expects classification results from 020_exec_classify.py in:
-           {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/proxy_{tile_size}/
+           {CACHE_DIR}/{dataset}/{video_file}/020_relevancy/score/proxy_{tile_size}/
          - Looks for score.jsonl files
          - Videos are read from {DATA_DIR}/{dataset}/
-         - Visualizations are saved to {CACHE_DIR}/{dataset}/{video_file}/relevancy/proxy_{tile_size}/
+         - Visualizations are saved to {CACHE_DIR}/{dataset}/{video_file}/020_relevancy/proxy_{tile_size}/
          - The script creates a video file (visualization.mp4) showing brightness-adjusted frames
     """
     # Set multiprocessing start method
@@ -252,7 +252,7 @@ def main(args):
         video_file_path = os.path.join(dataset_dir, video_file)
         
         # Get classifier tile sizes for this video
-        relevancy_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy')
+        relevancy_dir = os.path.join(CACHE_DIR, args.dataset, video_file, '020_relevancy')
         if not os.path.exists(relevancy_dir):
             print(f"Skipping {video_file}: No relevancy directory found")
             continue

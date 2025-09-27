@@ -103,7 +103,7 @@ def process_video(video_path: str, video_file: str, tile_size: int,
     frame_detections = load_tracking_results(CACHE_DIR, dataset, video_file)
     
     # Create output directory structure
-    output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_file, 'relevancy')
+    output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '020_relevancy')
     os.makedirs(output_dir, exist_ok=True)
 
     classifier_dir = os.path.join(output_dir, f'groundtruth_{tile_size}')
@@ -192,7 +192,7 @@ def main(args):
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - Groundtruth tracking results are loaded for each video
         - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
-        - Output files are saved in {CACHE_DIR}/{dataset}/{video_file}/relevancy/groundtruth_{tile_size}/score/score.jsonl
+        - Output files are saved in {CACHE_DIR}/{dataset}/{video_file}/020_relevancy/groundtruth_{tile_size}/score/score.jsonl
         - If no tracking results are found for a video, that video is skipped with a warning
     """
     mp.set_start_method('spawn', force=True)

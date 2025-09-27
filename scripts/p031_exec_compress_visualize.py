@@ -37,13 +37,13 @@ def list_video_dirs(dataset: str) -> list[str]:
     video_dirs: list[str] = []
     for entry in os.listdir(dataset_cache_dir):
         full_path = os.path.join(dataset_cache_dir, entry)
-        if os.path.isdir(full_path) and os.path.isdir(os.path.join(full_path, "packing")):
+        if os.path.isdir(full_path) and os.path.isdir(os.path.join(full_path, "030_compressed_frames")):
             video_dirs.append(full_path)
     return sorted(video_dirs)
 
 
 def list_classifier_tile_dirs(video_cache_dir: str) -> list[str]:
-    packing_dir = os.path.join(video_cache_dir, "packing")
+    packing_dir = os.path.join(video_cache_dir, "030_compressed_frames")
     if not os.path.isdir(packing_dir):
         return []
     dirs: list[str] = []
