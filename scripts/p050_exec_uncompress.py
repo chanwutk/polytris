@@ -68,13 +68,13 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
                       offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]], 
                       tile_size: int) -> UnpackedDets:
     """
-    Unpack detections from packed coordinates back to original frame coordinates.
+    Unpack detections from compressed coordinates back to original frame coordinates.
     
     Args:
-        detections (list[list[float]]): list of bounding boxes in packed coordinates [x1, y1, x2, y2]
+        detections (list[list[float]]): list of bounding boxes in compressed coordinates [x1, y1, x2, y2]
         index_map (np.ndarray): Index map from the mapping file (2D array with group_ids)
         offset_lookup (list[tuple[tuple[int, int], tuple[int, int], int]]): Offset lookup from the mapping file
-        tile_size (int): Size of tiles used for packing
+        tile_size (int): Size of tiles used for compression
         
     Returns:
         tuple[
@@ -93,7 +93,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
     # Process each detection
     for x1, y1, x2, y2 in detections:
-        # Get the center point of the detection in packed coordinates
+        # Get the center point of the detection in compressed coordinates
         center_x = (x1 + x2) / 2.0
         center_y = (y1 + y2) / 2.0
         
@@ -105,7 +105,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         frame_idx: int | None = None
         center_in_any_tile: bool = True
         for x, y in zip(xs, ys):
-            # Convert to tile coordinates in the packed image
+            # Convert to tile coordinates in the compressed image
             tile_x = int(x // tile_size)
             tile_y = int(y // tile_size)
             
@@ -136,8 +136,8 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         assert 0 <= group_id < len(offset_lookup), f"Group {group_id} not found in offset lookup"
         (packed_y, packed_x), (original_offset_y, original_offset_x), frame_idx = offset_lookup[group_id]
         
-        # Calculate the offset to convert from packed to original coordinates
-        # The offset represents how much the tile was moved during packing
+        # Calculate the offset to convert from compressed to original coordinates
+        # The offset represents how much the tile was moved during compression
         offset_x = (original_offset_x - packed_x) * tile_size
         offset_y = (original_offset_y - packed_y) * tile_size
         
@@ -165,20 +165,20 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
     
     Args:
         video_file_path (str): Path to the video file directory
-        tile_size (int): Tile size used for packing
-        classifier (str): Classifier name used for packing and detection
+        tile_size (int): Tile size used for compression
+        classifier (str): Classifier name used for compression and detection
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
     
-    # Check if packed detections exist
+    # Check if compressed detections exist
     detections_file = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
     assert os.path.exists(detections_file)
     
-    # Check if packing directory exists
-    packing_dir = os.path.join(video_file_path, 'packing', f'{classifier}_{tile_size}')
-    assert os.path.exists(packing_dir)
+    # Check if compressed frames directory exists
+    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames', f'{classifier}_{tile_size}')
+    assert os.path.exists(compressed_frames_dir)
     
     # print(f"Processing video {video_file_path} for unpacking")
     
@@ -217,8 +217,8 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
             to_idx = int(to_idx)
 
             # Construct paths
-            index_map_path = os.path.join(packing_dir, 'index_maps', f'{from_idx:08d}_{to_idx:08d}.npy')
-            offset_lookup_path = os.path.join(packing_dir, 'offset_lookups', f'{from_idx:08d}_{to_idx:08d}.jsonl')
+            index_map_path = os.path.join(compressed_frames_dir, 'index_maps', f'{from_idx:08d}_{to_idx:08d}.npy')
+            offset_lookup_path = os.path.join(compressed_frames_dir, 'offset_lookups', f'{from_idx:08d}_{to_idx:08d}.jsonl')
             
             # Load detection results
             detections: list[list[float]] = content['bboxes']
@@ -236,7 +236,7 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
             # save not_in_any_tile_detections and center_not_in_any_tile_detections
             if len(not_in_any_tile_detections) > 0:
                 # load the image
-                image_path = os.path.join(packing_dir, 'images', image_file)
+                image_path = os.path.join(compressed_frames_dir, 'images', image_file)
                 image = cv2.imread(image_path)
                 assert image is not None, f"Image not found: {image_path}"
 
@@ -254,7 +254,7 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
 
             if len(center_not_in_any_tile_detections) > 0:
                 # load the image
-                image_path = os.path.join(packing_dir, 'images', image_file)
+                image_path = os.path.join(compressed_frames_dir, 'images', image_file)
                 image = cv2.imread(image_path)
                 assert image is not None, f"Image not found: {image_path}"
 
@@ -309,15 +309,15 @@ def main(args):
             - datasets (List[str]): Names of the datasets to process
             
     Note:
-        - The script expects packed detections from 040_exec_detect.py in:
+        - The script expects compressed detections from 040_exec_detect.py in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tile_size}/detections.jsonl
         - The script expects mapping files from 030_exec_compress.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/packing/{classifier}_{tile_size}/
+          {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tile_size}/
         - Unpacked detections are saved to:
           {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
         - Each line in the output JSONL file contains one bounding box [x1, y1, x2, y2] in original frame coordinates
         - All available video/classifier/tile_size combinations are processed
-        - If no packed detections are found for a video/tile_size/classifier combination, that combination is skipped
+        - If no compressed detections are found for a video/tile_size/classifier combination, that combination is skipped
         - The number of processes equals the number of available GPUs
     """
     # mp.set_start_method('spawn', force=True)
@@ -338,16 +338,16 @@ def main(args):
         for video_file in sorted(video_files):
             video_file_path = os.path.join(dataset_dir, video_file)
             
-            packed_detections_dir = os.path.join(video_file_path, '040_compressed_detections')
-            if not os.path.exists(packed_detections_dir):
-                print(f"No packed detections directory found for {video_file}, skipping")
+            compressed_detections_dir = os.path.join(video_file_path, '040_compressed_detections')
+            if not os.path.exists(compressed_detections_dir):
+                print(f"No compressed detections directory found for {video_file}, skipping")
                 continue
         
             uncompressed_detections_dir = os.path.join(video_file_path, '050_uncompressed_detections')
             if os.path.exists(uncompressed_detections_dir):
                 shutil.rmtree(uncompressed_detections_dir)
                 
-            for classifier_tilesize in sorted(os.listdir(packed_detections_dir)):
+            for classifier_tilesize in sorted(os.listdir(compressed_detections_dir)):
                 classifier, tile_size = classifier_tilesize.split('_')
                 tile_size = int(tile_size)
                 

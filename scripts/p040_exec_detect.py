@@ -55,12 +55,12 @@ def parse_args():
 def detect_objects(video_file_path: str, tile_size: int, classifier: str,
                    dataset_name: str, gpu_id: int, command_queue: mp.Queue):
     """
-    Detect objects in packed images using auto-selected detector.
+    Detect objects in compressed images using auto-selected detector.
     
     Args:
         video_file_path (str): Path to the video file
-        tile_size (int): Tile size used for packing
-        classifier (str): Classifier name used for packing
+        tile_size (int): Tile size used for compression
+        classifier (str): Classifier name used for compression
         dataset_name (str): Name of the dataset (used to auto-select detector)
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
@@ -68,8 +68,8 @@ def detect_objects(video_file_path: str, tile_size: int, classifier: str,
     device = f'cuda:{gpu_id}'
     video_name = os.path.basename(video_file_path)
     
-    packing_dir = os.path.join(video_file_path, '030_compressed_frames', f'{classifier}_{tile_size}', 'images')
-    assert os.path.exists(packing_dir)
+    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames', f'{classifier}_{tile_size}', 'images')
+    assert os.path.exists(compressed_frames_dir)
 
     detector = polyis.models.detector.get_detector(dataset_name, gpu_id)
 
@@ -82,11 +82,11 @@ def detect_objects(video_file_path: str, tile_size: int, classifier: str,
         shutil.rmtree(detections_output_dir)
     os.makedirs(detections_output_dir, exist_ok=True)
 
-    # Get all packed image files
-    image_files = [f for f in os.listdir(packing_dir) if f.endswith('.jpg')]
+    # Get all compressed image files
+    image_files = [f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg')]
     
     if not image_files:
-        raise FileNotFoundError(f"No packed images found in {packing_dir}")
+        raise FileNotFoundError(f"No compressed images found in {compressed_frames_dir}")
 
     with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
@@ -95,10 +95,10 @@ def detect_objects(video_file_path: str, tile_size: int, classifier: str,
                   'description': f"{video_name} {tile_size:>3} {classifier}"}
         command_queue.put((device, kwargs))
         for idx, image_file in enumerate(image_files):
-            image_path = os.path.join(packing_dir, image_file)
+            image_path = os.path.join(compressed_frames_dir, image_file)
             runtime = dict()
             
-            # Read the packed image
+            # Read the compressed image
             start_time = (time.time_ns() / 1e6)
             frame = cv2.imread(image_path)
             if frame is None:
@@ -124,7 +124,7 @@ def detect_objects(video_file_path: str, tile_size: int, classifier: str,
 
 def main(args):
     """
-    Main function that orchestrates the object detection process on packed images using parallel processing.
+    Main function that orchestrates the object detection process on compressed images using parallel processing.
     
     This function serves as the entry point for the script. It:
     1. Validates the dataset directories exist
@@ -141,14 +141,14 @@ def main(args):
             - clear (bool): Whether to remove and recreate the 040_compressed_detections folder for each video
             
     Note:
-        - The script expects packed images from 030_exec_compress.py in:
+        - The script expects compressed images from 030_exec_compress.py in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tile_size}/images/
         - Detection results are saved to:
           {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tile_size}/detections.jsonl
         - Each line in the output JSONL file contains one bounding box [x1, y1, x2, y2]
         - When tile_size is 'all', all available tile sizes are processed
         - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST + ['groundtruth'] are processed
-        - If no packed images are found for a video/tile_size/classifier combination, that combination is skipped
+        - If no compressed images are found for a video/tile_size/classifier combination, that combination is skipped
         - The number of processes equals the number of available GPUs
     """
     mp.set_start_method('spawn', force=True)
@@ -184,19 +184,19 @@ def main(args):
         for video_file in sorted(video_files):
             video_file_path = os.path.join(dataset_dir, video_file)
             
-            # Clear packed_detections folder if requested
+            # Clear compressed detections folder if requested
             if args.clear:
-                packed_detections_base_dir = os.path.join(video_file_path, '040_compressed_detections')
-                if os.path.exists(packed_detections_base_dir):
-                    shutil.rmtree(packed_detections_base_dir)
-                    print(f"Cleared existing 040_compressed_detections folder: {packed_detections_base_dir}")
+                compressed_detections_base_dir = os.path.join(video_file_path, '040_compressed_detections')
+                if os.path.exists(compressed_detections_base_dir):
+                    shutil.rmtree(compressed_detections_base_dir)
+                    print(f"Cleared existing 040_compressed_detections folder: {compressed_detections_base_dir}")
             
             for classifier in classifiers_to_process:
                 for tile_size in tile_sizes_to_process:
-                    # Check if packing directory exists
-                    packing_dir = os.path.join(video_file_path, '030_compressed_frames', f'{classifier}_{tile_size}', 'images')
-                    if not os.path.exists(packing_dir):
-                        print(f"No packing directory found for {video_file} {classifier} {tile_size}, skipping")
+                    # Check if compressed frames directory exists
+                    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames', f'{classifier}_{tile_size}', 'images')
+                    if not os.path.exists(compressed_frames_dir):
+                        print(f"No compressed frames directory found for {video_file} {classifier} {tile_size}, skipping")
                         continue
                     
                     funcs.append(partial(detect_objects, video_file_path, tile_size, classifier, dataset_name))

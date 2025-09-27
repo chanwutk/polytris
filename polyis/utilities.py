@@ -338,9 +338,9 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str,
     """
     # Look for the classification results file
     if execution_dir:
-        score_dir = os.path.join(cache_dir, dataset, 'execution', video_file, 'relevancy', f'{classifier}_{tile_size}', 'score')
+        score_dir = os.path.join(cache_dir, dataset, 'execution', video_file, '020_relevancy', f'{classifier}_{tile_size}', 'score')
     else:
-        score_dir = os.path.join(cache_dir, dataset, video_file, 'relevancy', f'{classifier}_{tile_size}', 'score')
+        score_dir = os.path.join(cache_dir, dataset, video_file, '020_relevancy', f'{classifier}_{tile_size}', 'score')
     
     # Use model scores
     expected_filename = 'score.jsonl'
