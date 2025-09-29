@@ -19,12 +19,14 @@ def parse_args():
     
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
+            - datasets (list): Dataset names to process (default: ['caldot1', 'caldot2'])
             - metrics (str): Comma-separated list of metrics to evaluate (default: 'HOTA,CLEAR')
     """
     parser = argparse.ArgumentParser(description='Visualize accuracy-throughput tradeoffs')
-    parser.add_argument('--dataset', required=False, default='b3d',
-                        help='Dataset name to process')
+    parser.add_argument('--datasets', required=False,
+                        default=['caldot1', 'caldot2'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     parser.add_argument('--metrics', type=str, default='HOTA,CLEAR',
                         help='Comma-separated list of metrics to evaluate')
     return parser.parse_args()
@@ -46,19 +48,24 @@ def load_accuracy_results(dataset: str) -> List[Dict[str, Any]]:
         return []
     
     results = []
-    for video_filename in os.listdir(dataset_cache_dir):
-        video_dir = os.path.join(dataset_cache_dir, video_filename)
+    execution_dir = os.path.join(dataset_cache_dir, 'execution')
+    if not os.path.exists(execution_dir):
+        print(f"Execution directory {execution_dir} does not exist")
+        return []
+    
+    for video_filename in os.listdir(execution_dir):
+        video_dir = os.path.join(execution_dir, video_filename)
         if not os.path.isdir(video_dir):
             continue
             
-        evaluation_dir = os.path.join(video_dir, 'evaluation')
-        if not os.path.exists(evaluation_dir):
+        tracking_accuracy_dir = os.path.join(video_dir, '070_tracking_accuracy')
+        if not os.path.exists(tracking_accuracy_dir):
             continue
 
-        for classifier_tilesize in os.listdir(evaluation_dir):
+        for classifier_tilesize in os.listdir(tracking_accuracy_dir):
             classifier, tilesize = classifier_tilesize.split('_')
             ts = int(tilesize)
-            results_path = os.path.join(evaluation_dir, f'{classifier}_{ts}',
+            results_path = os.path.join(tracking_accuracy_dir, f'{classifier}_{ts}',
                                         'accuracy', 'detailed_results.json')
             
             if os.path.exists(results_path):
@@ -109,7 +116,7 @@ def load_throughput_results(dataset: str) -> Dict[str, Any]:
     }
 
 
-def calculate_naive_runtime(video_name: str, query_summaries: Dict[str, Any]) -> float:
+def calculate_naive_runtime(video_name: str, query_summaries: Dict[str, Any], dataset: str) -> float:
     """
     Calculate naive runtime for a specific video.
     
@@ -119,11 +126,12 @@ def calculate_naive_runtime(video_name: str, query_summaries: Dict[str, Any]) ->
     Args:
         video_name: Name of the video
         query_summaries: Query execution timing data
+        dataset: Dataset name
         
     Returns:
         float: Naive runtime in seconds
     """
-    config_key = f"b3d/{video_name}_groundtruth_0"  # Naive uses groundtruth with tile size 0
+    config_key = f"{dataset}/{video_name}_groundtruth_0"  # Naive uses groundtruth with tile size 0
     naive_runtime = 0.0
     
     # Add preprocessing time (naive approach)
@@ -137,7 +145,7 @@ def calculate_naive_runtime(video_name: str, query_summaries: Dict[str, Any]) ->
 
 
 def calculate_query_execution_runtime(video_name: str, classifier: str, tile_size: int, 
-                                    query_summaries: Dict[str, Any]) -> float:
+                                    query_summaries: Dict[str, Any], dataset: str) -> float:
     """
     Calculate query execution runtime for a specific configuration.
     
@@ -149,11 +157,12 @@ def calculate_query_execution_runtime(video_name: str, classifier: str, tile_siz
         classifier: Classifier used
         tile_size: Tile size used
         query_summaries: Query execution timing data
+        dataset: Dataset name
         
     Returns:
         float: Query execution runtime in seconds
     """
-    config_key = f"b3d/{video_name}_{classifier}_{tile_size}"
+    config_key = f"{dataset}/{video_name}_{classifier}_{tile_size}"
     query_runtime = 0.0
     
     # Add query execution time (specific to this tile size)
@@ -198,7 +207,7 @@ def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]],
             continue
         
         # Create config key for throughput lookup (include dataset prefix)
-        config_key = f"b3d/{video_name}_{classifier}_{tile_size}"
+        config_key = f"{dataset}/{video_name}_{classifier}_{tile_size}"
         
         # Extract accuracy metrics
         metrics = result['metrics']
@@ -218,7 +227,7 @@ def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]],
         
         # Calculate query execution runtime only
         query_runtime = calculate_query_execution_runtime(video_name, classifier, tile_size, 
-                                                        query_summaries)
+                                                        query_summaries, dataset)
         
         matched_entry = {
             'video_name': video_name,
@@ -238,7 +247,7 @@ def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]],
 
 
 def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], output_dir: str, 
-                                 metrics_list: List[str], query_summaries: Dict[str, Any]) -> None:
+                                 metrics_list: List[str], query_summaries: Dict[str, Any], dataset: str) -> None:
     """
     Create visualizations showing accuracy-throughput tradeoffs.
     
@@ -279,7 +288,7 @@ def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], output_di
         unique_videos = sorted(df['video_name'].unique())
         naive_runtimes = {}
         for video in unique_videos:
-            naive_runtime = calculate_naive_runtime(video, query_summaries)
+            naive_runtime = calculate_naive_runtime(video, query_summaries, dataset)
             naive_runtimes[video] = naive_runtime
         
         # Add naive runtime data to dataframe
@@ -292,7 +301,7 @@ def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], output_di
         # Create scatter plot
         scatter = base.mark_circle(opacity=0.7).encode(
             x=alt.X('query_runtime:Q', title='Query Execution Runtime (seconds)'),
-            y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score'),
+            y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', scale=alt.Scale(domain=[0, 1])),
             color=alt.Color('classifier:N', title='Classifier'),
             size=alt.Size('tile_size:O', title='Tile Size', scale=alt.Scale(range=[20, 200])),
             tooltip=['video_name', 'classifier', 'tile_size', 'query_runtime', accuracy_col]
@@ -316,6 +325,8 @@ def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], output_di
             facet=alt.Facet('video_name:N', title=None,
                             header=alt.Header(labelExpr="'Video: ' + datum.value")),
             columns=2
+        ).resolve_scale(
+            x='independent'
         ).properties(
             title=f'{metric_name} vs Query Execution Runtime Tradeoff (By Video)',
         )
@@ -346,41 +357,44 @@ def main(args):
           {CACHE_DIR}/summary/{dataset}/throughput/measurements/query_execution_summaries.json
         - Only query execution runtime is used (index construction time is ignored)
     """
-    print(f"Starting accuracy-query execution runtime tradeoff visualization for dataset: {args.dataset}")
-    
     # Parse metrics
     metrics_list = [m.strip() for m in args.metrics.split(',')]
     print(f"Processing metrics: {metrics_list}")
     
-    # Load accuracy results
-    print("Loading accuracy results...")
-    accuracy_results = load_accuracy_results(args.dataset)
+    for dataset in args.datasets:
+        print(f"Starting accuracy-query execution runtime tradeoff visualization for dataset: {dataset}")
+        
+        # Load accuracy results
+        print("Loading accuracy results...")
+        accuracy_results = load_accuracy_results(dataset)
+        
+        if not accuracy_results:
+            print(f"No accuracy results found for {dataset}. Please run p070_accuracy_compute.py first.")
+            continue
+        
+        # Load throughput results
+        print("Loading throughput results...")
+        throughput_data = load_throughput_results(dataset)
+        
+        if not throughput_data:
+            print(f"No throughput results found for {dataset}. Please run p080_throughput_gather.py and p081_throughput_compute.py first.")
+            continue
+        
+        # Match accuracy and throughput data
+        print("Matching accuracy and throughput data...")
+        matched_data = match_accuracy_throughput_data(accuracy_results, throughput_data, dataset)
+        
+        if not matched_data:
+            print(f"No matching data points found between accuracy and throughput results for {dataset}.")
+            continue
+        
+        # Create visualizations
+        output_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'tradeoff')
+        create_tradeoff_visualizations(matched_data, output_dir, metrics_list, throughput_data['summaries'], dataset)
+        
+        print(f"Accuracy-query execution runtime tradeoff visualization complete for {dataset}! Results saved to: {output_dir}")
     
-    if not accuracy_results:
-        print("No accuracy results found. Please run p070_accuracy_compute.py first.")
-        return
-    
-    # Load throughput results
-    print("Loading throughput results...")
-    throughput_data = load_throughput_results(args.dataset)
-    
-    if not throughput_data:
-        print("No throughput results found. Please run p080_throughput_gather.py and p081_throughput_compute.py first.")
-        return
-    
-    # Match accuracy and throughput data
-    print("Matching accuracy and throughput data...")
-    matched_data = match_accuracy_throughput_data(accuracy_results, throughput_data, args.dataset)
-    
-    if not matched_data:
-        print("No matching data points found between accuracy and throughput results.")
-        return
-    
-    # Create visualizations
-    output_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'tradeoff')
-    create_tradeoff_visualizations(matched_data, output_dir, metrics_list, throughput_data['summaries'])
-    
-    print(f"\nAccuracy-query execution runtime tradeoff visualization complete! Results saved to: {output_dir}")
+    print(f"\nAll datasets processed!")
 
 
 if __name__ == '__main__':

@@ -12,9 +12,10 @@ from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Process runtime measurement data for throughput analysis')
-    parser.add_argument('--dataset', type=str, 
-                        default='b3d',
-                        help='Dataset name to process')
+    parser.add_argument('--datasets', required=False,
+                        default=['caldot1', 'caldot2'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     return parser.parse_args()
 
 
@@ -107,11 +108,11 @@ def parse_index_construction_timings(index_data: List[Dict]) -> Dict[str, Any]:
     }
     
     for entry in index_data:
-        dataset_video = entry['dataset/video']
+        dataset = entry['dataset']
         classifier = entry['classifier']
-        config_key = f"{dataset_video}_{classifier}"
+        config_key = f"{dataset}_{classifier}"
         
-        for stage, file_path in entry['runtime_files']:
+        for stage, file_path, video_name in entry['runtime_files']:
             file_timings = parse_runtime_file(file_path, stage, accessors[stage])
             
             if not file_timings:
@@ -292,22 +293,23 @@ def main():
     """Main function to process runtime measurement data."""
     args = parse_args()
     
-    print(f"Loading throughput data tables for dataset: {args.dataset}")
-    data_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput')
-    print(f"Data directory: {data_dir}")
-    index_data, query_data = load_data_tables(data_dir)
-    
-    print("Parsing index construction timing data...")
-    index_timings = parse_index_construction_timings(index_data)
-    
-    print("Parsing query execution timing data...")
-    query_timings = parse_query_execution_timings(query_data)
-    
-    print("Saving processed measurements...")
-    measurements_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput', 'measurements')
-    save_measurements(index_timings, query_timings, measurements_dir, args.dataset)
-    
-    print(f"\nData processing complete! Measurements saved to: {measurements_dir}")
+    for dataset in args.datasets:
+        print(f"Loading throughput data tables for dataset: {dataset}")
+        data_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput')
+        print(f"Data directory: {data_dir}")
+        index_data, query_data = load_data_tables(data_dir)
+        
+        print("Parsing index construction timing data...")
+        index_timings = parse_index_construction_timings(index_data)
+        
+        print("Parsing query execution timing data...")
+        query_timings = parse_query_execution_timings(query_data)
+        
+        print("Saving processed measurements...")
+        measurements_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput', 'measurements')
+        save_measurements(index_timings, query_timings, measurements_dir, dataset)
+        
+        print(f"\nData processing complete for {dataset}! Measurements saved to: {measurements_dir}")
 
 
 if __name__ == '__main__':

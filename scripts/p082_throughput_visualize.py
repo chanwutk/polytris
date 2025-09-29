@@ -15,9 +15,10 @@ from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Visualize runtime breakdown of training configurations')
-    parser.add_argument('--dataset', type=str, 
-                        default='b3d',
-                        help='Dataset name to process')
+    parser.add_argument('--datasets', required=False,
+                        default=['caldot1', 'caldot2'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     return parser.parse_args()
 
 
@@ -145,7 +146,7 @@ def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, da
         assert isinstance(stage_data, pd.DataFrame)
         if len(stage_data) > 0:
             chart = alt.Chart(stage_data).mark_bar().encode(
-                x='Runtime:Q',
+                x=alt.X('Runtime:Q', title='Runtime (seconds)'),
                 y=alt.Y('Config:N',
                         sort=alt.SortField(field='Runtime', order='descending'),
                         axis=alt.Axis(labelExpr="split(datum.label, ' ')",
@@ -154,7 +155,7 @@ def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, da
                     orient='bottom',
                     columns=3,
                 )),
-                tooltip=['Config', 'Operation', alt.Tooltip('Runtime:Q', format='.2f')]
+                tooltip=['Config', 'Operation', alt.Tooltip('Runtime:Q', format='.2f', title='Runtime (s)')]
             ).properties(
                 title=f'{stage_name} Runtime by Operation',
                 width=300,
@@ -192,9 +193,11 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
                               output_dir: str, video: str, video_name: str):
     """Create comparative analysis between index construction and query execution, split by tile size.
     
+    Note: Index construction is per-dataset (shared across all videos), while query execution is per-video.
+    
     Args:
-        index_timings: Index construction timing data
-        query_timings: Query execution timing data
+        index_timings: Index construction timing data (per-dataset)
+        query_timings: Query execution timing data (per-video)
         output_dir: Output directory for saving plots
         video: Specific video for per-video analysis
         video_name: Display name for the video
@@ -237,18 +240,16 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
         }
     
     # Index construction stage breakdown by tile size
+    # Note: Index construction is per-dataset, not per-video, so we don't filter by video
     for stage_name, stage_summaries in index_timings['summaries'].items():
         for k, times in stage_summaries.items():
-            # For per-video analysis, only include configs for this video
-            if not k.startswith(video + '_'):
-                continue
             if times:
                 stage_total = np.sum(times)
                 
                 # For index construction stages, check if config key has tile size
                 parts = k.split('_')
                 if len(parts) >= 3 and parts[-1].isdigit():
-                    # Config key has tile size (e.g., "b3d/jnc00.mp4_SimpleCNN_30")
+                    # Config key has tile size (e.g., "caldot1_SimpleCNN_30")
                     tile_size = int(parts[-1])
                     if tile_size in index_stages_by_tile:
                         if '011_tune_detect' in stage_name:
@@ -258,7 +259,7 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
                         elif '013_tune_train_classifier' in stage_name:
                             index_stages_by_tile[tile_size]['Classifier Training'] += stage_total
                 else:
-                    # Config key doesn't have tile size (e.g., "b3d/jnc00.mp4_SimpleCNN")
+                    # Config key doesn't have tile size (e.g., "caldot1_SimpleCNN")
                     # Add to all tile sizes since index construction is shared
                     for tile_size in index_stages_by_tile.keys():
                         if '011_tune_detect' in stage_name:
@@ -408,7 +409,7 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
         # Prepare data for altair charts
         chart_data = []
         
-        # Add index construction data
+        # Add index construction data (per-dataset, shared across all videos)
         for value, label in zip(index_values, index_labels):
             chart_data.append({
                 'Category': 'Index Constr.',
@@ -463,13 +464,13 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
         df2 = pd.DataFrame(chart_data2)
         
         chart1 = alt.Chart(df1).mark_bar().encode(
-            x='Runtime:Q',
+            x=alt.X('Runtime:Q', title='Runtime (seconds)'),
             y=alt.Y('Category:N',
                     sort=alt.SortField(field='Runtime', order='descending'),
                     axis=alt.Axis(labelExpr="split(datum.label, '\\n')",
                                   labelBaseline='alphabetic')),
             color=alt.Color('Operation:N', legend=alt.Legend(orient='top')),
-            tooltip=['Category', 'Operation', alt.Tooltip('Runtime:Q', format='.2f')]
+            tooltip=['Category', 'Operation', alt.Tooltip('Runtime:Q', format='.2f', title='Runtime (s)')]
         ).properties(
             title='With Index Construction',
             width=400,
@@ -477,13 +478,13 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
         )
         
         chart2 = alt.Chart(df2).mark_bar().encode(
-            x='Runtime:Q',
+            x=alt.X('Runtime:Q', title='Runtime (seconds)'),
             y=alt.Y('Category:N',
                     sort=alt.SortField(field='Runtime', order='descending'),
                     axis=alt.Axis(labelExpr="split(datum.label, '\\n')",
                                   labelBaseline='alphabetic')),
             color=alt.Color('Operation:N', legend=alt.Legend(orient='top')),
-            tooltip=['Category', 'Operation', alt.Tooltip('Runtime:Q', format='.2f')]
+            tooltip=['Category', 'Operation', alt.Tooltip('Runtime:Q', format='.2f', title='Runtime (s)')]
         ).properties(
             title='Without Index Construction',
             width=400,
@@ -492,7 +493,7 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
         
         # Combine charts horizontally
         combined_chart = alt.hconcat(chart1, chart2, spacing=20).properties(
-            title='Index Construction vs Query Execution Runtime Breakdown '
+            title='Index Construction (Per-Dataset) vs Query Execution (Per-Video) Runtime Breakdown '
                   f'- {video_name} (Tile Size: {tile_size})'
         )
         
@@ -554,23 +555,22 @@ def main():
     """Main function to create runtime breakdown visualizations."""
     args = parse_args()
     
-    print(f"Loading processed measurements for dataset: {args.dataset}")
-    measurements_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput', 'measurements')
-    print(f"Measurements directory: {measurements_dir}")
-    
-    assert os.path.exists(measurements_dir), f"Error: Measurements directory {measurements_dir} does not exist."
-    
-    index_timings, query_timings, metadata = load_measurements(measurements_dir)
-    
-    print("Creating query execution visualizations...")
-    throughput_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput')
-    visualize_breakdown_query_execution_all(query_timings, throughput_dir, args.dataset)
-    
-    print("Creating comparative analysis...")
-    visualize_overal_runtime_all(index_timings, query_timings, throughput_dir)
-    
-    print(f"Visualization complete! Results saved to: {throughput_dir}")
-    print("- Per-video visualizations saved in per_video/ subdirectory")
+    for dataset in args.datasets:
+        print(f"Loading processed measurements for dataset: {dataset}")
+        measurements_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput', 'measurements')
+        print(f"Measurements directory: {measurements_dir}")
+        
+        assert os.path.exists(measurements_dir), f"Error: Measurements directory {measurements_dir} does not exist."
+        
+        index_timings, query_timings, metadata = load_measurements(measurements_dir)
+        
+        throughput_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput')
+        visualize_breakdown_query_execution_all(query_timings, throughput_dir, dataset)
+        
+        visualize_overal_runtime_all(index_timings, query_timings, throughput_dir)
+        
+        print(f"Visualization complete for {dataset}! Results saved to: {throughput_dir}")
+        print("- Per-video visualizations saved in per_video/ subdirectory")
 
 
 if __name__ == '__main__':
