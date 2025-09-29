@@ -187,12 +187,12 @@ def main(args):
     Note:
         - The script expects a specific directory structure:
           {DATA_DIR}/{dataset}/ - contains video files
-          {CACHE_DIR}/{dataset}/{video_file}/groundtruth/tracking.jsonl - contains groundtruth tracking results
+          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl - contains groundtruth tracking results
           where DATA_DIR is /polyis-data/video-datasets-low and CACHE_DIR is /polyis-cache
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - Groundtruth tracking results are loaded for each video
         - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
-        - Output files are saved in {CACHE_DIR}/{dataset}/{video_file}/020_relevancy/groundtruth_{tile_size}/score/score.jsonl
+        - Output files are saved in {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/groundtruth_{tile_size}/score/score.jsonl
         - If no tracking results are found for a video, that video is skipped with a warning
     """
     mp.set_start_method('spawn', force=True)

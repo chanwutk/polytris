@@ -65,7 +65,7 @@ def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, str, int
         video_dir = os.path.join(dataset_cache_dir, video_filename)
         assert os.path.isdir(video_dir)
             
-        evaluation_dir = os.path.join(video_dir, 'evaluation')
+        evaluation_dir = os.path.join(video_dir, '070_tracking_accuracy')
         assert os.path.exists(evaluation_dir)
 
         for classifier_tilesize in os.listdir(evaluation_dir):
@@ -100,7 +100,7 @@ def load_saved_results(dataset: str) -> List[Dict[str, Any]]:
     results = []
     for video_name, classifier, tile_size in video_tile_combinations:
         results_path = os.path.join(CACHE_DIR, dataset, video_name,
-                                    'evaluation', f'{classifier}_{tile_size}',
+                                    '070_tracking_accuracy', f'{classifier}_{tile_size}',
                                     'accuracy', 'detailed_results.json')
         
         print(f"Loading results from {results_path}")

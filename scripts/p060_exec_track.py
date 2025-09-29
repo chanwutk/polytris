@@ -19,7 +19,7 @@ def parse_args():
     
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
-            - datasets (List[str]): Dataset names to process (default: ['b3d'])
+            - datasets (List[str]): Dataset names to process (default: ['caldot1', 'caldot2'])
             - tracker (str): Tracking algorithm to use (default: 'sort')
             - max_age (int): Maximum age for SORT tracker (default: 10)
             - min_hits (int): Minimum hits for SORT tracker (default: 3)
@@ -29,7 +29,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Execute object tracking on uncompressed '
                                                  'detection results from 050_exec_uncompress.py')
     parser.add_argument('--datasets', required=False,
-                        default=['b3d'],
+                        default=['caldot1', 'caldot2'],
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tracker', required=False,

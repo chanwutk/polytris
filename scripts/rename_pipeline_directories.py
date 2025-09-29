@@ -63,7 +63,8 @@ def rename_directories(dataset_name: str, dry_run: bool = False):
             ('packing', '030_compressed_frames'),
             ('packed_detections', '040_compressed_detections'),
             ('uncompressed_detections', '050_uncompressed_detections'),
-            ('uncompressed_tracking', '060_uncompressed_tracks')
+            ('uncompressed_tracking', '060_uncompressed_tracks'),
+            ('evaluation', '070_tracking_accuracy')
         ]
         
         for old_name, new_name in directory_mappings:
@@ -111,6 +112,7 @@ def main(args):
           * 'packed_detections' -> '040_compressed_detections'
           * 'uncompressed_detections' -> '050_uncompressed_detections'
           * 'uncompressed_tracking' -> '060_uncompressed_tracks'
+          * 'evaluation' -> '070_tracking_accuracy'
         - Use --dry-run to preview changes without making them
         - Existing directories with the new names will cause errors
     """

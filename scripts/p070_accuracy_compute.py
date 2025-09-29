@@ -41,13 +41,14 @@ def parse_args():
     
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
+            - datasets (List[str]): Dataset names to process (default: ['caldot1', 'caldot2'])
             - metrics (str): Comma-separated list of metrics to evaluate (default: 'HOTA,CLEAR,Identity')
             - parallel (bool): Whether to use parallel processing (default: True)
     """
     parser = argparse.ArgumentParser(description='Evaluate tracking accuracy using TrackEval and create visualizations')
-    parser.add_argument('--dataset', required=False, default='b3d',
-                        help='Dataset name to process')
+    parser.add_argument('--datasets', required=False, default=['caldot1', 'caldot2'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     parser.add_argument('--metrics', type=str, default='HOTA,CLEAR',  #,Identity',
                         help='Comma-separated list of metrics to evaluate')
     parser.add_argument('--no_parallel', action='store_true', default=False,
@@ -66,21 +67,25 @@ def find_tracking_results(cache_dir: str, dataset: str) -> List[Tuple[str, str, 
     Returns:
         List[Tuple[str, str, int]]: List of (video_name, classifier, tile_size) tuples
     """
-    dataset_cache_dir = os.path.join(cache_dir, dataset)
-    assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
+    dataset_cache_dir = os.path.join(cache_dir, dataset, 'execution')
+    if not os.path.exists(dataset_cache_dir):
+        print(f"Dataset cache directory {dataset_cache_dir} does not exist, skipping...")
+        return []
     
     video_tile_combinations: list[tuple[str, str, int]] = []
     for video_filename in os.listdir(dataset_cache_dir):
         video_dir = os.path.join(dataset_cache_dir, video_filename)
-        assert os.path.isdir(video_dir), f"Video directory {video_dir} does not exist"
-        tracking_dir = os.path.join(video_dir, 'uncompressed_tracking')
-        assert os.path.isdir(tracking_dir), f"Tracking directory {tracking_dir} does not exist"
+        if not os.path.isdir(video_dir):
+            continue
+        tracking_dir = os.path.join(video_dir, '060_uncompressed_tracks')
+        if not os.path.exists(tracking_dir):
+            continue
 
         for classifier_tilesize in os.listdir(tracking_dir):
             classifier, tilesize = classifier_tilesize.split('_')
             ts = int(tilesize)
             tracking_path = os.path.join(tracking_dir, f'{classifier}_{ts}', 'tracking.jsonl')
-            groundtruth_path = os.path.join(video_dir, 'groundtruth', 'tracking.jsonl')
+            groundtruth_path = os.path.join(video_dir, '000_groundtruth', 'tracking.jsonl')
             
             if os.path.exists(tracking_path) and os.path.exists(groundtruth_path):
                 video_tile_combinations.append((video_filename, classifier, ts))
@@ -270,7 +275,7 @@ def main(args):
     Main function that orchestrates the tracking accuracy evaluation process.
     
     This function serves as the entry point for the script. It:
-    1. Finds all videos with tracking results for the specified dataset and tile size(s)
+    1. Finds all videos with tracking results for the specified datasets and tile size(s)
     2. Runs accuracy evaluation using TrackEval's B3D evaluation methods
     3. Creates summary reports of the accuracy results
     4. Optionally creates visualizations if requested and libraries are available
@@ -280,12 +285,12 @@ def main(args):
         
     Note:
         - The script expects tracking results from 060_exec_track.py in:
-          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_tracking/proxy_{tile_size}/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tile_size}/tracking.jsonl
         - Groundtruth data should be in:
-          {CACHE_DIR}/{dataset}/{video_file}/groundtruth/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl
         - Multiple metrics are evaluated: HOTA, CLEAR (MOTA), and Identity (IDF1)
     """
-    print(f"Starting tracking accuracy evaluation for dataset: {args.dataset}")
+    print(f"Starting tracking accuracy evaluation for datasets: {args.datasets}")
     
     # Parse metrics (needed for both compute and no_recompute modes)
     metrics_list = [m.strip() for m in args.metrics.split(',')]
@@ -293,24 +298,30 @@ def main(args):
     print(f"Metrics: {args.metrics}")
     print(f"Evaluating metrics: {metrics_list}")
     
-    # Find tracking results
-    video_tile_combinations = find_tracking_results(CACHE_DIR, args.dataset)
+    # Find tracking results for all datasets
+    all_video_tile_combinations = []
+    for dataset in args.datasets:
+        print(f"Processing dataset: {dataset}")
+        video_tile_combinations = find_tracking_results(CACHE_DIR, dataset)
+        # Add dataset info to each combination
+        for video_name, classifier, tile_size in video_tile_combinations:
+            all_video_tile_combinations.append((dataset, video_name, classifier, tile_size))
     
-    if not video_tile_combinations:
+    if not all_video_tile_combinations:
         print("No tracking results found. Please ensure 060_exec_track.py has been run first.")
         return
     
-    print(f"Found {len(video_tile_combinations)} video-tile size combinations to evaluate")
+    print(f"Found {len(all_video_tile_combinations)} video-tile size combinations to evaluate")
     
     # Prepare arguments for parallel processing if requested
     # eval_args = []
     eval_tasks: list[Callable[[], dict]] = []
-    for video_name, classifier, tile_size in sorted(video_tile_combinations):
-        tracking_path = os.path.join(CACHE_DIR, args.dataset, video_name, 'uncompressed_tracking',
+    for dataset, video_name, classifier, tile_size in sorted(all_video_tile_combinations):
+        tracking_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '060_uncompressed_tracks',
                                         f'{classifier}_{tile_size}', 'tracking.jsonl')
-        groundtruth_path = os.path.join(CACHE_DIR, args.dataset, video_name, 
-                                        'groundtruth', 'tracking.jsonl')
-        output_dir = os.path.join(CACHE_DIR, args.dataset, video_name, 'evaluation',
+        groundtruth_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, 
+                                        '000_groundtruth', 'tracking.jsonl')
+        output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '070_tracking_accuracy',
                                     f'{classifier}_{tile_size}', 'accuracy')
 
         # eval_args.append((video_name, classifier, tile_size, tracking_path, groundtruth_path, 
