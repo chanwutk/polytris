@@ -28,19 +28,11 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 def parse_args():
-    """
-    Parse command line arguments for the script.
-    
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
-            - metrics (str): Comma-separated list of metrics to evaluate (default: 'HOTA,CLEAR,Identity')
-    """
     parser = argparse.ArgumentParser(description='Evaluate tracking accuracy using TrackEval and create visualizations')
-    parser.add_argument('--dataset', required=False, default='b3d',
-                        help='Dataset name to process')
-    parser.add_argument('--metrics', type=str, default='HOTA,CLEAR',  #,Identity',
-                        help='Comma-separated list of metrics to evaluate')
+    parser.add_argument('--datasets', required=False,
+                        default=['caldot1', 'caldot2'],
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     return parser.parse_args()
 
 
@@ -55,18 +47,16 @@ def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, str, int
     Returns:
         List[Tuple[str, str, int]]: List of (video_name, classifier, tile_size) tuples
     """
-    dataset_cache_dir = os.path.join(cache_dir, dataset)
-    if not os.path.exists(dataset_cache_dir):
-        print(f"Dataset cache directory {dataset_cache_dir} does not exist")
-        return []
+    dataset_cache_dir = os.path.join(cache_dir, dataset, 'execution')
+    assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
     
     video_tile_combinations: list[tuple[str, str, int]] = []
     for video_filename in os.listdir(dataset_cache_dir):
         video_dir = os.path.join(dataset_cache_dir, video_filename)
-        assert os.path.isdir(video_dir)
+        assert os.path.isdir(video_dir), f"Video directory {video_dir} is not a directory"
             
         evaluation_dir = os.path.join(video_dir, '070_tracking_accuracy')
-        assert os.path.exists(evaluation_dir)
+        assert os.path.exists(evaluation_dir), f"Evaluation directory {evaluation_dir} does not exist"
 
         for classifier_tilesize in os.listdir(evaluation_dir):
             classifier, tilesize = classifier_tilesize.split('_')
@@ -74,8 +64,8 @@ def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, str, int
             results_path = os.path.join(evaluation_dir, f'{classifier}_{ts}',
                                         'accuracy', 'detailed_results.json')
             
-            if os.path.exists(results_path):
-                video_tile_combinations.append((video_filename, classifier, ts))
+            assert os.path.exists(results_path), f"Results path {results_path} does not exist"
+            video_tile_combinations.append((video_filename, classifier, ts))
     
     return video_tile_combinations
 
@@ -92,14 +82,11 @@ def load_saved_results(dataset: str) -> List[Dict[str, Any]]:
     """
     # Find all saved results
     video_tile_combinations = find_saved_results(CACHE_DIR, dataset)
-    
-    if not video_tile_combinations:
-        print("No saved results found. Please run p070_accuracy_compute.py first to generate results.")
-        return []
-    
+    assert len(video_tile_combinations) > 0, f"No saved results found for dataset {dataset}"
+
     results = []
     for video_name, classifier, tile_size in video_tile_combinations:
-        results_path = os.path.join(CACHE_DIR, dataset, video_name,
+        results_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name,
                                     '070_tracking_accuracy', f'{classifier}_{tile_size}',
                                     'accuracy', 'detailed_results.json')
         
@@ -124,7 +111,7 @@ def main(args):
     1. Finds all videos with tracking results for the specified dataset and tile size(s)
     2. Runs accuracy evaluation using TrackEval's B3D evaluation methods
     3. Creates summary reports of the accuracy results
-    4. Optionally creates visualizations if requested and libraries are available
+    4. Creates visualizations for each dataset
     
     Args:
         args (argparse.Namespace): Parsed command line arguments
@@ -134,43 +121,42 @@ def main(args):
           {CACHE_DIR}/{dataset}/{video_file}/uncompressed_tracking/proxy_{tile_size}/tracking.jsonl
         - Groundtruth data should be in:
           {CACHE_DIR}/{dataset}/{video_file}/groundtruth/tracking.jsonl
-        - Multiple metrics are evaluated: HOTA, CLEAR (MOTA), and Identity (IDF1)
+        - Multiple metrics are evaluated: HOTA, CLEAR (MOTA)
     """
-    print(f"Starting tracking accuracy evaluation for dataset: {args.dataset}")
+    print(f"Starting tracking accuracy evaluation for datasets: {args.datasets}")
     
-    # Parse metrics (needed for both compute and no_recompute modes)
-    metrics_list = [m.strip() for m in args.metrics.split(',')]
-    
-    # Check if we should use saved results instead of recomputing
-    print("Using saved accuracy results...")
-    results = load_saved_results(args.dataset)
-    assert len(results) > 0
-    
-    # Print summary
-    successful_results = [r for r in results if r['success']]
-    failed_results = [r for r in results if not r['success']]
-    
-    print(f"  Successful evaluations: {len(successful_results)}")
-    print(f"  Failed evaluations: {len(failed_results)}")
-    
-    if failed_results:
-        print("\nFailed evaluations:")
-        for result in failed_results:
-            error_msg = result.get('error', 'Unknown error')
-            print(f"  {result['video_name']} (tile size {result['tile_size']}): {error_msg}")
-    assert len(failed_results) == 0
-    
-    output_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'accuracy')
-    
-    # Optionally create plots if requested
-    visualize_tracking_accuracy(successful_results, output_dir)
-    print(f"Results saved to: {output_dir}")
+    # Process each dataset separately
+    for dataset in args.datasets:
+        print(f"\nProcessing dataset: {dataset}")
+        dataset_results = load_saved_results(dataset)
+        assert len(dataset_results) > 0, f"No results found for dataset {dataset}"
+        
+        # Print summary for this dataset
+        successful_results = [r for r in dataset_results if r['success']]
+        failed_results = [r for r in dataset_results if not r['success']]
+        
+        print(f"  Successful evaluations: {len(successful_results)}")
+        print(f"  Failed evaluations: {len(failed_results)}")
+        
+        if failed_results:
+            print("\nFailed evaluations:")
+            for result in failed_results:
+                error_msg = result.get('error', 'Unknown error')
+                print(f"  {result['video_name']} (tile size {result['tile_size']}): {error_msg}")
+        
+        assert len(successful_results) > 0, f"No successful results for dataset {dataset}"
+        # Create output directory for this dataset
+        output_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'accuracy')
+        
+        # Create visualizations for this dataset
+        visualize_tracking_accuracy(successful_results, output_dir)
+        print(f"Results saved to: {output_dir}")
 
 
 def visualize_compared_accuracy_bar(video_tile_groups: Dict[str, Dict[int, Dict[str, List]]], 
-                            sorted_videos: List[str], sorted_tile_sizes: List[int],
-                            num_videos: int, num_tile_sizes: int, score_field: str,
-                            metric_name: str, xlabel: str, output_path: str) -> None:
+                                    sorted_videos: List[str], sorted_tile_sizes: List[int],
+                                    num_videos: int, num_tile_sizes: int, score_field: str,
+                                    metric_name: str, xlabel: str, output_path: str) -> None:
     """
     Create a comparison plot for tracking accuracy scores by video and tile size.
     

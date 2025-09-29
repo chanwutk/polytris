@@ -36,17 +36,9 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 def parse_args():
-    """
-    Parse command line arguments for the script.
-    
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - datasets (List[str]): Dataset names to process (default: ['caldot1', 'caldot2'])
-            - metrics (str): Comma-separated list of metrics to evaluate (default: 'HOTA,CLEAR,Identity')
-            - parallel (bool): Whether to use parallel processing (default: True)
-    """
     parser = argparse.ArgumentParser(description='Evaluate tracking accuracy using TrackEval and create visualizations')
-    parser.add_argument('--datasets', required=False, default=['caldot1', 'caldot2'],
+    parser.add_argument('--datasets', required=False,
+                        default=['caldot1', 'caldot2'],
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--metrics', type=str, default='HOTA,CLEAR',  #,Identity',
@@ -114,6 +106,11 @@ def load_tracking_data(file_path: str) -> Dict[int, List[List[float]]]:
                 tracks = data['tracks']
                 frame_data[frame_idx] = tracks
     
+    # Pad with empty lists if first frame index is not 0
+    if frame_data and min(frame_data.keys()) > 0:
+        for i in range(min(frame_data.keys())):
+            frame_data[i] = []
+    
     return frame_data
 
 
@@ -136,6 +133,11 @@ def load_groundtruth_data(file_path: str) -> Dict[int, List[List[float]]]:
                 frame_idx = data['frame_idx']
                 detections = data['detections'] if 'detections' in data else data.get('tracks', [])
                 frame_data[frame_idx] = detections
+    
+    # Pad with empty lists if first frame index is not 0
+    if frame_data and min(frame_data.keys()) > 0:
+        for i in range(min(frame_data.keys())):
+            frame_data[i] = []
     
     return frame_data
 

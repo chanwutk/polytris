@@ -6,10 +6,28 @@ import json
 from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
 
 DATASETS_VIDEOS = [
-    ('b3d', 'jnc00.mp4'),
-    ('b3d', 'jnc02.mp4'),
-    ('b3d', 'jnc06.mp4'),
-    ('b3d', 'jnc07.mp4'),
+    # ('b3d', 'jnc00.mp4'),
+    # ('b3d', 'jnc02.mp4'),
+    # ('b3d', 'jnc06.mp4'),
+    # ('b3d', 'jnc07.mp4'),
+
+    ('caldot1', 'caldot1-1.mp4'),
+    ('caldot1', 'caldot1-2.mp4'),
+    ('caldot1', 'caldot1-3.mp4'),
+    ('caldot1', 'caldot1-4.mp4'),
+    ('caldot1', 'caldot1-5.mp4'),
+    ('caldot1', 'caldot1-6.mp4'),
+    ('caldot1', 'caldot1-7.mp4'),
+    ('caldot1', 'caldot1-8.mp4'),
+    ('caldot1', 'caldot1-9.mp4'),
+
+    ('caldot2', 'caldot2-1.mp4'),
+    ('caldot2', 'caldot2-2.mp4'),
+    ('caldot2', 'caldot2-3.mp4'),
+    ('caldot2', 'caldot2-4.mp4'),
+    ('caldot2', 'caldot2-5.mp4'),
+    ('caldot2', 'caldot2-6.mp4'),
+    ('caldot2', 'caldot2-7.mp4'),
 ]
 
 # CLASSIFIERS = ['SimpleCNN']
