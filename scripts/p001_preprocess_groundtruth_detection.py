@@ -10,7 +10,7 @@ import torch
 from multiprocessing import Queue
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST
 
 
 def parse_args():
@@ -23,7 +23,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Execute object detection on preprocessed videos')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1-yolov5', 'caldot2-yolov5'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     return parser.parse_args()

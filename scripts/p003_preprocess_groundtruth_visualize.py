@@ -6,7 +6,7 @@ import multiprocessing as mp
 from multiprocessing import Queue
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, ProgressBar, create_tracking_visualization, load_detection_results
+from polyis.utilities import CACHE_DIR, DATA_DIR, ProgressBar, create_tracking_visualization, load_detection_results, DATASETS_TO_TEST
 
 
 def parse_args():
@@ -20,7 +20,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Visualize tracking results on original videos')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1-yolov5', 'caldot2-yolov5'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--speed_up', type=int, default=4,

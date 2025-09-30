@@ -6,14 +6,14 @@ import argparse
 from typing import Callable, Dict, List, Tuple, Any
 from collections import defaultdict
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST
 
 
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Process runtime measurement data for throughput analysis')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     return parser.parse_args()

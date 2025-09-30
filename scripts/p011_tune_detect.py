@@ -12,13 +12,13 @@ import cv2
 import torch
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute object detection on video segments')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     return parser.parse_args()

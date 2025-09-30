@@ -20,7 +20,7 @@ from torch.optim import Adam
 
 from polyis.models.classifier.simple_cnn import SimpleCNN
 from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, format_time, ProgressBar
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, format_time, ProgressBar, DATASETS_TO_TEST
 
 # Factory functions for models that don't accept tile_size parameter
 def ShuffleNet05_factory(_tile_size: int):
@@ -74,7 +74,7 @@ TILE_SIZES = [30, 60]  #, 120]
 def parse_args():
     parser = argparse.ArgumentParser(description='Preprocess video dataset')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--classifiers', required=False,
@@ -82,12 +82,8 @@ def parse_args():
                         default=CLASSIFIERS_TO_TEST,
                         choices=CLASSIFIERS_CHOICES,
                         nargs='+',
-                        help='Model types to train (can specify multiple): SimpleCNN, '
-                             'YoloN, YoloS, YoloM, YoloL, YoloX, ShuffleNet05, '
-                             'ShuffleNet20, MobileNetL, MobileNetS, WideResNet50, '
-                             'WideResNet101, ResNet152, ResNet101, ResNet18, '
-                             'EfficientNetS, EfficientNetL. For example: '
-                             '--classifiers YoloN ShuffleNet05 ResNet18')
+                        help='Model types to train (can specify multiple). For '
+                             'example: --classifiers YoloN ShuffleNet05 ResNet18')
     parser.add_argument('--clear', action='store_true',
                         help='Clear existing results directories before training')
     return parser.parse_args()

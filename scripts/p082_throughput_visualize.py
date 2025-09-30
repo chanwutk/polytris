@@ -9,14 +9,14 @@ import pandas as pd
 from collections import defaultdict
 from typing import Any
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST
 
 
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Visualize runtime breakdown of training configurations')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     return parser.parse_args()

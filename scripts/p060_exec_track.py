@@ -10,7 +10,7 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import create_tracker, format_time, CACHE_DIR, ProgressBar, register_tracked_detections
+from polyis.utilities import create_tracker, format_time, CACHE_DIR, ProgressBar, register_tracked_detections, DATASETS_TO_TEST
 
 
 def parse_args():
@@ -29,7 +29,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Execute object tracking on uncompressed '
                                                  'detection results from 050_exec_uncompress.py')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1-yolov5', 'caldot2-yolov5'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tracker', required=False,

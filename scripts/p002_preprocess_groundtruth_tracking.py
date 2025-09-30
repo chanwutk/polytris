@@ -9,7 +9,7 @@ import torch
 from functools import partial
 from multiprocessing import Queue
 
-from polyis.utilities import CACHE_DIR, create_tracker, format_time, load_detection_results, ProgressBar, register_tracked_detections
+from polyis.utilities import CACHE_DIR, create_tracker, format_time, load_detection_results, ProgressBar, register_tracked_detections, DATASETS_TO_TEST
 
 
 def parse_args():
@@ -26,7 +26,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Execute object tracking on detection results')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1-yolov5', 'caldot2-yolov5'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tracker', required=False,

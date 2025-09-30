@@ -14,7 +14,7 @@ from functools import partial
 
 from polyis.images import splitHWC, padHWC
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST
 
 
 TILE_SIZES = [30, 60]  #, 120]
@@ -32,7 +32,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Execute trained classifier models to classify video tiles')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1-yolov5', 'caldot2-yolov5'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',

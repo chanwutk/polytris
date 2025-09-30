@@ -12,7 +12,7 @@ from rich.progress import track
 
 import polyis.images
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap
+from polyis.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap, DATASETS_TO_TEST
 
 TILE_SIZES = [30, 60, 120]
 
@@ -20,7 +20,7 @@ TILE_SIZES = [30, 60, 120]
 def parse_args():
     parser = argparse.ArgumentParser(description='Preprocess video dataset')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     return parser.parse_args()

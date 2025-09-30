@@ -10,7 +10,7 @@ import time
 import multiprocessing as mp
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar, DATASETS_TO_TEST
 
 
 TILE_SIZES = [30, 60]  #, 120]
@@ -19,7 +19,7 @@ TILE_SIZES = [30, 60]  #, 120]
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute trained proxy models to classify video tiles')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1-yolov5', 'caldot2-yolov5'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',

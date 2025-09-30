@@ -7,7 +7,7 @@ from pathlib import Path
 
 import cv2
 
-from polyis.utilities import CACHE_DIR, DATA_DIR
+from polyis.utilities import CACHE_DIR, DATA_DIR, DATASETS_TO_TEST
 
 
 SELECTIVITY = 0.05
@@ -20,7 +20,7 @@ DIFF_SCALE = [1, 2, 4]
 def parse_args():
     parser = argparse.ArgumentParser(description="Tune parameters for the model.")
     parser.add_argument("--datasets", type=str,
-                        default=['caldot1', 'caldot2'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help="The dataset names (space-separated).")
     parser.add_argument("--selectivity", type=float,

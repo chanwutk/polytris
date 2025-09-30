@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST
 
 
 def parse_args():
@@ -24,7 +24,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Visualize accuracy-throughput tradeoffs')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--metrics', type=str, default='HOTA,CLEAR',

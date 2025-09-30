@@ -10,7 +10,7 @@ import multiprocessing as mp
 from functools import partial
 import pandas as pd
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar
+from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST
 
 
 TILE_SIZES = [30, 60]  #, 120]
@@ -28,7 +28,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Visualize video tile classification results')
     parser.add_argument('--datasets', required=False,
-                        default=['b3d'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',

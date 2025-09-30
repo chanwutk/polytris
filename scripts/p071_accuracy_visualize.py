@@ -10,7 +10,7 @@ import numpy as np
 import altair as alt
 import pandas as pd
 
-from polyis.utilities import CACHE_DIR
+from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
 
 
 TILE_SIZES = [30, 60]
@@ -30,7 +30,7 @@ class NumpyEncoder(json.JSONEncoder):
 def parse_args():
     parser = argparse.ArgumentParser(description='Evaluate tracking accuracy using TrackEval and create visualizations')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1-yolov5', 'caldot2-yolov5'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     return parser.parse_args()

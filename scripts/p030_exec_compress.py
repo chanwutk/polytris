@@ -16,7 +16,7 @@ from polyis.utilities import (
     CACHE_DIR, CLASSIFIERS_CHOICES,
     DATA_DIR, format_time,
     load_classification_results,
-    CLASSIFIERS_TO_TEST, ProgressBar
+    CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST
 )
 from lib.pack_append import pack_append
 from lib.group_tiles import group_tiles
@@ -40,7 +40,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Execute compression of video tiles into images based on classification results')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1-yolov5', 'caldot2-yolov5'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',

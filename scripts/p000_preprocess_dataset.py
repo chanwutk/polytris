@@ -13,7 +13,7 @@ import torch
 import torch.nn.functional as F
 from matplotlib.path import Path
 
-from polyis.utilities import DATA_RAW_DIR, DATA_DIR, ProgressBar
+from polyis.utilities import DATA_RAW_DIR, DATA_DIR, ProgressBar, DATASETS_TO_TEST
 
 
 def parse_args():
@@ -29,7 +29,7 @@ def parse_args():
                         type=int,
                         help='Batch size')
     parser.add_argument('-d', '--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
     
@@ -321,7 +321,7 @@ def main(args):
 
     for dataset in datasets:
         print(f"Processing dataset: {dataset}")
-        if dataset == 'b3d':
+        if dataset.startswith('b3d'):
             process_b3d(args)
         elif dataset.startswith('caldot'):
             process_caldot(args, dataset)
