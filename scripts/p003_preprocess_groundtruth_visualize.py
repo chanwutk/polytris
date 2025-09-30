@@ -20,7 +20,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Visualize tracking results on original videos')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=['caldot1-yolov5', 'caldot2-yolov5'],
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--speed_up', type=int, default=4,

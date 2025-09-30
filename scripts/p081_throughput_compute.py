@@ -274,7 +274,7 @@ def save_measurements(index_timings: Dict[str, Any], query_timings: Dict[str, An
     metadata = {
         'dataset': dataset,
         'videos': videos,
-        'classifiers': CLASSIFIERS_TO_TEST + ['groundtruth'],
+        'classifiers': CLASSIFIERS_TO_TEST + ['Perfect'],
         'tile_sizes': [30, 60],
         'index_stages': ['011_tune_detect', '012_tune_create_training_data', '013_tune_train_classifier'],
         'query_stages': ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking', 

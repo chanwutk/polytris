@@ -187,9 +187,13 @@ def get_detector(gpu_id: int, config_path: str | None = None, model_path: str | 
                 os.remove(temp_file)
 
 
-def detect(image: np.ndarray, detector: YOLOv3Detector, threshold: float | None = None):
+def detect(
+    image: np.ndarray,
+    detector: YOLOv3Detector,
+    threshold: float | None = None
+) -> polyis.dtypes.DetArray:
     """
-    Detect objects in an image using YOLOv3.
+    Detect vehicles in an image using YOLOv3.
     
     Args:
         image: Input image as numpy array (H, W, C)
@@ -197,7 +201,8 @@ def detect(image: np.ndarray, detector: YOLOv3Detector, threshold: float | None 
         threshold: Override detection threshold (optional)
         
     Returns:
-        np.ndarray: Detection results as array of shape (N, 5) where each row is [x1, y1, x2, y2, confidence]
+        np.ndarray: Detection results as array of shape (N, 5)
+                    where each row is [x1, y1, x2, y2, confidence]
     """
     if threshold is None:
         threshold = detector.threshold

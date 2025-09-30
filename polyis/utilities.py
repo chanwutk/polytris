@@ -712,24 +712,20 @@ class ProgressBar:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit the context manager - clean up progress bars and terminate process."""
-        try:
-            # Signal progress bars to stop
-            self.command_queue.put(None)
+        # Signal progress bars to stop
+        self.command_queue.put(None)
+        
+        if self.progress_process is not None:
+            # Wait for progress process to finish and terminate it
+            self.progress_process.join(timeout=5)  # Wait up to 5 seconds
+            if self.progress_process.is_alive():
+                self.progress_process.terminate()
+                self.progress_process.join(timeout=2)  # Give it time to terminate
             
-            if self.progress_process is not None:
-                # Wait for progress process to finish and terminate it
-                self.progress_process.join(timeout=5)  # Wait up to 5 seconds
-                if self.progress_process.is_alive():
-                    self.progress_process.terminate()
-                    self.progress_process.join(timeout=2)  # Give it time to terminate
-                
-                # Force kill if still alive
-                if self.progress_process.is_alive():
-                    self.progress_process.kill()
-                    self.progress_process.join()
-        except Exception as e:
-            print(f"Error during progress bar cleanup: {e}")
-            raise e
+            # Force kill if still alive
+            if self.progress_process.is_alive():
+                self.progress_process.kill()
+                self.progress_process.join()
     
     def update_overall_progress(self, advance: int = 1):
         """Update the overall progress bar."""
@@ -778,6 +774,24 @@ class ProgressBar:
             worker_id_queue.put(worker_id)
 
 
+DATASETS_TO_TEST = [
+    'caldot1-yolov5',
+    'caldot2-yolov5',
+]
+
+
+DATASETS_CHOICES = [
+    'caldot1-yolov5',
+    'caldot2-yolov5',
+    'caldot1',
+    'caldot2',
+    'b3d-jnc00',
+    'b3d-jnc02',
+    'b3d-jnc06',
+    'b3d-jnc07',
+]
+
+
 CLASSIFIERS_TO_TEST = [
     'SimpleCNN',
     'YoloN',
@@ -791,7 +805,7 @@ CLASSIFIERS_TO_TEST = [
     'MobileNetS',
     # 'WideResNet50',
     # 'WideResNet101',
-    'ResNet18', 
+    # 'ResNet18', 
     # 'ResNet101',
     # 'ResNet152',
     # 'EfficientNetS',
@@ -799,21 +813,34 @@ CLASSIFIERS_TO_TEST = [
 ]
 
 CLASSIFIERS_CHOICES = [
+    # Cutsom CNNs
     'SimpleCNN',
+
+    # YOLOv11 models
     'YoloN',
     'YoloS',
     'YoloM',
     'YoloL',
     'YoloX',
+
+    # ShuffleNet models
     'ShuffleNet05',
     'ShuffleNet20',
+
+    # MobileNet models
     'MobileNetL',
     'MobileNetS',
-    'WideResNet50',
-    'WideResNet101',
+
+    # ResNet models
     'ResNet18',
     'ResNet101',
     'ResNet152',
+
+    # WideResNet models
+    'WideResNet50',
+    'WideResNet101',
+
+    # EfficientNet models
     'EfficientNetS',
     'EfficientNetL',
 ]

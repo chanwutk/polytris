@@ -10,11 +10,14 @@ from typing import Any
 
 import polyis.models.retinanet_b3d
 import polyis.models.yolov3_otif
+import polyis.models.yolov5
 
 
 DATASET_NAME_MAPPING = {
     "caldot1": "caldot",
     "caldot2": "caldot",
+    "caldot1-yolov5": "caldot-yolov5",
+    "caldot2-yolov5": "caldot-yolov5",
     "b3d": "b3d",
 }
 
@@ -34,6 +37,10 @@ DATASET_DETECTOR_CONFIG = {
             "height": 480,
             "model_path": "/otif-dataset/yolov3/caldot/yolov3-704x480.best",
             "config_path": "/otif-dataset/yolov3/caldot/yolov3-704x480-test.cfg"
+        },
+        "caldot-yolov5": {
+            "detector": "yolov5",
+            "detector_label": "caldot-yolov5",
         },
     },
     "default_detector": "retina",
@@ -105,6 +112,10 @@ def get_detector(dataset_name: str, gpu_id):
             nms_threshold=nms_threshold
         )
     
+    elif detector_type == 'yolov5':
+        print(f"Loading YOLOv5 detector for dataset '{dataset_name}' on {device}")
+        return polyis.models.yolov5.get_detector(device=device)
+    
     else:
         raise ValueError(f"Unknown detector type: {detector_type}")
 
@@ -115,17 +126,20 @@ def detect(image, detector: Any, threshold: float = 0.25):
     
     Args:
         image: Input image as numpy array
-        detector: Pre-loaded detector instance (RetinaNet or YOLOv3)
+        detector: Pre-loaded detector instance (RetinaNet, YOLOv3, or YOLOv5)
         threshold: Detection confidence threshold
         
     Returns:
-        Detection results as DetArray
+        np.ndarray: Detection results as array of shape (N, 5) where each row is [x1, y1, x2, y2, confidence]
+                   Only returns detections for car, truck, and van classes
     """
     # Use the appropriate detect function based on detector type
     if hasattr(detector, 'net'):  # YOLOv3 detector
         return polyis.models.yolov3_otif.detect(image, detector, threshold)
-    else:  # RetinaNet detector
+    elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         return polyis.models.retinanet_b3d.detect(image, detector, threshold)
+    else:
+        return polyis.models.yolov5.detect(image, detector)
 
 
 def get_detector_info(dataset_name: str) -> dict:

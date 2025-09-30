@@ -40,7 +40,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Execute compression of video tiles into images based on classification results')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=['caldot1-yolov5', 'caldot2-yolov5'],
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
@@ -48,8 +48,8 @@ def parse_args():
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification probability (0.0 to 1.0)')
     parser.add_argument('--classifiers', required=False,
-                        default=CLASSIFIERS_TO_TEST + ['groundtruth'],
-                        choices=CLASSIFIERS_CHOICES + ['groundtruth'],
+                        default=CLASSIFIERS_TO_TEST + ['Perfect'],
+                        choices=CLASSIFIERS_CHOICES + ['Perfect'],
                         nargs='+',
                         help='Classifier names to use (can specify multiple): '
                              f'{", ".join(CLASSIFIERS_CHOICES)}. For example: '
@@ -474,12 +474,12 @@ def main(args):
     print(f"Created {len(funcs)} tasks to process")
     
     # Set up multiprocessing with ProgressBar
-    num_processes = int(mp.cpu_count() * 0.8)
-    num_processes = 8
+    num_processes = int(mp.cpu_count() * 0.5)
+    # num_processes = 8
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    ProgressBar(num_workers=num_processes, num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
     print("All tasks completed!")
 
 

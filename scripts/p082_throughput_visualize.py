@@ -223,9 +223,9 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
     # Sort tile sizes and classifiers for consistent ordering
     # Filter out tilesize = 0 as requested, but keep it for naive query execution
     sorted_tile_sizes = sorted([ts for ts in all_tile_sizes if ts != 0])
-    sorted_classifiers = sorted([c for c in all_classifiers if c != 'groundtruth'])
-    if 'groundtruth' in all_classifiers:
-        sorted_classifiers.append('groundtruth')
+    sorted_classifiers = sorted([c for c in all_classifiers if c != 'Perfect'])
+    if 'Perfect' in all_classifiers:
+        sorted_classifiers.append('Perfect')
     
     # Check if tilesize=0 data exists for naive query execution
     has_naive_query_data = 0 in all_tile_sizes

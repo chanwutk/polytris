@@ -324,7 +324,7 @@ def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], output_di
         chart = (scatter + naive_lines).facet(
             facet=alt.Facet('video_name:N', title=None,
                             header=alt.Header(labelExpr="'Video: ' + datum.value")),
-            columns=2
+            columns=4
         ).resolve_scale(
             x='independent'
         ).properties(

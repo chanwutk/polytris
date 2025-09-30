@@ -26,7 +26,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Execute object tracking on detection results')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=['caldot1-yolov5', 'caldot2-yolov5'],
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tracker', required=False,

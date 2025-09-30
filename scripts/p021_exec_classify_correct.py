@@ -19,7 +19,7 @@ TILE_SIZES = [30, 60]  #, 120]
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute trained proxy models to classify video tiles')
     parser.add_argument('--datasets', required=False,
-                        default=['caldot1', 'caldot2'],
+                        default=['caldot1-yolov5', 'caldot2-yolov5'],
                         nargs='+',
                         help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
@@ -106,7 +106,7 @@ def process_video(video_path: str, video_file: str, tile_size: int,
     output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '020_relevancy')
     os.makedirs(output_dir, exist_ok=True)
 
-    classifier_dir = os.path.join(output_dir, f'groundtruth_{tile_size}')
+    classifier_dir = os.path.join(output_dir, f'Perfect_{tile_size}')
     os.makedirs(classifier_dir, exist_ok=True)
     
     # Create score directory for this tile size
@@ -130,7 +130,7 @@ def process_video(video_path: str, video_file: str, tile_size: int,
     
     with open(output_path, 'w') as f:
         frame_idx = 0
-        command_queue.put((device, {'description': f"{video_path.split('/')[-1]} {tile_size:>3} groundtruth",
+        command_queue.put((device, {'description': f"{video_path.split('/')[-1]} {tile_size:>3}",
                                     'completed': 0, 'total': frame_count}))
         
         mod = int(max(1, frame_count * 0.02))
@@ -192,7 +192,7 @@ def main(args):
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - Groundtruth tracking results are loaded for each video
         - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
-        - Output files are saved in {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/groundtruth_{tile_size}/score/score.jsonl
+        - Output files are saved in {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/Perfect_{tile_size}/score/score.jsonl
         - If no tracking results are found for a video, that video is skipped with a warning
     """
     mp.set_start_method('spawn', force=True)
