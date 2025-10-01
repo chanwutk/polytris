@@ -52,7 +52,7 @@ def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, int]]:
         List[Tuple[str, int]]: List of (classifier, tile_size) tuples
     """
     # Construct path to evaluation directory for this dataset
-    evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_tracking_accuracy')
+    evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_accuracy')
     assert os.path.exists(evaluation_dir), f"Evaluation directory {evaluation_dir} does not exist"
     
     # Collect all classifier/tile_size combinations
@@ -96,7 +96,7 @@ def load_saved_results(dataset: str, combined: bool = False) -> List[Dict[str, A
 
     # Initialize results list
     results = []
-    evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_tracking_accuracy')
+    evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
     
     # Process each classifier/tile_size combination
     for classifier, tile_size in classifier_tile_combinations:
@@ -147,12 +147,12 @@ def main(args):
         
     Note:
         - The script expects accuracy results from p070_accuracy_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/070_tracking_accuracy/{classifier}_{tile_size}/
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tile_size}/
           ├── DATASET.json (combined results)
           ├── {video_name}.json (individual video results)
           └── LOG.txt (evaluation logs)
         - Multiple metrics are visualized: HOTA, CLEAR (MOTA)
-        - Visualizations are saved to: {CACHE_DIR}/summary/{dataset}/accuracy/
+        - Visualizations are saved to: {CACHE_DIR}/{dataset}/evaluation/071_accuracy_visualize/
     """
     print(f"Starting tracking accuracy visualization for datasets: {args.datasets}")
     
@@ -165,7 +165,7 @@ def main(args):
         assert len(dataset_results) > 0, f"No results found for dataset {dataset}"
         
         # Create output directory for this dataset's visualizations
-        output_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'accuracy')
+        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '071_accuracy_visualize')
         
         # Clean and recreate output directory to ensure fresh results
         if os.path.exists(output_dir):

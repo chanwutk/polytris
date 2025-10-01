@@ -268,7 +268,7 @@ def save_data_tables(index_data, query_data):
     
     for dataset in datasets:
         # Create output directory
-        output_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput')
+        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
         os.makedirs(output_dir, exist_ok=True)
         
         # Save index construction data

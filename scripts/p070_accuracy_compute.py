@@ -274,7 +274,7 @@ def main(args):
         - Groundtruth data should be in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl
         - Results are saved to:
-          {CACHE_DIR}/{dataset}/evaluation/070_tracking_accuracy/{classifier}_{tile_size}/
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tile_size}/
           ├── DATASET.json (combined results)
           ├── {video_name}.json (individual video results)
           └── LOG.txt (evaluation logs)
@@ -298,7 +298,7 @@ def main(args):
         videos, classifier_tilesizes = find_tracking_results(CACHE_DIR, dataset)
         
         # Create evaluation directory path for this dataset
-        evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_tracking_accuracy')
+        evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
         
         # Create one evaluation task per classifier/tile_size combination
         # Each task will evaluate all videos in the dataset for that combination

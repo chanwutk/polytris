@@ -308,7 +308,7 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
                         
                         if (config_classifier == classifier and 
                             config_tile_size == tile_size and times):
-                            stage_total += np.mean(times)
+                            stage_total += times
                 
                 if '020_exec_classify' in stage_name:
                     classifier_query_stages_by_tile[tile_size][classifier]['Classify'] += stage_total
@@ -347,7 +347,7 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
                     if remaining.split('_')[-1].isdigit():
                         config_tile_size = int(remaining.split('_')[-1])
                         if config_tile_size == 0 and times:
-                            stage_total += np.mean(times)
+                            stage_total += times
             
             if '020_exec_classify' in stage_name:
                 naive_query_stages['Classify'] += stage_total
@@ -386,7 +386,7 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
                     config_tile_size = int(parts[-1])
                     # Preprocessing stages use tile size 0, but we add them to all tile sizes
                     if config_tile_size == 0 and times:
-                        stage_total += np.mean(times)
+                        stage_total += times
             
             if '001_preprocess_groundtruth_detection' in stage_name:
                 preprocessing_stages_by_tile[tile_size]['Detect'] += float(stage_total)
@@ -557,14 +557,14 @@ def main():
     
     for dataset in args.datasets:
         print(f"Loading processed measurements for dataset: {dataset}")
-        measurements_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput', 'measurements')
+        measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
         print(f"Measurements directory: {measurements_dir}")
         
         assert os.path.exists(measurements_dir), f"Error: Measurements directory {measurements_dir} does not exist."
         
         index_timings, query_timings, metadata = load_measurements(measurements_dir)
         
-        throughput_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput')
+        throughput_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
         visualize_breakdown_query_execution_all(query_timings, throughput_dir, dataset)
         
         visualize_overal_runtime_all(index_timings, query_timings, throughput_dir)

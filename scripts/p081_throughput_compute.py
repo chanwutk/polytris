@@ -175,12 +175,12 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
     }
     
     stage_summaries = {
-        '001_preprocess_groundtruth_detection': defaultdict(list),
-        '002_preprocess_groundtruth_tracking': defaultdict(list),
-        '020_exec_classify': defaultdict(list),
-        '030_exec_compress': defaultdict(list),
-        '040_exec_detect': defaultdict(list),
-        '060_exec_track': defaultdict(list)
+        '001_preprocess_groundtruth_detection': {},
+        '002_preprocess_groundtruth_tracking': {},
+        '020_exec_classify': {},
+        '030_exec_compress': {},
+        '040_exec_detect': {},
+        '060_exec_track': {}
     }
 
     accessors = {
@@ -224,7 +224,9 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
             
             # Calculate stage summary
             total_time = sum(agg['total_time'] for agg in op_aggregates.values())
-            stage_summaries[stage][config_key].append(total_time)
+            # Assert that this config_key hasn't been processed before (should be unique)
+            assert config_key not in stage_summaries[stage], f"Config key {config_key} already exists in stage {stage}"
+            stage_summaries[stage][config_key] = total_time
     
     return {
         'timings': timings,
@@ -295,7 +297,7 @@ def main():
     
     for dataset in args.datasets:
         print(f"Loading throughput data tables for dataset: {dataset}")
-        data_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput')
+        data_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
         print(f"Data directory: {data_dir}")
         index_data, query_data = load_data_tables(data_dir)
         
@@ -306,7 +308,7 @@ def main():
         query_timings = parse_query_execution_timings(query_data)
         
         print("Saving processed measurements...")
-        measurements_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput', 'measurements')
+        measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
         save_measurements(index_timings, query_timings, measurements_dir, dataset)
         
         print(f"\nData processing complete for {dataset}! Measurements saved to: {measurements_dir}")

@@ -3,9 +3,12 @@
 import argparse
 import json
 import os
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Literal, Tuple, Any, Optional
 from collections import defaultdict
+from multiprocessing import Pool
+from functools import partial
 
+from rich.progress import track
 import numpy as np
 import pandas as pd
 import altair as alt
@@ -45,14 +48,6 @@ def get_video_frame_count(dataset: str, video_name: str) -> int:
 
 
 def parse_args():
-    """
-    Parse command line arguments for the script.
-    
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - datasets (list): Dataset names to process (default: ['caldot1', 'caldot2'])
-            - metrics (str): Comma-separated list of metrics to evaluate (default: 'HOTA,CLEAR')
-    """
     parser = argparse.ArgumentParser(description='Visualize accuracy-throughput tradeoffs')
     parser.add_argument('--datasets', required=False,
                         default=DATASETS_TO_TEST,
@@ -63,49 +58,60 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_accuracy_results(dataset: str) -> List[Dict[str, Any]]:
+def load_accuracy_results(dataset: str) -> Tuple[List[Dict[str, Any]], Dict[str, Dict[str, Any]]]:
     """
-    Load saved accuracy results from individual detailed_results.json files.
+    Load saved accuracy results from individual video result files and combined dataset results.
+    
+    Loads both individual video results and combined dataset results from the new evaluation 
+    directory structure created by p070_accuracy_compute.py.
     
     Args:
         dataset (str): Dataset name
         
     Returns:
-        List[Dict[str, Any]]: List of evaluation results
+        Tuple[List[Dict[str, Any]], Dict[str, Dict[str, Any]]]: 
+            - List of individual video evaluation results
+            - Dictionary mapping classifier_tile_size to combined dataset results
     """
-    dataset_cache_dir = os.path.join(CACHE_DIR, dataset)
-    if not os.path.exists(dataset_cache_dir):
-        print(f"Dataset cache directory {dataset_cache_dir} does not exist")
-        return []
+    # Construct path to evaluation directory for this dataset
+    evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+    assert os.path.exists(evaluation_dir), f"Evaluation directory {evaluation_dir} does not exist"
     
-    results = []
-    execution_dir = os.path.join(dataset_cache_dir, 'execution')
-    if not os.path.exists(execution_dir):
-        print(f"Execution directory {execution_dir} does not exist")
-        return []
+    individual_results = []
+    combined_results = {}
     
-    for video_filename in os.listdir(execution_dir):
-        video_dir = os.path.join(execution_dir, video_filename)
-        if not os.path.isdir(video_dir):
-            continue
-            
-        tracking_accuracy_dir = os.path.join(video_dir, '070_tracking_accuracy')
-        if not os.path.exists(tracking_accuracy_dir):
-            continue
-
-        for classifier_tilesize in os.listdir(tracking_accuracy_dir):
-            classifier, tilesize = classifier_tilesize.split('_')
-            ts = int(tilesize)
-            results_path = os.path.join(tracking_accuracy_dir, f'{classifier}_{ts}',
-                                        'accuracy', 'detailed_results.json')
-            
-            if os.path.exists(results_path):
-                print(f"Loading accuracy results from {results_path}")
+    # Iterate through all classifier-tile_size combinations
+    for classifier_tilesize in os.listdir(evaluation_dir):
+        combination_dir = os.path.join(evaluation_dir, classifier_tilesize)
+        assert os.path.isdir(combination_dir), f"Combination directory {combination_dir} does not exist"
+        
+        # Load individual video result files (exclude DATASET.json)
+        for filename in os.listdir(combination_dir):
+            if filename.endswith('.json'):
+                results_path = os.path.join(combination_dir, filename)
+                assert os.path.exists(results_path), f"Results file {results_path} does not exist"
+                
                 with open(results_path, 'r') as f:
-                    results.append(json.load(f))
+                    result_data = json.load(f)
+                    if filename == 'DATASET.json':
+                        combined_results[classifier_tilesize] = result_data
+                    else:
+                        individual_results.append(result_data)
     
-    print(f"Loaded {len(results)} accuracy evaluation results")
-    return results
+    print(f"Loaded {len(individual_results)} individual accuracy evaluation results")
+    print(f"Loaded {len(combined_results)} combined dataset accuracy results")
+    
+    # Debug: Print sample result structure
+    if individual_results:
+        print(f"Sample individual accuracy result structure: {list(individual_results[0].keys())}")
+        if 'video_name' in individual_results[0]:
+            print(f"Sample video_name: {individual_results[0]['video_name']}")
+        if 'classifier' in individual_results[0]:
+            print(f"Sample classifier: {individual_results[0]['classifier']}")
+        if 'tile_size' in individual_results[0]:
+            print(f"Sample tile_size: {individual_results[0]['tile_size']}")
+    
+    return individual_results, combined_results
 
 
 def load_throughput_results(dataset: str) -> Dict[str, Any]:
@@ -118,7 +124,7 @@ def load_throughput_results(dataset: str) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: Throughput measurement data
     """
-    measurements_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'throughput', 'measurements')
+    measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
     
     if not os.path.exists(measurements_dir):
         print(f"Throughput measurements directory {measurements_dir} does not exist")
@@ -168,8 +174,12 @@ def calculate_naive_runtime(video_name: str, query_summaries: Dict[str, Any], da
     # Add preprocessing time (naive approach)
     preprocessing_stages = ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking']
     for stage_name, stage_summaries in query_summaries.items():
-        if stage_name in preprocessing_stages and config_key in stage_summaries and stage_summaries[config_key]:
-            stage_total = np.mean(stage_summaries[config_key])  # Use mean like in p082
+        if stage_name in preprocessing_stages and config_key in stage_summaries:
+            # Assert that execution stages have numeric values (int or float)
+            assert isinstance(stage_summaries[config_key], (int, float)), \
+                "Execution stage {stage_name} should have numeric value (int/float), ' \
+                f'got {type(stage_summaries[config_key])}: {stage_summaries[config_key]}"
+            stage_total = stage_summaries[config_key]
             naive_runtime += stage_total
     
     return naive_runtime
@@ -199,26 +209,35 @@ def calculate_query_execution_runtime(video_name: str, classifier: str, tile_siz
     # Add query execution time (specific to this tile size)
     query_stages = ['020_exec_classify', '030_exec_compress', '040_exec_detect', '060_exec_track']
     for stage_name, stage_summaries in query_summaries.items():
-        if stage_name in query_stages and config_key in stage_summaries and stage_summaries[config_key]:
-            stage_total = np.mean(stage_summaries[config_key])  # Use mean like in p082
+        if stage_name in query_stages and config_key in stage_summaries:
+            # Assert that execution stages have numeric values (int or float)
+            assert isinstance(stage_summaries[config_key], (int, float)), \
+                "Execution stage {stage_name} should have numeric value (int/float), " \
+                f"got {type(stage_summaries[config_key])}: {stage_summaries[config_key]}"
+            stage_total = stage_summaries[config_key]
             query_runtime += stage_total
     
     return query_runtime
 
 
-def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]], 
-                                 throughput_data: Dict[str, Any], dataset: str = 'b3d') -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+def match_accuracy_throughput_data(
+    accuracy_results: List[dict],
+    throughput_data: dict,
+    combined_results: Dict[str, dict],
+    dataset: str,
+) -> Tuple[List[dict], List[dict]]:
     """
     Match accuracy and throughput data by video/classifier/tilesize combination.
     
     Args:
-        accuracy_results: List of accuracy evaluation results
+        accuracy_results: List of individual video accuracy evaluation results
         throughput_data: Throughput measurement data
+        combined_results: Dictionary mapping classifier_tile_size to combined dataset accuracy results
         
     Returns:
-        Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]: 
+        Tuple[List[dict], List[dict]]: 
             - Individual video data points
-            - Dataset-wide aggregated data points with frame-weighted accuracy scores
+            - Dataset-wide aggregated data points using actual combined accuracy scores
     """
     matched_data = []
     query_summaries = throughput_data.get('summaries', {})
@@ -233,8 +252,21 @@ def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]],
     # Group data by classifier and tile_size for aggregation
     grouped_data = defaultdict(list)
     
+    print(f"Processing {len(accuracy_results)} accuracy results for matching...")
+    
+    # Debug: Show available throughput config keys
+    print(f"Available throughput stages: {list(query_summaries.keys())}")
+    for stage_name, stage_data in query_summaries.items():
+        if stage_data:
+            sample_keys = list(stage_data.keys())[:3]  # Show first 3 keys
+            print(f"  {stage_name}: {len(stage_data)} configs, sample keys: {sample_keys}")
+    
+    processed_count = 0
+    matched_count = 0
+    
     for result in accuracy_results:
-        if not result.get('success', False):
+        # Skip combined results (video_name is None) - we only want individual video results
+        if result.get('video_name') is None:
             continue
             
         video_name = result['video_name']
@@ -243,10 +275,14 @@ def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]],
         
         # Only include classifiers from CLASSIFIERS_TO_TEST
         if classifier not in CLASSIFIERS_TO_TEST:
+            print(f"Skipping classifier {classifier} (not in CLASSIFIERS_TO_TEST)")
             continue
+        
+        processed_count += 1
         
         # Create config key for throughput lookup (include dataset prefix)
         config_key = f"{dataset}/{video_name}_{classifier}_{tile_size}"
+        print(f"Looking for config_key: {config_key}")
         
         # Extract accuracy metrics
         metrics = result['metrics']
@@ -264,8 +300,11 @@ def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]],
         
         for stage in query_stages:
             if stage in query_summaries and config_key in query_summaries[stage]:
-                # Get the first (and typically only) timing for this config
-                stage_time = query_summaries[stage][config_key][0] if query_summaries[stage][config_key] else 0.0
+                # Assert that execution stages have numeric values (int or float)
+                assert isinstance(query_summaries[stage][config_key], (int, float)), \
+                    "Execution stage {stage} should have numeric value (int/float), " \
+                    f"got {type(query_summaries[stage][config_key])}: {query_summaries[stage][config_key]}"
+                stage_time = query_summaries[stage][config_key]
                 stage_times[stage] = stage_time
                 total_query_time += stage_time
         
@@ -290,28 +329,28 @@ def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]],
         }
         
         matched_data.append(matched_entry)
+        matched_count += 1
         
         # Group by classifier and tile_size for aggregation
         group_key = (classifier, tile_size)
         grouped_data[group_key].append(matched_entry)
     
-    # Create dataset-wide aggregated data
+    # Create dataset-wide aggregated data using actual combined accuracy scores
     aggregated_data = []
     for (classifier, tile_size), entries in grouped_data.items():
         if not entries:
             continue
             
-        # Calculate frame-weighted averages for accuracy scores
-        total_frames = sum([entry['frame_count'] for entry in entries])
-        if total_frames > 0:
-            # Weight each accuracy score by its frame count
-            weighted_hota = sum([entry['hota_score'] * entry['frame_count'] for entry in entries]) / total_frames
-            weighted_mota = sum([entry['mota_score'] * entry['frame_count'] for entry in entries]) / total_frames
-        else:
-            weighted_hota = 0.0
-            weighted_mota = 0.0
+        # Get actual combined accuracy scores from DATASET.json
+        combination_key = f"{classifier}_{tile_size}"
+        assert combination_key in combined_results, f"Combined results not found for {combination_key}"
+        combined_metrics = combined_results[combination_key]['metrics']
+        actual_hota = combined_metrics.get('HOTA', {}).get('HOTA(0)', 0.0)
+        actual_mota = combined_metrics.get('CLEAR', {}).get('MOTA', 0.0)
+        print(f"Using actual combined accuracy scores for {combination_key}: HOTA={actual_hota:.3f}, MOTA={actual_mota:.3f}")
             
         # Calculate combined runtime and throughput
+        total_frames = sum([entry['frame_count'] for entry in entries])
         total_runtime = sum([entry['query_runtime'] for entry in entries])
         combined_throughput = total_frames / total_runtime if total_runtime > 0 else 0.0
         
@@ -319,8 +358,8 @@ def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]],
             'video_name': 'Dataset Average',
             'classifier': classifier,
             'tile_size': tile_size,
-            'hota_score': weighted_hota,
-            'mota_score': weighted_mota,
+            'hota_score': actual_hota,
+            'mota_score': actual_mota,
             'total_query_time': sum([entry['total_query_time'] for entry in entries]),
             'query_runtime': total_runtime,
             'frame_count': total_frames,
@@ -330,15 +369,17 @@ def match_accuracy_throughput_data(accuracy_results: List[Dict[str, Any]],
         
         aggregated_data.append(aggregated_entry)
     
-    print(f"Matched {len(matched_data)} individual accuracy-throughput data points")
+    print(f"Processed {processed_count} accuracy results")
+    print(f"Matched {matched_count} individual accuracy-throughput data points")
     print(f"Created {len(aggregated_data)} dataset-wide aggregated data points")
     return matched_data, aggregated_data
 
 
 def create_tradeoff_visualization(matched_data: List[Dict[str, Any]], aggregated_data: List[Dict[str, Any]], 
                                  output_dir: str, metrics_list: List[str], query_summaries: Dict[str, Any], 
-                                 dataset: str, x_column: str, x_title: str, naive_column: str, 
-                                 plot_suffix: str, csv_suffix: str) -> None:
+                                 dataset: str, x_column: str, x_title: str,
+                                 naive_column: Literal['naive_runtime', 'naive_throughput'], 
+                                 plot_suffix: str, csv_suffix: str):
     """
     Create a single tradeoff visualization with configurable x-axis, including dataset-wide aggregated subplot.
     
@@ -357,10 +398,9 @@ def create_tradeoff_visualization(matched_data: List[Dict[str, Any]], aggregated
     """
     print(f"Creating {plot_suffix} tradeoff visualizations...")
     
-    if not matched_data:
-        print(f"No matched data available for {plot_suffix} visualization")
-        return
-    
+    assert len(matched_data) > 0, f"No matched data available for {plot_suffix} visualization"
+    assert len(aggregated_data) > 0, f"No aggregated data available for {plot_suffix} visualization"
+
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
     
@@ -493,7 +533,7 @@ def create_tradeoff_visualization(matched_data: List[Dict[str, Any]], aggregated
 
 
 def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], aggregated_data: List[Dict[str, Any]], 
-                                 output_dir: str, metrics_list: List[str], query_summaries: Dict[str, Any], dataset: str) -> None:
+                                 output_dir: str, metrics_list: List[str], query_summaries: Dict[str, Any], dataset: str):
     """
     Create both runtime and throughput tradeoff visualizations.
     
@@ -526,6 +566,50 @@ def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], aggregate
     )
 
 
+def process_dataset(dataset: str, metrics_list: List[str]):
+    """
+    Process a single dataset for accuracy-query execution runtime tradeoff visualization.
+    
+    This function loads accuracy and throughput results for a single dataset, matches them,
+    and creates visualizations showing the tradeoff between accuracy and query execution runtime.
+    
+    Args:
+        dataset: Dataset name to process
+        metrics_list: List of metrics to include in visualizations
+    """
+    print(f"Starting accuracy-query execution runtime tradeoff visualization for: {dataset}")
+    
+    # Load accuracy results (both individual and combined)
+    print(f"Loading accuracy results for {dataset}...")
+    accuracy_results, combined_results = load_accuracy_results(dataset)
+    
+    assert accuracy_results, \
+        f"No accuracy results found for {dataset}. ' \
+        'Please run p070_accuracy_compute.py first."
+    
+    # Load throughput results
+    print(f"Loading throughput results for {dataset}...")
+    throughput_data = load_throughput_results(dataset)
+    
+    assert throughput_data, \
+        f"No throughput results found for {dataset}. ' \
+        'Please run p080_throughput_gather.py and p081_throughput_compute.py first."
+    
+    # Match accuracy and throughput data
+    print(f"Matching accuracy and throughput data for {dataset}...")
+    matched_data, aggregated_data = match_accuracy_throughput_data(accuracy_results, throughput_data, combined_results, dataset)
+    
+    assert len(matched_data) > 0, \
+        f"No matching data points found between accuracy and throughput results for {dataset}."
+    
+    # Create visualizations
+    output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
+    create_tradeoff_visualizations(matched_data, aggregated_data, output_dir,
+                                   metrics_list, throughput_data['summaries'], dataset)
+    
+    print(f"Completed processing dataset: {dataset}")
+
+
 def main(args):
     """
     Main function that orchestrates the accuracy-throughput tradeoff visualization.
@@ -543,50 +627,27 @@ def main(args):
         
     Note:
         - The script expects accuracy results from p070_accuracy_compute.py in:
-          {CACHE_DIR}/{dataset}/{video_file}/evaluation/{classifier}_{tile_size}/accuracy/detailed_results.json
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tile_size}/{video_name}.json
         - The script expects throughput results from p081_throughput_compute.py in:
-          {CACHE_DIR}/summary/{dataset}/throughput/measurements/query_execution_summaries.json
+          {CACHE_DIR}/{dataset}/evaluation/080_throughput/measurements/query_execution_summaries.json
+        - Results are saved to: {CACHE_DIR}/{dataset}/evaluation/090_tradeoff_compute/
         - Video files are expected in {DATA_DIR}/{dataset}/{video_name}.mp4 (or other extensions)
         - Only query execution runtime is used (index construction time is ignored)
     """
     # Parse metrics
     metrics_list = [m.strip() for m in args.metrics.split(',')]
     print(f"Processing metrics: {metrics_list}")
+    print(f"Processing datasets: {args.datasets}")
     
-    for dataset in args.datasets:
-        print(f"Starting accuracy-query execution runtime tradeoff visualization for dataset: {dataset}")
+    # Process datasets in parallel with progress tracking
+    with Pool() as pool:
+        # Create partial function with metrics_list fixed
+        process_func = partial(process_dataset, metrics_list=metrics_list)
         
-        # Load accuracy results
-        print("Loading accuracy results...")
-        accuracy_results = load_accuracy_results(dataset)
-        
-        if not accuracy_results:
-            print(f"No accuracy results found for {dataset}. Please run p070_accuracy_compute.py first.")
-            continue
-        
-        # Load throughput results
-        print("Loading throughput results...")
-        throughput_data = load_throughput_results(dataset)
-        
-        if not throughput_data:
-            print(f"No throughput results found for {dataset}. Please run p080_throughput_gather.py and p081_throughput_compute.py first.")
-            continue
-        
-        # Match accuracy and throughput data
-        print("Matching accuracy and throughput data...")
-        matched_data, aggregated_data = match_accuracy_throughput_data(accuracy_results, throughput_data, dataset)
-        
-        if not matched_data:
-            print(f"No matching data points found between accuracy and throughput results for {dataset}.")
-            continue
-        
-        # Create visualizations
-        output_dir = os.path.join(CACHE_DIR, 'summary', dataset, 'tradeoff')
-        create_tradeoff_visualizations(matched_data, aggregated_data, output_dir, metrics_list, throughput_data['summaries'], dataset)
-        
-        print(f"Accuracy-throughput tradeoff visualization complete for {dataset}! Results saved to: {output_dir}")
+        # Process datasets in parallel using imap with rich track
+        _ = [*track(pool.imap(process_func, args.datasets), total=len(args.datasets))]
     
-    print(f"\nAll datasets processed!")
+    print("All datasets processed successfully!")
 
 
 if __name__ == '__main__':
