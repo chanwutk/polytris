@@ -46,7 +46,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def find_tracking_results(cache_dir: str, dataset: str) -> list[tuple[str, str, int]]:
+def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[tuple[str, int]]]:
     """
     Find all video files with tracking results for the specified dataset and tile size.
     
@@ -55,21 +55,18 @@ def find_tracking_results(cache_dir: str, dataset: str) -> list[tuple[str, str, 
         dataset (str): Dataset name
         
     Returns:
-        List[Tuple[str, str, int]]: List of (video_name, classifier, tile_size) tuples
+        tuple[set[str], set[tuple[str, int]]]: Set of video names and set of (classifier, tile_size) tuples
     """
     dataset_cache_dir = os.path.join(cache_dir, dataset, 'execution')
-    if not os.path.exists(dataset_cache_dir):
-        print(f"Dataset cache directory {dataset_cache_dir} does not exist, skipping...")
-        return []
+    assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
     
     video_tile_combinations: list[tuple[str, str, int]] = []
     for video_filename in os.listdir(dataset_cache_dir):
         video_dir = os.path.join(dataset_cache_dir, video_filename)
-        if not os.path.isdir(video_dir):
-            continue
+        assert os.path.isdir(video_dir), f"Video directory {video_dir} is not a directory"
+
         tracking_dir = os.path.join(video_dir, '060_uncompressed_tracks')
-        if not os.path.exists(tracking_dir):
-            continue
+        assert os.path.exists(tracking_dir), f"Tracking directory {tracking_dir} does not exist"
 
         for classifier_tilesize in os.listdir(tracking_dir):
             classifier, tilesize = classifier_tilesize.split('_')
@@ -77,11 +74,23 @@ def find_tracking_results(cache_dir: str, dataset: str) -> list[tuple[str, str, 
             tracking_path = os.path.join(tracking_dir, f'{classifier}_{ts}', 'tracking.jsonl')
             groundtruth_path = os.path.join(video_dir, '000_groundtruth', 'tracking.jsonl')
             
-            if os.path.exists(tracking_path) and os.path.exists(groundtruth_path):
-                video_tile_combinations.append((video_filename, classifier, ts))
-                print(f"Found tracking results: {video_filename} with tile size {ts}")
+            assert os.path.exists(tracking_path), f"Tracking path {tracking_path} does not exist"
+            assert os.path.exists(groundtruth_path), f"Groundtruth path {groundtruth_path} does not exist"
+            video_tile_combinations.append((video_filename, classifier, ts))
+            print(f"Found tracking results: {video_filename} with tile size {ts}")
     
-    return video_tile_combinations
+    classifier_tilesizes = set((cl, ts) for _, cl, ts in video_tile_combinations)
+    videos = set(video for video, _, _ in video_tile_combinations)
+
+    video_tile_combinations_set = set(video_tile_combinations)
+    assert len(video_tile_combinations_set) == len(video_tile_combinations), \
+        f"Duplicate video-tile combinations: {video_tile_combinations_set}"
+    for video in videos:
+        for cl, ts in classifier_tilesizes:
+            assert (video, cl, ts) in video_tile_combinations_set, \
+                f"Video-tile combination {video}-{cl}-{ts} not found"
+
+    return videos, classifier_tilesizes
 
 
 def evaluate_tracking_accuracy(dataset: str, video_name: str, classifier: str,
@@ -171,7 +180,7 @@ def evaluate_tracking_accuracy(dataset: str, video_name: str, classifier: str,
         if metric_name in vehicle_results:
             summary_results[metric_name] = vehicle_results[metric_name]
     
-    return {
+    result = {
         'video_name': video_name,
         'tile_size': tile_size,
         'classifier': classifier,
@@ -180,9 +189,9 @@ def evaluate_tracking_accuracy(dataset: str, video_name: str, classifier: str,
         'output_dir': output_dir,
     }
 
-
-def get_results(eval_task: Callable[[], dict], res_queue: "mp.Queue[dict]"):
-    res_queue.put(eval_task())
+    os.makedirs(output_dir, exist_ok=True)
+    with open(os.path.join(output_dir, 'detailed_results.json'), 'w') as f:
+        json.dump(result, f, indent=2, cls=NumpyEncoder)
 
 
 def main(args):
@@ -209,62 +218,38 @@ def main(args):
     
     # Parse metrics (needed for both compute and no_recompute modes)
     metrics_list = [m.strip() for m in args.metrics.split(',')]
-    
-    print(f"Metrics: {args.metrics}")
     print(f"Evaluating metrics: {metrics_list}")
     
     # Find tracking results for all datasets
-    all_video_tile_combinations = []
+    eval_tasks: list[Callable[[], dict]] = []
     for dataset in args.datasets:
         print(f"Processing dataset: {dataset}")
-        video_tile_combinations = find_tracking_results(CACHE_DIR, dataset)
+        videos, classifier_tilesizes = find_tracking_results(CACHE_DIR, dataset)
+        execution_dir = os.path.join(CACHE_DIR, dataset, 'execution')
         # Add dataset info to each combination
-        for video_name, classifier, tile_size in video_tile_combinations:
-            all_video_tile_combinations.append((dataset, video_name, classifier, tile_size))
+        for video in videos:
+            for cl, ts in classifier_tilesizes:
+                output_dir = os.path.join(execution_dir, video, '070_tracking_accuracy',
+                                          f'{cl}_{ts}', 'accuracy')
+                eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, video,
+                                          cl, ts, metrics_list, output_dir))
     
-    if not all_video_tile_combinations:
-        print("No tracking results found. Please ensure 060_exec_track.py has been run first.")
-        return
-    
-    print(f"Found {len(all_video_tile_combinations)} video-tile size combinations to evaluate")
-    
-    eval_tasks: list[Callable[[], dict]] = []
-    for dataset, video_name, classifier, tile_size in sorted(all_video_tile_combinations):
-        output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_name,
-                                  '070_tracking_accuracy', f'{classifier}_{tile_size}',
-                                  'accuracy')
-
-        eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, video_name,
-                                  classifier, tile_size, metrics_list, output_dir))
-    
+    assert len(eval_tasks) > 0, "No tracking results found. Please ensure 060_exec_track.py has been run first."
+    print(f"Found {len(eval_tasks)} video-tile size combinations to evaluate")
     
     if args.no_parallel:
-        results = []
         for eval_task in eval_tasks:
-            results.append(eval_task())
+            eval_task()
     else:
-        res_queue = mp.Queue()
         processes: list[mp.Process] = []
         for eval_task in eval_tasks:
-            process = mp.Process(target=get_results, args=(eval_task, res_queue))
+            process = mp.Process(target=eval_task)
             process.start()
             processes.append(process)
-        
-        results = []
-        for _ in track(range(len(eval_tasks)), total=len(eval_tasks)):
-            results.append(res_queue.get())
 
         for process in track(processes):
             process.join()
             process.terminate()
-    
-
-    # Save individual results
-    for result in results:
-        print('save results to', result['output_dir'])
-        os.makedirs(result['output_dir'], exist_ok=True)
-        with open(os.path.join(result['output_dir'], 'detailed_results.json'), 'w') as f:
-            json.dump(result, f, indent=2, cls=NumpyEncoder)
 
 
 if __name__ == '__main__':
