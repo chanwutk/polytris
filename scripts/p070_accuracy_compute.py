@@ -5,19 +5,17 @@ from functools import partial
 import json
 import os
 import multiprocessing as mp
-import tempfile
 import sys
-from typing import Callable, Dict, List, Tuple, Any
+from typing import Callable
 
 import numpy as np
-
 from rich.progress import track
 
 sys.path.append('/polyis/modules/TrackEval')
 import trackeval
-from trackeval.datasets import B3D
 from trackeval.metrics import HOTA, CLEAR, Identity
 
+from polyis.trackeval.dataset import Dataset
 from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
 
 
@@ -48,7 +46,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def find_tracking_results(cache_dir: str, dataset: str) -> List[Tuple[str, str, int]]:
+def find_tracking_results(cache_dir: str, dataset: str) -> list[tuple[str, str, int]]:
     """
     Find all video files with tracking results for the specified dataset and tile size.
     
@@ -86,69 +84,17 @@ def find_tracking_results(cache_dir: str, dataset: str) -> List[Tuple[str, str, 
     return video_tile_combinations
 
 
-def load_tracking_data(file_path: str) -> Dict[int, List[List[float]]]:
-    """
-    Load tracking data from JSONL file.
-    
-    Args:
-        file_path (str): Path to the tracking JSONL file
-        
-    Returns:
-        Dict[int, List[List[float]]]: Dictionary mapping frame indices to list of detections
-    """
-    frame_data = {}
-    
-    with open(file_path, 'r') as f:
-        for line in f:
-            if line.strip():
-                data = json.loads(line)
-                frame_idx = data['frame_idx']
-                tracks = data['tracks']
-                frame_data[frame_idx] = tracks
-    
-    # Pad with empty lists if first frame index is not 0
-    if frame_data and min(frame_data.keys()) > 0:
-        for i in range(min(frame_data.keys())):
-            frame_data[i] = []
-    
-    return frame_data
-
-
-def convert_to_trackeval_format(frame_data: Dict[int, List[List[float]]], is_gt: bool = False) -> str:
-    """
-    Convert frame data to TrackEval format and save to temporary file.
-    
-    Args:
-        frame_data (Dict[int, List[List[float]]]): Frame data dictionary
-        is_gt (bool): Whether this is groundtruth data
-        
-    Returns:
-        str: Path to temporary file in TrackEval format
-    """
-    # Create temporary file
-    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False)
-    
-    # Sort frames and write data
-    for frame_idx in sorted(frame_data.keys()):
-        detections = frame_data[frame_idx]
-        temp_file.write(json.dumps([frame_idx, detections]) + '\n')
-    
-    temp_file.close()
-    return temp_file.name
-
-
-def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int, tracking_path: str, 
-                              groundtruth_path: str, metrics_list: List[str], 
-                              output_dir: str) -> Dict[str, Any]:
+def evaluate_tracking_accuracy(dataset: str, video_name: str, classifier: str,
+                               tile_size: int, metrics_list: list[str], 
+                               output_dir: str) -> dict:
     """
     Evaluate tracking accuracy for a single video using TrackEval.
     
     Args:
+        dataset (str): Dataset name
         video_name (str): Name of the video
         classifier (str): Classifier used
         tile_size (int): Tile size used
-        tracking_path (str): Path to tracking results
-        groundtruth_path (str): Path to groundtruth data
         metrics_list (List[str]): List of metrics to evaluate
         output_dir (str): Output directory for results
         
@@ -156,23 +102,19 @@ def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int,
         Dict[str, Any]: Evaluation results
     """
     print(f"Evaluating {video_name} with tile size {tile_size}")
-    
-    # Load data
-    tracking_data = load_tracking_data(tracking_path)
-    groundtruth_data = load_tracking_data(groundtruth_path)
-    
-    # Convert to TrackEval format
-    temp_tracking_file = convert_to_trackeval_format(tracking_data, is_gt=False)
-    temp_groundtruth_file = convert_to_trackeval_format(groundtruth_data, is_gt=True)
-    
+
+    clts = f'{classifier}_{tile_size}'
+
     # Create dataset configuration
     dataset_config = {
         'output_fol': output_dir,
-        'output_sub_fol': f'{video_name}_{classifier}_{tile_size}',
-        'input_gt': temp_groundtruth_file,
-        'input_track': temp_tracking_file,
+        'output_sub_fol': f'{video_name}_{clts}',
+        'input_gt': os.path.join('000_groundtruth', 'tracking.jsonl'),
+        'input_track': os.path.join('060_uncompressed_tracks', clts, 'tracking.jsonl'),
         'skip': 1,  # Process every frame
-        'tracker': f'{classifier}_{tile_size}'
+        'tracker': clts,
+        'seq_list': [video_name],
+        'input_dir': os.path.join(CACHE_DIR, dataset, 'execution')
     }
     
     # Create evaluator configuration
@@ -180,7 +122,7 @@ def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int,
         'USE_PARALLEL': False,
         # 'NUM_PARALLEL_CORES': int(mp.cpu_count() * 0.8),
         'BREAK_ON_ERROR': True,
-        'LOG_ON_ERROR': os.path.join(f'{video_name}_{classifier}_{tile_size}_error_log.txt'),  # if not None, save any errors into a log file.
+        'LOG_ON_ERROR': f'{dataset}_{video_name}_{clts}_error_log.txt',
         'PRINT_RESULTS': False,
         'PRINT_CONFIG': False,
         'TIME_PROGRESS': False,
@@ -201,34 +143,33 @@ def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int,
             metrics.append(Identity({'THRESHOLD': 0.5}))
     
     # Create dataset and evaluator
-    dataset = B3D(dataset_config)
+    eval_dataset = Dataset(dataset_config)
     evaluator = trackeval.Evaluator(eval_config)
     
     # Run evaluation
-    results = evaluator.evaluate([dataset], metrics)
-    
-    # Clean up temporary files
-    os.unlink(temp_tracking_file)
-    os.unlink(temp_groundtruth_file)
+    results = evaluator.evaluate([eval_dataset], metrics)
     
     # Extract summary results
     summary_results = {}
     
-    # The actual structure is: results[0]["B3D"]["xsort"]["COMBINED_SEQ"]["car"]
-    if results and len(results) > 0:
-        # Get the first result which contains the B3D evaluation
-        b3d_result = results[0].get('B3D', {})
-        xsort_result = b3d_result.get('xsort', {})
-        
-        # Look for the COMBINED_SEQ results which contain the car class
-        if 'COMBINED_SEQ' in xsort_result and 'car' in xsort_result['COMBINED_SEQ']:
-            car_results = xsort_result['COMBINED_SEQ']['car']
-            
-            # Extract metrics from the car results
-            for metric in metrics:
-                metric_name = metric.get_name()
-                if metric_name in car_results:
-                    summary_results[metric_name] = car_results[metric_name]
+    # The actual structure is: results[0]["Dataset"]["sort"]["COMBINED_SEQ"]["vehicle"]
+    assert results and len(results) == 2, results
+
+    # Get the first result which contains the B3D evaluation
+    b3d_result = results[0].get('Dataset', {})
+    sort_result = b3d_result.get('sort', {})
+    
+    # Look for the COMBINED_SEQ results which contain the vehicle class
+    assert 'COMBINED_SEQ' in sort_result, sort_result
+    assert 'vehicle' in sort_result['COMBINED_SEQ'], sort_result
+
+    vehicle_results = sort_result['COMBINED_SEQ']['vehicle']
+    
+    # Extract metrics from the vehicle results
+    for metric in metrics:
+        metric_name = metric.get_name()
+        if metric_name in vehicle_results:
+            summary_results[metric_name] = vehicle_results[metric_name]
     
     return {
         'video_name': video_name,
@@ -287,21 +228,14 @@ def main(args):
     
     print(f"Found {len(all_video_tile_combinations)} video-tile size combinations to evaluate")
     
-    # Prepare arguments for parallel processing if requested
-    # eval_args = []
     eval_tasks: list[Callable[[], dict]] = []
     for dataset, video_name, classifier, tile_size in sorted(all_video_tile_combinations):
-        tracking_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '060_uncompressed_tracks',
-                                        f'{classifier}_{tile_size}', 'tracking.jsonl')
-        groundtruth_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, 
-                                        '000_groundtruth', 'tracking.jsonl')
-        output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '070_tracking_accuracy',
-                                    f'{classifier}_{tile_size}', 'accuracy')
+        output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_name,
+                                  '070_tracking_accuracy', f'{classifier}_{tile_size}',
+                                  'accuracy')
 
-        # eval_args.append((video_name, classifier, tile_size, tracking_path, groundtruth_path, 
-        #                  metrics_list, output_dir))
-        eval_tasks.append(partial(evaluate_tracking_accuracy, video_name, classifier,
-                                    tile_size, tracking_path, groundtruth_path, metrics_list, output_dir))
+        eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, video_name,
+                                  classifier, tile_size, metrics_list, output_dir))
     
     
     if args.no_parallel:
@@ -309,10 +243,6 @@ def main(args):
         for eval_task in eval_tasks:
             results.append(eval_task())
     else:
-        # # Run evaluation in parallel
-        # with mp.Pool(processes=mp.cpu_count()) as pool:
-        #     results = pool.starmap(evaluate_tracking_accuracy, eval_args)
-
         res_queue = mp.Queue()
         processes: list[mp.Process] = []
         for eval_task in eval_tasks:

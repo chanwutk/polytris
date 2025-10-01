@@ -1,4 +1,5 @@
 import json
+import os
 
 import numpy as np
 
@@ -22,6 +23,7 @@ class Dataset(_BaseDataset):
 
         self.output_fol = config.get('output_fol', 'output-eval')
         self.output_sub_fol = config.get('output_sub_fol', None)
+        self.input_dir = config['input_dir']
         self.input_gt = config['input_gt']
         self.input_track = config['input_track']
         self.skip = config['skip']
@@ -43,85 +45,55 @@ class Dataset(_BaseDataset):
         [tracker_dets]: list (for each timestep) of lists of detections.
         """
         data = {}
-        if is_gt:
-            file = self.input_gt
-            with open(file, 'r') as f:
-                lines = f.readlines()
-            
-            data['num_timesteps'] = len(lines)
-            data['gt_ids'] = []
-            data['gt_classes'] = []
-            data['gt_dets'] = []
-            data['gt_crowd_ignore_regions'] = []
-            data['gt_extras'] = []
+        prefix = 'gt_' if is_gt else 'tracker_'
+        file = self.input_gt if is_gt else self.input_track
 
-            for idx, line in enumerate(lines):
-                t = json.loads(line)
-                frame_idx, dets = t
-                if frame_idx % self.skip != 0:
-                    idx += 1
-                    continue
-                assert frame_idx == idx, (frame_idx, idx)
-                gt_ids = []
-                gt_classes = []
-                gt_dets = []
-                gt_extras = []
-                for det in dets:
-                    gt_ids.append(det[0])
-                    gt_classes.append(0)
-                    gt_dets.append(det[1:])
-                    gt_extras.append({})
-                data['gt_ids'].append(np.array(gt_ids, dtype=int))
-                data['gt_classes'].append(np.array(gt_classes, dtype=int))
-                data['gt_dets'].append(np.array(gt_dets))
-                data['gt_crowd_ignore_regions'].append([])
-                data['gt_extras'].append(gt_extras)
-            
-            data['seq'] = seq
-            return data
-        else:
-            file = self.input_track
-            with open(file, 'r') as f:
-                trajectories = f.readlines()
-            data['tracker_ids'] = []
-            data['tracker_classes'] = []
-            data['tracker_dets'] = []
-            data['tracker_confidences'] = []
+        with open(os.path.join(self.input_dir, seq, file), 'r') as f:
+            lines = f.readlines()
 
-            idx = 0
-            for l in trajectories:
-                try:
-                    t = json.loads(l)
-                    frame_idx, tracks = t
+        raw: dict[int, list[tuple[int, float, float, float, float]]] = {}
+        data['num_timesteps'] = 0
+        for line in lines:
+            if len(line) == 0:
+                continue
+            t = json.loads(line)
+            frame_idx = t['frame_idx']
+            dets = t['tracks']
+            assert frame_idx not in raw, (frame_idx, raw)
+            raw[frame_idx] = dets
+            data['num_timesteps'] = max(data['num_timesteps'], frame_idx + 1)
+        
+        data[f'{prefix}ids'] = []
+        data[f'{prefix}classes'] = []
+        data[f'{prefix}confidences'] = []
+        data[f'{prefix}dets'] = []
+        data[f'{prefix}crowd_ignore_regions'] = []
+        data[f'{prefix}extras'] = []
 
-                    assert idx == int(frame_idx) / self.skip, (idx, frame_idx, self.skip, seq, self.input_gt)
+        for idx in range(data['num_timesteps']):
+            dets = raw.get(idx, [])
+            if idx % self.skip != 0:
+                continue
 
-                    t = np.array(tracks, dtype=float)
-                    if len(t) == 0:
-                        t = np.empty((0, 5))
-                    n, dim = t.shape
-
-                    data['tracker_ids'].append(t[:, 0].astype(int))
-                    data['tracker_dets'].append(t[:, 1:5])
-
-                    tracker_classes = np.zeros((n,), dtype=int)
-                    if dim > 5:
-                        tracker_classes = t[:, 5].astype(int)
-                    data['tracker_classes'].append(tracker_classes)
-                    
-                    tracker_confidences = np.ones((n,), dtype=float)
-                    if dim > 6:
-                        tracker_confidences = t[:, 6]
-                    data['tracker_confidences'].append(tracker_confidences)
-
-                    idx += 1
-                    data['num_timesteps'] = idx
-                except Exception as e:
-                    if len(l) != 0:
-                        raise e
-            
-            data['seq'] = seq
-            return data
+            n = len(dets)
+            data[f'{prefix}crowd_ignore_regions'].append([])
+            data[f'{prefix}extras'].append([{} for _ in range(n)])
+            if n == 0:
+                data[f'{prefix}ids'].append(np.empty(0, dtype=int))
+                data[f'{prefix}dets'].append(np.empty((0, 4), dtype=float))
+                data[f'{prefix}classes'].append(np.empty(0, dtype=int))
+                data[f'{prefix}confidences'].append(np.empty(0, dtype=float))
+                continue
+            tfloat = np.array(dets, dtype=float)
+            tint = np.array(dets, dtype=int)
+            _, dim = tint.shape
+            data[f'{prefix}ids'].append(tint[:, 0])
+            data[f'{prefix}dets'].append(tfloat[:, 1:5])
+            data[f'{prefix}classes'].append(tint[:, 5] if dim > 5 else np.zeros(n, dtype=int))
+            data[f'{prefix}confidences'].append(tint[:, 6] if dim > 6 else np.ones(n, dtype=float))
+        
+        data['seq'] = seq
+        return data
 
     def get_preprocessed_seq_data(self, raw_data, cls):
         """ Preprocess data for a single sequence for a single class ready for evaluation.
