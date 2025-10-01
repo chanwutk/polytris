@@ -135,11 +135,6 @@ def main(args):
     for dataset_name in args.datasets:
         rename_directories(dataset_name, args.dry_run)
         print()
-    
-    if args.dry_run:
-        print("Dry run completed. Use without --dry-run to perform actual renaming.")
-    else:
-        print("Directory renaming completed!")
 
 
 if __name__ == '__main__':
