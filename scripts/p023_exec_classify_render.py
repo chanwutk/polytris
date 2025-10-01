@@ -7,7 +7,7 @@ import numpy as np
 import multiprocessing as mp
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, ProgressBar
+from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, ProgressBar, to_h264
 
 
 TILE_SIZES = [30, 60]  #, 120]
@@ -194,6 +194,9 @@ def render_scores(video_file: str, video_file_path: str, dataset_name: str,
     # Release resources
     cap.release()
     brightness_writer.release()
+    
+    # Convert to H.264 using FFMPEG
+    to_h264(brightness_video_path)
 
 
 def main(args):

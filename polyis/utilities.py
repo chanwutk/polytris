@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import typing
 import multiprocessing as mp
 
@@ -513,6 +514,36 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
     return vis_frame
 
 
+def to_h264(input_path: str):
+    """
+    Convert video to H.264 codec with .h264 extension using FFMPEG.
+    
+    Args:
+        input_path: Path to the input video file
+    """
+    # Create output path with .h264 extension
+    # base_path = os.path.splitext(input_path)[0]
+    output_path = f"{input_path[:-len('.mp4')]}.h264.mp4"
+    
+    # Run FFMPEG command to convert to H.264 (silent, optimized for small file size)
+    cmd = [
+        'ffmpeg', '-y',  # -y to overwrite output file
+        '-loglevel', 'quiet',  # silence FFMPEG output
+        '-i', input_path,  # input file
+        '-c:v', 'libx264',  # H.264 codec
+        '-preset', 'fast',  # encoding preset
+        '-crf', '28',  # constant rate factor (lower quality, smaller file)
+        '-profile:v', 'baseline',  # baseline profile for better compatibility
+        '-level', '3.0',  # H.264 level for broader device support
+        '-movflags', '+faststart',  # optimize for streaming/web playback
+        '-pix_fmt', 'yuv420p',  # pixel format for maximum compatibility
+        '-tune', 'fastdecode',  # optimize for faster decoding
+        output_path
+    ]
+    
+    subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+
 def create_tracking_visualization(video_path: str, tracking_results: dict[int, list[list[float]]], 
                                   output_path: str, speed_up: int, process_id: int, progress_queue=None):
     """
@@ -586,6 +617,11 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         # Send progress update
         if progress_queue is not None:
             progress_queue.put((f'cuda:{process_id}', {'completed': frame_idx + 1}))
+    
+    cap.release()
+    writer.release()
+
+    to_h264(output_path)
 
 
 def mark_detections(

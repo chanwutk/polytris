@@ -28,6 +28,24 @@ DATASETS_VIDEOS = [
     ('caldot2', 'caldot2-5.mp4'),
     ('caldot2', 'caldot2-6.mp4'),
     ('caldot2', 'caldot2-7.mp4'),
+
+    ('caldot1-yolov5', 'caldot1-1.mp4'),
+    ('caldot1-yolov5', 'caldot1-2.mp4'),
+    ('caldot1-yolov5', 'caldot1-3.mp4'),
+    ('caldot1-yolov5', 'caldot1-4.mp4'),
+    ('caldot1-yolov5', 'caldot1-5.mp4'),
+    ('caldot1-yolov5', 'caldot1-6.mp4'),
+    ('caldot1-yolov5', 'caldot1-7.mp4'),
+    ('caldot1-yolov5', 'caldot1-8.mp4'),
+    ('caldot1-yolov5', 'caldot1-9.mp4'),
+
+    ('caldot2-yolov5', 'caldot2-1.mp4'),
+    ('caldot2-yolov5', 'caldot2-2.mp4'),
+    ('caldot2-yolov5', 'caldot2-3.mp4'),
+    ('caldot2-yolov5', 'caldot2-4.mp4'),
+    ('caldot2-yolov5', 'caldot2-5.mp4'),
+    ('caldot2-yolov5', 'caldot2-6.mp4'),
+    ('caldot2-yolov5', 'caldot2-7.mp4'),
 ]
 
 # CLASSIFIERS = ['SimpleCNN']
