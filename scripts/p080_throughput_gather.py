@@ -1,52 +1,17 @@
 
 #!/usr/local/bin/python
 
+import argparse
 import os
 import json
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_CHOICES
 
-DATASETS_VIDEOS = [
-    # ('b3d', 'jnc00.mp4'),
-    # ('b3d', 'jnc02.mp4'),
-    # ('b3d', 'jnc06.mp4'),
-    # ('b3d', 'jnc07.mp4'),
 
-    ('caldot1', 'caldot1-1.mp4'),
-    ('caldot1', 'caldot1-2.mp4'),
-    ('caldot1', 'caldot1-3.mp4'),
-    ('caldot1', 'caldot1-4.mp4'),
-    ('caldot1', 'caldot1-5.mp4'),
-    ('caldot1', 'caldot1-6.mp4'),
-    ('caldot1', 'caldot1-7.mp4'),
-    ('caldot1', 'caldot1-8.mp4'),
-    ('caldot1', 'caldot1-9.mp4'),
-
-    ('caldot2', 'caldot2-1.mp4'),
-    ('caldot2', 'caldot2-2.mp4'),
-    ('caldot2', 'caldot2-3.mp4'),
-    ('caldot2', 'caldot2-4.mp4'),
-    ('caldot2', 'caldot2-5.mp4'),
-    ('caldot2', 'caldot2-6.mp4'),
-    ('caldot2', 'caldot2-7.mp4'),
-
-    ('caldot1-yolov5', 'caldot1-1.mp4'),
-    ('caldot1-yolov5', 'caldot1-2.mp4'),
-    ('caldot1-yolov5', 'caldot1-3.mp4'),
-    ('caldot1-yolov5', 'caldot1-4.mp4'),
-    ('caldot1-yolov5', 'caldot1-5.mp4'),
-    ('caldot1-yolov5', 'caldot1-6.mp4'),
-    ('caldot1-yolov5', 'caldot1-7.mp4'),
-    ('caldot1-yolov5', 'caldot1-8.mp4'),
-    ('caldot1-yolov5', 'caldot1-9.mp4'),
-
-    ('caldot2-yolov5', 'caldot2-1.mp4'),
-    ('caldot2-yolov5', 'caldot2-2.mp4'),
-    ('caldot2-yolov5', 'caldot2-3.mp4'),
-    ('caldot2-yolov5', 'caldot2-4.mp4'),
-    ('caldot2-yolov5', 'caldot2-5.mp4'),
-    ('caldot2-yolov5', 'caldot2-6.mp4'),
-    ('caldot2-yolov5', 'caldot2-7.mp4'),
-]
+def parse_args():
+    parser = argparse.ArgumentParser(description='Gather throughput data from pipeline stages')
+    parser.add_argument('--datasets', required=False, default=DATASETS_CHOICES, nargs='+',
+                        help='Dataset names (space-separated)')
+    return parser.parse_args()
 
 # CLASSIFIERS = ['SimpleCNN']
 CLASSIFIERS = CLASSIFIERS_TO_TEST
@@ -55,22 +20,47 @@ EXEC_CLASSIFIERS = CLASSIFIERS_TO_TEST + ['Perfect']
 TILE_SIZES = [30, 60]  #, 120]
 
 
-def gather_index_construction_data():
+def discover_available_videos(datasets):
+    """
+    Discover available videos from execution directories for given datasets.
+    
+    Args:
+        datasets (list): List of dataset names to search
+        
+    Returns:
+        list[tuple[str, str]]: List of (dataset, video_file) tuples
+    """
+    datasets_videos = []
+    
+    for dataset in datasets:
+        execution_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+        assert os.path.exists(execution_dir), \
+            f"Execution directory {execution_dir} does not exist"
+
+        # Get all video files from the execution directory
+        video_files = [f for f in os.listdir(execution_dir) 
+                        if os.path.isdir(os.path.join(execution_dir, f))]
+        
+        for video_file in video_files:
+            datasets_videos.append((dataset, video_file))
+    
+    return datasets_videos
+
+
+def gather_index_construction_data(datasets):
     """
     Gather runtime data for index construction stages:
     - 011_tune_detect.py
     - 012_tune_create_training_data.py  
     - 013_tune_train_classifier.py
     
+    Args:
+        datasets (list): List of dataset names to process
+    
     Returns list of dicts with columns: dataset, classifier, runtime_files
     Note: Index construction is done at dataset level, not per video
     """
     index_data = []
-    
-    # Get unique datasets
-    datasets = set()
-    for dataset, video in DATASETS_VIDEOS:
-        datasets.add(dataset)
     
     for dataset in datasets:
         for classifier in CLASSIFIERS:
@@ -121,7 +111,7 @@ def gather_index_construction_data():
     return index_data
 
 
-def gather_query_execution_data():
+def gather_query_execution_data(datasets_videos):
     """
     Gather runtime data for query execution stages:
     - 001_preprocess_groundtruth_detection.py
@@ -132,12 +122,15 @@ def gather_query_execution_data():
     - 050_exec_uncompress.py
     - 060_exec_track.py
     
+    Args:
+        datasets_videos (list): List of (dataset, video_file) tuples
+    
     Returns list of dicts with columns: dataset/video, classifier, tile_size, runtime_files
     Note: Query execution is done per video
     """
     query_data = []
     
-    for dataset, video in DATASETS_VIDEOS:
+    for dataset, video in datasets_videos:
         video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
         
         # Groundtruth detection and tracking (no tile_size)
@@ -316,13 +309,17 @@ def save_query_execution_data(query_data, dataset, output_dir):
         print_query_execution_table(dataset_data, write_line=fwrite)
 
 
-def main():
+def main(args):
     """Main function to gather and print runtime data."""
     print("Gathering runtime data from all stages and configurations...")
     
+    # Discover available videos from execution directories
+    datasets_videos = discover_available_videos(args.datasets)
+    print(f"Found {len(datasets_videos)} dataset/video combinations")
+    
     # Gather data
-    index_data = gather_index_construction_data()
-    query_data = gather_query_execution_data()
+    index_data = gather_index_construction_data(args.datasets)
+    query_data = gather_query_execution_data(datasets_videos)
     
     # Print tables
     print("\n1. INDEX CONSTRUCTION DATASET")
@@ -366,4 +363,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(parse_args())

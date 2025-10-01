@@ -7,6 +7,7 @@ import os
 import multiprocessing as mp
 import sys
 from typing import Callable
+import warnings
 
 import numpy as np
 from rich.progress import track
@@ -39,7 +40,7 @@ def parse_args():
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
-    parser.add_argument('--metrics', type=str, default='HOTA,CLEAR',  #,Identity',
+    parser.add_argument('--metrics', type=str, default='HOTA',  #,Identity,CLEAR',
                         help='Comma-separated list of metrics to evaluate')
     parser.add_argument('--no_parallel', action='store_true', default=False,
                         help='Whether to disable parallel processing')
@@ -115,7 +116,8 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
 
 
 def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
-                               tile_size: int, metrics_list: list[str], output_dir: str):
+                               tile_size: int, metrics_list: list[str], output_dir: str,
+                               worker_id: int, worker_id_queue: "mp.Queue"):
     """
     Evaluate tracking accuracy for multiple videos using TrackEval.
     
@@ -157,7 +159,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
     # Create TrackEval evaluator configuration
     # This controls how the evaluation is performed and what output is generated
     eval_config = {
-        'USE_PARALLEL': True,  # Enable parallel processing within TrackEval
+        'USE_PARALLEL': False,  # Enable parallel processing within TrackEval
         'NUM_PARALLEL_CORES': min(mp.cpu_count(), len(videos)),  # Limit cores to number of videos
         'BREAK_ON_ERROR': True,  # Stop evaluation if any error occurs
         'LOG_ON_ERROR': os.path.join(output_dir, 'LOG.txt'),  # Save error logs to this file
@@ -190,9 +192,11 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
     # The evaluator object handles the actual evaluation process
     evaluator = trackeval.Evaluator(eval_config)
     
-    # Run the evaluation across all videos simultaneously
-    # This returns results for both individual videos and combined dataset
-    results = evaluator.evaluate([eval_dataset], metrics)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+        # Run the evaluation across all videos simultaneously
+        # This returns results for both individual videos and combined dataset
+        results = evaluator.evaluate([eval_dataset], metrics)
     
     # TrackEval returns results in structure: results[0]["Dataset"]["sort"][sequence]["vehicle"]
     # where sequence can be individual video names or "COMBINED_SEQ" for aggregated results
@@ -253,6 +257,8 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         output_file = "DATASET" if seq == "COMBINED_SEQ" else seq
         with open(os.path.join(output_dir, f'{output_file}.json'), 'w') as f:
             json.dump(result_data, f, indent=2, cls=NumpyEncoder)
+    
+    worker_id_queue.put(worker_id)
 
 
 def main(args):
@@ -288,7 +294,7 @@ def main(args):
     print(f"Evaluating metrics: {metrics_list}")
     
     # Find tracking results for all datasets and create evaluation tasks
-    eval_tasks: list[Callable[[], None]] = []
+    eval_tasks: list[Callable[[int, "mp.Queue"], None]] = []
     
     # Process each dataset separately
     for dataset in args.datasets:
@@ -313,24 +319,23 @@ def main(args):
     print(f"Found {len(eval_tasks)} classifier-tile size combinations to evaluate")
     
     # Execute evaluation tasks either sequentially or in parallel
-    if args.no_parallel:
-        # Sequential execution: run each task one after another
-        for eval_task in eval_tasks:
-            eval_task()
-    else:
-        # Parallel execution: start all processes simultaneously
-        processes: list[mp.Process] = []
-        
-        # Start each evaluation task in a separate process
-        for eval_task in eval_tasks:
-            process = mp.Process(target=eval_task)
-            process.start()
-            processes.append(process)
+    # Parallel execution: start all processes simultaneously
+    processes: list[mp.Process] = []
+    worker_id_queue = mp.Queue()
+    for i in range(int(mp.cpu_count() * 0.9)):
+        worker_id_queue.put(i)
+    
+    # Start each evaluation task in a separate process
+    for eval_task in eval_tasks:
+        worker_id = worker_id_queue.get()
+        process = mp.Process(target=eval_task, args=(worker_id, worker_id_queue))
+        process.start()
+        processes.append(process)
 
-        # Wait for all processes to complete and clean up
-        for process in track(processes):
-            process.join()  # Wait for process to finish
-            process.terminate()  # Ensure process is terminated
+    # Wait for all processes to complete and clean up
+    for process in track(processes):
+        process.join()  # Wait for process to finish
+        process.terminate()  # Ensure process is terminated
 
 
 if __name__ == '__main__':

@@ -8,6 +8,9 @@ import cv2
 import numpy as np
 from rich import progress
 
+if typing.TYPE_CHECKING:
+    import altair as alt
+    import pandas as pd
 
 DATA_RAW_DIR = '/polyis-data/video-datasets-raw'
 DATA_DIR = '/polyis-data/video-datasets-low'
@@ -810,9 +813,116 @@ class ProgressBar:
             worker_id_queue.put(worker_id)
 
 
+def load_tradeoff_data(dataset: str, csv_suffix: str) -> "tuple[pd.DataFrame, pd.DataFrame]":
+    """
+    Load pre-computed tradeoff data from CSV files created by p090_tradeoff_compute.py.
+    
+    Args:
+        dataset: Dataset name
+        csv_suffix: Suffix for CSV files ('runtime' or 'throughput')
+        
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: Individual and aggregated data DataFrames
+    """
+    # Construct paths to CSV files created by p090_tradeoff_compute.py
+    tradeoff_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
+    
+    individual_csv_path = os.path.join(tradeoff_dir, f'individual_accuracy_{csv_suffix}_tradeoff.csv')
+    aggregated_csv_path = os.path.join(tradeoff_dir, f'combined_accuracy_{csv_suffix}_tradeoff.csv')
+    
+    # Check if CSV files exist
+    assert os.path.exists(individual_csv_path), \
+        f"Individual tradeoff data not found: {individual_csv_path}. " \
+        "Please run p090_tradeoff_compute.py first."
+    
+    assert os.path.exists(aggregated_csv_path), \
+        f"Aggregated tradeoff data not found: {aggregated_csv_path}. " \
+        "Please run p090_tradeoff_compute.py first."
+    
+    # Load CSV files
+    import pandas as pd
+    df_individual = pd.read_csv(individual_csv_path)
+    df_aggregated = pd.read_csv(aggregated_csv_path)
+    
+    print(f"Loaded individual tradeoff data: {len(df_individual)} rows from {individual_csv_path}")
+    print(f"Loaded aggregated tradeoff data: {len(df_aggregated)} rows from {aggregated_csv_path}")
+    
+    return df_individual, df_aggregated
+
+
+def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, x_title: str, 
+                                        accuracy_col: str, metric_name: str, naive_column: str,
+                                        size_range: tuple[int, int] = (20, 200), scatter_opacity: float = 0.7, 
+                                        size: int | None = None, baseline_stroke_width: int = 2, 
+                                        baseline_opacity: float = 0.8) -> "tuple[alt.Chart, alt.Chart]":
+    """
+    Create both a scatter plot and naive baseline visualization with common styling.
+    
+    Args:
+        base_chart: Base Altair chart
+        x_column: Column name for x-axis data
+        x_title: Title for x-axis
+        accuracy_col: Column name for accuracy data
+        metric_name: Name of the metric (e.g., 'HOTA', 'MOTA')
+        naive_column: Column name for naive baseline data
+        size_range: Tuple of (min, max) for tile size scale
+        scatter_opacity: Opacity for the scatter points
+        size: Fixed size for scatter points (if None, uses tile_size encoding)
+        baseline_stroke_width: Width of the baseline rule line
+        baseline_opacity: Opacity of the baseline rule line
+        
+    Returns:
+        tuple[alt.Chart, alt.Chart]: Tuple of (scatter_plot, naive_baseline)
+    """
+    # Create scatter plot
+    scatter = base_chart.mark_circle(opacity=scatter_opacity).encode(
+        x=alt.X(f'{x_column}:Q', title=x_title),
+        y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
+                scale=alt.Scale(domain=[0, 1])),
+        color=alt.Color('classifier:N', title='Classifier'),
+        tooltip=['video_name', 'classifier', 'tile_size', x_column, accuracy_col]
+    ).properties(
+        width=200,
+        height=200
+    )
+    
+    # Add size encoding only if no fixed size is provided
+    if size is None:
+        scatter = scatter.encode(size=alt.Size('tile_size:O',
+                                 title='Tile Size',
+                                 scale=alt.Scale(range=size_range)))
+    
+    # Create naive baseline
+    baseline = base_chart.mark_rule(
+        color='red',
+        strokeDash=[5, 5],
+        strokeWidth=baseline_stroke_width,
+        opacity=baseline_opacity
+    ).encode(
+        x=f'{naive_column}:Q'
+    )
+    
+    return scatter, baseline
+
+
+METRICS = [
+    'HOTA',
+    # 'CLEAR',
+    # 'Identity',
+]
+
+
+METRICS = ['HOTA', 'CLEAR']
+
 DATASETS_TO_TEST = [
     'caldot1-yolov5',
     'caldot2-yolov5',
+    'caldot1',
+    'caldot2',
+    'b3d-jnc00',
+    'b3d-jnc02',
+    'b3d-jnc06',
+    'b3d-jnc07',
 ]
 
 

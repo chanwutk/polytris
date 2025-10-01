@@ -3,7 +3,7 @@
 import argparse
 import json
 import os
-from typing import Dict, List, Literal, Tuple, Any, Optional
+from typing import Dict, List, Literal, Tuple, Any
 from collections import defaultdict
 from multiprocessing import Pool
 from functools import partial
@@ -11,10 +11,9 @@ from functools import partial
 from rich.progress import track
 import numpy as np
 import pandas as pd
-import altair as alt
 import cv2
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST, DATA_DIR
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST, DATA_DIR, METRICS
 
 
 def get_video_frame_count(dataset: str, video_name: str) -> int:
@@ -48,13 +47,11 @@ def get_video_frame_count(dataset: str, video_name: str) -> int:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Visualize accuracy-throughput tradeoffs')
+    parser = argparse.ArgumentParser(description='Compute accuracy-throughput tradeoff data')
     parser.add_argument('--datasets', required=False,
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
-    parser.add_argument('--metrics', type=str, default='HOTA,CLEAR',
-                        help='Comma-separated list of metrics to evaluate')
     return parser.parse_args()
 
 
@@ -177,8 +174,8 @@ def calculate_naive_runtime(video_name: str, query_summaries: Dict[str, Any], da
         if stage_name in preprocessing_stages and config_key in stage_summaries:
             # Assert that execution stages have numeric values (int or float)
             assert isinstance(stage_summaries[config_key], (int, float)), \
-                "Execution stage {stage_name} should have numeric value (int/float), ' \
-                f'got {type(stage_summaries[config_key])}: {stage_summaries[config_key]}"
+                f"Execution stage {stage_name} should have numeric value (int/float), " \
+                f"got {type(stage_summaries[config_key])}: {stage_summaries[config_key]}"
             stage_total = stage_summaries[config_key]
             naive_runtime += stage_total
     
@@ -212,7 +209,7 @@ def calculate_query_execution_runtime(video_name: str, classifier: str, tile_siz
         if stage_name in query_stages and config_key in stage_summaries:
             # Assert that execution stages have numeric values (int or float)
             assert isinstance(stage_summaries[config_key], (int, float)), \
-                "Execution stage {stage_name} should have numeric value (int/float), " \
+                f"Execution stage {stage_name} should have numeric value (int/float), " \
                 f"got {type(stage_summaries[config_key])}: {stage_summaries[config_key]}"
             stage_total = stage_summaries[config_key]
             query_runtime += stage_total
@@ -225,7 +222,7 @@ def match_accuracy_throughput_data(
     throughput_data: dict,
     combined_results: Dict[str, dict],
     dataset: str,
-) -> Tuple[List[dict], List[dict]]:
+) -> tuple[list[dict], list[dict]]:
     """
     Match accuracy and throughput data by video/classifier/tilesize combination.
     
@@ -235,7 +232,7 @@ def match_accuracy_throughput_data(
         combined_results: Dictionary mapping classifier_tile_size to combined dataset accuracy results
         
     Returns:
-        Tuple[List[dict], List[dict]]: 
+        tuple[list[dict], list[dict]]: 
             - Individual video data points
             - Dataset-wide aggregated data points using actual combined accuracy scores
     """
@@ -343,11 +340,13 @@ def match_accuracy_throughput_data(
             
         # Get actual combined accuracy scores from DATASET.json
         combination_key = f"{classifier}_{tile_size}"
-        assert combination_key in combined_results, f"Combined results not found for {combination_key}"
+        assert combination_key in combined_results, \
+            f"Combined results not found for {combination_key}"
         combined_metrics = combined_results[combination_key]['metrics']
         actual_hota = combined_metrics.get('HOTA', {}).get('HOTA(0)', 0.0)
         actual_mota = combined_metrics.get('CLEAR', {}).get('MOTA', 0.0)
-        print(f"Using actual combined accuracy scores for {combination_key}: HOTA={actual_hota:.3f}, MOTA={actual_mota:.3f}")
+        print(f"Using actual combined accuracy scores for {combination_key}: " \
+            f"HOTA={actual_hota:.3f}, MOTA={actual_mota:.3f}")
             
         # Calculate combined runtime and throughput
         total_frames = sum([entry['frame_count'] for entry in entries])
@@ -375,19 +374,19 @@ def match_accuracy_throughput_data(
     return matched_data, aggregated_data
 
 
-def create_tradeoff_visualization(matched_data: List[Dict[str, Any]], aggregated_data: List[Dict[str, Any]], 
-                                 output_dir: str, metrics_list: List[str], query_summaries: Dict[str, Any], 
-                                 dataset: str, x_column: str, x_title: str,
-                                 naive_column: Literal['naive_runtime', 'naive_throughput'], 
-                                 plot_suffix: str, csv_suffix: str):
+def compute_tradeoff(matched_data: list[dict], aggregated_data: list[dict], 
+                       output_dir: str, metrics_list: list[str], query_summaries: dict, 
+                       dataset: str, x_column: str, x_title: str,
+                       naive_column: Literal['naive_runtime', 'naive_throughput'], 
+                       plot_suffix: str, csv_suffix: str):
     """
-    Create a single tradeoff visualization with configurable x-axis, including dataset-wide aggregated subplot.
+    Compute tradeoff data with configurable x-axis, including dataset-wide aggregated data.
     
     Args:
         matched_data: List of individual video accuracy-throughput data points
         aggregated_data: List of dataset-wide aggregated data points
-        output_dir: Output directory for visualizations
-        metrics_list: List of metrics to visualize
+        output_dir: Output directory for data files
+        metrics_list: List of metrics to compute
         query_summaries: Query execution timing data
         dataset: Dataset name
         x_column: Column name for x-axis data
@@ -396,10 +395,12 @@ def create_tradeoff_visualization(matched_data: List[Dict[str, Any]], aggregated
         plot_suffix: Suffix for plot filename
         csv_suffix: Suffix for CSV filename
     """
-    print(f"Creating {plot_suffix} tradeoff visualizations...")
+    print(f"Computing {plot_suffix} tradeoff data...")
     
-    assert len(matched_data) > 0, f"No matched data available for {plot_suffix} visualization"
-    assert len(aggregated_data) > 0, f"No aggregated data available for {plot_suffix} visualization"
+    assert len(matched_data) > 0, \
+        f"No matched data available for {plot_suffix} computation"
+    assert len(aggregated_data) > 0, \
+        f"No aggregated data available for {plot_suffix} computation"
 
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
@@ -408,145 +409,74 @@ def create_tradeoff_visualization(matched_data: List[Dict[str, Any]], aggregated
     df = pd.DataFrame(matched_data)
     df_agg = pd.DataFrame(aggregated_data)
     
+    # Calculate naive values for each video
+    unique_videos = sorted(df['video_name'].unique())
+    naive_values = {}
+    for video in unique_videos:
+        naive_runtime = calculate_naive_runtime(video, query_summaries, dataset)
+        if naive_column == 'naive_runtime':
+            naive_values[video] = naive_runtime
+        elif naive_column == 'naive_throughput':
+            df_video = df[df['video_name'] == video]
+            assert isinstance(df_video, pd.DataFrame), \
+                f"Expected DataFrame for video {video}, got {type(df_video)}"
+            frame_counts = df_video['frame_count']
+            # Assert that all frame_counts have the same value
+            assert frame_counts.nunique() == 1, \
+                f"All frame_counts for video {video} must have the same value, " \
+                f"but found {frame_counts.nunique()} unique values: {frame_counts.unique()}"
+            frame_count = frame_counts.iloc[0]
+            assert naive_runtime > 0, \
+                f"Naive runtime must be greater than 0, got {naive_runtime}"
+            naive_throughput = frame_count / naive_runtime
+            naive_values[video] = naive_throughput
+    
+    # Add naive data to dataframe
+    df_with_naive = df.copy()
+    df_with_naive[naive_column] = df_with_naive['video_name'].map(naive_values)  # type: ignore
+    
     # Save matched data to CSV
-    csv_file_path = os.path.join(output_dir, f'accuracy_{csv_suffix}_tradeoff.csv')
-    df.to_csv(csv_file_path, index=False)
+    csv_file_path = os.path.join(output_dir, f'individual_accuracy_{csv_suffix}_tradeoff.csv')
+    df_with_naive.to_csv(csv_file_path, index=False)
     print(f"Saved matched data to: {csv_file_path}")
     
-    # Create scatter plots for each metric using Altair
-    for metric in metrics_list:
-        if metric == 'HOTA':
-            accuracy_col = 'hota_score'
-            metric_name = 'HOTA'
-        elif metric == 'CLEAR':
-            accuracy_col = 'mota_score'
-            metric_name = 'MOTA'
-        else:
-            continue
-        
-        # Calculate naive values for each video
-        unique_videos = sorted(df['video_name'].unique())
-        naive_values = {}
-        for video in unique_videos:
-            naive_runtime = calculate_naive_runtime(video, query_summaries, dataset)
-            if naive_column == 'naive_runtime':
-                naive_values[video] = naive_runtime
-            elif naive_column == 'naive_throughput':
-                frame_count = df[df['video_name'] == video]['frame_count'].iloc[0]
-                naive_throughput = frame_count / naive_runtime if naive_runtime > 0 else 0.0
-                naive_values[video] = naive_throughput
-        
-        # Add naive data to dataframe
-        df_with_naive = df.copy()
-        df_with_naive[naive_column] = df_with_naive['video_name'].map(naive_values)  # type: ignore
-        
-        # Calculate dataset-wide naive values
-        total_naive_runtime = sum([calculate_naive_runtime(video, query_summaries, dataset) for video in unique_videos])
-        if naive_column == 'naive_runtime':
-            dataset_naive_value = total_naive_runtime
-        elif naive_column == 'naive_throughput':
-            total_frames = sum([df[df['video_name'] == video]['frame_count'].iloc[0] for video in unique_videos])
-            dataset_naive_value = total_frames / total_naive_runtime if total_naive_runtime > 0 else 0.0
-        
-        # Add dataset naive value to aggregated dataframe
-        df_agg_with_naive = df_agg.copy()
-        df_agg_with_naive[naive_column] = dataset_naive_value
-        
-        # Create base charts
-        base_individual = alt.Chart(df_with_naive)
-        base_aggregated = alt.Chart(df_agg_with_naive)
-        
-        # Create individual video scatter plot
-        individual_scatter = base_individual.mark_circle(opacity=0.7).encode(
-            x=alt.X(f'{x_column}:Q', title=x_title),
-            y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', scale=alt.Scale(domain=[0, 1])),
-            color=alt.Color('classifier:N', title='Classifier'),
-            size=alt.Size('tile_size:O', title='Tile Size', scale=alt.Scale(range=[20, 200])),
-            tooltip=['video_name', 'classifier', 'tile_size', x_column, accuracy_col]
-        ).properties(
-            width=200,
-            height=200
-        )
-        
-        # Create dataset-wide scatter plot
-        aggregated_scatter = base_aggregated.mark_circle(opacity=0.8, size=300).encode(
-            x=alt.X(f'{x_column}:Q', title=x_title),
-            y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', scale=alt.Scale(domain=[0, 1])),
-            color=alt.Color('classifier:N', title='Classifier'),
-            size=alt.Size('tile_size:O', title='Tile Size', scale=alt.Scale(range=[50, 300])),
-            tooltip=['video_name', 'classifier', 'tile_size', x_column, accuracy_col]
-        ).properties(
-            width=200,
-            height=200
-        )
-        
-        # Create naive baseline lines for individual videos
-        naive_lines_individual = base_individual.mark_rule(
-            color='red',
-            strokeDash=[5, 5],
-            strokeWidth=2,
-            opacity=0.8
-        ).encode(
-            x=f'{naive_column}:Q'
-        )
-        
-        # Create naive baseline line for dataset-wide plot
-        naive_line_aggregated = base_aggregated.mark_rule(
-            color='red',
-            strokeDash=[5, 5],
-            strokeWidth=3,
-            opacity=0.9
-        ).encode(
-            x=f'{naive_column}:Q'
-        )
-        
-        # Combine individual video charts
-        individual_chart = (individual_scatter + naive_lines_individual).facet(
-            facet=alt.Facet('video_name:N', title=None,
-                            header=alt.Header(labelExpr="'Video: ' + datum.value")),
-            columns=4
-        ).resolve_scale(
-            x='independent'
-        ).properties(
-            title=f'{metric_name} vs {x_title} Tradeoff (By Video)',
-        )
-        
-        # Create dataset-wide chart
-        dataset_chart = (aggregated_scatter + naive_line_aggregated).properties(
-            title=f'{metric_name} vs {x_title} Tradeoff (Dataset Average)',
-            width=400,
-            height=300
-        )
-        
-        # Combine individual and dataset charts vertically
-        combined_chart = alt.vconcat(
-            individual_chart,
-            dataset_chart
-        ).resolve_scale(
-            x='independent'
-        )
-        
-        # Save the chart
-        plot_path = os.path.join(output_dir, f'{metric.lower()}_{plot_suffix}_tradeoff.png')
-        combined_chart.save(plot_path, scale_factor=2)
-        print(f"Saved {metric_name} {plot_suffix} tradeoff plot to: {plot_path}")
+    # Calculate dataset-wide naive values
+    total_naive_runtime = sum([calculate_naive_runtime(video, query_summaries, dataset) for video in unique_videos])
+    if naive_column == 'naive_runtime':
+        dataset_naive_value = total_naive_runtime
+    elif naive_column == 'naive_throughput':
+        total_frames = df_agg['frame_count'].iloc[0]
+        assert total_naive_runtime > 0, \
+            f"Total naive runtime must be greater than 0, got {total_naive_runtime}"
+        dataset_naive_value = total_frames / total_naive_runtime
+    
+    # Add dataset naive value to aggregated dataframe
+    df_agg_with_naive = df_agg.copy()
+    df_agg_with_naive[naive_column] = dataset_naive_value
+
+    # Save matched aggregated data to CSV
+    csv_file_path_agg = os.path.join(output_dir, f'combined_accuracy_{csv_suffix}_tradeoff.csv')
+    df_agg_with_naive.to_csv(csv_file_path_agg, index=False)
+    print(f"Saved matched aggregated data to: {csv_file_path_agg}")
+    
+    print(f"Computed tradeoff data for {plot_suffix} - visualization skipped")
 
 
-def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], aggregated_data: List[Dict[str, Any]], 
-                                 output_dir: str, metrics_list: List[str], query_summaries: Dict[str, Any], dataset: str):
+def compute_tradeoffs(matched_data: list[dict], aggregated_data: list[dict], output_dir: str,
+                      metrics_list: list[str], query_summaries: dict, dataset: str):
     """
-    Create both runtime and throughput tradeoff visualizations.
+    Compute both runtime and throughput tradeoff data.
     
     Args:
         matched_data: List of individual video accuracy-throughput data points
         aggregated_data: List of dataset-wide aggregated data points
-        output_dir: Output directory for visualizations
-        metrics_list: List of metrics to visualize
+        output_dir: Output directory for data files
+        metrics_list: List of metrics to compute
         query_summaries: Query execution timing data
         dataset: Dataset name
     """
-    # Create runtime visualization
-    create_tradeoff_visualization(
+    # Compute runtime data
+    compute_tradeoff(
         matched_data, aggregated_data, output_dir, metrics_list, query_summaries, dataset,
         x_column='query_runtime',
         x_title='Query Execution Runtime (seconds)',
@@ -555,8 +485,8 @@ def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], aggregate
         csv_suffix='runtime'
     )
     
-    # Create throughput visualization
-    create_tradeoff_visualization(
+    # Compute throughput data
+    compute_tradeoff(
         matched_data, aggregated_data, output_dir, metrics_list, query_summaries, dataset,
         x_column='throughput_fps',
         x_title='Throughput (frames/second)',
@@ -566,34 +496,37 @@ def create_tradeoff_visualizations(matched_data: List[Dict[str, Any]], aggregate
     )
 
 
-def process_dataset(dataset: str, metrics_list: List[str]):
+def process_dataset(dataset: str):
     """
-    Process a single dataset for accuracy-query execution runtime tradeoff visualization.
+    Process a single dataset for accuracy-query execution runtime tradeoff computation.
     
     This function loads accuracy and throughput results for a single dataset, matches them,
-    and creates visualizations showing the tradeoff between accuracy and query execution runtime.
+    and computes tradeoff data showing the relationship between accuracy and query execution runtime.
     
     Args:
         dataset: Dataset name to process
-        metrics_list: List of metrics to include in visualizations
     """
-    print(f"Starting accuracy-query execution runtime tradeoff visualization for: {dataset}")
+    print(f"Starting accuracy-query execution runtime tradeoff computation for: {dataset}")
     
     # Load accuracy results (both individual and combined)
     print(f"Loading accuracy results for {dataset}...")
     accuracy_results, combined_results = load_accuracy_results(dataset)
     
     assert accuracy_results, \
-        f"No accuracy results found for {dataset}. ' \
-        'Please run p070_accuracy_compute.py first."
+        f"No accuracy results found for {dataset}. " \
+        "Please run p070_accuracy_compute.py first."
+    
+    # Use metrics from utilities
+    metrics_list = METRICS
+    print(f"Using metrics: {metrics_list}")
     
     # Load throughput results
     print(f"Loading throughput results for {dataset}...")
     throughput_data = load_throughput_results(dataset)
     
     assert throughput_data, \
-        f"No throughput results found for {dataset}. ' \
-        'Please run p080_throughput_gather.py and p081_throughput_compute.py first."
+        f"No throughput results found for {dataset}. Please run " \
+        "p080_throughput_gather.py and p081_throughput_compute.py first."
     
     # Match accuracy and throughput data
     print(f"Matching accuracy and throughput data for {dataset}...")
@@ -602,9 +535,9 @@ def process_dataset(dataset: str, metrics_list: List[str]):
     assert len(matched_data) > 0, \
         f"No matching data points found between accuracy and throughput results for {dataset}."
     
-    # Create visualizations
+    # Compute tradeoff data
     output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
-    create_tradeoff_visualizations(matched_data, aggregated_data, output_dir,
+    compute_tradeoffs(matched_data, aggregated_data, output_dir,
                                    metrics_list, throughput_data['summaries'], dataset)
     
     print(f"Completed processing dataset: {dataset}")
@@ -612,15 +545,15 @@ def process_dataset(dataset: str, metrics_list: List[str]):
 
 def main(args):
     """
-    Main function that orchestrates the accuracy-throughput tradeoff visualization.
+    Main function that orchestrates the accuracy-throughput tradeoff computation.
     
     This function serves as the entry point for the script. It:
     1. Loads accuracy results from p070_accuracy_compute.py
     2. Loads throughput results from p081_throughput_compute.py
     3. Gets video frame counts using OpenCV
     4. Matches the data by video/classifier/tilesize combination
-    5. Creates visualizations showing accuracy vs query execution runtime tradeoffs
-    6. Creates visualizations showing accuracy vs throughput (frames/second) tradeoffs
+    5. Computes tradeoff data showing accuracy vs query execution runtime relationships
+    6. Computes tradeoff data showing accuracy vs throughput (frames/second) relationships
     
     Args:
         args (argparse.Namespace): Parsed command line arguments
@@ -630,24 +563,19 @@ def main(args):
           {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tile_size}/{video_name}.json
         - The script expects throughput results from p081_throughput_compute.py in:
           {CACHE_DIR}/{dataset}/evaluation/080_throughput/measurements/query_execution_summaries.json
-        - Results are saved to: {CACHE_DIR}/{dataset}/evaluation/090_tradeoff_compute/
+        - Results are saved to: {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/
         - Video files are expected in {DATA_DIR}/{dataset}/{video_name}.mp4 (or other extensions)
         - Only query execution runtime is used (index construction time is ignored)
+        - Metrics are automatically detected from the accuracy results
     """
-    # Parse metrics
-    metrics_list = [m.strip() for m in args.metrics.split(',')]
-    print(f"Processing metrics: {metrics_list}")
     print(f"Processing datasets: {args.datasets}")
     
     # Process datasets in parallel with progress tracking
     with Pool() as pool:
-        # Create partial function with metrics_list fixed
-        process_func = partial(process_dataset, metrics_list=metrics_list)
+        ires = pool.imap(process_dataset, args.datasets)
         
         # Process datasets in parallel using imap with rich track
-        _ = [*track(pool.imap(process_func, args.datasets), total=len(args.datasets))]
-    
-    print("All datasets processed successfully!")
+        _ = [*track(ires, total=len(args.datasets))]
 
 
 if __name__ == '__main__':
