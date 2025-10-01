@@ -114,34 +114,6 @@ def load_tracking_data(file_path: str) -> Dict[int, List[List[float]]]:
     return frame_data
 
 
-def load_groundtruth_data(file_path: str) -> Dict[int, List[List[float]]]:
-    """
-    Load groundtruth data from JSONL file.
-    
-    Args:
-        file_path (str): Path to the groundtruth JSONL file
-        
-    Returns:
-        Dict[int, List[List[float]]]: Dictionary mapping frame indices to list of groundtruth detections
-    """
-    frame_data = {}
-    
-    with open(file_path, 'r') as f:
-        for line in f:
-            if line.strip():
-                data = json.loads(line)
-                frame_idx = data['frame_idx']
-                detections = data['detections'] if 'detections' in data else data.get('tracks', [])
-                frame_data[frame_idx] = detections
-    
-    # Pad with empty lists if first frame index is not 0
-    if frame_data and min(frame_data.keys()) > 0:
-        for i in range(min(frame_data.keys())):
-            frame_data[i] = []
-    
-    return frame_data
-
-
 def convert_to_trackeval_format(frame_data: Dict[int, List[List[float]]], is_gt: bool = False) -> str:
     """
     Convert frame data to TrackEval format and save to temporary file.
@@ -187,7 +159,7 @@ def evaluate_tracking_accuracy(video_name: str, classifier: str, tile_size: int,
     
     # Load data
     tracking_data = load_tracking_data(tracking_path)
-    groundtruth_data = load_groundtruth_data(groundtruth_path)
+    groundtruth_data = load_tracking_data(groundtruth_path)
     
     # Convert to TrackEval format
     temp_tracking_file = convert_to_trackeval_format(tracking_data, is_gt=False)
