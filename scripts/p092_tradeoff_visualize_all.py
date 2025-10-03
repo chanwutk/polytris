@@ -47,7 +47,7 @@ def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str) -> pd.
     # Combine all datasets
     combined_df = pd.concat(all_data, ignore_index=True)
     print(f"Combined tradeoff data from {len(datasets)} datasets: {len(combined_df)} total rows")
-    
+
     return combined_df
 
 
@@ -85,7 +85,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: lis
         # Create scatter plot and baseline using shared function
         scatter, baseline = tradeoff_scatter_and_naive_baseline(
             base_chart, x_column, x_title, accuracy_col, metric_name, naive_column,
-            size_range=(50, 300), scatter_opacity=0.8, size=300,
+            size_range=(50, 300), scatter_opacity=0.8,
             baseline_stroke_width=3, baseline_opacity=0.9
         )
         
@@ -100,11 +100,11 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: lis
         ).resolve_scale(
             x='independent'
         ).properties(
-            title=f'{metric_name} vs {x_title} Tradeoff (All Datasets)',
+            title=f'{metric_name} vs {x_title} Tradeoff',
         )
         
         # Save the chart
-        plot_path = os.path.join(output_dir, f'all_datasets_{metric.lower()}_{plot_suffix}_tradeoff.png')
+        plot_path = os.path.join(output_dir, f'{metric.lower()}_{plot_suffix}.png')
         combined_chart.save(plot_path, scale_factor=2)
         print(f"Saved all datasets {metric_name} {plot_suffix} tradeoff plot to: {plot_path}")
 
@@ -119,7 +119,7 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     print(f"Creating all datasets tradeoff visualizations for {len(datasets)} datasets...")
     
     # Create output directory
-    output_dir = os.path.join(CACHE_DIR, 'evaluation', '092_tradeoff_all')
+    output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '092_tradeoff_all')
     os.makedirs(output_dir, exist_ok=True)
     
     # Use metrics from utilities

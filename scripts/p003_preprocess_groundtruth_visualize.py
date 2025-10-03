@@ -17,6 +17,7 @@ def parse_args():
         argparse.Namespace: Parsed command line arguments containing:
             - datasets (list): List of dataset names to process (default: ['caldot1', 'caldot2'])
             - speed_up (int): Speed up factor for visualization (default: 4)
+            - track_ids (list): List of track IDs to color (others will be grey)
     """
     parser = argparse.ArgumentParser(description='Visualize tracking results on original videos')
     parser.add_argument('--datasets', required=False,
@@ -25,11 +26,15 @@ def parse_args():
                         help='Dataset names (space-separated)')
     parser.add_argument('--speed_up', type=int, default=4,
                         help='Speed up factor for visualization (process every Nth frame)')
+    parser.add_argument('--track_ids', type=int, nargs='*', default=None,
+                        help='List of track IDs to color (others will be grey)')
+    parser.add_argument('--detection_only', action='store_true',
+                        help='Only show detections without trajectories, all boxes in green without track IDs')
     return parser.parse_args()
 
 
-def visualize_video(video_file: str, cache_dir: str, dataset: str,
-                    speed_up: int, process_id: int, progress_queue: Queue):
+def visualize_video(video_file: str, cache_dir: str, dataset: str, speed_up: int,
+                    track_ids: list[int] | None, detection_only: bool, process_id: int, progress_queue: Queue):
     """
     Process visualization for a single video file.
     
@@ -38,6 +43,8 @@ def visualize_video(video_file: str, cache_dir: str, dataset: str,
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
         speed_up (int): Speed up factor for visualization (process every Nth frame)
+        track_ids (list[int] | None): List of track IDs to color (others will be grey)
+        detection_only (bool): If True, only show detections without trajectories, all boxes in green without track IDs
         process_id (int): Process ID for logging
         progress_queue (Queue): Queue for progress updates
     """
@@ -60,8 +67,8 @@ def visualize_video(video_file: str, cache_dir: str, dataset: str,
                                '000_groundtruth', f'annotated_{video_file}')
     
     # Create visualization
-    create_tracking_visualization(video_path, tracking_results, output_path,
-                                  speed_up, process_id, progress_queue)
+    create_tracking_visualization(video_path, tracking_results, output_path, speed_up,
+                                  process_id, progress_queue, track_ids, detection_only)
 
 
 def main(args):
@@ -125,7 +132,7 @@ def main(args):
         print(f"Found {len(video_dirs)} videos with tracking results")
         
         funcs.extend(
-            partial(visualize_video, video_file, CACHE_DIR, dataset, args.speed_up)
+            partial(visualize_video, video_file, CACHE_DIR, dataset, args.speed_up, args.track_ids, args.detection_only)
             for video_file in video_dirs
         )
     

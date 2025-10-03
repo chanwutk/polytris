@@ -216,16 +216,23 @@ def register_tracked_detections(
         # trajectories[track_id].append((frame_idx, box_array))
 
 
-def get_track_color(track_id: int) -> tuple[int, int, int]:
+def get_track_color(track_id: int, track_ids: list[int] | None = None) -> tuple[int, int, int]:
     """
     Get a color for a track ID by cycling through the predefined colors.
+    If track_ids is specified, only those track IDs get colors, others get grey.
     
     Args:
         track_id (int): Track ID
+        track_ids (list[int] | None): List of track IDs to color (others will be grey)
         
     Returns:
         tuple[int, int, int]: BGR color tuple
     """
+    # If track_ids is specified and this track_id is not in the list, return grey
+    if track_ids is not None and track_id not in track_ids:
+        return (128, 128, 128)  # Grey color in BGR format
+    
+    # Otherwise, use the normal color cycling
     color_index = track_id % len(TRACK_COLORS)
     return TRACK_COLORS[color_index]
 
@@ -393,9 +400,9 @@ def create_tracker(tracker_name: str, max_age: int = 1, min_hits: int = 3, iou_t
         raise ValueError(f"Unknown tracker: {tracker_name}")
 
 
-def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]], 
-                             frame_idx: int, trajectory_history: dict[int, list[tuple[int, int, int]]], 
-                             speed_up: int) -> np.ndarray | None:
+def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]], frame_idx: int,
+                               trajectory_history: dict[int, list[tuple[int, int, int]]], 
+                               speed_up: int, track_ids: list[int] | None, detection_only: bool = False) -> np.ndarray | None:
     """
     Create a visualization frame by drawing bounding boxes and trajectories for all tracks.
     
@@ -405,6 +412,8 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
         frame_idx (int): Frame index for logging
         trajectory_history (dict[int, list[tuple[int, int, int]]]): History of track centers with frame timestamps
         speed_up (int): Speed up factor (process every Nth frame)
+        track_ids (list[int] | None): List of track IDs to color (others will be grey)
+        detection_only (bool): If True, only show detections without trajectories, all boxes in green without track IDs
         
     Returns:
         np.ndarray | None: Frame with bounding boxes and trajectories drawn, or None if frame should be skipped
@@ -430,47 +439,89 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
     # Create a copy of the frame for visualization
     vis_frame = frame.copy()
     
-    # Second loop: Draw bounding boxes and labels for current tracks
-    for track in tracks:
-        if len(track) >= 5:  # Ensure we have track_id, x1, y1, x2, y2
-            track_id, x1, y1, x2, y2 = track[:5]
-            
-            # Convert to integers for drawing
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-            track_id = int(track_id)
-            
-            # Get color for this track
-            color = get_track_color(track_id)
-            
-            # Draw bounding box
-            cv2.rectangle(vis_frame, (x1, y1), (x2, y2), color, 2)
-            
-            # Draw track ID label
-            label = f"ID: {track_id}"
-            font_scale = 0.6
-            font_thickness = 2
-            
-            # Calculate text size and position
-            (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 
-                                                                 font_scale, font_thickness)
-            
-            # Position text above the bounding box
-            text_x = x1
-            text_y = max(y1 - 10, text_height + 5)
-            
-            # Draw text background for better visibility
-            cv2.rectangle(vis_frame, (text_x - 2, text_y - text_height - 2), 
-                         (text_x + text_width + 2, text_y + baseline + 2), 
-                         color, -1)
-            
-            # Draw text
-            cv2.putText(vis_frame, label, (text_x, text_y), 
-                       cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness)
+    if detection_only:
+        # In detection-only mode, draw all bounding boxes in green without track IDs
+        draw_track_bounding_boxes(vis_frame, tracks, track_ids, detection_only=True)
+    else:
+        # Draw bounding boxes and labels for tracks not in track_ids (grey)
+        tracks_not_in_track_ids = [track for track in tracks if track[0] not in (track_ids or [])]
+        draw_track_bounding_boxes(vis_frame, tracks_not_in_track_ids, track_ids)
+        
+        # Draw all trajectories with gradual fading
+        draw_trajectories(vis_frame, trajectory_history, frame_idx, track_ids)
+        
+        # Draw bounding boxes and labels for tracks in track_ids (colored)
+        tracks_in_track_ids = [track for track in tracks if track[0] in (track_ids or [])]
+        draw_track_bounding_boxes(vis_frame, tracks_in_track_ids, track_ids)
     
-    # Draw all trajectories with gradual fading
-    for track_id, trajectory in trajectory_history.items():
+    return vis_frame
+
+
+def draw_track_bounding_boxes(vis_frame: np.ndarray, tracks: list[list[float]], 
+                              track_ids: list[int] | None, detection_only: bool = False):
+    """
+    Draw bounding boxes and labels for all tracks on the visualization frame.
+    
+    Args:
+        vis_frame (np.ndarray): Frame to draw on (modified in place)
+        tracks (list[list[float]]): List of tracks for this frame
+        track_ids (list[int] | None): List of track IDs to color (others will be grey)
+        detection_only (bool): If True, use green color for all boxes and hide track IDs
+    """
+    for track in tracks:
+        assert len(track) >= 5, f"Track must have at least 5 elements: {track}"
+        track_id, x1, y1, x2, y2 = track[:5]
+        
+        # Convert to integers for drawing
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        track_id = int(track_id)
+        
+        color = (0, 255, 0) if detection_only else get_track_color(track_id, track_ids)
+        
+        # Draw bounding box
+        cv2.rectangle(vis_frame, (x1, y1), (x2, y2), color, 2)
+        
+        # Draw track ID label only if not in detection-only mode
+        if detection_only:
+            continue
+
+        label = str(track_id)
+        font_scale = 0.6
+        font_thickness = 2
+        
+        # Calculate text size and position
+        (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 
+                                                                font_scale, font_thickness)
+        
+        # Position text above the bounding box
+        text_x = x1
+        text_y = max(y1 - 10, text_height + 5)
+        
+        # Draw text background for better visibility
+        cv2.rectangle(vis_frame, (text_x - 2, text_y - text_height - 2), 
+                        (text_x + text_width + 2, text_y + baseline + 2), 
+                        color, -1)
+        
+        # Draw text
+        cv2.putText(vis_frame, label, (text_x, text_y), 
+                    cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), font_thickness)
+
+
+def draw_trajectories(vis_frame: np.ndarray, trajectory_history: dict[int, list[tuple[int, int, int]]], 
+                      frame_idx: int, track_ids: list[int] | None):
+    """
+    Draw all trajectories with gradual fading on the visualization frame.
+    
+    Args:
+        vis_frame (np.ndarray): Frame to draw on (modified in place)
+        trajectory_history (dict[int, list[tuple[int, int, int]]]): History of track centers with frame timestamps
+        frame_idx (int): Current frame index for fade calculations
+        track_ids (list[int] | None): List of track IDs to color (others will be grey)
+    """
+    ids_trajectories = sorted(trajectory_history.items(), key=lambda x: x[0] in (track_ids or []))
+    for track_id, trajectory in ids_trajectories:
         if len(trajectory) > 1:
-            color = get_track_color(track_id)
+            color = get_track_color(track_id, track_ids)
             
             # Calculate fade parameters
             max_fade_frames = 30  # Number of frames for complete fade after track ends
@@ -513,8 +564,6 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]],
                 # Draw final point
                 final_center = trajectory[-1]
                 cv2.circle(vis_frame, (final_center[0], final_center[1]), 3, point_color, -1)
-    
-    return vis_frame
 
 
 def to_h264(input_path: str):
@@ -548,7 +597,8 @@ def to_h264(input_path: str):
 
 
 def create_tracking_visualization(video_path: str, tracking_results: dict[int, list[list[float]]], 
-                                  output_path: str, speed_up: int, process_id: int, progress_queue=None):
+                                  output_path: str, speed_up: int, process_id: int, progress_queue=None, 
+                                  track_ids: list[int] | None = None, detection_only: bool = False):
     """
     Create a visualization video showing tracking results overlaid on the original video.
     
@@ -556,6 +606,11 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         video_path (str): Path to the input video file
         tracking_results (dict[int, list[list[float]]]): Tracking results from load_tracking_results
         output_path (str): Path where the output visualization video will be saved
+        speed_up (int): Speed up factor for visualization (process every Nth frame)
+        process_id (int): Process ID for logging
+        progress_queue: Queue for progress updates
+        track_ids (list[int] | None): List of track IDs to color (others will be grey)
+        detection_only (bool): If True, only show detections without trajectories, all boxes in green without track IDs
     """
     # print(f"Creating tracking visualization for video: {video_path}")
     
@@ -611,7 +666,8 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         tracks = tracking_results.get(frame_idx, [])
         
         # Create visualization frame with trajectory history
-        vis_frame = create_visualization_frame(frame, tracks, frame_idx, trajectory_history, speed_up)
+        vis_frame = create_visualization_frame(frame, tracks, frame_idx, trajectory_history,
+                                               speed_up, track_ids, detection_only)
 
         # Write frame to video
         if vis_frame is not None:
@@ -854,7 +910,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
                                         accuracy_col: str, metric_name: str, naive_column: str,
                                         size_range: tuple[int, int] = (20, 200), scatter_opacity: float = 0.7, 
                                         size: int | None = None, baseline_stroke_width: int = 2, 
-                                        baseline_opacity: float = 0.8) -> "tuple[alt.Chart, alt.Chart]":
+                                        baseline_opacity: float = 0.8) -> "tuple[alt.Chart, alt.LayerChart]":
     """
     Create both a scatter plot and naive baseline visualization with common styling.
     
@@ -874,6 +930,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
     Returns:
         tuple[alt.Chart, alt.Chart]: Tuple of (scatter_plot, naive_baseline)
     """
+    import altair as alt
     # Create scatter plot
     scatter = base_chart.mark_circle(opacity=scatter_opacity).encode(
         x=alt.X(f'{x_column}:Q', title=x_title),
@@ -902,7 +959,23 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         x=f'{naive_column}:Q'
     )
     
-    return scatter, baseline
+    # Create annotation text for the baseline
+    baseline_annotation = base_chart.mark_text(
+        align='left',
+        baseline='bottom',
+        fontSize=12,
+        fontWeight='bold',
+        color='red',
+        dx=5,  # Offset to the right of the line
+        dy=0,  # No vertical offset
+        angle=90  # Rotate 90 degrees clockwise
+    ).encode(
+        x=f'{naive_column}:Q',
+        y=alt.value(0.5),  # Position at middle of y-axis
+        text=alt.value('Without Optimization')
+    )
+    
+    return scatter, baseline + baseline_annotation
 
 
 METRICS = [
@@ -915,14 +988,14 @@ METRICS = [
 METRICS = ['HOTA', 'CLEAR']
 
 DATASETS_TO_TEST = [
-    'caldot1-yolov5',
-    'caldot2-yolov5',
-    'caldot1',
-    'caldot2',
+    # 'caldot1-yolov5',
+    # 'caldot2-yolov5',
+    # 'caldot1',
+    # 'caldot2',
     'b3d-jnc00',
-    'b3d-jnc02',
-    'b3d-jnc06',
-    'b3d-jnc07',
+    # 'b3d-jnc02',
+    # 'b3d-jnc06',
+    # 'b3d-jnc07',
 ]
 
 

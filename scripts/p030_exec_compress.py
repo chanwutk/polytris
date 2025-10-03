@@ -11,6 +11,9 @@ import time
 import multiprocessing as mp
 from functools import partial
 
+import torch
+import torch.nn.functional as F
+
 from polyis import dtypes
 from polyis.utilities import (
     CACHE_DIR, CLASSIFIERS_CHOICES,
@@ -270,6 +273,14 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
     
     # print(f"Processing {len(results)} frames with tile size {tile_size}")
 
+    add_margin = torch.tensor(
+        [[[[0, 1, 0],
+        [1, 1, 1],
+        [0, 1, 0]]]],
+        dtype=torch.uint8,
+        requires_grad=False,
+    )
+
     with open(runtime_file, 'w') as f:
         # Process each frame
         mod = int(len(results) * 0.05)
@@ -311,6 +322,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
             
             # Profile: Group connected tiles into polyominoes
             step_start = (time.time_ns() / 1e6)
+            bitmap_frame = F.conv2d(torch.from_numpy(np.array([[bitmap_frame]])), add_margin, padding='same').numpy()[0, 0]
             polyominoes = group_tiles(bitmap_frame)
             step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
             
@@ -474,8 +486,8 @@ def main(args):
     print(f"Created {len(funcs)} tasks to process")
     
     # Set up multiprocessing with ProgressBar
-    num_processes = int(mp.cpu_count() * 0.5)
-    # num_processes = 8
+    # num_processes = int(mp.cpu_count() * 0.5)
+    num_processes = 20
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
