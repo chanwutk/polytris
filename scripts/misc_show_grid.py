@@ -2,8 +2,10 @@ import argparse
 import cv2
 import numpy as np
 import os
+import torch
 
-from scripts.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, progress_bars
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, progress_bars
+from polyis.images import padHWC, splitHWC
 
 def visualize_first_frame_tiles(video_path: str, output_path: str, tile_size: int):
     """
@@ -27,20 +29,25 @@ def visualize_first_frame_tiles(video_path: str, output_path: str, tile_size: in
         cap.release()
         return
 
-    # Get frame dimensions
-    height, width, _ = frame.shape
+    # Pad the frame to be divisible by tile_size, just like in the classification script
+    frame_tensor = torch.from_numpy(frame).float()
+    padded_frame_tensor = padHWC(frame_tensor, tile_size, tile_size)
+    padded_frame = padded_frame_tensor.numpy().astype(np.uint8)
+
+    # Get padded dimensions
+    height, width, _ = padded_frame.shape
 
     # Draw horizontal grid lines
     for i in range(0, height, tile_size):
-        cv2.line(frame, (0, i), (width, i), (0, 255, 0), 1)
+        cv2.line(padded_frame, (0, i), (width, i), (0, 255, 0), 1)
 
     # Draw vertical grid lines
     for j in range(0, width, tile_size):
-        cv2.line(frame, (j, 0), (j, height), (0, 255, 0), 1)
+        cv2.line(padded_frame, (j, 0), (j, height), (0, 255, 0), 1)
 
-    # Calculate number of tiles in x and y directions
-    num_tiles_x = width // tile_size
+    # Calculate number of tiles in x and y directions from the padded frame
     num_tiles_y = height // tile_size
+    num_tiles_x = width // tile_size
 
     # Add tile numbers to the grid
     for y in range(num_tiles_y):
@@ -54,7 +61,7 @@ def visualize_first_frame_tiles(video_path: str, output_path: str, tile_size: in
             
             # Put the text on the frame
             cv2.putText(
-                frame,
+                padded_frame,
                 str(tile_number),
                 (text_x, text_y),
                 cv2.FONT_HERSHEY_SIMPLEX,
@@ -65,7 +72,7 @@ def visualize_first_frame_tiles(video_path: str, output_path: str, tile_size: in
             )
     
     # Save the output image
-    cv2.imwrite(output_path, frame)
+    cv2.imwrite(output_path, padded_frame)
     print(f"Successfully saved tiled frame to {output_path}")
 
     # Release the video capture object
