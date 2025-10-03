@@ -204,34 +204,87 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
 
     return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
 
-def mark_neighbor_tiles(relevance_grid, threshold):
+def mark_neighbor_tiles(relevance_grid: np.ndarray, threshold: float) -> np.ndarray:
     """
-    Creates a new grid where tiles meeting the threshold, plus their 
-    adjacent neighbors (including diagonals), are marked as 1.
-
-    Args:
-        relevance_grid (np.ndarray): A 2D grid of relevance scores.
-        threshold (int): The relevance score threshold.
-
-    Returns:
-        np.ndarray: A new 2D array of 0s and 1s, where 1s indicate
-                    relevant tiles or their neighbors. (Mask)
+    relevance_grid: either float in [0,1] or uint8 in [0,255]
+    threshold: if <=1, interpreted as [0,1] probability; if >1, treated as raw level
     """
-    # Create a boolean mask for tiles above the threshold
-    relevant_mask = (relevance_grid >= threshold)
+    # normalize threshold to the grid's dtype/range
+    if relevance_grid.dtype == np.uint8:
+        thr = int(round(threshold * 255)) if threshold <= 1.0 else int(round(threshold))
+    else:  # float grid assumed in [0,1]
+        thr = float(threshold if threshold <= 1.0 else threshold / 255.0)
 
-    # Create kernel for all 8 neighboring tiles (TODO: should this be 4?)
-    kernel = np.ones((3, 3), dtype=np.uint8)
+    mask = relevance_grid >= thr
+    if not mask.any():
+        return np.array([], dtype=int)
 
-    # Apply dilation to expand the mask to include neighbors
-    dilated_mask = binary_dilation(relevant_mask, structure=kernel)
+    dilated = binary_dilation(mask, structure=np.ones((3, 3), dtype=bool))
+    return np.flatnonzero(dilated)
 
-    # convert to list of relevant indices
-    relevant_indices = np.where(dilated_mask.flatten())[0]
+def pixel_difference(prev_frame: np.ndarray, current_frame: np.ndarray, tile_size: int, diff_threshold: int) -> np.ndarray:
+    """
+    Identifies relevant tiles based on the pixel difference between two consecutive frames.
+    ...
+    """
+    # 1. Take the difference between current frame and previous frame
+    abs_diff = cv2.absdiff(prev_frame, current_frame)
+    
+    # Convert the NumPy array to a PyTorch tensor and move it to the correct device
+    abs_diff_tensor = torch.from_numpy(abs_diff).to('cpu').float() # Use the appropriate device, TODO: change this later 
+
+    # Pad frames to be divisible by tile size
+    padded_diff = padHWC(abs_diff_tensor, tile_size, tile_size)
+
+    # Split the padded difference frame into tiles
+    tiles = splitHWC(padded_diff, tile_size, tile_size)
+    num_tiles = tiles.shape[0] * tiles.shape[1]
+    tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
+
+    # 2. Calculate the total difference for each tile (sum up pixel difference values)
+    # The sum is done across height, width, and color channels
+    tile_diff_sums = torch.sum(tiles_flat, dim=(1, 2, 3)).cpu().numpy()
+
+    # 3. Return a list of tile indices where the total difference is > threshold
+    relevant_indices = np.where(tile_diff_sums > diff_threshold)[0]
+    
     return relevant_indices
+# def pixel_difference(prev_frame: np.ndarray, current_frame: np.ndarray, tile_size: int, diff_threshold: int) -> np.ndarray:
+#     """
+#     Identifies relevant tiles based on the pixel difference between two consecutive frames.
+
+#     Args:
+#         prev_frame (np.ndarray): The previous video frame.
+#         current_frame (np.ndarray): The current video frame.
+#         tile_size (int): The size of the tiles.
+#         diff_threshold (int): The threshold for the total pixel difference per tile.
+
+#     Returns:
+#         np.ndarray: A 1D array of indices for the tiles that have a difference
+#                     greater than the threshold.
+#     """
+#     # Take the difference between current frame and previous frame
+#     abs_diff = cv2.absdiff(prev_frame, current_frame)
+    
+#     # Pad frames to be divisible by tile size
+#     padded_diff = padHWC(abs_diff, tile_size, tile_size)
+
+#     # Split the padded difference frame into tiles
+#     tiles = splitHWC(padded_diff, tile_size, tile_size)
+#     num_tiles = tiles.shape[0] * tiles.shape[1]
+#     tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
+
+#     #  Calculate the total difference for each tile (sum up pixel difference values)
+#     # The sum is done across height, width, and color channels
+#     tile_diff_sums = np.sum(tiles_flat, axis=(1, 2, 3))
+
+#     # Return a list of tile indices where the total difference is > threshold
+#     relevant_indices = np.where(tile_diff_sums > diff_threshold)[0]
+    
+#     return relevant_indices
 
 def process_video_task(video_path: str, cache_video_dir: str, classifier: str, 
-                      tile_size: int, gpu_id: int, command_queue: mp.Queue):
+                    tile_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
@@ -309,29 +362,35 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': frame_count}))
         prev_relevance_grid = None # no previous frame yet
+        prev_frame = None
         threshold = 0.5 # modify if necessary
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
             
+            # only use if flag is on
+            
             if frame_idx == 0:
                 # process entire first frame
                 current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, None, device)
-
+                pruned_tiles = 0
             else:
                 # we know prev_relevance_grid is not none 
                 relevant_indices = mark_neighbor_tiles(prev_relevance_grid, threshold)
+                # relevant_indices = pixel_difference(prev_frame, frame, 60, 100) # TODO: edit this 
+                # include pixel difference generator here
                 manual_include = np.array([18, 36, 54, 72, 90, 17, 35, 53, 133, 134, 152, 161, 179, 197, 215, 22, 23, 24, 25, 26])
                 relevant_indices = np.union1d(relevant_indices, manual_include) # manual include
                 current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, relevant_indices, device)
+                pruned_tiles = int(current_relevance_grid.size - len(relevant_indices))
 
             
             # Update the relevance grid for the next loop iteration
             prev_relevance_grid = current_relevance_grid
-            
+            prev_frame = frame
 
-
+            num_tiles = (current_relevance_grid.shape[0] * current_relevance_grid.shape[1])
             # Create result entry for this frame
             frame_entry = {
                 "frame_idx": frame_idx,
@@ -341,6 +400,7 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
                 "runtime": runtime,
                 "classification_size": current_relevance_grid.shape,
                 "classification_hex": current_relevance_grid.flatten().tobytes().hex(),
+                "pruned_tiles": pruned_tiles
             }
             
             # Write to JSONL file
@@ -373,9 +433,9 @@ def main(args):
             
     Note:
         - The script expects a specific directory structure:
-          {DATA_DIR}/{dataset}/ - contains video files
-          {DATA_CACHE}/{dataset}/{video_file_name}/training/results/{classifier_name}_{tile_size}/model.pth - contains trained models
-          where DATA_DIR and DATA_CACHE are both /polyis-data/video-datasets-low
+        {DATA_DIR}/{dataset}/ - contains video files
+        {DATA_CACHE}/{dataset}/{video_file_name}/training/results/{classifier_name}_{tile_size}/model.pth - contains trained models
+        where DATA_DIR and DATA_CACHE are both /polyis-data/video-datasets-low
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - A separate model is loaded for each video directory, classifier, and tile size combination
         - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
@@ -416,7 +476,7 @@ def main(args):
         for classifier in args.classifiers:
             for tile_size in tile_sizes_to_process:
                 func = partial(process_video_task, video_file_path,
-                               cache_video_dir, classifier, tile_size)
+                            cache_video_dir, classifier, tile_size)
                 funcs.append(func)
     
     # Set up multiprocessing with ProgressBar

@@ -172,6 +172,8 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     all_actual_positives = []
     all_classification_scores = []
     all_error_counts = []
+    pruned_tile_counts = [frame_result['pruned_tiles'] for frame_result in results if 'pruned_tiles' in frame_result]
+
 
     # print(f"Evaluating {len(results)} frames using multiprocessing")
 
@@ -243,6 +245,9 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     #     all_classification_scores, all_actual_positives,
     #     threshold, tile_size, output_dir
     # )
+    visualize_pruned_tile_distribution(
+        pruned_tile_counts, tile_size, output_dir
+    )
 
     # print(f"Saved statistics visualizations to: {output_dir}")
     # print(f"Overall Metrics - Precision: {overall_precision:.3f}, Recall: {overall_recall:.3f}, F1: {overall_f1:.3f}")
@@ -584,6 +589,36 @@ def visualize_score_distribution(all_classification_scores: list[float], all_act
     plt.close()
     
     return histogram_path
+
+def visualize_pruned_tile_distribution(pruned_tile_counts: list[int], tile_size: int, output_dir: str) -> str:
+    """
+    Visualize the distribution of pruned tiles across all frames for a given classifier/tile size.
+
+    Args:
+        pruned_tile_counts (list[int]): Number of pruned tiles per frame
+        tile_size (int): Tile size used for classification
+        output_dir (str): Directory to save visualization
+
+    Returns:
+        str: Path to saved visualization file
+    """
+    if len(pruned_tile_counts) == 0:
+        print(f"No pruned tile data found for tile size {tile_size}")
+        return ""
+
+    plt.figure(figsize=(12, 6))
+    plt.hist(pruned_tile_counts, bins=50, color='steelblue', edgecolor='black', alpha=0.7)
+    plt.xlabel("Number of Pruned Tiles per Frame")
+    plt.ylabel("Frame Count")
+    plt.title(f"Distribution of Pruned Tiles per Frame (Tile Size: {tile_size})")
+    plt.grid(axis='y', alpha=0.3)
+
+    prune_hist_path = os.path.join(output_dir, f'050_pruned_tile_distribution_tile{tile_size}.png')
+    plt.tight_layout()
+    plt.savefig(prune_hist_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    return prune_hist_path
 
 
 def _process_classifier_tile_worker(video_file: str, dataset_name: str, classifier_name: str, 
