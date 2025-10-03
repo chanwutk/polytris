@@ -51,6 +51,67 @@ def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str) -> pd.
     return combined_df
 
 
+def print_best_data_points(df_combined: pd.DataFrame, metrics_list: list[str], 
+                          x_column: str, naive_column: str, plot_suffix: str):
+    """
+    Print the best data point (highest accuracy, faster than baseline) for each dataset and metric as tables.
+    
+    Args:
+        df_combined: Combined DataFrame with data from all datasets
+        metrics_list: list of metrics to analyze
+        x_column: Column name for x-axis data (runtime or throughput)
+        naive_column: Column name for naive baseline data
+        plot_suffix: Suffix for the analysis type ('runtime' or 'throughput')
+    """
+    print(f"\n=== Best Data Points Analysis ({plot_suffix.upper()}) ===")
+    
+    for metric in metrics_list:
+        if metric == 'HOTA':
+            accuracy_col = 'hota_score'
+            metric_name = 'HOTA'
+        elif metric == 'CLEAR':
+            accuracy_col = 'mota_score'
+            metric_name = 'MOTA'
+        else:
+            continue
+            
+        print(f"\n--- {metric_name} Analysis ---")
+        
+        # Collect results for this metric
+        results = []
+        
+        for dataset in df_combined['dataset'].unique():
+            dataset_data = df_combined[df_combined['dataset'] == dataset]
+            
+            # Filter data points that are faster than baseline for this dataset
+            faster_than_baseline = dataset_data[dataset_data[x_column] < dataset_data[naive_column]]
+            
+            if len(faster_than_baseline) == 0:
+                # If no points are faster than baseline, use the fastest point
+                best_point = dataset_data.loc[dataset_data[x_column].idxmin()]
+            else:
+                # Find the point with highest accuracy among those faster than baseline
+                best_point = faster_than_baseline.loc[faster_than_baseline[accuracy_col].idxmax()]
+            
+            # Calculate speed improvement
+            naive_runtime = best_point[naive_column]
+            best_runtime = best_point[x_column]
+            speedup = naive_runtime / best_runtime if best_runtime > 0 else 0
+            
+            results.append({
+                'Dataset': dataset,
+                'HOTA Score': f"{best_point[accuracy_col]:.2f}",
+                'Speedup': f"{speedup:.2f}"
+            })
+        
+        # Create and print table for this metric
+        if results:
+            df = pd.DataFrame(results)
+            print(df.to_string(index=False))
+        else:
+            print("No results found.")
+
+
 def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: list[str], 
                                     x_column: str, x_title: str, naive_column: str, 
                                     plot_suffix: str, output_dir: str):
@@ -67,6 +128,9 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: lis
         output_dir: Output directory for visualizations
     """
     print(f"Creating all datasets {plot_suffix} tradeoff visualizations...")
+    
+    # Print best data points tables first
+    print_best_data_points(df_combined, metrics_list, x_column, naive_column, plot_suffix)
     
     # Create base chart
     base_chart = alt.Chart(df_combined)
@@ -105,7 +169,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: lis
         
         # Save the chart
         plot_path = os.path.join(output_dir, f'{metric.lower()}_{plot_suffix}.png')
-        combined_chart.save(plot_path, scale_factor=2)
+        combined_chart.save(plot_path, scale_factor=4)
         print(f"Saved all datasets {metric_name} {plot_suffix} tradeoff plot to: {plot_path}")
 
 

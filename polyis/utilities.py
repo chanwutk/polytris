@@ -988,14 +988,14 @@ METRICS = [
 METRICS = ['HOTA', 'CLEAR']
 
 DATASETS_TO_TEST = [
-    # 'caldot1-yolov5',
-    # 'caldot2-yolov5',
-    # 'caldot1',
-    # 'caldot2',
+    'caldot1-yolov5',
+    'caldot2-yolov5',
+    'caldot1',
+    'caldot2',
     'b3d-jnc00',
-    # 'b3d-jnc02',
-    # 'b3d-jnc06',
-    # 'b3d-jnc07',
+    'b3d-jnc02',
+    'b3d-jnc06',
+    'b3d-jnc07',
 ]
 
 
