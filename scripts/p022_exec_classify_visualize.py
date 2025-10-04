@@ -172,7 +172,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     all_actual_positives = []
     all_classification_scores = []
     all_error_counts = []
-    pruned_tile_counts = [frame_result['pruned_tiles'] for frame_result in results if 'pruned_tiles' in frame_result]
+    pruned_tile_props = [frame_result['pruned_tiles_prop'] for frame_result in results if 'pruned_tiles_prop' in frame_result]
 
 
     # print(f"Evaluating {len(results)} frames using multiprocessing")
@@ -246,7 +246,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     #     threshold, tile_size, output_dir
     # )
     visualize_pruned_tile_distribution(
-        pruned_tile_counts, tile_size, output_dir
+        pruned_tile_props, tile_size, output_dir
     )
 
     # print(f"Saved statistics visualizations to: {output_dir}")
@@ -590,25 +590,26 @@ def visualize_score_distribution(all_classification_scores: list[float], all_act
     
     return histogram_path
 
-def visualize_pruned_tile_distribution(pruned_tile_counts: list[int], tile_size: int, output_dir: str) -> str:
+def visualize_pruned_tile_distribution(pruned_tile_props: list[float], tile_size: int, output_dir: str) -> str:
     """
     Visualize the distribution of pruned tiles across all frames for a given classifier/tile size.
 
     Args:
-        pruned_tile_counts (list[int]): Number of pruned tiles per frame
+        pruned_tile_props (list[float]): A list containing the proportion (0.0 to 1.0)
+                                         of pruned tiles for each frame.
         tile_size (int): Tile size used for classification
         output_dir (str): Directory to save visualization
 
     Returns:
         str: Path to saved visualization file
     """
-    if len(pruned_tile_counts) == 0:
+    if len(pruned_tile_props) == 0:
         print(f"No pruned tile data found for tile size {tile_size}")
         return ""
 
     plt.figure(figsize=(12, 6))
-    plt.hist(pruned_tile_counts, bins=50, color='steelblue', edgecolor='black', alpha=0.7)
-    plt.xlabel("Number of Pruned Tiles per Frame")
+    plt.hist(pruned_tile_props, bins=50, color='steelblue', edgecolor='black', alpha=0.7)
+    plt.xlabel("Proportion of Pruned Tiles per Frame")
     plt.ylabel("Frame Count")
     plt.title(f"Distribution of Pruned Tiles per Frame (Tile Size: {tile_size})")
     plt.grid(axis='y', alpha=0.3)

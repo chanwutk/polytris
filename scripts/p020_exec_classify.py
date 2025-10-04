@@ -19,7 +19,13 @@ from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST
 
 
 TILE_SIZES = [60]  #, 30, 120]
-MANUALLY_INCLUDE = {"jnc00.mp4": [18, 36, 54, 72, 90, 17, 35, 53, 133, 134, 152, 161, 179, 197, 215, 22, 23, 24, 25, 26]} # comment this out if not needed
+
+# hard coded entries below
+MANUALLY_INCLUDE = {"jnc00.mp4": [18, 36, 54, 72, 90, 17, 35, 53, 133, 134, 152, 161, 179, 197, 215, 22, 23, 24, 25, 26],
+                    "jnc02.mp4": [90, 108, 126, 6, 7, 8, 9, 10, 89, 107, 125, 143, 161, 204, 205, 206, 207, 208, 209],
+                    "jnc06.mp4": [18, 36, 54, 72, 90, 108, 126, 7, 8, 9, 10, 11, 12, 53, 71, 89, 107, 125, 143, 161, 203, 204, 205, 206, 207, 208], # good 
+                    "jnc07.mp4": [109, 110, 111, 112, 72, 90, 108, 6, 7, 8, 9, 10, 11, 12, 107, 125, 210, 204, 205, 206, 207, 208, 209]
+                    } 
 def get_classifier_class(classifier_name: str):
     """
     Get the classifier class based on the classifier name.
@@ -249,6 +255,7 @@ def pixel_difference(prev_frame: np.ndarray, current_frame: np.ndarray, tile_siz
     relevant_indices = np.where(tile_diff_sums > diff_threshold)[0]
     
     return relevant_indices
+
 # def pixel_difference(prev_frame: np.ndarray, current_frame: np.ndarray, tile_size: int, diff_threshold: int) -> np.ndarray:
 #     """
 #     Identifies relevant tiles based on the pixel difference between two consecutive frames.
@@ -374,16 +381,16 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
             if frame_idx == 0:
                 # process entire first frame
                 current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, None, device)
-                pruned_tiles = 0
+                pruned_tiles_prop = 0.0
             else:
                 # we know prev_relevance_grid is not none 
                 relevant_indices = mark_neighbor_tiles(prev_relevance_grid, threshold)
-                # relevant_indices = pixel_difference(prev_frame, frame, 60, 100) # TODO: edit this 
-                # include pixel difference generator here
-                manual_include = np.array([18, 36, 54, 72, 90, 17, 35, 53, 133, 134, 152, 161, 179, 197, 215, 22, 23, 24, 25, 26])
+                video_name = os.path.basename(video_path)
+                manual_include = np.array(MANUALLY_INCLUDE.get(video_name, None))
                 relevant_indices = np.union1d(relevant_indices, manual_include) # manual include
                 current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, relevant_indices, device)
-                pruned_tiles = int(current_relevance_grid.size - len(relevant_indices))
+                num_pruned = current_relevance_grid.size - len(relevant_indices)
+                pruned_tiles_prop = num_pruned / current_relevance_grid.size if current_relevance_grid.size > 0 else 0.0
 
             
             # Update the relevance grid for the next loop iteration
@@ -400,7 +407,7 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
                 "runtime": runtime,
                 "classification_size": current_relevance_grid.shape,
                 "classification_hex": current_relevance_grid.flatten().tobytes().hex(),
-                "pruned_tiles": pruned_tiles
+                "pruned_tiles_prop": pruned_tiles_prop
             }
             
             # Write to JSONL file
