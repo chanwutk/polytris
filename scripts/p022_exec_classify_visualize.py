@@ -35,6 +35,8 @@ def parse_args():
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification visualization (0.0 to 1.0)')
+    parser.add_argument('--filter', type=str, default=None,
+                        help='Specify a filter to limit analysis to specific runs (e.g., "none", "neighbor").')
     return parser.parse_args()
 
 
@@ -223,6 +225,27 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     overall_recall = total_tp / (total_tp + total_fn) if (total_tp + total_fn) > 0 else 0.0
     overall_accuracy = (total_tp + total_tn) / (total_tp + total_tn + total_fp + total_fn) if (total_tp + total_tn + total_fp + total_fn) > 0 else 0.0
     overall_f1 = 2 * (overall_precision * overall_recall) / (overall_precision + overall_recall) if (overall_precision + overall_recall) > 0 else 0.0
+
+    # Save overall metrics to a JSON file for easy parsing
+    summary_metrics = {
+        'video_file': video_file,
+        # Classifier and filter are part of the directory name, e.g., MobileNetS_60_neighbor
+        'classifier': '_'.join(os.path.basename(os.path.dirname(os.path.dirname(output_dir))).split('_')[:-2]),
+        'filter': os.path.basename(os.path.dirname(os.path.dirname(output_dir))).split('_')[-1],
+        'tile_size': tile_size,
+        'threshold': threshold,
+        'total_tp': int(total_tp),
+        'total_tn': int(total_tn),
+        'total_fp': int(total_fp),
+        'total_fn': int(total_fn),
+        'overall_precision': float(overall_precision),
+        'overall_recall': float(overall_recall),
+        'overall_f1': float(overall_f1),
+        'avg_pruned_tiles_prop': float(np.mean(pruned_tile_props)) if pruned_tile_props else 0.0,
+    }
+    summary_metrics_path = os.path.join(output_dir, 'summary_metrics.json')
+    with open(summary_metrics_path, 'w') as f:
+        json.dump(summary_metrics, f, indent=2)
 
     # Create individual visualizations
     visualize_error_summary(
@@ -729,11 +752,16 @@ def main(args):
         classifier_tilesizes: list[tuple[str, int]] = []
         for file in os.listdir(relevancy_dir):
             if '_' in file:
-                classifier_name = file.split('_')[0]
-                tile_size = int(file.split('_')[1])
-                classifier_tilesizes.append((classifier_name, tile_size))
+                parts = file.split('_')
+                if len(parts) >= 3: # Expects classifier_tilesize_filter
+                    filter_type = parts[-1]
+                    tile_size = int(parts[-2])
+                    classifier_name = '_'.join(parts[:-2])
+                    # If a filter is specified via args, only process matching directories
+                    if args.filter is None or args.filter == filter_type:
+                        classifier_tilesizes.append((classifier_name, tile_size, filter_type))
         
-        classifier_tilesizes = sorted(classifier_tilesizes)
+        classifier_tilesizes = sorted(list(set(classifier_tilesizes)))
         
         if not classifier_tilesizes:
             print(f"Skipping {video_file}: No classifier tile sizes found")
@@ -742,8 +770,8 @@ def main(args):
         print(f"Found {len(classifier_tilesizes)} classifier tile sizes for {video_file}: {classifier_tilesizes}")
         
         # Add tasks for each classifier-tile size combination
-        for classifier_name, tile_size in classifier_tilesizes:
-            task_args = (video_file, args.dataset, classifier_name, tile_size, args.threshold)
+        for classifier_name, tile_size, filter_type in classifier_tilesizes:
+            task_args = (video_file, args.dataset, classifier_name, tile_size, args.threshold, filter_type)
             all_tasks.append(task_args)
 
     if not all_tasks:
@@ -754,9 +782,9 @@ def main(args):
 
     # Create worker functions for ProgressBar
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for video_file, dataset_name, classifier_name, tile_size, threshold in all_tasks:
+    for video_file, dataset_name, classifier_name, tile_size, threshold, filter_type in all_tasks:
         funcs.append(partial(_process_classifier_tile_worker, video_file, dataset_name, 
-                            classifier_name, tile_size, threshold))
+                            classifier_name, tile_size, threshold, filter_type))
     
     # Set up multiprocessing with ProgressBar
     num_processes = int(mp.cpu_count() * 0.5)
@@ -769,6 +797,29 @@ def main(args):
     ProgressBar(num_workers=num_processes, num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 
+
+def _process_classifier_tile_worker(video_file: str, dataset_name: str, classifier_name: str, 
+                                   tile_size: int, threshold: float, filter_type: str, gpu_id: int, command_queue: mp.Queue):
+    """
+    Worker function to process a single classifier-tile size combination for multiprocessing.
+    """
+    device = f'cuda:{gpu_id}'
+    
+    # Send initial progress update
+    command_queue.put((device, {
+        'description': f"{video_file} {tile_size:>3} {classifier_name} ({filter_type})",
+        'completed': 0,
+        'total': 1
+    }))
+
+    # Load classification results
+    results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier_name, filter_type)
+    groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
+    
+    # Create output directory for statistics visualizations
+    stats_output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}_{filter_type}', 'statistics')
+    
+    create_statistics_visualizations(video_file, results, groundtruth_detections, tile_size, threshold, stats_output_dir, gpu_id, command_queue)
 
 if __name__ == '__main__':
     main(parse_args())
