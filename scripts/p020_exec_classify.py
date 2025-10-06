@@ -116,6 +116,8 @@ def parse_args():
                         help='Specific classifiers to analyze (if not specified, all classifiers will be analyzed)')
     parser.add_argument('--clear', action='store_true',
                         help='Clear the output directory before processing')
+    parser.add_argument('--filter', type=str, default='none',
+                        help='Frame-skipping filter to use (e.g., "none", "neighbor"). This also affects output directory naming.')
     return parser.parse_args()
 
 
@@ -291,7 +293,7 @@ def pixel_difference(prev_frame: np.ndarray, current_frame: np.ndarray, tile_siz
 #     return relevant_indices
 
 def process_video_task(video_path: str, cache_video_dir: str, classifier: str, 
-                    tile_size: int, gpu_id: int, command_queue: mp.Queue):
+                    tile_size: int, filter_type: str, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
@@ -305,6 +307,7 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
         cache_video_dir: Path to the cache directory for this video
         classifier: Classifier name to use
         tile_size: Tile size to use
+        filter_type (str): The type of filter to apply ('none', 'neighbor').
         gpu_id: GPU ID to use for processing
         command_queue: Queue for progress updates
             
@@ -337,10 +340,10 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
     #     print(f"Failed to compile model: {e}")
     
     # Create output directory structure
-    output_dir = os.path.join(cache_video_dir, 'relevancy')
+    output_dir = os.path.join(cache_video_dir, 'relevancy') # This is now a base, specific dir is next
     
     # Create score directory for this classifier and tile size
-    classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}')
+    classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}_{filter_type}')
     if os.path.exists(classifier_dir):
         shutil.rmtree(classifier_dir)
     os.makedirs(classifier_dir)
@@ -377,21 +380,26 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
                 break
             
             # only use if flag is on
+            relevant_indices = None
+            pruned_tiles_prop = 0.0
+
+            # get relevant indices for neighbor
+            if filter_type == 'neighbor':
+                if frame_idx > 0 and prev_relevance_grid is not None:
+                    # For subsequent frames, determine relevant tiles based on the previous frame
+                    relevant_indices = mark_neighbor_tiles(prev_relevance_grid, threshold)
+                    video_name = os.path.basename(video_path)
+                    manual_include = np.array(MANUALLY_INCLUDE.get(video_name, None))
+                    if manual_include is not None:
+                        relevant_indices = np.union1d(relevant_indices, manual_include)
+            # 'none' filter or frame 0: relevant_indices remains None to process all tiles.
             
-            if frame_idx == 0:
-                # process entire first frame
-                current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, None, device)
-                pruned_tiles_prop = 0.0
-            else:
-                # we know prev_relevance_grid is not none 
-                relevant_indices = mark_neighbor_tiles(prev_relevance_grid, threshold)
-                video_name = os.path.basename(video_path)
-                manual_include = np.array(MANUALLY_INCLUDE.get(video_name, None))
-                relevant_indices = np.union1d(relevant_indices, manual_include) # manual include
-                current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, relevant_indices, device)
+            # process tiles
+            current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, relevant_indices, device)
+
+            if relevant_indices is not None:
                 num_pruned = current_relevance_grid.size - len(relevant_indices)
                 pruned_tiles_prop = num_pruned / current_relevance_grid.size if current_relevance_grid.size > 0 else 0.0
-
             
             # Update the relevance grid for the next loop iteration
             prev_relevance_grid = current_relevance_grid
@@ -483,7 +491,7 @@ def main(args):
         for classifier in args.classifiers:
             for tile_size in tile_sizes_to_process:
                 func = partial(process_video_task, video_file_path,
-                            cache_video_dir, classifier, tile_size)
+                            cache_video_dir, classifier, tile_size, args.filter)
                 funcs.append(func)
     
     # Set up multiprocessing with ProgressBar
