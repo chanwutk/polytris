@@ -13,7 +13,7 @@ import torch
 import torch.nn.functional as F
 from matplotlib.path import Path
 
-from polyis.utilities import DATA_RAW_DIR, DATA_DIR, ProgressBar, DATASETS_TO_TEST, to_h264
+from polyis.utilities import DATA_RAW_DIR, DATA_DIR, ProgressBar, DATASETS_TO_TEST
 
 
 def parse_args():
@@ -197,9 +197,6 @@ def process_b3d_video(file: str, videodir: str, outputdir: str, mask: str, batch
 
     cap.release()
     writer.release()
-    
-    # Convert to H.264 using FFMPEG
-    to_h264(out_filename)
 
 
 def process_b3d(args: argparse.Namespace):
@@ -296,9 +293,6 @@ def process_caldot_video(video_file: str, videodir: str, outputdir: str, isr: in
     cap.release()
     writer.release()
     
-    # Convert to H.264 using FFMPEG
-    to_h264(out_filename)
-
 
 def process_caldot(args: argparse.Namespace, dataset: str):
     videodir = os.path.join(args.input, dataset)

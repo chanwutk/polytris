@@ -8,10 +8,7 @@ import numpy as np
 from tqdm import tqdm
 import multiprocessing as mp
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization
-
-
-TILE_SIZES = [64]
+from polyis.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization, TILE_SIZES
 
 
 def parse_args():

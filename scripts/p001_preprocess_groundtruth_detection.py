@@ -10,7 +10,7 @@ import torch
 from multiprocessing import Queue
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST, get_num_frames
 
 
 def parse_args():
@@ -161,8 +161,11 @@ def main(args):
         for video_file in video_files:
             video_file_path = os.path.join(dataset_dir, video_file)
             output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '000_groundtruth', 'detections.jsonl')
-            funcs.append(partial(detect_objects, video_file_path, dataset, output_path))
+            funcs.append((get_num_frames(video_file_path), partial(detect_objects, video_file_path, dataset, output_path)))
             # detect_objects(video_file_path, dataset, output_path, 0, Queue())
+    
+    funcs = sorted(funcs, key=lambda x: x[0], reverse=True)
+    funcs = [func for _, func in funcs]
     
     # Determine number of available GPUs
     num_gpus = torch.cuda.device_count()

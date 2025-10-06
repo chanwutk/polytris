@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
 DATA_RAW_DIR = '/polyis-data/video-datasets-raw'
 DATA_DIR = '/polyis-data/video-datasets-low'
 CACHE_DIR = '/polyis-cache'
+TILE_SIZES = [60]
 
 # Define 10 distinct colors for track visualization (BGR format for OpenCV)
 TRACK_COLORS = [
@@ -29,6 +30,28 @@ TRACK_COLORS = [
     (0, 128, 255),  # Light Blue
     (255, 0, 128),  # Pink
 ]
+
+
+def get_num_frames(video_file_path: str) -> int:
+    """
+    Get the number of frames from a video file.
+    
+    Args:
+        video_file_path (str): Path to the video file
+        
+    Returns:
+        int: Number of frames in the video
+        
+    Raises:
+        AssertionError: If the video file cannot be opened
+    """
+    cap = cv2.VideoCapture(video_file_path)
+    assert cap.isOpened(), f"Could not open video {video_file_path}"
+    
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+    
+    return frame_count
 
 
 def format_time(**kwargs: float | int) -> list[dict[str, float | int | str]]:
@@ -985,17 +1008,17 @@ METRICS = [
 ]
 
 
-METRICS = ['HOTA', 'CLEAR']
+# METRICS = ['HOTA', 'CLEAR']
 
 DATASETS_TO_TEST = [
-    'caldot1-yolov5',
-    'caldot2-yolov5',
+    # 'b3d-jnc00',
+    # 'b3d-jnc02',
+    # 'b3d-jnc06',
+    # 'b3d-jnc07',
+    # 'caldot1-yolov5',
+    # 'caldot2-yolov5',
     'caldot1',
     'caldot2',
-    'b3d-jnc00',
-    'b3d-jnc02',
-    'b3d-jnc06',
-    'b3d-jnc07',
 ]
 
 

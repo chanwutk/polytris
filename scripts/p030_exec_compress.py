@@ -19,14 +19,10 @@ from polyis.utilities import (
     CACHE_DIR, CLASSIFIERS_CHOICES,
     DATA_DIR, format_time,
     load_classification_results,
-    CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST
+    CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
 from lib.pack_append import pack_append
 from lib.group_tiles import group_tiles
-
-
-# TILE_SIZES = [30, 60, 120]
-TILE_SIZES = [30, 60]
 
 
 def parse_args():
@@ -59,6 +55,8 @@ def parse_args():
                              '--classifiers YoloN ShuffleNet05 ResNet18')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the compressed frames folder')
+    parser.add_argument('--dilate', action='store_true',
+                        help='Dilate the classification results')
     return parser.parse_args()
 
 
@@ -182,8 +180,8 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap,
     step_times['save_mapping_files'] = (time.time_ns() / 1e6) - step_start
 
 
-def compress(video_file_path: str, cache_video_dir: str, classifier: str, 
-             tile_size: int, threshold: float, gpu_id: int, command_queue: mp.Queue):
+def compress(video_file_path: str, cache_video_dir: str, classifier: str, tile_size: int,
+             threshold: float, dilate: bool, gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video with a specific classifier and tile size.
     
@@ -205,16 +203,19 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
     results = load_classification_results(CACHE_DIR, dataset, video_file,
                                           tile_size, classifier, execution_dir=True)
     
+    dilate_str = "dilate" if dilate else "nodilate"
     # Create output directory for compression results
-    output_dir = os.path.join(cache_video_dir, '030_compressed_frames', f'{classifier}_{tile_size}')
+    output_dir = os.path.join(cache_video_dir, '030_compressed_frames',
+                              f'{classifier}_{tile_size}_{dilate_str}')
     if os.path.exists(output_dir):
         # Remove the entire directory
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     
     # Send initial progress update
+    description = f"{video_name} {tile_size:>3} {classifier} {dilate_str}"
     command_queue.put((device, {
-        'description': f"{video_name} {tile_size:>3} {classifier}",
+        'description': description + ' 0',
         'completed': 0,
         'total': len(results)
     }))
@@ -283,7 +284,8 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
 
     with open(runtime_file, 'w') as f:
         # Process each frame
-        mod = int(len(results) * 0.05)
+        fail_count = 0
+        mod = int(len(results) * 0.01)
         for frame_idx, frame_result in enumerate(results):
             # Start profiling for this frame
             # frame_start_time = (time.time_ns() / 1e6)
@@ -322,7 +324,10 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
             
             # Profile: Group connected tiles into polyominoes
             step_start = (time.time_ns() / 1e6)
-            bitmap_frame = F.conv2d(torch.from_numpy(np.array([[bitmap_frame]])), add_margin, padding='same').numpy()[0, 0]
+            if dilate:
+                bitmap_frame = F.conv2d(
+                    torch.from_numpy(np.array([[bitmap_frame]])),
+                    add_margin, padding='same').numpy()[0, 0]
             polyominoes = group_tiles(bitmap_frame)
             step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
             
@@ -366,7 +371,8 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
                     step_times['pack_append_retry'] = (time.time_ns() / 1e6) - step_start
 
                     # If retry compression fails, save the entire frame as a single polyomino
-                    print(f"Failed to compress frame {frame_idx} even after reset, saving entire frame as single polyomino")
+                    fail_count += 1
+                    # print(f"Failed to compress frame {frame_idx} even after reset, saving entire frame as single polyomino")
                     
                     # Render the entire frame onto canvas
                     # canvas = frame
@@ -394,7 +400,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str,
             
             f.write(json.dumps(profiling_data) + '\n')
             if frame_idx % mod == 0:
-                command_queue.put((device, {'completed': frame_idx}))
+                command_queue.put((device, {'description': description + f' {fail_count:>3}', 'completed': frame_idx}))
     
     # Release video capture
     cap.release()
@@ -480,18 +486,19 @@ def main(args):
                         print(f"No score file found for {video_file} {classifier} {tile_size}, skipping")
                         continue
 
-                    funcs.append(partial(compress, video_file_path, cache_video_dir,
-                                         classifier, tile_size, args.threshold))
+                    for dilate in [True, False] if args.dilate else [False]:
+                        funcs.append(partial(compress, video_file_path, cache_video_dir,
+                                            classifier, tile_size, args.threshold, dilate))
     
     print(f"Created {len(funcs)} tasks to process")
     
     # Set up multiprocessing with ProgressBar
-    # num_processes = int(mp.cpu_count() * 0.5)
-    num_processes = 20
+    num_processes = int(mp.cpu_count() * 0.9)
+    num_processes = 1
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=4).run_all(funcs)
     print("All tasks completed!")
 
 

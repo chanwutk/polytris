@@ -12,9 +12,7 @@ from rich.progress import track
 
 import polyis.images
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap, DATASETS_TO_TEST
-
-TILE_SIZES = [30, 60, 120]
+from polyis.utilities import CACHE_DIR, DATA_DIR, mark_detections, overlap, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():

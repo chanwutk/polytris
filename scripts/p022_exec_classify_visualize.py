@@ -10,10 +10,7 @@ import multiprocessing as mp
 from functools import partial
 import pandas as pd
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST
-
-
-TILE_SIZES = [30, 60]  #, 120]
+from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():

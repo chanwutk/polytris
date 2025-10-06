@@ -10,10 +10,7 @@ from rich.progress import track
 from typing import Any, Dict, List
 import multiprocessing as mp
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, mark_detections, DATASETS_TO_TEST
-
-
-TILE_SIZES = [30, 60]  #, 120]
+from polyis.utilities import CACHE_DIR, DATA_DIR, get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, mark_detections, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():

@@ -20,7 +20,7 @@ from torch.optim import Adam
 
 from polyis.models.classifier.simple_cnn import SimpleCNN
 from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, format_time, ProgressBar, DATASETS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, format_time, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 # Factory functions for models that don't accept tile_size parameter
 def ShuffleNet05_factory(_tile_size: int):
@@ -66,9 +66,6 @@ def EfficientNetS_factory(_tile_size: int):
 def EfficientNetL_factory(_tile_size: int):
     from polyis.models.classifier.efficientnet import EfficientNetL
     return EfficientNetL()
-
-
-TILE_SIZES = [30, 60]  #, 120]
 
 
 def parse_args():

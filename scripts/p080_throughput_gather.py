@@ -1,10 +1,9 @@
-
 #!/usr/local/bin/python
 
 import argparse
 import os
 import json
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_CHOICES
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_CHOICES, TILE_SIZES
 
 
 def parse_args():
@@ -13,11 +12,8 @@ def parse_args():
                         help='Dataset names (space-separated)')
     return parser.parse_args()
 
-# CLASSIFIERS = ['SimpleCNN']
 CLASSIFIERS = CLASSIFIERS_TO_TEST
-# EXEC_CLASSIFIERS = ['SimpleCNN', 'Perfect']
 EXEC_CLASSIFIERS = CLASSIFIERS_TO_TEST + ['Perfect']
-TILE_SIZES = [30, 60]  #, 120]
 
 
 def discover_available_videos(datasets):

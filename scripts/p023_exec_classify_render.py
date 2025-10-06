@@ -7,10 +7,7 @@ import numpy as np
 import multiprocessing as mp
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, ProgressBar, to_h264, DATASETS_TO_TEST
-
-
-TILE_SIZES = [30, 60]  #, 120]
+from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, ProgressBar, to_h264, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():

@@ -12,11 +12,7 @@ from typing import Callable
 import torch
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, format_time, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST
-
-
-# TILE_SIZES = [30, 60, 120]
-TILE_SIZES = [30, 60]
+from polyis.utilities import CACHE_DIR, format_time, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES, CLASSIFIERS_TO_TEST
 
 
 def parse_args():
@@ -48,11 +44,13 @@ def parse_args():
                              '--classifiers YoloN ShuffleNet05 ResNet18 groundtruth')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the 040_compressed_detections folder for each video')
+    parser.add_argument('--dilate', action='store_true',
+                        help='Dilate the classification results')
     return parser.parse_args()
 
 
 def detect_objects(video_file_path: str, tile_size: int, classifier: str,
-                   dataset_name: str, gpu_id: int, command_queue: mp.Queue):
+                   dataset_name: str, dilate: bool, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
     
@@ -65,9 +63,11 @@ def detect_objects(video_file_path: str, tile_size: int, classifier: str,
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
+    dilate_str = "dilate" if dilate else "nodilate"
     video_name = os.path.basename(video_file_path)
     
-    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames', f'{classifier}_{tile_size}', 'images')
+    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
+                                         f'{classifier}_{tile_size}_{dilate_str}', 'images')
     assert os.path.exists(compressed_frames_dir)
 
     detector = polyis.models.detector.get_detector(dataset_name, gpu_id)
@@ -75,7 +75,7 @@ def detect_objects(video_file_path: str, tile_size: int, classifier: str,
     print(f"Processing video {video_file_path}")
 
     # Create output directory for detections
-    detections_output_dir = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tile_size}')
+    detections_output_dir = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tile_size}_{dilate_str}')
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -91,7 +91,7 @@ def detect_objects(video_file_path: str, tile_size: int, classifier: str,
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
         kwargs = {'completed': 0,
                   'total': len(image_files),
-                  'description': f"{video_name} {tile_size:>3} {classifier}"}
+                  'description': f"{video_name} {tile_size:>3} {classifier} {dilate_str}"}
         command_queue.put((device, kwargs))
         for idx, image_file in enumerate(image_files):
             image_path = os.path.join(compressed_frames_dir, image_file)
@@ -192,13 +192,16 @@ def main(args):
             
             for classifier in classifiers_to_process:
                 for tile_size in tile_sizes_to_process:
-                    # Check if compressed frames directory exists
-                    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames', f'{classifier}_{tile_size}', 'images')
-                    if not os.path.exists(compressed_frames_dir):
-                        print(f"No compressed frames directory found for {video_file} {classifier} {tile_size}, skipping")
-                        continue
+                    for dilate in [True, False] if args.dilate else [False]:
+                        dilate_str = "dilate" if dilate else "nodilate"
+                        # Check if compressed frames directory exists
+                        compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
+                                                             f'{classifier}_{tile_size}_{dilate_str}', 'images')
+                        if not os.path.exists(compressed_frames_dir):
+                            print(f"No compressed frames directory found for {video_file} {classifier} {tile_size}, skipping")
+                            continue
                     
-                    funcs.append(partial(detect_objects, video_file_path, tile_size, classifier, dataset_name))
+                        funcs.append(partial(detect_objects, video_file_path, tile_size, classifier, dataset_name, dilate))
     
     print(f"Created {len(funcs)} tasks to process")
     

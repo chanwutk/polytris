@@ -14,9 +14,6 @@ import pandas as pd
 from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
 
 
-TILE_SIZES = [30, 60]
-
-
 class NumpyEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, np.ndarray):

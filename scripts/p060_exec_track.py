@@ -48,7 +48,7 @@ def parse_args():
 
 
 def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_size: int,
-                           classifier: str, verbose: bool = False) -> list[dict]:
+                           classifier: str, dilate: bool | None = None, verbose: bool = False):
     """
     Load detection results from the uncompressed detections JSONL file.
     
@@ -65,9 +65,13 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     Raises:
         FileNotFoundError: If no detection results file is found
     """
+    dilate_str = ""
+    if dilate is not None:
+        dilate_str = "dilate" if dilate else "nodilate"
+        dilate_str = f"_{dilate_str}"
     detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
                                   '050_uncompressed_detections',
-                                  f'{classifier}_{tile_size}',
+                                  f'{classifier}_{tile_size}{dilate_str}',
                                   'detections.jsonl')
     
     if not os.path.exists(detection_path):
@@ -76,7 +80,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     if verbose:
         print(f"Loading detection results from: {detection_path}")
     
-    results = []
+    results: list[dict] = []
     with open(detection_path, 'r') as f:
         for line in f:
             if line.strip():
@@ -88,7 +92,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
 
 
 def process_tracking_task(video_file: str, tile_size: int, classifier: str, dataset_name: str,
-                          args: argparse.Namespace, gpu_id: int, command_queue: mp.Queue):
+                          args: argparse.Namespace, dilate: bool, gpu_id: int, command_queue: mp.Queue):
     """
     Process tracking for a single video/classifier/tile_size combination.
     This function is designed to be called in parallel.
@@ -109,19 +113,20 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str, data
     min_hits = args.min_hits
     iou_threshold = args.iou_threshold
     no_interpolate = args.no_interpolate
+    dilate_str = "dilate" if dilate else "nodilate"
     
     # Check if uncompressed detections exist
     detection_path = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file,
-                                  '050_uncompressed_detections', f'{classifier}_{tile_size}',
+                                  '050_uncompressed_detections', f'{classifier}_{tile_size}_{dilate_str}',
                                   'detections.jsonl')
     assert os.path.exists(detection_path)
 
     # Load detection results
-    detection_results = load_detection_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier)
+    detection_results = load_detection_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier, dilate)
 
     # Create output path for tracking results
     uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '060_uncompressed_tracks')
-    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tile_size}', 'tracking.jsonl')
+    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tile_size}_{dilate_str}', 'tracking.jsonl')
     
     # Create tracker
     tracker = create_tracker(tracker_name, max_age, min_hits, iou_threshold)
@@ -272,9 +277,10 @@ def main(args: argparse.Namespace):
                 shutil.rmtree(uncompressed_tracking_dir)
 
             for classifier_tilesize in sorted(os.listdir(uncompressed_detections_dir)):
-                classifier, tile_size = classifier_tilesize.split('_')
+                classifier, tile_size, dilate = classifier_tilesize.split('_')
                 tile_size = int(tile_size)
-                funcs.append(partial(process_tracking_task, item, tile_size, classifier, dataset_name, args))
+                dilate = dilate == "dilate"
+                funcs.append(partial(process_tracking_task, item, tile_size, classifier, dataset_name, args, dilate))
     
     print(f"Created {len(funcs)} tasks to process")
     
@@ -282,6 +288,7 @@ def main(args: argparse.Namespace):
     num_processes = int(mp.cpu_count() * 0.8)
     print(f"Using {num_processes} CPUs for parallel processing")
     
+    num_processes = 16
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     

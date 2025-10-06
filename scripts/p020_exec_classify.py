@@ -14,10 +14,7 @@ from functools import partial
 
 from polyis.images import splitHWC, padHWC
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST
-
-
-TILE_SIZES = [30, 60]  #, 120]
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():

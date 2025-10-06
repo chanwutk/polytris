@@ -10,10 +10,7 @@ import time
 import multiprocessing as mp
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar, DATASETS_TO_TEST
-
-
-TILE_SIZES = [30, 60]  #, 120]
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():

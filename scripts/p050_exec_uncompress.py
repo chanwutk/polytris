@@ -10,10 +10,7 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST
-
-# TILE_SIZES = [30, 60, 120]
-TILE_SIZES = [60]
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -157,8 +154,8 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
     return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
-def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str, 
-                           gpu_id: int, command_queue: mp.Queue):
+def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str,
+                           dilate: bool, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tile_size combination.
     This function is designed to be called in parallel.
@@ -171,20 +168,25 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
+    dilate_str = "dilate" if dilate else "nodilate"
     
     # Check if compressed detections exist
-    detections_file = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
+    detections_file = os.path.join(video_file_path, '040_compressed_detections',
+                                   f'{classifier}_{tile_size}_{dilate_str}', 'detections.jsonl')
     assert os.path.exists(detections_file)
     
     # Check if compressed frames directory exists
-    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames', f'{classifier}_{tile_size}')
+    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
+                                         f'{classifier}_{tile_size}_{dilate_str}')
     assert os.path.exists(compressed_frames_dir)
     
     # print(f"Processing video {video_file_path} for unpacking")
     
-    detections_file = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tile_size}', 'detections.jsonl')
+    detections_file = os.path.join(video_file_path, '040_compressed_detections',
+                                   f'{classifier}_{tile_size}_{dilate_str}', 'detections.jsonl')
     
-    unpacked_output_dir = os.path.join(video_file_path, '050_uncompressed_detections', f'{classifier}_{tile_size}')
+    unpacked_output_dir = os.path.join(video_file_path, '050_uncompressed_detections',
+                                       f'{classifier}_{tile_size}_{dilate_str}')
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -204,7 +206,7 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
     with open(detections_file, 'r') as f:
         # Process each detection file
         contents = f.readlines()
-        description = f"{video_file_path} {tile_size:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}}"
+        description = f"{video_file_path} {tile_size:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}} {dilate_str}"
         kwargs = {'completed': 0, 'total': len(contents), 'description': description}
         mod = max(1, int(len(contents) * 0.05))
         command_queue.put((device, kwargs))
@@ -347,11 +349,11 @@ def main(args):
             if os.path.exists(uncompressed_detections_dir):
                 shutil.rmtree(uncompressed_detections_dir)
                 
-            for classifier_tilesize in sorted(os.listdir(compressed_detections_dir)):
-                classifier, tile_size = classifier_tilesize.split('_')
+            for classifier_tilesize_dilate in sorted(os.listdir(compressed_detections_dir)):
+                classifier, tile_size, dilate = classifier_tilesize_dilate.split('_')
                 tile_size = int(tile_size)
-                
-                funcs.append(partial(process_unpacking_task, video_file_path, tile_size, classifier))
+                dilate = dilate == "dilate"
+                funcs.append(partial(process_unpacking_task, video_file_path, tile_size, classifier, dilate))
     
     print(f"Created {len(funcs)} tasks to process")
     
@@ -361,7 +363,7 @@ def main(args):
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    # num_processes = 10
+    num_processes = 20
     
     ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
     print("All tasks completed!")
