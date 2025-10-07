@@ -753,13 +753,17 @@ def main(args):
         for file in os.listdir(relevancy_dir):
             if '_' in file:
                 parts = file.split('_')
-                if len(parts) >= 3: # Expects classifier_tilesize_filter
-                    filter_type = parts[-1]
-                    tile_size = int(parts[-2])
-                    classifier_name = '_'.join(parts[:-2])
-                    # If a filter is specified via args, only process matching directories
-                    if args.filter is None or args.filter == filter_type:
-                        classifier_tilesizes.append((classifier_name, tile_size, filter_type))
+                if len(parts) >= 3:  # Expects classifier_tilesize_filter
+                    try:
+                        filter_type = parts[-1]
+                        tile_size = int(parts[-2])
+                        classifier_name = '_'.join(parts[:-2])
+                        # If a filter is specified via args, only process matching directories
+                        if args.filter is None or args.filter == filter_type:
+                            classifier_tilesizes.append((classifier_name, tile_size, filter_type))
+                    except ValueError:
+                        print(f"Warning: Skipping directory with unexpected name format: {file}")
+                        continue
         
         classifier_tilesizes = sorted(list(set(classifier_tilesizes)))
         

@@ -202,15 +202,8 @@ def main():
 
     if not args.skip_run:
         # Run experiments for each filter
+        # The called scripts are responsible for clearing their own results.
         for filter_type in track(args.filters, description="Running experiments..."):
-            # Clear previous results for this filter run to ensure a clean state
-            for video_file in [f for f in os.listdir(os.path.join(DATA_DIR, args.dataset)) if f.endswith('.mp4')]:
-                for classifier in args.classifiers:
-                    filter_dir = Path(CACHE_DIR) / args.dataset / video_file / 'relevancy' / f'{classifier}_60_{filter_type}'
-                    if filter_dir.exists():
-                        print(f"Clearing previous results in {filter_dir}")
-                        shutil.rmtree(filter_dir)
-
             print(f"\n--- Running for filter: {filter_type} ---")
             # Run classification
             run_script('p020_exec_classify.py', [
