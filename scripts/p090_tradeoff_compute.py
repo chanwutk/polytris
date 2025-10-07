@@ -68,7 +68,7 @@ def load_accuracy_results(dataset: str) -> Tuple[List[Dict[str, Any]], Dict[str,
     Returns:
         Tuple[List[Dict[str, Any]], Dict[str, Dict[str, Any]]]: 
             - List of individual video evaluation results
-            - Dictionary mapping classifier_tile_size to combined dataset results
+            - Dictionary mapping classifier_tilesize to combined dataset results
     """
     # Construct path to evaluation directory for this dataset
     evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
@@ -77,9 +77,9 @@ def load_accuracy_results(dataset: str) -> Tuple[List[Dict[str, Any]], Dict[str,
     individual_results = []
     combined_results = {}
     
-    # Iterate through all classifier-tile_size combinations
-    for classifier_tilesize in os.listdir(evaluation_dir):
-        combination_dir = os.path.join(evaluation_dir, classifier_tilesize)
+    # Iterate through all classifier-tilesize-tilepadding combinations
+    for classifier_tilesize_tilepadding in os.listdir(evaluation_dir):
+        combination_dir = os.path.join(evaluation_dir, classifier_tilesize_tilepadding)
         assert os.path.isdir(combination_dir), f"Combination directory {combination_dir} does not exist"
         
         # Load individual video result files (exclude DATASET.json)
@@ -91,7 +91,7 @@ def load_accuracy_results(dataset: str) -> Tuple[List[Dict[str, Any]], Dict[str,
                 with open(results_path, 'r') as f:
                     result_data = json.load(f)
                     if filename == 'DATASET.json':
-                        combined_results[classifier_tilesize] = result_data
+                        combined_results[classifier_tilesize_tilepadding] = result_data
                     else:
                         individual_results.append(result_data)
     
@@ -105,8 +105,8 @@ def load_accuracy_results(dataset: str) -> Tuple[List[Dict[str, Any]], Dict[str,
             print(f"Sample video_name: {individual_results[0]['video_name']}")
         if 'classifier' in individual_results[0]:
             print(f"Sample classifier: {individual_results[0]['classifier']}")
-        if 'tile_size' in individual_results[0]:
-            print(f"Sample tile_size: {individual_results[0]['tile_size']}")
+        if 'tilesize' in individual_results[0]:
+            print(f"Sample tilesize: {individual_results[0]['tilesize']}")
     
     return individual_results, combined_results
 
@@ -165,11 +165,12 @@ def calculate_naive_runtime(video_name: str, query_summaries: Dict[str, Any], da
     Returns:
         float: Naive runtime in seconds
     """
-    config_key = f"{dataset}/{video_name}_groundtruth_0"  # Naive uses groundtruth with tile size 0
     naive_runtime = 0.0
     
     # Add preprocessing time (naive approach)
+    # Try both tilepadding and notilepadding versions since naive approach should be the same for both
     preprocessing_stages = ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking']
+    config_key = f"{dataset}/{video_name}_groundtruth_0_N/A"  # Naive uses groundtruth with tile size 0
     for stage_name, stage_summaries in query_summaries.items():
         if stage_name in preprocessing_stages and config_key in stage_summaries:
             # Assert that execution stages have numeric values (int or float)
@@ -178,11 +179,12 @@ def calculate_naive_runtime(video_name: str, query_summaries: Dict[str, Any], da
                 f"got {type(stage_summaries[config_key])}: {stage_summaries[config_key]}"
             stage_total = stage_summaries[config_key]
             naive_runtime += stage_total
+            break  # Only need one tilepadding version since naive is the same for both
     
     return naive_runtime
 
 
-def calculate_query_execution_runtime(video_name: str, classifier: str, tile_size: int, 
+def calculate_query_execution_runtime(video_name: str, classifier: str, tilesize: int, tilepadding: str,
                                     query_summaries: Dict[str, Any], dataset: str) -> float:
     """
     Calculate query execution runtime for a specific configuration.
@@ -193,14 +195,15 @@ def calculate_query_execution_runtime(video_name: str, classifier: str, tile_siz
     Args:
         video_name: Name of the video
         classifier: Classifier used
-        tile_size: Tile size used
+        tilesize: Tile size used
+        tilepadding: Tile padding used
         query_summaries: Query execution timing data
         dataset: Dataset name
         
     Returns:
         float: Query execution runtime in seconds
     """
-    config_key = f"{dataset}/{video_name}_{classifier}_{tile_size}"
+    config_key = f"{dataset}/{video_name}_{classifier}_{tilesize}_{tilepadding}"
     query_runtime = 0.0
     
     # Add query execution time (specific to this tile size)
@@ -229,7 +232,7 @@ def match_accuracy_throughput_data(
     Args:
         accuracy_results: List of individual video accuracy evaluation results
         throughput_data: Throughput measurement data
-        combined_results: Dictionary mapping classifier_tile_size to combined dataset accuracy results
+        combined_results: Dictionary mapping classifier_tilesize to combined dataset accuracy results
         
     Returns:
         tuple[list[dict], list[dict]]: 
@@ -246,7 +249,7 @@ def match_accuracy_throughput_data(
     # Cache frame counts to avoid repeated OpenCV calls
     frame_count_cache = {}
     
-    # Group data by classifier and tile_size for aggregation
+    # Group data by classifier and tilesize for aggregation
     grouped_data = defaultdict(list)
     
     print(f"Processing {len(accuracy_results)} accuracy results for matching...")
@@ -268,17 +271,18 @@ def match_accuracy_throughput_data(
             
         video_name = result['video_name']
         classifier = result['classifier']
-        tile_size = result['tile_size']
+        tilesize = result['tilesize']
+        tilepadding = result['tilepadding']
         
         # Only include classifiers from CLASSIFIERS_TO_TEST
-        if classifier not in CLASSIFIERS_TO_TEST:
-            print(f"Skipping classifier {classifier} (not in CLASSIFIERS_TO_TEST)")
+        if classifier not in CLASSIFIERS_TO_TEST + ['Perfect']:
+            print(f"Skipping classifier {classifier} (not in CLASSIFIERS_TO_TEST + ['Perfect'])")
             continue
         
         processed_count += 1
         
         # Create config key for throughput lookup (include dataset prefix)
-        config_key = f"{dataset}/{video_name}_{classifier}_{tile_size}"
+        config_key = f"{dataset}/{video_name}_{classifier}_{tilesize}_{tilepadding}"
         print(f"Looking for config_key: {config_key}")
         
         # Extract accuracy metrics
@@ -306,8 +310,8 @@ def match_accuracy_throughput_data(
                 total_query_time += stage_time
         
         # Calculate query execution runtime only
-        query_runtime = calculate_query_execution_runtime(video_name, classifier, tile_size, 
-                                                        query_summaries, dataset)
+        query_runtime = calculate_query_execution_runtime(video_name, classifier, tilesize, 
+                                                          tilepadding, query_summaries, dataset)
         
         # Calculate throughput (frames per second)
         throughput_fps = frame_count / query_runtime if query_runtime > 0 else 0.0
@@ -315,7 +319,8 @@ def match_accuracy_throughput_data(
         matched_entry = {
             'video_name': video_name,
             'classifier': classifier,
-            'tile_size': tile_size,
+            'tilesize': tilesize,
+            'tilepadding': tilepadding,
             'hota_score': hota_score,
             'mota_score': mota_score,
             'total_query_time': total_query_time,
@@ -328,18 +333,18 @@ def match_accuracy_throughput_data(
         matched_data.append(matched_entry)
         matched_count += 1
         
-        # Group by classifier and tile_size for aggregation
-        group_key = (classifier, tile_size)
+        # Group by classifier, tilesize, and tilepadding for aggregation
+        group_key = (classifier, tilesize, tilepadding)
         grouped_data[group_key].append(matched_entry)
     
     # Create dataset-wide aggregated data using actual combined accuracy scores
     aggregated_data = []
-    for (classifier, tile_size), entries in grouped_data.items():
+    for (classifier, tilesize, tilepadding), entries in grouped_data.items():
         if not entries:
             continue
             
         # Get actual combined accuracy scores from DATASET.json
-        combination_key = f"{classifier}_{tile_size}"
+        combination_key = f"{classifier}_{tilesize}_{tilepadding}"
         assert combination_key in combined_results, \
             f"Combined results not found for {combination_key}"
         combined_metrics = combined_results[combination_key]['metrics']
@@ -356,7 +361,8 @@ def match_accuracy_throughput_data(
         aggregated_entry = {
             'video_name': 'Dataset Average',
             'classifier': classifier,
-            'tile_size': tile_size,
+            'tilesize': tilesize,
+            'tilepadding': tilepadding,
             'hota_score': actual_hota,
             'mota_score': actual_mota,
             'total_query_time': sum([entry['total_query_time'] for entry in entries]),
@@ -560,7 +566,7 @@ def main(args):
         
     Note:
         - The script expects accuracy results from p070_accuracy_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tile_size}/{video_name}.json
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tilesize}/{video_name}.json
         - The script expects throughput results from p081_throughput_compute.py in:
           {CACHE_DIR}/{dataset}/evaluation/080_throughput/measurements/query_execution_summaries.json
         - Results are saved to: {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/
@@ -572,7 +578,8 @@ def main(args):
     
     # Process datasets in parallel with progress tracking
     with Pool() as pool:
-        ires = pool.imap(process_dataset, args.datasets)
+        # ires = pool.imap(process_dataset, args.datasets)
+        ires = map(process_dataset, args.datasets)
         
         # Process datasets in parallel using imap with rich track
         _ = [*track(ires, total=len(args.datasets))]

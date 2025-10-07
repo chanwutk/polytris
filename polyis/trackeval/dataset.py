@@ -18,7 +18,7 @@ class Dataset(_BaseDataset):
         super().__init__()
         config = {} if config is None else config
         self.tracker_list = config.get('tracker_list', ['sort'])
-        self.seq_list = config.get('seq_list', [''])
+        self.seq_list = config['seq_list']
         self.class_list = ['vehicle']
 
         self.output_fol = config.get('output_fol', 'output-eval')

@@ -47,8 +47,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_size: int,
-                           classifier: str, dilate: bool | None = None, verbose: bool = False):
+def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesize: int,
+                           classifier: str, tilepadding: bool | None = None, verbose: bool = False):
     """
     Load detection results from the uncompressed detections JSONL file.
     
@@ -56,8 +56,9 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
         video_file (str): Video file name
-        tile_size (int): Tile size used for detections
+        tilesize (int): Tile size used for detections
         classifier (str): Classifier name used for detections
+        tilepadding (bool): Whether padding was applied to classification results
         verbose (bool): Whether to print verbose output
     Returns:
         list[dict]: list of frame detection results
@@ -65,13 +66,13 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     Raises:
         FileNotFoundError: If no detection results file is found
     """
-    dilate_str = ""
-    if dilate is not None:
-        dilate_str = "dilate" if dilate else "nodilate"
-        dilate_str = f"_{dilate_str}"
+    tilepadding_str = ""
+    if tilepadding is not None:
+        tilepadding_str = "padded" if tilepadding else "unpadded"
+        tilepadding_str = f"_{tilepadding_str}"
     detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
                                   '050_uncompressed_detections',
-                                  f'{classifier}_{tile_size}{dilate_str}',
+                                  f'{classifier}_{tilesize}{tilepadding_str}',
                                   'detections.jsonl')
     
     if not os.path.exists(detection_path):
@@ -91,15 +92,15 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     return results
 
 
-def process_tracking_task(video_file: str, tile_size: int, classifier: str, dataset_name: str,
-                          args: argparse.Namespace, dilate: bool, gpu_id: int, command_queue: mp.Queue):
+def process_tracking_task(video_file: str, tilesize: int, classifier: str, dataset_name: str,
+                          args: argparse.Namespace, tilepadding: bool, gpu_id: int, command_queue: mp.Queue):
     """
-    Process tracking for a single video/classifier/tile_size combination.
+    Process tracking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
     
     Args:
         video_file (str): Name of the video file to process
-        tile_size (int): Tile size used for detections
+        tilesize (int): Tile size used for detections
         classifier (str): Classifier name used for detections
         dataset_name (str): Name of the dataset
         gpu_id (int): GPU ID to use for processing
@@ -113,20 +114,20 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str, data
     min_hits = args.min_hits
     iou_threshold = args.iou_threshold
     no_interpolate = args.no_interpolate
-    dilate_str = "dilate" if dilate else "nodilate"
+    tilepadding_str = "padded" if tilepadding else "unpadded"
     
     # Check if uncompressed detections exist
     detection_path = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file,
-                                  '050_uncompressed_detections', f'{classifier}_{tile_size}_{dilate_str}',
+                                  '050_uncompressed_detections', f'{classifier}_{tilesize}_{tilepadding_str}',
                                   'detections.jsonl')
     assert os.path.exists(detection_path)
 
     # Load detection results
-    detection_results = load_detection_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier, dilate)
+    detection_results = load_detection_results(CACHE_DIR, dataset_name, video_file, tilesize, classifier, tilepadding)
 
     # Create output path for tracking results
     uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '060_uncompressed_tracks')
-    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tile_size}_{dilate_str}', 'tracking.jsonl')
+    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tilesize}_{tilepadding_str}', 'tracking.jsonl')
     
     # Create tracker
     tracker = create_tracker(tracker_name, max_age, min_hits, iou_threshold)
@@ -139,7 +140,7 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str, data
     
     # Send initial progress update
     command_queue.put((device, {
-        'description': f"{video_name} {tracker_name} {classifier} {tile_size}",
+        'description': f"{video_name} {tracker_name} {classifier} {tilesize}",
         'completed': 0,
         'total': len(detection_results)
     }))
@@ -229,7 +230,7 @@ def main(args: argparse.Namespace):
     
     This function serves as the entry point for the script. It:
     1. Validates the dataset directories exist
-    2. Creates a list of all video/classifier/tile_size combinations to process
+    2. Creates a list of all video/classifier/tilesize combinations to process
     3. Uses multiprocessing to process tasks in parallel across available GPUs
     4. Processes each video and saves tracking results
     
@@ -238,9 +239,9 @@ def main(args: argparse.Namespace):
         
     Note:
         - The script expects uncompressed detection results from 050_exec_uncompress.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tilesize}/detections.jsonl
         - Tracking results are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tile_size}/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tilesize}/tracking.jsonl
         - Linear interpolation is optional and controlled by the --no_interpolate flag
         - Processing is parallelized for improved performance
         - The number of processes equals the number of available GPUs
@@ -251,7 +252,7 @@ def main(args: argparse.Namespace):
     print(f"Tracker parameters: max_age={args.max_age}, min_hits={args.min_hits}, iou_threshold={args.iou_threshold}")
     print(f"Interpolation: {'enabled' if not args.no_interpolate else 'disabled'}")
     
-    # Create tasks list with all video/classifier/tile_size combinations
+    # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     
     for dataset_name in args.datasets:
@@ -277,10 +278,10 @@ def main(args: argparse.Namespace):
                 shutil.rmtree(uncompressed_tracking_dir)
 
             for classifier_tilesize in sorted(os.listdir(uncompressed_detections_dir)):
-                classifier, tile_size, dilate = classifier_tilesize.split('_')
-                tile_size = int(tile_size)
-                dilate = dilate == "dilate"
-                funcs.append(partial(process_tracking_task, item, tile_size, classifier, dataset_name, args, dilate))
+                classifier, tilesize, tilepadding_str = classifier_tilesize.split('_')
+                tilesize = int(tilesize)
+                tilepadding = tilepadding_str == "padded"
+                funcs.append(partial(process_tracking_task, item, tilesize, classifier, dataset_name, args, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
     

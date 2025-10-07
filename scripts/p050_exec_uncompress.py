@@ -63,7 +63,7 @@ UnpackedDets = tuple[FrameIdToDets, Dets, Dets]
 
 def unpack_detections(detections: list[list[float]], index_map: np.ndarray, 
                       offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]], 
-                      tile_size: int) -> UnpackedDets:
+                      tilesize: int) -> UnpackedDets:
     """
     Unpack detections from compressed coordinates back to original frame coordinates.
     
@@ -71,7 +71,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         detections (list[list[float]]): list of bounding boxes in compressed coordinates [x1, y1, x2, y2]
         index_map (np.ndarray): Index map from the mapping file (2D array with group_ids)
         offset_lookup (list[tuple[tuple[int, int], tuple[int, int], int]]): Offset lookup from the mapping file
-        tile_size (int): Size of tiles used for compression
+        tilesize (int): Size of tiles used for compression
         
     Returns:
         tuple[
@@ -103,8 +103,8 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         center_in_any_tile: bool = True
         for x, y in zip(xs, ys):
             # Convert to tile coordinates in the compressed image
-            tile_x = int(x // tile_size)
-            tile_y = int(y // tile_size)
+            tile_x = int(x // tilesize)
+            tile_y = int(y // tilesize)
             
             # Ensure tile coordinates are within bounds
             if (tile_y < 0 or tile_y >= index_map.shape[0] or 
@@ -135,8 +135,8 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         
         # Calculate the offset to convert from compressed to original coordinates
         # The offset represents how much the tile was moved during compression
-        offset_x = (original_offset_x - packed_x) * tile_size
-        offset_y = (original_offset_y - packed_y) * tile_size
+        offset_x = (original_offset_x - packed_x) * tilesize
+        offset_y = (original_offset_y - packed_y) * tilesize
         
         # Convert detection back to original frame coordinates
         original_det = [
@@ -154,39 +154,40 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
     return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
-def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str,
-                           dilate: bool, gpu_id: int, command_queue: mp.Queue):
+def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
+                           tilepadding: bool, gpu_id: int, command_queue: mp.Queue):
     """
-    Process unpacking for a single video/classifier/tile_size combination.
+    Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
     
     Args:
         video_file_path (str): Path to the video file directory
-        tile_size (int): Tile size used for compression
+        tilesize (int): Tile size used for compression
         classifier (str): Classifier name used for compression and detection
+        tilepadding (bool): Whether padding was applied to classification results
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    dilate_str = "dilate" if dilate else "nodilate"
+    tilepadding_str = "padded" if tilepadding else "unpadded"
     
     # Check if compressed detections exist
     detections_file = os.path.join(video_file_path, '040_compressed_detections',
-                                   f'{classifier}_{tile_size}_{dilate_str}', 'detections.jsonl')
+                                   f'{classifier}_{tilesize}_{tilepadding_str}', 'detections.jsonl')
     assert os.path.exists(detections_file)
     
     # Check if compressed frames directory exists
     compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
-                                         f'{classifier}_{tile_size}_{dilate_str}')
+                                         f'{classifier}_{tilesize}_{tilepadding_str}')
     assert os.path.exists(compressed_frames_dir)
     
     # print(f"Processing video {video_file_path} for unpacking")
     
     detections_file = os.path.join(video_file_path, '040_compressed_detections',
-                                   f'{classifier}_{tile_size}_{dilate_str}', 'detections.jsonl')
+                                   f'{classifier}_{tilesize}_{tilepadding_str}', 'detections.jsonl')
     
     unpacked_output_dir = os.path.join(video_file_path, '050_uncompressed_detections',
-                                       f'{classifier}_{tile_size}_{dilate_str}')
+                                       f'{classifier}_{tilesize}_{tilepadding_str}')
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -206,7 +207,7 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
     with open(detections_file, 'r') as f:
         # Process each detection file
         contents = f.readlines()
-        description = f"{video_file_path} {tile_size:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}} {dilate_str}"
+        description = f"{video_file_path} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}} {tilepadding_str}"
         kwargs = {'completed': 0, 'total': len(contents), 'description': description}
         mod = max(1, int(len(contents) * 0.05))
         command_queue.put((device, kwargs))
@@ -233,7 +234,7 @@ def process_unpacking_task(video_file_path: str, tile_size: int, classifier: str
                 frame_detections,
                 not_in_any_tile_detections,
                 center_not_in_any_tile_detections,
-            ) = unpack_detections(detections, index_map, offset_lookup, tile_size)
+            ) = unpack_detections(detections, index_map, offset_lookup, tilesize)
 
             # save not_in_any_tile_detections and center_not_in_any_tile_detections
             if len(not_in_any_tile_detections) > 0:
@@ -302,7 +303,7 @@ def main(args):
     
     This function serves as the entry point for the script. It:
     1. Validates the dataset directories exist
-    2. Creates a list of all video/classifier/tile_size combinations to process
+    2. Creates a list of all video/classifier/tilesize combinations to process
     3. Uses multiprocessing to process tasks in parallel across available GPUs
     4. Processes each video and saves unpacked detection results
     
@@ -312,19 +313,19 @@ def main(args):
             
     Note:
         - The script expects compressed detections from 040_exec_detect.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tile_size}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tilesize}/detections.jsonl
         - The script expects mapping files from 030_exec_compress.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tile_size}/
+          {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/
         - Unpacked detections are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tilesize}/detections.jsonl
         - Each line in the output JSONL file contains one bounding box [x1, y1, x2, y2] in original frame coordinates
-        - All available video/classifier/tile_size combinations are processed
-        - If no compressed detections are found for a video/tile_size/classifier combination, that combination is skipped
+        - All available video/classifier/tilesize combinations are processed
+        - If no compressed detections are found for a video/tilesize/classifier combination, that combination is skipped
         - The number of processes equals the number of available GPUs
     """
     # mp.set_start_method('spawn', force=True)
     
-    # Create tasks list with all video/classifier/tile_size combinations
+    # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
 
     for dataset_name in args.datasets:
@@ -349,11 +350,11 @@ def main(args):
             if os.path.exists(uncompressed_detections_dir):
                 shutil.rmtree(uncompressed_detections_dir)
                 
-            for classifier_tilesize_dilate in sorted(os.listdir(compressed_detections_dir)):
-                classifier, tile_size, dilate = classifier_tilesize_dilate.split('_')
-                tile_size = int(tile_size)
-                dilate = dilate == "dilate"
-                funcs.append(partial(process_unpacking_task, video_file_path, tile_size, classifier, dilate))
+            for classifier_tilesize_tilepadding in sorted(os.listdir(compressed_detections_dir)):
+                classifier, tilesize, tilepadding_str = classifier_tilesize_tilepadding.split('_')
+                tilesize = int(tilesize)
+                tilepadding = tilepadding_str == "padded"
+                funcs.append(partial(process_unpacking_task, video_file_path, tilesize, classifier, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
     

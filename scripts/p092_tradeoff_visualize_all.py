@@ -88,9 +88,13 @@ def print_best_data_points(df_combined: pd.DataFrame, metrics_list: list[str],
             
             if len(faster_than_baseline) == 0:
                 # If no points are faster than baseline, use the fastest point
+                assert isinstance(dataset_data, pd.DataFrame), \
+                    f"dataset_data should be a DataFrame, got {type(dataset_data)}"
                 best_point = dataset_data.loc[dataset_data[x_column].idxmin()]
             else:
                 # Find the point with highest accuracy among those faster than baseline
+                assert isinstance(faster_than_baseline, pd.DataFrame), \
+                    f"faster_than_baseline should be a DataFrame, got {type(faster_than_baseline)}"
                 best_point = faster_than_baseline.loc[faster_than_baseline[accuracy_col].idxmax()]
             
             # Calculate speed improvement
@@ -154,7 +158,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: lis
         )
         
         # Add dataset to tooltip for all datasets visualization
-        scatter = scatter.encode(tooltip=['dataset', 'video_name', 'classifier', 'tile_size', x_column, accuracy_col])
+        scatter = scatter.encode(tooltip=['dataset', 'video_name', 'classifier', 'tilesize', 'tilepadding', x_column, accuracy_col])
         
         # Create the combined chart with dataset facets
         combined_chart = (scatter + baseline).facet(

@@ -31,14 +31,16 @@ def parse_args():
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
+    parser.add_argument('--clear', action='store_true',
+                        help='Remove and recreate the 070_accuracy evaluation directory for each dataset')
     return parser.parse_args()
 
 
-def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, int]]:
+def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, int, str]]:
     """
-    Find all classifier/tile_size combinations with saved accuracy results.
+    Find all classifier/tilesize/tilepadding combinations with saved accuracy results.
     
-    Scans the evaluation directory to discover all classifier/tile_size combinations
+    Scans the evaluation directory to discover all classifier/tilesize/tilepadding combinations
     that have completed accuracy evaluation results available.
     
     Args:
@@ -46,28 +48,30 @@ def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, int]]:
         dataset (str): Dataset name
         
     Returns:
-        List[Tuple[str, int]]: List of (classifier, tile_size) tuples
+        List[Tuple[str, int, str]]: List of (classifier, tilesize, tilepadding) tuples
     """
     # Construct path to evaluation directory for this dataset
     evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_accuracy')
     assert os.path.exists(evaluation_dir), f"Evaluation directory {evaluation_dir} does not exist"
     
-    # Collect all classifier/tile_size combinations
-    classifier_tile_combinations: list[tuple[str, int]] = []
+    # Collect all classifier/tilesize/tilepadding combinations
+    classifier_tile_combinations: list[tuple[str, int, str]] = []
     
-    # Iterate through all classifier-tile_size directories
-    for classifier_tilesize in os.listdir(evaluation_dir):
-        # Parse classifier and tile size from directory name
-        classifier, tilesize = classifier_tilesize.split('_')
+    # Iterate through all classifier-tilesize-tilepadding directories
+    for classifier_tilesize_tilepadding in os.listdir(evaluation_dir):
+        # Parse classifier, tile size, and tilepadding from directory name
+        parts = classifier_tilesize_tilepadding.split('_')
+        assert len(parts) == 3, f"Expected format 'classifier_tilesize_tilepadding', got '{classifier_tilesize_tilepadding}'"
+        classifier, tilesize, tilepadding = parts
         ts = int(tilesize)
         
         # Verify that the required DATASET.json file exists
         # This ensures the evaluation was completed successfully
-        dataset_results_path = os.path.join(evaluation_dir, f'{classifier}_{ts}', 'DATASET.json')
+        dataset_results_path = os.path.join(evaluation_dir, f'{classifier}_{ts}_{tilepadding}', 'DATASET.json')
         assert os.path.exists(dataset_results_path), f"Dataset results path {dataset_results_path} does not exist"
         
         # Add this combination to our list
-        classifier_tile_combinations.append((classifier, ts))
+        classifier_tile_combinations.append((classifier, ts, tilepadding))
     
     return classifier_tile_combinations
 
@@ -87,7 +91,7 @@ def load_saved_results(dataset: str, combined: bool = False) -> List[Dict[str, A
     Returns:
         List[Dict[str, Any]]: List of evaluation results
     """
-    # Find all classifier/tile_size combinations with available results
+    # Find all classifier/tilesize combinations with available results
     classifier_tile_combinations = find_saved_results(CACHE_DIR, dataset)
     assert len(classifier_tile_combinations) > 0, f"No saved results found for dataset {dataset}"
 
@@ -95,9 +99,9 @@ def load_saved_results(dataset: str, combined: bool = False) -> List[Dict[str, A
     results = []
     evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
     
-    # Process each classifier/tile_size combination
-    for classifier, tile_size in classifier_tile_combinations:
-        combination_dir = os.path.join(evaluation_dir, f'{classifier}_{tile_size}')
+    # Process each classifier/tilesize/tilepadding combination
+    for classifier, tilesize, tilepadding in classifier_tile_combinations:
+        combination_dir = os.path.join(evaluation_dir, f'{classifier}_{tilesize}_{tilepadding}')
         
         # Load result files based on the combined parameter
         for filename in os.listdir(combination_dir):
@@ -134,9 +138,9 @@ def main(args):
     Main function that orchestrates the tracking accuracy visualization process.
     
     This function serves as the entry point for the script. It:
-    1. Finds all classifier/tile_size combinations with saved accuracy results
+    1. Finds all classifier/tilesize/tilepadding combinations with saved accuracy results
     2. Loads individual video result files from the new evaluation directory structure
-    3. Creates visualizations comparing accuracy across videos, classifiers, and tile sizes
+    3. Creates visualizations comparing accuracy across videos, classifiers, tile sizes, and tilepadding values
     4. Generates summary reports and charts for each dataset
     
     Args:
@@ -144,7 +148,7 @@ def main(args):
         
     Note:
         - The script expects accuracy results from p070_accuracy_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tile_size}/
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tilesize}_{tilepadding}/
           ├── DATASET.json (combined results)
           ├── {video_name}.json (individual video results)
           └── LOG.txt (evaluation logs)
@@ -157,7 +161,15 @@ def main(args):
     for dataset in args.datasets:
         print(f"\nProcessing dataset: {dataset}")
         
+        # Clear 070_accuracy directory if requested
+        if args.clear:
+            accuracy_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+            if os.path.exists(accuracy_dir):
+                shutil.rmtree(accuracy_dir)
+                print(f"Cleared existing 070_accuracy directory: {accuracy_dir}")
+        
         # Load individual video results for per-video visualizations
+        # This loads results for all classifier/tilesize/tilepadding combinations
         dataset_results = load_saved_results(dataset, combined=False)
         assert len(dataset_results) > 0, f"No results found for dataset {dataset}"
         
@@ -179,20 +191,21 @@ def main(args):
         print(f"Results saved to: {output_dir}")
 
 
-def visualize_compared_accuracy_bar(video_tile_groups: Dict[str, Dict[int, Dict[str, List]]], 
-                                    sorted_videos: List[str], sorted_tile_sizes: List[int],
+def visualize_compared_accuracy_bar(video_tile_tilepadding_groups: Dict[str, Dict[int, Dict[str, Dict[str, List]]]], 
+                                    sorted_videos: List[str], sorted_tilesizes: List[int], sorted_tilepadding_values: List[str],
                                     score_field: str, xlabel: str, output_path: str):
     """
-    Create a comparison plot for tracking accuracy scores by video and tile size.
+    Create a comparison plot for tracking accuracy scores by video, tile size, and tilepadding.
     
     Creates a faceted bar chart showing accuracy scores for different classifiers
-    across videos and tile sizes. Each facet shows one video-tile_size combination,
+    across videos, tile sizes, and tilepadding values. Each facet shows one video-tilesize-tilepadding combination,
     with bars representing different classifiers sorted by performance.
     
     Args:
-        video_tile_groups: Grouped data by video and tile size
+        video_tile_tilepadding_groups: Grouped data by video, tile size, and tilepadding
         sorted_videos: List of video names in sorted order
-        sorted_tile_sizes: List of tile sizes in sorted order
+        sorted_tilesizes: List of tile sizes in sorted order
+        sorted_tilepadding_values: List of tilepadding values in sorted order
         score_field: Field name for scores ('hota_scores' or 'clear_scores')
         xlabel: Label for x-axis
         output_path: Path to save the plot
@@ -200,29 +213,33 @@ def visualize_compared_accuracy_bar(video_tile_groups: Dict[str, Dict[int, Dict[
     # Prepare data for the chart by flattening grouped data
     chart_data = []
     
-    # Iterate through all video-tile_size combinations
+    # Iterate through all video-tilesize-tilepadding combinations
     for video_name in sorted_videos:
-        for tile_size in sorted_tile_sizes:
-            # Check if this combination has data
-            if tile_size in video_tile_groups[video_name]:
-                group_data = video_tile_groups[video_name][tile_size]
-                
-                # Sort classifiers by their scores (descending order)
-                sorted_indices = sorted(range(len(group_data[score_field])), 
-                                       key=lambda x: group_data[score_field][x], reverse=True)
-                
-                # Extract sorted labels and scores
-                sorted_labels = [group_data['labels'][idx] for idx in sorted_indices]
-                sorted_scores = [group_data[score_field][idx] for idx in sorted_indices]
-                
-                # Add each classifier-score pair to chart data
-                for label, score in zip(sorted_labels, sorted_scores):
-                    chart_data.append({
-                        'Video': video_name,
-                        'Tile_Size': tile_size,
-                        'Classifier': label,
-                        'Score': score
-                    })
+        for tilesize in sorted_tilesizes:
+            for tilepadding in sorted_tilepadding_values:
+                # Check if this combination has data
+                if (tilesize in video_tile_tilepadding_groups[video_name] and 
+                    tilepadding in video_tile_tilepadding_groups[video_name][tilesize]):
+                    group_data = video_tile_tilepadding_groups[video_name][tilesize][tilepadding]
+                    
+                    # Sort classifiers by their scores (descending order)
+                    sorted_indices = sorted(range(len(group_data[score_field])), 
+                                           key=lambda x: group_data[score_field][x], reverse=True)
+                    
+                    # Extract sorted labels and scores
+                    sorted_labels = [group_data['labels'][idx] for idx in sorted_indices]
+                    sorted_scores = [group_data[score_field][idx] for idx in sorted_indices]
+                    
+                    # Add each classifier-score pair to chart data
+                    for label, score in zip(sorted_labels, sorted_scores):
+                        chart_data.append({
+                            'Video': video_name,
+                            'Tile_Size': tilesize,
+                            'Tile_Padding': tilepadding,
+                            'Classifier': label,
+                            'Classifier_Tile_Padding': f'{label}_{tilepadding}',
+                            'Score': score
+                        })
     
     # Convert to pandas DataFrame for Altair
     df = pd.DataFrame(chart_data)
@@ -231,7 +248,9 @@ def visualize_compared_accuracy_bar(video_tile_groups: Dict[str, Dict[int, Dict[
     # Main bars showing the scores
     bars = alt.Chart(df).mark_bar().encode(
         x=alt.X('Score:Q', title=xlabel, scale=alt.Scale(domain=[0, 1])),
-        tooltip=['Video', 'Tile_Size', 'Classifier', alt.Tooltip('Score:Q', format='.2f')]
+        # yOffset=alt.YOffset('Dilate:N'),
+        color=alt.Color('Tile_Padding:N', title='Tile Padding'),
+        tooltip=['Video', 'Tile_Size', 'Tile_Padding', 'Classifier', alt.Tooltip('Score:Q', format='.2f')]
     ).properties(
         width=200,
         height=200
@@ -246,6 +265,7 @@ def visualize_compared_accuracy_bar(video_tile_groups: Dict[str, Dict[int, Dict[
     ).transform_calculate(text='datum.Score > 0.01 ? format(datum.Score, ".2f") : ""').encode(
         x=alt.X('Score:Q'),
         text=alt.Text('text:N'),
+        # yOffset=alt.YOffset('Dilate:N')
     )
 
     # Add classifier name labels on the left side of bars
@@ -257,18 +277,24 @@ def visualize_compared_accuracy_bar(video_tile_groups: Dict[str, Dict[int, Dict[
         color='black'
     ).transform_calculate(Score2='datum.Score * 0.0001').encode(
         x=alt.X('Score2:Q'),
-        text=alt.Text('Classifier:N'),
+        text=alt.Text('Classifier_Tile_Padding:N'),
         # Use white text for high scores, black for low scores
-        color=alt.condition(alt.datum.Score > 0.1, alt.value('white'), alt.value('black'))
+        color=alt.condition(alt.datum.Score > 0.1, alt.value('white'), alt.value('black')),
+        # yOffset=alt.YOffset('Dilate:N')
     )
     
     # Layer the charts (bars + labels + text) and apply faceting
-    # Facet by tile size (rows) and video (columns)
+    # Facet by tile size (rows), tilepadding (columns), and video (sub-columns)
     chart = (bars + labels + text).encode(
-        y=alt.Y('Classifier:N', sort='-x', axis=alt.Axis(labels=False, ticks=False, title=None)),
+        y=alt.Y('Classifier_Tile_Padding:N', sort='-x', axis=alt.Axis(labels=False, ticks=False, title=None)),
+        # yOffset=alt.YOffset('Tile_Padding:N'),
+        # detail=alt.Detail('Tile_Padding:N'),
+        # color=alt.Color('Tile_Padding:N', title='Tile Padding')
     ).resolve_scale(y='independent').facet(
         row=alt.Row('Tile_Size:O', title='Tile Size'),
-        column=alt.Column('Video:N', title=None)
+        column=alt.Column('Video:N', title=None),
+        # column=alt.Column('Tile_Padding:N', title='Tile Padding'),
+        # facet=alt.Facet('Video:N', title=None)
     ).resolve_scale(y='independent').properties(padding=0)
     
     # Save the chart as PNG with high resolution
@@ -297,7 +323,8 @@ def visualize_tracking_accuracy(results: List[Dict[str, Any]], output_dir: str, 
         data.append({
             'Video': result['video_name'] or 'Combined',  # Use 'Combined' for dataset-level results
             'Classifier': result['classifier'],
-            'Tile_Size': result['tile_size'],
+            'Tile_Size': result['tilesize'],
+            'Tile_Padding': result['tilepadding'],
             'HOTA': metrics.get('HOTA', {}).get('HOTA(0)', 0.0),  # Extract HOTA score
             'MOTA': metrics.get('CLEAR', {}).get('MOTA', 0.0)   # Extract MOTA score
         })
@@ -311,38 +338,42 @@ def visualize_tracking_accuracy(results: List[Dict[str, Any]], output_dir: str, 
     csv_file_path = os.path.join(output_dir, f'{prefix}accuracy_results.csv')
     df.to_csv(csv_file_path, index=False)
     
-    # Group data by video and tile size for bar plots
-    # This creates a nested structure: video -> tile_size -> {labels, scores}
-    video_tile_groups = {}
+    # Group data by video, tile size, and tilepadding for bar plots
+    # This creates a nested structure: video -> tilesize -> tilepadding -> {labels, scores}
+    video_tile_tilepadding_groups = {}
     for _, row in df.iterrows():
         video_name = row['Video']
-        tile_size = row['Tile_Size']
+        tilesize = row['Tile_Size']
+        tilepadding = row['Tile_Padding']
         
         # Initialize nested structure if needed
-        if video_name not in video_tile_groups:
-            video_tile_groups[video_name] = {}
-        if tile_size not in video_tile_groups[video_name]:
-            video_tile_groups[video_name][tile_size] = {
+        if video_name not in video_tile_tilepadding_groups:
+            video_tile_tilepadding_groups[video_name] = {}
+        if tilesize not in video_tile_tilepadding_groups[video_name]:
+            video_tile_tilepadding_groups[video_name][tilesize] = {}
+        if tilepadding not in video_tile_tilepadding_groups[video_name][tilesize]:
+            video_tile_tilepadding_groups[video_name][tilesize][tilepadding] = {
                 'labels': [],
                 'hota_scores': [],
                 'clear_scores': []
             }
         
         # Add this classifier's data to the group
-        video_tile_groups[video_name][tile_size]['labels'].append(row['Classifier'])
-        video_tile_groups[video_name][tile_size]['hota_scores'].append(row['HOTA'])
-        video_tile_groups[video_name][tile_size]['clear_scores'].append(row['MOTA'])
+        video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['labels'].append(row['Classifier'])
+        video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['hota_scores'].append(row['HOTA'])
+        video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['clear_scores'].append(row['MOTA'])
     
-    # Sort videos and tile sizes for consistent ordering in visualizations
-    sorted_videos = sorted(video_tile_groups.keys())
-    sorted_tile_sizes = sorted(df['Tile_Size'].unique())
+    # Sort videos, tile sizes, and tilepadding values for consistent ordering in visualizations
+    sorted_videos = sorted(video_tile_tilepadding_groups.keys())
+    sorted_tilesizes = sorted(df['Tile_Size'].unique())
+    sorted_tilepadding_values = sorted(df['Tile_Padding'].unique())
     
     # Create comparison plots for both HOTA and MOTA scores
-    # Each plot shows classifiers ranked by performance for each video-tile_size combination
-    visualize_compared_accuracy_bar(video_tile_groups, sorted_videos, sorted_tile_sizes,
+    # Each plot shows classifiers ranked by performance for each video-tilesize-tilepadding combination
+    visualize_compared_accuracy_bar(video_tile_tilepadding_groups, sorted_videos, sorted_tilesizes, sorted_tilepadding_values,
         'hota_scores', 'HOTA Score', os.path.join(output_dir, f'{prefix}hota.png'))
     
-    visualize_compared_accuracy_bar(video_tile_groups, sorted_videos, sorted_tile_sizes,
+    visualize_compared_accuracy_bar(video_tile_tilepadding_groups, sorted_videos, sorted_tilesizes, sorted_tilepadding_values,
         'clear_scores', 'MOTA Score', os.path.join(output_dir, f'{prefix}mota.png'))
 
 

@@ -146,10 +146,10 @@ def parse_index_construction_timings(index_data: List[Dict]) -> Dict[str, Any]:
                 # Training data creation - group by operation and tile size
                 for timing in file_timings:
                     op = timing.get('op', 'unknown')
-                    tile_size = timing.get('tile_size', 'unknown')
+                    tilesize = timing.get('tilesize', 'unknown')
                     time_val = timing.get('time', 0)
                     
-                    op_key = f"{config_key}_{tile_size}_{op}"
+                    op_key = f"{config_key}_{tilesize}_{op}"
                     stage_summaries[stage][op_key].append(time_val)
             
             elif stage == '013_tune_train_classifier':
@@ -195,8 +195,9 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
     for entry in query_data:
         dataset_video = entry['dataset/video']
         classifier = entry['classifier']
-        tile_size = entry['tile_size']
-        config_key = f"{dataset_video}_{classifier}_{tile_size}"
+        tilesize = entry['tilesize']
+        tilepadding = entry.get('tilepadding', 'N/A')
+        config_key = f"{dataset_video}_{classifier}_{tilesize}_{tilepadding}"
         
         for stage, file_path in entry['runtime_files']:
             file_timings = parse_runtime_file(file_path, stage, accessors[stage])
@@ -277,7 +278,8 @@ def save_measurements(index_timings: Dict[str, Any], query_timings: Dict[str, An
         'dataset': dataset,
         'videos': videos,
         'classifiers': CLASSIFIERS_TO_TEST + ['Perfect'],
-        'tile_sizes': [30, 60],
+        'tilesizes': [30, 60],
+        'tilepadding_values': ['padded', 'unpadded'],
         'index_stages': ['011_tune_detect', '012_tune_create_training_data', '013_tune_train_classifier'],
         'query_stages': ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking', 
                         '020_exec_classify', '030_exec_compress', '040_exec_detect', '060_exec_track']

@@ -32,7 +32,7 @@ def parse_args():
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
             - datasets (List[str]): Dataset names to process (default: ['b3d'])
-            - tile_size (int | str): Tile size to use for compression (choices: 30, 60, 120, 'all')
+            - tilesize (int | str): Tile size to use for compression (choices: 30, 60, 120, 'all')
             - threshold (float): Threshold for classification probability (default: 0.5)
             - classifiers (str): Classifier names to use
             - clear (bool): Whether to remove and recreate the compressed frames folder (default: False)
@@ -42,7 +42,7 @@ def parse_args():
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
-    parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
+    parser.add_argument('--tilesize', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for compression (or "all" for all tile sizes)')
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification probability (0.0 to 1.0)')
@@ -55,8 +55,8 @@ def parse_args():
                              '--classifiers YoloN ShuffleNet05 ResNet18')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the compressed frames folder')
-    parser.add_argument('--dilate', action='store_true',
-                        help='Dilate the classification results')
+    parser.add_argument('--tilepadding', action='store_true',
+                        help='Apply padding to the classification results')
     return parser.parse_args()
 
 
@@ -100,7 +100,7 @@ def apply_pack(
     offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]],
     frame_idx: int,
     frame: dtypes.NPImage,
-    tile_size: int,
+    tilesize: int,
     step_times: dict[str, float],
 ):
     """
@@ -113,7 +113,7 @@ def apply_pack(
         offset_lookup: The offset lookup to update
         frame_idx: The index of the frame
         frame: The frame to render
-        tile_size: The size of the tile
+        tilesize: The size of the tile
         step_times: The step times to update
         
     Returns:
@@ -121,7 +121,7 @@ def apply_pack(
     """
     # Profile: Render packed polyominoes onto canvas
     step_start = (time.time_ns() / 1e6)
-    canvas = render(canvas, positions, frame, tile_size)
+    canvas = render(canvas, positions, frame, tilesize)
     step_times['render_canvas'] = (time.time_ns() / 1e6) - step_start
 
     assert index_map is not None
@@ -180,8 +180,8 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap,
     step_times['save_mapping_files'] = (time.time_ns() / 1e6) - step_start
 
 
-def compress(video_file_path: str, cache_video_dir: str, classifier: str, tile_size: int,
-             threshold: float, dilate: bool, gpu_id: int, command_queue: mp.Queue):
+def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesize: int,
+             threshold: float, tilepadding: bool, gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video with a specific classifier and tile size.
     
@@ -189,8 +189,9 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tile_s
         video_file_path: Path to the video file
         cache_video_dir: Path to the cache directory for this video
         classifier: Classifier name to use
-        tile_size: Tile size to use
+        tilesize: Tile size to use
         threshold: Threshold for classification probability
+        tilepadding: Whether to apply padding to classification results
         gpu_id: GPU ID to use for processing
         command_queue: Queue for progress updates
     """
@@ -201,19 +202,19 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tile_s
     dataset = os.path.basename(os.path.dirname(os.path.dirname(cache_video_dir)))
     video_file = os.path.basename(cache_video_dir)
     results = load_classification_results(CACHE_DIR, dataset, video_file,
-                                          tile_size, classifier, execution_dir=True)
+                                          tilesize, classifier, execution_dir=True)
     
-    dilate_str = "dilate" if dilate else "nodilate"
+    tilepadding_str = "padded" if tilepadding else "unpadded"
     # Create output directory for compression results
     output_dir = os.path.join(cache_video_dir, '030_compressed_frames',
-                              f'{classifier}_{tile_size}_{dilate_str}')
+                              f'{classifier}_{tilesize}_{tilepadding_str}')
     if os.path.exists(output_dir):
         # Remove the entire directory
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     
     # Send initial progress update
-    description = f"{video_name} {tile_size:>3} {classifier} {dilate_str}"
+    description = f"{video_name} {tilesize:>3} {classifier} {tilepadding_str}"
     command_queue.put((device, {
         'description': description + ' 0',
         'completed': 0,
@@ -248,8 +249,8 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tile_s
     os.makedirs(offset_lookup_dir)
     
     # Calculate grid dimensions
-    grid_height = height // tile_size
-    grid_width = width // tile_size
+    grid_height = height // tilesize
+    grid_width = width // tilesize
 
     def init_compression_variables():
         canvas = np.zeros((height, width, 3), dtype=np.uint8)
@@ -272,7 +273,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tile_s
     # Initialize profiling output file
     runtime_file = os.path.join(output_dir, 'runtime.jsonl')
     
-    # print(f"Processing {len(results)} frames with tile size {tile_size}")
+    # print(f"Processing {len(results)} frames with tile size {tilesize}")
 
     add_margin = torch.tensor(
         [[[[0, 1, 0],
@@ -324,7 +325,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tile_s
             
             # Profile: Group connected tiles into polyominoes
             step_start = (time.time_ns() / 1e6)
-            if dilate:
+            if tilepadding:
                 bitmap_frame = F.conv2d(
                     torch.from_numpy(np.array([[bitmap_frame]])),
                     add_margin, padding='same').numpy()[0, 0]
@@ -343,7 +344,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tile_s
             if positions is not None:
                 step_times['pack_append'] = (time.time_ns() / 1e6) - step_start
                 canvas = apply_pack(positions, canvas, index_map, offset_lookup,
-                                    frame_idx, frame, tile_size, step_times)
+                                    frame_idx, frame, tilesize, step_times)
                 clean = False
             else:
                 # If compression fails, save current compressed image and start new one
@@ -365,7 +366,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tile_s
                 if positions is not None:
                     step_times['pack_append_retry'] = (time.time_ns() / 1e6) - step_start
                     canvas = apply_pack(positions, canvas, index_map, offset_lookup,
-                                        frame_idx, frame, tile_size, step_times)
+                                        frame_idx, frame, tilesize, step_times)
                     clean = False
                 else:
                     step_times['pack_append_retry'] = (time.time_ns() / 1e6) - step_start
@@ -420,27 +421,27 @@ def main(args):
     
     This function serves as the entry point for the script. It:
     1. Validates the dataset directories exist
-    2. Creates a list of all video/classifier/tile_size combinations to process
+    2. Creates a list of all video/classifier/tilesize combinations to process
     3. Uses multiprocessing to process tasks in parallel across available GPUs
     4. Processes each video and saves compression results
     
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - datasets (List[str]): Names of the datasets to process
-            - tile_size (str): Tile size to use for compression ('30', '60', '120', or 'all')
+            - tilesize (str): Tile size to use for compression ('30', '60', '120', or 'all')
             - threshold (float): Threshold for classification probability (0.0 to 1.0)
             - classifiers (list): List of classifier names to use (default: CLASSIFIERS_TO_TEST)
             - clear (bool): Whether to remove and recreate the compressed frames folder
             
     Note:
         - The script expects classification results from 020_exec_classify.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tile_size}/score/
+          {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tilesize}/score/
         - Looks for score.jsonl files
         - Videos are read from {DATA_DIR}/{dataset}/
-        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tile_size}/images/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tile_size}/index_maps/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tile_size}/offset_lookups/
-        - When tile_size is 'all', all tile sizes (30, 60, 120) are processed
+        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/images/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/index_maps/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/offset_lookups/
+        - When tilesize is 'all', all tile sizes (30, 60, 120) are processed
         - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST are processed
         - If no classification results are found for a video, that video is skipped with a warning
         - Tiles with classification probability > threshold are considered relevant for compression
@@ -448,14 +449,14 @@ def main(args):
     mp.set_start_method('spawn', force=True)
     
     # Determine which tile sizes to process
-    if args.tile_size == 'all':
-        tile_sizes_to_process = TILE_SIZES
-        print(f"Processing all tile sizes: {tile_sizes_to_process}")
+    if args.tilesize == 'all':
+        tilesizes_to_process = TILE_SIZES
+        print(f"Processing all tile sizes: {tilesizes_to_process}")
     else:
-        tile_sizes_to_process = [int(args.tile_size)]
-        print(f"Processing tile size: {tile_sizes_to_process[0]}")
+        tilesizes_to_process = [int(args.tilesize)]
+        print(f"Processing tile size: {tilesizes_to_process[0]}")
     
-    # Create tasks list with all video/classifier/tile_size combinations
+    # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     
     for dataset_name in args.datasets:
@@ -478,17 +479,17 @@ def main(args):
                 print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")
             
             for classifier in args.classifiers:
-                for tile_size in tile_sizes_to_process:
+                for tilesize in tilesizes_to_process:
 
                     score_file = os.path.join(cache_video_dir, '020_relevancy',
-                                              f'{classifier}_{tile_size}', 'score', 'score.jsonl')
+                                              f'{classifier}_{tilesize}', 'score', 'score.jsonl')
                     if not os.path.exists(score_file):
-                        print(f"No score file found for {video_file} {classifier} {tile_size}, skipping")
+                        print(f"No score file found for {video_file} {classifier} {tilesize}, skipping")
                         continue
 
-                    for dilate in [True, False] if args.dilate else [False]:
+                    for tilepadding in [True, False] if args.tilepadding else [False]:
                         funcs.append(partial(compress, video_file_path, cache_video_dir,
-                                            classifier, tile_size, args.threshold, dilate))
+                                            classifier, tilesize, args.threshold, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
     

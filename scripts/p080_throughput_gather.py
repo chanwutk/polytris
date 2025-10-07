@@ -75,8 +75,8 @@ def gather_index_construction_data(datasets):
             # 012_tune_create_training_data.py - per video runtime files for all tile sizes
             training_runtime_dir = os.path.join(dataset_path, 'indexing', 'training', 'runtime')
             if os.path.exists(training_runtime_dir):
-                for tile_size in TILE_SIZES:
-                    tile_dir = os.path.join(training_runtime_dir, f'tilesize_{tile_size}')
+                for tilesize in TILE_SIZES:
+                    tile_dir = os.path.join(training_runtime_dir, f'tilesize_{tilesize}')
                     if os.path.exists(tile_dir):
                         for runtime_file in os.listdir(tile_dir):
                             if runtime_file.endswith('_creating_training_data.jsonl'):
@@ -84,11 +84,11 @@ def gather_index_construction_data(datasets):
                                 training_data_path = os.path.join(tile_dir, runtime_file)
                                 runtime_files.append(('012_tune_create_training_data', training_data_path, video_name))
             
-            # 013_tune_train_classifier.py - per classifier/tile_size training results
+            # 013_tune_train_classifier.py - per classifier/tilesize training results
             training_results_dir = os.path.join(dataset_path, 'indexing', 'training', 'results')
             if os.path.exists(training_results_dir):
-                for tile_size in TILE_SIZES:
-                    classifier_dir = os.path.join(training_results_dir, f'{classifier}_{tile_size}')
+                for tilesize in TILE_SIZES:
+                    classifier_dir = os.path.join(training_results_dir, f'{classifier}_{tilesize}')
                     if os.path.exists(classifier_dir):
                         train_logs_path = os.path.join(classifier_dir, 'train_losses.json')
                         test_logs_path = os.path.join(classifier_dir, 'test_losses.json')
@@ -121,7 +121,7 @@ def gather_query_execution_data(datasets_videos):
     Args:
         datasets_videos (list): List of (dataset, video_file) tuples
     
-    Returns list of dicts with columns: dataset/video, classifier, tile_size, runtime_files
+    Returns list of dicts with columns: dataset/video, classifier, tilesize, runtime_files
     Note: Query execution is done per video
     """
     query_data = []
@@ -129,7 +129,7 @@ def gather_query_execution_data(datasets_videos):
     for dataset, video in datasets_videos:
         video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
         
-        # Groundtruth detection and tracking (no tile_size)
+        # Groundtruth detection and tracking (no tilesize)
         groundtruth_detection_path = os.path.join(video_path, '000_groundtruth', 'detections.jsonl')
         groundtruth_tracking_path = os.path.join(video_path, '000_groundtruth', 'tracking_runtimes.jsonl')
         
@@ -137,7 +137,7 @@ def gather_query_execution_data(datasets_videos):
             query_data.append({
                 'dataset/video': f"{dataset}/{video}",
                 'classifier': 'groundtruth',
-                'tile_size': 0,
+                'tilesize': 0,
                 'runtime_files': [('001_preprocess_groundtruth_detection', groundtruth_detection_path)]
             })
         
@@ -145,43 +145,86 @@ def gather_query_execution_data(datasets_videos):
             query_data.append({
                 'dataset/video': f"{dataset}/{video}",
                 'classifier': 'groundtruth',
-                'tile_size': 0,
+                'tilesize': 0,
                 'runtime_files': [('002_preprocess_groundtruth_tracking', groundtruth_tracking_path)]
             })
 
         # Classifier-based stages
         for classifier in EXEC_CLASSIFIERS:
-            for tile_size in TILE_SIZES:
-                runtime_files = []
+            for tilesize in TILE_SIZES:
+                # Check if this dataset uses the new format with tilepadding parameter
+                has_tilepadding_format = False
+                test_path = os.path.join(video_path, '030_compressed_frames', f'{classifier}_{tilesize}_padded')
+                if os.path.exists(test_path):
+                    has_tilepadding_format = True
                 
-                # 020_exec_classify.py
-                classify_path = os.path.join(video_path, '020_relevancy', f'{classifier}_{tile_size}', 'score', 'score.jsonl')
-                if os.path.exists(classify_path):
-                    runtime_files.append(('020_exec_classify', classify_path))
-                
-                # 030_exec_compress.py
-                compress_path = os.path.join(video_path, '030_compressed_frames', f'{classifier}_{tile_size}', 'runtime.jsonl')
-                if os.path.exists(compress_path):
-                    runtime_files.append(('030_exec_compress', compress_path))
-                
-                # 040_exec_detect.py
-                detect_path = os.path.join(video_path, '040_compressed_detections', f'{classifier}_{tile_size}', 'runtimes.jsonl')
-                if os.path.exists(detect_path):
-                    runtime_files.append(('040_exec_detect', detect_path))
-                
-                # 060_exec_track.py
-                track_path = os.path.join(video_path, '060_uncompressed_tracks', f'{classifier}_{tile_size}', 'runtimes.jsonl')
-                if os.path.exists(track_path):
-                    runtime_files.append(('060_exec_track', track_path))
-                
-                # Note: 050_exec_uncompress has no dedicated runtime file
-                
-                query_data.append({
-                    'dataset/video': f"{dataset}/{video}",
-                    'classifier': classifier,
-                    'tile_size': tile_size,
-                    'runtime_files': runtime_files
-                })
+                if has_tilepadding_format:
+                    # New format with tilepadding parameter
+                    for tilepadding in ['padded', 'unpadded']:
+                        runtime_files = []
+                        
+                        # 020_exec_classify.py - Note: 020_relevancy uses old format without tilepadding parameter
+                        classify_path = os.path.join(video_path, '020_relevancy', f'{classifier}_{tilesize}', 'score', 'score.jsonl')
+                        if os.path.exists(classify_path):
+                            runtime_files.append(('020_exec_classify', classify_path))
+                        
+                        # 030_exec_compress.py
+                        compress_path = os.path.join(video_path, '030_compressed_frames', f'{classifier}_{tilesize}_{tilepadding}', 'runtime.jsonl')
+                        if os.path.exists(compress_path):
+                            runtime_files.append(('030_exec_compress', compress_path))
+                        
+                        # 040_exec_detect.py
+                        detect_path = os.path.join(video_path, '040_compressed_detections', f'{classifier}_{tilesize}_{tilepadding}', 'runtimes.jsonl')
+                        if os.path.exists(detect_path):
+                            runtime_files.append(('040_exec_detect', detect_path))
+                        
+                        # 060_exec_track.py
+                        track_path = os.path.join(video_path, '060_uncompressed_tracks', f'{classifier}_{tilesize}_{tilepadding}', 'runtimes.jsonl')
+                        if os.path.exists(track_path):
+                            runtime_files.append(('060_exec_track', track_path))
+                        
+                        # Note: 050_exec_uncompress has no dedicated runtime file
+                        
+                        query_data.append({
+                            'dataset/video': f"{dataset}/{video}",
+                            'classifier': classifier,
+                            'tilesize': tilesize,
+                            'tilepadding': tilepadding,
+                            'runtime_files': runtime_files
+                        })
+                else:
+                    # Old format without tilepadding parameter
+                    runtime_files = []
+                    
+                    # 020_exec_classify.py
+                    classify_path = os.path.join(video_path, '020_relevancy', f'{classifier}_{tilesize}', 'score', 'score.jsonl')
+                    if os.path.exists(classify_path):
+                        runtime_files.append(('020_exec_classify', classify_path))
+                    
+                    # 030_exec_compress.py
+                    compress_path = os.path.join(video_path, '030_compressed_frames', f'{classifier}_{tilesize}', 'runtime.jsonl')
+                    if os.path.exists(compress_path):
+                        runtime_files.append(('030_exec_compress', compress_path))
+                    
+                    # 040_exec_detect.py
+                    detect_path = os.path.join(video_path, '040_compressed_detections', f'{classifier}_{tilesize}', 'runtimes.jsonl')
+                    if os.path.exists(detect_path):
+                        runtime_files.append(('040_exec_detect', detect_path))
+                    
+                    # 060_exec_track.py
+                    track_path = os.path.join(video_path, '060_uncompressed_tracks', f'{classifier}_{tilesize}', 'runtimes.jsonl')
+                    if os.path.exists(track_path):
+                        runtime_files.append(('060_exec_track', track_path))
+                    
+                    # Note: 050_exec_uncompress has no dedicated runtime file
+                    
+                    query_data.append({
+                        'dataset/video': f"{dataset}/{video}",
+                        'classifier': classifier,
+                        'tilesize': tilesize,
+                        'tilepadding': 'N/A',
+                        'runtime_files': runtime_files
+                    })
     
     return query_data
 
@@ -229,13 +272,14 @@ def print_query_execution_table(query_data, write_line=print):
     write_line()
     
     # Header
-    write_line(f"{'Dataset/Video':<20} {'Classifier':<12} {'Tile Size':<10} {'Runtime Files':<70}")
-    write_line("-" * 112)
+    write_line(f"{'Dataset/Video':<20} {'Classifier':<12} {'Tile Size':<10} {'Tile Padding':<12} {'Runtime Files':<70}")
+    write_line("-" * 124)
     
     for entry in query_data:
         dataset_video = entry['dataset/video']
         classifier = entry['classifier']
-        tile_size = entry['tile_size']
+        tilesize = entry['tilesize']
+        tilepadding = entry.get('tilepadding', 'N/A')
         
         # Show all runtime files
         stage_files = []
@@ -244,7 +288,7 @@ def print_query_execution_table(query_data, write_line=print):
         
         runtime_files_str = ", ".join(stage_files) if stage_files else "None"
         
-        write_line(f"{dataset_video:<20} {classifier:<12} {tile_size:<10} {runtime_files_str:<70}")
+        write_line(f"{dataset_video:<20} {classifier:<12} {tilesize:<10} {tilepadding:<12} {runtime_files_str:<70}")
 
 
 def save_data_tables(index_data, query_data):

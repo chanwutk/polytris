@@ -63,10 +63,10 @@ def parse_classifier_and_tile(dir_name: str) -> tuple[str, int]:
         return dir_name, -1
     classifier, tile = dir_name.rsplit("_", 1)
     try:
-        tile_size = int(tile)
+        tilesize = int(tile)
     except ValueError:
-        tile_size = -1
-    return classifier, tile_size
+        tilesize = -1
+    return classifier, tilesize
 
 
 def list_index_map_files(classifier_tile_dir: str) -> list[str]:
@@ -230,17 +230,17 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
     # Output paths
     series_name = os.path.basename(classifier_tile_dir)
     video_name = os.path.basename(video_cache_dir)
-    classifier, tile_size = parse_classifier_and_tile(series_name)
+    classifier, tilesize = parse_classifier_and_tile(series_name)
 
     # Prepare summary output locations
     base_dir, each_dir = ensure_summary_dirs(dataset)
     safe_video = video_name
     safe_classifier = classifier
     # Filenames include identifiers to keep one file per series
-    plot_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tile_size}__compress_content_ratio.png")
-    json_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tile_size}__compress_content_ratio.json")
+    plot_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}__compress_content_ratio.png")
+    json_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}__compress_content_ratio.json")
 
-    title = f"{video_name} | {classifier} | tile {tile_size}"
+    title = f"{video_name} | {classifier} | tile {tilesize}"
     plot_series(x_values, y_values, avg_value, title, plot_path)
     print(f"Saved plot: {plot_path}")
 
@@ -249,7 +249,7 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
         "video": video_name,
         "series": series_name,
         "classifier": classifier,
-        "tile_size": tile_size,
+        "tilesize": tilesize,
         "x_values": x_values,
         "content_ratios": y_values,
         "average_content_ratio": avg_value,
@@ -259,8 +259,8 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
         json.dump(metrics, f, indent=2)
     print(f"Saved metrics: {json_path}")
 
-    label = f"{video_name}|{classifier}|{tile_size}"
-    return label, x_values, y_values, avg_value, classifier, tile_size
+    label = f"{video_name}|{classifier}|{tilesize}"
+    return label, x_values, y_values, avg_value, classifier, tilesize
 
 
 def process_video_worker(args_tuple: tuple[str, str, int]) -> list[tuple[str, list[int], list[float], float, str, int]]:
@@ -268,7 +268,7 @@ def process_video_worker(args_tuple: tuple[str, str, int]) -> list[tuple[str, li
     Worker function for multiprocessing that processes a single video directory.
     
     Returns:
-        List of tuples containing (label, x_values, y_values, avg_value, classifier, tile_size)
+        List of tuples containing (label, x_values, y_values, avg_value, classifier, tilesize)
         for each classifier/tile combination in the video.
     """
     dataset, video_cache_dir, idx = args_tuple
