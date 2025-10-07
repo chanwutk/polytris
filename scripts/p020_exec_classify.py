@@ -374,6 +374,8 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
         prev_relevance_grid = None # no previous frame yet
         prev_frame = None
         threshold = 0.5 # modify if necessary
+        overall_start_time = time.time_ns() / 1e6
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -405,6 +407,10 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
             prev_relevance_grid = current_relevance_grid
             prev_frame = frame
 
+            # Add overall time to runtime metrics before writing
+            overall_end_time = time.time_ns() / 1e6
+            runtime.append({'op': 'overall', 'time': overall_end_time - overall_start_time})
+
             num_tiles = (current_relevance_grid.shape[0] * current_relevance_grid.shape[1])
             # Create result entry for this frame
             frame_entry = {
@@ -425,6 +431,9 @@ def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
             
             frame_idx += 1
             command_queue.put((device, {'completed': frame_idx}))
+
+            # Reset overall timer for the next frame
+            overall_start_time = time.time_ns() / 1e6
 
     cap.release()
     # print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")

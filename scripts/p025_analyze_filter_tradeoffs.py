@@ -61,12 +61,17 @@ def gather_data(dataset: str, classifiers: list[str], filters: list[str]) -> pd.
                         print(f"Warning: Score file not found, skipping: {score_file}")
                         continue
                     
-                    total_runtime = 0
+                    inference_runtime = 0
+                    overall_runtime = 0
                     pruned_props = []
                     with open(score_file, 'r') as f:
                         for line in f:
                             data = json.loads(line)
-                            total_runtime += sum(op['time'] for op in data.get('runtime', []))
+                            for op in data.get('runtime', []):
+                                if op['op'] == 'inference':
+                                    inference_runtime += op['time']
+                                if op['op'] == 'overall':
+                                    overall_runtime += op['time']
                             pruned_props.append(data.get('pruned_tiles_prop', 0.0))
                     
                     # Load accuracy metrics
@@ -83,7 +88,8 @@ def gather_data(dataset: str, classifiers: list[str], filters: list[str]) -> pd.
                         'classifier': classifier,
                         'filter': filter_type,
                         'tile_size': tile_size,
-                        'total_runtime_ms': total_runtime,
+                        'inference_runtime_ms': inference_runtime,
+                        'overall_runtime_ms': overall_runtime,
                         'avg_pruned_prop': np.mean(pruned_props) if pruned_props else 0.0,
                         'precision': metrics.get('overall_precision', 0.0),
                         'recall': metrics.get('overall_recall', 0.0),
@@ -108,22 +114,22 @@ def create_comparison_charts(df: pd.DataFrame, output_dir: Path):
             continue
 
         # Calculate speedup relative to the 'none' filter
-        none_runtimes = clf_df[clf_df['filter'] == 'none'].set_index('video')['total_runtime_ms']
+        none_runtimes = clf_df[clf_df['filter'] == 'none'].set_index('video')['overall_runtime_ms']
         if none_runtimes.empty:
             print(f"Warning: No 'none' filter data for classifier {classifier}, cannot calculate speedup.")
             clf_df['speedup'] = 1.0
         else:
             # Use map to align runtimes by video
             clf_df['baseline_runtime'] = clf_df['video'].map(none_runtimes)
-            # Calculate speedup, handling potential division by zero
+            # Calculate speedup based on overall runtime, handling potential division by zero
             clf_df['speedup'] = clf_df.apply(
-                lambda row: row['baseline_runtime'] / row['total_runtime_ms'] if row['total_runtime_ms'] > 0 else 0,
+                lambda row: row['baseline_runtime'] / row['overall_runtime_ms'] if row['overall_runtime_ms'] > 0 else 0,
                 axis=1
             )
 
         # Plotting
         n_videos = len(videos)
-        n_metrics = 5  # Runtime, Pruned, Precision, Recall, F1
+        n_metrics = 6  # Overall Runtime, Inference Runtime, Speedup, Pruned, F1, Precision/Recall
         fig, axes = plt.subplots(n_videos, n_metrics, figsize=(20, 4 * n_videos), sharey='row')
         if n_videos == 1:
             axes = np.array([axes])
@@ -143,50 +149,57 @@ def create_comparison_charts(df: pd.DataFrame, output_dir: Path):
             filters_present = video_df['filter'].unique()
             y_pos = np.arange(len(filters_present))
 
-            # 1. Total Runtime
+            # 1. Overall Runtime
             ax = axes[i, 0]
-            runtimes = video_df['total_runtime_ms'] / 1000  # to seconds
+            runtimes = video_df['overall_runtime_ms'] / 1000  # to seconds
             ax.barh(y_pos, runtimes, align='center')
             ax.set_yticks(y_pos, labels=video_df['filter'])
             ax.invert_yaxis()
-            ax.set_xlabel('Total Runtime (s)')
-            if i == 0: ax.set_title('Runtime')
+            ax.set_xlabel('Overall Runtime (s)')
+            if i == 0: ax.set_title('Overall Runtime')
             ax.set_ylabel(video.replace('.mp4', ''), rotation=0, size='large', ha='right', va='center')
 
-            # 2. Speedup (relative to 'none')
+            # 2. Inference Runtime
             ax = axes[i, 1]
+            runtimes = video_df['inference_runtime_ms'] / 1000  # to seconds
+            ax.barh(y_pos, runtimes, align='center')
+            ax.set_xlabel('Inference Runtime (s)')
+            if i == 0: ax.set_title('Inference Runtime')
+
+            # 3. Speedup (relative to 'none')
+            ax = axes[i, 2]
             speedups = video_df['speedup']
             colors = ['red' if s < 1 else 'green' for s in speedups]
             ax.barh(y_pos, speedups, align='center', color=colors)
             ax.axvline(1, color='grey', linestyle='--')
             ax.set_xlabel('Speedup (x)')
-            if i == 0: ax.set_title('Speedup vs. No Filter')
+            if i == 0: ax.set_title('Overall Speedup vs. No Filter')
 
-            # 3. Pruned Tiles
-            ax = axes[i, 2]
+            # 4. Pruned Tiles
+            ax = axes[i, 3]
             pruned = video_df['avg_pruned_prop'] * 100
             ax.barh(y_pos, pruned, align='center')
             ax.set_xlabel('Avg. Pruned Tiles (%)')
             ax.set_xlim(0, 100)
             if i == 0: ax.set_title('Tiles Pruned')
 
-            # 4. F1-Score
-            ax = axes[i, 3]
+            # 5. F1-Score
+            ax = axes[i, 4]
             f1s = video_df['f1_score']
             ax.barh(y_pos, f1s, align='center')
             ax.set_xlabel('F1-Score')
             ax.set_xlim(0, 1)
             if i == 0: ax.set_title('F1-Score')
 
-            # 5. Precision & Recall
-            ax = axes[i, 4]
+            # 6. Precision & Recall
+            ax = axes[i, 5]
             precision = video_df['precision']
             recall = video_df['recall']
             ax.barh(y_pos - 0.2, precision, 0.4, align='center', label='Precision')
             ax.barh(y_pos + 0.2, recall, 0.4, align='center', label='Recall')
             ax.set_xlabel('Score')
             ax.set_xlim(0, 1)
-            ax.legend()
+            if i == 0: ax.legend()
             if i == 0: ax.set_title('Precision & Recall')
 
         plt.tight_layout(rect=[0, 0, 1, 0.98])
