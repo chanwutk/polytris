@@ -194,10 +194,7 @@ def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, da
         if len(stage_data) > 0:
             chart = alt.Chart(stage_data).mark_bar().encode(
                 x=alt.X('Runtime:Q', title='Runtime (seconds)'),
-                y=alt.Y('Config:N',
-                        sort=alt.SortField(field='Runtime', order='descending'),
-                        axis=alt.Axis(labelExpr="split(datum.label, ' ')",
-                                      labelBaseline='alphabetic', labelLineHeight=9)),
+                y=alt.Y('Config:N', sort=alt.SortField(field='Runtime', order='descending')),
                 color=alt.Color('Operation:N', legend=alt.Legend(
                     orient='bottom',
                     columns=3,

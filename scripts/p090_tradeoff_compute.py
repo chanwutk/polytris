@@ -578,8 +578,8 @@ def main(args):
     
     # Process datasets in parallel with progress tracking
     with Pool() as pool:
-        # ires = pool.imap(process_dataset, args.datasets)
-        ires = map(process_dataset, args.datasets)
+        ires = pool.imap(process_dataset, args.datasets)
+        # ires = map(process_dataset, args.datasets)
         
         # Process datasets in parallel using imap with rich track
         _ = [*track(ires, total=len(args.datasets))]
