@@ -8,22 +8,10 @@ import numpy as np
 from tqdm import tqdm
 import multiprocessing as mp
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization
-
-
-TILE_SIZES = [64]
+from polyis.utilities import CACHE_DIR, DATA_DIR, create_tracking_visualization, TILE_SIZES
 
 
 def parse_args():
-    """
-    Parse command line arguments for the script.
-    
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
-            - tile_size (str): Tile size to use for visualization (choices: '64', '128', 'all')
-            - speed_up (int): Speed up factor for visualization (default: 4)
-    """
     parser = argparse.ArgumentParser(description='Visualize tracking results from 060_exec_track.py on original videos')
     parser.add_argument('--dataset', required=False,
                         default='b3d',

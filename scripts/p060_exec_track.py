@@ -6,13 +6,11 @@ import os
 import shutil
 import time
 import numpy as np
-import tqdm
 import multiprocessing as mp
 from functools import partial
 from typing import Callable
-import torch
 
-from polyis.utilities import create_tracker, format_time, interpolate_trajectory, CACHE_DIR, ProgressBar, register_tracked_detections
+from polyis.utilities import create_tracker, format_time, CACHE_DIR, ProgressBar, register_tracked_detections, DATASETS_TO_TEST
 
 
 def parse_args():
@@ -21,7 +19,7 @@ def parse_args():
     
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
+            - datasets (List[str]): Dataset names to process (default: ['caldot1', 'caldot2'])
             - tracker (str): Tracking algorithm to use (default: 'sort')
             - max_age (int): Maximum age for SORT tracker (default: 10)
             - min_hits (int): Minimum hits for SORT tracker (default: 3)
@@ -30,9 +28,10 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Execute object tracking on uncompressed '
                                                  'detection results from 050_exec_uncompress.py')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
+    parser.add_argument('--datasets', required=False,
+                        default=DATASETS_TO_TEST,
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     parser.add_argument('--tracker', required=False,
                         default='sort',
                         choices=['sort'],
@@ -48,7 +47,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_size: int, classifier: str, verbose: bool = False) -> list[dict]:
+def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesize: int,
+                           classifier: str, tilepadding: bool | None = None, verbose: bool = False):
     """
     Load detection results from the uncompressed detections JSONL file.
     
@@ -56,8 +56,9 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
         video_file (str): Video file name
-        tile_size (int): Tile size used for detections
+        tilesize (int): Tile size used for detections
         classifier (str): Classifier name used for detections
+        tilepadding (bool): Whether padding was applied to classification results
         verbose (bool): Whether to print verbose output
     Returns:
         list[dict]: list of frame detection results
@@ -65,9 +66,13 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     Raises:
         FileNotFoundError: If no detection results file is found
     """
-    detection_path = os.path.join(cache_dir, dataset, video_file,
-                                  'uncompressed_detections',
-                                  f'{classifier}_{tile_size}',
+    tilepadding_str = ""
+    if tilepadding is not None:
+        tilepadding_str = "padded" if tilepadding else "unpadded"
+        tilepadding_str = f"_{tilepadding_str}"
+    detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
+                                  '050_uncompressed_detections',
+                                  f'{classifier}_{tilesize}{tilepadding_str}',
                                   'detections.jsonl')
     
     if not os.path.exists(detection_path):
@@ -76,7 +81,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     if verbose:
         print(f"Loading detection results from: {detection_path}")
     
-    results = []
+    results: list[dict] = []
     with open(detection_path, 'r') as f:
         for line in f:
             if line.strip():
@@ -87,16 +92,17 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tile_s
     return results
 
 
-def process_tracking_task(video_file: str, tile_size: int, classifier: str, 
-                          args: argparse.Namespace, gpu_id: int, command_queue: mp.Queue):
+def process_tracking_task(video_file: str, tilesize: int, classifier: str, dataset_name: str,
+                          args: argparse.Namespace, tilepadding: bool, gpu_id: int, command_queue: mp.Queue):
     """
-    Process tracking for a single video/classifier/tile_size combination.
+    Process tracking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
     
     Args:
         video_file (str): Name of the video file to process
-        tile_size (int): Tile size used for detections
+        tilesize (int): Tile size used for detections
         classifier (str): Classifier name used for detections
+        dataset_name (str): Name of the dataset
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
         args: Command line arguments
@@ -108,19 +114,20 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
     min_hits = args.min_hits
     iou_threshold = args.iou_threshold
     no_interpolate = args.no_interpolate
+    tilepadding_str = "padded" if tilepadding else "unpadded"
     
     # Check if uncompressed detections exist
-    detection_path = os.path.join(CACHE_DIR, args.dataset, video_file,
-                                  'uncompressed_detections', f'{classifier}_{tile_size}',
+    detection_path = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file,
+                                  '050_uncompressed_detections', f'{classifier}_{tilesize}_{tilepadding_str}',
                                   'detections.jsonl')
     assert os.path.exists(detection_path)
 
     # Load detection results
-    detection_results = load_detection_results(CACHE_DIR, args.dataset, video_file, tile_size, classifier)
+    detection_results = load_detection_results(CACHE_DIR, dataset_name, video_file, tilesize, classifier, tilepadding)
 
     # Create output path for tracking results
-    uncompressed_tracking_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'uncompressed_tracking')
-    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tile_size}', 'tracking.jsonl')
+    uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '060_uncompressed_tracks')
+    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tilesize}_{tilepadding_str}', 'tracking.jsonl')
     
     # Create tracker
     tracker = create_tracker(tracker_name, max_age, min_hits, iou_threshold)
@@ -133,7 +140,7 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
     
     # Send initial progress update
     command_queue.put((device, {
-        'description': f"{video_name} {tracker_name} {classifier} {tile_size}",
+        'description': f"{video_name} {tracker_name} {classifier} {tilesize}",
         'completed': 0,
         'total': len(detection_results)
     }))
@@ -197,6 +204,9 @@ def process_tracking_task(video_file: str, tile_size: int, classifier: str,
     
     with open(output_path, 'w') as f:
         frame_ids = frame_tracks.keys()
+        if len(frame_ids) == 0:
+            return
+        
         first_idx = min(frame_ids)
         last_idx = max(frame_ids)
 
@@ -219,8 +229,8 @@ def main(args: argparse.Namespace):
     Main function that orchestrates the object tracking process using parallel processing.
     
     This function serves as the entry point for the script. It:
-    1. Validates the dataset directory exists
-    2. Creates a list of all video/classifier/tile_size combinations to process
+    1. Validates the dataset directories exist
+    2. Creates a list of all video/classifier/tilesize combinations to process
     3. Uses multiprocessing to process tasks in parallel across available GPUs
     4. Processes each video and saves tracking results
     
@@ -229,44 +239,49 @@ def main(args: argparse.Namespace):
         
     Note:
         - The script expects uncompressed detection results from 050_exec_uncompress.py in:
-          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_detections/{classifier}_{tile_size}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tilesize}/detections.jsonl
         - Tracking results are saved to:
-          {CACHE_DIR}/{dataset}/{video_file}/uncompressed_tracking/{classifier}_{tile_size}/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tilesize}/tracking.jsonl
         - Linear interpolation is optional and controlled by the --no_interpolate flag
         - Processing is parallelized for improved performance
         - The number of processes equals the number of available GPUs
     """
     mp.set_start_method('spawn', force=True)
     
-    print(f"Processing dataset: {args.dataset}")
     print(f"Using tracker: {args.tracker}")
     print(f"Tracker parameters: max_age={args.max_age}, min_hits={args.min_hits}, iou_threshold={args.iou_threshold}")
     print(f"Interpolation: {'enabled' if not args.no_interpolate else 'disabled'}")
     
-    # Find all videos with uncompressed detection results
-    dataset_cache_dir = os.path.join(CACHE_DIR, args.dataset)
-    if not os.path.exists(dataset_cache_dir):
-        raise FileNotFoundError(f"Dataset cache directory {dataset_cache_dir} does not exist")
-    
-    # Create tasks list with all video/classifier/tile_size combinations
+    # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for item in os.listdir(dataset_cache_dir):
-        item_path = os.path.join(dataset_cache_dir, item)
-        if not os.path.isdir(item_path):
+    
+    for dataset_name in args.datasets:
+        print(f"Processing dataset: {dataset_name}")
+        
+        # Find all videos with uncompressed detection results
+        dataset_cache_dir = os.path.join(CACHE_DIR, dataset_name, 'execution')
+        if not os.path.exists(dataset_cache_dir):
+            print(f"Dataset cache directory {dataset_cache_dir} does not exist, skipping...")
             continue
+        
+        for item in os.listdir(dataset_cache_dir):
+            item_path = os.path.join(dataset_cache_dir, item)
+            if not os.path.isdir(item_path):
+                continue
 
-        uncompressed_detections_dir = os.path.join(item_path, 'uncompressed_detections')
-        if not os.path.exists(uncompressed_detections_dir):
-            continue
+            uncompressed_detections_dir = os.path.join(item_path, '050_uncompressed_detections')
+            if not os.path.exists(uncompressed_detections_dir):
+                continue
 
-        uncompressed_tracking_dir = os.path.join(item_path, 'uncompressed_tracking')
-        if os.path.exists(uncompressed_tracking_dir):
-            shutil.rmtree(uncompressed_tracking_dir)
+            uncompressed_tracking_dir = os.path.join(item_path, '060_uncompressed_tracks')
+            if os.path.exists(uncompressed_tracking_dir):
+                shutil.rmtree(uncompressed_tracking_dir)
 
-        for classifier_tilesize in sorted(os.listdir(uncompressed_detections_dir)):
-            classifier, tile_size = classifier_tilesize.split('_')
-            tile_size = int(tile_size)
-            funcs.append(partial(process_tracking_task, item, tile_size, classifier, args))
+            for classifier_tilesize in sorted(os.listdir(uncompressed_detections_dir)):
+                classifier, tilesize, tilepadding_str = classifier_tilesize.split('_')
+                tilesize = int(tilesize)
+                tilepadding = tilepadding_str == "padded"
+                funcs.append(partial(process_tracking_task, item, tilesize, classifier, dataset_name, args, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
     
@@ -274,6 +289,7 @@ def main(args: argparse.Namespace):
     num_processes = int(mp.cpu_count() * 0.8)
     print(f"Using {num_processes} CPUs for parallel processing")
     
+    num_processes = 16
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
@@ -283,3 +299,4 @@ def main(args: argparse.Namespace):
 
 if __name__ == '__main__':
     main(parse_args())
+

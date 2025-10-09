@@ -1,40 +1,45 @@
 #!/usr/local/bin/python
 
 import argparse
+from functools import partial
 import json
 import os
 import time
-import multiprocessing as mp
 from multiprocessing import Queue
+from pathlib import Path
 
 import cv2
-import tqdm
 import torch
 
-import polyis.models.retinanet_b3d
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, progress_bars
+import polyis.models.detector
+from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Preprocess video dataset')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
-    parser.add_argument('--detector', required=False,
-                        default='retina',
-                        help='Detector name')
+    parser = argparse.ArgumentParser(description='Execute object detection on video segments')
+    parser.add_argument('--datasets', required=False,
+                        default=DATASETS_TO_TEST,
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     return parser.parse_args()
 
 
-def _detect_retina(video_path: str, dataset_dir: str, video: str, gpu_id: int, progress_queue: Queue):
-    detector = polyis.models.retinanet_b3d.get_detector(device=f'cuda:{gpu_id}')
+def detect_objects(video: str, dataset_name: str, gpu_id: int, command_queue: Queue):
+    # Get detector based on detector_name parameter
+    detector = polyis.models.detector.get_detector(dataset_name, gpu_id)
 
-    with (open(os.path.join(video_path, 'segments', 'detection', 'segments.jsonl'), 'r') as f,
-            open(os.path.join(video_path, 'segments', 'detection', 'detections.jsonl'), 'w') as fd):
+    # New output path structure
+    output_path = Path(CACHE_DIR) / dataset_name / 'indexing' / 'segment' / 'detection' / f'{video}.detections.jsonl'
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Input segments path
+    segments_path = Path(CACHE_DIR) / dataset_name / 'indexing' / 'segment' / 'detection' / f'{video}.segments.jsonl'
+
+    with (open(segments_path, 'r') as f, open(output_path, 'w') as fd):
         lines = [*f.readlines()]
 
         # Construct the path to the video file in the dataset directory
-        dataset_video_path = os.path.join(dataset_dir, video)
+        dataset_video_path = os.path.join(DATA_DIR, dataset_name, video)
         cap = cv2.VideoCapture(dataset_video_path)
 
         # Calculate total frames across all segments for progress tracking
@@ -42,8 +47,8 @@ def _detect_retina(video_path: str, dataset_dir: str, video: str, gpu_id: int, p
         processed_frames = 0
 
         # Send initial progress update
-        progress_queue.put((f'cuda:{gpu_id}', {
-            'description': video,
+        command_queue.put((f'cuda:{gpu_id}', {
+            'description': f'{dataset_name}/{video}',
             'completed': 0,
             'total': total_frames
         }))
@@ -68,7 +73,7 @@ def _detect_retina(video_path: str, dataset_dir: str, video: str, gpu_id: int, p
 
                 # Detect objects in the frame
                 start_time = time.time_ns() / 1e6
-                outputs = polyis.models.retinanet_b3d.detect(frame, detector)
+                outputs = polyis.models.detector.detect(frame, detector)
                 end_time = time.time_ns() / 1e6
                 detect_time = end_time - start_time
 
@@ -78,122 +83,90 @@ def _detect_retina(video_path: str, dataset_dir: str, video: str, gpu_id: int, p
                 processed_frames += 1
 
                 # Send progress update
-                progress_queue.put((f'cuda:{gpu_id}', {'completed': processed_frames}))
+                command_queue.put((f'cuda:{gpu_id}', {'completed': processed_frames}))
         cap.release()
 
 
-def detect_retina(cache_dir: str, dataset_dir: str):
+def main(args):
     """
-    Perform object detection on video segments using RetinaNet B3D model.
-    
+    Main function to run object detection on video segments.
+
     This function:
-    1. Loads a RetinaNet B3D detector on CUDA device
-    2. Iterates through each video in the dataset directory
-    3. Reads detection segments from the cache
-    4. Processes each frame in each segment to detect objects
-    5. Saves detection results with timing information to detections.jsonl
-    
+    1. Processes multiple datasets in sequence
+    2. For each dataset, sets up paths for cache and dataset directories
+    3. Selects the appropriate detector (based on dataset name)
+    4. Iterates through each video in the dataset directory
+    5. Reads detection segments from the cache
+    6. Processes each frame in each segment to detect objects using multiprocessing
+    7. Saves detection results with timing information to detections.jsonl
+
     Args:
-        cache_dir (str): Path to the cache directory containing video segments
-        dataset_dir (str): Path to the dataset directory containing original video files
-        
+        args (argparse.Namespace): Parsed command line arguments containing:
+            - datasets: List of dataset names to process
+
+    Raises:
+        ValueError: If dataset is not found in configuration
+
     Note:
-        The function expects the cache directory to have a specific structure:
-        - cache_dir/video_name/segments/detection/segments.jsonl (input segments)
-        - cache_dir/video_name/segments/detection/detections.jsonl (output detections)
-        
+        The function expects the following directory structure:
+        - CACHE_DIR/dataset_name/indexing/segments/detection/ (for processed segments and results)
+        - DATA_DIR/dataset_name/ (for original video files)
+
         Detection results are saved in JSONL format with:
         - frame_idx: Current frame index
         - bounding_boxes: Detected object bounding boxes (first 4 columns of outputs)
         - segment_idx: Index of the current segment
         - timing: Dictionary with read and detection timing information
     """
-    # Get list of videos to process
-    videos = [v for v in sorted(os.listdir(dataset_dir)) 
-              if os.path.isdir(os.path.join(cache_dir, v))]
-    
-    if not videos:
-        print("No videos found to process")
-        return
+    datasets = args.datasets
 
-    print(f"Found {len(videos)} videos to process")
+    # Show detector info
+    print(f"Using detector: {datasets}")
+
+    # Create task functions
+    funcs = []
+    for dataset_name in datasets:
+        cache_dir = Path(CACHE_DIR) / dataset_name
+        dataset_dir = Path(DATA_DIR) / dataset_name
+
+        if not dataset_dir.exists():
+            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
+            continue
+
+        # Get list of videos to process
+        videos = [
+            v.name[:-len('.segments.jsonl')]
+            for v in (cache_dir / 'indexing' / 'segment' / 'detection').iterdir()
+            if v.is_file()
+        ]
+
+        if len(videos) == 0:
+            print(f"No videos with segments found in {cache_dir}")
+            continue
+
+        print(f"Found {len(videos)} videos to process in dataset {dataset_name}")
+
+        funcs.extend(
+            partial(detect_objects, video, dataset_name)
+            for video in videos
+        )
+
+    if len(funcs) == 0:
+        print("No videos found to process across all datasets")
+        return
 
     # Determine number of available GPUs
     num_gpus = torch.cuda.device_count()
     print(f"Available GPUs: {num_gpus}")
-    
-    if num_gpus == 0:
-        print("No CUDA GPUs available. Falling back to CPU processing.")
-        num_gpus = min(mp.cpu_count(), 20)  # Use available CPUs but cap at 20
-        gpu_ids = [None] * num_gpus  # Will use CPU
-    else:
-        gpu_ids = list(range(num_gpus))
-    
+
     # Limit the number of processes to the number of available GPUs
-    max_processes = min(len(videos), num_gpus)
+    max_processes = min(len(funcs), num_gpus)
     print(f"Using {max_processes} processes (limited by {num_gpus} GPUs)")
 
-    # Create progress queue and start progress display
-    progress_queue = Queue()
-    
-    # Start progress display in a separate process
-    progress_process = mp.Process(target=progress_bars, args=(progress_queue, max_processes, len(videos)))
-    progress_process.start()
-    
-    # Create and start video processing processes
-    processes: list[mp.Process] = []
-    for i, video in enumerate(videos):
-        video_path = os.path.join(cache_dir, video)
-        gpu_id = gpu_ids[i % len(gpu_ids)]
-        
-        process = mp.Process(target=_detect_retina, 
-                           args=(video_path, dataset_dir, video, gpu_id, progress_queue))
-        process.start()
-        processes.append(process)
-        print(f"Started processing video: {video} on GPU {gpu_id}")
-    
-    # Wait for all video processing to complete
-    for process in processes:
-        process.join()
-        process.terminate()
-    
-    # Signal progress display to stop and wait for it
-    progress_queue.put(None)
-    progress_process.join()
-    
+    # Use ProgressBar for parallel processing
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
+
     print("All videos processed successfully!")
-
-
-def main(args):
-    """
-    Main function to run object detection on video segments.
-    
-    This function:
-    1. Sets up paths for cache and dataset directories based on command line arguments
-    2. Routes to the appropriate detector based on the detector argument
-    3. Currently supports 'retina' detector (RetinaNet B3D)
-    
-    Args:
-        args (argparse.Namespace): Parsed command line arguments containing:
-            - dataset: Name of the dataset to process
-            - detector: Type of detector to use (currently only 'retina' supported)
-            
-    Raises:
-        ValueError: If an unknown detector is specified
-        
-    Note:
-        The function expects the following directory structure:
-        - CACHE_DIR/dataset_name/ (for processed segments and results)
-        - DATA_DIR/dataset_name/ (for original video files)
-    """
-    cache_dir = os.path.join(CACHE_DIR, args.dataset)
-    dataset_dir = os.path.join(DATA_DIR, args.dataset)
-    detector = args.detector
-
-    if detector == 'retina':
-        detect_retina(cache_dir, dataset_dir)
-    else:
-        raise ValueError(f"Unknown detector: {detector}")
 
 
 if __name__ == '__main__':

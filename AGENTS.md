@@ -35,6 +35,8 @@
 - Filenames/modules: `snake_case.py`; classes: `PascalCase`; constants: `UPPER_SNAKE_CASE`.
 - Scripts: keep numeric prefixes (`p0xx_`, `p0yy_exec_*`, `p0zz_tune_*`).
 - Type checking: `pyright` configured in `pyproject.toml`.
+- Always add comments to every operations of the code.
+- Do not add any comment or any doc-string to the parse_args function and its contents.
 
 ## Testing Guidelines
 - Framework: `pytest`. Place new tests alongside targets or under `lib/tests/` as `test_*.py`.

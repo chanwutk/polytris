@@ -1,20 +1,16 @@
 #!/usr/local/bin/python
 
 import argparse
-import json
 import os
 import shutil
 import numpy as np
-from rich.progress import track
-import matplotlib.pyplot as plt
-from typing import Any, Callable
+import altair as alt
+from typing import Callable
 import multiprocessing as mp
 from functools import partial
+import pandas as pd
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar
-
-
-TILE_SIZES = [30, 60]  #, 120]
+from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -23,14 +19,15 @@ def parse_args():
 
     Returns:
         argparse.Namespace: Parsed command line arguments containing:
-            - dataset (str): Dataset name to process (default: 'b3d')
+            - datasets (List[str]): Dataset names to process (default: ['b3d'])
             - tile_size (int | str): Tile size to use for classification (choices: 30, 60, 120, 'all')
             - threshold (float): Threshold for classification visualization (default: 0.5)
     """
     parser = argparse.ArgumentParser(description='Visualize video tile classification results')
-    parser.add_argument('--dataset', required=False,
-                        default='b3d',
-                        help='Dataset name')
+    parser.add_argument('--datasets', required=False,
+                        default=DATASETS_TO_TEST,
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
                         help='Tile size to use for classification (or "all" for all tile sizes)')
     parser.add_argument('--threshold', type=float, default=0.5,
@@ -38,21 +35,27 @@ def parse_args():
     return parser.parse_args()
 
 
-def evaluate_classification_accuracy(classifications: np.ndarray,
-                                     detections: list[list[float]], tile_size: int,
-                                     threshold: float) -> dict[str, Any]:
+def evaluate_classification_accuracy(args):
     """
     Evaluate classification accuracy by comparing predictions with groundtruth detections.
 
     Args:
-        classifications (np.ndarray): 2D grid of classification scores
-        detections (list[dict]): list of detection dictionaries
-        tile_size (int): Size of each tile
-        threshold (float): Classification threshold
+        args: Tuple containing (frame_result, frame_detections, tile_size, threshold)
 
     Returns:
         dict: dictionary containing evaluation metrics and error details
     """
+    frame_result, frame_detections, tile_size, threshold = args
+
+    # Validate frame data
+    assert 'tracks' in frame_detections, f"tracks not in frame_detections: {frame_detections}"
+
+    classifications = frame_result['classification_hex']
+    classification_size = frame_result['classification_size']
+    classifications = (np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8)
+        .reshape(classification_size)
+        .astype(np.float32) / 255.0)
+
     grid_height = classifications.shape[0]
     grid_width = classifications.shape[1] if grid_height > 0 else 0
 
@@ -67,14 +70,14 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
     total_height = grid_height * tile_size
     total_width = grid_width * tile_size
 
-    detection_bitmap = mark_detections(detections, total_width, total_height,
-                                       tile_size, slice(-4, None))
+    detection_bitmap = mark_detections(frame_detections['tracks'], total_width,
+                                       total_height, tile_size, slice(-4, None))
 
     # Vectorized operations for much better performance
     # Flatten arrays for easier processing
     classification_scores = classifications.flatten()
     actual_positives = (detection_bitmap > 0).flatten()
-    
+
     # Create boolean masks for predictions
     predicted_positives = classification_scores >= threshold
     
@@ -114,37 +117,7 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
     }
 
 
-def _evaluate_frame_worker(args):
-    """
-    Worker function to evaluate a single frame for multiprocessing.
-
-    Args:
-        args: Tuple containing (frame_result, frame_detections, tile_size, threshold)
-
-    Returns:
-        dict: Frame evaluation results
-    """
-    frame_result, frame_detections, tile_size, threshold = args
-
-    # Validate frame data
-    assert 'tracks' in frame_detections, f"tracks not in frame_detections: {frame_detections}"
-
-    classifications = frame_result['classification_hex']
-    classification_size = frame_result['classification_size']
-    classifications = (np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8)
-        .reshape(classification_size)
-        .astype(np.float32) / 255.0)
-
-    # Evaluate this frame
-    frame_eval = evaluate_classification_accuracy(
-        classifications, frame_detections['tracks'], tile_size, threshold
-    )
-
-    return frame_eval
-
-
-def create_statistics_visualizations(video_file: str, results: list[dict],
-                                     groundtruth_detections: list[dict],
+def create_statistics_visualizations(results: list[dict], groundtruth_detections: list[dict],
                                      tile_size: int, threshold: float, output_dir: str,
                                      gpu_id: int, command_queue: mp.Queue):
     """
@@ -199,7 +172,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     command_queue.put((f'cuda:{gpu_id}', { 'completed': 0, 'total': len(results) }))
     mod = int(len(results) * 0.05)
     for frame_idx, (frame_result, frame_detections) in enumerate(zip(results, groundtruth_detections)):
-        frame_eval = _evaluate_frame_worker((frame_result, frame_detections, tile_size, threshold))
+        frame_eval = evaluate_classification_accuracy((frame_result, frame_detections, tile_size, threshold))
         frame_evals.append(frame_eval)
         if frame_idx % mod == 0:
             command_queue.put((f'cuda:{gpu_id}', { 'completed': frame_idx + 1 }))
@@ -231,7 +204,7 @@ def create_statistics_visualizations(video_file: str, results: list[dict],
     
     visualize_error_over_time(
         frame_metrics, groundtruth_detections,
-        overall_precision, overall_recall, overall_f1,
+        # overall_precision, overall_recall, overall_f1,
         tile_size, output_dir
     )
     
@@ -270,80 +243,77 @@ def visualize_error_summary(total_tp: int, total_tn: int, total_fp: int, total_f
     Returns:
         str: Path to saved visualization file
     """
-    fig, ((ax1, ax3, ax2)) = plt.subplots(1, 3, figsize=(15, 6))
-
-    # First stacked bar chart: x-axis is Predicted, color is Actual
-    x_labels = ['Predicted Negative', 'Predicted Positive']
-    actual_negative_values = [total_tn, total_fp]  # TN, FP
-    actual_positive_values = [total_fn, total_tp]  # FN, TP
-
-    bars1 = ax1.bar(x_labels, actual_negative_values, label='Actual Negative', color='lightcoral', alpha=0.8)
-    bars2 = ax1.bar(x_labels, actual_positive_values, bottom=actual_negative_values, label='Actual Positive', color='lightgreen', alpha=0.8)
-
-    # Add value labels on bars
-    for i, (bar1, bar2) in enumerate(zip(bars1, bars2)):
-        # Label for Actual Negative (bottom)
-        if actual_negative_values[i] > 0:
-            ax1.text(bar1.get_x() + bar1.get_width()/2, bar1.get_height()/2,
-                    str(actual_negative_values[i]), ha='center', va='center', fontweight='bold')
-
-        # Label for Actual Positive (top)
-        if actual_positive_values[i] > 0:
-            ax1.text(bar2.get_x() + bar2.get_width()/2, bar2.get_y() + bar2.get_height()/2,
-                    str(actual_positive_values[i]), ha='center', va='center', fontweight='bold')
-
-    ax1.set_ylabel('Count')
-    ax1.set_title(f'Classification Results by Prediction (Tile Size: {tile_size})')
-    ax1.legend()
-    ax1.grid(True, alpha=0.3, axis='y')
-
-    # Metrics bar chart
-    metrics = ['Precision', 'Recall', 'Accuracy', 'F1-Score']
-    values = [overall_precision, overall_recall, overall_accuracy, overall_f1]
-    colors = ['skyblue', 'lightgreen', 'lightcoral', 'gold']
-    bars = ax2.bar(metrics, values, color=colors, alpha=0.7)
-    ax2.set_ylabel('Score')
-    ax2.set_title(f'Overall Classification Metrics (Tile Size: {tile_size})')
-    ax2.set_ylim(0, 1)
-    for bar, value in zip(bars, values):
-        ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                f'{value:.3f}', ha='center', va='bottom')
-
-    # Second stacked bar chart: x-axis is Actual, color is Predicted
-    x_labels2 = ['Actual Negative', 'Actual Positive']
-    predicted_negative_values = [total_tn, total_fn]  # TN, FN
-    predicted_positive_values = [total_fp, total_tp]  # FP, TP
-
-    bars3 = ax3.bar(x_labels2, predicted_negative_values, label='Predicted Negative', color='lightcoral', alpha=0.8)
-    bars4 = ax3.bar(x_labels2, predicted_positive_values, bottom=predicted_negative_values, label='Predicted Positive', color='lightgreen', alpha=0.8)
-
-    # Add value labels on bars
-    for i, (bar3, bar4) in enumerate(zip(bars3, bars4)):
-        # Label for Predicted Negative (bottom)
-        if predicted_negative_values[i] > 0:
-            ax3.text(bar3.get_x() + bar3.get_width()/2, bar3.get_height()/2,
-                    str(predicted_negative_values[i]), ha='center', va='center', fontweight='bold')
-
-        # Label for Predicted Positive (top)
-        if predicted_positive_values[i] > 0:
-            ax3.text(bar4.get_x() + bar4.get_width()/2, bar4.get_y() + bar4.get_height()/2,
-                    str(predicted_positive_values[i]), ha='center', va='center', fontweight='bold')
-
-    ax3.set_ylabel('Count')
-    ax3.set_title(f'Classification Results by Actual (Tile Size: {tile_size})')
-    ax3.legend()
-    ax3.grid(True, alpha=0.3, axis='y')
-
-    plt.tight_layout()
+    # Prepare data for confusion matrix charts
+    confusion_data = [
+        {'Prediction': 'Predicted Negative', 'Actual': 'Actual Negative', 'Count': total_tn},
+        {'Prediction': 'Predicted Negative', 'Actual': 'Actual Positive', 'Count': total_fn},
+        {'Prediction': 'Predicted Positive', 'Actual': 'Actual Negative', 'Count': total_fp},
+        {'Prediction': 'Predicted Positive', 'Actual': 'Actual Positive', 'Count': total_tp}
+    ]
+    
+    confusion_df = pd.DataFrame(confusion_data)
+    
+    # Create confusion matrix chart by prediction
+    chart1 = alt.Chart(confusion_df).mark_bar().encode(
+        x='Prediction:N',
+        y='Count:Q',
+        color=alt.Color('Actual:N', scale=alt.Scale(domain=['Actual Negative', 'Actual Positive'], 
+                                                   range=['lightcoral', 'lightgreen'])),
+        tooltip=['Prediction', 'Actual', 'Count']
+    ).properties(
+        title=f'Classification Results by Prediction (Tile Size: {tile_size})',
+        width=200,
+        height=300
+    )
+    
+    # Create confusion matrix chart by actual
+    chart2 = alt.Chart(confusion_df).mark_bar().encode(
+        x='Actual:N',
+        y='Count:Q',
+        color=alt.Color('Prediction:N', scale=alt.Scale(domain=['Predicted Negative', 'Predicted Positive'], 
+                                                       range=['lightcoral', 'lightgreen'])),
+        tooltip=['Prediction', 'Actual', 'Count']
+    ).properties(
+        title=f'Classification Results by Actual (Tile Size: {tile_size})',
+        width=200,
+        height=300
+    )
+    
+    # Prepare metrics data
+    metrics_data = [
+        {'Metric': 'Precision', 'Score': overall_precision},
+        {'Metric': 'Recall', 'Score': overall_recall},
+        {'Metric': 'Accuracy', 'Score': overall_accuracy},
+        {'Metric': 'F1-Score', 'Score': overall_f1}
+    ]
+    
+    metrics_df = pd.DataFrame(metrics_data)
+    
+    # Create metrics chart
+    chart3 = alt.Chart(metrics_df).mark_bar().encode(
+        x='Metric:N',
+        y=alt.Y('Score:Q', scale=alt.Scale(domain=[0, 1])),
+        color=alt.Color('Metric:N', scale=alt.Scale(domain=['Precision', 'Recall', 'Accuracy', 'F1-Score'],
+                                                   range=['skyblue', 'lightgreen', 'lightcoral', 'gold'])),
+        tooltip=['Metric', alt.Tooltip('Score:Q', format='.3f')]
+    ).properties(
+        title=f'Overall Classification Metrics (Tile Size: {tile_size})',
+        width=200,
+        height=300
+    )
+    
+    # Combine charts horizontally
+    combined_chart = alt.hconcat(chart1, chart2, chart3, spacing=20)
+    
+    # Save the chart
     overall_summary_path = os.path.join(output_dir, f'010_overall_summary_tile{tile_size}.png')
-    plt.savefig(overall_summary_path, dpi=300, bbox_inches='tight')
-    plt.close()
+    combined_chart.save(overall_summary_path, scale_factor=2)
     
     return overall_summary_path
 
 
 def visualize_error_over_time(frame_metrics: list[dict], groundtruth_detections: list[dict],
-                              overall_precision: float, overall_recall: float, overall_f1: float,
+                              # overall_precision: float, overall_recall: float, overall_f1: float,
                               tile_size: int, output_dir: str) -> str:
     """
     Create classification error over time visualization with 4 subplots.
@@ -360,8 +330,6 @@ def visualize_error_over_time(frame_metrics: list[dict], groundtruth_detections:
     Returns:
         str: Path to saved visualization file
     """
-    fig, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, figsize=(25, 12))
-
     frame_indices = list(range(len(frame_metrics)))
     error_rates = [(m['fp'] + m['fn']) / m['total_tiles'] for m in frame_metrics]
     precision_rates = [m['precision'] for m in frame_metrics]
@@ -377,69 +345,85 @@ def visualize_error_over_time(frame_metrics: list[dict], groundtruth_detections:
         objects_per_frame.append(object_count)
 
     # Get number of tiles per frame and metrics data
-    num_tiles_per_frame = frame_metrics[0]['total_tiles']
+    # num_tiles_per_frame = frame_metrics[0]['total_tiles']
     tp_counts = [m['tp'] for m in frame_metrics]
     tn_counts = [m['tn'] for m in frame_metrics]
     fp_counts = [m['fp'] for m in frame_metrics]
     fn_counts = [m['fn'] for m in frame_metrics]
 
-    # First subplot: Error rate and F1 over time
-    ax1_twin = ax1.twinx()
-    line1 = ax1.plot(frame_indices, error_rates, 'r-', linewidth=2, label='Error Rate')
-    line2 = ax1.plot(frame_indices, f1_scores, 'orange', linewidth=2, label='F1-Score')
-    mean_error = float(np.mean(error_rates))
-    ax1.axhline(y=mean_error, color='red', linestyle='--', alpha=0.7, label=f'Mean Error: {mean_error:.3f}')
-    ax1.axhline(y=float(overall_f1), color='orange', linestyle='--', alpha=0.7, label=f'Overall F1: {overall_f1:.3f}')
-    ax1.set_xlabel('Frame Index')
-    ax1.set_ylabel('Rate/Score')
-    ax1.set_title(f'Error Rate and F1-Score Over Time (Tile Size: {tile_size})')
-    ax1.grid(True, alpha=0.3)
-
-    # Object count on secondary y-axis (only for the first subplot)
-    line3 = ax1_twin.plot(frame_indices, objects_per_frame, 'purple', linewidth=2, label='Object Count', alpha=0.7)
-    ax1_twin.set_ylabel('Object Count', color='purple')
-    ax1_twin.tick_params(axis='y', labelcolor='purple')
-
-    # Combine legends
-    lines = line1 + line2 + line3
-    labels = [str(l.get_label()) for l in lines]
-    ax1.legend(lines, labels, loc='upper right')
-
-    # Second subplot: Precision and Recall over time (no object count)
-    line4 = ax2.plot(frame_indices, precision_rates, 'g-', linewidth=2, label='Precision')
-    line5 = ax2.plot(frame_indices, recall_rates, 'b-', linewidth=2, label='Recall')
-    ax2.axhline(y=float(overall_precision), color='green', linestyle='--', alpha=0.7, label=f'Overall Precision: {overall_precision:.3f}')
-    ax2.axhline(y=float(overall_recall), color='blue', linestyle='--', alpha=0.7, label=f'Overall Recall: {overall_recall:.3f}')
-    ax2.set_xlabel('Frame Index')
-    ax2.set_ylabel('Score')
-    ax2.set_title(f'Precision and Recall Over Time (Tile Size: {tile_size})')
-    ax2.grid(True, alpha=0.3)
-    ax2.legend(loc='upper right')
-
-    # Third subplot: True Positive and True Negative over time (no object count)
-    line7 = ax3.plot(frame_indices, tp_counts, 'g-', linewidth=2, label='True Positives')
-    line8 = ax3.plot(frame_indices, tn_counts, 'b-', linewidth=2, label='True Negatives')
-    ax3.set_yticklabels([f'{int(v)}\n({v * 100 / num_tiles_per_frame:.1f}%)' for v in ax3.get_yticks()])
-    ax3.set_xlabel('Frame Index')
-    ax3.set_ylabel('Count (% of Tiles)')
-    ax3.set_title(f'True Positives and Negatives Over Time (Tile Size: {tile_size})')
-    ax3.grid(True, alpha=0.3)
-    ax3.legend(loc='upper right')
-
-    # Fourth subplot: False Positive and False Negative over time (no object count)
-    line10 = ax4.plot(frame_indices, fp_counts, 'r-', linewidth=2, label='False Positives')
-    line11 = ax4.plot(frame_indices, fn_counts, 'orange', linewidth=2, label='False Negatives')
-    ax4.set_yticklabels([f'{int(v)}\n({v * 100 / num_tiles_per_frame:.1f}%)' for v in ax4.get_yticks()])
-    ax4.set_xlabel('Frame Index')
-    ax4.set_ylabel('Count (% of Tiles)')
-    ax4.set_title(f'False Positives and Negatives Over Time (Tile Size: {tile_size})')
-    ax4.grid(True, alpha=0.3)
-    ax4.legend(loc='upper right')
-
-    plt.tight_layout()
+    # Prepare data for all charts
+    chart_data = []
+    for i in range(len(frame_indices)):
+        chart_data.extend([
+            {'Frame': frame_indices[i], 'Value': error_rates[i], 'Metric': 'Error Rate', 'Chart': 'Chart1'},
+            {'Frame': frame_indices[i], 'Value': f1_scores[i], 'Metric': 'F1-Score', 'Chart': 'Chart1'},
+            {'Frame': frame_indices[i], 'Value': objects_per_frame[i], 'Metric': 'Object Count', 'Chart': 'Chart1'},
+            {'Frame': frame_indices[i], 'Value': precision_rates[i], 'Metric': 'Precision', 'Chart': 'Chart2'},
+            {'Frame': frame_indices[i], 'Value': recall_rates[i], 'Metric': 'Recall', 'Chart': 'Chart2'},
+            {'Frame': frame_indices[i], 'Value': tp_counts[i], 'Metric': 'True Positives', 'Chart': 'Chart3'},
+            {'Frame': frame_indices[i], 'Value': tn_counts[i], 'Metric': 'True Negatives', 'Chart': 'Chart3'},
+            {'Frame': frame_indices[i], 'Value': fp_counts[i], 'Metric': 'False Positives', 'Chart': 'Chart4'},
+            {'Frame': frame_indices[i], 'Value': fn_counts[i], 'Metric': 'False Negatives', 'Chart': 'Chart4'}
+        ])
+    
+    df = pd.DataFrame(chart_data)
+    
+    # Create individual charts
+    chart1_data = df[df['Chart'] == 'Chart1']
+    assert isinstance(chart1_data, pd.DataFrame)
+    chart1 = alt.Chart(chart1_data).mark_line().encode(
+        x='Frame:Q',
+        y=alt.Y('Value:Q', scale=alt.Scale(zero=False)),
+        color='Metric:N',
+        strokeDash=alt.condition(alt.datum.Metric == 'Object Count', alt.value([5, 5]), alt.value([0, 0]))
+    ).properties(
+        title=f'Error Rate and F1-Score Over Time (Tile Size: {tile_size})',
+        width=600,
+        height=200
+    ).resolve_scale(y='independent')
+    
+    chart2_data = df[df['Chart'] == 'Chart2']
+    assert isinstance(chart2_data, pd.DataFrame)
+    chart2 = alt.Chart(chart2_data).mark_line().encode(
+        x='Frame:Q',
+        y='Value:Q',
+        color='Metric:N'
+    ).properties(
+        title=f'Precision and Recall Over Time (Tile Size: {tile_size})',
+        width=600,
+        height=200
+    )
+    
+    chart3_data = df[df['Chart'] == 'Chart3']
+    assert isinstance(chart3_data, pd.DataFrame)
+    chart3 = alt.Chart(chart3_data).mark_line().encode(
+        x='Frame:Q',
+        y='Value:Q',
+        color='Metric:N'
+    ).properties(
+        title=f'True Positives and Negatives Over Time (Tile Size: {tile_size})',
+        width=600,
+        height=200
+    )
+    
+    chart4_data = df[df['Chart'] == 'Chart4']
+    assert isinstance(chart4_data, pd.DataFrame)
+    chart4 = alt.Chart(chart4_data).mark_line().encode(
+        x='Frame:Q',
+        y='Value:Q',
+        color='Metric:N'
+    ).properties(
+        title=f'False Positives and Negatives Over Time (Tile Size: {tile_size})',
+        width=600,
+        height=200
+    )
+    
+    # Combine charts vertically
+    combined_chart = alt.vconcat(chart1, chart2, chart3, chart4, spacing=20)
+    
+    # Save the chart
     time_series_path = os.path.join(output_dir, f'020_time_series_tile{tile_size}.png')
-    plt.savefig(time_series_path, dpi=300, bbox_inches='tight')
-    plt.close()
+    combined_chart.save(time_series_path, scale_factor=2)
     
     return time_series_path
 
@@ -464,23 +448,33 @@ def visualize_spatial_misclassification(all_error_counts: list[np.ndarray], tile
     for error_map in all_error_counts:
         aggregated_error_map += error_map
 
-    plt.figure(figsize=(12, 8))
-    # Use matplotlib heatmap
-    plt.imshow(aggregated_error_map, cmap='Reds', interpolation='nearest')
-    for i in range(aggregated_error_map.shape[0]):
-        for j in range(aggregated_error_map.shape[1]):
-            if aggregated_error_map[i, j] == 0:
-                plt.text(j, i, str(aggregated_error_map[i, j]),
-                         ha='center', va='center', color='black', fontweight='bold')
-    plt.colorbar(label='Error Count')
-
-    plt.title(f'Cumulative Error Count per Tile (Tile Size: {tile_size})\nRed: False Positive, Orange: False Negative')
-    plt.xlabel('Tile X Position')
-    plt.ylabel('Tile Y Position')
-
+    # Prepare data for heatmap
+    heatmap_data = []
+    for i in range(grid_height):
+        for j in range(grid_width):
+            heatmap_data.append({
+                'x': j,
+                'y': i,
+                'error_count': int(aggregated_error_map[i, j])
+            })
+    
+    df = pd.DataFrame(heatmap_data)
+    
+    # Create heatmap chart
+    chart = alt.Chart(df).mark_rect().encode(
+        x=alt.X('x:O', title='Tile X Position'),
+        y=alt.Y('y:O', title='Tile Y Position', sort=alt.SortField('y', order='descending')),
+        color=alt.Color('error_count:Q', scale=alt.Scale(scheme='reds'), title='Error Count'),
+        tooltip=['x', 'y', 'error_count']
+    ).properties(
+        title=f'Cumulative Error Count per Tile (Tile Size: {tile_size})',
+        width=600,
+        height=400
+    )
+    
+    # Save the chart
     error_heatmap_path = os.path.join(output_dir, f'030_error_heatmap_tile{tile_size}.png')
-    plt.savefig(error_heatmap_path, dpi=300, bbox_inches='tight')
-    plt.close()
+    chart.save(error_heatmap_path, scale_factor=2)
     
     return error_heatmap_path
 
@@ -521,67 +515,72 @@ def visualize_score_distribution(all_classification_scores: list[float], all_act
         else:
             actual_negative_scores.append(score)
 
-    # Create histograms for correct and incorrect predictions, plus actual positive/negative
-    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-    axes = axes.flatten()  # Flatten to 1D array for easier indexing
+    # Prepare data for histograms
+    histogram_data = []
     
-    # Create twin axes for dual y-axis functionality
-    twin_axes = []
-    for ax in axes:
-        twin_ax = ax.twinx()
-        twin_axes.append(twin_ax)
+    # Add correct predictions data
+    for score in correct_scores:
+        histogram_data.append({'Score': score, 'Category': 'Correct Predictions', 'Count': 1})
     
-    # Define consistent colors for original axes (left y-axis) and synchronized axes (right y-axis)
-    original_colors = '#4682B4'  # SteelBlue
-    sync_colors = '#FFD700'     # Yellow
-    sync_colors_edge = '#B8860B'  # Darker yellow for edge color
+    # Add incorrect predictions data
+    for score in incorrect_scores:
+        histogram_data.append({'Score': score, 'Category': 'Incorrect Predictions', 'Count': 1})
     
-    # Define plot configurations as tuples: (scores, title)
-    plot_configs = [
-        (correct_scores, 'Correct Predictions'),
-        (incorrect_scores, 'Incorrect Predictions'),
-        (actual_positive_scores, 'Actual Positive Scores'),
-        (actual_negative_scores, 'Actual Negative Scores')
-    ]
+    # Add actual positive scores data
+    for score in actual_positive_scores:
+        histogram_data.append({'Score': score, 'Category': 'Actual Positive Scores', 'Count': 1})
     
-    # Create plots for each configuration
-    for ax, twin_ax, (scores, title) in zip(axes, twin_axes, plot_configs):
-        if len(scores) > 0:
-            # Plot on original axis with original color
-            ax.hist(scores, bins=100, alpha=0.7, color=original_colors, edgecolor=original_colors)
-            ax.axvline(x=threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold: {threshold}')
-            ax.set_xlabel('Classification Score')
-            ax.set_ylabel('Count', color=original_colors)
-            ax.tick_params(axis='y', labelcolor=original_colors)
-            ax.set_title(f'{title} (Tile Size: {tile_size})\nTotal: {len(scores):,}')
-            ax.legend()
-            ax.grid(True, alpha=0.3)
-            
-            # Plot on twin axis with synchronized color
-            twin_ax.hist(scores, bins=100, color=sync_colors, edgecolor=sync_colors_edge)
-            twin_ax.set_ylabel('Count (Synchronized)', color=sync_colors)
-            twin_ax.tick_params(axis='y', labelcolor=sync_colors)
+    # Add actual negative scores data
+    for score in actual_negative_scores:
+        histogram_data.append({'Score': score, 'Category': 'Actual Negative Scores', 'Count': 1})
+    
+    df = pd.DataFrame(histogram_data)
+    
+    # Create histogram charts for each category
+    charts = []
+    categories = ['Correct Predictions', 'Incorrect Predictions', 'Actual Positive Scores', 'Actual Negative Scores']
+    
+    for category in categories:
+        category_data = df[df['Category'] == category]
+        if len(category_data) > 0:
+            assert isinstance(category_data, pd.DataFrame)
+            chart = alt.Chart(category_data).mark_bar().encode(
+                alt.X('Score:Q', bin=alt.Bin(maxbins=100), title='Classification Score'),
+                y='count():Q',
+                color=alt.value('#4682B4')
+            ).properties(
+                title=f'{category} (Tile Size: {tile_size}) - Total: {len(category_data):,}',
+                width=300,
+                height=200
+            # ).add_selection(
+            #     alt.selection_interval()
+            ).add_layer(
+                alt.Chart(pd.DataFrame([{'threshold': threshold}])).mark_rule(
+                    color='red', strokeDash=[5, 5], strokeWidth=2
+                ).encode(x='threshold:Q')
+            )
+            charts.append(chart)
         else:
-            ax.text(0.5, 0.5, f'No {title.lower()}', ha='center', va='center', transform=ax.transAxes)
-            ax.set_title(f'{title} (Tile Size: {tile_size})')
-
-    # Sync y-axes across all subplots for synchronized axes (right y-axis)
-    y_min_sync = float('inf')
-    y_max_sync = float('-inf')
+            # Create empty chart with text
+            empty_data = pd.DataFrame([{'text': f'No {category.lower()}'}])
+            chart = alt.Chart(empty_data).mark_text(size=20).encode(
+                text='text:N'
+            ).properties(
+                title=f'{category} (Tile Size: {tile_size})',
+                width=300,
+                height=200
+            )
+            charts.append(chart)
     
-    for twin_ax in twin_axes:
-        if twin_ax.get_children():  # Check if twin subplot has content
-            y_min_sync = min(y_min_sync, twin_ax.get_ylim()[0])
-            y_max_sync = max(y_max_sync, twin_ax.get_ylim()[1])
+    # Combine charts in a 2x2 grid
+    combined_chart = alt.vconcat(
+        alt.hconcat(charts[0], charts[1]),
+        alt.hconcat(charts[2], charts[3])
+    )
     
-    # Set the same y-limits for all synchronized axes (right y-axis)
-    for twin_ax in twin_axes:
-        twin_ax.set_ylim(y_min_sync, y_max_sync)
-
-    plt.tight_layout()
+    # Save the chart
     histogram_path = os.path.join(output_dir, f'040_histogram_scores_tile{tile_size}.png')
-    plt.savefig(histogram_path, dpi=300, bbox_inches='tight')
-    plt.close()
+    combined_chart.save(histogram_path, scale_factor=2)
     
     return histogram_path
 
@@ -609,52 +608,48 @@ def _process_classifier_tile_worker(video_file: str, dataset_name: str, classifi
         'total': 1
     }))
 
-    # Load classification results
-    results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier_name)
+    # Load classification results from execution directory
+    results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size,
+                                          classifier_name, execution_dir=True)
     
     # Load groundtruth detections for comparison
     groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
     
     # Create output directory for statistics visualizations
-    stats_output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
+    stats_output_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file,
+                                    '020_relevancy', f'{classifier_name}_{tile_size}',
+                                    'statistics')
     
     # Create statistics visualizations
-    create_statistics_visualizations(
-        video_file, results, groundtruth_detections,
-        tile_size, threshold, stats_output_dir, gpu_id, command_queue
-    )
+    create_statistics_visualizations(results, groundtruth_detections, tile_size,
+                                     threshold, stats_output_dir, gpu_id, command_queue)
 
 
 def main(args):
     """
     Main function that orchestrates the video tile classification visualization process.
 
-    This function serves as the entry point for the script. It: 1. Validates the dataset directory exists
-    2. Iterates through all videos in the dataset directory
+    This function serves as the entry point for the script. It: 1. Validates the dataset directories exist
+    2. Iterates through all videos in each dataset directory
     3. For each video, loads the classification results for the specified tile size(s)
     4. Creates visualizations showing tile classifications and statistics for each tile size
 
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
-            - dataset (str): Name of the dataset to process
+            - datasets (List[str]): Names of the datasets to process
             - tile_size (str): Tile size to use for classification ('30', '60', '120', or 'all')
             - threshold (float): Threshold value for visualization (0.0 to 1.0)
 
          Note:
-         - The script expects classification results from 020_exec_classify.py in:
-           {CACHE_DIR}/{dataset}/{video_file}/relevancy/score/proxy_{tile_size}/score.jsonl
+         - The script expects classification results from 021_exec_classify_correct.py in:
+           {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier_name}_{tile_size}/score/score.jsonl
          - Looks for score.jsonl files
          - Videos are read from {DATA_DIR}/{dataset}/
-         - Visualizations are saved to {CACHE_DIR}/{dataset}/{video_file}/relevancy/proxy_{tile_size}/statistics/
+         - Visualizations are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier_name}_{tile_size}/statistics/
          - Summary statistics and plots are also generated
     """
     mp.set_start_method('spawn', force=True)
     
-    dataset_dir = os.path.join(DATA_DIR, args.dataset)
-
-    if not os.path.exists(dataset_dir):
-        raise FileNotFoundError(f"Dataset directory {dataset_dir} does not exist")
-
     # Validate threshold
     if not 0.0 <= args.threshold <= 1.0:
         raise ValueError("Threshold must be between 0.0 and 1.0")
@@ -669,50 +664,53 @@ def main(args):
 
     print(f"Using threshold: {args.threshold}")
 
-    # Get all video files from the dataset directory
-    video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-
-    if not video_files:
-        print(f"No video files found in {dataset_dir}")
-        return
-
-    print(f"Found {len(video_files)} video files to process")
-
     # Collect all video-classifier-tile combinations for parallel processing
     all_tasks = []
     
-    for video_file in sorted(video_files):
-        video_file_path = os.path.join(dataset_dir, video_file)
+    for dataset_name in args.datasets:
+        dataset_dir = os.path.join(DATA_DIR, dataset_name)
         
-        # Get classifier tile sizes for this video
-        relevancy_dir = os.path.join(CACHE_DIR, args.dataset, video_file, 'relevancy')
-        if not os.path.exists(relevancy_dir):
-            print(f"Skipping {video_file}: No relevancy directory found")
+        if not os.path.exists(dataset_dir):
+            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
             continue
-            
-        classifier_tilesizes: list[tuple[str, int]] = []
-        for file in os.listdir(relevancy_dir):
-            if '_' in file:
-                classifier_name = file.split('_')[0]
-                tile_size = int(file.split('_')[1])
-                classifier_tilesizes.append((classifier_name, tile_size))
         
-        classifier_tilesizes = sorted(classifier_tilesizes)
+        # Get all video files from the dataset directory
+        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
         
-        if not classifier_tilesizes:
-            print(f"Skipping {video_file}: No classifier tile sizes found")
+        if not video_files:
+            print(f"No video files found in {dataset_dir}")
             continue
-            
-        print(f"Found {len(classifier_tilesizes)} classifier tile sizes for {video_file}: {classifier_tilesizes}")
         
-        # Add tasks for each classifier-tile size combination
-        for classifier_name, tile_size in classifier_tilesizes:
-            task_args = (video_file, args.dataset, classifier_name, tile_size, args.threshold)
-            all_tasks.append(task_args)
+        print(f"Found {len(video_files)} video files in dataset {dataset_name}")
+        
+        for video_file in sorted(video_files):
+            # Get classifier tile sizes for this video from execution directory
+            relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '020_relevancy')
+            if not os.path.exists(relevancy_dir):
+                print(f"Skipping {video_file}: No relevancy directory found in execution folder")
+                continue
+                
+            classifier_tilesizes: list[tuple[str, int]] = []
+            for file in os.listdir(relevancy_dir):
+                if '_' in file:
+                    classifier_name = file.split('_')[0]
+                    tile_size = int(file.split('_')[1])
+                    classifier_tilesizes.append((classifier_name, tile_size))
+            
+            classifier_tilesizes = sorted(classifier_tilesizes)
+            
+            if not classifier_tilesizes:
+                print(f"Skipping {video_file}: No classifier tile sizes found")
+                continue
+                
+            print(f"Found {len(classifier_tilesizes)} classifier tile sizes for {video_file}: {classifier_tilesizes}")
+            
+            # Add tasks for each classifier-tile size combination
+            for classifier_name, tile_size in classifier_tilesizes:
+                task_args = (video_file, dataset_name, classifier_name, tile_size, args.threshold)
+                all_tasks.append(task_args)
 
-    if not all_tasks:
-        print("No tasks to process")
-        return
+    assert len(all_tasks) > 0, 'No tasks to process'
 
     print(f"Processing {len(all_tasks)} tasks in parallel...")
 

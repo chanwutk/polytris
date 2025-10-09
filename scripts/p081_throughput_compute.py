@@ -6,15 +6,16 @@ import argparse
 from typing import Callable, Dict, List, Tuple, Any
 from collections import defaultdict
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST
 
 
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Process runtime measurement data for throughput analysis')
-    parser.add_argument('--dataset', type=str, 
-                        default='b3d',
-                        help='Dataset name to process')
+    parser.add_argument('--datasets', required=False,
+                        default=DATASETS_TO_TEST,
+                        nargs='+',
+                        help='Dataset names (space-separated)')
     return parser.parse_args()
 
 
@@ -107,11 +108,11 @@ def parse_index_construction_timings(index_data: List[Dict]) -> Dict[str, Any]:
     }
     
     for entry in index_data:
-        dataset_video = entry['dataset/video']
+        dataset = entry['dataset']
         classifier = entry['classifier']
-        config_key = f"{dataset_video}_{classifier}"
+        config_key = f"{dataset}_{classifier}"
         
-        for stage, file_path in entry['runtime_files']:
+        for stage, file_path, video_name in entry['runtime_files']:
             file_timings = parse_runtime_file(file_path, stage, accessors[stage])
             
             if not file_timings:
@@ -145,10 +146,10 @@ def parse_index_construction_timings(index_data: List[Dict]) -> Dict[str, Any]:
                 # Training data creation - group by operation and tile size
                 for timing in file_timings:
                     op = timing.get('op', 'unknown')
-                    tile_size = timing.get('tile_size', 'unknown')
+                    tilesize = timing.get('tilesize', 'unknown')
                     time_val = timing.get('time', 0)
                     
-                    op_key = f"{config_key}_{tile_size}_{op}"
+                    op_key = f"{config_key}_{tilesize}_{op}"
                     stage_summaries[stage][op_key].append(time_val)
             
             elif stage == '013_tune_train_classifier':
@@ -174,12 +175,12 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
     }
     
     stage_summaries = {
-        '001_preprocess_groundtruth_detection': defaultdict(list),
-        '002_preprocess_groundtruth_tracking': defaultdict(list),
-        '020_exec_classify': defaultdict(list),
-        '030_exec_compress': defaultdict(list),
-        '040_exec_detect': defaultdict(list),
-        '060_exec_track': defaultdict(list)
+        '001_preprocess_groundtruth_detection': {},
+        '002_preprocess_groundtruth_tracking': {},
+        '020_exec_classify': {},
+        '030_exec_compress': {},
+        '040_exec_detect': {},
+        '060_exec_track': {}
     }
 
     accessors = {
@@ -194,8 +195,9 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
     for entry in query_data:
         dataset_video = entry['dataset/video']
         classifier = entry['classifier']
-        tile_size = entry['tile_size']
-        config_key = f"{dataset_video}_{classifier}_{tile_size}"
+        tilesize = entry['tilesize']
+        tilepadding = entry.get('tilepadding', 'N/A')
+        config_key = f"{dataset_video}_{classifier}_{tilesize}_{tilepadding}"
         
         for stage, file_path in entry['runtime_files']:
             file_timings = parse_runtime_file(file_path, stage, accessors[stage])
@@ -223,7 +225,9 @@ def parse_query_execution_timings(query_data: List[Dict]) -> Dict[str, Any]:
             
             # Calculate stage summary
             total_time = sum(agg['total_time'] for agg in op_aggregates.values())
-            stage_summaries[stage][config_key].append(total_time)
+            # Assert that this config_key hasn't been processed before (should be unique)
+            assert config_key not in stage_summaries[stage], f"Config key {config_key} already exists in stage {stage}"
+            stage_summaries[stage][config_key] = total_time
     
     return {
         'timings': timings,
@@ -273,8 +277,9 @@ def save_measurements(index_timings: Dict[str, Any], query_timings: Dict[str, An
     metadata = {
         'dataset': dataset,
         'videos': videos,
-        'classifiers': CLASSIFIERS_TO_TEST + ['groundtruth'],
-        'tile_sizes': [30, 60],
+        'classifiers': CLASSIFIERS_TO_TEST + ['Perfect'],
+        'tilesizes': [30, 60],
+        'tilepadding_values': ['padded', 'unpadded'],
         'index_stages': ['011_tune_detect', '012_tune_create_training_data', '013_tune_train_classifier'],
         'query_stages': ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking', 
                         '020_exec_classify', '030_exec_compress', '040_exec_detect', '060_exec_track']
@@ -292,22 +297,23 @@ def main():
     """Main function to process runtime measurement data."""
     args = parse_args()
     
-    print(f"Loading throughput data tables for dataset: {args.dataset}")
-    data_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput')
-    print(f"Data directory: {data_dir}")
-    index_data, query_data = load_data_tables(data_dir)
-    
-    print("Parsing index construction timing data...")
-    index_timings = parse_index_construction_timings(index_data)
-    
-    print("Parsing query execution timing data...")
-    query_timings = parse_query_execution_timings(query_data)
-    
-    print("Saving processed measurements...")
-    measurements_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'throughput', 'measurements')
-    save_measurements(index_timings, query_timings, measurements_dir, args.dataset)
-    
-    print(f"\nData processing complete! Measurements saved to: {measurements_dir}")
+    for dataset in args.datasets:
+        print(f"Loading throughput data tables for dataset: {dataset}")
+        data_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
+        print(f"Data directory: {data_dir}")
+        index_data, query_data = load_data_tables(data_dir)
+        
+        print("Parsing index construction timing data...")
+        index_timings = parse_index_construction_timings(index_data)
+        
+        print("Parsing query execution timing data...")
+        query_timings = parse_query_execution_timings(query_data)
+        
+        print("Saving processed measurements...")
+        measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
+        save_measurements(index_timings, query_timings, measurements_dir, dataset)
+        
+        print(f"\nData processing complete for {dataset}! Measurements saved to: {measurements_dir}")
 
 
 if __name__ == '__main__':

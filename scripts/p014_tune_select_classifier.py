@@ -6,8 +6,7 @@ import os
 from collections import defaultdict
 from typing import Dict, List, Any
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+import altair as alt
 import numpy as np
 
 from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
@@ -116,12 +115,8 @@ def load_training_results(dataset_dir: str, classifiers_filter: List[str] | None
 
 def create_scatterplots(df: pd.DataFrame, output_dir: str, title_suffix: str = ""):
     """
-    Create the 5 required scatterplots using seaborn.
+    Create the 5 required scatterplots using altair.
     """
-    # Set up the plotting style
-    sns.set_style("whitegrid")
-    plt.rcParams['figure.figsize'] = (12, 8)
-
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
@@ -170,69 +165,66 @@ def create_scatterplots(df: pd.DataFrame, output_dir: str, title_suffix: str = "
     ]
 
     for plot_config in plots:
-        plt.figure(figsize=(10, 6))
-
         # Create scatter plot with different colors for classifiers and sizes for tile sizes
-        scatter = sns.scatterplot(
-            data=df,
-            x=plot_config['x'],
-            y=plot_config['y'],
-            hue='classifier',
-            palette='tab20',
-            size='tile_size',
-            sizes=(50, 200),
-            alpha=0.7
+        scatter = alt.Chart(df).mark_circle().encode(
+            x=alt.X(f'{plot_config["x"]}:Q', title=plot_config['xlabel']),
+            y=alt.Y(f'{plot_config["y"]}:Q', title=plot_config['ylabel'], 
+                   scale=alt.Scale(zero=False)),
+            color='classifier:N',
+            size=alt.Size('tile_size:O', scale=alt.Scale(range=[50, 200])),
+            tooltip=['classifier', 'tile_size', plot_config['x'], plot_config['y']]
+        ).properties(
+            title=plot_config['title'],
+            width=600,
+            height=400
         )
 
-        # Draw lines connecting the same classifier across tile sizes (smallest to largest)
-        # Get the color mapping from the scatter plot
-        unique_classifiers = df['classifier'].unique()
-        tab20_colors = sns.color_palette('tab20', len(unique_classifiers))
-        classifier_color_map = dict(zip(unique_classifiers, tab20_colors))
-
-        for classifier in unique_classifiers:
+        # Add lines connecting the same classifier across tile sizes
+        line_data = []
+        for classifier in df['classifier'].unique():
             classifier_data = df[df['classifier'] == classifier]
+            assert isinstance(classifier_data, pd.DataFrame)
+            classifier_data = classifier_data.sort_values('tile_size')
             if len(classifier_data) > 1:
-                # Convert to numpy arrays and sort by tile_size
-                tile_sizes = np.array(classifier_data['tile_size'])
-                x_values = np.array(classifier_data[plot_config['x']])
-                y_values = np.array(classifier_data[plot_config['y']])
+                for i in range(len(classifier_data) - 1):
+                    line_data.append({
+                        'x1': classifier_data.iloc[i][plot_config['x']],
+                        'y1': classifier_data.iloc[i][plot_config['y']],
+                        'x2': classifier_data.iloc[i+1][plot_config['x']],
+                        'y2': classifier_data.iloc[i+1][plot_config['y']],
+                        'classifier': classifier
+                    })
+        
+        if line_data:
+            line_df = pd.DataFrame(line_data)
+            lines = alt.Chart(line_df).mark_rule(strokeDash=[5, 5], opacity=0.5).encode(
+                x='x1:Q',
+                y='y1:Q',
+                x2='x2:Q',
+                y2='y2:Q',
+                color='classifier:N'
+            )
+            chart = scatter + lines
+        else:
+            chart = scatter
 
-                # Sort by tile_size
-                sorted_indices = np.argsort(tile_sizes)
-                x_sorted = x_values[sorted_indices]
-                y_sorted = y_values[sorted_indices]
-
-                # Use the same color as the scatter points for this classifier
-                color = classifier_color_map[classifier]
-                plt.plot(x_sorted, y_sorted, '--', alpha=0.5, linewidth=1, color=color)
-
-        plt.title(plot_config['title'], fontsize=14, fontweight='bold')
-        plt.xlabel(plot_config['xlabel'], fontsize=12)
-        plt.ylabel(plot_config['ylabel'], fontsize=12)
-
-        # Improve legend
-        legend = plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-        legend.get_frame().set_facecolor('white')
-        legend.get_frame().set_alpha(0.9)
-        # Make legend title bold
-        for text in legend.get_texts():
-            text.set_fontweight('bold')
-
-        # Add correlation coefficient
-        x_values = np.array(df[plot_config['x']].values)
-        y_values = np.array(df[plot_config['y']].values)
-        correlation = np.corrcoef(x_values, y_values)[0, 1]
-        plt.text(0.05, 0.95, f'Correlation: {correlation:.3f}',
-                transform=plt.gca().transAxes, fontsize=10,
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-
-        plt.tight_layout()
+        # # Add correlation coefficient
+        # correlation = df[plot_config['x']].corr(df[plot_config['y']])
+        # correlation_text = alt.Chart(pd.DataFrame([{'text': f'Correlation: {correlation:.3f}'}])).mark_text(
+        #     align='left', baseline='top', fontSize=12
+        # ).encode(
+        #     text='text:N'
+        # ).properties(
+        #     width=600,
+        #     height=400
+        # )
+        
+        # final_chart = alt.layer(chart, correlation_text)
+        final_chart = chart
 
         # Save the plot
         output_path = os.path.join(output_dir, plot_config['filename'])
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        plt.close()
+        final_chart.save(output_path, scale_factor=2)
 
         print(f"Saved plot: {output_path}")
 
