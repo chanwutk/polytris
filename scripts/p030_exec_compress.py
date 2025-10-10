@@ -26,17 +26,6 @@ from lib.group_tiles import group_tiles
 
 
 def parse_args():
-    """
-    Parse command line arguments for the script.
-    
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - datasets (List[str]): Dataset names to process (default: ['b3d'])
-            - tilesize (int | str): Tile size to use for compression (choices: 30, 60, 120, 'all')
-            - threshold (float): Threshold for classification probability (default: 0.5)
-            - classifiers (str): Classifier names to use
-            - clear (bool): Whether to remove and recreate the compressed frames folder (default: False)
-    """
     parser = argparse.ArgumentParser(description='Execute compression of video tiles into images based on classification results')
     parser.add_argument('--datasets', required=False,
                         default=DATASETS_TO_TEST,
@@ -61,7 +50,7 @@ def parse_args():
 
 
 def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions], 
-           frame: dtypes.NPImage, chunk_size: int) -> dtypes.NPImage:
+           frame: dtypes.NPImage, chunk_size: int):
     """
     Render packed polyominoes onto the canvas.
     
@@ -89,8 +78,6 @@ def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions],
                 yfrom + (chunk_size * i): yfrom + (chunk_size * i) + chunk_size,
                 xfrom + (chunk_size * j): xfrom + (chunk_size * j) + chunk_size,
             ] = patch
-    
-    return canvas
 
 
 def apply_pack(
@@ -121,7 +108,7 @@ def apply_pack(
     """
     # Profile: Render packed polyominoes onto canvas
     step_start = (time.time_ns() / 1e6)
-    canvas = render(canvas, positions, frame, tilesize)
+    render(canvas, positions, frame, tilesize)
     step_times['render_canvas'] = (time.time_ns() / 1e6) - step_start
 
     assert index_map is not None
