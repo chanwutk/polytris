@@ -69,3 +69,43 @@ def detect(image: np.ndarray, model: ultralytics.YOLO) -> polyis.dtypes.DetArray
 
     assert polyis.dtypes.is_det_array(detections)
     return detections
+
+
+def detect_batch(
+    images: list[polyis.dtypes.NPImage],
+    model: ultralytics.YOLO
+) -> list[polyis.dtypes.DetArray]:
+    """
+    Detect vehicles in a batch of images using YOLOv5.
+
+    Args:
+        images: Input images as numpy array (H, W, C)
+        model: YOLOv5 model instance
+
+    Returns:
+        list[np.ndarray]: Detection results as array of shape (N, 5)
+                    where each row is [x1, y1, x2, y2, confidence]
+    """
+
+    all_results = model(np.stack(images), classes=VEHICLE_CLASSES, verbose=False)
+    all_detections: list[polyis.dtypes.DetArray] = []
+    for results in all_results:
+        if results.boxes is None or len(results.boxes) == 0:
+            res = np.empty((0, 5))
+            assert polyis.dtypes.is_det_array(res)
+            all_detections.append(res)
+            continue
+
+        # Get bounding boxes and confidence scores
+        bboxes = results.boxes.xyxy.cpu().numpy()  # [x1, y1, x2, y2]
+        confidences = results.boxes.conf.cpu().numpy()  # confidence scores
+
+        # Create output array with shape (N, 5): [x1, y1, x2, y2, confidence]
+        detections = np.zeros((len(bboxes), 5))
+        detections[:, :4] = bboxes
+        detections[:, 4] = confidences
+
+        assert polyis.dtypes.is_det_array(detections)
+        all_detections.append(detections)
+
+    return all_detections

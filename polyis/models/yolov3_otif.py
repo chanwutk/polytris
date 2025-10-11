@@ -32,9 +32,10 @@ DEFAULT_DETECTOR_LABEL = "caldot"
 class YOLOv3Detector:
     """YOLOv3 detector wrapper for consistent interface with other detectors."""
     
-    def __init__(self, net, class_names: list, width: int, height: int, 
+    def __init__(self, net, remaining_net, class_names: list, width: int, height: int, 
                  batch_size: int = 1, threshold: float = 0.25, nms_threshold: float = 0.45):
         self.net = net
+        self.remaining_net = remaining_net
         self.class_names = class_names
         self.width = width
         self.height = height
@@ -43,32 +44,18 @@ class YOLOv3Detector:
         self.nms_threshold = nms_threshold
 
 
-def get_detector(gpu_id: int, config_path: str | None = None, model_path: str | None = None,
-                 data_root: str | None = None, detector_label: str | None = None,
-                 width: int | None = None, height: int | None = None,
-                 threshold: float = 0.25, nms_threshold: float = 0.45):
+def load_model(
+    gpu_id: int,
+    config_path: str | None = None,
+    model_path: str | None = None,
+    data_root: str | None = None,
+    detector_label: str | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    batch_size: int = DEFAULT_BATCH_SIZE):
     """
     Load YOLOv3 detector with configurable parameters.
-    
-    Args:
-        gpu_id: GPU device ID to use (e.g., 0, 1, 2, 3)
-        config_path: Path to YOLOv3 config file (.cfg)
-        model_path: Path to YOLOv3 weights file (.best)
-        data_root: Root directory for YOLOv3 models (default: '/otif-dataset')
-        detector_label: Label for detector (e.g., 'caldot', 'shibuya', 'uav', 'warsaw')
-        width: Model input width (default: 704)
-        height: Model input height (default: 480)
-        threshold: Detection confidence threshold (default: 0.25)
-        nms_threshold: NMS threshold (default: 0.45)
-        
-    Returns:
-        YOLOv3Detector: Configured detector instance
-        
-    Raises:
-        FileNotFoundError: If required files are not found
-        ValueError: If configuration is invalid
     """
-
     # Set defaults
     data_root = data_root or DEFAULT_DATA_ROOT
     detector_label = detector_label or DEFAULT_DETECTOR_LABEL
@@ -149,7 +136,6 @@ def get_detector(gpu_id: int, config_path: str | None = None, model_path: str | 
         temp_files.append(tmp_obj_meta)
         
         # Load YOLOv3 network
-        batch_size = DEFAULT_BATCH_SIZE
         darknet.set_gpu(gpu_id)
         # Suppress architecture output from load_network
         # Use file descriptor redirection for C-level output
@@ -170,21 +156,75 @@ def get_detector(gpu_id: int, config_path: str | None = None, model_path: str | 
         if len(class_names) != 1:
             raise ValueError(f'Expected 1 class, but got {len(class_names)}')
         
-        return YOLOv3Detector(
-            net=net,
-            class_names=class_names,
-            width=width,
-            height=height,
-            batch_size=batch_size,
-            threshold=threshold or DEFAULT_THRESHOLD,
-            nms_threshold=nms_threshold or DEFAULT_NMS_THRESHOLD
-        )
+        return net, class_names
         
     finally:
         # Clean up temporary files
         for temp_file in temp_files:
             if os.path.exists(temp_file):
                 os.remove(temp_file)
+
+
+def get_detector(
+    gpu_id: int,
+    config_path: str | None = None,
+    model_path: str | None = None,
+    data_root: str | None = None,
+    detector_label: str | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    threshold: float = 0.25,
+    nms_threshold: float = 0.45,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    num_images: int = 0
+):
+    """
+    Load YOLOv3 detector with configurable parameters.
+    
+    Args:
+        gpu_id: GPU device ID to use (e.g., 0, 1, 2, 3)
+        config_path: Path to YOLOv3 config file (.cfg)
+        model_path: Path to YOLOv3 weights file (.best)
+        data_root: Root directory for YOLOv3 models (default: '/otif-dataset')
+        detector_label: Label for detector (e.g., 'caldot', 'shibuya', 'uav', 'warsaw')
+        width: Model input width (default: 704)
+        height: Model input height (default: 480)
+        threshold: Detection confidence threshold (default: 0.25)
+        nms_threshold: NMS threshold (default: 0.45)
+        
+    Returns:
+        YOLOv3Detector: Configured detector instance
+        
+    Raises:
+        FileNotFoundError: If required files are not found
+        ValueError: If configuration is invalid
+    """
+
+    # Set defaults
+    data_root = data_root or DEFAULT_DATA_ROOT
+    detector_label = detector_label or DEFAULT_DETECTOR_LABEL
+    width = width or DEFAULT_WIDTH
+    height = height or DEFAULT_HEIGHT
+
+    net, class_names = load_model(gpu_id, config_path, model_path, data_root,
+                                  detector_label, width, height, batch_size)
+    if num_images % batch_size != 0:
+        r_net, r_class_names = load_model(gpu_id, config_path, model_path, data_root,
+                                          detector_label, width, height, num_images % batch_size)
+        assert tuple(class_names) == tuple(r_class_names), \
+            f"Class names do not match: {class_names} != {r_class_names}"
+    else:
+        r_net = None
+    return YOLOv3Detector(
+        net=net,
+        remaining_net=r_net,
+        class_names=class_names,
+        width=width,
+        height=height,
+        batch_size=batch_size,
+        threshold=threshold or DEFAULT_THRESHOLD,
+        nms_threshold=nms_threshold or DEFAULT_NMS_THRESHOLD
+    )
 
 
 def detect(
@@ -255,3 +295,75 @@ def detect(
 
     assert polyis.dtypes.is_det_array(detections)
     return detections
+
+
+def detect_batch(
+    images: list[polyis.dtypes.NPImage],
+    detector: YOLOv3Detector,
+    threshold: float | None = None
+) -> list[polyis.dtypes.DetArray]:
+    """
+    Detect vehicles in a batch of images using YOLOv3.
+    
+    Args:
+        images: Input images as numpy array (H, W, C)
+        detector: YOLOv3Detector instance
+        threshold: Override detection threshold (optional)
+        
+    Returns:
+        list[np.ndarray]: Detection results as array of shape (N, 5)
+                    where each row is [x1, y1, x2, y2, confidence]
+    """
+    if threshold is None:
+        threshold = detector.threshold
+    
+    # Prepare image for darknet
+    oheight, owidth = images[0].shape[:2]
+
+    images_stack = np.stack(images)
+    N, H, W, C = images_stack.shape
+    instack = images_stack.transpose((1, 2, 3, 0)).reshape((H, W, C*N))
+    images_stack = cv2.resize(instack, (detector.width, detector.height),
+                       interpolation=cv2.INTER_LINEAR)
+    images_stack = images_stack.reshape((H, W, C, N)).transpose((3, 2, 0, 1))
+
+    arr = np.ascontiguousarray(images_stack.flat, dtype=np.float32) / 255.0
+    darknet_images = arr.ctypes.data_as(darknet.POINTER(darknet.c_float))
+    darknet_images = darknet.IMAGE(detector.width, detector.height, 3, darknet_images)
+
+    # Detect
+    net = detector.net if len(images) == detector.batch_size else detector.remaining_net
+    raw_detections = darknet.network_predict_batch(
+        net, darknet_images, detector.batch_size, detector.width,
+        detector.height, threshold, 0.5, None, 0, 0)
+
+    all_detections: list[polyis.dtypes.DetArray] = []
+    for i in range(len(images)):
+        # Process detections
+        num = raw_detections[i].num
+        
+        raw_dlist = raw_detections[i].dets
+        darknet.do_nms_obj(raw_dlist, num, len(detector.class_names), detector.nms_threshold)
+        
+        predictions: list[tuple[float, float, float, float, float]] = []
+        for j in range(num):
+            det = raw_dlist[j]
+            if det.prob[0] > 0:
+                bbox = det.bbox
+                cx, cy, w, h = bbox.x, bbox.y, bbox.w, bbox.h
+                if int(w) == 0 or int(h) == 0:
+                    print(f"Zero detected ({det.prob[0]}): {cx}, {cy}, {w}, {h}")
+                    continue
+                predictions.append((int(cx-w/2), int(cy-h/2), int(cx+w/2),
+                                    int(cy+h/2), det.prob[0]))
+        
+        detections = np.array(predictions) if len(predictions) > 0 else np.empty((0, 5))
+        darknet.free_batch_detections(raw_detections, detector.batch_size)
+
+        detections[:, [0, 2]] = detections[:, [0, 2]] * owidth / detector.width
+        detections[:, [1, 3]] = detections[:, [1, 3]] * oheight / detector.height
+
+        assert polyis.dtypes.is_det_array(detections)
+        all_detections.append(detections)
+
+    return all_detections

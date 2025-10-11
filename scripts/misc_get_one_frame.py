@@ -14,8 +14,8 @@ from pathlib import Path
 import cv2
 
 
-def get_frame_from_video(video_path: str, output_path: str, frame_number: int = None, 
-                        timestamp: float = None) -> bool:
+def get_frame_from_video(video_path: str, output_path: str, frame_number: int, 
+                         timestamp: float) -> bool:
     """
     Extract a frame from a video file.
     

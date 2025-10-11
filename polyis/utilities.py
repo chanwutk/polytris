@@ -13,7 +13,7 @@ if typing.TYPE_CHECKING:
     import pandas as pd
 
 DATA_RAW_DIR = '/polyis-data/video-datasets-raw'
-DATA_DIR = '/polyis-data/video-datasets-low'
+DATA_DIR = '/polyis-data/video-datasets'
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [60]
 
@@ -1020,12 +1020,12 @@ METRICS = [
 # METRICS = ['HOTA', 'CLEAR']
 
 DATASETS_TO_TEST = [
-    # 'b3d-jnc00',
-    # 'b3d-jnc02',
-    # 'b3d-jnc06',
-    # 'b3d-jnc07',
-    # 'caldot1-yolov5',
-    # 'caldot2-yolov5',
+    'b3d-jnc00',
+    'b3d-jnc02',
+    'b3d-jnc06',
+    'b3d-jnc07',
+    'caldot1-yolov5',
+    'caldot2-yolov5',
     'caldot1',
     'caldot2',
 ]
@@ -1044,7 +1044,7 @@ DATASETS_CHOICES = [
 
 
 CLASSIFIERS_TO_TEST = [
-    'SimpleCNN',
+    # 'SimpleCNN',
     'YoloN',
     # 'YoloS',
     # 'YoloM',

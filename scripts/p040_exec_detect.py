@@ -12,6 +12,7 @@ from typing import Callable
 import torch
 
 import polyis.models.detector
+import polyis.dtypes
 from polyis.utilities import CACHE_DIR, format_time, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES, CLASSIFIERS_TO_TEST
 
 
@@ -33,11 +34,13 @@ def parse_args():
                              '--classifiers YoloN ShuffleNet05 ResNet18 groundtruth')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the 040_compressed_detections folder for each video')
+    parser.add_argument('--batch_size', type=int, default=64,
+                        help='Batch size for detection processing (default: 64)')
     return parser.parse_args()
 
 
-def detect_objects(video_file_path: str, tilesize: int, classifier: str,
-                   dataset_name: str, tilepadding: bool, gpu_id: int, command_queue: mp.Queue):
+def detect_objects(video_file_path: str, tilesize: int, classifier: str, dataset_name: str,
+                   tilepadding: bool, batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
     
@@ -58,8 +61,6 @@ def detect_objects(video_file_path: str, tilesize: int, classifier: str,
                                          f'{classifier}_{tilesize}_{tilepadding_str}', 'images')
     assert os.path.exists(compressed_frames_dir)
 
-    detector = polyis.models.detector.get_detector(dataset_name, gpu_id)
-
     # print(f"Processing video {video_file_path}")
 
     # Create output directory for detections
@@ -71,6 +72,8 @@ def detect_objects(video_file_path: str, tilesize: int, classifier: str,
 
     # Get all compressed image files
     image_files = [f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg')]
+
+    detector = polyis.models.detector.get_detector(dataset_name, gpu_id, batch_size, len(image_files))
     
     if not image_files:
         raise FileNotFoundError(f"No compressed images found in {compressed_frames_dir}")
@@ -81,32 +84,45 @@ def detect_objects(video_file_path: str, tilesize: int, classifier: str,
                   'total': len(image_files),
                   'description': f"{video_name} {tilesize:>3} {classifier} {tilepadding_str}"}
         command_queue.put((device, kwargs))
-        for idx, image_file in enumerate(image_files):
-            image_path = os.path.join(compressed_frames_dir, image_file)
-            runtime = dict()
+        
+        # Process images in batches
+        for batch_start in range(0, len(image_files), batch_size):
+            batch_end = min(batch_start + batch_size, len(image_files))
+            batch_files = image_files[batch_start:batch_end]
             
-            # Read the compressed image
+            # Read all images in the batch
+            batch_images: list[polyis.dtypes.NPImage] = []
+            batch_runtimes: list[dict] = []
             start_time = (time.time_ns() / 1e6)
-            frame = cv2.imread(image_path)
-            if frame is None:
-                raise ValueError(f"Could not read image {image_path}")
+            for image_file in batch_files:
+                image_path = os.path.join(compressed_frames_dir, image_file)
+                frame = cv2.imread(image_path)
+                assert polyis.dtypes.is_np_image(frame)
+                batch_images.append(frame)
+                batch_runtimes.append({'image_file': image_file})
             end_time = (time.time_ns() / 1e6)
-            runtime['read'] = end_time - start_time
+            read_time_per_image = (end_time - start_time) / len(batch_files)
 
-            # Detect objects in the frame
+            # Detect objects in the batch
             start_time = (time.time_ns() / 1e6)
-            outputs = polyis.models.detector.detect(frame, detector)
+            batch_outputs = polyis.models.detector.detect_batch(batch_images, detector)
             end_time = (time.time_ns() / 1e6)
-            runtime['detect'] = end_time - start_time
+            detect_time_per_image = (end_time - start_time) / len(batch_files)
 
-            # Extract bounding boxes (x1, y1, x2, y2 format)
-            bounding_boxes = outputs[:, :4].tolist()
+            # Process results for each image in the batch
+            for idx, (image_file, outputs) in enumerate(zip(batch_files, batch_outputs)):
+                runtime = batch_runtimes[idx]
+                runtime['read'] = read_time_per_image
+                runtime['detect'] = detect_time_per_image
 
-            # Save detection results
-            f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
-            fr.write(json.dumps(format_time(**runtime)) + '\n')
+                # Extract bounding boxes (x1, y1, x2, y2) format
+                bounding_boxes = outputs[:, :4].tolist()
 
-            command_queue.put((device, {'completed': idx + 1}))
+                # Save detection results
+                f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
+                fr.write(json.dumps(format_time(**runtime)) + '\n')
+
+            command_queue.put((device, {'completed': batch_end + 1}))
 
 
 def main(args):
@@ -189,7 +205,8 @@ def main(args):
                             print(f"No compressed frames directory found for {video_file} {classifier} {tilesize}, skipping")
                             continue
                     
-                        funcs.append(partial(detect_objects, video_file_path, tilesize, classifier, dataset_name, tilepadding))
+                        funcs.append(partial(detect_objects, video_file_path, tilesize, classifier,
+                                             dataset_name, tilepadding, args.batch_size))
     
     print(f"Created {len(funcs)} tasks to process")
     
