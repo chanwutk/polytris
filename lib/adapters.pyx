@@ -5,7 +5,7 @@
 
 import numpy as np
 cimport numpy as cnp
-from libc.stdlib cimport malloc
+from libc.stdlib cimport malloc, free
 import cython
 
 # Import data structures from the shared module
@@ -24,6 +24,12 @@ from pack_append import pack_append as pack_append_cython
 @cython.wraparound(False)  # type: ignore
 def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
     cdef unsigned long long polyomino_stack_ptr = group_tiles_cython(bitmap_input)
+    return format_polyominoes(polyomino_stack_ptr)
+
+
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+def format_polyominoes(unsigned long long polyomino_stack_ptr):
     cdef PolyominoStack *polyomino_stack = <PolyominoStack*>polyomino_stack_ptr
     cdef list bins = []
     cdef Polyomino polyomino
@@ -65,76 +71,22 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
             mask_view[tile_i, tile_j] = 1
         bins.append((mask, (polyomino.offset_i, polyomino.offset_j)))
     PolyominoStack_cleanup(polyomino_stack)
-    # free(polyomino_stack)
+    free(<void*>polyomino_stack)
     return bins
 
 
-def pack_append(
-    list polyominoes,
-    int h,
-    int w,
-    cnp.uint8_t[:, :] occupied_tiles
-):
-    # convert polyominoes to PolyominoStack
-    cdef PolyominoStack polyominoes_stack
-    PolyominoStack_init(&polyominoes_stack, len(polyominoes))
-    
-    cdef Polyomino polyomino
-    cdef IntStack mask
-    cdef cnp.uint8_t[:, :] mask_array
-    cdef tuple offset
-    cdef int i, j, k, mask_h, mask_w
-    
-    for input_polyomino in polyominoes:
-        mask_array, offset = input_polyomino
-        mask_h = mask_array.shape[0]
-        mask_w = mask_array.shape[1]
-        
-        # Initialize IntStack for mask coordinates
-        IntStack_init(&mask, 16)
-        
-        # Convert mask array to coordinate pairs
-        for i in range(mask_h):
-            for j in range(mask_w):
-                if mask_array[i, j]:
-                    IntStack_push(&mask, <unsigned short>i)
-                    IntStack_push(&mask, <unsigned short>j)
-        
-        # Create Polyomino structure
-        polyomino.mask = mask
-        polyomino.offset_i = offset[0]
-        polyomino.offset_j = offset[1]
-        
-        PolyominoStack_push(&polyominoes_stack, polyomino)
-
-    positions = pack_append_cython(<unsigned long long>&polyominoes_stack, h, w, occupied_tiles)
-    if positions is None:
-        return None
-
-    PolyominoStack_cleanup(&polyominoes_stack)
-
-    positions_ret = []
-    for position in positions:
-        mask_array_ = position[2]
-        max_i = 0
-        max_j = 0
-        for k in range(mask_array_.shape[0] // 2):
-            i = mask_array_[(k * 2)]
-            j = mask_array_[(k * 2) + 1]
-            if i > max_i:
-                max_i = i
-            if j > max_j:
-                max_j = j
-        mask_ = np.zeros((max_i + 1, max_j + 1), dtype=np.uint8)
-        for k in range(mask_array_.shape[0] // 2):
-            i = mask_array_[(k * 2)]
-            j = mask_array_[(k * 2) + 1]
-            mask_[i, j] = 1
-        positions_ret.append((position[0], position[1], mask_, position[3]))
-
-    return positions_ret
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+def pack_append(list polyominoes, int h, int w, cnp.uint8_t[:, :] occupied_tiles):
+    cdef unsigned long long polyominoes_stack_ptr = get_polyominoes(polyominoes)
+    positions = pack_append_cython(<unsigned long long>polyominoes_stack_ptr, h, w, occupied_tiles)
+    PolyominoStack_cleanup(<PolyominoStack*>polyominoes_stack_ptr)
+    free(<void*>polyominoes_stack_ptr)
+    return format_positions(positions)
 
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
 def get_polyominoes(list polyominoes):
     # convert polyominoes to PolyominoStack
     cdef PolyominoStack *polyominoes_stack = <PolyominoStack*>malloc(sizeof(PolyominoStack))
@@ -171,6 +123,8 @@ def get_polyominoes(list polyominoes):
     return <unsigned long long>polyominoes_stack
 
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
 def format_positions(list positions) -> "list[tuple[int, int, np.ndarray, tuple[int, int]]] | None":
     if positions is None:
         return None

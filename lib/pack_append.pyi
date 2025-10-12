@@ -6,7 +6,7 @@ import numpy as np
 
 
 if typing.TYPE_CHECKING:
-    from polyis.dtypes import Array, D2, PolyominoPositions, Polyomino
+    from polyis.dtypes import Array, D1, D2, PolyominoPositions
 
 
 def pack_append(

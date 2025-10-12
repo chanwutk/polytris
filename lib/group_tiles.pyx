@@ -147,7 +147,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
     """
     cdef unsigned short h = <unsigned short>bitmap_input.shape[0]
     cdef unsigned short w = <unsigned short>bitmap_input.shape[1]
-    cdef unsigned short group_id, min_i, min_j, max_i, max_j, tile_i, tile_j, num_pairs
+    cdef unsigned short group_id, min_i, min_j, tile_i, tile_j, num_pairs
     cdef int i, j, k
     cdef IntStack connected_tiles
     cdef Polyomino polyomino
@@ -174,7 +174,6 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
                 continue
 
             # Find connected tiles - returns IntStack
-            # connected_tiles = _find_connected_tiles(groups_view, i, j)
             connected_tiles = _find_connected_tiles(groups, h, w, i, j)
             if connected_tiles.top == 0:
                 # Clean up empty IntStack
@@ -186,9 +185,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
             
             # Initialize with first coordinate pair
             min_i = connected_tiles.data[0]
-            max_i = connected_tiles.data[0]
             min_j = connected_tiles.data[1]
-            max_j = connected_tiles.data[1]
             
             # Find min/max through all coordinate pairs
             for k in range(1, num_pairs):
@@ -197,13 +194,9 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
                 
                 if tile_i < min_i:
                     min_i = tile_i
-                elif tile_i > max_i:
-                    max_i = tile_i
                     
                 if tile_j < min_j:
                     min_j = tile_j
-                elif tile_j > max_j:
-                    max_j = tile_j
 
             for k in range(num_pairs):
                 connected_tiles.data[k << 1] -= min_i        # i coordinate
@@ -214,22 +207,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
             polyomino.offset_j = min_j
             PolyominoStack_push(polyomino_stack, polyomino)
 
-            # # Create mask
-            # mask_h = max_i - min_i + 1
-            # mask_w = max_j - min_j + 1
-            # mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
-            # mask_view = mask
-
-            # # Fill mask - iterate through IntStack data directly
-            # for k in range(num_pairs):
-            #     tile_i = connected_tiles.data[k << 1]        # i coordinate
-            #     tile_j = connected_tiles.data[(k << 1) + 1]  # j coordinate
-            #     mask_view[tile_i - min_i, tile_j - min_j] = 1
-            # # Clean up IntStack memory
-            # IntStack_cleanup(&connected_tiles)
             bitmap_input[i, j] = 0
-
-            # bins.append((mask, (min_i, min_j)))
 
     # Sort polyominoes by mask length (descending order) before returning
     if polyomino_stack.top > 0:
