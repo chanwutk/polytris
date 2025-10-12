@@ -5,18 +5,20 @@
 
 import numpy as np
 cimport numpy as cnp
-from libc.stdlib cimport malloc, calloc, free, realloc
+from libc.stdlib cimport malloc, calloc, free, realloc, qsort
+from libc.string cimport memcpy
 import cython
 
+# Import data structures from the shared module
+from utilities cimport (
+    IntStack, Polyomino, PolyominoStack,
+    IntStack_init, IntStack_push, IntStack_cleanup,
+    PolyominoStack_init, PolyominoStack_push,
+    PolyominoStack_cleanup
+)
 
 ctypedef cnp.uint16_t GROUP_t
 ctypedef cnp.uint8_t MASK_t
-
-
-cdef struct IntVector:
-    unsigned short *data
-    int top
-    int capacity
 
 
 # Directions: up, left, down, right
@@ -24,76 +26,19 @@ cdef unsigned short[4] DIRECTIONS_I = [-1, 0, 1, 0]
 cdef unsigned short[4] DIRECTIONS_J = [0, -1, 0, 1]
 
 
-@cython.boundscheck(False)  # type: ignore
-@cython.wraparound(False)  # type: ignore
-cdef int IntVector_init(IntVector *int_vector, int initial_capacity) noexcept nogil:
-    """Initialize an integer vector with initial capacity"""
-    # if not int_vector:
-    #     return -1
-    
-    int_vector.data = <unsigned short*>malloc(<size_t>initial_capacity * sizeof(unsigned short))
-    # if not int_vector.data:
-    #     return -1
-    
-    int_vector.top = 0
-    int_vector.capacity = initial_capacity
-    return 0
+cdef int compare_polyomino_by_mask_length(const void *a, const void *b) noexcept nogil:
+    """
+    Comparison function for qsort to sort polyominoes by mask length (descending order).
+    Returns negative if a should come before b, positive if b should come before a.
+    """
+    # Compare by mask length (top field of IntStack) in descending order
+    # Larger masks first (negative return means a comes before b)
+    return (<Polyomino*>b).mask.top - (<Polyomino*>a).mask.top
 
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
-cdef int IntVector_push(IntVector *int_vector, unsigned short value) noexcept nogil:
-    """Push a value onto the vector, expanding if necessary"""
-    cdef int new_capacity
-    cdef unsigned short *new_data
-    
-    # if not int_vector:
-    #     return -1
-    
-    # Check if we need to expand
-    if int_vector.top >= int_vector.capacity:
-        new_capacity = int_vector.capacity * 2
-        new_data = <unsigned short*>realloc(<void*>int_vector.data,
-                                            <size_t>new_capacity * sizeof(unsigned short))
-        # if not new_data:
-        #     return -1  # Memory allocation failed
-        
-        int_vector.data = new_data
-        int_vector.capacity = new_capacity
-    
-    # Push the value
-    int_vector.data[int_vector.top] = value
-    int_vector.top += 1
-    return 0
-
-
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# cdef unsigned short IntVector_pop(IntVector *int_vector) noexcept:
-#     """Pop a value from the vector"""
-#     if not int_vector or int_vector.top <= 0:
-#         return -1  # Stack is empty or invalid
-    
-#     int_vector.top -= 1
-#     return int_vector.data[int_vector.top]
-
-
-@cython.boundscheck(False)  # type: ignore
-@cython.wraparound(False)  # type: ignore
-cdef void IntVector_cleanup(IntVector *int_vector) noexcept nogil:
-    """Free the stack's data array (stack itself is on stack memory)"""
-    if int_vector:
-        if int_vector.data:
-            free(<void*>int_vector.data)
-            int_vector.data = NULL
-        int_vector.top = 0
-        int_vector.capacity = 0
-
-
-
-@cython.boundscheck(False)  # type: ignore
-@cython.wraparound(False)  # type: ignore
-cdef IntVector _find_connected_tiles(
+cdef IntStack _find_connected_tiles(
     # unsigned int[:, :] bitmap,
     unsigned int* bitmap,
     unsigned short h,
@@ -114,47 +59,47 @@ cdef IntVector _find_connected_tiles(
         start_j: Starting column index
 
     Returns:
-        IntVector: IntVector containing coordinate pairs for connected tiles
+        IntStack: IntStack containing coordinate pairs for connected tiles
     """
     # cdef unsigned short h = <unsigned short>bitmap.shape[0]
     # cdef unsigned short w = <unsigned short>bitmap.shape[1]
     # cdef unsigned int value = bitmap[start_i, start_j]
     cdef unsigned int value = bitmap[start_i * w + start_j]
     
-    # Create IntVector for filled coordinates on stack memory
-    cdef IntVector filled
-    if IntVector_init(&filled, 16) == -1:  # Initial capacity of 32 (16 coordinate pairs)
-        # Return empty IntVector on initialization failure
-        IntVector_cleanup(&filled)
+    # Create IntStack for filled coordinates on stack memory
+    cdef IntStack filled
+    if IntStack_init(&filled, 16) == -1:  # Initial capacity of 32 (16 coordinate pairs)
+        # Return empty IntStack on initialization failure
+        IntStack_cleanup(&filled)
         return filled
     
     # Create C stack for coordinates on stack memory
-    cdef IntVector stack
-    if IntVector_init(&stack, 16):  # Initial capacity of 16
+    cdef IntStack stack
+    if IntStack_init(&stack, 16):  # Initial capacity of 16
         # Initialization failed, cleanup filled and return empty
-        IntVector_cleanup(&stack)
-        IntVector_cleanup(&filled)
+        IntStack_cleanup(&stack)
+        IntStack_cleanup(&filled)
         return filled
     
     cdef unsigned short i, j, _i, _j, di
 
     # Push initial coordinates
-    IntVector_push(&stack, start_i)
-    IntVector_push(&stack, start_j)
+    IntStack_push(&stack, start_i)
+    IntStack_push(&stack, start_j)
 
     while stack.top > 0:
         j = stack.data[stack.top - 1]
         i = stack.data[stack.top - 2]
         stack.top -= 2
-        # j = IntVector_pop(&stack)
-        # i = IntVector_pop(&stack)
+        # j = IntStack_pop(&stack)
+        # i = IntStack_pop(&stack)
 
         # Mark current position as visited and add to result
         # bitmap[i, j] = value
         bitmap[i * w + j] = value
-        IntVector_push(&filled, i)
-        IntVector_push(&filled, j)
-        # if IntVector_push(&filled, i) or IntVector_push(&filled, j):
+        IntStack_push(&filled, i)
+        IntStack_push(&filled, j)
+        # if IntStack_push(&filled, i) or IntStack_push(&filled, j):
         #     # Memory allocation failed
         #     break
 
@@ -169,22 +114,22 @@ cdef IntVector _find_connected_tiles(
                 # if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
                 if bitmap[_i * w + _j] != 0 and bitmap[_i * w + _j] != value:
                     # If either push failed, we have a memory issue
-                    IntVector_push(&stack, _i)
-                    IntVector_push(&stack, _j)
-                    # if IntVector_push(&stack, _i) or IntVector_push(&stack, _j):
+                    IntStack_push(&stack, _i)
+                    IntStack_push(&stack, _j)
+                    # if IntStack_push(&stack, _i) or IntStack_push(&stack, _j):
                     #     # Memory allocation failed
-                    #     IntVector_cleanup(&stack)
-                    #     IntVector_cleanup(&filled)
+                    #     IntStack_cleanup(&stack)
+                    #     IntStack_cleanup(&filled)
                     #     return filled
 
     # Free the stack's data before returning
-    IntVector_cleanup(&stack)
+    IntStack_cleanup(&stack)
     return filled
 
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
-def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
+def group_tiles(cnp.uint8_t[:, :] bitmap_input):
     """
     Fast Cython implementation of group_tiles.
 
@@ -202,10 +147,13 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
     """
     cdef unsigned short h = <unsigned short>bitmap_input.shape[0]
     cdef unsigned short w = <unsigned short>bitmap_input.shape[1]
-    cdef unsigned short group_id, min_i, min_j, max_i, max_j, tile_i, tile_j, num_pairs, i, j, k
-    cdef IntVector connected_tiles
-    cdef list bins = []
-    # cdef set visited = set()
+    cdef unsigned short group_id, min_i, min_j, tile_i, tile_j, num_pairs
+    cdef int i, j, k
+    cdef IntStack connected_tiles
+    cdef Polyomino polyomino
+    cdef PolyominoStack *polyomino_stack
+    polyomino_stack = <PolyominoStack*>malloc(sizeof(PolyominoStack))
+    PolyominoStack_init(polyomino_stack, 16)
 
     # Create groups array with unique IDs
     cdef unsigned int* groups = <unsigned int*>calloc(h * w, sizeof(unsigned int))
@@ -214,7 +162,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
         for j in range(w):
             if bitmap_input[i, j]:
                 groups[i * w + j] = i * w + j + 1
-    cdef MASK_t[:] mask_view
+    # cdef MASK_t[:, :] mask_view
 
     # Process each cell
     for i in range(h):
@@ -225,22 +173,19 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
             if group_id == 0 or bitmap_input[(group_id - 1) // w, (group_id - 1) % w] == 0:
                 continue
 
-            # Find connected tiles - returns IntVector
-            # connected_tiles = _find_connected_tiles(groups_view, i, j)
+            # Find connected tiles - returns IntStack
             connected_tiles = _find_connected_tiles(groups, h, w, i, j)
             if connected_tiles.top == 0:
-                # Clean up empty IntVector
-                IntVector_cleanup(&connected_tiles)
+                # Clean up empty IntStack
+                IntStack_cleanup(&connected_tiles)
                 continue
             
-            # Find bounding box directly from IntVector data
+            # Find bounding box directly from IntStack data
             num_pairs = <unsigned short>(connected_tiles.top // 2)
             
             # Initialize with first coordinate pair
             min_i = connected_tiles.data[0]
-            # max_i = connected_tiles.data[0]
             min_j = connected_tiles.data[1]
-            # max_j = connected_tiles.data[1]
             
             # Find min/max through all coordinate pairs
             for k in range(1, num_pairs):
@@ -249,41 +194,29 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
                 
                 if tile_i < min_i:
                     min_i = tile_i
-                # elif tile_i > max_i:
-                #     max_i = tile_i
                     
                 if tile_j < min_j:
                     min_j = tile_j
-                # elif tile_j > max_j:
-                #     max_j = tile_j
 
-            # # Create mask
-            # mask_h = max_i - min_i + 1
-            # mask_w = max_j - min_j + 1
-            # mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
-            # mask_view = mask
-
-            mask = np.empty((num_pairs * 2,), dtype=np.uint8)
-            mask_view = mask
-
-            # Fill mask - iterate through IntVector data directly
             for k in range(num_pairs):
-                tile_i = connected_tiles.data[k << 1]        # i coordinate
-                tile_j = connected_tiles.data[(k << 1) + 1]  # j coordinate
-                mask_view[k * 2] = tile_i - min_i
-                mask_view[k * 2 + 1] = tile_j - min_j
-                # mask_view[tile_i - min_i, tile_j - min_j] = 1
-            # Clean up IntVector memory
-            IntVector_cleanup(&connected_tiles)
+                connected_tiles.data[k << 1] -= min_i        # i coordinate
+                connected_tiles.data[(k << 1) + 1] -= min_j  # j coordinate
+            
+            polyomino.mask = connected_tiles
+            polyomino.offset_i = min_i
+            polyomino.offset_j = min_j
+            PolyominoStack_push(polyomino_stack, polyomino)
+
             bitmap_input[i, j] = 0
 
-            bins.append((mask, (min_i, min_j)))
+    # Sort polyominoes by mask length (descending order) before returning
+    if polyomino_stack.top > 0:
+        qsort(polyomino_stack.mo_data, polyomino_stack.top,
+              sizeof(Polyomino), &compare_polyomino_by_mask_length)
 
     free(groups)
-    return bins
+    return <unsigned long long>polyomino_stack
 
 
-# @cython.boundscheck(False)  # type: ignore
-# @cython.wraparound(False)  # type: ignore
-# def group_tiles(cnp.uint8_t[:, :] bitmap_input):
-#     return group_tiles_help(bitmap_input)
+def cleanup_polyomino_stack(unsigned long long polyomino_stack_ptr):
+    PolyominoStack_cleanup(<PolyominoStack*>polyomino_stack_ptr)

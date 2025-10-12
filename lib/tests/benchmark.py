@@ -254,8 +254,8 @@ def benchmark_compress():
                             # Profile: Group connected tiles into polyominoes
                             step_start = (time.time_ns() / 1e6)
                             polyominoes = group_tiles(bitmap_frame.copy())
-                            # if not is_cython:
-                            polyominoes = sorted(polyominoes, key=lambda x: x[0].sum(), reverse=True)
+                            if not is_cython:
+                                polyominoes = sorted(polyominoes, key=lambda x: x[0].sum(), reverse=True)
                             step_times['group_tiles'].append((time.time_ns() / 1e6) - step_start)
                             
                             # Profile: Try compressing polyominoes
