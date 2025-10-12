@@ -10,7 +10,7 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST
 
 
 def parse_args():
@@ -364,7 +364,7 @@ def main(args):
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    num_processes = 20
+    num_processes = 6
     
     ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
     print("All tasks completed!")

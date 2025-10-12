@@ -9,8 +9,9 @@ allowing the system to automatically choose the appropriate detector
 from typing import Any
 
 import polyis.models.retinanet_b3d
-import polyis.models.yolov3_otif
+import polyis.models.yolov3
 import polyis.models.yolov5
+import polyis.dtypes
 
 
 DATASET_NAME_MAPPING = {
@@ -57,7 +58,7 @@ DATASET_DETECTOR_CONFIG = {
 }
 
 
-def get_detector(dataset_name: str, gpu_id):
+def get_detector(dataset_name: str, gpu_id, batch_size: int = 64, num_images: int = 0):
     """
     Get the appropriate detector for a given dataset name.
     
@@ -104,7 +105,7 @@ def get_detector(dataset_name: str, gpu_id):
         threshold = fallback_config.get('threshold', 0.25)
         nms_threshold = fallback_config.get('nms_threshold', 0.45)
         
-        return polyis.models.yolov3_otif.get_detector(
+        return polyis.models.yolov3.get_detector(
             gpu_id=gpu_id,
             config_path=config_path_yolo,
             model_path=model_path,
@@ -112,7 +113,9 @@ def get_detector(dataset_name: str, gpu_id):
             width=width,
             height=height,
             threshold=threshold,
-            nms_threshold=nms_threshold
+            nms_threshold=nms_threshold,
+            batch_size=batch_size,
+            num_images=num_images,
         )
     
     elif detector_type == 'yolov5':
@@ -138,11 +141,27 @@ def detect(image, detector: Any, threshold: float = 0.25):
     """
     # Use the appropriate detect function based on detector type
     if hasattr(detector, 'net'):  # YOLOv3 detector
-        return polyis.models.yolov3_otif.detect(image, detector, threshold)
+        return polyis.models.yolov3.detect(image, detector, threshold)
     elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         return polyis.models.retinanet_b3d.detect(image, detector, threshold)
     else:
         return polyis.models.yolov5.detect(image, detector)
+
+
+def detect_batch(
+    images: list[polyis.dtypes.NPImage],
+    detector: Any,
+    threshold: float = 0.25
+) -> "list[polyis.dtypes.DetArray]":
+    """
+    Detect vehicles in a batch of images using the appropriate detector.
+    """
+    if hasattr(detector, 'net'):  # YOLOv3 detector
+        return polyis.models.yolov3.detect_batch(images, detector, threshold)
+    elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
+        return polyis.models.retinanet_b3d.detect_batch(images, detector, threshold)
+    else:
+        return polyis.models.yolov5.detect_batch(images, detector)
 
 
 def get_detector_info(dataset_name: str) -> dict:

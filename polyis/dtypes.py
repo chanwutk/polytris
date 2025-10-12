@@ -70,4 +70,4 @@ def is_index_map(x: np.ndarray[tuple, np.dtype[NPDType]]) -> TypeGuard[IndexMap]
     return x.ndim == 2 and x.dtype == np.uint16
 
 Polyomino = tuple[Bitmap2D, tuple[int, int]]
-PolyominoPositions = tuple[int, int, Bitmap2D, tuple[int, int]]
+PolyominoPositions = tuple[int, int, Array[*D1, np.uint8], tuple[int, int]]

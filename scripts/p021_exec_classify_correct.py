@@ -222,9 +222,10 @@ def main(args):
                              video_file, tile_size, dataset_name))
     
     print(f"Created {len(funcs)} tasks to process")
+    num_processes = min(mp.cpu_count(), len(funcs), 6)
     
     # Set up multiprocessing with ProgressBar - use CPU count as we don't need GPUs for groundtruth processing
-    ProgressBar(num_workers=mp.cpu_count(), num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
     
     print("All tasks completed!")
 

@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
 Polyomino = tuple[Array[*D2, np.uint8], tuple[int, int]]
 
 
-def group_tiles(bitmap_input: Array[*D2, np.uint8]) -> list[Polyomino]:
+def group_tiles(bitmap_input: Array[*D2, np.uint8]) -> int:
     """
     Fast Cython implementation of group_tiles.
 
@@ -23,8 +23,9 @@ def group_tiles(bitmap_input: Array[*D2, np.uint8]) -> list[Polyomino]:
                      where 1 indicates a tile with detection and 0 indicates no detection
 
     Returns:
-        list: List of polyominoes, where each polyomino is:
-            - mask: masking of the polyomino as a 2D numpy array
+        int: a pointer to a list of polyominoes, where each polyomino is:
+            - mask: masking of the polyomino as a list of (i, j) tuples,
+                    where (i, j) are the coordinates of the mask tile
             - offset: offset of the mask from the top left corner of the bitmap
     """
     ...

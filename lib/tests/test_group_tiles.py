@@ -7,7 +7,7 @@ import numpy as np
 import time
 import sys
 import os
-from group_tiles import group_tiles
+from adapters import group_tiles
 from queue import Queue
 
 # Add parent directory to path to import original implementation
@@ -305,7 +305,7 @@ class TestGroupTilesPerformance:
 def test_import_success():
     """Test that the Cython module can be imported successfully."""
     try:
-        from group_tiles import group_tiles
+        from adapters import group_tiles
         assert callable(group_tiles), "group_tiles should be callable"
     except ImportError as e:
         pytest.fail(f"Failed to import Cython implementation: {e}")

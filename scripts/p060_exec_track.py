@@ -289,7 +289,7 @@ def main(args: argparse.Namespace):
     num_processes = int(mp.cpu_count() * 0.8)
     print(f"Using {num_processes} CPUs for parallel processing")
     
-    num_processes = 16
+    num_processes = 6
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
