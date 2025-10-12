@@ -5,7 +5,8 @@
 
 import numpy as np
 cimport numpy as cnp
-from libc.stdlib cimport malloc, calloc, free, realloc
+from libc.stdlib cimport malloc, calloc, free, realloc, qsort
+from libc.string cimport memcpy
 import cython
 
 # Import data structures from the shared module
@@ -23,6 +24,16 @@ ctypedef cnp.uint8_t MASK_t
 # Directions: up, left, down, right
 cdef unsigned short[4] DIRECTIONS_I = [-1, 0, 1, 0]
 cdef unsigned short[4] DIRECTIONS_J = [0, -1, 0, 1]
+
+
+cdef int compare_polyomino_by_mask_length(const void *a, const void *b) noexcept nogil:
+    """
+    Comparison function for qsort to sort polyominoes by mask length (descending order).
+    Returns negative if a should come before b, positive if b should come before a.
+    """
+    # Compare by mask length (top field of IntStack) in descending order
+    # Larger masks first (negative return means a comes before b)
+    return (<Polyomino*>b).mask.top - (<Polyomino*>a).mask.top
 
 
 @cython.boundscheck(False)  # type: ignore
@@ -219,6 +230,11 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
             bitmap_input[i, j] = 0
 
             # bins.append((mask, (min_i, min_j)))
+
+    # Sort polyominoes by mask length (descending order) before returning
+    if polyomino_stack.top > 0:
+        qsort(polyomino_stack.mo_data, polyomino_stack.top,
+              sizeof(Polyomino), &compare_polyomino_by_mask_length)
 
     free(groups)
     return <unsigned long long>polyomino_stack

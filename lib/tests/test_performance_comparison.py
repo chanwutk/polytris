@@ -81,8 +81,8 @@ def compare_group_tiles_results(cython_result: List, python_result: List) -> boo
         return False
     
     # Sort both results by offset for comparison
-    cython_sorted = sorted(cython_result, key=lambda x: (x[1][0], x[1][1]))
-    python_sorted = sorted(python_result, key=lambda x: (x[1][0], x[1][1]))
+    cython_sorted = sorted(cython_result, key=lambda x: (x[1][0], x[1][1], x[0].sum()))
+    python_sorted = sorted(python_result, key=lambda x: (x[1][0], x[1][1], x[0].sum()))
     
     for cython_item, python_item in zip(cython_sorted, python_sorted):
         # Compare masks
