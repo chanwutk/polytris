@@ -30,9 +30,9 @@ def pack_append(
     Returns:
         list: positions or None if packing fails
     """
-    cdef int i, j, row, col, mask_h, mask_w, groupid
+    cdef int i, j, k, row, col, mask_h, mask_w, groupid
     cdef tuple offset
-    cdef cnp.uint8_t[:, :] mask_view
+    cdef cnp.uint8_t[:] mask_view
     cdef cnp.uint8_t[:, :] appending_tiles_view
     cdef bint valid, placed
     cdef list positions = []
@@ -44,8 +44,14 @@ def pack_append(
         mask = polyomino_data[0]
         offset = polyomino_data[1]
         mask_view = mask
-        mask_h = mask.shape[0]
-        mask_w = mask.shape[1]
+        # mask_h = mask.shape[0]
+        # mask_w = mask.shape[1]
+
+        mask_h = 0
+        mask_w = 0
+        for k in range(mask.shape[0] // 2):
+            mask_h = max(mask_h, mask_view[k << 1] + 1)
+            mask_w = max(mask_w, mask_view[(k << 1) + 1] + 1)
         
         placed = False
         
@@ -55,21 +61,15 @@ def pack_append(
                 valid = True
                 
                 # Check for collisions
-                for row in range(mask_h):
-                    for col in range(mask_w):
-                        if mask_view[row, col] and occupied_tiles[i + row, j + col]:
-                            valid = False
-                            break
-                    if not valid:
+                for k in range(mask.shape[0] // 2):
+                    if occupied_tiles[i + mask_view[k << 1], j + mask_view[(k << 1) + 1]]:
+                        valid = False
                         break
                 
                 if valid:
-                    # Place the polyomino
-                    for row in range(mask_h):
-                        for col in range(mask_w):
-                            if mask_view[row, col]:
-                                occupied_tiles[i + row, j + col] = 1
-                                appending_tiles_view[i + row, j + col] = 1
+                    for k in range(mask.shape[0] // 2):
+                        occupied_tiles[i + mask_view[k << 1], j + mask_view[(k << 1) + 1]] = 1
+                        appending_tiles_view[i + mask_view[k << 1], j + mask_view[(k << 1) + 1]] = 1
                     
                     positions.append((i, j, mask, offset))
                     placed = True

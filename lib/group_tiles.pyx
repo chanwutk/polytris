@@ -214,7 +214,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
         for j in range(w):
             if bitmap_input[i, j]:
                 groups[i * w + j] = i * w + j + 1
-    cdef MASK_t[:, :] mask_view
+    cdef MASK_t[:] mask_view
 
     # Process each cell
     for i in range(h):
@@ -238,9 +238,9 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
             
             # Initialize with first coordinate pair
             min_i = connected_tiles.data[0]
-            max_i = connected_tiles.data[0]
+            # max_i = connected_tiles.data[0]
             min_j = connected_tiles.data[1]
-            max_j = connected_tiles.data[1]
+            # max_j = connected_tiles.data[1]
             
             # Find min/max through all coordinate pairs
             for k in range(1, num_pairs):
@@ -249,25 +249,30 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
                 
                 if tile_i < min_i:
                     min_i = tile_i
-                elif tile_i > max_i:
-                    max_i = tile_i
+                # elif tile_i > max_i:
+                #     max_i = tile_i
                     
                 if tile_j < min_j:
                     min_j = tile_j
-                elif tile_j > max_j:
-                    max_j = tile_j
+                # elif tile_j > max_j:
+                #     max_j = tile_j
 
-            # Create mask
-            mask_h = max_i - min_i + 1
-            mask_w = max_j - min_j + 1
-            mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
+            # # Create mask
+            # mask_h = max_i - min_i + 1
+            # mask_w = max_j - min_j + 1
+            # mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
+            # mask_view = mask
+
+            mask = np.empty((num_pairs * 2,), dtype=np.uint8)
             mask_view = mask
 
             # Fill mask - iterate through IntVector data directly
             for k in range(num_pairs):
                 tile_i = connected_tiles.data[k << 1]        # i coordinate
                 tile_j = connected_tiles.data[(k << 1) + 1]  # j coordinate
-                mask_view[tile_i - min_i, tile_j - min_j] = 1
+                mask_view[k * 2] = tile_i - min_i
+                mask_view[k * 2 + 1] = tile_j - min_j
+                # mask_view[tile_i - min_i, tile_j - min_j] = 1
             # Clean up IntVector memory
             IntVector_cleanup(&connected_tiles)
             bitmap_input[i, j] = 0
