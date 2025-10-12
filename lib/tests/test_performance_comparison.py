@@ -15,9 +15,9 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import Cython modules
-from group_tiles import group_tiles as cython_group_tiles
-from pack_append import pack_append as cython_pack_append
-# CYTHON_AVAILABLE = True
+from adapters import group_tiles as cython_group_tiles
+from adapters import pack_append as cython_pack_append
+CYTHON_AVAILABLE = True
 
 # Import original Python implementations
 from group_tiles_original import group_tiles as python_group_tiles
@@ -115,7 +115,9 @@ def compare_pack_append_results(cython_result: Optional[List], python_result: Op
             return False
         
         # Compare masks
-        if not np.array_equal(cython_pos[2], python_pos[2]):
+        cython_mask = np.zeros_like(python_pos[2])
+        cython_mask[:cython_pos[2].shape[0], :cython_pos[2].shape[1]] = cython_pos[2]
+        if not np.array_equal(cython_mask, python_pos[2]):
             return False
         
         # Compare offsets

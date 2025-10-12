@@ -58,7 +58,7 @@ def run_implementation_comparison():
     
     # Import Cython implementation
     try:
-        from pack_append import pack_append
+        from adapters import pack_append
         print("✓ Cython implementation imported successfully")
     except ImportError as e:
         print(f"✗ Failed to import Cython implementation: {e}")

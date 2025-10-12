@@ -16,18 +16,19 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, 
         list[tuple[int, int]]: List of tuples representing the coordinates of all connected tiles
     """
     value = bitmap[i, j]
-    q = Queue()
-    q.put((i, j))
+    # q = Queue()
+    q = []
+    q.append((i, j))
     filled: list[tuple[int, int]] = []
-    while not q.empty():
-        i, j = q.get()
+    while len(q) > 0:
+        i, j = q.pop()
         bitmap[i, j] = value
         filled.append((i, j))
         for _i, _j in [(-1, 0), (0, -1), (+1, 0), (0, +1)]:
             _i += i
             _j += j
             if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
-                q.put((_i, _j))
+                q.append((_i, _j))
     return filled
 
 

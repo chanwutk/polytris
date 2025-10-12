@@ -5,6 +5,20 @@ import numpy
 
 extensions = [
     Extension(
+        "utilities",
+        ["utilities.pyx"],
+        include_dirs=[numpy.get_include()],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
+    ),
+    Extension(
+        "adapters",
+        ["adapters.pyx"],
+        include_dirs=[numpy.get_include()],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
+    ),
+    Extension(
         "pack_append",
         ["pack_append.pyx"],
         include_dirs=[numpy.get_include()],
