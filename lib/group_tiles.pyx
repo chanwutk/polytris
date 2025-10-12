@@ -3,27 +3,16 @@
 # cython: wraparound=False
 # cython: cdivision=True
 
-import numpy as np
 cimport numpy as cnp
-from libc.stdlib cimport malloc, calloc, free, realloc, qsort
-from libc.string cimport memcpy
+from libc.stdlib cimport malloc, calloc, free, qsort
 import cython
 
-# Import data structures from the shared module
-from utilities cimport (
-    IntStack, Polyomino, PolyominoStack,
-    IntStack_init, IntStack_push, IntStack_cleanup,
-    PolyominoStack_init, PolyominoStack_push,
-    PolyominoStack_cleanup
-)
+from utilities cimport IntStack, Polyomino, PolyominoStack, IntStack_init, \
+                       IntStack_push, IntStack_cleanup, PolyominoStack_init, \
+                       PolyominoStack_push, PolyominoStack_cleanup
 
 ctypedef cnp.uint16_t GROUP_t
 ctypedef cnp.uint8_t MASK_t
-
-
-# Directions: up, left, down, right
-cdef unsigned short[4] DIRECTIONS_I = [-1, 0, 1, 0]
-cdef unsigned short[4] DIRECTIONS_J = [0, -1, 0, 1]
 
 
 cdef int compare_polyomino_by_mask_length(const void *a, const void *b) noexcept nogil:
@@ -39,7 +28,6 @@ cdef int compare_polyomino_by_mask_length(const void *a, const void *b) noexcept
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 cdef IntStack _find_connected_tiles(
-    # unsigned int[:, :] bitmap,
     unsigned int* bitmap,
     unsigned short h,
     unsigned short w,
@@ -47,7 +35,7 @@ cdef IntStack _find_connected_tiles(
     unsigned short start_j
 ) noexcept nogil:
     """
-    Fast Cython implementation of find_connected_tiles using a C-based stack.
+    Groups connected tiles into a polyomino.
 
     This function modifies the bitmap in-place to mark visited tiles.
     The algorithm uses flood fill: it starts with a unique value at (start_i, start_j)
@@ -61,27 +49,23 @@ cdef IntStack _find_connected_tiles(
     Returns:
         IntStack: IntStack containing coordinate pairs for connected tiles
     """
-    # cdef unsigned short h = <unsigned short>bitmap.shape[0]
-    # cdef unsigned short w = <unsigned short>bitmap.shape[1]
-    # cdef unsigned int value = bitmap[start_i, start_j]
+    cdef unsigned short i, j, _i, _j
+    cdef int di
+    cdef IntStack filled, stack
+    cdef char[4] DIRECTIONS_I = [-1, 0, 1, 0]
+    cdef char[4] DIRECTIONS_J = [0, -1, 0, 1]
     cdef unsigned int value = bitmap[start_i * w + start_j]
     
-    # Create IntStack for filled coordinates on stack memory
-    cdef IntStack filled
-    if IntStack_init(&filled, 16) == -1:  # Initial capacity of 32 (16 coordinate pairs)
+    if IntStack_init(&filled, 16):
         # Return empty IntStack on initialization failure
         IntStack_cleanup(&filled)
         return filled
     
-    # Create C stack for coordinates on stack memory
-    cdef IntStack stack
-    if IntStack_init(&stack, 16):  # Initial capacity of 16
+    if IntStack_init(&stack, 16):
         # Initialization failed, cleanup filled and return empty
         IntStack_cleanup(&stack)
         IntStack_cleanup(&filled)
         return filled
-    
-    cdef unsigned short i, j, _i, _j, di
 
     # Push initial coordinates
     IntStack_push(&stack, start_i)
@@ -91,11 +75,8 @@ cdef IntStack _find_connected_tiles(
         j = stack.data[stack.top - 1]
         i = stack.data[stack.top - 2]
         stack.top -= 2
-        # j = IntStack_pop(&stack)
-        # i = IntStack_pop(&stack)
 
         # Mark current position as visited and add to result
-        # bitmap[i, j] = value
         bitmap[i * w + j] = value
         IntStack_push(&filled, i)
         IntStack_push(&filled, j)
@@ -111,11 +92,10 @@ cdef IntStack _find_connected_tiles(
             if 0 <= _i < h and 0 <= _j < w:
                 # Add neighbors that are non-zero and different from current value
                 # (meaning they haven't been visited yet)
-                # if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
                 if bitmap[_i * w + _j] != 0 and bitmap[_i * w + _j] != value:
-                    # If either push failed, we have a memory issue
                     IntStack_push(&stack, _i)
                     IntStack_push(&stack, _j)
+                    # If either push failed, we have a memory issue
                     # if IntStack_push(&stack, _i) or IntStack_push(&stack, _j):
                     #     # Memory allocation failed
                     #     IntStack_cleanup(&stack)
@@ -130,21 +110,6 @@ cdef IntStack _find_connected_tiles(
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 def group_tiles(cnp.uint8_t[:, :] bitmap_input):
-    """
-    Fast Cython implementation of group_tiles.
-
-    Groups connected tiles into polyominoes.
-
-    Args:
-        bitmap_input: 2D numpy array memoryview (uint8) representing the grid of tiles,
-                     where 1 indicates a tile with detection and 0 indicates no detection
-
-    Returns:
-        list: List of polyominoes, where each polyomino is:
-            - group_id: unique id of the group
-            - mask: masking of the polyomino as a 2D numpy array
-            - offset: offset of the mask from the top left corner of the bitmap
-    """
     cdef unsigned short h = <unsigned short>bitmap_input.shape[0]
     cdef unsigned short w = <unsigned short>bitmap_input.shape[1]
     cdef unsigned short group_id, min_i, min_j, tile_i, tile_j, num_pairs
@@ -162,7 +127,6 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
         for j in range(w):
             if bitmap_input[i, j]:
                 groups[i * w + j] = i * w + j + 1
-    # cdef MASK_t[:, :] mask_view
 
     # Process each cell
     for i in range(h):

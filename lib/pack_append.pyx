@@ -4,17 +4,12 @@
 # cython: cdivision=True
 
 cimport numpy as cnp
-from libc.stdlib cimport malloc, free, realloc
 
 import numpy as np
 
 # Import data structures from the shared module
-from utilities cimport (
-    IntStack, Polyomino, PolyominoStack,
-    IntStack_init, IntStack_push, IntStack_cleanup,
-    PolyominoStack_init, PolyominoStack_push,
-    PolyominoStack_cleanup
-)
+from utilities cimport IntStack, Polyomino, PolyominoStack, \
+                       IntStack_init, IntStack_push, IntStack_cleanup
 
 ctypedef cnp.uint8_t DTYPE_t
 
@@ -25,18 +20,6 @@ def pack_append(
     int w,
     cnp.uint8_t[:, :] occupied_tiles
 ):
-    """
-    Fast Cython implementation of pack_append.
-    
-    Args:
-        polyominoes: List of (groupid, mask, offset) tuples
-        h: Height of the bitmap
-        w: Width of the bitmap
-        occupied_tiles: Existing bitmap to append to (modified in-place)
-        
-    Returns:
-        list: positions or None if packing fails
-    """
     cdef int idx, i, j, k, mask_h, mask_w
     cdef tuple offset
     cdef bint valid, placed

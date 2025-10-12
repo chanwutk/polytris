@@ -8,17 +8,24 @@ def pack_append(
     occupied_tiles: np.ndarray
 ) -> list[tuple[int, int, np.ndarray, tuple[int, int]]] | None:
     """
-    Implementation of pack_append.
+    Pack all polyominoes into the occupied tiles.
+    If not possible, return None.
+    Note:
+        - occupied_tiles will be reverted to the original state if packing fails.
     
     Args:
         poliominoes: List of polyominoes to pack
-        h: Height of the bitmap
-        w: Width of the bitmap
-        occupied_tiles: Existing bitmap to append to (modified in-place)
+        h: Height of the occupied_tiles
+        w: Width of the occupied_tiles
+        occupied_tiles: Existing bitmap to append polyominoes to (modified in-place)
         
     Returns:
-        list: positions where positions contains packing info
-        or None if packing fails
+        list: positions where each position contains (i, j, mask, offset) or None if packing fails
+            where:
+                - i: y-coordinate of the position
+                - j: x-coordinate of the position
+                - mask: masking of the polyomino as a numpy array,
+                - offset: offset of the mask of its original position
     """
     appending_tiles = np.zeros((h, w), dtype=np.uint8)
     

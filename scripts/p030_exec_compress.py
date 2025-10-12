@@ -69,7 +69,7 @@ def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions],
         xfrom = x * chunk_size
         
         # Get mask indices where True
-        for i, j in zip(*np.nonzero(mask)):
+        for i, j in zip(*mask.reshape(-1, 2)):
             patch = frame[
                 (i + offset[0]) * chunk_size:(i + offset[0] + 1) * chunk_size,
                 (j + offset[1]) * chunk_size:(j + offset[1] + 1) * chunk_size,
@@ -119,11 +119,13 @@ def apply_pack(
     start_gid = len(offset_lookup)
     for i, (y, x, mask, offset) in enumerate(positions):
         gid = start_gid + i + 1
-        h = mask.shape[0]
-        w = mask.shape[1]
-        # assert not np.any(index_map[y:y+h, x:x+w] & mask), \
-        #     (index_map[y:y+h, x:x+w], mask)
-        index_map[y:y+h, x:x+w] += mask.astype(np.uint16) * gid
+        # mask is a 1D array of positions in format [x, y, x, y, x, y, ...]
+        # Reshape to get x and y coordinates as separate arrays
+        coords = mask.reshape(-1, 2)  # Shape: (n_coords, 2) where each row is [x, y]
+        mask_x = coords[:, 0]  # All x coordinates
+        mask_y = coords[:, 1]  # All y coordinates
+        # Set the gid at all positions at once using vectorized operations
+        index_map[y + mask_y - offset[0], x + mask_x - offset[1]] = gid
         offset_lookup.append(((y, x), offset, frame_idx))
     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
 
@@ -319,10 +321,10 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
             polyominoes = group_tiles(bitmap_frame)
             step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
             
-            # Profile: Sort polyominoes by size
-            step_start = (time.time_ns() / 1e6)
-            polyominoes = sorted(polyominoes, key=lambda x: x[0].sum(), reverse=True)
-            step_times['sort_polyominoes'] = (time.time_ns() / 1e6) - step_start
+            # # Profile: Sort polyominoes by size
+            # step_start = (time.time_ns() / 1e6)
+            # polyominoes = sorted(polyominoes, key=lambda x: x[0].sum(), reverse=True)
+            # step_times['sort_polyominoes'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Try compressing polyominoes
             step_start = (time.time_ns() / 1e6)
