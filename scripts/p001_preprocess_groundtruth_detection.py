@@ -57,7 +57,7 @@ def detect_objects(video_path: str, dataset_name: str, output_path: str,
     # print(f"Processing video: {video_path} on GPU {gpu_id}")
     
     # Load detector for this specific process and GPU (auto-selected based on dataset)
-    detector = polyis.models.detector.get_detector(dataset_name, gpu_id)
+    detector = polyis.models.detector.get_detector(dataset_name, gpu_id, batch_size=1)
     
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f"Could not open video {video_path}"

@@ -761,7 +761,7 @@ def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
                                       total=num_tasks, completed=-num_workers)
         bars['overall'] = overall_progress
         for gpu_id in range(num_workers):
-            bars[f'cuda:{gpu_id}'] = p.add_task("video tilesize model T/V")
+            bars[f'cuda:{gpu_id}'] = p.add_task("")
 
         while True:
             val = command_queue.get()
@@ -1024,8 +1024,8 @@ DATASETS_TO_TEST = [
     'b3d-jnc02',
     'b3d-jnc06',
     'b3d-jnc07',
-    'caldot1-yolov5',
-    'caldot2-yolov5',
+    # 'caldot1-yolov5',
+    # 'caldot2-yolov5',
     'caldot1',
     'caldot2',
 ]

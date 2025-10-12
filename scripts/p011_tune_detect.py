@@ -26,7 +26,7 @@ def parse_args():
 
 def detect_objects(video: str, dataset_name: str, gpu_id: int, command_queue: Queue):
     # Get detector based on detector_name parameter
-    detector = polyis.models.detector.get_detector(dataset_name, gpu_id)
+    detector = polyis.models.detector.get_detector(dataset_name, gpu_id, batch_size=1)
 
     # New output path structure
     output_path = Path(CACHE_DIR) / dataset_name / 'indexing' / 'segment' / 'detection' / f'{video}.detections.jsonl'

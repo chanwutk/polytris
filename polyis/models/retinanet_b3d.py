@@ -82,8 +82,9 @@ def detect_batch(
     new_w: int = transform.new_w  # type: ignore
     images_stack = torch.from_numpy(np.stack(images)).to(device=detector.cfg.MODEL.DEVICE)
 
-    assert model.pixel_mean.device == detector.cfg.MODEL.DEVICE, \
-        f"Model pixel mean device {model.pixel_mean.device} does not match detector device {detector.cfg.MODEL.DEVICE}"
+    assert str(model.pixel_mean.device) == str(detector.cfg.MODEL.DEVICE), \
+        f"Model pixel mean device {model.pixel_mean.device} does " \
+        f"not match detector device {detector.cfg.MODEL.DEVICE}"
     
     all_detections = []
 
@@ -94,6 +95,7 @@ def detect_batch(
             images_stack = images_stack[:, :, :, ::-1]
 
         images_stack = images_stack.permute(0, 3, 1, 2)  # NCHW -> NCHW
+        images_stack = images_stack.to(dtype=torch.float32)
         images_stack = interpolate(images_stack,
                                    size=(new_h, new_w),
                                    mode="bilinear",
@@ -107,7 +109,7 @@ def detect_batch(
 
         for outputs in predictions:
             instances = outputs['instances'].to('cpu')
-            bboxes = instances.pred_boxes
+            bboxes = instances.pred_boxes.tensor
             scores = instances.scores
 
             nms_bboxes, nms_scores = nms.nms(bboxes, scores, nms_threshold)
