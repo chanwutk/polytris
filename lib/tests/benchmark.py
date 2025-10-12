@@ -137,10 +137,10 @@ def benchmark_compress():
     try:
         from group_tiles import group_tiles as cython_group_tiles
         try:
-            from group_tiles import cleanup_polyomino_stack  # type: ignore
+            from group_tiles import free_polyimino_stack  # type: ignore
         except ImportError:
             # Fallback if cleanup function not available
-            def cleanup_polyomino_stack(polyominoes):
+            def free_polyimino_stack(polyominoes):
                 pass
         from group_tiles_original import group_tiles as python_group_tiles
         from pack_append import pack_append as cython_pack_append
@@ -272,7 +272,7 @@ def benchmark_compress():
                                 step_times['pack_append_retry'].append((time.time_ns() / 1e6) - step_start)
                             
                             if is_cython:
-                                cleanup_polyomino_stack(polyominoes)
+                                free_polyimino_stack(polyominoes)
 
                         # Update occupied_tiles if copy was made
                         try:

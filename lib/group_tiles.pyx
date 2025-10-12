@@ -182,5 +182,8 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
     return <unsigned long long>polyomino_stack
 
 
-def cleanup_polyomino_stack(unsigned long long polyomino_stack_ptr):
+def free_polyimino_stack(unsigned long long polyomino_stack_ptr) -> int:
+    cdef int num_polyominoes = (<PolyominoStack*>polyomino_stack_ptr).top
     PolyominoStack_cleanup(<PolyominoStack*>polyomino_stack_ptr)
+    free(<void*>polyomino_stack_ptr)
+    return num_polyominoes

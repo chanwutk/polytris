@@ -27,3 +27,18 @@ def group_tiles(bitmap_input: Array[*D2, np.uint8]) -> int:
                       and j is the vertical offset of the mask of its original position
     """
     ...
+
+
+def free_polyimino_stack(polyomino_stack_ptr: int) -> int:
+    """
+    Cleans up a polyomino stack.
+
+    This function frees the memory allocated for the polyomino stack.
+    
+    Args:
+        polyomino_stack_ptr: A pointer to a polyomino stack
+
+    Returns:
+        int: The number of polyominoes in the stack
+    """
+    ...

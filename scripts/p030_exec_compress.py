@@ -22,7 +22,7 @@ from polyis.utilities import (
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
 from lib.pack_append import pack_append
-from lib.group_tiles import group_tiles
+from lib.group_tiles import free_polyimino_stack, group_tiles
 
 
 def parse_args():
@@ -381,11 +381,13 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
                     save_packed_image(frame, _index_map, _offset_lookup, start_idx, frame_idx, output_dir, step_times)
                     count_compressed_images += 1
 
+            num_polyominoes = free_polyimino_stack(polyominoes)
+
             # Save profiling data for this frame
             profiling_data = {
                 'frame_idx': frame_idx,
                 'runtime': format_time(**step_times),
-                'num_polyominoes': len(polyominoes),
+                'num_polyominoes': num_polyominoes,
             }
             
             f.write(json.dumps(profiling_data) + '\n')
