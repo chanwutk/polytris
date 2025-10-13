@@ -645,44 +645,6 @@ def visualize_pruned_tile_distribution(pruned_tile_props: list[float], tile_size
     return prune_hist_path
 
 
-def _process_classifier_tile_worker(video_file: str, dataset_name: str, classifier_name: str, 
-                                   tile_size: int, threshold: float, gpu_id: int, command_queue: mp.Queue):
-    """
-    Worker function to process a single classifier-tile size combination for multiprocessing.
-    
-    Args:
-        video_file (str): Name of the video file
-        dataset_name (str): Name of the dataset
-        classifier_name (str): Name of the classifier
-        tile_size (int): Tile size to use
-        threshold (float): Classification threshold
-        gpu_id (int): GPU ID (unused but required for ProgressBar compatibility)
-        command_queue (mp.Queue): Queue for progress updates
-    """
-    device = f'cuda:{gpu_id}'
-    
-    # Send initial progress update
-    command_queue.put((device, {
-        'description': f"{video_file} {tile_size:>3} {classifier_name}",
-        'completed': 0,
-        'total': 1
-    }))
-
-    # Load classification results
-    results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size, classifier_name)
-    
-    # Load groundtruth detections for comparison
-    groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
-    
-    # Create output directory for statistics visualizations
-    stats_output_dir = os.path.join(CACHE_DIR, dataset_name, video_file, 'relevancy', f'{classifier_name}_{tile_size}', 'statistics')
-    
-    # Create statistics visualizations
-    create_statistics_visualizations(
-        video_file, results, groundtruth_detections,
-        tile_size, threshold, stats_output_dir, gpu_id, command_queue
-    )
-
 
 def main(args):
     """
