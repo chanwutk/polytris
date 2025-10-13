@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import sys
 from typing import Callable
 import cv2
 import numpy as np
@@ -13,6 +14,9 @@ from functools import partial
 
 import torch
 import torch.nn.functional as F
+
+# Add lib directory to Python path for Cython modules
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'lib'))
 
 from polyis import dtypes
 from polyis.utilities import (
@@ -69,15 +73,30 @@ def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions],
         xfrom = x * chunk_size
         
         # Get mask indices where True
-        for i, j in zip(*mask.reshape(-1, 2)):
-            patch = frame[
-                (i + offset[0]) * chunk_size:(i + offset[0] + 1) * chunk_size,
-                (j + offset[1]) * chunk_size:(j + offset[1] + 1) * chunk_size,
-            ]
-            canvas[
-                yfrom + (chunk_size * i): yfrom + (chunk_size * i) + chunk_size,
-                xfrom + (chunk_size * j): xfrom + (chunk_size * j) + chunk_size,
-            ] = patch
+        for i, j in mask.reshape(-1, 2).astype(np.uint16):
+            try:
+                patch = frame[
+                    (i + offset[0]) * chunk_size:(i + offset[0] + 1) * chunk_size,
+                    (j + offset[1]) * chunk_size:(j + offset[1] + 1) * chunk_size,
+                ]
+                canvas[
+                    yfrom + (chunk_size * i): yfrom + (chunk_size * i) + chunk_size,
+                    xfrom + (chunk_size * j): xfrom + (chunk_size * j) + chunk_size,
+                ] = patch
+            except:
+                print((i + offset[0]) * chunk_size, (i + offset[0] + 1) * chunk_size)
+                print((j + offset[1]) * chunk_size, (j + offset[1] + 1) * chunk_size)
+                print(yfrom + (chunk_size * i), yfrom + (chunk_size * i) + chunk_size)
+                print(xfrom + (chunk_size * j), xfrom + (chunk_size * j) + chunk_size)
+                print(f"Error: {i}, {j}, {offset[0]}, {offset[1]}")
+                print(f"Frame shape: {frame.shape}")
+                print(f"Canvas shape: {canvas.shape}")
+                print(f"Chunk size: {chunk_size}")
+                print(f"Y from: {yfrom}, X from: {xfrom}")
+                print(f"Y to: {yfrom + (chunk_size * i) + chunk_size}, X to: {xfrom + (chunk_size * j) + chunk_size}")
+                print(f"Offset: {offset}")
+                print(f"Mask: {mask}")
+                raise
 
 
 def apply_pack(
@@ -121,11 +140,16 @@ def apply_pack(
         gid = start_gid + i + 1
         # mask is a 1D array of positions in format [x, y, x, y, x, y, ...]
         # Reshape to get x and y coordinates as separate arrays
-        coords = mask.reshape(-1, 2)  # Shape: (n_coords, 2) where each row is [x, y]
-        mask_x = coords[:, 0]  # All x coordinates
-        mask_y = coords[:, 1]  # All y coordinates
+        coords = mask.reshape(-1, 2).astype(np.uint16)  # Shape: (n_coords, 2) where each row is [x, y]
+        mask_y = coords[:, 0]  # All y coordinates
+        mask_x = coords[:, 1]  # All x coordinates
         # Set the gid at all positions at once using vectorized operations
-        index_map[y + mask_y - offset[0], x + mask_x - offset[1]] = gid
+        try:
+            index_map[y + mask_y, x + mask_x] = gid
+        except IndexError as e:
+            print(f"Error: {y}, {x}, {offset[0]}, {offset[1]}")
+            print(f"Mask: {mask}")
+            raise e
         offset_lookup.append(((y, x), offset, frame_idx))
     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
 
@@ -486,11 +510,12 @@ def main(args):
     
     # Set up multiprocessing with ProgressBar
     num_processes = int(mp.cpu_count() * 0.9)
-    num_processes = 1
+    num_processes = max(1, torch.cuda.device_count() // 2)
+    # num_processes = 1
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=4).run_all(funcs)
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
     print("All tasks completed!")
 
 

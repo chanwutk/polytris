@@ -28,6 +28,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Clean up previous build artifacts
+echo "Cleaning up previous build artifacts..."
+find . -name "*.c" -type f -delete
+find . -name "*.html" -type f -delete
+find . -name "*.so" -type f -delete
+echo "Cleanup completed."
+
 # Build the Cython extension
 echo "Building Cython extension..."
 python setup.py build_ext --inplace

@@ -933,7 +933,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
                                         accuracy_col: str, metric_name: str, naive_column: str,
                                         size_range: tuple[int, int] = (20, 200), scatter_opacity: float = 0.7, 
                                         size: int | None = None, baseline_stroke_width: int = 2, 
-                                        baseline_opacity: float = 0.8) -> "tuple[alt.Chart, alt.LayerChart]":
+                                        baseline_opacity: float = 0.8, size_field: str = 'tilesize') -> "tuple[alt.Chart, alt.LayerChart]":
     """
     Create both a scatter plot and naive baseline visualization with common styling.
     
@@ -946,9 +946,10 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         naive_column: Column name for naive baseline data
         size_range: Tuple of (min, max) for tile size scale
         scatter_opacity: Opacity for the scatter points
-        size: Fixed size for scatter points (if None, uses tilesize encoding)
+        size: Fixed size for scatter points (if None, uses size_field encoding)
         baseline_stroke_width: Width of the baseline rule line
         baseline_opacity: Opacity of the baseline rule line
+        size_field: Column name for size encoding (default: 'tilesize')
         
     Returns:
         tuple[alt.Chart, alt.Chart]: Tuple of (scatter_plot, naive_baseline)
@@ -960,7 +961,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
                 scale=alt.Scale(domain=[0, 1])),
         color=alt.Color('classifier:N', title='Classifier'),
-        tooltip=['video_name', 'classifier', 'tilesize', x_column, accuracy_col]
+        tooltip=['video_name', 'classifier', size_field, x_column, accuracy_col]
     ).properties(
         width=200,
         height=200
@@ -968,7 +969,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
     
     # Add size encoding only if no fixed size is provided
     if size is None:
-        scatter = scatter.encode(size=alt.Size('tilesize:O',
+        scatter = scatter.encode(size=alt.Size(f'{size_field}:O',
                                  title='Tile Size',
                                  scale=alt.Scale(range=size_range)))
     

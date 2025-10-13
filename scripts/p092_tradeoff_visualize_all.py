@@ -154,7 +154,8 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: lis
         scatter, baseline = tradeoff_scatter_and_naive_baseline(
             base_chart, x_column, x_title, accuracy_col, metric_name, naive_column,
             size_range=(50, 300), scatter_opacity=0.8,
-            baseline_stroke_width=3, baseline_opacity=0.9
+            baseline_stroke_width=3, baseline_opacity=0.9,
+            size_field='tilepadding'
         )
         
         # Add dataset to tooltip for all datasets visualization

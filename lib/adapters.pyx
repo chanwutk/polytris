@@ -23,7 +23,7 @@ from pack_append import pack_append as pack_append_cython
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
-    cdef unsigned long long polyomino_stack_ptr = group_tiles_cython(bitmap_input)
+    cdef unsigned long long polyomino_stack_ptr = <unsigned long long>group_tiles_cython(bitmap_input)
     return format_polyominoes(polyomino_stack_ptr)
 
 
@@ -35,22 +35,22 @@ def format_polyominoes(unsigned long long polyomino_stack_ptr):
     cdef Polyomino polyomino
     cdef IntStack connected_tiles
     cdef unsigned short max_i, max_j, tile_i, tile_j, num_pairs
-    cdef unsigned short * data
+    cdef unsigned short *data
 
     for i in range(polyomino_stack.top):
-        polyomino = polyomino_stack.mo_data[i]
+        polyomino = polyomino_stack.mo_data[i]  # type: ignore
         connected_tiles = polyomino.mask
         num_pairs = <unsigned short>(connected_tiles.top // 2)
         data = connected_tiles.data
 
         # Initialize with first coordinate pair
-        max_i = data[0]
-        max_j = data[1]
+        max_i = data[0]  # type: ignore
+        max_j = data[1]  # type: ignore
         
         # Find min/max through all coordinate pairs
         for k in range(1, num_pairs):
-            tile_i = data[k << 1]        # i coordinate
-            tile_j = data[(k << 1) + 1]  # j coordinate
+            tile_i = data[k << 1]        # type: ignore
+            tile_j = data[(k << 1) + 1]  # type: ignore
             
             if tile_i > max_i:
                 max_i = tile_i
@@ -66,8 +66,8 @@ def format_polyominoes(unsigned long long polyomino_stack_ptr):
 
         # Fill mask - iterate through IntStack data directly
         for k in range(num_pairs):
-            tile_i = data[k << 1]        # i coordinate
-            tile_j = data[(k << 1) + 1]  # j coordinate
+            tile_i = data[k << 1]        # type: ignore
+            tile_j = data[(k << 1) + 1]  # type: ignore
             mask_view[tile_i, tile_j] = 1
         bins.append((mask, (polyomino.offset_i, polyomino.offset_j)))
     PolyominoStack_cleanup(polyomino_stack)
@@ -79,7 +79,7 @@ def format_polyominoes(unsigned long long polyomino_stack_ptr):
 @cython.wraparound(False)  # type: ignore
 def pack_append(list polyominoes, int h, int w, cnp.uint8_t[:, :] occupied_tiles):
     cdef unsigned long long polyominoes_stack_ptr = get_polyominoes(polyominoes)
-    positions = pack_append_cython(<unsigned long long>polyominoes_stack_ptr, h, w, occupied_tiles)
+    positions = pack_append_cython(polyominoes_stack_ptr, h, w, occupied_tiles)
     PolyominoStack_cleanup(<PolyominoStack*>polyominoes_stack_ptr)
     free(<void*>polyominoes_stack_ptr)
     return format_positions(positions)
@@ -109,7 +109,7 @@ def get_polyominoes(list polyominoes):
         # Convert mask array to coordinate pairs
         for i in range(mask_h):
             for j in range(mask_w):
-                if mask_array[i, j]:
+                if mask_array[i, j]:  # type: ignore
                     IntStack_push(&mask, <unsigned short>i)
                     IntStack_push(&mask, <unsigned short>j)
         

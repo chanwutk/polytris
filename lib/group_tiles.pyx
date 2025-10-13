@@ -52,9 +52,9 @@ cdef IntStack _find_connected_tiles(
     cdef unsigned short i, j, _i, _j
     cdef int di
     cdef IntStack filled, stack
-    cdef char[4] DIRECTIONS_I = [-1, 0, 1, 0]
-    cdef char[4] DIRECTIONS_J = [0, -1, 0, 1]
-    cdef unsigned int value = bitmap[start_i * w + start_j]
+    cdef char[4] DIRECTIONS_I = [-1, 0, 1, 0]  # type: ignore
+    cdef char[4] DIRECTIONS_J = [0, -1, 0, 1]  # type: ignore
+    cdef unsigned int value = bitmap[start_i * w + start_j]  # type: ignore
     
     if IntStack_init(&filled, 16):
         # Return empty IntStack on initialization failure
@@ -72,12 +72,12 @@ cdef IntStack _find_connected_tiles(
     IntStack_push(&stack, start_j)
 
     while stack.top > 0:
-        j = stack.data[stack.top - 1]
-        i = stack.data[stack.top - 2]
+        j = stack.data[stack.top - 1]  # type: ignore
+        i = stack.data[stack.top - 2]  # type: ignore
         stack.top -= 2
 
         # Mark current position as visited and add to result
-        bitmap[i * w + j] = value
+        bitmap[i * w + j] = value  # type: ignore
         IntStack_push(&filled, i)
         IntStack_push(&filled, j)
         # if IntStack_push(&filled, i) or IntStack_push(&filled, j):
@@ -86,13 +86,13 @@ cdef IntStack _find_connected_tiles(
 
         # Check all 4 directions for unvisited connected tiles
         for di in range(4):
-            _i = i + DIRECTIONS_I[di]
-            _j = j + DIRECTIONS_J[di]
+            _i = i + DIRECTIONS_I[di]  # type: ignore
+            _j = j + DIRECTIONS_J[di]  # type: ignore
 
             if 0 <= _i < h and 0 <= _j < w:
                 # Add neighbors that are non-zero and different from current value
                 # (meaning they haven't been visited yet)
-                if bitmap[_i * w + _j] != 0 and bitmap[_i * w + _j] != value:
+                if bitmap[_i * w + _j] != 0 and bitmap[_i * w + _j] != value:  # type: ignore
                     IntStack_push(&stack, _i)
                     IntStack_push(&stack, _j)
                     # If either push failed, we have a memory issue
@@ -125,20 +125,20 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
     # Mask groups by bitmap - only keep group IDs where bitmap has 1s
     for i in range(h):
         for j in range(w):
-            if bitmap_input[i, j]:
-                groups[i * w + j] = i * w + j + 1
+            if bitmap_input[i, j]:  # type: ignore
+                groups[i * w + j] = i * w + j + 1  # type: ignore
 
     # Process each cell
     for i in range(h):
         for j in range(w):
             # group_id = groups_view[i, j]
-            group_id = groups[i * w + j]
+            group_id = groups[i * w + j]  # type: ignore
             # if group_id == 0 or group_id in visited:
-            if group_id == 0 or bitmap_input[(group_id - 1) // w, (group_id - 1) % w] == 0:
+            if group_id == 0 or bitmap_input[(group_id - 1) // w, (group_id - 1) % w] == 0:  # type: ignore
                 continue
 
             # Find connected tiles - returns IntStack
-            connected_tiles = _find_connected_tiles(groups, h, w, i, j)
+            connected_tiles = _find_connected_tiles(groups, h, w, <unsigned short>i, <unsigned short>j)
             if connected_tiles.top == 0:
                 # Clean up empty IntStack
                 IntStack_cleanup(&connected_tiles)
@@ -148,13 +148,13 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
             num_pairs = <unsigned short>(connected_tiles.top // 2)
             
             # Initialize with first coordinate pair
-            min_i = connected_tiles.data[0]
-            min_j = connected_tiles.data[1]
+            min_i = connected_tiles.data[0]  # type: ignore
+            min_j = connected_tiles.data[1]  # type: ignore
             
             # Find min/max through all coordinate pairs
             for k in range(1, num_pairs):
-                tile_i = connected_tiles.data[k << 1]        # i coordinate
-                tile_j = connected_tiles.data[(k << 1) + 1]  # j coordinate
+                tile_i = connected_tiles.data[k << 1]        # type: ignore
+                tile_j = connected_tiles.data[(k << 1) + 1]  # type: ignore
                 
                 if tile_i < min_i:
                     min_i = tile_i
@@ -163,15 +163,15 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
                     min_j = tile_j
 
             for k in range(num_pairs):
-                connected_tiles.data[k << 1] -= min_i        # i coordinate
-                connected_tiles.data[(k << 1) + 1] -= min_j  # j coordinate
+                connected_tiles.data[k << 1] -= min_i        # type: ignore
+                connected_tiles.data[(k << 1) + 1] -= min_j  # type: ignore
             
             polyomino.mask = connected_tiles
             polyomino.offset_i = min_i
             polyomino.offset_j = min_j
             PolyominoStack_push(polyomino_stack, polyomino)
 
-            bitmap_input[i, j] = 0
+            bitmap_input[i, j] = 0  # type: ignore
 
     # Sort polyominoes by mask length (descending order) before returning
     if polyomino_stack.top > 0:
