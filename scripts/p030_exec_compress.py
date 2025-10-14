@@ -22,8 +22,8 @@ from polyis.utilities import (
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
-from polyis.lib.pack_append import pack_append
-from polyis.lib.group_tiles import free_polyimino_stack, group_tiles
+from polyis.binpack.pack_append import pack_append
+from polyis.binpack.group_tiles import free_polyimino_stack, group_tiles
 
 
 def parse_args():
