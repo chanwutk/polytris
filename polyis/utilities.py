@@ -1018,8 +1018,6 @@ METRICS = [
 ]
 
 
-# METRICS = ['HOTA', 'CLEAR']
-
 DATASETS_TO_TEST = [
     'b3d-jnc00',
     'b3d-jnc02',

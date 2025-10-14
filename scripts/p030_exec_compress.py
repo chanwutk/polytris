@@ -15,9 +15,6 @@ from functools import partial
 import torch
 import torch.nn.functional as F
 
-# Add lib directory to Python path for Cython modules
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'lib'))
-
 from polyis import dtypes
 from polyis.utilities import (
     CACHE_DIR, CLASSIFIERS_CHOICES,
@@ -25,8 +22,8 @@ from polyis.utilities import (
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
-from lib.pack_append import pack_append
-from lib.group_tiles import free_polyimino_stack, group_tiles
+from polyis.lib.pack_append import pack_append
+from polyis.lib.group_tiles import free_polyimino_stack, group_tiles
 
 
 def parse_args():

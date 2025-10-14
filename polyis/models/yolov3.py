@@ -332,7 +332,13 @@ def detect_batch(
     darknet_images = darknet.IMAGE(detector.width, detector.height, 3, darknet_images)
 
     # Detect
-    net = detector.net if len(images) == detector.batch_size else detector.remaining_net
+    if len(images) == detector.batch_size:
+        net = detector.net
+    elif len(images) < detector.batch_size:
+        net = detector.remaining_net
+    else:
+        raise ValueError(f"Invalid number of images: {len(images)}")
+
     raw_detections = darknet.network_predict_batch(
         net, darknet_images, detector.batch_size, detector.width,
         detector.height, threshold, 0.5, None, 0, 0)

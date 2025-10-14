@@ -2,6 +2,19 @@
 # echo "Running p000_preprocess_dataset.py"
 # CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 python scripts/p000_preprocess_dataset.py
 
+# Compile darknet first
+echo -e "\n\n\n\n\n============================================================================="
+echo "Compiling darknet with auto-detected GPU architecture"
+# Calculate number of jobs as ~90% of available CPU cores
+NUM_CORES=$(nproc)
+NUM_JOBS=$(( (NUM_CORES * 9) / 10 ))
+# Ensure NUM_JOBS is at least 1
+if [ $NUM_JOBS -lt 1 ]; then
+    NUM_JOBS=1
+fi
+echo "Using $NUM_JOBS parallel jobs (90% of $NUM_CORES available cores)"
+cd modules/darknet && make -j$NUM_JOBS && cd ../..
+
 # echo -e "\n\n\n\n\n============================================================================="
 # echo "Running p001_preprocess_groundtruth_detection.py"
 # CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 python scripts/p001_preprocess_groundtruth_detection.py
@@ -61,6 +74,10 @@ CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 python scripts/p021_exec_classify_correct.py
 # echo -e "\n\n\n\n\n============================================================================="
 # echo "Running p024_exec_classify_tradeoff.py"
 # CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 python scripts/p024_exec_classify_tradeoff.py
+
+echo -e "\n\n\n\n\n============================================================================="
+echo "Compiling Cython modules"
+cd lib && ./build.sh && cd ..
 
 echo -e "\n\n\n\n\n============================================================================="
 echo "Running p030_exec_compress.py"
