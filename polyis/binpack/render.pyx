@@ -5,6 +5,7 @@
 
 cimport numpy as cnp
 import cython
+from cython.parallel import prange
 
 ctypedef cnp.uint8_t DTYPE_t
 
@@ -15,7 +16,7 @@ def render(
     cnp.uint8_t[:, :, :] canvas,
     list positions,
     cnp.uint8_t[:, :, :] frame,
-    int chunk_size,
+    int tile_size,
 ):
     """
     Render packed polyominoes onto the canvas.
@@ -24,19 +25,16 @@ def render(
         canvas: The canvas to render onto
         positions: List of packed polyominoe positions
         frame: Source frame
-        chunk_size: Size of each tile/chunk
+        tile_size: Size of each tile/chunk
         
     Returns:
         np.ndarray: Updated canvas
     """
-    cdef int i, j
-    cdef int y, x, yfrom, xfrom, n
-    cdef long offset_h, offset_w
+    cdef int i, y, x, yfrom, xfrom, n_masks, offset_h, offset_w
     cdef tuple position, offset
+    cdef int ts = tile_size
 
-    n = len(positions)
-
-    for i in range(n):
+    for i in range(len(positions)):
         position = positions[i]
         y = position[0]
         x = position[1]
@@ -45,21 +43,20 @@ def render(
         offset_h = offset[0]
         offset_w = offset[1]
 
-        yfrom = y * chunk_size
-        xfrom = x * chunk_size
-        
-        # mask is a 1D array of positions in format [x, y, x, y, x, y, ...]
-        # Reshape to get x and y coordinates as separate arrays
-        coords = mask.reshape(-1, 2)  # Shape: (n_coords, 2) where each row is [x, y]
-        mask_x = coords[:, 0]  # All x coordinates
-        mask_y = coords[:, 1]  # All y coordinates
+        yfrom = y * ts
+        xfrom = x * ts
+
+        n_masks = mask.shape[0] // 2
         
         # Process all coordinates at once using vectorized operations
-        for k in range(len(mask_x)):
-            canvas[
-                yfrom + (chunk_size * mask_y[k]): yfrom + (chunk_size * mask_y[k]) + chunk_size,
-                xfrom + (chunk_size * mask_x[k]): xfrom + (chunk_size * mask_x[k]) + chunk_size,
-            ] = frame[
-                (mask_y[k] + offset_h) * chunk_size:(mask_y[k] + offset_h + 1) * chunk_size,
-                (mask_x[k] + offset_w) * chunk_size:(mask_x[k] + offset_w + 1) * chunk_size,
-            ]
+        for k in range(n_masks):
+            mask_x = mask[k << 1]
+            mask_y = mask[(k << 1) + 1]
+
+            sx = xfrom + (ts * mask_x)
+            sy = yfrom + (ts * mask_y)
+
+            dx = (mask_y + offset_h) * ts
+            dy = (mask_x + offset_w) * ts
+
+            canvas[sy: sy + ts, sx: sx + ts, :] = frame[dy: dy + ts, dx: dx + ts, :]

@@ -7,7 +7,6 @@ cimport numpy as cnp
 
 import numpy as np
 
-# Import data structures from the shared module
 from utilities cimport IntStack, Polyomino, PolyominoStack, \
                        IntStack_init, IntStack_push, IntStack_cleanup
 

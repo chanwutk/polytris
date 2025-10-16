@@ -15,6 +15,8 @@ ctypedef cnp.uint16_t GROUP_t
 ctypedef cnp.uint8_t MASK_t
 
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
 cdef int compare_polyomino_by_mask_length(const void *a, const void *b) noexcept nogil:
     """
     Comparison function for qsort to sort polyominoes by mask length (descending order).
@@ -174,14 +176,17 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
             bitmap_input[i, j] = 0  # type: ignore
 
     # Sort polyominoes by mask length (descending order) before returning
-    if polyomino_stack.top > 0:
-        qsort(polyomino_stack.mo_data, polyomino_stack.top,
-              sizeof(Polyomino), &compare_polyomino_by_mask_length)
+    qsort(polyomino_stack.mo_data,
+          polyomino_stack.top,
+          sizeof(Polyomino),
+          &compare_polyomino_by_mask_length)
 
     free(groups)
     return <unsigned long long>polyomino_stack
 
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
 def free_polyimino_stack(unsigned long long polyomino_stack_ptr) -> int:
     cdef int num_polyominoes = (<PolyominoStack*>polyomino_stack_ptr).top
     PolyominoStack_cleanup(<PolyominoStack*>polyomino_stack_ptr)

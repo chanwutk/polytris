@@ -51,7 +51,7 @@ def parse_args():
 
 
 def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions], 
-           frame: dtypes.NPImage, chunk_size: int):
+           frame: dtypes.NPImage, tile_size: int):
     """
     Render packed polyominoes onto the canvas.
     
@@ -64,37 +64,23 @@ def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions],
     Returns:
         np.ndarray: Updated canvas
     """
+    ts = tile_size
+
     # TODO: use Torch, Cython, or Numba.
     for y, x, mask, offset in positions:
-        yfrom = y * chunk_size
-        xfrom = x * chunk_size
+        yfrom = y * ts
+        xfrom = x * ts
+        yoffset, xoffset = offset
         
         # Get mask indices where True
         for i, j in mask.reshape(-1, 2).astype(np.uint16):
-            try:
-                patch = frame[
-                    (i + offset[0]) * chunk_size:(i + offset[0] + 1) * chunk_size,
-                    (j + offset[1]) * chunk_size:(j + offset[1] + 1) * chunk_size,
-                ]
-                canvas[
-                    yfrom + (chunk_size * i): yfrom + (chunk_size * i) + chunk_size,
-                    xfrom + (chunk_size * j): xfrom + (chunk_size * j) + chunk_size,
-                ] = patch
-            except:
-                print((i + offset[0]) * chunk_size, (i + offset[0] + 1) * chunk_size)
-                print((j + offset[1]) * chunk_size, (j + offset[1] + 1) * chunk_size)
-                print(yfrom + (chunk_size * i), yfrom + (chunk_size * i) + chunk_size)
-                print(xfrom + (chunk_size * j), xfrom + (chunk_size * j) + chunk_size)
-                print(f"Error: {i}, {j}, {offset[0]}, {offset[1]}")
-                print(f"Frame shape: {frame.shape}")
-                print(f"Canvas shape: {canvas.shape}")
-                print(f"Chunk size: {chunk_size}")
-                print(f"Y from: {yfrom}, X from: {xfrom}")
-                print(f"Y to: {yfrom + (chunk_size * i) + chunk_size}, X to: {xfrom + (chunk_size * j) + chunk_size}")
-                print(f"Offset: {offset}")
-                print(f"Mask: {mask}")
-                raise
+            sy = (i + yoffset) * ts
+            sx = (j + xoffset) * ts
 
+            dy = yfrom + (ts * i)
+            dx = xfrom + (ts * j)
+
+            canvas[dy:dy+ts, dx:dx+ts] = frame[sy:sy+ts, sx:sx+ts]
 
 def apply_pack(
     positions: list[dtypes.PolyominoPositions],
@@ -333,12 +319,16 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
             assert dtypes.is_bitmap(bitmap_frame), bitmap_frame.shape
             step_times['create_bitmap'] = (time.time_ns() / 1e6) - step_start
             
-            # Profile: Group connected tiles into polyominoes
+            # Profile: Add margin to bitmap
             step_start = (time.time_ns() / 1e6)
             if tilepadding:
                 bitmap_frame = F.conv2d(
                     torch.from_numpy(np.array([[bitmap_frame]])),
                     add_margin, padding='same').numpy()[0, 0]
+            step_times['add_margin'] = (time.time_ns() / 1e6) - step_start
+
+            # Profile: Group connected tiles into polyominoes
+            step_start = (time.time_ns() / 1e6)
             polyominoes = group_tiles(bitmap_frame)
             step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
             
