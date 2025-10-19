@@ -326,6 +326,7 @@ def visualize_tracking_accuracy(results: List[Dict[str, Any]], output_dir: str, 
             'Tile_Size': result['tilesize'],
             'Tile_Padding': result['tilepadding'],
             'HOTA': metrics.get('HOTA', {}).get('HOTA(0)', 0.0),  # Extract HOTA score
+            'AssA': metrics.get('HOTA', {}).get('AssA', [0.0])[0] if metrics.get('HOTA', {}).get('AssA') else 0.0,  # Extract AssA score (first element of array)
             'MOTA': metrics.get('CLEAR', {}).get('MOTA', 0.0)   # Extract MOTA score
         })
     
@@ -355,12 +356,14 @@ def visualize_tracking_accuracy(results: List[Dict[str, Any]], output_dir: str, 
             video_tile_tilepadding_groups[video_name][tilesize][tilepadding] = {
                 'labels': [],
                 'hota_scores': [],
+                'assa_scores': [],
                 'clear_scores': []
             }
         
         # Add this classifier's data to the group
         video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['labels'].append(row['Classifier'])
         video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['hota_scores'].append(row['HOTA'])
+        video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['assa_scores'].append(row['AssA'])
         video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['clear_scores'].append(row['MOTA'])
     
     # Sort videos, tile sizes, and tilepadding values for consistent ordering in visualizations
@@ -368,10 +371,13 @@ def visualize_tracking_accuracy(results: List[Dict[str, Any]], output_dir: str, 
     sorted_tilesizes = sorted(df['Tile_Size'].unique())
     sorted_tilepadding_values = sorted(df['Tile_Padding'].unique())
     
-    # Create comparison plots for both HOTA and MOTA scores
+    # Create comparison plots for HOTA, AssA, and MOTA scores
     # Each plot shows classifiers ranked by performance for each video-tilesize-tilepadding combination
     visualize_compared_accuracy_bar(video_tile_tilepadding_groups, sorted_videos, sorted_tilesizes, sorted_tilepadding_values,
         'hota_scores', 'HOTA Score', os.path.join(output_dir, f'{prefix}hota.png'))
+    
+    visualize_compared_accuracy_bar(video_tile_tilepadding_groups, sorted_videos, sorted_tilesizes, sorted_tilepadding_values,
+        'assa_scores', 'AssA Score', os.path.join(output_dir, f'{prefix}assa.png'))
     
     visualize_compared_accuracy_bar(video_tile_tilepadding_groups, sorted_videos, sorted_tilesizes, sorted_tilepadding_values,
         'clear_scores', 'MOTA Score', os.path.join(output_dir, f'{prefix}mota.png'))

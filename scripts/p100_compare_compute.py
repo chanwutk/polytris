@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, METRICS, load_tradeoff_data, tradeoff_scatter_and_naive_baseline
+from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, METRICS, OPTIMAL_PARAMS, load_tradeoff_data, tradeoff_scatter_and_naive_baseline
 
 
 def parse_args():
@@ -17,38 +17,63 @@ def parse_args():
     parser.add_argument('--sota-dir', required=False,
                         default='/sota-results',
                         help='Directory containing SOTA results CSV files')
+    parser.add_argument('--best', action='store_true',
+                        help='Only visualize optimal parameters from OPTIMAL_PARAMS')
+    parser.add_argument('--no_perfect', action='store_true',
+                        help='Exclude perfect classifier from visualization')
     return parser.parse_args()
 
 
 def load_sota_data(sota_dir: str) -> pd.DataFrame:
     """
     Load SOTA tradeoff data from CSV files in the specified directory.
-    SOTA data is only available for caldot1, so it will only be shown for that dataset.
+    SOTA data is available for caldot1 and caldot2, excluding split data.
     
     Args:
         sota_dir: Directory containing SOTA results CSV files
         
     Returns:
-        pd.DataFrame: Combined SOTA tradeoff data (only for caldot1)
+        pd.DataFrame: Combined SOTA tradeoff data for caldot1 and caldot2
     """
     sota_data = []
     
     # Process each CSV file in the SOTA directory
     for filename in os.listdir(sota_dir):
         if filename.endswith('.csv'):
+            # Skip split data files
+            if 'split' in filename:
+                print(f"Skipping split data file: {filename}")
+                continue
+                
             filepath = os.path.join(sota_dir, filename)
             
-            # Extract system name from filename (e.g., 'otif_caldot1_full.csv' -> 'otif_full')
-            system_name = filename.replace('.csv', '').replace('_caldot1', '')
+            # Extract system name and dataset from filename
+            # Examples: 'otif_caldot1_full.csv' -> system='otif_full', dataset='caldot1'
+            #          'otif_caldot2_full.csv' -> system='otif_full', dataset='caldot2'
+            base_name = filename.replace('.csv', '')
+            if '_caldot1_' in base_name:
+                system_name = base_name.replace('_caldot1', '')
+                dataset_name = 'caldot1'
+            elif '_caldot2_' in base_name:
+                system_name = base_name.replace('_caldot2', '')
+                dataset_name = 'caldot2'
+            else:
+                print(f"  Warning: Cannot determine dataset from filename {filename}, skipping")
+                continue
             
-            print(f"Loading SOTA data from: {filename} (system: {system_name})")
+            print(f"Loading SOTA data from: {filename} (system: {system_name}, dataset: {dataset_name})")
             
             # Read CSV file - the format appears to be: 0,1,2,3,4,5,6,hota,fps
             # The first row is the header, but the data contains JSON strings
             df = pd.read_csv(filepath, header=0)
+
+            # check if column 'runtime' exists
+            runtime_col = '3'
+            if 'runtime' in df.columns:
+                runtime_col = 'runtime'
             
             # Convert data to numeric, handling any string values
-            runtime_numeric = pd.to_numeric(df['3'], errors='coerce')  # Column 3 is runtime
+            runtime_numeric = pd.to_numeric(df[runtime_col], errors='coerce')  # Column 3 is runtime
             fps_numeric = pd.to_numeric(df['fps'], errors='coerce')
             
             # Handle different column names for HOTA score
@@ -74,10 +99,10 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
                 print(f"  Warning: No valid data found in {filename}")
                 continue
             
-            # Create SOTA data only for caldot1 (since that's the only dataset SOTA was run on)
+            # Create SOTA data for the appropriate dataset
             clean_df = pd.DataFrame({
                 'system': system_name,
-                'dataset': 'caldot1',  # SOTA data is only for caldot1
+                'dataset': dataset_name,  # Use extracted dataset name
                 'video_name': 'Dataset Average',  # SOTA data appears to be aggregated
                 'classifier': 'N/A',  # SOTA systems don't use our classifier system
                 'tilesize': 'N/A',  # SOTA data doesn't have explicit tile size
@@ -92,7 +117,7 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
             })
             
             sota_data.append(clean_df)
-            print(f"  Loaded {len(df_valid)} data points for {system_name}")
+            print(f"  Loaded {len(df_valid)} data points for {system_name} on {dataset_name}")
     
     if not sota_data:
         print(f"No SOTA data found in {sota_dir}")
@@ -100,12 +125,13 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
     
     # Combine all SOTA data
     combined_sota_df = pd.concat(sota_data, ignore_index=True)
-    print(f"Combined SOTA data: {len(combined_sota_df)} total rows from {len(sota_data)} systems (caldot1 only)")
+    datasets_covered = combined_sota_df['dataset'].unique()
+    print(f"Combined SOTA data: {len(combined_sota_df)} total rows from {len(sota_data)} systems (datasets: {list(datasets_covered)})")
     
     return combined_sota_df
 
 
-def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str) -> pd.DataFrame:
+def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str, best_only: bool = False, no_perfect: bool = False) -> pd.DataFrame:
     """
     Load tradeoff data from all datasets and combine into a single DataFrame.
     This follows the same pattern as p092_tradeoff_visualize_all.py.
@@ -113,6 +139,8 @@ def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str) -> pd.
     Args:
         datasets: list of dataset names
         csv_suffix: Suffix for CSV files ('runtime' or 'throughput')
+        best_only: If True, only include optimal parameters from OPTIMAL_PARAMS
+        no_perfect: If True, exclude perfect classifier from the data
         
     Returns:
         pd.DataFrame: Combined tradeoff data from all datasets
@@ -123,9 +151,39 @@ def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str) -> pd.
         # Use the load_tradeoff_data function from polyis.utilities
         _, df_aggregated = load_tradeoff_data(dataset, csv_suffix)
         
+        # Filter for optimal parameters if best_only is True
+        if best_only and dataset in OPTIMAL_PARAMS:
+            optimal_params = OPTIMAL_PARAMS[dataset]
+            print(f"Filtering {dataset} for optimal parameters: {optimal_params}")
+            
+            # Filter the dataframe for optimal parameters
+            mask = (
+                (df_aggregated['classifier'] == optimal_params['classifier']) &
+                (df_aggregated['tilesize'] == optimal_params['tilesize']) &
+                (df_aggregated['tilepadding'] == optimal_params['tilepadding'])
+            )
+            df_aggregated = df_aggregated[mask]
+            
+            if len(df_aggregated) == 0:
+                print(f"  Warning: No data found for optimal parameters in {dataset}")
+                continue
+            else:
+                print(f"  Filtered to {len(df_aggregated)} rows with optimal parameters")
+        elif best_only:
+            print(f"  Warning: No optimal parameters defined for {dataset}, skipping")
+            continue
+        
+        # Filter out perfect classifier if no_perfect is True
+        if no_perfect:
+            initial_count = len(df_aggregated)
+            df_aggregated = df_aggregated[df_aggregated['classifier'] != 'Perfect']
+            filtered_count = len(df_aggregated)
+            if initial_count > filtered_count:
+                print(f"  Filtered out perfect classifier: {initial_count - filtered_count} rows removed")
+        
         # Add dataset and system columns to identify the source
         df_aggregated['dataset'] = dataset
-        df_aggregated['system'] = 'polyis'  # Our system name
+        df_aggregated['system'] = 'Our System'  # Our system name
         
         all_data.append(df_aggregated)
         print(f"Loaded tradeoff data for {dataset}: {len(df_aggregated)} rows")
@@ -210,7 +268,7 @@ def print_best_data_points(df_combined: pd.DataFrame, metrics_list: list[str],
 
 def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota: pd.DataFrame, 
                                    metrics_list: list[str], x_column: str, x_title: str, 
-                                   naive_column: str, plot_suffix: str, output_dir: str):
+                                   naive_column: str, plot_suffix: str, output_dir: str, best_only: bool = False):
     """
     Create visualization showing all dataset-wide trade-offs for a specific metric and axis.
     This follows the same pattern as p092_tradeoff_visualize_all.py but adds SOTA data to caldot1.
@@ -224,33 +282,47 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota: pd.DataF
         naive_column: Column name for naive baseline data
         plot_suffix: Suffix for plot filename
         output_dir: Output directory for visualizations
+        best_only: If True, use system color encoding and remove size encoding
     """
     print(f"Creating all datasets {plot_suffix} tradeoff visualizations...")
     
     # Print best data points tables first
     print_best_data_points(df_combined, metrics_list, x_column, naive_column, plot_suffix)
     
-    # Add SOTA data to caldot1 if available
+    # Add SOTA data to appropriate datasets if available
     if not df_sota.empty:
-        # Filter our data to only caldot1
-        df_caldot1 = df_combined[df_combined['dataset'] == 'caldot1'].copy()
+        # Get unique datasets from SOTA data
+        sota_datasets = df_sota['dataset'].unique()
+        print(f"Adding SOTA data for datasets: {list(sota_datasets)}")
         
-        # Get the naive baseline from our system's caldot1 data
-        our_naive_baseline = df_caldot1[naive_column].iloc[0]  # Should be the same for all rows
-        
-        # Update SOTA data to use our system's naive baseline for consistent baseline line
-        df_sota_updated = df_sota.copy()
-        df_sota_updated[naive_column] = our_naive_baseline
-        
-        # Add SOTA data to caldot1
-        df_caldot1_with_sota = pd.concat([df_caldot1, df_sota_updated], ignore_index=True)
-        # Replace caldot1 data in combined dataframe
-        df_combined = pd.concat([
-            df_combined[df_combined['dataset'] != 'caldot1'],
-            df_caldot1_with_sota
-        ], ignore_index=True)
-        print(f"Added SOTA data to caldot1: {len(df_sota)} additional data points")
-        print(f"Using our system's naive baseline for all systems: {our_naive_baseline}")
+        # Process each dataset that has SOTA data
+        for dataset in sota_datasets:
+            # Filter our data to the current dataset
+            df_dataset = df_combined[df_combined['dataset'] == dataset].copy()
+            
+            if len(df_dataset) == 0:
+                print(f"  Warning: No our data found for dataset {dataset}, skipping SOTA data")
+                continue
+            
+            # Get the naive baseline from our system's data for this dataset
+            our_naive_baseline = df_dataset[naive_column].iloc[0]  # Should be the same for all rows
+            
+            # Filter SOTA data for this dataset
+            df_sota_dataset = df_sota[df_sota['dataset'] == dataset].copy()
+            
+            # Update SOTA data to use our system's naive baseline for consistent baseline line
+            df_sota_dataset[naive_column] = our_naive_baseline
+            
+            # Add SOTA data to this dataset
+            df_dataset_with_sota = pd.concat([df_dataset, df_sota_dataset], ignore_index=True)
+            
+            # Replace dataset data in combined dataframe
+            df_combined = pd.concat([
+                df_combined[df_combined['dataset'] != dataset],
+                df_dataset_with_sota
+            ], ignore_index=True)
+            print(f"  Added SOTA data to {dataset}: {len(df_sota_dataset)} additional data points")
+            print(f"  Using our system's naive baseline for {dataset}: {our_naive_baseline}")
     
     # Create base chart
     base_chart = alt.Chart(df_combined)
@@ -271,25 +343,42 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota: pd.DataF
             base_chart, x_column, x_title, accuracy_col, metric_name, naive_column,
             size_range=(50, 300), scatter_opacity=0.8,
             baseline_stroke_width=3, baseline_opacity=0.9,
-            size_field='tilepadding'
+            size_field='tilepadding', size=100
         )
         
-        # Update encoding to use shape for system and color for classifier
-        scatter = scatter.mark_point(opacity=0.8).encode(
-            x=alt.X(f'{x_column}:Q', title=x_title),
-            y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
-                    scale=alt.Scale(domain=[0, 1])),
-            color=alt.Color('classifier:N', title='Classifier'),
-            shape=alt.Shape('system:N', title='System',
-                          scale=alt.Scale(domain=['polyis', 'otif_full', 'otif_split'],
-                                        range=['circle', 'square', 'triangle'])),
-            size=alt.Size('tilepadding:O', title='Tile Padding',
-                         scale=alt.Scale(range=[50, 300])),
-            tooltip=['dataset', 'video_name', 'system', 'classifier', 'tilesize', 'tilepadding', x_column, accuracy_col]
-        ).properties(
-            width=200,
-            height=200
-        )
+        # Update encoding based on best_only flag
+        if best_only:
+            # For best mode: color by system only, no size or shape encoding in legend
+            scatter = scatter.mark_point(opacity=0.8).encode(
+                x=alt.X(f'{x_column}:Q', title=x_title),
+                y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
+                        scale=alt.Scale(domain=[0, 1])),
+                color=alt.Color('system:N', title='System'),
+                # shape=alt.Shape('system:N',
+                #               scale=alt.Scale(domain=['Our System', 'otif_full'],
+                #                             range=['circle', 'square'])),
+                tooltip=['dataset', 'video_name', 'system', 'classifier', 'tilesize', 'tilepadding', x_column, accuracy_col]
+            ).properties(
+                width=200,
+                height=200
+            )
+        else:
+            # For normal mode: color by classifier, size by tilepadding
+            scatter = scatter.mark_point(opacity=0.8).encode(
+                x=alt.X(f'{x_column}:Q', title=x_title),
+                y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
+                        scale=alt.Scale(domain=[0, 1])),
+                color=alt.Color('classifier:N', title='Classifier'),
+                shape=alt.Shape('system:N', title='System',
+                              scale=alt.Scale(domain=['Our System', 'otif_full'],
+                                            range=['circle', 'square'])),
+                size=alt.Size('tilepadding:O', title='Tile Padding',
+                             scale=alt.Scale(range=[50, 300])),
+                tooltip=['dataset', 'video_name', 'system', 'classifier', 'tilesize', 'tilepadding', x_column, accuracy_col]
+            ).properties(
+                width=200,
+                height=200
+            )
         
         # Create the combined chart with dataset facets
         combined_chart = (scatter + baseline).facet(
@@ -335,24 +424,43 @@ def create_runtime_per_frame_data(df_throughput: pd.DataFrame, df_sota: pd.DataF
         df_sota_runtime_per_frame['runtime_per_frame'] = (1.0 / df_sota_runtime_per_frame['throughput_fps']) * 1000.0
         df_sota_runtime_per_frame['naive_runtime_per_frame'] = (1.0 / df_sota_runtime_per_frame['naive_throughput']) * 1000.0
         
-        # Add SOTA data to caldot1
-        df_caldot1 = df_runtime_per_frame[df_runtime_per_frame['dataset'] == 'caldot1'].copy()
-        our_naive_baseline = df_caldot1['naive_runtime_per_frame'].iloc[0]
-        df_sota_runtime_per_frame['naive_runtime_per_frame'] = our_naive_baseline
+        # Get unique datasets from SOTA data
+        sota_datasets = df_sota_runtime_per_frame['dataset'].unique()
+        print(f"Adding SOTA runtime per frame data for datasets: {list(sota_datasets)}")
         
-        df_caldot1_with_sota = pd.concat([df_caldot1, df_sota_runtime_per_frame], ignore_index=True)
-        df_runtime_per_frame = pd.concat([
-            df_runtime_per_frame[df_runtime_per_frame['dataset'] != 'caldot1'],
-            df_caldot1_with_sota
-        ], ignore_index=True)
+        # Process each dataset that has SOTA data
+        for dataset in sota_datasets:
+            # Filter our data to the current dataset
+            df_dataset = df_runtime_per_frame[df_runtime_per_frame['dataset'] == dataset].copy()
+            
+            if len(df_dataset) == 0:
+                print(f"  Warning: No our data found for dataset {dataset}, skipping SOTA data")
+                continue
+            
+            # Get the naive baseline from our system's data for this dataset
+            our_naive_baseline = df_dataset['naive_runtime_per_frame'].iloc[0]
+            
+            # Filter SOTA data for this dataset
+            df_sota_dataset = df_sota_runtime_per_frame[df_sota_runtime_per_frame['dataset'] == dataset].copy()
+            df_sota_dataset['naive_runtime_per_frame'] = our_naive_baseline
+            
+            # Add SOTA data to this dataset
+            df_dataset_with_sota = pd.concat([df_dataset, df_sota_dataset], ignore_index=True)
+            
+            # Replace dataset data in combined dataframe
+            df_runtime_per_frame = pd.concat([
+                df_runtime_per_frame[df_runtime_per_frame['dataset'] != dataset],
+                df_dataset_with_sota
+            ], ignore_index=True)
+            
+            print(f"  Added SOTA runtime per frame data to {dataset}: {len(df_sota_dataset)} additional data points")
         
         print(f"Created runtime per frame data: {len(df_runtime_per_frame)} total rows")
-        print(f"Added SOTA runtime per frame data to caldot1: {len(df_sota_runtime_per_frame)} additional data points")
     
     return df_runtime_per_frame
 
 
-def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str):
+def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str, best_only: bool = False, no_perfect: bool = False):
     """
     Create runtime, throughput, and runtime per frame tradeoff visualizations for all datasets.
     This follows the same pattern as p092_tradeoff_visualize_all.py but adds SOTA comparison.
@@ -360,6 +468,8 @@ def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str):
     Args:
         datasets: list of dataset names
         sota_dir: Directory containing SOTA results CSV files
+        best_only: If True, only include optimal parameters from OPTIMAL_PARAMS
+        no_perfect: If True, exclude perfect classifier from the data
     """
     print(f"Creating all datasets tradeoff visualizations for {len(datasets)} datasets...")
     
@@ -380,25 +490,27 @@ def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str):
         df_sota = pd.DataFrame()
     
     # Create runtime visualization
-    df_combined_runtime = load_all_datasets_tradeoff_data(datasets, 'runtime')
+    df_combined_runtime = load_all_datasets_tradeoff_data(datasets, 'runtime', best_only, no_perfect)
     visualize_all_datasets_tradeoff(
         df_combined_runtime, df_sota, metrics_list,
         x_column='query_runtime',
         x_title='Query Execution Runtime (seconds)',
         naive_column='naive_runtime',
         plot_suffix='runtime',
-        output_dir=output_dir
+        output_dir=output_dir,
+        best_only=best_only
     )
     
     # Create throughput visualization
-    df_combined_throughput = load_all_datasets_tradeoff_data(datasets, 'throughput')
+    df_combined_throughput = load_all_datasets_tradeoff_data(datasets, 'throughput', best_only, no_perfect)
     visualize_all_datasets_tradeoff(
         df_combined_throughput, df_sota, metrics_list,
         x_column='throughput_fps',
         x_title='Throughput (frames/second)',
         naive_column='naive_throughput',
         plot_suffix='throughput',
-        output_dir=output_dir
+        output_dir=output_dir,
+        best_only=best_only
     )
     
     # Create runtime per frame visualization
@@ -410,7 +522,8 @@ def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str):
         x_title='Runtime per Frame (milliseconds)',
         naive_column='naive_runtime_per_frame',
         plot_suffix='runtime_per_frame',
-        output_dir=output_dir
+        output_dir=output_dir,
+        best_only=best_only
     )
 
 
@@ -430,14 +543,20 @@ def main(args):
         - The script expects tradeoff data from p090_tradeoff_compute.py in:
           {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/accuracy_{suffix}_tradeoff_combined.csv
         - The script expects SOTA results in CSV files in the specified SOTA directory
+          - Supports caldot1 and caldot2 datasets
+          - Excludes split data files (files containing 'split' in filename)
+          - Expected format: otif_caldot1_full.csv, otif_caldot2_full.csv
         - Results are saved to: {CACHE_DIR}/SUMMARY/100_compare_compute/
+        - Use --best flag to only visualize optimal parameters from OPTIMAL_PARAMS
         - Please run p090_tradeoff_compute.py first to generate the required CSV files
     """
     print(f"Processing datasets: {args.datasets}")
     print(f"SOTA directory: {args.sota_dir}")
+    print(f"Best only mode: {args.best}")
+    print(f"No perfect classifier mode: {args.no_perfect}")
     
     # Create comparison visualizations
-    visualize_all_datasets_tradeoffs(args.datasets, args.sota_dir)
+    visualize_all_datasets_tradeoffs(args.datasets, args.sota_dir, args.best, args.no_perfect)
 
 
 if __name__ == '__main__':

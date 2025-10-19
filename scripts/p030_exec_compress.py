@@ -320,12 +320,12 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
             step_times['create_bitmap'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Add margin to bitmap
-            step_start = (time.time_ns() / 1e6)
+            # step_start = (time.time_ns() / 1e6)
             if tilepadding:
                 bitmap_frame = F.conv2d(
                     torch.from_numpy(np.array([[bitmap_frame]])),
                     add_margin, padding='same').numpy()[0, 0]
-            step_times['add_margin'] = (time.time_ns() / 1e6) - step_start
+            # step_times['add_margin'] = (time.time_ns() / 1e6) - step_start
 
             # Profile: Group connected tiles into polyominoes
             step_start = (time.time_ns() / 1e6)

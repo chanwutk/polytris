@@ -1002,6 +1002,40 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
     return scatter, baseline + baseline_annotation
 
 
+OPTIMAL_PARAMS = {
+    'b3d-jnc00': {
+        'classifier': 'YoloN',
+        'tilesize': 60,
+        'tilepadding': 'unpadded',
+    },
+    'b3d-jnc02': {
+        'classifier': 'YoloN',
+        'tilesize': 60,
+        'tilepadding': 'unpadded',
+    },
+    'b3d-jnc06': {
+        'classifier': 'YoloN',
+        'tilesize': 60,
+        'tilepadding': 'unpadded',
+    },
+    'b3d-jnc07': {
+        'classifier': 'YoloN',
+        'tilesize': 60,
+        'tilepadding': 'unpadded',
+    },
+    'caldot1': {
+        'classifier': 'ShuffleNet05',
+        'tilesize': 60,
+        'tilepadding': 'padded',
+    },
+    'caldot2': {
+        'classifier': 'MobileNetS',
+        'tilesize': 60,
+        'tilepadding': 'padded',
+    },
+}
+
+
 PARAMS = [
     'classifier',
     'tilesize',
