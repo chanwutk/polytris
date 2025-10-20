@@ -74,7 +74,11 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
             
             # Convert data to numeric, handling any string values
             runtime_numeric = pd.to_numeric(df[runtime_col], errors='coerce')  # Column 3 is runtime
+            assert isinstance(runtime_numeric, pd.Series), \
+                f"runtime_numeric should be a Series, got {type(runtime_numeric)}"
             fps_numeric = pd.to_numeric(df['fps'], errors='coerce')
+            assert isinstance(fps_numeric, pd.Series), \
+                f"fps_numeric should be a Series, got {type(fps_numeric)}"
             
             # Handle different column names for HOTA score
             if 'hota' in df.columns:
@@ -86,6 +90,8 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
                 continue
                 
             hota_numeric = pd.to_numeric(df[hota_col], errors='coerce')
+            assert isinstance(hota_numeric, pd.Series), \
+                f"hota_numeric should be a Series, got {type(hota_numeric)}"
             
             # Filter out rows with invalid data
             valid_mask = (runtime_numeric.notna() & hota_numeric.notna() & 
@@ -438,6 +444,8 @@ def create_runtime_per_frame_data(df_throughput: pd.DataFrame, df_sota: pd.DataF
                 continue
             
             # Get the naive baseline from our system's data for this dataset
+            assert isinstance(df_dataset, pd.DataFrame), \
+                f"df_dataset should be a DataFrame, got {type(df_dataset)}"
             our_naive_baseline = df_dataset['naive_runtime_per_frame'].iloc[0]
             
             # Filter SOTA data for this dataset
@@ -448,6 +456,8 @@ def create_runtime_per_frame_data(df_throughput: pd.DataFrame, df_sota: pd.DataF
             df_dataset_with_sota = pd.concat([df_dataset, df_sota_dataset], ignore_index=True)
             
             # Replace dataset data in combined dataframe
+            assert isinstance(df_runtime_per_frame, pd.DataFrame), \
+                f"df_runtime_per_frame should be a DataFrame, got {type(df_runtime_per_frame)}"
             df_runtime_per_frame = pd.concat([
                 df_runtime_per_frame[df_runtime_per_frame['dataset'] != dataset],
                 df_dataset_with_sota
