@@ -1,4 +1,4 @@
-# Polyis: Efficient Object Tracking through Relevant Pixel Compression
+# Polytris: Efficient Object Tracking through Relevant Pixel Compression
 
 ## Development Setup
 
