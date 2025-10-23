@@ -1,6 +1,6 @@
 import qrcode
 
-url = "https://github.com/chanwutk/polyis"
+url = "https://github.com/chanwutk/polytris"
 
 qr = qrcode.QRCode(version=1, box_size=10, border=0)
 qr.add_data(url)

@@ -12,7 +12,7 @@ from polyis.models.classifier.utils import collapse_classifier
 #         self.model.fc = torch.nn.Linear(self.model.fc.in_features, 1)
 
 #     def forward(self, x: torch.Tensor) -> torch.Tensor:
-#         return torch.sigmoid(self.model(x))
+#         return self.model(x)  # Return logits instead of sigmoid probabilities
 
 
 class ShuffleNet05(torch.nn.Module):
@@ -23,7 +23,7 @@ class ShuffleNet05(torch.nn.Module):
         self.model.fc = collapse_classifier(weight, self.model.fc)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities
 
 
 class ShuffleNet20(torch.nn.Module):
@@ -34,4 +34,4 @@ class ShuffleNet20(torch.nn.Module):
         self.model.fc = collapse_classifier(weight, self.model.fc)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities

@@ -2,6 +2,7 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+# cython: nonecheck=False
 
 import numpy as np
 cimport numpy as cnp
@@ -22,6 +23,7 @@ from pack_append import pack_append as pack_append_cython
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
     cdef unsigned long long polyomino_stack_ptr = <unsigned long long>group_tiles_cython(bitmap_input)
     return format_polyominoes(polyomino_stack_ptr)
@@ -29,6 +31,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 def format_polyominoes(unsigned long long polyomino_stack_ptr):
     cdef PolyominoStack *polyomino_stack = <PolyominoStack*>polyomino_stack_ptr
     cdef list bins = []
@@ -77,6 +80,7 @@ def format_polyominoes(unsigned long long polyomino_stack_ptr):
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 def pack_append(list polyominoes, int h, int w, cnp.uint8_t[:, :] occupied_tiles):
     cdef unsigned long long polyominoes_stack_ptr = get_polyominoes(polyominoes)
     positions = pack_append_cython(polyominoes_stack_ptr, h, w, occupied_tiles)
@@ -87,6 +91,7 @@ def pack_append(list polyominoes, int h, int w, cnp.uint8_t[:, :] occupied_tiles
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 def get_polyominoes(list polyominoes):
     # convert polyominoes to PolyominoStack
     cdef PolyominoStack *polyominoes_stack = <PolyominoStack*>malloc(sizeof(PolyominoStack))
@@ -125,6 +130,7 @@ def get_polyominoes(list polyominoes):
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 def format_positions(list positions) -> "list[tuple[int, int, np.ndarray, tuple[int, int]]] | None":
     if positions is None:
         return None

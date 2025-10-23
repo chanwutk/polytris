@@ -12,7 +12,7 @@ class ResNet152(torch.nn.Module):
         self.model.fc = collapse_classifier(weight, self.model.fc)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities
 
 
 class ResNet101(torch.nn.Module):
@@ -23,7 +23,7 @@ class ResNet101(torch.nn.Module):
         self.model.fc = collapse_classifier(weight, self.model.fc)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities
 
 
 class ResNet18(torch.nn.Module):
@@ -34,7 +34,7 @@ class ResNet18(torch.nn.Module):
         self.model.fc = collapse_classifier(weight, self.model.fc)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities
 
 
 # class ResNet18Q(torch.nn.Module):
@@ -45,4 +45,4 @@ class ResNet18(torch.nn.Module):
 #         self.model.fc = torch.nn.Linear(self.model.fc.in_features, 1)
 
 #     def forward(self, x: torch.Tensor) -> torch.Tensor:
-#         return torch.sigmoid(self.model(x))
+#         return self.model(x)  # Return logits instead of sigmoid probabilities

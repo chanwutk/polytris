@@ -963,8 +963,8 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         color=alt.Color('classifier:N', title='Classifier'),
         tooltip=['video_name', 'classifier', size_field, x_column, accuracy_col]
     ).properties(
-        width=200,
-        height=200
+        width=150,
+        height=150
     )
     
     # Add size encoding only if no fixed size is provided
@@ -973,30 +973,31 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
                                  title='Tile Size',
                                  scale=alt.Scale(range=size_range)))
     
-    # Create naive baseline
-    baseline = base_chart.mark_rule(
+    # Create naive baseline as a point at 1.0 accuracy score
+    baseline = base_chart.mark_point(
         color='red',
-        strokeDash=[5, 5],
-        strokeWidth=baseline_stroke_width,
-        opacity=baseline_opacity
+        fill='red',
+        size=20,
+        opacity=baseline_opacity,
     ).encode(
-        x=f'{naive_column}:Q'
+        x=f'{naive_column}:Q',
+        y=alt.value(1.0)  # Fixed at 1.0 accuracy score
     )
     
     # Create annotation text for the baseline
     baseline_annotation = base_chart.mark_text(
-        align='left',
-        baseline='bottom',
+        align='right',
+        baseline='top',
         fontSize=12,
         fontWeight='bold',
         color='red',
-        dx=5,  # Offset to the right of the line
-        dy=0,  # No vertical offset
-        angle=90  # Rotate 90 degrees clockwise
+        dy=3,
+        dx=15,
+        lineHeight=10
     ).encode(
         x=f'{naive_column}:Q',
-        y=alt.value(0.5),  # Position at middle of y-axis
-        text=alt.value('Without Optimization')
+        y=alt.value(1.0),  # Position at 1.0 accuracy score
+        text=alt.value(['Without', 'Optimization'])
     )
     
     return scatter, baseline + baseline_annotation
@@ -1033,6 +1034,38 @@ OPTIMAL_PARAMS = {
         'tilesize': 60,
         'tilepadding': 'padded',
     },
+}
+
+CHOSEN_PARAMS = {
+    'b3d-jnc00': [
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'b3d-jnc02': [
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'b3d-jnc06': [
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'b3d-jnc07': [
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'caldot1': [
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'padded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'padded'},
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'caldot2': [
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'padded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
 }
 
 

@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, METRICS, OPTIMAL_PARAMS, load_tradeoff_data, tradeoff_scatter_and_naive_baseline
+from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, METRICS, OPTIMAL_PARAMS, CHOSEN_PARAMS, load_tradeoff_data, tradeoff_scatter_and_naive_baseline
 
 
 def parse_args():
@@ -21,6 +21,8 @@ def parse_args():
                         help='Only visualize optimal parameters from OPTIMAL_PARAMS')
     parser.add_argument('--no_perfect', action='store_true',
                         help='Exclude perfect classifier from visualization')
+    parser.add_argument('--choose_params', action='store_true',
+                        help='Only visualize parameter sets in CHOSEN_PARAMS for our system')
     return parser.parse_args()
 
 
@@ -106,8 +108,10 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
                 continue
             
             # Create SOTA data for the appropriate dataset
+            # Map system names to display names
+            display_system_name = 'OTIF' if system_name == 'otif_full' else system_name
             clean_df = pd.DataFrame({
-                'system': system_name,
+                'system': display_system_name,
                 'dataset': dataset_name,  # Use extracted dataset name
                 'video_name': 'Dataset Average',  # SOTA data appears to be aggregated
                 'classifier': 'N/A',  # SOTA systems don't use our classifier system
@@ -137,7 +141,7 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
     return combined_sota_df
 
 
-def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str, best_only: bool = False, no_perfect: bool = False) -> pd.DataFrame:
+def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str, best_only: bool = False, no_perfect: bool = False, choose_params: bool = False) -> pd.DataFrame:
     """
     Load tradeoff data from all datasets and combine into a single DataFrame.
     This follows the same pattern as p092_tradeoff_visualize_all.py.
@@ -147,6 +151,7 @@ def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str, best_o
         csv_suffix: Suffix for CSV files ('runtime' or 'throughput')
         best_only: If True, only include optimal parameters from OPTIMAL_PARAMS
         no_perfect: If True, exclude perfect classifier from the data
+        choose_params: If True, only include parameter sets from CHOSEN_PARAMS
         
     Returns:
         pd.DataFrame: Combined tradeoff data from all datasets
@@ -187,9 +192,39 @@ def load_all_datasets_tradeoff_data(datasets: list[str], csv_suffix: str, best_o
             if initial_count > filtered_count:
                 print(f"  Filtered out perfect classifier: {initial_count - filtered_count} rows removed")
         
+        # Filter for chosen parameters if choose_params is True
+        if choose_params and dataset in CHOSEN_PARAMS:
+            chosen_params = CHOSEN_PARAMS[dataset]
+            print(f"Filtering {dataset} for chosen parameters: {chosen_params}")
+            
+            # Create a mask for all chosen parameter combinations
+            assert isinstance(df_aggregated, pd.DataFrame), \
+                f"df_aggregated should be a DataFrame, got {type(df_aggregated)}"
+            mask = pd.Series([False] * len(df_aggregated), index=df_aggregated.index)
+            for param_set in chosen_params:
+                param_mask = (
+                    (df_aggregated['classifier'] == param_set['classifier']) &
+                    (df_aggregated['tilesize'] == param_set['tilesize']) &
+                    (df_aggregated['tilepadding'] == param_set['tilepadding'])
+                )
+                mask = mask | param_mask
+            
+            initial_count = len(df_aggregated)
+            df_aggregated = df_aggregated[mask]
+            filtered_count = len(df_aggregated)
+            
+            if len(df_aggregated) == 0:
+                print(f"  Warning: No data found for chosen parameters in {dataset}")
+                continue
+            else:
+                print(f"  Filtered to {filtered_count} rows with chosen parameters ({initial_count - filtered_count} rows removed)")
+        elif choose_params:
+            print(f"  Warning: No chosen parameters defined for {dataset}, skipping")
+            continue
+        
         # Add dataset and system columns to identify the source
         df_aggregated['dataset'] = dataset
-        df_aggregated['system'] = 'Our System'  # Our system name
+        df_aggregated['system'] = 'Polytris'  # Our system name
         
         all_data.append(df_aggregated)
         print(f"Loaded tradeoff data for {dataset}: {len(df_aggregated)} rows")
@@ -323,6 +358,10 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota: pd.DataF
             df_dataset_with_sota = pd.concat([df_dataset, df_sota_dataset], ignore_index=True)
             
             # Replace dataset data in combined dataframe
+            assert isinstance(df_combined, pd.DataFrame), \
+                f"df_combined should be a DataFrame, got {type(df_combined)}"
+            assert isinstance(df_dataset_with_sota, pd.DataFrame), \
+                f"df_dataset_with_sota should be a DataFrame, got {type(df_dataset_with_sota)}"
             df_combined = pd.concat([
                 df_combined[df_combined['dataset'] != dataset],
                 df_dataset_with_sota
@@ -356,12 +395,12 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota: pd.DataF
         if best_only:
             # For best mode: color by system only, no size or shape encoding in legend
             scatter = scatter.mark_point(opacity=0.8).encode(
-                x=alt.X(f'{x_column}:Q', title=x_title),
+                x=alt.X(f'{x_column}:Q', title=x_title, scale=alt.Scale(zero=True)),
                 y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
                         scale=alt.Scale(domain=[0, 1])),
                 color=alt.Color('system:N', title='System'),
                 # shape=alt.Shape('system:N',
-                #               scale=alt.Scale(domain=['Our System', 'otif_full'],
+                #               scale=alt.Scale(domain=['Polytris', 'OTIF'],
                 #                             range=['circle', 'square'])),
                 tooltip=['dataset', 'video_name', 'system', 'classifier', 'tilesize', 'tilepadding', x_column, accuracy_col]
             ).properties(
@@ -369,22 +408,40 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota: pd.DataF
                 height=200
             )
         else:
-            # For normal mode: color by classifier, size by tilepadding
-            scatter = scatter.mark_point(opacity=0.8).encode(
-                x=alt.X(f'{x_column}:Q', title=x_title),
+            # For normal mode: color by system, shape by classifier, size by tilepadding
+            # Create line chart layer where each line represents a different system
+            line_chart = base_chart.mark_line(opacity=0.6, strokeWidth=2).encode(
+                x=alt.X(f'{x_column}:Q', title=x_title, scale=alt.Scale(zero=True)),
                 y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
                         scale=alt.Scale(domain=[0, 1])),
-                color=alt.Color('classifier:N', title='Classifier'),
-                shape=alt.Shape('system:N', title='System',
-                              scale=alt.Scale(domain=['Our System', 'otif_full'],
-                                            range=['circle', 'square'])),
-                size=alt.Size('tilepadding:O', title='Tile Padding',
-                             scale=alt.Scale(range=[50, 300])),
+                color=alt.Color('system:N', title='System'),
                 tooltip=['dataset', 'video_name', 'system', 'classifier', 'tilesize', 'tilepadding', x_column, accuracy_col]
             ).properties(
-                width=200,
-                height=200
+                width=180,
+                height=180
             )
+            
+            # Create scatter plot layer
+            scatter = base_chart.mark_point(opacity=1, stroke=None, size=100).encode(
+                x=alt.X(f'{x_column}:Q', title=x_title, scale=alt.Scale(zero=True)),
+                y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
+                        scale=alt.Scale(domain=[0, 1])),
+                color=alt.Color('system:N', title='System'),
+                fill=alt.Fill('system:N', legend=None),
+                shape=alt.Shape('classifier:N', title=['Relevancy', 'Classifier'],
+                              scale=alt.Scale(domain=['N/A', 'YoloN', 'ShuffleNet05', 'MobileNetS'],  # , 'Perfect', 'SimpleCNN'],
+                                            range=['circle', 'square', 'triangle', 'cross'])),  # , 'diamond', 'cross'])),
+                # size=alt.Size('tilepadding:O', title='Tile Padding',
+                #              scale=alt.Scale(range=[50, 300])),
+                size=alt.condition(alt.datum['system'] == 'Polytris', alt.value(100), alt.value(20)),
+                tooltip=['dataset', 'video_name', 'system', 'classifier', 'tilesize', 'tilepadding', x_column, accuracy_col]
+            ).properties(
+                width=180,
+                height=180
+            )
+            
+            # Combine line chart and scatter plot
+            scatter = line_chart + scatter
         
         # Create the combined chart with dataset facets
         combined_chart = (scatter + baseline).facet(
@@ -394,7 +451,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota: pd.DataF
         ).resolve_scale(
             x='independent'
         ).properties(
-            title=f'{metric_name} vs {x_title} Tradeoff Comparison',
+            title=f'{metric_name} vs {x_title}',
         )
         
         # Save the chart with appropriate filename
@@ -402,6 +459,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota: pd.DataF
             plot_path = os.path.join(output_dir, f'{metric.lower()}_runtime_per_frame_comparison.png')
         else:
             plot_path = os.path.join(output_dir, f'{metric.lower()}_{plot_suffix}_comparison.png')
+        print(f"Saving chart to: {plot_path}")
         combined_chart.save(plot_path, scale_factor=4)
         print(f"Saved comparison {metric_name} {plot_suffix} tradeoff plot to: {plot_path}")
 
@@ -467,10 +525,12 @@ def create_runtime_per_frame_data(df_throughput: pd.DataFrame, df_sota: pd.DataF
         
         print(f"Created runtime per frame data: {len(df_runtime_per_frame)} total rows")
     
+    assert isinstance(df_runtime_per_frame, pd.DataFrame), \
+        f"df_runtime_per_frame should be a DataFrame, got {type(df_runtime_per_frame)}"
     return df_runtime_per_frame
 
 
-def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str, best_only: bool = False, no_perfect: bool = False):
+def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str, best_only: bool = False, no_perfect: bool = False, choose_params: bool = False):
     """
     Create runtime, throughput, and runtime per frame tradeoff visualizations for all datasets.
     This follows the same pattern as p092_tradeoff_visualize_all.py but adds SOTA comparison.
@@ -480,6 +540,7 @@ def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str, best_on
         sota_dir: Directory containing SOTA results CSV files
         best_only: If True, only include optimal parameters from OPTIMAL_PARAMS
         no_perfect: If True, exclude perfect classifier from the data
+        choose_params: If True, only include parameter sets from CHOSEN_PARAMS
     """
     print(f"Creating all datasets tradeoff visualizations for {len(datasets)} datasets...")
     
@@ -500,7 +561,7 @@ def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str, best_on
         df_sota = pd.DataFrame()
     
     # Create runtime visualization
-    df_combined_runtime = load_all_datasets_tradeoff_data(datasets, 'runtime', best_only, no_perfect)
+    df_combined_runtime = load_all_datasets_tradeoff_data(datasets, 'runtime', best_only, no_perfect, choose_params)
     visualize_all_datasets_tradeoff(
         df_combined_runtime, df_sota, metrics_list,
         x_column='query_runtime',
@@ -512,7 +573,7 @@ def visualize_all_datasets_tradeoffs(datasets: list[str], sota_dir: str, best_on
     )
     
     # Create throughput visualization
-    df_combined_throughput = load_all_datasets_tradeoff_data(datasets, 'throughput', best_only, no_perfect)
+    df_combined_throughput = load_all_datasets_tradeoff_data(datasets, 'throughput', best_only, no_perfect, choose_params)
     visualize_all_datasets_tradeoff(
         df_combined_throughput, df_sota, metrics_list,
         x_column='throughput_fps',
@@ -564,9 +625,10 @@ def main(args):
     print(f"SOTA directory: {args.sota_dir}")
     print(f"Best only mode: {args.best}")
     print(f"No perfect classifier mode: {args.no_perfect}")
+    print(f"Choose params mode: {args.choose_params}")
     
     # Create comparison visualizations
-    visualize_all_datasets_tradeoffs(args.datasets, args.sota_dir, args.best, args.no_perfect)
+    visualize_all_datasets_tradeoffs(args.datasets, args.sota_dir, args.best, args.no_perfect, args.choose_params)
 
 
 if __name__ == '__main__':

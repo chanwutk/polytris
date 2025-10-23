@@ -9,7 +9,7 @@ class WideResNet50(torch.nn.Module):
         self.model.fc = torch.nn.Linear(self.model.fc.in_features, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities
 
 
 class WideResNet101(torch.nn.Module):
@@ -19,4 +19,4 @@ class WideResNet101(torch.nn.Module):
         self.model.fc = torch.nn.Linear(self.model.fc.in_features, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities

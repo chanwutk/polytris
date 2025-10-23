@@ -2,6 +2,7 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+# cython: nonecheck=False
 
 cimport numpy as cnp
 from libc.stdlib cimport malloc, calloc, free, qsort
@@ -17,6 +18,7 @@ ctypedef cnp.uint8_t MASK_t
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef int compare_polyomino_by_mask_length(const void *a, const void *b) noexcept nogil:
     """
     Comparison function for qsort to sort polyominoes by mask length (descending order).
@@ -29,6 +31,7 @@ cdef int compare_polyomino_by_mask_length(const void *a, const void *b) noexcept
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef IntStack _find_connected_tiles(
     unsigned int* bitmap,
     unsigned short h,
@@ -111,6 +114,7 @@ cdef IntStack _find_connected_tiles(
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 def group_tiles(cnp.uint8_t[:, :] bitmap_input):
     cdef unsigned short h = <unsigned short>bitmap_input.shape[0]
     cdef unsigned short w = <unsigned short>bitmap_input.shape[1]
@@ -187,6 +191,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input):
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 def free_polyimino_stack(unsigned long long polyomino_stack_ptr) -> int:
     cdef int num_polyominoes = (<PolyominoStack*>polyomino_stack_ptr).top
     PolyominoStack_cleanup(<PolyominoStack*>polyomino_stack_ptr)

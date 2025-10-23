@@ -2,8 +2,10 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+# cython: nonecheck=False
 
 cimport numpy as cnp
+import cython
 
 import numpy as np
 
@@ -11,6 +13,9 @@ from utilities cimport IntStack, Polyomino, PolyominoStack, \
                        IntStack_init, IntStack_push, IntStack_cleanup
 
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 def pack_append(
     unsigned long long polyominoes,
     int h,

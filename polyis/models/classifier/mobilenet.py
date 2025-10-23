@@ -14,7 +14,7 @@ class MobileNetL(torch.nn.Module):
         self.model.classifier[-1] = collapse_classifier(weight, last_layer)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities
 
 
 # class MobileNetLQ(torch.nn.Module):
@@ -29,7 +29,7 @@ class MobileNetL(torch.nn.Module):
 #                                                     device=last_layer.weight.device)
     
 #     def forward(self, x: torch.Tensor) -> torch.Tensor:
-#         return torch.sigmoid(self.model(x))
+#         return self.model(x)  # Return logits instead of sigmoid probabilities
 
 
 class MobileNetS(torch.nn.Module):
@@ -42,4 +42,4 @@ class MobileNetS(torch.nn.Module):
         self.model.classifier[-1] = collapse_classifier(weight, last_layer)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities

@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import time
 import multiprocessing as mp
 from functools import partial
@@ -309,7 +310,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 if model_type.startswith('Yolo'):
                     if y_hat.dim() == 1:
                         y_hat = y_hat.unsqueeze(1)
-                predictions = y_hat > 0.5
+                # Apply sigmoid to convert logits to probabilities for accuracy calculation
+                y_hat_probs = torch.sigmoid(y_hat)
+                predictions = y_hat_probs > 0.5
                 train_correct += int(torch.sum(predictions == y_batch).item())
                 train_total += len(y_batch)
 
@@ -408,8 +411,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 cumulative_loss += val_loss / len(test_loader)
                 val_total_loss_time += (time.time_ns() / 1e6) - val_loss_start_time
 
-                # Apply appropriate activation function based on model type
-                ans = yhat > 0.5
+                # Apply sigmoid to convert logits to probabilities for accuracy calculation
+                yhat_probs = torch.sigmoid(yhat)
+                ans = yhat_probs > 0.5
                 misc = torch.sum(ans == y_batch)
                 misc_sum += misc.item()
                 num_samples += len(y_batch)
@@ -543,16 +547,29 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
     if model_type not in MODEL_ZOO:
         raise ValueError(f"Unsupported model type: {model_type}")
     model = MODEL_ZOO[model_type](tile_size).to(device)
-    loss_fn = torch.nn.BCELoss().to(device)
 
     optimizer = Adam(model.parameters(), lr=0.001)
 
     training_data_path = os.path.join(training_path, 'data', f'tilesize_{tile_size}')
 
-    if not os.path.exists(training_data_path):
-        raise FileNotFoundError(f"Training data directory {training_data_path} does not exist. "
-                                "Please run p012_tune_create_training_data.py first.")
+    assert os.path.exists(training_data_path), \
+        f"Training data directory {training_data_path} does not exist. " \
+        "Please run p012_tune_create_training_data.py first."
 
+    # Count files directly from directories using simple shell commands
+    neg_dir = os.path.join(training_data_path, 'neg')
+    pos_dir = os.path.join(training_data_path, 'pos')
+    
+    # Use ls -1 | wc -l to count files (simple and fast)
+    neg_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {neg_dir} | wc -l'], text=True).strip())
+    pos_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {pos_dir} | wc -l'], text=True).strip())
+    
+    # Calculate pos_weight for binary classification (inverse frequency weighting)
+    pos_weight = neg_count / pos_count
+    
+    # Use BCEWithLogitsLoss with pos_weight to handle class imbalance
+    loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight)).to(device)
+    
     train_data = datasets.ImageFolder(training_data_path, transform=transforms.ToTensor())
 
     generator = torch.Generator().manual_seed(0)

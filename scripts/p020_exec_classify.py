@@ -98,7 +98,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
     Note:
         - Frame is padded if necessary to ensure divisibility by tile size
         - Input frame is normalized to [0, 1] range before inference
-        - Model is expected to output logits, which are converted to probabilities using sigmoid
+        - Model outputs logits, which are converted to probabilities using sigmoid
         - Timing information includes preprocessing and model inference times
     """
     with torch.no_grad():
@@ -125,8 +125,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
 
         # Run inference
         start_time = (time.time_ns() / 1e6)
-        predictions = model(tiles_nchw)
-        # Apply sigmoid to get probabilities
+        predictions = torch.sigmoid(model(tiles_nchw))
         probabilities = (predictions * 255).to(torch.uint8).cpu().numpy().flatten()
 
         # Reshape back to grid format

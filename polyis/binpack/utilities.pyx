@@ -2,6 +2,7 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+# cython: nonecheck=False
 
 from libc.stdlib cimport malloc, free, realloc
 import cython
@@ -15,6 +16,7 @@ cdef struct IntStack:
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef int IntStack_init(IntStack *stack, int initial_capacity) noexcept nogil:
     """Initialize an integer vector with initial capacity"""
     # if not stack:
@@ -31,6 +33,7 @@ cdef int IntStack_init(IntStack *stack, int initial_capacity) noexcept nogil:
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef int IntStack_push(IntStack *stack, unsigned short value) noexcept nogil:
     """Push a value onto the vector, expanding if necessary"""
     cdef int new_capacity
@@ -58,6 +61,7 @@ cdef int IntStack_push(IntStack *stack, unsigned short value) noexcept nogil:
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void IntStack_cleanup(IntStack *stack) noexcept nogil:
     """Free the stack's data array (stack itself is on stack memory)"""
     if stack:
@@ -76,6 +80,7 @@ cdef struct Polyomino:
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void Polyomino_cleanup(Polyomino *polyomino) noexcept nogil:
     """Free the stack's data array (stack itself is on stack memory)"""
     if polyomino:
@@ -90,6 +95,7 @@ cdef struct PolyominoStack:
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef int PolyominoStack_init(
     PolyominoStack *stack,
     int initial_capacity
@@ -109,6 +115,7 @@ cdef int PolyominoStack_init(
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef int PolyominoStack_push(
     PolyominoStack *stack,
     Polyomino value
@@ -139,6 +146,7 @@ cdef int PolyominoStack_push(
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void PolyominoStack_cleanup(PolyominoStack *stack) noexcept nogil:
     """Free the stack's data array (stack itself is on stack memory)"""
     cdef int i
