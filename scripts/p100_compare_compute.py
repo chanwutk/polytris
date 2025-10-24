@@ -42,9 +42,10 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
     # Process each CSV file in the SOTA directory
     for filename in os.listdir(sota_dir):
         if filename.endswith('.csv'):
-            # Skip split data files
-            if 'split' in filename:
-                print(f"Skipping split data file: {filename}")
+            # Include both full and split data files
+            # Skip other types of split data files if any
+            if 'split' in filename and 'otif' not in filename:
+                print(f"Skipping non-OTIF split data file: {filename}")
                 continue
                 
             filepath = os.path.join(sota_dir, filename)
@@ -52,6 +53,7 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
             # Extract system name and dataset from filename
             # Examples: 'otif_caldot1_full.csv' -> system='otif_full', dataset='caldot1'
             #          'otif_caldot2_full.csv' -> system='otif_full', dataset='caldot2'
+            #          'otif_caldot1_split.csv' -> system='otif_split', dataset='caldot1'
             base_name = filename.replace('.csv', '')
             if '_caldot1_' in base_name:
                 system_name = base_name.replace('_caldot1', '')
@@ -109,7 +111,12 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
             
             # Create SOTA data for the appropriate dataset
             # Map system names to display names
-            display_system_name = 'OTIF' if system_name == 'otif_full' else system_name
+            if system_name == 'otif_full':
+                display_system_name = 'OTIF'
+            elif system_name == 'otif_split':
+                display_system_name = 'OTIF-Split'
+            else:
+                display_system_name = system_name
             clean_df = pd.DataFrame({
                 'system': display_system_name,
                 'dataset': dataset_name,  # Use extracted dataset name
