@@ -1,4 +1,5 @@
 import argparse
+import subprocess
 
 
 create = """
@@ -13,14 +14,14 @@ gcloud compute instances create {name} \\
     --scopes=https://www.googleapis.com/auth/cloud-platform \\
     --accelerator=count=1,type=nvidia-tesla-t4 \\
     --min-cpu-platform=Intel\\ Skylake \\
-    --create-disk=auto-delete=yes,boot=yes,device-name=instance-20251025-011007,image=projects/ubuntu-os-accelerator-images/global/images/ubuntu-accelerator-2404-amd64-with-nvidia-580-v20251021,mode=rw,size=200,type=pd-ssd \\
     --no-shielded-secure-boot \\
     --no-shielded-vtpm \\
     --no-shielded-integrity-monitoring \\
     --labels=goog-ec-src=vm_add-gcloud \\
     --reservation-affinity=any \\
     --threads-per-core=1 \\
-    --visible-core-count=4
+    --visible-core-count=4 \\
+    --source-machine-image=polyis
 """
 
 
@@ -38,8 +39,18 @@ def main():
         if value is not None:
             values.append(value)
     name = '-'.join(values)
-    print(create.format(name=name))
+    command = create.format(name=name).strip()
+    print(f"Executing: {command}")
+    try:
+        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+        print("Command executed successfully!")
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Command failed with return code {e.returncode}")
+        print(f"Error output: {e.stderr}")
+        return 1
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    exit(main())
