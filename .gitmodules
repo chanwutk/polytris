@@ -1,6 +1,3 @@
-[submodule "modules/detectron2"]
-	path = modules/detectron2
-	url = git@github.com:chanwutk/detectron2.git
 [submodule "modules/TrackEval"]
 	path = modules/TrackEval
 	url = git@github.com:chanwutk/TrackEval.git
