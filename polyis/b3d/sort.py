@@ -17,13 +17,8 @@
 """
 from __future__ import print_function
 
-import os
 import numpy as np
 import numpy.typing as npt
-
-import glob
-import time
-import argparse
 
 from filterpy.kalman import KalmanFilter
 import lap

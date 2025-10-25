@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 import typing
 
 import numpy as np
@@ -12,18 +11,16 @@ import polyis.dtypes
 if typing.TYPE_CHECKING:
     from detectron2.modeling.meta_arch.retinanet import RetinaNet
 
-sys.path.append('/polyis/modules/detectron2')
-sys.path.append('/polyis/modules/b3d')
 
-from b3d.external import nms
-from b3d.utils import parse_outputs
+from polyis.b3d import nms
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 
 
 MODULES = '/polyis/modules'
-CONFIG = os.path.join(MODULES, 'b3d/b3d/configs/config_refined.json')
-DETECTRON_CONFIG_DIR = os.path.join(MODULES, 'detectron2/configs')
+POLYIS = '/polyis'
+CONFIG = os.path.join(POLYIS, 'configs/retinanet.json')
+DETECTRON_CONFIG_DIR = os.path.join(POLYIS, 'configs/detectron2')
 
 
 def get_detector(device: str, configfile: str | None = None) -> "DefaultPredictor":
