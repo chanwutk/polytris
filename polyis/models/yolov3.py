@@ -35,7 +35,7 @@ class YOLOv3Detector:
     def __init__(self, net, remaining_net, class_names: list, width: int, height: int, 
                  batch_size: int = 1, threshold: float = 0.25, nms_threshold: float = 0.45):
         self.net = net
-        self.remaining_net = remaining_net
+        # self.remaining_net = remaining_net
         self.class_names = class_names
         self.width = width
         self.height = height
@@ -208,13 +208,14 @@ def get_detector(
 
     net, class_names = load_model(gpu_id, config_path, model_path, data_root,
                                   detector_label, width, height, batch_size)
-    if num_images % batch_size != 0:
-        r_net, r_class_names = load_model(gpu_id, config_path, model_path, data_root,
-                                          detector_label, width, height, num_images % batch_size)
-        assert tuple(class_names) == tuple(r_class_names), \
-            f"Class names do not match: {class_names} != {r_class_names}"
-    else:
-        r_net = None
+    # if num_images % batch_size != 0:
+    #     r_net, r_class_names = load_model(gpu_id, config_path, model_path, data_root,
+    #                                       detector_label, width, height, num_images % batch_size)
+    #     assert tuple(class_names) == tuple(r_class_names), \
+    #         f"Class names do not match: {class_names} != {r_class_names}"
+    # else:
+    #     r_net = None
+    r_net = None
     return YOLOv3Detector(
         net=net,
         remaining_net=r_net,
@@ -325,19 +326,23 @@ def detect_batch(
     instack = images_stack.transpose((1, 2, 3, 0)).reshape((H, W, C*N))
     images_stack = cv2.resize(instack, (detector.width, detector.height),
                        interpolation=cv2.INTER_LINEAR)
-    images_stack = images_stack.reshape((H, W, C, N)).transpose((3, 2, 0, 1))
+    images_stack = images_stack.reshape((detector.height, detector.width, C, N)).transpose((3, 2, 0, 1))
+    if len(images) < detector.batch_size:
+        black_images = np.zeros((detector.batch_size - len(images), C, detector.height, detector.width))
+        images_stack = np.concatenate([images_stack, black_images], axis=0)
 
     arr = np.ascontiguousarray(images_stack.flat, dtype=np.float32) / 255.0
     darknet_images = arr.ctypes.data_as(darknet.POINTER(darknet.c_float))
     darknet_images = darknet.IMAGE(detector.width, detector.height, 3, darknet_images)
 
     # Detect
-    if len(images) == detector.batch_size:
-        net = detector.net
-    elif len(images) < detector.batch_size:
-        net = detector.remaining_net
-    else:
-        raise ValueError(f"Invalid number of images: {len(images)}")
+    # if len(images) == detector.batch_size:
+    #     net = detector.net
+    # elif len(images) < detector.batch_size:
+    #     net = detector.remaining_net
+    # else:
+    #     raise ValueError(f"Invalid number of images: {len(images)}")
+    net = detector.net
 
     raw_detections = darknet.network_predict_batch(
         net, darknet_images, detector.batch_size, detector.width,
@@ -364,7 +369,6 @@ def detect_batch(
                                     int(cy+h/2), det.prob[0]))
         
         detections = np.array(predictions) if len(predictions) > 0 else np.empty((0, 5))
-        darknet.free_batch_detections(raw_detections, detector.batch_size)
 
         detections[:, [0, 2]] = detections[:, [0, 2]] * owidth / detector.width
         detections[:, [1, 3]] = detections[:, [1, 3]] * oheight / detector.height
@@ -372,4 +376,5 @@ def detect_batch(
         assert polyis.dtypes.is_det_array(detections)
         all_detections.append(detections)
 
+    darknet.free_batch_detections(raw_detections, len(images))
     return all_detections

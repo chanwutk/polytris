@@ -80,18 +80,15 @@ def get_detector(dataset_name: str, gpu_id, batch_size: int = 64, num_images: in
     if dataset_config is None:
         # Fall back to default detector
         default_detector = config.get('default_detector', 'retina')
-        print(f"Dataset '{dataset_name}' not found in configuration, using default detector: {default_detector}")
         dataset_config = {'detector': default_detector}
     
     detector_type = dataset_config['detector']
     device = f'cuda:{gpu_id}'
     
     if detector_type == 'retina':
-        print(f"Loading RetinaNet detector for dataset '{dataset_name}' on {device}")
         return polyis.models.retinanet_b3d.get_detector(device=device)
     
     elif detector_type == 'yolov3':
-        print(f"Loading YOLOv3 detector for dataset '{dataset_name}' on {device}")
         
         # Extract YOLOv3-specific parameters
         detector_label = dataset_config.get('detector_label', 'caldot')
@@ -119,7 +116,6 @@ def get_detector(dataset_name: str, gpu_id, batch_size: int = 64, num_images: in
         )
     
     elif detector_type == 'yolov5':
-        print(f"Loading YOLOv5 detector for dataset '{dataset_name}' on {device}")
         return polyis.models.yolov5.get_detector(device=device)
     
     else:
