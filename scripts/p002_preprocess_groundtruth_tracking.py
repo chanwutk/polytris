@@ -9,7 +9,7 @@ import torch
 from functools import partial
 from multiprocessing import Queue
 
-from polyis.utilities import CACHE_DIR, create_tracker, format_time, load_detection_results, ProgressBar, register_tracked_detections, DATASETS_TO_TEST
+from polyis.utilities import CACHE_DIR, VIDEO_SETS, create_tracker, format_time, load_detection_results, ProgressBar, register_tracked_detections, DATASETS_TO_TEST
 
 
 def parse_args():

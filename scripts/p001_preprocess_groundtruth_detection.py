@@ -7,10 +7,10 @@ import os
 import time
 import cv2
 import torch
-from multiprocessing import Queue
+import queue
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST, get_num_frames
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, VIDEO_SETS, format_time, ProgressBar, DATASETS_TO_TEST, get_num_frames
 
 
 def parse_args():
@@ -30,7 +30,7 @@ def parse_args():
 
 
 def detect_objects(video_path: str, dataset_name: str, output_path: str,
-                   gpu_id: int, command_queue: Queue):
+                   gpu_id: int, command_queue: queue.Queue):
     """
     Execute object detection on a single video file and save results to JSONL.
     
@@ -117,6 +117,9 @@ def detect_objects(video_path: str, dataset_name: str, output_path: str,
     # print(f"GPU {gpu_id}: Completed processing {frame_idx} frames. Results saved to {output_path}")
 
 
+setattr(detect_objects, 'gcp', 'p001g_preprocess_groundtruth_detection.py')
+
+
 def main(args):
     """
     Main function that orchestrates the object detection process on preprocessed videos.
@@ -134,7 +137,7 @@ def main(args):
             
     Note:
         - The script expects preprocessed videos from 000_preprocess_dataset.py in:
-          {DATA_DIR}/{dataset}/
+          {DATASETS_DIR}/{dataset}/
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - Object detection results are saved to:
           {CACHE_DIR}/{dataset}/{video_file}/000_groundtruth/detections.jsonl
@@ -147,7 +150,7 @@ def main(args):
     # Create task functions
     funcs = []
     for dataset in datasets:
-        dataset_dir = os.path.join(DATA_DIR, dataset)
+        dataset_dir = os.path.join(DATASETS_DIR, dataset)
         assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
         
         # # Show detector info for this dataset
@@ -155,12 +158,16 @@ def main(args):
         # print(f"Using detector: {detector_info['detector']} ({detector_info['description']})")
         
         # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        video_files: list[str] = []
+        for videoset in VIDEO_SETS:
+            videoset_dir = os.path.join(dataset_dir, videoset)
+            assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
+            video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])
         assert len(video_files) > 0, f"No video files found in {dataset_dir}"
         
         for video_file in video_files:
             video_file_path = os.path.join(dataset_dir, video_file)
-            output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '000_groundtruth', 'detections.jsonl')
+            output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file.split('/')[1], '000_groundtruth', 'detections.jsonl')
             funcs.append((get_num_frames(video_file_path), partial(detect_objects, video_file_path, dataset, output_path)))
             # detect_objects(video_file_path, dataset, output_path, 0, Queue())
     

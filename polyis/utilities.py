@@ -3,6 +3,8 @@ import os
 import subprocess
 import typing
 import multiprocessing as mp
+import functools
+import queue
 
 import cv2
 import numpy as np
@@ -12,10 +14,20 @@ if typing.TYPE_CHECKING:
     import altair as alt
     import pandas as pd
 
+SOURCE_DIR = '/polyis-data/sources'
+DATASETS_DIR = '/polyis-data/datasets'
 DATA_RAW_DIR = '/polyis-data/video-datasets-raw'
 DATA_DIR = '/polyis-data/video-datasets'
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [60]
+
+GS_RAW_DATA = 'gs://polytris/polyis-data/video-datasets-raw'
+GS_DATA = 'gs://polytris/polyis-data/video-datasets'
+GS_CACHE = 'gs://polytris/polyis-cache'
+
+GC_RAW_DATA = '/data/chanwutk/data/polyis-data/video-datasets-raw'
+GC_DATA = '/data/chanwutk/data/polyis-data/video-datasets'
+GC_CACHE = '/data/chanwutk/data/polyis-cache'
 
 # Define 10 distinct colors for track visualization (BGR format for OpenCV)
 TRACK_COLORS = [
@@ -417,7 +429,7 @@ def create_tracker(tracker_name: str, max_age: int = 1, min_hits: int = 3, iou_t
     """
     if tracker_name == 'sort':
         # print(f"Creating SORT tracker with max_age={max_age}, min_hits={min_hits}, iou_threshold={iou_threshold}")
-        from modules.b3d.b3d.external.sort import Sort
+        from polyis.b3d.sort import Sort
         return Sort(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
     else:
         raise ValueError(f"Unknown tracker: {tracker_name}")
@@ -863,22 +875,30 @@ class ProgressBar:
         process.start()
         return process
     
-    def run_all(self, funcs: list[typing.Callable[[int, mp.Queue], None]]):
+    def run_all(self, funcs: list[functools.partial], gcp: bool = False):
         """Run all funcs in a new process with a worker ID."""
-        with self:
-            processes: list[mp.Process] = []
-            for func in funcs:
-                processes.append(self.run(func))
-            
-            for _ in range(self.num_workers):
-                worker_id = self.get_worker_id()
-                self.update_overall_progress(1)
-                self.command_queue.put((f'cuda:{worker_id}',
-                                        {'remove': True}))
+        if not gcp:
+            with self:
+                processes: list[mp.Process] = []
+                for func in funcs:
+                    processes.append(self.run(func))
+                
+                for _ in range(self.num_workers):
+                    worker_id = self.get_worker_id()
+                    self.update_overall_progress(1)
+                    self.command_queue.put((f'cuda:{worker_id}',
+                                            {'remove': True}))
 
-            for process in processes:
-                process.join()
-                process.terminate()
+                for process in processes:
+                    process.join()
+                    process.terminate()
+        else:
+            for func in funcs:
+                args: tuple = func.args
+                func_name = func.func.__name__
+                script: str = func.func.gcp
+                command = f"python ./scripts/{script}"
+                pass
 
     @staticmethod
     def run_with_worker_id(func: typing.Callable[[int, mp.Queue], None],
@@ -1004,22 +1024,22 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
 
 
 OPTIMAL_PARAMS = {
-    'b3d-jnc00': {
+    'b3dJnc00': {
         'classifier': 'YoloN',
         'tilesize': 60,
         'tilepadding': 'unpadded',
     },
-    'b3d-jnc02': {
+    'b3dJnc02': {
         'classifier': 'YoloN',
         'tilesize': 60,
         'tilepadding': 'unpadded',
     },
-    'b3d-jnc06': {
+    'b3dJnc06': {
         'classifier': 'YoloN',
         'tilesize': 60,
         'tilepadding': 'unpadded',
     },
-    'b3d-jnc07': {
+    'b3dJnc07': {
         'classifier': 'YoloN',
         'tilesize': 60,
         'tilepadding': 'unpadded',
@@ -1037,22 +1057,22 @@ OPTIMAL_PARAMS = {
 }
 
 CHOSEN_PARAMS = {
-    'b3d-jnc00': [
+    'b3dJnc00': [
         {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
     ],
-    'b3d-jnc02': [
+    'b3dJnc02': [
         {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
     ],
-    'b3d-jnc06': [
+    'b3dJnc06': [
         {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
     ],
-    'b3d-jnc07': [
+    'b3dJnc07': [
         {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
@@ -1066,6 +1086,14 @@ CHOSEN_PARAMS = {
         {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'padded'},
         {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
     ],
+}
+
+
+VIDEO_SETS = ['train', 'valid', 'test']
+PREFIX_TO_VIDEOSET = {
+    'tr': 'train',
+    'va': 'valid',
+    'te': 'test',
 }
 
 
@@ -1086,10 +1114,10 @@ METRICS = [
 
 
 DATASETS_TO_TEST = [
-    'b3d-jnc00',
-    'b3d-jnc02',
-    'b3d-jnc06',
-    'b3d-jnc07',
+    'b3dJnc00',
+    'b3dJnc02',
+    'b3dJnc06',
+    'b3dJnc07',
     # 'caldot1-yolov5',
     # 'caldot2-yolov5',
     'caldot1',
@@ -1102,10 +1130,10 @@ DATASETS_CHOICES = [
     'caldot2-yolov5',
     'caldot1',
     'caldot2',
-    'b3d-jnc00',
-    'b3d-jnc02',
-    'b3d-jnc06',
-    'b3d-jnc07',
+    'b3dJnc00',
+    'b3dJnc02',
+    'b3dJnc06',
+    'b3dJnc07',
 ]
 
 
@@ -1229,3 +1257,11 @@ def get_classifier_from_name(classifier_name: str):
         return EfficientNetL
     else:
         raise ValueError(f"Unsupported classifier: {classifier_name}")
+
+
+class FakeQueue(queue.Queue):
+    def __init__(self):
+        pass
+
+    def put(self, item, block: bool = True, timeout: float | None = None):
+        pass
