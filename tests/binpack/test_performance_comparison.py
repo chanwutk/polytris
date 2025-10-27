@@ -17,8 +17,8 @@ from polyis.binpack.adapters import pack_append as cython_pack_append
 CYTHON_AVAILABLE = True
 
 # Import original Python implementations from polyis.binpack
-from polyis.binpack.group_tiles_original import group_tiles as python_group_tiles
-from polyis.binpack.pack_append_original import pack_append as python_pack_append
+from .group_tiles_original import group_tiles as python_group_tiles
+from .pack_append_original import pack_append as python_pack_append
 
 
 class PerformanceTimer:
@@ -36,6 +36,7 @@ class PerformanceTimer:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end_time = time.perf_counter()
+        assert self.start_time is not None
         self.duration = self.end_time - self.start_time
         print(f"{self.name}: {self.duration:.6f} seconds")
     

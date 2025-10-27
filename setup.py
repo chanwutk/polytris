@@ -1,3 +1,5 @@
+#!/usr/local/bin/python
+
 from setuptools import setup, Extension, Command
 from setuptools.command.build_ext import build_ext
 from Cython.Build import cythonize
@@ -96,7 +98,7 @@ setup(
     version="0.1.0",
     cmdclass={
         'clean': CleanCommand,
-        'build_ext': BuildExtInplace,
+        'build': BuildExtInplace,
     },
     ext_modules=cythonize(
         extensions,
