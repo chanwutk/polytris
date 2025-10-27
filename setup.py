@@ -1,6 +1,9 @@
-from setuptools import setup, Extension
+from setuptools import setup, Extension, Command
+from setuptools.command.build_ext import build_ext
 from Cython.Build import cythonize
 import numpy
+import os
+import glob
 
 
 extensions = [
@@ -41,9 +44,60 @@ extensions = [
     )
 ]
 
+
+class CleanCommand(Command):
+    """Custom clean command to remove build artifacts."""
+    
+    description = "Remove build artifacts (*.c, *.html, *.so files)"
+    user_options = []
+    
+    def initialize_options(self):
+        pass
+    
+    def finalize_options(self):
+        pass
+    
+    def run(self):
+        """Execute the clean command."""
+        # Patterns to clean
+        patterns = [
+            'polyis/binpack/**/*.c',
+            'polyis/binpack/**/*.html',
+            'polyis/binpack/**/*.so',
+            'polyis/binpack/*.c',
+            'polyis/binpack/*.html',
+            'polyis/binpack/*.so',
+        ]
+        
+        removed_count = 0
+        for pattern in patterns:
+            for filepath in glob.glob(pattern, recursive=True):
+                try:
+                    os.remove(filepath)
+                    print(f"Removed: {filepath}")
+                    removed_count += 1
+                except OSError as e:
+                    print(f"Error removing {filepath}: {e}")
+        
+        print(f"\nCleaned {removed_count} file(s)")
+
+
+class BuildExtInplace(build_ext):
+    """Custom build_ext command that defaults to --inplace."""
+    
+    def initialize_options(self):
+        super().initialize_options()
+        # Set inplace to True by default
+        self.inplace = True
+
+
 setup(
-    name="polyis_binpack_cython",
+    name="polyis",
     version="0.1.0",
+    cmdclass={
+        'clean': CleanCommand,
+        'build_ext': BuildExtInplace,
+    },
     ext_modules=cythonize(
         extensions,
         compiler_directives={

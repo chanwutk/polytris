@@ -6,13 +6,25 @@
 
 ```bash
 cd /polyis
-./build_cython.sh
+./build.sh
 ```
 
 Or skip tests:
 ```bash
 cd /polyis
-./build_cython.sh --skip-tests
+./build.sh --skip-tests
+```
+
+**Clean build artifacts:**
+```bash
+cd /polyis
+python setup.py clean
+```
+
+**Manual build from root:**
+```bash
+cd /polyis
+python setup.py build_ext  # --inplace is the default
 ```
 
 **Alternative (legacy):** Run from the `polyis/binpack` directory:
@@ -20,12 +32,6 @@ cd /polyis
 ```bash
 cd /polyis/polyis/binpack
 ./build.sh --skip-tests
-```
-
-**Manual build from root:**
-```bash
-cd /polyis
-python setup_cython.py build_ext --inplace
 ```
 
 ## Usage

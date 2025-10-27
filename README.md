@@ -59,13 +59,22 @@ To set up this repository for development, follow these steps.
     ```bash
     ./dock  # Enter the container
     cd /polyis
-    ./build_cython.sh
+    python setup.py clean
+    python setup.py build_ext
+    pytest tests -v
     ```
 
     Or skip tests during build:
 
     ```bash
-    ./build_cython.sh --skip-tests
+    python setup.py clean
+    python setup.py build_ext
+    ```
+    
+    To clean build artifacts:
+
+    ```bash
+    python setup.py clean
     ```
 
 6.  **Run Tests:**
