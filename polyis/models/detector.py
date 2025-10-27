@@ -58,7 +58,7 @@ DATASET_DETECTOR_CONFIG = {
 }
 
 
-def get_detector(dataset_name: str, gpu_id, batch_size: int = 64, num_images: int = 0):
+def get_detector(dataset_name: str, gpu_id, batch_size: int = 16, num_images: int = 0):
     """
     Get the appropriate detector for a given dataset name.
     

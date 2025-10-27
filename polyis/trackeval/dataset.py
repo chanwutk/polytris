@@ -155,7 +155,7 @@ class Dataset(_BaseDataset):
             'num_tracker_dets': sum(len(x) for x in raw_data['tracker_ids']),
             'num_gt_dets': sum(len(x) for x in raw_data['gt_ids']),
             'num_tracker_ids': max(num_tracker_ids) + 1 if len(num_tracker_ids) > 0 else 0,
-            'num_gt_ids': max(num_gt_ids) + 1,
+            'num_gt_ids': max(num_gt_ids) + 1 if len(num_gt_ids) > 0 else 0,
 
             'similarity_scores': raw_data['similarity_scores'],
         }

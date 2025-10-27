@@ -893,9 +893,10 @@ class ProgressBar:
         else:
             commands = []
             for func in funcs:
+                assert isinstance(func, functools.partial)
                 args: tuple = func.args
                 func_name = func.func.__name__
-                script: str = func.func.gcp
+                script: str = func.func.gcp  # type: ignore
                 args_str = ' '.join(str(arg) for arg in args)
                 command = f"python ./scripts/{script} {func_name} {args_str}"
                 commands.append(command)
@@ -1114,6 +1115,12 @@ PARAMS = [
     'tilesize',
     'tilepadding',
 ]
+
+TILEPADDING_MODES: "dict[typing.Literal['none', 'connected', 'disconnected'], int]" = {
+    'none': 0,
+    'connected': 1,
+    'disconnected': 2,
+}
 
 ParamTypes = tuple[str, int, str]
 

@@ -76,7 +76,9 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
 
         # Check for tracking results directory
         tracking_dir = os.path.join(video_dir, '060_uncompressed_tracks')
-        assert os.path.exists(tracking_dir), f"Tracking directory {tracking_dir} does not exist"
+        if not os.path.exists(tracking_dir):
+            continue
+        # assert os.path.exists(tracking_dir), f"Tracking directory {tracking_dir} does not exist"
 
         # Iterate through all classifier-tilesize-tilepadding combinations
         for classifier_tilesize_tilepadding in os.listdir(tracking_dir):
@@ -174,6 +176,8 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         'PLOT_CURVES': False,  # Don't generate plot curves
         'OUTPUT_EMPTY_CLASSES': False,  # Don't output results for empty classes
     }
+
+    os.makedirs(output_dir, exist_ok=True)
     
     # Create TrackEval metric objects based on requested metrics
     # Each metric is configured with appropriate thresholds and settings

@@ -32,7 +32,7 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, 
     return filled
 
 
-def group_tiles(bitmap: np.ndarray) -> list[tuple[np.ndarray, tuple[int, int]]]:
+def group_tiles(bitmap: np.ndarray, mode: int = 0) -> list[tuple[np.ndarray, tuple[int, int]]]:
     """
     Original Python implementation of group_tiles (backup).
     """

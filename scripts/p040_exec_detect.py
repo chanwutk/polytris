@@ -8,12 +8,12 @@ import time
 import cv2
 import multiprocessing as mp
 from functools import partial
-from typing import Callable
+from typing import Callable, Literal
 import torch
 
 import polyis.models.detector
 import polyis.dtypes
-from polyis.utilities import CACHE_DIR, format_time, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES, CLASSIFIERS_TO_TEST
+from polyis.utilities import CACHE_DIR, TILEPADDING_MODES, format_time, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES, CLASSIFIERS_TO_TEST
 
 
 def parse_args():
@@ -34,13 +34,13 @@ def parse_args():
                              '--classifiers YoloN ShuffleNet05 ResNet18 groundtruth')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the 040_compressed_detections folder for each video')
-    parser.add_argument('--batch_size', type=int, default=64,
-                        help='Batch size for detection processing (default: 64)')
+    parser.add_argument('--batch_size', type=int, default=16,
+                        help='Batch size for detection processing (default: 16)')
     return parser.parse_args()
 
 
 def detect_objects(video_file_path: str, tilesize: int, classifier: str, dataset_name: str,
-                   tilepadding: bool, batch_size: int, gpu_id: int, command_queue: mp.Queue):
+                   tilepadding: Literal['none', 'connected', 'disconnected'], batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
     
@@ -54,17 +54,16 @@ def detect_objects(video_file_path: str, tilesize: int, classifier: str, dataset
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    tilepadding_str = "padded" if tilepadding else "unpadded"
     video_name = os.path.basename(video_file_path)
     
     compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
-                                         f'{classifier}_{tilesize}_{tilepadding_str}', 'images')
+                                         f'{classifier}_{tilesize}_{tilepadding}', 'images')
     assert os.path.exists(compressed_frames_dir)
 
     # print(f"Processing video {video_file_path}")
 
     # Create output directory for detections
-    detections_output_dir = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tilesize}_{tilepadding_str}')
+    detections_output_dir = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tilesize}_{tilepadding}')
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -82,47 +81,52 @@ def detect_objects(video_file_path: str, tilesize: int, classifier: str, dataset
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
         kwargs = {'completed': 0,
                   'total': len(image_files),
-                  'description': f"{video_name} {tilesize:>3} {classifier} {tilepadding_str}"}
+                  'description': f"{video_name} {tilesize:>3} {classifier} {tilepadding}"}
         command_queue.put((device, kwargs))
         
-        # Process images in batches
-        for batch_start in range(0, len(image_files), batch_size):
-            batch_end = min(batch_start + batch_size, len(image_files))
-            batch_files = image_files[batch_start:batch_end]
-            
-            # Read all images in the batch
-            batch_images: list[polyis.dtypes.NPImage] = []
-            batch_runtimes: list[dict] = []
-            start_time = (time.time_ns() / 1e6)
-            for image_file in batch_files:
-                image_path = os.path.join(compressed_frames_dir, image_file)
-                frame = cv2.imread(image_path)
-                assert polyis.dtypes.is_np_image(frame)
-                batch_images.append(frame)
-                batch_runtimes.append({'image_file': image_file})
-            end_time = (time.time_ns() / 1e6)
-            read_time_per_image = (end_time - start_time) / len(batch_files)
+        try:
+            # Process images in batches
+            for batch_start in range(0, len(image_files), batch_size):
+                batch_end = min(batch_start + batch_size, len(image_files))
+                batch_files = image_files[batch_start:batch_end]
+                
+                # Read all images in the batch
+                batch_images: list[polyis.dtypes.NPImage] = []
+                batch_runtimes: list[dict] = []
+                start_time = (time.time_ns() / 1e6)
+                for image_file in batch_files:
+                    image_path = os.path.join(compressed_frames_dir, image_file)
+                    frame = cv2.imread(image_path)
+                    assert polyis.dtypes.is_np_image(frame)
+                    batch_images.append(frame)
+                    batch_runtimes.append({'image_file': image_file})
+                end_time = (time.time_ns() / 1e6)
+                read_time_per_image = (end_time - start_time) / len(batch_files)
 
-            # Detect objects in the batch
-            start_time = (time.time_ns() / 1e6)
-            batch_outputs = polyis.models.detector.detect_batch(batch_images, detector)
-            end_time = (time.time_ns() / 1e6)
-            detect_time_per_image = (end_time - start_time) / len(batch_files)
+                # Detect objects in the batch
+                start_time = (time.time_ns() / 1e6)
+                batch_outputs = polyis.models.detector.detect_batch(batch_images, detector)
+                end_time = (time.time_ns() / 1e6)
+                detect_time_per_image = (end_time - start_time) / len(batch_files)
 
-            # Process results for each image in the batch
-            for idx, (image_file, outputs) in enumerate(zip(batch_files, batch_outputs)):
-                runtime = batch_runtimes[idx]
-                runtime['read'] = read_time_per_image
-                runtime['detect'] = detect_time_per_image
+                # Process results for each image in the batch
+                for idx, (image_file, outputs) in enumerate(zip(batch_files, batch_outputs)):
+                    runtime = batch_runtimes[idx]
+                    runtime['read'] = read_time_per_image
+                    runtime['detect'] = detect_time_per_image
 
-                # Extract bounding boxes (x1, y1, x2, y2) format
-                bounding_boxes = outputs[:, :4].tolist()
+                    # Extract bounding boxes (x1, y1, x2, y2) format
+                    bounding_boxes = outputs[:, :4].tolist()
 
-                # Save detection results
-                f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
-                fr.write(json.dumps(format_time(**runtime)) + '\n')
+                    # Save detection results
+                    f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
+                    fr.write(json.dumps(format_time(**runtime)) + '\n')
 
-            command_queue.put((device, {'completed': batch_end + 1}))
+                command_queue.put((device, {'completed': batch_end + 1}))
+        except Exception as e:
+            with open('LOG.txt', 'a') as f:
+                f.write(json.dumps([video_file_path, tilesize, classifier, tilepadding, batch_runtimes]) + '\n')
+            raise e
 
 
 def main(args):
@@ -196,11 +200,10 @@ def main(args):
             
             for classifier in classifiers_to_process:
                 for tilesize in tilesizes_to_process:
-                    for tilepadding in [True, False]:
-                        tilepadding_str = "padded" if tilepadding else "unpadded"
+                    for tilepadding in TILEPADDING_MODES:
                         # Check if compressed frames directory exists
                         compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
-                                                             f'{classifier}_{tilesize}_{tilepadding_str}', 'images')
+                                                             f'{classifier}_{tilesize}_{tilepadding}', 'images')
                         if not os.path.exists(compressed_frames_dir):
                             print(f"No compressed frames directory found for {video_file} {classifier} {tilesize}, skipping")
                             continue

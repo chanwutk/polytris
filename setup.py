@@ -14,35 +14,35 @@ extensions = [
         ["polyis/binpack/utilities.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     ),
     Extension(
         "polyis.binpack.adapters",
         ["polyis/binpack/adapters.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     ),
     Extension(
         "polyis.binpack.pack_append",
         ["polyis/binpack/pack_append.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     ),
     Extension(
         "polyis.binpack.group_tiles",
         ["polyis/binpack/group_tiles.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     ),
     Extension(
         "polyis.binpack.render",
         ["polyis/binpack/render.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     )
 ]
 
@@ -53,6 +53,20 @@ class CleanCommand(Command):
     description = "Remove build artifacts (*.c, *.html, *.so files)"
     user_options = []
     
+    # Patterns to clean - can be overridden in subclasses
+    c_patterns = [
+        'polyis/binpack/**/*.c',
+        'polyis/binpack/*.c',
+    ]
+    so_patterns = [
+        'polyis/binpack/**/*.so',
+        'polyis/binpack/*.so',
+    ]
+    html_patterns = [
+        'polyis/binpack/**/*.html',
+        'polyis/binpack/*.html',
+    ]
+    
     def initialize_options(self):
         pass
     
@@ -61,18 +75,8 @@ class CleanCommand(Command):
     
     def run(self):
         """Execute the clean command."""
-        # Patterns to clean
-        patterns = [
-            'polyis/binpack/**/*.c',
-            'polyis/binpack/**/*.html',
-            'polyis/binpack/**/*.so',
-            'polyis/binpack/*.c',
-            'polyis/binpack/*.html',
-            'polyis/binpack/*.so',
-        ]
-        
         removed_count = 0
-        for pattern in patterns:
+        for pattern in self.c_patterns + self.so_patterns + self.html_patterns:
             for filepath in glob.glob(pattern, recursive=True):
                 try:
                     os.remove(filepath)
@@ -84,8 +88,15 @@ class CleanCommand(Command):
         print(f"\nCleaned {removed_count} file(s)")
 
 
-class BuildExtInplace(build_ext):
-    """Custom build_ext command that defaults to --inplace."""
+class CleanAnnotateCommand(CleanCommand):
+    """Custom clean command to remove only annotation artifacts (*.c, *.html files)."""
+    
+    description = "Remove annotation artifacts (*.c, *.html files only)"
+    so_patterns = []
+
+
+class BuildExt(build_ext):
+    """Custom build_ext command that defaults to --inplace and cleans artifacts."""
     
     def initialize_options(self):
         super().initialize_options()
@@ -98,7 +109,8 @@ setup(
     version="0.1.0",
     cmdclass={
         'clean': CleanCommand,
-        'build': BuildExtInplace,
+        'clean_annotate': CleanAnnotateCommand,
+        'build_ext': BuildExt,
     },
     ext_modules=cythonize(
         extensions,

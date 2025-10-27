@@ -4,7 +4,7 @@ import argparse
 import json
 import os
 import sys
-from typing import Callable
+from typing import Callable, Literal
 import cv2
 import numpy as np
 import shutil
@@ -18,7 +18,7 @@ import torch.nn.functional as F
 from polyis import dtypes
 from polyis.utilities import (
     CACHE_DIR, CLASSIFIERS_CHOICES,
-    DATASETS_DIR, format_time,
+    DATASETS_DIR, TILEPADDING_MODES, format_time,
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
@@ -45,8 +45,9 @@ def parse_args():
                              '--classifiers YoloN ShuffleNet05 ResNet18')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the compressed frames folder')
-    parser.add_argument('--tilepadding', action='store_true',
-                        help='Apply padding to the classification results')
+    parser.add_argument('--tilepadding', type=str, choices=['none', 'connected', 'disconnected'],
+                        nargs='+', default=['none', 'connected', 'disconnected'],
+                        help='Apply padding to the classification results (space-separated list of none/connected/disconnected)')
     return parser.parse_args()
 
 
@@ -177,7 +178,7 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap,
 
 
 def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesize: int,
-             threshold: float, tilepadding: bool, gpu_id: int, command_queue: mp.Queue):
+             threshold: float, tilepadding: Literal['none', 'connected', 'disconnected'], gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video with a specific classifier and tile size.
     
@@ -200,17 +201,16 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     results = load_classification_results(CACHE_DIR, dataset, video_file,
                                           tilesize, classifier, execution_dir=True)
     
-    tilepadding_str = "padded" if tilepadding else "unpadded"
     # Create output directory for compression results
     output_dir = os.path.join(cache_video_dir, '030_compressed_frames',
-                              f'{classifier}_{tilesize}_{tilepadding_str}')
+                              f'{classifier}_{tilesize}_{tilepadding}')
     if os.path.exists(output_dir):
         # Remove the entire directory
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     
     # Send initial progress update
-    description = f"{video_name} {tilesize:>3} {classifier} {tilepadding_str}"
+    description = f"{video_name} {tilesize:>3} {classifier} {tilepadding}"
     command_queue.put((device, {
         'description': description + ' 0',
         'completed': 0,
@@ -318,18 +318,10 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
             bitmap_frame = bitmap_frame.astype(np.uint8)
             assert dtypes.is_bitmap(bitmap_frame), bitmap_frame.shape
             step_times['create_bitmap'] = (time.time_ns() / 1e6) - step_start
-            
-            # Profile: Add margin to bitmap
-            # step_start = (time.time_ns() / 1e6)
-            if tilepadding:
-                bitmap_frame = F.conv2d(
-                    torch.from_numpy(np.array([[bitmap_frame]])),
-                    add_margin, padding='same').numpy()[0, 0]
-            # step_times['add_margin'] = (time.time_ns() / 1e6) - step_start
 
             # Profile: Group connected tiles into polyominoes
             step_start = (time.time_ns() / 1e6)
-            polyominoes = group_tiles(bitmap_frame)
+            polyominoes = group_tiles(bitmap_frame, TILEPADDING_MODES[tilepadding])
             step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
             
             # # Profile: Sort polyominoes by size
@@ -484,22 +476,21 @@ def main(args):
                 
                 for classifier in args.classifiers:
                     for tilesize in tilesizes_to_process:
-
                         score_file = os.path.join(cache_video_dir, '020_relevancy',
                                                 f'{classifier}_{tilesize}', 'score', 'score.jsonl')
                         if not os.path.exists(score_file):
                             print(f"No score file found for {video_file} {classifier} {tilesize}, skipping")
                             continue
 
-                        for tilepadding in [True, False] if args.tilepadding else [False]:
+                        for tilepadding in set[Literal['none', 'connected', 'disconnected']](args.tilepadding):
                             funcs.append(partial(compress, video_file_path, cache_video_dir,
                                                 classifier, tilesize, args.threshold, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
     
     # Set up multiprocessing with ProgressBar
-    num_processes = int(mp.cpu_count() * 0.9)
-    num_processes = max(1, torch.cuda.device_count() // 2)
+    num_processes = int(mp.cpu_count() * 0.1)
+    # num_processes = max(1, torch.cuda.device_count() // 2)
     # num_processes = 1
     if len(funcs) < num_processes:
         num_processes = len(funcs)

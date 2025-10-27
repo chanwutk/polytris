@@ -57,7 +57,7 @@ def benchmark_group_tiles():
     print("=== Group Tiles Benchmark ===")
     
     try:
-        from group_tiles import group_tiles as cython_group_tiles
+        from polyis.binpack.group_tiles import group_tiles as cython_group_tiles
         from group_tiles_original import group_tiles as python_group_tiles
     except ImportError as e:
         print(f"Error importing modules: {e}")
@@ -80,7 +80,7 @@ def benchmark_group_tiles():
             
             # Time Cython implementation
             start = time.perf_counter()
-            cython_result = cython_group_tiles(bitmap.copy())
+            cython_result = cython_group_tiles(bitmap.copy(), 0)
             cython_time = time.perf_counter() - start
             
             speedup = python_time / cython_time if cython_time > 0 else float('inf')
@@ -92,7 +92,7 @@ def benchmark_pack_append():
     print("\n=== Pack Append Benchmark ===")
     
     try:
-        from pack_append import pack_append as cython_pack_append
+        from polyis.binpack.pack_append import pack_append as cython_pack_append
         from pack_append_original import pack_append as python_pack_append
     except ImportError as e:
         print(f"Error importing modules: {e}")
@@ -132,7 +132,7 @@ def benchmark_compress():
     print("\n=== Compress Benchmark ===")
 
     try:
-        from group_tiles import group_tiles as cython_group_tiles
+        from polyis.binpack.group_tiles import group_tiles as cython_group_tiles
         try:
             from group_tiles import free_polyimino_stack  # type: ignore
         except ImportError:
@@ -140,7 +140,7 @@ def benchmark_compress():
             def free_polyimino_stack(polyominoes):
                 pass
         from group_tiles_original import group_tiles as python_group_tiles
-        from pack_append import pack_append as cython_pack_append
+        from polyis.binpack.pack_append import pack_append as cython_pack_append
         from pack_append_original import pack_append as python_pack_append
     except ImportError as e:
         print(f"Error importing modules: {e}")
@@ -155,18 +155,30 @@ def benchmark_compress():
     )
     
     dataset_video = [
-        ('caldot1', 'caldot1-1.mp4'),
-        ('caldot1', 'caldot1-3.mp4'),
-        ('caldot1', 'caldot1-5.mp4'),
-        ('caldot1', 'caldot1-7.mp4'),
-        ('caldot2', 'caldot2-1.mp4'),
-        ('caldot2', 'caldot2-3.mp4'),
-        ('caldot2', 'caldot2-5.mp4'),
-        ('caldot2', 'caldot2-7.mp4'),
-        ('b3d-jnc00', 'jnc00.mp4'),
-        ('b3d-jnc02', 'jnc02.mp4'),
-        ('b3d-jnc06', 'jnc06.mp4'),
-        ('b3d-jnc07', 'jnc07.mp4'),
+        *[
+            ('jnc0', f'te{i:02d}.mp4')
+            for i in range(18)
+        ],
+        *[
+            ('jnc2', f'te{i:02d}.mp4')
+            for i in range(18)
+        ],
+        *[
+            ('jnc6', f'te{i:02d}.mp4')
+            for i in range(18)
+        ],
+        *[
+            ('jnc7', f'te{i:02d}.mp4')
+            for i in range(18)
+        ],
+        *[
+            ('caldot1', f'te{i:02d}.mp4')
+            for i in range(0, 60, 5)
+        ],
+        *[
+            ('caldot2', f'te{i:02d}.mp4')
+            for i in range(0, 60, 5)
+        ],
     ]
     fns = [
         (True, cython_group_tiles, cython_pack_append),
@@ -181,7 +193,10 @@ def benchmark_compress():
     results_summary = {}
 
     for dataset, video in dataset_video:
-        video_file = os.path.basename(os.path.join('/polyis-data/video-datasets', dataset, video))
+        video_path = os.path.join('/polyis-data/datasets', dataset, 'test', video)
+        if not os.path.exists(video_path):
+            continue
+        video_file = os.path.basename(video_path)
         
         # Initialize results for this dataset/video combination
         if (dataset, video) not in results_summary:
@@ -250,7 +265,7 @@ def benchmark_compress():
                             occupied_tiles_copy = occupied_tiles.copy()
                             # Profile: Group connected tiles into polyominoes
                             step_start = (time.time_ns() / 1e6)
-                            polyominoes = group_tiles(bitmap_frame.copy())
+                            polyominoes = group_tiles(bitmap_frame.copy(), 0)
                             if not is_cython:
                                 polyominoes = sorted(polyominoes, key=lambda x: x[0].sum(), reverse=True)
                             step_times['group_tiles'].append((time.time_ns() / 1e6) - step_start)

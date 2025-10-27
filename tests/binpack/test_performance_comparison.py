@@ -17,8 +17,8 @@ from polyis.binpack.adapters import pack_append as cython_pack_append
 CYTHON_AVAILABLE = True
 
 # Import original Python implementations from polyis.binpack
-from .group_tiles_original import group_tiles as python_group_tiles
-from .pack_append_original import pack_append as python_pack_append
+from group_tiles_original import group_tiles as python_group_tiles
+from pack_append_original import pack_append as python_pack_append
 
 
 class PerformanceTimer:
@@ -137,7 +137,7 @@ class TestGroupTilesPerformance:
             python_result = python_group_tiles(bitmap.copy())
         
         with PerformanceTimer("Cython group_tiles (small)"):
-            cython_result = cython_group_tiles(bitmap.copy())
+            cython_result = cython_group_tiles(bitmap.copy(), 0)
         
         assert compare_group_tiles_results(cython_result, python_result), \
             "Results don't match between Python and Cython implementations"
@@ -150,7 +150,7 @@ class TestGroupTilesPerformance:
             python_result = python_group_tiles(bitmap.copy())
         
         with PerformanceTimer("Cython group_tiles (medium)"):
-            cython_result = cython_group_tiles(bitmap.copy())
+            cython_result = cython_group_tiles(bitmap.copy(), 0)
         
         assert compare_group_tiles_results(cython_result, python_result), \
             "Results don't match between Python and Cython implementations"
@@ -163,7 +163,7 @@ class TestGroupTilesPerformance:
             python_result = python_group_tiles(bitmap.copy())
         
         with PerformanceTimer("Cython group_tiles (large)"):
-            cython_result = cython_group_tiles(bitmap.copy())
+            cython_result = cython_group_tiles(bitmap.copy(), 0)
         
         assert compare_group_tiles_results(cython_result, python_result), \
             "Results don't match between Python and Cython implementations"
@@ -173,7 +173,7 @@ class TestGroupTilesPerformance:
         bitmap = np.zeros((10, 10), dtype=np.uint8)
         
         python_result = python_group_tiles(bitmap.copy())
-        cython_result = cython_group_tiles(bitmap.copy())
+        cython_result = cython_group_tiles(bitmap.copy(), 0)
         
         assert compare_group_tiles_results(cython_result, python_result)
         assert len(cython_result) == 0
@@ -183,7 +183,7 @@ class TestGroupTilesPerformance:
         bitmap = np.ones((5, 5), dtype=np.uint8)
         
         python_result = python_group_tiles(bitmap.copy())
-        cython_result = cython_group_tiles(bitmap.copy())
+        cython_result = cython_group_tiles(bitmap.copy(), 0)
         
         assert compare_group_tiles_results(cython_result, python_result)
         assert len(cython_result) == 1  # Should be one large group
@@ -208,7 +208,7 @@ class TestGroupTilesPerformance:
                 
                 # Time Cython implementation
                 start = time.perf_counter()
-                cython_result = cython_group_tiles(bitmap.copy())
+                cython_result = cython_group_tiles(bitmap.copy(), 0)
                 cython_time = time.perf_counter() - start
                 
                 speedup = python_time / cython_time if cython_time > 0 else float('inf')

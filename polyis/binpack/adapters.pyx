@@ -24,8 +24,8 @@ from polyis.binpack.pack_append import pack_append as pack_append_cython
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def group_tiles(cnp.uint8_t[:, :] bitmap_input) -> list:
-    cdef unsigned long long polyomino_stack_ptr = <unsigned long long>group_tiles_cython(bitmap_input)
+def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> list:
+    cdef unsigned long long polyomino_stack_ptr = <unsigned long long>group_tiles_cython(bitmap_input, tilepadding_mode)
     return format_polyominoes(polyomino_stack_ptr)
 
 

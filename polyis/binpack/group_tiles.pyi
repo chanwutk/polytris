@@ -12,14 +12,17 @@ if typing.TYPE_CHECKING:
 Polyomino = tuple[Array[*D2, np.uint8], tuple[int, int]]
 
 
-def group_tiles(bitmap_input: Array[*D2, np.uint8]) -> int:
+def group_tiles(bitmap_input: Array[*D2, np.uint8], tilepadding_mode: int) -> int:
     """
     Groups connected tiles into polyominoes.
 
     Args:
         bitmap_input: 2D numpy array memoryview (uint8) representing the grid of tiles,
                      where 1 indicates a tile with detection and 0 indicates no detection
-
+        tilepadding_mode: The mode of tile padding to apply
+            - 0: No padding
+            - 1: Connected padding
+            - 2: Disconnected padding
     Returns:
         list: A pointer to a list of polyominoes, where each polyomino is:
             - mask: a list of [x, y, x, y, ...], where (x, y) are the coordinates of the masked tile
