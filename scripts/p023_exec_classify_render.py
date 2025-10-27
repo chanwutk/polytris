@@ -7,7 +7,7 @@ import numpy as np
 import multiprocessing as mp
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, ProgressBar, to_h264, DATASETS_TO_TEST, TILE_SIZES
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, load_classification_results, ProgressBar, to_h264, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -100,6 +100,19 @@ def create_visualization_frame(frame: np.ndarray, classifications: np.ndarray,
 
     # Clip values to valid range and convert back to uint8
     vis_frame = np.clip(vis_frame, 0, 255).astype(np.uint8)
+
+    # Draw white grid lines to separate tiles
+    # Draw horizontal lines
+    for i in range(grid_height + 1):
+        y_pos = i * tile_size
+        if y_pos < vis_frame.shape[0]:
+            vis_frame[y_pos:min(y_pos + 1, vis_frame.shape[0]), :] = 255  # White
+    
+    # Draw vertical lines
+    for j in range(grid_width + 1):
+        x_pos = j * tile_size
+        if x_pos < vis_frame.shape[1]:
+            vis_frame[:, x_pos:min(x_pos + 1, vis_frame.shape[1])] = 255  # White
 
     return vis_frame
 
@@ -274,7 +287,7 @@ def main(args):
          - The script expects classification results from 020_exec_classify.py in:
            {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tile_size}/
          - Looks for score.jsonl files
-         - Videos are read from {DATA_DIR}/{dataset}/
+         - Videos are read from {DATASETS_DIR}/{dataset}/
          - Visualizations are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tile_size}/
          - The script creates a video file (visualization.mp4) showing brightness-adjusted frames
     """
@@ -298,50 +311,54 @@ def main(args):
     
     # Process each dataset
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATA_DIR, dataset_name)
+        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
         
         if not os.path.exists(dataset_dir):
             print(f"Dataset directory {dataset_dir} does not exist, skipping...")
             continue
+
+        for videoset in ['test']:
+            videoset_dir = os.path.join(dataset_dir, videoset)
+            assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
+
+            print(f"\nProcessing dataset: {dataset_name}")
             
-        print(f"\nProcessing dataset: {dataset_name}")
-        
-        # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-        if len(video_files) == 0:
-            print(f"No video files found in {dataset_dir}, skipping...")
-            continue
-            
-        print(f"Found {len(video_files)} video files to process")
-        
-        for video_file in sorted(video_files):
-            video_file_path = os.path.join(dataset_dir, video_file)
-            
-            # Get classifier tile sizes for this video
-            relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '020_relevancy')
-            if not os.path.exists(relevancy_dir):
-                print(f"Skipping {video_file}: No relevancy directory found")
+            # Get all video files from the dataset directory
+            video_files = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+            if len(video_files) == 0:
+                print(f"No video files found in {videoset_dir}, skipping...")
                 continue
                 
-            classifier_tilesizes: list[tuple[str, int]] = []
-            for file in os.listdir(relevancy_dir):
-                if '_' in file:
-                    classifier_name = file.split('_')[0]
-                    tile_size = int(file.split('_')[1])
-                    classifier_tilesizes.append((classifier_name, tile_size))
+            print(f"Found {len(video_files)} video files to process")
             
-            classifier_tilesizes = sorted(classifier_tilesizes)
-            
-            if not classifier_tilesizes:
-                print(f"Skipping {video_file}: No classifier tile sizes found")
-                continue
+            for video_file in sorted(video_files):
+                video_file_path = os.path.join(videoset_dir, video_file)
                 
-            print(f"Found {len(classifier_tilesizes)} classifier tile sizes for {video_file}: {classifier_tilesizes}")
-            
-            # Add tasks for each classifier-tile size combination
-            for classifier_name, tile_size in classifier_tilesizes:
-                funcs.append(partial(render_scores, video_file, video_file_path, dataset_name, 
-                                    classifier_name, tile_size, args.threshold, args.frame_limit, args.frames, args.no_tint))
+                # Get classifier tile sizes for this video
+                relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '020_relevancy')
+                if not os.path.exists(relevancy_dir):
+                    print(f"Skipping {video_file}: No relevancy directory found")
+                    continue
+                    
+                classifier_tilesizes: list[tuple[str, int]] = []
+                for file in os.listdir(relevancy_dir):
+                    if '_' in file:
+                        classifier_name = file.split('_')[0]
+                        tile_size = int(file.split('_')[1])
+                        classifier_tilesizes.append((classifier_name, tile_size))
+                
+                classifier_tilesizes = sorted(classifier_tilesizes)
+                
+                if not classifier_tilesizes:
+                    print(f"Skipping {video_file}: No classifier tile sizes found")
+                    continue
+                    
+                print(f"Found {len(classifier_tilesizes)} classifier tile sizes for {video_file}: {classifier_tilesizes}")
+                
+                # Add tasks for each classifier-tile size combination
+                for classifier_name, tile_size in classifier_tilesizes:
+                    funcs.append(partial(render_scores, video_file, video_file_path, dataset_name, 
+                                        classifier_name, tile_size, args.threshold, args.frame_limit, args.frames, args.no_tint))
 
     assert len(funcs) > 0, "No tasks to process"
     

@@ -10,7 +10,7 @@ import multiprocessing as mp
 from functools import partial
 import pandas as pd
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -644,7 +644,7 @@ def main(args):
          - The script expects classification results from 021_exec_classify_correct.py in:
            {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier_name}_{tile_size}/score/score.jsonl
          - Looks for score.jsonl files
-         - Videos are read from {DATA_DIR}/{dataset}/
+         - Videos are read from {DATASETS_DIR}/{dataset}/
          - Visualizations are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier_name}_{tile_size}/statistics/
          - Summary statistics and plots are also generated
     """
@@ -668,7 +668,7 @@ def main(args):
     all_tasks = []
     
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATA_DIR, dataset_name)
+        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
         
         if not os.path.exists(dataset_dir):
             print(f"Dataset directory {dataset_dir} does not exist, skipping...")
