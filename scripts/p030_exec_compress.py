@@ -18,7 +18,7 @@ import torch.nn.functional as F
 from polyis import dtypes
 from polyis.utilities import (
     CACHE_DIR, CLASSIFIERS_CHOICES,
-    DATA_DIR, format_time,
+    DATASETS_DIR, format_time,
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
@@ -439,7 +439,7 @@ def main(args):
         - The script expects classification results from 020_exec_classify.py in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tilesize}/score/
         - Looks for score.jsonl files
-        - Videos are read from {DATA_DIR}/{dataset}/
+        - Videos are read from {DATASETS_DIR}/{dataset}/
         - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/images/
         - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/index_maps/
         - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/offset_lookups/
@@ -462,36 +462,38 @@ def main(args):
     funcs: list[Callable[[int, mp.Queue], None]] = []
     
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATA_DIR, dataset_name)
-        
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
-            continue
-        
-        # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-        
-        for video_file in sorted(video_files):
-            video_file_path = os.path.join(dataset_dir, video_file)
-            cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
+        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
 
-            compressed_frames_base_dir = os.path.join(cache_video_dir, '030_compressed_frames')
-            if args.clear and os.path.exists(compressed_frames_base_dir):
-                shutil.rmtree(compressed_frames_base_dir)
-                print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")
+        for videoset in ['test']:
+            videoset_dir = os.path.join(dataset_dir, videoset)
+            if not os.path.exists(videoset_dir):
+                print(f"Videoset directory {videoset_dir} does not exist, skipping...")
+                continue
             
-            for classifier in args.classifiers:
-                for tilesize in tilesizes_to_process:
+            # Get all video files from the dataset directory
+            video_files = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+            
+            for video_file in sorted(video_files):
+                video_file_path = os.path.join(videoset_dir, video_file)
+                cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-                    score_file = os.path.join(cache_video_dir, '020_relevancy',
-                                              f'{classifier}_{tilesize}', 'score', 'score.jsonl')
-                    if not os.path.exists(score_file):
-                        print(f"No score file found for {video_file} {classifier} {tilesize}, skipping")
-                        continue
+                compressed_frames_base_dir = os.path.join(cache_video_dir, '030_compressed_frames')
+                if args.clear and os.path.exists(compressed_frames_base_dir):
+                    shutil.rmtree(compressed_frames_base_dir)
+                    print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")
+                
+                for classifier in args.classifiers:
+                    for tilesize in tilesizes_to_process:
 
-                    for tilepadding in [True, False] if args.tilepadding else [False]:
-                        funcs.append(partial(compress, video_file_path, cache_video_dir,
-                                            classifier, tilesize, args.threshold, tilepadding))
+                        score_file = os.path.join(cache_video_dir, '020_relevancy',
+                                                f'{classifier}_{tilesize}', 'score', 'score.jsonl')
+                        if not os.path.exists(score_file):
+                            print(f"No score file found for {video_file} {classifier} {tilesize}, skipping")
+                            continue
+
+                        for tilepadding in [True, False] if args.tilepadding else [False]:
+                            funcs.append(partial(compress, video_file_path, cache_video_dir,
+                                                classifier, tilesize, args.threshold, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
     

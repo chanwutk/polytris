@@ -12,6 +12,7 @@ track-results*
 videos
 videos-small
 output
+build
 
 **/model.pth
 

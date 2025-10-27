@@ -873,7 +873,7 @@ class ProgressBar:
         process.start()
         return process
     
-    def run_all(self, funcs: list[functools.partial], gcp: bool = False):
+    def run_all(self, funcs: list[typing.Callable[[int, mp.Queue], None]], gcp: bool = False):
         """Run all funcs in a new process with a worker ID."""
         if not gcp:
             with self:

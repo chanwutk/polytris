@@ -17,16 +17,13 @@ import statistics
 
 # Import adapters with fallback
 try:
-    from adapters import get_polyominoes, format_positions  # type: ignore
-except ImportError:
-    # Fallback if adapters not available
+    from polyis.binpack.adapters import get_polyominoes, format_positions  # type: ignore
+except (ImportError, AttributeError):
+    # Fallback if adapters not available or functions don't exist
     def get_polyominoes(polyominoes):
         return polyominoes
     def format_positions(positions):
         return positions
-
-# Add the lib directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 def generate_test_bitmap(shape, density=0.3, seed=42):
     """Generate a test bitmap with specified density of 1s."""

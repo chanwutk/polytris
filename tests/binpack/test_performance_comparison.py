@@ -11,17 +11,14 @@ from typing import List, Tuple, Optional, Any
 import sys
 import os
 
-# Add the lib directory to the path to import the modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 # Import Cython modules
-from adapters import group_tiles as cython_group_tiles
-from adapters import pack_append as cython_pack_append
+from polyis.binpack.adapters import group_tiles as cython_group_tiles
+from polyis.binpack.adapters import pack_append as cython_pack_append
 CYTHON_AVAILABLE = True
 
-# Import original Python implementations
-from group_tiles_original import group_tiles as python_group_tiles
-from pack_append_original import pack_append as python_pack_append
+# Import original Python implementations from polyis.binpack
+from polyis.binpack.group_tiles_original import group_tiles as python_group_tiles
+from polyis.binpack.pack_append_original import pack_append as python_pack_append
 
 
 class PerformanceTimer:

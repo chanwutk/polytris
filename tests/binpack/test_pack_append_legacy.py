@@ -8,8 +8,7 @@ import sys
 import os
 import time
 
-# Add the parent directory to the path to import the original function
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# No path manipulation needed - using inline reference implementation
 
 def original_pack_append(polyominoes, h, w, occupied_tiles):
     """Simplified reference implementation for basic testing."""
@@ -58,7 +57,7 @@ def run_implementation_comparison():
     
     # Import Cython implementation
     try:
-        from adapters import pack_append
+        from polyis.binpack.adapters import pack_append
         print("✓ Cython implementation imported successfully")
     except ImportError as e:
         print(f"✗ Failed to import Cython implementation: {e}")

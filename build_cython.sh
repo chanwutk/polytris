@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Build script for the Cython polyomino packing library
+# Run from the project root directory: /polyis
 
 set -e
 
@@ -18,6 +19,8 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --no-test, --skip-tests    Skip running tests after build"
             echo "  -h, --help                 Show this help message"
+            echo ""
+            echo "This script should be run from the project root: /polyis"
             exit 0
             ;;
         *)
@@ -28,20 +31,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Clean up previous build artifacts
+# Clean up previous build artifacts in polyis/binpack
 echo "Cleaning up previous build artifacts..."
-find . -name "*.c" -type f -delete
-find . -name "*.html" -type f -delete
-find . -name "*.so" -type f -delete
+find polyis/binpack -name "*.c" -type f -delete
+find polyis/binpack -name "*.html" -type f -delete
+find polyis/binpack -name "*.so" -type f -delete
 echo "Cleanup completed."
 
-# Build the Cython extension
-echo "Building Cython extension..."
-python setup.py build_ext --inplace || true
-
-# Copy the built .so files to the current directory
-echo "Copying built extensions..."
-cp build/lib.linux-x86_64-cpython-313/polyis/binpack/*.so . 2>/dev/null || true
+# Build the Cython extensions
+echo "Building Cython extensions..."
+python setup_cython.py build_ext --inplace
 
 echo "Build completed successfully!"
 echo "You can now import the fast Cython implementations:"
@@ -52,7 +51,8 @@ echo ""
 # Run tests by default unless disabled
 if [ "$RUN_TESTS" = true ]; then
     echo "Running tests..."
-    pytest tests/ -v
+    pytest tests/binpack/ -v
 else
-    echo "Tests skipped (use pytest tests/ -v to run manually)"
+    echo "Tests skipped (use 'pytest tests/binpack/ -v' to run manually)"
 fi
+

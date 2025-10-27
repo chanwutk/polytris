@@ -9,7 +9,7 @@ import cython
 
 import numpy as np
 
-from utilities cimport IntStack, Polyomino, PolyominoStack, \
+from polyis.binpack.utilities cimport IntStack, Polyomino, PolyominoStack, \
                        IntStack_init, IntStack_push, IntStack_cleanup
 
 

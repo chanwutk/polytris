@@ -6,35 +6,35 @@ import numpy
 extensions = [
     Extension(
         "polyis.binpack.utilities",
-        ["utilities.pyx"],
+        ["polyis/binpack/utilities.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
     ),
     Extension(
         "polyis.binpack.adapters",
-        ["adapters.pyx"],
+        ["polyis/binpack/adapters.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
     ),
     Extension(
         "polyis.binpack.pack_append",
-        ["pack_append.pyx"],
+        ["polyis/binpack/pack_append.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
     ),
     Extension(
         "polyis.binpack.group_tiles",
-        ["group_tiles.pyx"],
+        ["polyis/binpack/group_tiles.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
     ),
     Extension(
         "polyis.binpack.render",
-        ["render.pyx"],
+        ["polyis/binpack/render.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native"],
@@ -42,7 +42,7 @@ extensions = [
 ]
 
 setup(
-    name="polyis_pack_cython",
+    name="polyis_binpack_cython",
     version="0.1.0",
     ext_modules=cythonize(
         extensions,
@@ -90,3 +90,4 @@ setup(
     ),
     zip_safe=False,
 )
+

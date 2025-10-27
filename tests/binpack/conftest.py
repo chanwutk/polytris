@@ -7,8 +7,7 @@ import numpy as np
 import sys
 import os
 
-# Add the lib directory to the path so we can import the Cython module
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# No need to modify sys.path - polyis package is already accessible
 
 
 @pytest.fixture
