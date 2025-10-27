@@ -19,10 +19,10 @@ DATASET_NAME_MAPPING = {
     "caldot2": "caldot",
     "caldot1-yolov5": "caldot-yolov5",
     "caldot2-yolov5": "caldot-yolov5",
-    "b3d-jnc00": "b3d",
-    "b3d-jnc02": "b3d",
-    "b3d-jnc06": "b3d",
-    "b3d-jnc07": "b3d",
+    "jnc0": "b3d",
+    "jnc2": "b3d",
+    "jnc6": "b3d",
+    "jnc7": "b3d",
 }
 
 

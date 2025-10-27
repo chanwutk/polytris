@@ -14,7 +14,7 @@ from functools import partial
 
 from polyis.images import splitHWC, padHWC
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATASETS_DIR, format_time, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -43,7 +43,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_model(dataset_name: str, tile_size: int, classifier_name: str) -> "torch.nn.Module":
+def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: str) -> "torch.nn.Module":
     """
     Load trained classifier model for the specified tile size from the dataset indexing directory.
 
@@ -54,6 +54,7 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str) -> "torc
         dataset_name (str): Name of the dataset
         tile_size (int): Tile size for which to load the model (30, 60, or 120)
         classifier_name (str): Name of the classifier model to use (default: 'SimpleCNN')
+        device (str): Device to use for loading the model (e.g. 'cuda', 'cpu')
 
     Returns:
         The loaded trained model for the specified tile size.
@@ -68,7 +69,7 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str) -> "torc
 
     if os.path.exists(model_path):
         print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
-        model = torch.load(model_path, map_location='cuda', weights_only=False)
+        model = torch.load(model_path, map_location=device, weights_only=False)
         model.eval()
         return model
 
@@ -176,7 +177,7 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
     device = f'cuda:{gpu_id}'
 
     # Load the trained model for this dataset, classifier, and tile size
-    model = load_model(dataset_name, tile_size, classifier)
+    model = load_model(dataset_name, tile_size, classifier, device)
     model = model.to(device)
     # try:
     #     model.compile()
@@ -265,9 +266,9 @@ def main(args):
 
     Note:
         - The script expects a specific directory structure:
-          {DATA_DIR}/{dataset}/ - contains video files
+          {DATASETS_DIR}/{dataset}/ - contains video files
           {DATA_CACHE}/{dataset}/{video_file_name}/training/results/{classifier_name}_{tile_size}/model.pth - contains trained models
-          where DATA_DIR and DATA_CACHE are both /polyis-data/video-datasets-low
+          where DATASETS_DIR and DATA_CACHE are both /polyis-data/video-datasets-low
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - A separate model is loaded for each video directory, classifier, and tile size combination
         - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
@@ -288,32 +289,34 @@ def main(args):
     funcs: list[Callable[[int, mp.Queue], None]] = []
 
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATA_DIR, dataset_name)
+        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
 
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
-            continue
+        for videoset in ['test']:
+            videoset_dir = os.path.join(dataset_dir, videoset)
+            if not os.path.exists(videoset_dir):
+                print(f"Dataset directory {videoset_dir} does not exist, skipping...")
+                continue
 
-        # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+            # Get all video files from the dataset directory
+            video_files = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
 
-        for video_file in sorted(video_files):
-            video_file_path = os.path.join(dataset_dir, video_file)
-            cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
+            for video_file in sorted(video_files):
+                video_file_path = os.path.join(videoset_dir, video_file)
+                cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-            output_dir = os.path.join(cache_video_dir, '020_relevancy')
+                output_dir = os.path.join(cache_video_dir, '020_relevancy')
 
-            # Clear output directory if --clear flag is specified
-            if args.clear and os.path.exists(output_dir):
-                print(f"Clearing output directory: {output_dir}")
-                shutil.rmtree(output_dir)
-            os.makedirs(output_dir, exist_ok=True)
+                # Clear output directory if --clear flag is specified
+                if args.clear and os.path.exists(output_dir):
+                    print(f"Clearing output directory: {output_dir}")
+                    shutil.rmtree(output_dir)
+                os.makedirs(output_dir, exist_ok=True)
 
-            for classifier in args.classifiers:
-                for tile_size in tile_sizes_to_process:
-                    func = partial(process_video_task, video_file_path, cache_video_dir,
-                                   dataset_name, classifier, tile_size)
-                    funcs.append(func)
+                for classifier in args.classifiers:
+                    for tile_size in tile_sizes_to_process:
+                        func = partial(process_video_task, video_file_path, cache_video_dir,
+                                    dataset_name, classifier, tile_size)
+                        funcs.append(func)
 
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()

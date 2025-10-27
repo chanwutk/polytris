@@ -21,12 +21,10 @@ DATA_DIR = '/polyis-data/video-datasets'
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [60]
 
-GS_RAW_DATA = 'gs://polytris/polyis-data/video-datasets-raw'
-GS_DATA = 'gs://polytris/polyis-data/video-datasets'
+GS_DATASETS_DIR = 'gs://polytris/polyis-data/datasets'
 GS_CACHE = 'gs://polytris/polyis-cache'
 
-GC_RAW_DATA = '/data/chanwutk/data/polyis-data/video-datasets-raw'
-GC_DATA = '/data/chanwutk/data/polyis-data/video-datasets'
+GC_DATASETS_DIR = '/data/chanwutk/data/polyis-data/datasets'
 GC_CACHE = '/data/chanwutk/data/polyis-cache'
 
 # Define 10 distinct colors for track visualization (BGR format for OpenCV)
@@ -893,12 +891,26 @@ class ProgressBar:
                     process.join()
                     process.terminate()
         else:
+            commands = []
             for func in funcs:
                 args: tuple = func.args
                 func_name = func.func.__name__
                 script: str = func.func.gcp
-                command = f"python ./scripts/{script}"
-                pass
+                args_str = ' '.join(str(arg) for arg in args)
+                command = f"python ./scripts/{script} {func_name} {args_str}"
+                commands.append(command)
+            
+            command_funcs = [functools.partial(subprocess.run, command, shell=True, check=True, capture_output=True, text=True) for command in commands]
+            processes = []
+            for command_func in command_funcs:
+                process = mp.Process(target=command_func)
+                process.start()
+                processes.append(process)
+            
+            for process in progress.track(processes):
+                process.join()
+                process.terminate()
+
 
     @staticmethod
     def run_with_worker_id(func: typing.Callable[[int, mp.Queue], None],
@@ -1024,22 +1036,22 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
 
 
 OPTIMAL_PARAMS = {
-    'b3dJnc00': {
+    'jnc0': {
         'classifier': 'YoloN',
         'tilesize': 60,
         'tilepadding': 'unpadded',
     },
-    'b3dJnc02': {
+    'jnc2': {
         'classifier': 'YoloN',
         'tilesize': 60,
         'tilepadding': 'unpadded',
     },
-    'b3dJnc06': {
+    'jnc6': {
         'classifier': 'YoloN',
         'tilesize': 60,
         'tilepadding': 'unpadded',
     },
-    'b3dJnc07': {
+    'jnc7': {
         'classifier': 'YoloN',
         'tilesize': 60,
         'tilepadding': 'unpadded',
@@ -1057,22 +1069,22 @@ OPTIMAL_PARAMS = {
 }
 
 CHOSEN_PARAMS = {
-    'b3dJnc00': [
+    'jnc0': [
         {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
     ],
-    'b3dJnc02': [
+    'jnc2': [
         {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
     ],
-    'b3dJnc06': [
+    'jnc6': [
         {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
     ],
-    'b3dJnc07': [
+    'jnc7': [
         {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
         {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
@@ -1114,10 +1126,10 @@ METRICS = [
 
 
 DATASETS_TO_TEST = [
-    'b3dJnc00',
-    'b3dJnc02',
-    'b3dJnc06',
-    'b3dJnc07',
+    'jnc0',
+    'jnc2',
+    'jnc6',
+    'jnc7',
     # 'caldot1-yolov5',
     # 'caldot2-yolov5',
     'caldot1',
@@ -1130,10 +1142,10 @@ DATASETS_CHOICES = [
     'caldot2-yolov5',
     'caldot1',
     'caldot2',
-    'b3dJnc00',
-    'b3dJnc02',
-    'b3dJnc06',
-    'b3dJnc07',
+    'jnc0',
+    'jnc2',
+    'jnc6',
+    'jnc7',
 ]
 
 

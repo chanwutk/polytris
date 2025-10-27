@@ -276,7 +276,7 @@ def main(args):
     funcs = []
     for dataset in datasets:
         print(f"Processing dataset: {dataset}")
-        if dataset.startswith('b3dJnc'):
+        if dataset.startswith('jnc'):
             funcs.extend(process_b3d(args, dataset))
         elif dataset.startswith('caldot'):
             funcs.extend(process_caldot(args, dataset))
