@@ -6,7 +6,7 @@
     "ims_per_batch": 2,
     "base_lr": 1e-4,
     "max_iter": 100000,
-	"weights": "output/model_final.pth",
+	"weights": "weights/retinanet_b3d.pth",
 	"num_classes": 1,
 	"score_threshold": 0.45,
 	"nms_threshold": 0.25,

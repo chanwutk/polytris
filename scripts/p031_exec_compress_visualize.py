@@ -59,17 +59,12 @@ def list_classifier_tile_dirs(video_cache_dir: str) -> list[str]:
     return sorted(dirs)
 
 
-def parse_classifier_and_tile(dir_name: str) -> tuple[str, int]:
+def parse_classifier_and_tile(dir_name: str) -> tuple[str, int, str]:
     # dir_name is like "SimpleCNN_64" or possibly classifier names with underscores
     # Split on the last underscore
-    if "_" not in dir_name:
-        return dir_name, -1
-    classifier, tile = dir_name.rsplit("_", 1)
-    try:
-        tilesize = int(tile)
-    except ValueError:
-        tilesize = -1
-    return classifier, tilesize
+    split = dir_name.split("_")
+    assert len(split) == 3, split
+    return split[0], int(split[1]), split[2]
 
 
 def list_index_map_files(classifier_tile_dir: str) -> list[str]:
@@ -173,7 +168,7 @@ def plot_histogram_facets(labels: list[str], datasets: list[list[float]], title:
     # Create faceted histogram with 20 bins
     chart = alt.Chart(df).mark_bar().encode(
         x=alt.X('content_ratio:Q', 
-                bin=alt.Bin(maxbins=20),
+                bin=alt.Bin(maxbins=100),
                 title='Content ratio'),
         y=alt.Y('count()', title='Count'),
         color=alt.Color('label:N', legend=None)
@@ -262,10 +257,10 @@ def plot_histogram_facets_per_video(video_name: str, video_data: list[tuple[str,
 
 
 def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_dir: str,
-                           idx: int) -> tuple[str, list[int], list[float], float, str, int]:
+                           idx: int) -> tuple[str, list[int], list[float], float, str, int, str]:
     npy_files = list_index_map_files(classifier_tile_dir)
     if not npy_files:
-        return "", [], [], 0.0, "", -1
+        return "", [], [], 0.0, "", -1, ""
 
     # Build time series
     time_to_ratio: list[tuple[int, float]] = []
@@ -280,7 +275,7 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
             print(f"Warning: failed to read {npy_path}: {e}")
 
     if not time_to_ratio:
-        return "", [], [], 0.0, "", -1
+        return "", [], [], 0.0, "", -1, ""
 
     # Sort by x (time)
     time_to_ratio.sort(key=lambda t: t[0])
@@ -291,17 +286,17 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
     # Output paths
     series_name = os.path.basename(classifier_tile_dir)
     video_name = os.path.basename(video_cache_dir)
-    classifier, tilesize = parse_classifier_and_tile(series_name)
+    classifier, tilesize, tilepadding = parse_classifier_and_tile(series_name)
 
     # Prepare summary output locations
     base_dir, each_dir = ensure_summary_dirs(dataset)
     safe_video = video_name
     safe_classifier = classifier
     # Filenames include identifiers to keep one file per series
-    plot_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}__compress_content_ratio.png")
-    json_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}__compress_content_ratio.json")
+    plot_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}_{tilepadding}__compress_content_ratio.png")
+    json_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}_{tilepadding}__compress_content_ratio.json")
 
-    title = f"{video_name} | {classifier} | tile {tilesize}"
+    title = f"{video_name} | {classifier} | tile {tilesize} | {tilepadding}"
     plot_series(x_values, y_values, avg_value, title, plot_path)
     print(f"Saved plot: {plot_path}")
 
@@ -311,6 +306,7 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
         "series": series_name,
         "classifier": classifier,
         "tilesize": tilesize,
+        "tilepadding": tilepadding,
         "x_values": x_values,
         "content_ratios": y_values,
         "average_content_ratio": avg_value,
@@ -320,8 +316,8 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
         json.dump(metrics, f, indent=2)
     print(f"Saved metrics: {json_path}")
 
-    label = f"{video_name}|{classifier}|{tilesize}"
-    return label, x_values, y_values, avg_value, classifier, tilesize
+    label = f"{video_name}|{classifier}|{tilesize}|{tilepadding}"
+    return label, x_values, y_values, avg_value, classifier, tilesize, tilepadding
 
 
 def process_video_worker(args_tuple: tuple[str, str, int]) -> list[tuple[str, list[int], list[float], float, str, int]]:
@@ -340,11 +336,11 @@ def process_video_worker(args_tuple: tuple[str, str, int]) -> list[tuple[str, li
         return results
     
     for classifier_tile_dir in classifier_tile_dirs:
-        label, xs, ys, avg, clf, tile = process_series_for_dir(
+        label, xs, ys, avg, clf, tile, tilepadding = process_series_for_dir(
             dataset, video_cache_dir, classifier_tile_dir, idx
         )
         if label and ys:
-            results.append((label, xs, ys, avg, clf, tile))
+            results.append((label, xs, ys, avg, clf, tile, tilepadding))
     
     return results
 
@@ -392,7 +388,7 @@ def main(args: argparse.Namespace) -> None:
             
             # Prepare data for this video (label, y_values, avg_value)
             video_data = []
-            for label, _xs, ys, avg, _clf, _tile in video_results:
+            for label, _xs, ys, avg, _clf, _tile, tilepadding in video_results:
                 video_data.append((label, ys, avg))
             
             # Create faceted histogram for this video

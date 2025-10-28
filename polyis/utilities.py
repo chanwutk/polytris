@@ -409,7 +409,7 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str,
     return results
 
 
-def create_tracker(tracker_name: str, max_age: int = 1, min_hits: int = 3, iou_threshold: float = 0.3):
+def create_tracker(tracker_name: str):
     """
     Create a tracker instance based on the specified algorithm.
     
@@ -425,12 +425,14 @@ def create_tracker(tracker_name: str, max_age: int = 1, min_hits: int = 3, iou_t
     Raises:
         ValueError: If the tracker name is not supported
     """
-    if tracker_name == 'sort':
-        # print(f"Creating SORT tracker with max_age={max_age}, min_hits={min_hits}, iou_threshold={iou_threshold}")
-        from polyis.b3d.sort import Sort
-        return Sort(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
-    else:
-        raise ValueError(f"Unknown tracker: {tracker_name}")
+    with open('configs/trackers.json', 'r') as f:
+        if tracker_name == 'sort':
+            # print(f"Creating SORT tracker with max_age={max_age}, min_hits={min_hits}, iou_threshold={iou_threshold}")
+            from polyis.b3d.sort import Sort
+            config = json.load(f)['sort']
+            return Sort(max_age=config['max_age'], min_hits=config['min_hits'], iou_threshold=config['iou_threshold'])
+        else:
+            raise ValueError(f"Unknown tracker: {tracker_name}")
 
 
 def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]], frame_idx: int,
@@ -873,42 +875,20 @@ class ProgressBar:
         process.start()
         return process
     
-    def run_all(self, funcs: list[typing.Callable[[int, mp.Queue], None]], gcp: bool = False):
+    def run_all(self, funcs: list[typing.Callable[[int, mp.Queue], None]]):
         """Run all funcs in a new process with a worker ID."""
-        if not gcp:
-            with self:
-                processes: list[mp.Process] = []
-                for func in funcs:
-                    processes.append(self.run(func))
-                
-                for _ in range(self.num_workers):
-                    worker_id = self.get_worker_id()
-                    self.update_overall_progress(1)
-                    self.command_queue.put((f'cuda:{worker_id}',
-                                            {'remove': True}))
-
-                for process in processes:
-                    process.join()
-                    process.terminate()
-        else:
-            commands = []
+        with self:
+            processes: list[mp.Process] = []
             for func in funcs:
-                assert isinstance(func, functools.partial)
-                args: tuple = func.args
-                func_name = func.func.__name__
-                script: str = func.func.gcp  # type: ignore
-                args_str = ' '.join(str(arg) for arg in args)
-                command = f"python ./scripts/{script} {func_name} {args_str}"
-                commands.append(command)
+                processes.append(self.run(func))
             
-            command_funcs = [functools.partial(subprocess.run, command, shell=True, check=True, capture_output=True, text=True) for command in commands]
-            processes = []
-            for command_func in command_funcs:
-                process = mp.Process(target=command_func)
-                process.start()
-                processes.append(process)
-            
-            for process in progress.track(processes):
+            for _ in range(self.num_workers):
+                worker_id = self.get_worker_id()
+                self.update_overall_progress(1)
+                self.command_queue.put((f'cuda:{worker_id}',
+                                        {'remove': True}))
+
+            for process in processes:
                 process.join()
                 process.terminate()
 
@@ -923,6 +903,36 @@ class ProgressBar:
             kwargs = {'completed': 0, 'description': 'Done', 'total': 1}
             command_queue.put((f'cuda:{worker_id}', kwargs))
             worker_id_queue.put(worker_id)
+
+
+def gcp_run(funcs: list[typing.Callable[[int, mp.Queue], None]]):
+    """
+    Run a list of functions in a GCP instance.
+    
+    Args:
+        funcs (list[typing.Callable[[int, mp.Queue], None]]): List of functions to run
+    """
+    commands = []
+    for func in funcs:
+        assert isinstance(func, functools.partial)
+        args: tuple = func.args
+        func_name = func.func.__name__
+        script: str = func.func.gcp  # type: ignore
+        args_str = ' '.join(str(arg) for arg in args)
+        command = f"python ./scripts/{script} {func_name} {args_str}"
+        commands.append(command)
+    
+    command_funcs = [functools.partial(subprocess.run, command, shell=True, check=True, capture_output=True, text=True) for command in commands]
+    processes = []
+    for command_func in command_funcs:
+        process = mp.Process(target=command_func)
+        process.start()
+        processes.append(process)
+    
+    for process in progress.track(processes):
+        process.join()
+        process.terminate()
+
 
 
 def load_tradeoff_data(dataset: str, csv_suffix: str) -> "tuple[pd.DataFrame, pd.DataFrame]":

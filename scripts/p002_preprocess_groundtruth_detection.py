@@ -10,7 +10,7 @@ import torch
 import queue
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, VIDEO_SETS, format_time, ProgressBar, DATASETS_TO_TEST, get_num_frames
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, VIDEO_SETS, format_time, ProgressBar, DATASETS_TO_TEST, gcp_run, get_num_frames
 
 
 def parse_args():
@@ -26,6 +26,7 @@ def parse_args():
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
+    parser.add_argument('--gcp', action='store_true', help='Execute the code in GCP')
     return parser.parse_args()
 
 
@@ -117,7 +118,7 @@ def detect_objects(video_path: str, dataset_name: str, output_path: str,
     # print(f"GPU {gpu_id}: Completed processing {frame_idx} frames. Results saved to {output_path}")
 
 
-setattr(detect_objects, 'gcp', 'p001g_preprocess_groundtruth_detection.py')
+setattr(detect_objects, 'gcp', 'p002g_preprocess_groundtruth_detection.py')
 
 
 def main(args):
@@ -183,7 +184,10 @@ def main(args):
     print(f"Using {max_processes} processes (limited by {num_gpus} GPUs)")
     
     # Use ProgressBar for parallel processing
-    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
+    if not args.gcp:
+        ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
+    else:
+        gcp_run(funcs)
 
 
 if __name__ == '__main__':

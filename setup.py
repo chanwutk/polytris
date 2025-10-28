@@ -43,6 +43,13 @@ extensions = [
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+    ),
+    Extension(
+        "polyis.binpack.pack_all",
+        ["polyis/binpack/pack_all.pyx"],
+        include_dirs=[numpy.get_include()],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     )
 ]
 

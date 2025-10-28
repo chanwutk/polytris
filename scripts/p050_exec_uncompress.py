@@ -10,7 +10,7 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, DATASETS_DIR
 
 
 def parse_args():
@@ -155,7 +155,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
 
 def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
-                           tilepadding: bool, gpu_id: int, command_queue: mp.Queue):
+                           tilepadding: str, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
@@ -169,25 +169,24 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    tilepadding_str = "padded" if tilepadding else "unpadded"
     
     # Check if compressed detections exist
     detections_file = os.path.join(video_file_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{tilepadding_str}', 'detections.jsonl')
+                                   f'{classifier}_{tilesize}_{tilepadding}', 'detections.jsonl')
     assert os.path.exists(detections_file)
     
     # Check if compressed frames directory exists
     compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
-                                         f'{classifier}_{tilesize}_{tilepadding_str}')
+                                         f'{classifier}_{tilesize}_{tilepadding}')
     assert os.path.exists(compressed_frames_dir)
     
     # print(f"Processing video {video_file_path} for unpacking")
     
     detections_file = os.path.join(video_file_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{tilepadding_str}', 'detections.jsonl')
+                                   f'{classifier}_{tilesize}_{tilepadding}', 'detections.jsonl')
     
     unpacked_output_dir = os.path.join(video_file_path, '050_uncompressed_detections',
-                                       f'{classifier}_{tilesize}_{tilepadding_str}')
+                                       f'{classifier}_{tilesize}_{tilepadding}')
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -207,7 +206,7 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
     with open(detections_file, 'r') as f:
         # Process each detection file
         contents = f.readlines()
-        description = f"{video_file_path} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}} {tilepadding_str}"
+        description = f"{video_file_path} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}} {tilepadding}"
         kwargs = {'completed': 0, 'total': len(contents), 'description': description}
         mod = max(1, int(len(contents) * 0.05))
         command_queue.put((device, kwargs))
@@ -329,17 +328,20 @@ def main(args):
     funcs: list[Callable[[int, mp.Queue], None]] = []
 
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(CACHE_DIR, dataset_name, 'execution')
+        cache_dir = os.path.join(CACHE_DIR, dataset_name, 'execution')
+        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
+        videosets_dir = os.path.join(dataset_dir, 'test')
         
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
+        if not os.path.exists(videosets_dir):
+            print(f"Dataset directory {videosets_dir} does not exist, skipping...")
             continue
         
         # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, f))]
+        video_files = [f for f in os.listdir(videosets_dir) if f.endswith('.mp4')]
+        print(f"Found {len(video_files)} video files in dataset {dataset_name}")
         
         for video_file in sorted(video_files):
-            video_file_path = os.path.join(dataset_dir, video_file)
+            video_file_path = os.path.join(cache_dir, video_file)
             
             compressed_detections_dir = os.path.join(video_file_path, '040_compressed_detections')
             if not os.path.exists(compressed_detections_dir):
@@ -351,9 +353,8 @@ def main(args):
                 shutil.rmtree(uncompressed_detections_dir)
                 
             for classifier_tilesize_tilepadding in sorted(os.listdir(compressed_detections_dir)):
-                classifier, tilesize, tilepadding_str = classifier_tilesize_tilepadding.split('_')
+                classifier, tilesize, tilepadding = classifier_tilesize_tilepadding.split('_')
                 tilesize = int(tilesize)
-                tilepadding = tilepadding_str == "padded"
                 funcs.append(partial(process_unpacking_task, video_file_path, tilesize, classifier, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")

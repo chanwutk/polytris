@@ -54,7 +54,7 @@ cdef int IntStack_push(IntStack *stack, unsigned short value) noexcept nogil:
         stack.capacity = new_capacity
     
     # Push the value
-    stack.data[stack.top] = value
+    stack.data[stack.top] = value  # type: ignore
     stack.top += 1
     return 0
 
@@ -139,7 +139,7 @@ cdef int PolyominoStack_push(
         stack.capacity = new_capacity
     
     # Push the value
-    stack.mo_data[stack.top] = value
+    stack.mo_data[stack.top] = value  # type: ignore
     stack.top += 1
     return 0
 
@@ -153,7 +153,7 @@ cdef void PolyominoStack_cleanup(PolyominoStack *stack) noexcept nogil:
     if stack:
         if stack.mo_data:
             for i in range(stack.top):
-                Polyomino_cleanup(&(stack.mo_data[i]))
+                Polyomino_cleanup(&(stack.mo_data[i]))  # type: ignore
             free(<void*>stack.mo_data)
             stack.mo_data = NULL
         stack.top = 0

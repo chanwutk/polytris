@@ -7,23 +7,12 @@ import time
 import numpy as np
 import torch
 from functools import partial
-from multiprocessing import Queue
+import queue
 
 from polyis.utilities import CACHE_DIR, VIDEO_SETS, create_tracker, format_time, load_detection_results, ProgressBar, register_tracked_detections, DATASETS_TO_TEST
 
 
 def parse_args():
-    """
-    Parse command line arguments for the script.
-
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - datasets (list): List of dataset names to process (default: ['caldot1', 'caldot2'])
-            - tracker (str): Tracking algorithm to use (default: 'sort')
-            - max_age (int): Maximum age for SORT tracker (default: 10)
-            - min_hits (int): Minimum hits for SORT tracker (default: 3)
-            - iou_threshold (float): IOU threshold for SORT tracker (default: 0.3)
-    """
     parser = argparse.ArgumentParser(description='Execute object tracking on detection results')
     parser.add_argument('--datasets', required=False,
                         default=DATASETS_TO_TEST,
@@ -33,41 +22,29 @@ def parse_args():
                         default='sort',
                         choices=['sort'],
                         help='Tracking algorithm to use')
-    parser.add_argument('--max_age', type=int, default=10,
-                        help='Maximum age for SORT tracker')
-    parser.add_argument('--min_hits', type=int, default=3,
-                        help='Minimum hits for SORT tracker')
-    parser.add_argument('--iou_threshold', type=float, default=0.3,
-                        help='IOU threshold for SORT tracker')
     return parser.parse_args()
 
 
-def track(video_file: str, args, cache_dir: str, dataset: str, gpu_id: int, command_queue: "Queue[tuple[str, dict]]"):
+def track(video_file: str, tracker_name: str, dataset: str, gpu_id: int, command_queue: "queue.Queue[tuple[str, dict]]"):
     """
     Execute object tracking on detection results and save tracking results to JSONL.
 
     Args:
         video_file (str): Name of the video file to process
-        args: Command line arguments
-        cache_dir (str): Cache directory path
+        tracker_name (str): Name of the tracker to use
         dataset (str): Dataset name
         gpu_id (int): GPU device ID to use for this process
         command_queue (Queue): Queue for progress updates
     """
     # Load detection results
-    detection_results = load_detection_results(cache_dir, dataset, video_file)
+    detection_results = load_detection_results(CACHE_DIR, dataset, video_file)
 
     # Create output path for tracking results
-    output_path = os.path.join(cache_dir, dataset, 'execution', video_file, '000_groundtruth', 'tracking.jsonl')
-
-    tracker_name = args.tracker
-    max_age = args.max_age
-    min_hits = args.min_hits
-    iou_threshold = args.iou_threshold
+    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '000_groundtruth', 'tracking.jsonl')
 
     # print(f"Processing video: {video_file}")
     # Create tracker
-    tracker = create_tracker(tracker_name, max_age, min_hits, iou_threshold)
+    tracker = create_tracker(tracker_name)
 
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
@@ -176,9 +153,6 @@ def main(args):
         args (argparse.Namespace): Parsed command line arguments containing:
             - datasets (list): List of dataset names to process
             - tracker (str): Tracking algorithm to use
-            - max_age (int): Maximum age for SORT tracker
-            - min_hits (int): Minimum hits for SORT tracker
-            - iou_threshold (float): IOU threshold for SORT tracker
 
     Note:
         - The script expects detection results from 001_preprocess_groundtruth_detection.py in:
@@ -192,6 +166,8 @@ def main(args):
 
     print(f"Using tracker: {args.tracker}")
     print(f"Tracker parameters: max_age={args.max_age}, min_hits={args.min_hits}, iou_threshold={args.iou_threshold}")
+
+    tracker = args.tracker
 
     # Create task functions
     funcs = []
@@ -225,7 +201,7 @@ def main(args):
         print(f"Found {len(video_dirs)} videos with detection results")
 
         funcs.extend(
-            partial(track, video_file, args, CACHE_DIR, dataset)
+            partial(track, video_file, tracker, dataset)
             for video_file in video_dirs
         )
 
