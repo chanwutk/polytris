@@ -366,7 +366,7 @@ def visualize_error_over_time(frame_metrics: list[dict], groundtruth_detections:
             {'Frame': frame_indices[i], 'Value': fn_counts[i], 'Metric': 'False Negatives', 'Chart': 'Chart4'}
         ])
     
-    df = pd.DataFrame(chart_data)
+    df = pd.DataFrame.from_records(chart_data, columns=['Frame', 'Value', 'Metric', 'Chart'])
     
     # Create individual charts
     chart1_data = df[df['Chart'] == 'Chart1']
@@ -670,18 +670,19 @@ def main(args):
     for dataset_name in args.datasets:
         dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
         
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
+        videoset_dir = os.path.join(dataset_dir, 'test')
+        if not os.path.exists(videoset_dir):
+            print(f"Videoset directory {videoset_dir} does not exist, skipping...")
             continue
         
         # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        video_files = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
         
         if not video_files:
-            print(f"No video files found in {dataset_dir}")
+            print(f"No video files found in {videoset_dir}")
             continue
         
-        print(f"Found {len(video_files)} video files in dataset {dataset_name}")
+        print(f"Found {len(video_files)} video files in videoset {videoset_dir}")
         
         for video_file in sorted(video_files):
             # Get classifier tile sizes for this video from execution directory
@@ -728,7 +729,7 @@ def main(args):
     print(f"Using {num_processes} processes for parallel processing")
     
     # Run all tasks with ProgressBar
-    ProgressBar(num_workers=num_processes, num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=10, num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 
 

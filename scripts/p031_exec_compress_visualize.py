@@ -7,30 +7,33 @@ import json
 from multiprocessing import Pool, cpu_count
 
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
+import altair as alt
 from tqdm import tqdm
 
-from polyis.utilities import CACHE_DIR
+from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Visualize compression empty-space ratios over time by reading "
-            "index_maps saved by 030_exec_compress.py."
+            "index_maps saved by 030_exec_compress.py. Creates faceted histograms "
+            "using Altair with 20 bins per classifier/tile combination."
         )
     )
     parser.add_argument(
-        "--dataset",
+        "--datasets",
+        nargs="+",
         required=False,
-        default="b3d",
-        help="Dataset name (matches directory in DATA_DIR and CACHE_DIR)",
+        default=DATASETS_TO_TEST,
+        help="Dataset names (matches directories in DATA_DIR and CACHE_DIR)",
     )
     return parser.parse_args()
 
 
 def list_video_dirs(dataset: str) -> list[str]:
-    dataset_cache_dir = os.path.join(CACHE_DIR, dataset)
+    dataset_cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
     if not os.path.isdir(dataset_cache_dir):
         raise FileNotFoundError(f"Dataset cache dir does not exist: {dataset_cache_dir}")
     # Only directories that contain a packing folder are relevant
@@ -115,45 +118,87 @@ def plot_series(
     title: str,
     output_png_path: str,
 ) -> None:
-    plt.figure(figsize=(10, 4))
-    plt.plot(x_values, y_values, label="Content ratio", color="#1f77b4")
-    plt.axhline(avg_value, color="#ff7f0e", linestyle="--", label=f"Average: {avg_value:.3f}")
-    plt.ylim(0.0, 1.0)
-    plt.xlabel("Frame index (end of packed span)")
-    plt.ylabel("Content ratio (index_map[:,:,0] > 0)")
-    plt.title(title)
-    plt.grid(True, linestyle=":", linewidth=0.5, alpha=0.8)
-    plt.legend(loc="best")
-    plt.tight_layout()
-    plt.savefig(output_png_path)
-    plt.close()
+    # Create DataFrame for Altair
+    df = pd.DataFrame({
+        'frame_index': x_values,
+        'content_ratio': y_values
+    })
+    
+    # Create line chart with average line
+    line = alt.Chart(df).mark_line(color='#1f77b4').encode(
+        x=alt.X('frame_index:Q', title='Frame index (end of packed span)'),
+        y=alt.Y('content_ratio:Q', title='Content ratio (index_map[:,:,0] > 0)', scale=alt.Scale(domain=[0, 1]))
+    )
+    
+    # Add average line
+    avg_line = alt.Chart(pd.DataFrame({'avg': [avg_value]})).mark_rule(
+        color='#ff7f0e',
+        strokeDash=[5, 5]
+    ).encode(
+        y='avg:Q'
+    )
+    
+    # Combine charts
+    chart = (line + avg_line).properties(
+        width=800,
+        height=300,
+        title=title
+    ).configure_axis(
+        gridOpacity=0.3
+    )
+    
+    # Save chart
+    chart.save(output_png_path)
 
 
-def plot_violin(labels: list[str], datasets: list[list[float]], title: str, output_png_path: str) -> None:
+def plot_histogram_facets(labels: list[str], datasets: list[list[float]], title: str, output_png_path: str) -> None:
+    # Create faceted histogram plot with Altair
     if not datasets:
         return
-    plt.figure(figsize=(12, max(10, len(labels) * 0.5)))
-    y = [[*filter(lambda x: x < 1, d)] for d in datasets]
-    x = list(range(1, len(labels) + 1))
+    
+    # Filter out values >= 1 and prepare data
+    filtered_data = []
+    for label, data in zip(labels, datasets):
+        filtered_values = [x for x in data if x < 1]
+        if filtered_values:
+            for value in filtered_values:
+                filtered_data.append({'label': label, 'content_ratio': value})
+    
+    if not filtered_data:
+        return
+    
+    # Create DataFrame
+    df = pd.DataFrame(filtered_data)
+    
+    # Create faceted histogram with 20 bins
+    chart = alt.Chart(df).mark_bar().encode(
+        x=alt.X('content_ratio:Q', 
+                bin=alt.Bin(maxbins=20),
+                title='Content ratio'),
+        y=alt.Y('count()', title='Count'),
+        color=alt.Color('label:N', legend=None)
+    ).properties(
+        width=600,
+        height=80
+    ).facet(
+        row=alt.Row('label:N', title=None, header=alt.Header(labelAngle=0, labelAlign='left'))
+    ).resolve_scale(
+        y='independent'
+    ).properties(
+        title=title
+    ).configure_axis(
+        gridOpacity=0.3
+    )
+    
+    # Save chart
+    chart.save(output_png_path)
+    print(f"Saved faceted histogram: {output_png_path}")
 
-    x = [_x for i, _x in enumerate(x) if len(y[i]) > 0]
-    labels = [_label for i, _label in enumerate(labels) if len(y[i]) > 0]
-    y = [_y for _y in y if len(_y) > 0]
 
-    parts = plt.violinplot(y, positions=x, showmedians=True, vert=False)
-    plt.yticks(ticks=x, labels=labels)
-    plt.xlabel("Content ratio")
-    plt.title(title)
-    plt.grid(True, linestyle=":", linewidth=0.5, alpha=0.8, axis='x')
-    plt.tight_layout()
-    plt.savefig(output_png_path)
-    plt.close()
-
-
-def plot_violin_per_video(video_name: str, video_data: list[tuple[str, list[float], float]], 
-                         dataset: str, output_dir: str) -> None:
+def plot_histogram_facets_per_video(video_name: str, video_data: list[tuple[str, list[float], float]], 
+                                   dataset: str, output_dir: str) -> None:
     """
-    Create a violin plot for a single video, sorted by average content ratio.
+    Create a faceted histogram plot for a single video, sorted by average content ratio.
     
     Args:
         video_name: Name of the video
@@ -167,37 +212,53 @@ def plot_violin_per_video(video_name: str, video_data: list[tuple[str, list[floa
     # Sort by average content ratio (descending)
     video_data.sort(key=lambda x: x[2], reverse=True)
     
-    labels = [item[0] for item in video_data]
-    datasets = [item[1] for item in video_data]
+    # Prepare data for faceted histogram
+    plot_data = []
+    for label, y_values, avg_value in video_data:
+        # Filter out values >= 1
+        filtered_values = [x for x in y_values if x < 1]
+        if filtered_values:
+            for value in filtered_values:
+                plot_data.append({
+                    'label': label,
+                    'content_ratio': value,
+                    'avg': avg_value
+                })
     
-    # Filter out empty datasets and values >= 1
-    filtered_data = []
-    filtered_labels = []
-    for i, (label, data) in enumerate(zip(labels, datasets)):
-        filtered_data_points = [x for x in data if x < 1]
-        if filtered_data_points:
-            filtered_data.append(filtered_data_points)
-            filtered_labels.append(label)
-    
-    if not filtered_data:
+    if not plot_data:
         print(f"No valid data for video {video_name}")
         return
     
-    plt.figure(figsize=(12, max(8, len(filtered_labels) * 0.6)))
-    x = list(range(1, len(filtered_labels) + 1))
+    # Create DataFrame
+    df = pd.DataFrame(plot_data)
     
-    parts = plt.violinplot(filtered_data, positions=x, showmedians=True, vert=False)
-    plt.yticks(ticks=x, labels=filtered_labels)
-    plt.xlabel("Content ratio")
-    plt.title(f"Content ratios by classifier/tile - {video_name} ({dataset})")
-    plt.grid(True, linestyle=":", linewidth=0.5, alpha=0.8, axis='x')
-    plt.tight_layout()
+    # Create faceted histogram with 20 bins
+    chart = alt.Chart(df).mark_bar().encode(
+        x=alt.X('content_ratio:Q', 
+                bin=alt.Bin(maxbins=20),
+                title='Content ratio'),
+        y=alt.Y('count()', title='Count'),
+        color=alt.Color('label:N', legend=None)
+    ).properties(
+        width=600,
+        height=80
+    ).facet(
+        row=alt.Row('label:N', 
+                   title=None, 
+                   header=alt.Header(labelAngle=0, labelAlign='left'),
+                   sort=alt.SortField('avg', order='descending'))
+    ).resolve_scale(
+        y='independent'
+    ).properties(
+        title=f"Content ratios by classifier/tile - {video_name} ({dataset})"
+    ).configure_axis(
+        gridOpacity=0.3
+    )
     
     # Save the plot
-    plot_path = os.path.join(output_dir, f"{video_name}_compress_content_ratio_violin.png")
-    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"Saved violin plot for {video_name}: {plot_path}")
+    plot_path = os.path.join(output_dir, f"{video_name}_compress_content_ratio_histogram.png")
+    chart.save(plot_path)
+    print(f"Saved faceted histogram for {video_name}: {plot_path}")
 
 
 def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_dir: str,
@@ -289,45 +350,57 @@ def process_video_worker(args_tuple: tuple[str, str, int]) -> list[tuple[str, li
 
 
 def main(args: argparse.Namespace) -> None:
-    dataset = args.dataset
-    video_dirs = list_video_dirs(dataset)
-
-    if not video_dirs:
-        print(f"No video directories found for dataset {dataset}")
-        return
-
-    # Prepare worker arguments
-    worker_args = [
-        (dataset, video_cache_dir, idx)
-        for idx, video_cache_dir in enumerate(video_dirs)
-    ]
-
-    # Process videos in parallel
-    with Pool(processes=cpu_count()) as pool:
-        # Use tqdm to show progress
-        results = list(tqdm(
-            pool.imap(process_video_worker, worker_args),
-            total=len(worker_args),
-            desc="Processing videos"
-        ))
-
-    # Create individual violin plots for each video
-    base_dir, _each_dir = ensure_summary_dirs(dataset)
+    # Convert datasets to list if it's a single string
+    datasets = args.datasets if isinstance(args.datasets, list) else [args.datasets]
     
-    for video_results in results:
-        if not video_results:
+    # Process each dataset
+    for dataset in datasets:
+        print(f"\n{'='*80}")
+        print(f"Processing dataset: {dataset}")
+        print(f"{'='*80}\n")
+        
+        video_dirs = list_video_dirs(dataset)
+
+        if not video_dirs:
+            print(f"No video directories found for dataset {dataset}")
             continue
+
+        # Prepare worker arguments
+        worker_args = [
+            (dataset, video_cache_dir, idx)
+            for idx, video_cache_dir in enumerate(video_dirs)
+        ]
+
+        # Process videos in parallel
+        with Pool(processes=int(cpu_count() * 0.3)) as pool:
+            # Use tqdm to show progress
+            results = list(tqdm(
+                pool.imap(process_video_worker, worker_args),
+                total=len(worker_args),
+                desc=f"Processing videos for {dataset}"
+            ))
+
+        # Create individual violin plots for each video
+        base_dir, _each_dir = ensure_summary_dirs(dataset)
+        
+        for video_results in results:
+            if not video_results:
+                continue
+                
+            # Extract video name from the first result
+            video_name = video_results[0][0].split('|')[0]  # Extract video name from label
             
-        # Extract video name from the first result
-        video_name = video_results[0][0].split('|')[0]  # Extract video name from label
-        
-        # Prepare data for this video (label, y_values, avg_value)
-        video_data = []
-        for label, _xs, ys, avg, _clf, _tile in video_results:
-            video_data.append((label, ys, avg))
-        
-        # Create violin plot for this video
-        plot_violin_per_video(video_name, video_data, dataset, base_dir)
+            # Prepare data for this video (label, y_values, avg_value)
+            video_data = []
+            for label, _xs, ys, avg, _clf, _tile in video_results:
+                video_data.append((label, ys, avg))
+            
+            # Create faceted histogram for this video
+            plot_histogram_facets_per_video(video_name, video_data, dataset, base_dir)
+    
+    print(f"\n{'='*80}")
+    print(f"Finished processing all datasets")
+    print(f"{'='*80}\n")
 
 
 if __name__ == "__main__":
