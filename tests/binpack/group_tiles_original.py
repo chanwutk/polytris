@@ -2,7 +2,7 @@ from queue import Queue
 import numpy as np
 
 
-def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, int]]:
+def find_connected_tiles(bitmap: np.ndarray, i: int, j: int, original_bitmap: np.ndarray, mode: int) -> list[tuple[int, int]]:
     """
     Find all connected tiles in the bitmap starting from the tile at (i, j).
     
@@ -28,18 +28,51 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, 
             _i += i
             _j += j
             if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
-                q.append((_i, _j))
+                if mode == 0 or mode == 2 or (mode == 1 and (original_bitmap[i, j] == 1 or original_bitmap[_i, _j] == 1)):
+                    q.append((_i, _j))
     return filled
+
+
+def _add_padding(bitmap: np.ndarray) -> np.ndarray:
+    pad = np.zeros_like(bitmap)
+    pad[:-1, :] += bitmap[1:, :]
+    pad[1:, :] += bitmap[:-1, :]
+    pad[:, :-1] += bitmap[:, 1:]
+    pad[:, 1:] += bitmap[:, :-1]
+
+    pad = np.where(pad, 2, 0)
+    pad = np.where(bitmap, 1, pad)
+    return pad
+
+
+res = _add_padding(np.array([[0, 1, 0],
+                           [0, 0, 0],
+                           [1, 0, 1]]))
+exp = np.array([[2, 1, 2],
+              [2, 2, 2],
+              [1, 2, 1]])
+assert np.array_equal(res, exp), f"\n{res}\n{exp}"
+
+res = _add_padding(np.array([[0, 0, 0],
+                           [1, 0, 0],
+                           [1, 0, 0]]))
+exp = np.array([[2, 0, 0],
+              [1, 2, 0],
+              [1, 2, 0]])
+assert np.array_equal(res, exp), f"\n{res}\n{exp}"
 
 
 def group_tiles(bitmap: np.ndarray, mode: int = 0) -> list[tuple[np.ndarray, tuple[int, int]]]:
     """
     Original Python implementation of group_tiles (backup).
     """
+    if mode != 0:
+        bitmap = _add_padding(bitmap)
+
     h, w = bitmap.shape
     _groups = np.arange(h * w, dtype=np.int16) + 1
     _groups = _groups.reshape(bitmap.shape)
-    _groups = _groups * bitmap
+    _groups = _groups * (bitmap != 0)
     
     # Padding with size=1 on all sides
     groups = np.zeros((h + 2, w + 2), dtype=np.int16)
@@ -48,12 +81,14 @@ def group_tiles(bitmap: np.ndarray, mode: int = 0) -> list[tuple[np.ndarray, tup
     visited: set[int] = set()
     bins: list[tuple[np.ndarray, tuple[int, int]]] = []
     
+    padded_bitmap = np.zeros((h + 2, w + 2), dtype=bitmap.dtype)
+    padded_bitmap[1:h+1, 1:w+1] = bitmap
     for i in range(groups.shape[0]):
         for j in range(groups.shape[1]):
             if groups[i, j] == 0 or groups[i, j] in visited:
                 continue
-            
-            connected_tiles = find_connected_tiles(groups, i, j)
+
+            connected_tiles = find_connected_tiles(groups, i, j, padded_bitmap, mode)
             if not connected_tiles:
                 continue
                 

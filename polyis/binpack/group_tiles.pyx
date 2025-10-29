@@ -137,15 +137,15 @@ cdef void _add_padding(cnp.uint8_t[:, :] bitmap,
 
     for i in range(h):
         for j in range(w):
-            if bitmap[i, j] == 1:
+            if bitmap[i, j] != 1:  # type: ignore
                 continue
 
             for di in range(4):
                 _i = i + DIRECTIONS_I[di]  # type: ignore
                 _j = j + DIRECTIONS_J[di]  # type: ignore
 
-                if 0 <= _i < h and 0 <= _j < w and bitmap[_i, _j] == 0:
-                    bitmap[_i, _j] = 2
+                if 0 <= _i < h and 0 <= _j < w and bitmap[_i, _j] == 0:  # type: ignore
+                    bitmap[_i, _j] = 2  # type: ignore
 
 
 @cython.boundscheck(False)  # type: ignore
@@ -159,14 +159,14 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
     cdef IntStack connected_tiles
     cdef Polyomino polyomino
     cdef PolyominoStack *polyomino_stack
-    polyomino_stack = <PolyominoStack*>malloc(sizeof(PolyominoStack))
+    polyomino_stack = <PolyominoStack*>malloc(<size_t>sizeof(PolyominoStack))
     PolyominoStack_init(polyomino_stack, 16)
 
     if tilepadding_mode != 0:
         _add_padding(bitmap_input, h, w)
 
     # Create groups array with unique IDs
-    cdef unsigned int* groups = <unsigned int*>calloc(h * w, sizeof(unsigned int))
+    cdef unsigned int* groups = <unsigned int*>calloc(<size_t>(h * w), <size_t>sizeof(unsigned int))
     # Mask groups by bitmap - only keep group IDs where bitmap has 1s
     for i in range(h):
         for j in range(w):
@@ -197,7 +197,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
             
             # Find min/max through all coordinate pairs
             for k in range(1, num_pairs):
-                tile_i = connected_tiles.data[k << 1]        # type: ignore
+                tile_i = connected_tiles.data[k << 1]        
                 tile_j = connected_tiles.data[(k << 1) + 1]  # type: ignore
                 
                 if tile_i < min_i:
@@ -218,12 +218,12 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
             bitmap_input[i, j] = 0  # type: ignore
 
     # Sort polyominoes by mask length (descending order) before returning
-    qsort(polyomino_stack.mo_data,
-          polyomino_stack.top,
-          sizeof(Polyomino),
+    qsort(<void*>polyomino_stack.mo_data,
+          <size_t>polyomino_stack.top,
+          <size_t>sizeof(Polyomino),
           &compare_polyomino_by_mask_length)
 
-    free(groups)
+    free(<void*>groups)
     return <unsigned long long>polyomino_stack
 
 

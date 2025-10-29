@@ -114,7 +114,7 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
     for video in videos:
         for cl, ts, tilepadding in classifier_tilesizes:
             assert (video, cl, ts, tilepadding) in video_tile_combinations_set, \
-                f"Video-tile combination {video}-{cl}-{ts}-{tilepadding} not found"
+                f"Video-tile combination {video}-{cl}-{ts}-{tilepadding} ({dataset}) not found"
 
     return videos, classifier_tilesizes
 

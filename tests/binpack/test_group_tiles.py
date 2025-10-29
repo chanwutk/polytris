@@ -8,74 +8,17 @@ import time
 import sys
 import os
 from polyis.binpack.adapters import group_tiles
+from group_tiles_original import group_tiles as _group_tiles_original
 from queue import Queue
 
-def find_connected_tiles(bitmap: np.ndarray, i: int, j: int) -> list[tuple[int, int]]:
-    """
-    Find all connected tiles in the bitmap starting from the tile at (i, j).
-    
-    Args:
-        bitmap: 2D numpy array representing the grid of tiles,
-                where 1 indicates a tile with detection and 0 indicates no detection
-        i: row index of the starting tile
-        j: column index of the starting tile
-        
-    Returns:
-        list[tuple[int, int]]: List of tuples representing the coordinates of all connected tiles
-    """
-    value = bitmap[i, j]
-    q = Queue()
-    q.put((i, j))
-    filled: list[tuple[int, int]] = []
-    while not q.empty():
-        i, j = q.get()
-        bitmap[i, j] = value
-        filled.append((i, j))
-        for _i, _j in [(-1, 0), (0, -1), (+1, 0), (0, +1)]:
-            _i += i
-            _j += j
-            if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
-                q.put((_i, _j))
-    return filled
 
-
-def _group_tiles_original(bitmap: np.ndarray) -> list[tuple[np.ndarray, tuple[int, int]]]:
-    """
-    Original Python implementation of group_tiles (backup).
-    """
-    h, w = bitmap.shape
-    _groups = np.arange(h * w, dtype=np.int16) + 1
-    _groups = _groups.reshape(bitmap.shape)
-    _groups = _groups * bitmap
-    
-    # Padding with size=1 on all sides
-    groups = np.zeros((h + 2, w + 2), dtype=np.int16)
-    groups[1:h+1, 1:w+1] = _groups
-    
-    visited: set[int] = set()
-    bins: list[tuple[np.ndarray, tuple[int, int]]] = []
-    
-    for i in range(groups.shape[0]):
-        for j in range(groups.shape[1]):
-            if groups[i, j] == 0 or groups[i, j] in visited:
-                continue
-            
-            connected_tiles = find_connected_tiles(groups, i, j)
-            if not connected_tiles:
-                continue
-                
-            connected_tiles = np.array(connected_tiles, dtype=int).T
-            mask = np.zeros((h + 1, w + 1), dtype=np.uint8)
-            mask[*connected_tiles] = True
-            
-            offset = np.min(connected_tiles, axis=1)
-            end = np.max(connected_tiles, axis=1) + 1
-            
-            mask = mask[offset[0]:end[0], offset[1]:end[1]]
-            bins.append((mask, (int(offset[0] - 1), int(offset[1] - 1))))
-            visited.add(groups[i, j])
-    
-    return bins
+def same_results(result1, result2):
+    """Helper function to compare two group_tiles results."""
+    assert len(result1) == len(result2), \
+        f"Different number of polyominoes: Result1={len(result1)}, Result2={len(result2)}"
+    for (mask1, offset1), (mask2, offset2) in zip(result1, result2):
+        np.testing.assert_array_equal(mask1, mask2, 
+            err_msg=f"Masks differ at offset {offset1}")
 
 
 class TestGroupTiles:
@@ -215,6 +158,37 @@ class TestGroupTiles:
         np.testing.assert_array_equal(cython_mask, orig_mask, "Masks should be identical")
         assert cython_offset == orig_offset, "Offsets should be identical"
         assert cython_mask.sum() == 5, "L-shape should have 5 tiles"
+    
+    def test_connected_padding(self):
+        bitmap = np.array([
+            [0, 0, 0, 0],
+            [1, 0, 0, 1],
+            [0, 0, 0, 0]
+        ], dtype=np.uint8)
+        result1 = [(np.array([
+            [1, 0],
+            [1, 1],
+            [1, 0]
+        ]), (0, 0)), (np.array([
+            [0, 1],
+            [1, 1],
+            [0, 1]
+        ]), (0, 2))]
+        result2 = [(np.array([
+            [1, 0, 0, 1],
+            [1, 1, 1, 1],
+            [1, 0, 0, 1]
+        ]), (0, 0))]
+
+        result_cython = group_tiles(bitmap.copy(), 1)
+        result_original = _group_tiles_original(bitmap.copy(), 1)
+        same_results(result_cython, result1)
+        same_results(result_original, result1)
+
+        result_cython = group_tiles(bitmap.copy(), 2)
+        result_original = _group_tiles_original(bitmap.copy(), 2)
+        same_results(result_cython, result2)
+        same_results(result_original, result2)
     
     def test_diagonal_not_connected(self):
         """Test that diagonal tiles are not considered connected."""
