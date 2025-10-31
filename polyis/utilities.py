@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import time
 import typing
 import multiprocessing as mp
 import functools
@@ -757,6 +758,28 @@ def mark_detections(
     return bitmap
 
 
+def create_timer(file: typing.TextIO, meta: dict | None = None) -> "typing.Callable[[str], Timer]":
+    def timer(op: str) -> Timer:
+        return Timer(file, op, meta)
+    return timer
+
+
+class Timer:
+    def __init__(self, file: typing.TextIO, op: str, meta: dict | None = None):
+        self.start_time = time.time_ns() / 1e6
+        self.file = file
+        self.op = op
+        self.meta = meta
+
+    def __enter__(self):
+        self.start_time = time.time_ns() / 1e6
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end_time = time.time_ns() / 1e6
+        elapsed_time = self.end_time - self.start_time
+        self.file.write(json.dumps((self.op, elapsed_time, *(self.meta or ()))) + '\n')
+
+
 def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
                   refresh_per_second: float = 1):
     with progress.Progress(
@@ -934,7 +957,6 @@ def gcp_run(funcs: list[typing.Callable[[int, mp.Queue], None]]):
         process.terminate()
 
 
-
 def load_tradeoff_data(dataset: str, csv_suffix: str) -> "tuple[pd.DataFrame, pd.DataFrame]":
     """
     Load pre-computed tradeoff data from CSV files created by p090_tradeoff_compute.py.
@@ -1046,6 +1068,10 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
     return scatter, baseline + baseline_annotation
 
 
+STR_NA = '_NA_'
+INT_NA = 0
+
+
 OPTIMAL_PARAMS = {
     'jnc0': {
         'classifier': 'YoloN',
@@ -1151,18 +1177,6 @@ DATASETS_TO_TEST = [
     # 'caldot2-yolov5',
     'caldot1',
     'caldot2',
-]
-
-
-DATASETS_CHOICES = [
-    'caldot1-yolov5',
-    'caldot2-yolov5',
-    'caldot1',
-    'caldot2',
-    'jnc0',
-    'jnc2',
-    'jnc6',
-    'jnc7',
 ]
 
 

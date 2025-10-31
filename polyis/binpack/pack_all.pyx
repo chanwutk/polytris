@@ -71,48 +71,48 @@ cdef int large_first(const void *a, const void *b) noexcept nogil:
     return (<Polyomino*>b).mask.top - (<Polyomino*>a).mask.top
 
 
-@cython.boundscheck(False)  # type: ignore
-@cython.wraparound(False)  # type: ignore
-@cython.nonecheck(False)  # type: ignore
-cdef cnp.uint8_t[:, :] rotate_polyomino(cnp.uint8_t[:, :] polyomino, int rotation):
-    """
-    Rotate a polyomino by the specified number of 90-degree counter-clockwise rotations.
+# @cython.boundscheck(False)  # type: ignore
+# @cython.wraparound(False)  # type: ignore
+# @cython.nonecheck(False)  # type: ignore
+# cdef cnp.uint8_t[:, :] rotate_polyomino(cnp.uint8_t[:, :] polyomino, int rotation):
+#     """
+#     Rotate a polyomino by the specified number of 90-degree counter-clockwise rotations.
     
-    Args:
-        polyomino: 2D numpy array representing the polyomino shape
-        rotation: Number of 90-degree rotations (0-3)
+#     Args:
+#         polyomino: 2D numpy array representing the polyomino shape
+#         rotation: Number of 90-degree rotations (0-3)
         
-    Returns:
-        Rotated polyomino as a new numpy array
-    """
-    cdef int h = polyomino.shape[0]
-    cdef int w = polyomino.shape[1]
-    cdef int new_h, new_w
-    cdef int i, j
+#     Returns:
+#         Rotated polyomino as a new numpy array
+#     """
+#     cdef int h = polyomino.shape[0]
+#     cdef int w = polyomino.shape[1]
+#     cdef int new_h, new_w
+#     cdef int i, j
     
-    # Determine new dimensions based on rotation
-    if rotation % 2 == 0:
-        new_h, new_w = h, w
-    else:
-        new_h, new_w = w, h
+#     # Determine new dimensions based on rotation
+#     if rotation % 2 == 0:
+#         new_h, new_w = h, w
+#     else:
+#         new_h, new_w = w, h
     
-    # Create new array for rotated polyomino
-    cdef cnp.uint8_t[:, :] rotated = np.zeros((new_h, new_w), dtype=np.uint8)
+#     # Create new array for rotated polyomino
+#     cdef cnp.uint8_t[:, :] rotated = np.zeros((new_h, new_w), dtype=np.uint8)
     
-    # Apply rotation
-    for i in range(h):
-        for j in range(w):
-            if polyomino[i, j]:  # type: ignore
-                if rotation == 0:
-                    rotated[i, j] = 1  # type: ignore
-                elif rotation == 1:  # 90 degrees counter-clockwise
-                    rotated[j, h - 1 - i] = 1  # type: ignore
-                elif rotation == 2:  # 180 degrees
-                    rotated[h - 1 - i, w - 1 - j] = 1  # type: ignore
-                elif rotation == 3:  # 270 degrees counter-clockwise
-                    rotated[w - 1 - j, i] = 1  # type: ignore
+#     # Apply rotation
+#     for i in range(h):
+#         for j in range(w):
+#             if polyomino[i, j]:  # type: ignore
+#                 if rotation == 0:
+#                     rotated[i, j] = 1  # type: ignore
+#                 elif rotation == 1:  # 90 degrees counter-clockwise
+#                     rotated[j, h - 1 - i] = 1  # type: ignore
+#                 elif rotation == 2:  # 180 degrees
+#                     rotated[h - 1 - i, w - 1 - j] = 1  # type: ignore
+#                 elif rotation == 3:  # 270 degrees counter-clockwise
+#                     rotated[w - 1 - j, i] = 1  # type: ignore
     
-    return rotated
+#     return rotated
 
 
 @cython.boundscheck(False)  # type: ignore
@@ -139,43 +139,46 @@ cdef Placement try_pack(cnp.uint8_t[:, :] polyomino, cnp.uint8_t[:, :] occupied_
     cdef int y, x, rotation
     cdef int i, j
     cdef bint overlap
-    
-    # Try all 4 possible rotations (0°, 90°, 180°, 270°)
-    for rotation in range(4):
-        # Rotate the polyomino by 90 degrees * rotation counter-clockwise
-        rotated = rotate_polyomino(polyomino, rotation)
-        # Get dimensions of the rotated polyomino
-        ph = rotated.shape[0]
-        pw = rotated.shape[1]
-        # Get dimensions of the collage
-        ch = occupied_tiles.shape[0]
-        cw = occupied_tiles.shape[1]
 
-        # Try all possible positions where the polyomino would fit
-        for y in range(ch - ph + 1):
-            for x in range(cw - pw + 1):
-                # Check if there's no overlap between existing collage and polyomino
-                overlap = False
+    rotation = 0
+    
+    # # Try all 4 possible rotations (0°, 90°, 180°, 270°)
+    # for rotation in range(4):
+    # Rotate the polyomino by 90 degrees * rotation counter-clockwise
+    # rotated = rotate_polyomino(polyomino, rotation)
+    rotated = polyomino
+    # Get dimensions of the rotated polyomino
+    ph = rotated.shape[0]
+    pw = rotated.shape[1]
+    # Get dimensions of the collage
+    ch = occupied_tiles.shape[0]
+    cw = occupied_tiles.shape[1]
+
+    # Try all possible positions where the polyomino would fit
+    for y in range(ch - ph + 1):
+        for x in range(cw - pw + 1):
+            # Check if there's no overlap between existing collage and polyomino
+            overlap = <bint>False
+            for i in range(ph):
+                for j in range(pw):
+                    if rotated[i, j] and occupied_tiles[y + i, x + j]:  # type: ignore
+                        overlap = <bint>True
+                        break
+                if overlap:
+                    break
+            
+            if not overlap:
+                # Place the polyomino by adding it to the collage
                 for i in range(ph):
                     for j in range(pw):
-                        if rotated[i, j] and occupied_tiles[y + i, x + j]:  # type: ignore
-                            overlap = True
-                            break
-                    if overlap:
-                        break
+                        if rotated[i, j]:  # type: ignore
+                            occupied_tiles[y + i, x + j] = 1  # type: ignore
                 
-                if not overlap:
-                    # Place the polyomino by adding it to the collage
-                    for i in range(ph):
-                        for j in range(pw):
-                            if rotated[i, j]:  # type: ignore
-                                occupied_tiles[y + i, x + j] = 1  # type: ignore
-                    
-                    # Return the successful placement coordinates and rotation
-                    return Placement(y, x, rotation)
+                # Return the successful placement coordinates and rotation
+                return Placement(y, x, rotation)
     
     # No valid placement found
-    return None
+    return NULL
 
 
 @cython.boundscheck(False)  # type: ignore

@@ -4,13 +4,14 @@ import argparse
 import json
 import os
 import shutil
+import time
 import numpy as np
 import cv2
 import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, DATASETS_DIR
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, DATASETS_DIR, create_timer
 
 
 def parse_args():
@@ -200,16 +201,23 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
     os.makedirs(images_center_not_in_any_tile_dir, exist_ok=True)
     # print(f"Saving images center not in any tile to {images_center_not_in_any_tile_dir}")
 
+    relevancy_scores_file = os.path.join(video_file_path, '020_relevancy', f'{classifier}_{tilesize}', 'score', 'score.jsonl')
+    with open(relevancy_scores_file, 'r') as f:
+        num_frames = max(json.loads(line)['frame_idx'] for line in f if line.strip())
+
     # dictionary to store all frame detections
-    all_frame_detections: dict[int, list[list[float]]] = {}
+    all_frame_detections: dict[int, list[list[float]]] = {
+        i: [] for i in range(num_frames + 1)
+    }
     
-    with open(detections_file, 'r') as f:
+    with open(detections_file, 'r') as f, open(os.path.join(unpacked_output_dir, 'runtime.jsonl'), 'w') as fr:
         # Process each detection file
         contents = f.readlines()
         description = f"{video_file_path} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}} {tilepadding}"
         kwargs = {'completed': 0, 'total': len(contents), 'description': description}
         mod = max(1, int(len(contents) * 0.05))
         command_queue.put((device, kwargs))
+        timer = create_timer(fr)
         for idx, line in enumerate(contents):
             content = json.loads(line)
             image_file: str = content['image_file']
@@ -228,12 +236,10 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
             # Load corresponding mapping file
             index_map, offset_lookup = load_mapping_file(index_map_path, offset_lookup_path)
             
-            # Unpack detections
-            (
-                frame_detections,
-                not_in_any_tile_detections,
-                center_not_in_any_tile_detections,
-            ) = unpack_detections(detections, index_map, offset_lookup, tilesize)
+            with timer('unpack_detections'):
+                # Unpack detections
+                frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections \
+                    = unpack_detections(detections, index_map, offset_lookup, tilesize)
 
             # save not_in_any_tile_detections and center_not_in_any_tile_detections
             if len(not_in_any_tile_detections) > 0:
@@ -274,8 +280,6 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
             
             # Merge with existing frame detections
             for frame_idx, bboxes in frame_detections.items():
-                if frame_idx not in all_frame_detections:
-                    all_frame_detections[frame_idx] = []
                 all_frame_detections[frame_idx].extend(bboxes)
 
             if idx % mod == 0:
@@ -283,9 +287,10 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
                                             'description': description,
                                             'total': len(contents)}))
     
-    # Save unpacked detections organized by frame
-    # Sort frames by index
-    sorted_frames = sorted(all_frame_detections.keys())
+        with timer('sort_frames'):
+            # Save unpacked detections organized by frame
+            # Sort frames by index
+            sorted_frames = sorted(all_frame_detections.keys())
     
     # Save each frame's detections
     with open(os.path.join(unpacked_output_dir, 'detections.jsonl'), 'w') as f:

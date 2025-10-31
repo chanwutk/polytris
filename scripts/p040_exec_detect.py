@@ -81,7 +81,7 @@ def detect_objects(video_file_path: str, tilesize: int, classifier: str, dataset
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
         kwargs = {'completed': 0,
                   'total': len(image_files),
-                  'description': f"{video_name} {tilesize:>3} {classifier} {tilepadding}"}
+                  'description': f"{dataset_name} {video_name} {tilesize:>3} {classifier[:3]} {tilepadding[:3]}"}
         command_queue.put((device, kwargs))
         
         try:

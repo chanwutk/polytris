@@ -9,7 +9,7 @@ import pandas as pd
 from collections import defaultdict
 from typing import Any
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST, TILE_SIZES, TILEPADDING_MODES
 
 
 def parse_args():
@@ -22,28 +22,19 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_measurements(measurements_dir: str) -> tuple[dict, dict, dict]:
+def load_measurements(measurements_dir: str):
     """Load the processed measurement data."""
-    index_file = os.path.join(measurements_dir, 'index_construction_measurements.json')
-    query_timings_file = os.path.join(measurements_dir, 'query_execution_timings.json')
-    query_summaries_file = os.path.join(measurements_dir, 'query_execution_summaries.json')
+    index_overall_file = os.path.join(measurements_dir, 'index_construction_overall.csv')
+    index_per_op_file = os.path.join(measurements_dir, 'index_construction_per_op.csv')
+    query_overall_file = os.path.join(measurements_dir, 'query_execution_overall.csv')
+    query_per_op_file = os.path.join(measurements_dir, 'query_execution_per_op.csv')
     metadata_file = os.path.join(measurements_dir, 'metadata.json')
     
-    with open(index_file, 'r') as f:
-        index_timings = json.load(f)
-    
-    with open(query_timings_file, 'r') as f:
-        query_timings_data = json.load(f)
-    
-    with open(query_summaries_file, 'r') as f:
-        query_summaries_data = json.load(f)
-    
-    # Reconstruct the query_timings structure
-    query_timings = {
-        'timings': query_timings_data,
-        'summaries': query_summaries_data
-    }
-    
+    index_overall = pd.read_csv(index_overall_file)
+    index_per_op = pd.read_csv(index_per_op_file)
+    query_overall = pd.read_csv(query_overall_file)
+    query_per_op = pd.read_csv(query_per_op_file)
+
     with open(metadata_file, 'r') as f:
         metadata = json.load(f)
     
@@ -51,7 +42,7 @@ def load_measurements(measurements_dir: str) -> tuple[dict, dict, dict]:
     print(f"Loaded query execution timings and summaries")
     print(f"Loaded metadata for {len(metadata['videos'])} videos")
     
-    return index_timings, query_timings, metadata
+    return index_overall, index_per_op, query_overall, query_per_op, metadata
 
 
 def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, dataset: str, 
@@ -72,26 +63,9 @@ def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, da
     
     # Group by classifier, tile size, and tilepadding
     classifiers = CLASSIFIERS_TO_TEST
-    tilesizes = [30, 60]
+    tilesizes = TILE_SIZES
     
-    # Check if this dataset uses the new format with tilepadding parameter
-    has_tilepadding_format = False
-    for stage in stages:
-        for classifier in classifiers:
-            for tilesize in tilesizes:
-                test_config_key = f"{video}_{classifier}_{tilesize}_padded"
-                if test_config_key in query_timings['timings'][stage]:
-                    has_tilepadding_format = True
-                    break
-            if has_tilepadding_format:
-                break
-        if has_tilepadding_format:
-            break
-    
-    if has_tilepadding_format:
-        tilepadding_values = ['padded', 'unpadded']
-    else:
-        tilepadding_values = ['N/A']
+    tilepadding_values = [*TILEPADDING_MODES.keys()]
     
     # Find which classifiers actually have data for this video
     available_classifiers = set()
@@ -99,10 +73,7 @@ def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, da
         for classifier in classifiers:
             for tilesize in tilesizes:
                 for tilepadding in tilepadding_values:
-                    if has_tilepadding_format:
-                        config_key = f"{video}_{classifier}_{tilesize}_{tilepadding}"
-                    else:
-                        config_key = f"{video}_{classifier}_{tilesize}_N/A"
+                    config_key = f"{video}_{classifier}_{tilesize}_{tilepadding}"
                     if config_key in query_timings['timings'][stage]:
                         available_classifiers.add(classifier)
     
@@ -124,12 +95,8 @@ def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, da
             for tilesize in tilesizes:
                 for tilepadding in tilepadding_values:
                     # Per-video analysis
-                    if has_tilepadding_format:
-                        config_key = f"{video}_{classifier}_{tilesize}_{tilepadding}"
-                        config_labels.append(f"{classifier} {tilesize} {tilepadding}")
-                    else:
-                        config_key = f"{video}_{classifier}_{tilesize}_N/A"
-                        config_labels.append(f"{classifier} {tilesize}")
+                    config_key = f"{video}_{classifier}_{tilesize}_{tilepadding}"
+                    config_labels.append(f"{classifier} {tilesize} {tilepadding}")
                     
                     # Get individual timings for this config to group by operation
                     config_ops = defaultdict(float)
@@ -143,10 +110,7 @@ def visualize_breakdown_query_execution(query_timings: dict, output_dir: str, da
                     for other_classifier in classifiers:
                         for other_tilesize in tilesizes:
                             for other_tilepadding in tilepadding_values:
-                                if has_tilepadding_format:
-                                    other_config_key = f"{video}_{other_classifier}_{other_tilesize}_{other_tilepadding}"
-                                else:
-                                    other_config_key = f"{video}_{other_classifier}_{other_tilesize}_N/A"
+                                other_config_key = f"{video}_{other_classifier}_{other_tilesize}_{other_tilepadding}"
                                 if other_config_key in query_timings['timings'][stage]:
                                     for timing in query_timings['timings'][stage][other_config_key]:
                                         all_ops.add(timing.get('op', 'unknown'))
@@ -363,7 +327,7 @@ def visualize_overall_runtime(index_timings: dict, query_timings: dict,
                         parts = config_key.split('_')
                         if len(parts) >= 4:
                             remaining = '_'.join(parts[1:])
-                            if (remaining.split('_')[-1] in ['padded', 'unpadded'] and 
+                            if (remaining.split('_')[-1] in TILEPADDING_MODES.keys() and 
                                 remaining.split('_')[-2].isdigit()):
                                 config_tilepadding = remaining.split('_')[-1]
                                 config_tilesize = int(remaining.split('_')[-2])
@@ -613,12 +577,12 @@ def extract_video_names(query_timings: dict) -> list[str]:
     return sorted(list(videos))
 
 
-def visualize_breakdown_query_execution_all(query_timings: dict, output_dir: str, dataset: str = 'b3d'):
+def visualize_breakdown_query_execution_all(query_overall: pd.DataFrame, query_per_op: pd.DataFrame, output_dir: str, dataset: str = 'b3d'):
     """Create visualizations for query execution runtime breakdown."""
     os.makedirs(output_dir, exist_ok=True)
     
     # Extract all videos from the data
-    videos = extract_video_names(query_timings)
+    videos = query_overall['video'].unique()
     print(f"Found {len(videos)} videos: {videos}")
     
     # Create per-video visualizations
@@ -652,12 +616,12 @@ def main():
         
         assert os.path.exists(measurements_dir), f"Error: Measurements directory {measurements_dir} does not exist."
         
-        index_timings, query_timings, metadata = load_measurements(measurements_dir)
+        index_overall, index_per_op, query_overall, query_per_op, metadata = load_measurements(measurements_dir)
         
         throughput_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
-        visualize_breakdown_query_execution_all(query_timings, throughput_dir, dataset)
+        visualize_breakdown_query_execution_all(query_overall, query_per_op, throughput_dir, dataset)
         
-        visualize_overal_runtime_all(index_timings, query_timings, throughput_dir)
+        visualize_overal_runtime_all(index_timings, query_per_op, throughput_dir)
         
         print(f"Visualization complete for {dataset}! Results saved to: {throughput_dir}")
         print("- Per-video visualizations saved in per_video/ subdirectory")

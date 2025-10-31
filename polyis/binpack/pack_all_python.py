@@ -53,27 +53,29 @@ def try_pack(polyomino: np.ndarray, occupied_tiles: np.ndarray) -> Placement | N
         Placement object with successful position and rotation if found, None otherwise.
         The occupied_tiles is modified in-place when a successful placement is found.
     """
-    # Try all 4 possible rotations (0°, 90°, 180°, 270°)
-    for rotation in range(4):
-        # Rotate the polyomino by 90 degrees * rotation counter-clockwise
-        rotated = np.rot90(polyomino, rotation)
-        # Get dimensions of the rotated polyomino
-        ph, pw = rotated.shape
-        # Get dimensions of the collage
-        ch, cw = occupied_tiles.shape
+    # # Try all 4 possible rotations (0°, 90°, 180°, 270°)
+    # for rotation in range(4):
+    # Rotate the polyomino by 90 degrees * rotation counter-clockwise
+    # rotated = np.rot90(polyomino, rotation)
+    rotated = polyomino
+    # Get dimensions of the rotated polyomino
+    ph, pw = rotated.shape
+    # Get dimensions of the collage
+    ch, cw = occupied_tiles.shape
 
-        # Try all possible positions where the polyomino would fit
-        for y in range(ch - ph + 1):
-            for x in range(cw - pw + 1):
-                # Extract the window where we want to place the polyomino
-                window = occupied_tiles[y : y + ph, x : x + pw]
-                # Check if there's no overlap between existing collage and polyomino
-                # Using bitwise AND: if any cell is occupied in both, placement is invalid
-                if not np.any(window & rotated):
-                    # Place the polyomino by adding it to the collage
-                    occupied_tiles[y : y + ph, x : x + pw] += rotated
-                    # Return the successful placement coordinates and rotation
-                    return Placement(y, x, rotation)
+    # Try all possible positions where the polyomino would fit
+    for y in range(ch - ph + 1):
+        for x in range(cw - pw + 1):
+            # Extract the window where we want to place the polyomino
+            window = occupied_tiles[y : y + ph, x : x + pw]
+            # Check if there's no overlap between existing collage and polyomino
+            # Using bitwise AND: if any cell is occupied in both, placement is invalid
+            if not np.any(window & rotated):
+                # Place the polyomino by adding it to the collage
+                occupied_tiles[y : y + ph, x : x + pw] += rotated
+                # Return the successful placement coordinates and rotation
+                # return Placement(y, x, rotation)
+                return Placement(y, x, 0)
 
 
 def pack_all(polyominoes_stacks: list[int], h: int, w: int) -> list[list[PolyominoPosition]]:
