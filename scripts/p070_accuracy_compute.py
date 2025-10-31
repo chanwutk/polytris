@@ -289,7 +289,7 @@ def main(args):
         - Groundtruth data should be in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl
         - Results are saved to:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tilesize}_{tilepadding}/
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{tilepadding}/
           ├── DATASET.json (combined results)
           ├── {video}.json (individual video results)
           └── LOG.txt (evaluation logs)
@@ -325,7 +325,7 @@ def main(args):
         # Create one evaluation task per classifier/tilesize/tilepadding combination
         # Each task will evaluate all videos in the dataset for that combination
         for cl, ts, tilepadding in classifier_tilesizes:
-            output_dir = os.path.join(evaluation_dir, f'{cl}_{ts}_{tilepadding}')
+            output_dir = os.path.join(evaluation_dir, 'raw', f'{cl}_{ts}_{tilepadding}')
             # Create a partial function with all arguments bound except the function call
             eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos,
                                       cl, ts, tilepadding, metrics_list, output_dir))

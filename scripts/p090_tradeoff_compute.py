@@ -11,7 +11,7 @@ from rich.progress import track
 import pandas as pd
 
 from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST, METRICS, get_video_frame_count
-from scripts.p071_accuracy_visualize import load_saved_results
+from scripts.p071_accuracy_aggregate import load_raw_results
 
 
 def parse_args():
@@ -39,11 +39,11 @@ def load_accuracy_results(dataset: str) -> Tuple[List[Dict[str, Any]], Dict[str,
             - List of individual video evaluation results
             - Dictionary mapping classifier_tilesize_tilepadding to combined dataset results
     """
-    # Load individual video results using the shared function
-    individual_results = load_saved_results(dataset, combined=False)
+    # Load individual video results using the shared function (raw, unparsed results)
+    individual_results = load_raw_results(dataset, combined=False)
     
-    # Load combined dataset results using the shared function
-    combined_results_list = load_saved_results(dataset, combined=True)
+    # Load combined dataset results using the shared function (raw, unparsed results)
+    combined_results_list = load_raw_results(dataset, combined=True)
     
     # Convert combined results list to dictionary keyed by classifier_tilesize_tilepadding
     # This format is expected by the match_accuracy_throughput_data function
@@ -494,7 +494,7 @@ def main(args):
         
     Note:
         - The script expects accuracy results from p070_accuracy_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tilesize}/{video_name}.json
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{tilepadding}/
         - The script expects throughput results from p081_throughput_compute.py in:
           {CACHE_DIR}/{dataset}/evaluation/080_throughput/measurements/query_execution_summaries.json
         - Results are saved to: {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/

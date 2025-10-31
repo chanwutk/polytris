@@ -11,6 +11,7 @@ import altair as alt
 import pandas as pd
 
 from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
+from scripts.p071_accuracy_aggregate import load_saved_results, save_results_csv
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -53,11 +54,15 @@ def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, str
     evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_accuracy')
     assert os.path.exists(evaluation_dir), f"Evaluation directory {evaluation_dir} does not exist"
     
+    # Construct path to raw results directory
+    raw_dir = os.path.join(evaluation_dir, 'raw')
+    assert os.path.exists(raw_dir), f"Raw results directory {raw_dir} does not exist"
+    
     # Collect all classifier/tilesize/tilepadding combinations
     classifier_tile_combinations: list[tuple[str, int, str]] = []
     
     # Iterate through all classifier-tilesize-tilepadding directories
-    for classifier_tilesize_tilepadding in os.listdir(evaluation_dir):
+    for classifier_tilesize_tilepadding in os.listdir(raw_dir):
         # Parse classifier, tile size, and tilepadding from directory name
         parts = classifier_tilesize_tilepadding.split('_')
         assert len(parts) == 3, f"Expected format 'classifier_tilesize_tilepadding', got '{classifier_tilesize_tilepadding}'"
@@ -66,7 +71,7 @@ def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, str
         
         # Verify that the required DATASET.json file exists
         # This ensures the evaluation was completed successfully
-        dataset_results_path = os.path.join(evaluation_dir, f'{classifier}_{ts}_{tilepadding}', 'DATASET.json')
+        dataset_results_path = os.path.join(raw_dir, f'{classifier}_{ts}_{tilepadding}', 'DATASET.json')
         assert os.path.exists(dataset_results_path), f"Dataset results path {dataset_results_path} does not exist"
         
         # Add this combination to our list
@@ -126,10 +131,11 @@ def load_saved_results(dataset: str, combined: bool = False):
     # Initialize results list
     results = []
     evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+    raw_dir = os.path.join(evaluation_dir, 'raw')
     
     # Process each classifier/tilesize/tilepadding combination
     for classifier, tilesize, tilepadding in classifier_tile_combinations:
-        combination_dir = os.path.join(evaluation_dir, f'{classifier}_{tilesize}_{tilepadding}')
+        combination_dir = os.path.join(raw_dir, f'{classifier}_{tilesize}_{tilepadding}')
         
         # Load result files based on the combined parameter
         for filename in os.listdir(combination_dir):
@@ -169,12 +175,12 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
     # Create horizontal bar chart with text labels inside bars
     # Main bars showing the scores
     if score_field.startswith('Count.'):
-        scale = {}
+        x_encoding = alt.X('Score:Q', title=xlabel)
     else:
-        scale = {'scale': alt.Scale(domain=[0, 1])}
+        x_encoding = alt.X('Score:Q', title=xlabel, scale=alt.Scale(domain=[0, 1]))
 
     bars = alt.Chart(df).mark_bar().encode(
-        x=alt.X('Score:Q', title=xlabel, **scale),
+        x=x_encoding,
         # yOffset=alt.YOffset('Dilate:N'),
         color=alt.Color('Tile_Padding:N', title='Tile Padding'),
         tooltip=['Video', 'Tile_Size', 'Tile_Padding', 'Classifier', alt.Tooltip('Score:Q', format='.2f')]
@@ -243,10 +249,6 @@ def visualize_tracking_accuracy(results: pd.DataFrame, output_dir: str, combined
     print("Creating visualizations...")
     # Set prefix for output files based on whether these are combined results
     prefix = "combined_" if combined else ""
-    
-    # Save results to CSV for further analysis
-    csv_file_path = os.path.join(output_dir, f'{prefix}accuracy_results.csv')
-    results.to_csv(csv_file_path, index=False)
 
     metrics = [
         ('HOTA.HOTA', 'HOTA Score'),
@@ -278,7 +280,7 @@ def main(args):
         
     Note:
         - The script expects accuracy results from p070_accuracy_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tilesize}_{tilepadding}/
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{tilepadding}/
           ├── DATASET.json (combined results)
           ├── {video_name}.json (individual video results)
           └── LOG.txt (evaluation logs)
