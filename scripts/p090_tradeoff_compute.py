@@ -19,16 +19,16 @@ from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST, D
 def get_video_frame_count(dataset: str, video_name: str) -> int:
     """
     Get the total number of frames in a video using OpenCV.
-    
+
     Args:
         dataset (str): Dataset name
-        video_name (str): Video name (without extension)
-        
+        video_name (str): Video name (with extension, e.g., 'te01.mp4')
+
     Returns:
         int: Total number of frames in the video
     """
-    # Construct video path - assume .mp4 extension
-    video_path = os.path.join(DATA_DIR, dataset, f"{video_name}")
+    # Construct video path - videos are in /polyis-data/datasets/{dataset}/test/
+    video_path = os.path.join('/polyis-data/datasets', dataset, 'test', video_name)
     
     if not os.path.exists(video_path):
         print(f"Warning: Video file not found for {dataset}/{video_name}")
@@ -114,109 +114,104 @@ def load_accuracy_results(dataset: str) -> Tuple[List[Dict[str, Any]], Dict[str,
 def load_throughput_results(dataset: str) -> Dict[str, Any]:
     """
     Load throughput results from the measurements directory.
-    
+
     Args:
         dataset (str): Dataset name
-        
+
     Returns:
-        Dict[str, Any]: Throughput measurement data
+        Dict[str, Any]: Throughput measurement data with CSV DataFrames
     """
     measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
-    
+
     if not os.path.exists(measurements_dir):
         print(f"Throughput measurements directory {measurements_dir} does not exist")
         return {}
-    
-    # Load query execution summaries (aggregated timing data)
-    query_summaries_file = os.path.join(measurements_dir, 'query_execution_summaries.json')
-    if not os.path.exists(query_summaries_file):
-        print(f"Query execution summaries file {query_summaries_file} does not exist")
+
+    # Load CSV files
+    query_overall_file = os.path.join(measurements_dir, 'query_execution_overall.csv')
+    if not os.path.exists(query_overall_file):
+        print(f"Query execution overall file {query_overall_file} does not exist")
         return {}
-    
-    with open(query_summaries_file, 'r') as f:
-        query_summaries = json.load(f)
-    
+
+    query_overall = pd.read_csv(query_overall_file)
+
     # Load metadata
     metadata_file = os.path.join(measurements_dir, 'metadata.json')
     metadata = {}
     if os.path.exists(metadata_file):
         with open(metadata_file, 'r') as f:
             metadata = json.load(f)
-    
-    print(f"Loaded throughput data with {len(query_summaries)} stage summaries")
+
+    print(f"Loaded throughput data with {len(query_overall)} query execution records")
     return {
-        'summaries': query_summaries,
+        'query_overall': query_overall,
         'metadata': metadata
     }
 
 
-def calculate_naive_runtime(video_name: str, query_summaries: Dict[str, Any], dataset: str) -> float:
+def calculate_naive_runtime(video_name: str, query_overall: pd.DataFrame, dataset: str) -> float:
     """
     Calculate naive runtime for a specific video.
-    
+
     This matches the naive calculation in p082_throughput_visualize.py,
     which sums the preprocessing stages (detection and tracking).
-    
+
     Args:
         video_name: Name of the video
-        query_summaries: Query execution timing data
+        query_overall: Query execution overall timing DataFrame
         dataset: Dataset name
-        
+
     Returns:
         float: Naive runtime in seconds
     """
-    naive_runtime = 0.0
-    
     # Add preprocessing time (naive approach)
-    # Try both tilepadding and notilepadding versions since naive approach should be the same for both
     preprocessing_stages = ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking']
-    config_key = f"{dataset}/{video_name}_groundtruth_0_N/A"  # Naive uses groundtruth with tile size 0
-    for stage_name, stage_summaries in query_summaries.items():
-        if stage_name in preprocessing_stages and config_key in stage_summaries:
-            # Assert that execution stages have numeric values (int or float)
-            assert isinstance(stage_summaries[config_key], (int, float)), \
-                f"Execution stage {stage_name} should have numeric value (int/float), " \
-                f"got {type(stage_summaries[config_key])}: {stage_summaries[config_key]}"
-            stage_total = stage_summaries[config_key]
-            naive_runtime += stage_total
-            break  # Only need one tilepadding version since naive is the same for both
-    
+
+    # Filter for this video and preprocessing stages with tilesize 0
+    naive_data = query_overall[
+        (query_overall['video'] == video_name) &
+        (query_overall['stage'].isin(preprocessing_stages)) &
+        (query_overall['tilesize'] == 0)
+    ]
+
+    naive_runtime = naive_data['time'].sum()
+
     return naive_runtime
 
 
 def calculate_query_execution_runtime(video_name: str, classifier: str, tilesize: int, tilepadding: str,
-                                    query_summaries: Dict[str, Any], dataset: str) -> float:
+                                    query_overall: pd.DataFrame, dataset: str) -> float:
     """
     Calculate query execution runtime for a specific configuration.
-    
+
     This matches the query execution portion of the bars in p082_throughput_visualize.py,
     ignoring index construction time.
-    
+
     Args:
         video_name: Name of the video
         classifier: Classifier used
         tilesize: Tile size used
         tilepadding: Tile padding used
-        query_summaries: Query execution timing data
+        query_overall: Query execution overall timing DataFrame
         dataset: Dataset name
-        
+
     Returns:
         float: Query execution runtime in seconds
     """
-    config_key = f"{dataset}/{video_name}_{classifier}_{tilesize}_{tilepadding}"
-    query_runtime = 0.0
-    
     # Add query execution time (specific to this tile size)
     query_stages = ['020_exec_classify', '030_exec_compress', '040_exec_detect', '060_exec_track']
-    for stage_name, stage_summaries in query_summaries.items():
-        if stage_name in query_stages and config_key in stage_summaries:
-            # Assert that execution stages have numeric values (int or float)
-            assert isinstance(stage_summaries[config_key], (int, float)), \
-                f"Execution stage {stage_name} should have numeric value (int/float), " \
-                f"got {type(stage_summaries[config_key])}: {stage_summaries[config_key]}"
-            stage_total = stage_summaries[config_key]
-            query_runtime += stage_total
-    
+
+    # Filter for this configuration
+    config_data = query_overall[
+        (query_overall['video'] == video_name) &
+        (query_overall['stage'].isin(query_stages)) &
+        (query_overall['classifier'] == classifier) &
+        (query_overall['tilesize'] == tilesize) &
+        (query_overall['tilepadding'] == tilepadding)
+    ]
+
+    query_runtime = config_data['time'].sum()
+
     return query_runtime
 
 
@@ -228,94 +223,65 @@ def match_accuracy_throughput_data(
 ) -> tuple[list[dict], list[dict]]:
     """
     Match accuracy and throughput data by video/classifier/tilesize combination.
-    
+
     Args:
         accuracy_results: List of individual video accuracy evaluation results
-        throughput_data: Throughput measurement data
+        throughput_data: Throughput measurement data (contains query_overall DataFrame)
         combined_results: Dictionary mapping classifier_tilesize to combined dataset accuracy results
-        
+
     Returns:
-        tuple[list[dict], list[dict]]: 
+        tuple[list[dict], list[dict]]:
             - Individual video data points
             - Dataset-wide aggregated data points using actual combined accuracy scores
     """
     matched_data = []
-    query_summaries = throughput_data.get('summaries', {})
-    query_timings = throughput_data.get('timings', {})
-    
-    # Key stages for query execution throughput
-    query_stages = ['020_exec_classify', '030_exec_compress', '040_exec_detect', '060_exec_track']
-    
+    query_overall = throughput_data.get('query_overall')
+
     # Cache frame counts to avoid repeated OpenCV calls
     frame_count_cache = {}
-    
+
     # Group data by classifier and tilesize for aggregation
     grouped_data = defaultdict(list)
-    
+
     print(f"Processing {len(accuracy_results)} accuracy results for matching...")
-    
-    # Debug: Show available throughput config keys
-    print(f"Available throughput stages: {list(query_summaries.keys())}")
-    for stage_name, stage_data in query_summaries.items():
-        if stage_data:
-            sample_keys = list(stage_data.keys())[:3]  # Show first 3 keys
-            print(f"  {stage_name}: {len(stage_data)} configs, sample keys: {sample_keys}")
-    
+
     processed_count = 0
     matched_count = 0
-    
+
     for result in accuracy_results:
         # Skip combined results (video_name is None) - we only want individual video results
         if result.get('video_name') is None:
             continue
-            
+
         video_name = result['video_name']
         classifier = result['classifier']
         tilesize = result['tilesize']
         tilepadding = result['tilepadding']
-        
+
         # Only include classifiers from CLASSIFIERS_TO_TEST
         if classifier not in CLASSIFIERS_TO_TEST + ['Perfect']:
             print(f"Skipping classifier {classifier} (not in CLASSIFIERS_TO_TEST + ['Perfect'])")
             continue
-        
+
         processed_count += 1
-        
-        # Create config key for throughput lookup (include dataset prefix)
-        config_key = f"{dataset}/{video_name}_{classifier}_{tilesize}_{tilepadding}"
-        print(f"Looking for config_key: {config_key}")
-        
+
         # Extract accuracy metrics
         metrics = result['metrics']
         hota_score = metrics.get('HOTA', {}).get('HOTA(0)', 0.0)
         mota_score = metrics.get('CLEAR', {}).get('MOTA', 0.0)
-        
+
         # Get frame count (with caching)
         if video_name not in frame_count_cache:
             frame_count_cache[video_name] = get_video_frame_count(dataset, video_name)
         frame_count = frame_count_cache[video_name]
-        
-        # Calculate total query execution time (for reference)
-        total_query_time = 0.0
-        stage_times = {}
-        
-        for stage in query_stages:
-            if stage in query_summaries and config_key in query_summaries[stage]:
-                # Assert that execution stages have numeric values (int or float)
-                assert isinstance(query_summaries[stage][config_key], (int, float)), \
-                    "Execution stage {stage} should have numeric value (int/float), " \
-                    f"got {type(query_summaries[stage][config_key])}: {query_summaries[stage][config_key]}"
-                stage_time = query_summaries[stage][config_key]
-                stage_times[stage] = stage_time
-                total_query_time += stage_time
-        
+
         # Calculate query execution runtime only
-        query_runtime = calculate_query_execution_runtime(video_name, classifier, tilesize, 
-                                                          tilepadding, query_summaries, dataset)
-        
+        query_runtime = calculate_query_execution_runtime(video_name, classifier, tilesize,
+                                                          tilepadding, query_overall, dataset)
+
         # Calculate throughput (frames per second)
         throughput_fps = frame_count / query_runtime if query_runtime > 0 else 0.0
-        
+
         matched_entry = {
             'video_name': video_name,
             'classifier': classifier,
@@ -323,26 +289,26 @@ def match_accuracy_throughput_data(
             'tilepadding': tilepadding,
             'hota_score': hota_score,
             'mota_score': mota_score,
-            'total_query_time': total_query_time,
+            'total_query_time': query_runtime,  # Now same as query_runtime
             'query_runtime': query_runtime,
             'frame_count': frame_count,
             'throughput_fps': throughput_fps,
-            'stage_times': stage_times
+            'stage_times': {}  # No longer tracking individual stage times
         }
-        
+
         matched_data.append(matched_entry)
         matched_count += 1
-        
+
         # Group by classifier, tilesize, and tilepadding for aggregation
         group_key = (classifier, tilesize, tilepadding)
         grouped_data[group_key].append(matched_entry)
-    
+
     # Create dataset-wide aggregated data using actual combined accuracy scores
     aggregated_data = []
     for (classifier, tilesize, tilepadding), entries in grouped_data.items():
         if not entries:
             continue
-            
+
         # Get actual combined accuracy scores from DATASET.json
         combination_key = f"{classifier}_{tilesize}_{tilepadding}"
         assert combination_key in combined_results, \
@@ -352,12 +318,12 @@ def match_accuracy_throughput_data(
         actual_mota = combined_metrics.get('CLEAR', {}).get('MOTA', 0.0)
         print(f"Using actual combined accuracy scores for {combination_key}: " \
             f"HOTA={actual_hota:.3f}, MOTA={actual_mota:.3f}")
-            
+
         # Calculate combined runtime and throughput
         total_frames = sum([entry['frame_count'] for entry in entries])
         total_runtime = sum([entry['query_runtime'] for entry in entries])
         combined_throughput = total_frames / total_runtime if total_runtime > 0 else 0.0
-        
+
         aggregated_entry = {
             'video_name': 'Dataset Average',
             'classifier': classifier,
@@ -365,35 +331,35 @@ def match_accuracy_throughput_data(
             'tilepadding': tilepadding,
             'hota_score': actual_hota,
             'mota_score': actual_mota,
-            'total_query_time': sum([entry['total_query_time'] for entry in entries]),
+            'total_query_time': total_runtime,
             'query_runtime': total_runtime,
             'frame_count': total_frames,
             'throughput_fps': combined_throughput,
             'stage_times': {}  # Not used for aggregated data
         }
-        
+
         aggregated_data.append(aggregated_entry)
-    
+
     print(f"Processed {processed_count} accuracy results")
     print(f"Matched {matched_count} individual accuracy-throughput data points")
     print(f"Created {len(aggregated_data)} dataset-wide aggregated data points")
     return matched_data, aggregated_data
 
 
-def compute_tradeoff(matched_data: list[dict], aggregated_data: list[dict], 
-                       output_dir: str, metrics_list: list[str], query_summaries: dict, 
+def compute_tradeoff(matched_data: list[dict], aggregated_data: list[dict],
+                       output_dir: str, metrics_list: list[str], query_overall: pd.DataFrame,
                        dataset: str, x_column: str, x_title: str,
-                       naive_column: Literal['naive_runtime', 'naive_throughput'], 
+                       naive_column: Literal['naive_runtime', 'naive_throughput'],
                        plot_suffix: str, csv_suffix: str):
     """
     Compute tradeoff data with configurable x-axis, including dataset-wide aggregated data.
-    
+
     Args:
         matched_data: List of individual video accuracy-throughput data points
         aggregated_data: List of dataset-wide aggregated data points
         output_dir: Output directory for data files
         metrics_list: List of metrics to compute
-        query_summaries: Query execution timing data
+        query_overall: Query execution overall timing DataFrame
         dataset: Dataset name
         x_column: Column name for x-axis data
         x_title: Title for x-axis
@@ -402,7 +368,7 @@ def compute_tradeoff(matched_data: list[dict], aggregated_data: list[dict],
         csv_suffix: Suffix for CSV filename
     """
     print(f"Computing {plot_suffix} tradeoff data...")
-    
+
     assert len(matched_data) > 0, \
         f"No matched data available for {plot_suffix} computation"
     assert len(aggregated_data) > 0, \
@@ -410,16 +376,16 @@ def compute_tradeoff(matched_data: list[dict], aggregated_data: list[dict],
 
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Create DataFrame for easier data handling
     df = pd.DataFrame(matched_data)
     df_agg = pd.DataFrame(aggregated_data)
-    
+
     # Calculate naive values for each video
     unique_videos = sorted(df['video_name'].unique())
     naive_values = {}
     for video in unique_videos:
-        naive_runtime = calculate_naive_runtime(video, query_summaries, dataset)
+        naive_runtime = calculate_naive_runtime(video, query_overall, dataset)
         if naive_column == 'naive_runtime':
             naive_values[video] = naive_runtime
         elif naive_column == 'naive_throughput':
@@ -436,18 +402,18 @@ def compute_tradeoff(matched_data: list[dict], aggregated_data: list[dict],
                 f"Naive runtime must be greater than 0, got {naive_runtime}"
             naive_throughput = frame_count / naive_runtime
             naive_values[video] = naive_throughput
-    
+
     # Add naive data to dataframe
     df_with_naive = df.copy()
     df_with_naive[naive_column] = df_with_naive['video_name'].map(naive_values)  # type: ignore
-    
+
     # Save matched data to CSV
     csv_file_path = os.path.join(output_dir, f'individual_accuracy_{csv_suffix}_tradeoff.csv')
     df_with_naive.to_csv(csv_file_path, index=False)
     print(f"Saved matched data to: {csv_file_path}")
-    
+
     # Calculate dataset-wide naive values
-    total_naive_runtime = sum([calculate_naive_runtime(video, query_summaries, dataset) for video in unique_videos])
+    total_naive_runtime = sum([calculate_naive_runtime(video, query_overall, dataset) for video in unique_videos])
     if naive_column == 'naive_runtime':
         dataset_naive_value = total_naive_runtime
     elif naive_column == 'naive_throughput':
@@ -455,7 +421,7 @@ def compute_tradeoff(matched_data: list[dict], aggregated_data: list[dict],
         assert total_naive_runtime > 0, \
             f"Total naive runtime must be greater than 0, got {total_naive_runtime}"
         dataset_naive_value = total_frames / total_naive_runtime
-    
+
     # Add dataset naive value to aggregated dataframe
     df_agg_with_naive = df_agg.copy()
     df_agg_with_naive[naive_column] = dataset_naive_value
@@ -464,36 +430,36 @@ def compute_tradeoff(matched_data: list[dict], aggregated_data: list[dict],
     csv_file_path_agg = os.path.join(output_dir, f'combined_accuracy_{csv_suffix}_tradeoff.csv')
     df_agg_with_naive.to_csv(csv_file_path_agg, index=False)
     print(f"Saved matched aggregated data to: {csv_file_path_agg}")
-    
+
     print(f"Computed tradeoff data for {plot_suffix} - visualization skipped")
 
 
 def compute_tradeoffs(matched_data: list[dict], aggregated_data: list[dict], output_dir: str,
-                      metrics_list: list[str], query_summaries: dict, dataset: str):
+                      metrics_list: list[str], query_overall: pd.DataFrame, dataset: str):
     """
     Compute both runtime and throughput tradeoff data.
-    
+
     Args:
         matched_data: List of individual video accuracy-throughput data points
         aggregated_data: List of dataset-wide aggregated data points
         output_dir: Output directory for data files
         metrics_list: List of metrics to compute
-        query_summaries: Query execution timing data
+        query_overall: Query execution overall timing DataFrame
         dataset: Dataset name
     """
     # Compute runtime data
     compute_tradeoff(
-        matched_data, aggregated_data, output_dir, metrics_list, query_summaries, dataset,
+        matched_data, aggregated_data, output_dir, metrics_list, query_overall, dataset,
         x_column='query_runtime',
         x_title='Query Execution Runtime (seconds)',
         naive_column='naive_runtime',
         plot_suffix='runtime',
         csv_suffix='runtime'
     )
-    
+
     # Compute throughput data
     compute_tradeoff(
-        matched_data, aggregated_data, output_dir, metrics_list, query_summaries, dataset,
+        matched_data, aggregated_data, output_dir, metrics_list, query_overall, dataset,
         x_column='throughput_fps',
         x_title='Throughput (frames/second)',
         naive_column='naive_throughput',
@@ -544,7 +510,7 @@ def process_dataset(dataset: str):
     # Compute tradeoff data
     output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
     compute_tradeoffs(matched_data, aggregated_data, output_dir,
-                                   metrics_list, throughput_data['summaries'], dataset)
+                                   metrics_list, throughput_data['query_overall'], dataset)
     
     print(f"Completed processing dataset: {dataset}")
 
