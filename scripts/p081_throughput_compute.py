@@ -162,7 +162,7 @@ def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[d
         
         all_per_op.append(per_op)
 
-        total_time = int(per_op['time'].sum())
+        total_time = float(per_op['time'].sum())
         overall.append({
             'stage': stage,
             'dataset': dataset,

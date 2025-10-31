@@ -4,14 +4,12 @@ import argparse
 import json
 import os
 import shutil
-from typing import Any
 
 import numpy as np
 import altair as alt
 import pandas as pd
 
 from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
-from scripts.p071_accuracy_aggregate import load_saved_results, save_results_csv
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -31,126 +29,7 @@ def parse_args():
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
-    parser.add_argument('--clear', action='store_true',
-                        help='Remove and recreate the 070_accuracy evaluation directory for each dataset')
     return parser.parse_args()
-
-
-def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, str]]:
-    """
-    Find all classifier/tilesize/tilepadding combinations with saved accuracy results.
-    
-    Scans the evaluation directory to discover all classifier/tilesize/tilepadding combinations
-    that have completed accuracy evaluation results available.
-    
-    Args:
-        cache_dir (str): Cache directory path
-        dataset (str): Dataset name
-        
-    Returns:
-        list[tuple[str, int, str]]: list of (classifier, tilesize, tilepadding) tuples
-    """
-    # Construct path to evaluation directory for this dataset
-    evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_accuracy')
-    assert os.path.exists(evaluation_dir), f"Evaluation directory {evaluation_dir} does not exist"
-    
-    # Construct path to raw results directory
-    raw_dir = os.path.join(evaluation_dir, 'raw')
-    assert os.path.exists(raw_dir), f"Raw results directory {raw_dir} does not exist"
-    
-    # Collect all classifier/tilesize/tilepadding combinations
-    classifier_tile_combinations: list[tuple[str, int, str]] = []
-    
-    # Iterate through all classifier-tilesize-tilepadding directories
-    for classifier_tilesize_tilepadding in os.listdir(raw_dir):
-        # Parse classifier, tile size, and tilepadding from directory name
-        parts = classifier_tilesize_tilepadding.split('_')
-        assert len(parts) == 3, f"Expected format 'classifier_tilesize_tilepadding', got '{classifier_tilesize_tilepadding}'"
-        classifier, tilesize, tilepadding = parts
-        ts = int(tilesize)
-        
-        # Verify that the required DATASET.json file exists
-        # This ensures the evaluation was completed successfully
-        dataset_results_path = os.path.join(raw_dir, f'{classifier}_{ts}_{tilepadding}', 'DATASET.json')
-        assert os.path.exists(dataset_results_path), f"Dataset results path {dataset_results_path} does not exist"
-        
-        # Add this combination to our list
-        classifier_tile_combinations.append((classifier, ts, tilepadding))
-    
-    return classifier_tile_combinations
-
-
-def parse_result(result: dict) -> dict:
-    parsed = {
-        'Video': result['video'] or 'Combined',
-        'Dataset': result['dataset'],
-        'Classifier': result['classifier'],
-        'Tile_Size': result['tilesize'],
-        'Tile_Padding': result['tilepadding'],
-    }
-
-    metrics = result['metrics']
-    if 'HOTA' in metrics:
-        parsed['HOTA.HOTA'] = sum(metrics['HOTA']['HOTA']) / len(metrics['HOTA']['HOTA'])
-        parsed['HOTA.AssA'] = sum(metrics['HOTA']['AssA']) / len(metrics['HOTA']['AssA'])
-        parsed['HOTA.DetA'] = sum(metrics['HOTA']['DetA']) / len(metrics['HOTA']['DetA'])
-    if 'CLEAR' in metrics:
-        raise NotImplementedError("CLEAR metrics not implemented")
-        # base['CLEAR.MOTA'] = sum(metrics['CLEAR']['MOTA']) / len(metrics['CLEAR']['MOTA'])
-    if 'Count' in metrics:
-        count = metrics['Count']
-        # mean absolute percentage error
-        parsed['Count.DetsMAPE'] = (abs(count['Dets'] - count['GT_Dets']) * 100 / count['GT_Dets']
-                                    if count['GT_Dets'] > 0
-                                    else (0 if count['Dets'] == 0 else float('inf')))
-        parsed['Count.TracksMAPE'] = (abs(count['IDs'] - count['GT_IDs']) * 100 / count['GT_IDs']
-                                      if count['GT_IDs'] > 0
-                                      else (0 if count['IDs'] == 0 else float('inf')))
-    return parsed
-
-
-def load_saved_results(dataset: str, combined: bool = False):
-    """
-    Load saved accuracy results from result files.
-    
-    Loads either individual video results or combined dataset results based on
-    the combined parameter. Individual results are used for per-video visualizations,
-    while combined results are used for dataset-level visualizations.
-    
-    Args:
-        dataset (str): Dataset name
-        combined (bool): Whether to load combined results (DATASET.json) or individual video results
-        
-    Returns:
-        list[dict[str, Any]]: list of evaluation results
-    """
-    # Find all classifier/tilesize combinations with available results
-    classifier_tile_combinations = find_saved_results(CACHE_DIR, dataset)
-    assert len(classifier_tile_combinations) > 0, f"No saved results found for dataset {dataset}"
-
-    # Initialize results list
-    results = []
-    evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
-    raw_dir = os.path.join(evaluation_dir, 'raw')
-    
-    # Process each classifier/tilesize/tilepadding combination
-    for classifier, tilesize, tilepadding in classifier_tile_combinations:
-        combination_dir = os.path.join(raw_dir, f'{classifier}_{tilesize}_{tilepadding}')
-        
-        # Load result files based on the combined parameter
-        for filename in os.listdir(combination_dir):
-            # Load DATASET.json if combined=True, otherwise load individual video files
-            if filename.endswith('.json') and (filename == 'DATASET.json') == combined:
-                results_path = os.path.join(combination_dir, filename)
-                
-                print(f"Loading results from {results_path}")
-                # Load and parse JSON result file
-                with open(results_path, 'r') as f:
-                    result_data = json.load(f)
-                    results.append(parse_result(result_data))
-    
-    print(f"Loaded {len(results)} saved evaluation results")
-    return pd.DataFrame.from_records(results)
 
 
 def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xlabel: str, output_path: str):
@@ -292,32 +171,22 @@ def main(args):
     # Process each dataset separately to create independent visualizations
     for dataset in args.datasets:
         print(f"\nProcessing dataset: {dataset}")
+        results_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
         
-        # Clear 071_accuracy directory if requested
-        if args.clear:
-            accuracy_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '071_accuracy')
-            if os.path.exists(accuracy_dir):
-                shutil.rmtree(accuracy_dir)
-                print(f"Cleared existing 070_accuracy directory: {accuracy_dir}")
-        
-        # Load individual video results for per-video visualizations
-        # This loads results for all classifier/tilesize/tilepadding combinations
-        dataset_results = load_saved_results(dataset, combined=False)
+        dataset_results = pd.read_csv(os.path.join(results_dir, 'accuracy_combined.csv'))
+        combined_results = pd.read_csv(os.path.join(results_dir, 'accuracy_combined.csv'))
         assert len(dataset_results) > 0, f"No results found for dataset {dataset}"
+        assert len(combined_results) > 0, f"No combined results found for dataset {dataset}"
         
         # Create output directory for this dataset's visualizations
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '071_accuracy_visualize')
+        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '072_accuracy_visualize')
         
         # Clean and recreate output directory to ensure fresh results
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
         os.makedirs(output_dir, exist_ok=True)
         
-        # Create per-video visualizations using individual results
         visualize_tracking_accuracy(dataset_results, output_dir, combined=False)
-        
-        # Create dataset-level visualizations using combined results
-        combined_results = load_saved_results(dataset, combined=True)
         visualize_tracking_accuracy(combined_results, output_dir, combined=True)
         
         print(f"Results saved to: {output_dir}")
