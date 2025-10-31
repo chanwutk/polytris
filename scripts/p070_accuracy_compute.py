@@ -15,7 +15,7 @@ from rich.progress import track
 
 sys.path.append('/polyis/modules/TrackEval')
 import trackeval
-from trackeval.metrics import HOTA, CLEAR, Identity
+from trackeval.metrics import HOTA, CLEAR, Identity, Count
 
 from polyis.trackeval.dataset import Dataset
 from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
@@ -141,7 +141,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
 
     Output Structure:
         - DATASET.json: Combined results across all videos
-        - {video_name}.json: Individual video results
+        - {video}.json: Individual video results
         - LOG.txt: Evaluation logs and errors
     """
     print(f"Evaluating {len(videos)} videos with classifier {classifier}, tile size {tilesize}, and tilepadding {tilepadding}")
@@ -186,7 +186,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
     for metric_name in metrics_list:
         if metric_name == 'HOTA':
             # Higher Order Tracking Accuracy metric with 0.5 IoU threshold
-            metrics.append(HOTA({'THRESHOLD': 0.5}))
+            metrics.append(HOTA())
         elif metric_name == 'CLEAR':
             # CLEAR metrics (MOTA, MOTP, etc.) with 0.5 IoU threshold
             metrics.append(CLEAR({'THRESHOLD': 0.5, 'PRINT_CONFIG': False}))
@@ -242,7 +242,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
 
         # Extract metrics from TrackEval results for this sequence
         # Each metric object provides its name and the corresponding results
-        for metric in metrics:
+        for metric in metrics + [Count()]:
             metric_name = metric.get_name()
             assert metric_name in vehicle_results, \
                 f"Metric {metric_name} not found in {vehicle_results}"
@@ -253,7 +253,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         # Prepare result data structure with metadata
         # This creates a consistent structure for both individual and combined results
         result_data = {
-            'video_name': None if seq == 'COMBINED_SEQ' else seq,  # None for combined results
+            'video': None if seq == 'COMBINED_SEQ' else seq,  # None for combined results
             'dataset': dataset,
             'classifier': classifier,
             'tilesize': tilesize,
@@ -291,7 +291,7 @@ def main(args):
         - Results are saved to:
           {CACHE_DIR}/{dataset}/evaluation/070_accuracy/{classifier}_{tilesize}_{tilepadding}/
           ├── DATASET.json (combined results)
-          ├── {video_name}.json (individual video results)
+          ├── {video}.json (individual video results)
           └── LOG.txt (evaluation logs)
         - Multiple metrics are evaluated: HOTA, CLEAR (MOTA), and Identity (IDF1)
     """

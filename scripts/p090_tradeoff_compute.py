@@ -6,44 +6,12 @@ import os
 from typing import Dict, List, Literal, Tuple, Any
 from collections import defaultdict
 from multiprocessing import Pool
-from functools import partial
 
 from rich.progress import track
-import numpy as np
 import pandas as pd
-import cv2
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST, DATA_DIR, METRICS
-
-
-def get_video_frame_count(dataset: str, video_name: str) -> int:
-    """
-    Get the total number of frames in a video using OpenCV.
-
-    Args:
-        dataset (str): Dataset name
-        video_name (str): Video name (with extension, e.g., 'te01.mp4')
-
-    Returns:
-        int: Total number of frames in the video
-    """
-    # Construct video path - videos are in /polyis-data/datasets/{dataset}/test/
-    video_path = os.path.join('/polyis-data/datasets', dataset, 'test', video_name)
-    
-    if not os.path.exists(video_path):
-        print(f"Warning: Video file not found for {dataset}/{video_name}")
-        return 0
-    
-    # Open video and get frame count
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        print(f"Warning: Could not open video {video_path}")
-        return 0
-    
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    cap.release()
-    
-    return frame_count
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST, METRICS, get_video_frame_count
+from scripts.p071_accuracy_visualize import load_saved_results
 
 
 def parse_args():
@@ -60,7 +28,8 @@ def load_accuracy_results(dataset: str) -> Tuple[List[Dict[str, Any]], Dict[str,
     Load saved accuracy results from individual video result files and combined dataset results.
     
     Loads both individual video results and combined dataset results from the new evaluation 
-    directory structure created by p070_accuracy_compute.py.
+    directory structure created by p070_accuracy_compute.py. Reuses load_saved_results from
+    p071_accuracy_visualize.py to avoid code duplication.
     
     Args:
         dataset (str): Dataset name
@@ -68,32 +37,23 @@ def load_accuracy_results(dataset: str) -> Tuple[List[Dict[str, Any]], Dict[str,
     Returns:
         Tuple[List[Dict[str, Any]], Dict[str, Dict[str, Any]]]: 
             - List of individual video evaluation results
-            - Dictionary mapping classifier_tilesize to combined dataset results
+            - Dictionary mapping classifier_tilesize_tilepadding to combined dataset results
     """
-    # Construct path to evaluation directory for this dataset
-    evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
-    assert os.path.exists(evaluation_dir), f"Evaluation directory {evaluation_dir} does not exist"
+    # Load individual video results using the shared function
+    individual_results = load_saved_results(dataset, combined=False)
     
-    individual_results = []
+    # Load combined dataset results using the shared function
+    combined_results_list = load_saved_results(dataset, combined=True)
+    
+    # Convert combined results list to dictionary keyed by classifier_tilesize_tilepadding
+    # This format is expected by the match_accuracy_throughput_data function
     combined_results = {}
-    
-    # Iterate through all classifier-tilesize-tilepadding combinations
-    for classifier_tilesize_tilepadding in os.listdir(evaluation_dir):
-        combination_dir = os.path.join(evaluation_dir, classifier_tilesize_tilepadding)
-        assert os.path.isdir(combination_dir), f"Combination directory {combination_dir} does not exist"
-        
-        # Load individual video result files (exclude DATASET.json)
-        for filename in os.listdir(combination_dir):
-            if filename.endswith('.json'):
-                results_path = os.path.join(combination_dir, filename)
-                assert os.path.exists(results_path), f"Results file {results_path} does not exist"
-                
-                with open(results_path, 'r') as f:
-                    result_data = json.load(f)
-                    if filename == 'DATASET.json':
-                        combined_results[classifier_tilesize_tilepadding] = result_data
-                    else:
-                        individual_results.append(result_data)
+    for result in combined_results_list:
+        classifier = result['classifier']
+        tilesize = result['tilesize']
+        tilepadding = result['tilepadding']
+        combination_key = f"{classifier}_{tilesize}_{tilepadding}"
+        combined_results[combination_key] = result
     
     print(f"Loaded {len(individual_results)} individual accuracy evaluation results")
     print(f"Loaded {len(combined_results)} combined dataset accuracy results")

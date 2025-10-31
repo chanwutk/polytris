@@ -4,8 +4,7 @@ import argparse
 import json
 import os
 import shutil
-import multiprocessing as mp
-from typing import Callable, Dict, List, Tuple, Any
+from typing import Any
 
 import numpy as np
 import altair as alt
@@ -36,7 +35,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, int, str]]:
+def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, str]]:
     """
     Find all classifier/tilesize/tilepadding combinations with saved accuracy results.
     
@@ -48,7 +47,7 @@ def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, int, str
         dataset (str): Dataset name
         
     Returns:
-        List[Tuple[str, int, str]]: List of (classifier, tilesize, tilepadding) tuples
+        list[tuple[str, int, str]]: list of (classifier, tilesize, tilepadding) tuples
     """
     # Construct path to evaluation directory for this dataset
     evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_accuracy')
@@ -76,7 +75,36 @@ def find_saved_results(cache_dir: str, dataset: str) -> List[Tuple[str, int, str
     return classifier_tile_combinations
 
 
-def load_saved_results(dataset: str, combined: bool = False) -> List[Dict[str, Any]]:
+def parse_result(result: dict) -> dict:
+    parsed = {
+        'Video': result['video'] or 'Combined',
+        'Dataset': result['dataset'],
+        'Classifier': result['classifier'],
+        'Tile_Size': result['tilesize'],
+        'Tile_Padding': result['tilepadding'],
+    }
+
+    metrics = result['metrics']
+    if 'HOTA' in metrics:
+        parsed['HOTA.HOTA'] = sum(metrics['HOTA']['HOTA']) / len(metrics['HOTA']['HOTA'])
+        parsed['HOTA.AssA'] = sum(metrics['HOTA']['AssA']) / len(metrics['HOTA']['AssA'])
+        parsed['HOTA.DetA'] = sum(metrics['HOTA']['DetA']) / len(metrics['HOTA']['DetA'])
+    if 'CLEAR' in metrics:
+        raise NotImplementedError("CLEAR metrics not implemented")
+        # base['CLEAR.MOTA'] = sum(metrics['CLEAR']['MOTA']) / len(metrics['CLEAR']['MOTA'])
+    if 'Count' in metrics:
+        count = metrics['Count']
+        # mean absolute percentage error
+        parsed['Count.DetsMAPE'] = (abs(count['Dets'] - count['GT_Dets']) * 100 / count['GT_Dets']
+                                    if count['GT_Dets'] > 0
+                                    else (0 if count['Dets'] == 0 else float('inf')))
+        parsed['Count.TracksMAPE'] = (abs(count['IDs'] - count['GT_IDs']) * 100 / count['GT_IDs']
+                                      if count['GT_IDs'] > 0
+                                      else (0 if count['IDs'] == 0 else float('inf')))
+    return parsed
+
+
+def load_saved_results(dataset: str, combined: bool = False):
     """
     Load saved accuracy results from result files.
     
@@ -89,7 +117,7 @@ def load_saved_results(dataset: str, combined: bool = False) -> List[Dict[str, A
         combined (bool): Whether to load combined results (DATASET.json) or individual video results
         
     Returns:
-        List[Dict[str, Any]]: List of evaluation results
+        list[dict[str, Any]]: list of evaluation results
     """
     # Find all classifier/tilesize combinations with available results
     classifier_tile_combinations = find_saved_results(CACHE_DIR, dataset)
@@ -113,24 +141,126 @@ def load_saved_results(dataset: str, combined: bool = False) -> List[Dict[str, A
                 # Load and parse JSON result file
                 with open(results_path, 'r') as f:
                     result_data = json.load(f)
-                    results.append(result_data)
+                    results.append(parse_result(result_data))
     
     print(f"Loaded {len(results)} saved evaluation results")
-    return results
+    return pd.DataFrame.from_records(results)
 
 
-def get_results(eval_task: Callable[[], dict], res_queue: "mp.Queue[tuple[int, dict]]", worker_id: int):
+def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xlabel: str, output_path: str):
     """
-    Helper function for multiprocessing to collect results from worker processes.
+    Create a comparison plot for tracking accuracy scores by video, tile size, and tilepadding.
+    
+    Creates a faceted bar chart showing accuracy scores for different classifiers
+    across videos, tile sizes, and tilepadding values. Each facet shows one video-tilesize-tilepadding combination,
+    with bars representing different classifiers sorted by performance.
     
     Args:
-        eval_task: Function to execute
-        res_queue: Queue to put results in
-        worker_id: ID of the worker process
+        results: DataFrame of evaluation results
+        score_field: Field name for scores ('HOTA.HOTA', 'HOTA.AssA', 'HOTA.DetA', 'Count.DetsMAPE', 'Count.TracksMAPE')
+        xlabel: Label for x-axis
+        output_path: Path to save the plot
     """
-    # Execute the task and put result in queue with worker ID
-    result = eval_task()
-    res_queue.put((worker_id, result))
+
+    df = results.copy()
+    df['Score'] = df[score_field]
+    df['Classifier_Tile_Padding'] = df['Classifier'] + '_' + df['Tile_Padding']
+    
+    # Create horizontal bar chart with text labels inside bars
+    # Main bars showing the scores
+    if score_field.startswith('Count.'):
+        scale = {}
+    else:
+        scale = {'scale': alt.Scale(domain=[0, 1])}
+
+    bars = alt.Chart(df).mark_bar().encode(
+        x=alt.X('Score:Q', title=xlabel, **scale),
+        # yOffset=alt.YOffset('Dilate:N'),
+        color=alt.Color('Tile_Padding:N', title='Tile Padding'),
+        tooltip=['Video', 'Tile_Size', 'Tile_Padding', 'Classifier', alt.Tooltip('Score:Q', format='.2f')]
+    ).properties(
+        width=200,
+        height=200
+    )
+    
+    # Add score text labels inside the bars (white text)
+    text = alt.Chart(df).mark_text(
+        align='right',
+        baseline='middle',
+        dx=-3,  # Small offset from the right edge of the bar
+        color='white'
+    ).transform_calculate(text='datum.Score > 0.01 ? format(datum.Score, ".2f") : ""').encode(
+        x=alt.X('Score:Q'),
+        text=alt.Text('text:N'),
+        # yOffset=alt.YOffset('Dilate:N')
+    )
+
+    # Add classifier name labels on the left side of bars
+    labels = alt.Chart(df).mark_text(
+        align='left',
+        baseline='middle',
+        dx=3,
+        fontWeight='bold',
+        color='black'
+    ).transform_calculate(Score2='datum.Score * 0.0001').encode(
+        x=alt.X('Score2:Q'),
+        text=alt.Text('Classifier_Tile_Padding:N'),
+        # Use white text for high scores, black for low scores
+        color=alt.condition(alt.datum.Score > 0.1, alt.value('white'), alt.value('black')),
+        # yOffset=alt.YOffset('Dilate:N')
+    )
+    
+    # Layer the charts (bars + labels + text) and apply faceting
+    # Facet by tile size (rows), tilepadding (columns), and video (sub-columns)
+    chart = (bars + labels + text).encode(
+        y=alt.Y('Classifier_Tile_Padding:N', sort='-x', axis=alt.Axis(labels=False, ticks=False, title=None)),
+        # yOffset=alt.YOffset('Tile_Padding:N'),
+        # detail=alt.Detail('Tile_Padding:N'),
+        # color=alt.Color('Tile_Padding:N', title='Tile Padding')
+    ).resolve_scale(y='independent').facet(
+        row=alt.Row('Tile_Size:O', title='Tile Size'),
+        column=alt.Column('Video:N', title=None),
+        # column=alt.Column('Tile_Padding:N', title='Tile Padding'),
+        # facet=alt.Facet('Video:N', title=None)
+    ).resolve_scale(y='independent').properties(padding=0)
+    
+    # Save the chart as PNG with high resolution
+    chart.save(output_path, scale_factor=2)
+
+
+def visualize_tracking_accuracy(results: pd.DataFrame, output_dir: str, combined: bool = False):
+    """
+    Create visualizations for tracking accuracy results using Altair.
+    
+    Processes evaluation results and creates comparison charts showing
+    accuracy scores across different classifiers, videos, and tile sizes.
+    
+    Args:
+        results (pd.DataFrame): DataFrame of evaluation results
+        output_dir (str): Output directory for visualizations
+        combined (bool): Whether these are combined dataset results or individual video results
+    """
+    print("Creating visualizations...")
+    # Set prefix for output files based on whether these are combined results
+    prefix = "combined_" if combined else ""
+    
+    # Save results to CSV for further analysis
+    csv_file_path = os.path.join(output_dir, f'{prefix}accuracy_results.csv')
+    results.to_csv(csv_file_path, index=False)
+
+    metrics = [
+        ('HOTA.HOTA', 'HOTA Score'),
+        ('HOTA.AssA', 'AssA Score'),
+        ('HOTA.DetA', 'DetA Score'),
+        ('Count.DetsMAPE', 'Dets MAPE (%)'),
+        ('Count.TracksMAPE', 'Tracks MAPE (%)'),
+    ]
+    
+    # Create comparison plots for HOTA, AssA, and MOTA scores
+    # Each plot shows classifiers ranked by performance for each video-tilesize-tilepadding combination
+    for metric_name, metric_label in metrics:
+        visualize_compared_accuracy_bar(results, metric_name, metric_label,
+                                        os.path.join(output_dir, f'{prefix}{metric_name}.png'))
 
 
 def main(args):
@@ -189,198 +319,6 @@ def main(args):
         visualize_tracking_accuracy(combined_results, output_dir, combined=True)
         
         print(f"Results saved to: {output_dir}")
-
-
-def visualize_compared_accuracy_bar(video_tile_tilepadding_groups: Dict[str, Dict[int, Dict[str, Dict[str, List]]]], 
-                                    sorted_videos: List[str], sorted_tilesizes: List[int], sorted_tilepadding_values: List[str],
-                                    score_field: str, xlabel: str, output_path: str):
-    """
-    Create a comparison plot for tracking accuracy scores by video, tile size, and tilepadding.
-    
-    Creates a faceted bar chart showing accuracy scores for different classifiers
-    across videos, tile sizes, and tilepadding values. Each facet shows one video-tilesize-tilepadding combination,
-    with bars representing different classifiers sorted by performance.
-    
-    Args:
-        video_tile_tilepadding_groups: Grouped data by video, tile size, and tilepadding
-        sorted_videos: List of video names in sorted order
-        sorted_tilesizes: List of tile sizes in sorted order
-        sorted_tilepadding_values: List of tilepadding values in sorted order
-        score_field: Field name for scores ('hota_scores' or 'clear_scores')
-        xlabel: Label for x-axis
-        output_path: Path to save the plot
-    """
-    # Prepare data for the chart by flattening grouped data
-    chart_data = []
-    
-    # Iterate through all video-tilesize-tilepadding combinations
-    for video_name in sorted_videos:
-        for tilesize in sorted_tilesizes:
-            for tilepadding in sorted_tilepadding_values:
-                # Check if this combination has data
-                if (tilesize in video_tile_tilepadding_groups[video_name] and 
-                    tilepadding in video_tile_tilepadding_groups[video_name][tilesize]):
-                    group_data = video_tile_tilepadding_groups[video_name][tilesize][tilepadding]
-                    
-                    # Sort classifiers by their scores (descending order)
-                    sorted_indices = sorted(range(len(group_data[score_field])), 
-                                           key=lambda x: group_data[score_field][x], reverse=True)
-                    
-                    # Extract sorted labels and scores
-                    sorted_labels = [group_data['labels'][idx] for idx in sorted_indices]
-                    sorted_scores = [group_data[score_field][idx] for idx in sorted_indices]
-                    
-                    # Add each classifier-score pair to chart data
-                    for label, score in zip(sorted_labels, sorted_scores):
-                        chart_data.append({
-                            'Video': video_name,
-                            'Tile_Size': tilesize,
-                            'Tile_Padding': tilepadding,
-                            'Classifier': label,
-                            'Classifier_Tile_Padding': f'{label}_{tilepadding}',
-                            'Score': score
-                        })
-    
-    # Convert to pandas DataFrame for Altair
-    df = pd.DataFrame(chart_data)
-    
-    # Create horizontal bar chart with text labels inside bars
-    # Main bars showing the scores
-    bars = alt.Chart(df).mark_bar().encode(
-        x=alt.X('Score:Q', title=xlabel, scale=alt.Scale(domain=[0, 1])),
-        # yOffset=alt.YOffset('Dilate:N'),
-        color=alt.Color('Tile_Padding:N', title='Tile Padding'),
-        tooltip=['Video', 'Tile_Size', 'Tile_Padding', 'Classifier', alt.Tooltip('Score:Q', format='.2f')]
-    ).properties(
-        width=200,
-        height=200
-    )
-    
-    # Add score text labels inside the bars (white text)
-    text = alt.Chart(df).mark_text(
-        align='right',
-        baseline='middle',
-        dx=-3,  # Small offset from the right edge of the bar
-        color='white'
-    ).transform_calculate(text='datum.Score > 0.01 ? format(datum.Score, ".2f") : ""').encode(
-        x=alt.X('Score:Q'),
-        text=alt.Text('text:N'),
-        # yOffset=alt.YOffset('Dilate:N')
-    )
-
-    # Add classifier name labels on the left side of bars
-    labels = alt.Chart(df).mark_text(
-        align='left',
-        baseline='middle',
-        dx=3,
-        fontWeight='bold',
-        color='black'
-    ).transform_calculate(Score2='datum.Score * 0.0001').encode(
-        x=alt.X('Score2:Q'),
-        text=alt.Text('Classifier_Tile_Padding:N'),
-        # Use white text for high scores, black for low scores
-        color=alt.condition(alt.datum.Score > 0.1, alt.value('white'), alt.value('black')),
-        # yOffset=alt.YOffset('Dilate:N')
-    )
-    
-    # Layer the charts (bars + labels + text) and apply faceting
-    # Facet by tile size (rows), tilepadding (columns), and video (sub-columns)
-    chart = (bars + labels + text).encode(
-        y=alt.Y('Classifier_Tile_Padding:N', sort='-x', axis=alt.Axis(labels=False, ticks=False, title=None)),
-        # yOffset=alt.YOffset('Tile_Padding:N'),
-        # detail=alt.Detail('Tile_Padding:N'),
-        # color=alt.Color('Tile_Padding:N', title='Tile Padding')
-    ).resolve_scale(y='independent').facet(
-        row=alt.Row('Tile_Size:O', title='Tile Size'),
-        column=alt.Column('Video:N', title=None),
-        # column=alt.Column('Tile_Padding:N', title='Tile Padding'),
-        # facet=alt.Facet('Video:N', title=None)
-    ).resolve_scale(y='independent').properties(padding=0)
-    
-    # Save the chart as PNG with high resolution
-    chart.save(output_path, scale_factor=2)
-
-
-def visualize_tracking_accuracy(results: List[Dict[str, Any]], output_dir: str, combined: bool = False):
-    """
-    Create visualizations for tracking accuracy results using Altair.
-    
-    Processes evaluation results and creates comparison charts showing
-    accuracy scores across different classifiers, videos, and tile sizes.
-    
-    Args:
-        results (List[Dict[str, Any]]): List of evaluation results
-        output_dir (str): Output directory for visualizations
-        combined (bool): Whether these are combined dataset results or individual video results
-    """
-    print("Creating visualizations...")
-    
-    # Convert results to DataFrame for easier data handling
-    data = []
-    for result in results:
-        metrics = result['metrics']
-        # Extract key metrics from the nested structure
-        data.append({
-            'Video': result['video_name'] or 'Combined',  # Use 'Combined' for dataset-level results
-            'Classifier': result['classifier'],
-            'Tile_Size': result['tilesize'],
-            'Tile_Padding': result['tilepadding'],
-            'HOTA': metrics.get('HOTA', {}).get('HOTA(0)', 0.0),  # Extract HOTA score
-            'AssA': metrics.get('HOTA', {}).get('AssA', [0.0])[0] if metrics.get('HOTA', {}).get('AssA') else 0.0,  # Extract AssA score (first element of array)
-            'MOTA': metrics.get('CLEAR', {}).get('MOTA', 0.0)   # Extract MOTA score
-        })
-    
-    df = pd.DataFrame(data)
-
-    # Set prefix for output files based on whether these are combined results
-    prefix = "combined_" if combined else ""
-    
-    # Save results to CSV for further analysis
-    csv_file_path = os.path.join(output_dir, f'{prefix}accuracy_results.csv')
-    df.to_csv(csv_file_path, index=False)
-    
-    # Group data by video, tile size, and tilepadding for bar plots
-    # This creates a nested structure: video -> tilesize -> tilepadding -> {labels, scores}
-    video_tile_tilepadding_groups = {}
-    for _, row in df.iterrows():
-        video_name = row['Video']
-        tilesize = row['Tile_Size']
-        tilepadding = row['Tile_Padding']
-        
-        # Initialize nested structure if needed
-        if video_name not in video_tile_tilepadding_groups:
-            video_tile_tilepadding_groups[video_name] = {}
-        if tilesize not in video_tile_tilepadding_groups[video_name]:
-            video_tile_tilepadding_groups[video_name][tilesize] = {}
-        if tilepadding not in video_tile_tilepadding_groups[video_name][tilesize]:
-            video_tile_tilepadding_groups[video_name][tilesize][tilepadding] = {
-                'labels': [],
-                'hota_scores': [],
-                'assa_scores': [],
-                'clear_scores': []
-            }
-        
-        # Add this classifier's data to the group
-        video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['labels'].append(row['Classifier'])
-        video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['hota_scores'].append(row['HOTA'])
-        video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['assa_scores'].append(row['AssA'])
-        video_tile_tilepadding_groups[video_name][tilesize][tilepadding]['clear_scores'].append(row['MOTA'])
-    
-    # Sort videos, tile sizes, and tilepadding values for consistent ordering in visualizations
-    sorted_videos = sorted(video_tile_tilepadding_groups.keys())
-    sorted_tilesizes = sorted(df['Tile_Size'].unique())
-    sorted_tilepadding_values = sorted(df['Tile_Padding'].unique())
-    
-    # Create comparison plots for HOTA, AssA, and MOTA scores
-    # Each plot shows classifiers ranked by performance for each video-tilesize-tilepadding combination
-    visualize_compared_accuracy_bar(video_tile_tilepadding_groups, sorted_videos, sorted_tilesizes, sorted_tilepadding_values,
-        'hota_scores', 'HOTA Score', os.path.join(output_dir, f'{prefix}hota.png'))
-    
-    visualize_compared_accuracy_bar(video_tile_tilepadding_groups, sorted_videos, sorted_tilesizes, sorted_tilepadding_values,
-        'assa_scores', 'AssA Score', os.path.join(output_dir, f'{prefix}assa.png'))
-    
-    visualize_compared_accuracy_bar(video_tile_tilepadding_groups, sorted_videos, sorted_tilesizes, sorted_tilepadding_values,
-        'clear_scores', 'MOTA Score', os.path.join(output_dir, f'{prefix}mota.png'))
 
 
 if __name__ == '__main__':

@@ -43,6 +43,30 @@ TRACK_COLORS = [
 ]
 
 
+def get_video_frame_count(dataset: str, video: str) -> int:
+    """
+    Get the total number of frames in a video using OpenCV.
+
+    Args:
+        dataset (str): Dataset name
+        video_name (str): Video name (with extension, e.g., 'te01.mp4')
+
+    Returns:
+        int: Total number of frames in the video
+    """
+    video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
+    assert os.path.exists(video_path), f"Video file not found for {dataset}/{video}"
+    
+    # Open video and get frame count
+    cap = cv2.VideoCapture(video_path)
+    assert cap.isOpened(), f"Could not open video {video_path}"
+    
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+    
+    return frame_count
+
+
 def get_num_frames(video_file_path: str) -> int:
     """
     Get the number of frames from a video file.
