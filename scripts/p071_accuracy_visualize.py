@@ -161,9 +161,9 @@ def main(args):
     for dataset in args.datasets:
         print(f"\nProcessing dataset: {dataset}")
         
-        # Clear 070_accuracy directory if requested
+        # Clear 071_accuracy directory if requested
         if args.clear:
-            accuracy_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+            accuracy_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '071_accuracy')
             if os.path.exists(accuracy_dir):
                 shutil.rmtree(accuracy_dir)
                 print(f"Cleared existing 070_accuracy directory: {accuracy_dir}")

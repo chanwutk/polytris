@@ -1,15 +1,16 @@
 #!/usr/local/bin/python
 
+from functools import partial
 import os
 import json
 import argparse
-from typing import Callable, Dict, Generator, List, TextIO, Tuple, Any
-from collections import defaultdict
+import queue
+from typing import Callable, Generator, TextIO, Tuple
+import multiprocessing as mp
 
 import pandas as pd
-from rich.progress import track
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST, TILE_SIZES
+from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, ProgressBar
 
 
 def parse_args():
@@ -53,9 +54,7 @@ def jsonl_loader(f: TextIO) -> Generator[dict, None, None]:
         yield json.loads(line)
 
 
-def parse_runtime_file(file_path: str, stage: str,
-                       accessor: Callable[[dict], list[dict]] | None = None
-                       ) -> pd.DataFrame:
+def parse_runtime_file(file_path: str, stage: str, accessor: Callable[[dict], list[dict]] | None = None) -> pd.DataFrame:
     """
     Parse a runtime file and extract timing data.
 
@@ -132,15 +131,23 @@ QUERY_DATA_ACCESSORS = {
     '020_exec_classify': lambda row: row['runtime'],
     '030_exec_compress': lambda row: row['runtime'],
     '040_exec_detect': lambda row: row,
+    '050_exec_uncompress': lambda row: row,
     '060_exec_track': lambda row: row['runtime']
 }
 
 
-def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[dict]]]) -> tuple[pd.DataFrame, pd.DataFrame]:
+def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[dict]]],
+                  worker_id: int, command_queue: "mp.Queue") -> tuple[pd.DataFrame, pd.DataFrame]:
     all_per_op: list[pd.DataFrame] = []
     overall: list[dict] = []
 
-    for _, row in track(df.iterrows(), total=len(df)):
+    kwargs = {'completed': 0,
+            'total': len(df),
+            'description': f"{df['dataset'].unique()[0]}",
+            'completed': 0}
+    device = f'cuda:{worker_id}'
+    command_queue.put((device, kwargs))
+    for idx, row in df.iterrows():
         dataset, video, classifier, tilesize, tilepadding, stage, runtime_file = row
         file_timings = parse_runtime_file(runtime_file, stage, accessors[stage])
         assert file_timings is not None, f"File timings are None for {stage}, {runtime_file}, {video}"
@@ -165,7 +172,8 @@ def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[d
             'tilepadding': tilepadding,
             'time': total_time
         })
-    
+        command_queue.put((device, {'completed': idx}))
+
     return pd.concat(all_per_op, ignore_index=True), pd.DataFrame.from_records(overall)
 
 
@@ -177,19 +185,19 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
     
     index_per_op_file = os.path.join(output_dir, 'index_construction_per_op.csv')
     index_per_op.to_csv(index_per_op_file, index=False)
-    print(f"Saved index construction per operation measurements to: {index_per_op_file}")
+    # print(f"Saved index construction per operation measurements to: {index_per_op_file}")
 
     index_overall_file = os.path.join(output_dir, 'index_construction_overall.csv')
     index_overall.to_csv(index_overall_file, index=False)
-    print(f"Saved index construction overall measurements to: {index_overall_file}")
+    # print(f"Saved index construction overall measurements to: {index_overall_file}")
 
     query_per_op_file = os.path.join(output_dir, 'query_execution_per_op.csv')
     query_per_op.to_csv(query_per_op_file, index=False)
-    print(f"Saved query execution per operation measurements to: {query_per_op_file}")
+    # print(f"Saved query execution per operation measurements to: {query_per_op_file}")
 
     query_overall_file = os.path.join(output_dir, 'query_execution_overall.csv')
     query_overall.to_csv(query_overall_file, index=False)
-    print(f"Saved query execution overall measurements to: {query_overall_file}")
+    # print(f"Saved query execution overall measurements to: {query_overall_file}")
     
     # Save metadata
     videos = sorted(query_overall['video'].unique())
@@ -207,32 +215,32 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
     metadata_file = os.path.join(output_dir, 'metadata.json')
     with open(metadata_file, 'w') as f:
         json.dump(metadata, f, indent=2)
-    print(f"Saved metadata to: {metadata_file}")
+    # print(f"Saved metadata to: {metadata_file}")
     
-    print(f"Found {len(videos)} videos: {videos}")
+    # print(f"Found {len(videos)} videos: {videos}")
+
+
+def compute(dataset: str, worker_id: int, command_queue: "mp.Queue[dict]"):
+    data_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
+    index_data, query_data = load_data_tables(data_dir)
+    
+    index_timings, index_summaries = parse_runtime(index_data, INDEX_DATA_ACCESSORS, worker_id, command_queue)
+    
+    query_timings, query_summaries = parse_runtime(query_data, QUERY_DATA_ACCESSORS, worker_id, command_queue)
+    
+    measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
+    save_measurements(index_timings, index_summaries, query_timings, query_summaries, measurements_dir, dataset)
 
 
 def main():
     """Main function to process runtime measurement data."""
     args = parse_args()
     
+    tasks: list[Callable[[int, "mp.Queue"], None]] = []
     for dataset in args.datasets:
-        print(f"Loading throughput data tables for dataset: {dataset}")
-        data_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
-        print(f"Data directory: {data_dir}")
-        index_data, query_data = load_data_tables(data_dir)
-        
-        print("Parsing index construction timing data...")
-        index_timings, index_summaries = parse_runtime(index_data, INDEX_DATA_ACCESSORS)
-        
-        print("Parsing query execution timing data...")
-        query_timings, query_summaries = parse_runtime(query_data, QUERY_DATA_ACCESSORS)
-        
-        print("Saving processed measurements...")
-        measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
-        save_measurements(index_timings, index_summaries, query_timings, query_summaries, measurements_dir, dataset)
-        
-        print(f"\nData processing complete for {dataset}! Measurements saved to: {measurements_dir}")
+        tasks.append(partial(compute, dataset))
+
+    ProgressBar(num_tasks=len(tasks), num_workers=mp.cpu_count()).run_all(tasks)
 
 
 if __name__ == '__main__':

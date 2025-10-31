@@ -217,7 +217,7 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
         kwargs = {'completed': 0, 'total': len(contents), 'description': description}
         mod = max(1, int(len(contents) * 0.05))
         command_queue.put((device, kwargs))
-        timer = create_timer(fr)
+        timer, flush = create_timer(fr)
         for idx, line in enumerate(contents):
             content = json.loads(line)
             image_file: str = content['image_file']
@@ -286,11 +286,13 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
                 command_queue.put((device, {'completed': idx + 1,
                                             'description': description,
                                             'total': len(contents)}))
+            flush()
     
         with timer('sort_frames'):
             # Save unpacked detections organized by frame
             # Sort frames by index
             sorted_frames = sorted(all_frame_detections.keys())
+        flush()
     
     # Save each frame's detections
     with open(os.path.join(unpacked_output_dir, 'detections.jsonl'), 'w') as f:

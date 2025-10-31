@@ -7,7 +7,7 @@ import os
 import shutil
 import multiprocessing as mp
 import sys
-from typing import Callable
+from typing import Any, Callable, override
 import warnings
 
 import numpy as np
@@ -22,6 +22,7 @@ from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
 
 
 class NumpyEncoder(json.JSONEncoder):
+    @override
     def default(self, o):
         if isinstance(o, np.ndarray):
             return o.tolist()
@@ -50,25 +51,25 @@ def parse_args():
 def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[tuple[str, int, str]]]:
     """
     Find all videos and classifier/tilesize/tilepadding combinations with tracking results.
-    
+
     Scans the execution directory to discover all available videos and their
     corresponding classifier/tilesize/tilepadding combinations that have both tracking
     results and groundtruth data available.
-    
+
     Args:
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
-        
+
     Returns:
         tuple[set[str], set[tuple[str, int, str]]]: Set of video names and set of (classifier, tilesize, tilepadding) tuples
     """
     # Construct path to dataset execution directory
     dataset_cache_dir = os.path.join(cache_dir, dataset, 'execution')
     assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
-    
+
     # Collect all video-classifier-tilesize-tilepadding combinations
     video_tile_combinations: list[tuple[str, str, int, str]] = []
-    
+
     # Iterate through all video directories in the dataset
     for video_filename in os.listdir(dataset_cache_dir):
         video_dir = os.path.join(dataset_cache_dir, video_filename)
@@ -87,19 +88,19 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
             assert len(parts) == 3, f"Expected format 'classifier_tilesize_tilepadding', got '{classifier_tilesize_tilepadding}'"
             classifier, tilesize, tilepadding = parts
             ts = int(tilesize)
-            
+
             # Construct paths to tracking and groundtruth files
             tracking_path = os.path.join(tracking_dir, f'{classifier}_{ts}_{tilepadding}', 'tracking.jsonl')
             groundtruth_path = os.path.join(video_dir, '000_groundtruth', 'tracking.jsonl')
-            
+
             # Verify both tracking results and groundtruth exist
             assert os.path.exists(tracking_path), f"Tracking path {tracking_path} does not exist"
             assert os.path.exists(groundtruth_path), f"Groundtruth path {groundtruth_path} does not exist"
-            
+
             # Add this combination to our list
             video_tile_combinations.append((video_filename, classifier, ts, tilepadding))
             print(f"Found tracking results: {video_filename} with tile size {ts} and tilepadding {tilepadding}")
-    
+
     # Extract unique classifier-tilesize-tilepadding combinations and video names
     classifier_tilesizes = set((cl, ts, tilepadding) for _, cl, ts, tilepadding in video_tile_combinations)
     videos = set(video for video, _, _, _ in video_tile_combinations)
@@ -109,7 +110,7 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
     video_tile_combinations_set = set(video_tile_combinations)
     assert len(video_tile_combinations_set) == len(video_tile_combinations), \
         f"Duplicate video-tile combinations: {video_tile_combinations_set}"
-    
+
     # Check completeness: every video should have results for every classifier-tilesize-tilepadding combination
     for video in videos:
         for cl, ts, tilepadding in classifier_tilesizes:
@@ -124,11 +125,11 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
                                worker_id: int, worker_id_queue: "mp.Queue"):
     """
     Evaluate tracking accuracy for multiple videos using TrackEval.
-    
+
     Performs a single evaluation across all videos in the dataset for the given
     classifier, tile size, and tilepadding combination. Generates both combined dataset results
     and individual video results in a flattened directory structure.
-    
+
     Args:
         dataset (str): Dataset name
         videos (set[str]): Set of video names to evaluate (all videos in dataset)
@@ -137,7 +138,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         tilepadding (str): Tile padding parameter ('padded' or 'unpadded')
         metrics_list (list[str]): List of metrics to evaluate
         output_dir (str): Output directory for results
-        
+
     Output Structure:
         - DATASET.json: Combined results across all videos
         - {video_name}.json: Individual video results
@@ -160,7 +161,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         'seq_list': videos,  # List of sequences (videos) to evaluate
         'input_dir': os.path.join(CACHE_DIR, dataset, 'execution')  # Base directory for relative paths
     }
-    
+
     # Create TrackEval evaluator configuration
     # This controls how the evaluation is performed and what output is generated
     eval_config = {
@@ -178,7 +179,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
     }
 
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Create TrackEval metric objects based on requested metrics
     # Each metric is configured with appropriate thresholds and settings
     metrics = []
@@ -192,19 +193,19 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         elif metric_name == 'Identity':
             # Identity metrics (IDF1, etc.) with 0.5 IoU threshold
             metrics.append(Identity({'THRESHOLD': 0.5}))
-    
+
     # Create TrackEval dataset and evaluator objects
     # The dataset object handles data loading and preprocessing
     eval_dataset = Dataset(dataset_config)
     # The evaluator object handles the actual evaluation process
     evaluator = trackeval.Evaluator(eval_config)
-    
+
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
         # Run the evaluation across all videos simultaneously
         # This returns results for both individual videos and combined dataset
         results = evaluator.evaluate([eval_dataset], metrics)
-    
+
     # TrackEval returns results in structure: results[0]["Dataset"]["sort"][sequence]["vehicle"]
     # where sequence can be individual video names or "COMBINED_SEQ" for aggregated results
     # results[0] contains the actual evaluation results
@@ -216,7 +217,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
     # Navigate through the nested result structure to get to the actual data
     dataset_result = results[0].get('Dataset', {})
     tracker_results = dataset_result.get('sort', {})
-    
+
     # Ensure output directory exists for saving results
     os.makedirs(output_dir, exist_ok=True)
 
@@ -226,7 +227,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
     actual_sequences = tuple(sorted(tracker_results.keys()))
     assert expected_sequences == actual_sequences, \
         f"Expected sequences {expected_sequences} do not match actual {actual_sequences}"
-    
+
     # Process and save results for each sequence (individual videos + combined)
     # Iterate through all sequences in the results
     for seq, tracker_result in tracker_results.items():
@@ -234,11 +235,11 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         assert 'vehicle' in tracker_result, f"Vehicle results not found for {seq}"
         # Validate that this is either a known video or the combined sequence
         assert seq in videos or seq == 'COMBINED_SEQ', f"Sequence {seq} not found in {videos}"
-        
+
         # Initialize metrics dictionary for this sequence
         seq_metrics = {}
         vehicle_results = tracker_result['vehicle']
-        
+
         # Extract metrics from TrackEval results for this sequence
         # Each metric object provides its name and the corresponding results
         for metric in metrics:
@@ -248,7 +249,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
 
             # Store the metric results for this sequence
             seq_metrics[metric_name] = vehicle_results[metric_name]
-        
+
         # Prepare result data structure with metadata
         # This creates a consistent structure for both individual and combined results
         result_data = {
@@ -259,29 +260,29 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
             'tilepadding': tilepadding,
             'metrics': seq_metrics,
         }
-        
+
         # Save results to appropriate file
         # DATASET.json for combined results, {video}.json for individual video results
         output_file = "DATASET" if seq == "COMBINED_SEQ" else seq
         with open(os.path.join(output_dir, f'{output_file}.json'), 'w') as f:
             json.dump(result_data, f, indent=2, cls=NumpyEncoder)
-    
+
     worker_id_queue.put(worker_id)
 
 
 def main(args):
     """
     Main function that orchestrates the tracking accuracy evaluation process.
-    
+
     This function serves as the entry point for the script. It:
     1. Finds all videos with tracking results for the specified datasets and classifier/tilesize/tilepadding combinations
     2. Groups videos by dataset and classifier/tilesize/tilepadding combination
     3. Runs accuracy evaluation using TrackEval for each combination (evaluating all videos simultaneously)
     4. Generates both combined dataset results and individual video results
-    
+
     Args:
         args (argparse.Namespace): Parsed command line arguments
-        
+
     Note:
         - The script expects tracking results from 060_exec_track.py in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tilesize}_{tilepadding}/tracking.jsonl
@@ -295,31 +296,32 @@ def main(args):
         - Multiple metrics are evaluated: HOTA, CLEAR (MOTA), and Identity (IDF1)
     """
     print(f"Starting tracking accuracy evaluation for datasets: {args.datasets}")
-    
+
     # Parse metrics from comma-separated string into list
     # Remove any whitespace and split by comma
     metrics_list = [m.strip() for m in args.metrics.split(',')]
     print(f"Evaluating metrics: {metrics_list}")
-    
+
     # Find tracking results for all datasets and create evaluation tasks
-    eval_tasks: list[Callable[[int, "mp.Queue"]]] = []
-    
+    eval_tasks: list[Callable[[int, "mp.Queue"], None]] = []
+
     # Process each dataset separately
     for dataset in args.datasets:
         print(f"Processing dataset: {dataset}")
-        
+
         # Find all videos and classifier/tilesize/tilepadding combinations for this dataset
         videos, classifier_tilesizes = find_tracking_results(CACHE_DIR, dataset)
-        
+
         # Create evaluation directory path for this dataset
         evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
-        
+
         # Clear evaluation directory if requested
         if args.clear:
             if os.path.exists(evaluation_dir):
                 shutil.rmtree(evaluation_dir)
                 print(f"Cleared existing 070_accuracy directory: {evaluation_dir}")
-        
+            os.makedirs(evaluation_dir, exist_ok=True)
+
         # Create one evaluation task per classifier/tilesize/tilepadding combination
         # Each task will evaluate all videos in the dataset for that combination
         for cl, ts, tilepadding in classifier_tilesizes:
@@ -327,18 +329,18 @@ def main(args):
             # Create a partial function with all arguments bound except the function call
             eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos,
                                       cl, ts, tilepadding, metrics_list, output_dir))
-    
+
     # Validate that we found some evaluation tasks
     assert len(eval_tasks) > 0, "No tracking results found. Please ensure 060_exec_track.py has been run first."
     print(f"Found {len(eval_tasks)} classifier-tile size-tilepadding combinations to evaluate")
-    
+
     # Execute evaluation tasks either sequentially or in parallel
     # Parallel execution: start all processes simultaneously
     processes: list[mp.Process] = []
     worker_id_queue = mp.Queue()
     for i in range(int(mp.cpu_count() * 0.9)):
         worker_id_queue.put(i)
-    
+
     # Start each evaluation task in a separate process
     for eval_task in eval_tasks:
         worker_id = worker_id_queue.get()

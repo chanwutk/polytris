@@ -1,10 +1,14 @@
 #!/usr/local/bin/python
 
+from functools import partial
 import os
-import json
 import argparse
+import shutil
 import altair as alt
 import pandas as pd
+import multiprocessing as mp
+
+from rich.progress import track
 
 from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
 
@@ -16,6 +20,8 @@ def parse_args():
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
+    parser.add_argument('--clear', action='store_true',
+                        help='Clear the 082_throughput_visualize directory before creating visualizations')
     return parser.parse_args()
 
 
@@ -61,6 +67,7 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
         '020_exec_classify': 'Classify',
         '030_exec_compress': 'Compress',
         '040_exec_detect': 'Detect',
+        '050_exec_uncompress': 'Uncompress',
         '060_exec_track': 'Track'
     }
 
@@ -102,10 +109,10 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
 
     # Combine charts in a 2x2 grid
     combined_chart = alt.vconcat(
-        alt.hconcat(charts[0], charts[1]).resolve_scale(
+        alt.hconcat(charts[0], charts[1], charts[2]).resolve_scale(
             color='independent'
         ),
-        alt.hconcat(charts[2], charts[3]).resolve_scale(
+        alt.hconcat(charts[3], charts[4]).resolve_scale(
             color='independent'
         )
     )
@@ -151,6 +158,7 @@ def visualize_overall_runtime(index_overall: pd.DataFrame, query_overall: pd.Dat
         '020_exec_classify': 'Classification',
         '030_exec_compress': 'Compression',
         '040_exec_detect': 'Detection',
+        '050_exec_uncompress': 'Uncompression',
         '060_exec_track': 'Tracking'
     }
 
@@ -205,7 +213,7 @@ def extract_video_names(query_overall: pd.DataFrame) -> list[str]:
     return sorted(list(videos))
 
 
-def visualize_breakdown_query_execution_all(query_overall: pd.DataFrame, query_per_op: pd.DataFrame, output_dir: str, dataset: str = 'b3d'):
+def visualize_breakdown_query_execution_all(query_overall: pd.DataFrame, query_per_op: pd.DataFrame, output_dir: str):
     """Create visualizations for query execution runtime breakdown."""
     os.makedirs(output_dir, exist_ok=True)
 
@@ -237,6 +245,16 @@ def main():
     """Main function to create runtime breakdown visualizations."""
     args = parse_args()
 
+    # Clear the 082_throughput_visualize directory if --clear flag is set
+    if args.clear:
+        for dataset in args.datasets:
+            output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
+            if os.path.exists(output_dir):
+                print(f"Clearing directory: {output_dir}")
+                shutil.rmtree(output_dir)
+            os.makedirs(output_dir, exist_ok=True)
+
+    tasks = []
     for dataset in args.datasets:
         print(f"Loading processed measurements for dataset: {dataset}")
         measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
@@ -247,12 +265,22 @@ def main():
         index_overall, query_overall, query_per_op = load_measurements(measurements_dir)
 
         throughput_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
-        visualize_breakdown_query_execution_all(query_overall, query_per_op, throughput_dir, dataset)
 
-        visualize_overal_runtime_all(index_overall, query_overall, throughput_dir)
-
-        print(f"Visualization complete for {dataset}! Results saved to: {throughput_dir}")
-        print("- Per-video visualizations saved in per_video/ subdirectory")
+        os.makedirs(throughput_dir, exist_ok=True)
+        videos = extract_video_names(query_overall)
+        for video in videos + [None]:
+            tasks.append(partial(visualize_breakdown_query_execution, query_per_op, throughput_dir, video))
+            tasks.append(partial(visualize_overall_runtime, index_overall, query_overall, throughput_dir, video))
+    
+    processes = []
+    for task in tasks:
+        p = mp.Process(target=task)
+        p.start()
+        processes.append(p)
+    
+    for p in track(processes, total=len(processes)):
+        p.join()
+        p.terminate()
 
 
 if __name__ == '__main__':

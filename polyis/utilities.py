@@ -758,18 +758,23 @@ def mark_detections(
     return bitmap
 
 
-def create_timer(file: typing.TextIO, meta: dict | None = None) -> "typing.Callable[[str], Timer]":
+def create_timer(file: typing.TextIO, meta: dict | None = None):
+    row = []
     def timer(op: str) -> Timer:
-        return Timer(file, op, meta)
-    return timer
+        return Timer(op, row)
+    def flush():
+        nonlocal row
+        if row:
+            file.write(json.dumps(row) + '\n')
+            row = []
+    return timer, flush
 
 
 class Timer:
-    def __init__(self, file: typing.TextIO, op: str, meta: dict | None = None):
+    def __init__(self, op: str, row: list[dict]):
         self.start_time = time.time_ns() / 1e6
-        self.file = file
         self.op = op
-        self.meta = meta
+        self.row = row
 
     def __enter__(self):
         self.start_time = time.time_ns() / 1e6
@@ -777,7 +782,7 @@ class Timer:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end_time = time.time_ns() / 1e6
         elapsed_time = self.end_time - self.start_time
-        self.file.write(json.dumps((self.op, elapsed_time, *(self.meta or ()))) + '\n')
+        self.row.append({'op': self.op, 'time': elapsed_time})
 
 
 def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,

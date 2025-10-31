@@ -236,6 +236,8 @@ def match_accuracy_throughput_data(
     """
     matched_data = []
     query_overall = throughput_data.get('query_overall')
+    assert isinstance(query_overall, pd.DataFrame), \
+        "Throughput data must contain 'query_overall' as a DataFrame"
 
     # Cache frame counts to avoid repeated OpenCV calls
     frame_count_cache = {}
