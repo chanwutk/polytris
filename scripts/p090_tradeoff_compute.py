@@ -202,7 +202,7 @@ def match_accuracy_throughput_data(
     # Print combined accuracy scores for verification
     for _, row in tradeoff_combined.iterrows():
         print(f"Using actual combined accuracy scores for {row['classifier']}_{row['tilesize']}_{row['tilepadding']}: " \
-              f"HOTA={row['HOTA.HOTA']:.3f}, Count.DetsMAPE={row['Count.DetsMAPE']:.3f}")
+              f"HOTA={row['HOTA_HOTA']:.3f}, Count_DetsMAPE={row['Count_DetsMAPE']:.3f}")
 
     print(f"Created {len(tradeoff_combined)} combined tradeoff data points")
     return tradeoff, tradeoff_combined

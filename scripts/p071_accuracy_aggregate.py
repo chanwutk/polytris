@@ -85,19 +85,19 @@ def parse_result(result: dict) -> dict:
 
     metrics = result['metrics']
     if 'HOTA' in metrics:
-        parsed['HOTA.HOTA'] = sum(metrics['HOTA']['HOTA']) / len(metrics['HOTA']['HOTA'])
-        parsed['HOTA.AssA'] = sum(metrics['HOTA']['AssA']) / len(metrics['HOTA']['AssA'])
-        parsed['HOTA.DetA'] = sum(metrics['HOTA']['DetA']) / len(metrics['HOTA']['DetA'])
+        parsed['HOTA_HOTA'] = sum(metrics['HOTA']['HOTA']) / len(metrics['HOTA']['HOTA'])
+        parsed['HOTA_AssA'] = sum(metrics['HOTA']['AssA']) / len(metrics['HOTA']['AssA'])
+        parsed['HOTA_DetA'] = sum(metrics['HOTA']['DetA']) / len(metrics['HOTA']['DetA'])
     if 'CLEAR' in metrics:
         raise NotImplementedError("CLEAR metrics not implemented")
         # base['CLEAR.MOTA'] = sum(metrics['CLEAR']['MOTA']) / len(metrics['CLEAR']['MOTA'])
     if 'Count' in metrics:
         count = metrics['Count']
         # mean absolute percentage error
-        parsed['Count.DetsMAPE'] = (abs(count['Dets'] - count['GT_Dets']) * 100 / count['GT_Dets']
+        parsed['Count_DetsMAPE'] = (abs(count['Dets'] - count['GT_Dets']) * 100 / count['GT_Dets']
                                     if count['GT_Dets'] > 0
                                     else (0 if count['Dets'] == 0 else float('inf')))
-        parsed['Count.TracksMAPE'] = (abs(count['IDs'] - count['GT_IDs']) * 100 / count['GT_IDs']
+        parsed['Count_TracksMAPE'] = (abs(count['IDs'] - count['GT_IDs']) * 100 / count['GT_IDs']
                                       if count['GT_IDs'] > 0
                                       else (0 if count['IDs'] == 0 else float('inf')))
     return parsed

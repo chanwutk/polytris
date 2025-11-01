@@ -1027,6 +1027,119 @@ def load_tradeoff_data(dataset: str):
     return tradeoff, combined, naive, naive_combined
 
 
+def load_all_datasets_tradeoff_data(datasets: list[str], system_name: str | None = None):
+    """
+    Load tradeoff data from all datasets and combine into a single DataFrame.
+
+    Args:
+        datasets: list of dataset names
+        system_name: Optional system name to add as a column (e.g., 'Polytris')
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: Combined tradeoff data and naive data from all datasets
+    """
+    all_combined = []
+    all_naive = []
+
+    for dataset in datasets:
+        # Use the load_tradeoff_data function
+        _, combined, _, naive_combined = load_tradeoff_data(dataset)
+        # Add dataset column to combined data
+        combined['dataset'] = dataset
+        naive_combined['dataset'] = dataset
+
+        # Add system column if specified
+        if system_name is not None:
+            combined['system'] = system_name
+
+        all_combined.append(combined)
+        all_naive.append(naive_combined)
+
+    # Combine all datasets
+    import pandas as pd
+    combined_df = pd.concat(all_combined, ignore_index=True)
+    naive_df = pd.concat(all_naive, ignore_index=True)
+    print(f"Combined tradeoff data from {len(datasets)} datasets: {len(combined_df)} total rows")
+
+    return combined_df, naive_df
+
+
+def print_best_data_points(df_combined: "pd.DataFrame", metrics_list: list[str],
+                          x_column: str, plot_suffix: str, include_system: bool = False):
+    """
+    Print the best data point (highest accuracy, faster than baseline) for each dataset and metric as tables.
+
+    Args:
+        df_combined: Combined DataFrame with data from all datasets (already merged with naive data)
+        metrics_list: list of metrics to analyze
+        x_column: Column name for x-axis data (runtime or throughput)
+        plot_suffix: Suffix for the analysis type ('runtime' or 'throughput')
+        include_system: Whether to include the 'system' column in output (default: False)
+    """
+    import pandas as pd
+
+    print(f"\n=== Best Data Points Analysis ({plot_suffix.upper()}) ===")
+
+    # Naive column is automatically created from merge with suffix '_naive'
+    naive_column = f'{x_column}_naive'
+
+    for metric in metrics_list:
+        if metric == 'HOTA':
+            accuracy_col = 'HOTA_HOTA'
+            metric_name = 'HOTA'
+        elif metric == 'CLEAR':
+            accuracy_col = 'MOTA_MOTA'
+            metric_name = 'MOTA'
+        else:
+            continue
+
+        print(f"\n--- {metric_name} Analysis ---")
+
+        # Collect results for this metric
+        results = []
+
+        for dataset in df_combined['dataset'].unique():
+            dataset_data = df_combined[df_combined['dataset'] == dataset]
+
+            # Filter data points that are faster than baseline for this dataset
+            faster_than_baseline = dataset_data[dataset_data[x_column] < dataset_data[naive_column]]
+
+            if len(faster_than_baseline) == 0:
+                # If no points are faster than baseline, use the fastest point
+                assert isinstance(dataset_data, pd.DataFrame), \
+                    f"dataset_data should be a DataFrame, got {type(dataset_data)}"
+                best_point = dataset_data.loc[dataset_data[x_column].idxmin()]
+            else:
+                # Find the point with highest accuracy among those faster than baseline
+                assert isinstance(faster_than_baseline, pd.DataFrame), \
+                    f"faster_than_baseline should be a DataFrame, got {type(faster_than_baseline)}"
+                best_point = faster_than_baseline.loc[faster_than_baseline[accuracy_col].idxmax()]
+
+            # Calculate speed improvement
+            naive_runtime = best_point[naive_column]
+            best_runtime = best_point[x_column]
+            speedup = naive_runtime / best_runtime if best_runtime > 0 else 0
+
+            result = {
+                'Dataset': dataset,
+            }
+
+            if include_system:
+                result['System'] = best_point['system']
+
+            result[f'{metric_name} Score'] = f"{best_point[accuracy_col]:.2f}"
+            result['Speedup'] = f"{speedup:.2f}"
+
+            results.append(result)
+
+        # Create and print table for this metric
+        if results:
+            df = pd.DataFrame(results)
+            print(df.to_string(index=False))
+        else:
+            print("No results found.")
+
+
 def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, x_title: str, 
                                         accuracy_col: str, metric_name: str,
                                         size_range: tuple[int, int] = (20, 200), scatter_opacity: float = 0.7, 

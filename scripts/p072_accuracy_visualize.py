@@ -42,7 +42,7 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
     
     Args:
         results: DataFrame of evaluation results
-        score_field: Field name for scores ('HOTA.HOTA', 'HOTA.AssA', 'HOTA.DetA', 'Count.DetsMAPE', 'Count.TracksMAPE')
+        score_field: Field name for scores ('HOTA_HOTA', 'HOTA_AssA', 'HOTA_DetA', 'Count_DetsMAPE', 'Count_TracksMAPE')
         xlabel: Label for x-axis
         output_path: Path to save the plot
     """
@@ -53,7 +53,7 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
     
     # Create horizontal bar chart with text labels inside bars
     # Main bars showing the scores
-    if score_field.startswith('Count.'):
+    if score_field.startswith('Count_'):
         x_encoding = alt.X('Score:Q', title=xlabel)
     else:
         x_encoding = alt.X('Score:Q', title=xlabel, scale=alt.Scale(domain=[0, 1]))
@@ -130,11 +130,11 @@ def visualize_tracking_accuracy(results: pd.DataFrame, output_dir: str, combined
     prefix = "combined_" if combined else ""
 
     metrics = [
-        ('HOTA.HOTA', 'HOTA Score'),
-        ('HOTA.AssA', 'AssA Score'),
-        ('HOTA.DetA', 'DetA Score'),
-        ('Count.DetsMAPE', 'Dets MAPE (%)'),
-        ('Count.TracksMAPE', 'Tracks MAPE (%)'),
+        ('HOTA_HOTA', 'HOTA Score'),
+        ('HOTA_AssA', 'AssA Score'),
+        ('HOTA_DetA', 'DetA Score'),
+        ('Count_DetsMAPE', 'Dets MAPE (%)'),
+        ('Count_TracksMAPE', 'Tracks MAPE (%)'),
     ]
     
     # Create comparison plots for HOTA, AssA, and MOTA scores

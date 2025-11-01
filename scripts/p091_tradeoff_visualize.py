@@ -55,12 +55,6 @@ def visualize_tradeoff(tradeoff: pd.DataFrame, combined: pd.DataFrame,
     
     # Create base charts
     naive_combined['video'] = 'dataset_level'
-    tradeoff['HOTA_HOTA'] = tradeoff['HOTA.HOTA']
-    tradeoff['Count_TracksMAPE'] = tradeoff['Count.TracksMAPE']
-    # tradeoff['MOTA_MOTA'] = tradeoff['MOTA.MOTA']
-    combined['HOTA_HOTA'] = combined['HOTA.HOTA']
-    combined['Count_TracksMAPE'] = combined['Count.TracksMAPE']
-    # combined['MOTA_MOTA'] = combined['MOTA.MOTA']
     base_individual = alt.Chart(tradeoff.merge(naive, on='video', how='left', suffixes=('', '_naive')))
     base_aggregated = alt.Chart(combined.merge(naive_combined, on='video', how='left', suffixes=('', '_naive')))
     
