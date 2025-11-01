@@ -20,8 +20,6 @@ def parse_args():
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
-    parser.add_argument('--clear', action='store_true',
-                        help='Clear the 082_throughput_visualize directory before creating visualizations')
     return parser.parse_args()
 
 
@@ -245,14 +243,13 @@ def main():
     """Main function to create runtime breakdown visualizations."""
     args = parse_args()
 
-    # Clear the 082_throughput_visualize directory if --clear flag is set
-    if args.clear:
-        for dataset in args.datasets:
-            output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
-            if os.path.exists(output_dir):
-                print(f"Clearing directory: {output_dir}")
-                shutil.rmtree(output_dir)
-            os.makedirs(output_dir, exist_ok=True)
+    # Clear the 082_throughput_visualize directory
+    for dataset in args.datasets:
+        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
+        if os.path.exists(output_dir):
+            print(f"Clearing directory: {output_dir}")
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
 
     tasks = []
     for dataset in args.datasets:
