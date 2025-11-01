@@ -97,4 +97,4 @@ class SimpleCNN(torch.nn.Module):
         x = self.encoder(imgs)
         x = x.flatten(1)
         x = self.decoder(x)
-        return torch.sigmoid(x)
+        return x  # Return logits instead of sigmoid probabilities

@@ -9,147 +9,162 @@ from multiprocessing import Queue
 from pathlib import Path
 
 import cv2
+import numpy as np
 import torch
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, ProgressBar, DATASETS_TO_TEST
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, VIDEO_SETS, format_time, ProgressBar, DATASETS_TO_TEST
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Execute object detection on video segments')
+    parser = argparse.ArgumentParser(description='Execute object detection on uniformly sampled video frames')
     parser.add_argument('--datasets', required=False,
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
+    parser.add_argument('--selectivity', type=float, default=0.1,
+                        help='Fraction of frames to uniformly sample from video (default: 0.1)')
+    parser.add_argument('--batch_size', type=int, default=16,
+                        help='Batch size for detection processing (default: 64)')
     return parser.parse_args()
 
 
-def detect_objects(video: str, dataset_name: str, gpu_id: int, command_queue: Queue):
-    # Get detector based on detector_name parameter
-    detector = polyis.models.detector.get_detector(dataset_name, gpu_id)
-
+def detect_objects(video: str, split: str, dataset: str, selectivity: float, batch_size: int, gpu_id: int, command_queue: Queue):
     # New output path structure
-    output_path = Path(CACHE_DIR) / dataset_name / 'indexing' / 'segment' / 'detection' / f'{video}.detections.jsonl'
+    output_path = Path(CACHE_DIR) / dataset / 'indexing' / 'segment' / 'detection' / f'{video}.detections.jsonl'
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Input segments path
-    segments_path = Path(CACHE_DIR) / dataset_name / 'indexing' / 'segment' / 'detection' / f'{video}.segments.jsonl'
+    # Construct the path to the video file in the dataset directory
+    dataset_video_path = os.path.join(DATASETS_DIR, dataset, split, video)
+    cap = cv2.VideoCapture(dataset_video_path)
 
-    with (open(segments_path, 'r') as f, open(output_path, 'w') as fd):
-        lines = [*f.readlines()]
+    # Get total frame count from video
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    
+    # Calculate number of frames to sample based on selectivity
+    frames_to_sample = int(total_frames * selectivity)
+    assert frames_to_sample > 1, "Number of frames to sample must be greater than 1"
+    
+    # Generate uniformly distributed frame indices
+    frame_indices = np.linspace(0, total_frames - 1, frames_to_sample, dtype=int)
+    
+    processed_frames = 0
 
-        # Construct the path to the video file in the dataset directory
-        dataset_video_path = os.path.join(DATA_DIR, dataset_name, video)
-        cap = cv2.VideoCapture(dataset_video_path)
+    # Send initial progress update
+    command_queue.put((f'cuda:{gpu_id}', {
+        'description': f'{dataset}/{video}',
+        'completed': 0,
+        'total': frames_to_sample
+    }))
 
-        # Calculate total frames across all segments for progress tracking
-        total_frames = sum(json.loads(line)['end'] - json.loads(line)['start'] for line in lines)
-        processed_frames = 0
+    # Get detector based on detector_name parameter with appropriate batch size
+    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size=batch_size,
+                                                   num_images=len(frame_indices))
 
-        # Send initial progress update
-        command_queue.put((f'cuda:{gpu_id}', {
-            'description': f'{dataset_name}/{video}',
-            'completed': 0,
-            'total': total_frames
-        }))
-
-        for line in lines:
-            snippet = json.loads(line)
-            idx = snippet['idx']
-            start = snippet['start']
-            end = snippet['end']
-
-            frame_idx = start
-            # set cap to the start frame
-            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-
-            while cap.isOpened() and frame_idx < end:
+    with open(output_path, 'w') as fd:
+        # Process frames in batches
+        for batch_start in range(0, len(frame_indices), batch_size):
+            batch_end = min(batch_start + batch_size, len(frame_indices))
+            batch_indices = frame_indices[batch_start:batch_end]
+            batch_frames = []
+            
+            # Read frames for current batch
+            read_times = []
+            for frame_idx in batch_indices:
                 start_time = time.time_ns() / 1e6
+                # Set cap to the target frame
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
                 ret, frame = cap.read()
                 end_time = time.time_ns() / 1e6
                 read_time = end_time - start_time
+                read_times.append(read_time)
 
                 assert ret, "Failed to read frame"
+                batch_frames.append(frame)
 
-                # Detect objects in the frame
-                start_time = time.time_ns() / 1e6
-                outputs = polyis.models.detector.detect(frame, detector)
-                end_time = time.time_ns() / 1e6
-                detect_time = end_time - start_time
+            # Detect objects in the batch of frames
+            start_time = time.time_ns() / 1e6
+            batch_outputs = polyis.models.detector.detect_batch(batch_frames, detector)
+            end_time = time.time_ns() / 1e6
+            detect_time = end_time - start_time
 
-                fd.write(json.dumps([frame_idx, outputs[:, :4].tolist(), idx, format_time(read=read_time, detect=detect_time)]) + '\n')
+            # Write detection results for each frame in the batch
+            for i, frame_idx in enumerate(batch_indices):
+                outputs = batch_outputs[i]
+                formatted_time = format_time(read=read_times[i], detect=detect_time / len(batch_indices))
+                fd.write(json.dumps([int(frame_idx), outputs[:, :4].tolist(), formatted_time]) + '\n')
 
-                frame_idx += 1
-                processed_frames += 1
+            processed_frames += len(batch_indices)
 
-                # Send progress update
-                command_queue.put((f'cuda:{gpu_id}', {'completed': processed_frames}))
-        cap.release()
+            # Send progress update
+            command_queue.put((f'cuda:{gpu_id}', {'completed': processed_frames}))
+    
+    cap.release()
 
 
 def main(args):
     """
-    Main function to run object detection on video segments.
+    Main function to run object detection on uniformly sampled video frames.
 
     This function:
     1. Processes multiple datasets in sequence
     2. For each dataset, sets up paths for cache and dataset directories
     3. Selects the appropriate detector (based on dataset name)
     4. Iterates through each video in the dataset directory
-    5. Reads detection segments from the cache
-    6. Processes each frame in each segment to detect objects using multiprocessing
+    5. Uniformly samples frames from each video based on selectivity parameter
+    6. Processes sampled frames in batches to detect objects using multiprocessing
     7. Saves detection results with timing information to detections.jsonl
 
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
             - datasets: List of dataset names to process
+            - selectivity: Fraction of frames to uniformly sample (default: 0.1)
+            - batch_size: Number of frames to process in each batch (default: 8)
 
     Raises:
         ValueError: If dataset is not found in configuration
 
     Note:
         The function expects the following directory structure:
-        - CACHE_DIR/dataset_name/indexing/segments/detection/ (for processed segments and results)
-        - DATA_DIR/dataset_name/ (for original video files)
+        - CACHE_DIR/dataset_name/indexing/segment/detection/ (for detection results)
+        - DATASETS_DIR/dataset_name/ (for original video files)
 
         Detection results are saved in JSONL format with:
         - frame_idx: Current frame index
         - bounding_boxes: Detected object bounding boxes (first 4 columns of outputs)
-        - segment_idx: Index of the current segment
+        - segment_idx: Frame index (for compatibility)
         - timing: Dictionary with read and detection timing information
+        
+        Batch processing improves GPU utilization and overall performance.
     """
     datasets = args.datasets
-
-    # Show detector info
-    print(f"Using detector: {datasets}")
+    selectivity = args.selectivity
+    batch_size = args.batch_size
 
     # Create task functions
     funcs = []
-    for dataset_name in datasets:
-        cache_dir = Path(CACHE_DIR) / dataset_name
-        dataset_dir = Path(DATA_DIR) / dataset_name
+    for dataset in datasets:
+        dataset_dir = Path(DATASETS_DIR) / dataset
+        assert dataset_dir.exists(), f"Dataset directory {dataset_dir} does not exist"
 
-        if not dataset_dir.exists():
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
-            continue
+        for split in ['train']:
+            # Get list of videos to process from dataset directory
+            videos = [
+                v.name
+                for v in (dataset_dir / split).iterdir()
+                if v.is_file() and v.suffix.lower() in ['.mp4', '.avi', '.mov', '.mkv']
+            ]
 
-        # Get list of videos to process
-        videos = [
-            v.name[:-len('.segments.jsonl')]
-            for v in (cache_dir / 'indexing' / 'segment' / 'detection').iterdir()
-            if v.is_file()
-        ]
+            if len(videos) == 0:
+                print(f"No video files found in {dataset_dir}")
+                continue
 
-        if len(videos) == 0:
-            print(f"No videos with segments found in {cache_dir}")
-            continue
+            print(f"Found {len(videos)} videos to process in dataset {dataset}")
 
-        print(f"Found {len(videos)} videos to process in dataset {dataset_name}")
-
-        funcs.extend(
-            partial(detect_objects, video, dataset_name)
-            for video in videos
-        )
+            funcs.extend(
+                partial(detect_objects, video, split, dataset, selectivity, batch_size)
+                for video in videos
+            )
 
     if len(funcs) == 0:
         print("No videos found to process across all datasets")

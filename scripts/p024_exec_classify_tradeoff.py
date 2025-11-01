@@ -10,7 +10,7 @@ from rich.progress import track
 from typing import Any, Dict, List
 import multiprocessing as mp
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, mark_detections, DATASETS_TO_TEST, TILE_SIZES
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, mark_detections, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -249,7 +249,7 @@ def visualize_tradeoff(dataset_name: str, results: List[Dict], output_dir: str):
         # Create scatter plot with lines connecting same classifier
         scatter = alt.Chart(df).mark_circle().encode(
             x='throughput_fps:Q',
-            y=alt.Y(f'{metric}:Q', scale=alt.Scale(zero=False)),
+            y=alt.Y(f'{metric}:Q', scale=alt.Scale(domain=[0, 1])),
             color='classifier:N',
             size=alt.Size('tile_size:O', scale=alt.Scale(range=[50, 200])),
             tooltip=['classifier', 'tile_size', 'throughput_fps', metric]
@@ -279,9 +279,9 @@ def visualize_tradeoff(dataset_name: str, results: List[Dict], output_dir: str):
             line_df = pd.DataFrame(line_data)
             lines = alt.Chart(line_df).mark_rule(strokeDash=[5, 5], opacity=0.5).encode(
                 x='x1:Q',
-                y='y1:Q',
+                y=alt.Y('y1:Q', scale=alt.Scale(domain=[0, 1])),
                 x2='x2:Q',
-                y2='y2:Q',
+                y2=alt.Y2('y2:Q'),
                 color='classifier:N'
             )
             chart = scatter + lines
@@ -313,7 +313,7 @@ def process_dataset(args):
     Returns:
         str: Status message about processing completion
     """
-    video_files, dataset_name, tile_sizes, threshold = args
+    video_files, dataset_name, videoset, tile_sizes, threshold = args
     
     classifier_tilesizes: set[tuple[str, int]] | None = None
     for video_file in video_files:
@@ -391,24 +391,26 @@ def main(args):
 
     # Process each dataset
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATA_DIR, dataset_name)
+        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
         
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
-            continue
+        for videoset in ['test']:
+            videoset_dir = os.path.join(dataset_dir, videoset)
+            if not os.path.exists(videoset_dir):
+                print(f"Videoset directory {videoset_dir} does not exist, skipping...")
+                continue
 
-        print(f"\nProcessing dataset: {dataset_name}")
+            print(f"\nProcessing dataset: {dataset_name}")
 
-        # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-        if len(video_files) == 0:
-            print(f"No video files found in {dataset_dir}, skipping...")
-            continue
+            # Get all video files from the dataset directory
+            video_files = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+            if len(video_files) == 0:
+                print(f"No video files found in {videoset_dir}, skipping...")
+                continue
 
-        # # Prepare arguments for parallel processing
-        # worker_args = [(video_file, dataset_name, tile_sizes_to_process, args.threshold)
-        #                for video_file in sorted(video_files)]
-        dataset_args.append((video_files, dataset_name, tile_sizes_to_process, args.threshold))
+            # # Prepare arguments for parallel processing
+            # worker_args = [(video_file, dataset_name, tile_sizes_to_process, args.threshold)
+            #                for video_file in sorted(video_files)]
+            dataset_args.append((video_files, dataset_name, videoset, tile_sizes_to_process, args.threshold))
 
     # # Process videos in parallel
     # with mp.Pool(processes=num_processes) as pool:

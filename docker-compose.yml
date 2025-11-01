@@ -13,6 +13,7 @@ services:
       - /data/chanwutk/data/polyis-data:/polyis-data
       - /data/chanwutk/data/polyis-cache:/polyis-cache
       - /data/chanwutk/data/otif-dataset:/otif-dataset
+      - /data/alenachao/data/hota_outputs:/sota-results
       - /home/eecs/chanwutk/.ssh:/root/.ssh
     deploy:
       resources:

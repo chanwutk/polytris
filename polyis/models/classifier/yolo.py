@@ -72,13 +72,13 @@ class YoloClassifier(torch.nn.Module):
             img: Input image tensor of shape (batch_size, 3, height, width) with dtype uint8 and values in [0, 255]
             
         Returns:
-            Car probabilities as a tensor of shape (batch_size,)
+            Car logits as a tensor of shape (batch_size,)
         """
         x = img
         x = self.convs(x)
         c = self.classify
         x = c.linear(c.drop(c.pool(c.conv(x)).flatten(1)))
-        return torch.sigmoid(x)
+        return x  # Return logits instead of sigmoid probabilities
     
     def get_model_info(self) -> Dict[str, Any]:
         """Return information about the loaded model."""

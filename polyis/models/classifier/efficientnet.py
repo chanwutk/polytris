@@ -14,7 +14,7 @@ class EfficientNetS(torch.nn.Module):
         self.model.classifier[-1] = collapse_classifier(weight, last_layer)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities
 
 
 class EfficientNetL(torch.nn.Module):
@@ -27,4 +27,4 @@ class EfficientNetL(torch.nn.Module):
         self.model.classifier[-1] = collapse_classifier(weight, last_layer)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sigmoid(self.model(x))
+        return self.model(x)  # Return logits instead of sigmoid probabilities

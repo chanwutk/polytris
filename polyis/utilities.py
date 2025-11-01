@@ -1,8 +1,11 @@
 import json
 import os
 import subprocess
+import time
 import typing
 import multiprocessing as mp
+import functools
+import queue
 
 import cv2
 import numpy as np
@@ -12,10 +15,18 @@ if typing.TYPE_CHECKING:
     import altair as alt
     import pandas as pd
 
+SOURCE_DIR = '/polyis-data/sources'
+DATASETS_DIR = '/polyis-data/datasets'
 DATA_RAW_DIR = '/polyis-data/video-datasets-raw'
-DATA_DIR = '/polyis-data/video-datasets-low'
+DATA_DIR = '/polyis-data/video-datasets'
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [60]
+
+GS_DATASETS_DIR = 'gs://polytris/polyis-data/datasets'
+GS_CACHE = 'gs://polytris/polyis-cache'
+
+GC_DATASETS_DIR = '/data/chanwutk/data/polyis-data/datasets'
+GC_CACHE = '/data/chanwutk/data/polyis-cache'
 
 # Define 10 distinct colors for track visualization (BGR format for OpenCV)
 TRACK_COLORS = [
@@ -30,6 +41,30 @@ TRACK_COLORS = [
     (0, 128, 255),  # Light Blue
     (255, 0, 128),  # Pink
 ]
+
+
+def get_video_frame_count(dataset: str, video: str) -> int:
+    """
+    Get the total number of frames in a video using OpenCV.
+
+    Args:
+        dataset (str): Dataset name
+        video_name (str): Video name (with extension, e.g., 'te01.mp4')
+
+    Returns:
+        int: Total number of frames in the video
+    """
+    video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
+    assert os.path.exists(video_path), f"Video file not found for {dataset}/{video}"
+    
+    # Open video and get frame count
+    cap = cv2.VideoCapture(video_path)
+    assert cap.isOpened(), f"Could not open video {video_path}"
+    
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+    
+    return frame_count
 
 
 def get_num_frames(video_file_path: str) -> int:
@@ -399,7 +434,7 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str,
     return results
 
 
-def create_tracker(tracker_name: str, max_age: int = 1, min_hits: int = 3, iou_threshold: float = 0.3):
+def create_tracker(tracker_name: str):
     """
     Create a tracker instance based on the specified algorithm.
     
@@ -415,12 +450,14 @@ def create_tracker(tracker_name: str, max_age: int = 1, min_hits: int = 3, iou_t
     Raises:
         ValueError: If the tracker name is not supported
     """
-    if tracker_name == 'sort':
-        # print(f"Creating SORT tracker with max_age={max_age}, min_hits={min_hits}, iou_threshold={iou_threshold}")
-        from modules.b3d.b3d.external.sort import Sort
-        return Sort(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
-    else:
-        raise ValueError(f"Unknown tracker: {tracker_name}")
+    with open('configs/trackers.json', 'r') as f:
+        if tracker_name == 'sort':
+            # print(f"Creating SORT tracker with max_age={max_age}, min_hits={min_hits}, iou_threshold={iou_threshold}")
+            from polyis.b3d.sort import Sort
+            config = json.load(f)['sort']
+            return Sort(max_age=config['max_age'], min_hits=config['min_hits'], iou_threshold=config['iou_threshold'])
+        else:
+            raise ValueError(f"Unknown tracker: {tracker_name}")
 
 
 def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]], frame_idx: int,
@@ -745,6 +782,33 @@ def mark_detections(
     return bitmap
 
 
+def create_timer(file: typing.TextIO, meta: dict | None = None):
+    row = []
+    def timer(op: str) -> Timer:
+        return Timer(op, row)
+    def flush():
+        nonlocal row
+        if row:
+            file.write(json.dumps(row) + '\n')
+            row = []
+    return timer, flush
+
+
+class Timer:
+    def __init__(self, op: str, row: list[dict]):
+        self.start_time = time.time_ns() / 1e6
+        self.op = op
+        self.row = row
+
+    def __enter__(self):
+        self.start_time = time.time_ns() / 1e6
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end_time = time.time_ns() / 1e6
+        elapsed_time = self.end_time - self.start_time
+        self.row.append({'op': self.op, 'time': elapsed_time})
+
+
 def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
                   refresh_per_second: float = 1):
     with progress.Progress(
@@ -761,7 +825,7 @@ def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
                                       total=num_tasks, completed=-num_workers)
         bars['overall'] = overall_progress
         for gpu_id in range(num_workers):
-            bars[f'cuda:{gpu_id}'] = p.add_task("video tilesize model T/V")
+            bars[f'cuda:{gpu_id}'] = p.add_task("")
 
         while True:
             val = command_queue.get()
@@ -880,6 +944,7 @@ class ProgressBar:
                 process.join()
                 process.terminate()
 
+
     @staticmethod
     def run_with_worker_id(func: typing.Callable[[int, mp.Queue], None],
                            worker_id: int, command_queue: mp.Queue,
@@ -892,7 +957,36 @@ class ProgressBar:
             worker_id_queue.put(worker_id)
 
 
-def load_tradeoff_data(dataset: str, csv_suffix: str) -> "tuple[pd.DataFrame, pd.DataFrame]":
+def gcp_run(funcs: list[typing.Callable[[int, mp.Queue], None]]):
+    """
+    Run a list of functions in a GCP instance.
+    
+    Args:
+        funcs (list[typing.Callable[[int, mp.Queue], None]]): List of functions to run
+    """
+    commands = []
+    for func in funcs:
+        assert isinstance(func, functools.partial)
+        args: tuple = func.args
+        func_name = func.func.__name__
+        script: str = func.func.gcp  # type: ignore
+        args_str = ' '.join(str(arg) for arg in args)
+        command = f"python ./scripts/{script} {func_name} {args_str}"
+        commands.append(command)
+    
+    command_funcs = [functools.partial(subprocess.run, command, shell=True, check=True, capture_output=True, text=True) for command in commands]
+    processes = []
+    for command_func in command_funcs:
+        process = mp.Process(target=command_func)
+        process.start()
+        processes.append(process)
+    
+    for process in progress.track(processes):
+        process.join()
+        process.terminate()
+
+
+def load_tradeoff_data(dataset: str):
     """
     Load pre-computed tradeoff data from CSV files created by p090_tradeoff_compute.py.
     
@@ -906,34 +1000,151 @@ def load_tradeoff_data(dataset: str, csv_suffix: str) -> "tuple[pd.DataFrame, pd
     # Construct paths to CSV files created by p090_tradeoff_compute.py
     tradeoff_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
     
-    individual_csv_path = os.path.join(tradeoff_dir, f'individual_accuracy_{csv_suffix}_tradeoff.csv')
-    aggregated_csv_path = os.path.join(tradeoff_dir, f'combined_accuracy_{csv_suffix}_tradeoff.csv')
+    tradeoff_path = os.path.join(tradeoff_dir, f'tradeoff.csv')
+    tradeoff_combined_path = os.path.join(tradeoff_dir, f'tradeoff_combined.csv')
+    naive_path = os.path.join(tradeoff_dir, f'naive.csv')
+    naive_combined_path = os.path.join(tradeoff_dir, f'naive_combined.csv')
     
     # Check if CSV files exist
-    assert os.path.exists(individual_csv_path), \
-        f"Individual tradeoff data not found: {individual_csv_path}. " \
+    assert os.path.exists(tradeoff_path), \
+        f"Tradeoff data not found: {tradeoff_path}. " \
         "Please run p090_tradeoff_compute.py first."
     
-    assert os.path.exists(aggregated_csv_path), \
-        f"Aggregated tradeoff data not found: {aggregated_csv_path}. " \
+    assert os.path.exists(tradeoff_combined_path), \
+        f"Combined tradeoff data not found: {tradeoff_combined_path}. " \
         "Please run p090_tradeoff_compute.py first."
     
     # Load CSV files
     import pandas as pd
-    df_individual = pd.read_csv(individual_csv_path)
-    df_aggregated = pd.read_csv(aggregated_csv_path)
+    tradeoff = pd.read_csv(tradeoff_path)
+    combined = pd.read_csv(tradeoff_combined_path)
+    naive = pd.read_csv(naive_path)
+    naive_combined = pd.read_csv(naive_combined_path)
     
-    print(f"Loaded individual tradeoff data: {len(df_individual)} rows from {individual_csv_path}")
-    print(f"Loaded aggregated tradeoff data: {len(df_aggregated)} rows from {aggregated_csv_path}")
+    print(f"Loaded individual tradeoff data: {len(tradeoff)} rows from {tradeoff_path}")
+    print(f"Loaded combined tradeoff data: {len(combined)} rows from {tradeoff_combined_path}")
     
-    return df_individual, df_aggregated
+    return tradeoff, combined, naive, naive_combined
+
+
+def load_all_datasets_tradeoff_data(datasets: list[str], system_name: str | None = None):
+    """
+    Load tradeoff data from all datasets and combine into a single DataFrame.
+
+    Args:
+        datasets: list of dataset names
+        system_name: Optional system name to add as a column (e.g., 'Polytris')
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: Combined tradeoff data and naive data from all datasets
+    """
+    all_combined = []
+    all_naive = []
+
+    for dataset in datasets:
+        # Use the load_tradeoff_data function
+        _, combined, _, naive_combined = load_tradeoff_data(dataset)
+        # Add dataset column to combined data
+        combined['dataset'] = dataset
+        naive_combined['dataset'] = dataset
+
+        # Add system column if specified
+        if system_name is not None:
+            combined['system'] = system_name
+
+        all_combined.append(combined)
+        all_naive.append(naive_combined)
+
+    # Combine all datasets
+    import pandas as pd
+    combined_df = pd.concat(all_combined, ignore_index=True)
+    naive_df = pd.concat(all_naive, ignore_index=True)
+    print(f"Combined tradeoff data from {len(datasets)} datasets: {len(combined_df)} total rows")
+
+    return combined_df, naive_df
+
+
+def print_best_data_points(df_combined: "pd.DataFrame", metrics_list: list[str],
+                          x_column: str, plot_suffix: str, include_system: bool = False):
+    """
+    Print the best data point (highest accuracy, faster than baseline) for each dataset and metric as tables.
+
+    Args:
+        df_combined: Combined DataFrame with data from all datasets (already merged with naive data)
+        metrics_list: list of metrics to analyze
+        x_column: Column name for x-axis data (runtime or throughput)
+        plot_suffix: Suffix for the analysis type ('runtime' or 'throughput')
+        include_system: Whether to include the 'system' column in output (default: False)
+    """
+    import pandas as pd
+
+    print(f"\n=== Best Data Points Analysis ({plot_suffix.upper()}) ===")
+
+    # Naive column is automatically created from merge with suffix '_naive'
+    naive_column = f'{x_column}_naive'
+
+    for metric in metrics_list:
+        if metric == 'HOTA':
+            accuracy_col = 'HOTA_HOTA'
+            metric_name = 'HOTA'
+        elif metric == 'CLEAR':
+            accuracy_col = 'MOTA_MOTA'
+            metric_name = 'MOTA'
+        else:
+            continue
+
+        print(f"\n--- {metric_name} Analysis ---")
+
+        # Collect results for this metric
+        results = []
+
+        for dataset in df_combined['dataset'].unique():
+            dataset_data = df_combined[df_combined['dataset'] == dataset]
+
+            # Filter data points that are faster than baseline for this dataset
+            faster_than_baseline = dataset_data[dataset_data[x_column] < dataset_data[naive_column]]
+
+            if len(faster_than_baseline) == 0:
+                # If no points are faster than baseline, use the fastest point
+                assert isinstance(dataset_data, pd.DataFrame), \
+                    f"dataset_data should be a DataFrame, got {type(dataset_data)}"
+                best_point = dataset_data.loc[dataset_data[x_column].idxmin()]
+            else:
+                # Find the point with highest accuracy among those faster than baseline
+                assert isinstance(faster_than_baseline, pd.DataFrame), \
+                    f"faster_than_baseline should be a DataFrame, got {type(faster_than_baseline)}"
+                best_point = faster_than_baseline.loc[faster_than_baseline[accuracy_col].idxmax()]
+
+            # Calculate speed improvement
+            naive_runtime = best_point[naive_column]
+            best_runtime = best_point[x_column]
+            speedup = naive_runtime / best_runtime if best_runtime > 0 else 0
+
+            result = {
+                'Dataset': dataset,
+            }
+
+            if include_system:
+                result['System'] = best_point['system']
+
+            result[f'{metric_name} Score'] = f"{best_point[accuracy_col]:.2f}"
+            result['Speedup'] = f"{speedup:.2f}"
+
+            results.append(result)
+
+        # Create and print table for this metric
+        if results:
+            df = pd.DataFrame(results)
+            print(df.to_string(index=False))
+        else:
+            print("No results found.")
 
 
 def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, x_title: str, 
-                                        accuracy_col: str, metric_name: str, naive_column: str,
+                                        accuracy_col: str, metric_name: str,
                                         size_range: tuple[int, int] = (20, 200), scatter_opacity: float = 0.7, 
                                         size: int | None = None, baseline_stroke_width: int = 2, 
-                                        baseline_opacity: float = 0.8) -> "tuple[alt.Chart, alt.LayerChart]":
+                                        baseline_opacity: float = 0.8, size_field: str = 'tilesize') -> "tuple[alt.Chart, alt.LayerChart]":
     """
     Create both a scatter plot and naive baseline visualization with common styling.
     
@@ -946,59 +1157,139 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         naive_column: Column name for naive baseline data
         size_range: Tuple of (min, max) for tile size scale
         scatter_opacity: Opacity for the scatter points
-        size: Fixed size for scatter points (if None, uses tilesize encoding)
+        size: Fixed size for scatter points (if None, uses size_field encoding)
         baseline_stroke_width: Width of the baseline rule line
         baseline_opacity: Opacity of the baseline rule line
+        size_field: Column name for size encoding (default: 'tilesize')
         
     Returns:
         tuple[alt.Chart, alt.Chart]: Tuple of (scatter_plot, naive_baseline)
     """
     import altair as alt
     # Create scatter plot
+    scale = {'scale': alt.Scale(domain=[0, 1])} if metric_name != 'Count' else {}
     scatter = base_chart.mark_circle(opacity=scatter_opacity).encode(
         x=alt.X(f'{x_column}:Q', title=x_title),
-        y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
-                scale=alt.Scale(domain=[0, 1])),
+        y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **scale),
         color=alt.Color('classifier:N', title='Classifier'),
-        tooltip=['video_name', 'classifier', 'tilesize', x_column, accuracy_col]
+        tooltip=['video', 'classifier', size_field, x_column, accuracy_col]
     ).properties(
-        width=200,
-        height=200
+        width=150,
+        height=150
     )
     
     # Add size encoding only if no fixed size is provided
     if size is None:
-        scatter = scatter.encode(size=alt.Size('tilesize:O',
+        scatter = scatter.encode(size=alt.Size(f'{size_field}:O',
                                  title='Tile Size',
                                  scale=alt.Scale(range=size_range)))
     
-    # Create naive baseline
-    baseline = base_chart.mark_rule(
+    # Create naive baseline as a point at 1.0 accuracy score
+    baseline = base_chart.mark_point(
         color='red',
-        strokeDash=[5, 5],
-        strokeWidth=baseline_stroke_width,
-        opacity=baseline_opacity
+        fill='red',
+        size=20,
+        opacity=baseline_opacity,
     ).encode(
-        x=f'{naive_column}:Q'
+        x=f'{x_column}_naive:Q',
+        y=alt.value(1.0)  # Fixed at 1.0 accuracy score
     )
     
     # Create annotation text for the baseline
     baseline_annotation = base_chart.mark_text(
-        align='left',
-        baseline='bottom',
+        align='right',
+        baseline='top',
         fontSize=12,
         fontWeight='bold',
         color='red',
-        dx=5,  # Offset to the right of the line
-        dy=0,  # No vertical offset
-        angle=90  # Rotate 90 degrees clockwise
+        dy=3,
+        dx=15,
+        lineHeight=10
     ).encode(
-        x=f'{naive_column}:Q',
-        y=alt.value(0.5),  # Position at middle of y-axis
-        text=alt.value('Without Optimization')
+        x=f'{x_column}_naive:Q',
+        y=alt.value(1.0),  # Position at 1.0 accuracy score
+        text=alt.value(['Without', 'Optimization'])
     )
     
     return scatter, baseline + baseline_annotation
+
+
+STR_NA = '_NA_'
+INT_NA = 0
+
+
+OPTIMAL_PARAMS = {
+    'jnc0': {
+        'classifier': 'YoloN',
+        'tilesize': 60,
+        'tilepadding': 'unpadded',
+    },
+    'jnc2': {
+        'classifier': 'YoloN',
+        'tilesize': 60,
+        'tilepadding': 'unpadded',
+    },
+    'jnc6': {
+        'classifier': 'YoloN',
+        'tilesize': 60,
+        'tilepadding': 'unpadded',
+    },
+    'jnc7': {
+        'classifier': 'YoloN',
+        'tilesize': 60,
+        'tilepadding': 'unpadded',
+    },
+    'caldot1': {
+        'classifier': 'ShuffleNet05',
+        'tilesize': 60,
+        'tilepadding': 'padded',
+    },
+    'caldot2': {
+        'classifier': 'MobileNetS',
+        'tilesize': 60,
+        'tilepadding': 'padded',
+    },
+}
+
+CHOSEN_PARAMS = {
+    'jnc0': [
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'jnc2': [
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'jnc6': [
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'jnc7': [
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'caldot1': [
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'padded'},
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'padded'},
+        {'classifier': 'YoloN', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+    'caldot2': [
+        {'classifier': 'MobileNetS', 'tilesize': 60, 'tilepadding': 'padded'},
+        {'classifier': 'ShuffleNet05', 'tilesize': 60, 'tilepadding': 'unpadded'},
+    ],
+}
+
+
+VIDEO_SETS = ['train', 'valid', 'test']
+PREFIX_TO_VIDEOSET = {
+    'tr': 'train',
+    'va': 'valid',
+    'te': 'test',
+}
 
 
 PARAMS = [
@@ -1007,6 +1298,12 @@ PARAMS = [
     'tilepadding',
 ]
 
+TILEPADDING_MODES: "dict[typing.Literal['none', 'connected', 'disconnected'], int]" = {
+    'none': 0,
+    'connected': 1,
+    'disconnected': 2,
+}
+
 ParamTypes = tuple[str, int, str]
 
 
@@ -1014,16 +1311,15 @@ METRICS = [
     'HOTA',
     # 'CLEAR',
     # 'Identity',
+    'Count',
 ]
 
 
-# METRICS = ['HOTA', 'CLEAR']
-
 DATASETS_TO_TEST = [
-    # 'b3d-jnc00',
-    # 'b3d-jnc02',
-    # 'b3d-jnc06',
-    # 'b3d-jnc07',
+    'jnc0',
+    'jnc2',
+    'jnc6',
+    'jnc7',
     # 'caldot1-yolov5',
     # 'caldot2-yolov5',
     'caldot1',
@@ -1031,20 +1327,8 @@ DATASETS_TO_TEST = [
 ]
 
 
-DATASETS_CHOICES = [
-    'caldot1-yolov5',
-    'caldot2-yolov5',
-    'caldot1',
-    'caldot2',
-    'b3d-jnc00',
-    'b3d-jnc02',
-    'b3d-jnc06',
-    'b3d-jnc07',
-]
-
-
 CLASSIFIERS_TO_TEST = [
-    'SimpleCNN',
+    # 'SimpleCNN',
     'YoloN',
     # 'YoloS',
     # 'YoloM',
@@ -1163,3 +1447,11 @@ def get_classifier_from_name(classifier_name: str):
         return EfficientNetL
     else:
         raise ValueError(f"Unsupported classifier: {classifier_name}")
+
+
+class FakeQueue(queue.Queue):
+    def __init__(self):
+        pass
+
+    def put(self, item, block: bool = True, timeout: float | None = None):
+        pass

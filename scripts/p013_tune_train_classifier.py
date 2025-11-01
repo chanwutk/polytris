@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import time
 import multiprocessing as mp
 from functools import partial
@@ -83,11 +84,13 @@ def parse_args():
                              'example: --classifiers YoloN ShuffleNet05 ResNet18')
     parser.add_argument('--clear', action='store_true',
                         help='Clear existing results directories before training')
+    parser.add_argument('--visualize', action='store_true',
+                        help='Generate training progress visualizations during training')
     return parser.parse_args()
 
 
-def plot_training_progress(train_losses: list[float], train_accuracies: list[float],
-                           val_losses: list[float], val_accuracies: list[float],
+def plot_training_progress(train_losses: list[float], train_accuracies: list[float], train_precisions: list[float], train_recalls: list[float], train_f1s: list[float],
+                           val_losses: list[float], val_accuracies: list[float], val_precisions: list[float], val_recalls: list[float], val_f1s: list[float],
                            train_times: list[float], val_times: list[float],
                            results_dir: str, epoch: int, train_images_processed: int,
                            val_images_processed: int,
@@ -118,22 +121,32 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
             {'Epoch': epoch_num, 'Value': train_losses[i], 'Metric': 'Train Loss', 'Type': 'Loss'},
             {'Epoch': epoch_num, 'Value': val_losses[i], 'Metric': 'Validation Loss', 'Type': 'Loss'},
             {'Epoch': epoch_num, 'Value': train_accuracies_scaled[i], 'Metric': 'Train Accuracy', 'Type': 'Accuracy'},
-            {'Epoch': epoch_num, 'Value': val_accuracies_scaled[i], 'Metric': 'Validation Accuracy', 'Type': 'Accuracy'}
+            {'Epoch': epoch_num, 'Value': val_accuracies_scaled[i], 'Metric': 'Validation Accuracy', 'Type': 'Accuracy'},
+            {'Epoch': epoch_num, 'Value': train_precisions[i], 'Metric': 'Train Precision', 'Type': 'Precision'},
+            {'Epoch': epoch_num, 'Value': val_precisions[i], 'Metric': 'Validation Precision', 'Type': 'Precision'},
+            {'Epoch': epoch_num, 'Value': train_recalls[i], 'Metric': 'Train Recall', 'Type': 'Recall'},
+            {'Epoch': epoch_num, 'Value': val_recalls[i], 'Metric': 'Validation Recall', 'Type': 'Recall'},
+            {'Epoch': epoch_num, 'Value': train_f1s[i], 'Metric': 'Train F1', 'Type': 'F1'},
+            {'Epoch': epoch_num, 'Value': val_f1s[i], 'Metric': 'Validation F1', 'Type': 'F1'}
         ])
 
     df = pd.DataFrame(plot_data)
+    
+    # Extract Train/Validation and specific metric from Metric field
+    df['Split'] = df['Metric'].str.split(' ').str[0]  # Train or Validation
+    df['MetricType'] = df['Metric'].str.split(' ', n=1).str[1]  # Loss or Accuracy
 
     # Left chart: Loss and accuracy progress
     chart1 = alt.Chart(df).mark_line(point=True).encode(
         x='Epoch:Q',
         y=alt.Y('Value:Q', scale=alt.Scale(domain=[0, 1])),
-        color='Metric:N',
-        strokeDash='Type:N'
+        color='MetricType:N',
+        strokeDash='Split:N'
     ).properties(
         title=f'Training Progress - Epoch {epoch + 1}',
         width=400,
         height=300
-    )
+    ).resolve_scale(color='independent', strokeDash='independent')
 
     # Right chart: ms/frame stacked bar chart
     train_op_times: dict[str, float] = {}
@@ -193,7 +206,7 @@ def plot_training_progress(train_losses: list[float], train_accuracies: list[flo
             title='Milliseconds per Frame by Operation',
             width=400,
             height=300
-        )
+        ).resolve_scale(color='independent')
 
         # Combine charts horizontally
         combined_chart = alt.hconcat(chart1, chart2, spacing=20)
@@ -229,8 +242,8 @@ def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
           optimizer: "torch.optim.Optimizer", train_loader: "torch.utils.data.DataLoader",
           test_loader: "torch.utils.data.DataLoader", n_epochs: int, results_dir: str,
-          model_type: str, device: str, command_queue: mp.Queue, training_path: str, tile_size: int):
-    early_stopping_tolerance = 10
+          model_type: str, device: str, command_queue: mp.Queue, training_path: str, tile_size: int, visualize: bool = False):
+    early_stopping_tolerance = 5
     early_stopping_threshold = 0.001
 
     epoch_train_losses: list[dict] = []
@@ -241,6 +254,12 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     val_loss_history: list[float] = []
     train_accuracy_history: list[float] = []
     val_accuracy_history: list[float] = []
+    train_precision_history: list[float] = []
+    val_precision_history: list[float] = []
+    train_recall_history: list[float] = []
+    val_recall_history: list[float] = []
+    train_f1_history: list[float] = []
+    val_f1_history: list[float] = []
     train_time_history: list[float] = []
     val_time_history: list[float] = []
 
@@ -309,7 +328,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 if model_type.startswith('Yolo'):
                     if y_hat.dim() == 1:
                         y_hat = y_hat.unsqueeze(1)
-                predictions = y_hat > 0.5
+                # Apply sigmoid to convert logits to probabilities for accuracy calculation
+                y_hat_probs = torch.sigmoid(y_hat)
+                predictions = y_hat_probs > 0.5
                 train_correct += int(torch.sum(predictions == y_batch).item())
                 train_total += len(y_batch)
 
@@ -333,11 +354,19 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # Record training end time
         train_time = (time.time_ns() / 1e6) - train_start_time
         train_accuracy = 100 * train_correct / train_total if train_total > 0 else 0
+        
+        # Calculate additional metrics from confusion matrix
+        train_precision = train_tp / (train_tp + train_fp) if (train_tp + train_fp) > 0 else 0
+        train_recall = train_tp / (train_tp + train_fn) if (train_tp + train_fn) > 0 else 0
+        train_f1 = 2 * (train_precision * train_recall) / (train_precision + train_recall) if (train_precision + train_recall) > 0 else 0
 
         epoch_train_losses.append({
             'op': 'train',
             'loss': float(epoch_loss),
             'accuracy': float(train_accuracy),
+            'precision': float(train_precision),
+            'recall': float(train_recall),
+            'f1': float(train_f1),
             'time': train_time,
             'tp': train_tp,
             'tn': train_tn,
@@ -352,6 +381,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # Store for plotting
         train_loss_history.append(float(epoch_loss))
         train_accuracy_history.append(float(train_accuracy))
+        train_precision_history.append(float(train_precision))
+        train_recall_history.append(float(train_recall))
+        train_f1_history.append(float(train_f1))
         train_time_history.append(train_time)
 
         # Update cumulative training images
@@ -408,8 +440,9 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                 cumulative_loss += val_loss / len(test_loader)
                 val_total_loss_time += (time.time_ns() / 1e6) - val_loss_start_time
 
-                # Apply appropriate activation function based on model type
-                ans = yhat > 0.5
+                # Apply sigmoid to convert logits to probabilities for accuracy calculation
+                yhat_probs = torch.sigmoid(yhat)
+                ans = yhat_probs > 0.5
                 misc = torch.sum(ans == y_batch)
                 misc_sum += misc.item()
                 num_samples += len(y_batch)
@@ -434,11 +467,19 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             # Record validation end time
             val_time = (time.time_ns() / 1e6) - val_start_time # no need to add to total time
             val_accuracy = misc_sum * 100 / num_samples if num_samples > 0 else 0
+            
+            # Calculate additional metrics from confusion matrix
+            val_precision = val_tp / (val_tp + val_fp) if (val_tp + val_fp) > 0 else 0
+            val_recall = val_tp / (val_tp + val_fn) if (val_tp + val_fn) > 0 else 0
+            val_f1 = 2 * (val_precision * val_recall) / (val_precision + val_recall) if (val_precision + val_recall) > 0 else 0
 
             epoch_test_losses.append({
                 'op': 'test',
                 'loss': float(cumulative_loss),
                 'accuracy': float(val_accuracy),
+                'precision': float(val_precision),
+                'recall': float(val_recall),
+                'f1': float(val_f1),
                 'time': val_time,
                 'tp': val_tp,
                 'tn': val_tn,
@@ -456,15 +497,18 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             # Store for plotting
             val_loss_history.append(float(cumulative_loss))
             val_accuracy_history.append(float(val_accuracy))
+            val_precision_history.append(float(val_precision))
+            val_recall_history.append(float(val_recall))
+            val_f1_history.append(float(val_f1))
             val_time_history.append(val_time)
 
             # Update cumulative validation images
             cumulative_val_images += num_samples
 
             # Generate plot at the end of each epoch
-            if results_dir:
-                plot_training_progress(train_loss_history, train_accuracy_history,
-                                     val_loss_history, val_accuracy_history,
+            if results_dir and visualize:
+                plot_training_progress(train_loss_history, train_accuracy_history, train_precision_history, train_recall_history, train_f1_history,
+                                     val_loss_history, val_accuracy_history, val_precision_history, val_recall_history, val_f1_history,
                                      train_time_history, val_time_history,
                                      results_dir, epoch, cumulative_train_images, cumulative_val_images,
                                      throughput_per_epoch)
@@ -521,7 +565,7 @@ MODEL_ZOO = {
 
 
 def train_classifier(training_path: str, tile_size: int, model_type: str,
-                     gpu_id: int, command_queue: mp.Queue):
+                     gpu_id: int, command_queue: mp.Queue, visualize: bool = False):
     """
     Train a classifier model for a specific video, tile size, and model type.
 
@@ -543,16 +587,29 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
     if model_type not in MODEL_ZOO:
         raise ValueError(f"Unsupported model type: {model_type}")
     model = MODEL_ZOO[model_type](tile_size).to(device)
-    loss_fn = torch.nn.BCELoss().to(device)
 
     optimizer = Adam(model.parameters(), lr=0.001)
 
     training_data_path = os.path.join(training_path, 'data', f'tilesize_{tile_size}')
 
-    if not os.path.exists(training_data_path):
-        raise FileNotFoundError(f"Training data directory {training_data_path} does not exist. "
-                                "Please run p012_tune_create_training_data.py first.")
+    assert os.path.exists(training_data_path), \
+        f"Training data directory {training_data_path} does not exist. " \
+        "Please run p012_tune_create_training_data.py first."
 
+    # Count files directly from directories using simple shell commands
+    neg_dir = os.path.join(training_data_path, 'neg')
+    pos_dir = os.path.join(training_data_path, 'pos')
+    
+    # Use ls -1 | wc -l to count files (simple and fast)
+    neg_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {neg_dir} | wc -l'], text=True).strip())
+    pos_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {pos_dir} | wc -l'], text=True).strip())
+    
+    # Calculate pos_weight for binary classification (inverse frequency weighting)
+    pos_weight = neg_count / pos_count
+    
+    # Use BCEWithLogitsLoss with pos_weight to handle class imbalance
+    loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight)).to(device)
+    
     train_data = datasets.ImageFolder(training_data_path, transform=transforms.ToTensor())
 
     generator = torch.Generator().manual_seed(0)
@@ -577,7 +634,7 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
             # print(f"Training {model_type} (tile_size={tile_size}) with batch_size={batch_size}")
             best_model_wts = train(model, loss_fn, optimizer, train_loader, test_loader, n_epochs=50,
                                    results_dir=results_dir, model_type=model_type, device=device,
-                                   command_queue=command_queue, training_path=training_path, tile_size=tile_size)
+                                   command_queue=command_queue, training_path=training_path, tile_size=tile_size, visualize=visualize)
             break  # Success, exit the retry loop
 
         except Exception as e:
@@ -608,7 +665,7 @@ def train_classifier(training_path: str, tile_size: int, model_type: str,
 def main(args):
     mp.set_start_method('spawn', force=True)
 
-    funcs: list[Callable[[int, mp.Queue], None]] = []
+    funcs: list[partial] = []
 
     for dataset_name in args.datasets:
         dataset_dir = os.path.join(CACHE_DIR, dataset_name)
@@ -627,7 +684,7 @@ def main(args):
 
         for classifier in args.classifiers:
             for tile_size in TILE_SIZES:
-                func = partial(train_classifier, training_path, tile_size, classifier)
+                func = partial(train_classifier, training_path, tile_size, classifier, visualize=args.visualize)
                 funcs.append(func)
 
     # Set up multiprocessing with ProgressBar

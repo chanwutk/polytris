@@ -3,7 +3,8 @@
 import argparse
 import json
 import os
-from typing import Callable
+import sys
+from typing import Callable, Literal
 import cv2
 import numpy as np
 import shutil
@@ -17,12 +18,12 @@ import torch.nn.functional as F
 from polyis import dtypes
 from polyis.utilities import (
     CACHE_DIR, CLASSIFIERS_CHOICES,
-    DATA_DIR, format_time,
+    DATASETS_DIR, TILEPADDING_MODES, format_time,
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
-from lib.pack_append import pack_append
-from lib.group_tiles import group_tiles
+from polyis.binpack.pack_append import pack_append
+from polyis.binpack.group_tiles import free_polyimino_stack, group_tiles
 
 
 def parse_args():
@@ -44,13 +45,14 @@ def parse_args():
                              '--classifiers YoloN ShuffleNet05 ResNet18')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the compressed frames folder')
-    parser.add_argument('--tilepadding', action='store_true',
-                        help='Apply padding to the classification results')
+    parser.add_argument('--tilepadding', type=str, choices=['none', 'connected', 'disconnected'],
+                        nargs='+', default=['none', 'connected', 'disconnected'],
+                        help='Apply padding to the classification results (space-separated list of none/connected/disconnected)')
     return parser.parse_args()
 
 
 def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions], 
-           frame: dtypes.NPImage, chunk_size: int):
+           frame: dtypes.NPImage, tile_size: int):
     """
     Render packed polyominoes onto the canvas.
     
@@ -63,22 +65,23 @@ def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions],
     Returns:
         np.ndarray: Updated canvas
     """
+    ts = tile_size
+
     # TODO: use Torch, Cython, or Numba.
     for y, x, mask, offset in positions:
-        yfrom = y * chunk_size
-        xfrom = x * chunk_size
+        yfrom = y * ts
+        xfrom = x * ts
+        yoffset, xoffset = offset
         
         # Get mask indices where True
-        for i, j in zip(*np.nonzero(mask)):
-            patch = frame[
-                (i + offset[0]) * chunk_size:(i + offset[0] + 1) * chunk_size,
-                (j + offset[1]) * chunk_size:(j + offset[1] + 1) * chunk_size,
-            ]
-            canvas[
-                yfrom + (chunk_size * i): yfrom + (chunk_size * i) + chunk_size,
-                xfrom + (chunk_size * j): xfrom + (chunk_size * j) + chunk_size,
-            ] = patch
+        for i, j in mask.reshape(-1, 2).astype(np.uint16):
+            sy = (i + yoffset) * ts
+            sx = (j + xoffset) * ts
 
+            dy = yfrom + (ts * i)
+            dx = xfrom + (ts * j)
+
+            canvas[dy:dy+ts, dx:dx+ts] = frame[sy:sy+ts, sx:sx+ts]
 
 def apply_pack(
     positions: list[dtypes.PolyominoPositions],
@@ -119,11 +122,18 @@ def apply_pack(
     start_gid = len(offset_lookup)
     for i, (y, x, mask, offset) in enumerate(positions):
         gid = start_gid + i + 1
-        h = mask.shape[0]
-        w = mask.shape[1]
-        # assert not np.any(index_map[y:y+h, x:x+w] & mask), \
-        #     (index_map[y:y+h, x:x+w], mask)
-        index_map[y:y+h, x:x+w] += mask.astype(np.uint16) * gid
+        # mask is a 1D array of positions in format [x, y, x, y, x, y, ...]
+        # Reshape to get x and y coordinates as separate arrays
+        coords = mask.reshape(-1, 2).astype(np.uint16)  # Shape: (n_coords, 2) where each row is [x, y]
+        mask_y = coords[:, 0]  # All y coordinates
+        mask_x = coords[:, 1]  # All x coordinates
+        # Set the gid at all positions at once using vectorized operations
+        try:
+            index_map[y + mask_y, x + mask_x] = gid
+        except IndexError as e:
+            print(f"Error: {y}, {x}, {offset[0]}, {offset[1]}")
+            print(f"Mask: {mask}")
+            raise e
         offset_lookup.append(((y, x), offset, frame_idx))
     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
 
@@ -168,7 +178,7 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap,
 
 
 def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesize: int,
-             threshold: float, tilepadding: bool, gpu_id: int, command_queue: mp.Queue):
+             threshold: float, tilepadding: Literal['none', 'connected', 'disconnected'], gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video with a specific classifier and tile size.
     
@@ -191,17 +201,16 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     results = load_classification_results(CACHE_DIR, dataset, video_file,
                                           tilesize, classifier, execution_dir=True)
     
-    tilepadding_str = "padded" if tilepadding else "unpadded"
     # Create output directory for compression results
     output_dir = os.path.join(cache_video_dir, '030_compressed_frames',
-                              f'{classifier}_{tilesize}_{tilepadding_str}')
+                              f'{classifier}_{tilesize}_{tilepadding}')
     if os.path.exists(output_dir):
         # Remove the entire directory
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     
     # Send initial progress update
-    description = f"{video_name} {tilesize:>3} {classifier} {tilepadding_str}"
+    description = f"{video_name} {tilesize:>3} {classifier} {tilepadding}"
     command_queue.put((device, {
         'description': description + ' 0',
         'completed': 0,
@@ -309,20 +318,16 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
             bitmap_frame = bitmap_frame.astype(np.uint8)
             assert dtypes.is_bitmap(bitmap_frame), bitmap_frame.shape
             step_times['create_bitmap'] = (time.time_ns() / 1e6) - step_start
-            
+
             # Profile: Group connected tiles into polyominoes
             step_start = (time.time_ns() / 1e6)
-            if tilepadding:
-                bitmap_frame = F.conv2d(
-                    torch.from_numpy(np.array([[bitmap_frame]])),
-                    add_margin, padding='same').numpy()[0, 0]
-            polyominoes = group_tiles(bitmap_frame)
+            polyominoes = group_tiles(bitmap_frame, TILEPADDING_MODES[tilepadding])
             step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
             
-            # Profile: Sort polyominoes by size
-            step_start = (time.time_ns() / 1e6)
-            polyominoes = sorted(polyominoes, key=lambda x: x[0].sum(), reverse=True)
-            step_times['sort_polyominoes'] = (time.time_ns() / 1e6) - step_start
+            # # Profile: Sort polyominoes by size
+            # step_start = (time.time_ns() / 1e6)
+            # polyominoes = sorted(polyominoes, key=lambda x: x[0].sum(), reverse=True)
+            # step_times['sort_polyominoes'] = (time.time_ns() / 1e6) - step_start
             
             # Profile: Try compressing polyominoes
             step_start = (time.time_ns() / 1e6)
@@ -379,11 +384,13 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
                     save_packed_image(frame, _index_map, _offset_lookup, start_idx, frame_idx, output_dir, step_times)
                     count_compressed_images += 1
 
+            num_polyominoes = free_polyimino_stack(polyominoes)
+
             # Save profiling data for this frame
             profiling_data = {
                 'frame_idx': frame_idx,
                 'runtime': format_time(**step_times),
-                'num_polyominoes': len(polyominoes),
+                'num_polyominoes': num_polyominoes,
             }
             
             f.write(json.dumps(profiling_data) + '\n')
@@ -424,7 +431,7 @@ def main(args):
         - The script expects classification results from 020_exec_classify.py in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tilesize}/score/
         - Looks for score.jsonl files
-        - Videos are read from {DATA_DIR}/{dataset}/
+        - Videos are read from {DATASETS_DIR}/{dataset}/
         - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/images/
         - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/index_maps/
         - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/offset_lookups/
@@ -447,46 +454,48 @@ def main(args):
     funcs: list[Callable[[int, mp.Queue], None]] = []
     
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATA_DIR, dataset_name)
-        
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
-            continue
-        
-        # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-        
-        for video_file in sorted(video_files):
-            video_file_path = os.path.join(dataset_dir, video_file)
-            cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
+        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
 
-            compressed_frames_base_dir = os.path.join(cache_video_dir, '030_compressed_frames')
-            if args.clear and os.path.exists(compressed_frames_base_dir):
-                shutil.rmtree(compressed_frames_base_dir)
-                print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")
+        for videoset in ['test']:
+            videoset_dir = os.path.join(dataset_dir, videoset)
+            if not os.path.exists(videoset_dir):
+                print(f"Videoset directory {videoset_dir} does not exist, skipping...")
+                continue
             
-            for classifier in args.classifiers:
-                for tilesize in tilesizes_to_process:
+            # Get all video files from the dataset directory
+            video_files = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+            
+            for video_file in sorted(video_files):
+                video_file_path = os.path.join(videoset_dir, video_file)
+                cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-                    score_file = os.path.join(cache_video_dir, '020_relevancy',
-                                              f'{classifier}_{tilesize}', 'score', 'score.jsonl')
-                    if not os.path.exists(score_file):
-                        print(f"No score file found for {video_file} {classifier} {tilesize}, skipping")
-                        continue
+                compressed_frames_base_dir = os.path.join(cache_video_dir, '030_compressed_frames')
+                if args.clear and os.path.exists(compressed_frames_base_dir):
+                    shutil.rmtree(compressed_frames_base_dir)
+                    print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")
+                
+                for classifier in args.classifiers:
+                    for tilesize in tilesizes_to_process:
+                        score_file = os.path.join(cache_video_dir, '020_relevancy',
+                                                f'{classifier}_{tilesize}', 'score', 'score.jsonl')
+                        if not os.path.exists(score_file):
+                            print(f"No score file found for {video_file} {classifier} {tilesize}, skipping")
+                            continue
 
-                    for tilepadding in [True, False] if args.tilepadding else [False]:
-                        funcs.append(partial(compress, video_file_path, cache_video_dir,
-                                            classifier, tilesize, args.threshold, tilepadding))
+                        for tilepadding in set[Literal['none', 'connected', 'disconnected']](args.tilepadding):
+                            funcs.append(partial(compress, video_file_path, cache_video_dir,
+                                                classifier, tilesize, args.threshold, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
     
     # Set up multiprocessing with ProgressBar
-    num_processes = int(mp.cpu_count() * 0.9)
-    num_processes = 1
+    num_processes = int(mp.cpu_count() * 0.1)
+    # num_processes = max(1, torch.cuda.device_count() // 2)
+    # num_processes = 1
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=4).run_all(funcs)
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
     print("All tasks completed!")
 
 

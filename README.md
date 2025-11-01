@@ -51,3 +51,42 @@ To set up this repository for development, follow these steps.
 
     -   **VSCode/Cursor:** Use the "Remote - SSH" and "Remote - Containers" extensions to attach your editor to the running container.
     -   **Terminal:** Run the `./dock` script to access the shell inside the container.
+
+5.  **Build Cython Extensions:**
+
+    After setting up the container, build the high-performance Cython modules:
+
+    ```bash
+    ./dock  # Enter the container
+    cd /polyis
+    python setup.py clean
+    python setup.py build_ext
+    pytest tests -v
+    ```
+
+    Or skip tests during build:
+
+    ```bash
+    python setup.py clean
+    python setup.py build_ext
+    ```
+    
+    To clean build artifacts:
+
+    ```bash
+    python setup.py clean
+    ```
+
+6.  **Run Tests:**
+
+    Test the Cython binpack modules:
+
+    ```bash
+    pytest tests/binpack/ -v
+    ```
+
+    Or test the entire project:
+
+    ```bash
+    pytest tests/ -v
+    ```

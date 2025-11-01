@@ -10,7 +10,7 @@ import time
 import multiprocessing as mp
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -123,7 +123,7 @@ def process_video(video_path: str, video_file: str, tile_size: int,
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
-    print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
+    # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     
     with open(output_path, 'w') as f:
         frame_idx = 0
@@ -183,9 +183,9 @@ def main(args):
             
     Note:
         - The script expects a specific directory structure:
-          {DATA_DIR}/{dataset}/ - contains video files
+          {DATASETS_DIR}/{dataset}/ - contains video files
           {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl - contains groundtruth tracking results
-          where DATA_DIR is /polyis-data/video-datasets-low and CACHE_DIR is /polyis-cache
+          where DATASETS_DIR is /polyis-data/video-datasets-low and CACHE_DIR is /polyis-cache
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - Groundtruth tracking results are loaded for each video
         - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
@@ -206,25 +206,28 @@ def main(args):
     funcs: list[Callable[[int, mp.Queue], None]] = []
     
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATA_DIR, dataset_name)
+        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
         
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
-            continue
-        
-        # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-        
-        for video_file in sorted(video_files):
-            video_file_path = os.path.join(dataset_dir, video_file)
-            for tile_size in tile_sizes_to_process:
-                funcs.append(partial(process_video, video_file_path,
-                             video_file, tile_size, dataset_name))
+        for videoset in ['test']:
+            videoset_dir = os.path.join(dataset_dir, videoset)
+            if not os.path.exists(videoset_dir):
+                print(f"Videoset directory {videoset_dir} does not exist, skipping...")
+                continue
+            
+            # Get all video files from the dataset directory
+            video_files = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+            
+            for video_file in sorted(video_files):
+                video_file_path = os.path.join(videoset_dir, video_file)
+                for tile_size in tile_sizes_to_process:
+                    funcs.append(partial[None](process_video, video_file_path,
+                                video_file, tile_size, dataset_name))
     
     print(f"Created {len(funcs)} tasks to process")
+    num_processes = min(mp.cpu_count(), len(funcs), 6)
     
     # Set up multiprocessing with ProgressBar - use CPU count as we don't need GPUs for groundtruth processing
-    ProgressBar(num_workers=mp.cpu_count(), num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
+    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
     
     print("All tasks completed!")
 

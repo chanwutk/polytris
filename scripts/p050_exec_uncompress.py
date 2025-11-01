@@ -4,13 +4,14 @@ import argparse
 import json
 import os
 import shutil
+import time
 import numpy as np
 import cv2
 import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, DATASETS_DIR, create_timer
 
 
 def parse_args():
@@ -155,7 +156,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
 
 def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
-                           tilepadding: bool, gpu_id: int, command_queue: mp.Queue):
+                           tilepadding: str, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
@@ -169,25 +170,24 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    tilepadding_str = "padded" if tilepadding else "unpadded"
     
     # Check if compressed detections exist
     detections_file = os.path.join(video_file_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{tilepadding_str}', 'detections.jsonl')
+                                   f'{classifier}_{tilesize}_{tilepadding}', 'detections.jsonl')
     assert os.path.exists(detections_file)
     
     # Check if compressed frames directory exists
     compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
-                                         f'{classifier}_{tilesize}_{tilepadding_str}')
+                                         f'{classifier}_{tilesize}_{tilepadding}')
     assert os.path.exists(compressed_frames_dir)
     
     # print(f"Processing video {video_file_path} for unpacking")
     
     detections_file = os.path.join(video_file_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{tilepadding_str}', 'detections.jsonl')
+                                   f'{classifier}_{tilesize}_{tilepadding}', 'detections.jsonl')
     
     unpacked_output_dir = os.path.join(video_file_path, '050_uncompressed_detections',
-                                       f'{classifier}_{tilesize}_{tilepadding_str}')
+                                       f'{classifier}_{tilesize}_{tilepadding}')
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -201,16 +201,23 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
     os.makedirs(images_center_not_in_any_tile_dir, exist_ok=True)
     # print(f"Saving images center not in any tile to {images_center_not_in_any_tile_dir}")
 
+    relevancy_scores_file = os.path.join(video_file_path, '020_relevancy', f'{classifier}_{tilesize}', 'score', 'score.jsonl')
+    with open(relevancy_scores_file, 'r') as f:
+        num_frames = max(json.loads(line)['frame_idx'] for line in f if line.strip())
+
     # dictionary to store all frame detections
-    all_frame_detections: dict[int, list[list[float]]] = {}
+    all_frame_detections: dict[int, list[list[float]]] = {
+        i: [] for i in range(num_frames + 1)
+    }
     
-    with open(detections_file, 'r') as f:
+    with open(detections_file, 'r') as f, open(os.path.join(unpacked_output_dir, 'runtime.jsonl'), 'w') as fr:
         # Process each detection file
         contents = f.readlines()
-        description = f"{video_file_path} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}} {tilepadding_str}"
+        description = f"{video_file_path} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS_CHOICES)}} {tilepadding}"
         kwargs = {'completed': 0, 'total': len(contents), 'description': description}
         mod = max(1, int(len(contents) * 0.05))
         command_queue.put((device, kwargs))
+        timer, flush = create_timer(fr)
         for idx, line in enumerate(contents):
             content = json.loads(line)
             image_file: str = content['image_file']
@@ -229,12 +236,10 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
             # Load corresponding mapping file
             index_map, offset_lookup = load_mapping_file(index_map_path, offset_lookup_path)
             
-            # Unpack detections
-            (
-                frame_detections,
-                not_in_any_tile_detections,
-                center_not_in_any_tile_detections,
-            ) = unpack_detections(detections, index_map, offset_lookup, tilesize)
+            with timer('unpack_detections'):
+                # Unpack detections
+                frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections \
+                    = unpack_detections(detections, index_map, offset_lookup, tilesize)
 
             # save not_in_any_tile_detections and center_not_in_any_tile_detections
             if len(not_in_any_tile_detections) > 0:
@@ -275,18 +280,19 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
             
             # Merge with existing frame detections
             for frame_idx, bboxes in frame_detections.items():
-                if frame_idx not in all_frame_detections:
-                    all_frame_detections[frame_idx] = []
                 all_frame_detections[frame_idx].extend(bboxes)
 
             if idx % mod == 0:
                 command_queue.put((device, {'completed': idx + 1,
                                             'description': description,
                                             'total': len(contents)}))
+            flush()
     
-    # Save unpacked detections organized by frame
-    # Sort frames by index
-    sorted_frames = sorted(all_frame_detections.keys())
+        with timer('sort_frames'):
+            # Save unpacked detections organized by frame
+            # Sort frames by index
+            sorted_frames = sorted(all_frame_detections.keys())
+        flush()
     
     # Save each frame's detections
     with open(os.path.join(unpacked_output_dir, 'detections.jsonl'), 'w') as f:
@@ -329,17 +335,20 @@ def main(args):
     funcs: list[Callable[[int, mp.Queue], None]] = []
 
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(CACHE_DIR, dataset_name, 'execution')
+        cache_dir = os.path.join(CACHE_DIR, dataset_name, 'execution')
+        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
+        videosets_dir = os.path.join(dataset_dir, 'test')
         
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
+        if not os.path.exists(videosets_dir):
+            print(f"Dataset directory {videosets_dir} does not exist, skipping...")
             continue
         
         # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, f))]
+        video_files = [f for f in os.listdir(videosets_dir) if f.endswith('.mp4')]
+        print(f"Found {len(video_files)} video files in dataset {dataset_name}")
         
         for video_file in sorted(video_files):
-            video_file_path = os.path.join(dataset_dir, video_file)
+            video_file_path = os.path.join(cache_dir, video_file)
             
             compressed_detections_dir = os.path.join(video_file_path, '040_compressed_detections')
             if not os.path.exists(compressed_detections_dir):
@@ -351,9 +360,8 @@ def main(args):
                 shutil.rmtree(uncompressed_detections_dir)
                 
             for classifier_tilesize_tilepadding in sorted(os.listdir(compressed_detections_dir)):
-                classifier, tilesize, tilepadding_str = classifier_tilesize_tilepadding.split('_')
+                classifier, tilesize, tilepadding = classifier_tilesize_tilepadding.split('_')
                 tilesize = int(tilesize)
-                tilepadding = tilepadding_str == "padded"
                 funcs.append(partial(process_unpacking_task, video_file_path, tilesize, classifier, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
@@ -364,7 +372,7 @@ def main(args):
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    num_processes = 20
+    num_processes = 6
     
     ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
     print("All tasks completed!")

@@ -1,0 +1,11 @@
+{
+    "DATASETS_TO_TEST": [
+        "jnc0",
+        "jnc2",
+        "jnc6",
+        "jnc7",
+        "caldot1",
+        "caldot2",
+        "ams"
+    ]
+}

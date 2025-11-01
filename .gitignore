@@ -12,6 +12,8 @@ track-results*
 videos
 videos-small
 output
+build
+weights
 
 **/model.pth
 

@@ -9,8 +9,9 @@ allowing the system to automatically choose the appropriate detector
 from typing import Any
 
 import polyis.models.retinanet_b3d
-import polyis.models.yolov3_otif
+import polyis.models.yolov3
 import polyis.models.yolov5
+import polyis.dtypes
 
 
 DATASET_NAME_MAPPING = {
@@ -18,10 +19,10 @@ DATASET_NAME_MAPPING = {
     "caldot2": "caldot",
     "caldot1-yolov5": "caldot-yolov5",
     "caldot2-yolov5": "caldot-yolov5",
-    "b3d-jnc00": "b3d",
-    "b3d-jnc02": "b3d",
-    "b3d-jnc06": "b3d",
-    "b3d-jnc07": "b3d",
+    "jnc0": "b3d",
+    "jnc2": "b3d",
+    "jnc6": "b3d",
+    "jnc7": "b3d",
 }
 
 
@@ -57,7 +58,7 @@ DATASET_DETECTOR_CONFIG = {
 }
 
 
-def get_detector(dataset_name: str, gpu_id):
+def get_detector(dataset_name: str, gpu_id, batch_size: int = 16, num_images: int = 0):
     """
     Get the appropriate detector for a given dataset name.
     
@@ -79,18 +80,15 @@ def get_detector(dataset_name: str, gpu_id):
     if dataset_config is None:
         # Fall back to default detector
         default_detector = config.get('default_detector', 'retina')
-        print(f"Dataset '{dataset_name}' not found in configuration, using default detector: {default_detector}")
         dataset_config = {'detector': default_detector}
     
     detector_type = dataset_config['detector']
     device = f'cuda:{gpu_id}'
     
     if detector_type == 'retina':
-        print(f"Loading RetinaNet detector for dataset '{dataset_name}' on {device}")
         return polyis.models.retinanet_b3d.get_detector(device=device)
     
     elif detector_type == 'yolov3':
-        print(f"Loading YOLOv3 detector for dataset '{dataset_name}' on {device}")
         
         # Extract YOLOv3-specific parameters
         detector_label = dataset_config.get('detector_label', 'caldot')
@@ -104,7 +102,7 @@ def get_detector(dataset_name: str, gpu_id):
         threshold = fallback_config.get('threshold', 0.25)
         nms_threshold = fallback_config.get('nms_threshold', 0.45)
         
-        return polyis.models.yolov3_otif.get_detector(
+        return polyis.models.yolov3.get_detector(
             gpu_id=gpu_id,
             config_path=config_path_yolo,
             model_path=model_path,
@@ -112,11 +110,12 @@ def get_detector(dataset_name: str, gpu_id):
             width=width,
             height=height,
             threshold=threshold,
-            nms_threshold=nms_threshold
+            nms_threshold=nms_threshold,
+            batch_size=batch_size,
+            num_images=num_images,
         )
     
     elif detector_type == 'yolov5':
-        print(f"Loading YOLOv5 detector for dataset '{dataset_name}' on {device}")
         return polyis.models.yolov5.get_detector(device=device)
     
     else:
@@ -138,11 +137,27 @@ def detect(image, detector: Any, threshold: float = 0.25):
     """
     # Use the appropriate detect function based on detector type
     if hasattr(detector, 'net'):  # YOLOv3 detector
-        return polyis.models.yolov3_otif.detect(image, detector, threshold)
+        return polyis.models.yolov3.detect(image, detector, threshold)
     elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         return polyis.models.retinanet_b3d.detect(image, detector, threshold)
     else:
         return polyis.models.yolov5.detect(image, detector)
+
+
+def detect_batch(
+    images: list[polyis.dtypes.NPImage],
+    detector: Any,
+    threshold: float = 0.25
+) -> "list[polyis.dtypes.DetArray]":
+    """
+    Detect vehicles in a batch of images using the appropriate detector.
+    """
+    if hasattr(detector, 'net'):  # YOLOv3 detector
+        return polyis.models.yolov3.detect_batch(images, detector, threshold)
+    elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
+        return polyis.models.retinanet_b3d.detect_batch(images, detector, threshold)
+    else:
+        return polyis.models.yolov5.detect_batch(images, detector)
 
 
 def get_detector_info(dataset_name: str) -> dict:
