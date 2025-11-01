@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+from functools import partial
 import os
 from typing import List
 
@@ -20,10 +21,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def visualize_tradeoff(df_individual: pd.DataFrame, df_aggregated: pd.DataFrame,
-                       output_dir: str, metrics_list: List[str], 
-                       x_column: str, x_title: str,
-                       naive_column: str, plot_suffix: str):
+def visualize_tradeoff(tradeoff: pd.DataFrame, combined: pd.DataFrame,
+                       naive: pd.DataFrame, naive_combined: pd.DataFrame,
+                       output_dir: str, x_column: str, x_title: str, plot_suffix: str):
     """
     Create a single tradeoff visualization with configurable x-axis,
     including dataset-wide aggregated subplot.
@@ -40,37 +40,52 @@ def visualize_tradeoff(df_individual: pd.DataFrame, df_aggregated: pd.DataFrame,
     """
     print(f"Creating {plot_suffix} tradeoff visualizations...")
     
-    assert len(df_individual) > 0, \
-        f"No individual data available for {plot_suffix} visualization"
-    assert len(df_aggregated) > 0, \
-        f"No aggregated data available for {plot_suffix} visualization"
+    assert len(tradeoff) > 0, \
+        f"No tradeoff data available for {plot_suffix} visualization"
+    assert len(combined) > 0, \
+        f"No combined tradeoff data available for {plot_suffix} visualization"
+    
+    assert len(naive) > 0, \
+        f"No naive data available for {plot_suffix} visualization"
+    assert len(naive_combined) == 1, \
+        f"Expected 1 row of combined naive data, got {len(naive_combined)}"
 
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
     
     # Create base charts
-    base_individual = alt.Chart(df_individual)
-    base_aggregated = alt.Chart(df_aggregated)
+    naive_combined['video'] = 'dataset_level'
+    tradeoff['HOTA_HOTA'] = tradeoff['HOTA.HOTA']
+    tradeoff['Count_TracksMAPE'] = tradeoff['Count.TracksMAPE']
+    # tradeoff['MOTA_MOTA'] = tradeoff['MOTA.MOTA']
+    combined['HOTA_HOTA'] = combined['HOTA.HOTA']
+    combined['Count_TracksMAPE'] = combined['Count.TracksMAPE']
+    # combined['MOTA_MOTA'] = combined['MOTA.MOTA']
+    base_individual = alt.Chart(tradeoff.merge(naive, on='video', how='left', suffixes=('', '_naive')))
+    base_aggregated = alt.Chart(combined.merge(naive_combined, on='video', how='left', suffixes=('', '_naive')))
     
     # Create scatter plots for each metric using Altair
-    for metric in metrics_list:
+    for metric in METRICS:
         if metric == 'HOTA':
-            accuracy_col = 'hota_score'
+            accuracy_col = 'HOTA_HOTA'
             metric_name = 'HOTA'
         elif metric == 'CLEAR':
-            accuracy_col = 'mota_score'
+            accuracy_col = 'MOTA_MOTA'
             metric_name = 'MOTA'
+        elif metric == 'Count':
+            accuracy_col = 'Count_TracksMAPE'
+            metric_name = 'Count'
         else:
             continue
         
         # Create individual video scatter plot and baseline using combined function
         individual_scatter, naive_lines_individual = tradeoff_scatter_and_naive_baseline(
-            base_individual, x_column, x_title, accuracy_col, metric_name, naive_column,
+            base_individual, x_column, x_title, accuracy_col, metric_name,
         )
         
         # Combine individual video charts
         individual_chart = (individual_scatter + naive_lines_individual).facet(
-            facet=alt.Facet('video_name:N', title=None,
+            facet=alt.Facet('video:N', title=None,
                             header=alt.Header(labelExpr="'Video: ' + datum.value")),
             columns=3
         ).resolve_scale(
@@ -81,7 +96,7 @@ def visualize_tradeoff(df_individual: pd.DataFrame, df_aggregated: pd.DataFrame,
         
         # Create dataset-wide scatter plot and baseline using combined function
         aggregated_scatter, naive_line_aggregated = tradeoff_scatter_and_naive_baseline(
-            base_aggregated, x_column, x_title, accuracy_col, metric_name, naive_column,
+            base_aggregated, x_column, x_title, accuracy_col, metric_name,
         )
         
         # Create dataset-wide chart
@@ -113,28 +128,13 @@ def visualize_tradeoffs(dataset: str):
     output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '091_tradeoff')
     
     # Use metrics from utilities
-    metrics_list = METRICS
-    print(f"Using metrics: {metrics_list}")
     
     # Create runtime visualization
-    df_individual_runtime, df_aggregated_runtime = load_tradeoff_data(dataset, 'runtime')
-    visualize_tradeoff(
-        df_individual_runtime, df_aggregated_runtime, output_dir, metrics_list,
-        x_column='query_runtime',
-        x_title='Query Execution Runtime (seconds)',
-        naive_column='naive_runtime',
-        plot_suffix='runtime'
-    )
-    
-    # Create throughput visualization
-    df_individual_throughput, df_aggregated_throughput = load_tradeoff_data(dataset, 'throughput')
-    visualize_tradeoff(
-        df_individual_throughput, df_aggregated_throughput, output_dir, metrics_list,
-        x_column='throughput_fps',
-        x_title='Throughput (frames/second)',
-        naive_column='naive_throughput',
-        plot_suffix='throughput'
-    )
+    tradeoff, combined, naive, naive_combined = load_tradeoff_data(dataset)
+
+    visualize = partial(visualize_tradeoff, tradeoff, combined, naive, naive_combined, output_dir)
+    visualize(x_column='time', x_title='Query Execution Runtime (seconds)', plot_suffix='runtime')
+    visualize(x_column='throughput_fps', x_title='Throughput (frames/second)', plot_suffix='throughput')
 
 
 def main(args):

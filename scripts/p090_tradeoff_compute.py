@@ -113,6 +113,7 @@ def prepare_accuracy(accuracy: pd.DataFrame, dataset: str) -> pd.DataFrame:
 
     # Rename columns to match expected output format
     accuracy = accuracy.rename(columns={
+        'Dataset': 'dataset',
         'Video': 'video',
         'Classifier': 'classifier',
         'Tile_Size': 'tilesize',
@@ -141,7 +142,7 @@ def prepare_throughput(throughput: pd.DataFrame) -> pd.DataFrame:
 def match_accuracy_throughput_data(
     accuracy: pd.DataFrame,
     throughput: pd.DataFrame,
-    combined_accuracy: pd.DataFrame,
+    accuracy_combined: pd.DataFrame,
     dataset: str,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
@@ -159,7 +160,7 @@ def match_accuracy_throughput_data(
     """
     print(f"Processing {len(accuracy)} accuracy results for matching...")
     accuracy = prepare_accuracy(accuracy, dataset)
-    combined_accuracy = prepare_accuracy(combined_accuracy, dataset)
+    accuracy_combined = prepare_accuracy(accuracy_combined, dataset)
 
     is_naive = throughput['stage'].isin(NAIVE_STAGES)
     throughput_ = throughput[~is_naive]
@@ -170,41 +171,41 @@ def match_accuracy_throughput_data(
     assert len(throughput) == len(accuracy), \
         f"Expected {len(accuracy)} runtime data points, got {len(throughput)}"
     join_cols = ['video', 'classifier', 'tilesize', 'tilepadding']
-    matched = accuracy.merge(throughput, on=join_cols, how='inner')
-    assert len(matched) == len(accuracy), \
-        f"Expected {len(accuracy)} matched data points, got {len(matched)}"
+    tradeoff = accuracy.merge(throughput, on=join_cols, how='inner')
+    assert len(tradeoff) == len(accuracy), \
+        f"Expected {len(accuracy)} tradeoff data points, got {len(tradeoff)}"
 
     # Calculate throughput (frames per second)
     count_frames = partial(get_video_frame_count, dataset)
-    matched['frame_count'] = matched['video'].map(count_frames)
-    matched['throughput_fps'] = matched['frame_count'] / matched['time']
+    tradeoff['frame_count'] = tradeoff['video'].map(count_frames)
+    tradeoff['throughput_fps'] = tradeoff['frame_count'] / tradeoff['time']
 
     # Aggregate runtime and frame counts by classifier/tilesize/tilepadding
     gb_cols = ['classifier', 'tilesize', 'tilepadding']
-    combined_throughput = matched.groupby(gb_cols).agg({
+    throughput_combined = tradeoff.groupby(gb_cols).agg({
         'frame_count': 'sum',
         'time': 'sum'
     }).reset_index()
 
     # Merge with combined accuracy scores
-    assert len(combined_accuracy) == len(combined_throughput), \
-        f"Expected {len(combined_accuracy)} combined throughput data points, got {len(combined_throughput)}"
+    assert len(accuracy_combined) == len(throughput_combined), \
+        f"Expected {len(accuracy_combined)} combined throughput data points, got {len(throughput_combined)}"
     join_cols = ['classifier', 'tilesize', 'tilepadding']
-    combined_matched = combined_accuracy.merge(combined_throughput, on=join_cols, how='inner')
-    assert len(combined_matched) == len(combined_throughput), \
-        f"Expected {len(combined_throughput)} combined matched data points, got {len(combined_matched)}"
+    tradeoff_combined = accuracy_combined.merge(throughput_combined, on=join_cols, how='inner')
+    assert len(tradeoff_combined) == len(throughput_combined), \
+        f"Expected {len(throughput_combined)} combined tradeoff data points, got {len(tradeoff_combined)}"
 
     # Calculate combined throughput
-    combined_matched['throughput_fps'] = combined_matched['frame_count'] / combined_matched['time']
-    combined_matched['video'] = 'dataset_level'
+    tradeoff_combined['throughput_fps'] = tradeoff_combined['frame_count'] / tradeoff_combined['time']
+    tradeoff_combined['video'] = 'dataset_level'
 
     # Print combined accuracy scores for verification
-    for _, row in combined_matched.iterrows():
+    for _, row in tradeoff_combined.iterrows():
         print(f"Using actual combined accuracy scores for {row['classifier']}_{row['tilesize']}_{row['tilepadding']}: " \
               f"HOTA={row['HOTA.HOTA']:.3f}, Count.DetsMAPE={row['Count.DetsMAPE']:.3f}")
 
-    print(f"Created {len(combined_matched)} dataset-wide aggregated data points")
-    return matched, combined_matched
+    print(f"Created {len(tradeoff_combined)} combined tradeoff data points")
+    return tradeoff, tradeoff_combined
 
 
 def prepare_naive_throughput(throughput: pd.DataFrame, dataset: str):
@@ -247,9 +248,9 @@ def process_dataset(dataset: str):
     
     # Load accuracy results (both individual and combined)
     print(f"Loading accuracy results for {dataset}...")
-    accuracy_results, combined_accuracy_results = load_accuracy_results(dataset)
+    accuracy, accuracy_combined = load_accuracy_results(dataset)
     
-    assert len(accuracy_results) > 0, \
+    assert len(accuracy) > 0, \
         f"No accuracy results found for {dataset}. " \
         "Please run p070_accuracy_compute.py first."
     
@@ -259,29 +260,29 @@ def process_dataset(dataset: str):
     
     # Load throughput results
     print(f"Loading throughput results for {dataset}...")
-    throughput_overall = load_throughput_results(dataset)
+    throughput = load_throughput_results(dataset)
 
-    assert len(throughput_overall) > 0, \
+    assert len(throughput) > 0, \
         f"No throughput results found for {dataset}. Please run " \
         "p080_throughput_gather.py and p081_throughput_compute.py first."
     
     # Match accuracy and throughput data
     print(f"Matching accuracy and throughput data for {dataset}...")
-    matched, combined_matched = match_accuracy_throughput_data(accuracy_results, throughput_overall,
-                                                               combined_accuracy_results, dataset)
+    tradeoff, tradeoff_combined = match_accuracy_throughput_data(accuracy, throughput,
+                                                                 accuracy_combined, dataset)
+    naive, naive_combined = prepare_naive_throughput(throughput, dataset)
     
-    assert len(matched) > 0, \
+    assert len(tradeoff) > 0, \
         f"No matching data points found between accuracy and throughput results for {dataset}."
-    assert len(combined_matched) > 0, \
+    assert len(tradeoff_combined) > 0, \
         f"No combined matched data points found between accuracy and throughput results for {dataset}."
 
     # Save tradeoff data
     output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
-    naive, combined_naive = prepare_naive_throughput(throughput_overall, dataset)
-    matched.to_csv(os.path.join(output_dir, f'matched.csv'), index=False)
-    combined_matched.to_csv(os.path.join(output_dir, f'matched_combined.csv'), index=False)
+    tradeoff.to_csv(os.path.join(output_dir, f'tradeoff.csv'), index=False)
+    tradeoff_combined.to_csv(os.path.join(output_dir, f'tradeoff_combined.csv'), index=False)
     naive.to_csv(os.path.join(output_dir, f'naive.csv'), index=False)
-    combined_naive.to_csv(os.path.join(output_dir, f'naive_combined.csv'), index=False)
+    naive_combined.to_csv(os.path.join(output_dir, f'naive_combined.csv'), index=False)
 
 
 def main(args):

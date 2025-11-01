@@ -986,7 +986,7 @@ def gcp_run(funcs: list[typing.Callable[[int, mp.Queue], None]]):
         process.terminate()
 
 
-def load_tradeoff_data(dataset: str, csv_suffix: str) -> "tuple[pd.DataFrame, pd.DataFrame]":
+def load_tradeoff_data(dataset: str):
     """
     Load pre-computed tradeoff data from CSV files created by p090_tradeoff_compute.py.
     
@@ -1000,31 +1000,35 @@ def load_tradeoff_data(dataset: str, csv_suffix: str) -> "tuple[pd.DataFrame, pd
     # Construct paths to CSV files created by p090_tradeoff_compute.py
     tradeoff_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
     
-    individual_csv_path = os.path.join(tradeoff_dir, f'individual_accuracy_{csv_suffix}_tradeoff.csv')
-    aggregated_csv_path = os.path.join(tradeoff_dir, f'combined_accuracy_{csv_suffix}_tradeoff.csv')
+    tradeoff_path = os.path.join(tradeoff_dir, f'tradeoff.csv')
+    tradeoff_combined_path = os.path.join(tradeoff_dir, f'tradeoff_combined.csv')
+    naive_path = os.path.join(tradeoff_dir, f'naive.csv')
+    naive_combined_path = os.path.join(tradeoff_dir, f'naive_combined.csv')
     
     # Check if CSV files exist
-    assert os.path.exists(individual_csv_path), \
-        f"Individual tradeoff data not found: {individual_csv_path}. " \
+    assert os.path.exists(tradeoff_path), \
+        f"Tradeoff data not found: {tradeoff_path}. " \
         "Please run p090_tradeoff_compute.py first."
     
-    assert os.path.exists(aggregated_csv_path), \
-        f"Aggregated tradeoff data not found: {aggregated_csv_path}. " \
+    assert os.path.exists(tradeoff_combined_path), \
+        f"Combined tradeoff data not found: {tradeoff_combined_path}. " \
         "Please run p090_tradeoff_compute.py first."
     
     # Load CSV files
     import pandas as pd
-    df_individual = pd.read_csv(individual_csv_path)
-    df_aggregated = pd.read_csv(aggregated_csv_path)
+    tradeoff = pd.read_csv(tradeoff_path)
+    combined = pd.read_csv(tradeoff_combined_path)
+    naive = pd.read_csv(naive_path)
+    naive_combined = pd.read_csv(naive_combined_path)
     
-    print(f"Loaded individual tradeoff data: {len(df_individual)} rows from {individual_csv_path}")
-    print(f"Loaded aggregated tradeoff data: {len(df_aggregated)} rows from {aggregated_csv_path}")
+    print(f"Loaded individual tradeoff data: {len(tradeoff)} rows from {tradeoff_path}")
+    print(f"Loaded combined tradeoff data: {len(combined)} rows from {tradeoff_combined_path}")
     
-    return df_individual, df_aggregated
+    return tradeoff, combined, naive, naive_combined
 
 
 def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, x_title: str, 
-                                        accuracy_col: str, metric_name: str, naive_column: str,
+                                        accuracy_col: str, metric_name: str,
                                         size_range: tuple[int, int] = (20, 200), scatter_opacity: float = 0.7, 
                                         size: int | None = None, baseline_stroke_width: int = 2, 
                                         baseline_opacity: float = 0.8, size_field: str = 'tilesize') -> "tuple[alt.Chart, alt.LayerChart]":
@@ -1050,12 +1054,12 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
     """
     import altair as alt
     # Create scatter plot
+    scale = {'scale': alt.Scale(domain=[0, 1])} if metric_name != 'Count' else {}
     scatter = base_chart.mark_circle(opacity=scatter_opacity).encode(
         x=alt.X(f'{x_column}:Q', title=x_title),
-        y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score',
-                scale=alt.Scale(domain=[0, 1])),
+        y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **scale),
         color=alt.Color('classifier:N', title='Classifier'),
-        tooltip=['video_name', 'classifier', size_field, x_column, accuracy_col]
+        tooltip=['video', 'classifier', size_field, x_column, accuracy_col]
     ).properties(
         width=150,
         height=150
@@ -1074,7 +1078,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         size=20,
         opacity=baseline_opacity,
     ).encode(
-        x=f'{naive_column}:Q',
+        x=f'{x_column}_naive:Q',
         y=alt.value(1.0)  # Fixed at 1.0 accuracy score
     )
     
@@ -1089,7 +1093,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         dx=15,
         lineHeight=10
     ).encode(
-        x=f'{naive_column}:Q',
+        x=f'{x_column}_naive:Q',
         y=alt.value(1.0),  # Position at 1.0 accuracy score
         text=alt.value(['Without', 'Optimization'])
     )
@@ -1194,6 +1198,7 @@ METRICS = [
     'HOTA',
     # 'CLEAR',
     # 'Identity',
+    'Count',
 ]
 
 
