@@ -124,8 +124,24 @@ def pack_all(polyominoes_stacks: list[int], h: int, w: int) -> list[list[Polyomi
         # Extract the shape and original offset coordinates
         shape, (oy, ox) = polyomino
         
+        # Calculate the size of the polyomino (number of tiles)
+        polyomino_size = np.sum(shape)
+
         # Try to place the polyomino in an existing collage
+        # Calculate empty space for each collage and filter/sort by most empty space
+        collage_candidates = []
         for i, collage in enumerate(collages_pool):
+            empty_space = np.sum(collage == 0)
+            # Filter out collages with less empty space than the polyomino size
+            if empty_space >= polyomino_size:
+                collage_candidates.append((i, empty_space))
+
+        # Sort by most empty space first (descending order)
+        collage_candidates.sort(key=lambda x: x[1], reverse=True)
+
+        # Try to pack in the collages with most empty space first
+        for i, _ in collage_candidates:
+            collage = collages_pool[i]
             # Attempt to pack the polyomino in this collage
             res = try_pack(shape, collage)
             if res is not None:

@@ -13,7 +13,7 @@ import torch
 
 import polyis.models.detector
 import polyis.dtypes
-from polyis.utilities import CACHE_DIR, TILEPADDING_MODES, format_time, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES, CLASSIFIERS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS, DATASETS_DIR, TILEPADDING_MODES, TilePadding, format_time, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES, CLASSIFIERS_TO_TEST
 
 
 def parse_args():
@@ -39,13 +39,13 @@ def parse_args():
     return parser.parse_args()
 
 
-def detect_objects(video_file_path: str, tilesize: int, classifier: str, dataset_name: str,
-                   tilepadding: Literal['none', 'connected', 'disconnected'], batch_size: int, gpu_id: int, command_queue: mp.Queue):
+def detect_objects(video_name: str, tilesize: int, classifier: str, dataset_name: str,
+                   tilepadding: TilePadding, batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
     
     Args:
-        video_file_path (str): Path to the video file
+        video_name (str): Name of the video file
         tilesize (int): Tile size used for compression
         classifier (str): Classifier name used for compression
         dataset_name (str): Name of the dataset (used to auto-select detector)
@@ -54,16 +54,14 @@ def detect_objects(video_file_path: str, tilesize: int, classifier: str, dataset
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    video_name = os.path.basename(video_file_path)
+    video_file_path = os.path.join(CACHE_DIR, dataset_name, 'execution', video_name)
+    param_str = f'{classifier}_{tilesize}_{tilepadding}'
     
-    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
-                                         f'{classifier}_{tilesize}_{tilepadding}', 'images')
+    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir)
 
-    # print(f"Processing video {video_file_path}")
-
     # Create output directory for detections
-    detections_output_dir = os.path.join(video_file_path, '040_compressed_detections', f'{classifier}_{tilesize}_{tilepadding}')
+    detections_output_dir = os.path.join(video_file_path, '040_compressed_detections', param_str)
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -160,56 +158,27 @@ def main(args):
     """
     mp.set_start_method('spawn', force=True)
     
-    # Determine which tile sizes to process
-    if args.tilesize == 'all':
-        tilesizes_to_process = TILE_SIZES
-        print(f"Processing all tile sizes: {tilesizes_to_process}")
-    else:
-        tilesizes_to_process = [int(args.tilesize)]
-        print(f"Processing tile size: {tilesizes_to_process[0]}")
-    
-    # Determine which classifiers to process
-    classifiers_to_process = args.classifiers
-    
     # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
+
+    if args.clear:
+        print(f"Cleared existing 040_compressed_detections folder")
+        for dataset in args.datasets:
+            cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+            for video_file in sorted(os.listdir(cache_dir)):
+                compressed_detections_dir = os.path.join(cache_dir, video_file,
+                                                         '040_compressed_detections')
+                if os.path.exists(compressed_detections_dir):
+                    shutil.rmtree(compressed_detections_dir)
     
-    for dataset_name in args.datasets:
-        dataset_dir = os.path.join(CACHE_DIR, dataset_name, 'execution')
-        
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
-            continue
-        
-        # Show detector info for this dataset
-        detector_info = polyis.models.detector.get_detector_info(dataset_name)
-        print(f"Using detector: {detector_info['detector']} ({detector_info['description']})")
-        
-        # Get all video files from the dataset directory
-        video_files = [f for f in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, f))]
-        
-        for video_file in sorted(video_files):
-            video_file_path = os.path.join(dataset_dir, video_file)
-            
-            # Clear compressed detections folder if requested
-            if args.clear:
-                compressed_detections_base_dir = os.path.join(video_file_path, '040_compressed_detections')
-                if os.path.exists(compressed_detections_base_dir):
-                    shutil.rmtree(compressed_detections_base_dir)
-                    print(f"Cleared existing 040_compressed_detections folder: {compressed_detections_base_dir}")
-            
-            for classifier in classifiers_to_process:
-                for tilesize in tilesizes_to_process:
+    for dataset in args.datasets:
+        cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+        for video_file in sorted(os.listdir(cache_dir)):
+            for classifier in CLASSIFIERS:
+                for tilesize in TILE_SIZES:
                     for tilepadding in TILEPADDING_MODES:
-                        # Check if compressed frames directory exists
-                        compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
-                                                             f'{classifier}_{tilesize}_{tilepadding}', 'images')
-                        if not os.path.exists(compressed_frames_dir):
-                            print(f"No compressed frames directory found for {video_file} {classifier} {tilesize}, skipping")
-                            continue
-                    
-                        funcs.append(partial(detect_objects, video_file_path, tilesize, classifier,
-                                             dataset_name, tilepadding, args.batch_size))
+                        funcs.append(partial(detect_objects, video_file, tilesize, classifier,
+                                             dataset, tilepadding, args.batch_size))
     
     print(f"Created {len(funcs)} tasks to process")
     

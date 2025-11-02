@@ -187,12 +187,69 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
         if frame_idx % max(1, len(results) // 100) == 0:
             command_queue.put((device, {'description': description + ' grouping', 'completed': frame_idx}))
 
-    # Step 2: Pack all polyominoes at once
-    command_queue.put((device, {'description': description + ' packing', 'completed': 0, 'total': 1}))
-    pack_start = (time.time_ns() / 1e6)
-    collages = pack_all(polyominoes_stacks, grid_height, grid_width)
-    pack_time = (time.time_ns() / 1e6) - pack_start
-    timing_data.append({'step': 'pack_all', 'runtime': format_time(pack_all=pack_time)})
+    # Step 2: Pack all polyominoes in batches (10 equal parts)
+    num_batches = 10
+    batch_size = len(polyominoes_stacks) // num_batches
+    # Handle case where len(polyominoes_stacks) < num_batches
+    if batch_size == 0:
+        batch_size = 1
+        num_batches = len(polyominoes_stacks)
+
+    command_queue.put((device, {'description': description + ' packing', 'completed': 0, 'total': num_batches}))
+
+    # Initialize empty list to store all collages from all batches
+    collages = []
+    total_pack_time = 0.0
+
+    #########################################################
+    # TODO
+    #########################################################
+    # instead of sort the collages by left-over space, sort by the largest enclosed left-over space
+    # Write document for all experiments and results
+
+    # Process each batch
+    for batch_idx in range(num_batches):
+        # Calculate batch boundaries
+        start_idx = batch_idx * batch_size
+        # For the last batch, include any remaining frames
+        if batch_idx == num_batches - 1:
+            end_idx = len(polyominoes_stacks)
+        else:
+            end_idx = start_idx + batch_size
+
+        # Extract batch of polyominoes
+        batch_polyominoes = polyominoes_stacks[start_idx:end_idx]
+
+        # Pack this batch
+        batch_start = (time.time_ns() / 1e6)
+        batch_collages = pack_all(batch_polyominoes, grid_height, grid_width)
+        batch_pack_time = (time.time_ns() / 1e6) - batch_start
+        total_pack_time += batch_pack_time
+
+        # Adjust frame indices in batch_collages to be relative to the full video
+        # pack_all returns frame indices relative to the batch (0-indexed within batch)
+        # We need to offset them by start_idx to get the actual frame index
+        for collage_idx, collage in enumerate(batch_collages):
+            batch_collages[collage_idx] = [
+                poly_pos._replace(frame=poly_pos.frame + start_idx)
+                for poly_pos in collage
+            ]
+
+        # Merge batch collages into the overall collages list
+        collages.extend(batch_collages)
+
+        # Record timing for this batch
+        timing_data.append({
+            'step': f'pack_batch_{batch_idx}',
+            'frames': f'{start_idx}-{end_idx-1}',
+            'runtime': format_time(pack_batch=batch_pack_time)
+        })
+
+        # Update progress
+        command_queue.put((device, {'description': description + ' packing', 'completed': batch_idx + 1}))
+
+    # Record total packing time
+    timing_data.append({'step': 'pack_all_total', 'runtime': format_time(pack_all_total=total_pack_time)})
 
     # Step 3: Read all frames from video
     command_queue.put((device, {'description': description + ' reading', 'completed': 0, 'total': num_frames_total}))

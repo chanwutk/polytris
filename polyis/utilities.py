@@ -1298,7 +1298,8 @@ PARAMS = [
     'tilepadding',
 ]
 
-TILEPADDING_MODES: "dict[typing.Literal['none', 'connected', 'disconnected'], int]" = {
+TilePadding = typing.Literal['none', 'connected', 'disconnected']
+TILEPADDING_MODES: "dict[TilePadding, int]" = {
     'none': 0,
     'connected': 1,
     'disconnected': 2,
@@ -1346,6 +1347,8 @@ CLASSIFIERS_TO_TEST = [
     # 'EfficientNetS',
     # 'EfficientNetL',
 ]
+
+CLASSIFIERS = CLASSIFIERS_TO_TEST + ['Perfect']
 
 CLASSIFIERS_CHOICES = [
     # Cutsom CNNs
