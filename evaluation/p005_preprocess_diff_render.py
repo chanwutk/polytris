@@ -236,7 +236,7 @@ def main(args):
         video_dirs = []
         for item in os.listdir(execution_dir):
             item_path = os.path.join(execution_dir, item)
-            if os.path.isdir(item_path):
+            if os.path.isdir(item_path) and item.startswith('te'):
                 tracking_path = os.path.join(item_path, '000_groundtruth', 'tracking.jsonl')
                 if os.path.exists(tracking_path):
                     video_dirs.append(item)

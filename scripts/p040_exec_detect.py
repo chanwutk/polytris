@@ -8,12 +8,12 @@ import time
 import cv2
 import multiprocessing as mp
 from functools import partial
-from typing import Callable, Literal
+from typing import Callable
 import torch
 
 import polyis.models.detector
 import polyis.dtypes
-from polyis.utilities import CACHE_DIR, CLASSIFIERS, DATASETS_DIR, TILEPADDING_MODES, TilePadding, format_time, CLASSIFIERS_CHOICES, ProgressBar, DATASETS_TO_TEST, TILE_SIZES, CLASSIFIERS_TO_TEST
+from polyis.utilities import CACHE_DIR, CLASSIFIERS, DATASETS_DIR, TILEPADDING_MODES, TilePadding, format_time, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -22,16 +22,6 @@ def parse_args():
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names (space-separated)')
-    parser.add_argument('--tilesize', type=str, choices=['30', '60', '120', 'all'], default='all',
-                        help='Tile size to use for detection (or "all" for all tile sizes)')
-    # Detector selection is now automatic based on dataset name
-    parser.add_argument('--classifiers', required=False,
-                        default=CLASSIFIERS_TO_TEST + ['Perfect'],
-                        choices=CLASSIFIERS_CHOICES + ['Perfect'],
-                        nargs='+',
-                        help='Classifier names to use (can specify multiple): '
-                             f'{", ".join(CLASSIFIERS_CHOICES + ["Perfect"])}. For example: '
-                             '--classifiers YoloN ShuffleNet05 ResNet18 groundtruth')
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the 040_compressed_detections folder for each video')
     parser.add_argument('--batch_size', type=int, default=16,
@@ -39,7 +29,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def detect_objects(video_name: str, tilesize: int, classifier: str, dataset_name: str,
+def detect_objects(video_name: str, tilesize: int, classifier: str, dataset: str,
                    tilepadding: TilePadding, batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
@@ -54,14 +44,14 @@ def detect_objects(video_name: str, tilesize: int, classifier: str, dataset_name
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    video_file_path = os.path.join(CACHE_DIR, dataset_name, 'execution', video_name)
+    cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_name)
     param_str = f'{classifier}_{tilesize}_{tilepadding}'
     
-    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames', param_str, 'images')
+    compressed_frames_dir = os.path.join(cache_dir, '031_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir)
 
     # Create output directory for detections
-    detections_output_dir = os.path.join(video_file_path, '040_compressed_detections', param_str)
+    detections_output_dir = os.path.join(cache_dir, '040_compressed_detections', param_str)
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -70,61 +60,55 @@ def detect_objects(video_name: str, tilesize: int, classifier: str, dataset_name
     # Get all compressed image files
     image_files = [f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg')]
 
-    detector = polyis.models.detector.get_detector(dataset_name, gpu_id, batch_size, len(image_files))
+    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len(image_files))
     
     if not image_files:
         raise FileNotFoundError(f"No compressed images found in {compressed_frames_dir}")
 
     with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
-        kwargs = {'completed': 0,
-                  'total': len(image_files),
-                  'description': f"{dataset_name} {video_name} {tilesize:>3} {classifier[:3]} {tilepadding[:3]}"}
+        description = f"{dataset} {video_name} {tilesize:>3} {classifier[:3]} {tilepadding[:3]}"
+        kwargs = {'completed': 0, 'total': len(image_files), 'description': description}
         command_queue.put((device, kwargs))
         
-        try:
-            # Process images in batches
-            for batch_start in range(0, len(image_files), batch_size):
-                batch_end = min(batch_start + batch_size, len(image_files))
-                batch_files = image_files[batch_start:batch_end]
-                
-                # Read all images in the batch
-                batch_images: list[polyis.dtypes.NPImage] = []
-                batch_runtimes: list[dict] = []
-                start_time = (time.time_ns() / 1e6)
-                for image_file in batch_files:
-                    image_path = os.path.join(compressed_frames_dir, image_file)
-                    frame = cv2.imread(image_path)
-                    assert polyis.dtypes.is_np_image(frame)
-                    batch_images.append(frame)
-                    batch_runtimes.append({'image_file': image_file})
-                end_time = (time.time_ns() / 1e6)
-                read_time_per_image = (end_time - start_time) / len(batch_files)
+        # Process images in batches
+        for batch_start in range(0, len(image_files), batch_size):
+            batch_end = min(batch_start + batch_size, len(image_files))
+            batch_files = image_files[batch_start:batch_end]
+            
+            # Read all images in the batch
+            batch_images: list[polyis.dtypes.NPImage] = []
+            batch_runtimes: list[dict] = []
+            start_time = (time.time_ns() / 1e6)
+            for image_file in batch_files:
+                image_path = os.path.join(compressed_frames_dir, image_file)
+                frame = cv2.imread(image_path)
+                assert polyis.dtypes.is_np_image(frame)
+                batch_images.append(frame)
+                batch_runtimes.append({'image_file': image_file})
+            end_time = (time.time_ns() / 1e6)
+            read_time_per_image = (end_time - start_time) / len(batch_files)
 
-                # Detect objects in the batch
-                start_time = (time.time_ns() / 1e6)
-                batch_outputs = polyis.models.detector.detect_batch(batch_images, detector)
-                end_time = (time.time_ns() / 1e6)
-                detect_time_per_image = (end_time - start_time) / len(batch_files)
+            # Detect objects in the batch
+            start_time = (time.time_ns() / 1e6)
+            batch_outputs = polyis.models.detector.detect_batch(batch_images, detector)
+            end_time = (time.time_ns() / 1e6)
+            detect_time_per_image = (end_time - start_time) / len(batch_files)
 
-                # Process results for each image in the batch
-                for idx, (image_file, outputs) in enumerate(zip(batch_files, batch_outputs)):
-                    runtime = batch_runtimes[idx]
-                    runtime['read'] = read_time_per_image
-                    runtime['detect'] = detect_time_per_image
+            # Process results for each image in the batch
+            for idx, (image_file, outputs) in enumerate(zip(batch_files, batch_outputs)):
+                runtime = batch_runtimes[idx]
+                runtime['read'] = read_time_per_image
+                runtime['detect'] = detect_time_per_image
 
-                    # Extract bounding boxes (x1, y1, x2, y2) format
-                    bounding_boxes = outputs[:, :4].tolist()
+                # Extract bounding boxes (x1, y1, x2, y2) format
+                bounding_boxes = outputs[:, :4].tolist()
 
-                    # Save detection results
-                    f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
-                    fr.write(json.dumps(format_time(**runtime)) + '\n')
+                # Save detection results
+                f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
+                fr.write(json.dumps(format_time(**runtime)) + '\n')
 
-                command_queue.put((device, {'completed': batch_end + 1}))
-        except Exception as e:
-            with open('LOG.txt', 'a') as f:
-                f.write(json.dumps([video_file_path, tilesize, classifier, tilepadding, batch_runtimes]) + '\n')
-            raise e
+            command_queue.put((device, {'completed': batch_end + 1}))
 
 
 def main(args):
@@ -172,8 +156,8 @@ def main(args):
                     shutil.rmtree(compressed_detections_dir)
     
     for dataset in args.datasets:
-        cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
-        for video_file in sorted(os.listdir(cache_dir)):
+        videoset_dir = os.path.join(DATASETS_DIR, dataset, 'test')
+        for video_file in sorted(os.listdir(videoset_dir)):
             for classifier in CLASSIFIERS:
                 for tilesize in TILE_SIZES:
                     for tilepadding in TILEPADDING_MODES:

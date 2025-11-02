@@ -3,18 +3,13 @@
 import argparse
 import json
 import os
-import sys
 from typing import Callable, Literal
 import cv2
 import numpy as np
 import shutil
 import time
 import multiprocessing as mp
-import queue
 from functools import partial
-
-import torch
-import torch.nn.functional as F
 
 from polyis import dtypes
 from polyis.utilities import (
@@ -50,9 +45,11 @@ def parse_args():
     return parser.parse_args()
 
 
-def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap,
-                      offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]],
-                      start_idx: int, frame_idx: int, output_dir: str, step_times: dict):
+OffsetLookup = tuple[tuple[int, int], tuple[int, int], int]
+
+
+def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap, offset_lookup: list[OffsetLookup],
+                      collage_idx: int, start_idx: int, frame_idx: int, output_dir: str, step_times: dict):
     """
     Save the packed image, index_map, and offset_lookup.
     
@@ -71,16 +68,16 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap,
 
     # Profile: Save canvas
     step_start = (time.time_ns() / 1e6)
-    img_path = os.path.join(image_dir, f'{start_idx:04d}_{frame_idx:04d}.jpg')
+    img_path = os.path.join(image_dir, f'{collage_idx:04d}_{start_idx:04d}_{frame_idx:04d}.jpg')
     cv2.imwrite(img_path, canvas)
     step_times['save_canvas'] = (time.time_ns() / 1e6) - step_start
 
     # Profile: Save index_map and offset_lookup
     step_start = (time.time_ns() / 1e6)
-    index_map_path = os.path.join(index_map_dir, f'{start_idx:04d}_{frame_idx:04d}.npy')
+    index_map_path = os.path.join(index_map_dir, f'{collage_idx:04d}_{start_idx:04d}_{frame_idx:04d}.npy')
     np.save(index_map_path, index_map)
 
-    offset_lookup_path = os.path.join(offset_lookup_dir, f'{start_idx:04d}_{frame_idx:04d}.jsonl')
+    offset_lookup_path = os.path.join(offset_lookup_dir, f'{collage_idx:04d}_{start_idx:04d}_{frame_idx:04d}.jsonl')
     with open(offset_lookup_path, 'w') as f:
         for offset in offset_lookup:
             f.write(json.dumps(offset) + '\n')
@@ -326,7 +323,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
 
         # Save the collage
         step_start = (time.time_ns() / 1e6)
-        save_packed_image(canvas, index_map, offset_lookup, start_frame, end_frame, output_dir, step_times)
+        save_packed_image(canvas, index_map, offset_lookup, collage_idx, start_frame, end_frame, output_dir, step_times)
         step_times['save_collage'] = (time.time_ns() / 1e6) - step_start
 
         timing_data.append({'step': 'process_collage', 'runtime': format_time(**step_times)})
@@ -405,27 +402,21 @@ def main(args):
                 video_file_path = os.path.join(videoset_dir, video_file)
                 cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-                compressed_frames_base_dir = os.path.join(cache_video_dir, '030_compressed_frames')
+                compressed_frames_base_dir = os.path.join(cache_video_dir, '031_compressed_frames')
                 if args.clear and os.path.exists(compressed_frames_base_dir):
                     shutil.rmtree(compressed_frames_base_dir)
                     print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")
                 
                 for classifier in args.classifiers:
                     for tilesize in TILE_SIZES:
-                        score_file = os.path.join(cache_video_dir, '020_relevancy',
-                                                f'{classifier}_{tilesize}', 'score', 'score.jsonl')
-                        if not os.path.exists(score_file):
-                            print(f"No score file found for {video_file} {classifier} {tilesize}, skipping")
-                            continue
-
-                        for tilepadding in set[Literal['none', 'connected', 'disconnected']](args.tilepadding):
+                        for tilepadding in TILEPADDING_MODES:
                             funcs.append(partial(compress, video_file_path, cache_video_dir,
                                                  classifier, tilesize, args.threshold, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
     
     # Set up multiprocessing with ProgressBar
-    num_processes = int(mp.cpu_count() * 0.1)
+    num_processes = int(mp.cpu_count() * 0.3)
     # num_processes = max(1, torch.cuda.device_count() // 2)
     # num_processes = 1
     if len(funcs) < num_processes:
