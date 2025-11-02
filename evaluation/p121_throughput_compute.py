@@ -31,8 +31,8 @@ def load_data_tables(data_dir: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     index_data = pd.read_csv(index_file)
     query_data = pd.read_csv(query_file)
     
-    print(f"Loaded {len(index_data)} index construction entries")
-    print(f"Loaded {len(query_data)} query execution entries")
+    # print(f"Loaded {len(index_data)} index construction entries")
+    # print(f"Loaded {len(query_data)} query execution entries")
     
     return index_data, query_data
 

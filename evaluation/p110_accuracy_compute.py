@@ -43,8 +43,6 @@ def parse_args():
                         help='Comma-separated list of metrics to evaluate')
     parser.add_argument('--no_parallel', action='store_true', default=False,
                         help='Whether to disable parallel processing')
-    parser.add_argument('--clear', action='store_true',
-                        help='Remove and recreate the 070_accuracy evaluation directory for each dataset')
     return parser.parse_args()
 
 
@@ -315,12 +313,11 @@ def main(args):
         # Create evaluation directory path for this dataset
         evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
 
-        # Clear evaluation directory if requested
-        if args.clear:
-            if os.path.exists(evaluation_dir):
-                shutil.rmtree(evaluation_dir)
-                print(f"Cleared existing 070_accuracy directory: {evaluation_dir}")
-            os.makedirs(evaluation_dir, exist_ok=True)
+        # Clear evaluation directory
+        if args.clear and os.path.exists(evaluation_dir):
+            shutil.rmtree(evaluation_dir)
+            print(f"Cleared existing 070_accuracy directory: {evaluation_dir}")
+        os.makedirs(evaluation_dir, exist_ok=True)
 
         # Create one evaluation task per classifier/tilesize/tilepadding combination
         # Each task will evaluate all videos in the dataset for that combination

@@ -12,8 +12,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Gather throughput data from pipeline stages')
     parser.add_argument('--datasets', required=False, default=DATASETS_TO_TEST, nargs='+',
                         help='Dataset names (space-separated)')
-    parser.add_argument('--clear', action='store_true',
-                        help='Clear the 080_throughput directory before gathering data')
     return parser.parse_args()
 
 CLASSIFIERS = CLASSIFIERS_TO_TEST
@@ -318,13 +316,12 @@ def save_query_execution_data(query_data, dataset, output_dir):
 
 def main(args):
     """Main function to gather and print runtime data."""
-    # Clear the 080_throughput directory if --clear flag is set
-    if args.clear:
-        for dataset in args.datasets:
-            output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
-            if os.path.exists(output_dir):
-                print(f"Clearing directory: {output_dir}")
-                shutil.rmtree(output_dir)
+    # Clear the 080_throughput directory
+    for dataset in args.datasets:
+        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
+        if os.path.exists(output_dir):
+            print(f"Clearing directory: {output_dir}")
+            shutil.rmtree(output_dir)
 
     print("Gathering runtime data from all stages and configurations...")
 
