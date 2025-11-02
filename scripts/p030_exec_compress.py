@@ -128,12 +128,7 @@ def apply_pack(
         mask_y = coords[:, 0]  # All y coordinates
         mask_x = coords[:, 1]  # All x coordinates
         # Set the gid at all positions at once using vectorized operations
-        try:
-            index_map[y + mask_y, x + mask_x] = gid
-        except IndexError as e:
-            print(f"Error: {y}, {x}, {offset[0]}, {offset[1]}")
-            print(f"Mask: {mask}")
-            raise e
+        index_map[y + mask_y, x + mask_x] = gid
         offset_lookup.append(((y, x), offset, frame_idx))
     step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
 

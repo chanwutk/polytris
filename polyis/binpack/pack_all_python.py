@@ -117,7 +117,7 @@ def pack_all(polyominoes_stacks: list[int], h: int, w: int) -> list[list[Polyomi
     # Combine polyominoes with their frame indices for processing
     all_polyominoes_frames = [*zip(all_polyominoes, all_frames)]
     # Sort polyominoes by size (largest first) for better packing efficiency
-    all_polyominoes_frames.sort(key=lambda x: -np.sum(x[0][0]))
+    all_polyominoes_frames.sort(key=lambda x: np.sum(x[0][0]), reverse=True)
     
     # Process each polyomino in size order (largest first)
     for polyomino, frame in all_polyominoes_frames:
