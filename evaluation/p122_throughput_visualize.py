@@ -13,6 +13,24 @@ from rich.progress import track
 from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
 
 
+# Global constant for naive baseline stages
+NAIVE_STAGES = ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking']
+
+# Global constant for runtime stage mapping
+RUNTIME_STAGE_MAPPING = {
+    '001_preprocess_groundtruth_detection': 'Detection',
+    '002_preprocess_groundtruth_tracking': 'Tracking',
+    '011_tune_detect': 'Detection',
+    '012_tune_create_training_data': 'Create Training Data',
+    '013_tune_train_classifier': 'Classifier Training',
+    '020_exec_classify': 'Classification',
+    '030_exec_compress': 'Compression',
+    '040_exec_detect': 'Detection',
+    '050_exec_uncompress': 'Uncompression',
+    '060_exec_track': 'Tracking'
+}
+
+
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Visualize runtime breakdown of training configurations')
@@ -119,6 +137,57 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
     combined_chart.save(os.path.join(output_dir, output_name), scale_factor=2)
 
 
+def transform_query_data(query_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Transform query execution data into execution and naive DataFrames.
+    
+    Args:
+        query_data: Query execution overall timing DataFrame
+        
+    Returns:
+        Tuple of (exec_df, naive_df) where:
+            - exec_df: Execution data with Category and Operation columns
+            - naive_df: Naive baseline data with Category and Operation columns
+    """
+    # Transform execution data: filter, create category labels, map operations, and aggregate
+    exec_df = query_data[~query_data['stage'].isin(NAIVE_STAGES)].copy()
+    exec_df['Category'] = exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' + exec_df['tilepadding'].str[:4]
+    exec_df['Operation'] = exec_df['stage'].map(RUNTIME_STAGE_MAPPING)
+    exec_df = exec_df.groupby(['dataset', 'Category', 'Operation']).agg({'time': 'sum'}).reset_index()
+    
+    # Transform naive baseline data: filter naive stages and aggregate
+    naive_df = query_data[query_data['stage'].isin(NAIVE_STAGES)]
+    naive_df = naive_df.groupby(['dataset', 'stage']).agg({'time': 'sum'}).reset_index()
+    naive_df['Category'] = 'Naive'
+    naive_df['Operation'] = naive_df['stage'].map(RUNTIME_STAGE_MAPPING)
+    
+    return exec_df, naive_df
+
+
+def create_runtime_chart(df: pd.DataFrame, title: str, height: int) -> alt.Chart:
+    """Create a stacked bar chart for runtime visualization.
+    
+    Args:
+        df: DataFrame with Category, Operation, and time columns
+        title: Chart title
+        height: Chart height in pixels
+        
+    Returns:
+        Altair chart object
+    """
+    return alt.Chart(df).mark_bar().encode(
+        x=alt.X('time:Q', title='Runtime (seconds)'),
+        y=alt.Y('Category:N', sort=alt.SortField(field='time', order='descending')),
+        color=alt.Color('Operation:N', legend=alt.Legend(orient='top')),
+        stroke=alt.condition(alt.datum.Category == 'Naive', alt.value('black'), alt.value('none')),
+        strokeWidth=alt.condition(alt.datum.Category == 'Naive', alt.value(4), alt.value(0)),
+        tooltip=['Category', 'Operation', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
+    ).properties(
+        title=title,
+        width=800,
+        height=height
+    )
+
+
 def visualize_overall_runtime(index_overall: pd.DataFrame, query_overall: pd.DataFrame,
                               output_dir: str, video: str | None):
     """Create comparative analysis between index construction and query execution.
@@ -144,65 +213,50 @@ def visualize_overall_runtime(index_overall: pd.DataFrame, query_overall: pd.Dat
 
     os.makedirs(video_output_dir, exist_ok=True)
 
-    naive_stages = ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking']
-
-    # Define stage mapping for display names
-    stage_mapping = {
-        '001_preprocess_groundtruth_detection': 'Detection',
-        '002_preprocess_groundtruth_tracking': 'Tracking',
-        '011_tune_detect': 'Detection',
-        '012_tune_create_training_data': 'Create Training Data',
-        '013_tune_train_classifier': 'Classifier Training',
-        '020_exec_classify': 'Classification',
-        '030_exec_compress': 'Compression',
-        '040_exec_detect': 'Detection',
-        '050_exec_uncompress': 'Uncompression',
-        '060_exec_track': 'Tracking'
-    }
-
     # Transform index construction data: aggregate by stage and add labels
     index_df = index_overall.groupby('stage').agg({'time': 'sum'}).reset_index()
     index_df['Category'] = 'Index Constr.'
-    index_df['Operation'] = index_df['stage'].map(stage_mapping)
+    index_df['Operation'] = index_df['stage'].map(RUNTIME_STAGE_MAPPING)
 
-    # Transform execution data: filter, create category labels, map operations, and aggregate
-    exec_df = video_query_data[~video_query_data['stage'].isin(naive_stages)].copy()
-    exec_df['Category'] = exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' + exec_df['tilepadding'].str[:4]
-    exec_df['Operation'] = exec_df['stage'].map(stage_mapping)
-    exec_df = exec_df.groupby(['Category', 'Operation']).agg({'time': 'sum'}).reset_index()
-
-    # Transform naive baseline data: filter naive stages and aggregate
-    naive_df = video_query_data[video_query_data['stage'].isin(naive_stages)]
-    naive_df = naive_df.groupby('stage').agg({'time': 'sum'}).reset_index()
-    naive_df['Category'] = 'Naive'
-    naive_df['Operation'] = naive_df['stage'].map(stage_mapping)
+    # Transform query execution data using common function
+    exec_df, naive_df = transform_query_data(video_query_data)
 
     # Combine data for two comparison views
     df1 = pd.concat((exec_df, index_df, naive_df), ignore_index=True)  # With index construction
     df2 = pd.concat((exec_df, naive_df), ignore_index=True)  # Without index construction
 
-    # Helper function to create stacked bar chart
-    def make_chart(df: pd.DataFrame, title: str, height: int) -> alt.Chart:
-        return alt.Chart(df).mark_bar().encode(
-            x=alt.X('time:Q', title='Runtime (seconds)'),
-            y=alt.Y('Category:N', sort=alt.SortField(field='time', order='descending')),
-            color=alt.Color('Operation:N', legend=alt.Legend(orient='top')),
-            tooltip=['Category', 'Operation', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
-        ).properties(
-            title=title,
-            width=800,
-            height=height
-        )
-
-    # Create two charts for comparison
-    chart1 = make_chart(df1, 'With Index Construction', 200)
-    chart2 = make_chart(df2, 'Without Index Construction', 400)
+    # Create two charts for comparison using common function
+    chart1 = create_runtime_chart(df1, 'With Index Construction', 200)
+    chart2 = create_runtime_chart(df2, 'Without Index Construction', 400)
 
     # Combine charts vertically and save
     combined_chart = alt.vconcat(chart1, chart2, spacing=20).properties(
         title=f'Index Construction (Per-Dataset) vs Query Execution (Per-Video) Runtime Breakdown - {video}'
     )
     combined_chart.save(os.path.join(video_output_dir, file_name), scale_factor=2)
+
+
+def visualize_summary_all_datasets(all_query_overall: pd.DataFrame, output_dir: str):
+    """Create summary visualization of overall runtime across all datasets without index construction.
+    
+    Args:
+        all_query_overall: Combined query execution overall timing DataFrame from all datasets
+        output_dir: Output directory for saving plots
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Transform query execution data using common function
+    exec_df, naive_df = transform_query_data(all_query_overall)
+    
+    # Combine data without index construction
+    df = pd.concat((exec_df, naive_df), ignore_index=True)
+    
+    # Create chart without index construction using common function
+    chart = create_runtime_chart(df, 'Overall Runtime Across All Datasets', 400)
+    chart = chart.facet(row=alt.Row('dataset:N', title='Dataset')).resolve_scale(x='independent', y='independent')
+    
+    # Save chart
+    chart.save(os.path.join(output_dir, 'overall_summary.png'), scale_factor=2)
 
 
 def extract_video_names(query_overall: pd.DataFrame) -> list[str]:
@@ -251,6 +305,9 @@ def main():
             shutil.rmtree(output_dir)
         os.makedirs(output_dir, exist_ok=True)
 
+    # Collect all query_overall DataFrames for summary visualization
+    all_query_overall_list = []
+    
     tasks = []
     for dataset in args.datasets:
         print(f"Loading processed measurements for dataset: {dataset}")
@@ -261,6 +318,9 @@ def main():
 
         index_overall, query_overall, query_per_op = load_measurements(measurements_dir)
 
+        # Collect query_overall for summary visualization
+        all_query_overall_list.append(query_overall)
+
         throughput_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
 
         os.makedirs(throughput_dir, exist_ok=True)
@@ -268,6 +328,13 @@ def main():
         for video in videos + [None]:
             tasks.append(partial(visualize_breakdown_query_execution, query_per_op, throughput_dir, video))
             tasks.append(partial(visualize_overall_runtime, index_overall, query_overall, throughput_dir, video))
+
+    # Create summary visualization across all datasets
+    print("Creating summary visualization across all datasets...")
+    all_query_overall = pd.concat(all_query_overall_list, ignore_index=True)
+    summary_output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '082_throughput')
+    tasks.append(partial(visualize_summary_all_datasets, all_query_overall, summary_output_dir))
+    print(f"Summary visualization saved to: {summary_output_dir}/overall_summary.png")
     
     processes = []
     for task in tasks:

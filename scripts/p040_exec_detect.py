@@ -61,9 +61,6 @@ def detect_objects(video_name: str, tilesize: int, classifier: str, dataset: str
     image_files = [f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg')]
 
     detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len(image_files))
-    
-    if not image_files:
-        raise FileNotFoundError(f"No compressed images found in {compressed_frames_dir}")
 
     with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):

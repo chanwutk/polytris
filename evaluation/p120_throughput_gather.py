@@ -190,7 +190,7 @@ def gather_query_execution_data(datasets_videos):
                     runtime_files.append(('020_exec_classify', classify_path))
                     
                     # 030_exec_compress.py
-                    compress_path = os.path.join(video_path, '030_compressed_frames', cl_ts_tp, 'runtime.jsonl')
+                    compress_path = os.path.join(video_path, '031_compressed_frames', cl_ts_tp, 'runtime.jsonl')
                     assert os.path.exists(compress_path), f"Compress path {compress_path} does not exist"
                     runtime_files.append(('030_exec_compress', compress_path))
                     

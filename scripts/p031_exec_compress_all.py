@@ -245,8 +245,8 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
         # Update progress
         command_queue.put((device, {'description': description + ' packing', 'completed': batch_idx + 1}))
 
-    # Record total packing time
-    timing_data.append({'step': 'pack_all_total', 'runtime': format_time(pack_all_total=total_pack_time)})
+    # # Record total packing time
+    # timing_data.append({'step': 'pack_all_total', 'runtime': format_time(pack_all_total=total_pack_time)})
 
     # Step 3: Read all frames from video
     command_queue.put((device, {'description': description + ' reading', 'completed': 0, 'total': num_frames_total}))
