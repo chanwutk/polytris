@@ -43,6 +43,9 @@ TRACK_COLORS = [
 ]
 
 
+video_frame_counts: dict[tuple[str, str], int] = {}
+
+
 def get_video_frame_count(dataset: str, video: str) -> int:
     """
     Get the total number of frames in a video using OpenCV.
@@ -54,6 +57,9 @@ def get_video_frame_count(dataset: str, video: str) -> int:
     Returns:
         int: Total number of frames in the video
     """
+    if (dataset, video) in video_frame_counts:
+        return video_frame_counts[(dataset, video)]
+    
     video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
     assert os.path.exists(video_path), f"Video file not found for {dataset}/{video}"
     
@@ -63,7 +69,8 @@ def get_video_frame_count(dataset: str, video: str) -> int:
     
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
-    
+
+    video_frame_counts[(dataset, video)] = frame_count
     return frame_count
 
 

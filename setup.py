@@ -17,6 +17,17 @@ extensions = [
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     ),
     Extension(
+        "polyis.cbinpack.adapters",
+        [
+            "polyis/cbinpack/adapters.pyx",
+            "polyis/cbinpack/utilities.c",
+            "polyis/cbinpack/group_tiles_.c",
+        ],
+        include_dirs=["polyis/cbinpack", numpy.get_include()],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions", "-std=c11"],
+    ),
+    Extension(
         "polyis.binpack.adapters",
         ["polyis/binpack/adapters.pyx"],
         include_dirs=[numpy.get_include()],
@@ -44,13 +55,20 @@ extensions = [
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     ),
-    Extension(
-        "polyis.binpack.pack_all",
-        ["polyis/binpack/pack_all.pyx"],
-        include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
-    )
+    # Extension(
+    #     "polyis.binpack.pack_all",
+    #     ["polyis/binpack/pack_all.pyx"],
+    #     include_dirs=[numpy.get_include()],
+    #     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+    #     extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+    # ),
+    # Extension(
+    #     "polyis.binpack.pack_all_optimized",
+    #     ["polyis/binpack/pack_all_optimized.pyx"],
+    #     include_dirs=[numpy.get_include()],
+    #     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+    #     extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+    # )
 ]
 
 

@@ -174,12 +174,12 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
     # Check if compressed detections exist
     detections_file = os.path.join(video_file_path, '040_compressed_detections',
                                    f'{classifier}_{tilesize}_{tilepadding}', 'detections.jsonl')
-    assert os.path.exists(detections_file)
+    assert os.path.exists(detections_file), f"Detections file not found: {detections_file}"
     
     # Check if compressed frames directory exists
-    compressed_frames_dir = os.path.join(video_file_path, '030_compressed_frames',
+    compressed_frames_dir = os.path.join(video_file_path, '031_compressed_frames',
                                          f'{classifier}_{tilesize}_{tilepadding}')
-    assert os.path.exists(compressed_frames_dir)
+    assert os.path.exists(compressed_frames_dir), f"Compressed frames directory not found: {compressed_frames_dir}"
     
     # print(f"Processing video {video_file_path} for unpacking")
     
@@ -221,14 +221,11 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
         for idx, line in enumerate(contents):
             content = json.loads(line)
             image_file: str = content['image_file']
-
-            from_idx, to_idx = image_file.split('.')[0].split('_')
-            from_idx = int(from_idx)
-            to_idx = int(to_idx)
+            prefix = image_file.split('.')[0]
 
             # Construct paths
-            index_map_path = os.path.join(compressed_frames_dir, 'index_maps', f'{from_idx:08d}_{to_idx:08d}.npy')
-            offset_lookup_path = os.path.join(compressed_frames_dir, 'offset_lookups', f'{from_idx:08d}_{to_idx:08d}.jsonl')
+            index_map_path = os.path.join(compressed_frames_dir, 'index_maps', f'{prefix}.npy')
+            offset_lookup_path = os.path.join(compressed_frames_dir, 'offset_lookups', f'{prefix}.jsonl')
             
             # Load detection results
             detections: list[list[float]] = content['bboxes']

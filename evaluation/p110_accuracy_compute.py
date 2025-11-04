@@ -313,11 +313,11 @@ def main(args):
         # Create evaluation directory path for this dataset
         evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
 
-        # Clear evaluation directory
-        if args.clear and os.path.exists(evaluation_dir):
-            shutil.rmtree(evaluation_dir)
-            print(f"Cleared existing 070_accuracy directory: {evaluation_dir}")
-        os.makedirs(evaluation_dir, exist_ok=True)
+        # # Clear evaluation directory
+        # if args.clear and os.path.exists(evaluation_dir):
+        #     shutil.rmtree(evaluation_dir)
+        #     print(f"Cleared existing 070_accuracy directory: {evaluation_dir}")
+        # os.makedirs(evaluation_dir, exist_ok=True)
 
         # Create one evaluation task per classifier/tilesize/tilepadding combination
         # Each task will evaluate all videos in the dataset for that combination
