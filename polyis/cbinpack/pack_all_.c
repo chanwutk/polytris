@@ -131,6 +131,13 @@ typedef struct CollageMetadataArray {
     int capacity;
 } CollageMetadataArray;
 
+// Dynamic array of unsigned char pointers (for collage occupied tiles pool)
+typedef struct UCharPArray {
+    unsigned char **data;  // Array of unsigned char pointers
+    int size;              // Current number of elements
+    int capacity;          // Allocated capacity
+} UCharPArray;
+
 // ============================================================================
 // Memory Management Functions for Dynamic Arrays
 // ============================================================================
@@ -363,6 +370,50 @@ void CollageMetadataArray_cleanup(CollageMetadataArray *arr) {
             CoordinateArrayList_cleanup(&arr->data[i].unoccupied_spaces);
             IntArray_cleanup(&arr->data[i].space_sizes);
         }
+        free(arr->data);
+        arr->data = NULL;
+    }
+    arr->size = 0;
+    arr->capacity = 0;
+}
+
+// Initialize a UCharPArray
+int UCharPArray_init(UCharPArray *arr, int initial_capacity) {
+    // Allocate array of pointers
+    arr->data = (unsigned char**)malloc((size_t)initial_capacity * sizeof(unsigned char*));
+    if (!arr->data) return -1;
+    arr->size = 0;
+    arr->capacity = initial_capacity;
+    return 0;
+}
+
+// Push an unsigned char pointer to the array
+int UCharPArray_push(UCharPArray *arr, unsigned char *value) {
+    // Expand if necessary
+    if (arr->size >= arr->capacity) {
+        int new_capacity = arr->capacity * 2;
+        unsigned char **new_data = (unsigned char**)realloc(arr->data,
+                                                            (size_t)new_capacity * sizeof(unsigned char*));
+        if (!new_data) return -1;
+        arr->data = new_data;
+        arr->capacity = new_capacity;
+    }
+    // Push the pointer
+    arr->data[arr->size] = value;
+    arr->size += 1;
+    return 0;
+}
+
+// Cleanup UCharPArray (two-level cleanup: frees stored pointers then array)
+void UCharPArray_cleanup(UCharPArray *arr) {
+    if (arr && arr->data) {
+        // Free each stored pointer
+        for (int i = 0; i < arr->size; i++) {
+            if (arr->data[i]) {
+                free(arr->data[i]);
+            }
+        }
+        // Free the array itself
         free(arr->data);
         arr->data = NULL;
     }
@@ -763,11 +814,11 @@ bool try_pack_coords(CoordinateArray *polyomino_coords, unsigned char *occupied_
                 int py = y + polyomino_coords->data[i].y - min_y;
                 int px = x + polyomino_coords->data[i].x - min_x;
 
-                // Check bounds
-                if (!in_bounds(py, px, h, w)) {
-                    fits = false;
-                    break;
-                }
+                // // Check bounds
+                // if (!in_bounds(py, px, h, w)) {
+                //     fits = false;
+                //     break;
+                // }
 
                 // Check collision
                 if (get_tile(occupied_tiles, h, w, py, px) != 0) {
@@ -856,9 +907,8 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
     CollageArray_init(result, 16);
 
     // Storage for collage occupied tiles arrays
-    unsigned char **collages_pool = (unsigned char**)malloc(16 * sizeof(unsigned char*));
-    int collages_pool_size = 0;
-    int collages_pool_capacity = 16;
+    UCharPArray collages_pool;
+    UCharPArray_init(&collages_pool, 16);
 
     // Process each polyomino in size order (largest first)
     for (int i = 0; i < all_polyominoes.size; i++) {
@@ -872,8 +922,8 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
 
         // Try to place the polyomino in an existing collage
         bool placed = false;
-        for (int collage_idx = 0; collage_idx < collages_pool_size; collage_idx++) {
-            unsigned char *collage = collages_pool[collage_idx];
+        for (int collage_idx = 0; collage_idx < collages_pool.size; collage_idx++) {
+            unsigned char *collage = collages_pool.data[collage_idx];
 
             // Attempt to pack the polyomino in this collage
             Placement placement;
@@ -893,6 +943,7 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
                 pos.frame = frame;
 
                 // Copy shape coordinates
+                // TODO: Do not copy
                 CoordinateArray_init(&pos.shape, shape->size);
                 for (int k = 0; k < shape->size; k++) {
                     CoordinateArray_push(&pos.shape, shape->data[k]);
@@ -908,19 +959,6 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
 
         if (!placed) {
             // No existing collage could fit this polyomino - create a new collage
-            // Expand collages_pool if needed
-            if (collages_pool_size >= collages_pool_capacity) {
-                int new_capacity = collages_pool_capacity * 2;
-                unsigned char **new_pool = (unsigned char**)realloc(collages_pool,
-                                                                    (size_t)new_capacity * sizeof(unsigned char*));
-                if (!new_pool) {
-                    // Cleanup and return partial result
-                    break;
-                }
-                collages_pool = new_pool;
-                collages_pool_capacity = new_capacity;
-            }
-
             // Create a new empty collage with specified dimensions
             unsigned char *collage = (unsigned char*)calloc((size_t)(h * w), sizeof(unsigned char));
             if (!collage) {
@@ -946,6 +984,7 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
                 pos.frame = frame;
 
                 // Copy shape coordinates
+                // TODO: Do not copy
                 CoordinateArray_init(&pos.shape, shape->size);
                 for (int k = 0; k < shape->size; k++) {
                     CoordinateArray_push(&pos.shape, shape->data[k]);
@@ -957,8 +996,13 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
                 PolyominoPositionArray_push(&new_collage_positions, pos);
 
                 // Add to collages pool and result
-                collages_pool[collages_pool_size] = collage;
-                collages_pool_size++;
+                if (UCharPArray_push(&collages_pool, collage) != 0) {
+                    // Push failed - cleanup and return partial result
+                    free(collage);
+                    CoordinateArray_cleanup(&pos.shape);
+                    PolyominoPositionArray_cleanup(&new_collage_positions);
+                    break;
+                }
                 CollageArray_push(result, new_collage_positions);
             } else {
                 // Should not happen for empty collage, but cleanup if it does
@@ -968,10 +1012,7 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
     }
 
     // Cleanup
-    for (int i = 0; i < collages_pool_size; i++) {
-        free(collages_pool[i]);
-    }
-    free(collages_pool);
+    UCharPArray_cleanup(&collages_pool);
     PolyominoWithFrameArray_cleanup(&all_polyominoes);
 
     return result;

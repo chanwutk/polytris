@@ -9,13 +9,17 @@ import glob
 import multiprocessing as mp
 
 
+ARGS = ["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"]
+MACROS: list[tuple[str, str | None]] = [("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")]
+
+
 extensions = [
     Extension(
         "polyis.binpack.utilities",
         ["polyis/binpack/utilities.pyx"],
         include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
     Extension(
         "polyis.cbinpack.group_tiles",
@@ -25,8 +29,8 @@ extensions = [
             "polyis/cbinpack/group_tiles_.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions", "-std=c11"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
         "polyis.cbinpack.adapters",
@@ -35,51 +39,37 @@ extensions = [
             "polyis/cbinpack/utilities_.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions", "-std=c11"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
         "polyis.binpack.adapters",
         ["polyis/binpack/adapters.pyx"],
         include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
     Extension(
         "polyis.binpack.pack_append",
         ["polyis/binpack/pack_append.pyx"],
         include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
     Extension(
         "polyis.binpack.group_tiles",
         ["polyis/binpack/group_tiles.pyx"],
         include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
     Extension(
         "polyis.binpack.render",
         ["polyis/binpack/render.pyx"],
         include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
-    # Extension(
-    #     "polyis.binpack.pack_all",
-    #     ["polyis/binpack/pack_all.pyx"],
-    #     include_dirs=[numpy.get_include()],
-    #     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-    #     extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
-    # ),
-    # Extension(
-    #     "polyis.binpack.pack_all_optimized",
-    #     ["polyis/binpack/pack_all_optimized.pyx"],
-    #     include_dirs=[numpy.get_include()],
-    #     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-    #     extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
-    # )
 ]
 
 
