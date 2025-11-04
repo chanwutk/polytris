@@ -782,7 +782,7 @@ int compare_polyominoes_by_size(const void *a, const void *b) {
 // ============================================================================
 
 // Try to pack a polyomino (as coordinate array) into the collage
-bool try_pack_coords(CoordinateArray *polyomino_coords, unsigned char *occupied_tiles,
+bool try_pack(CoordinateArray *polyomino_coords, unsigned char *occupied_tiles,
                      int h, int w, Placement *placement_out) {
     // No rotation in this implementation (rotation = 0)
     int rotation = 0;
@@ -927,7 +927,7 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
 
             // Attempt to pack the polyomino in this collage
             Placement placement;
-            if (try_pack_coords(shape, collage, h, w, &placement)) {
+            if (try_pack(shape, collage, h, w, &placement)) {
                 // Successfully placed - extract position and rotation
                 int py = placement.y;
                 int px = placement.x;
@@ -968,7 +968,7 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
 
             // Attempt to place the polyomino in the new collage
             Placement placement;
-            if (try_pack_coords(shape, collage, h, w, &placement)) {
+            if (try_pack(shape, collage, h, w, &placement)) {
                 // Extract position and rotation from successful placement
                 int py = placement.y;
                 int px = placement.x;

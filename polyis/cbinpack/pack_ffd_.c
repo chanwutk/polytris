@@ -273,6 +273,51 @@ void UCharPArray_cleanup(UCharPArray *arr) {
 }
 
 // ============================================================================
+// IntArray: Dynamic array for storing integers (for empty space tracking)
+// ============================================================================
+
+typedef struct IntArray {
+    int *data;      // Array of integers
+    int size;       // Current number of elements
+    int capacity;   // Allocated capacity
+} IntArray;
+
+// Initialize an IntArray
+int IntArray_init(IntArray *arr, int initial_capacity) {
+    arr->data = (int*)malloc((size_t)initial_capacity * sizeof(int));
+    if (!arr->data) return -1;
+    arr->size = 0;
+    arr->capacity = initial_capacity;
+    return 0;
+}
+
+// Push an integer to the array
+int IntArray_push(IntArray *arr, int value) {
+    // Expand if necessary
+    if (arr->size >= arr->capacity) {
+        int new_capacity = arr->capacity * 2;
+        int *new_data = (int*)realloc(arr->data, (size_t)new_capacity * sizeof(int));
+        if (!new_data) return -1;
+        arr->data = new_data;
+        arr->capacity = new_capacity;
+    }
+    // Push the value
+    arr->data[arr->size] = value;
+    arr->size += 1;
+    return 0;
+}
+
+// Cleanup IntArray
+void IntArray_cleanup(IntArray *arr) {
+    if (arr && arr->data) {
+        free(arr->data);
+        arr->data = NULL;
+    }
+    arr->size = 0;
+    arr->capacity = 0;
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
@@ -289,6 +334,20 @@ static inline void set_tile(unsigned char *tiles, int h, int w, int y, int x, un
 // Check if coordinate is within bounds
 static inline bool in_bounds(int y, int x, int h, int w) {
     return y >= 0 && y < h && x >= 0 && x < w;
+}
+
+// Structure to hold collage candidates with their empty space
+typedef struct CollageCandidate {
+    int index;        // Index in collages_pool
+    int empty_space;  // Amount of empty space in this collage
+} CollageCandidate;
+
+// Comparison function for sorting collage candidates by empty space (descending)
+int compare_collage_candidates(const void *a, const void *b) {
+    const CollageCandidate *ca = (const CollageCandidate*)a;
+    const CollageCandidate *cb = (const CollageCandidate*)b;
+    // Sort descending (most empty space first)
+    return cb->empty_space - ca->empty_space;
 }
 
 // ============================================================================
@@ -378,8 +437,8 @@ int compare_polyominoes_by_size(const void *a, const void *b) {
 // ============================================================================
 
 // Try to pack a polyomino (as coordinate array) into the collage
-bool try_pack_coords(CoordinateArray *polyomino_coords, unsigned char *occupied_tiles,
-                     int h, int w, Placement *placement_out) {
+bool try_pack(CoordinateArray *polyomino_coords, unsigned char *occupied_tiles,
+              int h, int w, Placement *placement_out) {
     // No rotation in this implementation (rotation = 0)
     int rotation = 0;
 
@@ -506,6 +565,10 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
     UCharPArray collages_pool;
     UCharPArray_init(&collages_pool, 16);
 
+    // Storage for empty space tracking (parallel to collages_pool)
+    IntArray empty_spaces;
+    IntArray_init(&empty_spaces, 16);
+
     // Process each polyomino in size order (largest first)
     for (int i = 0; i < all_polyominoes.size; i++) {
         PolyominoWithFrame *pwf = &all_polyominoes.data[i];
@@ -515,15 +578,45 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
         int oy = pwf->oy;
         int ox = pwf->ox;
         int frame = pwf->frame;
+        int polyomino_size = shape->size;
 
-        // Try to place the polyomino in an existing collage
+        // Build list of collage candidates sorted by empty space (most empty first)
+        // Allocate candidates array (max size = number of collages)
+        CollageCandidate *candidates = NULL;
+        int num_candidates = 0;
+
+        if (collages_pool.size > 0) {
+            candidates = (CollageCandidate*)malloc((size_t)collages_pool.size * sizeof(CollageCandidate));
+            if (candidates) {
+                // Use cached empty space values and filter by polyomino size
+                for (int collage_idx = 0; collage_idx < collages_pool.size; collage_idx++) {
+                    int empty_space = empty_spaces.data[collage_idx];
+
+                    // Only consider collages with enough empty space
+                    if (empty_space >= polyomino_size) {
+                        candidates[num_candidates].index = collage_idx;
+                        candidates[num_candidates].empty_space = empty_space;
+                        num_candidates++;
+                    }
+                }
+
+                // Sort candidates by empty space (descending order)
+                if (num_candidates > 0) {
+                    qsort(candidates, (size_t)num_candidates, sizeof(CollageCandidate),
+                          compare_collage_candidates);
+                }
+            }
+        }
+
+        // Try to place the polyomino in existing collages (ordered by most empty space first)
         bool placed = false;
-        for (int collage_idx = 0; collage_idx < collages_pool.size; collage_idx++) {
+        for (int cand_idx = 0; cand_idx < num_candidates; cand_idx++) {
+            int collage_idx = candidates[cand_idx].index;
             unsigned char *collage = collages_pool.data[collage_idx];
 
             // Attempt to pack the polyomino in this collage
             Placement placement;
-            if (try_pack_coords(shape, collage, h, w, &placement)) {
+            if (try_pack(shape, collage, h, w, &placement)) {
                 // Successfully placed - extract position and rotation
                 int py = placement.y;
                 int px = placement.x;
@@ -548,9 +641,18 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
                 // Record the polyomino position in this collage
                 PolyominoPositionArray_push(&result->data[collage_idx], pos);
 
+                // Update the empty space counter for this collage
+                empty_spaces.data[collage_idx] -= polyomino_size;
+
                 placed = true;
                 break;
             }
+        }
+
+        // Free candidates array
+        if (candidates) {
+            free(candidates);
+            candidates = NULL;
         }
 
         if (!placed) {
@@ -564,7 +666,7 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
 
             // Attempt to place the polyomino in the new collage
             Placement placement;
-            if (try_pack_coords(shape, collage, h, w, &placement)) {
+            if (try_pack(shape, collage, h, w, &placement)) {
                 // Extract position and rotation from successful placement
                 int py = placement.y;
                 int px = placement.x;
@@ -600,6 +702,11 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
                     break;
                 }
                 CollageArray_push(result, new_collage_positions);
+
+                // Initialize empty space for this new collage
+                // Total space minus the polyomino just placed
+                int initial_empty_space = (h * w) - polyomino_size;
+                IntArray_push(&empty_spaces, initial_empty_space);
             } else {
                 // Should not happen for empty collage, but cleanup if it does
                 free(collage);
@@ -609,6 +716,7 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
 
     // Cleanup
     UCharPArray_cleanup(&collages_pool);
+    IntArray_cleanup(&empty_spaces);
     PolyominoWithFrameArray_cleanup(&all_polyominoes);
 
     return result;
