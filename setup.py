@@ -6,6 +6,7 @@ from Cython.Build import cythonize
 import numpy
 import os
 import glob
+import multiprocessing as mp
 
 
 extensions = [
@@ -15,6 +16,27 @@ extensions = [
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+    ),
+    Extension(
+        "polyis.cbinpack.group_tiles",
+        [
+            "polyis/cbinpack/group_tiles.pyx",
+            "polyis/cbinpack/utilities_.c",
+            "polyis/cbinpack/group_tiles_.c",
+        ],
+        include_dirs=["polyis/cbinpack", numpy.get_include()],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions", "-std=c11"],
+    ),
+    Extension(
+        "polyis.cbinpack.adapters",
+        [
+            "polyis/cbinpack/adapters.pyx",
+            "polyis/cbinpack/utilities_.c",
+        ],
+        include_dirs=["polyis/cbinpack", numpy.get_include()],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions", "-std=c11"],
     ),
     Extension(
         "polyis.binpack.adapters",
@@ -44,13 +66,20 @@ extensions = [
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     ),
-    Extension(
-        "polyis.binpack.pack_all",
-        ["polyis/binpack/pack_all.pyx"],
-        include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
-    )
+    # Extension(
+    #     "polyis.binpack.pack_all",
+    #     ["polyis/binpack/pack_all.pyx"],
+    #     include_dirs=[numpy.get_include()],
+    #     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+    #     extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+    # ),
+    # Extension(
+    #     "polyis.binpack.pack_all_optimized",
+    #     ["polyis/binpack/pack_all_optimized.pyx"],
+    #     include_dirs=[numpy.get_include()],
+    #     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+    #     extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+    # )
 ]
 
 
@@ -68,10 +97,14 @@ class CleanCommand(Command):
     so_patterns = [
         'polyis/binpack/**/*.so',
         'polyis/binpack/*.so',
+        'polyis/cbinpack/**/*.so',
+        'polyis/cbinpack/*.so',
     ]
     html_patterns = [
         'polyis/binpack/**/*.html',
         'polyis/binpack/*.html',
+        'polyis/cbinpack/**/*.html',
+        'polyis/cbinpack/*.html',
     ]
     
     def initialize_options(self):
@@ -121,6 +154,7 @@ setup(
     },
     ext_modules=cythonize(
         extensions,
+        nthreads=mp.cpu_count() // 2,
         compiler_directives={
             "language_level": 3,
             # Performance optimizations

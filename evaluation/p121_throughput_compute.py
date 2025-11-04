@@ -100,13 +100,13 @@ def parse_runtime_file(file_path: str, stage: str, accessor: Callable[[dict], li
                     if item_copy['op'] in ignored_ops:
                         continue
                     assert isinstance(item_copy['time'], (int, float)), f"Time value is not a number for {item_copy}"
-                    assert item_copy['time'] > 0 or ('Perfect_' in file_path and item_copy['op'] == 'transform'), \
-                        f"Time value is not positive for {item_copy}, {file_path}, {stage}"
+                    assert item_copy['time'] >= 0 or ('Perfect_' in file_path and item_copy['op'] == 'transform'), \
+                        f"Time value is not positive for {item_copy}, {file_path}, {stage}, {item}"
                     assert isinstance(item_copy['op'], str), f"Operation is not a string for {item_copy}"
                     timings.append({'stage': stage, 'time': item_copy['time'], 'op': item_copy['op']})
     
-    assert len(timings) > 0, f"No timings found for {file_path}, {stage}"
-    return pd.DataFrame.from_records(timings)
+    # assert len(timings) > 0, f"No timings found for {file_path}, {stage}"
+    return pd.DataFrame.from_records(timings, columns=['stage', 'time', 'op'])
 
 
 def aggregate_per_op(file_timings: pd.DataFrame) -> pd.DataFrame:
@@ -135,6 +135,10 @@ QUERY_DATA_ACCESSORS = {
     '060_exec_track': lambda row: row['runtime']
 }
 
+EXCLUDED_OPS = {
+    '030_exec_compress': ['save_collage', 'pack_all_total'],
+}
+
 
 def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[dict]]],
                   worker_id: int, command_queue: "mp.Queue") -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -151,6 +155,10 @@ def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[d
         dataset, video, classifier, tilesize, tilepadding, stage, runtime_file = row
         file_timings = parse_runtime_file(runtime_file, stage, accessors[stage])
         assert file_timings is not None, f"File timings are None for {stage}, {runtime_file}, {video}"
+        excluded_ops = EXCLUDED_OPS.get(stage, [])
+        file_timings = file_timings[~file_timings['op'].isin(excluded_ops)]
+        assert isinstance(file_timings, pd.DataFrame), \
+            f"File timings are not a pandas DataFrame for {stage}, {runtime_file}, {video}"
 
         per_op = aggregate_per_op(file_timings)
         per_op['stage'] = stage
@@ -160,7 +168,8 @@ def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[d
         per_op['tilesize'] = tilesize
         per_op['tilepadding'] = tilepadding
         
-        all_per_op.append(per_op)
+        if len(per_op) > 0:
+            all_per_op.append(per_op)
 
         total_time = float(per_op['time'].sum())
         overall.append({

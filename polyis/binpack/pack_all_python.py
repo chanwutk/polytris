@@ -1,6 +1,7 @@
 import typing
 
 import numpy as np
+from scipy import ndimage
 from polyis.binpack.adapters import format_polyominoes
 
 
@@ -27,7 +28,7 @@ class PolyominoPosition(typing.NamedTuple):
 
 class Placement(typing.NamedTuple):
     """Represents a successful placement of a polyomino in a collage.
-    
+
     Attributes:
         y: Y-coordinate where the polyomino was placed
         x: X-coordinate where the polyomino was placed
@@ -36,6 +37,171 @@ class Placement(typing.NamedTuple):
     y: int
     x: int
     rotation: int
+
+
+class CollageMetadata(typing.NamedTuple):
+    """Holds a collage and cached metadata about its unoccupied regions.
+
+    This NamedTuple maintains both the collage array and cached information about
+    its unoccupied connected regions as polyomino masks to avoid expensive recomputation.
+
+    Attributes:
+        occupied_tiles: 2D numpy array representing the collage (0=empty, 1=occupied)
+        unoccupied_spaces: List of 2D numpy arrays, each representing one unoccupied region
+                          as a binary mask (same shape as occupied_tiles, 1=unoccupied in this region)
+        space_sizes: List of integers, parallel to unoccupied_spaces, storing the size of each space
+    """
+    occupied_tiles: np.ndarray
+    unoccupied_spaces: list[np.ndarray]
+    space_sizes: list[int]
+
+
+def extract_unoccupied_spaces(occupied_tiles: np.ndarray) -> tuple[list[np.ndarray], list[int]]:
+    """Extract all unoccupied connected regions as polyomino masks and their sizes.
+
+    Args:
+        occupied_tiles: 2D numpy array representing the collage state
+
+    Returns:
+        Tuple of (list of binary masks, list of sizes)
+        Each mask represents one unoccupied region (same shape as occupied_tiles, 1=unoccupied in this region, 0=otherwise)
+        Each size is the number of tiles in the corresponding region
+    """
+    # Create binary mask where empty cells are 1
+    empty_mask = (occupied_tiles == 0).astype(np.uint8)
+    # Label connected components
+    label_result = ndimage.label(empty_mask)
+    # Assert type check: should be a tuple of (array, int)
+    assert isinstance(label_result, tuple) and len(label_result) == 2, "ndimage.label should return a tuple of (labeled_array, num_features)"
+    labeled_array, num_features = label_result
+    assert isinstance(labeled_array, np.ndarray), "First element should be a numpy array"
+    assert isinstance(num_features, (int, np.integer)), "Second element should be an integer"
+
+    # Extract each region as a separate mask and calculate its size
+    unoccupied_spaces = []
+    space_sizes = []
+    for region_id in range(1, num_features + 1):
+        # Create a mask for this region (1 where region_id matches, 0 otherwise)
+        region_mask = (labeled_array == region_id).astype(np.uint8)
+        # Calculate size once when creating the mask
+        region_size = np.sum(region_mask)
+        unoccupied_spaces.append(region_mask)
+        space_sizes.append(region_size)
+
+    return unoccupied_spaces, space_sizes
+
+
+def update_collage_after_placement(
+    collage_meta: CollageMetadata,
+    placement: Placement,
+    polyomino_shape: np.ndarray
+) -> CollageMetadata:
+    """Update cached region information after a polyomino has been placed.
+
+    Finds which unoccupied space contains the placement location and updates only that space.
+    The placed polyomino breaks one unoccupied region into potentially smaller ones.
+
+    Args:
+        collage_meta: The CollageMetadata to update
+        placement: Placement object containing the position where the polyomino was placed
+        polyomino_shape: The shape of the polyomino that was placed
+
+    Returns:
+        New CollageMetadata with updated unoccupied spaces
+    """
+    # Get placement coordinates and dimensions
+    py, px = placement.y, placement.x
+    ph, pw = polyomino_shape.shape
+    occupied_tiles = collage_meta.occupied_tiles
+    
+    # Find which unoccupied space contains the placement location
+    # Find one tile that is part of the polyomino shape (guaranteed to be in exactly one unoccupied space)
+    polyomino_tile_coords = np.where(polyomino_shape > 0)
+    if len(polyomino_tile_coords[0]) == 0:
+        raise ValueError("Polyomino has no tiles")
+    
+    # Get the first tile's coordinates relative to the polyomino shape
+    tile_rel_y, tile_rel_x = polyomino_tile_coords[0][0], polyomino_tile_coords[1][0]
+    # Convert to absolute coordinates in the collage
+    tile_abs_y = py + tile_rel_y
+    tile_abs_x = px + tile_rel_x
+    
+    # Find which unoccupied space contains this tile
+    affected_space_idx = None
+    for idx, space_mask in enumerate(collage_meta.unoccupied_spaces):
+        # Check if this tile is in this unoccupied space
+        if (tile_abs_y < space_mask.shape[0] and tile_abs_x < space_mask.shape[1] and
+            space_mask[tile_abs_y, tile_abs_x] > 0):
+            affected_space_idx = idx
+            break
+    
+    # This should always succeed since the polyomino was successfully placed
+    # If somehow it doesn't, fall back to full recalculation
+    if affected_space_idx is None:
+        raise ValueError("Failed to find the affected unoccupied space")
+    
+    # Get the affected unoccupied space mask
+    affected_space = collage_meta.unoccupied_spaces[affected_space_idx]
+    
+    # Create a mask for the placed polyomino in the full collage coordinates
+    placed_polyomino_mask = np.zeros_like(occupied_tiles, dtype=np.uint8)
+    placed_polyomino_mask[py : py + ph, px : px + pw] = polyomino_shape
+    
+    # Subtract the placed polyomino from the affected space
+    remaining_space = affected_space.copy()
+    remaining_space = remaining_space.astype(np.int16) - placed_polyomino_mask.astype(np.int16)
+    # Assert that the result is valid (all values are 0 or 1, since placed polyomino is a subset of the space)
+    assert np.all((remaining_space >= 0) & (remaining_space <= 1)), "Remaining space contains invalid values after subtraction"
+    # Convert to uint8 after assertion
+    remaining_space = remaining_space.astype(np.uint8)
+    
+    # Extract new connected components from the remaining space
+    # Label connected components in the remaining space
+    label_result = ndimage.label(remaining_space)
+    # Assert type check: should be a tuple of (array, int)
+    assert isinstance(label_result, tuple) and len(label_result) == 2, "ndimage.label should return a tuple of (labeled_array, num_features)"
+    assert isinstance(label_result[0], np.ndarray), "First element should be a numpy array"
+    assert isinstance(label_result[1], (int, np.integer)), "Second element should be an integer"
+    labeled_remaining, num_features = label_result
+    
+    # Create new unoccupied space masks for each connected component and calculate their sizes
+    new_spaces = []
+    new_space_sizes = []
+    for region_id in range(1, num_features + 1):
+        new_space_mask = (labeled_remaining == region_id).astype(np.uint8)
+        # Calculate size once when creating the mask
+        new_space_size = np.sum(new_space_mask)
+        new_spaces.append(new_space_mask)
+        new_space_sizes.append(new_space_size)
+    
+    # Build updated lists: keep unaffected spaces, replace affected space with new spaces
+    updated_unoccupied_spaces = (
+        collage_meta.unoccupied_spaces[:affected_space_idx] + 
+        new_spaces + 
+        collage_meta.unoccupied_spaces[affected_space_idx + 1:]
+    )
+    updated_space_sizes = (
+        collage_meta.space_sizes[:affected_space_idx] + 
+        new_space_sizes + 
+        collage_meta.space_sizes[affected_space_idx + 1:]
+    )
+    
+    return CollageMetadata(occupied_tiles, updated_unoccupied_spaces, updated_space_sizes)
+
+
+def count_regions_at_least(collage_meta: CollageMetadata, min_size: int) -> int:
+    """Count how many unoccupied regions are at least the given size.
+
+    Args:
+        collage_meta: The CollageMetadata to query
+        min_size: Minimum size threshold
+
+    Returns:
+        Count of regions with size >= min_size
+    """
+    # Use cached space sizes for fast counting
+    # Sum booleans directly (True=1, False=0) - faster than creating 1s
+    return sum(size >= min_size for size in collage_meta.space_sizes)
 
 
 def try_pack(polyomino: np.ndarray, occupied_tiles: np.ndarray) -> Placement | None:
@@ -110,43 +276,68 @@ def pack_all(polyominoes_stacks: list[int], h: int, w: int) -> list[list[Polyomi
         # Add all polyominoes from this stack to the list
         all_polyominoes.extend(polyominoes)
 
-    # Initialize storage for collages and their corresponding polyomino positions
-    collages_pool: list[np.ndarray] = []
+    # Initialize storage for collages (with cached metadata) and their corresponding polyomino positions
+    collages_pool: list[CollageMetadata] = []
     positions: list[list[PolyominoPosition]] = []
 
     # Combine polyominoes with their frame indices for processing
     all_polyominoes_frames = [*zip(all_polyominoes, all_frames)]
     # Sort polyominoes by size (largest first) for better packing efficiency
-    all_polyominoes_frames.sort(key=lambda x: -np.sum(x[0][0]))
+    all_polyominoes_frames.sort(key=lambda x: np.sum(x[0][0]), reverse=True)
     
     # Process each polyomino in size order (largest first)
     for polyomino, frame in all_polyominoes_frames:
         # Extract the shape and original offset coordinates
         shape, (oy, ox) = polyomino
         
+        # Calculate the size of the polyomino (number of tiles)
+        polyomino_size = np.sum(shape)
+
         # Try to place the polyomino in an existing collage
-        for i, collage in enumerate(collages_pool):
+        # Evaluate each collage by counting unoccupied regions larger than the polyomino
+        collage_candidates = []
+        for i, collage_meta in enumerate(collages_pool):
+            # First, check if there's enough total empty space
+            empty_space = np.sum(collage_meta.occupied_tiles == 0)
+            if empty_space >= polyomino_size:
+                # Use cached region information to count fitting regions efficiently
+                # This metric considers fragmentation: more large regions = better quality space
+                num_fitting_regions = count_regions_at_least(collage_meta, polyomino_size)
+                if num_fitting_regions > 0:
+                    collage_candidates.append((i, num_fitting_regions))
+
+        # Sort by number of fitting unoccupied regions (descending order)
+        # Collages with more large contiguous empty spaces are prioritized
+        collage_candidates.sort(key=lambda x: x[1], reverse=True)
+
+        # Try to pack in collages with the most fitting unoccupied regions first
+        for i, _ in collage_candidates:
+            collage_meta = collages_pool[i]
             # Attempt to pack the polyomino in this collage
-            res = try_pack(shape, collage)
+            res = try_pack(shape, collage_meta.occupied_tiles)
             if res is not None:
                 # Successfully placed - extract position and rotation
                 py, px, rotation = res
                 # Record the polyomino position in this collage
                 positions[i].append(PolyominoPosition(oy, ox, py, px, rotation, frame, shape))
+                # Update cached region information for this collage only
+                collages_pool[i] = update_collage_after_placement(collage_meta, res, shape)
                 # Move to next polyomino (break out of collage loop)
                 break
         else:
             # No existing collage could fit this polyomino - create a new collage
             # Create a new empty collage with specified dimensions
-            collage = np.zeros((h, w), dtype=np.uint8)
-            # Add the new collage to the pool
-            collages_pool.append(collage)
+            collage_array = np.zeros((h, w), dtype=np.uint8)
             # Attempt to place the polyomino in the new collage
-            res = try_pack(shape, collage)
+            res = try_pack(shape, collage_array)
             # This should always succeed since the collage is empty
             assert res is not None
             # Extract position and rotation from successful placement
             py, px, rotation = res
+            # Extract unoccupied spaces after placement
+            unoccupied_spaces, space_sizes = extract_unoccupied_spaces(collage_array)
+            # Create new collage metadata with updated state
+            collages_pool.append(CollageMetadata(collage_array, unoccupied_spaces, space_sizes))
             # Create a new positions list for this collage with the first polyomino
             positions.append([PolyominoPosition(oy, ox, py, px, rotation, frame, shape)])
     

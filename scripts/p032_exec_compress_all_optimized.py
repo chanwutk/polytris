@@ -114,7 +114,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
                                           tilesize, classifier, execution_dir=True)
     
     # Create output directory for compression results
-    output_dir = os.path.join(cache_video_dir, '031_compressed_frames', f'{classifier}_{tilesize}_{tilepadding}')
+    output_dir = os.path.join(cache_video_dir, '032_compressed_frames', f'{classifier}_{tilesize}_{tilepadding}')
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -402,7 +402,7 @@ def main(args):
                 video_file_path = os.path.join(videoset_dir, video_file)
                 cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-                compressed_frames_base_dir = os.path.join(cache_video_dir, '031_compressed_frames')
+                compressed_frames_base_dir = os.path.join(cache_video_dir, '032_compressed_frames')
                 if args.clear and os.path.exists(compressed_frames_base_dir):
                     shutil.rmtree(compressed_frames_base_dir)
                     print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")
