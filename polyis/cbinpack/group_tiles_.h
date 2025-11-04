@@ -12,16 +12,16 @@
 //                   - 0: No padding
 //                   - 1: Connected padding
 //                   - 2: Disconnected padding
-// Returns: Pointer to PolyominoStack containing all found polyominoes
-PolyominoStack * group_tiles_(
+// Returns: Pointer to PolyominoArray containing all found polyominoes
+PolyominoArray * group_tiles_(
     unsigned char *bitmap_input,
     int width,
     int height,
     int tilepadding_mode
 );
 
-// Free a polyomino stack allocated by group_tiles
+// Free a polyomino array allocated by group_tiles
 // Returns the number of polyominoes that were freed
-int free_polyomino_stack_(PolyominoStack *polyomino_stack);
+int free_polyomino_array_(PolyominoArray *polyomino_array);
 
 #endif // GROUP_TILES_H

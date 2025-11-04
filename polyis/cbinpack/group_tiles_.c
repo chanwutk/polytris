@@ -12,14 +12,14 @@ static const char DIRECTIONS_J[4] = {0, -1, 0, 1};
 static int compare_polyomino_by_mask_length(const void *a, const void *b) {
     const Polyomino *poly_a = (const Polyomino *)a;
     const Polyomino *poly_b = (const Polyomino *)b;
-    // Compare by mask length (top field of IntStack) in descending order
+    // Compare by mask length (size field of UShortArray) in descending order
     // Larger masks first (negative return means a comes before b)
-    return poly_b->mask.top - poly_a->mask.top;
+    return poly_b->mask.size - poly_a->mask.size;
 }
 
 // Helper function to find connected tiles using flood fill algorithm
 // This function modifies the bitmap in-place to mark visited tiles
-static IntStack _find_connected_tiles(
+static UShortArray _find_connected_tiles(
     unsigned int *bitmap,
     unsigned short h,
     unsigned short w,
@@ -28,69 +28,69 @@ static IntStack _find_connected_tiles(
     unsigned char *bitmap_input,
     int mode
 ) {
-    IntStack filled, stack;
+    UShortArray filled, stack;
     unsigned short i, j, _i, _j;
     int di;
     unsigned int value = bitmap[start_i * w + start_j];
     unsigned char curr_occupancy;
     unsigned int next_group;
-    
-    // Initialize stacks
-    if (IntStack_init(&filled, 16) != 0) {
-        // Return empty IntStack on initialization failure
-        IntStack_cleanup(&filled);
+
+    // Initialize arrays
+    if (UShortArray_init(&filled, 16) != 0) {
+        // Return empty UShortArray on initialization failure
+        UShortArray_cleanup(&filled);
         return filled;
     }
-    
-    if (IntStack_init(&stack, 16) != 0) {
+
+    if (UShortArray_init(&stack, 16) != 0) {
         // Initialization failed, cleanup filled and return empty
-        IntStack_cleanup(&filled);
+        UShortArray_cleanup(&filled);
         return filled;
     }
 
     // Push initial coordinates
-    IntStack_push(&stack, start_i);
-    IntStack_push(&stack, start_j);
+    UShortArray_push(&stack, start_i);
+    UShortArray_push(&stack, start_j);
 
     // Flood fill algorithm
-    while (stack.top > 0) {
+    while (stack.size > 0) {
         // Pop coordinates from stack
-        j = stack.data[stack.top - 1];
-        i = stack.data[stack.top - 2];
-        stack.top -= 2;
+        j = stack.data[stack.size - 1];
+        i = stack.data[stack.size - 2];
+        stack.size -= 2;
 
         // Mark current position as visited and add to result
         bitmap[i * w + j] = value;
-        IntStack_push(&filled, i);
-        IntStack_push(&filled, j);
+        UShortArray_push(&filled, i);
+        UShortArray_push(&filled, j);
 
         curr_occupancy = bitmap_input[i * w + j];
-        
+
         // Check all 4 directions for unvisited connected tiles
         for (di = 0; di < 4; di++) {
             _i = i + DIRECTIONS_I[di];
             _j = j + DIRECTIONS_J[di];
-            
+
             // Check bounds
             if (0 <= _i && _i < h && 0 <= _j && _j < w) {
                 next_group = bitmap[_i * w + _j];
-                
+
                 // Add neighbors that are non-zero and different from current value
                 // (meaning they haven't been visited yet)
                 if (next_group != 0 && next_group != value) {
                     // Check padding mode conditions
-                    if (mode == 0 || mode == 2 || 
+                    if (mode == 0 || mode == 2 ||
                         (mode == 1 && (curr_occupancy == 1 || bitmap_input[_i * w + _j] == 1))) {
-                        IntStack_push(&stack, _i);
-                        IntStack_push(&stack, _j);
+                        UShortArray_push(&stack, _i);
+                        UShortArray_push(&stack, _j);
                     }
                 }
             }
         }
     }
 
-    // Free the stack's data before returning
-    IntStack_cleanup(&stack);
+    // Free the array's data before returning
+    UShortArray_cleanup(&stack);
     return filled;
 }
 
@@ -135,8 +135,8 @@ static void _add_padding(
 //                   - 0: No padding
 //                   - 1: Connected padding
 //                   - 2: Disconnected padding
-// Returns: Pointer to PolyominoStack containing all found polyominoes
-PolyominoStack * group_tiles_(
+// Returns: Pointer to PolyominoArray containing all found polyominoes
+PolyominoArray * group_tiles_(
     unsigned char *bitmap_input,
     int width,
     int height,
@@ -146,17 +146,17 @@ PolyominoStack * group_tiles_(
     unsigned short w = (unsigned short)width;
     unsigned short group_id, min_i, min_j, tile_i, tile_j, num_pairs;
     int i, j, k;
-    IntStack connected_tiles;
+    UShortArray connected_tiles;
     Polyomino polyomino;
-    PolyominoStack *polyomino_stack;
+    PolyominoArray *polyomino_array;
     unsigned int *groups;
-    
-    // Allocate and initialize polyomino stack
-    polyomino_stack = (PolyominoStack *)malloc(sizeof(PolyominoStack));
-    if (polyomino_stack == NULL) {
+
+    // Allocate and initialize polyomino array
+    polyomino_array = (PolyominoArray *)malloc(sizeof(PolyominoArray));
+    if (polyomino_array == NULL) {
         return NULL;
     }
-    PolyominoStack_init(polyomino_stack, 16);
+    PolyominoArray_init(polyomino_array, 16);
 
     // Add padding if mode is not 0
     if (tilepadding_mode != 0) {
@@ -166,8 +166,8 @@ PolyominoStack * group_tiles_(
     // Create groups array with unique IDs
     groups = (unsigned int *)calloc((size_t)(h * w), sizeof(unsigned int));
     if (groups == NULL) {
-        PolyominoStack_cleanup(polyomino_stack);
-        free(polyomino_stack);
+        PolyominoArray_cleanup(polyomino_array);
+        free(polyomino_array);
         return NULL;
     }
     
@@ -190,17 +190,17 @@ PolyominoStack * group_tiles_(
                 continue;
             }
 
-            // Find connected tiles - returns IntStack
+            // Find connected tiles - returns UShortArray
             connected_tiles = _find_connected_tiles(groups, h, w, (unsigned short)i, (unsigned short)j,
                                                     bitmap_input, tilepadding_mode);
-            if (connected_tiles.top == 0) {
-                // Clean up empty IntStack
-                IntStack_cleanup(&connected_tiles);
+            if (connected_tiles.size == 0) {
+                // Clean up empty UShortArray
+                UShortArray_cleanup(&connected_tiles);
                 continue;
             }
-            
-            // Find bounding box directly from IntStack data
-            num_pairs = (unsigned short)(connected_tiles.top / 2);
+
+            // Find bounding box directly from UShortArray data
+            num_pairs = (unsigned short)(connected_tiles.size / 2);
             
             // Initialize with first coordinate pair
             min_i = connected_tiles.data[0];
@@ -230,7 +230,7 @@ PolyominoStack * group_tiles_(
             polyomino.mask = connected_tiles;
             polyomino.offset_i = min_i;
             polyomino.offset_j = min_j;
-            PolyominoStack_push(polyomino_stack, polyomino);
+            PolyominoArray_push(polyomino_array, polyomino);
 
             // Mark this position as processed
             bitmap_input[i * w + j] = 0;
@@ -238,24 +238,24 @@ PolyominoStack * group_tiles_(
     }
 
     // Sort polyominoes by mask length (descending order) before returning
-    qsort((void *)polyomino_stack->data,
-          (size_t)polyomino_stack->top,
+    qsort((void *)polyomino_array->data,
+          (size_t)polyomino_array->size,
           sizeof(Polyomino),
           compare_polyomino_by_mask_length);
 
     free((void *)groups);
-    return polyomino_stack;
+    return polyomino_array;
 }
 
-// Free a polyomino stack allocated by group_tiles
+// Free a polyomino array allocated by group_tiles
 // Returns the number of polyominoes that were freed
-int free_polyomino_stack_(PolyominoStack *polyomino_stack) {
-    if (polyomino_stack == NULL) {
+int free_polyomino_array_(PolyominoArray *polyomino_array) {
+    if (polyomino_array == NULL) {
         return 0;
     }
-    int num_polyominoes = polyomino_stack->top;
-    PolyominoStack_cleanup(polyomino_stack);
-    free((void *)polyomino_stack);
+    int num_polyominoes = polyomino_array->size;
+    PolyominoArray_cleanup(polyomino_array);
+    free((void *)polyomino_array);
     return num_polyominoes;
 }
 

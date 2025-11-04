@@ -10,23 +10,23 @@ import cython
 
 # Declare C structures from utilities_.h
 cdef extern from "utilities_.h":
-    ctypedef struct IntStack:
+    ctypedef struct UShortArray:
         unsigned short *data  # type: ignore
-        int top
+        int size
         int capacity
 
     ctypedef struct Polyomino:
-        IntStack mask
+        UShortArray mask
         int offset_i
         int offset_j
 
-    ctypedef struct PolyominoStack:
+    ctypedef struct PolyominoArray:
         Polyomino *data
-        int top
+        int size
         int capacity
 
     # Declare utility functions
-    void PolyominoStack_cleanup(PolyominoStack *stack)
+    void PolyominoArray_cleanup(PolyominoArray *array)
 
 
 # Declare C functions from group_tiles_.h
@@ -40,17 +40,17 @@ cdef extern from "group_tiles_.h":
     #                   - 0: No padding
     #                   - 1: Disconnected padding
     #                   - 2: Connected padding
-    # Returns: Pointer to PolyominoStack containing all found polyominoes
-    PolyominoStack* group_tiles_(
+    # Returns: Pointer to PolyominoArray containing all found polyominoes
+    PolyominoArray* group_tiles_(
         unsigned char *bitmap_input,
         int width,
         int height,
         int tilepadding_mode
     )
 
-    # Free a polyomino stack allocated by group_tiles
+    # Free a polyomino array allocated by group_tiles
     # Returns the number of polyominoes that were freed
-    int free_polyomino_stack_(PolyominoStack *polyomino_stack)
+    int free_polyomino_array_(PolyominoArray *polyomino_array)
 
 
 @cython.boundscheck(False)  # type: ignore
@@ -70,7 +70,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> int:
                          - 2: Connected padding
 
     Returns:
-        A pointer to a list of polyomino stack
+        A pointer to a list of polyomino array
     """
     cdef int height = bitmap_input.shape[0]
     cdef int width = bitmap_input.shape[1]
@@ -80,8 +80,8 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> int:
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def free_polyomino_stack(unsigned long long polyomino_stack) -> int:
+def free_polyomino_array(unsigned long long polyomino_array) -> int:
     """
-    Free a polyomino stack allocated by group_tiles.
+    Free a polyomino array allocated by group_tiles.
     """
-    return free_polyomino_stack_(<PolyominoStack*>polyomino_stack)
+    return free_polyomino_array_(<PolyominoArray*>polyomino_array)

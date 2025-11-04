@@ -4,154 +4,154 @@
 
 // Structure definitions
 
-typedef struct IntStack {
+typedef struct UShortArray {
     unsigned short *data;
-    int top;
+    int size;
     int capacity;
-} IntStack;
+} UShortArray;
 
 typedef struct Polyomino {
-    IntStack mask;
+    UShortArray mask;
     int offset_i;
     int offset_j;
 } Polyomino;
 
-typedef struct PolyominoStack {
+typedef struct PolyominoArray {
     Polyomino *data;
-    int top;
+    int size;
     int capacity;
-} PolyominoStack;
+} PolyominoArray;
 
 // Function implementations
 
-// Initialize an integer stack with initial capacity
-int IntStack_init(IntStack *stack, int initial_capacity) {
-    // if not stack:
+// Initialize an unsigned short array with initial capacity
+int UShortArray_init(UShortArray *array, int initial_capacity) {
+    // if not array:
     //     return -1
-    
-    // Allocate memory for the stack data array
-    stack->data = (unsigned short*)malloc((size_t)initial_capacity * sizeof(unsigned short));
-    // if not stack.data:
+
+    // Allocate memory for the array data
+    array->data = (unsigned short*)malloc((size_t)initial_capacity * sizeof(unsigned short));
+    // if not array.data:
     //     return -1
-    
-    // Initialize stack fields
-    stack->top = 0;
-    stack->capacity = initial_capacity;
+
+    // Initialize array fields
+    array->size = 0;
+    array->capacity = initial_capacity;
     return 0;
 }
 
-// Push a value onto the stack, expanding if necessary
-int IntStack_push(IntStack *stack, unsigned short value) {
+// Push a value onto the array, expanding if necessary
+int UShortArray_push(UShortArray *array, unsigned short value) {
     int new_capacity;
     unsigned short *new_data;
-    
-    // if not stack:
+
+    // if not array:
     //     return -1
-    
+
     // Check if we need to expand the capacity
-    if (stack->top >= stack->capacity) {
+    if (array->size >= array->capacity) {
         // Double the capacity
-        new_capacity = stack->capacity * 2;
+        new_capacity = array->capacity * 2;
         // Reallocate memory with the new capacity
-        new_data = (unsigned short*)realloc((void*)stack->data,
+        new_data = (unsigned short*)realloc((void*)array->data,
                                             (size_t)new_capacity * sizeof(unsigned short));
         // if not new_data:
         //     return -1  // Memory allocation failed
-        
-        // Update stack data pointer and capacity
-        stack->data = new_data;
-        stack->capacity = new_capacity;
+
+        // Update array data pointer and capacity
+        array->data = new_data;
+        array->capacity = new_capacity;
     }
-    
-    // Push the value onto the stack
-    stack->data[stack->top] = value;
-    stack->top += 1;
+
+    // Push the value onto the array
+    array->data[array->size] = value;
+    array->size += 1;
     return 0;
 }
 
-// Free the stack's data array (stack itself is on stack memory)
-void IntStack_cleanup(IntStack *stack) {
-    if (stack) {
-        if (stack->data) {
+// Free the array's data (array itself is on stack memory)
+void UShortArray_cleanup(UShortArray *array) {
+    if (array) {
+        if (array->data) {
             // Free the allocated data array
-            free((void*)(stack->data));
-            stack->data = NULL;
+            free((void*)(array->data));
+            array->data = NULL;
         }
-        // Reset stack fields
-        stack->top = 0;
-        stack->capacity = 0;
+        // Reset array fields
+        array->size = 0;
+        array->capacity = 0;
     }
 }
 
-// Free the polyomino's mask stack
+// Free the polyomino's mask array
 void Polyomino_cleanup(Polyomino *polyomino) {
     if (polyomino) {
-        // Clean up the embedded IntStack mask
-        IntStack_cleanup(&(polyomino->mask));
+        // Clean up the embedded UShortArray mask
+        UShortArray_cleanup(&(polyomino->mask));
     }
 }
 
-// Initialize a polyomino stack with initial capacity
-int PolyominoStack_init(PolyominoStack *stack, int initial_capacity) {
-    // if not stack:
+// Initialize a polyomino array with initial capacity
+int PolyominoArray_init(PolyominoArray *array, int initial_capacity) {
+    // if not array:
     //     return -1
-    
+
     // Allocate memory for the polyomino array
-    stack->data = (Polyomino*)malloc((size_t)initial_capacity * sizeof(Polyomino));
-    // if not stack.data:
+    array->data = (Polyomino*)malloc((size_t)initial_capacity * sizeof(Polyomino));
+    // if not array.data:
     //     return -1
-    
-    // Initialize stack fields
-    stack->top = 0;
-    stack->capacity = initial_capacity;
+
+    // Initialize array fields
+    array->size = 0;
+    array->capacity = initial_capacity;
     return 0;
 }
 
-// Push a polyomino onto the stack, expanding if necessary
-int PolyominoStack_push(PolyominoStack *stack, Polyomino value) {
+// Push a polyomino onto the array, expanding if necessary
+int PolyominoArray_push(PolyominoArray *array, Polyomino value) {
     int new_capacity;
     Polyomino *new_data;
-    
-    // if not stack:
+
+    // if not array:
     //     return -1
-    
+
     // Check if we need to expand the capacity
-    if (stack->top >= stack->capacity) {
+    if (array->size >= array->capacity) {
         // Double the capacity
-        new_capacity = stack->capacity * 2;
+        new_capacity = array->capacity * 2;
         // Reallocate memory with the new capacity
-        new_data = (Polyomino*)realloc((void*)stack->data,
+        new_data = (Polyomino*)realloc((void*)array->data,
                                        (size_t)new_capacity * sizeof(Polyomino));
         // if not new_data:
         //     return -1  // Memory allocation failed
-        
-        // Update stack data pointer and capacity
-        stack->data = new_data;
-        stack->capacity = new_capacity;
+
+        // Update array data pointer and capacity
+        array->data = new_data;
+        array->capacity = new_capacity;
     }
-    
-    // Push the value onto the stack
-    stack->data[stack->top] = value;
-    stack->top += 1;
+
+    // Push the value onto the array
+    array->data[array->size] = value;
+    array->size += 1;
     return 0;
 }
 
-// Free the polyomino stack's data array and all contained polyominos
-void PolyominoStack_cleanup(PolyominoStack *stack) {
+// Free the polyomino array's data and all contained polyominos
+void PolyominoArray_cleanup(PolyominoArray *array) {
     int i;
-    if (stack) {
-        if (stack->data) {
-            // Clean up each polyomino in the stack
-            for (i = 0; i < stack->top; i++) {
-                Polyomino_cleanup(&(stack->data[i]));
+    if (array) {
+        if (array->data) {
+            // Clean up each polyomino in the array
+            for (i = 0; i < array->size; i++) {
+                Polyomino_cleanup(&(array->data[i]));
             }
             // Free the allocated data array
-            free((void*)stack->data);
-            stack->data = NULL;
+            free((void*)array->data);
+            array->data = NULL;
         }
-        // Reset stack fields
-        stack->top = 0;
-        stack->capacity = 0;
+        // Reset array fields
+        array->size = 0;
+        array->capacity = 0;
     }
 }
 

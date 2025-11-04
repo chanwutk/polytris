@@ -6,46 +6,46 @@
 
 // Structure definitions
 
-typedef struct IntStack {
+typedef struct UShortArray {
     unsigned short *data;
-    int top;
+    int size;
     int capacity;
-} IntStack;
+} UShortArray;
 
 typedef struct Polyomino {
-    IntStack mask;
+    UShortArray mask;
     int offset_i;
     int offset_j;
 } Polyomino;
 
-typedef struct PolyominoStack {
+typedef struct PolyominoArray {
     Polyomino *data;
-    int top;
+    int size;
     int capacity;
-} PolyominoStack;
+} PolyominoArray;
 
 // Function declarations
 
-// Initialize an integer stack with initial capacity
-int IntStack_init(IntStack *stack, int initial_capacity);
+// Initialize an unsigned short array with initial capacity
+int UShortArray_init(UShortArray *array, int initial_capacity);
 
-// Push a value onto the stack, expanding if necessary
-int IntStack_push(IntStack *stack, unsigned short value);
+// Push a value onto the array, expanding if necessary
+int UShortArray_push(UShortArray *array, unsigned short value);
 
-// Free the stack's data array (stack itself is on stack memory)
-void IntStack_cleanup(IntStack *stack);
+// Free the array's data (array itself is on stack memory)
+void UShortArray_cleanup(UShortArray *array);
 
-// Free the polyomino's mask stack
+// Free the polyomino's mask array
 void Polyomino_cleanup(Polyomino *polyomino);
 
-// Initialize a polyomino stack with initial capacity
-int PolyominoStack_init(PolyominoStack *stack, int initial_capacity);
+// Initialize a polyomino array with initial capacity
+int PolyominoArray_init(PolyominoArray *array, int initial_capacity);
 
-// Push a polyomino onto the stack, expanding if necessary
-int PolyominoStack_push(PolyominoStack *stack, Polyomino value);
+// Push a polyomino onto the array, expanding if necessary
+int PolyominoArray_push(PolyominoArray *array, Polyomino value);
 
-// Free the polyomino stack's data array and all contained polyominos
-void PolyominoStack_cleanup(PolyominoStack *stack);
+// Free the polyomino array's data and all contained polyominos
+void PolyominoArray_cleanup(PolyominoArray *array);
 
 #endif // UTILITIES_H
 
