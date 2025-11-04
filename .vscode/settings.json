@@ -3,5 +3,8 @@
         "polyis/binpack/*.{c,html,so}": true,
         "polyis/cbinpack/*.{html,so}": true,
         "polyis/cbinpack/*[a-zA-Z0-9].c": true
+    },
+    "files.associations": {
+        "utilities_.h": "c"
     }
 }

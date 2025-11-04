@@ -19,8 +19,8 @@ def group_tiles(bitmap_input: Array[*D2, np.uint8], tilepadding_mode: int) -> in
                      must be contiguous
         tilepadding_mode: The mode of tile padding to apply
             - 0: No padding
-            - 1: Connected padding
-            - 2: Disconnected padding
+            - 1: Disconnected padding
+            - 2: Connected padding
     Returns:
         int: A pointer to a polyomino stack
     """

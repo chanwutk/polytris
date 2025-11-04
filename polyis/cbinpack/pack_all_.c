@@ -6,6 +6,53 @@
 #include "utilities_.h"
 
 // ============================================================================
+// Macros for Dynamic Array Implementation
+// ============================================================================
+
+// Macro to define _init function for simple arrays
+#define DEFINE_ARRAY_INIT(TypeName, ElementType) \
+int TypeName##_init(TypeName *arr, int initial_capacity) { \
+    arr->data = (ElementType*)malloc((size_t)initial_capacity * sizeof(ElementType)); \
+    if (!arr->data) return -1; \
+    arr->size = 0; \
+    arr->capacity = initial_capacity; \
+    return 0; \
+}
+
+// Macro to define _push function for simple arrays
+#define DEFINE_ARRAY_PUSH(TypeName, ElementType) \
+int TypeName##_push(TypeName *arr, ElementType value) { \
+    if (arr->size >= arr->capacity) { \
+        int new_capacity = arr->capacity * 2; \
+        ElementType *new_data = (ElementType*)realloc(arr->data, \
+                                (size_t)new_capacity * sizeof(ElementType)); \
+        if (!new_data) return -1; \
+        arr->data = new_data; \
+        arr->capacity = new_capacity; \
+    } \
+    arr->data[arr->size] = value; \
+    arr->size += 1; \
+    return 0; \
+}
+
+// Macro to define _cleanup function for simple arrays (no nested cleanup)
+#define DEFINE_ARRAY_CLEANUP_SIMPLE(TypeName) \
+void TypeName##_cleanup(TypeName *arr) { \
+    if (arr && arr->data) { \
+        free(arr->data); \
+        arr->data = NULL; \
+    } \
+    arr->size = 0; \
+    arr->capacity = 0; \
+}
+
+// Macro to define complete simple array (init + push + cleanup)
+#define DEFINE_SIMPLE_ARRAY(TypeName, ElementType) \
+DEFINE_ARRAY_INIT(TypeName, ElementType) \
+DEFINE_ARRAY_PUSH(TypeName, ElementType) \
+DEFINE_ARRAY_CLEANUP_SIMPLE(TypeName)
+
+// ============================================================================
 // Structure Definitions
 // ============================================================================
 
@@ -62,11 +109,11 @@ typedef struct PolyominoPositionArray {
 } PolyominoPositionArray;
 
 // List of collages (each collage contains multiple polyomino positions)
-typedef struct CollageList {
+typedef struct CollageArray {
     PolyominoPositionArray *data;
     int size;
     int capacity;
-} CollageList;
+} CollageArray;
 
 // Metadata for a collage with cached unoccupied regions
 typedef struct CollageMetadata {
@@ -239,8 +286,8 @@ void PolyominoPositionArray_cleanup(PolyominoPositionArray *arr) {
     arr->capacity = 0;
 }
 
-// Initialize a CollageList
-int CollageList_init(CollageList *list, int initial_capacity) {
+// Initialize a CollageArray
+int CollageArray_init(CollageArray *list, int initial_capacity) {
     list->data = (PolyominoPositionArray*)malloc((size_t)initial_capacity * sizeof(PolyominoPositionArray));
     if (!list->data) return -1;
     list->size = 0;
@@ -249,7 +296,7 @@ int CollageList_init(CollageList *list, int initial_capacity) {
 }
 
 // Push a PolyominoPositionArray to the list
-int CollageList_push(CollageList *list, PolyominoPositionArray arr) {
+int CollageArray_push(CollageArray *list, PolyominoPositionArray arr) {
     // Expand if necessary
     if (list->size >= list->capacity) {
         int new_capacity = list->capacity * 2;
@@ -265,8 +312,8 @@ int CollageList_push(CollageList *list, PolyominoPositionArray arr) {
     return 0;
 }
 
-// Cleanup CollageList
-void CollageList_cleanup(CollageList *list) {
+// Cleanup CollageArray
+void CollageArray_cleanup(CollageArray *list) {
     if (list && list->data) {
         // Cleanup each collage
         for (int i = 0; i < list->size; i++) {
@@ -760,8 +807,8 @@ bool try_pack_coords(CoordinateArray *polyomino_coords, unsigned char *occupied_
 //   h: Height of each collage
 //   w: Width of each collage
 // Returns:
-//   CollageList containing all packed collages with polyomino positions
-CollageList* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w) {
+//   CollageArray containing all packed collages with polyomino positions
+CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w) {
     // Initialize storage for all polyominoes with their frame indices
     PolyominoWithFrameArray all_polyominoes;
     PolyominoWithFrameArray_init(&all_polyominoes, 256);
@@ -795,8 +842,8 @@ CollageList* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int h
     // If no polyominoes, return empty result
     if (all_polyominoes.size == 0) {
         PolyominoWithFrameArray_cleanup(&all_polyominoes);
-        CollageList *result = (CollageList*)malloc(sizeof(CollageList));
-        CollageList_init(result, 1);
+        CollageArray *result = (CollageArray*)malloc(sizeof(CollageArray));
+        CollageArray_init(result, 1);
         return result;
     }
 
@@ -805,8 +852,8 @@ CollageList* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int h
           sizeof(PolyominoWithFrame), compare_polyominoes_by_size);
 
     // Initialize storage for collages and their corresponding polyomino positions
-    CollageList *result = (CollageList*)malloc(sizeof(CollageList));
-    CollageList_init(result, 16);
+    CollageArray *result = (CollageArray*)malloc(sizeof(CollageArray));
+    CollageArray_init(result, 16);
 
     // Storage for collage occupied tiles arrays
     unsigned char **collages_pool = (unsigned char**)malloc(16 * sizeof(unsigned char*));
@@ -912,7 +959,7 @@ CollageList* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int h
                 // Add to collages pool and result
                 collages_pool[collages_pool_size] = collage;
                 collages_pool_size++;
-                CollageList_push(result, new_collage_positions);
+                CollageArray_push(result, new_collage_positions);
             } else {
                 // Should not happen for empty collage, but cleanup if it does
                 free(collage);

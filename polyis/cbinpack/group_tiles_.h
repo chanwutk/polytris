@@ -10,8 +10,8 @@
 // height: height of the bitmap
 // tilepadding_mode: The mode of tile padding to apply
 //                   - 0: No padding
-//                   - 1: Connected padding
-//                   - 2: Disconnected padding
+//                   - 1: Disconnected padding
+//                   - 2: Connected padding
 // Returns: Pointer to PolyominoArray containing all found polyominoes
 PolyominoArray * group_tiles_(
     unsigned char *bitmap_input,
