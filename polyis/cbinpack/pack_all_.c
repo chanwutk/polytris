@@ -30,11 +30,11 @@ typedef struct CoordinateArrayList {
 } CoordinateArrayList;
 
 // Dynamic array of integers (for region sizes)
-typedef struct IntSizeArray {
+typedef struct IntArray {
     int *data;
     int size;
     int capacity;
-} IntSizeArray;
+} IntArray;
 
 // Represents a placement result
 typedef struct Placement {
@@ -74,7 +74,7 @@ typedef struct CollageMetadata {
     int height;
     int width;
     CoordinateArrayList unoccupied_spaces;  // List of unoccupied regions
-    IntSizeArray space_sizes;               // Size of each region
+    IntArray space_sizes;               // Size of each region
 } CollageMetadata;
 
 // Dynamic array of CollageMetadata
@@ -165,7 +165,7 @@ void CoordinateArrayList_cleanup(CoordinateArrayList *list) {
 }
 
 // Initialize an integer size array
-int IntSizeArray_init(IntSizeArray *arr, int initial_capacity) {
+int IntArray_init(IntArray *arr, int initial_capacity) {
     arr->data = (int*)malloc((size_t)initial_capacity * sizeof(int));
     if (!arr->data) return -1;
     arr->size = 0;
@@ -174,7 +174,7 @@ int IntSizeArray_init(IntSizeArray *arr, int initial_capacity) {
 }
 
 // Push an integer to the size array
-int IntSizeArray_push(IntSizeArray *arr, int value) {
+int IntArray_push(IntArray *arr, int value) {
     // Expand if necessary
     if (arr->size >= arr->capacity) {
         int new_capacity = arr->capacity * 2;
@@ -190,7 +190,7 @@ int IntSizeArray_push(IntSizeArray *arr, int value) {
 }
 
 // Cleanup integer size array
-void IntSizeArray_cleanup(IntSizeArray *arr) {
+void IntArray_cleanup(IntArray *arr) {
     if (arr && arr->data) {
         free(arr->data);
         arr->data = NULL;
@@ -314,7 +314,7 @@ void CollageMetadataArray_cleanup(CollageMetadataArray *arr) {
                 free(arr->data[i].occupied_tiles);
             }
             CoordinateArrayList_cleanup(&arr->data[i].unoccupied_spaces);
-            IntSizeArray_cleanup(&arr->data[i].space_sizes);
+            IntArray_cleanup(&arr->data[i].space_sizes);
         }
         free(arr->data);
         arr->data = NULL;
@@ -373,7 +373,7 @@ void flood_fill_recursive(unsigned char *tiles, int *labels, int h, int w,
 // Extract unoccupied connected regions as coordinate arrays
 int extract_unoccupied_spaces(unsigned char *occupied_tiles, int h, int w,
                               CoordinateArrayList *unoccupied_spaces,
-                              IntSizeArray *space_sizes) {
+                              IntArray *space_sizes) {
     // Allocate label array
     int *labels = (int*)calloc((size_t)(h * w), sizeof(int));
     if (!labels) return -1;
@@ -394,7 +394,7 @@ int extract_unoccupied_spaces(unsigned char *occupied_tiles, int h, int w,
 
                 // Add region to list
                 CoordinateArrayList_push(unoccupied_spaces, region);
-                IntSizeArray_push(space_sizes, region.size);
+                IntArray_push(space_sizes, region.size);
 
                 current_label++;
             }
@@ -473,9 +473,9 @@ int update_collage_after_placement(CollageMetadata *collage_meta,
 
     // Extract new connected components from remaining space
     CoordinateArrayList new_spaces;
-    IntSizeArray new_space_sizes;
+    IntArray new_space_sizes;
     CoordinateArrayList_init(&new_spaces, 4);
-    IntSizeArray_init(&new_space_sizes, 4);
+    IntArray_init(&new_space_sizes, 4);
 
     extract_unoccupied_spaces(temp_tiles, collage_meta->height, collage_meta->width,
                              &new_spaces, &new_space_sizes);
@@ -495,7 +495,7 @@ int update_collage_after_placement(CollageMetadata *collage_meta,
     // Insert new spaces
     for (int i = 0; i < new_spaces.size; i++) {
         CoordinateArrayList_push(&collage_meta->unoccupied_spaces, new_spaces.data[i]);
-        IntSizeArray_push(&collage_meta->space_sizes, new_space_sizes.data[i]);
+        IntArray_push(&collage_meta->space_sizes, new_space_sizes.data[i]);
     }
 
     // Cleanup (don't cleanup individual arrays as they were moved)
@@ -941,6 +941,6 @@ void CollageMetadata_cleanup(CollageMetadata *meta) {
             meta->occupied_tiles = NULL;
         }
         CoordinateArrayList_cleanup(&meta->unoccupied_spaces);
-        IntSizeArray_cleanup(&meta->space_sizes);
+        IntArray_cleanup(&meta->space_sizes);
     }
 }

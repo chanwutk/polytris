@@ -6,6 +6,7 @@ from Cython.Build import cythonize
 import numpy
 import os
 import glob
+import multiprocessing as mp
 
 
 extensions = [
@@ -153,6 +154,7 @@ setup(
     },
     ext_modules=cythonize(
         extensions,
+        nthreads=mp.cpu_count() // 2,
         compiler_directives={
             "language_level": 3,
             # Performance optimizations
