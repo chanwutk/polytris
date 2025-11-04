@@ -6,13 +6,16 @@
 
 import numpy as np
 cimport numpy as cnp
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport free
 import cython
 
-# Declare C structures from utilities.h
-cdef extern from "utilities.h":
+from polyis.cbinpack.group_tiles import group_tiles  # type: ignore[import-untyped]
+
+
+# Declare C structures from utilities_.h
+cdef extern from "utilities_.h":
     ctypedef struct IntStack:
-        unsigned short *data
+        unsigned short *data  # type: ignore
         int top
         int capacity
 
@@ -28,25 +31,6 @@ cdef extern from "utilities.h":
 
     # Declare utility functions
     void PolyominoStack_cleanup(PolyominoStack *stack)
-
-# Declare C functions from group_tiles.h
-cdef extern from "group_tiles_.h":
-    # Main function to group tiles into polyominoes
-    # bitmap_input: 2D array (flattened) of uint8_t representing the grid of tiles
-    #               where 1 indicates a tile with detection and 0 indicates no detection
-    # width: width of the bitmap
-    # height: height of the bitmap
-    # tilepadding_mode: The mode of tile padding to apply
-    #                   - 0: No padding
-    #                   - 1: Connected padding
-    #                   - 2: Disconnected padding
-    # Returns: Pointer to PolyominoStack containing all found polyominoes
-    PolyominoStack* group_tiles_(
-        unsigned char *bitmap_input,
-        int width,
-        int height,
-        int tilepadding_mode
-    )
 
 
 @cython.boundscheck(False)  # type: ignore
@@ -69,22 +53,18 @@ def c_group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> list:
         - mask is a 2D numpy array representing the polyomino shape
         - offset_i, offset_j are the top-left coordinates of the polyomino
     """
-    cdef int height = bitmap_input.shape[0]
-    cdef int width = bitmap_input.shape[1]
-    cdef PolyominoStack *polyomino_stack
+    cdef int polyomino_stack
 
-    # Create contiguous copy for C function
-    # Need to copy because C function modifies the bitmap
-    cdef cnp.uint8_t[:, :] bitmap_copy = np.ascontiguousarray(bitmap_input.copy(), dtype=np.uint8)
+    # Call group_tiles function from group_tiles.pyx
+    # Cast the returned pointer (as int) back to PolyominoStack*
+    # Note: group_tiles is defined in group_tiles.pyx, compiled into the same extension
+    polyomino_stack = group_tiles(bitmap_input, tilepadding_mode)  # type: ignore[name-defined]
 
-    # Call C function
-    polyomino_stack = group_tiles_(&bitmap_copy[0, 0], width, height, tilepadding_mode)
-
-    if polyomino_stack == NULL:
+    if polyomino_stack == 0:
         return []
 
     # Convert result to Python format
-    result = format_polyominoes(polyomino_stack)
+    result = format_polyominoes(<PolyominoStack*><unsigned long long>polyomino_stack)
 
     # Free the stack (format_polyominoes already handles cleanup)
     return result
@@ -107,26 +87,26 @@ cdef format_polyominoes(PolyominoStack *polyomino_stack):
     cdef Polyomino polyomino
     cdef IntStack connected_tiles
     cdef unsigned short max_i, max_j, tile_i, tile_j, num_pairs
-    cdef unsigned short *data
+    cdef unsigned short *data_
     cdef int i, k
     cdef int mask_h, mask_w
     cdef cnp.uint8_t[:, :] mask_view
 
     # Process each polyomino in the stack
     for i in range(polyomino_stack.top):
-        polyomino = polyomino_stack.data[i]
+        polyomino = polyomino_stack.data[i]  # type: ignore
         connected_tiles = polyomino.mask
         num_pairs = <unsigned short>(connected_tiles.top // 2)
-        data = connected_tiles.data
+        data_ = connected_tiles.data  # type: ignore
 
         # Initialize with first coordinate pair
-        max_i = data[0]
-        max_j = data[1]
+        max_i = data_[0]  # type: ignore
+        max_j = data_[1]  # type: ignore
 
         # Find max coordinates through all coordinate pairs
         for k in range(1, num_pairs):
-            tile_i = data[k << 1]        # k * 2
-            tile_j = data[(k << 1) + 1]  # k * 2 + 1
+            tile_i = data_[k << 1]        # type: ignore
+            tile_j = data_[(k << 1) + 1]  # type: ignore
 
             if tile_i > max_i:
                 max_i = tile_i
@@ -138,13 +118,13 @@ cdef format_polyominoes(PolyominoStack *polyomino_stack):
         mask_h = max_i + 1
         mask_w = max_j + 1
         mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
-        mask_view = mask
+        mask_view = mask  # type: ignore
 
         # Fill mask - iterate through IntStack data directly
         for k in range(num_pairs):
-            tile_i = data[k << 1]        # k * 2
-            tile_j = data[(k << 1) + 1]  # k * 2 + 1
-            mask_view[tile_i, tile_j] = 1
+            tile_i = data_[k << 1]        # type: ignore
+            tile_j = data_[(k << 1) + 1]  # type: ignore
+            mask_view[tile_i, tile_j] = 1  # type: ignore
 
         # Append as tuple: (mask, (offset_i, offset_j))
         bins.append((mask, (polyomino.offset_i, polyomino.offset_j)))

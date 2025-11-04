@@ -4,16 +4,14 @@
 # cython: cdivision=True
 # cython: nonecheck=False
 
-import numpy as np
 cimport numpy as cnp
-from libc.stdlib cimport malloc, free
 import cython
 
 
-# Declare C structures from utilities.h
-cdef extern from "utilities.h":
+# Declare C structures from utilities_.h
+cdef extern from "utilities_.h":
     ctypedef struct IntStack:
-        unsigned short *data
+        unsigned short *data  # type: ignore
         int top
         int capacity
 
@@ -40,8 +38,8 @@ cdef extern from "group_tiles_.h":
     # height: height of the bitmap
     # tilepadding_mode: The mode of tile padding to apply
     #                   - 0: No padding
-    #                   - 1: Connected padding
-    #                   - 2: Disconnected padding
+    #                   - 1: Disconnected padding
+    #                   - 2: Connected padding
     # Returns: Pointer to PolyominoStack containing all found polyominoes
     PolyominoStack* group_tiles_(
         unsigned char *bitmap_input,
@@ -52,7 +50,7 @@ cdef extern from "group_tiles_.h":
 
     # Free a polyomino stack allocated by group_tiles
     # Returns the number of polyominoes that were freed
-    int free_polyomino_stack(PolyominoStack *polyomino_stack)
+    int free_polyomino_stack_(PolyominoStack *polyomino_stack)
 
 
 @cython.boundscheck(False)  # type: ignore
@@ -68,14 +66,22 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> int:
                      must be contiguous
         tilepadding_mode: The mode of tile padding to apply
                          - 0: No padding
-                         - 1: Connected padding
-                         - 2: Disconnected padding
+                         - 1: Disconnected padding
+                         - 2: Connected padding
 
     Returns:
-        List of tuples (mask, (offset_i, offset_j)) where:
-        - mask is a 2D numpy array representing the polyomino shape
-        - offset_i, offset_j are the top-left coordinates of the polyomino
+        A pointer to a list of polyomino stack
     """
     cdef int height = bitmap_input.shape[0]
     cdef int width = bitmap_input.shape[1]
-    return <unsigned long long>group_tiles_(&bitmap[0, 0], width, height, tilepadding_mode)
+    return <unsigned long long>group_tiles_(&bitmap_input[0, 0], width, height, tilepadding_mode)  # type: ignore
+
+
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
+def free_polyomino_stack(unsigned long long polyomino_stack) -> int:
+    """
+    Free a polyomino stack allocated by group_tiles.
+    """
+    return free_polyomino_stack_(<PolyominoStack*>polyomino_stack)

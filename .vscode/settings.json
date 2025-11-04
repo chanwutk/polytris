@@ -1,0 +1,6 @@
+{
+    "files.exclude": {
+        "polyis/binpack/*.{c,html,so}": true,
+        "polyis/cbinpack/*.{html,so}": true
+    }
+}

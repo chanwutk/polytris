@@ -16,14 +16,7 @@ import statistics
 
 
 # Import adapters with fallback
-try:
-    from polyis.binpack.adapters import get_polyominoes, format_positions  # type: ignore
-except (ImportError, AttributeError):
-    # Fallback if adapters not available or functions don't exist
-    def get_polyominoes(polyominoes):
-        return polyominoes
-    def format_positions(positions):
-        return positions
+from polyis.binpack.adapters import get_polyominoes
 
 def generate_test_bitmap(shape, density=0.3, seed=42):
     """Generate a test bitmap with specified density of 1s."""
@@ -55,37 +48,45 @@ def generate_test_polyominoes(num_polyominoes=5, max_size=3):
 def benchmark_group_tiles():
     """Benchmark group_tiles implementations."""
     print("=== Group Tiles Benchmark ===")
-    
-    try:
-        from polyis.binpack.group_tiles import group_tiles as cython_group_tiles
-        from group_tiles_original import group_tiles as python_group_tiles
-    except ImportError as e:
-        print(f"Error importing modules: {e}")
-        return
-    
+
+    from polyis.binpack.group_tiles import group_tiles as cython_group_tiles
+    from polyis.cbinpack.group_tiles import group_tiles as c_group_tiles
+    from group_tiles_original import group_tiles as python_group_tiles
+
     sizes = [(20, 20), (50, 50), (100, 100)]
     densities = [0.1, 0.3, 0.5]
-    
-    print("Size\t\tDensity\tPython (s)\tCython (s)\tSpeedup")
-    print("-" * 60)
-    
+
+    print("Size\t\tDensity\tPython (s)\tCython (s)\tC (s)\t\tCy/Py\tC/Py\tC/Cy")
+    print("-" * 100)
+
     for h, w in sizes:
         for density in densities:
             bitmap = generate_test_bitmap((h, w), density=density)
-            
+
             # Time Python implementation
             start = time.perf_counter()
             python_result = python_group_tiles(bitmap.copy())
             python_time = time.perf_counter() - start
-            
+
             # Time Cython implementation
             start = time.perf_counter()
             cython_result = cython_group_tiles(bitmap.copy(), 0)
             cython_time = time.perf_counter() - start
-            
-            speedup = python_time / cython_time if cython_time > 0 else float('inf')
-            
-            print(f"{h}x{w}\t\t{density:.1f}\t{python_time:.6f}\t\t{cython_time:.6f}\t\t{speedup:.2f}x")
+
+            # Time C implementation
+            start = time.perf_counter()
+            c_result = c_group_tiles(bitmap.copy(), 0)
+            c_time = time.perf_counter() - start
+
+            # Verify results match
+            # assert len(python_result) == len(cython_result) == len(c_result), \
+            #     f"Result mismatch: Python={len(python_result)}, Cython={len(cython_result)}, C={len(c_result)}"
+
+            speedup_cy = python_time / cython_time if cython_time > 0 else float('inf')
+            speedup_c = python_time / c_time if c_time > 0 else float('inf')
+            speedup_c_vs_cy = cython_time / c_time if c_time > 0 else float('inf')
+
+            print(f"{h}x{w}\t\t{density:.1f}\t{python_time:.6f}\t{cython_time:.6f}\t{c_time:.6f}\t{speedup_cy:.2f}x\t{speedup_c:.2f}x\t{speedup_c_vs_cy:.2f}x")
 
 def benchmark_pack_append():
     """Benchmark pack_append implementations."""
@@ -131,20 +132,17 @@ def benchmark_compress():
     """Benchmark compress implementations."""
     print("\n=== Compress Benchmark ===")
 
+    from polyis.binpack.group_tiles import group_tiles as cython_group_tiles
+    from polyis.cbinpack.group_tiles import group_tiles as c_group_tiles
     try:
-        from polyis.binpack.group_tiles import group_tiles as cython_group_tiles
-        try:
-            from group_tiles import free_polyimino_stack  # type: ignore
-        except ImportError:
-            # Fallback if cleanup function not available
-            def free_polyimino_stack(polyominoes):
-                pass
-        from group_tiles_original import group_tiles as python_group_tiles
-        from polyis.binpack.pack_append import pack_append as cython_pack_append
-        from pack_append_original import pack_append as python_pack_append
-    except ImportError as e:
-        print(f"Error importing modules: {e}")
-        return
+        from group_tiles import free_polyimino_stack  # type: ignore
+    except ImportError:
+        # Fallback if cleanup function not available
+        def free_polyimino_stack(polyominoes):
+            pass
+    from group_tiles_original import group_tiles as python_group_tiles
+    from polyis.binpack.pack_append import pack_append as cython_pack_append
+    from pack_append_original import pack_append as python_pack_append
     
     add_margin = torch.tensor(
         [[[[0, 1, 0],
@@ -181,8 +179,9 @@ def benchmark_compress():
         ],
     ]
     fns = [
-        (True, cython_group_tiles, cython_pack_append),
-        (False, python_group_tiles, python_pack_append),
+        ('cython', cython_group_tiles, cython_pack_append),
+        ('c', c_group_tiles, cython_pack_append),
+        ('python', python_group_tiles, python_pack_append),
     ]
     tilepaddings = [True, False]
     threshold = 0.5
@@ -206,11 +205,12 @@ def benchmark_compress():
             if tilepadding not in results_summary[(dataset, video)]:
                 results_summary[(dataset, video)][tilepadding] = {
                     'python': {'group_tiles': [], 'pack_append': [], 'pack_append_retry': []},
-                    'cython': {'group_tiles': [], 'pack_append': [], 'pack_append_retry': []}
+                    'cython': {'group_tiles': [], 'pack_append': [], 'pack_append_retry': []},
+                    'c': {'group_tiles': [], 'pack_append': [], 'pack_append_retry': []}
                 }
-            
-            for is_cython, group_tiles, pack_append in fns:
-                print(f"Dataset: {dataset}, Video: {video}, Tilepadding: {tilepadding}, Cython: {is_cython}")
+
+            for impl_type, group_tiles, pack_append in fns:
+                print(f"Dataset: {dataset}, Video: {video}, Tilepadding: {tilepadding}, Implementation: {impl_type}")
 
                 cap = cv2.VideoCapture(video_file)
                 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -254,9 +254,9 @@ def benchmark_compress():
                         if tilepadding:
                             bitmap_frame = F.conv2d(
                                 torch.from_numpy(np.array([[bitmap_frame]])), add_margin, padding='same').numpy()[0, 0]
-                        
+
                         step_times = {
-                            'cython': is_cython,
+                            'impl_type': impl_type,
                             'group_tiles': [],
                             'pack_append': [],
                             'pack_append_retry': [],
@@ -266,10 +266,10 @@ def benchmark_compress():
                             # Profile: Group connected tiles into polyominoes
                             step_start = (time.time_ns() / 1e6)
                             polyominoes = group_tiles(bitmap_frame.copy(), 0)
-                            if not is_cython:
+                            if impl_type == 'python':
                                 polyominoes = sorted(polyominoes, key=lambda x: x[0].sum(), reverse=True)
                             step_times['group_tiles'].append((time.time_ns() / 1e6) - step_start)
-                            
+
                             # Profile: Try compressing polyominoes
                             step_start = (time.time_ns() / 1e6)
                             positions = None if full else pack_append(polyominoes, grid_height, grid_width, occupied_tiles_copy)
@@ -282,15 +282,15 @@ def benchmark_compress():
                                 step_start = (time.time_ns() / 1e6)
                                 positions = pack_append(polyominoes, grid_height, grid_width, occupied_tiles_copy)
                                 step_times['pack_append_retry'].append((time.time_ns() / 1e6) - step_start)
-                            
-                            if is_cython:
+
+                            if impl_type in ('cython', 'c'):
                                 free_polyimino_stack(polyominoes)
 
-                        # Update occupied_tiles if copy was made
-                        try:
-                            occupied_tiles = occupied_tiles_copy
-                        except NameError:
-                            pass  # occupied_tiles_copy not available
+                        # # Update occupied_tiles if copy was made
+                        # try:
+                        #     occupied_tiles = occupied_tiles_copy
+                        # except NameError:
+                        #     pass  # occupied_tiles_copy not available
                         # Get median times, handling cases where lists might be empty
                         group_tiles_times = sorted(step_times['group_tiles'])
                         pack_append_times = sorted(step_times['pack_append'])
@@ -306,7 +306,6 @@ def benchmark_compress():
                         all_pack_append_retry_times.append(pack_append_retry_time)
 
                 # Store results for this configuration
-                impl_type = 'cython' if is_cython else 'python'
                 results_summary[(dataset, video)][tilepadding][impl_type]['group_tiles'].extend(all_group_tiles_times)
                 results_summary[(dataset, video)][tilepadding][impl_type]['pack_append'].extend(all_pack_append_times)
                 results_summary[(dataset, video)][tilepadding][impl_type]['pack_append_retry'].extend(all_pack_append_retry_times)
@@ -322,25 +321,30 @@ def benchmark_compress():
         
         for tilepadding, padding_results in video_results.items():
             print(f"\n  🔧 Tilepadding: {tilepadding}")
-            print("  " + "-" * 60)
-            
-            # Get Python and Cython results
+            print("  " + "-" * 80)
+
+            # Get Python, Cython, and C results
             python_results = padding_results['python']
             cython_results = padding_results['cython']
-            
+            c_results = padding_results['c']
+
             # Calculate statistics for each function
             functions = ['group_tiles', 'pack_append', 'pack_append_retry']
-            
+
             for func in functions:
                 python_times = python_results[func]
                 cython_times = cython_results[func]
-                
-                if python_times and cython_times:
+                c_times = c_results[func]
+
+                if python_times and cython_times and c_times:
                     python_avg = statistics.mean(python_times)
                     cython_avg = statistics.mean(cython_times)
-                    speedup = python_avg / cython_avg if cython_avg > 0 else float('inf')
-                    
-                    print(f"    {func:20} | Python: {python_avg:8.2f}μs | Cython: {cython_avg:8.2f}μs | Speedup: {speedup:6.2f}x")
+                    c_avg = statistics.mean(c_times)
+                    speedup_cy = python_avg / cython_avg if cython_avg > 0 else float('inf')
+                    speedup_c = python_avg / c_avg if c_avg > 0 else float('inf')
+                    speedup_c_vs_cy = cython_avg / c_avg if c_avg > 0 else float('inf')
+
+                    print(f"    {func:20} | Python: {python_avg:7.2f}μs | Cython: {cython_avg:7.2f}μs | C: {c_avg:7.2f}μs | Cy/Py: {speedup_cy:5.2f}x | C/Py: {speedup_c:5.2f}x | C/Cy: {speedup_c_vs_cy:5.2f}x")
                 else:
                     print(f"    {func:20} | No data available")
     
@@ -350,32 +354,36 @@ def benchmark_compress():
     print("=" * 100)
     
     overall_stats = {
-        'group_tiles': {'python': [], 'cython': []},
-        'pack_append': {'python': [], 'cython': []},
-        'pack_append_retry': {'python': [], 'cython': []}
+        'group_tiles': {'python': [], 'cython': [], 'c': []},
+        'pack_append': {'python': [], 'cython': [], 'c': []},
+        'pack_append_retry': {'python': [], 'cython': [], 'c': []}
     }
-    
+
     # Aggregate all results
     for (dataset, video), video_results in results_summary.items():
         for tilepadding, padding_results in video_results.items():
-            for impl_type in ['python', 'cython']:
+            for impl_type in ['python', 'cython', 'c']:
                 for func in ['group_tiles', 'pack_append', 'pack_append_retry']:
                     overall_stats[func][impl_type].extend(padding_results[impl_type][func])
-    
-    print("\nFunction".ljust(20) + " | " + "Python Avg".ljust(12) + " | " + "Cython Avg".ljust(12) + " | " + "Speedup".ljust(10) + " | " + "Samples")
-    print("-" * 80)
-    
+
+    print("\nFunction".ljust(20) + " | " + "Python Avg".ljust(11) + " | " + "Cython Avg".ljust(11) + " | " + "C Avg".ljust(11) + " | " + "Cy/Py".ljust(8) + " | " + "C/Py".ljust(8) + " | " + "C/Cy".ljust(8) + " | " + "Samples")
+    print("-" * 110)
+
     for func in ['group_tiles', 'pack_append', 'pack_append_retry']:
         python_times = overall_stats[func]['python']
         cython_times = overall_stats[func]['cython']
-        
-        if python_times and cython_times:
+        c_times = overall_stats[func]['c']
+
+        if python_times and cython_times and c_times:
             python_avg = statistics.mean(python_times)
             cython_avg = statistics.mean(cython_times)
-            speedup = python_avg / cython_avg if cython_avg > 0 else float('inf')
+            c_avg = statistics.mean(c_times)
+            speedup_cy = python_avg / cython_avg if cython_avg > 0 else float('inf')
+            speedup_c = python_avg / c_avg if c_avg > 0 else float('inf')
+            speedup_c_vs_cy = cython_avg / c_avg if c_avg > 0 else float('inf')
             samples = len(python_times)
-            
-            print(f"{func:20} | {python_avg:10.2f}μs | {cython_avg:10.2f}μs | {speedup:8.2f}x | {samples:7d}")
+
+            print(f"{func:20} | {python_avg:9.2f}μs | {cython_avg:9.2f}μs | {c_avg:9.2f}μs | {speedup_cy:6.2f}x | {speedup_c:6.2f}x | {speedup_c_vs_cy:6.2f}x | {samples:7d}")
         else:
             print(f"{func:20} | No data available")
     
@@ -385,13 +393,13 @@ def benchmark_compress():
 
 def main():
     """Run all benchmarks."""
-    print("Performance Comparison: Python vs Cython")
+    print("Performance Comparison: Python vs Cython vs C")
     print("=" * 50)
-    
-    # benchmark_group_tiles()
-    # benchmark_pack_append()
+
+    benchmark_group_tiles()
+    benchmark_pack_append()
     benchmark_compress()
-    
+
     print("\nBenchmark completed!")
 
 

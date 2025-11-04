@@ -17,11 +17,21 @@ extensions = [
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
     ),
     Extension(
+        "polyis.cbinpack.group_tiles",
+        [
+            "polyis/cbinpack/group_tiles.pyx",
+            "polyis/cbinpack/utilities_.c",
+            "polyis/cbinpack/group_tiles_.c",
+        ],
+        include_dirs=["polyis/cbinpack", numpy.get_include()],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
+        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions", "-std=c11"],
+    ),
+    Extension(
         "polyis.cbinpack.adapters",
         [
             "polyis/cbinpack/adapters.pyx",
-            "polyis/cbinpack/utilities.c",
-            "polyis/cbinpack/group_tiles_.c",
+            "polyis/cbinpack/utilities_.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
@@ -86,10 +96,14 @@ class CleanCommand(Command):
     so_patterns = [
         'polyis/binpack/**/*.so',
         'polyis/binpack/*.so',
+        'polyis/cbinpack/**/*.so',
+        'polyis/cbinpack/*.so',
     ]
     html_patterns = [
         'polyis/binpack/**/*.html',
         'polyis/binpack/*.html',
+        'polyis/cbinpack/**/*.html',
+        'polyis/cbinpack/*.html',
     ]
     
     def initialize_options(self):
