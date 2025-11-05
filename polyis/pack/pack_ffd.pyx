@@ -10,8 +10,8 @@ from libc.stdlib cimport malloc, free
 import cython
 
 
-# Declare C structures from utilities_.h
-cdef extern from "c/utilities_.h":
+# Declare C structures from utilities.h
+cdef extern from "c/utilities.h":
     ctypedef struct UShortArray:
         unsigned short *data  # type: ignore
         int size
@@ -28,8 +28,8 @@ cdef extern from "c/utilities_.h":
         int capacity
 
 
-# Declare C structures from pack_ffd_.h
-cdef extern from "c/pack_ffd_.h":
+# Declare C structures from pack_ffd.h
+cdef extern from "c/pack_ffd.h":
     ctypedef struct Coordinate:
         int y
         int x

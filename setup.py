@@ -25,8 +25,8 @@ extensions = [
         "polyis.pack.group_tiles",
         [
             "polyis/pack/group_tiles.pyx",
-            "polyis/pack/c/utilities_.c",
-            "polyis/pack/c/group_tiles_.c",
+            "polyis/pack/c/utilities.c",
+            "polyis/pack/c/group_tiles.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
         define_macros=MACROS,
@@ -36,7 +36,7 @@ extensions = [
         "polyis.pack.adapters",
         [
             "polyis/pack/adapters.pyx",
-            "polyis/pack/c/utilities_.c",
+            "polyis/pack/c/utilities.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
         define_macros=MACROS,
@@ -46,8 +46,8 @@ extensions = [
         "polyis.pack.pack_ffd",
         [
             "polyis/pack/pack_ffd.pyx",
-            "polyis/pack/c/utilities_.c",
-            "polyis/pack/c/pack_ffd_.c",
+            "polyis/pack/c/utilities.c",
+            "polyis/pack/c/pack_ffd.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
         define_macros=MACROS,

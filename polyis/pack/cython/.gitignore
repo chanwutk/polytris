@@ -1,14 +1,4 @@
-# Build artifacts
 *.so
-*.c
-*.o
-*.pyd
-*.dll
-
-# Build directories
-build/
-dist/
-*.egg-info/
 
 # Cython generated files
 *.c
@@ -20,20 +10,4 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Temporary files
-*.tmp
-*.temp
-*~
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-
 .pytest_cache/
-build

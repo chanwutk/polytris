@@ -1,7 +1,7 @@
 #ifndef GROUP_TILES_H
 #define GROUP_TILES_H
 
-#include "utilities_.h"
+#include "utilities.h"
 
 // Main function to group tiles into polyominoes
 // bitmap_input: 2D array (flattened) of uint8_t representing the grid of tiles

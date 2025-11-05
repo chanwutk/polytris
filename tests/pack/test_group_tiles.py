@@ -5,9 +5,9 @@ Pytest tests for the group_tiles Cython implementation.
 import pytest
 import numpy as np
 import time
-from polyis.pack.cython.adapters import group_tiles
-from polyis.pack.adapters import c_group_tiles
-from group_tiles_original import group_tiles as _group_tiles_original
+from polyis.pack.cython.adapters import group_tiles as group_tiles_cython
+from polyis.pack.adapters import c_group_tiles as group_tiles_c
+from polyis.pack.python.group_tiles import group_tiles as python_group_tiles
 
 
 def same_results(result1, result2):
@@ -31,9 +31,9 @@ class TestGroupTiles:
         ], dtype=np.uint8)
 
         # Test all three implementations
-        result_cython = group_tiles(bitmap.copy(), 0)
-        result_c = c_group_tiles(bitmap.copy(), 0)
-        result_original = _group_tiles_original(bitmap.copy())
+        result_cython = group_tiles_cython(bitmap.copy(), 0)
+        result_c = group_tiles_c(bitmap.copy(), 0)
+        result_original = python_group_tiles(bitmap.copy())
 
         # Compare results - all should have same number of polyominoes
         assert len(result_cython) == len(result_original) == len(result_c), \
@@ -72,9 +72,9 @@ class TestGroupTiles:
 
         for bitmap in [bitmap1, bitmap2]:
             # Test all three implementations
-            result_cython = group_tiles(bitmap.copy(), 0)
-            result_c = c_group_tiles(bitmap.copy(), 0)
-            result_original = _group_tiles_original(bitmap.copy())
+            result_cython = group_tiles_cython(bitmap.copy(), 0)
+            result_c = group_tiles_c(bitmap.copy(), 0)
+            result_original = python_group_tiles(bitmap.copy())
 
             # Compare results
             assert len(result_cython) == len(result_original) == len(result_c), \
@@ -98,9 +98,9 @@ class TestGroupTiles:
         bitmap = np.zeros((3, 3), dtype=np.uint8)
 
         # Test all three implementations
-        result_cython = group_tiles(bitmap.copy(), 0)
-        result_c = c_group_tiles(bitmap.copy(), 0)
-        result_original = _group_tiles_original(bitmap.copy())
+        result_cython = group_tiles_cython(bitmap.copy(), 0)
+        result_c = group_tiles_c(bitmap.copy(), 0)
+        result_original = python_group_tiles(bitmap.copy())
 
         assert len(result_cython) == len(result_original) == len(result_c) == 0, \
             f"Different results for empty bitmap: Cython={len(result_cython)}, C={len(result_c)}, Original={len(result_original)}"
@@ -110,9 +110,9 @@ class TestGroupTiles:
         bitmap = np.ones((3, 3), dtype=np.uint8)
 
         # Test all three implementations
-        result_cython = group_tiles(bitmap.copy(), 0)
-        result_c = c_group_tiles(bitmap.copy(), 0)
-        result_original = _group_tiles_original(bitmap.copy())
+        result_cython = group_tiles_cython(bitmap.copy(), 0)
+        result_c = group_tiles_c(bitmap.copy(), 0)
+        result_original = python_group_tiles(bitmap.copy())
 
         # Compare results
         assert len(result_cython) == len(result_original) == len(result_c) == 1, \
@@ -137,9 +137,9 @@ class TestGroupTiles:
         ], dtype=np.uint8)
 
         # Test all three implementations
-        result_cython = group_tiles(bitmap.copy(), 0)
-        result_c = c_group_tiles(bitmap.copy(), 0)
-        result_original = _group_tiles_original(bitmap.copy())
+        result_cython = group_tiles_cython(bitmap.copy(), 0)
+        result_c = group_tiles_c(bitmap.copy(), 0)
+        result_original = python_group_tiles(bitmap.copy())
 
         # Compare results
         assert len(result_cython) == len(result_original) == len(result_c) == 1, \
@@ -165,9 +165,9 @@ class TestGroupTiles:
         ], dtype=np.uint8)
 
         # Test all three implementations
-        result_cython = group_tiles(bitmap.copy(), 0)
-        result_c = c_group_tiles(bitmap.copy(), 0)
-        result_original = _group_tiles_original(bitmap.copy())
+        result_cython = group_tiles_cython(bitmap.copy(), 0)
+        result_c = group_tiles_c(bitmap.copy(), 0)
+        result_original = python_group_tiles(bitmap.copy())
 
         # Compare results
         assert len(result_cython) == len(result_original) == len(result_c) == 1, \
@@ -206,17 +206,17 @@ class TestGroupTiles:
         ]), (0, 0))]
 
         # Test all three implementations with mode 1
-        result_cython = group_tiles(bitmap.copy(), 1)
-        result_c = c_group_tiles(bitmap.copy(), 1)
-        result_original = _group_tiles_original(bitmap.copy(), 1)
+        result_cython = group_tiles_cython(bitmap.copy(), 1)
+        result_c = group_tiles_c(bitmap.copy(), 1)
+        result_original = python_group_tiles(bitmap.copy(), 1)
         same_results(result_cython, result1)
         same_results(result_c, result1)
         same_results(result_original, result1)
 
         # Test all three implementations with mode 2
-        result_cython = group_tiles(bitmap.copy(), 2)
-        result_c = c_group_tiles(bitmap.copy(), 2)
-        result_original = _group_tiles_original(bitmap.copy(), 2)
+        result_cython = group_tiles_cython(bitmap.copy(), 2)
+        result_c = group_tiles_c(bitmap.copy(), 2)
+        result_original = python_group_tiles(bitmap.copy(), 2)
         same_results(result_cython, result2)
         same_results(result_c, result2)
         same_results(result_original, result2)
@@ -239,17 +239,17 @@ class TestGroupTiles:
         ]), (0, 0))]
 
         # Test all three implementations with mode 1
-        result_cython = group_tiles(bitmap.copy(), 1)
-        result_c = c_group_tiles(bitmap.copy(), 1)
-        result_original = _group_tiles_original(bitmap.copy(), 1)
+        result_cython = group_tiles_cython(bitmap.copy(), 1)
+        result_c = group_tiles_c(bitmap.copy(), 1)
+        result_original = python_group_tiles(bitmap.copy(), 1)
         same_results(result_cython, result1)
         same_results(result_c, result1)
         same_results(result_original, result1)
 
         # Test all three implementations with mode 2
-        result_cython = group_tiles(bitmap.copy(), 2)
-        result_c = c_group_tiles(bitmap.copy(), 2)
-        result_original = _group_tiles_original(bitmap.copy(), 2)
+        result_cython = group_tiles_cython(bitmap.copy(), 2)
+        result_c = group_tiles_c(bitmap.copy(), 2)
+        result_original = python_group_tiles(bitmap.copy(), 2)
         same_results(result_cython, result2)
         same_results(result_c, result2)
         same_results(result_original, result2)
@@ -263,9 +263,9 @@ class TestGroupTiles:
         ], dtype=np.uint8)
 
         # Test all three implementations
-        result_cython = group_tiles(bitmap.copy(), 0)
-        result_c = c_group_tiles(bitmap.copy(), 0)
-        result_original = _group_tiles_original(bitmap.copy())
+        result_cython = group_tiles_cython(bitmap.copy(), 0)
+        result_c = group_tiles_c(bitmap.copy(), 0)
+        result_original = python_group_tiles(bitmap.copy())
 
         # Compare results
         assert len(result_cython) == len(result_original) == len(result_c) == 3, \
@@ -309,17 +309,17 @@ class TestGroupTilesPerformance:
 
         # Test original implementation
         start_time = time.time()
-        result_original = _group_tiles_original(bitmap.copy())
+        result_original = python_group_tiles(bitmap.copy())
         original_time = time.time() - start_time
 
         # Test Cython implementation
         start_time = time.time()
-        result_cython = group_tiles(bitmap.copy(), 0)
+        result_cython = group_tiles_cython(bitmap.copy(), 0)
         cython_time = time.time() - start_time
 
         # Test C implementation
         start_time = time.time()
-        result_c = c_group_tiles(bitmap.copy(), 0)
+        result_c = group_tiles_c(bitmap.copy(), 0)
         c_time = time.time() - start_time
 
         # Verify results are identical
@@ -369,7 +369,7 @@ def test_return_format():
     """Test the return format of group_tiles."""
     bitmap = np.array([[1, 1], [0, 1]], dtype=np.uint8)
     
-    result = group_tiles(bitmap, 0)
+    result = group_tiles_cython(bitmap, 0)
     
     assert isinstance(result, list), "Should return a list"
     assert len(result) > 0, "Should find at least one polyomino"
@@ -409,9 +409,9 @@ def test_comprehensive_comparison():
 
     for i, bitmap in enumerate(test_bitmaps):
         # Test all three implementations
-        result_cython = group_tiles(bitmap.copy(), 0)
-        result_c = c_group_tiles(bitmap.copy(), 0)
-        result_original = _group_tiles_original(bitmap.copy())
+        result_cython = group_tiles_cython(bitmap.copy(), 0)
+        result_c = group_tiles_c(bitmap.copy(), 0)
+        result_original = python_group_tiles(bitmap.copy())
 
         # Verify identical results
         assert len(result_cython) == len(result_original) == len(result_c), \

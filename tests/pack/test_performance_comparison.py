@@ -6,19 +6,15 @@ against original Python implementations.
 
 import time
 import numpy as np
-import pytest
-from typing import List, Tuple, Optional, Any
-import sys
-import os
+from typing import List, Tuple, Optional
 
 # Import Cython modules
 from polyis.pack.cython.adapters import group_tiles as cython_group_tiles
 from polyis.pack.cython.adapters import pack_append as cython_pack_append
-CYTHON_AVAILABLE = True
 
 # Import original Python implementations from polyis.binpack
-from group_tiles_original import group_tiles as python_group_tiles
-from pack_append_original import pack_append as python_pack_append
+from polyis.pack.python.group_tiles import group_tiles as python_group_tiles
+from polyis.pack.python.pack_append import pack_append as python_pack_append
 
 
 class PerformanceTimer:
@@ -343,10 +339,10 @@ def run_manual_benchmark():
     bitmap = generate_test_bitmap((30, 30), density=0.3, seed=42)
     
     with PerformanceTimer("Python group_tiles"):
-        python_result = python_group_tiles(bitmap.copy())
+        python_result = python_group_tiles(bitmap.copy(), 0)
     
     with PerformanceTimer("Cython group_tiles"):
-        cython_result = cython_group_tiles(bitmap.copy())
+        cython_result = cython_group_tiles(bitmap.copy(), 0)
     
     print(f"Python found {len(python_result)} groups")
     print(f"Cython found {len(cython_result)} groups")

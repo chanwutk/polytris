@@ -1,7 +1,7 @@
 #ifndef PACK_FFD_H
 #define PACK_FFD_H
 
-#include "utilities_.h"
+#include "utilities.h"
 
 // Structure to hold a coordinate/point
 typedef struct Coordinate {

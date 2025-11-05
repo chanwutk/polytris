@@ -31,7 +31,7 @@ def generate_test_bitmap(shape, density=0.3, seed=42):
     return bitmap.astype(np.uint8)
 
 
-def get_polyominoes_for_both_implementations(bitmap):
+def get_polyominoes_for_both_implementations(bitmap, mode):
     """Get polyomino stacks for both Python and C implementations.
 
     Args:
@@ -44,8 +44,8 @@ def get_polyominoes_for_both_implementations(bitmap):
     # IMPORTANT: Due to symbol conflicts between Cython and C group_tiles,
     # we must use the same implementation for both to avoid memory corruption.
     # Both implementations can accept PolyominoArray* from C group_tiles.
-    python_stack = group_tiles_cython(bitmap.copy(), 0)
-    c_stack = group_tiles_c(bitmap.copy(), 0)
+    python_stack = group_tiles_cython(bitmap.copy(), mode)
+    c_stack = group_tiles_c(bitmap.copy(), mode)
     return python_stack, c_stack
 
 
@@ -192,7 +192,7 @@ class TestPackFFDBasic:
         ], dtype=np.uint8)
 
         # Get polyominoes for both implementations
-        python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap)
+        python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
 
         h, w = 10, 10
 
@@ -221,7 +221,7 @@ class TestPackFFDBasic:
         python_stacks = []
         c_stacks = []
         for bitmap in bitmaps:
-            python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap)
+            python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
             python_stacks.append(python_stack)
             c_stacks.append(c_stack)
 
@@ -252,7 +252,7 @@ class TestPackFFDRandom:
         bitmap = generate_test_bitmap(size, density=density, seed=seed)
 
         # Get polyominoes for both implementations
-        python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap)
+        python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
 
         h, w = 50, 50
 
@@ -276,7 +276,7 @@ class TestPackFFDRandom:
         python_stacks = []
         c_stacks = []
         for bitmap in bitmaps:
-            python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap)
+            python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
             python_stacks.append(python_stack)
             c_stacks.append(c_stack)
 
@@ -321,7 +321,7 @@ class TestPackFFDPerformance:
             python_stacks = []
             c_stacks = []
             for bitmap in bitmaps:
-                python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap)
+                python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
                 python_stacks.append(python_stack)
                 c_stacks.append(c_stack)
 

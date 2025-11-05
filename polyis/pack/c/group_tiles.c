@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include "utilities_.h"
+#include "utilities.h"
 
 // Direction arrays for 4-connectivity (up, left, down, right)
 static const char DIRECTIONS_I[4] = {-1, 0, 1, 0};

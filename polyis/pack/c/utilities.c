@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stddef.h>
-// #include "utilities.h"
 
 // Structure definitions
 

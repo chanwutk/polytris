@@ -13,7 +13,7 @@ from polyis.pack.group_tiles import group_tiles  # type: ignore[import-untyped]
 
 
 # Declare C structures from utilities_.h
-cdef extern from "c/utilities_.h":
+cdef extern from "c/utilities.h":
     ctypedef struct UShortArray:
         unsigned short *data  # type: ignore
         int size
