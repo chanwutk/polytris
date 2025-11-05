@@ -4,21 +4,13 @@ Test suite for comparing C and Python implementations of pack_ffd (First Fit Dec
 
 This module tests the correctness and consistency of the C implementation (pack_ffd.pyx)
 against the Python prototype implementation (pack_ffd_python.py).
-
-KNOWN ISSUE: There is a memory corruption bug when using both implementations in the same
-process. Calling pack_all_python followed by pack_all_c on separate polyomino arrays from
-the same bitmap causes pack_all_c to produce incorrect results (splitting single polyominoes
-into multiple entries). For now, each implementation should be tested separately.
-
-TODO: Investigate and fix the memory corruption issue between pack_all_python and pack_all_c.
 """
 
 import pytest
 import numpy as np
 import time
-# NOTE: Do NOT import cython group_tiles - it causes symbol conflicts with C group_tiles
 from polyis.pack.group_tiles import group_tiles as group_tiles_cython
-from polyis.pack.pack_ffd_python import pack_all as pack_all_python
+from polyis.pack.python.pack_ffd_python import pack_all as pack_all_python
 from polyis.cbinpack.group_tiles import group_tiles as group_tiles_c
 from polyis.cbinpack.pack_ffd import pack_all as pack_all_c
 
