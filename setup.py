@@ -43,6 +43,17 @@ extensions = [
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
+        "polyis.cbinpack.pack_ffd",
+        [
+            "polyis/cbinpack/pack_ffd.pyx",
+            "polyis/cbinpack/utilities_.c",
+            "polyis/cbinpack/pack_ffd_.c",
+        ],
+        include_dirs=["polyis/cbinpack", numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c11"],
+    ),
+    Extension(
         "polyis.binpack.adapters",
         ["polyis/binpack/adapters.pyx"],
         include_dirs=[numpy.get_include()],

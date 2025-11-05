@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(python -m py_compile:*)",
-      "Bash(python setup.py:*)"
+      "Bash(python setup.py:*)",
+      "Bash(python -m pytest:*)"
     ]
   }
 }

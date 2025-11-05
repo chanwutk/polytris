@@ -514,7 +514,7 @@ bool try_pack(CoordinateArray *polyomino_coords, unsigned char *occupied_tiles,
 //   w: Width of each collage
 // Returns:
 //   CollageArray containing all packed collages with polyomino positions
-CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w) {
+CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w) {
     // Initialize storage for all polyominoes with their frame indices
     PolyominoWithFrameArray all_polyominoes;
     PolyominoWithFrameArray_init(&all_polyominoes, 256);

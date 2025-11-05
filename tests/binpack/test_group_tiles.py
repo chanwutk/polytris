@@ -58,34 +58,43 @@ class TestGroupTiles:
     
     def test_multiple_connected_components(self):
         """Test grouping multiple separate connected components."""
-        bitmap = np.array([
+        bitmap1 = np.array([
             [1, 1, 0, 1],
             [0, 0, 0, 1],
             [1, 0, 0, 0],
             [1, 1, 0, 0]
         ], dtype=np.uint8)
 
-        # Test all three implementations
-        result_cython = group_tiles(bitmap.copy(), 0)
-        result_c = c_group_tiles(bitmap.copy(), 0)
-        result_original = _group_tiles_original(bitmap.copy())
+        bitmap2 = np.array([
+            [1, 1, 0, 1, 1],
+            [1, 0, 0, 1, 1],
+            [0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1]
+        ], dtype=np.uint8)
 
-        # Compare results
-        assert len(result_cython) == len(result_original) == len(result_c), \
-            f"Different number of polyominoes: Cython={len(result_cython)}, C={len(result_c)}, Original={len(result_original)}"
+        for bitmap in [bitmap1, bitmap2]:
+            # Test all three implementations
+            result_cython = group_tiles(bitmap.copy(), 0)
+            result_c = c_group_tiles(bitmap.copy(), 0)
+            result_original = _group_tiles_original(bitmap.copy())
 
-        # Sort results by offset for consistent comparison
-        result_cython_sorted = sorted(result_cython, key=lambda x: (x[1][0], x[1][1]))
-        result_c_sorted = sorted(result_c, key=lambda x: (x[1][0], x[1][1]))
-        result_original_sorted = sorted(result_original, key=lambda x: (x[1][0], x[1][1]))
+            # Compare results
+            assert len(result_cython) == len(result_original) == len(result_c), \
+                f"Different number of polyominoes: Cython={len(result_cython)}, C={len(result_c)}, Original={len(result_original)}"
 
-        for i, ((cython_mask, cython_offset), (c_mask, c_offset), (orig_mask, orig_offset)) in enumerate(
-            zip(result_cython_sorted, result_c_sorted, result_original_sorted)
-        ):
-            assert cython_mask.shape == orig_mask.shape == c_mask.shape, f"Polyomino {i}: Different mask shapes"
-            np.testing.assert_array_equal(cython_mask, orig_mask, f"Polyomino {i}: Cython vs Original mask content differs")
-            np.testing.assert_array_equal(c_mask, orig_mask, f"Polyomino {i}: C vs Original mask content differs")
-            assert cython_offset == orig_offset == c_offset, f"Polyomino {i}: Different offsets"
+            # Sort results by offset for consistent comparison
+            result_cython_sorted = sorted(result_cython, key=lambda x: (x[1][0], x[1][1]))
+            result_c_sorted = sorted(result_c, key=lambda x: (x[1][0], x[1][1]))
+            result_original_sorted = sorted(result_original, key=lambda x: (x[1][0], x[1][1]))
+
+            for i, ((cython_mask, cython_offset), (c_mask, c_offset), (orig_mask, orig_offset)) in enumerate(
+                zip(result_cython_sorted, result_c_sorted, result_original_sorted)
+            ):
+                assert cython_mask.shape == orig_mask.shape == c_mask.shape, f"Polyomino {i}: Different mask shapes"
+                np.testing.assert_array_equal(cython_mask, orig_mask, f"Polyomino {i}: Cython vs Original mask content differs")
+                np.testing.assert_array_equal(c_mask, orig_mask, f"Polyomino {i}: C vs Original mask content differs")
+                assert cython_offset == orig_offset == c_offset, f"Polyomino {i}: Different offsets"
     
     def test_empty_bitmap(self):
         """Test with empty bitmap."""
@@ -178,7 +187,7 @@ class TestGroupTiles:
         assert cython_offset == orig_offset == c_offset, "Offsets should be identical"
         assert cython_mask.sum() == c_mask.sum() == 5, "L-shape should have 5 tiles"
     
-    def test_connected_padding(self):
+    def test_connected_padding_split(self):
         bitmap = np.array([
             [0, 0, 0, 0],
             [1, 0, 0, 1],
@@ -197,6 +206,39 @@ class TestGroupTiles:
             [1, 0, 0, 1],
             [1, 1, 1, 1],
             [1, 0, 0, 1]
+        ]), (0, 0))]
+
+        # Test all three implementations with mode 1
+        result_cython = group_tiles(bitmap.copy(), 1)
+        result_c = c_group_tiles(bitmap.copy(), 1)
+        result_original = _group_tiles_original(bitmap.copy(), 1)
+        same_results(result_cython, result1)
+        same_results(result_c, result1)
+        same_results(result_original, result1)
+
+        # Test all three implementations with mode 2
+        result_cython = group_tiles(bitmap.copy(), 2)
+        result_c = c_group_tiles(bitmap.copy(), 2)
+        result_original = _group_tiles_original(bitmap.copy(), 2)
+        same_results(result_cython, result2)
+        same_results(result_c, result2)
+        same_results(result_original, result2)
+    
+    def test_connected_padding_combined(self):
+        bitmap = np.array([
+            [0, 0, 0],
+            [1, 0, 1],
+            [0, 0, 0]
+        ], dtype=np.uint8)
+        result1 = [(np.array([
+            [1, 0, 1],
+            [1, 1, 1],
+            [1, 0, 1]
+        ]), (0, 0))]
+        result2 = [(np.array([
+            [1, 0, 1],
+            [1, 1, 1],
+            [1, 0, 1]
         ]), (0, 0))]
 
         # Test all three implementations with mode 1

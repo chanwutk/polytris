@@ -49,8 +49,8 @@ def benchmark_group_tiles():
     """Benchmark group_tiles implementations."""
     print("=== Group Tiles Benchmark ===")
 
-    from polyis.binpack.group_tiles import group_tiles as cython_group_tiles
-    from polyis.cbinpack.group_tiles import group_tiles as c_group_tiles
+    from polyis.binpack.group_tiles import group_tiles as group_tiles_cython
+    from polyis.cbinpack.group_tiles import group_tiles as group_tiles_c
     from group_tiles_original import group_tiles as python_group_tiles
 
     sizes = [(20, 20), (50, 50), (100, 100)]
@@ -70,12 +70,12 @@ def benchmark_group_tiles():
 
             # Time Cython implementation
             start = time.perf_counter()
-            cython_result = cython_group_tiles(bitmap.copy(), 0)
+            cython_result = group_tiles_cython(bitmap.copy(), 0)
             cython_time = time.perf_counter() - start
 
             # Time C implementation
             start = time.perf_counter()
-            c_result = c_group_tiles(bitmap.copy(), 0)
+            c_result = group_tiles_c(bitmap.copy(), 0)
             c_time = time.perf_counter() - start
 
             # Verify results match
@@ -132,8 +132,8 @@ def benchmark_compress():
     """Benchmark compress implementations."""
     print("\n=== Compress Benchmark ===")
 
-    from polyis.binpack.group_tiles import group_tiles as cython_group_tiles
-    from polyis.cbinpack.group_tiles import group_tiles as c_group_tiles
+    from polyis.binpack.group_tiles import group_tiles as group_tiles_cython
+    from polyis.cbinpack.group_tiles import group_tiles as group_tiles_c
     try:
         from group_tiles import free_polyimino_stack  # type: ignore
     except ImportError:
@@ -179,8 +179,8 @@ def benchmark_compress():
         ],
     ]
     fns = [
-        ('cython', cython_group_tiles, cython_pack_append),
-        ('c', c_group_tiles, cython_pack_append),
+        ('cython', group_tiles_cython, cython_pack_append),
+        ('c', group_tiles_c, cython_pack_append),
         ('python', python_group_tiles, python_pack_append),
     ]
     tilepaddings = [True, False]
