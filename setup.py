@@ -22,32 +22,32 @@ extensions = [
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.cbinpack.group_tiles",
+        "polyis.pack.c.group_tiles",
         [
-            "polyis/cbinpack/group_tiles.pyx",
-            "polyis/cbinpack/utilities_.c",
-            "polyis/cbinpack/group_tiles_.c",
+            "polyis/pack/c/group_tiles.pyx",
+            "polyis/pack/c/utilities_.c",
+            "polyis/pack/c/group_tiles_.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.cbinpack.adapters",
+        "polyis.pack.c.adapters",
         [
-            "polyis/cbinpack/adapters.pyx",
-            "polyis/cbinpack/utilities_.c",
+            "polyis/pack/c/adapters.pyx",
+            "polyis/pack/c/utilities_.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.cbinpack.pack_ffd",
+        "polyis.pack.c.pack_ffd",
         [
-            "polyis/cbinpack/pack_ffd.pyx",
-            "polyis/cbinpack/utilities_.c",
-            "polyis/cbinpack/pack_ffd_.c",
+            "polyis/pack/c/pack_ffd.pyx",
+            "polyis/pack/c/utilities_.c",
+            "polyis/pack/c/pack_ffd_.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
         define_macros=MACROS,
@@ -91,14 +91,14 @@ class CleanCommand(Command):
     so_patterns = [
         'polyis/pack/cython/**/*.so',
         'polyis/pack/cython/*.so',
-        'polyis/cbinpack/**/*.so',
-        'polyis/cbinpack/*.so',
+        'polyis/pack/c/**/*.so',
+        'polyis/pack/c/*.so',
     ]
     html_patterns = [
         'polyis/pack/cython/**/*.html',
         'polyis/pack/cython/*.html',
-        'polyis/cbinpack/**/*.html',
-        'polyis/cbinpack/*.html',
+        'polyis/pack/c/**/*.html',
+        'polyis/pack/c/*.html',
     ]
     
     def initialize_options(self):
