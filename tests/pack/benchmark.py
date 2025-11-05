@@ -16,7 +16,7 @@ import statistics
 
 
 # Import adapters with fallback
-from polyis.binpack.adapters import get_polyominoes
+from polyis.pack.adapters import get_polyominoes
 
 def generate_test_bitmap(shape, density=0.3, seed=42):
     """Generate a test bitmap with specified density of 1s."""
@@ -49,7 +49,7 @@ def benchmark_group_tiles():
     """Benchmark group_tiles implementations."""
     print("=== Group Tiles Benchmark ===")
 
-    from polyis.binpack.group_tiles import group_tiles as group_tiles_cython
+    from polyis.pack.group_tiles import group_tiles as group_tiles_cython
     from polyis.cbinpack.group_tiles import group_tiles as group_tiles_c
     from group_tiles_original import group_tiles as python_group_tiles
 
@@ -93,7 +93,7 @@ def benchmark_pack_append():
     print("\n=== Pack Append Benchmark ===")
     
     try:
-        from polyis.binpack.pack_append import pack_append as cython_pack_append
+        from polyis.pack.pack_append import pack_append as cython_pack_append
         from pack_append_original import pack_append as python_pack_append
     except ImportError as e:
         print(f"Error importing modules: {e}")
@@ -132,7 +132,7 @@ def benchmark_compress():
     """Benchmark compress implementations."""
     print("\n=== Compress Benchmark ===")
 
-    from polyis.binpack.group_tiles import group_tiles as group_tiles_cython
+    from polyis.pack.group_tiles import group_tiles as group_tiles_cython
     from polyis.cbinpack.group_tiles import group_tiles as group_tiles_c
     try:
         from group_tiles import free_polyimino_stack  # type: ignore
@@ -141,7 +141,7 @@ def benchmark_compress():
         def free_polyimino_stack(polyominoes):
             pass
     from group_tiles_original import group_tiles as python_group_tiles
-    from polyis.binpack.pack_append import pack_append as cython_pack_append
+    from polyis.pack.pack_append import pack_append as cython_pack_append
     from pack_append_original import pack_append as python_pack_append
     
     add_margin = torch.tensor(

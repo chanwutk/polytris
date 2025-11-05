@@ -2,7 +2,7 @@ import typing
 
 import numpy as np
 from scipy import ndimage
-from polyis.binpack.adapters import format_polyominoes
+from polyis.pack.adapters import format_polyominoes
 
 
 class PolyominoPosition(typing.NamedTuple):

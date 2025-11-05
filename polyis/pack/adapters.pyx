@@ -10,15 +10,15 @@ from libc.stdlib cimport malloc, free
 import cython
 
 # Import data structures from the shared module
-from polyis.binpack.utilities cimport (
+from polyis.pack.utilities cimport (
     IntStack, Polyomino, PolyominoStack,
     IntStack_init, IntStack_push,
     PolyominoStack_init, PolyominoStack_push,
     PolyominoStack_cleanup
 )
 
-from polyis.binpack.group_tiles import group_tiles as group_tiles_cython
-from polyis.binpack.pack_append import pack_append as pack_append_cython
+from polyis.pack.group_tiles import group_tiles as group_tiles_cython
+from polyis.pack.pack_append import pack_append as pack_append_cython
 
 
 @cython.boundscheck(False)  # type: ignore

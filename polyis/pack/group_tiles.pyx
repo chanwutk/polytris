@@ -8,7 +8,7 @@ cimport numpy as cnp
 from libc.stdlib cimport malloc, calloc, free, qsort
 import cython
 
-from polyis.binpack.utilities cimport IntStack, Polyomino, PolyominoStack, IntStack_init, \
+from polyis.pack.utilities cimport IntStack, Polyomino, PolyominoStack, IntStack_init, \
                        IntStack_push, IntStack_cleanup, PolyominoStack_init, \
                        PolyominoStack_push, PolyominoStack_cleanup
 

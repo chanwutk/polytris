@@ -5,7 +5,7 @@ Pytest tests for the pack_append Cython implementation.
 import pytest
 import numpy as np
 import time
-from polyis.binpack.adapters import pack_append
+from polyis.pack.adapters import pack_append
 
 
 class TestPackAppend:
@@ -156,7 +156,7 @@ class TestPerformance:
 def test_import_success():
     """Test that the Cython module can be imported successfully."""
     try:
-        from polyis.binpack.adapters import pack_append
+        from polyis.pack.adapters import pack_append
         assert callable(pack_append), "pack_append should be callable"
     except ImportError as e:
         pytest.fail(f"Failed to import Cython implementation: {e}")

@@ -17,8 +17,8 @@ import pytest
 import numpy as np
 import time
 # NOTE: Do NOT import cython group_tiles - it causes symbol conflicts with C group_tiles
-from polyis.binpack.group_tiles import group_tiles as group_tiles_cython
-from polyis.binpack.pack_ffd_python import pack_all as pack_all_python
+from polyis.pack.group_tiles import group_tiles as group_tiles_cython
+from polyis.pack.pack_ffd_python import pack_all as pack_all_python
 from polyis.cbinpack.group_tiles import group_tiles as group_tiles_c
 from polyis.cbinpack.pack_ffd import pack_all as pack_all_c
 

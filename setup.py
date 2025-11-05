@@ -15,8 +15,8 @@ MACROS: list[tuple[str, str | None]] = [("NPY_NO_DEPRECATED_API", "NPY_2_3_API_V
 
 extensions = [
     Extension(
-        "polyis.binpack.utilities",
-        ["polyis/binpack/utilities.pyx"],
+        "polyis.pack.utilities",
+        ["polyis/pack/utilities.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
@@ -54,29 +54,22 @@ extensions = [
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.binpack.adapters",
-        ["polyis/binpack/adapters.pyx"],
+        "polyis.pack.adapters",
+        ["polyis/pack/adapters.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.binpack.pack_append",
-        ["polyis/binpack/pack_append.pyx"],
+        "polyis.pack.pack_append",
+        ["polyis/pack/pack_append.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.binpack.group_tiles",
-        ["polyis/binpack/group_tiles.pyx"],
-        include_dirs=[numpy.get_include()],
-        define_macros=MACROS,
-        extra_compile_args=ARGS,
-    ),
-    Extension(
-        "polyis.binpack.render",
-        ["polyis/binpack/render.pyx"],
+        "polyis.pack.group_tiles",
+        ["polyis/pack/group_tiles.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
@@ -92,18 +85,18 @@ class CleanCommand(Command):
     
     # Patterns to clean - can be overridden in subclasses
     c_patterns = [
-        'polyis/binpack/**/*.c',
-        'polyis/binpack/*.c',
+        'polyis/pack/**/*.c',
+        'polyis/pack/*.c',
     ]
     so_patterns = [
-        'polyis/binpack/**/*.so',
-        'polyis/binpack/*.so',
+        'polyis/pack/**/*.so',
+        'polyis/pack/*.so',
         'polyis/cbinpack/**/*.so',
         'polyis/cbinpack/*.so',
     ]
     html_patterns = [
-        'polyis/binpack/**/*.html',
-        'polyis/binpack/*.html',
+        'polyis/pack/**/*.html',
+        'polyis/pack/*.html',
         'polyis/cbinpack/**/*.html',
         'polyis/cbinpack/*.html',
     ]

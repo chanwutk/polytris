@@ -18,8 +18,8 @@ from polyis.utilities import (
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
-from polyis.binpack.group_tiles import free_polyimino_stack, group_tiles
-from polyis.binpack.pack_bfd_python import pack_all
+from polyis.pack.group_tiles import free_polyimino_stack, group_tiles
+from polyis.pack.pack_bfd_python import pack_all
 
 
 def parse_args():
