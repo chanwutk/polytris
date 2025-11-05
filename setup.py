@@ -15,8 +15,8 @@ MACROS: list[tuple[str, str | None]] = [("NPY_NO_DEPRECATED_API", "NPY_2_3_API_V
 
 extensions = [
     Extension(
-        "polyis.pack.utilities",
-        ["polyis/pack/utilities.pyx"],
+        "polyis.pack.cython.utilities",
+        ["polyis/pack/cython/utilities.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
@@ -54,22 +54,22 @@ extensions = [
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.pack.adapters",
-        ["polyis/pack/adapters.pyx"],
+        "polyis.pack.cython.adapters",
+        ["polyis/pack/cython/adapters.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.pack.pack_append",
-        ["polyis/pack/pack_append.pyx"],
+        "polyis.pack.cython.pack_append",
+        ["polyis/pack/cython/pack_append.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.pack.group_tiles",
-        ["polyis/pack/group_tiles.pyx"],
+        "polyis.pack.cython.group_tiles",
+        ["polyis/pack/cython/group_tiles.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
@@ -85,18 +85,18 @@ class CleanCommand(Command):
     
     # Patterns to clean - can be overridden in subclasses
     c_patterns = [
-        'polyis/pack/**/*.c',
-        'polyis/pack/*.c',
+        'polyis/pack/cython/**/*.c',
+        'polyis/pack/cython/*.c',
     ]
     so_patterns = [
-        'polyis/pack/**/*.so',
-        'polyis/pack/*.so',
+        'polyis/pack/cython/**/*.so',
+        'polyis/pack/cython/*.so',
         'polyis/cbinpack/**/*.so',
         'polyis/cbinpack/*.so',
     ]
     html_patterns = [
-        'polyis/pack/**/*.html',
-        'polyis/pack/*.html',
+        'polyis/pack/cython/**/*.html',
+        'polyis/pack/cython/*.html',
         'polyis/cbinpack/**/*.html',
         'polyis/cbinpack/*.html',
     ]

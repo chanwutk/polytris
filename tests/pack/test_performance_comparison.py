@@ -12,8 +12,8 @@ import sys
 import os
 
 # Import Cython modules
-from polyis.pack.adapters import group_tiles as cython_group_tiles
-from polyis.pack.adapters import pack_append as cython_pack_append
+from polyis.pack.cython.adapters import group_tiles as cython_group_tiles
+from polyis.pack.cython.adapters import pack_append as cython_pack_append
 CYTHON_AVAILABLE = True
 
 # Import original Python implementations from polyis.binpack

@@ -1,7 +1,7 @@
 import typing
 
 import numpy as np
-from polyis.pack.adapters import format_polyominoes
+from polyis.pack.cython.adapters import format_polyominoes
 
 
 class PolyominoPosition(typing.NamedTuple):

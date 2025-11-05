@@ -7,7 +7,7 @@ import numpy as np
 import time
 import sys
 import os
-from polyis.pack.adapters import group_tiles
+from polyis.pack.cython.adapters import group_tiles
 from polyis.cbinpack.adapters import c_group_tiles
 from group_tiles_original import group_tiles as _group_tiles_original
 from queue import Queue
@@ -362,7 +362,7 @@ class TestGroupTilesPerformance:
 def test_import_success():
     """Test that the Cython module can be imported successfully."""
     try:
-        from polyis.pack.adapters import group_tiles
+        from polyis.pack.cython.adapters import group_tiles
         assert callable(group_tiles), "group_tiles should be callable"
     except ImportError as e:
         pytest.fail(f"Failed to import Cython implementation: {e}")

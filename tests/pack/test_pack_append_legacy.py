@@ -57,7 +57,7 @@ def run_implementation_comparison():
     
     # Import Cython implementation
     try:
-        from polyis.pack.adapters import pack_append
+        from polyis.pack.cython.adapters import pack_append
         print("✓ Cython implementation imported successfully")
     except ImportError as e:
         print(f"✗ Failed to import Cython implementation: {e}")
