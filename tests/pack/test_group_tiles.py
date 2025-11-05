@@ -5,12 +5,9 @@ Pytest tests for the group_tiles Cython implementation.
 import pytest
 import numpy as np
 import time
-import sys
-import os
 from polyis.pack.cython.adapters import group_tiles
-from polyis.cbinpack.adapters import c_group_tiles
+from polyis.pack.adapters import c_group_tiles
 from group_tiles_original import group_tiles as _group_tiles_original
-from queue import Queue
 
 
 def same_results(result1, result2):

@@ -22,9 +22,9 @@ extensions = [
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.pack.c.group_tiles",
+        "polyis.pack.group_tiles",
         [
-            "polyis/pack/c/group_tiles.pyx",
+            "polyis/pack/group_tiles.pyx",
             "polyis/pack/c/utilities_.c",
             "polyis/pack/c/group_tiles_.c",
         ],
@@ -33,9 +33,9 @@ extensions = [
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.pack.c.adapters",
+        "polyis.pack.adapters",
         [
-            "polyis/pack/c/adapters.pyx",
+            "polyis/pack/adapters.pyx",
             "polyis/pack/c/utilities_.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
@@ -43,9 +43,9 @@ extensions = [
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.pack.c.pack_ffd",
+        "polyis.pack.pack_ffd",
         [
-            "polyis/pack/c/pack_ffd.pyx",
+            "polyis/pack/pack_ffd.pyx",
             "polyis/pack/c/utilities_.c",
             "polyis/pack/c/pack_ffd_.c",
         ],
@@ -87,18 +87,21 @@ class CleanCommand(Command):
     c_patterns = [
         'polyis/pack/cython/**/*.c',
         'polyis/pack/cython/*.c',
+        'polyis/pack/*.c',
     ]
     so_patterns = [
-        'polyis/pack/cython/**/*.so',
-        'polyis/pack/cython/*.so',
-        'polyis/pack/c/**/*.so',
-        'polyis/pack/c/*.so',
+        # 'polyis/pack/cython/**/*.so',
+        # 'polyis/pack/cython/*.so',
+        # 'polyis/pack/c/**/*.so',
+        # 'polyis/pack/c/*.so',
+        'polyis/pack/**/*.so',
+        'polyis/pack/*.so',
     ]
     html_patterns = [
-        'polyis/pack/cython/**/*.html',
-        'polyis/pack/cython/*.html',
-        'polyis/pack/c/**/*.html',
-        'polyis/pack/c/*.html',
+        # 'polyis/pack/cython/**/*.html',
+        # 'polyis/pack/cython/*.html',
+        'polyis/pack/**/*.html',
+        'polyis/pack/*.html',
     ]
     
     def initialize_options(self):

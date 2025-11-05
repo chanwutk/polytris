@@ -9,11 +9,11 @@ cimport numpy as cnp
 from libc.stdlib cimport free
 import cython
 
-from polyis.cbinpack.group_tiles import group_tiles  # type: ignore[import-untyped]
+from polyis.pack.group_tiles import group_tiles  # type: ignore[import-untyped]
 
 
 # Declare C structures from utilities_.h
-cdef extern from "utilities_.h":
+cdef extern from "c/utilities_.h":
     ctypedef struct UShortArray:
         unsigned short *data  # type: ignore
         int size

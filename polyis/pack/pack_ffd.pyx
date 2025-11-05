@@ -11,7 +11,7 @@ import cython
 
 
 # Declare C structures from utilities_.h
-cdef extern from "utilities_.h":
+cdef extern from "c/utilities_.h":
     ctypedef struct UShortArray:
         unsigned short *data  # type: ignore
         int size
@@ -29,7 +29,7 @@ cdef extern from "utilities_.h":
 
 
 # Declare C structures from pack_ffd_.h
-cdef extern from "pack_ffd_.h":
+cdef extern from "c/pack_ffd_.h":
     ctypedef struct Coordinate:
         int y
         int x

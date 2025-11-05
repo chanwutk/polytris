@@ -9,7 +9,7 @@ import cython
 
 
 # Declare C structures from utilities_.h
-cdef extern from "utilities_.h":
+cdef extern from "c/utilities_.h":
     ctypedef struct UShortArray:
         unsigned short *data  # type: ignore
         int size
@@ -30,7 +30,7 @@ cdef extern from "utilities_.h":
 
 
 # Declare C functions from group_tiles_.h
-cdef extern from "group_tiles_.h":
+cdef extern from "c/group_tiles_.h":
     # Main function to group tiles into polyominoes
     # bitmap_input: 2D array (flattened) of uint8_t representing the grid of tiles
     #               where 1 indicates a tile with detection and 0 indicates no detection

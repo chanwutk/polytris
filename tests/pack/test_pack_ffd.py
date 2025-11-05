@@ -11,8 +11,8 @@ import numpy as np
 import time
 from polyis.pack.cython.group_tiles import group_tiles as group_tiles_cython
 from polyis.pack.python.pack_ffd import pack_all as pack_all_python
-from polyis.cbinpack.group_tiles import group_tiles as group_tiles_c
-from polyis.cbinpack.pack_ffd import pack_all as pack_all_c
+from polyis.pack.group_tiles import group_tiles as group_tiles_c
+from polyis.pack.pack_ffd import pack_all as pack_all_c
 
 
 def generate_test_bitmap(shape, density=0.3, seed=42):
