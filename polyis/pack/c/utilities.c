@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stddef.h>
+#include "errors.h"
 
 // Structure definitions
 
@@ -25,13 +26,17 @@ typedef struct PolyominoArray {
 
 // Initialize an unsigned short array with initial capacity
 int UShortArray_init(UShortArray *array, int initial_capacity) {
-    // if not array:
-    //     return -1
+    // Check input pointer is valid
+    CHECK_NULL(array, "array pointer is NULL");
+
+    // Check initial capacity is positive
+    ASSERT(initial_capacity > 0, "initial_capacity must be positive");
 
     // Allocate memory for the array data
     array->data = (unsigned short*)malloc((size_t)initial_capacity * sizeof(unsigned short));
-    // if not array.data:
-    //     return -1
+
+    // Check if allocation succeeded
+    CHECK_ALLOC(array->data, "failed to allocate array data");
 
     // Initialize array fields
     array->size = 0;
@@ -44,18 +49,21 @@ int UShortArray_push(UShortArray *array, unsigned short value) {
     int new_capacity;
     unsigned short *new_data;
 
-    // if not array:
-    //     return -1
+    // Check input pointer is valid
+    CHECK_NULL(array, "array pointer is NULL");
+    CHECK_NULL(array->data, "array data is NULL");
 
     // Check if we need to expand the capacity
     if (array->size >= array->capacity) {
         // Double the capacity
         new_capacity = array->capacity * 2;
+
         // Reallocate memory with the new capacity
         new_data = (unsigned short*)realloc((void*)array->data,
                                             (size_t)new_capacity * sizeof(unsigned short));
-        // if not new_data:
-        //     return -1  // Memory allocation failed
+
+        // Check if reallocation succeeded
+        CHECK_ALLOC(new_data, "failed to reallocate array data");
 
         // Update array data pointer and capacity
         array->data = new_data;
@@ -92,13 +100,17 @@ void Polyomino_cleanup(Polyomino *polyomino) {
 
 // Initialize a polyomino array with initial capacity
 int PolyominoArray_init(PolyominoArray *array, int initial_capacity) {
-    // if not array:
-    //     return -1
+    // Check input pointer is valid
+    CHECK_NULL(array, "array pointer is NULL");
+
+    // Check initial capacity is positive
+    ASSERT(initial_capacity > 0, "initial_capacity must be positive");
 
     // Allocate memory for the polyomino array
     array->data = (Polyomino*)malloc((size_t)initial_capacity * sizeof(Polyomino));
-    // if not array.data:
-    //     return -1
+
+    // Check if allocation succeeded
+    CHECK_ALLOC(array->data, "failed to allocate polyomino array data");
 
     // Initialize array fields
     array->size = 0;
@@ -111,18 +123,21 @@ int PolyominoArray_push(PolyominoArray *array, Polyomino value) {
     int new_capacity;
     Polyomino *new_data;
 
-    // if not array:
-    //     return -1
+    // Check input pointer is valid
+    CHECK_NULL(array, "array pointer is NULL");
+    CHECK_NULL(array->data, "array data is NULL");
 
     // Check if we need to expand the capacity
     if (array->size >= array->capacity) {
         // Double the capacity
         new_capacity = array->capacity * 2;
+
         // Reallocate memory with the new capacity
         new_data = (Polyomino*)realloc((void*)array->data,
                                        (size_t)new_capacity * sizeof(Polyomino));
-        // if not new_data:
-        //     return -1  // Memory allocation failed
+
+        // Check if reallocation succeeded
+        CHECK_ALLOC(new_data, "failed to reallocate polyomino array data");
 
         // Update array data pointer and capacity
         array->data = new_data;
@@ -153,4 +168,3 @@ void PolyominoArray_cleanup(PolyominoArray *array) {
         array->capacity = 0;
     }
 }
-

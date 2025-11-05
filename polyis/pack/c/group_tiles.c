@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 #include "utilities.h"
+#include "errors.h"
 
 // Direction arrays for 4-connectivity (up, left, down, right)
 static const char DIRECTIONS_I[4] = {-1, 0, 1, 0};
@@ -153,9 +154,7 @@ PolyominoArray * group_tiles_(
 
     // Allocate and initialize polyomino array
     polyomino_array = (PolyominoArray *)malloc(sizeof(PolyominoArray));
-    if (polyomino_array == NULL) {
-        return NULL;
-    }
+    CHECK_NULL(polyomino_array, "failed to allocate PolyominoArray");
     PolyominoArray_init(polyomino_array, 16);
 
     // Add padding if mode is not 0
@@ -250,9 +249,8 @@ PolyominoArray * group_tiles_(
 // Free a polyomino array allocated by group_tiles
 // Returns the number of polyominoes that were freed
 int free_polyomino_array_(PolyominoArray *polyomino_array) {
-    if (polyomino_array == NULL) {
-        return 0;
-    }
+    CHECK_NULL(polyomino_array, "polyomino_array pointer is NULL");
+
     int num_polyominoes = polyomino_array->size;
     PolyominoArray_cleanup(polyomino_array);
     free((void *)polyomino_array);

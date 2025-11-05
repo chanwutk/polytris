@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "utilities.h"
+#include "errors.h"
 
 // ============================================================================
 // Macros for Dynamic Array Implementation
@@ -12,8 +13,10 @@
 // Macro to define _init function for simple arrays
 #define DEFINE_ARRAY_INIT(TypeName, ElementType) \
 int TypeName##_init(TypeName *arr, int initial_capacity) { \
+    CHECK_NULL(arr, #TypeName " array pointer is NULL"); \
+    ASSERT(initial_capacity > 0, "initial_capacity must be positive"); \
     arr->data = (ElementType*)malloc((size_t)initial_capacity * sizeof(ElementType)); \
-    if (!arr->data) return -1; \
+    CHECK_ALLOC(arr->data, "failed to allocate " #TypeName " array data"); \
     arr->size = 0; \
     arr->capacity = initial_capacity; \
     return 0; \
@@ -22,11 +25,13 @@ int TypeName##_init(TypeName *arr, int initial_capacity) { \
 // Macro to define _push function for simple arrays
 #define DEFINE_ARRAY_PUSH(TypeName, ElementType) \
 int TypeName##_push(TypeName *arr, ElementType value) { \
+    CHECK_NULL(arr, #TypeName " array pointer is NULL"); \
+    CHECK_NULL(arr->data, #TypeName " array data is NULL"); \
     if (arr->size >= arr->capacity) { \
         int new_capacity = arr->capacity * 2; \
         ElementType *new_data = (ElementType*)realloc(arr->data, \
                                 (size_t)new_capacity * sizeof(ElementType)); \
-        if (!new_data) return -1; \
+        CHECK_ALLOC(new_data, "failed to reallocate " #TypeName " array data"); \
         arr->data = new_data; \
         arr->capacity = new_capacity; \
     } \
