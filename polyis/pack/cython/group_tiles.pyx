@@ -90,6 +90,9 @@ cdef IntStack _find_connected_tiles(
         i = stack.data[stack.top - 2]  # type: ignore
         stack.top -= 2
 
+        if bitmap[i * w + j] == value and (j != start_j or i != start_i):  # type: ignore
+            continue  # Already visited
+
         # Mark current position as visited and add to result
         bitmap[i * w + j] = value  # type: ignore
         IntStack_push(&filled, i)

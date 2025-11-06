@@ -119,8 +119,10 @@ typedef struct UCharPArray {
 
 // Initialize a coordinate array
 int CoordinateArray_init(CoordinateArray *arr, int initial_capacity) {
+    CHECK_NULL(arr, "CoordinateArray pointer is NULL");
+    ASSERT(initial_capacity > 0, "initial_capacity must be positive");
     arr->data = (Coordinate*)malloc((size_t)initial_capacity * sizeof(Coordinate));
-    if (!arr->data) return -1;
+    CHECK_ALLOC(arr->data, "failed to allocate CoordinateArray data");
     arr->size = 0;
     arr->capacity = initial_capacity;
     return 0;
@@ -128,12 +130,14 @@ int CoordinateArray_init(CoordinateArray *arr, int initial_capacity) {
 
 // Push a coordinate to the array
 int CoordinateArray_push(CoordinateArray *arr, Coordinate coord) {
+    CHECK_NULL(arr, "CoordinateArray pointer is NULL");
+    CHECK_NULL(arr->data, "CoordinateArray data is NULL");
     // Expand if necessary
     if (arr->size >= arr->capacity) {
         int new_capacity = arr->capacity * 2;
         Coordinate *new_data = (Coordinate*)realloc(arr->data,
                                                      (size_t)new_capacity * sizeof(Coordinate));
-        if (!new_data) return -1;
+        CHECK_ALLOC(new_data, "failed to reallocate CoordinateArray data");
         arr->data = new_data;
         arr->capacity = new_capacity;
     }
@@ -155,8 +159,10 @@ void CoordinateArray_cleanup(CoordinateArray *arr) {
 
 // Initialize a PolyominoPositionArray
 int PolyominoPositionArray_init(PolyominoPositionArray *arr, int initial_capacity) {
+    CHECK_NULL(arr, "PolyominoPositionArray pointer is NULL");
+    ASSERT(initial_capacity > 0, "initial_capacity must be positive");
     arr->data = (PolyominoPosition*)malloc((size_t)initial_capacity * sizeof(PolyominoPosition));
-    if (!arr->data) return -1;
+    CHECK_ALLOC(arr->data, "failed to allocate PolyominoPositionArray data");
     arr->size = 0;
     arr->capacity = initial_capacity;
     return 0;
@@ -164,12 +170,14 @@ int PolyominoPositionArray_init(PolyominoPositionArray *arr, int initial_capacit
 
 // Push a PolyominoPosition to the array
 int PolyominoPositionArray_push(PolyominoPositionArray *arr, PolyominoPosition pos) {
+    CHECK_NULL(arr, "PolyominoPositionArray pointer is NULL");
+    CHECK_NULL(arr->data, "PolyominoPositionArray data is NULL");
     // Expand if necessary
     if (arr->size >= arr->capacity) {
         int new_capacity = arr->capacity * 2;
         PolyominoPosition *new_data = (PolyominoPosition*)realloc(arr->data,
                                                                    (size_t)new_capacity * sizeof(PolyominoPosition));
-        if (!new_data) return -1;
+        CHECK_ALLOC(new_data, "failed to reallocate PolyominoPositionArray data");
         arr->data = new_data;
         arr->capacity = new_capacity;
     }
@@ -195,8 +203,10 @@ void PolyominoPositionArray_cleanup(PolyominoPositionArray *arr) {
 
 // Initialize a CollageArray
 int CollageArray_init(CollageArray *list, int initial_capacity) {
+    CHECK_NULL(list, "CollageArray pointer is NULL");
+    ASSERT(initial_capacity > 0, "initial_capacity must be positive");
     list->data = (PolyominoPositionArray*)malloc((size_t)initial_capacity * sizeof(PolyominoPositionArray));
-    if (!list->data) return -1;
+    CHECK_ALLOC(list->data, "failed to allocate CollageArray data");
     list->size = 0;
     list->capacity = initial_capacity;
     return 0;
@@ -204,12 +214,14 @@ int CollageArray_init(CollageArray *list, int initial_capacity) {
 
 // Push a PolyominoPositionArray to the list
 int CollageArray_push(CollageArray *list, PolyominoPositionArray arr) {
+    CHECK_NULL(list, "CollageArray pointer is NULL");
+    CHECK_NULL(list->data, "CollageArray data is NULL");
     // Expand if necessary
     if (list->size >= list->capacity) {
         int new_capacity = list->capacity * 2;
         PolyominoPositionArray *new_data = (PolyominoPositionArray*)realloc(list->data,
                                                                              (size_t)new_capacity * sizeof(PolyominoPositionArray));
-        if (!new_data) return -1;
+        CHECK_ALLOC(new_data, "failed to reallocate CollageArray data");
         list->data = new_data;
         list->capacity = new_capacity;
     }
@@ -235,9 +247,11 @@ void CollageArray_cleanup(CollageArray *list) {
 
 // Initialize a UCharPArray
 int UCharPArray_init(UCharPArray *arr, int initial_capacity) {
+    CHECK_NULL(arr, "UCharPArray pointer is NULL");
+    ASSERT(initial_capacity > 0, "initial_capacity must be positive");
     // Allocate array of pointers
     arr->data = (unsigned char**)malloc((size_t)initial_capacity * sizeof(unsigned char*));
-    if (!arr->data) return -1;
+    CHECK_ALLOC(arr->data, "failed to allocate UCharPArray data");
     arr->size = 0;
     arr->capacity = initial_capacity;
     return 0;
@@ -245,12 +259,14 @@ int UCharPArray_init(UCharPArray *arr, int initial_capacity) {
 
 // Push an unsigned char pointer to the array
 int UCharPArray_push(UCharPArray *arr, unsigned char *value) {
+    CHECK_NULL(arr, "UCharPArray pointer is NULL");
+    CHECK_NULL(arr->data, "UCharPArray data is NULL");
     // Expand if necessary
     if (arr->size >= arr->capacity) {
         int new_capacity = arr->capacity * 2;
         unsigned char **new_data = (unsigned char**)realloc(arr->data,
                                                             (size_t)new_capacity * sizeof(unsigned char*));
-        if (!new_data) return -1;
+        CHECK_ALLOC(new_data, "failed to reallocate UCharPArray data");
         arr->data = new_data;
         arr->capacity = new_capacity;
     }
@@ -289,8 +305,10 @@ typedef struct IntArray {
 
 // Initialize an IntArray
 int IntArray_init(IntArray *arr, int initial_capacity) {
+    CHECK_NULL(arr, "IntArray pointer is NULL");
+    ASSERT(initial_capacity > 0, "initial_capacity must be positive");
     arr->data = (int*)malloc((size_t)initial_capacity * sizeof(int));
-    if (!arr->data) return -1;
+    CHECK_ALLOC(arr->data, "failed to allocate IntArray data");
     arr->size = 0;
     arr->capacity = initial_capacity;
     return 0;
@@ -298,11 +316,13 @@ int IntArray_init(IntArray *arr, int initial_capacity) {
 
 // Push an integer to the array
 int IntArray_push(IntArray *arr, int value) {
+    CHECK_NULL(arr, "IntArray pointer is NULL");
+    CHECK_NULL(arr->data, "IntArray data is NULL");
     // Expand if necessary
     if (arr->size >= arr->capacity) {
         int new_capacity = arr->capacity * 2;
         int *new_data = (int*)realloc(arr->data, (size_t)new_capacity * sizeof(int));
-        if (!new_data) return -1;
+        CHECK_ALLOC(new_data, "failed to reallocate IntArray data");
         arr->data = new_data;
         arr->capacity = new_capacity;
     }
@@ -394,8 +414,10 @@ typedef struct PolyominoWithFrameArray {
 
 // Initialize PolyominoWithFrameArray
 int PolyominoWithFrameArray_init(PolyominoWithFrameArray *arr, int initial_capacity) {
+    CHECK_NULL(arr, "PolyominoWithFrameArray pointer is NULL");
+    ASSERT(initial_capacity > 0, "initial_capacity must be positive");
     arr->data = (PolyominoWithFrame*)malloc((size_t)initial_capacity * sizeof(PolyominoWithFrame));
-    if (!arr->data) return -1;
+    CHECK_ALLOC(arr->data, "failed to allocate PolyominoWithFrameArray data");
     arr->size = 0;
     arr->capacity = initial_capacity;
     return 0;
@@ -403,11 +425,13 @@ int PolyominoWithFrameArray_init(PolyominoWithFrameArray *arr, int initial_capac
 
 // Push to PolyominoWithFrameArray
 int PolyominoWithFrameArray_push(PolyominoWithFrameArray *arr, PolyominoWithFrame item) {
+    CHECK_NULL(arr, "PolyominoWithFrameArray pointer is NULL");
+    CHECK_NULL(arr->data, "PolyominoWithFrameArray data is NULL");
     if (arr->size >= arr->capacity) {
         int new_capacity = arr->capacity * 2;
         PolyominoWithFrame *new_data = (PolyominoWithFrame*)realloc(arr->data,
                                                                      (size_t)new_capacity * sizeof(PolyominoWithFrame));
-        if (!new_data) return -1;
+        CHECK_ALLOC(new_data, "failed to reallocate PolyominoWithFrameArray data");
         arr->data = new_data;
         arr->capacity = new_capacity;
     }
@@ -474,11 +498,8 @@ bool try_pack(CoordinateArray *polyomino_coords, unsigned char *occupied_tiles,
                 int py = y + polyomino_coords->data[i].y - min_y;
                 int px = x + polyomino_coords->data[i].x - min_x;
 
-                // // Check bounds
-                // if (!in_bounds(py, px, h, w)) {
-                //     fits = false;
-                //     break;
-                // }
+                // Assert bounds (should never be out of bounds due to loop constraints)
+                ASSERT(in_bounds(py, px, h, w), "polyomino coordinate out of bounds during placement check");
 
                 // Check collision
                 if (get_tile(occupied_tiles, h, w, py, px) != 0) {
@@ -585,137 +606,125 @@ CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int
         int frame = pwf->frame;
         int polyomino_size = shape->size;
 
-        // Build list of collage candidates sorted by empty space (most empty first)
-        // Allocate candidates array (max size = number of collages)
-        CollageCandidate *candidates = NULL;
-        int num_candidates = 0;
-
-        if (collages_pool.size > 0) {
-            candidates = (CollageCandidate*)malloc((size_t)collages_pool.size * sizeof(CollageCandidate));
-            if (candidates) {
-                // Use cached empty space values and filter by polyomino size
-                for (int collage_idx = 0; collage_idx < collages_pool.size; collage_idx++) {
-                    int empty_space = empty_spaces.data[collage_idx];
-
-                    // Only consider collages with enough empty space
-                    if (empty_space >= polyomino_size) {
-                        candidates[num_candidates].index = collage_idx;
-                        candidates[num_candidates].empty_space = empty_space;
-                        num_candidates++;
-                    }
-                }
-
-                // Sort candidates by empty space (descending order)
-                if (num_candidates > 0) {
-                    qsort(candidates, (size_t)num_candidates, sizeof(CollageCandidate),
-                          compare_collage_candidates);
-                }
-            }
-        }
-
         // Try to place the polyomino in existing collages (ordered by most empty space first)
         bool placed = false;
-        for (int cand_idx = 0; cand_idx < num_candidates; cand_idx++) {
-            int collage_idx = candidates[cand_idx].index;
-            unsigned char *collage = collages_pool.data[collage_idx];
 
-            // Attempt to pack the polyomino in this collage
-            Placement placement;
-            if (try_pack(shape, collage, h, w, &placement)) {
-                // Successfully placed - extract position and rotation
-                int py = placement.y;
-                int px = placement.x;
-                int rotation = placement.rotation;
+        if (collages_pool.size > 0) {
+            // Build list of collage candidates sorted by empty space (most empty first)
+            CollageCandidate *candidates = (CollageCandidate*)malloc((size_t)collages_pool.size * sizeof(CollageCandidate));
+            CHECK_ALLOC(candidates, "failed to allocate candidates array for collage selection");
 
-                // Create PolyominoPosition
-                PolyominoPosition pos;
-                pos.oy = oy;
-                pos.ox = ox;
-                pos.py = py;
-                pos.px = px;
-                pos.rotation = rotation;
-                pos.frame = frame;
+            int num_candidates = 0;
 
-                // Copy shape coordinates
-                // TODO: Do not copy
-                CoordinateArray_init(&pos.shape, shape->size);
-                for (int k = 0; k < shape->size; k++) {
-                    CoordinateArray_push(&pos.shape, shape->data[k]);
+            // Use cached empty space values and filter by polyomino size
+            for (int collage_idx = 0; collage_idx < collages_pool.size; collage_idx++) {
+                int empty_space = empty_spaces.data[collage_idx];
+
+                // Only consider collages with enough empty space
+                if (empty_space >= polyomino_size) {
+                    candidates[num_candidates].index = collage_idx;
+                    candidates[num_candidates].empty_space = empty_space;
+                    num_candidates++;
                 }
-
-                // Record the polyomino position in this collage
-                PolyominoPositionArray_push(&result->data[collage_idx], pos);
-
-                // Update the empty space counter for this collage
-                empty_spaces.data[collage_idx] -= polyomino_size;
-
-                placed = true;
-                break;
             }
-        }
 
-        // Free candidates array
-        if (candidates) {
+            // Sort candidates by empty space (descending order)
+            if (num_candidates > 0) {
+                qsort(candidates, (size_t)num_candidates, sizeof(CollageCandidate),
+                      compare_collage_candidates);
+            }
+
+            // Try to place in existing collages
+            for (int cand_idx = 0; cand_idx < num_candidates; cand_idx++) {
+                int collage_idx = candidates[cand_idx].index;
+                unsigned char *collage = collages_pool.data[collage_idx];
+
+                // Attempt to pack the polyomino in this collage
+                Placement placement;
+                if (try_pack(shape, collage, h, w, &placement)) {
+                    // Successfully placed - extract position and rotation
+                    int py = placement.y;
+                    int px = placement.x;
+                    int rotation = placement.rotation;
+
+                    // Create PolyominoPosition
+                    PolyominoPosition pos = {
+                        .oy = oy,
+                        .ox = ox,
+                        .py = py,
+                        .px = px,
+                        .rotation = rotation,
+                        .frame = frame
+                    };
+
+                    // Copy shape coordinates
+                    // TODO: Do not copy
+                    CoordinateArray_init(&pos.shape, shape->size);
+                    for (int k = 0; k < shape->size; k++) {
+                        CoordinateArray_push(&pos.shape, shape->data[k]);
+                    }
+
+                    // Record the polyomino position in this collage
+                    PolyominoPositionArray_push(&result->data[collage_idx], pos);
+
+                    // Update the empty space counter for this collage
+                    empty_spaces.data[collage_idx] -= polyomino_size;
+
+                    placed = true;
+                    break;
+                }
+            }
+
+            // Free candidates array
             free(candidates);
-            candidates = NULL;
         }
 
         if (!placed) {
             // No existing collage could fit this polyomino - create a new collage
             // Create a new empty collage with specified dimensions
             unsigned char *collage = (unsigned char*)calloc((size_t)(h * w), sizeof(unsigned char));
-            if (!collage) {
-                // Cleanup and return partial result
-                break;
-            }
+            CHECK_ALLOC(collage, "failed to allocate new collage for packing");
 
             // Attempt to place the polyomino in the new collage
             Placement placement;
-            if (try_pack(shape, collage, h, w, &placement)) {
-                // Extract position and rotation from successful placement
-                int py = placement.y;
-                int px = placement.x;
-                int rotation = placement.rotation;
+            bool pack_success = try_pack(shape, collage, h, w, &placement);
+            ASSERT(pack_success, "failed to pack polyomino in empty collage - this should never happen");
 
-                // Create PolyominoPosition
-                PolyominoPosition pos;
-                pos.oy = oy;
-                pos.ox = ox;
-                pos.py = py;
-                pos.px = px;
-                pos.rotation = rotation;
-                pos.frame = frame;
+            // Extract position and rotation from successful placement
+            int py = placement.y;
+            int px = placement.x;
+            int rotation = placement.rotation;
 
-                // Copy shape coordinates
-                // TODO: Do not copy
-                CoordinateArray_init(&pos.shape, shape->size);
-                for (int k = 0; k < shape->size; k++) {
-                    CoordinateArray_push(&pos.shape, shape->data[k]);
-                }
+            // Create PolyominoPosition
+            PolyominoPosition pos = {
+                .oy = oy,
+                .ox = ox,
+                .py = py,
+                .px = px,
+                .rotation = rotation,
+                .frame = frame
+            };
 
-                // Create a new positions array for this collage
-                PolyominoPositionArray new_collage_positions;
-                PolyominoPositionArray_init(&new_collage_positions, 64);
-                PolyominoPositionArray_push(&new_collage_positions, pos);
-
-                // Add to collages pool and result
-                if (UCharPArray_push(&collages_pool, collage) != 0) {
-                    // Push failed - cleanup and return partial result
-                    free(collage);
-                    CoordinateArray_cleanup(&pos.shape);
-                    PolyominoPositionArray_cleanup(&new_collage_positions);
-                    break;
-                }
-                CollageArray_push(result, new_collage_positions);
-
-                // Initialize empty space for this new collage
-                // Total space minus the polyomino just placed
-                int initial_empty_space = (h * w) - polyomino_size;
-                IntArray_push(&empty_spaces, initial_empty_space);
-            } else {
-                // Should not happen for empty collage, but cleanup if it does
-                free(collage);
+            // Copy shape coordinates
+            // TODO: Do not copy
+            CoordinateArray_init(&pos.shape, shape->size);
+            for (int k = 0; k < shape->size; k++) {
+                CoordinateArray_push(&pos.shape, shape->data[k]);
             }
+
+            // Create a new positions array for this collage
+            PolyominoPositionArray new_collage_positions;
+            PolyominoPositionArray_init(&new_collage_positions, 64);
+            PolyominoPositionArray_push(&new_collage_positions, pos);
+
+            // Add to collages pool and result
+            UCharPArray_push(&collages_pool, collage);
+            CollageArray_push(result, new_collage_positions);
+
+            // Initialize empty space for this new collage
+            // Total space minus the polyomino just placed
+            int initial_empty_space = (h * w) - polyomino_size;
+            IntArray_push(&empty_spaces, initial_empty_space);
         }
     }
 

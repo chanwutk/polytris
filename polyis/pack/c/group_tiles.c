@@ -37,17 +37,8 @@ static UShortArray _find_connected_tiles(
     unsigned int next_group;
 
     // Initialize arrays
-    if (UShortArray_init(&filled, 16) != 0) {
-        // Return empty UShortArray on initialization failure
-        UShortArray_cleanup(&filled);
-        return filled;
-    }
-
-    if (UShortArray_init(&stack, 16) != 0) {
-        // Initialization failed, cleanup filled and return empty
-        UShortArray_cleanup(&filled);
-        return filled;
-    }
+    UShortArray_init(&filled, 16);
+    UShortArray_init(&stack, 16);
 
     // Push initial coordinates
     UShortArray_push(&stack, start_i);
@@ -59,6 +50,10 @@ static UShortArray _find_connected_tiles(
         j = stack.data[stack.size - 1];
         i = stack.data[stack.size - 2];
         stack.size -= 2;
+
+        if (bitmap[i * w + j] == value && (j != start_j || i != start_i)) {
+            continue;  // Already visited
+        }
 
         // Mark current position as visited and add to result
         bitmap[i * w + j] = value;
@@ -164,18 +159,12 @@ PolyominoArray * group_tiles_(
 
     // Create groups array with unique IDs
     groups = (unsigned int *)calloc((size_t)(h * w), sizeof(unsigned int));
-    if (groups == NULL) {
-        PolyominoArray_cleanup(polyomino_array);
-        free(polyomino_array);
-        return NULL;
-    }
+    CHECK_ALLOC(groups, "failed to allocate groups array for connected component labeling");
     
     // Mask groups by bitmap - only keep group IDs where bitmap has 1s
-    for (i = 0; i < h; i++) {
-        for (j = 0; j < w; j++) {
-            if (bitmap_input[i * w + j]) {
-                groups[i * w + j] = i * w + j + 1;
-            }
+    for (i = 0; i < h * w; i++) {
+        if (bitmap_input[i]) {
+            groups[i] = i + 1;
         }
     }
 
