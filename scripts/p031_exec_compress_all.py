@@ -18,8 +18,8 @@ from polyis.utilities import (
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
-from polyis.pack.group_tiles import free_polyimino_stack, group_tiles
-from polyis.pack.pack_bfd_python import pack_all
+from polyis.pack.python.group_tiles import group_tiles
+from polyis.pack.python.pack_bfd import pack_all
 
 
 def parse_args():
@@ -155,6 +155,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     polyominoes_stacks = []
     timing_data = []
 
+    polyominoes_stacks = np.empty(len(results), dtype=np.uint64)
     for frame_idx, frame_result in enumerate(results):
         step_times = {}
 
@@ -175,7 +176,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
         # Group connected tiles into polyominoes
         step_start = (time.time_ns() / 1e6)
         polyominoes = group_tiles(bitmap_frame, TILEPADDING_MODES[tilepadding])
-        polyominoes_stacks.append(polyominoes)
+        polyominoes_stacks[frame_idx] = polyominoes
         step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
 
         timing_data.append({'step': 'group_tiles', 'frame_idx': frame_idx, 'runtime': format_time(**step_times)})

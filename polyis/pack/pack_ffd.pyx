@@ -89,7 +89,7 @@ cdef class PyPolyominoPosition:
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def pack_all(list polyominoes_stacks, int h, int w):
+def pack_all(list polyominoes_stacks, int h, int w) -> list[list[PyPolyominoPosition]]:
     """Packs all polyominoes from multiple stacks into collages using the C FFD algorithm.
 
     This function takes multiple stacks of polyominoes (memory addresses) and attempts to
@@ -111,15 +111,15 @@ def pack_all(list polyominoes_stacks, int h, int w):
     cdef int num_arrays = len(polyominoes_stacks)
     cdef PolyominoArray **arrays_ptr
     cdef CollageArray *result
-    cdef list collages
-    cdef int i, j, k
+    cdef list[list[PyPolyominoPosition]] collages
+    cdef int i
 
     if num_arrays == 0:
         return []
 
     # Allocate array of pointers to PolyominoArray
     arrays_ptr = <PolyominoArray**>malloc(<size_t>num_arrays * sizeof(PolyominoArray*))
-    if arrays_ptr == NULL:
+    if arrays_ptr == NULL:  # type: ignore
         raise MemoryError("Failed to allocate memory for polyominoes arrays")
 
     # Convert Python list of integers (memory addresses) to array of pointers
@@ -129,7 +129,7 @@ def pack_all(list polyominoes_stacks, int h, int w):
     # Call the C packing function
     result = pack_all_(arrays_ptr, num_arrays, h, w)
 
-    if result == NULL:
+    if result == NULL:  # type: ignore
         raise MemoryError("pack_all_ returned NULL")
 
     # Convert result to Python format
@@ -145,7 +145,7 @@ def pack_all(list polyominoes_stacks, int h, int w):
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-cdef list convert_collage_array_to_python(CollageArray *collage_array):
+cdef list[list[PyPolyominoPosition]] convert_collage_array_to_python(CollageArray *collage_array):
     """Convert a C CollageArray to Python list format.
 
     Parameters:
@@ -154,7 +154,7 @@ cdef list convert_collage_array_to_python(CollageArray *collage_array):
     Returns:
         List of lists of PolyominoPosition objects
     """
-    cdef list result = []
+    cdef list[list[PyPolyominoPosition]] result = []
     cdef list collage_positions
     cdef PolyominoPositionArray *position_array
     cdef PolyominoPosition *pos
@@ -167,7 +167,7 @@ cdef list convert_collage_array_to_python(CollageArray *collage_array):
     # Process each collage
     for i in range(collage_array.size):
         position_array = &collage_array.data[i]
-        collage_positions = []
+        collage_positions: list[PyPolyominoPosition] = []
 
         # Process each polyomino position in this collage
         for j in range(position_array.size):

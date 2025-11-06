@@ -56,7 +56,7 @@ cdef extern from "c/group_tiles.h":
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> int:
+def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
     """
     Group connected tiles into polyominoes using C implementation.
 

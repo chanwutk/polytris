@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
 Polyomino = tuple[Array[*D2, np.uint8], tuple[int, int]]
 
 
-def group_tiles(bitmap_input: Array[*D2, np.uint8], tilepadding_mode: int) -> list[Polyomino]:
+def group_tiles(bitmap_input: Array[*D2, np.uint8], tilepadding_mode: int) -> int:
     """
     Groups connected tiles into polyominoes.
 
@@ -24,10 +24,10 @@ def group_tiles(bitmap_input: Array[*D2, np.uint8], tilepadding_mode: int) -> li
             - 1: Connected padding
             - 2: Disconnected padding
     Returns:
-        list[Polyomino]: A list of polyominoes, where each polyomino is:
+        A memory address of a list of polyominoes, where each polyomino is:
             - mask: a list of [x, y, x, y, ...], where (x, y) are the coordinates of the masked tile
-            - offset: a tuple of (i, j), where i is the horizontal offset
-                      and j is the vertical offset of the mask of its original position
+            - offset_i: the horizontal offset of the mask from its original position
+            - offset_j: the vertical offset of the mask from its original position
     """
     ...
 
