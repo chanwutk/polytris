@@ -15,20 +15,6 @@ typedef struct UShortArray {
     int capacity;
 } UShortArray;
 
-// Polyomino with mask and offset information
-typedef struct Polyomino {
-    UShortArray mask;
-    int offset_i;
-    int offset_j;
-} Polyomino;
-
-// Dynamic array of polyominoes
-typedef struct PolyominoArray {
-    Polyomino *data;
-    int size;
-    int capacity;
-} PolyominoArray;
-
 // Represents a 2D coordinate/point
 typedef struct Coordinate {
     int y;
@@ -41,6 +27,20 @@ typedef struct CoordinateArray {
     int size;
     int capacity;
 } CoordinateArray;
+
+// Polyomino with coordinate-based mask and offset information
+typedef struct Polyomino {
+    CoordinateArray mask;
+    int offset_i;
+    int offset_j;
+} Polyomino;
+
+// Dynamic array of polyominoes
+typedef struct PolyominoArray {
+    Polyomino *data;
+    int size;
+    int capacity;
+} PolyominoArray;
 
 // Represents a placement result
 typedef struct Placement {
