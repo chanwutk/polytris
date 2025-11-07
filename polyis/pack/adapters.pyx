@@ -53,7 +53,7 @@ def c_group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> list:
         - mask is a 2D numpy array representing the polyomino shape
         - offset_i, offset_j are the top-left coordinates of the polyomino
     """
-    cdef int polyomino_stack
+    cdef unsigned long long polyomino_stack
 
     # Call group_tiles function from group_tiles.pyx
     # Cast the returned pointer (as int) back to PolyominoArray*
@@ -64,7 +64,7 @@ def c_group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> list:
         return []
 
     # Convert result to Python format
-    result = format_polyominoes(<PolyominoArray*><unsigned long long>polyomino_stack)
+    result = format_polyominoes(<PolyominoArray*>polyomino_stack)
 
     # Free the array (format_polyominoes already handles cleanup)
     return result

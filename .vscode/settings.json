@@ -7,6 +7,6 @@
         "polyis/pack/*.{c,html,so}": true,
     },
     "files.associations": {
-        "utilities_.h": "c"
+        "utilities.h": "c"
     }
 }
