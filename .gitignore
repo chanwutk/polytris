@@ -36,3 +36,4 @@ det_otif
 **/.pytest_cache/
 
 .cursor/mcp.json
+.claude/.nfs*
