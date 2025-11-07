@@ -8,9 +8,9 @@ cimport numpy as cnp
 from libc.stdlib cimport malloc, calloc, free, qsort
 import cython
 
-from polyis.pack.cython.utilities cimport IntStack, Polyomino, PolyominoStack, IntStack_init, \
-                       IntStack_push, IntStack_cleanup, PolyominoStack_init, \
-                       PolyominoStack_push, PolyominoStack_cleanup
+from polyis.pack.cython.utilities cimport Coordinate, CoordinateStack, Polyomino, PolyominoStack, \
+                       CoordinateStack_init, CoordinateStack_push, CoordinateStack_cleanup, \
+                       PolyominoStack_init, PolyominoStack_push, PolyominoStack_cleanup
 
 ctypedef cnp.uint16_t GROUP_t
 ctypedef cnp.uint8_t MASK_t
@@ -32,7 +32,7 @@ cdef int compare_polyomino_by_mask_length(const void *a, const void *b) noexcept
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-cdef IntStack _find_connected_tiles(
+cdef CoordinateStack _find_connected_tiles(
     unsigned int* bitmap,
     short h,
     short w,
@@ -59,47 +59,49 @@ cdef IntStack _find_connected_tiles(
             - 1: Connected padding
             - 2: Disconnected padding
     Returns:
-        IntStack: IntStack containing coordinate pairs for connected tiles
+        CoordinateStack: CoordinateStack containing coordinates for connected tiles
     """
     cdef short i, j, _i, _j
     cdef int di
-    cdef IntStack filled, stack
+    cdef CoordinateStack filled, stack
+    cdef Coordinate coord
     cdef char[4] DIRECTIONS_I = [-1, 0, 1, 0]  # type: ignore
     cdef char[4] DIRECTIONS_J = [0, -1, 0, 1]  # type: ignore
     cdef unsigned int value = bitmap[start_i * w + start_j]  # type: ignore
     cdef unsigned char curr_occupancy
     cdef unsigned int next_group
-    
-    if IntStack_init(&filled, 16):
-        # Return empty IntStack on initialization failure
-        IntStack_cleanup(&filled)
+
+    if CoordinateStack_init(&filled, 16):
+        # Return empty CoordinateStack on initialization failure
+        CoordinateStack_cleanup(&filled)
         return filled
-    
-    if IntStack_init(&stack, 16):
+
+    if CoordinateStack_init(&stack, 16):
         # Initialization failed, cleanup filled and return empty
-        IntStack_cleanup(&stack)
-        IntStack_cleanup(&filled)
+        CoordinateStack_cleanup(&stack)
+        CoordinateStack_cleanup(&filled)
         return filled
 
     # Push initial coordinates
-    IntStack_push(&stack, start_i)
-    IntStack_push(&stack, start_j)
+    coord.y = start_i
+    coord.x = start_j
+    CoordinateStack_push(&stack, coord)
 
     while stack.top > 0:
-        j = stack.data[stack.top - 1]  # type: ignore
-        i = stack.data[stack.top - 2]  # type: ignore
-        stack.top -= 2
+        # Pop coordinate from stack
+        stack.top -= 1
+        coord = stack.data[stack.top]  # type: ignore
+        i = coord.y
+        j = coord.x
 
         if bitmap[i * w + j] == value and (j != start_j or i != start_i):  # type: ignore
             continue  # Already visited
 
         # Mark current position as visited and add to result
         bitmap[i * w + j] = value  # type: ignore
-        IntStack_push(&filled, i)
-        IntStack_push(&filled, j)
-        # if IntStack_push(&filled, i) or IntStack_push(&filled, j):
-        #     # Memory allocation failed
-        #     break
+        coord.y = i
+        coord.x = j
+        CoordinateStack_push(&filled, coord)
 
         curr_occupancy = bitmap_input[i, j]
         # Check all 4 directions for unvisited connected tiles
@@ -113,17 +115,12 @@ cdef IntStack _find_connected_tiles(
                 # (meaning they haven't been visited yet)
                 if next_group != 0 and next_group != value:  # type: ignore
                     if mode == 0 or mode == 2 or (mode == 1 and (curr_occupancy == 1 or bitmap_input[_i, _j] == 1)):
-                        IntStack_push(&stack, _i)
-                        IntStack_push(&stack, _j)
-                    # If either push failed, we have a memory issue
-                    # if IntStack_push(&stack, _i) or IntStack_push(&stack, _j):
-                    #     # Memory allocation failed
-                    #     IntStack_cleanup(&stack)
-                    #     IntStack_cleanup(&filled)
-                    #     return filled
+                        coord.y = _i
+                        coord.x = _j
+                        CoordinateStack_push(&stack, coord)
 
     # Free the stack's data before returning
-    IntStack_cleanup(&stack)
+    CoordinateStack_cleanup(&stack)
     return filled
 
 
@@ -157,9 +154,9 @@ cdef void _add_padding(cnp.uint8_t[:, :] bitmap,
 def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
     cdef unsigned short h = <unsigned short>bitmap_input.shape[0]
     cdef unsigned short w = <unsigned short>bitmap_input.shape[1]
-    cdef short group_id, min_i, min_j, tile_i, tile_j, num_pairs
-    cdef int i, j, k
-    cdef IntStack connected_tiles
+    cdef short group_id, min_i, min_j
+    cdef int i, j, k, tile_i, tile_j
+    cdef CoordinateStack connected_tiles
     cdef Polyomino polyomino
     cdef PolyominoStack *polyomino_stack
     polyomino_stack = <PolyominoStack*>malloc(<size_t>sizeof(PolyominoStack))
@@ -183,36 +180,35 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
             if group_id == 0 or bitmap_input[(group_id - 1) // w, (group_id - 1) % w] == 0:  # type: ignore
                 continue
 
-            # Find connected tiles - returns IntStack
+            # Find connected tiles - returns CoordinateStack
             connected_tiles = _find_connected_tiles(groups, h, w, <short>i, <short>j,
                                                     bitmap_input, tilepadding_mode)
             if connected_tiles.top == 0:
-                # Clean up empty IntStack
-                IntStack_cleanup(&connected_tiles)
+                # Clean up empty CoordinateStack
+                CoordinateStack_cleanup(&connected_tiles)
                 continue
-            
-            # Find bounding box directly from IntStack data
-            num_pairs = <unsigned short>(connected_tiles.top // 2)
-            
-            # Initialize with first coordinate pair
-            min_i = connected_tiles.data[0]  # type: ignore
-            min_j = connected_tiles.data[1]  # type: ignore
-            
-            # Find min/max through all coordinate pairs
-            for k in range(1, num_pairs):
-                tile_i = connected_tiles.data[k << 1]        
-                tile_j = connected_tiles.data[(k << 1) + 1]  # type: ignore
-                
+
+            # Find bounding box directly from CoordinateStack data
+            # Initialize with first coordinate
+            min_i = connected_tiles.data[0].y  # type: ignore
+            min_j = connected_tiles.data[0].x  # type: ignore
+
+            # Find min coordinates through all coordinates
+            for k in range(1, connected_tiles.top):
+                tile_i = connected_tiles.data[k].y  # type: ignore
+                tile_j = connected_tiles.data[k].x  # type: ignore
+
                 if tile_i < min_i:
                     min_i = tile_i
-                    
+
                 if tile_j < min_j:
                     min_j = tile_j
 
-            for k in range(num_pairs):
-                connected_tiles.data[k << 1] -= min_i        # type: ignore
-                connected_tiles.data[(k << 1) + 1] -= min_j  # type: ignore
-            
+            # Normalize coordinates by subtracting min_i and min_j
+            for k in range(connected_tiles.top):
+                connected_tiles.data[k].y -= min_i  # type: ignore
+                connected_tiles.data[k].x -= min_j  # type: ignore
+
             polyomino.mask = connected_tiles
             polyomino.offset_i = min_i
             polyomino.offset_j = min_j

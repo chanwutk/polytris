@@ -17,8 +17,8 @@ typedef struct ShortArray {
 
 // Represents a 2D coordinate/point
 typedef struct Coordinate {
-    int y;
-    int x;
+    short y;
+    short x;
 } Coordinate;
 
 // Dynamic array of coordinates
@@ -30,7 +30,7 @@ typedef struct CoordinateArray {
 
 // Polyomino with coordinate-based mask and offset information
 typedef struct Polyomino {
-    ShortArray mask;
+    CoordinateArray mask;
     int offset_i;
     int offset_j;
 } Polyomino;

@@ -20,7 +20,7 @@ static int compare_polyomino_by_mask_length(const void *a, const void *b) {
 
 // Helper function to find connected tiles using flood fill algorithm
 // This function modifies the bitmap in-place to mark visited tiles
-static ShortArray _find_connected_tiles(
+static CoordinateArray _find_connected_tiles(
     short *bitmap,
     unsigned char *bitmap_input,
     short h,
@@ -29,27 +29,30 @@ static ShortArray _find_connected_tiles(
     short start_x,
     char mode
 ) {
-    ShortArray filled, stack;
+    CoordinateArray filled, stack;
     short y, x, yy, xx;
     int di;
     short value = bitmap[start_y * w + start_x];
     unsigned char curr_occupancy;
     short next_group;
+    Coordinate coord;
 
     // Initialize arrays
-    ShortArray_init(&filled, 16);
-    ShortArray_init(&stack, 16);
+    CoordinateArray_init(&filled, 16);
+    CoordinateArray_init(&stack, 16);
 
     // Push initial coordinates
-    ShortArray_push(&stack, start_y);
-    ShortArray_push(&stack, start_x);
+    coord.y = start_y;
+    coord.x = start_x;
+    CoordinateArray_push(&stack, coord);
 
     // Flood fill algorithm
     while (stack.size > 0) {
         // Pop coordinates from stack
-        x = stack.data[stack.size - 1];
-        y = stack.data[stack.size - 2];
-        stack.size -= 2;
+        stack.size--;
+        coord = stack.data[stack.size];
+        x = stack.data[stack.size].x;
+        y = stack.data[stack.size].y;
 
         if (bitmap[y * w + x] == value && (x != start_x || y != start_y)) {
             continue;  // Already visited
@@ -57,8 +60,9 @@ static ShortArray _find_connected_tiles(
 
         // Mark current position as visited and add to result
         bitmap[y * w + x] = value;
-        ShortArray_push(&filled, y);
-        ShortArray_push(&filled, x);
+        coord.y = y;
+        coord.x = x;
+        CoordinateArray_push(&filled, coord);
 
         curr_occupancy = bitmap_input[y * w + x];
 
@@ -76,8 +80,9 @@ static ShortArray _find_connected_tiles(
                 if (next_group != 0 && next_group != value) {
                     // Check padding mode conditions
                     if (mode != 1 || curr_occupancy == 1 || bitmap_input[yy * w + xx] == 1) {
-                        ShortArray_push(&stack, yy);
-                        ShortArray_push(&stack, xx);
+                        coord.y = yy;
+                        coord.x = xx;
+                        CoordinateArray_push(&stack, coord);
                     }
                 }
             }
@@ -85,7 +90,7 @@ static ShortArray _find_connected_tiles(
     }
 
     // Free the array's data before returning
-    ShortArray_cleanup(&stack);
+    CoordinateArray_cleanup(&stack);
     return filled;
 }
 
@@ -130,9 +135,9 @@ PolyominoArray * group_tiles_(
     short height,
     char tilepadding_mode
 ) {
-    short group_id, min_i, min_j, tile_i, tile_j, num_pairs;
-    int i, j, k;
-    ShortArray connected_tiles;
+    short group_id, min_i, min_j;
+    int i, j, k, tile_i, tile_j;
+    CoordinateArray connected_tiles;
     Polyomino polyomino;
     PolyominoArray *polyomino_array;
     short *groups;
@@ -150,7 +155,7 @@ PolyominoArray * group_tiles_(
     // Create groups array with unique IDs
     groups = (short *)calloc((size_t)(height * width), sizeof(short));
     CHECK_ALLOC(groups, "failed to allocate groups array for connected component labeling");
-    
+
     // Mask groups by bitmap - only keep group IDs where bitmap has 1s
     for (i = 0; i < height * width; i++) {
         if (bitmap_input[i]) {
@@ -168,42 +173,40 @@ PolyominoArray * group_tiles_(
                 continue;
             }
 
-            // Find connected tiles - returns ShortArray
+            // Find connected tiles - returns CoordinateArray
             connected_tiles = _find_connected_tiles(groups, bitmap_input, height, width,
                                                     i, j, tilepadding_mode);
             if (connected_tiles.size == 0) {
-                // Clean up empty ShortArray
-                ShortArray_cleanup(&connected_tiles);
+                // Clean up empty CoordinateArray
+                CoordinateArray_cleanup(&connected_tiles);
                 continue;
             }
 
-            // Find bounding box directly from ShortArray data
-            num_pairs = (unsigned short)(connected_tiles.size / 2);
-            
-            // Initialize with first coordinate pair
-            min_i = connected_tiles.data[0];
-            min_j = connected_tiles.data[1];
-            
-            // Find min coordinates through all coordinate pairs
-            for (k = 1; k < num_pairs; k++) {
-                tile_i = connected_tiles.data[k * 2];
-                tile_j = connected_tiles.data[(k * 2) + 1];
-                
+            // Find bounding box directly from CoordinateArray data
+            // Initialize with first coordinate
+            min_i = connected_tiles.data[0].y;
+            min_j = connected_tiles.data[0].x;
+
+            // Find min coordinates through all coordinates
+            for (k = 1; k < connected_tiles.size; k++) {
+                tile_i = connected_tiles.data[k].y;
+                tile_j = connected_tiles.data[k].x;
+
                 if (tile_i < min_i) {
                     min_i = tile_i;
                 }
-                
+
                 if (tile_j < min_j) {
                     min_j = tile_j;
                 }
             }
 
             // Normalize coordinates by subtracting min_i and min_j
-            for (k = 0; k < num_pairs; k++) {
-                connected_tiles.data[k * 2] -= min_i;
-                connected_tiles.data[(k * 2) + 1] -= min_j;
+            for (k = 0; k < connected_tiles.size; k++) {
+                connected_tiles.data[k].y -= min_i;
+                connected_tiles.data[k].x -= min_j;
             }
-            
+
             // Create polyomino with normalized mask and offsets
             polyomino.mask = connected_tiles;
             polyomino.offset_i = min_i;

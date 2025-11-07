@@ -30,18 +30,14 @@ typedef struct CollageCandidate {
     int empty_space;  // Amount of empty space in this collage
 } CollageCandidate;
 
-// Convert ShortArray mask to CoordinateArray
-int convert_mask_to_coordinates(ShortArray *mask, CoordinateArray *coords) {
-    // Initialize coordinate array
-    int num_pairs = mask->size / 2;
-    CoordinateArray_init(coords, num_pairs);
+// Copy CoordinateArray mask to another CoordinateArray
+int copy_coordinate_array(CoordinateArray *src, CoordinateArray *dest) {
+    // Initialize destination array with same capacity as source
+    CoordinateArray_init(dest, src->size);
 
-    // Convert coordinate pairs from ShortArray to CoordinateArray
-    for (int i = 0; i < num_pairs; i++) {
-        Coordinate coord;
-        coord.y = (int)mask->data[i * 2];
-        coord.x = (int)mask->data[i * 2 + 1];
-        CoordinateArray_push(coords, coord);
+    // Copy all coordinates from source to destination
+    for (int i = 0; i < src->size; i++) {
+        CoordinateArray_push(dest, src->data[i]);
     }
 
     return 0;
@@ -159,8 +155,8 @@ CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int
             // Create PolyominoWithFrame entry
             PolyominoWithFrame pwf;
 
-            // Convert mask to coordinate array
-            convert_mask_to_coordinates(&polyomino->mask, &pwf.shape);
+            // Copy mask coordinate array
+            copy_coordinate_array(&polyomino->mask, &pwf.shape);
 
             // Store offset and frame information
             pwf.oy = polyomino->offset_i;

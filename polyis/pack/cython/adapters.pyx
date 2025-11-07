@@ -11,8 +11,8 @@ import cython
 
 # Import data structures from the shared module
 from polyis.pack.cython.utilities cimport (
-    IntStack, Polyomino, PolyominoStack,
-    IntStack_init, IntStack_push,
+    Coordinate, CoordinateStack, Polyomino, PolyominoStack,
+    CoordinateStack_init, CoordinateStack_push,
     PolyominoStack_init, PolyominoStack_push,
     PolyominoStack_cleanup
 )
@@ -36,28 +36,27 @@ def format_polyominoes(unsigned long long polyomino_stack_ptr):
     cdef PolyominoStack *polyomino_stack = <PolyominoStack*>polyomino_stack_ptr
     cdef list bins = []
     cdef Polyomino polyomino
-    cdef IntStack connected_tiles
-    cdef short max_i, max_j, tile_i, tile_j, num_pairs
-    cdef short *data
+    cdef CoordinateStack connected_tiles
+    cdef int max_i, max_j, tile_i, tile_j
+    cdef Coordinate *data
 
     for i in range(polyomino_stack.top):
         polyomino = polyomino_stack.mo_data[i]  # type: ignore
         connected_tiles = polyomino.mask
-        num_pairs = <short>(connected_tiles.top // 2)
         data = connected_tiles.data
 
-        # Initialize with first coordinate pair
-        max_i = data[0]  # type: ignore
-        max_j = data[1]  # type: ignore
-        
-        # Find min/max through all coordinate pairs
-        for k in range(1, num_pairs):
-            tile_i = data[k << 1]        # type: ignore
-            tile_j = data[(k << 1) + 1]  # type: ignore
-            
+        # Initialize with first coordinate
+        max_i = data[0].y  # type: ignore
+        max_j = data[0].x  # type: ignore
+
+        # Find max coordinates through all coordinates
+        for k in range(1, connected_tiles.top):
+            tile_i = data[k].y  # type: ignore
+            tile_j = data[k].x  # type: ignore
+
             if tile_i > max_i:
                 max_i = tile_i
-                
+
             if tile_j > max_j:
                 max_j = tile_j
 
@@ -67,10 +66,10 @@ def format_polyominoes(unsigned long long polyomino_stack_ptr):
         mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
         mask_view = mask
 
-        # Fill mask - iterate through IntStack data directly
-        for k in range(num_pairs):
-            tile_i = data[k << 1]        # type: ignore
-            tile_j = data[(k << 1) + 1]  # type: ignore
+        # Fill mask - iterate through CoordinateStack data directly
+        for k in range(connected_tiles.top):
+            tile_i = data[k].y  # type: ignore
+            tile_j = data[k].x  # type: ignore
             mask_view[tile_i, tile_j] = 1
         bins.append((mask, (polyomino.offset_i, polyomino.offset_j)))
     PolyominoStack_cleanup(polyomino_stack)
@@ -96,33 +95,35 @@ def get_polyominoes(list polyominoes):
     # convert polyominoes to PolyominoStack
     cdef PolyominoStack *polyominoes_stack = <PolyominoStack*>malloc(sizeof(PolyominoStack))
     PolyominoStack_init(polyominoes_stack, len(polyominoes))
-    
+
     cdef Polyomino polyomino
-    cdef IntStack mask
+    cdef CoordinateStack mask
+    cdef Coordinate coord
     cdef cnp.uint8_t[:, :] mask_array
     cdef tuple offset
     cdef int i, j, mask_h, mask_w
-    
+
     for input_polyomino in polyominoes:
         mask_array, offset = input_polyomino
         mask_h = mask_array.shape[0]
         mask_w = mask_array.shape[1]
-        
-        # Initialize IntStack for mask coordinates
-        IntStack_init(&mask, 16)
-        
-        # Convert mask array to coordinate pairs
+
+        # Initialize CoordinateStack for mask coordinates
+        CoordinateStack_init(&mask, 16)
+
+        # Convert mask array to coordinates
         for i in range(mask_h):
             for j in range(mask_w):
                 if mask_array[i, j]:  # type: ignore
-                    IntStack_push(&mask, <unsigned short>i)
-                    IntStack_push(&mask, <unsigned short>j)
-        
+                    coord.y = <short>i
+                    coord.x = <short>j
+                    CoordinateStack_push(&mask, coord)
+
         # Create Polyomino structure
         polyomino.mask = mask
         polyomino.offset_i = offset[0]
         polyomino.offset_j = offset[1]
-        
+
         PolyominoStack_push(polyominoes_stack, polyomino)
 
     return <unsigned long long>polyominoes_stack
