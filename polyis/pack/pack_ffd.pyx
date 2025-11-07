@@ -12,13 +12,13 @@ import cython
 
 # Declare C structures from utilities.h
 cdef extern from "c/utilities.h":
-    ctypedef struct UShortArray:
+    ctypedef struct ShortArray:
         unsigned short *data  # type: ignore
         int size
         int capacity
 
     ctypedef struct Polyomino:
-        UShortArray mask
+        ShortArray mask
         int offset_i
         int offset_j
 

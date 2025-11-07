@@ -120,13 +120,13 @@ DEFINE_ARRAY_CLEANUP_POINTERS(TypeName)
 // Structure Definitions
 // ============================================================================
 
-typedef struct UShortArray {
-    unsigned short *data;
+typedef struct ShortArray {
+    short *data;
     int size;
     int capacity;
-} UShortArray;
-// Generate UShortArray functions: init, push, cleanup
-DEFINE_ARRAY(UShortArray, unsigned short)
+} ShortArray;
+// Generate ShortArray functions: init, push, cleanup
+DEFINE_ARRAY(ShortArray, short)
 
 // Represents a 2D coordinate/point
 typedef struct Coordinate {
@@ -145,7 +145,7 @@ DEFINE_ARRAY(CoordinateArray, Coordinate)
 
 // Polyomino structure with coordinate-based mask
 typedef struct Polyomino {
-    UShortArray mask;
+    ShortArray mask;
     int offset_i;
     int offset_j;
 } Polyomino;
@@ -156,7 +156,7 @@ typedef struct PolyominoArray {
     int capacity;
 } PolyominoArray;
 // Generate PolyominoArray with automatic Polyomino cleanup (cleans mask field)
-DEFINE_NESTED_ARRAY_WITH_FIELD(PolyominoArray, Polyomino, UShortArray, mask)
+DEFINE_NESTED_ARRAY_WITH_FIELD(PolyominoArray, Polyomino, ShortArray, mask)
 
 // Represents a placement result
 typedef struct Placement {

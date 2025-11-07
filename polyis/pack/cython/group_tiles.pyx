@@ -34,10 +34,10 @@ cdef int compare_polyomino_by_mask_length(const void *a, const void *b) noexcept
 @cython.nonecheck(False)  # type: ignore
 cdef IntStack _find_connected_tiles(
     unsigned int* bitmap,
-    unsigned short h,
-    unsigned short w,
-    unsigned short start_i,
-    unsigned short start_j,
+    short h,
+    short w,
+    short start_i,
+    short start_j,
     cnp.uint8_t[:, :] bitmap_input,
     int mode
 ) noexcept nogil:
@@ -61,7 +61,7 @@ cdef IntStack _find_connected_tiles(
     Returns:
         IntStack: IntStack containing coordinate pairs for connected tiles
     """
-    cdef unsigned short i, j, _i, _j
+    cdef short i, j, _i, _j
     cdef int di
     cdef IntStack filled, stack
     cdef char[4] DIRECTIONS_I = [-1, 0, 1, 0]  # type: ignore
@@ -136,7 +136,7 @@ cdef void _add_padding(cnp.uint8_t[:, :] bitmap,
     cdef char[4] DIRECTIONS_I = [-1, 0, 1, 0]  # type: ignore
     cdef char[4] DIRECTIONS_J = [0, -1, 0, 1]  # type: ignore
     cdef int i, j, di
-    cdef char _i, _j
+    cdef int _i, _j
 
     for i in range(h):
         for j in range(w):
@@ -157,7 +157,7 @@ cdef void _add_padding(cnp.uint8_t[:, :] bitmap,
 def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
     cdef unsigned short h = <unsigned short>bitmap_input.shape[0]
     cdef unsigned short w = <unsigned short>bitmap_input.shape[1]
-    cdef unsigned short group_id, min_i, min_j, tile_i, tile_j, num_pairs
+    cdef short group_id, min_i, min_j, tile_i, tile_j, num_pairs
     cdef int i, j, k
     cdef IntStack connected_tiles
     cdef Polyomino polyomino
@@ -184,7 +184,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
                 continue
 
             # Find connected tiles - returns IntStack
-            connected_tiles = _find_connected_tiles(groups, h, w, <unsigned short>i, <unsigned short>j,
+            connected_tiles = _find_connected_tiles(groups, h, w, <short>i, <short>j,
                                                     bitmap_input, tilepadding_mode)
             if connected_tiles.top == 0:
                 # Clean up empty IntStack

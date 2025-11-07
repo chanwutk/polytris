@@ -2,9 +2,9 @@
     "files.exclude": {
         "**/__pycache__": true,
         "**/.pytest_cache": true,
-        "polyis/pack/cython/*.{c,html,so}": true,
-        "polyis/pack/c/*.{html,so}": true,
-        "polyis/pack/*.{c,html,so}": true,
+        // "polyis/pack/cython/*.{c,html,so}": true,
+        // "polyis/pack/c/*.{html,so}": true,
+        // "polyis/pack/*.{c,html,so}": true,
     },
     "files.associations": {
         "utilities.h": "c"

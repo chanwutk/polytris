@@ -10,13 +10,13 @@ import cython
 
 # Declare C structures from utilities.h
 cdef extern from "c/utilities.h":
-    ctypedef struct UShortArray:
+    ctypedef struct ShortArray:
         unsigned short *data  # type: ignore
         int size
         int capacity
 
     ctypedef struct Polyomino:
-        UShortArray mask
+        ShortArray mask
         int offset_i
         int offset_j
 
@@ -43,9 +43,9 @@ cdef extern from "c/group_tiles.h":
     # Returns: Pointer to PolyominoArray containing all found polyominoes
     PolyominoArray* group_tiles_(
         unsigned char *bitmap_input,
-        int width,
-        int height,
-        int tilepadding_mode
+        short width,
+        short height,
+        char tilepadding_mode
     )
 
     # Free a polyomino array allocated by group_tiles
@@ -72,9 +72,9 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
     Returns:
         A pointer to a list of polyomino array
     """
-    cdef int height = bitmap_input.shape[0]
-    cdef int width = bitmap_input.shape[1]
-    return <unsigned long long>group_tiles_(&bitmap_input[0, 0], width, height, tilepadding_mode)  # type: ignore
+    cdef short height = <short>bitmap_input.shape[0]
+    cdef short width = <short>bitmap_input.shape[1]
+    return <unsigned long long>group_tiles_(&bitmap_input[0, 0], width, height, <char>tilepadding_mode)  # type: ignore
 
 
 @cython.boundscheck(False)  # type: ignore

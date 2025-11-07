@@ -4,7 +4,7 @@
 # cython: cdivision=True
 
 cdef struct IntStack:
-    unsigned short *data
+    short *data
     int top
     int capacity
 
@@ -19,7 +19,7 @@ cdef struct PolyominoStack:
     int capacity
 
 cdef int IntStack_init(IntStack *stack, int initial_capacity) noexcept nogil
-cdef int IntStack_push(IntStack *stack, unsigned short value) noexcept nogil
+cdef int IntStack_push(IntStack *stack, short value) noexcept nogil
 cdef void IntStack_cleanup(IntStack *stack) noexcept nogil
 
 cdef void Polyomino_cleanup(Polyomino *polyomino) noexcept nogil

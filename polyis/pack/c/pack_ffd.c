@@ -30,13 +30,13 @@ typedef struct CollageCandidate {
     int empty_space;  // Amount of empty space in this collage
 } CollageCandidate;
 
-// Convert UShortArray mask to CoordinateArray
-int convert_mask_to_coordinates(UShortArray *mask, CoordinateArray *coords) {
+// Convert ShortArray mask to CoordinateArray
+int convert_mask_to_coordinates(ShortArray *mask, CoordinateArray *coords) {
     // Initialize coordinate array
     int num_pairs = mask->size / 2;
     CoordinateArray_init(coords, num_pairs);
 
-    // Convert coordinate pairs from UShortArray to CoordinateArray
+    // Convert coordinate pairs from ShortArray to CoordinateArray
     for (int i = 0; i < num_pairs; i++) {
         Coordinate coord;
         coord.y = (int)mask->data[i * 2];

@@ -37,13 +37,13 @@ def format_polyominoes(unsigned long long polyomino_stack_ptr):
     cdef list bins = []
     cdef Polyomino polyomino
     cdef IntStack connected_tiles
-    cdef unsigned short max_i, max_j, tile_i, tile_j, num_pairs
-    cdef unsigned short *data
+    cdef short max_i, max_j, tile_i, tile_j, num_pairs
+    cdef short *data
 
     for i in range(polyomino_stack.top):
         polyomino = polyomino_stack.mo_data[i]  # type: ignore
         connected_tiles = polyomino.mask
-        num_pairs = <unsigned short>(connected_tiles.top // 2)
+        num_pairs = <short>(connected_tiles.top // 2)
         data = connected_tiles.data
 
         # Initialize with first coordinate pair

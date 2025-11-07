@@ -14,13 +14,13 @@ from polyis.pack.group_tiles import group_tiles  # type: ignore[import-untyped]
 
 # Declare C structures from utilities_.h
 cdef extern from "c/utilities.h":
-    ctypedef struct UShortArray:
-        unsigned short *data  # type: ignore
+    ctypedef struct ShortArray:
+        short *data  # type: ignore
         int size
         int capacity
 
     ctypedef struct Polyomino:
-        UShortArray mask
+        ShortArray mask
         int offset_i
         int offset_j
 
@@ -85,9 +85,9 @@ cdef format_polyominoes(PolyominoArray *polyomino_array):
     """
     cdef list bins = []
     cdef Polyomino polyomino
-    cdef UShortArray connected_tiles
-    cdef unsigned short max_i, max_j, tile_i, tile_j, num_pairs
-    cdef unsigned short *data_
+    cdef ShortArray connected_tiles
+    cdef short max_i, max_j, tile_i, tile_j, num_pairs
+    cdef short *data_
     cdef int i, k
     cdef int mask_h, mask_w
     cdef cnp.uint8_t[:, :] mask_view
@@ -96,7 +96,7 @@ cdef format_polyominoes(PolyominoArray *polyomino_array):
     for i in range(polyomino_array.size):
         polyomino = polyomino_array.data[i]  # type: ignore
         connected_tiles = polyomino.mask
-        num_pairs = <unsigned short>(connected_tiles.size // 2)
+        num_pairs = <short>(connected_tiles.size // 2)
         data_ = connected_tiles.data  # type: ignore
 
         # Initialize with first coordinate pair
@@ -120,7 +120,7 @@ cdef format_polyominoes(PolyominoArray *polyomino_array):
         mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
         mask_view = mask  # type: ignore
 
-        # Fill mask - iterate through UShortArray data directly
+        # Fill mask - iterate through ShortArray data directly
         for k in range(num_pairs):
             tile_i = data_[k << 1]        # type: ignore
             tile_j = data_[(k << 1) + 1]  # type: ignore

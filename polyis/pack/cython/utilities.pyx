@@ -9,7 +9,7 @@ import cython
 
 
 cdef struct IntStack:
-    unsigned short *data
+    short *data
     int top
     int capacity
 
@@ -21,11 +21,11 @@ cdef int IntStack_init(IntStack *stack, int initial_capacity) noexcept nogil:
     """Initialize an integer vector with initial capacity"""
     # if not stack:
     #     return -1
-    
-    stack.data = <unsigned short*>malloc(<size_t>initial_capacity * sizeof(unsigned short))
+
+    stack.data = <short*>malloc(<size_t>initial_capacity * sizeof(short))
     # if not stack.data:
     #     return -1
-    
+
     stack.top = 0
     stack.capacity = initial_capacity
     return 0
@@ -34,25 +34,25 @@ cdef int IntStack_init(IntStack *stack, int initial_capacity) noexcept nogil:
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-cdef int IntStack_push(IntStack *stack, unsigned short value) noexcept nogil:
+cdef int IntStack_push(IntStack *stack, short value) noexcept nogil:
     """Push a value onto the vector, expanding if necessary"""
     cdef int new_capacity
-    cdef unsigned short *new_data
-    
+    cdef short *new_data
+
     # if not stack:
     #     return -1
-    
+
     # Check if we need to expand
     if stack.top >= stack.capacity:
         new_capacity = stack.capacity * 2
-        new_data = <unsigned short*>realloc(<void*>stack.data,
-                                            <size_t>new_capacity * sizeof(unsigned short))
+        new_data = <short*>realloc(<void*>stack.data,
+                                            <size_t>new_capacity * sizeof(short))
         # if not new_data:
         #     return -1  # Memory allocation failed
-        
+
         stack.data = new_data
         stack.capacity = new_capacity
-    
+
     # Push the value
     stack.data[stack.top] = value  # type: ignore
     stack.top += 1

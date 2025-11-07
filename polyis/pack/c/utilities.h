@@ -8,12 +8,12 @@
 // Structure Definitions
 // ============================================================================
 
-// Dynamic array of unsigned shorts
-typedef struct UShortArray {
-    unsigned short *data;
+// Dynamic array of shorts
+typedef struct ShortArray {
+    short *data;
     int size;
     int capacity;
-} UShortArray;
+} ShortArray;
 
 // Represents a 2D coordinate/point
 typedef struct Coordinate {
@@ -30,7 +30,7 @@ typedef struct CoordinateArray {
 
 // Polyomino with coordinate-based mask and offset information
 typedef struct Polyomino {
-    UShortArray mask;
+    ShortArray mask;
     int offset_i;
     int offset_j;
 } Polyomino;
@@ -105,17 +105,17 @@ typedef struct PolyominoWithFrameArray {
 } PolyominoWithFrameArray;
 
 // ============================================================================
-// Function Declarations - UShortArray
+// Function Declarations - ShortArray
 // ============================================================================
 
 // Initialize an unsigned short array with initial capacity
-int UShortArray_init(UShortArray *array, int initial_capacity);
+int ShortArray_init(ShortArray *array, int initial_capacity);
 
 // Push a value onto the array, expanding if necessary
-int UShortArray_push(UShortArray *array, unsigned short value);
+int ShortArray_push(ShortArray *array, short value);
 
 // Free the array's data (array itself is on stack memory)
-void UShortArray_cleanup(UShortArray *array);
+void ShortArray_cleanup(ShortArray *array);
 
 // ============================================================================
 // Function Declarations - Polyomino and PolyominoArray
