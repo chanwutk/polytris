@@ -73,6 +73,48 @@ def compare_polyomino_positions(python_result, c_result, verbose=False):
                 print(f"Collage {i}: Number of polyominoes differs: Python={len(py_collage)}, C={len(c_collage)}")
             return False
 
+        # Compare each polyomino within the collage
+        for j, (py_poly, c_poly) in enumerate(zip(py_collage, c_collage)):
+            # Compare scalar fields
+            if py_poly.oy != c_poly.oy:
+                if verbose:
+                    print(f"Collage {i}, Polyomino {j}: oy differs: Python={py_poly.oy}, C={c_poly.oy}")
+                return False
+            if py_poly.ox != c_poly.ox:
+                if verbose:
+                    print(f"Collage {i}, Polyomino {j}: ox differs: Python={py_poly.ox}, C={c_poly.ox}")
+                return False
+            if py_poly.py != c_poly.py:
+                if verbose:
+                    print(f"Collage {i}, Polyomino {j}: py differs: Python={py_poly.py}, C={c_poly.py}")
+                return False
+            if py_poly.px != c_poly.px:
+                if verbose:
+                    print(f"Collage {i}, Polyomino {j}: px differs: Python={py_poly.px}, C={c_poly.px}")
+                return False
+            if py_poly.rotation != c_poly.rotation:
+                if verbose:
+                    print(f"Collage {i}, Polyomino {j}: rotation differs: Python={py_poly.rotation}, C={c_poly.rotation}")
+                return False
+            if py_poly.frame != c_poly.frame:
+                if verbose:
+                    print(f"Collage {i}, Polyomino {j}: frame differs: Python={py_poly.frame}, C={c_poly.frame}")
+                return False
+
+            # Compare shape (numpy array mask)
+            if py_poly.shape.shape != c_poly.shape.shape:
+                if verbose:
+                    print(f"Collage {i}, Polyomino {j}: shape dimensions differ: Python={py_poly.shape.shape}, C={c_poly.shape.shape}")
+                return False
+
+            # Compare shape contents element-wise
+            if not np.array_equal(py_poly.shape, c_poly.shape):
+                if verbose:
+                    print(f"Collage {i}, Polyomino {j}: shape contents differ")
+                    print(f"  Python shape:\n{py_poly.shape}")
+                    print(f"  C shape:\n{c_poly.shape}")
+                return False
+
     if verbose:
         print(f"Results match: {len(python_result)} collages")
         for i, collage in enumerate(python_result):

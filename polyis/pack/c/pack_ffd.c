@@ -157,6 +157,7 @@ CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int
 
             // Copy mask coordinate array
             copy_coordinate_array(&polyomino->mask, &pwf.shape);
+            // pwf.shape = polyomino->mask; // Shallow copy; ensure no modifications later
 
             // Store offset and frame information
             pwf.oy = polyomino->offset_i;

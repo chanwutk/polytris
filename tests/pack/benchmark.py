@@ -253,10 +253,15 @@ def verify_packing_properties(result, h, w):
 
     # Check each collage
     for collage_idx, collage in enumerate(result):
-        # Create occupancy grid for this collage
-        occupancy = np.zeros((h, w), dtype=np.uint8)
+        # Create occupancy grid for this collage (stores polyomino index + 1, 0 = empty)
+        occupancy = np.zeros((h, w), dtype=np.int32)
 
-        for pos in collage:
+        # Track error information for visualization
+        has_error = False
+        overlap_positions = []  # List of (y, x, poly_idx1, poly_idx2)
+        oob_positions = []  # List of (y, x, poly_idx)
+
+        for poly_idx, pos in enumerate(collage):
             # Check bounds
             shape = pos.shape
             ph, pw = shape.shape
@@ -275,18 +280,154 @@ def verify_packing_properties(result, h, w):
                 if y < 0 or y >= h or x < 0 or x >= w:
                     stats['valid'] = False
                     stats['errors'].append(f"Collage {collage_idx}: Position out of bounds at ({y}, {x})")
+                    has_error = True
+                    oob_positions.append((y, x, poly_idx))
                     continue
 
                 # Check overlap
                 if occupancy[y, x] != 0:
                     stats['valid'] = False
-                    stats['errors'].append(f"Collage {collage_idx}: Overlap detected at ({y}, {x})")
+                    overlapping_poly_idx = occupancy[y, x] - 1
+                    stats['errors'].append(f"Collage {collage_idx}: Overlap detected at ({y}, {x}) between polyomino {overlapping_poly_idx} and {poly_idx}")
+                    has_error = True
+                    overlap_positions.append((y, x, overlapping_poly_idx, poly_idx))
 
-                occupancy[y, x] = 1
+                occupancy[y, x] = poly_idx + 1  # Store 1-indexed to distinguish from empty
 
         # Calculate fill percentage
-        fill_pct = np.sum(occupancy) / (h * w) * 100
+        fill_pct = np.sum(occupancy > 0) / (h * w) * 100
         stats['collage_fills'].append(fill_pct)
+
+        # If errors detected, visualize the collage
+        if has_error:
+            print(f"\n{'='*100}")
+            print(f"VERIFICATION ERROR VISUALIZATION - Collage {collage_idx}")
+            print(f"{'='*100}")
+
+            # Print error summary
+            if overlap_positions:
+                print(f"\n⚠️  OVERLAP ERRORS ({len(overlap_positions)} overlaps detected):")
+                for y, x, poly_idx1, poly_idx2 in overlap_positions[:10]:  # Show first 10
+                    print(f"  Position ({y}, {x}): Polyomino {poly_idx1} overlaps with Polyomino {poly_idx2}")
+                if len(overlap_positions) > 10:
+                    print(f"  ... and {len(overlap_positions) - 10} more overlaps")
+
+            if oob_positions:
+                print(f"\n⚠️  OUT-OF-BOUNDS ERRORS ({len(oob_positions)} tiles out of bounds):")
+                for y, x, poly_idx in oob_positions[:10]:  # Show first 10
+                    print(f"  Position ({y}, {x}): Polyomino {poly_idx} is out of bounds (collage size: {h}x{w})")
+                if len(oob_positions) > 10:
+                    print(f"  ... and {len(oob_positions) - 10} more out-of-bounds tiles")
+
+            # Visualize the full collage with polyominoes
+            print(f"\n📊 Full Collage Visualization ({h}x{w}):")
+            print("  Legend: '·' = empty, numbers = polyomino ID, '█' = overlap, 'X' = out-of-bounds")
+
+            # Create error map
+            error_map = np.zeros((h, w), dtype=np.int32)  # 0 = no error, 1 = overlap, 2 = oob
+            for y, x, _, _ in overlap_positions:
+                if 0 <= y < h and 0 <= x < w:
+                    error_map[y, x] = 1
+            for y, x, _ in oob_positions:
+                # Mark in extended visualization if needed
+                pass
+
+            # Print a compact visualization for large collages
+            if h <= 40 and w <= 80:
+                # Print full collage
+                for y in range(h):
+                    row_str = "  "
+                    for x in range(w):
+                        if error_map[y, x] == 1:  # Overlap
+                            row_str += "█"
+                        elif occupancy[y, x] == 0:
+                            row_str += "·"
+                        else:
+                            # Show polyomino ID (use modulo to fit in single char)
+                            poly_id = (occupancy[y, x] - 1) % 36
+                            if poly_id < 10:
+                                row_str += str(poly_id)
+                            else:
+                                row_str += chr(ord('A') + poly_id - 10)
+                    print(row_str)
+            else:
+                print(f"  (Collage too large to visualize completely: {h}x{w})")
+
+            # Print detailed polyomino information for those involved in errors
+            error_poly_indices = set()
+            for _, _, poly_idx1, poly_idx2 in overlap_positions:
+                error_poly_indices.add(poly_idx1)
+                error_poly_indices.add(poly_idx2)
+            for _, _, poly_idx in oob_positions:
+                error_poly_indices.add(poly_idx)
+
+            if error_poly_indices:
+                print(f"\n🔍 Detailed Polyomino Information (polyominoes involved in errors):")
+                for poly_idx in sorted(error_poly_indices)[:10]:  # Show first 10
+                    if poly_idx >= len(collage):
+                        continue
+                    pos = collage[poly_idx]
+                    shape = pos.shape
+                    shape_h, shape_w = shape.shape
+                    tiles = np.sum(shape)
+                    print(f"\n  Polyomino {poly_idx}:")
+                    print(f"    Position: ({pos.py}, {pos.px})")
+                    print(f"    Offset: ({pos.oy}, {pos.ox})")
+                    print(f"    Shape: {shape_h}x{shape_w}, {tiles} tiles")
+                    print(f"    Frame: {pos.frame}")
+                    print(f"    Bitmap representation:")
+
+                    # Show polyomino in its placement context
+                    for local_y in range(shape_h):
+                        row_str = "      "
+                        for local_x in range(shape_w):
+                            global_y = pos.py + local_y
+                            global_x = pos.px + local_x
+
+                            if shape[local_y, local_x] == 1:
+                                # Check if this tile is involved in an error
+                                is_overlap = any(y == global_y and x == global_x for y, x, _, _ in overlap_positions)
+                                is_oob = any(y == global_y and x == global_x for y, x, _ in oob_positions)
+
+                                if is_overlap:
+                                    row_str += "█"  # Overlap
+                                elif is_oob or global_y < 0 or global_y >= h or global_x < 0 or global_x >= w:
+                                    row_str += "X"  # Out of bounds
+                                else:
+                                    row_str += "█"  # Normal tile
+                            else:
+                                row_str += "·"  # Empty
+                        print(row_str)
+
+                    # Show where this polyomino is placed in the collage
+                    print(f"    Placement context (showing area around polyomino):")
+                    min_y = max(0, pos.py - 1)
+                    max_y = min(h, pos.py + shape_h + 1)
+                    min_x = max(0, pos.px - 1)
+                    max_x = min(w, pos.px + shape_w + 1)
+
+                    for y in range(min_y, max_y):
+                        row_str = "      "
+                        for x in range(min_x, max_x):
+                            if error_map[y, x] == 1:  # Overlap
+                                row_str += "█"
+                            elif occupancy[y, x] == 0:
+                                row_str += "·"
+                            elif occupancy[y, x] == poly_idx + 1:
+                                row_str += "#"  # Current polyomino
+                            else:
+                                # Other polyomino
+                                other_id = (occupancy[y, x] - 1) % 36
+                                if other_id < 10:
+                                    row_str += str(other_id)
+                                else:
+                                    row_str += chr(ord('A') + other_id - 10)
+                        print(row_str)
+
+                if len(error_poly_indices) > 10:
+                    print(f"\n  ... and {len(error_poly_indices) - 10} more polyominoes involved in errors")
+
+            print(f"\n{'='*100}\n")
 
     return stats
 
@@ -340,6 +481,7 @@ def benchmark_pack_ffd():
         correctness_mismatches = 0
         python_valid_count = 0
         c_valid_count = 0
+        total_validation_runs = 0  # Track total number of validation runs
 
         # Sample frames (every 10th frame to keep benchmark manageable)
         sample_indices = list(range(0, len(lines), max(1, len(lines) // 50)))
@@ -393,27 +535,48 @@ def benchmark_pack_ffd():
                 if run_idx == 0:
                     # Correctness validation: compare Python vs C results
                     if compare_polyomino_positions(python_result, c_result, verbose=False):
-                        correctness_matches = len(sample_indices)
+                        correctness_matches += 1
                     else:
-                        correctness_mismatches = len(sample_indices)
+                        correctness_mismatches += 1
                         print(f"\n⚠️  Results mismatch detected!")
                         # Print detailed diagnostics about the mismatch
                         print_packing_diagnostics(python_result, c_result, 0, max_polyominoes=1000)
 
                     # Verify packing properties for both implementations
+                    # Track if all collages in the frame are valid
+                    python_frame_valid = True
+                    c_frame_valid = True
+                    python_frame_errors = []
+                    c_frame_errors = []
+
                     for collage_idx, (py_collage, c_collage) in enumerate(zip(python_result, c_result)):
                         python_stats = verify_packing_properties([py_collage], grid_height, grid_width)
                         c_stats = verify_packing_properties([c_collage], grid_height, grid_width)
 
-                        if python_stats['valid']:
-                            python_valid_count += 1
-                        else:
-                            print(f"\n⚠️  Collage {collage_idx}: Python packing invalid: {python_stats['errors'][:3]}")
+                        if not python_stats['valid']:
+                            python_frame_valid = False
+                            python_frame_errors.extend(python_stats['errors'][:3])
 
-                        if c_stats['valid']:
-                            c_valid_count += 1
-                        else:
-                            print(f"\n⚠️  Collage {collage_idx}: C packing invalid: {c_stats['errors'][:3]}")
+                        if not c_stats['valid']:
+                            c_frame_valid = False
+                            c_frame_errors.extend(c_stats['errors'][:3])
+
+                    # Print summary of validation results for this run
+                    if not python_frame_valid or not c_frame_valid:
+                        print(f"\n⚠️  Validation failed for tilepadding={tilepadding}:")
+                        if not python_frame_valid:
+                            print(f"     Python errors: {python_frame_errors[:3]}")
+                        if not c_frame_valid:
+                            print(f"     C errors: {c_frame_errors[:3]}")
+
+                    # Increment frame-level valid counts
+                    if python_frame_valid:
+                        python_valid_count += 1
+                    if c_frame_valid:
+                        c_valid_count += 1
+
+                    # Increment total validation runs counter
+                    total_validation_runs += 1
 
             # Store results
             results_summary[test_name] = {
@@ -424,7 +587,7 @@ def benchmark_pack_ffd():
                     'mismatches': correctness_mismatches,
                     'python_valid': python_valid_count,
                     'c_valid': c_valid_count,
-                    'total': len(sample_indices)
+                    'total': total_validation_runs  # Use actual validation run count
                 }
             }
 
