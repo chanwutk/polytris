@@ -30,7 +30,7 @@ typedef struct CoordinateArray {
 
 // Polyomino with coordinate-based mask and offset information
 typedef struct Polyomino {
-    CoordinateArray mask;
+    UShortArray mask;
     int offset_i;
     int offset_j;
 } Polyomino;

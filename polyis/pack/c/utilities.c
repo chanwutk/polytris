@@ -145,7 +145,7 @@ DEFINE_ARRAY(CoordinateArray, Coordinate)
 
 // Polyomino structure with coordinate-based mask
 typedef struct Polyomino {
-    CoordinateArray mask;
+    UShortArray mask;
     int offset_i;
     int offset_j;
 } Polyomino;
@@ -156,7 +156,7 @@ typedef struct PolyominoArray {
     int capacity;
 } PolyominoArray;
 // Generate PolyominoArray with automatic Polyomino cleanup (cleans mask field)
-DEFINE_NESTED_ARRAY_WITH_FIELD(PolyominoArray, Polyomino, CoordinateArray, mask)
+DEFINE_NESTED_ARRAY_WITH_FIELD(PolyominoArray, Polyomino, UShortArray, mask)
 
 // Represents a placement result
 typedef struct Placement {
