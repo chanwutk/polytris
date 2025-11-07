@@ -89,7 +89,7 @@ cdef class PyPolyominoPosition:
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def pack_all(list polyominoes_stacks, int h, int w) -> list[list[PyPolyominoPosition]]:
+def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w) -> list[list[PyPolyominoPosition]]:
     """Packs all polyominoes from multiple stacks into collages using the C FFD algorithm.
 
     This function takes multiple stacks of polyominoes (memory addresses) and attempts to
@@ -98,17 +98,17 @@ def pack_all(list polyominoes_stacks, int h, int w) -> list[list[PyPolyominoPosi
     the most empty space.
 
     Args:
-        polyominoes_stacks: List of integers, each representing a memory address pointing
-                            to a PolyominoArray from C/Cython code.
-                            Each stack of polyominoes corresponds to a video frame.
+        polyominoes_stacks: cnp.uint64_t[:], a list of memory addresses pointing
+                            to a PolyominoArray from C/Cython code. Each stack of polyominoes
+                            corresponds to a video frame.
         h: Height of each collage in pixels
         w: Width of each collage in pixels
 
     Returns:
         List of lists, where each inner list represents a collage containing
-        PolyominoPosition objects representing all polyominoes packed into that collage.
+        PolyominoPosition objects representing all polyominoes packed into that collage
     """
-    cdef int num_arrays = len(polyominoes_stacks)
+    cdef int num_arrays = polyominoes_stacks.shape[0]
     cdef PolyominoArray **arrays_ptr
     cdef CollageArray *result
     cdef list[list[PyPolyominoPosition]] collages
@@ -122,9 +122,9 @@ def pack_all(list polyominoes_stacks, int h, int w) -> list[list[PyPolyominoPosi
     if arrays_ptr == NULL:  # type: ignore
         raise MemoryError("Failed to allocate memory for polyominoes arrays")
 
-    # Convert Python list of integers (memory addresses) to array of pointers
+    # Convert Python list of memory addresses (numpy.uint64 or int) to array of pointers
     for i in range(num_arrays):
-        arrays_ptr[i] = <PolyominoArray*><unsigned long long>polyominoes_stacks[i]  # type: ignore
+        arrays_ptr[i] = <PolyominoArray*>polyominoes_stacks[i]
 
     # Call the C packing function
     result = pack_all_(arrays_ptr, num_arrays, h, w)

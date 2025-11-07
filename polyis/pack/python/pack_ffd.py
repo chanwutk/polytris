@@ -78,7 +78,7 @@ def try_pack(polyomino: np.ndarray, occupied_tiles: np.ndarray) -> Placement | N
                 return Placement(y, x, 0)
 
 
-def pack_all(polyominoes_stacks: list[int], h: int, w: int) -> list[list[PolyominoPosition]]:
+def pack_all(polyominoes_stacks: np.ndarray, h: int, w: int) -> list[list[PolyominoPosition]]:
     """Packs all polyominoes from multiple stacks into collages using a bin packing algorithm.
 
     This function takes multiple stacks of polyominoes (memory addresses) and attempts to
@@ -102,7 +102,8 @@ def pack_all(polyominoes_stacks: list[int], h: int, w: int) -> list[list[Polyomi
     all_polyominoes: list[tuple[np.ndarray, tuple[int, int]]] = []
 
     # Combine stacks of polyominoes into a single list of polyominoes with frame indices
-    for i, polyominoes_stack in enumerate[int](polyominoes_stacks):
+    for i in range(polyominoes_stacks.shape[0]):
+        polyominoes_stack = polyominoes_stacks[i]
         # Convert the memory address to a list of polyominoes (shapes and offsets)
         polyominoes = format_polyominoes(polyominoes_stack)
         # Record which frame each polyomino belongs to (frame index repeated for each polyomino)

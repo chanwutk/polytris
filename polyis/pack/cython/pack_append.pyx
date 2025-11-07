@@ -17,11 +17,17 @@ from polyis.pack.cython.utilities cimport Coordinate, CoordinateStack, Polyomino
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
 def pack_append(
-    unsigned long long polyominoes,
+    cnp.uint64_t polyominoes,
     int h,
     int w,
     cnp.uint8_t[:, :] occupied_tiles
 ):
+    """
+    Pack polyominoes into occupied tiles.
+    
+    Parameters:
+        polyominoes: Memory address as numpy.uint64
+    """
     cdef int idx, i, j, k, mask_h, mask_w
     cdef tuple offset
     cdef bint valid, placed

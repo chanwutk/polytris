@@ -25,14 +25,20 @@ from polyis.pack.cython.pack_append import pack_append as pack_append_cython
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
 def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> list:
-    cdef unsigned long long polyomino_stack_ptr = <unsigned long long>group_tiles_cython(bitmap_input, tilepadding_mode)
-    return format_polyominoes(polyomino_stack_ptr)
+    # group_tiles_cython returns numpy.uint64, convert to pointer
+    return format_polyominoes(group_tiles_cython(bitmap_input, tilepadding_mode))
 
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def format_polyominoes(unsigned long long polyomino_stack_ptr):
+def format_polyominoes(cnp.uint64_t polyomino_stack_ptr):
+    """
+    Format polyominoes from a memory address.
+    
+    Parameters:
+        polyomino_stack_ptr: Memory address as numpy.uint64
+    """
     cdef PolyominoStack *polyomino_stack = <PolyominoStack*>polyomino_stack_ptr
     cdef list bins = []
     cdef Polyomino polyomino
@@ -81,17 +87,18 @@ def format_polyominoes(unsigned long long polyomino_stack_ptr):
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
 def pack_append(list polyominoes, int h, int w, cnp.uint8_t[:, :] occupied_tiles):
-    cdef unsigned long long polyominoes_stack_ptr = get_polyominoes(polyominoes)
-    positions = pack_append_cython(polyominoes_stack_ptr, h, w, occupied_tiles)
-    PolyominoStack_cleanup(<PolyominoStack*>polyominoes_stack_ptr)
-    free(<void*>polyominoes_stack_ptr)
+    # get_polyominoes returns numpy.uint64, convert to pointer for C function
+    cdef cnp.uint64_t polyominoes_ptr = get_polyominoes(polyominoes)
+    cdef list positions = pack_append_cython(polyominoes_ptr, h, w, occupied_tiles)
+    PolyominoStack_cleanup(<PolyominoStack*>polyominoes_ptr)
+    free(<void*>polyominoes_ptr)
     return format_positions(positions)
 
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def get_polyominoes(list polyominoes):
+def get_polyominoes(list polyominoes) -> np.uint64:
     # convert polyominoes to PolyominoStack
     cdef PolyominoStack *polyominoes_stack = <PolyominoStack*>malloc(sizeof(PolyominoStack))
     PolyominoStack_init(polyominoes_stack, len(polyominoes))
@@ -103,8 +110,8 @@ def get_polyominoes(list polyominoes):
     cdef tuple offset
     cdef int i, j, mask_h, mask_w
 
-    for input_polyomino in polyominoes:
-        mask_array, offset = input_polyomino
+    for i in range(len(polyominoes)):
+        mask_array, offset = polyominoes[i]
         mask_h = mask_array.shape[0]
         mask_w = mask_array.shape[1]
 
@@ -126,7 +133,8 @@ def get_polyominoes(list polyominoes):
 
         PolyominoStack_push(polyominoes_stack, polyomino)
 
-    return <unsigned long long>polyominoes_stack
+    # Convert pointer to numpy.uint64 for safe type handling
+    return np.uint64(<cnp.uint64_t>polyominoes_stack)
 
 
 @cython.boundscheck(False)  # type: ignore

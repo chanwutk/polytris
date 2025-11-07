@@ -10,7 +10,7 @@ if typing.TYPE_CHECKING:
 
 
 def pack_append(
-    polyominoes: int,
+    polyominoes: np.uint64,
     h: int,
     w: int,
     occupied_tiles: Array[*D2, np.uint8]
@@ -22,7 +22,7 @@ def pack_append(
         - occupied_tiles will be reverted to the original state if packing fails.
     
     Args:
-        polyominoes: a pointer to a list of polyominoes, where each polyomino is:
+        polyominoes: Memory address as numpy.uint64
             - mask: a list of [x, y, x, y, ...], where (x, y) are the coordinates of the masked tile
             - offset_i: horizontal offset of the mask from the top left corner of its original position
             - offset_j: vertical offset of the mask from the top left corner of its original position

@@ -40,7 +40,7 @@ cdef extern from "c/utilities.h":
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def c_group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> list:
+def c_group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> list[tuple[np.ndarray, tuple[int, int]]]:
     """
     Group connected tiles into polyominoes using C implementation.
 
@@ -57,37 +57,29 @@ def c_group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> list:
         - mask is a 2D numpy array representing the polyomino shape
         - offset_i, offset_j are the top-left coordinates of the polyomino
     """
-    cdef unsigned long long polyomino_stack
-
     # Call group_tiles function from group_tiles.pyx
-    # Cast the returned pointer (as int) back to PolyominoArray*
+    # group_tiles returns numpy.uint64, pass directly to format_polyominoes
     # Note: group_tiles is defined in group_tiles.pyx, compiled into the same extension
-    polyomino_stack = group_tiles(bitmap_input, tilepadding_mode)  # type: ignore[name-defined]
-
-    if polyomino_stack == 0:
-        return []
-
-    # Convert result to Python format
-    result = format_polyominoes(<PolyominoArray*>polyomino_stack)
-
-    # Free the array (format_polyominoes already handles cleanup)
-    return result
+    return format_polyominoes(<cnp.uint64_t>group_tiles(bitmap_input, tilepadding_mode))
 
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-cdef format_polyominoes(PolyominoArray *polyomino_array):
+cdef list[tuple[np.ndarray, tuple[int, int]]] format_polyominoes(cnp.uint64_t polyomino_array_addr):
     """
     Convert a C PolyominoArray to Python list format.
 
     Parameters:
-        polyomino_array: Pointer to PolyominoArray from C code
+        polyomino_array_addr: Memory address as uint64 pointing to PolyominoArray from C code
 
     Returns:
         List of tuples (mask, (offset_i, offset_j))
     """
-    cdef list bins = []
+    # Convert uint64 address to pointer
+    cdef PolyominoArray *polyomino_array = <PolyominoArray*>polyomino_array_addr
+    
+    cdef list[tuple[np.ndarray, tuple[int, int]]] bins = []
     cdef Polyomino polyomino
     cdef CoordinateArray connected_tiles
     cdef int max_i, max_j, tile_i, tile_j

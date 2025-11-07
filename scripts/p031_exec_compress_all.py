@@ -18,8 +18,8 @@ from polyis.utilities import (
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
-from polyis.pack.python.group_tiles import group_tiles
-from polyis.pack.python.pack_bfd import pack_all
+from polyis.pack.cython.group_tiles import group_tiles
+from polyis.pack.python.pack_ffd import pack_all
 
 
 def parse_args():
@@ -152,7 +152,6 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     grid_width = width // tilesize
 
     # Step 1: Group tiles for all frames to get polyominoes
-    polyominoes_stacks = []
     timing_data = []
 
     polyominoes_stacks = np.empty(len(results), dtype=np.uint64)

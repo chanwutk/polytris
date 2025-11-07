@@ -5,6 +5,7 @@
 # cython: nonecheck=False
 
 cimport numpy as cnp
+import numpy as np
 from libc.stdlib cimport malloc, calloc, free, qsort
 import cython
 
@@ -223,14 +224,22 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
           &compare_polyomino_by_mask_length)
 
     free(<void*>groups)
-    return <unsigned long long>polyomino_stack
+    # Convert pointer to numpy.uint64 for safe type handling
+    return np.uint64(<cnp.uint64_t>polyomino_stack)
 
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def free_polyimino_stack(unsigned long long polyomino_stack_ptr) -> int:
-    cdef int num_polyominoes = (<PolyominoStack*>polyomino_stack_ptr).top
-    PolyominoStack_cleanup(<PolyominoStack*>polyomino_stack_ptr)
-    free(<void*>polyomino_stack_ptr)
+def free_polyimino_stack(cnp.uint64_t polyomino_stack_ptr) -> int:
+    """
+    Free a polyomino stack allocated by group_tiles.
+    
+    Parameters:
+        polyomino_stack_ptr: Memory address as numpy.uint64
+    """
+    cdef PolyominoStack* stack = <PolyominoStack*>polyomino_stack_ptr
+    cdef int num_polyominoes = stack.top
+    PolyominoStack_cleanup(stack)
+    free(<void*>stack)
     return num_polyominoes

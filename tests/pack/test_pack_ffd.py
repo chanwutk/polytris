@@ -191,8 +191,8 @@ class TestPackFFDBasic:
         polyominoes_stacks = []
         h, w = 10, 10
 
-        result_python = pack_all_python(polyominoes_stacks, h, w)
-        result_c = pack_all_c(polyominoes_stacks, h, w)
+        result_python = pack_all_python(np.array(polyominoes_stacks, dtype=np.uint64), h, w)
+        result_c = pack_all_c(np.array(polyominoes_stacks, dtype=np.uint64), h, w)
 
         assert len(result_python) == 0
         assert len(result_c) == 0
@@ -210,7 +210,7 @@ class TestPackFFDBasic:
 
         # Test C implementation only (due to memory corruption bug)
         c_stack = group_tiles_c(bitmap, 0)
-        result_c = pack_all_c([c_stack], h, w)
+        result_c = pack_all_c(np.array([c_stack], dtype=np.uint64), h, w)
 
         # Should create exactly 1 collage with 1 polyomino
         assert len(result_c) == 1
@@ -238,8 +238,8 @@ class TestPackFFDBasic:
 
         h, w = 10, 10
 
-        result_python = pack_all_python([python_stack], h, w)
-        result_c = pack_all_c([c_stack], h, w)
+        result_python = pack_all_python(np.array([python_stack], dtype=np.uint64), h, w)
+        result_c = pack_all_c(np.array([c_stack], dtype=np.uint64), h, w)
 
         # Compare results
         assert compare_polyomino_positions(result_python, result_c, verbose=True)
@@ -260,12 +260,12 @@ class TestPackFFDBasic:
         ]
 
         # Get polyominoes for both implementations for each frame
-        python_stacks = []
-        c_stacks = []
-        for bitmap in bitmaps:
+        python_stacks = np.empty(len(bitmaps), dtype=np.uint64)
+        c_stacks = np.empty(len(bitmaps), dtype=np.uint64)
+        for idx, bitmap in enumerate(bitmaps):
             python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
-            python_stacks.append(python_stack)
-            c_stacks.append(c_stack)
+            python_stacks[idx] = python_stack
+            c_stacks[idx] = c_stack
 
         h, w = 8, 8
 
@@ -298,8 +298,8 @@ class TestPackFFDRandom:
 
         h, w = 50, 50
 
-        result_python = pack_all_python([python_stack], h, w)
-        result_c = pack_all_c([c_stack], h, w)
+        result_python = pack_all_python(np.array([python_stack], dtype=np.uint64), h, w)
+        result_c = pack_all_c(np.array([c_stack], dtype=np.uint64), h, w)
 
         # Compare results
         assert compare_polyomino_positions(result_python, result_c, verbose=False), \
@@ -315,12 +315,12 @@ class TestPackFFDRandom:
         bitmaps = [generate_test_bitmap((15, 15), density=0.3, seed=i*10) for i in range(num_frames)]
 
         # Get polyominoes for both implementations for each frame
-        python_stacks = []
-        c_stacks = []
-        for bitmap in bitmaps:
+        python_stacks = np.empty(num_frames, dtype=np.uint64)
+        c_stacks = np.empty(num_frames, dtype=np.uint64)
+        for idx, bitmap in enumerate(bitmaps):
             python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
-            python_stacks.append(python_stack)
-            c_stacks.append(c_stack)
+            python_stacks[idx] = python_stack
+            c_stacks[idx] = c_stack
 
         h, w = 40, 40
 
@@ -360,12 +360,12 @@ class TestPackFFDPerformance:
                       for i in range(num_frames)]
 
             # Get polyominoes for both implementations for each frame
-            python_stacks = []
-            c_stacks = []
-            for bitmap in bitmaps:
+            python_stacks = np.empty(num_frames, dtype=np.uint64)
+            c_stacks = np.empty(num_frames, dtype=np.uint64)
+            for idx, bitmap in enumerate(bitmaps):
                 python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
-                python_stacks.append(python_stack)
-                c_stacks.append(c_stack)
+                python_stacks[idx] = python_stack
+                c_stacks[idx] = c_stack
 
             h, w = 128, 128
 

@@ -9,7 +9,7 @@ if typing.TYPE_CHECKING:
     from polyis.dtypes import Array, D2
 
 
-def group_tiles(bitmap_input: Array[*D2, np.uint8], tilepadding_mode: int) -> int:
+def group_tiles(bitmap_input: Array[*D2, np.uint8], mode: int = 0) -> np.uint64:
     """
     Groups connected tiles into polyominoes.
 
@@ -17,26 +17,26 @@ def group_tiles(bitmap_input: Array[*D2, np.uint8], tilepadding_mode: int) -> in
         bitmap_input: 2D numpy array memoryview (uint8) representing the grid of tiles,
                      where 1 indicates a tile with detection and 0 indicates no detection
                      must be contiguous
-        tilepadding_mode: The mode of tile padding to apply
+        mode: The mode of tile padding to apply
             - 0: No padding
             - 1: Disconnected padding
             - 2: Connected padding
     Returns:
-        int: A pointer to a polyomino stack
+        numpy.uint64: Memory address (as uint64) pointing to a polyomino stack
     """
     ...
 
 
-def free_polyimino_stack(polyomino_stack_ptr: int) -> int:
+def free_polyomino_array(polyomino_array_addr: np.uint64) -> int:
     """
     Cleans up a polyomino stack.
 
     This function frees the memory allocated for the polyomino stack.
     
     Args:
-        polyomino_stack_ptr: A pointer to a polyomino stack
+        polyomino_array_addr: Memory address as numpy.uint64, int, or compatible type
 
     Returns:
-        int: The number of polyominoes in the stack
+        int: The number of polyominoes in the array
     """
     ...

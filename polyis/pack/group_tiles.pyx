@@ -5,6 +5,7 @@
 # cython: nonecheck=False
 
 cimport numpy as cnp
+import numpy as np
 import cython
 
 
@@ -56,7 +57,7 @@ cdef extern from "c/group_tiles.h":
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
+def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> np.uint64:
     """
     Group connected tiles into polyominoes using C implementation.
 
@@ -70,18 +71,23 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode):
                          - 2: Connected padding
 
     Returns:
-        A pointer to a list of polyomino array
+        numpy.uint64: Memory address (as uint64) pointing to a PolyominoArray
     """
     cdef short height = <short>bitmap_input.shape[0]
     cdef short width = <short>bitmap_input.shape[1]
-    return <unsigned long long>group_tiles_(&bitmap_input[0, 0], width, height, <char>tilepadding_mode)  # type: ignore
+    cdef PolyominoArray* result_ptr = group_tiles_(&bitmap_input[0, 0], width, height, <char>tilepadding_mode)
+    # Convert pointer to numpy.uint64 for safe type handling
+    return np.uint64(<cnp.uint64_t>result_ptr)
 
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def free_polyomino_array(unsigned long long polyomino_array) -> int:
+def free_polyomino_array(cnp.uint64_t polyomino_array_addr) -> int:
     """
     Free a polyomino array allocated by group_tiles.
+    
+    Parameters:
+        polyomino_array: Memory address as numpy.uint64, int, or compatible type
     """
-    return free_polyomino_array_(<PolyominoArray*>polyomino_array)
+    return free_polyomino_array_(<PolyominoArray*>polyomino_array_addr)

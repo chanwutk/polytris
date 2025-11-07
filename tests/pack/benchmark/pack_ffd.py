@@ -7,7 +7,7 @@ import time
 import numpy as np
 import os
 import json
-import tqdm
+from rich.progress import track
 import statistics
 
 
@@ -373,7 +373,7 @@ def benchmark_pack_ffd():
 
         # Step 1: Collect all bitmaps from all frames first
         all_bitmaps = []
-        for frame_idx in tqdm.tqdm(sample_indices, desc=f"  Loading bitmaps for {test_name}"):
+        for frame_idx in track(sample_indices, description=f"  Loading bitmaps for {test_name}"):
             frame_result = json.loads(lines[frame_idx])
 
             # Parse classification hex to bitmap
@@ -389,7 +389,7 @@ def benchmark_pack_ffd():
         # Step 2: Run the full pipeline multiple times to measure performance
         for tilepadding in [0, 1, 2]:
             num_runs = 20
-            for run_idx in tqdm.tqdm(range(num_runs), desc=f"  Benchmarking {test_name}"):
+            for run_idx in track(range(num_runs), description=f"  Benchmarking {test_name}"):
                 # Python implementation: group_tiles + pack_all
                 start = time.perf_counter()
                 # Group all bitmaps
