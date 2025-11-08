@@ -28,7 +28,7 @@ class PyPolyominoPosition:
 
 
 def pack_all(
-    polyominoes_stacks: cnp.uint64_t[:],
+    polyominoes_stacks: np.ndarray,
     h: int,
     w: int
 ) -> list[list[PyPolyominoPosition]]:
@@ -40,7 +40,7 @@ def pack_all(
     the most empty space.
 
     Args:
-        polyominoes_stacks: cnp.uint64_t[:], a list of memory addresses pointing
+        polyominoes_stacks: np.ndarray, a list of memory addresses pointing
                             to a PolyominoArray from C/Cython code. Each stack of polyominoes
                             corresponds to a video frame.
         h: Height of each collage in pixels
@@ -48,4 +48,5 @@ def pack_all(
     Returns:
         A list of lists, where each inner list represents a collage containing
         PolyominoPosition objects representing all polyominoes packed into that collage
-    """ ...
+    """
+    ...

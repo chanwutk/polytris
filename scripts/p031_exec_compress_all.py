@@ -10,6 +10,7 @@ import shutil
 import time
 import multiprocessing as mp
 from functools import partial
+import torch
 
 from polyis import dtypes
 from polyis.utilities import (
@@ -422,7 +423,7 @@ def main(args):
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
+    ProgressBar(num_workers=torch.cuda.device_count(), num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
     print("All tasks completed!")
 
 

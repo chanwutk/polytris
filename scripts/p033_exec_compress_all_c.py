@@ -3,7 +3,7 @@
 import argparse
 import json
 import os
-from typing import Callable, Literal
+from typing import Callable, Literal, NamedTuple
 import cv2
 import numpy as np
 import shutil
@@ -20,8 +20,18 @@ from polyis.utilities import (
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
-from polyis.pack.cython.group_tiles import group_tiles
-from polyis.pack.python.pack_bfd import pack_all
+from polyis.pack.group_tiles import group_tiles
+from polyis.pack.pack_ffd import pack_all
+
+
+class PolyominoPosition(NamedTuple):
+    oy: int
+    ox: int
+    py: int
+    px: int
+    rotation: int
+    frame: int
+    shape: np.ndarray
 
 
 def parse_args():
@@ -86,7 +96,7 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap, offset
     step_times['save_mapping_files'] = (time.time_ns() / 1e6) - step_start
 
 
-PolyominoPosition = tuple[int, int, int, int, int, int, np.ndarray]
+# PolyominoPosition = tuple[int, int, int, int, int, int, np.ndarray]
 Collage = list[PolyominoPosition]
 
 
@@ -116,7 +126,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
                                           tilesize, classifier, execution_dir=True)
     
     # Create output directory for compression results
-    output_dir = os.path.join(cache_video_dir, '032_compressed_frames', f'{classifier}_{tilesize}_{tilepadding}')
+    output_dir = os.path.join(cache_video_dir, '033_compressed_frames', f'{classifier}_{tilesize}_{tilepadding}')
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -154,9 +164,9 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     grid_width = width // tilesize
 
     # Step 1: Group tiles for all frames to get polyominoes
-    polyominoes_stacks = np.empty((len(results),), dtype=np.uint64)
     timing_data = []
 
+    polyominoes_stacks = np.empty(len(results), dtype=np.uint64)
     for frame_idx, frame_result in enumerate(results):
         step_times = {}
 
@@ -221,18 +231,23 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
 
         # Pack this batch
         batch_start = (time.time_ns() / 1e6)
-        batch_collages = pack_all(batch_polyominoes, grid_height, grid_width)
+        batch_collages_ = pack_all(batch_polyominoes, grid_height, grid_width)
         batch_pack_time = (time.time_ns() / 1e6) - batch_start
         total_pack_time += batch_pack_time
 
         # Adjust frame indices in batch_collages to be relative to the full video
         # pack_all returns frame indices relative to the batch (0-indexed within batch)
         # We need to offset them by start_idx to get the actual frame index
-        for collage_idx, collage in enumerate(batch_collages):
-            batch_collages[collage_idx] = [
-                poly_pos._replace(frame=poly_pos.frame + start_idx)
+        batch_collages: list[list[PolyominoPosition]] = []
+        for collage in batch_collages_:
+            batch_collages.append([
+                PolyominoPosition(oy=poly_pos.oy, ox=poly_pos.ox,
+                                  py=poly_pos.py, px=poly_pos.px,
+                                  rotation=poly_pos.rotation,
+                                  frame=poly_pos.frame + start_idx,
+                                  shape=poly_pos.shape)
                 for poly_pos in collage
-            ]
+            ])
 
         # Merge batch collages into the overall collages list
         collages.extend(batch_collages)
@@ -376,9 +391,9 @@ def main(args):
           {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tilesize}/score/
         - Looks for score.jsonl files
         - Videos are read from {DATASETS_DIR}/{dataset}/
-        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/images/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/index_maps/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/offset_lookups/
+        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/033_compressed_frames/{classifier}_{tilesize}/images/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/033_compressed_frames/{classifier}_{tilesize}/index_maps/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/033_compressed_frames/{classifier}_{tilesize}/offset_lookups/
         - When tilesize is 'all', all tile sizes (30, 60, 120) are processed
         - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST are processed
         - If no classification results are found for a video, that video is skipped with a warning
@@ -404,7 +419,7 @@ def main(args):
                 video_file_path = os.path.join(videoset_dir, video_file)
                 cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-                compressed_frames_base_dir = os.path.join(cache_video_dir, '032_compressed_frames')
+                compressed_frames_base_dir = os.path.join(cache_video_dir, '033_compressed_frames')
                 if args.clear and os.path.exists(compressed_frames_base_dir):
                     shutil.rmtree(compressed_frames_base_dir)
                     print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")
@@ -424,8 +439,7 @@ def main(args):
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    num_processes = torch.cuda.device_count()
-    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
+    ProgressBar(num_workers=torch.cuda.device_count(), num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
     print("All tasks completed!")
 
 
