@@ -367,7 +367,7 @@ def benchmark_pack_ffd():
         total_validation_runs = 0  # Track total number of validation runs
 
         # Sample frames (every 10th frame to keep benchmark manageable)
-        sample_indices = list(range(0, len(lines), max(1, len(lines) // 50)))
+        sample_indices = list(range(0, len(lines), max(1, len(lines) // 200)))
 
         print(f"  Sampling {len(sample_indices)} frames out of {len(lines)} total frames")
 
@@ -393,10 +393,10 @@ def benchmark_pack_ffd():
                 # Python implementation: group_tiles + pack_all
                 start = time.perf_counter()
                 # Group all bitmaps
-                all_polyominoes_python = []
-                for bitmap in all_bitmaps:
+                all_polyominoes_python = np.empty((len(all_bitmaps),), dtype=np.uint64)
+                for i, bitmap in enumerate(all_bitmaps):
                     polyominoes = group_tiles_cython(bitmap.copy(), tilepadding)
-                    all_polyominoes_python.append(polyominoes)
+                    all_polyominoes_python[i] = polyominoes
                 # Pack all polyominoes
                 python_result = python_pack_all(all_polyominoes_python, grid_height, grid_width)
                 python_time = (time.perf_counter() - start) * 1e6  # Convert to microseconds
@@ -405,10 +405,10 @@ def benchmark_pack_ffd():
                 # C implementation: group_tiles + pack_all
                 start = time.perf_counter()
                 # Group all bitmaps
-                all_polyominoes_c = []
-                for bitmap in all_bitmaps:
+                all_polyominoes_c = np.empty((len(all_bitmaps),), dtype=np.uint64)
+                for i, bitmap in enumerate(all_bitmaps):
                     polyominoes = group_tiles_cython(bitmap.copy(), tilepadding)
-                    all_polyominoes_c.append(polyominoes)
+                    all_polyominoes_c[i] = polyominoes
                 # Pack all polyominoes
                 c_result = c_pack_all(all_polyominoes_c, grid_height, grid_width)
                 c_time = (time.perf_counter() - start) * 1e6  # Convert to microseconds

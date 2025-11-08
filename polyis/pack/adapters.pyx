@@ -7,6 +7,7 @@
 import numpy as np
 cimport numpy as cnp
 from libc.stdlib cimport free
+from libc.stdint cimport int16_t
 import cython
 
 from polyis.pack.group_tiles import group_tiles  # type: ignore[import-untyped]
@@ -15,8 +16,8 @@ from polyis.pack.group_tiles import group_tiles  # type: ignore[import-untyped]
 # Declare C structures from utilities_.h
 cdef extern from "c/utilities.h":
     ctypedef struct Coordinate:
-        short y
-        short x
+        int16_t y
+        int16_t x
 
     ctypedef struct CoordinateArray:
         Coordinate *data  # type: ignore
@@ -25,8 +26,8 @@ cdef extern from "c/utilities.h":
 
     ctypedef struct Polyomino:
         CoordinateArray mask
-        int offset_i
-        int offset_j
+        int offset_y
+        int offset_x
 
     ctypedef struct PolyominoArray:
         Polyomino *data
@@ -121,8 +122,8 @@ cdef list[tuple[np.ndarray, tuple[int, int]]] format_polyominoes(cnp.uint64_t po
             tile_j = data_[k].x  # type: ignore
             mask_view[tile_i, tile_j] = 1  # type: ignore
 
-        # Append as tuple: (mask, (offset_i, offset_j))
-        bins.append((mask, (polyomino.offset_i, polyomino.offset_j)))
+        # Append as tuple: (mask, (offset_y, offset_x))
+        bins.append((mask, (polyomino.offset_y, polyomino.offset_x)))
 
     # Clean up the polyomino array
     PolyominoArray_cleanup(polyomino_array)

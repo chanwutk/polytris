@@ -7,35 +7,28 @@
 import numpy as np
 cimport numpy as cnp
 from libc.stdlib cimport malloc, free
+from libc.stdint cimport int16_t
 import cython
 
 
 # Declare C structures from utilities.h
 cdef extern from "c/utilities.h":
-    ctypedef struct ShortArray:
-        unsigned short *data  # type: ignore
+    ctypedef struct Coordinate:
+        int16_t y
+        int16_t x
+
+    ctypedef struct CoordinateArray:
+        Coordinate *data  # type: ignore
         int size
         int capacity
 
     ctypedef struct Polyomino:
-        ShortArray mask
-        int offset_i
-        int offset_j
+        CoordinateArray mask
+        int offset_y
+        int offset_x
 
     ctypedef struct PolyominoArray:
         Polyomino *data  # type: ignore
-        int size
-        int capacity
-
-
-# Declare C structures from pack_ffd.h
-cdef extern from "c/pack_ffd.h":
-    ctypedef struct Coordinate:
-        int y
-        int x
-
-    ctypedef struct CoordinateArray:
-        Coordinate *data  # type: ignore
         int size
         int capacity
 
@@ -58,6 +51,8 @@ cdef extern from "c/pack_ffd.h":
         int size
         int capacity
 
+# Declare C structures from pack_ffd.h
+cdef extern from "c/pack_ffd.h":
     # Declare the main packing function
     CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w)
 
@@ -69,21 +64,20 @@ cdef extern from "c/pack_ffd.h":
 # This is a regular Python class, not a cdef class
 cdef class PyPolyominoPosition:
     """Represents the position and orientation of a polyomino in a collage."""
-    cdef public int oy, ox, py, px, rotation, frame
+    cdef public int oy, ox, py, px, frame
     cdef public object shape
 
-    def __init__(self, int oy, int ox, int py, int px, int rotation, int frame, object shape):
+    def __init__(self, int oy, int ox, int py, int px, int frame, object shape):
         self.oy = oy
         self.ox = ox
         self.py = py
         self.px = px
-        self.rotation = rotation
         self.frame = frame
         self.shape = shape
 
     def __repr__(self):
         shape_info = f"shape={self.shape}"
-        return f"PolyominoPosition(oy={self.oy}, ox={self.ox}, py={self.py}, px={self.px}, rotation={self.rotation}, frame={self.frame}, {shape_info})"
+        return f"PolyominoPosition(oy={self.oy}, ox={self.ox}, py={self.py}, px={self.px}, frame={self.frame}, {shape_info})"
 
 
 @cython.boundscheck(False)  # type: ignore
@@ -124,7 +118,7 @@ def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w) -> list[list[PyPo
 
     # Convert Python list of memory addresses (numpy.uint64 or int) to array of pointers
     for i in range(num_arrays):
-        arrays_ptr[i] = <PolyominoArray*>polyominoes_stacks[i]
+        arrays_ptr[i] = <PolyominoArray*>polyominoes_stacks[i]  # type: ignore
 
     # Call the C packing function
     result = pack_all_(arrays_ptr, num_arrays, h, w)
@@ -209,7 +203,6 @@ cdef list[list[PyPolyominoPosition]] convert_collage_array_to_python(CollageArra
                 ox=pos.ox,
                 py=pos.py,
                 px=pos.px,
-                rotation=pos.rotation,
                 frame=pos.frame,
                 shape=mask
             )

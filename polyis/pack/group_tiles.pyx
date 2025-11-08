@@ -7,19 +7,24 @@
 cimport numpy as cnp
 import numpy as np
 import cython
+from libc.stdint cimport int16_t, int8_t, uint8_t
 
 
 # Declare C structures from utilities.h
 cdef extern from "c/utilities.h":
-    ctypedef struct ShortArray:
-        unsigned short *data  # type: ignore
+    ctypedef struct Coordinate:
+        int16_t y
+        int16_t x
+
+    ctypedef struct CoordinateArray:
+        Coordinate *data  # type: ignore
         int size
         int capacity
 
     ctypedef struct Polyomino:
-        ShortArray mask
-        int offset_i
-        int offset_j
+        CoordinateArray mask
+        int offset_y
+        int offset_x
 
     ctypedef struct PolyominoArray:
         Polyomino *data
@@ -43,10 +48,10 @@ cdef extern from "c/group_tiles.h":
     #                   - 2: Connected padding
     # Returns: Pointer to PolyominoArray containing all found polyominoes
     PolyominoArray* group_tiles_(
-        unsigned char *bitmap_input,
-        short width,
-        short height,
-        char tilepadding_mode
+        uint8_t *bitmap_input,
+        int16_t width,
+        int16_t height,
+        int8_t tilepadding_mode
     )
 
     # Free a polyomino array allocated by group_tiles
@@ -57,7 +62,7 @@ cdef extern from "c/group_tiles.h":
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> np.uint64:
+def group_tiles(cnp.uint8_t[:, :] bitmap_input, int8_t mode) -> np.uint64:
     """
     Group connected tiles into polyominoes using C implementation.
 
@@ -65,7 +70,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> np.uint
         bitmap_input: 2D numpy array of uint8 representing the tile grid
                      where 1 indicates a tile with detection and 0 indicates no detection
                      must be contiguous
-        tilepadding_mode: The mode of tile padding to apply
+        mode: The mode of tile padding to apply
                          - 0: No padding
                          - 1: Disconnected padding
                          - 2: Connected padding
@@ -73,9 +78,9 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> np.uint
     Returns:
         numpy.uint64: Memory address (as uint64) pointing to a PolyominoArray
     """
-    cdef short height = <short>bitmap_input.shape[0]
-    cdef short width = <short>bitmap_input.shape[1]
-    cdef PolyominoArray* result_ptr = group_tiles_(&bitmap_input[0, 0], width, height, <char>tilepadding_mode)
+    cdef int16_t height = <int16_t>bitmap_input.shape[0]
+    cdef int16_t width = <int16_t>bitmap_input.shape[1]
+    cdef PolyominoArray* result_ptr = group_tiles_(&bitmap_input[0, 0], width, height, <int8_t>mode)
     # Convert pointer to numpy.uint64 for safe type handling
     return np.uint64(<cnp.uint64_t>result_ptr)
 

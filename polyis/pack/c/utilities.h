@@ -3,22 +3,16 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // ============================================================================
 // Structure Definitions
 // ============================================================================
 
-// Dynamic array of shorts
-typedef struct ShortArray {
-    short *data;
-    int size;
-    int capacity;
-} ShortArray;
-
 // Represents a 2D coordinate/point
 typedef struct Coordinate {
-    short y;
-    short x;
+    int16_t y;
+    int16_t x;
 } Coordinate;
 
 // Dynamic array of coordinates
@@ -31,8 +25,8 @@ typedef struct CoordinateArray {
 // Polyomino with coordinate-based mask and offset information
 typedef struct Polyomino {
     CoordinateArray mask;
-    int offset_i;
-    int offset_j;
+    int16_t offset_y;
+    int16_t offset_x;
 } Polyomino;
 
 // Dynamic array of polyominoes
@@ -44,19 +38,17 @@ typedef struct PolyominoArray {
 
 // Represents a placement result
 typedef struct Placement {
-    int y;
-    int x;
-    int rotation;
+    int16_t y;
+    int16_t x;
 } Placement;
 
 // Represents a polyomino's position in a collage
 typedef struct PolyominoPosition {
-    int oy;              // Original y-offset from video frame
-    int ox;              // Original x-offset from video frame
-    int py;              // Packed y-position in collage
-    int px;              // Packed x-position in collage
-    int rotation;        // Rotation applied (0-3)
-    int frame;           // Frame index
+    int16_t oy;              // Original y-offset from video frame
+    int16_t ox;              // Original x-offset from video frame
+    int16_t py;              // Packed y-position in collage
+    int16_t px;              // Packed x-position in collage
+    int32_t frame;           // Frame index
     CoordinateArray shape;  // Shape as coordinate array
 } PolyominoPosition;
 
@@ -74,12 +66,12 @@ typedef struct CollageArray {
     int capacity;
 } CollageArray;
 
-// Dynamic array of unsigned char pointers (for collage occupied tiles pool)
-typedef struct UCharPArray {
-    unsigned char **data;  // Array of unsigned char pointers
-    int size;              // Current number of elements
-    int capacity;          // Allocated capacity
-} UCharPArray;
+// Dynamic array of uint8_t pointers (for collage occupied tiles pool)
+typedef struct U8PArray {
+    uint8_t **data;  // Array of uint8_t pointers
+    int size;        // Current number of elements
+    int capacity;    // Allocated capacity
+} U8PArray;
 
 // Dynamic array of integers (for empty space tracking)
 typedef struct IntArray {
@@ -103,19 +95,6 @@ typedef struct PolyominoWithFrameArray {
     int size;
     int capacity;
 } PolyominoWithFrameArray;
-
-// ============================================================================
-// Function Declarations - ShortArray
-// ============================================================================
-
-// Initialize an unsigned short array with initial capacity
-int ShortArray_init(ShortArray *array, int initial_capacity);
-
-// Push a value onto the array, expanding if necessary
-int ShortArray_push(ShortArray *array, short value);
-
-// Free the array's data (array itself is on stack memory)
-void ShortArray_cleanup(ShortArray *array);
 
 // ============================================================================
 // Function Declarations - Polyomino and PolyominoArray
@@ -173,17 +152,17 @@ int CollageArray_push(CollageArray *list, PolyominoPositionArray arr);
 void CollageArray_cleanup(CollageArray *list);
 
 // ============================================================================
-// Function Declarations - UCharPArray
+// Function Declarations - U8PArray
 // ============================================================================
 
-// Initialize a UCharPArray
-int UCharPArray_init(UCharPArray *arr, int initial_capacity);
+// Initialize a U8PArray
+int U8PArray_init(U8PArray *arr, int initial_capacity);
 
-// Push an unsigned char pointer to the array
-int UCharPArray_push(UCharPArray *arr, unsigned char *value);
+// Push an uint8_t pointer to the array
+int U8PArray_push(U8PArray *arr, uint8_t *value);
 
-// Cleanup UCharPArray (two-level cleanup: frees stored pointers then array)
-void UCharPArray_cleanup(UCharPArray *arr);
+// Cleanup U8PArray (two-level cleanup: frees stored pointers then array)
+void U8PArray_cleanup(U8PArray *arr);
 
 // ============================================================================
 // Function Declarations - IntArray

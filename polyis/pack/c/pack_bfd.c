@@ -138,11 +138,11 @@ typedef struct CollageMetadataArray {
 } CollageMetadataArray;
 
 // Dynamic array of unsigned char pointers (for collage occupied tiles pool)
-typedef struct UCharPArray {
+typedef struct U8PArray {
     unsigned char **data;  // Array of unsigned char pointers
     int size;              // Current number of elements
     int capacity;          // Allocated capacity
-} UCharPArray;
+} U8PArray;
 
 // ============================================================================
 // Memory Management Functions for Dynamic Arrays
@@ -383,8 +383,8 @@ void CollageMetadataArray_cleanup(CollageMetadataArray *arr) {
     arr->capacity = 0;
 }
 
-// Initialize a UCharPArray
-int UCharPArray_init(UCharPArray *arr, int initial_capacity) {
+// Initialize a U8PArray
+int U8PArray_init(U8PArray *arr, int initial_capacity) {
     // Allocate array of pointers
     arr->data = (unsigned char**)malloc((size_t)initial_capacity * sizeof(unsigned char*));
     if (!arr->data) return -1;
@@ -394,7 +394,7 @@ int UCharPArray_init(UCharPArray *arr, int initial_capacity) {
 }
 
 // Push an unsigned char pointer to the array
-int UCharPArray_push(UCharPArray *arr, unsigned char *value) {
+int U8PArray_push(U8PArray *arr, unsigned char *value) {
     // Expand if necessary
     if (arr->size >= arr->capacity) {
         int new_capacity = arr->capacity * 2;
@@ -410,8 +410,8 @@ int UCharPArray_push(UCharPArray *arr, unsigned char *value) {
     return 0;
 }
 
-// Cleanup UCharPArray (two-level cleanup: frees stored pointers then array)
-void UCharPArray_cleanup(UCharPArray *arr) {
+// Cleanup U8PArray (two-level cleanup: frees stored pointers then array)
+void U8PArray_cleanup(U8PArray *arr) {
     if (arr && arr->data) {
         // Free each stored pointer
         for (int i = 0; i < arr->size; i++) {
@@ -633,9 +633,7 @@ int count_regions_at_least(CollageMetadata *collage_meta, int min_size) {
 // Returns true if successful, fills placement_out
 bool try_pack(CoordinateArray *polyomino_shape, unsigned char *occupied_tiles,
              int h, int w, Placement *placement_out) {
-    // No rotation in this implementation (rotation = 0)
-    int rotation = 0;
-
+    // No rotation in this implementation
     // Find bounding box of polyomino
     if (polyomino_shape->size == 0) return false;
 
@@ -687,7 +685,6 @@ bool try_pack(CoordinateArray *polyomino_shape, unsigned char *occupied_tiles,
                 // Return placement
                 placement_out->y = y;
                 placement_out->x = x;
-                placement_out->rotation = rotation;
                 return true;
             }
         }
@@ -700,21 +697,15 @@ bool try_pack(CoordinateArray *polyomino_shape, unsigned char *occupied_tiles,
 // Polyomino Conversion Helpers
 // ============================================================================
 
-// Convert ShortArray mask to CoordinateArray
-int convert_mask_to_coordinates(ShortArray *mask, CoordinateArray *coords) {
-    // Initialize coordinate array
-    int num_pairs = mask->size / 2;
-    CoordinateArray_init(coords, num_pairs);
+// Copy CoordinateArray mask to another CoordinateArray
+static inline void copy_coordinate_array(CoordinateArray *src, CoordinateArray *dest) {
+    // Initialize destination array with same capacity as source
+    CoordinateArray_init(dest, src->size);
 
-    // Convert coordinate pairs from ShortArray to CoordinateArray
-    for (int i = 0; i < num_pairs; i++) {
-        Coordinate coord;
-        coord.y = (int)mask->data[i * 2];
-        coord.x = (int)mask->data[i * 2 + 1];
-        CoordinateArray_push(coords, coord);
+    // Copy all coordinates from source to destination
+    for (int16_t i = 0; i < src->size; i++) {
+        CoordinateArray_push(dest, src->data[i]);
     }
-
-    return 0;
 }
 
 // Get polyomino size from coordinate array
@@ -787,12 +778,34 @@ int compare_polyominoes_by_size(const void *a, const void *b) {
 // Try Pack with Coordinate Arrays
 // ============================================================================
 
+// Create a PolyominoPosition from placement result
+// This helper function encapsulates the common logic of creating a position
+// structure from a successful placement attempt
+static inline void create_polyomino_position(
+    PolyominoPosition *pos,
+    int oy, int ox, int frame,
+    Placement placement,
+    const CoordinateArray *shape
+) {
+    // Initialize position with placement data
+    pos->oy = oy;
+    pos->ox = ox;
+    pos->py = placement.y;
+    pos->px = placement.x;
+    pos->frame = frame;
+
+    // Copy shape coordinates
+    // TODO: Do not copy
+    CoordinateArray_init(&pos->shape, shape->size);
+    for (int k = 0; k < shape->size; k++) {
+        CoordinateArray_push(&pos->shape, shape->data[k]);
+    }
+}
+
 // Try to pack a polyomino (as coordinate array) into the collage
 bool try_pack(CoordinateArray *polyomino_coords, unsigned char *occupied_tiles,
                      int h, int w, Placement *placement_out) {
-    // No rotation in this implementation (rotation = 0)
-    int rotation = 0;
-
+    // No rotation in this implementation
     // Find bounding box of polyomino
     if (polyomino_coords->size == 0) return false;
 
@@ -844,7 +857,6 @@ bool try_pack(CoordinateArray *polyomino_coords, unsigned char *occupied_tiles,
                 // Return placement (adjust for min offset)
                 placement_out->y = y - min_y;
                 placement_out->x = x - min_x;
-                placement_out->rotation = rotation;
                 return true;
             }
         }
@@ -883,11 +895,11 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
             PolyominoWithFrame pwf;
 
             // Convert mask to coordinate array
-            convert_mask_to_coordinates(&polyomino->mask, &pwf.shape);
+            copy_coordinate_array(&polyomino->mask, &pwf.shape);
 
             // Store offset and frame information
-            pwf.oy = polyomino->offset_i;
-            pwf.ox = polyomino->offset_j;
+            pwf.oy = polyomino->offset_y;
+            pwf.ox = polyomino->offset_x;
             pwf.frame = array_idx;
             pwf.size = pwf.shape.size;
 
@@ -913,8 +925,8 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
     CollageArray_init(result, 16);
 
     // Storage for collage occupied tiles arrays
-    UCharPArray collages_pool;
-    UCharPArray_init(&collages_pool, 16);
+    U8PArray collages_pool;
+    U8PArray_init(&collages_pool, 16);
 
     // Process each polyomino in size order (largest first)
     for (int i = 0; i < all_polyominoes.size; i++) {
@@ -934,26 +946,9 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
             // Attempt to pack the polyomino in this collage
             Placement placement;
             if (try_pack(shape, collage, h, w, &placement)) {
-                // Successfully placed - extract position and rotation
-                int py = placement.y;
-                int px = placement.x;
-                int rotation = placement.rotation;
-
-                // Create PolyominoPosition
+                // Successfully placed - create position structure
                 PolyominoPosition pos;
-                pos.oy = oy;
-                pos.ox = ox;
-                pos.py = py;
-                pos.px = px;
-                pos.rotation = rotation;
-                pos.frame = frame;
-
-                // Copy shape coordinates
-                // TODO: Do not copy
-                CoordinateArray_init(&pos.shape, shape->size);
-                for (int k = 0; k < shape->size; k++) {
-                    CoordinateArray_push(&pos.shape, shape->data[k]);
-                }
+                create_polyomino_position(&pos, oy, ox, frame, placement, shape);
 
                 // Record the polyomino position in this collage
                 PolyominoPositionArray_push(&result->data[collage_idx], pos);
@@ -975,26 +970,9 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
             // Attempt to place the polyomino in the new collage
             Placement placement;
             if (try_pack(shape, collage, h, w, &placement)) {
-                // Extract position and rotation from successful placement
-                int py = placement.y;
-                int px = placement.x;
-                int rotation = placement.rotation;
-
-                // Create PolyominoPosition
+                // Create position structure from successful placement
                 PolyominoPosition pos;
-                pos.oy = oy;
-                pos.ox = ox;
-                pos.py = py;
-                pos.px = px;
-                pos.rotation = rotation;
-                pos.frame = frame;
-
-                // Copy shape coordinates
-                // TODO: Do not copy
-                CoordinateArray_init(&pos.shape, shape->size);
-                for (int k = 0; k < shape->size; k++) {
-                    CoordinateArray_push(&pos.shape, shape->data[k]);
-                }
+                create_polyomino_position(&pos, oy, ox, frame, placement, shape);
 
                 // Create a new positions array for this collage
                 PolyominoPositionArray new_collage_positions;
@@ -1002,7 +980,7 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
                 PolyominoPositionArray_push(&new_collage_positions, pos);
 
                 // Add to collages pool and result
-                if (UCharPArray_push(&collages_pool, collage) != 0) {
+                if (U8PArray_push(&collages_pool, collage) != 0) {
                     // Push failed - cleanup and return partial result
                     free(collage);
                     CoordinateArray_cleanup(&pos.shape);
@@ -1018,7 +996,7 @@ CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int 
     }
 
     // Cleanup
-    UCharPArray_cleanup(&collages_pool);
+    U8PArray_cleanup(&collages_pool);
     PolyominoWithFrameArray_cleanup(&all_polyominoes);
 
     return result;

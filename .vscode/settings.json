@@ -7,6 +7,8 @@
         "polyis/pack/*.{c,html,so}": true,
     },
     "files.associations": {
-        "utilities.h": "c"
+        "utilities.h": "c",
+        "stdint.h": "c",
+        "stdint-gcc.h": "c"
     }
 }

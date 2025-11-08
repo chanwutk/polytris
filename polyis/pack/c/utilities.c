@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdint.h>
 #include "errors.h"
 
 // ============================================================================
@@ -120,18 +121,10 @@ DEFINE_ARRAY_CLEANUP_POINTERS(TypeName)
 // Structure Definitions
 // ============================================================================
 
-typedef struct ShortArray {
-    short *data;
-    int size;
-    int capacity;
-} ShortArray;
-// Generate ShortArray functions: init, push, cleanup
-DEFINE_ARRAY(ShortArray, short)
-
 // Represents a 2D coordinate/point
 typedef struct Coordinate {
-    short y;
-    short x;
+    int16_t y;
+    int16_t x;
 } Coordinate;
 
 // Dynamic array of coordinates
@@ -146,8 +139,8 @@ DEFINE_ARRAY(CoordinateArray, Coordinate)
 // Polyomino structure with coordinate-based mask
 typedef struct Polyomino {
     CoordinateArray mask;
-    int offset_i;
-    int offset_j;
+    int16_t offset_y;
+    int16_t offset_x;
 } Polyomino;
 
 typedef struct PolyominoArray {
@@ -160,19 +153,17 @@ DEFINE_NESTED_ARRAY_WITH_FIELD(PolyominoArray, Polyomino, CoordinateArray, mask)
 
 // Represents a placement result
 typedef struct Placement {
-    int y;
-    int x;
-    int rotation;
+    int16_t y;
+    int16_t x;
 } Placement;
 
 // Represents a polyomino's position in a collage
 typedef struct PolyominoPosition {
-    int oy;              // Original y-offset from video frame
-    int ox;              // Original x-offset from video frame
-    int py;              // Packed y-position in collage
-    int px;              // Packed x-position in collage
-    int rotation;        // Rotation applied (0-3)
-    int frame;           // Frame index
+    int16_t oy;              // Original y-offset from video frame
+    int16_t ox;              // Original x-offset from video frame
+    int16_t py;              // Packed y-position in collage
+    int16_t px;              // Packed x-position in collage
+    int32_t frame;           // Frame index
     CoordinateArray shape;  // Shape as coordinate array
 } PolyominoPosition;
 
@@ -194,14 +185,14 @@ typedef struct CollageArray {
 // Generate CollageArray functions: init, push, cleanup with nested cleanup
 DEFINE_NESTED_ARRAY(CollageArray, PolyominoPositionArray, PolyominoPositionArray_cleanup)
 
-// Dynamic array of unsigned char pointers (for collage occupied tiles pool)
-typedef struct UCharPArray {
-    unsigned char **data;  // Array of unsigned char pointers
-    int size;              // Current number of elements
-    int capacity;          // Allocated capacity
-} UCharPArray;
-// Generate UCharPArray functions: init, push, cleanup with pointer cleanup
-DEFINE_POINTER_ARRAY(UCharPArray, unsigned char*)
+// Dynamic array of uint8_t pointers (for collage occupied tiles pool)
+typedef struct U8PArray {
+    uint8_t **data;  // Array of uint8_t pointers
+    int size;        // Current number of elements
+    int capacity;    // Allocated capacity
+} U8PArray;
+// Generate U8PArray functions: init, push, cleanup with pointer cleanup
+DEFINE_POINTER_ARRAY(U8PArray, uint8_t*)
 
 typedef struct IntArray {
     int *data;      // Array of integers

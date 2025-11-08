@@ -1,6 +1,7 @@
 #ifndef GROUP_TILES_H
 #define GROUP_TILES_H
 
+#include <stdint.h>
 #include "utilities.h"
 
 // Main function to group tiles into polyominoes
@@ -8,16 +9,16 @@
 //               where 1 indicates a tile with detection and 0 indicates no detection
 // width: width of the bitmap
 // height: height of the bitmap
-// tilepadding_mode: The mode of tile padding to apply
-//                   - 0: No padding
-//                   - 1: Disconnected padding
-//                   - 2: Connected padding
+// mode: The mode of tile padding to apply
+//          - 0: No padding
+//          - 1: Disconnected padding
+//          - 2: Connected padding
 // Returns: Pointer to PolyominoArray containing all found polyominoes
 PolyominoArray * group_tiles_(
-    unsigned char *bitmap_input,
-    int width,
-    int height,
-    int tilepadding_mode
+    uint8_t *bitmap_input,
+    int16_t width,
+    int16_t height,
+    int8_t mode
 );
 
 // Free a polyomino array allocated by group_tiles

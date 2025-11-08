@@ -92,10 +92,7 @@ def compare_polyomino_positions(python_result, c_result, verbose=False):
                 if verbose:
                     print(f"Collage {i}, Polyomino {j}: px differs: Python={py_poly.px}, C={c_poly.px}")
                 return False
-            if py_poly.rotation != c_poly.rotation:
-                if verbose:
-                    print(f"Collage {i}, Polyomino {j}: rotation differs: Python={py_poly.rotation}, C={c_poly.rotation}")
-                return False
+            # Note: rotation field removed from C implementation (always 0)
             if py_poly.frame != c_poly.frame:
                 if verbose:
                     print(f"Collage {i}, Polyomino {j}: frame differs: Python={py_poly.frame}, C={c_poly.frame}")
