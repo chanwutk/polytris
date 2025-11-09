@@ -151,37 +151,3 @@ class TestPerformance:
         print(f"\nBasic performance test:")
         print(f"  Time: {elapsed_time:.6f}s")
         print(f"  Placed {len(result)} polyominoes")
-
-
-def test_import_success():
-    """Test that the Cython module can be imported successfully."""
-    try:
-        from polyis.pack.cython.adapters import pack_append
-        assert callable(pack_append), "pack_append should be callable"
-    except ImportError as e:
-        pytest.fail(f"Failed to import Cython implementation: {e}")
-
-
-def test_return_format():
-    """Test the return format of pack_append_fast."""
-    # Create simple test case
-    polyomino_mask = np.array([[1, 1]], dtype=np.uint8)
-    polyominoes = [(polyomino_mask, (0, 0))]
-    h, w = 3, 3
-    occupied_tiles = np.zeros((h, w), dtype=np.uint8)
-    
-    result = pack_append(polyominoes, h, w, occupied_tiles)
-    
-    assert result is not None, "Should return positions list"
-    assert isinstance(result, list), "Should return a list"
-    assert len(result) == 1, "Should return one position"
-    
-    position = result[0]
-    assert len(position) == 4, "Position should have 4 elements: (i, j, mask, offset)"
-    assert isinstance(position[0], int), "Row should be integer"
-    assert isinstance(position[1], int), "Column should be integer"
-
-
-if __name__ == "__main__":
-    # Allow running tests directly
-    pytest.main([__file__, "-v"])

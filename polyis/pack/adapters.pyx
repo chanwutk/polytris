@@ -61,7 +61,7 @@ def c_group_tiles(cnp.uint8_t[:, :] bitmap_input, int tilepadding_mode) -> list[
     # Call group_tiles function from group_tiles.pyx
     # group_tiles returns numpy.uint64, pass directly to format_polyominoes
     # Note: group_tiles is defined in group_tiles.pyx, compiled into the same extension
-    return format_polyominoes(<cnp.uint64_t>group_tiles(bitmap_input, tilepadding_mode))
+    return format_polyominoes(<cnp.uint64_t>group_tiles(bitmap_input, tilepadding_mode))  # type: ignore
 
 
 @cython.boundscheck(False)  # type: ignore

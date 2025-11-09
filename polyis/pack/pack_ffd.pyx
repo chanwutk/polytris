@@ -161,23 +161,23 @@ cdef list[list[PyPolyominoPosition]] convert_collage_array_to_python(CollageArra
 
     # Process each collage
     for i in range(collage_array.size):
-        position_array = &collage_array.data[i]
+        position_array = &collage_array.data[i]  # type: ignore
         collage_positions: list[PyPolyominoPosition] = []
 
         # Process each polyomino position in this collage
         for j in range(position_array.size):
-            pos = &position_array.data[j]
+            pos = &position_array.data[j]  # type: ignore
             coords = &pos.shape
 
             if coords.size == 0:
                 continue
 
             coords_np = np.zeros((coords.size, 2), dtype=np.int16)
-            coords_view = coords_np
+            coords_view = coords_np  # type: ignore
 
             for k in range(coords.size):
-                coords_view[k, 0] = coords.data[k].y
-                coords_view[k, 1] = coords.data[k].x
+                coords_view[k, 0] = coords.data[k].y  # type: ignore
+                coords_view[k, 1] = coords.data[k].x  # type: ignore
 
             # Create PolyominoPosition object
             poly_pos = PyPolyominoPosition(

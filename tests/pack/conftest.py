@@ -4,10 +4,6 @@ Pytest configuration for pack_append tests.
 
 import pytest
 import numpy as np
-import sys
-import os
-
-# No need to modify sys.path - polyis package is already accessible
 
 
 @pytest.fixture

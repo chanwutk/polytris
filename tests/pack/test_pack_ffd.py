@@ -4,6 +4,9 @@ Test suite for comparing C and Python implementations of pack_ffd (First Fit Dec
 
 This module tests the correctness and consistency of the C implementation (pack_ffd.pyx)
 against the Python prototype implementation (pack_ffd_python.py).
+
+Also includes tests for the convert_collages_to_bitmap adapter function that converts
+coordinate-based shapes from pack_ffd.pyx into bitmap format.
 """
 
 import pytest
@@ -12,7 +15,7 @@ import time
 from polyis.pack.cython.group_tiles import group_tiles as group_tiles_cython
 from polyis.pack.python.pack_ffd import pack_all as pack_all_python
 from polyis.pack.group_tiles import group_tiles as group_tiles_c
-from polyis.pack.pack_ffd import pack_all as pack_all_c
+from polyis.pack.pack_ffd import pack_all as pack_all_c, PyPolyominoPosition
 from polyis.pack.adapters import convert_collages_to_bitmap
 
 
@@ -408,6 +411,68 @@ class TestPackFFDPerformance:
                 f"Results differ for size={size_str}, frames={num_frames}"
 
 
-if __name__ == "__main__":
-    # Run tests with pytest
-    pytest.main([__file__, "-v", "-s"])
+class TestConvertCollagesToBitmap:
+    """Tests for the convert_collages_to_bitmap adapter function."""
+
+    def test_convert_collages_to_bitmap(self):
+        """Test that coordinate-based shapes are correctly converted to bitmaps."""
+        # Create test data: simple L-shape polyomino
+        # Coordinates: [(0,0), (0,1), (1,0)]
+        coords1 = np.array([[0, 0], [0, 1], [1, 0]], dtype=np.int16)
+        pos1 = PyPolyominoPosition(oy=5, ox=10, py=20, px=30, frame=0, shape=coords1)  # type: ignore
+        
+        # Create test data: straight line polyomino
+        # Coordinates: [(2,3), (2,4), (2,5)]
+        coords2 = np.array([[2, 3], [2, 4], [2, 5]], dtype=np.int16)
+        pos2 = PyPolyominoPosition(oy=8, ox=12, py=25, px=35, frame=1, shape=coords2)  # type: ignore
+        
+        # Test with one collage containing two polyominoes
+        collages = [[pos1, pos2]]
+        
+        # Convert to bitmap
+        convert_collages_to_bitmap(collages)
+        
+        # Verify structure
+        assert len(collages) == 1, "Should have one collage"
+        assert len(collages[0]) == 2, "Collage should have two polyominoes"
+        
+        # Verify first polyomino (L-shape)
+        # Original coords: [(0,0), (0,1), (1,0)] -> bitmap 2x2
+        pos1_result = collages[0][0]
+        assert pos1_result.shape.shape == (2, 2), "L-shape bitmap should be 2x2"
+        assert pos1_result.shape.dtype == np.uint8, "Shape should be converted to uint8 bitmap"
+        assert pos1_result.py == 20 and pos1_result.px == 30, "Placement offsets should match py, px"
+        assert pos1_result.oy == 5 and pos1_result.ox == 10, "Original offsets should match oy, ox"
+        assert pos1_result.frame == 0, "Frame should be 0"
+        # Check L-shape bitmap pattern
+        expected_mask1 = np.array([
+            [1, 1],
+            [1, 0],
+        ], dtype=np.uint8)
+        assert np.array_equal(pos1_result.shape, expected_mask1), "L-shape bitmap should match"
+        
+        # Verify second polyomino (straight line)
+        # Original coords: [(2,3), (2,4), (2,5)] -> bitmap 3x6 with line at row 2
+        pos2_result = collages[0][1]
+        assert pos2_result.shape.shape == (3, 6), "Line bitmap should be 3x6"
+        assert pos2_result.shape.dtype == np.uint8, "Shape should be converted to uint8 bitmap"
+        assert pos2_result.py == 25 and pos2_result.px == 35, "Placement offsets should match py, px"
+        assert pos2_result.oy == 8 and pos2_result.ox == 12, "Original offsets should match oy, ox"
+        assert pos2_result.frame == 1, "Frame should be 1"
+        # Check line bitmap pattern
+        expected_mask2 = np.array([
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1],
+        ], dtype=np.uint8)
+        assert np.array_equal(pos2_result.shape, expected_mask2), "Line bitmap should match"
+
+    def test_convert_empty_collage(self):
+        """Test handling of empty collages."""
+        # Test with empty collages
+        result = convert_collages_to_bitmap([])
+        assert result == [], "Empty input should return empty list"
+        
+        # Test with collage containing no polyominoes
+        result = convert_collages_to_bitmap([[]])
+        assert result == [[]], "Empty collage should return empty inner list"
