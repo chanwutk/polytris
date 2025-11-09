@@ -90,16 +90,10 @@ class CleanCommand(Command):
         'polyis/pack/*.c',
     ]
     so_patterns = [
-        # 'polyis/pack/cython/**/*.so',
-        # 'polyis/pack/cython/*.so',
-        # 'polyis/pack/c/**/*.so',
-        # 'polyis/pack/c/*.so',
         'polyis/pack/**/*.so',
         'polyis/pack/*.so',
     ]
     html_patterns = [
-        # 'polyis/pack/cython/**/*.html',
-        # 'polyis/pack/cython/*.html',
         'polyis/pack/**/*.html',
         'polyis/pack/*.html',
     ]

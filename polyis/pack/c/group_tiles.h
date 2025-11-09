@@ -14,7 +14,7 @@
 //          - 1: Disconnected padding
 //          - 2: Connected padding
 // Returns: Pointer to PolyominoArray containing all found polyominoes
-PolyominoArray * group_tiles_(
+PolyominoArray * group_tiles(
     uint8_t *bitmap_input,
     int16_t width,
     int16_t height,
@@ -23,6 +23,6 @@ PolyominoArray * group_tiles_(
 
 // Free a polyomino array allocated by group_tiles
 // Returns the number of polyominoes that were freed
-int free_polyomino_array_(PolyominoArray *polyomino_array);
+int free_polyomino_array(PolyominoArray *polyomino_array);
 
 #endif // GROUP_TILES_H

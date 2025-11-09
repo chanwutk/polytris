@@ -21,7 +21,7 @@ static int compare_polyomino_by_mask_length(const void *a, const void *b) {
 
 // Helper function to find connected tiles using flood fill algorithm
 // This function modifies the bitmap in-place to mark visited tiles
-static CoordinateArray _find_connected_tiles(
+static CoordinateArray find_connected_tiles(
     int16_t *bitmap,
     uint8_t *bitmap_input,
     int16_t h,
@@ -86,7 +86,7 @@ static CoordinateArray _find_connected_tiles(
 // Add padding to bitmap based on tilepadding_mode
 // mode 1: Connected padding - pad neighbors of occupied tiles
 // mode 2: Disconnected padding - pad all neighbors
-static void _add_padding(uint8_t *bitmap, int16_t h, int16_t w) {
+static inline void add_padding(uint8_t *bitmap, int16_t h, int16_t w) {
     for (int16_t y = 0; y < h; y++) {
         for (int16_t x = 0; x < w; x++) {
             // Only process occupied tiles (value == 1)
@@ -118,7 +118,7 @@ static void _add_padding(uint8_t *bitmap, int16_t h, int16_t w) {
 //                   - 1: Connected padding
 //                   - 2: Disconnected padding
 // Returns: Pointer to PolyominoArray containing all found polyominoes
-PolyominoArray * group_tiles_(
+PolyominoArray * group_tiles(
     uint8_t *bitmap_input,
     int16_t width,
     int16_t height,
@@ -130,7 +130,7 @@ PolyominoArray * group_tiles_(
 
     // Add padding if mode is not 0
     if (mode != 0) {
-        _add_padding(bitmap_input, height, width);
+        add_padding(bitmap_input, height, width);
     }
 
     // Create groups array with unique IDs
@@ -155,7 +155,7 @@ PolyominoArray * group_tiles_(
             }
 
             // Find connected tiles - returns CoordinateArray
-            CoordinateArray connected_tiles = _find_connected_tiles(groups, bitmap_input,
+            CoordinateArray connected_tiles = find_connected_tiles(groups, bitmap_input,
                                                                     height, width, y, x, mode);
             if (connected_tiles.size == 0) {
                 // Clean up empty CoordinateArray
@@ -211,7 +211,7 @@ PolyominoArray * group_tiles_(
 
 // Free a polyomino array allocated by group_tiles
 // Returns the number of polyominoes that were freed
-int free_polyomino_array_(PolyominoArray *polyomino_array) {
+int free_polyomino_array(PolyominoArray *polyomino_array) {
     CHECK_NULL(polyomino_array, "polyomino_array pointer is NULL");
 
     int num_polyominoes = polyomino_array->size;

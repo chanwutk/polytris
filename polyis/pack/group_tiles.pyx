@@ -47,7 +47,7 @@ cdef extern from "c/group_tiles.h":
     #                   - 1: Disconnected padding
     #                   - 2: Connected padding
     # Returns: Pointer to PolyominoArray containing all found polyominoes
-    PolyominoArray* group_tiles_(
+    PolyominoArray* group_tiles_ "group_tiles"(
         uint8_t *bitmap_input,
         int16_t width,
         int16_t height,
@@ -56,7 +56,7 @@ cdef extern from "c/group_tiles.h":
 
     # Free a polyomino array allocated by group_tiles
     # Returns the number of polyominoes that were freed
-    int free_polyomino_array_(PolyominoArray *polyomino_array)
+    int free_polyomino_array_ "free_polyomino_array" (PolyominoArray *polyomino_array)
 
 
 @cython.boundscheck(False)  # type: ignore
@@ -80,8 +80,7 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int8_t mode) -> np.uint64:
     """
     cdef int16_t height = <int16_t>bitmap_input.shape[0]
     cdef int16_t width = <int16_t>bitmap_input.shape[1]
-    cdef PolyominoArray* result_ptr = group_tiles_(&bitmap_input[0, 0], width, height, <int8_t>mode)
-    # Convert pointer to numpy.uint64 for safe type handling
+    cdef PolyominoArray* result_ptr = group_tiles_(&bitmap_input[0, 0], width, height, mode)
     return np.uint64(<cnp.uint64_t>result_ptr)
 
 
