@@ -375,9 +375,9 @@ def main(args):
           {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tilesize}/score/
         - Looks for score.jsonl files
         - Videos are read from {DATASETS_DIR}/{dataset}/
-        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/images/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/index_maps/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/offset_lookups/
+        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/031_compressed_frames/{classifier}_{tilesize}/images/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/031_compressed_frames/{classifier}_{tilesize}/index_maps/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/031_compressed_frames/{classifier}_{tilesize}/offset_lookups/
         - When tilesize is 'all', all tile sizes (30, 60, 120) are processed
         - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST are processed
         - If no classification results are found for a video, that video is skipped with a warning

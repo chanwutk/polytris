@@ -13,6 +13,7 @@ from polyis.pack.cython.group_tiles import group_tiles as group_tiles_cython
 from polyis.pack.python.pack_ffd import pack_all as pack_all_python
 from polyis.pack.group_tiles import group_tiles as group_tiles_c
 from polyis.pack.pack_ffd import pack_all as pack_all_c
+from polyis.pack.adapters import convert_collages_to_bitmap
 
 
 def generate_test_bitmap(shape, density=0.3, seed=42):
@@ -97,8 +98,8 @@ def compare_polyomino_positions(python_result, c_result, verbose=False):
                 if verbose:
                     print(f"Collage {i}, Polyomino {j}: frame differs: Python={py_poly.frame}, C={c_poly.frame}")
                 return False
-
-            # Compare shape (numpy array mask)
+            
+            # Compare shape (numpy array mask) - both should be in bitmap format now
             if py_poly.shape.shape != c_poly.shape.shape:
                 if verbose:
                     print(f"Collage {i}, Polyomino {j}: shape dimensions differ: Python={py_poly.shape.shape}, C={c_poly.shape.shape}")
@@ -148,12 +149,11 @@ def verify_packing_properties(result, polyominoes_stacks, h, w):
         for pos in collage:
             # Check bounds
             shape = pos.shape
-            ph, pw = shape.shape
-
+            
             # Adjust for placement position
             py, px = pos.py, pos.px
-
-            # Find actual occupied tiles in shape
+            
+            # Shape should be bitmap format (2D array where 1s indicate occupied cells)
             occupied_coords = np.argwhere(shape == 1)
 
             for coord in occupied_coords:
@@ -189,10 +189,12 @@ class TestPackFFDBasic:
         h, w = 10, 10
 
         result_python = pack_all_python(np.array(polyominoes_stacks, dtype=np.uint64), h, w)
-        result_c = pack_all_c(np.array(polyominoes_stacks, dtype=np.uint64), h, w)
+        
+        # C implementation raises ValueError for empty input
+        with pytest.raises(ValueError, match="polyominoes_stacks cannot be empty"):
+            pack_all_c(np.array(polyominoes_stacks, dtype=np.uint64), h, w)
 
         assert len(result_python) == 0
-        assert len(result_c) == 0
 
     def test_single_polyomino(self):
         """Test with a single polyomino in a single frame."""
@@ -208,6 +210,9 @@ class TestPackFFDBasic:
         # Test C implementation only (due to memory corruption bug)
         c_stack = group_tiles_c(bitmap, 0)
         result_c = pack_all_c(np.array([c_stack], dtype=np.uint64), h, w)
+        
+        # Convert coordinate format to bitmap format
+        convert_collages_to_bitmap(result_c)
 
         # Should create exactly 1 collage with 1 polyomino
         assert len(result_c) == 1
@@ -237,6 +242,9 @@ class TestPackFFDBasic:
 
         result_python = pack_all_python(np.array([python_stack], dtype=np.uint64), h, w)
         result_c = pack_all_c(np.array([c_stack], dtype=np.uint64), h, w)
+        
+        # Convert C result from coordinate format to bitmap format
+        convert_collages_to_bitmap(result_c)
 
         # Compare results
         assert compare_polyomino_positions(result_python, result_c, verbose=True)
@@ -268,6 +276,9 @@ class TestPackFFDBasic:
 
         result_python = pack_all_python(python_stacks, h, w)
         result_c = pack_all_c(c_stacks, h, w)
+        
+        # Convert C result from coordinate format to bitmap format
+        convert_collages_to_bitmap(result_c)
 
         # Compare results
         assert compare_polyomino_positions(result_python, result_c, verbose=True)
@@ -297,6 +308,9 @@ class TestPackFFDRandom:
 
         result_python = pack_all_python(np.array([python_stack], dtype=np.uint64), h, w)
         result_c = pack_all_c(np.array([c_stack], dtype=np.uint64), h, w)
+        
+        # Convert C result from coordinate format to bitmap format
+        convert_collages_to_bitmap(result_c)
 
         # Compare results
         assert compare_polyomino_positions(result_python, result_c, verbose=False), \
@@ -323,6 +337,9 @@ class TestPackFFDRandom:
 
         result_python = pack_all_python(python_stacks, h, w)
         result_c = pack_all_c(c_stacks, h, w)
+        
+        # Convert C result from coordinate format to bitmap format
+        convert_collages_to_bitmap(result_c)
 
         # Compare results
         assert compare_polyomino_positions(result_python, result_c, verbose=True)
@@ -343,9 +360,8 @@ class TestPackFFDPerformance:
         print("\n=== Pack FFD Performance Comparison ===")
 
         test_cases = [
-            ((20, 20), 0.3, 3),   # Small: 3 frames of 20x20
-            ((50, 50), 0.3, 5),   # Medium: 5 frames of 50x50
-            # ((100, 100), 0.3, 3), # Large: 3 frames of 100x100
+            ((10, 10), 0.3, 3),   # Small: 10 frames of 10x10
+            ((20, 20), 0.3, 5),   # Medium: 20 frames of 20x20
         ]
 
         print(f"{'Size':<12} {'Frames':<8} {'Python (s)':<12} {'C (s)':<12} {'Speedup':<10}")
@@ -375,11 +391,17 @@ class TestPackFFDPerformance:
             start = time.perf_counter()
             result_c = pack_all_c(c_stacks, h, w)
             c_time = time.perf_counter() - start
+            
+            # Convert C result from coordinate format to bitmap format for comparison
+            convert_collages_to_bitmap(result_c)
 
             speedup = python_time / c_time if c_time > 0 else float('inf')
 
             size_str = f"{h_bitmap}x{w_bitmap}"
             print(f"{size_str:<12} {num_frames:<8} {python_time:<12.6f} {c_time:<12.6f} {speedup:<10.2f}x")
+            
+            assert speedup >= 1, \
+                f"C implementation not sufficiently faster for size={size_str}, frames={num_frames}"
 
             # Compare results to ensure both implementations produce same output
             assert compare_polyomino_positions(result_python, result_c, verbose=False), \

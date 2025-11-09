@@ -34,6 +34,16 @@ STAGE_METHOD_MAP = {
     '033_compressed_frames': 'FFD C'
 }
 
+# Detection time per image (milliseconds) for different datasets
+DETECTION_TIME_MS = {
+    'caldot1': 40,
+    'caldot2': 40,
+    'jnc0': 100,
+    'jnc2': 100,
+    'jnc6': 100,
+    'jnc7': 100,
+}
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -144,6 +154,7 @@ def create_num_images_chart(df: pd.DataFrame, dataset: str, output_path: str, ve
 
     # Aggregate by config and method: sum num_images across all videos
     grouped_df = df.groupby(['config', 'method'], as_index=False)['num_images'].sum()
+    assert isinstance(grouped_df, pd.DataFrame)
 
     if verbose:
         print(f"Creating num_images chart with {len(grouped_df)} data points")
@@ -257,12 +268,20 @@ def create_runtime_chart(df: pd.DataFrame, dataset: str, output_path: str, verbo
 
     # Aggregate by config, method, and operation: sum runtime across all videos
     grouped_df = df.groupby(['config', 'method', 'op'], as_index=False)['runtime'].sum()
+    assert isinstance(grouped_df, pd.DataFrame)
+
+    # Exclude non-core operations from visualization
+    exclude_ops = {'save_canvas', 'save_mapping_files', 'save_collage', 'read_frame'}
+    if verbose:
+        # Print all available operations before filtering
+        print(f"Available operations before filtering ({len(grouped_df['op'].unique())}): {sorted(grouped_df['op'].unique().tolist())}")
+    grouped_df = grouped_df[~grouped_df['op'].isin(exclude_ops)]
 
     if verbose:
         print(f"Creating runtime chart with {len(grouped_df)} data points")
         print(f"Configurations: {grouped_df['config'].nunique()}")
         print(f"Methods: {grouped_df['method'].unique().tolist()}")
-        print(f"Operations: {grouped_df['op'].unique().tolist()}")
+        print(f"Operations (filtered): {grouped_df['op'].unique().tolist()}")
 
     # Create grouped bar chart with faceting by operation
     chart = alt.Chart(grouped_df).mark_bar().encode(
@@ -293,43 +312,76 @@ def create_runtime_chart(df: pd.DataFrame, dataset: str, output_path: str, verbo
     print(f"Saved runtime chart: {output_path}")
 
 
-def create_total_runtime_chart(df: pd.DataFrame, dataset: str, output_path: str, verbose: bool = False):
+def create_total_runtime_chart(df: pd.DataFrame, image_counts_df: pd.DataFrame, dataset: str, output_path: str, verbose: bool = False):
     """
     Create a grouped bar chart comparing total runtime across compression methods.
+    Includes both compression runtime and estimated detection runtime.
 
     Args:
         df: DataFrame with runtime data (must have 'method' column and 'op', 'runtime' columns)
+        image_counts_df: DataFrame with image counts data (must have 'method', 'config', 'num_images' columns)
         dataset: Dataset name for the title
         output_path: Path to save the chart
         verbose: Whether to print verbose output
     """
-    # Create configuration label
+    # Create configuration label for runtime data
     df = df.copy()
     df['config'] = df.apply(create_config_label, axis=1)
 
     # Aggregate by config and method: sum runtime across all videos and operations
-    grouped_df = df.groupby(['config', 'method'], as_index=False)['runtime'].sum()
+    compression_df = df.groupby(['config', 'method'], as_index=False)['runtime'].sum()
+    assert isinstance(compression_df, pd.DataFrame)
+    compression_df = compression_df.rename(columns={'runtime': 'compression_runtime'})
+
+    # Create configuration label for image counts data
+    image_counts_df = image_counts_df.copy()
+    image_counts_df['config'] = image_counts_df.apply(create_config_label, axis=1)
+
+    # Aggregate image counts by config and method
+    images_df = image_counts_df.groupby(['config', 'method'], as_index=False)['num_images'].sum()
+
+    # Merge compression runtime with image counts
+    grouped_df = compression_df.merge(images_df, on=['config', 'method'], how='left')
+
+    # Calculate detection runtime based on dataset
+    detection_time_ms = DETECTION_TIME_MS.get(dataset, 40)  # Default to 40ms if dataset not found
+    grouped_df['detection_runtime'] = grouped_df['num_images'] * detection_time_ms / 1000.0  # Convert ms to seconds
+
+    # Create separate dataframes for compression and detection
+    compression_bars = grouped_df[['config', 'method', 'compression_runtime']].copy()
+    compression_bars['runtime_type'] = 'Compression'
+    compression_bars = compression_bars.rename(columns={'compression_runtime': 'runtime'})
+
+    detection_bars = grouped_df[['config', 'method', 'detection_runtime']].copy()
+    detection_bars['runtime_type'] = 'Detection'
+    detection_bars = detection_bars.rename(columns={'detection_runtime': 'runtime'})
+
+    # Combine both dataframes
+    chart_df = pd.concat([compression_bars, detection_bars], ignore_index=True)
 
     if verbose:
-        print(f"Creating total runtime chart with {len(grouped_df)} data points")
-        print(f"Configurations: {grouped_df['config'].nunique()}")
-        print(f"Methods: {grouped_df['method'].unique().tolist()}")
+        print(f"Creating total runtime chart with {len(chart_df)} data points")
+        print(f"Configurations: {chart_df['config'].nunique()}")
+        print(f"Methods: {chart_df['method'].unique().tolist()}")
+        print(f"Detection time per image: {detection_time_ms}ms")
 
-    # Create grouped bar chart
-    chart = alt.Chart(grouped_df).mark_bar().encode(
+    # Create grouped bar chart with stacked bars
+    chart = alt.Chart(chart_df).mark_bar().encode(
         x=alt.X('config:N',
                 title='Configuration (Classifier_TileSize_Padding)',
                 axis=alt.Axis(labelAngle=-45, labelLimit=200)),
         y=alt.Y('runtime:Q',
                 title='Total Runtime (seconds)'),
-        color=alt.Color('method:N',
-                       title='Compression Method',
+        color=alt.Color('runtime_type:N',
+                       title='Runtime Type',
                        scale=alt.Scale(scheme='category10')),
-        xOffset='method:N'
+        xOffset=alt.XOffset('method:N',
+                           title='Compression Method'),
+        order=alt.Order('runtime_type:N', sort='descending')
     ).properties(
         width=600,
         height=400,
-        title=f'Comparison of Total Runtime - {dataset}'
+        title=f'Comparison of Total Runtime (Compression + Detection) - {dataset}'
     ).configure_axis(
         gridOpacity=0.3
     ).configure_title(
@@ -373,9 +425,9 @@ def process_dataset(dataset: str, output_dir: Path, verbose: bool = False):
     runtime_path = dataset_output_dir / f'{dataset}_runtime_comparison.png'
     create_runtime_chart(data['runtime'], dataset, str(runtime_path), verbose)
 
-    # Create total runtime comparison chart
+    # Create total runtime comparison chart (compression + detection)
     total_runtime_path = dataset_output_dir / f'{dataset}_total_runtime_comparison.png'
-    create_total_runtime_chart(data['runtime'], dataset, str(total_runtime_path), verbose)
+    create_total_runtime_chart(data['runtime'], data['image_counts'], dataset, str(total_runtime_path), verbose)
 
 
 def main(args):

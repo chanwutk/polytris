@@ -109,7 +109,7 @@ def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w) -> list[list[PyPo
     cdef int i
 
     if num_arrays == 0:
-        return []
+        raise ValueError("polyominoes_stacks cannot be empty")
 
     # Allocate array of pointers to PolyominoArray
     arrays_ptr = <PolyominoArray**>malloc(<size_t>num_arrays * sizeof(PolyominoArray*))
@@ -122,6 +122,7 @@ def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w) -> list[list[PyPo
 
     # Call the C packing function
     result = pack_all_(arrays_ptr, num_arrays, h, w)
+    free(<void*>arrays_ptr)
 
     if result == NULL:  # type: ignore
         raise MemoryError("pack_all_ returned NULL")
@@ -153,7 +154,7 @@ cdef list[list[PyPolyominoPosition]] convert_collage_array_to_python(CollageArra
     cdef PolyominoPositionArray *position_array
     cdef PolyominoPosition *pos
     cdef CoordinateArray *coords
-    cdef cnp.uint8_t[:, :] mask_view
+    cdef cnp.int16_t[:, :] coords_view
     cdef int i, j, k
     cdef int min_y, max_y, min_x, max_x
     cdef int mask_h, mask_w
@@ -171,31 +172,12 @@ cdef list[list[PyPolyominoPosition]] convert_collage_array_to_python(CollageArra
             if coords.size == 0:
                 continue
 
-            # Find bounding box of the shape
-            min_y = coords.data[0].y
-            max_y = coords.data[0].y
-            min_x = coords.data[0].x
-            max_x = coords.data[0].x
+            coords_np = np.zeros((coords.size, 2), dtype=np.int16)
+            coords_view = coords_np
 
-            for k in range(1, coords.size):
-                if coords.data[k].y < min_y:
-                    min_y = coords.data[k].y
-                if coords.data[k].y > max_y:
-                    max_y = coords.data[k].y
-                if coords.data[k].x < min_x:
-                    min_x = coords.data[k].x
-                if coords.data[k].x > max_x:
-                    max_x = coords.data[k].x
-
-            # Create mask array
-            mask_h = max_y - min_y + 1
-            mask_w = max_x - min_x + 1
-            mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
-            mask_view = mask
-
-            # Fill mask with shape coordinates
             for k in range(coords.size):
-                mask_view[coords.data[k].y - min_y, coords.data[k].x - min_x] = 1
+                coords_view[k, 0] = coords.data[k].y
+                coords_view[k, 1] = coords.data[k].x
 
             # Create PolyominoPosition object
             poly_pos = PyPolyominoPosition(
@@ -204,7 +186,7 @@ cdef list[list[PyPolyominoPosition]] convert_collage_array_to_python(CollageArra
                 py=pos.py,
                 px=pos.px,
                 frame=pos.frame,
-                shape=mask
+                shape=coords_np
             )
 
             collage_positions.append(poly_pos)

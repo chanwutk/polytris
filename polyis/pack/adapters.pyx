@@ -130,3 +130,32 @@ cdef list[tuple[np.ndarray, tuple[int, int]]] format_polyominoes(cnp.uint64_t po
     free(<void*>polyomino_array)
 
     return bins
+
+
+def convert_collages_to_bitmap(collages):
+    """
+    Convert PyPolyominoPosition ``shape`` from coordinate lists to bitmap masks.
+
+    Mutates and returns the same nested structure (list[list[PyPolyominoPosition]]),
+    replacing each position's ``shape`` (Nx2 int16 coordinates) with a 2D uint8 bitmap
+    tightly bounded to the shape. All other fields (oy, ox, py, px, frame) remain unchanged.
+    """
+    out = []
+    for collage in collages:  # iterate collages
+        new_collage = []
+        for pos in collage:  # iterate positions within a collage
+            coords_np = pos.shape  # numpy array of coordinates
+            # Compute bounding box of coordinates
+            max_y = int(np.max(coords_np[:, 0]))
+            max_x = int(np.max(coords_np[:, 1]))
+            mask_h = max_y + 1
+            mask_w = max_x + 1
+            mask = np.zeros((mask_h, mask_w), dtype=np.uint8)
+            # Fill mask using translated coordinates
+            for y, x in coords_np:
+                mask[int(y), int(x)] = 1
+            # Replace shape with bitmap mask
+            pos.shape = mask
+            new_collage.append(pos)
+        out.append(new_collage)
+    return out
