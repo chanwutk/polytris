@@ -29,7 +29,6 @@ class PolyominoPosition(NamedTuple):
     ox: int
     py: int
     px: int
-    rotation: int
     frame: int
     shape: np.ndarray
 
@@ -243,7 +242,6 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
             batch_collages.append([
                 PolyominoPosition(oy=poly_pos.oy, ox=poly_pos.ox,
                                   py=poly_pos.py, px=poly_pos.px,
-                                  rotation=poly_pos.rotation,
                                   frame=poly_pos.frame + start_idx,
                                   shape=poly_pos.shape)
                 for poly_pos in collage
@@ -306,33 +304,30 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
         # Process each polyomino in this collage
         step_start = (time.time_ns() / 1e6)
         for gid, poly_pos in enumerate(collage, start=1):
-            oy, ox, py, px, rotation, frame_idx, shape = poly_pos
-
-            # Apply rotation to shape
-            rotated_shape = np.rot90(shape, rotation)
-
-            # Get tile coordinates from rotated shape
-            mask_coords = np.argwhere(rotated_shape == 1)
+            oy, ox, py, px, frame_idx, shape = poly_pos
 
             # Get source frame
             frame = frames[frame_idx]
 
-            # Render each tile
-            for i, j in mask_coords:
-                # Source position in frame (in pixels)
-                sy = (oy + i) * tilesize
-                sx = (ox + j) * tilesize
-
-                # Destination position in canvas (in pixels)
-                dy = (py + i) * tilesize
-                dx = (px + j) * tilesize
-
-                # Copy tile
+            # Optimized tile rendering: vectorized coordinate computation with slice-based copying
+            # Slice operations use optimized block memory copy (memcpy-like) which is faster than per-pixel
+            i_coords = shape[:, 0]
+            j_coords = shape[:, 1]
+            
+            # Compute all tile corner positions at once (vectorized)
+            sy_coords = (oy + i_coords) * tilesize
+            sx_coords = (ox + j_coords) * tilesize
+            dy_coords = (py + i_coords) * tilesize
+            dx_coords = (px + j_coords) * tilesize
+            
+            # Copy tiles using optimized slice operations (block memory copy)
+            for idx in range(len(shape)):
+                sy, sx = sy_coords[idx], sx_coords[idx]
+                dy, dx = dy_coords[idx], dx_coords[idx]
                 canvas[dy:dy+tilesize, dx:dx+tilesize] = frame[sy:sy+tilesize, sx:sx+tilesize]
 
-            # Update index_map
-            for i, j in mask_coords:
-                index_map[py + i, px + j] = gid
+            # Update index_map (vectorized)
+            index_map[py + i_coords, px + j_coords] = gid
 
             # Update offset_lookup
             offset_lookup.append(((py, px), (oy, ox), frame_idx))
