@@ -22,6 +22,7 @@ import pandas as pd
 import altair as alt
 
 from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
+from evaluation.utilities import ColorScheme
 
 
 # Configuration for compression evaluation directory
@@ -135,7 +136,10 @@ def create_config_label(row: pd.Series) -> str:
     Returns:
         Configuration label string
     """
-    return f"{row['classifier']}_{row['tilesize']}_{row['tilepadding']}"
+    classifier = str(row['classifier'])[:4]
+    tilesize = str(row['tilesize'])[:4]
+    tilepadding = str(row['tilepadding'])[:4]
+    return f"{classifier}_{tilesize}_{tilepadding}"
 
 
 def create_num_images_chart(df: pd.DataFrame, dataset: str, output_path: str, verbose: bool = False):
@@ -170,7 +174,7 @@ def create_num_images_chart(df: pd.DataFrame, dataset: str, output_path: str, ve
                 title='Total Number of Compressed Images'),
         color=alt.Color('method:N',
                        title='Compression Method',
-                       scale=alt.Scale(scheme='category10')),
+                       scale=alt.Scale(range=ColorScheme.DutchField)),
         xOffset='method:N'
     ).properties(
         width=600,
@@ -229,7 +233,7 @@ def create_occupancy_ratio_chart(df: pd.DataFrame, dataset: str, output_path: st
                 scale=alt.Scale(domain=[0, 1])),
         color=alt.Color('method:N',
                        title='Compression Method',
-                       scale=alt.Scale(scheme='category10')),
+                       scale=alt.Scale(range=ColorScheme.DutchField)),
         xOffset='method:N'
     ).properties(
         width=600,
@@ -292,7 +296,7 @@ def create_runtime_chart(df: pd.DataFrame, dataset: str, output_path: str, verbo
                 title='Total Runtime (seconds)'),
         color=alt.Color('method:N',
                        title='Compression Method',
-                       scale=alt.Scale(scheme='category10')),
+                       scale=alt.Scale(range=ColorScheme.DutchField)),
         xOffset='method:N',
         column=alt.Column('op:N',
                          title='Operation')
@@ -328,6 +332,13 @@ def create_total_runtime_chart(df: pd.DataFrame, image_counts_df: pd.DataFrame, 
     df = df.copy()
     df['config'] = df.apply(create_config_label, axis=1)
 
+    # Exclude non-core operations from visualization
+    exclude_ops = {'save_canvas', 'save_mapping_files', 'save_collage', 'read_frame'}
+    if verbose:
+        # Print all available operations before filtering
+        print(f"Available operations before filtering ({len(df['op'].unique())}): {sorted(df['op'].unique().tolist())}")
+    df = df[~df['op'].isin(exclude_ops)]
+
     # Aggregate by config and method: sum runtime across all videos and operations
     compression_df = df.groupby(['config', 'method'], as_index=False)['runtime'].sum()
     assert isinstance(compression_df, pd.DataFrame)
@@ -349,7 +360,7 @@ def create_total_runtime_chart(df: pd.DataFrame, image_counts_df: pd.DataFrame, 
 
     # Create separate dataframes for compression and detection
     compression_bars = grouped_df[['config', 'method', 'compression_runtime']].copy()
-    compression_bars['runtime_type'] = 'Compression'
+    compression_bars['runtime_type'] = 'Pack: ' + grouped_df['method']
     compression_bars = compression_bars.rename(columns={'compression_runtime': 'runtime'})
 
     detection_bars = grouped_df[['config', 'method', 'detection_runtime']].copy()
@@ -365,32 +376,31 @@ def create_total_runtime_chart(df: pd.DataFrame, image_counts_df: pd.DataFrame, 
         print(f"Methods: {chart_df['method'].unique().tolist()}")
         print(f"Detection time per image: {detection_time_ms}ms")
 
-    # Create grouped bar chart with stacked bars
-    chart = alt.Chart(chart_df).mark_bar().encode(
-        x=alt.X('config:N',
-                title='Configuration (Classifier_TileSize_Padding)',
-                axis=alt.Axis(labelAngle=-45, labelLimit=200)),
-        y=alt.Y('runtime:Q',
+    # Calculate total runtime per config and method for sorting
+    config_method_totals = chart_df.groupby(['config', 'method'])['runtime'].sum().reset_index()
+    config_method_totals = config_method_totals.rename(columns={'runtime': 'TotalRuntime'})
+    chart_df = chart_df.merge(config_method_totals, on=['config', 'method'])
+
+    # Create horizontal grouped bar chart with stacked bars
+    chart = alt.Chart(chart_df).mark_bar(stroke='white', strokeWidth=1).encode(
+        x=alt.X('runtime:Q',
                 title='Total Runtime (seconds)'),
-        color=alt.Color('runtime_type:N',
-                       title='Runtime Type',
-                       scale=alt.Scale(scheme='category10')),
-        xOffset=alt.XOffset('method:N',
-                           title='Compression Method'),
-        order=alt.Order('runtime_type:N', sort='descending')
+        y=alt.Y('config:N',
+                title='Configuration (Classifier_TileSize_Padding)',
+                sort=alt.SortField(field='TotalRuntime', order='descending')),
+        color=alt.Color('runtime_type:N', title='Runtime Type',
+                        scale=alt.Scale(range=ColorScheme.DutchField),
+                        legend=alt.Legend(orient='top')),
+        yOffset=alt.YOffset('method:N',
+                           title='Compression Method')
     ).properties(
-        width=600,
+        width=800,
         height=400,
         title=f'Comparison of Total Runtime (Compression + Detection) - {dataset}'
-    ).configure_axis(
-        gridOpacity=0.3
-    ).configure_title(
-        fontSize=16,
-        anchor='middle'
     )
 
     # Save the chart
-    chart.save(output_path)
+    chart.save(output_path, scale_factor=2)
     print(f"Saved total runtime chart: {output_path}")
 
 

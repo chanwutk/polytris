@@ -350,7 +350,7 @@ def save_comparison_tables(df: pd.DataFrame, runtime_df: pd.DataFrame, verbose: 
 
         # Save runtime table
         runtime_csv_path = output_dir / 'runtime_comparison.csv'
-        runtime_df.to_csv(runtime_csv_path, index=False)
+        runtime_df[runtime_df['dataset'] == dataset].to_csv(runtime_csv_path, index=False)
         print(f"Saved runtime table: {runtime_csv_path}")
 
         if verbose:

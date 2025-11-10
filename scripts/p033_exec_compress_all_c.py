@@ -196,7 +196,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
             command_queue.put((device, {'description': description + ' grouping', 'completed': frame_idx}))
 
     # Step 2: Pack all polyominoes in batches (10 equal parts)
-    num_batches = 10
+    num_batches = 1
     batch_size = len(polyominoes_stacks) // num_batches
     # Handle case where len(polyominoes_stacks) < num_batches
     if batch_size == 0:
@@ -208,12 +208,6 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     # Initialize empty list to store all collages from all batches
     collages = []
     total_pack_time = 0.0
-
-    #########################################################
-    # TODO
-    #########################################################
-    # instead of sort the collages by left-over space, sort by the largest enclosed left-over space
-    # Write document for all experiments and results
 
     # Process each batch
     for batch_idx in range(num_batches):

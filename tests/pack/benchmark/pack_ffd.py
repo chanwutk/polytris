@@ -321,6 +321,7 @@ def benchmark_pack_ffd():
 
     # Import implementations
     from polyis.pack.pack_ffd import pack_all as c_pack_all
+    from polyis.pack.adapters import convert_collages_to_bitmap
     from polyis.pack.python.pack_ffd import pack_all as python_pack_all
     from polyis.pack.group_tiles import group_tiles as group_tiles_cython
 
@@ -413,6 +414,7 @@ def benchmark_pack_ffd():
                 c_result = c_pack_all(all_polyominoes_c, grid_height, grid_width)
                 c_time = (time.perf_counter() - start) * 1e6  # Convert to microseconds
                 c_times.append(c_time)
+                convert_collages_to_bitmap(c_result)
 
                 # Only validate correctness on the first run to avoid spam
                 if run_idx == 0:

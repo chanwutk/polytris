@@ -199,12 +199,6 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     collages = []
     total_pack_time = 0.0
 
-    #########################################################
-    # TODO
-    #########################################################
-    # instead of sort the collages by left-over space, sort by the largest enclosed left-over space
-    # Write document for all experiments and results
-
     # Process each batch
     for batch_idx in range(num_batches):
         # Calculate batch boundaries

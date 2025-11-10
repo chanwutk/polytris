@@ -85,9 +85,21 @@ static inline void create_polyomino_position(
     }
 }
 
+// Place polyomino at specified position in the occupied tiles grid
+// Updates the occupied_tiles array by marking all polyomino coordinates as occupied
+static inline void place(CoordinateArray *coords, uint8_t *occupied_tiles,
+                         int h, int w, int16_t y, int16_t x) {
+    // Mark all polyomino tiles as occupied in the grid
+    for (int16_t i = 0; i < coords->size; i++) {
+        int16_t py = y + coords->data[i].y;
+        int16_t px = x + coords->data[i].x;
+        SET_TILE(occupied_tiles, h, w, py, px, 1);
+    }
+}
+
 // Try to pack a polyomino (as coordinate array) into the collage
 // ph and pw are the height and width of the polyomino bounding box
-static inline bool try_pack(CoordinateArray *coords, uint8_t *occupied_tiles, int h,
+static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, int h,
                             int w, int16_t ph, int16_t pw, Placement *placement_out) {
     if (coords->size == 0) return false;
 
@@ -111,12 +123,8 @@ static inline bool try_pack(CoordinateArray *coords, uint8_t *occupied_tiles, in
             }
 
             if (fits) {
-                // Place the polyomino
-                for (int16_t i = 0; i < coords->size; i++) {
-                    int16_t py = y + coords->data[i].y;
-                    int16_t px = x + coords->data[i].x;
-                    SET_TILE(occupied_tiles, h, w, py, px, 1);
-                }
+                // Place the polyomino at this position
+                place(coords, occupied_tiles, h, w, y, x);
 
                 // Return placement (no adjustment needed since min offsets are 0)
                 placement_out->y = y;
@@ -253,7 +261,7 @@ CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int
 
                 // Attempt to pack the polyomino in this collage
                 Placement placement;
-                if (try_pack(shape, collage, h, w, ph, pw, &placement)) {
+                if (try_place(shape, collage, h, w, ph, pw, &placement)) {
                     // Successfully placed - create position structure
                     PolyominoPosition pos;
                     create_polyomino_position(&pos, oy, ox, frame, placement, shape);
@@ -279,10 +287,11 @@ CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int
             uint8_t *collage = (uint8_t*)calloc((size_t)(h * w), sizeof(uint8_t));
             CHECK_ALLOC(collage, "failed to allocate new collage for packing");
 
-            // Attempt to place the polyomino in the new collage
-            Placement placement;
-            bool pack_success = try_pack(shape, collage, h, w, ph, pw, &placement);
-            ASSERT(pack_success, "failed to pack polyomino in empty collage - this should never happen");
+            // Place the polyomino at the top-left corner of the new empty collage
+            place(shape, collage, h, w, 0, 0);
+
+            // Create placement structure for position tracking
+            Placement placement = {.y = 0, .x = 0};
 
             // Create position structure from successful placement
             PolyominoPosition pos;
