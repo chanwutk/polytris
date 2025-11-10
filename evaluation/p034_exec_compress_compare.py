@@ -21,7 +21,7 @@ from tqdm import tqdm
 from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, get_video_frame_count
 
 
-INPUT_DIRS = ['030_compressed_frames', '031_compressed_frames', '032_compressed_frames', '033_compressed_frames']
+INPUT_DIRS = ['030_compressed_frames', '031_compressed_frames', '032_compressed_frames', '033_compressed_frames', '034_compressed_frames', '035_compressed_frames']
 OUTPUT_DIR = '083_compress'
 
 
@@ -238,8 +238,7 @@ def compute_metrics(df: pd.DataFrame, verbose: bool = False) -> Tuple[pd.DataFra
     # Check for duplicates and raise error if found
     video_subset = df[['dataset', 'video']]
     unique_videos = video_subset.drop_duplicates().copy()
-    tqdm.pandas(desc="Getting video frame counts", disable=not verbose)
-    unique_videos['total_frames'] = unique_videos.progress_apply(get_video_total_frames, axis=1) if verbose else unique_videos.apply(get_video_total_frames, axis=1)
+    unique_videos['total_frames'] = unique_videos.apply(get_video_total_frames, axis=1)
 
     # Merge the total_frames back into the main DataFrame
     merge_df = unique_videos[['dataset', 'video', 'total_frames']].copy()  # type: ignore
@@ -251,20 +250,6 @@ def compute_metrics(df: pd.DataFrame, verbose: bool = False) -> Tuple[pd.DataFra
     # Apply count_images function to each row
     tqdm.pandas(desc="Counting images", disable=not verbose)
     df['num_images'] = df['config_path'].progress_apply(count_images_for_path) if verbose else df['config_path'].apply(count_images_for_path)
-
-    if verbose:
-        print("Computing tile counts...")
-
-    # Apply count_tiles function and expand the tuple result into two columns using pandas
-    tqdm.pandas(desc="Counting tiles", disable=not verbose)
-    tile_counts = df['config_path'].progress_apply(count_tiles_for_path) if verbose else df['config_path'].apply(count_tiles_for_path)
-    # Convert Series of tuples to DataFrame using pandas from_records
-    tile_df = pd.DataFrame.from_records(tile_counts.values, columns=['empty_tiles', 'occupied_tiles'], index=df.index)
-    df = pd.concat([df, tile_df], axis=1)
-
-    # Compute derived metrics using vectorized pandas operations
-    df['total_tiles'] = df['empty_tiles'] + df['occupied_tiles']
-    df['occupancy_ratio'] = df['occupied_tiles'] / df['total_tiles'].where(df['total_tiles'] > 0, 1)
 
     if verbose:
         print("Computing runtime metrics...")
@@ -323,11 +308,6 @@ def save_comparison_tables(df: pd.DataFrame, runtime_df: pd.DataFrame, verbose: 
         image_cols = ['dataset', 'video', 'stage', 'classifier', 'tilesize', 'tilepadding', 'num_images', 'total_frames']
         image_df = group_df[image_cols].copy()
 
-        # Select columns for tile counts table (include stage)
-        tile_cols = ['dataset', 'video', 'stage', 'classifier', 'tilesize', 'tilepadding',
-                     'empty_tiles', 'occupied_tiles', 'total_tiles', 'occupancy_ratio']
-        tile_df = group_df[tile_cols].copy()
-
         # Save image counts table
         image_csv_path = output_dir / 'image_counts_comparison.csv'
         image_df.to_csv(image_csv_path, index=False)
@@ -337,16 +317,6 @@ def save_comparison_tables(df: pd.DataFrame, runtime_df: pd.DataFrame, verbose: 
             print(f"  Total configurations: {len(image_df)}")
             print(f"  Total images: {image_df['num_images'].sum()}")
             print(f"  Total frames: {image_df['total_frames'].sum()}")
-
-        # Save tile counts table
-        tile_csv_path = output_dir / 'tile_counts_comparison.csv'
-        tile_df.to_csv(tile_csv_path, index=False)
-        print(f"Saved tile counts table: {tile_csv_path}")
-
-        if verbose:
-            print(f"  Total configurations: {len(tile_df)}")
-            print(f"  Total tiles: {tile_df['total_tiles'].sum()}")
-            print(f"  Average occupancy ratio: {tile_df['occupancy_ratio'].mean():.4f}")
 
         # Save runtime table
         runtime_csv_path = output_dir / 'runtime_comparison.csv'
@@ -393,9 +363,8 @@ def main(args):
     print(f"  Total configurations analyzed: {len(df)}")
     print(f"  Total stages: {df['stage'].nunique()}")
     print(f"  Total compressed images: {df['num_images'].sum()}")
-    print(f"  Total tiles: {df['total_tiles'].sum()}")
-    if 'runtime_total' in df.columns:
-        print(f"  Total runtime: {df['runtime_total'].sum():.2f} seconds")
+    # print(f"  Total tiles: {df['total_tiles'].sum()}")
+    print(f"  Total runtime: {df['runtime_total'].sum():.2f} seconds")
 
 
 if __name__ == '__main__':

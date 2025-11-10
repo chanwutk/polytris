@@ -16,7 +16,6 @@ Creates grouped bar chart visualizations comparing:
 
 import argparse
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import pandas as pd
 import altair as alt
@@ -29,11 +28,22 @@ from evaluation.utilities import ColorScheme
 COMPRESSION_EVAL_DIR = '083_compress'
 
 STAGE_METHOD_MAP = {
-    '030_compressed_frames': 'Pack Append',
-    '031_compressed_frames': 'FFD Python',
-    '032_compressed_frames': 'BFD Python',
-    '033_compressed_frames': 'FFD C'
+    '030_compressed_frames': 'Append (Cython)',
+    '031_compressed_frames': 'EFD (Python: 10 Batches)',
+    '032_compressed_frames': 'BFD* (Python: 10 Batches)',
+    '033_compressed_frames': 'BFD (C)',
+    '034_compressed_frames': 'EFD (C)',
+    '035_compressed_frames': 'FFD (C)',
 }
+
+STAGE_ORDER = [
+    'Append (Cython)',
+    'EFD (Python: 10 Batches)',
+    'BFD* (Python: 10 Batches)',
+    'FFD (C)',
+    'BFD (C)',
+    'EFD (C)',
+]
 
 # Detection time per image (milliseconds) for different datasets
 DETECTION_TIME_MS = {
@@ -44,6 +54,8 @@ DETECTION_TIME_MS = {
     'jnc6': 100,
     'jnc7': 100,
 }
+
+TILEPADDINGS = ['none', 'connected', 'disconnected']
 
 
 def parse_args():
@@ -69,7 +81,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_compression_data(dataset: str, verbose: bool = False) -> Dict[str, pd.DataFrame]:
+def load_compression_data(dataset: str, verbose: bool = False) -> dict[str, pd.DataFrame]:
     """
     Load image counts, tile counts, and runtime data from the compression evaluation directory.
     The 'stage' column in each CSV differentiates the compression methods.
@@ -79,7 +91,7 @@ def load_compression_data(dataset: str, verbose: bool = False) -> Dict[str, pd.D
         verbose: Whether to print verbose output
 
     Returns:
-        Dictionary with keys 'image_counts', 'tile_counts', and 'runtime', each containing a DataFrame
+        dictionary with keys 'image_counts', 'tile_counts', and 'runtime', each containing a DataFrame
         with data from all compression methods (uses 'stage' column to differentiate methods)
     """
     # Get evaluation directory path
@@ -90,6 +102,7 @@ def load_compression_data(dataset: str, verbose: bool = False) -> Dict[str, pd.D
     # Load image counts CSV
     image_csv_path = eval_dir / 'image_counts_comparison.csv'
     image_df = pd.read_csv(image_csv_path)
+    image_df = image_df[image_df['tilepadding'].isin(TILEPADDINGS)]
     # Rename 'stage' column to 'method' and map stage names to method names
     image_df = image_df.rename(columns={'stage': 'method'})
     image_df['method'] = image_df['method'].map(STAGE_METHOD_MAP)
@@ -99,21 +112,22 @@ def load_compression_data(dataset: str, verbose: bool = False) -> Dict[str, pd.D
         if 'method' in image_df.columns:
             print(f"    Methods: {image_df['method'].unique().tolist()}")
 
-    # Load tile counts CSV
-    tile_csv_path = eval_dir / 'tile_counts_comparison.csv'
-    tile_df = pd.read_csv(tile_csv_path)
-    # Rename 'stage' column to 'method' and map stage names to method names
-    tile_df = tile_df.rename(columns={'stage': 'method'})
-    tile_df['method'] = tile_df['method'].map(STAGE_METHOD_MAP)
-    result['tile_counts'] = tile_df
-    if verbose:
-        print(f"  Loaded tile counts: {len(tile_df)} rows")
-        if 'method' in tile_df.columns:
-            print(f"    Methods: {tile_df['method'].unique().tolist()}")
+    # # Load tile counts CSV
+    # tile_csv_path = eval_dir / 'tile_counts_comparison.csv'
+    # tile_df = pd.read_csv(tile_csv_path)
+    # # Rename 'stage' column to 'method' and map stage names to method names
+    # tile_df = tile_df.rename(columns={'stage': 'method'})
+    # tile_df['method'] = tile_df['method'].map(STAGE_METHOD_MAP)
+    # result['tile_counts'] = tile_df
+    # if verbose:
+    #     print(f"  Loaded tile counts: {len(tile_df)} rows")
+    #     if 'method' in tile_df.columns:
+    #         print(f"    Methods: {tile_df['method'].unique().tolist()}")
 
     # Load runtime CSV
     runtime_csv_path = eval_dir / 'runtime_comparison.csv'
     runtime_df = pd.read_csv(runtime_csv_path)
+    runtime_df = runtime_df[runtime_df['tilepadding'].isin(TILEPADDINGS)]
     # Rename 'stage' column to 'method' and map stage names to method names
     runtime_df = runtime_df.rename(columns={'stage': 'method'})
     runtime_df['method'] = runtime_df['method'].map(STAGE_METHOD_MAP)
@@ -192,63 +206,63 @@ def create_num_images_chart(df: pd.DataFrame, dataset: str, output_path: str, ve
     print(f"Saved num_images chart: {output_path}")
 
 
-def create_occupancy_ratio_chart(df: pd.DataFrame, dataset: str, output_path: str, verbose: bool = False):
-    """
-    Create a grouped bar chart comparing occupancy_ratio across compression methods.
+# def create_occupancy_ratio_chart(df: pd.DataFrame, dataset: str, output_path: str, verbose: bool = False):
+#     """
+#     Create a grouped bar chart comparing occupancy_ratio across compression methods.
 
-    Args:
-        df: DataFrame with tile counts data (must have 'method' column)
-        dataset: Dataset name for the title
-        output_path: Path to save the chart
-        verbose: Whether to print verbose output
-    """
-    # Create configuration label
-    df = df.copy()
-    df['config'] = df.apply(create_config_label, axis=1)
+#     Args:
+#         df: DataFrame with tile counts data (must have 'method' column)
+#         dataset: Dataset name for the title
+#         output_path: Path to save the chart
+#         verbose: Whether to print verbose output
+#     """
+#     # Create configuration label
+#     df = df.copy()
+#     df['config'] = df.apply(create_config_label, axis=1)
 
-    # Aggregate by config and method: sum tiles across all videos, then recalculate occupancy ratio
-    grouped_df = df.groupby(['config', 'method'], as_index=False).agg({
-        'empty_tiles': 'sum',
-        'occupied_tiles': 'sum',
-        'total_tiles': 'sum'
-    })
+#     # Aggregate by config and method: sum tiles across all videos, then recalculate occupancy ratio
+#     grouped_df = df.groupby(['config', 'method'], as_index=False).agg({
+#         'empty_tiles': 'sum',
+#         'occupied_tiles': 'sum',
+#         'total_tiles': 'sum'
+#     })
 
-    # Recalculate occupancy ratio from aggregated tiles
-    grouped_df['occupancy_ratio'] = grouped_df['occupied_tiles'] / grouped_df['total_tiles'].where(
-        grouped_df['total_tiles'] > 0, 1
-    )
+#     # Recalculate occupancy ratio from aggregated tiles
+#     grouped_df['occupancy_ratio'] = grouped_df['occupied_tiles'] / grouped_df['total_tiles'].where(
+#         grouped_df['total_tiles'] > 0, 1
+#     )
 
-    if verbose:
-        print(f"Creating occupancy_ratio chart with {len(grouped_df)} data points")
-        print(f"Configurations: {grouped_df['config'].nunique()}")
-        print(f"Methods: {grouped_df['method'].unique().tolist()}")
+#     if verbose:
+#         print(f"Creating occupancy_ratio chart with {len(grouped_df)} data points")
+#         print(f"Configurations: {grouped_df['config'].nunique()}")
+#         print(f"Methods: {grouped_df['method'].unique().tolist()}")
 
-    # Create grouped bar chart
-    chart = alt.Chart(grouped_df).mark_bar().encode(
-        x=alt.X('config:N',
-                title='Configuration (Classifier_TileSize_Padding)',
-                axis=alt.Axis(labelAngle=-45, labelLimit=200)),
-        y=alt.Y('occupancy_ratio:Q',
-                title='Tile Occupancy Ratio',
-                scale=alt.Scale(domain=[0, 1])),
-        color=alt.Color('method:N',
-                       title='Compression Method',
-                       scale=alt.Scale(range=ColorScheme.DutchField)),
-        xOffset='method:N'
-    ).properties(
-        width=600,
-        height=400,
-        title=f'Comparison of Tile Occupancy Ratios - {dataset}'
-    ).configure_axis(
-        gridOpacity=0.3
-    ).configure_title(
-        fontSize=16,
-        anchor='middle'
-    )
+#     # Create grouped bar chart
+#     chart = alt.Chart(grouped_df).mark_bar().encode(
+#         x=alt.X('config:N',
+#                 title='Configuration (Classifier_TileSize_Padding)',
+#                 axis=alt.Axis(labelAngle=-45, labelLimit=200)),
+#         y=alt.Y('occupancy_ratio:Q',
+#                 title='Tile Occupancy Ratio',
+#                 scale=alt.Scale(domain=[0, 1])),
+#         color=alt.Color('method:N',
+#                        title='Compression Method',
+#                        scale=alt.Scale(range=ColorScheme.DutchField)),
+#         xOffset='method:N'
+#     ).properties(
+#         width=600,
+#         height=400,
+#         title=f'Comparison of Tile Occupancy Ratios - {dataset}'
+#     ).configure_axis(
+#         gridOpacity=0.3
+#     ).configure_title(
+#         fontSize=16,
+#         anchor='middle'
+#     )
 
-    # Save the chart
-    chart.save(output_path)
-    print(f"Saved occupancy_ratio chart: {output_path}")
+#     # Save the chart
+#     chart.save(output_path)
+#     print(f"Saved occupancy_ratio chart: {output_path}")
 
 
 def create_runtime_chart(df: pd.DataFrame, dataset: str, output_path: str, verbose: bool = False):
@@ -298,8 +312,9 @@ def create_runtime_chart(df: pd.DataFrame, dataset: str, output_path: str, verbo
                        title='Compression Method',
                        scale=alt.Scale(range=ColorScheme.DutchField)),
         xOffset='method:N',
-        column=alt.Column('op:N',
-                         title='Operation')
+        facet=alt.Facet('op:N',
+                        title='Operation',
+                        columns=4)
     ).properties(
         width=400,
         height=400,
@@ -342,7 +357,8 @@ def create_total_runtime_chart(df: pd.DataFrame, image_counts_df: pd.DataFrame, 
     # Aggregate by config and method: sum runtime across all videos and operations
     compression_df = df.groupby(['config', 'method'], as_index=False)['runtime'].sum()
     assert isinstance(compression_df, pd.DataFrame)
-    compression_df = compression_df.rename(columns={'runtime': 'compression_runtime'})
+    compression_df['compression_runtime'] = compression_df['runtime']
+    compression_df = compression_df.drop(columns=['runtime'])
 
     # Create configuration label for image counts data
     image_counts_df = image_counts_df.copy()
@@ -361,11 +377,13 @@ def create_total_runtime_chart(df: pd.DataFrame, image_counts_df: pd.DataFrame, 
     # Create separate dataframes for compression and detection
     compression_bars = grouped_df[['config', 'method', 'compression_runtime']].copy()
     compression_bars['runtime_type'] = 'Pack: ' + grouped_df['method']
-    compression_bars = compression_bars.rename(columns={'compression_runtime': 'runtime'})
+    compression_bars['runtime'] = compression_bars['compression_runtime']
+    compression_bars.drop(columns=['compression_runtime'], inplace=True)
 
     detection_bars = grouped_df[['config', 'method', 'detection_runtime']].copy()
     detection_bars['runtime_type'] = 'Detection'
-    detection_bars = detection_bars.rename(columns={'detection_runtime': 'runtime'})
+    detection_bars['runtime'] = detection_bars['detection_runtime']
+    detection_bars.drop(columns=['detection_runtime'], inplace=True)
 
     # Combine both dataframes
     chart_df = pd.concat([compression_bars, detection_bars], ignore_index=True)
@@ -389,10 +407,12 @@ def create_total_runtime_chart(df: pd.DataFrame, image_counts_df: pd.DataFrame, 
                 title='Configuration (Classifier_TileSize_Padding)',
                 sort=alt.SortField(field='TotalRuntime', order='descending')),
         color=alt.Color('runtime_type:N', title='Runtime Type',
-                        scale=alt.Scale(range=ColorScheme.DutchField),
+                        scale=alt.Scale(domain=['Detection'] + [f'Pack: {m}' for m in STAGE_ORDER],
+                                        range=ColorScheme.DutchField),
                         legend=alt.Legend(orient='top')),
         yOffset=alt.YOffset('method:N',
-                           title='Compression Method')
+                            sort=STAGE_ORDER,
+                            title='Compression Method')
     ).properties(
         width=800,
         height=400,
@@ -427,9 +447,9 @@ def process_dataset(dataset: str, output_dir: Path, verbose: bool = False):
     num_images_path = dataset_output_dir / f'{dataset}_num_images_comparison.png'
     create_num_images_chart(data['image_counts'], dataset, str(num_images_path), verbose)
 
-    # Create occupancy_ratio comparison chart
-    occupancy_ratio_path = dataset_output_dir / f'{dataset}_occupancy_ratio_comparison.png'
-    create_occupancy_ratio_chart(data['tile_counts'], dataset, str(occupancy_ratio_path), verbose)
+    # # Create occupancy_ratio comparison chart
+    # occupancy_ratio_path = dataset_output_dir / f'{dataset}_occupancy_ratio_comparison.png'
+    # create_occupancy_ratio_chart(data['tile_counts'], dataset, str(occupancy_ratio_path), verbose)
 
     # Create runtime comparison chart (per operation)
     runtime_path = dataset_output_dir / f'{dataset}_runtime_comparison.png'

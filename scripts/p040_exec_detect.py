@@ -47,7 +47,7 @@ def detect_objects(video_name: str, tilesize: int, classifier: str, dataset: str
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_name)
     param_str = f'{classifier}_{tilesize}_{tilepadding}'
     
-    compressed_frames_dir = os.path.join(cache_dir, '031_compressed_frames', param_str, 'images')
+    compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir)
 
     # Create output directory for detections

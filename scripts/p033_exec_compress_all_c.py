@@ -41,6 +41,13 @@ class PolyominoPosition(NamedTuple):
     shape: np.ndarray
 
 
+OUTPUT_DIR_MAP = {
+    PackMode.Best_Fit: '033_compressed_frames',
+    PackMode.Easiest_Fit: '034_compressed_frames',
+    PackMode.First_Fit: '035_compressed_frames',
+}
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute compression of video tiles into images based on classification results')
     parser.add_argument('--datasets', required=False,
@@ -136,7 +143,8 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
                                           tilesize, classifier, execution_dir=True)
     
     # Create output directory for compression results
-    output_dir = os.path.join(cache_video_dir, '033_compressed_frames', f'{classifier}_{tilesize}_{tilepadding}')
+    output_dir_name = OUTPUT_DIR_MAP[mode]
+    output_dir = os.path.join(cache_video_dir, output_dir_name, f'{classifier}_{tilesize}_{tilepadding}')
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -272,13 +280,14 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     command_queue.put((device, {'description': description + ' reading', 'completed': 0, 'total': num_frames_total}))
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
     frames = []
+    mod = max(1, num_frames_total // 20)
     for idx in range(num_frames_total):
         ret, frame = cap.read()
         if not ret:
             break
         assert dtypes.is_np_image(frame), frame.shape
         frames.append(frame)
-        if idx % max(1, num_frames_total // 100) == 0:
+        if idx % mod == 0:
             command_queue.put((device, {'description': description + ' reading', 'completed': idx}))
     
     assert len(frames) == num_frames_total, f"Expected {num_frames_total} frames, got {len(frames)}"
@@ -288,6 +297,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     # Step 4: Render and save each collage
     command_queue.put((device, {'description': description + ' rendering', 'completed': 0, 'total': len(collages)}))
 
+    mod = max(1, len(collages) // 20)
     for collage_idx, collage in enumerate(collages):
         assert len(collage) > 0, f"Expected at least one polyomino in collage {collage_idx}"
         step_times = {}
@@ -346,7 +356,8 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
         timing_data.append({'step': 'process_collage', 'runtime': format_time(**step_times)})
 
         # Update progress
-        command_queue.put((device, {'description': description + ' rendering', 'completed': collage_idx + 1}))
+        if collage_idx % mod == 0:
+            command_queue.put((device, {'description': description + ' rendering', 'completed': collage_idx + 1}))
 
     # # Free polyomino stacks
     # print('free polyominoes')
@@ -391,7 +402,7 @@ def main(args):
           {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tilesize}/score/
         - Looks for score.jsonl files
         - Videos are read from {DATASETS_DIR}/{dataset}/
-        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/033_compressed_frames/{classifier}_{tilesize}/images/
+        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/03_compressed_frames/{classifier}_{tilesize}/images/
         - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/033_compressed_frames/{classifier}_{tilesize}/index_maps/
         - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/033_compressed_frames/{classifier}_{tilesize}/offset_lookups/
         - When tilesize is 'all', all tile sizes (30, 60, 120) are processed
@@ -419,7 +430,8 @@ def main(args):
                 video_file_path = os.path.join(videoset_dir, video_file)
                 cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
 
-                compressed_frames_base_dir = os.path.join(cache_video_dir, '033_compressed_frames')
+                compressed_frames_dir_name = OUTPUT_DIR_MAP[args.mode]
+                compressed_frames_base_dir = os.path.join(cache_video_dir, compressed_frames_dir_name)
                 if args.clear and os.path.exists(compressed_frames_base_dir):
                     shutil.rmtree(compressed_frames_base_dir)
                     print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")

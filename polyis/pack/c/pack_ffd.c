@@ -354,5 +354,6 @@ CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int
     IntArray_cleanup(&empty_spaces);
     PolyominoWithFrameArray_cleanup(&all_polyominoes);
 
+    // TODO: Each list of PolyominoPosition should be sorted by frame index for easier processing later
     return result;
 }
