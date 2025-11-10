@@ -54,7 +54,7 @@ cdef extern from "c/utilities.h":
 # Declare C structures from pack_ffd.h
 cdef extern from "c/pack_ffd.h":
     # Declare the main packing function
-    CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w)
+    CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, int mode)
 
     # Cleanup functions
     void CollageArray_cleanup(CollageArray *list)
@@ -83,7 +83,7 @@ cdef class PyPolyominoPosition:
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w) -> list[list[PyPolyominoPosition]]:
+def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w, int mode) -> list[list[PyPolyominoPosition]]:
     """Packs all polyominoes from multiple stacks into collages using the C FFD algorithm.
 
     This function takes multiple stacks of polyominoes (memory addresses) and attempts to
@@ -97,6 +97,7 @@ def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w) -> list[list[PyPo
                             corresponds to a video frame.
         h: Height of each collage in pixels
         w: Width of each collage in pixels
+        mode: Packing mode to use (PackMode enum)
 
     Returns:
         List of lists, where each inner list represents a collage containing
@@ -121,7 +122,7 @@ def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w) -> list[list[PyPo
         arrays_ptr[i] = <PolyominoArray*>polyominoes_stacks[i]  # type: ignore
 
     # Call the C packing function
-    result = pack_all_(arrays_ptr, num_arrays, h, w)
+    result = pack_all_(arrays_ptr, num_arrays, h, w, mode)
     free(<void*>arrays_ptr)
 
     if result == NULL:  # type: ignore

@@ -30,7 +30,8 @@ class PyPolyominoPosition:
 def pack_all(
     polyominoes_stacks: np.ndarray,
     h: int,
-    w: int
+    w: int,
+    mode: int,
 ) -> list[list[PyPolyominoPosition]]:
     """Packs all polyominoes from multiple stacks into collages using the C FFD algorithm.
 
@@ -45,6 +46,7 @@ def pack_all(
                             corresponds to a video frame.
         h: Height of each collage in pixels
         w: Width of each collage in pixels
+        mode: Packing mode to use
     Returns:
         A list of lists, where each inner list represents a collage containing
         PolyominoPosition objects representing all polyominoes packed into that collage

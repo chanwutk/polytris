@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+from enum import IntEnum
 import json
 import os
 from typing import Callable, Literal, NamedTuple
@@ -22,6 +23,13 @@ from polyis.utilities import (
 )
 from polyis.pack.group_tiles import group_tiles
 from polyis.pack.pack_ffd import pack_all
+
+
+class PackMode(IntEnum):
+    """Packing mode options for bin packing algorithms."""
+    Easiest_Fit = 0  # Pack into collage with most empty space
+    First_Fit = 1    # Pack into first collage that fits
+    Best_Fit = 2     # Pack into collage with least empty space that fits
 
 
 class PolyominoPosition(NamedTuple):
@@ -53,6 +61,9 @@ def parse_args():
     parser.add_argument('--tilepadding', type=str, choices=['none', 'connected', 'disconnected'],
                         nargs='+', default=['none', 'connected', 'disconnected'],
                         help='Apply padding to the classification results (space-separated list of none/connected/disconnected)')
+    parser.add_argument('--mode', type=lambda x: PackMode[x], 
+                        default=PackMode.Best_Fit,
+                        help='Packing mode for the pack_all function. Options: Easiest_Fit, First_Fit, Best_Fit (default: Best_Fit)')
     return parser.parse_args()
 
 
@@ -101,7 +112,7 @@ Collage = list[PolyominoPosition]
 
 def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesize: int,
              threshold: float, tilepadding: Literal['none', 'connected', 'disconnected'],
-             gpu_id: int, command_queue: mp.Queue):
+             mode: PackMode, gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video by batch processing all frames at once using pack_all.
 
@@ -140,11 +151,11 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
 
     # Send initial progress update
     description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]}"
-    command_queue.put((device, {
-        'description': description + ' grouping',
-        'completed': 0,
-        'total': len(results)
-    }))
+    # command_queue.put((device, {
+    #     'description': description + ' grouping',
+    #     'completed': 0,
+    #     'total': len(results)
+    # }))
     
     # Open video to get dimensions
     cap = cv2.VideoCapture(video_file_path)
@@ -191,9 +202,9 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
 
         timing_data.append({'step': 'group_tiles', 'frame_idx': frame_idx, 'runtime': format_time(**step_times)})
 
-        # Update progress
-        if frame_idx % max(1, len(results) // 100) == 0:
-            command_queue.put((device, {'description': description + ' grouping', 'completed': frame_idx}))
+        # # Update progress
+        # if frame_idx % max(1, len(results) // 100) == 0:
+        #     command_queue.put((device, {'description': description + ' grouping', 'completed': frame_idx}))
 
     # Step 2: Pack all polyominoes in batches (10 equal parts)
     num_batches = 1
@@ -224,7 +235,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
 
         # Pack this batch
         batch_start = (time.time_ns() / 1e6)
-        batch_collages_ = pack_all(batch_polyominoes, grid_height, grid_width)
+        batch_collages_ = pack_all(batch_polyominoes, grid_height, grid_width, int(mode))
         batch_pack_time = (time.time_ns() / 1e6) - batch_start
         total_pack_time += batch_pack_time
 
@@ -417,7 +428,7 @@ def main(args):
                     for tilesize in TILE_SIZES:
                         for tilepadding in TILEPADDING_MODES:
                             funcs.append(partial(compress, video_file_path, cache_video_dir,
-                                                 classifier, tilesize, args.threshold, tilepadding))
+                                                 classifier, tilesize, args.threshold, tilepadding, args.mode))
     
     print(f"Created {len(funcs)} tasks to process")
     
@@ -428,7 +439,7 @@ def main(args):
     if len(funcs) < num_processes:
         num_processes = len(funcs)
     
-    ProgressBar(num_workers=torch.cuda.device_count(), num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
+    ProgressBar(num_workers=torch.cuda.device_count(), num_tasks=len(funcs), refresh_per_second=10).run_all(funcs)
     print("All tasks completed!")
 
 

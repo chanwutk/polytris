@@ -3,7 +3,12 @@
 
 #include "utilities.h"
 
-// Main packing function
-CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w);
+typedef enum PackMode {
+    Easiest_Fit,  // Pack into collage with most empty space
+    First_Fit,    // Pack into first collage that fits
+    Best_Fit      // Pack into collage with least empty space that fits
+} PackMode;
+
+CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode);
 
 #endif // PACK_FFD_H

@@ -8,6 +8,18 @@
 
 
 // ============================================================================
+// Enumerations
+// ============================================================================
+
+// Packing mode options for bin packing algorithms
+typedef enum PackMode {
+    Easiest_Fit = 0,  // Pack into collage with most empty space
+    First_Fit = 1,    // Pack into first collage that fits
+    Best_Fit = 2      // Pack into collage with least empty space that fits
+} PackMode;
+
+
+// ============================================================================
 // Helper Macros
 // ============================================================================
 
@@ -42,11 +54,18 @@ static inline void copy_coordinate_array(CoordinateArray *src, CoordinateArray *
 }
 
 // Comparison function for sorting collage candidates by empty space (descending)
-static int compare_collage_candidates(const void *a, const void *b) {
+static int compare_collage_candidates_descend(const void *a, const void *b) {
     const CollageCandidate *ca = (const CollageCandidate*)a;
     const CollageCandidate *cb = (const CollageCandidate*)b;
     // Sort descending (most empty space first)
     return cb->empty_space - ca->empty_space;
+}
+// Comparison function for sorting collage candidates by empty space (ascending)
+static int compare_collage_candidates_ascend(const void *a, const void *b) {
+    const CollageCandidate *ca = (const CollageCandidate*)a;
+    const CollageCandidate *cb = (const CollageCandidate*)b;
+    // Sort ascending (least empty space first)
+    return ca->empty_space - cb->empty_space;
 }
 
 // Comparison function for qsort (sort by size descending)
@@ -147,9 +166,10 @@ static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, i
 //   num_arrays: Number of arrays in the array
 //   h: Height of each collage
 //   w: Width of each collage
+//   mode: Packing mode to use
 // Returns:
 //   CollageArray containing all packed collages with polyomino positions
-CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w) {
+CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode) {
     // Initialize storage for all polyominoes with their frame indices
     PolyominoWithFrameArray all_polyominoes;
     PolyominoWithFrameArray_init(&all_polyominoes, 128);
@@ -250,8 +270,24 @@ CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int
 
             // Sort candidates by empty space (descending order)
             if (num_candidates > 0) {
-                qsort(candidates, (size_t)num_candidates, sizeof(CollageCandidate),
-                      compare_collage_candidates);
+                switch (mode) {
+                    case Easiest_Fit:
+                        // Sort descending (most empty space first)
+                        qsort(candidates, (size_t)num_candidates, sizeof(CollageCandidate),
+                              compare_collage_candidates_descend);
+                        break;
+                    case Best_Fit:
+                        // Sort ascending (least empty space first)
+                        qsort(candidates, (size_t)num_candidates, sizeof(CollageCandidate),
+                              compare_collage_candidates_ascend);
+                        break;
+                    case First_Fit:
+                        // No sorting needed for First Fit
+                        break;
+                    default:
+                        ASSERT(false, "unknown packing mode");
+                        break;
+                }
             }
 
             // Try to place in existing collages
