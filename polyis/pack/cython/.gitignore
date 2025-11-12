@@ -1,0 +1,13 @@
+*.so
+
+# Cython generated files
+*.c
+*.html
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.pytest_cache/

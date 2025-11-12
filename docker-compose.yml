@@ -1,20 +1,8 @@
 services:
   polyis:
-    build: .
-    container_name: polyis
-    tty: true
-    environment:
-      - TERM=xterm-256color
-      - POLYIS_DATA=/polyis-data
-      - POLYIS_CACHE=/polyis-cache
-    volumes:
-      - .:/polyis
-      # Change /data/chawutk/polyis-dataset to your local path
-      - /data/chanwutk/data/polyis-data:/polyis-data
-      - /data/chanwutk/data/polyis-cache:/polyis-cache
-      - /data/chanwutk/data/otif-dataset:/otif-dataset
-      - /data/alenachao/data/hota_outputs:/sota-results
-      - /home/eecs/chanwutk/.ssh:/root/.ssh
+    extends:
+      file: docker-compose.base.yml
+      service: polyis
     deploy:
       resources:
         reservations:
@@ -22,4 +10,3 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    network_mode: "host"

@@ -9,77 +9,71 @@ import glob
 import multiprocessing as mp
 
 
+ARGS = ["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"]
+MACROS: list[tuple[str, str | None]] = [("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")]
+
+
 extensions = [
     Extension(
-        "polyis.binpack.utilities",
-        ["polyis/binpack/utilities.pyx"],
+        "polyis.pack.cython.utilities",
+        ["polyis/pack/cython/utilities.pyx"],
         include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.cbinpack.group_tiles",
+        "polyis.pack.group_tiles",
         [
-            "polyis/cbinpack/group_tiles.pyx",
-            "polyis/cbinpack/utilities_.c",
-            "polyis/cbinpack/group_tiles_.c",
+            "polyis/pack/group_tiles.pyx",
+            "polyis/pack/c/utilities.c",
+            "polyis/pack/c/group_tiles.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions", "-std=c11"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.cbinpack.adapters",
+        "polyis.pack.adapters",
         [
-            "polyis/cbinpack/adapters.pyx",
-            "polyis/cbinpack/utilities_.c",
+            "polyis/pack/adapters.pyx",
+            "polyis/pack/c/utilities.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions", "-std=c11"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.binpack.adapters",
-        ["polyis/binpack/adapters.pyx"],
-        include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        "polyis.pack.pack_ffd",
+        [
+            "polyis/pack/pack_ffd.pyx",
+            "polyis/pack/c/utilities.c",
+            "polyis/pack/c/pack_ffd.c",
+        ],
+        include_dirs=["polyis/cbinpack", numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.binpack.pack_append",
-        ["polyis/binpack/pack_append.pyx"],
+        "polyis.pack.cython.adapters",
+        ["polyis/pack/cython/adapters.pyx"],
         include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.binpack.group_tiles",
-        ["polyis/binpack/group_tiles.pyx"],
+        "polyis.pack.cython.pack_append",
+        ["polyis/pack/cython/pack_append.pyx"],
         include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.binpack.render",
-        ["polyis/binpack/render.pyx"],
+        "polyis.pack.cython.group_tiles",
+        ["polyis/pack/cython/group_tiles.pyx"],
         include_dirs=[numpy.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
-    # Extension(
-    #     "polyis.binpack.pack_all",
-    #     ["polyis/binpack/pack_all.pyx"],
-    #     include_dirs=[numpy.get_include()],
-    #     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-    #     extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
-    # ),
-    # Extension(
-    #     "polyis.binpack.pack_all_optimized",
-    #     ["polyis/binpack/pack_all_optimized.pyx"],
-    #     include_dirs=[numpy.get_include()],
-    #     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")],
-    #     extra_compile_args=["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"],
-    # )
 ]
 
 
@@ -91,20 +85,17 @@ class CleanCommand(Command):
     
     # Patterns to clean - can be overridden in subclasses
     c_patterns = [
-        'polyis/binpack/**/*.c',
-        'polyis/binpack/*.c',
+        'polyis/pack/cython/**/*.c',
+        'polyis/pack/cython/*.c',
+        'polyis/pack/*.c',
     ]
     so_patterns = [
-        'polyis/binpack/**/*.so',
-        'polyis/binpack/*.so',
-        'polyis/cbinpack/**/*.so',
-        'polyis/cbinpack/*.so',
+        'polyis/pack/**/*.so',
+        'polyis/pack/*.so',
     ]
     html_patterns = [
-        'polyis/binpack/**/*.html',
-        'polyis/binpack/*.html',
-        'polyis/cbinpack/**/*.html',
-        'polyis/cbinpack/*.html',
+        'polyis/pack/**/*.html',
+        'polyis/pack/*.html',
     ]
     
     def initialize_options(self):

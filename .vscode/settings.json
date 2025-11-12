@@ -1,7 +1,14 @@
 {
     "files.exclude": {
-        "polyis/binpack/*.{c,html,so}": true,
-        "polyis/cbinpack/*.{html,so}": true,
-        "polyis/cbinpack/*[a-zA-Z0-9].c": true
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "polyis/pack/cython/*.{c,html,so}": true,
+        "polyis/pack/c/*.{html,o}": true,
+        "polyis/pack/*.{c,html,so}": true,
+    },
+    "files.associations": {
+        "utilities.h": "c",
+        "stdint.h": "c",
+        "stdint-gcc.h": "c"
     }
 }

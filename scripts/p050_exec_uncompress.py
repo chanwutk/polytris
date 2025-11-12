@@ -177,7 +177,7 @@ def process_unpacking_task(video_file_path: str, tilesize: int, classifier: str,
     assert os.path.exists(detections_file), f"Detections file not found: {detections_file}"
     
     # Check if compressed frames directory exists
-    compressed_frames_dir = os.path.join(video_file_path, '031_compressed_frames',
+    compressed_frames_dir = os.path.join(video_file_path, '033_compressed_frames',
                                          f'{classifier}_{tilesize}_{tilepadding}')
     assert os.path.exists(compressed_frames_dir), f"Compressed frames directory not found: {compressed_frames_dir}"
     
