@@ -1477,3 +1477,14 @@ def seed_everything(seed: int = 42):
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
+
+
+CONFIG_DIR = 'configs'
+
+
+def get_config(config_name: str = 'global.yaml'):
+    config_path = os.path.join(CONFIG_DIR, config_name)
+    import yaml
+    with open(config_path, 'r') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    return config
