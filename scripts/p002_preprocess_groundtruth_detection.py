@@ -8,37 +8,32 @@ import time
 import cv2
 import torch
 import queue
+import shutil
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, VIDEO_SETS, format_time, ProgressBar, DATASETS_TO_TEST, gcp_run, get_num_frames
+from polyis.utilities import format_time, ProgressBar, gcp_run, get_num_frames, get_config
+
+
+CONFIG = get_config('global.yaml')
+EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
+VIDEO_SETS = CONFIG['EXEC']['VIDEO_SETS']
+CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
+DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
 
 
 def parse_args():
-    """
-    Parse command line arguments for the script.
-    
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - datasets (list): List of dataset names to process (default: ['caldot1', 'caldot2'])
-    """
     parser = argparse.ArgumentParser(description='Execute object detection on preprocessed videos')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
     parser.add_argument('--gcp', action='store_true', help='Execute the code in GCP')
     return parser.parse_args()
 
 
-def detect_objects(video_path: str, dataset_name: str, output_path: str,
-                   gpu_id: int, command_queue: queue.Queue):
+def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: queue.Queue):
     """
     Execute object detection on a single video file and save results to JSONL.
     
     Args:
-        video_path (str): Path to the input video file
-        dataset_name (str): Name of the dataset (used to auto-select detector)
-        output_path (str): Path where the output JSONL file will be saved
+        dataset (str): Name of the dataset (used to auto-select detector)
+        video_file (str): Name of the video file
         gpu_id (int): GPU device ID to use for this process
         command_queue (Queue): Queue for progress updates
         
@@ -55,30 +50,34 @@ def detect_objects(video_path: str, dataset_name: str, output_path: str,
         - detections (list): List of detection results from RetinaNet
         - runtime (dict): Runtime measurements for read and detect operations
     """
+
+    dataset_dir = os.path.join(DATASETS_DIR, dataset)
+    video_path = os.path.join(dataset_dir, video_file)
+    video_name = video_file.split('/')[1]
+    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '000_groundtruth', 'detection.jsonl')
+    runtime_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '000_groundtruth', 'detection_runtime.jsonl')
     # print(f"Processing video: {video_path} on GPU {gpu_id}")
     
     # Load detector for this specific process and GPU (auto-selected based on dataset)
-    detector = polyis.models.detector.get_detector(dataset_name, gpu_id, batch_size=1)
+    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size=1)
     
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f"Could not open video {video_path}"
     
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    # fps = cap.get(cv2.CAP_PROP_FPS)
-    # width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    # height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    
-    # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     
     # Create output directory if it doesn't exist
     output_dir = os.path.dirname(output_path)
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
+
     
-    with open(output_path, 'w') as f:
+    with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
         frame_idx = 0
         
         command_queue.put(('cuda:' + str(gpu_id), {
-            'description': os.path.basename(video_path).split('.')[0],
+            'description': f"{dataset} {video_file}",
             'completed': 0,
             'total': frame_count
         }))
@@ -102,12 +101,11 @@ def detect_objects(video_path: str, dataset_name: str, output_path: str,
             frame_entry = {
                 "frame_idx": frame_idx,
                 "detections": detections.tolist() if detections is not None else [],
-                "runtime": format_time(read=read_time, detect=detect_time)
             }
             
             # Write to JSONL file
             f.write(json.dumps(frame_entry) + '\n')
-            f.flush()
+            fr.write(json.dumps(format_time(read=read_time, detect=detect_time)) + '\n')
             
             frame_idx += 1
             
@@ -146,17 +144,12 @@ def main(args):
         - Runtime measurements include frame reading and object detection times
         - Processing is parallelized across available GPUs for improved performance
     """
-    datasets = args.datasets
 
     # Create task functions
     funcs = []
-    for dataset in datasets:
+    for dataset in EXEC_DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
         assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
-        
-        # # Show detector info for this dataset
-        # detector_info = polyis.models.detector.get_detector_info(dataset)
-        # print(f"Using detector: {detector_info['detector']} ({detector_info['description']})")
         
         # Get all video files from the dataset directory
         video_files: list[str] = []
@@ -168,9 +161,7 @@ def main(args):
         
         for video_file in video_files:
             video_file_path = os.path.join(dataset_dir, video_file)
-            output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file.split('/')[1], '000_groundtruth', 'detections.jsonl')
-            funcs.append((get_num_frames(video_file_path), partial(detect_objects, video_file_path, dataset, output_path)))
-            # detect_objects(video_file_path, dataset, output_path, 0, Queue())
+            funcs.append((get_num_frames(video_file_path), partial(detect_objects, dataset, video_file)))
     
     funcs = sorted(funcs, key=lambda x: x[0], reverse=True)
     funcs = [func for _, func in funcs]

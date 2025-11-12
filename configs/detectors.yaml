@@ -1,0 +1,30 @@
+dataset_name_mapping:
+  caldot1: caldot
+  caldot2: caldot
+  caldot1-yolo12: caldot-yolo12
+  caldot2-yolo12: caldot-yolo12
+  caldot1-fasterrcnn: caldot-fasterrcnn
+  caldot2-fasterrcnn: caldot-fasterrcnn
+  jnc0: b3d
+  jnc2: b3d
+  jnc6: b3d
+  jnc7: b3d
+
+dataset_detector_mapping:
+  b3d:
+    detector: retina
+  caldot:
+    detector: yolov3
+    detector_label: caldot
+    width: 704
+    height: 480
+    model_path: /otif-dataset/yolov3/caldot/yolov3-704x480.best
+    config_path: /otif-dataset/yolov3/caldot/yolov3-704x480-test.cfg
+  caldot-yolo5:
+    detector: yolo5
+    model_path: yolov5x6u.pt
+  caldot-yolo12:
+    detector: yolo12
+    model_path: yolo12x.pt
+  caldot-fasterrcnn:
+    detector: fasterrcnn

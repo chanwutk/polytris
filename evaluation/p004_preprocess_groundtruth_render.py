@@ -6,24 +6,15 @@ import multiprocessing as mp
 from multiprocessing import Queue
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, load_detection_results, DATASETS_TO_TEST
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, load_detection_results, get_config
+
+
+CONFIG = get_config('global.yaml')
+EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
 
 
 def parse_args():
-    """
-    Parse command line arguments for the script.
-    
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - datasets (list): List of dataset names to process (default: ['caldot1', 'caldot2'])
-            - speed_up (int): Speed up factor for visualization (default: 4)
-            - track_ids (list): List of track IDs to color (others will be grey)
-    """
     parser = argparse.ArgumentParser(description='Visualize tracking results on original videos')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
     parser.add_argument('--speed_up', type=int, default=4,
                         help='Speed up factor for visualization (process every Nth frame)')
     parser.add_argument('--track_ids', type=int, nargs='*', default=None,
@@ -96,13 +87,11 @@ def main(args):
         - Each track ID gets a unique color from a predefined palette
         - Processing is parallelized for improved performance
     """
-    datasets = args.datasets
-    
     print(f"Speed up factor: {args.speed_up} (processing every {args.speed_up}th frame)")
     
     # Create task functions
     funcs = []
-    for dataset in datasets:
+    for dataset in EXEC_DATASETS:
         print(f"Processing dataset: {dataset}")
         
         # Find all videos with tracking results

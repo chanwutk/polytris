@@ -9,15 +9,18 @@ import torch
 from functools import partial
 import queue
 
-from polyis.utilities import CACHE_DIR, VIDEO_SETS, create_tracker, format_time, load_detection_results, ProgressBar, register_tracked_detections, DATASETS_TO_TEST
+from polyis.utilities import create_tracker, format_time, load_detection_results, ProgressBar, register_tracked_detections, get_config
+
+
+CONFIG = get_config('global.yaml')
+EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
+VIDEO_SETS = CONFIG['EXEC']['VIDEO_SETS']
+DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
+CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute object tracking on detection results')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
     parser.add_argument('--tracker', required=False,
                         default='sort',
                         choices=['sort'],
@@ -25,14 +28,14 @@ def parse_args():
     return parser.parse_args()
 
 
-def track(video_file: str, tracker_name: str, dataset: str, gpu_id: int, command_queue: "queue.Queue[tuple[str, dict]]"):
+def track(dataset: str, video_file: str, tracker_name: str, gpu_id: int, command_queue: "queue.Queue[tuple[str, dict]]"):
     """
     Execute object tracking on detection results and save tracking results to JSONL.
 
     Args:
+        dataset (str): Dataset name
         video_file (str): Name of the video file to process
         tracker_name (str): Name of the tracker to use
-        dataset (str): Dataset name
         gpu_id (int): GPU device ID to use for this process
         command_queue (Queue): Queue for progress updates
     """
@@ -41,6 +44,7 @@ def track(video_file: str, tracker_name: str, dataset: str, gpu_id: int, command
 
     # Create output path for tracking results
     output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '000_groundtruth', 'tracking.jsonl')
+    runtime_path = output_path.replace('tracking.jsonl', 'tracking_runtime.jsonl')
 
     # print(f"Processing video: {video_file}")
     # Create tracker
@@ -58,7 +62,6 @@ def track(video_file: str, tracker_name: str, dataset: str, gpu_id: int, command
         'total': len(detection_results)
     }))
 
-    runtime_path = output_path.replace('tracking.jsonl', 'tracking_runtimes.jsonl')
     with open(runtime_path, 'w') as runtime_file:
         # Process each frame
         mod = max(1, int(len(detection_results) * 0.05))
@@ -162,63 +165,33 @@ def main(args):
         - Linear interpolation is performed to fill missing detections in tracks
         - Processing is parallelized across available GPUs for improved performance
     """
-    datasets = args.datasets
-
-    print(f"Using tracker: {args.tracker}")
-    print(f"Tracker parameters: max_age={args.max_age}, min_hits={args.min_hits}, iou_threshold={args.iou_threshold}")
-
     tracker = args.tracker
-
-    # Create task functions
     funcs = []
-    for dataset in datasets:
-        print(f"Processing dataset: {dataset}")
-
-        # Find all videos with detection results
-        dataset_cache_dir = os.path.join(CACHE_DIR, dataset)
-        if not os.path.exists(dataset_cache_dir):
-            print(f"Dataset cache directory {dataset_cache_dir} does not exist, skipping...")
-            continue
-
-        # Look for directories that contain detection results in execution subdirectory
-        execution_dir = os.path.join(dataset_cache_dir, 'execution')
-        if not os.path.exists(execution_dir):
-            print(f"Execution directory {execution_dir} does not exist, skipping dataset {dataset}...")
-            continue
-
-        video_dirs = []
-        for item in os.listdir(execution_dir):
-            item_path = os.path.join(execution_dir, item)
-            if os.path.isdir(item_path):
-                detection_path = os.path.join(item_path, '000_groundtruth', 'detections.jsonl')
-                if os.path.exists(detection_path):
-                    video_dirs.append(item)
-
-        if not video_dirs:
-            print(f"No videos with detection results found in {execution_dir}")
-            continue
-
-        print(f"Found {len(video_dirs)} videos with detection results")
-
-        funcs.extend(
-            partial(track, video_file, tracker, dataset)
-            for video_file in video_dirs
-        )
-
-    assert len(funcs) > 0, "No videos found to process across all datasets"
-
+    for dataset in EXEC_DATASETS:
+        dataset_dir = os.path.join(DATASETS_DIR, dataset)
+        assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
+        
+        # Get all video files from the dataset directory
+        video_files: list[str] = []
+        for videoset in VIDEO_SETS:
+            videoset_dir = os.path.join(dataset_dir, videoset)
+            assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
+            video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])
+        assert len(video_files) > 0, f"No video files found in {dataset_dir}"
+        
+        for video_file in video_files:
+            funcs.append(partial(track, dataset, video_file, tracker))
+    
     # Determine number of available GPUs
     num_gpus = torch.cuda.device_count()
     print(f"Available GPUs: {num_gpus}")
-
+    
     # Limit the number of processes to the number of available GPUs
     max_processes = min(len(funcs), num_gpus)
     print(f"Using {max_processes} processes (limited by {num_gpus} GPUs)")
-
+    
     # Use ProgressBar for parallel processing
     ProgressBar(num_workers=num_gpus, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
-
-    print("All datasets processed successfully!")
 
 
 if __name__ == '__main__':

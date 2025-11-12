@@ -1,12 +1,7 @@
 import numpy as np
 import ultralytics
-# import torch
 
 import polyis.dtypes
-
-
-MODEL_PATH = "yolov5x6u.pt"
-# ultralytics.YOLO(MODEL_PATH)
 
 
 # COCO class indices: car=2, bus=5, truck=7
@@ -14,7 +9,7 @@ MODEL_PATH = "yolov5x6u.pt"
 VEHICLE_CLASSES = [2, 5, 7]  # car (includes vans), bus, truck
 
 
-def get_detector(device: str, model_path: str | None = None):
+def get_detector(device: str, model_path: str):
     """
     Get YOLOv5 detector model configured to detect only vehicles.
 
@@ -26,7 +21,7 @@ def get_detector(device: str, model_path: str | None = None):
         torch.nn.Module: Configured YOLOv5 model for vehicle detection
     """
     # print(f"Loading YOLOv5 detector for dataset on {device}")
-    model = ultralytics.YOLO(model_path or MODEL_PATH)
+    model = ultralytics.YOLO(model_path)
     # print(f"Loaded YOLOv5 detector for dataset on {device}")
     model.fuse()
     # print(f"Fused YOLOv5 detector for dataset on {device}")
