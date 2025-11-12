@@ -29,20 +29,20 @@ COMPRESSION_EVAL_DIR = '083_compress'
 
 STAGE_METHOD_MAP = {
     '030_compressed_frames': 'Append (Cython)',
-    '031_compressed_frames': 'EFD (Python: 10 Batches)',
-    '032_compressed_frames': 'BFD* (Python: 10 Batches)',
-    '033_compressed_frames': 'BFD (C)',
-    '034_compressed_frames': 'EFD (C)',
+    '031_compressed_frames': 'EFD(1) (Python: 10 Batches)',
+    '032_compressed_frames': 'EFD(2) (Python: 10 Batches)',
+    '033_compressed_frames': 'BFD(1) (C)',
+    '034_compressed_frames': 'EFD(1) (C)',
     '035_compressed_frames': 'FFD (C)',
 }
 
 STAGE_ORDER = [
     'Append (Cython)',
-    'EFD (Python: 10 Batches)',
-    'BFD* (Python: 10 Batches)',
+    'EFD(1) (Python: 10 Batches)',
+    'EFD(2) (Python: 10 Batches)',
+    'BFD(1) (C)',
+    'EFD(1) (C)',
     'FFD (C)',
-    'BFD (C)',
-    'EFD (C)',
 ]
 
 # Detection time per image (milliseconds) for different datasets

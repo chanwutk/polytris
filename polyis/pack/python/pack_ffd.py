@@ -103,7 +103,7 @@ def pack_all(polyominoes_stacks: np.ndarray, h: int, w: int) -> list[list[Polyom
 
     # Combine stacks of polyominoes into a single list of polyominoes with frame indices
     for i in range(polyominoes_stacks.shape[0]):
-        polyominoes_stack = polyominoes_stacks[i]
+        polyominoes_stack: np.uint64 = polyominoes_stacks[i]
         # Convert the memory address to a list of polyominoes (shapes and offsets)
         polyominoes = format_polyominoes(polyominoes_stack)
         # Record which frame each polyomino belongs to (frame index repeated for each polyomino)

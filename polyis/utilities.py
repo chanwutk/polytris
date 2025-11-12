@@ -6,10 +6,12 @@ import typing
 import multiprocessing as mp
 import functools
 import queue
+import random
 
 import cv2
 import numpy as np
 from rich import progress
+import torch
 
 if typing.TYPE_CHECKING:
     import altair as alt
@@ -1465,3 +1467,13 @@ class FakeQueue(queue.Queue):
 
     def put(self, item, block: bool = True, timeout: float | None = None):
         pass
+
+
+def seed_everything(seed: int = 42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True

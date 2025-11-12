@@ -15,4 +15,5 @@ services:
       - /data/chanwutk/data/otif-dataset:/otif-dataset
       - /data/alenachao/data/hota_outputs:/sota-results
       - /home/eecs/chanwutk/.ssh:/root/.ssh
+      - /home/eecs/chanwutk/.config:/root/.config
     network_mode: "host"

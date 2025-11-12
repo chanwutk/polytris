@@ -50,10 +50,12 @@ class CollageMetadata(typing.NamedTuple):
         unoccupied_spaces: List of 2D numpy arrays, each representing one unoccupied region
                           as a binary mask (same shape as occupied_tiles, 1=unoccupied in this region)
         space_sizes: List of integers, parallel to unoccupied_spaces, storing the size of each space
+        largest_space: Integer representing the size of the largest unoccupied space in the collage
     """
     occupied_tiles: np.ndarray
     unoccupied_spaces: list[np.ndarray]
     space_sizes: list[int]
+    largest_space: int
 
 
 def extract_unoccupied_spaces(occupied_tiles: np.ndarray) -> tuple[list[np.ndarray], list[int]]:
@@ -186,7 +188,11 @@ def update_collage_after_placement(
         collage_meta.space_sizes[affected_space_idx + 1:]
     )
     
-    return CollageMetadata(occupied_tiles, updated_unoccupied_spaces, updated_space_sizes)
+    # Calculate the largest space size from all updated space sizes
+    # If there are no spaces, set to 0
+    space_largest = max(updated_space_sizes) if updated_space_sizes else 0
+    
+    return CollageMetadata(occupied_tiles, updated_unoccupied_spaces, updated_space_sizes, space_largest)
 
 
 def count_regions_at_least(collage_meta: CollageMetadata, min_size: int) -> int:
@@ -295,23 +301,23 @@ def pack_all(polyominoes_stacks: np.ndarray, h: int, w: int) -> list[list[Polyom
         polyomino_size = np.sum(shape)
 
         # Try to place the polyomino in an existing collage
-        # Evaluate each collage by counting unoccupied regions larger than the polyomino
+        # Evaluate each collage by the largest unoccupied space size
         collage_candidates = []
         for i, collage_meta in enumerate(collages_pool):
             # First, check if there's enough total empty space
             empty_space = np.sum(collage_meta.occupied_tiles == 0)
             if empty_space >= polyomino_size:
-                # Use cached region information to count fitting regions efficiently
-                # This metric considers fragmentation: more large regions = better quality space
-                num_fitting_regions = count_regions_at_least(collage_meta, polyomino_size)
-                if num_fitting_regions > 0:
-                    collage_candidates.append((i, num_fitting_regions))
+                # Use cached largest space information to evaluate collage quality
+                # Check if the largest space can fit the polyomino
+                largest_space = collage_meta.largest_space
+                if largest_space >= polyomino_size:
+                    collage_candidates.append((i, largest_space))
 
-        # Sort by number of fitting unoccupied regions (descending order)
-        # Collages with more large contiguous empty spaces are prioritized
-        collage_candidates.sort(key=lambda x: x[1], reverse=True)
+        # Sort by largest unoccupied space size (descending order)
+        # Collages with smaller largest contiguous empty spaces are prioritized
+        collage_candidates.sort(key=lambda x: x[1], reverse=False)
 
-        # Try to pack in collages with the most fitting unoccupied regions first
+        # Try to pack in collages with the smallest largest unoccupied space first
         for i, _ in collage_candidates:
             collage_meta = collages_pool[i]
             # Attempt to pack the polyomino in this collage
@@ -337,8 +343,11 @@ def pack_all(polyominoes_stacks: np.ndarray, h: int, w: int) -> list[list[Polyom
             py, px, rotation = res
             # Extract unoccupied spaces after placement
             unoccupied_spaces, space_sizes = extract_unoccupied_spaces(collage_array)
+            # Calculate the largest space size from all space sizes
+            # If there are no spaces, set to 0
+            space_largest = max(space_sizes) if space_sizes else 0
             # Create new collage metadata with updated state
-            collages_pool.append(CollageMetadata(collage_array, unoccupied_spaces, space_sizes))
+            collages_pool.append(CollageMetadata(collage_array, unoccupied_spaces, space_sizes, space_largest))
             # Create a new positions list for this collage with the first polyomino
             positions.append([PolyominoPosition(oy, ox, py, px, rotation, frame, shape)])
     
