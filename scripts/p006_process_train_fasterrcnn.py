@@ -187,7 +187,7 @@ def find_pytorch_vision_train_script() -> str | None:
     return None
 
 
-def train_faster_rcnn(args) -> None:
+def main(args):
     """
     Train Faster R-CNN using PyTorch Vision's training script.
 
@@ -226,25 +226,8 @@ def train_faster_rcnn(args) -> None:
     train_script = args.train_script
     if train_script is None:
         train_script = find_pytorch_vision_train_script()
+    assert train_script is not None
 
-    if train_script is None or not os.path.exists(train_script):
-        # If train.py not found, use torchvision's built-in training API
-        print("\nPyTorch Vision train.py not found, using torchvision API directly...")
-        train_with_torchvision_api(args)
-    else:
-        # Use the train.py script
-        print(f"\nUsing PyTorch Vision training script: {train_script}")
-        train_with_script(train_script, args)
-
-
-def train_with_script(train_script: str, args) -> None:
-    """
-    Train using PyTorch Vision's train.py script.
-
-    Args:
-        train_script: Path to train.py script
-        args: Parsed command line arguments
-    """
     # Build command to run train.py
     cmd = [
         sys.executable,
@@ -276,201 +259,6 @@ def train_with_script(train_script: str, args) -> None:
     print("\n" + "=" * 80)
     print("Training completed!")
     print("=" * 80)
-
-
-def train_with_torchvision_api(args) -> None:
-    """
-    Train using torchvision API directly (fallback if train.py not found).
-
-    Args:
-        args: Parsed command line arguments
-    """
-    try:
-        import torch
-        import torchvision
-        from torchvision import transforms
-        from torchvision.models.detection import fasterrcnn_resnet50_fpn
-        from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-        from torch.utils.data import DataLoader
-        from torchvision.datasets import CocoDetection
-        from torch.optim import SGD
-        import torchvision.transforms.functional as F
-    except ImportError as e:
-        raise ImportError(f"Required packages not found: {e}. Please install torch and torchvision.")
-
-    print("\nSetting up Faster R-CNN model...")
-
-    # Load pre-trained model
-    model = fasterrcnn_resnet50_fpn(weights="DEFAULT")
-
-    # Modify the classifier head for 1 class (car) + background = 2 classes
-    in_features = model.roi_heads.box_predictor.cls_score.in_features  # type: ignore
-    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 2)  # 1 class + background
-
-    device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
-    print(f"Model loaded on {device}")
-    print(f"Number of classes: 2 (1 object class + background)")
-
-    # Create dataset and dataloader
-    print("\nLoading dataset...")
-    
-    # PyTorch Vision's CocoDetection expects:
-    # - root: directory containing images (or parent directory if file_name includes subdirs)
-    # - annFile: path to COCO JSON file
-    # - file_name in JSON: relative to root
-    # - transform: only transforms the image, not the target
-    # Since we fixed file_name to include images/train/ or images/val/, we use dataset root
-    train_dataset = CocoDetection(
-        root=args.dataset_dir,  # Root directory (file_name includes images/train/)
-        annFile=os.path.join(args.dataset_dir, "annotations", "instances_train.json"),
-        transform=transforms.ToTensor(),
-    )
-
-    val_dataset = CocoDetection(
-        root=args.dataset_dir,  # Root directory (file_name includes images/val/)
-        annFile=os.path.join(args.dataset_dir, "annotations", "instances_val.json"),
-        transform=transforms.ToTensor(),
-    )
-    
-    # Define function to convert COCO format targets to model format
-    def convert_coco_target_to_model_format(target):
-        """
-        Convert COCO format target to model format.
-        COCO format: list of dicts with 'bbox' [x, y, width, height] and 'category_id'
-        Model format: dict with 'boxes' tensor [x1, y1, x2, y2] and 'labels' tensor
-        """
-        boxes = []
-        labels = []
-        if isinstance(target, list):
-            for ann in target:
-                if isinstance(ann, dict):
-                    # COCO format: bbox is [x, y, width, height]
-                    bbox = ann.get('bbox', [])
-                    if len(bbox) == 4:
-                        x, y, w, h = bbox
-                        # Convert to [x1, y1, x2, y2]
-                        boxes.append([x, y, x + w, y + h])
-                        # COCO uses 1-indexed category_id, model uses 0-indexed
-                        # Our dataset has category_id=1 for "car", so we use label=0
-                        category_id = ann.get('category_id', 1)
-                        labels.append(category_id - 1)  # Convert to 0-indexed
-        
-        # Create target dict
-        target_dict = {
-            'boxes': torch.tensor(boxes, dtype=torch.float32) if boxes else torch.zeros((0, 4), dtype=torch.float32),
-            'labels': torch.tensor(labels, dtype=torch.int64) if labels else torch.zeros((0,), dtype=torch.int64)
-        }
-        return target_dict
-
-    # Set workers=0 to avoid shared memory issues in Docker/containers
-    # This disables multiprocessing for data loading
-    if args.workers > 0:
-        print(f"  Note: Setting workers=0 to avoid shared memory issues (requested: {args.workers})")
-    
-    # Custom collate function that converts COCO targets to model format
-    def collate_fn(batch):
-        """
-        Collate function that converts COCO format targets to model format.
-        """
-        images = []
-        targets = []
-        for image, target in batch:
-            images.append(image)
-            targets.append(convert_coco_target_to_model_format(target))
-        return images, targets
-    
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=0,  # Disable multiprocessing to avoid shared memory issues
-        collate_fn=collate_fn,
-    )
-
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=0,  # Disable multiprocessing to avoid shared memory issues
-        collate_fn=collate_fn,
-    )
-
-    print(f"Training samples: {len(train_dataset)}")
-    print(f"Validation samples: {len(val_dataset)}")
-
-    # Setup optimizer
-    params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = SGD(
-        params,
-        lr=args.lr,
-        momentum=args.momentum,
-        weight_decay=args.weight_decay,
-    )
-
-    # Training loop
-    print(f"\nStarting training for {args.epochs} epochs...")
-    model.train()
-
-    for epoch in range(args.epochs):
-        print(f"\nEpoch {epoch + 1}/{args.epochs}")
-        running_loss = 0.0
-
-        for batch_idx, (images, targets) in enumerate(train_loader):
-            # Move images and targets to device
-            images = [img.to(device) for img in images]
-            # Targets are already in dict format from our transform, just move to device
-            targets = [{k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in t.items()} for t in targets]
-
-            # Forward pass
-            loss_dict = model(images, targets)
-            # Sum all losses into a single tensor
-            losses = sum(loss for loss in loss_dict.values())
-            # Extract loss value for logging
-            if isinstance(losses, torch.Tensor):
-                loss_value = losses.item()
-            else:
-                loss_value = float(losses)
-
-            # Backward pass
-            optimizer.zero_grad()
-            losses.backward()  # type: ignore
-            optimizer.step()
-
-            running_loss += loss_value
-
-            if (batch_idx + 1) % 10 == 0:
-                print(f"  Batch {batch_idx + 1}/{len(train_loader)}, Loss: {loss_value:.4f}")
-
-        avg_loss = running_loss / len(train_loader)
-        print(f"Epoch {epoch + 1} average loss: {avg_loss:.4f}")
-
-        # Save checkpoint
-        os.makedirs(args.output_dir, exist_ok=True)
-        checkpoint_path = os.path.join(args.output_dir, f"fasterrcnn_epoch_{epoch + 1}.pth")
-        torch.save({
-            "epoch": epoch + 1,
-            "model_state_dict": model.state_dict(),
-            "optimizer_state_dict": optimizer.state_dict(),
-            "loss": avg_loss,
-        }, checkpoint_path)
-        print(f"  Saved checkpoint: {checkpoint_path}")
-
-    print("\n" + "=" * 80)
-    print("Training completed!")
-    print(f"Final model saved to: {os.path.join(args.output_dir, 'fasterrcnn_epoch_{args.epochs}.pth')}")
-    print("=" * 80)
-
-
-def main(args):
-    """
-    Main function to train Faster R-CNN.
-
-    Args:
-        args: Parsed command line arguments
-    """
-    train_faster_rcnn(args)
 
 
 if __name__ == "__main__":
