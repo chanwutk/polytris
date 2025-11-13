@@ -290,9 +290,12 @@ def create_coco_json(
             continue
 
         # Add image entry
+        # For PyTorch Vision COCO dataset, file_name should be relative to dataset root
+        # Include the split name (train/val) in the path
+        file_name_with_path = os.path.join(split_name, image_filename)
         image_entry = {
             "id": image_id,
-            "file_name": image_filename,
+            "file_name": file_name_with_path,  # Include split name in path for PyTorch Vision
             "height": height,
             "width": width,
             "license": 1,
@@ -413,9 +416,18 @@ def generate_coco_dataset(dataset: str, args) -> None:
     print("\n" + "=" * 80)
     print(f"COCO dataset generation complete for {dataset}!")
     print(f"Dataset location: {output_dir}")
-    print("\nTo use with PyTorch vision training:")
+    print("\nDataset structure:")
+    print(f"  {output_dir}/")
+    print(f"    ├── train/          # Training images")
+    print(f"    ├── val/            # Validation images")
+    print(f"    └── annotations/    # COCO JSON files")
+    print(f"        ├── instances_train.json")
+    print(f"        └── instances_val.json")
+    print("\nTo use with PyTorch Vision Faster R-CNN training:")
     print(f"  python train.py --data-path {output_dir} --dataset coco \\")
     print(f"    --model fasterrcnn_resnet50_fpn --epochs 26")
+    print("\nNote: The COCO JSON file_name paths include the split directory (train/ or val/)")
+    print("      which matches the image locations for PyTorch Vision's COCO dataset loader.")
     print("=" * 80)
 
 

@@ -180,7 +180,8 @@ def main(args):
         assert len(video_files) > 0, f"No video files found in {dataset_dir}"
         
         for video_file in video_files:
-            funcs.append(partial(track, dataset, video_file, tracker))
+            video = video_file.split('/')[-1]
+            funcs.append(partial(track, dataset, video, tracker))
     
     # Determine number of available GPUs
     num_gpus = torch.cuda.device_count()
