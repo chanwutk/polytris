@@ -13,6 +13,17 @@ import shutil
 import cv2
 from tqdm import tqdm
 
+from polyis.train.data import (
+    adjust_val_frames_for_prefix,
+    collect_valid_frames,
+    discover_videos_in_subsets,
+    find_highest_resolution_annotations,
+    get_dataset_subsets,
+    get_video_annotation_path,
+    split_frames_train_val,
+    get_adjusted_frame_stride,
+)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -34,7 +45,7 @@ def parse_args():
         "--val-split",
         type=float,
         default=0.2,
-        help="Fraction of videos to use for validation (default: 0.2)",
+        help="Fraction of frames to use for validation (default: 0.2)",
     )
     parser.add_argument(
         "--frame-stride",
@@ -45,19 +56,23 @@ def parse_args():
     return parser.parse_args()
 
 
-def extract_frames_and_annotations(video_path, anno_path, output_image_dir, video_id, frame_stride=1):
+def extract_frames_and_annotations(video_path, anno_path, train_image_dir, val_image_dir,
+                                   video_id, frame_stride=1, val_frames=None):
     """
     Extract frames from video and return frame info with annotations.
     
     Args:
         video_path: Path to video file
         anno_path: Path to annotation JSON file
-        output_image_dir: Directory to save extracted frames
-        video_id: Video identifier
+        train_image_dir: Directory to save training images
+        val_image_dir: Directory to save validation images
+        video_id: Video identifier for naming files
         frame_stride: Extract every Nth frame (adjusted based on video FPS)
+        val_frames: Set of (video_id, frame_idx) tuples that should go to validation.
+                    If None, all frames go to train directories.
     
     Returns:
-        List of (image_info, annotations) tuples
+        Tuple of (train_frame_data, val_frame_data) where each is a list of (image_info, annotations) tuples
     """
     # Load annotations
     with open(anno_path, 'r') as f:
@@ -65,18 +80,12 @@ def extract_frames_and_annotations(video_path, anno_path, output_image_dir, vide
     
     # Open video
     cap = cv2.VideoCapture(str(video_path))
-    if not cap.isOpened():
-        print(f"Warning: Could not open video {video_path}")
-        return []
     
-    # Get video FPS and adjust stride
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    actual_stride = frame_stride
-    if fps > 20:  # 30 fps video
-        actual_stride = frame_stride * 2
-    # else: 15 fps video, keep original stride
+    # Get adjusted stride based on video FPS
+    actual_stride = get_adjusted_frame_stride(video_path, frame_stride)
     
-    frame_data = []
+    train_frame_data = []
+    val_frame_data = []
     frame_idx = 0
     
     while True:
@@ -95,15 +104,25 @@ def extract_frames_and_annotations(video_path, anno_path, output_image_dir, vide
         
         frame_annos = annotations[frame_idx]
         
-        # Skip frames with no annotations
-        if not frame_annos:
-            frame_idx += 1
-            continue
+        # Include all frames, even those without annotations
+        # Frames without annotations will have empty annotation lists (negative examples)
+        
+        # Determine if this frame should go to validation
+        is_val = False
+        if val_frames is not None:
+            frame_key = (video_id, frame_idx)
+            is_val = frame_key in val_frames
+        
+        # Select target directory based on split
+        if is_val:
+            target_image_dir = val_image_dir
+        else:
+            target_image_dir = train_image_dir
         
         # Save frame
         height, width = frame.shape[:2]
         image_filename = f"{video_id}_{frame_idx:06d}.jpg"
-        image_path = output_image_dir / image_filename
+        image_path = target_image_dir / image_filename
         cv2.imwrite(str(image_path), frame)
         
         # Create image info
@@ -116,34 +135,18 @@ def extract_frames_and_annotations(video_path, anno_path, output_image_dir, vide
             "frame_idx": frame_idx
         }
         
-        frame_data.append((image_info, frame_annos))
+        # Add to appropriate list
+        if is_val:
+            val_frame_data.append((image_info, frame_annos))
+        else:
+            train_frame_data.append((image_info, frame_annos))
+        
         frame_idx += 1
     
     cap.release()
-    return frame_data
+    return (train_frame_data, val_frame_data)
 
 
-def find_highest_resolution_annotations(dataset_root):
-    """
-    Find annotation directory with highest resolution.
-    
-    Args:
-        dataset_root: Root directory of the dataset
-    
-    Returns:
-        Path to annotation directory with highest resolution
-    """
-    anno_dirs = sorted(dataset_root.glob("yolov3-*"))
-    if not anno_dirs:
-        raise FileNotFoundError(f"No annotation directories found in {dataset_root}")
-    
-    def get_width(path):
-        # Extract width from "yolov3-WIDTHxHEIGHT"
-        dims = path.name.split('-')[1]
-        width = int(dims.split('x')[0])
-        return width
-    
-    return max(anno_dirs, key=get_width)
 
 
 def setup_output_directories(output_dir):
@@ -171,24 +174,6 @@ def setup_output_directories(output_dir):
     return train_image_dir, val_image_dir, anno_output_dir
 
 
-def split_videos_train_val(video_files, val_split):
-    """
-    Split video files into training and validation sets.
-    
-    Args:
-        video_files: List of video file paths
-        val_split: Fraction of videos for validation (0.0-1.0)
-    
-    Returns:
-        Set of validation video paths
-    """
-    num_val = int(len(video_files) * val_split)
-    val_videos = set(video_files[-num_val:])
-    
-    print(f"Train videos: {len(video_files) - num_val}")
-    print(f"Val videos: {num_val}")
-    
-    return val_videos
 
 
 def initialize_coco_structure(categories):
@@ -237,7 +222,7 @@ def convert_bbox_annotation_to_coco(obj, image_id, annotation_id, category_name_
         category_name_to_id: Mapping from class name to category ID
     
     Returns:
-        COCO annotation dictionary, or None if invalid
+        COCO annotation dictionary
     """
     # Convert box format: [left, top, right, bottom] -> [x, y, width, height]
     left, top, right, bottom = obj["left"], obj["top"], obj["right"], obj["bottom"]
@@ -246,16 +231,16 @@ def convert_bbox_annotation_to_coco(obj, image_id, annotation_id, category_name_
     
     # Skip invalid boxes (must have positive dimensions and reasonable coordinates)
     if width <= 0 or height <= 0:
-        return None
+        raise Exception(f"Invalid box: {left}, {top}, {right}, {bottom}")
     if left < 0 or top < 0 or right < 0 or bottom < 0:
-        return None
+        raise Exception(f"Invalid box: {left}, {top}, {right}, {bottom}")
     if width > 10000 or height > 10000:  # Unreasonably large boxes
-        return None
+        raise Exception(f"Invalid box: {left}, {top}, {right}, {bottom}")
     
     # Get category ID
     class_name = obj["class"]
     if class_name not in category_name_to_id:
-        return None
+        raise Exception(f"Invalid class: {class_name}")
     
     category_id = category_name_to_id[class_name]
     
@@ -299,23 +284,26 @@ def add_frame_to_coco_dataset(image_info, frame_annos, image_id, annotation_id, 
     # Add annotations for this frame
     for obj in frame_annos:
         annotation = convert_bbox_annotation_to_coco(obj, image_id, annotation_id, category_name_to_id)
-        if annotation is not None:
-            target_coco["annotations"].append(annotation)
-            annotation_id += 1
+        assert annotation is not None, f"Invalid annotation: {obj}"
+        target_coco["annotations"].append(annotation)
+        annotation_id += 1
     
     return annotation_id
 
 
-def process_video_file(video_file, anno_dir, val_videos, train_coco, val_coco, 
-                       train_image_dir, val_image_dir, category_name_to_id, 
-                       image_id, annotation_id, frame_stride, id_prefix: str = ""):
+def process_video_file(video_file, anno_dir, val_frames,
+                       train_coco, val_coco,
+                       train_image_dir, val_image_dir,
+                       category_name_to_id,
+                       image_id, annotation_id,
+                       frame_stride, id_prefix: str = ""):
     """
     Process a single video file and add its frames to COCO dataset.
     
     Args:
         video_file: Path to video file
         anno_dir: Directory containing annotation files
-        val_videos: Set of validation video paths
+        val_frames: Set of (video_id, frame_idx) tuples for validation frames
         train_coco: Training COCO dataset dictionary
         val_coco: Validation COCO dataset dictionary
         train_image_dir: Directory for training images
@@ -329,31 +317,32 @@ def process_video_file(video_file, anno_dir, val_videos, train_coco, val_coco,
     Returns:
         Tuple of (updated image_id, updated annotation_id)
     """
-    # Compute base video id from filename
-    video_id = video_file.stem
-    anno_file = anno_dir / f"{video_id}.json"
+    # Get video ID and annotation file path
+    video_id, anno_file = get_video_annotation_path(video_file, anno_dir)
     
-    if not anno_file.exists():
-        print(f"Warning: No annotations found for video {video_id}")
-        return image_id, annotation_id
-    
-    # Determine if this is train or val
-    is_val = video_file in val_videos
-    target_coco = val_coco if is_val else train_coco
-    target_image_dir = val_image_dir if is_val else train_image_dir
-    
-    # Extract frames and annotations
-    # Use a prefixed video id to avoid file name collisions across subsets
+    # Use prefixed video id to avoid filename collisions across subsets
     prefixed_video_id = f"{id_prefix}{video_id}" if id_prefix else video_id
 
-    frame_data = extract_frames_and_annotations(
-        video_file, anno_file, target_image_dir, prefixed_video_id, frame_stride
+    # Create adjusted val_frames set with prefixed video_id for lookup
+    adjusted_val_frames = adjust_val_frames_for_prefix(val_frames, video_id, id_prefix)
+
+    # Extract frames and annotations
+    train_frame_data, val_frame_data = extract_frames_and_annotations(
+        video_file, anno_file, train_image_dir, val_image_dir,
+        prefixed_video_id, frame_stride, adjusted_val_frames
     )
     
-    # Add each frame to COCO dataset
-    for image_info, frame_annos in frame_data:
+    # Add training frames to COCO dataset
+    for image_info, frame_annos in train_frame_data:
         annotation_id = add_frame_to_coco_dataset(
-            image_info, frame_annos, image_id, annotation_id, target_coco, category_name_to_id
+            image_info, frame_annos, image_id, annotation_id, train_coco, category_name_to_id
+        )
+        image_id += 1
+    
+    # Add validation frames to COCO dataset
+    for image_info, frame_annos in val_frame_data:
+        annotation_id = add_frame_to_coco_dataset(
+            image_info, frame_annos, image_id, annotation_id, val_coco, category_name_to_id
         )
         image_id += 1
     
@@ -388,18 +377,22 @@ def main():
     args = parse_args()
 
     # Setup paths
-    base_root = Path("/otif-dataset/dataset") / args.dataset
-    # We'll include videos from train, valid, and test splits (if present)
-    subsets = [
-        ("train", base_root / "train"),
-        ("valid", base_root / "valid"),
-        ("test", base_root / "test"),
-    ]
+    base_root = Path("/otif-dataset/dataset")
+    dataset = args.dataset
     
-    output_dir = Path(args.output_dir or f"/polyis-data/fasterrcnn/{args.dataset}/coco-dataset")
+    output_dir = Path(args.output_dir or f"/polyis-data/fasterrcnn/{dataset}/coco-dataset")
     train_image_dir, val_image_dir, anno_output_dir = setup_output_directories(output_dir)
     
+    print("=" * 80)
+    print(f"Creating COCO Dataset for {dataset}")
+    print("=" * 80)
+    print(f"Output directory: {output_dir}")
+    print(f"Validation split: {args.val_split}")
+    print(f"Frame stride: {args.frame_stride}")
+    print()
+    
     # Initialize counters and accumulators
+    subsets = get_dataset_subsets(base_root, dataset)
     total_counts = {"train": 0, "valid": 0, "test": 0}
     
     # Setup category mapping (CalDOT dataset only has 'car' class)
@@ -409,38 +402,54 @@ def main():
     # Initialize COCO structures
     train_coco, val_coco = initialize_coco_structure(categories)
     
-    # Process all videos
+    # Discover all videos in subsets
+    video_info = discover_videos_in_subsets(base_root, dataset)
+
+    # Count videos per subset for statistics
+    for subset_name, _, _ in video_info:
+        if subset_name in total_counts:
+            total_counts[subset_name] += 1
+
+    # Print subset information
+    for subset_name, subset_root in subsets:
+        if subset_root.exists():
+            video_dir = subset_root / "video"
+            if video_dir.exists():
+                anno_dir = find_highest_resolution_annotations(subset_root)
+                print(f"Using annotations for '{subset_name}' from: {anno_dir.name}")
+                print(f"Found {total_counts[subset_name]} videos in '{subset_name}'")
+    
+    # First pass: Collect all valid frames from all videos (including negative samples)
+    print("\nCollecting valid frames from all videos...")
+    all_valid_frames = []
+
+    for subset_name, video_file, anno_dir in tqdm(video_info, desc="Scanning videos"):
+        video_id, anno_file = get_video_annotation_path(video_file, anno_dir)
+
+        # Collect valid frames (using original video_id without prefix for splitting)
+        valid_frames = collect_valid_frames(video_file, anno_file, video_id, args.frame_stride)
+        all_valid_frames.extend(valid_frames)
+
+    print(f"\nTotal frames collected: {len(all_valid_frames)} (including frames without annotations for negative examples)")
+
+    # Split frames into train/val with seed for reproducibility
+    print("\nSplitting frames into train/val sets...")
+    val_frames = split_frames_train_val(all_valid_frames, args.val_split)
+
+    # Second pass: Extract frames and save to appropriate directories
+    print("\nExtracting frames and saving to dataset...")
     image_id = 1
     annotation_id = 1
 
-    for subset_name, subset_root in subsets:
-        # Skip subsets that don't exist
-        if not subset_root.exists():
-            continue
-
-        video_dir = subset_root / "video"
-        if not video_dir.exists():
-            print(f"Warning: Missing video directory for subset '{subset_name}': {video_dir}")
-            continue
-
-        # Find annotations directory with highest resolution for this subset
-        anno_dir = find_highest_resolution_annotations(subset_root)
-        print(f"Using annotations for '{subset_name}' from: {anno_dir.name}")
-
-        # Gather videos for this subset
-        video_files = sorted([f for f in video_dir.glob("*.mp4")])
-        total_counts[subset_name] = len(video_files)
-        print(f"Found {len(video_files)} videos in '{subset_name}'")
-
-        val_videos = split_videos_train_val(video_files, args.val_split)
-
-        # Process videos in this subset
-        for video_file in tqdm(video_files, desc=f"Processing {subset_name} videos"):
-            image_id, annotation_id = process_video_file(
-                video_file, anno_dir, val_videos, train_coco, val_coco,
-                train_image_dir, val_image_dir, category_name_to_id,
-                image_id, annotation_id, args.frame_stride, id_prefix=f"{subset_name}_"
-            )
+    for subset_name, video_file, anno_dir in tqdm(video_info, desc="Processing all videos"):
+        image_id, annotation_id = process_video_file(
+            video_file, anno_dir, val_frames,
+            train_coco, val_coco,
+            train_image_dir, val_image_dir,
+            category_name_to_id,
+            image_id, annotation_id,
+            args.frame_stride, id_prefix=f"{subset_name}_"
+        )
     
     # Save COCO JSON files
     train_json_path, val_json_path = save_coco_json_files(train_coco, val_coco, anno_output_dir)

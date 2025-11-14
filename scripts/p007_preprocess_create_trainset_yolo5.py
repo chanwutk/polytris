@@ -8,11 +8,21 @@ Extracts frames from videos and converts annotations to YOLO format.
 import argparse
 import json
 from pathlib import Path
-import random
 import shutil
 
 import cv2
 from tqdm import tqdm
+
+from polyis.train.data import (
+    adjust_val_frames_for_prefix,
+    collect_valid_frames,
+    discover_videos_in_subsets,
+    find_highest_resolution_annotations,
+    get_dataset_subsets,
+    get_video_annotation_path,
+    split_frames_train_val,
+    get_adjusted_frame_stride,
+)
 
 
 def parse_args():
@@ -72,16 +82,9 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train
 
     # Open video capture
     cap = cv2.VideoCapture(str(video_path))
-    if not cap.isOpened():
-        print(f"Warning: Could not open video {video_path}")
-        return (0, 0)
 
-    # Get video FPS and adjust stride accordingly
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    actual_stride = frame_stride
-    if fps > 20:  # 30 fps video
-        actual_stride = frame_stride * 2
-    # else: 15 fps video, keep original stride
+    # Get adjusted stride based on video FPS
+    actual_stride = get_adjusted_frame_stride(video_path, frame_stride)
 
     train_frames_extracted = 0
     val_frames_extracted = 0
@@ -150,7 +153,7 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train
 
                     # Skip invalid boxes
                     if bbox_width <= 0 or bbox_height <= 0:
-                        continue
+                        raise Exception(f"Invalid box: {left}, {top}, {right}, {bottom}")
 
                     # Calculate normalized center coordinates and dimensions
                     center_x = (left + bbox_width / 2.0) / width
@@ -173,31 +176,6 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train
 
     cap.release()
     return (train_frames_extracted, val_frames_extracted)
-
-
-def find_highest_resolution_annotations(dataset_root):
-    """
-    Find annotation directory with highest resolution.
-
-    Args:
-        dataset_root: Root directory of the dataset
-
-    Returns:
-        Path to annotation directory with highest resolution
-    """
-    # Look for yolov3-* annotation directories
-    anno_dirs = sorted(dataset_root.glob("yolov3-*"))
-    if not anno_dirs:
-        raise FileNotFoundError(f"No annotation directories found in {dataset_root}")
-
-    def get_width(path):
-        # Extract width from "yolov3-WIDTHxHEIGHT"
-        dims = path.name.split('-')[1]
-        width = int(dims.split('x')[0])
-        return width
-
-    # Return directory with highest width
-    return max(anno_dirs, key=get_width)
 
 
 def setup_output_directories(output_dir):
@@ -233,79 +211,6 @@ def setup_output_directories(output_dir):
     return train_image_dir, val_image_dir, train_label_dir, val_label_dir
 
 
-def collect_valid_frames(video_file, anno_path, video_id, frame_stride=1):
-    """
-    Collect frame indices from a video (including frames without annotations).
-
-    Args:
-        video_file: Path to video file
-        anno_path: Path to annotation JSON file
-        video_id: Video identifier
-        frame_stride: Extract every Nth frame (adjusted based on video FPS)
-
-    Returns:
-        List of (video_id, frame_idx) tuples for all frames (with or without annotations)
-    """
-    # Load annotations from JSON file
-    with open(anno_path, 'r') as f:
-        annotations = json.load(f)
-
-    # Open video capture to get FPS
-    cap = cv2.VideoCapture(str(video_file))
-    if not cap.isOpened():
-        return []
-
-    # Get video FPS and adjust stride accordingly
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    actual_stride = frame_stride
-    if fps > 20:  # 30 fps video
-        actual_stride = frame_stride * 2
-    # else: 15 fps video, keep original stride
-
-    cap.release()
-
-    # Collect all frame indices (including frames without annotations)
-    # This provides negative examples for training
-    valid_frames = []
-    for frame_idx in range(len(annotations)):
-        # Skip frames based on adjusted stride
-        if frame_idx % actual_stride != 0:
-            continue
-
-        # Include all frames, even those without annotations
-        # Frames without annotations will have empty label files
-        valid_frames.append((video_id, frame_idx))
-
-    return valid_frames
-
-
-def split_frames_train_val(all_frames, val_split):
-    """
-    Split frame identifiers into training and validation sets with reproducible random shuffle.
-
-    Args:
-        all_frames: List of (video_id, frame_idx) tuples
-        val_split: Fraction of frames for validation (0.0-1.0)
-        seed: Random seed for reproducible split
-
-    Returns:
-        Set of (video_id, frame_idx) tuples for validation frames
-    """
-    # Create a copy and shuffle with seed for reproducible split
-    frames_shuffled = list(all_frames)
-    random.seed(42)
-    random.shuffle(frames_shuffled)
-
-    # Use last val_split fraction of shuffled frames for validation
-    num_val = int(len(frames_shuffled) * val_split)
-    val_frames = set(frames_shuffled[-num_val:])
-
-    print(f"Train frames: {len(frames_shuffled) - num_val}")
-    print(f"Val frames: {num_val}")
-
-    return val_frames
-
-
 def process_video_file(video_file, anno_dir, val_frames,
                        train_image_dir, val_image_dir,
                        train_label_dir, val_label_dir,
@@ -327,25 +232,14 @@ def process_video_file(video_file, anno_dir, val_frames,
     Returns:
         Tuple of (train_frames_extracted, val_frames_extracted)
     """
-    # Get video ID from filename (without extension)
-    video_id = video_file.stem
-    anno_file = anno_dir / f"{video_id}.json"
-
-    # Check if annotation file exists
-    if not anno_file.exists():
-        print(f"Warning: No annotations found for video {video_id}")
-        return (0, 0)
+    # Get video ID and annotation file path
+    video_id, anno_file = get_video_annotation_path(video_file, anno_dir)
 
     # Use prefixed video id to avoid filename collisions across subsets
     prefixed_video_id = f"{id_prefix}{video_id}" if id_prefix else video_id
 
     # Create adjusted val_frames set with prefixed video_id for lookup
-    adjusted_val_frames = set()
-    for orig_video_id, frame_idx in val_frames:
-        # Match frames by checking if the original video_id matches
-        # (accounting for prefix that will be added)
-        if orig_video_id == video_id:
-            adjusted_val_frames.add((prefixed_video_id, frame_idx))
+    adjusted_val_frames = adjust_val_frames_for_prefix(val_frames, video_id, id_prefix)
 
     # Extract frames and annotations
     train_count, val_count = extract_frames_and_annotations(
@@ -393,23 +287,17 @@ def main():
     args = parse_args()
 
     # Setup paths for CalDOT dataset structure
-    base_root = Path("/otif-dataset/dataset") / args.dataset
-
-    # We'll include videos from train, valid, and test splits (if present)
-    subsets = [
-        ("train", base_root / "train"),
-        ("valid", base_root / "valid"),
-        ("test", base_root / "test"),
-    ]
+    base_root = Path("/otif-dataset/dataset")
+    dataset = args.dataset
 
     # Set output directory
-    output_dir = Path(args.output_dir or f"/polyis-data/yolo5/{args.dataset}/training-data")
+    output_dir = Path(args.output_dir or f"/polyis-data/yolo5/{dataset}/training-data")
 
     # Create output directory structure
     train_image_dir, val_image_dir, train_label_dir, val_label_dir = setup_output_directories(output_dir)
 
     print("=" * 80)
-    print(f"Creating YOLOv5 Dataset for {args.dataset}")
+    print(f"Creating YOLOv5 Dataset for {dataset}")
     print("=" * 80)
     print(f"Output directory: {output_dir}")
     print(f"Validation split: {args.val_split}")
@@ -417,48 +305,37 @@ def main():
     print()
 
     # Track statistics
+    subsets = get_dataset_subsets(base_root, dataset)
     total_counts = {"train": 0, "valid": 0, "test": 0}
     total_frames = {"train": 0, "val": 0}
 
-    # First pass: Collect all valid frames from all videos
-    print("Collecting valid frames from all videos...")
-    all_valid_frames = []
-    video_info = []  # Store (subset_name, video_file, anno_dir) for second pass
+    # Discover all videos in subsets
+    video_info = discover_videos_in_subsets(base_root, dataset)
 
+    # Count videos per subset for statistics
+    for subset_name, _, _ in video_info:
+        if subset_name in total_counts:
+            total_counts[subset_name] += 1
+
+    # Print subset information
     for subset_name, subset_root in subsets:
-        # Skip subsets that don't exist
-        if not subset_root.exists():
-            continue
+        if subset_root.exists():
+            video_dir = subset_root / "video"
+            if video_dir.exists():
+                anno_dir = find_highest_resolution_annotations(subset_root)
+                print(f"Using annotations for '{subset_name}' from: {anno_dir.name}")
+                print(f"Found {total_counts[subset_name]} videos in '{subset_name}'")
 
-        video_dir = subset_root / "video"
-        if not video_dir.exists():
-            print(f"Warning: Missing video directory for subset '{subset_name}': {video_dir}")
-            continue
+    # First pass: Collect all valid frames from all videos
+    print("\nCollecting valid frames from all videos...")
+    all_valid_frames = []
 
-        # Find annotations directory with highest resolution for this subset
-        anno_dir = find_highest_resolution_annotations(subset_root)
-        print(f"Using annotations for '{subset_name}' from: {anno_dir.name}")
+    for subset_name, video_file, anno_dir in tqdm(video_info, desc="Scanning videos"):
+        video_id, anno_file = get_video_annotation_path(video_file, anno_dir)
 
-        # Gather videos for this subset
-        video_files = sorted([f for f in video_dir.glob("*.mp4")])
-        total_counts[subset_name] = len(video_files)
-        print(f"Found {len(video_files)} videos in '{subset_name}'")
-
-        # Collect valid frames from each video
-        for video_file in tqdm(video_files, desc=f"Scanning {subset_name} videos"):
-            video_id = video_file.stem
-            anno_file = anno_dir / f"{video_id}.json"
-
-            # Check if annotation file exists
-            if not anno_file.exists():
-                continue
-
-            # Collect valid frames (using original video_id without prefix for splitting)
-            valid_frames = collect_valid_frames(video_file, anno_file, video_id, args.frame_stride)
-            all_valid_frames.extend(valid_frames)
-
-            # Store video info for second pass
-            video_info.append((subset_name, video_file, anno_dir))
+        # Collect valid frames (using original video_id without prefix for splitting)
+        valid_frames = collect_valid_frames(video_file, anno_file, video_id, args.frame_stride)
+        all_valid_frames.extend(valid_frames)
 
     print(f"\nTotal frames collected: {len(all_valid_frames)} (including frames without annotations)")
 
