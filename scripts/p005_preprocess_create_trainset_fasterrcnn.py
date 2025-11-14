@@ -233,7 +233,7 @@ def convert_bbox_annotation_to_coco(obj, image_id, annotation_id, category_name_
     if width <= 0 or height <= 0:
         raise Exception(f"Invalid box: {left}, {top}, {right}, {bottom}")
     if left < 0 or top < 0 or right < 0 or bottom < 0:
-        raise Exception(f"Invalid box: {left}, {top}, {right}, {bottom}")
+        return None
     if width > 10000 or height > 10000:  # Unreasonably large boxes
         raise Exception(f"Invalid box: {left}, {top}, {right}, {bottom}")
     
@@ -284,9 +284,10 @@ def add_frame_to_coco_dataset(image_info, frame_annos, image_id, annotation_id, 
     # Add annotations for this frame
     for obj in frame_annos:
         annotation = convert_bbox_annotation_to_coco(obj, image_id, annotation_id, category_name_to_id)
-        assert annotation is not None, f"Invalid annotation: {obj}"
-        target_coco["annotations"].append(annotation)
-        annotation_id += 1
+        # assert annotation is not None, f"Invalid annotation: {obj}"
+        if annotation is not None:
+            target_coco["annotations"].append(annotation)
+            annotation_id += 1
     
     return annotation_id
 

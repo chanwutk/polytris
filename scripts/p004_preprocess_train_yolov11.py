@@ -1,9 +1,9 @@
 #!/usr/local/bin/python
 
 """
-Convert video dataset with JSON annotations to COCO format and train YOLOv12x.
+Convert video dataset with JSON annotations to COCO format and train YOLOv11x.
 Extracts frames from videos with FPS-based sampling and generates COCO JSON annotations.
-Trains YOLOv12x model using Ultralytics training API.
+Trains YOLOv11x model using Ultralytics training API.
 """
 
 import argparse
@@ -19,7 +19,7 @@ import ultralytics
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Convert video dataset to COCO format and train YOLOv12x"
+        description="Convert video dataset to COCO format and train YOLOv11x"
     )
     parser.add_argument(
         "--video-dir",
@@ -527,16 +527,16 @@ def load_all_samples(
     return all_samples
 
 
-def train_yolov12x(coco_dataset_dir: str, gpus: str | None = None) -> None:
+def train_yolov11x(coco_dataset_dir: str, gpus: str | None = None) -> None:
     """
-    Train YOLOv12x model using Ultralytics API on COCO dataset.
+    Train YOLOv11x model using Ultralytics API on COCO dataset.
 
     Args:
         coco_dataset_dir: Directory containing COCO dataset (with annotations/ subdirectory)
         gpus: Comma-separated list of GPU IDs (e.g., "0,1,2") or None for auto-detection
     """
     print("\n" + "=" * 80)
-    print("Training YOLOv12x model")
+    print("Training YOLOv11x model")
     print("=" * 80)
 
     # Check if COCO dataset exists
@@ -567,11 +567,11 @@ def train_yolov12x(coco_dataset_dir: str, gpus: str | None = None) -> None:
         os.remove(val_cache)
         print(f"  Cleared val cache: {val_cache}")
 
-    # Load YOLOv12x model
+    # Load YOLOv11x model
     # Use model name without extension - Ultralytics will download automatically if needed
     # Note: When training with nc: 1 in data.yaml, Ultralytics automatically modifies
     # the model's last layer to output only 1 class instead of the pre-trained 80 classes
-    print("Loading YOLOv12x model...")
+    print("Loading YOLOv11x model...")
     model = ultralytics.YOLO("yolo11x.pt")  # type: ignore
 
     # Train the model
@@ -631,7 +631,7 @@ def create_data_yaml(yaml_path: str, dataset_dir: str) -> None:
     train_json = os.path.join(dataset_dir, "annotations", "instances_train.json")
     val_json = os.path.join(dataset_dir, "annotations", "instances_val.json")
 
-    yaml_content = f"""# YOLO dataset configuration for YOLOv12x training
+    yaml_content = f"""# YOLO dataset configuration for YOLOv11x training
 # Following Ultralytics dataset structure: https://docs.ultralytics.com/datasets/#steps-to-contribute-a-new-dataset
 # Structure: dataset/images/train/, dataset/images/val/, dataset/labels/train/, dataset/labels/val/
 path: {dataset_dir}
@@ -657,20 +657,20 @@ names:
 
 def main(args):
     """
-    Main function to convert dataset to COCO format and train YOLOv12x.
+    Main function to convert dataset to COCO format and train YOLOv11x.
 
     This function:
     1. Loads videos and annotations from specified directories
     2. Extracts frames with FPS-based sampling (16 for 30fps, 8 for 15fps)
     3. Converts annotations to COCO format
     4. Creates COCO dataset with train/val split (0.8 ratio)
-    5. Trains YOLOv12x model using Ultralytics API
+    5. Trains YOLOv11x model using Ultralytics API
 
     Args:
         args: Parsed command line arguments
     """
     print("=" * 80)
-    print("YOLOv12x Training Script for caldot2 Dataset")
+    print("YOLOv11x Training Script for caldot2 Dataset")
     print("=" * 80)
     print(f"Output directory: {args.output_dir}")
 
@@ -738,9 +738,9 @@ def main(args):
         print(f"Dataset location: {args.output_dir}")
         print("=" * 80)
 
-    # Train YOLOv12x if not skipped
+    # Train YOLOv11x if not skipped
     if not args.skip_training:
-        train_yolov12x(args.output_dir, args.gpus)
+        train_yolov11x(args.output_dir, args.gpus)
     else:
         print("\nSkipping training (--skip-training flag set)")
 
