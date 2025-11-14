@@ -1,21 +1,22 @@
 #!/usr/local/bin/python
 
 """
-Train YOLOv5x6 model on CalDOT dataset.
-Uses Ultralytics API to train YOLOv5 on dataset created by p007.
+Train YOLOv5x6 or YOLOv11x model on CalDOT dataset.
+Uses Ultralytics API to train YOLO models on dataset created by p007 or p004.
 """
 
 import argparse
 import os
 import shutil
-import sys
 
 import ultralytics
+
+from polyis.train.data.ultralytics import parse_device_string, verify_dataset
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Train YOLOv5x6 on CalDOT dataset"
+        description="Train YOLOv5x6 or YOLOv11x on CalDOT dataset"
     )
     parser.add_argument(
         "--dataset",
@@ -27,7 +28,7 @@ def parse_args():
         "--data-dir",
         type=str,
         default=None,
-        help="Dataset directory containing data.yaml (default: /polyis-data/yolo5/{dataset}/training-data)",
+        help="Dataset directory containing data.yaml (default: /polyis-data/ultralytics/{dataset}/training-data)",
     )
     parser.add_argument(
         "--epochs",
@@ -62,113 +63,44 @@ def parse_args():
         help="Number of data loading workers (default: 0 for Docker compatibility)",
     )
     parser.add_argument(
-        "--project",
-        type=str,
-        default=None,
-        help="Project directory for saving results (default: /polyis-data/yolo5/{dataset})",
-    )
-    parser.add_argument(
-        "--name",
-        type=str,
-        default="train",
-        help="Experiment name (default: train)",
-    )
-    parser.add_argument(
         "--pretrained",
         type=str,
         default="yolov5x6.pt",
+        choices=["yolov5x6.pt", "yolo11x.pt"],
         help="Pretrained weights to use (default: yolov5x6.pt)",
     )
     return parser.parse_args()
 
 
-def verify_dataset(data_dir):
-    """
-    Verify that the dataset directory exists and contains required files.
-
-    Args:
-        data_dir: Path to dataset directory
-
-    Raises:
-        FileNotFoundError: If dataset or required files don't exist
-    """
-    # Check if dataset directory exists
-    if not os.path.exists(data_dir):
-        raise FileNotFoundError(
-            f"Dataset directory not found: {data_dir}\n"
-            f"Please run p007_preprocess_create_trainset_yolo5.py first to create the dataset."
-        )
-
-    # Check for data.yaml
-    data_yaml = os.path.join(data_dir, "data.yaml")
-    if not os.path.exists(data_yaml):
-        raise FileNotFoundError(f"data.yaml not found: {data_yaml}")
-
-    # Check for image directories
-    train_images = os.path.join(data_dir, "images", "train")
-    val_images = os.path.join(data_dir, "images", "val")
-
-    if not os.path.exists(train_images):
-        raise FileNotFoundError(f"Training images directory not found: {train_images}")
-    if not os.path.exists(val_images):
-        raise FileNotFoundError(f"Validation images directory not found: {val_images}")
-
-    # Check for label directories
-    train_labels = os.path.join(data_dir, "labels", "train")
-    val_labels = os.path.join(data_dir, "labels", "val")
-
-    if not os.path.exists(train_labels):
-        raise FileNotFoundError(f"Training labels directory not found: {train_labels}")
-    if not os.path.exists(val_labels):
-        raise FileNotFoundError(f"Validation labels directory not found: {val_labels}")
-
-    # Count files for verification
-    num_train_images = len([f for f in os.listdir(train_images) if f.endswith(('.jpg', '.png'))])
-    num_val_images = len([f for f in os.listdir(val_images) if f.endswith(('.jpg', '.png'))])
-    num_train_labels = len([f for f in os.listdir(train_labels) if f.endswith('.txt')])
-    num_val_labels = len([f for f in os.listdir(val_labels) if f.endswith('.txt')])
-
-    print(f"Dataset verification:")
-    print(f"  Train images: {num_train_images}")
-    print(f"  Train labels: {num_train_labels}")
-    print(f"  Val images: {num_val_images}")
-    print(f"  Val labels: {num_val_labels}")
-    print()
-
-    # Warn if image/label counts don't match
-    if num_train_images != num_train_labels:
-        print(f"Warning: Train image count ({num_train_images}) doesn't match label count ({num_train_labels})")
-    if num_val_images != num_val_labels:
-        print(f"Warning: Val image count ({num_val_images}) doesn't match label count ({num_val_labels})")
-
-    # Check if dataset is empty
-    if num_train_images == 0:
-        raise ValueError("Training dataset is empty!")
-    if num_val_images == 0:
-        raise ValueError("Validation dataset is empty!")
 
 
 def train_yolov5(args):
     """
-    Train YOLOv5x6 model using Ultralytics API.
+    Train YOLOv5x6 or YOLOv11x model using Ultralytics API.
 
     Args:
         args: Parsed command line arguments
     """
+    # Extract model name without extension for weights directory
+    model_name = os.path.splitext(args.pretrained)[0]
+    
     # Set up paths
-    data_dir = args.data_dir or f"/polyis-data/yolo5/{args.dataset}/training-data"
-    project_dir = args.project or f"/polyis-data/yolo5/{args.dataset}"
-    weights_dir = f"/polyis-data/yolo5/{args.dataset}/weights"
+    data_dir = args.data_dir or f"/polyis-data/ultralytics/{args.dataset}/training-data"
+    weights_dir = f"/polyis-data/ultralytics/{args.dataset}/weights/{model_name}"
+    # Set project to parent directory and name to model_name so Ultralytics saves to weights_dir/weights/
+    project_dir = os.path.dirname(weights_dir)
+    experiment_name = model_name
     data_yaml = os.path.join(data_dir, "data.yaml")
 
     print("=" * 80)
-    print("YOLOv5x6 Training on CalDOT Dataset")
+    model_display_name = "YOLOv5x6" if args.pretrained == "yolov5x6.pt" else "YOLOv11x"
+    print(f"{model_display_name} Training on CalDOT Dataset")
     print("=" * 80)
     print(f"Dataset: {args.dataset}")
     print(f"Data directory: {data_dir}")
     print(f"Data config: {data_yaml}")
     print(f"Project directory: {project_dir}")
-    print(f"Experiment name: {args.name}")
+    print(f"Experiment name: {experiment_name}")
     print(f"Model: {args.pretrained}")
     print(f"Epochs: {args.epochs}")
     print(f"Image size: {args.imgsz}")
@@ -180,8 +112,24 @@ def train_yolov5(args):
     # Verify dataset exists and is valid
     verify_dataset(data_dir)
 
-    # Load YOLOv5x6 pretrained model
-    print(f"Loading YOLOv5 model: {args.pretrained}...")
+    # Clear cache files to force Ultralytics to regenerate with correct annotations
+    train_cache = os.path.join(data_dir, "train.cache")
+    val_cache = os.path.join(data_dir, "val.cache")
+    if os.path.exists(train_cache):
+        os.remove(train_cache)
+        print(f"  Cleared train cache: {train_cache}")
+    if os.path.exists(val_cache):
+        os.remove(val_cache)
+        print(f"  Cleared val cache: {val_cache}")
+
+    # Clean up weights directory before training
+    experiment_dir = os.path.join(project_dir, experiment_name)
+    if os.path.exists(experiment_dir):
+        shutil.rmtree(experiment_dir)
+        print(f"  Cleared previous training results: {experiment_dir}")
+
+    # Load pretrained model
+    print(f"Loading model: {args.pretrained}...")
     model = ultralytics.YOLO(args.pretrained)  # type: ignore
 
     print("Model loaded successfully!")
@@ -193,7 +141,7 @@ def train_yolov5(args):
         "epochs": args.epochs,
         "imgsz": args.imgsz,
         "project": project_dir,
-        "name": args.name,
+        "name": experiment_name,
         "workers": args.workers,
         "seed": 42,
         "exist_ok": True,
@@ -208,12 +156,9 @@ def train_yolov5(args):
         train_kwargs["batch"] = args.batch
 
     # Add device if specified
-    if args.device:
-        # Parse device string: "0" or "0,1,2" -> list of ints or single int
-        if "," in args.device:
-            train_kwargs["device"] = [int(d.strip()) for d in args.device.split(",")]
-        else:
-            train_kwargs["device"] = int(args.device)
+    device = parse_device_string(args.device)
+    if device is not None:
+        train_kwargs["device"] = device
 
     # Start training
     print("Starting training...")
@@ -222,25 +167,16 @@ def train_yolov5(args):
 
     results = model.train(**train_kwargs)
     
-    # Copy weights to the desired location
-    source_weights_dir = os.path.join(project_dir, args.name, "weights")
-    if os.path.exists(source_weights_dir):
-        # Create destination directory if it doesn't exist
-        os.makedirs(weights_dir, exist_ok=True)
-        # Copy weight files
-        for weight_file in ["best.pt", "last.pt"]:
-            source_path = os.path.join(source_weights_dir, weight_file)
-            dest_path = os.path.join(weights_dir, weight_file)
-            if os.path.exists(source_path):
-                shutil.copy2(source_path, dest_path)
-                print(f"Copied {weight_file} to {dest_path}")
+    # Weights are saved directly to {project_dir}/{experiment_name}/weights/
+    # which equals {weights_dir}/weights/ when using default paths
+    weights_output_dir = os.path.join(project_dir, experiment_name, "weights")
     
     print("\n" + "=" * 80)
     print("Training completed successfully!")
     print("=" * 80)
-    print(f"Results saved to: {project_dir}/{args.name}")
-    print(f"Best model weights: {weights_dir}/best.pt")
-    print(f"Last model weights: {weights_dir}/last.pt")
+    print(f"Results saved to: {project_dir}/{experiment_name}")
+    print(f"Best model weights: {os.path.join(weights_output_dir, 'best.pt')}")
+    print(f"Last model weights: {os.path.join(weights_output_dir, 'last.pt')}")
     print("=" * 80)
 
 
