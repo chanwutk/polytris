@@ -40,7 +40,7 @@ def parse_args():
         "--output-dir",
         type=str,
         default=None,
-        help="Output directory for Ultralytics dataset (default: /polyis-data/ultralytics/{dataset}/training-data)",
+        help="Output directory for Ultralytics dataset (default: /polyis-data/training/ultralytics/{dataset}/training-data)",
     )
     parser.add_argument(
         "--val-split",
@@ -259,7 +259,7 @@ def main():
     base_root = Path("/otif-dataset/dataset")
     dataset = args.dataset
 
-    output_dir = Path(args.output_dir or f"/polyis-data/ultralytics/{dataset}/training-data")
+    output_dir = Path(args.output_dir or f"/polyis-data/training/ultralytics/{dataset}/training-data")
 
     # Create output directory structure
     train_image_dir, val_image_dir, train_label_dir, val_label_dir = setup_output_directories(output_dir)

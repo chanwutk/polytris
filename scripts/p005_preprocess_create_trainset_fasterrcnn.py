@@ -39,7 +39,7 @@ def parse_args():
         "--output-dir",
         type=str,
         default=None,
-        help="Output directory for COCO dataset",
+        help="Output directory for COCO dataset (default: /polyis-data/training/torchvision/{dataset}/coco-dataset)",
     )
     parser.add_argument(
         "--val-split",
@@ -381,7 +381,7 @@ def main():
     base_root = Path("/otif-dataset/dataset")
     dataset = args.dataset
     
-    output_dir = Path(args.output_dir or f"/polyis-data/fasterrcnn/{dataset}/coco-dataset")
+    output_dir = Path(args.output_dir or f"/polyis-data/training/torchvision/{dataset}/training-data")
     train_image_dir, val_image_dir, anno_output_dir = setup_output_directories(output_dir)
     
     print("=" * 80)

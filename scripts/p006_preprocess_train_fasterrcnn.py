@@ -86,8 +86,8 @@ def main(args):
         args: Parsed command line arguments
     """
     # Derive paths from dataset name
-    dataset_dir = f"/polyis-data/fasterrcnn/{args.dataset}/coco-dataset"
-    output_dir = f"/polyis-data/fasterrcnn/{args.dataset}/weights"
+    dataset_dir = f"/polyis-data/training/torchvision/{args.dataset}/training-data"
+    output_dir = f"/polyis-data/training/torchvision/{args.dataset}/weights/{args.model}"
     
     print("=" * 80)
     print("Faster R-CNN Training on CalDOT Dataset")

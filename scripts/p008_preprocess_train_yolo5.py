@@ -28,7 +28,7 @@ def parse_args():
         "--data-dir",
         type=str,
         default=None,
-        help="Dataset directory containing data.yaml (default: /polyis-data/ultralytics/{dataset}/training-data)",
+        help="Dataset directory containing data.yaml (default: /polyis-data/training/ultralytics/{dataset}/training-data)",
     )
     parser.add_argument(
         "--epochs",
@@ -85,16 +85,15 @@ def train_yolov5(args):
     model_name = os.path.splitext(args.pretrained)[0]
     
     # Set up paths
-    data_dir = args.data_dir or f"/polyis-data/ultralytics/{args.dataset}/training-data"
-    weights_dir = f"/polyis-data/ultralytics/{args.dataset}/weights/{model_name}"
+    data_dir = args.data_dir or f"/polyis-data/training/ultralytics/{args.dataset}/training-data"
+    weights_dir = f"/polyis-data/training/ultralytics/{args.dataset}/weights/{model_name}"
     # Set project to parent directory and name to model_name so Ultralytics saves to weights_dir/weights/
     project_dir = os.path.dirname(weights_dir)
     experiment_name = model_name
     data_yaml = os.path.join(data_dir, "data.yaml")
 
     print("=" * 80)
-    model_display_name = "YOLOv5x6" if args.pretrained == "yolov5x6.pt" else "YOLOv11x"
-    print(f"{model_display_name} Training on CalDOT Dataset")
+    print(f"YOLO ({model_name}) Training on CalDOT Dataset")
     print("=" * 80)
     print(f"Dataset: {args.dataset}")
     print(f"Data directory: {data_dir}")
