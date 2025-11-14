@@ -24,19 +24,19 @@ def parse_args():
     parser.add_argument(
         "--video-dir",
         type=str,
-        default="/otif-dataset/dataset/caldot1/train/video",
+        default="/otif-dataset/dataset/caldot2/train/video",
         help="Directory containing video files",
     )
     parser.add_argument(
         "--annotation-dir",
         type=str,
-        default="/otif-dataset/dataset/caldot1/train/yolov3-704x480",
+        default="/otif-dataset/dataset/caldot2/train/yolov3-704x480",
         help="Directory containing annotation JSON files",
     )
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="/polyis-data/coco-datasets/caldot1",
+        default="/polyis-data/coco-datasets/caldot2",
         help="Output directory for COCO dataset",
     )
     parser.add_argument(
@@ -294,7 +294,7 @@ def create_coco_dataset(
     # Initialize COCO JSON structure
     coco_data = {
         "info": {
-            "description": f"Caldot1 car detection dataset - {split_name} split",
+            "description": f"caldot2 car detection dataset - {split_name} split",
             "url": "",
             "version": "1.0",
             "year": datetime.datetime.now().year,
@@ -670,7 +670,7 @@ def main(args):
         args: Parsed command line arguments
     """
     print("=" * 80)
-    print("YOLOv12x Training Script for Caldot1 Dataset")
+    print("YOLOv12x Training Script for caldot2 Dataset")
     print("=" * 80)
     print(f"Output directory: {args.output_dir}")
 

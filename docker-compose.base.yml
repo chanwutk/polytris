@@ -10,10 +10,11 @@ services:
     volumes:
       - .:/polyis
       # Change /data/chawutk/polyis-dataset to your local path
-      - /data/chanwutk/data/polyis-data:/polyis-data
-      - /data/chanwutk/data/polyis-cache:/polyis-cache
-      - /data/chanwutk/data/otif-dataset:/otif-dataset
+      - ${DATA}/polyis-data:/polyis-data
+      - ${DATA}/polyis-cache:/polyis-cache
+      - ${DATA}/otif-dataset:/otif-dataset
+      - ${HOME}/.ssh:/root/.ssh
+      - ${HOME}/.config:/root/.config
+      - ${HOME}/.claude:/root/.claude
       - /data/alenachao/data/hota_outputs:/sota-results
-      - /home/eecs/chanwutk/.ssh:/root/.ssh
-      - /home/eecs/chanwutk/.config:/root/.config
     network_mode: "host"

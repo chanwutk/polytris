@@ -5,3 +5,6 @@
 	path = modules/darknet
 	url = git@github.com:chanwutk/darknet.git
 	branch = otif/titan-xp
+[submodule "modules/vision_references"]
+	path = modules/vision_references
+	url = git@github.com:chanwutk/vision_references.git
