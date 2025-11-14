@@ -308,7 +308,7 @@ def add_frame_to_coco_dataset(image_info, frame_annos, image_id, annotation_id, 
 
 def process_video_file(video_file, anno_dir, val_videos, train_coco, val_coco, 
                        train_image_dir, val_image_dir, category_name_to_id, 
-                       image_id, annotation_id, frame_stride):
+                       image_id, annotation_id, frame_stride, id_prefix: str = ""):
     """
     Process a single video file and add its frames to COCO dataset.
     
@@ -324,10 +324,12 @@ def process_video_file(video_file, anno_dir, val_videos, train_coco, val_coco,
         image_id: Starting image ID
         annotation_id: Starting annotation ID
         frame_stride: Extract every Nth frame
+        id_prefix: Optional prefix to ensure unique image file names across subsets
     
     Returns:
         Tuple of (updated image_id, updated annotation_id)
     """
+    # Compute base video id from filename
     video_id = video_file.stem
     anno_file = anno_dir / f"{video_id}.json"
     
@@ -341,8 +343,11 @@ def process_video_file(video_file, anno_dir, val_videos, train_coco, val_coco,
     target_image_dir = val_image_dir if is_val else train_image_dir
     
     # Extract frames and annotations
+    # Use a prefixed video id to avoid file name collisions across subsets
+    prefixed_video_id = f"{id_prefix}{video_id}" if id_prefix else video_id
+
     frame_data = extract_frames_and_annotations(
-        video_file, anno_file, target_image_dir, video_id, frame_stride
+        video_file, anno_file, target_image_dir, prefixed_video_id, frame_stride
     )
     
     # Add each frame to COCO dataset
@@ -383,18 +388,19 @@ def main():
     args = parse_args()
 
     # Setup paths
-    dataset_root = Path("/otif-dataset/dataset") / args.dataset / "train"
-    video_dir = dataset_root / "video"
-    anno_dir = find_highest_resolution_annotations(dataset_root)
-    print(f"Using annotations from: {anno_dir.name}")
+    base_root = Path("/otif-dataset/dataset") / args.dataset
+    # We'll include videos from train, valid, and test splits (if present)
+    subsets = [
+        ("train", base_root / "train"),
+        ("valid", base_root / "valid"),
+        ("test", base_root / "test"),
+    ]
     
     output_dir = Path(args.output_dir or f"/polyis-data/fasterrcnn/{args.dataset}/coco-dataset")
     train_image_dir, val_image_dir, anno_output_dir = setup_output_directories(output_dir)
     
-    # Get and split videos
-    video_files = sorted([f for f in video_dir.glob("*.mp4")])
-    print(f"Found {len(video_files)} videos")
-    val_videos = split_videos_train_val(video_files, args.val_split)
+    # Initialize counters and accumulators
+    total_counts = {"train": 0, "valid": 0, "test": 0}
     
     # Setup category mapping (CalDOT dataset only has 'car' class)
     categories = [{"id": 1, "name": "car"}]
@@ -406,13 +412,35 @@ def main():
     # Process all videos
     image_id = 1
     annotation_id = 1
-    
-    for video_file in tqdm(video_files, desc="Processing videos"):
-        image_id, annotation_id = process_video_file(
-            video_file, anno_dir, val_videos, train_coco, val_coco,
-            train_image_dir, val_image_dir, category_name_to_id,
-            image_id, annotation_id, args.frame_stride
-        )
+
+    for subset_name, subset_root in subsets:
+        # Skip subsets that don't exist
+        if not subset_root.exists():
+            continue
+
+        video_dir = subset_root / "video"
+        if not video_dir.exists():
+            print(f"Warning: Missing video directory for subset '{subset_name}': {video_dir}")
+            continue
+
+        # Find annotations directory with highest resolution for this subset
+        anno_dir = find_highest_resolution_annotations(subset_root)
+        print(f"Using annotations for '{subset_name}' from: {anno_dir.name}")
+
+        # Gather videos for this subset
+        video_files = sorted([f for f in video_dir.glob("*.mp4")])
+        total_counts[subset_name] = len(video_files)
+        print(f"Found {len(video_files)} videos in '{subset_name}'")
+
+        val_videos = split_videos_train_val(video_files, args.val_split)
+
+        # Process videos in this subset
+        for video_file in tqdm(video_files, desc=f"Processing {subset_name} videos"):
+            image_id, annotation_id = process_video_file(
+                video_file, anno_dir, val_videos, train_coco, val_coco,
+                train_image_dir, val_image_dir, category_name_to_id,
+                image_id, annotation_id, args.frame_stride, id_prefix=f"{subset_name}_"
+            )
     
     # Save COCO JSON files
     train_json_path, val_json_path = save_coco_json_files(train_coco, val_coco, anno_output_dir)
@@ -421,6 +449,7 @@ def main():
     print("\n" + "=" * 80)
     print("Dataset Creation Complete!")
     print("=" * 80)
+    print(f"Subsets discovered: train={total_counts['train']}, valid={total_counts['valid']}, test={total_counts['test']}")
     print(f"Train images: {len(train_coco['images'])}")
     print(f"Train annotations: {len(train_coco['annotations'])}")
     print(f"Val images: {len(val_coco['images'])}")

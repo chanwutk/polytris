@@ -2,6 +2,7 @@
 .venv.old
 venv
 **/__pycache__
+**/*.pyc
 
 # data
 test_frames
@@ -38,3 +39,5 @@ det_otif
 
 .cursor/mcp.json
 .claude/.nfs*
+
+*.mp4
