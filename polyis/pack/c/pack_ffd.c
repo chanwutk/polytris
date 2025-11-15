@@ -1,3 +1,19 @@
+/**
+ * @file pack_ffd.c
+ * @brief Implementation of First-Fit-Descending (FFD) polyomino packing algorithm
+ *
+ * This file implements a flexible packing algorithm that supports multiple fit
+ * strategies (First-Fit, Best-Fit, Easiest-Fit) for placing polyominoes into
+ * fixed-size collages. The algorithm sorts polyominoes by size and uses region
+ * tracking to efficiently find placement positions.
+ *
+ * Key features:
+ * - Multiple packing modes for different optimization goals
+ * - Efficient region-based placement search
+ * - Collision detection and occupied space tracking
+ * - Support for multiple output collages
+ */
+
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -160,15 +176,36 @@ static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, i
 // Main Packing Algorithm
 // ============================================================================
 
-// Pack all polyominoes into collages
-// Args:
-//   polyominoes_arrays: Array of pointers to PolyominoArray
-//   num_arrays: Number of arrays in the array
-//   h: Height of each collage
-//   w: Width of each collage
-//   mode: Packing mode to use
-// Returns:
-//   CollageArray containing all packed collages with polyomino positions
+/**
+ * @brief Pack all polyominoes into fixed-size collages using First-Fit-Descending
+ *
+ * This is the main entry point for the FFD packing algorithm with configurable
+ * fit strategy. It collects all polyominoes from multiple arrays, sorts them
+ * by size (largest first), and places them into collages using the specified
+ * packing mode (First-Fit, Best-Fit, or Easiest-Fit).
+ *
+ * Algorithm overview:
+ * 1. Collect all polyominoes from input arrays and tag with frame indices
+ * 2. Sort polyominoes by size (descending) for optimal packing
+ * 3. For each polyomino, find placement position based on selected mode:
+ *    - First_Fit: First collage that has space
+ *    - Best_Fit: Collage with least empty space that fits
+ *    - Easiest_Fit: Collage with most empty space
+ * 4. Create new collages as needed when no existing collage works
+ * 5. Update occupied regions and metadata after each placement
+ *
+ * @param polyominoes_arrays Array of pointers to PolyominoArray structures
+ * @param num_arrays Number of PolyominoArray pointers in the array
+ * @param h Height of each collage in tiles
+ * @param w Width of each collage in tiles
+ * @param mode Packing mode (First_Fit, Best_Fit, or Easiest_Fit)
+ *
+ * @return Pointer to a newly allocated CollageArray containing all packed collages
+ *
+ * @note Polyominoes are copied into the result, originals are not modified
+ * @note Caller must free the result using CollageArray_cleanup() and free()
+ * @note The algorithm may create multiple collages if needed
+ */
 CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode) {
     // Initialize storage for all polyominoes with their frame indices
     PolyominoWithFrameArray all_polyominoes;

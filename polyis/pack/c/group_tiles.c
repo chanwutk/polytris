@@ -1,3 +1,12 @@
+/**
+ * @file group_tiles.c
+ * @brief Implementation of tile grouping and polyomino extraction
+ *
+ * This file implements connected component analysis using flood-fill to extract
+ * polyominoes from a binary bitmap. The algorithm uses 4-connectivity (orthogonal
+ * neighbors only) and supports optional padding modes.
+ */
+
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -5,22 +14,56 @@
 #include "utilities.h"
 #include "errors.h"
 
-// Direction arrays for 4-connectivity (up, left, down, right)
-static const int16_t DIRECTIONS_Y[4] = {-1, 0, 1, 0};
-static const int16_t DIRECTIONS_X[4] = {0, -1, 0, 1};
+/**
+ * @brief Direction arrays for 4-connectivity movement
+ *
+ * These arrays define the four orthogonal directions: up, left, down, right.
+ * Used for flood-fill traversal and padding operations.
+ */
+static const int16_t DIRECTIONS_Y[4] = {-1, 0, 1, 0};  /**< Y-offsets for 4 directions */
+static const int16_t DIRECTIONS_X[4] = {0, -1, 0, 1};  /**< X-offsets for 4 directions */
 
-// Comparison function for qsort to sort polyominoes by mask length (descending order)
-// Returns negative if a should come before b, positive if b should come before a
+/**
+ * @brief Comparison function for qsort to sort polyominoes by size (descending)
+ *
+ * This comparator sorts polyominoes in descending order by the number of tiles
+ * they contain (mask size). Used to optimize packing by processing larger
+ * polyominoes first.
+ *
+ * @param a Pointer to first Polyomino (as void* for qsort compatibility)
+ * @param b Pointer to second Polyomino (as void* for qsort compatibility)
+ * @return Negative if a > b (a comes first), positive if b > a, 0 if equal
+ */
 static int compare_polyomino_by_mask_length(const void *a, const void *b) {
     const Polyomino *poly_a = (const Polyomino *)a;
     const Polyomino *poly_b = (const Polyomino *)b;
-    // Compare by mask length (size field of ShortArray) in descending order
+    // Compare by mask length (size field of CoordinateArray) in descending order
     // Larger masks first (negative return means a comes before b)
     return poly_b->mask.size - poly_a->mask.size;
 }
 
-// Helper function to find connected tiles using flood fill algorithm
-// This function modifies the bitmap in-place to mark visited tiles
+/**
+ * @brief Find all tiles connected to a starting position using flood-fill
+ *
+ * This function performs an iterative flood-fill starting from the given position
+ * to identify all connected tiles in the bitmap. It uses a stack-based approach
+ * (not recursion) to avoid stack overflow on large regions. The bitmap array is
+ * modified in-place to mark visited tiles.
+ *
+ * @param bitmap Working array of group IDs (modified in-place to mark visited tiles)
+ * @param bitmap_input Original binary bitmap indicating occupied tiles
+ * @param h Height of the bitmap
+ * @param w Width of the bitmap
+ * @param start_y Starting Y-coordinate for flood-fill
+ * @param start_x Starting X-coordinate for flood-fill
+ * @param mode Padding mode that affects connectivity rules (see group_tiles for details)
+ *
+ * @return CoordinateArray containing all coordinates in the connected component
+ *
+ * @note The bitmap parameter is modified to prevent revisiting tiles
+ * @note Uses 4-connectivity (orthogonal neighbors only)
+ * @note Caller must free the returned CoordinateArray
+ */
 static CoordinateArray find_connected_tiles(
     int16_t *bitmap,
     uint8_t *bitmap_input,
@@ -83,9 +126,21 @@ static CoordinateArray find_connected_tiles(
     return filled;
 }
 
-// Add padding to bitmap based on tilepadding_mode
-// mode 1: Connected padding - pad neighbors of occupied tiles
-// mode 2: Disconnected padding - pad all neighbors
+/**
+ * @brief Add padding tiles around occupied positions in the bitmap
+ *
+ * This function adds padding by marking empty neighbors of occupied tiles
+ * with the value 2. Padding helps connect nearby polyominoes or ensures
+ * isolated tiles have a minimum bounding box size.
+ *
+ * @param bitmap Binary bitmap to modify (0=empty, 1=occupied, 2=padding after execution)
+ * @param h Height of the bitmap
+ * @param w Width of the bitmap
+ *
+ * @note The bitmap is modified in-place
+ * @note Only orthogonal neighbors (4-connectivity) receive padding
+ * @note Padding tiles are marked with value 2 to distinguish from original tiles
+ */
 static inline void add_padding(uint8_t *bitmap, int16_t h, int16_t w) {
     for (int16_t y = 0; y < h; y++) {
         for (int16_t x = 0; x < w; x++) {
@@ -108,16 +163,34 @@ static inline void add_padding(uint8_t *bitmap, int16_t h, int16_t w) {
     }
 }
 
-// Main function to group tiles into polyominoes
-// bitmap_input: 2D array (flattened) of uint8_t representing the grid of tiles
-//               where 1 indicates a tile with detection and 0 indicates no detection
-// width: width of the bitmap
-// height: height of the bitmap
-// tilepadding_mode: The mode of tile padding to apply
-//                   - 0: No padding
-//                   - 1: Connected padding
-//                   - 2: Disconnected padding
-// Returns: Pointer to PolyominoArray containing all found polyominoes
+/**
+ * @brief Group connected tiles in a binary bitmap into polyominoes
+ *
+ * This is the main entry point for polyomino extraction. It processes a binary
+ * bitmap to identify connected components (polyominoes), optionally applies padding,
+ * normalizes coordinates, and returns a sorted array of polyominoes.
+ *
+ * Algorithm steps:
+ * 1. Optionally add padding around occupied tiles based on mode
+ * 2. Initialize group IDs for each occupied position
+ * 3. For each unvisited occupied tile, perform flood-fill to find connected component
+ * 4. Normalize coordinates to be relative to polyomino's bounding box origin
+ * 5. Sort polyominoes by size (largest first) for optimal packing
+ *
+ * @param bitmap_input Flattened 2D array (height*width) of uint8_t values
+ * @param width Width of the bitmap in tiles
+ * @param height Height of the bitmap in tiles
+ * @param mode Padding mode:
+ *             - 0: No padding (strict connectivity)
+ *             - 1: Disconnected padding (pad isolated tiles differently)
+ *             - 2: Connected padding (pad all occupied tiles)
+ *
+ * @return Pointer to a newly allocated PolyominoArray, sorted by polyomino size (descending)
+ *
+ * @note The bitmap_input is modified during processing
+ * @note Returned polyominoes have normalized coordinates (relative to their bounding box)
+ * @note Caller must free the result using free_polyomino_array()
+ */
 PolyominoArray * group_tiles(
     uint8_t *bitmap_input,
     int16_t width,
@@ -209,8 +282,19 @@ PolyominoArray * group_tiles(
     return polyomino_array;
 }
 
-// Free a polyomino array allocated by group_tiles
-// Returns the number of polyominoes that were freed
+/**
+ * @brief Free a polyomino array allocated by group_tiles
+ *
+ * Deallocates all memory associated with a PolyominoArray including the array
+ * structure itself and all contained polyominoes. This is the proper cleanup
+ * function for arrays returned by group_tiles().
+ *
+ * @param polyomino_array Pointer to the PolyominoArray to free
+ * @return The number of polyominoes that were freed
+ *
+ * @note Passing NULL will trigger an assertion error if error checking is enabled
+ * @note After calling this function, the pointer is invalid
+ */
 int free_polyomino_array(PolyominoArray *polyomino_array) {
     CHECK_NULL(polyomino_array, "polyomino_array pointer is NULL");
 

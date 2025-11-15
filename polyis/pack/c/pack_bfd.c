@@ -1,3 +1,19 @@
+/**
+ * @file pack_bfd.c
+ * @brief Implementation of Best-Fit-Descending (BFD) polyomino packing algorithm
+ *
+ * This file implements a sophisticated packing algorithm that places polyominoes
+ * into fixed-size collages by finding the best-fit position in each collage.
+ * The algorithm maintains metadata about unoccupied regions to optimize placement
+ * decisions and minimize fragmentation.
+ *
+ * Key features:
+ * - Best-fit placement strategy for tight packing
+ * - Region-based empty space tracking
+ * - Support for multiple collages when items don't fit
+ * - Efficient collision detection using occupied tile bitmaps
+ */
+
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -10,7 +26,12 @@
 // Macros for Dynamic Array Implementation
 // ============================================================================
 
-// Macro to define _init function for simple arrays
+/**
+ * @brief Macro to generate init function for dynamic arrays
+ *
+ * Generates a TypeName_init function that allocates initial capacity
+ * for a dynamic array structure.
+ */
 #define DEFINE_ARRAY_INIT(TypeName, ElementType) \
 int TypeName##_init(TypeName *arr, int initial_capacity) { \
     CHECK_NULL(arr, #TypeName " array pointer is NULL"); \
@@ -869,14 +890,31 @@ bool try_pack(CoordinateArray *polyomino_coords, unsigned char *occupied_tiles,
 // Main Packing Algorithm
 // ============================================================================
 
-// Pack all polyominoes into collages
-// Args:
-//   polyominoes_arrays: Array of pointers to PolyominoArray
-//   num_arrays: Number of arrays in the array
-//   h: Height of each collage
-//   w: Width of each collage
-// Returns:
-//   CollageArray containing all packed collages with polyomino positions
+/**
+ * @brief Pack all polyominoes into fixed-size collages using Best-Fit-Descending
+ *
+ * This is the main entry point for the BFD packing algorithm. It collects all
+ * polyominoes from multiple arrays, sorts them by size (largest first), and
+ * places them into collages using a best-fit strategy that minimizes fragmentation.
+ *
+ * Algorithm overview:
+ * 1. Collect all polyominoes from input arrays and tag with frame indices
+ * 2. Sort polyominoes by size (descending) for optimal packing
+ * 3. For each polyomino, try to place it in existing collages using best-fit
+ * 4. Create new collages as needed when no existing collage has space
+ * 5. Update occupied tile bitmaps and unoccupied region metadata after each placement
+ *
+ * @param polyominoes_arrays Array of pointers to PolyominoArray structures
+ * @param num_arrays Number of PolyominoArray pointers in the array
+ * @param h Height of each collage in tiles
+ * @param w Width of each collage in tiles
+ *
+ * @return Pointer to a newly allocated CollageArray containing all packed collages
+ *
+ * @note Polyominoes are copied into the result, originals are not modified
+ * @note Caller must free the result using CollageArray_cleanup() and free()
+ * @note The algorithm may create multiple collages if needed
+ */
 CollageArray* pack_all(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w) {
     // Initialize storage for all polyominoes with their frame indices
     PolyominoWithFrameArray all_polyominoes;

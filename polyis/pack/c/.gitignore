@@ -1,2 +1,9 @@
 *.so
 *.o
+
+# Doxygen generated documentation
+docs/
+
+# Doxygen logs
+doxygen.log
+doxygen_warnings.txt
