@@ -63,26 +63,29 @@ def parse_args():
         help="Number of data loading workers (default: 0 for Docker compatibility)",
     )
     parser.add_argument(
-        "--pretrained",
+        "--model",
         type=str,
-        default="yolov5x6.pt",
-        choices=["yolov5x6.pt", "yolo11x.pt"],
-        help="Pretrained weights to use (default: yolov5x6.pt)",
+        default="5x6",
+        choices=["5x6", "11x"],
+        help="Model to use (default: 5x6)",
     )
     return parser.parse_args()
 
 
-
-
-def train_yolov5(args):
+def main():
     """
     Train YOLOv5x6 or YOLOv11x model using Ultralytics API.
-
-    Args:
-        args: Parsed command line arguments
     """
+    args = parse_args()
+
+    # Map model option to pretrained weights filename
+    model_to_weights = {
+        "5x6": "yolov5x6.pt",
+        "11x": "yolo11x.pt",
+    }
+    pretrained_weights = model_to_weights[args.model]
     # Extract model name without extension for weights directory
-    model_name = os.path.splitext(args.pretrained)[0]
+    model_name = os.path.splitext(pretrained_weights)[0]
     
     # Set up paths
     data_dir = args.data_dir or f"/polyis-data/training/ultralytics/{args.dataset}/training-data"
@@ -100,7 +103,7 @@ def train_yolov5(args):
     print(f"Data config: {data_yaml}")
     print(f"Project directory: {project_dir}")
     print(f"Experiment name: {experiment_name}")
-    print(f"Model: {args.pretrained}")
+    print(f"Model: {args.model} ({pretrained_weights})")
     print(f"Epochs: {args.epochs}")
     print(f"Image size: {args.imgsz}")
     print(f"Batch size: {args.batch if args.batch > 0 else 'auto'}")
@@ -128,8 +131,8 @@ def train_yolov5(args):
         print(f"  Cleared previous training results: {experiment_dir}")
 
     # Load pretrained model
-    print(f"Loading model: {args.pretrained}...")
-    model = ultralytics.YOLO(args.pretrained)  # type: ignore
+    print(f"Loading model: {pretrained_weights}...")
+    model = ultralytics.YOLO(pretrained_weights)  # type: ignore
 
     print("Model loaded successfully!")
     print()
@@ -177,11 +180,6 @@ def train_yolov5(args):
     print(f"Best model weights: {os.path.join(weights_output_dir, 'best.pt')}")
     print(f"Last model weights: {os.path.join(weights_output_dir, 'last.pt')}")
     print("=" * 80)
-
-
-def main():
-    args = parse_args()
-    train_yolov5(args)
 
 
 if __name__ == "__main__":

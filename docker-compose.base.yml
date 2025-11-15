@@ -18,3 +18,4 @@ services:
       - ${HOME}/.claude:/root/.claude
       - /data/alenachao/data/hota_outputs:/sota-results
     network_mode: "host"
+    shm_size: "8gb"

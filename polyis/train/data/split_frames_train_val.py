@@ -6,20 +6,20 @@ import random
 
 
 def split_frames_train_val(
-    all_frames: list[tuple[str, int]],
+    all_frames: list[tuple[str, str, int]],
     val_split: float,
     seed: int = 42,
-) -> set[tuple[str, int]]:
+) -> set[tuple[str, str, int]]:
     """
     Split frame identifiers into training and validation sets with reproducible random shuffle.
 
     Args:
-        all_frames: List of (video_id, frame_idx) tuples
+        all_frames: List of (subset_name, video_id, frame_idx) tuples
         val_split: Fraction of frames for validation (0.0-1.0)
         seed: Random seed for reproducible split (default: 42)
 
     Returns:
-        Set of (video_id, frame_idx) tuples for validation frames
+        Set of (subset_name, video_id, frame_idx) tuples for validation frames
     """
     # Create a copy and shuffle with seed for reproducible split
     frames_shuffled = list(all_frames)
@@ -30,8 +30,10 @@ def split_frames_train_val(
     num_val = int(len(frames_shuffled) * val_split)
     val_frames = set(frames_shuffled[-num_val:])
 
-    print(f"Train frames: {len(frames_shuffled) - num_val}")
-    print(f"Val frames: {num_val}")
+    print(f"Total frames to split: {len(frames_shuffled)}")
+    print(f"Train frames: {len(frames_shuffled) - num_val} ({(len(frames_shuffled) - num_val)/len(frames_shuffled)*100:.1f}%)")
+    print(f"Val frames: {num_val} ({num_val/len(frames_shuffled)*100:.1f}%)")
+    print(f"Val frames set size: {len(val_frames)}")
 
     return val_frames
 

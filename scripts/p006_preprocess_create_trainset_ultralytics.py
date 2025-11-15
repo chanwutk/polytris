@@ -58,7 +58,7 @@ def parse_args():
 
 
 def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train_label_dir, 
-                                   val_image_dir, val_label_dir, video_id, frame_stride=1, val_frames=None):
+                                   val_image_dir, val_label_dir, video_id, frame_stride, val_frames):
     """
     Extract frames from video and save Ultralytics format annotations.
 
@@ -71,7 +71,7 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train
         val_label_dir: Directory to save validation labels
         video_id: Video identifier for naming files
         frame_stride: Extract every Nth frame (adjusted based on video FPS)
-        val_frames: Set of (video_id, frame_idx) tuples that should go to validation.
+        val_frames: Set of frame_idx that should go to validation.
                     If None, all frames go to train directories.
 
     Returns:
@@ -113,8 +113,7 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train
         # Determine if this frame should go to validation
         is_val = False
         if val_frames is not None:
-            frame_key = (video_id, frame_idx)
-            is_val = frame_key in val_frames
+            is_val = frame_idx in val_frames
 
         # Select target directories based on split
         if is_val:
@@ -222,7 +221,7 @@ def process_video_file(video_file, anno_dir, val_frames,
     Args:
         video_file: Path to video file
         anno_dir: Directory containing annotation files
-        val_frames: Set of (video_id, frame_idx) tuples for validation frames
+        val_frames: Set of frame_idx for validation frames
         train_image_dir: Directory for training images
         val_image_dir: Directory for validation images
         train_label_dir: Directory for training labels
@@ -239,14 +238,11 @@ def process_video_file(video_file, anno_dir, val_frames,
     # Use prefixed video id to avoid filename collisions across subsets
     prefixed_video_id = f"{id_prefix}{video_id}" if id_prefix else video_id
 
-    # Create adjusted val_frames set with prefixed video_id for lookup
-    adjusted_val_frames = adjust_val_frames_for_prefix(val_frames, video_id, id_prefix)
-
     # Extract frames and annotations
     train_count, val_count = extract_frames_and_annotations(
         video_file, anno_file, train_image_dir, train_label_dir,
         val_image_dir, val_label_dir, prefixed_video_id, frame_stride,
-        adjusted_val_frames
+        val_frames
     )
 
     return (train_count, val_count)
@@ -303,19 +299,28 @@ def main():
 
         # Collect valid frames (using original video_id without prefix for splitting)
         valid_frames = collect_valid_frames(video_file, anno_file, video_id, args.frame_stride)
-        all_valid_frames.extend(valid_frames)
+        all_valid_frames.extend((subset_name, *frame) for frame in valid_frames)
 
     print(f"\nTotal frames collected: {len(all_valid_frames)} (including frames without annotations)")
 
     # Split frames into train/val with seed for reproducibility
     print("\nSplitting frames into train/val sets...")
+    print(f"Using val_split={args.val_split} (expecting {int(len(all_valid_frames) * args.val_split)} validation frames)")
     val_frames = split_frames_train_val(all_valid_frames, args.val_split)
+    print(f"Split complete: {len(val_frames)} frames marked for validation")
+
+    val_frames_map = {}
+    for subset_name, video_id, frame_idx in val_frames:
+        if (subset_name, video_id) not in val_frames_map:
+            val_frames_map[(subset_name, video_id)] = []
+        val_frames_map[(subset_name, video_id)].append(frame_idx)
 
     # Second pass: Extract frames and save to appropriate directories
     print("\nExtracting frames and saving to dataset...")
     for subset_name, video_file, anno_dir in tqdm(video_info, desc="Processing all videos"):
+        video_id, _ = get_video_annotation_path(video_file, anno_dir)
         train_count, val_count = process_video_file(
-            video_file, anno_dir, val_frames,
+            video_file, anno_dir, val_frames_map[(subset_name, video_id)],
             train_image_dir, val_image_dir,
             train_label_dir, val_label_dir,
             args.frame_stride, id_prefix=f"{subset_name}_"
@@ -335,6 +340,9 @@ def main():
     print(f"Subsets discovered: train={total_counts['train']}, valid={total_counts['valid']}, test={total_counts['test']}")
     print(f"Train frames extracted: {total_frames['train']}")
     print(f"Val frames extracted: {total_frames['val']}")
+    total_extracted = total_frames['train'] + total_frames['val']
+    if total_extracted > 0:
+        print(f"Actual split: {total_frames['val']/total_extracted*100:.1f}% validation")
     print(f"\nDataset saved to: {output_dir}")
     print(f"  Images: {output_dir}/images/train/ and {output_dir}/images/val/")
     print(f"  Labels: {output_dir}/labels/train/ and {output_dir}/labels/val/")

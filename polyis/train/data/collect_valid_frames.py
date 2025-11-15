@@ -15,7 +15,6 @@ def collect_valid_frames(
     anno_path: Path,
     video_id: str,
     frame_stride: int = 1,
-    include_empty: bool = True,
 ) -> list[tuple[str, int]]:
     """
     Collect frame indices from a video.
@@ -44,16 +43,7 @@ def collect_valid_frames(
         # Skip frames based on adjusted stride
         if frame_idx % actual_stride != 0:
             continue
-
-        # Check if we should include this frame
-        if include_empty:
-            # Include all frames, even those without annotations
-            valid_frames.append((video_id, frame_idx))
-        else:
-            # Only include frames with annotations
-            frame_annos = annotations[frame_idx]
-            if frame_annos:
-                valid_frames.append((video_id, frame_idx))
+        valid_frames.append((video_id, frame_idx))
 
     return valid_frames
 

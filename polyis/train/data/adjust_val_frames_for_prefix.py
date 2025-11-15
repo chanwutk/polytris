@@ -7,7 +7,7 @@ across dataset subsets when splitting frames.
 
 
 def adjust_val_frames_for_prefix(
-    val_frames: set[tuple[str, int]],
+    val_frames: set[tuple[str, str, int]],
     video_id: str,
     id_prefix: str,
 ) -> set[tuple[str, int]]:
@@ -31,11 +31,11 @@ def adjust_val_frames_for_prefix(
 
     # Create adjusted val_frames set with prefixed video_id for lookup
     adjusted_val_frames = set()
-    for orig_video_id, frame_idx in val_frames:
+    for subset_name, orig_video_id, frame_idx in val_frames:
         # Match frames by checking if the original video_id matches
         # (accounting for prefix that will be added)
         if orig_video_id == video_id:
-            adjusted_val_frames.add((prefixed_video_id, frame_idx))
+            adjusted_val_frames.add((subset_name, prefixed_video_id, frame_idx))
 
     return adjusted_val_frames
 

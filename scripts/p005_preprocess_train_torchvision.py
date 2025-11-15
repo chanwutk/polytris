@@ -25,8 +25,8 @@ def parse_args():
     parser.add_argument(
         "--model",
         type=str,
-        default="fasterrcnn_resnet50_fpn",
-        help="Model architecture (default: fasterrcnn_resnet50_fpn)",
+        default="fasterrcnn",
+        help="Model architecture (default: fasterrcnn)",
     )
     parser.add_argument(
         "--epochs",
@@ -44,13 +44,7 @@ def parse_args():
         "--workers",
         type=int,
         default=1,
-        help="Number of data loading workers (default: 2)",
-    )
-    parser.add_argument(
-        "--lr",
-        type=float,
-        default=0.0025,
-        help="Learning rate (default: 0.0025, scaled for single GPU)",
+        help="Number of data loading workers (default: 1)",
     )
     parser.add_argument(
         "--num-classes",
@@ -71,11 +65,17 @@ def parse_args():
         help="Device to use for training (default: cuda)",
     )
     parser.add_argument(
-        "--track-best-loss",
+        "--no-track-best-loss",
         action="store_true",
-        help="Track and save the model with lowest validation loss",
+        help="Disable tracking and saving the model with lowest validation loss (default: enabled)",
     )
     return parser.parse_args()
+
+
+MODEL_MAP = {
+    "fasterrcnn": "fasterrcnn_resnet50_fpn_v2",
+    "retinanet": "retinanet_resnet50_fpn_v2",
+}
 
 
 def main(args):
@@ -89,6 +89,11 @@ def main(args):
     dataset_dir = f"/polyis-data/training/torchvision/{args.dataset}/training-data"
     output_dir = f"/polyis-data/training/torchvision/{args.dataset}/weights/{args.model}"
     
+    # Track best loss by default, unless --no-track-best-loss is set
+    track_best_loss = not args.no_track_best_loss
+
+    lr = 0.02 * args.batch_size / 16
+    
     print("=" * 80)
     print("Faster R-CNN Training on CalDOT Dataset")
     print("=" * 80)
@@ -98,7 +103,7 @@ def main(args):
     print(f"Model: {args.model}")
     print(f"Epochs: {args.epochs}")
     print(f"Batch size: {args.batch_size}")
-    print(f"Learning rate: {args.lr}")
+    print(f"Learning rate: {lr}")
     print(f"Number of classes: {args.num_classes}")
     print(f"Gradient clipping: {args.clip_grad_norm if args.clip_grad_norm > 0 else 'disabled'}")
     print()
@@ -123,7 +128,7 @@ def main(args):
         print(f"Warning: Output directory already exists: {output_dir}")
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Path to training script
     train_script = "/polyis/modules/vision_references/references/detection/train.py"
     
@@ -133,23 +138,19 @@ def main(args):
         train_script,
         "--data-path", dataset_dir,
         "--dataset", "coco",
-        "--model", args.model,
+        "--model", MODEL_MAP[args.model],
         "--epochs", str(args.epochs),
         "--batch-size", str(args.batch_size),
         "--workers", str(args.workers),
-        "--lr", str(args.lr),
-        "--weight-decay", "0.0001",
-        "--momentum", "0.9",
-        "--weights-backbone", "ResNet50_Weights.IMAGENET1K_V1",
-        "--lr-steps", "16", "22",
-        "--aspect-ratio-group-factor", "3",
+        "--lr", str(lr),
+        "--weights-backbone", "ResNet50_Weights.IMAGENET1K_V2",
         "--output-dir", output_dir,
         "--device", args.device,
         "--num-classes", str(args.num_classes),
         "--clip-grad-norm", str(args.clip_grad_norm),
     ]
     
-    if args.track_best_loss:
+    if track_best_loss:
         cmd.append("--track-best-loss")
     
     print("Running training command:")
@@ -164,7 +165,7 @@ def main(args):
     
     print("\n" + "=" * 80)
     print("Training completed!")
-    if args.track_best_loss:
+    if track_best_loss:
         best_model_path = os.path.join(output_dir, "best_model.pth")
         if os.path.exists(best_model_path):
             print(f"Best model (lowest validation loss): {best_model_path}")

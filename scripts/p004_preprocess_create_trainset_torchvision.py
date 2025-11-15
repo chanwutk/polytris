@@ -57,7 +57,7 @@ def parse_args():
 
 
 def extract_frames_and_annotations(video_path, anno_path, train_image_dir, val_image_dir,
-                                   video_id, frame_stride=1, val_frames=None):
+                                   video_id, frame_stride, val_frames):
     """
     Extract frames from video and return frame info with annotations.
     
@@ -110,8 +110,7 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, val_i
         # Determine if this frame should go to validation
         is_val = False
         if val_frames is not None:
-            frame_key = (video_id, frame_idx)
-            is_val = frame_key in val_frames
+            is_val = frame_idx in val_frames
         
         # Select target directory based on split
         if is_val:
@@ -324,13 +323,10 @@ def process_video_file(video_file, anno_dir, val_frames,
     # Use prefixed video id to avoid filename collisions across subsets
     prefixed_video_id = f"{id_prefix}{video_id}" if id_prefix else video_id
 
-    # Create adjusted val_frames set with prefixed video_id for lookup
-    adjusted_val_frames = adjust_val_frames_for_prefix(val_frames, video_id, id_prefix)
-
     # Extract frames and annotations
     train_frame_data, val_frame_data = extract_frames_and_annotations(
         video_file, anno_file, train_image_dir, val_image_dir,
-        prefixed_video_id, frame_stride, adjusted_val_frames
+        prefixed_video_id, frame_stride, val_frames
     )
     
     # Add training frames to COCO dataset
@@ -347,7 +343,8 @@ def process_video_file(video_file, anno_dir, val_frames,
         )
         image_id += 1
     
-    return image_id, annotation_id
+    # Return counts for debugging
+    return image_id, annotation_id, len(train_frame_data), len(val_frame_data)
 
 
 def save_coco_json_files(train_coco, val_coco, anno_output_dir):
@@ -429,28 +426,41 @@ def main():
 
         # Collect valid frames (using original video_id without prefix for splitting)
         valid_frames = collect_valid_frames(video_file, anno_file, video_id, args.frame_stride)
-        all_valid_frames.extend(valid_frames)
+        all_valid_frames.extend((subset_name, *frame) for frame in valid_frames)
 
     print(f"\nTotal frames collected: {len(all_valid_frames)} (including frames without annotations for negative examples)")
 
     # Split frames into train/val with seed for reproducibility
     print("\nSplitting frames into train/val sets...")
+    print(f"Using val_split={args.val_split} (expecting {int(len(all_valid_frames) * args.val_split)} validation frames)")
     val_frames = split_frames_train_val(all_valid_frames, args.val_split)
+    print(f"Split complete: {len(val_frames)} frames marked for validation")
 
     # Second pass: Extract frames and save to appropriate directories
     print("\nExtracting frames and saving to dataset...")
     image_id = 1
     annotation_id = 1
 
+    val_frames_map = {}
+    for subset_name, video_id, frame_idx in val_frames:
+        if (subset_name, video_id) not in val_frames_map:
+            val_frames_map[(subset_name, video_id)] = []
+        val_frames_map[(subset_name, video_id)].append(frame_idx)
+
+    total_train_frames = 0
+    total_val_frames = 0
     for subset_name, video_file, anno_dir in tqdm(video_info, desc="Processing all videos"):
-        image_id, annotation_id = process_video_file(
-            video_file, anno_dir, val_frames,
+        video_id, _ = get_video_annotation_path(video_file, anno_dir)
+        image_id, annotation_id, train_count, val_count = process_video_file(
+            video_file, anno_dir, val_frames_map[(subset_name, video_id)],
             train_coco, val_coco,
             train_image_dir, val_image_dir,
             category_name_to_id,
             image_id, annotation_id,
             args.frame_stride, id_prefix=f"{subset_name}_"
         )
+        total_train_frames += train_count
+        total_val_frames += val_count
     
     # Save COCO JSON files
     train_json_path, val_json_path = save_coco_json_files(train_coco, val_coco, anno_output_dir)
@@ -460,10 +470,13 @@ def main():
     print("Dataset Creation Complete!")
     print("=" * 80)
     print(f"Subsets discovered: train={total_counts['train']}, valid={total_counts['valid']}, test={total_counts['test']}")
-    print(f"Train images: {len(train_coco['images'])}")
+    print(f"Train images: {len(train_coco['images'])} (extracted: {total_train_frames})")
     print(f"Train annotations: {len(train_coco['annotations'])}")
-    print(f"Val images: {len(val_coco['images'])}")
+    print(f"Val images: {len(val_coco['images'])} (extracted: {total_val_frames})")
     print(f"Val annotations: {len(val_coco['annotations'])}")
+    total_extracted = total_train_frames + total_val_frames
+    if total_extracted > 0:
+        print(f"Actual split: {total_val_frames/total_extracted*100:.1f}% validation")
     print(f"\nDataset saved to: {output_dir}")
     print(f"Train JSON: {train_json_path}")
     print(f"Val JSON: {val_json_path}")
