@@ -151,6 +151,7 @@ class DocCommand(Command):
         c_dir = os.path.join('polyis', 'pack', 'c')
         doxyfile = os.path.join(c_dir, 'Doxyfile')
         docs_dir = os.path.join(c_dir, 'docs')
+        theme_dir = os.path.join(c_dir, 'doxygen-awesome-css')
 
         # Check if Doxygen is installed
         if shutil.which('doxygen') is None:
@@ -158,6 +159,15 @@ class DocCommand(Command):
             print("Install with: sudo apt-get install doxygen graphviz")
             print("          or: conda install -c conda-forge doxygen graphviz")
             return
+
+        # Check if theme is installed
+        if not os.path.exists(theme_dir):
+            print("Warning: doxygen-awesome-css theme not found")
+            print(f"The theme should be at: {theme_dir}")
+            print("\nTo install the theme:")
+            print(f"  cd {c_dir}")
+            print("  git clone https://github.com/jothepro/doxygen-awesome-css.git")
+            print("\nContinuing without theme (will use default Doxygen style)...\n")
 
         # Clean documentation if requested
         if self.clean and os.path.exists(docs_dir):
