@@ -43,11 +43,11 @@ extensions = [
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.pack.pack_ffd",
+        "polyis.pack.pack",
         [
-            "polyis/pack/pack_ffd.pyx",
+            "polyis/pack/pack.pyx",
             "polyis/pack/c/utilities.c",
-            "polyis/pack/c/pack_ffd.c",
+            "polyis/pack/c/pack.c",
         ],
         include_dirs=["polyis/cbinpack", numpy.get_include()],
         define_macros=MACROS,

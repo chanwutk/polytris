@@ -1,17 +1,17 @@
 /**
- * @file pack_ffd.h
- * @brief First-Fit-Descending (FFD) polyomino packing algorithm
+ * @file pack.h
+ * @brief Best-Fit-Descending (BFD) polyomino packing algorithm
  *
  * This header provides the main API for packing multiple polyominoes into
- * fixed-size collages using a First-Fit-Descending strategy. The algorithm
+ * fixed-size collages using a Best-Fit-Descending strategy. The algorithm
  * sorts polyominoes by size (largest first) and places them into collages
  * using various fit strategies.
  *
  * @note This implementation supports multiple packing modes for different use cases
  */
 
-#ifndef PACK_FFD_H
-#define PACK_FFD_H
+#ifndef PACK_H
+#define PACK_H
 
 #include "utilities.h"
 
@@ -30,7 +30,7 @@ typedef enum PackMode {
 /**
  * @brief Pack multiple polyomino arrays into fixed-size collages
  *
- * This function implements a First-Fit-Descending packing algorithm that takes
+ * This function implements a Best-Fit-Descending packing algorithm that takes
  * multiple arrays of polyominoes and packs them into a collection of fixed-size
  * collages. Polyominoes are sorted by size (largest first) before packing to
  * improve packing efficiency.
@@ -51,6 +51,6 @@ typedef enum PackMode {
  * @note The algorithm may leave some collages partially filled
  * @warning Caller is responsible for freeing the returned CollageArray
  */
-CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode);
+CollageArray* pack(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode);
 
-#endif // PACK_FFD_H
+#endif // PACK_H

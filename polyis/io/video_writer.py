@@ -157,3 +157,12 @@ class VideoWriter:
         
         # Write frame to ffmpeg stdin (frames must be in BGR format)
         self._process.stdin.write(frame.tobytes())
+    
+    def __call__(self, frame: np.ndarray):
+        """Write a frame to the video.
+        
+        Args:
+            frame: Frame as a numpy array in BGR format (OpenCV format).
+                  Expected shape: (height, width, 3) with dtype uint8.
+        """
+        self.write(frame)

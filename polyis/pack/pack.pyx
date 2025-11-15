@@ -51,10 +51,10 @@ cdef extern from "c/utilities.h":
         int size
         int capacity
 
-# Declare C structures from pack_ffd.h
-cdef extern from "c/pack_ffd.h":
+# Declare C structures from pack.h
+cdef extern from "c/pack.h":
     # Declare the main packing function
-    CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, int mode)
+    CollageArray* pack_ "pack" (PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, int mode)
 
     # Cleanup functions
     void CollageArray_cleanup(CollageArray *list)
@@ -83,13 +83,13 @@ cdef class PyPolyominoPosition:
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w, int mode) -> list[list[PyPolyominoPosition]]:
-    """Packs all polyominoes from multiple stacks into collages using the C FFD algorithm.
+def pack(cnp.uint64_t[:] polyominoes_stacks, int h, int w, int mode) -> list[list[PyPolyominoPosition]]:
+    """Packs all polyominoes from multiple stacks into collages using the C BFD algorithm.
 
     This function takes multiple stacks of polyominoes (memory addresses) and attempts to
-    pack them into rectangular collages of the specified dimensions. It uses a first-fit
-    decreasing algorithm, trying to place the largest polyominoes first in collages with
-    the most empty space.
+    pack them into rectangular collages of the specified dimensions. It uses a best-fit
+    descending algorithm, trying to place the largest polyominoes first in collages with
+    the least empty space.
 
     Args:
         polyominoes_stacks: cnp.uint64_t[:], a list of memory addresses pointing
@@ -122,11 +122,11 @@ def pack_all(cnp.uint64_t[:] polyominoes_stacks, int h, int w, int mode) -> list
         arrays_ptr[i] = <PolyominoArray*>polyominoes_stacks[i]  # type: ignore
 
     # Call the C packing function
-    result = pack_all_(arrays_ptr, num_arrays, h, w, mode)
+    result = pack_(arrays_ptr, num_arrays, h, w, mode)
     free(<void*>arrays_ptr)
 
     if result == NULL:  # type: ignore
-        raise MemoryError("pack_all_ returned NULL")
+        raise MemoryError("pack_ returned NULL")
 
     # Convert result to Python format
     collages = convert_collage_array_to_python(result)

@@ -1,6 +1,6 @@
 /**
- * @file pack_ffd.c
- * @brief Implementation of First-Fit-Descending (FFD) polyomino packing algorithm
+ * @file pack.c
+ * @brief Implementation of Best-Fit-Descending (BFD) polyomino packing algorithm
  *
  * This file implements a flexible packing algorithm that supports multiple fit
  * strategies (First-Fit, Best-Fit, Easiest-Fit) for placing polyominoes into
@@ -177,9 +177,9 @@ static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, i
 // ============================================================================
 
 /**
- * @brief Pack all polyominoes into fixed-size collages using First-Fit-Descending
+ * @brief Pack all polyominoes into fixed-size collages using Best-Fit-Descending
  *
- * This is the main entry point for the FFD packing algorithm with configurable
+ * This is the main entry point for the BFD packing algorithm with configurable
  * fit strategy. It collects all polyominoes from multiple arrays, sorts them
  * by size (largest first), and places them into collages using the specified
  * packing mode (First-Fit, Best-Fit, or Easiest-Fit).
@@ -206,7 +206,7 @@ static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, i
  * @note Caller must free the result using CollageArray_cleanup() and free()
  * @note The algorithm may create multiple collages if needed
  */
-CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode) {
+CollageArray* pack(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode) {
     // Initialize storage for all polyominoes with their frame indices
     PolyominoWithFrameArray all_polyominoes;
     PolyominoWithFrameArray_init(&all_polyominoes, 128);
