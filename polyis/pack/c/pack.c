@@ -171,14 +171,9 @@ static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, i
 // ============================================================================
 
 /**
- * @brief Pack all polyominoes into fixed-size collages using Best-Fit-Descending
+ * Implementation of pack() - see pack.h for full API documentation.
  *
- * This is the main entry point for the BFD packing algorithm with configurable
- * fit strategy. It collects all polyominoes from multiple arrays, sorts them
- * by size (largest first), and places them into collages using the specified
- * packing mode (First-Fit, Best-Fit, or Easiest-Fit).
- *
- * Algorithm overview:
+ * Algorithm implementation:
  * 1. Collect all polyominoes from input arrays and tag with frame indices
  * 2. Sort polyominoes by size (descending) for optimal packing
  * 3. For each polyomino, find placement position based on selected mode:
@@ -187,18 +182,6 @@ static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, i
  *    - Easiest_Fit: Collage with most empty space
  * 4. Create new collages as needed when no existing collage works
  * 5. Update occupied regions and metadata after each placement
- *
- * @param polyominoes_arrays Array of pointers to PolyominoArray structures
- * @param num_arrays Number of PolyominoArray pointers in the array
- * @param h Height of each collage in tiles
- * @param w Width of each collage in tiles
- * @param mode Packing mode (First_Fit, Best_Fit, or Easiest_Fit)
- *
- * @return Pointer to a newly allocated CollageArray containing all packed collages
- *
- * @note Polyominoes are copied into the result, originals are not modified
- * @note Caller must free the result using CollageArray_cleanup() and free()
- * @note The algorithm may create multiple collages if needed
  */
 CollageArray* pack(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode) {
     // Initialize storage for all polyominoes with their frame indices

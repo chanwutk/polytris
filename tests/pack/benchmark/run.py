@@ -13,7 +13,7 @@ if _workspace_root not in sys.path:
 
 from tests.pack.benchmark.group_tiles import benchmark_group_tiles
 from tests.pack.benchmark.pack_append import benchmark_pack_append
-from tests.pack.benchmark.pack_ffd import benchmark_pack_ffd
+from tests.pack.benchmark.pack import benchmark_pack
 from tests.pack.benchmark.compress import benchmark_compress
 
 
@@ -24,7 +24,7 @@ def main():
 
     benchmark_group_tiles()
     benchmark_pack_append()
-    benchmark_pack_ffd()
+    benchmark_pack()
     benchmark_compress()
 
     print("\nBenchmark completed!")

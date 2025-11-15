@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Benchmark script for pack_ffd implementations with correctness validation.
+Benchmark script for pack implementations with correctness validation.
 """
 
 import time
@@ -315,14 +315,14 @@ def verify_packing_properties(result, h, w):
     return stats
 
 
-def benchmark_pack_ffd():
-    """Benchmark pack_ffd implementations (C vs Python) with correctness validation."""
-    print("\n=== Pack FFD Benchmark ===")
+def benchmark_pack():
+    """Benchmark pack implementations (C vs Python) with correctness validation."""
+    print("\n=== Pack Benchmark ===")
 
     # Import implementations
-    from polyis.pack.pack_ffd import pack_all as c_pack_all
+    from polyis.pack.pack import pack as c_pack
     from polyis.pack.adapters import convert_collages_to_bitmap
-    from polyis.pack.python.pack_ffd import pack_all as python_pack_all
+    from polyis.pack.python.pack import pack as python_pack
     from polyis.pack.group_tiles import group_tiles as group_tiles_cython
 
     # Test data files
@@ -336,223 +336,231 @@ def benchmark_pack_ffd():
     threshold = 0.5
     tilepadding = 0  # No padding for this benchmark
 
-    # Storage for results
-    results_summary = {}
+    mode_map = {
+        0: 'Easiest Fit',
+        1: 'First Fit',
+        2: 'Best Fit',
+    }
 
-    for test_name, test_file in test_files:
-        if not os.path.exists(test_file):
-            print(f"Test file not found: {test_file}, skipping...")
-            continue
+    for mode in [0, 1, 2]:
+        print(f"Mode: {mode_map[mode]}")
+        # Storage for results
+        results_summary = {}
 
-        print(f"\n📁 Processing: {test_name}")
-        print("-" * 80)
+        for test_name, test_file in test_files:
+            if not os.path.exists(test_file):
+                print(f"Test file not found: {test_file}, skipping...")
+                continue
 
-        # Read all frames from JSONL file
-        with open(test_file, 'r') as f:
-            lines = f.readlines()
+            print(f"\n📁 Processing: {test_name}")
+            print("-" * 80)
 
-        # Get frame dimensions from first frame
-        first_frame = json.loads(lines[0])
-        frame_size = first_frame['frame_size']
-        tile_size = first_frame['tile_size']
-        grid_height = frame_size[0] // tile_size
-        grid_width = frame_size[1] // tile_size
+            # Read all frames from JSONL file
+            with open(test_file, 'r') as f:
+                lines = f.readlines()
 
-        # Storage for timing results and correctness checks
-        python_times = []
-        c_times = []
-        correctness_matches = 0
-        correctness_mismatches = 0
-        python_valid_count = 0
-        c_valid_count = 0
-        total_validation_runs = 0  # Track total number of validation runs
+            # Get frame dimensions from first frame
+            first_frame = json.loads(lines[0])
+            frame_size = first_frame['frame_size']
+            tile_size = first_frame['tile_size']
+            grid_height = frame_size[0] // tile_size
+            grid_width = frame_size[1] // tile_size
 
-        # Sample frames (every 10th frame to keep benchmark manageable)
-        sample_indices = list(range(0, len(lines), max(1, len(lines) // 200)))
+            # Storage for timing results and correctness checks
+            python_times = []
+            c_times = []
+            correctness_matches = 0
+            correctness_mismatches = 0
+            python_valid_count = 0
+            c_valid_count = 0
+            total_validation_runs = 0  # Track total number of validation runs
 
-        print(f"  Sampling {len(sample_indices)} frames out of {len(lines)} total frames")
+            # Sample frames (every 10th frame to keep benchmark manageable)
+            sample_indices = list(range(0, len(lines), max(1, len(lines) // 200)))
 
-        # Step 1: Collect all bitmaps from all frames first
-        all_bitmaps = []
-        for frame_idx in track(sample_indices, description=f"  Loading bitmaps for {test_name}"):
-            frame_result = json.loads(lines[frame_idx])
+            print(f"  Sampling {len(sample_indices)} frames out of {len(lines)} total frames")
 
-            # Parse classification hex to bitmap
-            classifications: str = frame_result['classification_hex']
-            classification_size: tuple[int, int] = frame_result['classification_size']
+            # Step 1: Collect all bitmaps from all frames first
+            all_bitmaps = []
+            for frame_idx in track(sample_indices, description=f"  Loading bitmaps for {test_name}"):
+                frame_result = json.loads(lines[frame_idx])
 
-            # Convert hex to bitmap
-            bitmap_frame = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size)
-            bitmap_frame = bitmap_frame > (threshold * 255)
-            bitmap_frame = bitmap_frame.astype(np.uint8)
-            all_bitmaps.append(bitmap_frame)
+                # Parse classification hex to bitmap
+                classifications: str = frame_result['classification_hex']
+                classification_size: tuple[int, int] = frame_result['classification_size']
 
-        # Step 2: Run the full pipeline multiple times to measure performance
-        for tilepadding in [0, 1, 2]:
-            num_runs = 20
-            for run_idx in track(range(num_runs), description=f"  Benchmarking {test_name}"):
-                # Python implementation: group_tiles + pack_all
-                start = time.perf_counter()
-                # Group all bitmaps
-                all_polyominoes_python = np.empty((len(all_bitmaps),), dtype=np.uint64)
-                for i, bitmap in enumerate(all_bitmaps):
-                    polyominoes = group_tiles_cython(bitmap.copy(), tilepadding)
-                    all_polyominoes_python[i] = polyominoes
-                # Pack all polyominoes
-                python_result = python_pack_all(all_polyominoes_python, grid_height, grid_width)
-                python_time = (time.perf_counter() - start) * 1e6  # Convert to microseconds
-                python_times.append(python_time)
+                # Convert hex to bitmap
+                bitmap_frame = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size)
+                bitmap_frame = bitmap_frame > (threshold * 255)
+                bitmap_frame = bitmap_frame.astype(np.uint8)
+                all_bitmaps.append(bitmap_frame)
 
-                # C implementation: group_tiles + pack_all
-                start = time.perf_counter()
-                # Group all bitmaps
-                all_polyominoes_c = np.empty((len(all_bitmaps),), dtype=np.uint64)
-                for i, bitmap in enumerate(all_bitmaps):
-                    polyominoes = group_tiles_cython(bitmap.copy(), tilepadding)
-                    all_polyominoes_c[i] = polyominoes
-                # Pack all polyominoes
-                c_result = c_pack_all(all_polyominoes_c, grid_height, grid_width)
-                c_time = (time.perf_counter() - start) * 1e6  # Convert to microseconds
-                c_times.append(c_time)
-                convert_collages_to_bitmap(c_result)
+            # Step 2: Run the full pipeline multiple times to measure performance
+            for tilepadding in [0, 1, 2]:
+                num_runs = 20
+                for run_idx in track(range(num_runs), description=f"  Benchmarking {test_name}"):
+                    # Python implementation: group_tiles + pack_all
+                    start = time.perf_counter()
+                    # Group all bitmaps
+                    all_polyominoes_python = np.empty((len(all_bitmaps),), dtype=np.uint64)
+                    for i, bitmap in enumerate(all_bitmaps):
+                        polyominoes = group_tiles_cython(bitmap.copy(), tilepadding)
+                        all_polyominoes_python[i] = polyominoes
+                    # Pack all polyominoes
+                    python_result = python_pack(all_polyominoes_python, grid_height, grid_width, mode)
+                    python_time = (time.perf_counter() - start) * 1e6  # Convert to microseconds
+                    python_times.append(python_time)
 
-                # Only validate correctness on the first run to avoid spam
-                if run_idx == 0:
-                    # Correctness validation: compare Python vs C results
-                    if compare_polyomino_positions(python_result, c_result, verbose=False):
-                        correctness_matches += 1
-                    else:
-                        correctness_mismatches += 1
-                        print(f"\n⚠️  Results mismatch detected!")
-                        # Print detailed diagnostics about the mismatch
-                        print_packing_diagnostics(python_result, c_result, 0, max_polyominoes=1000)
+                    # C implementation: group_tiles + pack_all
+                    start = time.perf_counter()
+                    # Group all bitmaps
+                    all_polyominoes_c = np.empty((len(all_bitmaps),), dtype=np.uint64)
+                    for i, bitmap in enumerate(all_bitmaps):
+                        polyominoes = group_tiles_cython(bitmap.copy(), tilepadding)
+                        all_polyominoes_c[i] = polyominoes
+                    # Pack all polyominoes
+                    c_result = c_pack(all_polyominoes_c, grid_height, grid_width, mode)
+                    c_time = (time.perf_counter() - start) * 1e6  # Convert to microseconds
+                    c_times.append(c_time)
+                    convert_collages_to_bitmap(c_result)
 
-                    # Verify packing properties for both implementations
-                    # Track if all collages in the frame are valid
-                    python_frame_valid = True
-                    c_frame_valid = True
-                    python_frame_errors = []
-                    c_frame_errors = []
+                    # Only validate correctness on the first run to avoid spam
+                    if run_idx == 0:
+                        # Correctness validation: compare Python vs C results
+                        if compare_polyomino_positions(python_result, c_result, verbose=False):
+                            correctness_matches += 1
+                        else:
+                            correctness_mismatches += 1
+                            print(f"\n⚠️  Results mismatch detected!")
+                            # Print detailed diagnostics about the mismatch
+                            print_packing_diagnostics(python_result, c_result, 0, max_polyominoes=1000)
 
-                    for collage_idx, (py_collage, c_collage) in enumerate(zip(python_result, c_result)):
-                        python_stats = verify_packing_properties([py_collage], grid_height, grid_width)
-                        c_stats = verify_packing_properties([c_collage], grid_height, grid_width)
+                        # Verify packing properties for both implementations
+                        # Track if all collages in the frame are valid
+                        python_frame_valid = True
+                        c_frame_valid = True
+                        python_frame_errors = []
+                        c_frame_errors = []
 
-                        if not python_stats['valid']:
-                            python_frame_valid = False
-                            python_frame_errors.extend(python_stats['errors'][:3])
+                        for collage_idx, (py_collage, c_collage) in enumerate(zip(python_result, c_result)):
+                            python_stats = verify_packing_properties([py_collage], grid_height, grid_width)
+                            c_stats = verify_packing_properties([c_collage], grid_height, grid_width)
 
-                        if not c_stats['valid']:
-                            c_frame_valid = False
-                            c_frame_errors.extend(c_stats['errors'][:3])
+                            if not python_stats['valid']:
+                                python_frame_valid = False
+                                python_frame_errors.extend(python_stats['errors'][:3])
 
-                    # Print summary of validation results for this run
-                    if not python_frame_valid or not c_frame_valid:
-                        print(f"\n⚠️  Validation failed for tilepadding={tilepadding}:")
-                        if not python_frame_valid:
-                            print(f"     Python errors: {python_frame_errors[:3]}")
-                        if not c_frame_valid:
-                            print(f"     C errors: {c_frame_errors[:3]}")
+                            if not c_stats['valid']:
+                                c_frame_valid = False
+                                c_frame_errors.extend(c_stats['errors'][:3])
 
-                    # Increment frame-level valid counts
-                    if python_frame_valid:
-                        python_valid_count += 1
-                    if c_frame_valid:
-                        c_valid_count += 1
+                        # Print summary of validation results for this run
+                        if not python_frame_valid or not c_frame_valid:
+                            print(f"\n⚠️  Validation failed for tilepadding={tilepadding}:")
+                            if not python_frame_valid:
+                                print(f"     Python errors: {python_frame_errors[:3]}")
+                            if not c_frame_valid:
+                                print(f"     C errors: {c_frame_errors[:3]}")
 
-                    # Increment total validation runs counter
-                    total_validation_runs += 1
+                        # Increment frame-level valid counts
+                        if python_frame_valid:
+                            python_valid_count += 1
+                        if c_frame_valid:
+                            c_valid_count += 1
 
-            # Store results
-            results_summary[test_name] = {
-                'python': python_times,
-                'c': c_times,
-                'correctness': {
-                    'matches': correctness_matches,
-                    'mismatches': correctness_mismatches,
-                    'python_valid': python_valid_count,
-                    'c_valid': c_valid_count,
-                    'total': total_validation_runs  # Use actual validation run count
+                        # Increment total validation runs counter
+                        total_validation_runs += 1
+
+                # Store results
+                results_summary[test_name] = {
+                    'python': python_times,
+                    'c': c_times,
+                    'correctness': {
+                        'matches': correctness_matches,
+                        'mismatches': correctness_mismatches,
+                        'python_valid': python_valid_count,
+                        'c_valid': c_valid_count,
+                        'total': total_validation_runs  # Use actual validation run count
+                    }
                 }
-            }
 
-    # Print summary
-    print("\n" + "=" * 100)
-    print("PACK FFD PERFORMANCE SUMMARY")
-    print("=" * 100)
-    print("\nTest File".ljust(20) + " | " + "Python Avg".ljust(12) + " | " + "C Avg".ljust(12) + " | " + "Speedup".ljust(10) + " | " + "Samples")
-    print("-" * 100)
+        # Print summary
+        print("\n" + "=" * 100)
+        print("PACK PERFORMANCE SUMMARY")
+        print("=" * 100)
+        print("\nTest File".ljust(20) + " | " + "Python Avg".ljust(12) + " | " + "C Avg".ljust(12) + " | " + "Speedup".ljust(10) + " | " + "Samples")
+        print("-" * 100)
 
-    for test_name, results in results_summary.items():
-        python_times = results['python']
-        c_times = results['c']
+        for test_name, results in results_summary.items():
+            python_times = results['python']
+            c_times = results['c']
 
-        if python_times and c_times:
-            python_avg = statistics.mean(python_times)
-            c_avg = statistics.mean(c_times)
+            if python_times and c_times:
+                python_avg = statistics.mean(python_times)
+                c_avg = statistics.mean(c_times)
+                speedup = python_avg / c_avg if c_avg > 0 else float('inf')
+                samples = len(python_times)
+
+                print(f"{test_name:20} | {python_avg:10.2f}μs | {c_avg:10.2f}μs | {speedup:8.2f}x | {samples:7d}")
+
+        # Print correctness summary
+        print("\n" + "=" * 100)
+        print("PACK CORRECTNESS SUMMARY")
+        print("=" * 100)
+        print("\nTest File".ljust(20) + " | " + "Matches".ljust(10) + " | " + "Mismatches".ljust(12) + " | " + "Python Valid".ljust(14) + " | " + "C Valid".ljust(10) + " | " + "Match Rate")
+        print("-" * 100)
+
+        total_matches = 0
+        total_mismatches = 0
+        total_python_valid = 0
+        total_c_valid = 0
+        total_samples = 0
+
+        for test_name, results in results_summary.items():
+            correctness = results['correctness']
+            matches = correctness['matches']
+            mismatches = correctness['mismatches']
+            python_valid = correctness['python_valid']
+            c_valid = correctness['c_valid']
+            total = correctness['total']
+            match_rate = (matches / total * 100) if total > 0 else 0
+
+            print(f"{test_name:20} | {matches:10d} | {mismatches:12d} | {python_valid:14d} | {c_valid:10d} | {match_rate:8.2f}%")
+
+            total_matches += matches
+            total_mismatches += mismatches
+            total_python_valid += python_valid
+            total_c_valid += c_valid
+            total_samples += total
+
+        # Overall summary
+        print("\n" + "=" * 100)
+        print("OVERALL SUMMARY")
+        print("=" * 100)
+
+        all_python_times = []
+        all_c_times = []
+        for results in results_summary.values():
+            all_python_times.extend(results['python'])
+            all_c_times.extend(results['c'])
+
+        if all_python_times and all_c_times:
+            python_avg = statistics.mean(all_python_times)
+            c_avg = statistics.mean(all_c_times)
             speedup = python_avg / c_avg if c_avg > 0 else float('inf')
-            samples = len(python_times)
+            samples = len(all_python_times)
 
-            print(f"{test_name:20} | {python_avg:10.2f}μs | {c_avg:10.2f}μs | {speedup:8.2f}x | {samples:7d}")
+            print(f"\nPerformance:")
+            print(f"  Overall Python Average: {python_avg:10.2f}μs")
+            print(f"  Overall C Average:      {c_avg:10.2f}μs")
+            print(f"  Overall Speedup:        {speedup:8.2f}x")
+            print(f"  Total Samples:          {samples:7d}")
 
-    # Print correctness summary
-    print("\n" + "=" * 100)
-    print("PACK FFD CORRECTNESS SUMMARY")
-    print("=" * 100)
-    print("\nTest File".ljust(20) + " | " + "Matches".ljust(10) + " | " + "Mismatches".ljust(12) + " | " + "Python Valid".ljust(14) + " | " + "C Valid".ljust(10) + " | " + "Match Rate")
-    print("-" * 100)
+            print(f"\nCorrectness:")
+            print(f"  Total Matches:          {total_matches:7d}")
+            print(f"  Total Mismatches:       {total_mismatches:7d}")
+            print(f"  Match Rate:             {(total_matches / total_samples * 100):6.2f}%")
+            print(f"  Python Valid Packings:  {total_python_valid:7d} / {total_samples:7d} ({total_python_valid / total_samples * 100:6.2f}%)")
+            print(f"  C Valid Packings:       {total_c_valid:7d} / {total_samples:7d} ({total_c_valid / total_samples * 100:6.2f}%)")
 
-    total_matches = 0
-    total_mismatches = 0
-    total_python_valid = 0
-    total_c_valid = 0
-    total_samples = 0
-
-    for test_name, results in results_summary.items():
-        correctness = results['correctness']
-        matches = correctness['matches']
-        mismatches = correctness['mismatches']
-        python_valid = correctness['python_valid']
-        c_valid = correctness['c_valid']
-        total = correctness['total']
-        match_rate = (matches / total * 100) if total > 0 else 0
-
-        print(f"{test_name:20} | {matches:10d} | {mismatches:12d} | {python_valid:14d} | {c_valid:10d} | {match_rate:8.2f}%")
-
-        total_matches += matches
-        total_mismatches += mismatches
-        total_python_valid += python_valid
-        total_c_valid += c_valid
-        total_samples += total
-
-    # Overall summary
-    print("\n" + "=" * 100)
-    print("OVERALL SUMMARY")
-    print("=" * 100)
-
-    all_python_times = []
-    all_c_times = []
-    for results in results_summary.values():
-        all_python_times.extend(results['python'])
-        all_c_times.extend(results['c'])
-
-    if all_python_times and all_c_times:
-        python_avg = statistics.mean(all_python_times)
-        c_avg = statistics.mean(all_c_times)
-        speedup = python_avg / c_avg if c_avg > 0 else float('inf')
-        samples = len(all_python_times)
-
-        print(f"\nPerformance:")
-        print(f"  Overall Python Average: {python_avg:10.2f}μs")
-        print(f"  Overall C Average:      {c_avg:10.2f}μs")
-        print(f"  Overall Speedup:        {speedup:8.2f}x")
-        print(f"  Total Samples:          {samples:7d}")
-
-        print(f"\nCorrectness:")
-        print(f"  Total Matches:          {total_matches:7d}")
-        print(f"  Total Mismatches:       {total_mismatches:7d}")
-        print(f"  Match Rate:             {(total_matches / total_samples * 100):6.2f}%")
-        print(f"  Python Valid Packings:  {total_python_valid:7d} / {total_samples:7d} ({total_python_valid / total_samples * 100:6.2f}%)")
-        print(f"  C Valid Packings:       {total_c_valid:7d} / {total_samples:7d} ({total_c_valid / total_samples * 100:6.2f}%)")
-
-    print("\n" + "=" * 100)
+        print("\n" + "=" * 100)

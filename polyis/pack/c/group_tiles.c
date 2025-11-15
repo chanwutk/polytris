@@ -164,32 +164,14 @@ static inline void add_padding(uint8_t *bitmap, int16_t h, int16_t w) {
 }
 
 /**
- * @brief Group connected tiles in a binary bitmap into polyominoes
+ * Implementation of group_tiles() - see group_tiles.h for full API documentation.
  *
- * This is the main entry point for polyomino extraction. It processes a binary
- * bitmap to identify connected components (polyominoes), optionally applies padding,
- * normalizes coordinates, and returns a sorted array of polyominoes.
- *
- * Algorithm steps:
+ * Algorithm implementation:
  * 1. Optionally add padding around occupied tiles based on mode
  * 2. Initialize group IDs for each occupied position
  * 3. For each unvisited occupied tile, perform flood-fill to find connected component
  * 4. Normalize coordinates to be relative to polyomino's bounding box origin
  * 5. Sort polyominoes by size (largest first) for optimal packing
- *
- * @param bitmap_input Flattened 2D array (height*width) of uint8_t values
- * @param width Width of the bitmap in tiles
- * @param height Height of the bitmap in tiles
- * @param mode Padding mode:
- *             - 0: No padding (strict connectivity)
- *             - 1: Disconnected padding (pad isolated tiles differently)
- *             - 2: Connected padding (pad all occupied tiles)
- *
- * @return Pointer to a newly allocated PolyominoArray, sorted by polyomino size (descending)
- *
- * @note The bitmap_input is modified during processing
- * @note Returned polyominoes have normalized coordinates (relative to their bounding box)
- * @note Caller must free the result using free_polyomino_array()
  */
 PolyominoArray * group_tiles(
     uint8_t *bitmap_input,
@@ -282,19 +264,7 @@ PolyominoArray * group_tiles(
     return polyomino_array;
 }
 
-/**
- * @brief Free a polyomino array allocated by group_tiles
- *
- * Deallocates all memory associated with a PolyominoArray including the array
- * structure itself and all contained polyominoes. This is the proper cleanup
- * function for arrays returned by group_tiles().
- *
- * @param polyomino_array Pointer to the PolyominoArray to free
- * @return The number of polyominoes that were freed
- *
- * @note Passing NULL will trigger an assertion error if error checking is enabled
- * @note After calling this function, the pointer is invalid
- */
+// Implementation of free_polyomino_array() - see group_tiles.h for full API documentation
 int free_polyomino_array(PolyominoArray *polyomino_array) {
     CHECK_NULL(polyomino_array, "polyomino_array pointer is NULL");
 

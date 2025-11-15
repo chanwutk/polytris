@@ -121,14 +121,103 @@ class CleanCommand(Command):
 
 class CleanAnnotateCommand(CleanCommand):
     """Custom clean command to remove only annotation artifacts (*.c, *.html files)."""
-    
+
     description = "Remove annotation artifacts (*.c, *.html files only)"
     so_patterns = []
 
 
+class DocCommand(Command):
+    """Custom command to generate documentation using Doxygen."""
+
+    description = "Generate documentation for C code using Doxygen"
+    user_options = [
+        ('clean', 'c', 'Clean documentation before generating'),
+        ('open', 'o', 'Open documentation in browser after generating'),
+    ]
+
+    def initialize_options(self):
+        self.clean = False
+        self.open = False
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        """Execute the documentation generation command."""
+        import subprocess
+        import shutil
+
+        # Path to C code directory
+        c_dir = os.path.join('polyis', 'pack', 'c')
+        doxyfile = os.path.join(c_dir, 'Doxyfile')
+        docs_dir = os.path.join(c_dir, 'docs')
+
+        # Check if Doxygen is installed
+        if shutil.which('doxygen') is None:
+            print("Error: Doxygen is not installed or not in PATH")
+            print("Install with: sudo apt-get install doxygen graphviz")
+            print("          or: conda install -c conda-forge doxygen graphviz")
+            return
+
+        # Clean documentation if requested
+        if self.clean and os.path.exists(docs_dir):
+            print(f"Cleaning existing documentation in {docs_dir}...")
+            shutil.rmtree(docs_dir)
+            print("Documentation cleaned.")
+
+        # Check if Doxyfile exists
+        if not os.path.exists(doxyfile):
+            print(f"Error: Doxyfile not found at {doxyfile}")
+            return
+
+        # Generate documentation
+        print(f"Generating documentation from {c_dir}...")
+        print(f"Using Doxyfile: {doxyfile}")
+
+        try:
+            # Run doxygen from the C directory
+            result = subprocess.run(
+                ['doxygen', 'Doxyfile'],
+                cwd=c_dir,
+                capture_output=True,
+                text=True
+            )
+
+            # Print output
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr)
+
+            if result.returncode == 0:
+                html_index = os.path.join(docs_dir, 'html', 'index.html')
+                print(f"\nDocumentation generated successfully!")
+                print(f"HTML documentation: {html_index}")
+
+                # Open in browser if requested
+                if self.open:
+                    if os.path.exists(html_index):
+                        print(f"Opening documentation in browser...")
+                        if shutil.which('xdg-open'):  # Linux
+                            subprocess.run(['xdg-open', html_index])
+                        elif shutil.which('open'):  # macOS
+                            subprocess.run(['open', html_index])
+                        elif shutil.which('start'):  # Windows
+                            subprocess.run(['start', html_index], shell=True)
+                        else:
+                            print(f"Could not detect browser opener. Open manually: {html_index}")
+                    else:
+                        print(f"Error: Generated documentation not found at {html_index}")
+            else:
+                print(f"\nError: Doxygen failed with return code {result.returncode}")
+
+        except Exception as e:
+            print(f"Error running Doxygen: {e}")
+
+
 class BuildExt(build_ext):
     """Custom build_ext command that defaults to --inplace and cleans artifacts."""
-    
+
     def initialize_options(self):
         super().initialize_options()
         # Set inplace to True by default
@@ -142,6 +231,7 @@ setup(
         'clean': CleanCommand,
         'clean_annotate': CleanAnnotateCommand,
         'build_ext': BuildExt,
+        'doc': DocCommand,
     },
     ext_modules=cythonize(
         extensions,
