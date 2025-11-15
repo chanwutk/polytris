@@ -13,7 +13,7 @@ import pytest
 import numpy as np
 import time
 from polyis.pack.cython.group_tiles import group_tiles as group_tiles_cython
-from polyis.pack.python.pack_ffd import pack as pack_python
+from polyis.pack.python.pack import pack as pack_python
 from polyis.pack.group_tiles import group_tiles as group_tiles_c
 from polyis.pack.pack import pack as pack_c, PyPolyominoPosition
 from polyis.pack.adapters import convert_collages_to_bitmap
