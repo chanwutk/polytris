@@ -13,7 +13,7 @@ import pytest
 import numpy as np
 import time
 from polyis.pack.cython.group_tiles import group_tiles as group_tiles_cython
-from polyis.pack.python.pack_ffd import pack_all as pack_all_python
+from polyis.pack.python.pack_ffd import pack as pack_python
 from polyis.pack.group_tiles import group_tiles as group_tiles_c
 from polyis.pack.pack import pack as pack_c, PyPolyominoPosition
 from polyis.pack.adapters import convert_collages_to_bitmap
@@ -191,7 +191,7 @@ class TestPackFFDBasic:
         polyominoes_stacks = []
         h, w = 10, 10
 
-        result_python = pack_all_python(np.array(polyominoes_stacks, dtype=np.uint64), h, w)
+        result_python = pack_python(np.array(polyominoes_stacks, dtype=np.uint64), h, w, 0)
         
         # C implementation raises ValueError for empty input
         with pytest.raises(ValueError, match="polyominoes_stacks cannot be empty"):
@@ -243,7 +243,7 @@ class TestPackFFDBasic:
 
         h, w = 10, 10
 
-        result_python = pack_all_python(np.array([python_stack], dtype=np.uint64), h, w)
+        result_python = pack_python(np.array([python_stack], dtype=np.uint64), h, w, 0)
         result_c = pack_c(np.array([c_stack], dtype=np.uint64), h, w, 0)
         
         # Convert C result from coordinate format to bitmap format
@@ -277,7 +277,7 @@ class TestPackFFDBasic:
 
         h, w = 8, 8
 
-        result_python = pack_all_python(python_stacks, h, w)
+        result_python = pack_python(python_stacks, h, w, 0)
         result_c = pack_c(c_stacks, h, w, 0)
         
         # Convert C result from coordinate format to bitmap format
@@ -309,7 +309,7 @@ class TestPackFFDRandom:
 
         h, w = 50, 50
 
-        result_python = pack_all_python(np.array([python_stack], dtype=np.uint64), h, w)
+        result_python = pack_python(np.array([python_stack], dtype=np.uint64), h, w, 0)
         result_c = pack_c(np.array([c_stack], dtype=np.uint64), h, w, 0)
         
         # Convert C result from coordinate format to bitmap format
@@ -338,7 +338,7 @@ class TestPackFFDRandom:
 
         h, w = 40, 40
 
-        result_python = pack_all_python(python_stacks, h, w)
+        result_python = pack_python(python_stacks, h, w, 0)
         result_c = pack_c(c_stacks, h, w, 0)
         
         # Convert C result from coordinate format to bitmap format
@@ -387,7 +387,7 @@ class TestPackFFDPerformance:
 
             # Time Python implementation
             start = time.perf_counter()
-            result_python = pack_all_python(python_stacks, h, w)
+            result_python = pack_python(python_stacks, h, w, 0)
             python_time = time.perf_counter() - start
 
             # Time C implementation

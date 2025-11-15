@@ -6,12 +6,6 @@
  * strategies (First-Fit, Best-Fit, Easiest-Fit) for placing polyominoes into
  * fixed-size collages. The algorithm sorts polyominoes by size and uses region
  * tracking to efficiently find placement positions.
- *
- * Key features:
- * - Multiple packing modes for different optimization goals
- * - Efficient region-based placement search
- * - Collision detection and occupied space tracking
- * - Support for multiple output collages
  */
 
 #include <stdlib.h>
@@ -132,7 +126,7 @@ static inline void place(CoordinateArray *coords, uint8_t *occupied_tiles,
     }
 }
 
-// Try to pack a polyomino (as coordinate array) into the collage
+// Try to place a polyomino (as coordinate array) into the collage
 // ph and pw are the height and width of the polyomino bounding box
 static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, int h,
                             int w, int16_t ph, int16_t pw, Placement *placement_out) {

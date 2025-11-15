@@ -78,12 +78,12 @@ def try_pack(polyomino: np.ndarray, occupied_tiles: np.ndarray) -> Placement | N
                 return Placement(y, x, 0)
 
 
-def pack_all(polyominoes_stacks: np.ndarray, h: int, w: int) -> list[list[PolyominoPosition]]:
-    """Packs all polyominoes from multiple stacks into collages using a bin packing algorithm.
+def pack(polyominoes_stacks: np.ndarray, h: int, w: int, mode: int) -> list[list[PolyominoPosition]]:
+    """Packs all polyominoes from multiple stacks into collages using the C FFD algorithm.
 
     This function takes multiple stacks of polyominoes (memory addresses) and attempts to
-    pack them into rectangular collages of the specified dimensions. It uses a greedy
-    first-fit decreasing algorithm, trying to place the largest polyominoes first.
+    pack them into rectangular collages of the specified dimensions. It uses a first-fit
+    decreasing algorithm, trying to place the largest polyominoes first.
     
     Args:
         polyominoes_stacks: List of integers, each representing a stack of polyominoes
@@ -92,10 +92,13 @@ def pack_all(polyominoes_stacks: np.ndarray, h: int, w: int) -> list[list[Polyom
                             Each stack of polyominoes corresponds to a video frame.
         h: Height of each collage in pixels
         w: Width of each collage in pixels
-        
+        mode: Packing mode to use (PackMode enum).
+            - 0: Easiest Fit (pack into collage with most empty space)
+            - 1: First Fit (pack into first collage that fits)
+            - 2: Best Fit (pack into collage with least empty space that fits)
     Returns:
         List of lists, where each inner list represents a collage, which contains
-        PolyominoPosition objects representing all polyominoes packed into a single collage.
+        PolyominoPosition objects representing all polyominoes packed into that collage.
     """
     # Initialize lists to store frame indices and polyomino data
     all_frames = []
@@ -137,8 +140,15 @@ def pack_all(polyominoes_stacks: np.ndarray, h: int, w: int) -> list[list[Polyom
             if empty_space >= polyomino_size:
                 collage_candidates.append((i, empty_space))
 
-        # Sort by most empty space first (descending order)
-        collage_candidates.sort(key=lambda x: x[1], reverse=True)
+        if mode == 0:
+            # Sort by most empty space first (descending order) for Easiest Fit
+            collage_candidates.sort(key=lambda x: x[1], reverse=True)
+        elif mode == 1:
+            # No sorting needed for First Fit
+            pass
+        elif mode == 2:
+            # Sort by least empty space first (ascending order) for Best Fit
+            collage_candidates.sort(key=lambda x: x[1], reverse=False)
 
         # Try to pack in the collages with most empty space first
         for i, _ in collage_candidates:
