@@ -8,7 +8,6 @@ import subprocess
 import time
 import multiprocessing as mp
 from functools import partial
-from typing import Callable
 
 import torch
 import torch.utils.data

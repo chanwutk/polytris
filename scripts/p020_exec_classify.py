@@ -179,11 +179,9 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
     # Load the trained model for this dataset, classifier, and tile size
     model = load_model(dataset_name, tile_size, classifier, device)
     model = model.to(device)
-    # try:
-    #     model.compile()
-    #     # model = torch.compile(model)
-    # except Exception as e:
-    #     print(f"Failed to compile model: {e}")
+    
+    # Benchmark different acceleration methods and use the fastest one
+    model = optimize_model_for_inference(model, device, tile_size)
 
     # Create output directory structure
     output_dir = os.path.join(cache_video_dir, '020_relevancy')
@@ -223,7 +221,7 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
                 break
 
             # Process frame with the model
-            relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, device)
+            relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, device)  # type: ignore
 
             # Create result entry for this frame
             frame_entry = {
