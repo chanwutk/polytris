@@ -22,7 +22,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
     model.eval()
     
     # Create dummy inputs for benchmarking (image and position)
-    dummy_image = torch.randn(batch_size, 3, tile_size, tile_size, device=device)
+    dummy_image = torch.randn(batch_size, 6, tile_size, tile_size, device=device)
     dummy_pos = torch.randn(batch_size, 2, device=device)
     
     results = []

@@ -14,6 +14,7 @@ from functools import partial
 
 from polyis.images import splitHWC, padHWC
 
+from polyis.train.select_model_optimization import select_model_optimization
 from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATASETS_DIR, format_time, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
@@ -76,7 +77,8 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
     raise FileNotFoundError(f"No trained model found for {classifier_name} tile size {tile_size} in {results_path}")
 
 
-def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int, device: str) -> tuple[np.ndarray, list[dict]]:
+def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int, device: str, 
+                       normalize_mean: torch.Tensor, normalize_std: torch.Tensor) -> tuple[np.ndarray, list[dict]]:
     """
     Process a single video frame with the specified tile size and return relevance scores and timing information.
 
@@ -89,6 +91,8 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
         model (torch.nn.Module): Trained model for the specified tile size
         tile_size (int): Size of tiles to use for processing (30, 60, or 120)
         device (str): Device to use for processing
+        normalize_mean (torch.Tensor): Pre-created mean tensor for ImageNet normalization
+        normalize_std (torch.Tensor): Pre-created std tensor for ImageNet normalization
 
     Returns:
         tuple[np.ndarray, list[dict[str, float]]]: A tuple containing:
@@ -105,7 +109,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
     with torch.no_grad():
         start_time = (time.time_ns() / 1e6)
         # Convert frame to tensor and ensure it's in HWC format
-        frame_tensor = torch.from_numpy(frame).to(device).float()
+        frame_tensor = torch.from_numpy(frame).to(device)
 
         # Pad frame to be divisible by tile_size
         padded_frame = padHWC(frame_tensor, tile_size, tile_size)  # type: ignore
@@ -117,17 +121,30 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
         num_tiles = tiles.shape[0] * tiles.shape[1]
         tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
 
-        # Normalize to [0, 1] range
-        tiles_flat = tiles_flat / 255.0
+        # Identify all-black tiles (all pixels are zero)
+        # Check if any pixel in each tile is non-zero
+        non_black_mask = tiles_flat.reshape(num_tiles, -1).any(dim=1).to(torch.uint8)
+
+        # Normalize to [0, 1] range (equivalent to ToTensor())
+        tiles_flat = tiles_flat.float() / 255.0
 
         # Convert to NCHW format for the model
         tiles_nchw = tiles_flat.permute(0, 3, 1, 2)
+        
+        # Apply ImageNet normalization to match training transform
+        # Using manual normalization for ~1.9x speedup vs torchvision.Normalize
+        tiles_nchw = (tiles_nchw - normalize_mean) / normalize_std
+        
         transform_runtime = (time.time_ns() / 1e6) - start_time
 
         # Run inference
         start_time = (time.time_ns() / 1e6)
         predictions = torch.sigmoid(model(tiles_nchw))
-        probabilities = (predictions * 255).to(torch.uint8).cpu().numpy().flatten()
+        
+        # Convert to uint8 and transfer to CPU
+        probabilities = (predictions * 255).to(torch.uint8)
+        predictions = predictions * non_black_mask.view(-1, 1)
+        probabilities = probabilities.cpu().numpy().flatten()
 
         # Reshape back to grid format
         grid_height, grid_width = tiles.shape[:2]
@@ -179,9 +196,6 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
     # Load the trained model for this dataset, classifier, and tile size
     model = load_model(dataset_name, tile_size, classifier, device)
     model = model.to(device)
-    
-    # Benchmark different acceleration methods and use the fastest one
-    model = optimize_model_for_inference(model, device, tile_size)
 
     # Create output directory structure
     output_dir = os.path.join(cache_video_dir, '020_relevancy')
@@ -209,6 +223,17 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+    # Select the best model optimization method based on the benchmark results and apply it to the model
+    with open(os.path.join(CACHE_DIR, dataset_name, 'indexing', 'training', 'results',
+                           f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
+        benchmark_results = [json.loads(line) for line in f]
+    model = select_model_optimization(model, benchmark_results, device, tile_size,
+                                      (width * height) // (tile_size * tile_size))
+
+    # Pre-create normalization tensors for ImageNet normalization (1.9x speedup vs torchvision.Normalize)
+    normalize_mean = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
+    normalize_std = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
+
     # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f:
         frame_idx = 0
@@ -221,7 +246,8 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
                 break
 
             # Process frame with the model
-            relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, device)  # type: ignore
+            relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, device, 
+                                                         normalize_mean, normalize_std)  # type: ignore
 
             # Create result entry for this frame
             frame_entry = {

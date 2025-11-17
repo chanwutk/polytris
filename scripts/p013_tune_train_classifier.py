@@ -9,7 +9,9 @@ import tempfile
 import time
 import multiprocessing as mp
 from functools import partial
+import traceback
 import typing
+import copy
 
 import numpy as np
 import torch
@@ -20,7 +22,7 @@ import pandas as pd
 
 from torchvision.transforms import ToTensor, Normalize, Compose
 from torchvision.datasets import ImageFolder
-from torch.optim import Adam
+from torch.optim import AdamW
 
 from polyis.models.classifier.classify_image_with_position import ClassifyImageWithPosition
 from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
@@ -110,100 +112,108 @@ class History(typing.NamedTuple):
 def plot_training_progress(train_history: History, val_history: History,
                            results_dir: str, train_images_processed: int,
                            val_images_processed: int,
-                           throughput_per_epoch: list[list[dict[str, float | int | str]]]):
+                           throughput_per_epoch: list[list[dict[str, float | int | str]]],
+                           frozen: bool):
     """Plot training progress with time on x-axis and loss/accuracy on y-axis"""
-    assert len(val_history.time) == len(train_history.time)
-    epoch = len(train_history.loss)
+    try:
+        assert len(val_history.time) == len(train_history.time)
+        epoch = len(train_history.loss)
 
-    # Create DataFrame for loss and accuracy data
-    plot_data = []
-    for i in range(len(train_history.loss)):
-        train_precision, train_recall, train_f1 = calculate_metrics(train_history.tp[i], train_history.fp[i], train_history.fn[i])
-        val_precision, val_recall, val_f1 = calculate_metrics(val_history.tp[i], val_history.fp[i], val_history.fn[i])
-        plot_data.extend([
-            {'Epoch': i, 'Value': train_history.loss[i], 'Metric': 'Train Loss', 'Type': 'Loss'},
-            {'Epoch': i, 'Value': val_history.loss[i], 'Metric': 'Validation Loss', 'Type': 'Loss'},
-            {'Epoch': i, 'Value': train_precision, 'Metric': 'Train Precision', 'Type': 'Precision'},
-            {'Epoch': i, 'Value': val_precision, 'Metric': 'Validation Precision', 'Type': 'Precision'},
-            {'Epoch': i, 'Value': train_recall, 'Metric': 'Train Recall', 'Type': 'Recall'},
-            {'Epoch': i, 'Value': val_recall, 'Metric': 'Validation Recall', 'Type': 'Recall'},
-            {'Epoch': i, 'Value': train_f1, 'Metric': 'Train F1', 'Type': 'F1'},
-            {'Epoch': i, 'Value': val_f1, 'Metric': 'Validation F1', 'Type': 'F1'}
-        ])
-    df = pd.DataFrame(plot_data)
-    
-    # Extract Train/Validation and specific metric from Metric field
-    df['Split'] = df['Metric'].str.split(' ').str[0]  # Train or Validation
-    df['MetricType'] = df['Metric'].str.split(' ', n=1).str[1]  # Loss or Accuracy
+        # Create DataFrame for loss and accuracy data
+        plot_data = []
+        for i in range(len(train_history.loss)):
+            train_precision, train_recall, train_f1 = calculate_metrics(train_history.tp[i], train_history.fp[i], train_history.fn[i])
+            val_precision, val_recall, val_f1 = calculate_metrics(val_history.tp[i], val_history.fp[i], val_history.fn[i])
+            plot_data.extend([
+                {'Epoch': i, 'Value': train_history.loss[i], 'Metric': 'Train Loss', 'Type': 'Loss'},
+                {'Epoch': i, 'Value': val_history.loss[i], 'Metric': 'Validation Loss', 'Type': 'Loss'},
+                {'Epoch': i, 'Value': train_precision, 'Metric': 'Train Precision', 'Type': 'Precision'},
+                {'Epoch': i, 'Value': val_precision, 'Metric': 'Validation Precision', 'Type': 'Precision'},
+                {'Epoch': i, 'Value': train_recall, 'Metric': 'Train Recall', 'Type': 'Recall'},
+                {'Epoch': i, 'Value': val_recall, 'Metric': 'Validation Recall', 'Type': 'Recall'},
+                {'Epoch': i, 'Value': train_f1, 'Metric': 'Train F1', 'Type': 'F1'},
+                {'Epoch': i, 'Value': val_f1, 'Metric': 'Validation F1', 'Type': 'F1'}
+            ])
+        df = pd.DataFrame(plot_data)
+        
+        # Extract Train/Validation and specific metric from Metric field
+        df['Split'] = df['Metric'].str.split(' ').str[0]  # Train or Validation
+        df['MetricType'] = df['Metric'].str.split(' ', n=1).str[1]  # Loss or Accuracy
 
-    # Left chart: Loss and accuracy progress
-    chart1 = alt.Chart(df).mark_line(point=True).encode(
-        x='Epoch:Q',
-        y=alt.Y('Value:Q', scale=alt.Scale(domain=[0, 1])),
-        color='MetricType:N',
-        strokeDash='Split:N'
-    ).properties(
-        title=f'Training Progress - Epoch {epoch + 1}',
-        width=400,
-        height=300
-    ).resolve_scale(color='independent', strokeDash='independent')
+        # Left chart: Loss and accuracy progress
+        chart1 = alt.Chart(df).mark_line(point=True).encode(
+            x='Epoch:Q',
+            y=alt.Y('Value:Q', scale=alt.Scale(domain=[0, 1])),
+            color='MetricType:N',
+            strokeDash='Split:N'
+        ).properties(
+            title=f'Training Progress - Epoch {epoch + 1}',
+            width=400,
+            height=300
+        ).resolve_scale(color='independent', strokeDash='independent')
 
-    # Right chart: ms/frame stacked bar chart
-    # Flatten throughput data into a DataFrame
-    throughput_flat = []
-    for epoch_throughput in throughput_per_epoch:
-        for op_data in epoch_throughput:
-            throughput_flat.append(op_data)
-    assert len(throughput_flat) != 0
+        # Right chart: ms/frame stacked bar chart
+        # Flatten throughput data into a DataFrame
+        throughput_flat = []
+        for epoch_throughput in throughput_per_epoch[1:]:
+            for op_data in epoch_throughput:
+                throughput_flat.append(op_data)
+        if len(throughput_flat) == 0:
+            return
 
-    # Create DataFrame from flattened throughput data
-    throughput_df = pd.DataFrame(throughput_flat)
-    throughput_df['op'] = throughput_df['op'].astype(str)
-    throughput_df['time'] = throughput_df['time'].astype(float)
-    
-    # Group by operation and sum times
-    op_times_df = throughput_df.groupby('op')['time'].sum().reset_index()
-    
-    # Determine phase (Training/Validation) based on operation name prefix
-    op_times_df['Phase'] = np.where(op_times_df['op'].str.startswith('train'), 'Training', 'Validation')
-    
-    # Filter out load_data operations
-    op_times_df = op_times_df[~op_times_df['op'].str.endswith('load_data')]
-    
-    # Calculate ms per frame based on phase
-    op_times_df['ms_per_frame'] = op_times_df.apply(
-        lambda row: row['time'] / train_images_processed if row['Phase'] == 'Training' else row['time'] / val_images_processed,
-        axis=1
-    )
-    
-    # Create clean operation labels
-    assert isinstance(op_times_df, pd.DataFrame)
-    op_times_df['Operation'] = op_times_df['op'].str.replace(r'^(train_|test_)', '', regex=True)
-    
-    # Select final columns
-    bar_df = op_times_df[['Phase', 'Operation', 'ms_per_frame']]
-    assert isinstance(bar_df, pd.DataFrame)
+        # Create DataFrame from flattened throughput data
+        throughput_df = pd.DataFrame(throughput_flat)
+        throughput_df['op'] = throughput_df['op'].astype(str)
+        throughput_df['time'] = throughput_df['time'].astype(float)
+        
+        # Group by operation and sum times
+        op_times_df = throughput_df.groupby('op')['time'].sum().reset_index()
+        
+        # Determine phase (Training/Validation) based on operation name prefix
+        op_times_df['Phase'] = np.where(op_times_df['op'].str.startswith('train'), 'Training', 'Validation')
+        
+        # Filter out load_data operations
+        op_times_df = op_times_df[~op_times_df['op'].str.endswith('load_data')]
+        
+        # Calculate ms per frame based on phase
+        op_times_df['ms_per_frame'] = op_times_df.apply(
+            lambda row: row['time'] / train_images_processed if row['Phase'] == 'Training' else row['time'] / val_images_processed,
+            axis=1
+        )
+        
+        # Create clean operation labels
+        assert isinstance(op_times_df, pd.DataFrame)
+        op_times_df['Operation'] = op_times_df['op'].str.replace(r'^(train_|test_)', '', regex=True)
+        
+        # Select final columns
+        bar_df = op_times_df[['Phase', 'Operation', 'ms_per_frame']]
+        assert isinstance(bar_df, pd.DataFrame)
 
-    # Only create the plot if we have data
-    assert not bar_df.empty
-    # Create stacked bar chart
-    chart2 = alt.Chart(bar_df).mark_bar().encode(
-        x='Phase:N',
-        y='ms_per_frame:Q',
-        color='Operation:N',
-        tooltip=['Phase', 'Operation', alt.Tooltip('ms_per_frame:Q', format='.2f')]
-    ).properties(
-        title='Milliseconds per Frame by Operation',
-        width=300,
-        height=300
-    ).resolve_scale(color='independent')
+        # Only create the plot if we have data
+        assert not bar_df.empty
+        # Create stacked bar chart
+        chart2 = alt.Chart(bar_df).mark_bar().encode(
+            x='Phase:N',
+            y='ms_per_frame:Q',
+            color='Operation:N',
+            tooltip=['Phase', 'Operation', alt.Tooltip('ms_per_frame:Q', format='.2f')]
+        ).properties(
+            title='Milliseconds per Frame by Operation',
+            width=300,
+            height=300
+        ).resolve_scale(color='independent')
 
-    # Combine charts horizontally
-    combined_chart = alt.hconcat(chart1, chart2, spacing=20)
+        # Combine charts horizontally
+        combined_chart = alt.hconcat(chart1, chart2, spacing=20)
 
-    # Save the plot
-    plot_path = os.path.join(results_dir, 'training_progress.png')
-    combined_chart.save(plot_path, scale_factor=2)
+        # Save the plot
+        plot_path = os.path.join(results_dir, f'training_progress_{"frozen" if frozen else "finetuned"}.png')
+        combined_chart.save(plot_path, scale_factor=2)
+    except Exception as e:
+        print(traceback.format_exc())
+        print(f"Error plotting training progress: {e}")
+        print("\n" * 20)
+        return
 
 
 def normalize_output_shape(outputs: "torch.Tensor", model_type: str) -> "torch.Tensor":
@@ -234,7 +244,8 @@ def calculate_metrics(tp: int, fp: int, fn: int) -> tuple[float, float, float]:
 
 def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                optimizer: "torch.optim.Optimizer", inputs: "torch.Tensor",
-               pos_inputs: "torch.Tensor", labels: "torch.Tensor", model_type: str):
+               pos_inputs: "torch.Tensor", labels: "torch.Tensor", model_type: str,
+               max_grad_norm: float = 10.0):
     optimizer.zero_grad()
 
     outputs: "torch.Tensor" = model(inputs, pos_inputs)
@@ -243,6 +254,10 @@ def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     loss: "torch.Tensor" = loss_fn(outputs, labels)
 
     loss.backward()
+    
+    # Apply gradient clipping to prevent gradient explosions
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_grad_norm)
+    
     optimizer.step()
 
     return loss.item(), outputs
@@ -250,7 +265,8 @@ def train_step(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
 
 def run_training_epoch(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
                        optimizer: "torch.optim.Optimizer", train_loader: "torch.utils.data.DataLoader",
-                       device: str, model_type: str, command_queue: mp.Queue, description: str):
+                       device: str, model_type: str, command_queue: mp.Queue, description: str,
+                       ema_model: "torch.nn.Module | None" = None, ema_decay: float = 0.999):
     # Initialize timing accumulators
     data_loading_time: float = 0.
     gpu_transfer_time: float = 0.
@@ -285,6 +301,12 @@ def run_training_epoch(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss
         loss, y_hat = train_step(model, loss_fn, optimizer, x_batch, pos_batch, y_batch, model_type)
         step_time += (time.time_ns() / 1e6) - step_start_time
         
+        # Update EMA model if provided
+        if ema_model is not None:
+            with torch.no_grad():
+                for ema_param, param in zip(ema_model.parameters(), model.parameters()):
+                    ema_param.data.mul_(ema_decay).add_(param.data, alpha=1 - ema_decay)
+        
         cumulative_loss += loss
         
         # Calculate training accuracy and confusion matrix metrics
@@ -305,12 +327,12 @@ def run_training_epoch(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss
             train_fn += batch_fn
         
         # Start timing for next batch data loading
-        batch_start_time = time.time_ns() / 1e6
         desc = f'T {int(idx * 100 / len(train_loader)):>2}%'
         command_queue.put((device, { 'description': description.format(desc) }))
+        batch_start_time = time.time_ns() / 1e6
     
     return {
-        'cumulative_loss': cumulative_loss / len(train_loader),
+        'cumulative_loss': float(cumulative_loss) / len(train_loader),
         'tp': train_tp,
         'tn': train_tn,
         'fp': train_fp,
@@ -359,7 +381,7 @@ def run_validation_epoch(model: "torch.nn.Module", loss_fn: "torch.nn.modules.lo
         
         # Measure inference time
         val_inference_start_time = time.time_ns() / 1e6
-        yhat = model(x_batch)
+        yhat = model(x_batch, pos_batch)
         inference_time += (time.time_ns() / 1e6) - val_inference_start_time
         
         # Handle different output formats
@@ -384,12 +406,12 @@ def run_validation_epoch(model: "torch.nn.Module", loss_fn: "torch.nn.modules.lo
         val_fn += batch_fn
         
         # Start timing for next validation batch data loading
-        val_batch_start_time = time.time_ns() / 1e6
         desc = f'V {int(idx * 100 / len(test_loader)):>2}%'
         command_queue.put((device, { 'description': description.format(desc) }))
+        val_batch_start_time = time.time_ns() / 1e6
     
     return {
-        'cumulative_loss': cumulative_loss / len(test_loader),
+        'cumulative_loss': float(cumulative_loss) / len(test_loader),
         'tp': val_tp,
         'tn': val_tn,
         'fp': val_fp,
@@ -442,11 +464,23 @@ def format_throughput(throughput: dict[str, float | int | str], prefix: str):
     })
 
 
-def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
-          optimizer: "torch.optim.Optimizer", train_loader: "torch.utils.data.DataLoader",
-          test_loader: "torch.utils.data.DataLoader", n_epochs: int, results_dir: str,
-          model_type: str, device: str, command_queue: mp.Queue, dataset: str,
-          training_path: str, tile_size: int, visualize: bool = False):
+def train(
+    model: "torch.nn.Module",
+    loss_fn: "torch.nn.modules.loss._Loss",
+    optimizer: "torch.optim.Optimizer",
+    train_loader: "torch.utils.data.DataLoader",
+    test_loader: "torch.utils.data.DataLoader",
+    n_epochs: int,
+    results_dir: str,
+    model_type: str,
+    device: str,
+    command_queue: mp.Queue,
+    dataset: str,
+    tile_size: int,
+    visualize: bool = False,
+    frozen: bool = False,
+    initial_best_loss: float = float('inf')
+):
     early_stopping_tolerance = 5
     early_stopping_threshold = 0.001
     
@@ -461,23 +495,36 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     cumulative_train_images: int = 0
     cumulative_val_images: int = 0
     
-    best_model_wts: "dict[str, torch.Tensor] | None" = None
+    best_model_wts: "dict[str, torch.Tensor]" = model.state_dict()
+    best_raw_model_wts: "dict[str, torch.Tensor]" = model.state_dict()
     best_epoch: int = 0
-    best_loss: float = float('inf')
+    best_loss: float = initial_best_loss
     early_stopping_counter: int = 0
     
     throughput_per_epoch: list[list[dict[str, float | int | str]]] = []
     
+    # Initialize EMA model for stable evaluation
+    # Start with None, will be initialized after warmup epochs
+    ema_model = None
+    ema_decay = 0.999
+    ema_warmup_epochs = 3
+    
     # Extract dataset name from training path for description
     max_model_name_length = max(len(name) for name in MODEL_ZOO)
-    description = f"{dataset} {tile_size:>3} {model_type:>{max_model_name_length}} {'{}'}"
+    description = f"{dataset} {tile_size:>3} {model_type:>{max_model_name_length}} {test_loader.batch_size:>4} {'{}'}"
     command_queue.put((device, { 'description': description.format('T'),
                                  'total': n_epochs, 'completed': 0 }))
     
     for epoch in range(n_epochs):
-        # Run training epoch
+        # Initialize EMA model after warmup epochs (once model has learned something)
+        if epoch == ema_warmup_epochs and ema_model is None:
+            ema_model = copy.deepcopy(model)
+            ema_model.eval()
+        
+        # Run training epoch with EMA updates (only if EMA initialized)
         train_result = run_training_epoch(model, loss_fn, optimizer, train_loader, 
-                                          device, model_type, command_queue, description)
+                                          device, model_type, command_queue, description,
+                                          ema_model=ema_model, ema_decay=ema_decay)
         
         # Store training epoch results
         epoch_train_losses.append({
@@ -496,9 +543,10 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
         # Update cumulative training images
         cumulative_train_images += train_result['num_samples']
         
-        # Run validation epoch
+        # Run validation epoch using EMA model if available, otherwise use raw model
+        validation_model = ema_model if ema_model is not None else model
         with torch.no_grad():
-            val_result = run_validation_epoch(model, loss_fn, test_loader, device, model_type, 
+            val_result = run_validation_epoch(validation_model, loss_fn, test_loader, device, model_type, 
                                               command_queue, description)
             
             # Store validation epoch results
@@ -527,11 +575,25 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
             if results_dir and visualize:
                 plot_training_progress(train_history, val_history, results_dir,
                                        cumulative_train_images, cumulative_val_images,
-                                       throughput_per_epoch)
+                                       throughput_per_epoch, frozen)
             
             # Save best model and check early stopping
             if val_result['cumulative_loss'] < best_loss:
-                best_model_wts = model.state_dict()
+                # Save EMA weights if available, otherwise raw weights
+                if ema_model is not None:
+                    best_model_wts = ema_model.state_dict()
+                    best_raw_model_wts = model.state_dict()
+                    # Clear any accumulated gradients to save memory in saved model
+                    ema_model.zero_grad(set_to_none=True)
+                    with open(os.path.join(results_dir, 'model.pth'), 'wb') as f:
+                        torch.save(ema_model, f)
+                else:
+                    best_model_wts = model.state_dict()
+                    best_raw_model_wts = model.state_dict()
+                    # Clear any accumulated gradients to save memory in saved model
+                    model.zero_grad(set_to_none=True)
+                    with open(os.path.join(results_dir, 'model.pth'), 'wb') as f:
+                        torch.save(model, f)
                 best_epoch = epoch
                 best_loss = val_result['cumulative_loss']
                 early_stopping_counter = 0
@@ -549,7 +611,7 @@ def train(model: "torch.nn.Module", loss_fn: "torch.nn.modules.loss._Loss",
     save_training_results(results_dir, epoch_train_losses, epoch_test_losses, throughput_per_epoch)
     
     assert best_model_wts is not None, "Best model weights are None"
-    return best_model_wts, best_epoch
+    return best_model_wts, best_raw_model_wts, best_loss
 
 
 MODEL_ZOO = {
@@ -576,12 +638,27 @@ MODEL_ZOO = {
 
 
 class ImageFolderWithPosition(ImageFolder):
+    def __init__(self, root: str, transform: typing.Callable | None = None):
+        super().__init__(root, transform)
+        self.mem = {}
+
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int, torch.Tensor]:
-        path, target = self.samples[index]
-        sample = self.loader(path)
-        diff_path = path.replace('/data/', '/diff/')
-        assert os.path.exists(diff_path), f"Diff sample not found: {diff_path}"
-        diff_sample = self.loader(diff_path)
+        if index in self.mem:
+            sample, diff_sample, target, pos = self.mem[index]
+        else:
+            path, target = self.samples[index]
+            sample = self.loader(path)
+            diff_path = path.replace('/data/', '/diff/')
+            assert os.path.exists(diff_path), f"Diff sample not found: {diff_path}"
+            diff_sample = self.loader(diff_path)
+
+            parts = path.split('.')
+            pos = parts[-2]
+            y, x = pos.split('_')[-2:]
+            pos = (int(y), int(x))
+
+            self.mem[index] = (sample, diff_sample, target, pos)
+
         if self.transform is not None:
             sample = self.transform(sample)
             diff_sample = self.transform(diff_sample)
@@ -589,12 +666,7 @@ class ImageFolderWithPosition(ImageFolder):
             target = self.target_transform(target)
         
         sample = torch.cat([sample, diff_sample], dim=0)
-        
-        parts = path.split('.')
-        pos = parts[-2]
-        y, x = pos.split('_')[-2:]
-        pos = torch.tensor([int(y), int(x)], dtype=torch.float32)
-
+        pos = torch.tensor(pos, dtype=torch.float32)
         return sample, target, pos
 
 
@@ -624,7 +696,8 @@ def train_classifier(dataset: str, tile_size: int, model_type: str,
     with tempfile.TemporaryDirectory(suffix=f'_polyis_training_data_{model_type}_{tile_size}') as tmpdir:
         # Move training_path to temporary directory
         training_path = os.path.join(tmpdir, 'training')
-        shutil.copytree(original_training_path, training_path)
+        # shutil.copytree(original_training_path, training_path)
+        training_path = original_training_path
 
         # Instantiate the correct model based on model_type
         if model_type not in MODEL_ZOO:
@@ -638,19 +711,20 @@ def train_classifier(dataset: str, tile_size: int, model_type: str,
             f"Training data directory {training_data_path} does not exist. " \
             "Please run p012_tune_create_training_data.py first."
 
-        # Count files directly from directories using simple shell commands
-        neg_dir = os.path.join(training_data_path, 'neg')
-        pos_dir = os.path.join(training_data_path, 'pos')
+        # # Count files directly from directories using simple shell commands
+        # neg_dir = os.path.join(training_data_path, 'neg')
+        # pos_dir = os.path.join(training_data_path, 'pos')
         
-        # Use ls -1 | wc -l to count files (simple and fast)
-        neg_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {neg_dir} | wc -l'], text=True).strip())
-        pos_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {pos_dir} | wc -l'], text=True).strip())
+        # # Use ls -1 | wc -l to count files (simple and fast)
+        # neg_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {neg_dir} | wc -l'], text=True).strip())
+        # pos_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {pos_dir} | wc -l'], text=True).strip())
         
-        # Calculate pos_weight for binary classification (inverse frequency weighting)
-        pos_weight = neg_count / pos_count
+        # # Calculate pos_weight for binary classification (inverse frequency weighting)
+        # pos_weight = neg_count / pos_count
         
         # Use BCEWithLogitsLoss with pos_weight to handle class imbalance
-        loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight)).to(device)
+        # loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight)).to(device)
+        loss_fn = torch.nn.BCEWithLogitsLoss().to(device)
         
         # Apply ImageNet normalization to all 6 channels (3 from image + 3 from diff)
         # This matches the pretrained models' expected input distribution
@@ -669,16 +743,15 @@ def train_classifier(dataset: str, tile_size: int, model_type: str,
         )
 
         # Try-Catch to lower the batch size if fails.
-        batch_size = 512
-        max_retries = 4
-        retry_count = 0
+        batch_size = 256
+        min_batch_size = 8
         best_model_wts = None
 
         run_train = partial(train, results_dir=results_dir, model_type=model_type,
                             device=device, tile_size=tile_size, visualize=visualize,
-                            command_queue=command_queue, dataset=dataset, training_path=training_path)
+                            command_queue=command_queue, dataset=dataset)
 
-        while retry_count <= max_retries:
+        while batch_size > min_batch_size:
             try:
                 train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
                 test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True)
@@ -690,50 +763,39 @@ def train_classifier(dataset: str, tile_size: int, model_type: str,
                 lr_scale = batch_size / base_batch_size
                 lr_frozen = 1e-3 * lr_scale
                 lr_unfrozen = 1e-4 * lr_scale
+
+                # # Scale down the learning rate
+                # lr_frozen = lr_frozen * 0.1
+                # lr_unfrozen = lr_unfrozen * 0.1
                 
                 # Stage 1: Train with base model frozen (higher learning rate)
                 # Train adapter, pos_encoder, and classifier head
                 model.freeze_base_model()
-                optimizer_frozen = Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=lr_frozen)
-                best_model_wts, best_epoch = run_train(model, loss_fn, optimizer_frozen, train_loader, test_loader, n_epochs=10)
+                optimizer_frozen = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr_frozen, weight_decay=0.01)
+                _, best_raw_wts_stage1, best_loss_stage1 = run_train(model, loss_fn, optimizer_frozen, train_loader, test_loader, n_epochs=25, frozen=True)
                 
-                # Load best weights from stage 1
-                model.load_state_dict(best_model_wts)
+                # Load best raw model weights from stage 1 (not EMA) to continue training
+                model.load_state_dict(best_raw_wts_stage1)
                 
                 # Stage 2: Fine-tune with base model unfrozen (lower learning rate)
                 # Train entire network with much lower learning rate
+                # Pass best_loss from stage 1 to ensure stage 2 only saves if it improves
                 model.unfreeze_base_model()
-                optimizer_unfrozen = Adam(model.parameters(), lr=lr_unfrozen)
-                best_model_wts, best_epoch = run_train(model, loss_fn, optimizer_unfrozen, train_loader, test_loader, n_epochs=25)
+                optimizer_unfrozen = AdamW(model.parameters(), lr=lr_unfrozen, weight_decay=0.01)
+                run_train(model, loss_fn, optimizer_unfrozen, train_loader, test_loader, n_epochs=50, initial_best_loss=best_loss_stage1)
                 
                 break  # Success, exit the retry loop
 
             except Exception as e:
-                retry_count += 1
-                if retry_count > max_retries:
-                    print(f"Training failed after {max_retries} retries for {model_type} (tile_size={tile_size}): {e}")
-                    raise e
-
                 # Reduce batch size by half for next attempt
                 batch_size = batch_size // 2
-                if batch_size < 1:
+                if batch_size < min_batch_size:
                     print(f"Batch size reduced to minimum (1) for {model_type} (tile_size={tile_size}), but still failing")
                     raise e
-
                 # Clear GPU memory before retry (only for the current device)
                 if torch.cuda.is_available() and device.startswith('cuda:'):
                     with torch.cuda.device(device):
                         torch.cuda.empty_cache()
-
-        assert best_model_wts is not None, f"Training failed after {max_retries} retries for {model_type} (tile_size={tile_size})"
-
-        # Load best model
-        model.load_state_dict(best_model_wts)
-    
-    # Clear any accumulated gradients to save memory in saved model
-    model.zero_grad(set_to_none=True)
-    with open(os.path.join(results_dir, 'model.pth'), 'wb') as f:
-        torch.save(model, f)
 
 
 def main(args):
