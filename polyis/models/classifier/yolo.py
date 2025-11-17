@@ -1,9 +1,14 @@
 from typing import Dict, Any
 import torch
+import os
 import ultralytics.nn.tasks
 from ultralytics import YOLO
 import ultralytics.nn.modules.head
 import ultralytics.nn.tasks
+
+
+# Set environment variable to suppress verbose output
+os.environ['YOLO_VERBOSE'] = 'False'
 
 # Map model sizes to actual model names
 MODEL_SIZE_MAP = {

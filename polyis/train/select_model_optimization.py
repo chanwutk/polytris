@@ -4,17 +4,14 @@ from typing import Any
 
 class CUDAGraphWrapper:
     """
-    Wrapper for CUDA Graph that handles variable batch sizes.
-    
-    Uses CUDA Graph for the expected batch size, falls back to the base model
-    for other batch sizes.
+    Wrapper for CUDA Graph with multi-input support (image, position).
     """
     def __init__(self, model: "torch.nn.Module", expected_batch_size: int, device: str, tile_size: int):
         """
         Initialize CUDA Graph wrapper.
         
         Args:
-            model: Base model to wrap
+            model: Base model to wrap (expects forward(image, position))
             expected_batch_size: Batch size to use for CUDA Graph
             device: Device to use
             tile_size: Tile size for creating static input
@@ -24,26 +21,32 @@ class CUDAGraphWrapper:
         self.expected_batch_size = expected_batch_size
         self.device = device
         self.tile_size = tile_size
-        self._ensure_graph_captured(torch.randn(expected_batch_size, 3, tile_size, tile_size, device=device))
+        
+        dummy_image = torch.randn(expected_batch_size, 3, tile_size, tile_size, device=device)
+        dummy_pos = torch.randn(expected_batch_size, 2, device=device)
+        self._ensure_graph_captured(dummy_image, dummy_pos)
     
-    def _ensure_graph_captured(self, input_tensor: torch.Tensor):
+    def _ensure_graph_captured(self, input_tensor: torch.Tensor, pos_tensor: torch.Tensor):
         """Ensure CUDA Graph is captured for the current input shape."""
         self.static_input = input_tensor.clone()
+        self.static_pos = pos_tensor.clone()
+        
         with torch.no_grad():
-            self.static_output = torch.empty_like(self.model(self.static_input))
+            self.static_output = torch.empty_like(self.model(self.static_input, self.static_pos))
         
         # Warmup
         for _ in range(5):
-            _ = self.model(self.static_input)
+            _ = self.model(self.static_input, self.static_pos)
         torch.cuda.synchronize()
         
         self.graph = torch.cuda.CUDAGraph()
         with torch.cuda.graph(self.graph):
-            self.static_output.copy_(self.model(self.static_input))
+            self.static_output.copy_(self.model(self.static_input, self.static_pos))
     
-    def __call__(self, input_tensor: torch.Tensor) -> torch.Tensor:
+    def __call__(self, input_tensor: torch.Tensor, pos_tensor: torch.Tensor) -> torch.Tensor:
         """Forward pass with CUDA Graph"""
         self.static_input.copy_(input_tensor)
+        self.static_pos.copy_(pos_tensor)
         self.graph.replay()
         return self.static_output.clone()
     
@@ -64,29 +67,36 @@ class CUDAGraphWrapper:
 
 class ChannelsLastCUDAGraphWrapper(CUDAGraphWrapper):
     """
-    Wrapper for channels-last + CUDA Graph.
+    Wrapper for channels-last + CUDA Graph with multi-input support.
     """
-    def _ensure_graph_captured(self, input_tensor: torch.Tensor):
-        """Ensure CUDA Graph is captured for the current input shape (channels-last)."""
-        # Capture graph for this input shape (already in channels-last format)
-        self.static_input = input_tensor.clone()
-        with torch.no_grad():
-            self.static_output = torch.empty_like(self.model(self.static_input))
+    def __init__(self, model: "torch.nn.Module", expected_batch_size: int, device: str, tile_size: int):
+        """
+        Initialize CUDA Graph wrapper with channels-last memory format.
         
-        # Warmup
-        for _ in range(5):
-            _ = self.model(self.static_input)
-        torch.cuda.synchronize()
+        Args:
+            model: Base model to wrap (expects forward(image, position))
+            expected_batch_size: Batch size to use for CUDA Graph
+            device: Device to use
+            tile_size: Tile size for creating static input
+        """
+        self.base_model = model
+        self.model = model
+        self.expected_batch_size = expected_batch_size
+        self.device = device
+        self.tile_size = tile_size
         
-        self.graph = torch.cuda.CUDAGraph()
-        with torch.cuda.graph(self.graph):
-            self.static_output.copy_(self.model(self.static_input))
+        # Create dummy inputs in channels-last format for graph capture
+        dummy_image = torch.randn(expected_batch_size, 3, tile_size, tile_size, device=device)
+        dummy_image = dummy_image.to(memory_format=torch.channels_last)  # type: ignore
+        dummy_pos = torch.randn(expected_batch_size, 2, device=device)
+        self._ensure_graph_captured(dummy_image, dummy_pos)
     
-    def __call__(self, input_tensor: torch.Tensor) -> torch.Tensor:
+    def __call__(self, input_tensor: torch.Tensor, pos_tensor: torch.Tensor) -> torch.Tensor:
         """Forward pass with channels-last memory format and CUDA Graph."""
-        # Convert input to channels-last
+        # Convert input to channels-last to match graph capture format
         input_cl = input_tensor.to(memory_format=torch.channels_last)  # type: ignore
         self.static_input.copy_(input_cl)
+        self.static_pos.copy_(pos_tensor)
         self.graph.replay()
         return self.static_output.clone()
         
@@ -97,7 +107,7 @@ def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[
     Select and apply the best optimization method based on benchmark results.
     
     Args:
-        model: The model to optimize
+        model: The model to optimize (expects forward(image, position))
         benchmark_results: List of benchmark results, each with 'method' and 'runtime_ms'
         device: Device to use
         tile_size: Tile size (used for creating dummy inputs)
@@ -138,15 +148,17 @@ def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[
         return torch.compile(model_cl, mode="reduce-overhead")
     
     elif method == 'torchscript_trace':
-        # Create dummy input for tracing
-        dummy_input = torch.randn(batch_size, 3, tile_size, tile_size, device=device)
-        traced_model = torch.jit.trace(model, dummy_input)
+        # Create dummy inputs for tracing
+        dummy_image = torch.randn(batch_size, 3, tile_size, tile_size, device=device)
+        dummy_pos = torch.randn(batch_size, 2, device=device)
+        traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
         return traced_model
     
     elif method == 'torchscript_optimize':
         # Trace, freeze, and optimize
-        dummy_input = torch.randn(batch_size, 3, tile_size, tile_size, device=device)
-        traced_model = torch.jit.trace(model, dummy_input)
+        dummy_image = torch.randn(batch_size, 3, tile_size, tile_size, device=device)
+        dummy_pos = torch.randn(batch_size, 2, device=device)
+        traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
         optimized_model = torch.jit.freeze(traced_model)
         optimized_model = torch.jit.optimize_for_inference(optimized_model)
         return optimized_model

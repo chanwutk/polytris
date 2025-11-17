@@ -1,7 +1,7 @@
 EXEC:
   DATASETS:
-    - caldot1-yolo12
-    - caldot2-yolo12
+    # - caldot1-yolo12
+    # - caldot2-yolo12
     - jnc0
     - jnc2
     - jnc6
@@ -17,9 +17,9 @@ EXEC:
     - test
   CLASSIFIERS:
     - YoloN
-    - ShuffleNet05
+    # - ShuffleNet05
     - MobileNetS
-    - Perfect
+    # - Perfect
   TILE_SIZES:
     - 60
   TILEPADDING_MODES:

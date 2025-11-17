@@ -13,7 +13,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
            TorchScript Trace, TorchScript + Optimize, CUDA Graph, channels-last + CUDA Graph
     
     Args:
-        model: The model to optimize
+        model: The model to optimize (expects forward(image, position))
         device: Device to use
         tile_size: Tile size (used to create dummy input)
         batch_size: Batch size for benchmarking
@@ -21,8 +21,9 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
     """
     model.eval()
     
-    # Create dummy input for benchmarking (typical batch size for a frame)
-    dummy_input = torch.randn(batch_size, 3, tile_size, tile_size, device=device)
+    # Create dummy inputs for benchmarking (image and position)
+    dummy_image = torch.randn(batch_size, 3, tile_size, tile_size, device=device)
+    dummy_pos = torch.randn(batch_size, 2, device=device)
     
     results = []
     
@@ -31,7 +32,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
         torch.cuda.synchronize()
         start = time.time_ns() / 1e6
         for _ in range(iterations):
-            _ = model(dummy_input)
+            _ = model(dummy_image, dummy_pos)
         torch.cuda.synchronize()
         baseline_time = ((time.time_ns() / 1e6) - start) / iterations
     results.append({
@@ -45,11 +46,11 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
         with torch.no_grad():
             # Warmup
             for _ in range(5):
-                _ = compiled_model(dummy_input)
+                _ = compiled_model(dummy_image, dummy_pos)
             torch.cuda.synchronize()
             start = time.time_ns() / 1e6
             for _ in range(iterations):
-                _ = compiled_model(dummy_input)
+                _ = compiled_model(dummy_image, dummy_pos)
             torch.cuda.synchronize()
             compile_time = ((time.time_ns() / 1e6) - start) / iterations
         results.append({
@@ -69,14 +70,14 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
         with torch.no_grad():
             # Warmup
             for _ in range(5):
-                input_cl = dummy_input.to(memory_format=torch.channels_last)  # type: ignore
-                _ = model_cl(input_cl)
+                input_cl = dummy_image.to(memory_format=torch.channels_last)  # type: ignore
+                _ = model_cl(input_cl, dummy_pos)
             torch.cuda.synchronize()
             start = time.time_ns() / 1e6
             for _ in range(iterations):
                 # Include input conversion in timing
-                input_cl = dummy_input.to(memory_format=torch.channels_last)  # type: ignore
-                _ = model_cl(input_cl)
+                input_cl = dummy_image.to(memory_format=torch.channels_last)  # type: ignore
+                _ = model_cl(input_cl, dummy_pos)
             torch.cuda.synchronize()
             channels_last_time = ((time.time_ns() / 1e6) - start) / iterations
         results.append({
@@ -94,17 +95,17 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
     try:
         model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
         compiled_channels_last_model = torch.compile(model_cl, mode="reduce-overhead")
-        dummy_input_cl = dummy_input.to(memory_format=torch.channels_last)  # type: ignore
+        dummy_input_cl = dummy_image.to(memory_format=torch.channels_last)  # type: ignore
         with torch.no_grad():
             # Warmup
             for _ in range(5):
-                _ = compiled_channels_last_model(dummy_input_cl)
+                _ = compiled_channels_last_model(dummy_input_cl, dummy_pos)
             torch.cuda.synchronize()
             start = time.time_ns() / 1e6
             for _ in range(iterations):
                 # Include input conversion in timing
-                input_cl = dummy_input.to(memory_format=torch.channels_last)  # type: ignore
-                _ = compiled_channels_last_model(input_cl)
+                input_cl = dummy_image.to(memory_format=torch.channels_last)  # type: ignore
+                _ = compiled_channels_last_model(input_cl, dummy_pos)
             torch.cuda.synchronize()
             compile_cl_time = ((time.time_ns() / 1e6) - start) / iterations
         results.append({
@@ -121,15 +122,15 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
     # 3. TorchScript Trace
     traced_model = None
     try:
-        traced_model = torch.jit.trace(model, dummy_input)
+        traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
         with torch.no_grad():
             # Warmup
             for _ in range(5):
-                _ = traced_model(dummy_input)  # type: ignore
+                _ = traced_model(dummy_image, dummy_pos)  # type: ignore
             torch.cuda.synchronize()
             start = time.time_ns() / 1e6
             for _ in range(iterations):
-                _ = traced_model(dummy_input)  # type: ignore
+                _ = traced_model(dummy_image, dummy_pos)  # type: ignore
             torch.cuda.synchronize()
             trace_time = ((time.time_ns() / 1e6) - start) / iterations
         results.append({
@@ -147,17 +148,17 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
     # 4. TorchScript Trace + Optimize
     try:
         if traced_model is None:
-            traced_model = torch.jit.trace(model, dummy_input)
+            traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
         optimized_model = torch.jit.freeze(traced_model)
         optimized_model = torch.jit.optimize_for_inference(optimized_model)
         with torch.no_grad():
             # Warmup
             for _ in range(5):
-                _ = optimized_model(dummy_input)
+                _ = optimized_model(dummy_image, dummy_pos)
             torch.cuda.synchronize()
             start = time.time_ns() / 1e6
             for _ in range(iterations):
-                _ = optimized_model(dummy_input)
+                _ = optimized_model(dummy_image, dummy_pos)
             torch.cuda.synchronize()
             optimize_time = ((time.time_ns() / 1e6) - start) / iterations
         results.append({
@@ -174,23 +175,28 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
     # 5. CUDA Graph (only if input size is fixed - may not work for variable batch sizes)
     try:
         # CUDA Graph requires fixed input/output sizes
-        static_input = dummy_input.clone()
-        static_output = torch.empty_like(model(static_input))
+        static_image = dummy_image.clone()
+        static_pos = dummy_pos.clone()
+        static_output = torch.empty_like(model(static_image, static_pos))
         
         graph = torch.cuda.CUDAGraph()
         with torch.cuda.graph(graph):
-            static_output.copy_(model(static_input))
+            static_output.copy_(model(static_image, static_pos))
         
         # Warmup
         for _ in range(5):
-            static_input.copy_(dummy_input)
+            static_image.copy_(dummy_image)
+            static_pos.copy_(dummy_pos)
             graph.replay()
+            static_output.clone()
         torch.cuda.synchronize()
         
         start = time.time_ns() / 1e6
         for _ in range(iterations):
-            static_input.copy_(dummy_input)
+            static_image.copy_(dummy_image)
+            static_pos.copy_(dummy_pos)
             graph.replay()
+            static_output.clone()
         torch.cuda.synchronize()
         cuda_graph_time = ((time.time_ns() / 1e6) - start) / iterations
         results.append({
@@ -207,25 +213,31 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
     # 5b. channels-last + CUDA Graph
     try:
         model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
-        static_input_cl = dummy_input.to(memory_format=torch.channels_last).clone()  # type: ignore
-        static_output_cl = torch.empty_like(model_cl(static_input_cl))
+        static_input_cl = dummy_image.to(memory_format=torch.channels_last).clone()  # type: ignore
+        static_pos = dummy_pos.clone()
+        static_output_cl = torch.empty_like(model_cl(static_input_cl, static_pos))
         
         graph_cl = torch.cuda.CUDAGraph()
         with torch.cuda.graph(graph_cl):
-            static_output_cl.copy_(model_cl(static_input_cl))
+            static_output_cl.copy_(model_cl(static_input_cl, static_pos))
         
         # Warmup
         for _ in range(5):
-            static_input_cl.copy_(dummy_input.to(memory_format=torch.channels_last))  # type: ignore
+            static_input_cl.copy_(dummy_image.to(memory_format=torch.channels_last))  # type: ignore
+            static_pos.copy_(dummy_pos)
             graph_cl.replay()
+            static_output_cl.clone()
         torch.cuda.synchronize()
         
         start = time.time_ns() / 1e6
         for _ in range(iterations):
             # Include input conversion in timing
-            static_input_cl.copy_(dummy_input.to(memory_format=torch.channels_last))  # type: ignore
+            static_input_cl.copy_(dummy_image.to(memory_format=torch.channels_last))  # type: ignore
+            static_pos.copy_(dummy_pos)
             graph_cl.replay()
+            static_output_cl.clone()
         torch.cuda.synchronize()
+        
         cuda_graph_cl_time = ((time.time_ns() / 1e6) - start) / iterations
         results.append({
             'method': 'channels_last_cuda_graph',
