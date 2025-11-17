@@ -3,21 +3,21 @@
 import argparse
 import json
 import os
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Optional
 from dataclasses import dataclass, field
 import cv2
 import torch
 import numpy as np
 import time
 import shutil
-import multiprocessing as mp
+import threading
+import queue
 from functools import partial
 
 from polyis.images import splitHWC, padHWC
-from scipy.ndimage import binary_dilation 
+from scipy.ndimage import binary_dilation
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATA_DIR, format_time, ProgressBar
-
+from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATA_DIR, format_time
 
 TILE_SIZES = [60]  #, 30, 120]
 
@@ -252,7 +252,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_model(video_path: str, tile_size: int, classifier_name: str) -> "torch.nn.Module":
+def load_model(video_path: str, tile_size: int, classifier_name: str, device: str = 'cpu') -> "torch.nn.Module":
     """
     Load trained classifier model for the specified tile size from a specific video directory.
 
@@ -263,10 +263,11 @@ def load_model(video_path: str, tile_size: int, classifier_name: str) -> "torch.
         video_path (str): Path to the specific video directory
         tile_size (int): Tile size for which to load the model (30, 60, or 120)
         classifier_name (str): Name of the classifier model to use (default: 'SimpleCNN')
+        device (str): Device to load the model to ('cpu' or 'cuda:X')
 
     Returns:
         The loaded trained model for the specified tile size.
-            The model is loaded to CUDA and set to evaluation mode.
+            The model is loaded to the specified device and set to evaluation mode.
 
     Raises:
         FileNotFoundError: If no trained model is found for the specified tile size
@@ -277,8 +278,12 @@ def load_model(video_path: str, tile_size: int, classifier_name: str) -> "torch.
 
     if os.path.exists(model_path):
         print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
-        model = torch.load(model_path, map_location='cuda', weights_only=False)
+        # Load to CPU first to avoid CUDA initialization delays
+        model = torch.load(model_path, map_location='cpu', weights_only=False)
+        print(f"Model loaded to CPU, moving to {device}...")
+        model = model.to(device)
         model.eval()
+        print(f"Model ready on {device}")
         return model
 
     raise FileNotFoundError(f"No trained model found for {classifier_name} tile size {tile_size} in {video_path}")
@@ -385,35 +390,46 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
 
     return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
 
-def process_video_splice(video_path: str, start_frame: int, end_frame: int,
-                        cache_video_dir: str, classifier: str, tile_size: int,
-                        filter_type: str, batch_size: int, gpu_id: int,
-                        command_queue: mp.Queue, splice_idx: int) -> List[dict]:
+
+
+def mark_neighbor_tiles(relevance_grid: np.ndarray, threshold: float) -> np.ndarray:
     """
-    Process a splice of video frames with cross-frame tile batching.
+    relevance_grid: either float in [0,1] or uint8 in [0,255]
+    threshold: if <=1, interpreted as [0,1] probability; if >1, treated as raw level
+    """
+    # normalize threshold to the grid's dtype/range
+    if relevance_grid.dtype == np.uint8:
+        thr = int(round(threshold * 255)) if threshold <= 1.0 else int(round(threshold))
+    else:  # float grid assumed in [0,1]
+        thr = float(threshold if threshold <= 1.0 else threshold / 255.0)
+
+    mask = relevance_grid >= thr
+    if not mask.any():
+        return np.array([], dtype=int)
+
+    dilated = binary_dilation(mask, structure=np.ones((3, 3), dtype=bool))
+    return np.flatnonzero(dilated)
+
+
+def reader_thread_fn(video_path: str, start_frame: int, end_frame: int,
+                     tile_size: int, filter_type: str, device: str,
+                     tile_queue: queue.Queue, result_queue: queue.Queue,
+                     splice_idx: int):
+    """
+    Reader thread that extracts tiles from a video splice and pushes them to a shared queue.
+    Waits for inference results to perform neighbor filtering on subsequent frames.
 
     Args:
         video_path: Path to the video file
         start_frame: First frame index to process (inclusive)
         end_frame: Last frame index to process (exclusive)
-        cache_video_dir: Path to the cache directory for this video
-        classifier: Classifier name to use
         tile_size: Tile size to use
         filter_type: The type of filter to apply ('none', 'neighbor')
-        batch_size: Maximum number of tiles to batch together
-        gpu_id: GPU ID to use for processing
-        command_queue: Queue for progress updates
-        splice_idx: Index of this splice (for progress tracking)
-
-    Returns:
-        List of frame result dictionaries in frame order
+        device: GPU device string (e.g., 'cuda:0')
+        tile_queue: Shared queue to push tiles to for inference
+        result_queue: Queue to receive results from inference thread
+        splice_idx: Index of this splice
     """
-    device = f'cuda:{gpu_id}'
-
-    # Load the trained model
-    model = load_model(cache_video_dir, tile_size, classifier)
-    model = model.to(device)
-
     # Open video and position at start_frame
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f"Could not open video {video_path}"
@@ -423,34 +439,16 @@ def process_video_splice(video_path: str, start_frame: int, end_frame: int,
     fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    num_frames_in_splice = end_frame - start_frame
 
-    # Create TileBatch for cross-frame batching
-    tile_batch = TileBatch(
-        max_batch_size=batch_size,
-        tile_size=tile_size,
-        device=device,
-        model=model
-    )
-
-    # Progress tracking
     video_name = os.path.basename(video_path)
-    description = f"{video_name} {tile_size:>3} {classifier} [splice {splice_idx}]"
-    command_queue.put((device, {'description': description,
-                                'completed': 0, 'total': num_frames_in_splice}))
+    print(f"Reader {splice_idx}: Processing {video_name} frames {start_frame}-{end_frame}")
 
-    # Storage for completed frame results
-    completed_results = {}
     prev_relevance_grid = None
     threshold = 0.5
 
-    # Storage for per-frame transform times (for final flush)
-    frame_transform_times = {}
-
     # Process frames in this splice
-    for frame_offset in range(num_frames_in_splice):
+    for frame_offset in range(end_frame - start_frame):
         frame_idx = start_frame + frame_offset
-        overall_start_time = time.time_ns() / 1e6
 
         ret, frame = cap.read()
         if not ret:
@@ -458,7 +456,6 @@ def process_video_splice(video_path: str, start_frame: int, end_frame: int,
 
         # Determine relevant indices
         relevant_indices = None
-        pruned_tiles_prop = 0.0
 
         if filter_type == 'neighbor':
             if frame_offset > 0 and prev_relevance_grid is not None:
@@ -484,117 +481,249 @@ def process_video_splice(video_path: str, start_frame: int, end_frame: int,
         if relevant_indices is None:
             relevant_indices = np.arange(num_tiles)
 
+        transform_runtime = (time.time_ns() / 1e6) - transform_start_time
+
         if len(relevant_indices) == 0:
             # No tiles to process - create empty relevance grid immediately
             current_relevance_grid = np.zeros((grid_h, grid_w), dtype=np.uint8)
-            transform_runtime = (time.time_ns() / 1e6) - transform_start_time
-            inference_runtime = 0.0
-            pruned_tiles_prop = 1.0
-            overall_end_time = time.time_ns() / 1e6
+
+            # Push result directly to queue with special marker
+            tile_queue.put({
+                'type': 'empty_frame',
+                'frame_idx': frame_idx,
+                'relevance_grid': current_relevance_grid,
+                'transform_time': transform_runtime,
+                'fps': fps,
+                'height': height,
+                'width': width,
+                'splice_idx': splice_idx
+            })
+
+            prev_relevance_grid = current_relevance_grid
+        else:
+            relevant_indices_tensor = torch.from_numpy(relevant_indices).to(device)
+            tiles_to_process = torch.index_select(tiles_flat, 0, relevant_indices_tensor)
+
+            # Push tiles to queue for inference
+            tile_queue.put({
+                'type': 'tiles',
+                'frame_idx': frame_idx,
+                'tiles': tiles_to_process,
+                'tile_indices': relevant_indices,
+                'grid_shape': (grid_h, grid_w),
+                'transform_time': transform_runtime,
+                'fps': fps,
+                'height': height,
+                'width': width,
+                'splice_idx': splice_idx
+            })
+
+            # Wait for result from inference thread to update prev_relevance_grid
+            while True:
+                result = result_queue.get()
+                if result['frame_idx'] == frame_idx:
+                    prev_relevance_grid = result['relevance_grid']
+                    break
+
+    cap.release()
+
+    print(f"Reader {splice_idx}: Completed {end_frame - start_frame} frames")
+
+    # Signal completion by pushing sentinel
+    tile_queue.put({'type': 'done', 'splice_idx': splice_idx})
+
+
+def inference_thread_fn(model: torch.nn.Module, device: str, tile_size: int, batch_size: int,
+                       tile_queue: queue.Queue, results_dict: dict, result_queues: dict,
+                       num_readers: int, lock: threading.Lock):
+    """
+    Inference thread that pulls tiles from queue, batches them, and runs GPU inference.
+
+    Args:
+        model: The classification model to use
+        device: GPU device string (e.g., 'cuda:0')
+        tile_size: Tile size being processed
+        batch_size: Maximum number of tiles to batch together
+        tile_queue: Shared queue to pull tiles from
+        results_dict: Dictionary to store completed frame results
+        result_queues: Dict mapping splice_idx -> queue for sending results back to readers
+        num_readers: Number of reader threads
+        lock: Lock for thread-safe updates
+    """
+    # Create TileBatch for cross-frame batching
+    tile_batch = TileBatch(
+        max_batch_size=batch_size,
+        tile_size=tile_size,
+        device=device,
+        model=model
+    )
+
+    print(f"Inference thread started, waiting for tiles from {num_readers} readers...")
+
+    readers_done = 0
+    frame_metadata = {}  # Track metadata for each frame
+    frames_processed = 0
+
+    while readers_done < num_readers:
+        try:
+            item = tile_queue.get(timeout=0.1)
+        except queue.Empty:
+            # Flush pending batch if queue is temporarily empty
+            # This prevents deadlock when batch doesn't fill completely
+            if tile_batch.current_size > 0:
+                batch_results = tile_batch.flush()
+
+                # Process flushed results
+                for result_frame_idx, relevance_grid, inf_time, num_processed_tiles in batch_results:
+                    meta = frame_metadata.get(result_frame_idx, {})
+                    result_pruned_prop = (relevance_grid.size - num_processed_tiles) / relevance_grid.size if relevance_grid.size > 0 else 0.0
+
+                    frame_entry = {
+                        "frame_idx": result_frame_idx,
+                        "timestamp": result_frame_idx / meta.get('fps', 30) if meta.get('fps', 30) > 0 else 0,
+                        "frame_size": [meta.get('height', 0), meta.get('width', 0)],
+                        "tile_size": tile_size,
+                        "runtime": format_time(transform=meta.get('transform_time', 0.0), inference=inf_time,
+                                              overall=meta.get('transform_time', 0.0) + inf_time),
+                        "classification_size": relevance_grid.shape,
+                        "classification_hex": relevance_grid.flatten().tobytes().hex(),
+                        "pruned_tiles_prop": result_pruned_prop
+                    }
+
+                    with lock:
+                        results_dict[result_frame_idx] = frame_entry
+
+                    frames_processed += 1
+                    if frames_processed % 100 == 0:
+                        print(f"Inference: Processed {frames_processed} frames, {readers_done}/{num_readers} readers done")
+
+                    # Send result back to the reader that owns this frame
+                    splice_idx = meta.get('splice_idx')
+                    if splice_idx is not None and splice_idx in result_queues:
+                        result_queues[splice_idx].put({
+                            'frame_idx': result_frame_idx,
+                            'relevance_grid': relevance_grid
+                        })
+            continue
+
+        item_type = item['type']
+
+        if item_type == 'done':
+            # One reader finished
+            readers_done += 1
+            continue
+
+        elif item_type == 'empty_frame':
+            # Frame with no tiles to process - store result immediately
+            frame_idx = item['frame_idx']
+            relevance_grid = item['relevance_grid']
+            transform_time = item['transform_time']
+            fps = item['fps']
+            height = item['height']
+            width = item['width']
+            splice_idx = item['splice_idx']
 
             frame_entry = {
                 "frame_idx": frame_idx,
                 "timestamp": frame_idx / fps if fps > 0 else 0,
                 "frame_size": [height, width],
                 "tile_size": tile_size,
-                "runtime": format_time(transform=transform_runtime, inference=inference_runtime,
-                                      overall=overall_end_time - overall_start_time),
-                "classification_size": current_relevance_grid.shape,
-                "classification_hex": current_relevance_grid.flatten().tobytes().hex(),
-                "pruned_tiles_prop": pruned_tiles_prop
+                "runtime": format_time(transform=transform_time, inference=0.0, overall=transform_time),
+                "classification_size": relevance_grid.shape,
+                "classification_hex": relevance_grid.flatten().tobytes().hex(),
+                "pruned_tiles_prop": 1.0
             }
-            completed_results[frame_idx] = frame_entry
-            prev_relevance_grid = current_relevance_grid
-        else:
-            relevant_indices_tensor = torch.from_numpy(relevant_indices).to(device)
-            tiles_to_process = torch.index_select(tiles_flat, 0, relevant_indices_tensor)
-            transform_runtime = (time.time_ns() / 1e6) - transform_start_time
 
-            # Store transform time for this frame
-            frame_transform_times[frame_idx] = transform_runtime
+            with lock:
+                results_dict[frame_idx] = frame_entry
 
-            # Add tiles to batch - may trigger flush
+            # Send result back to reader for neighbor filtering
+            if splice_idx in result_queues:
+                result_queues[splice_idx].put({
+                    'frame_idx': frame_idx,
+                    'relevance_grid': relevance_grid
+                })
+
+        elif item_type == 'tiles':
+            # Store metadata for this frame
+            frame_idx = item['frame_idx']
+            frame_metadata[frame_idx] = {
+                'transform_time': item['transform_time'],
+                'fps': item['fps'],
+                'height': item['height'],
+                'width': item['width'],
+                'splice_idx': item['splice_idx']
+            }
+
+            # Add to batch - may trigger flush
             batch_results = tile_batch.add_frame_tiles(
                 frame_idx=frame_idx,
-                tiles=tiles_to_process,
-                tile_indices=relevant_indices,
-                grid_shape=(grid_h, grid_w)
+                tiles=item['tiles'],
+                tile_indices=item['tile_indices'],
+                grid_shape=item['grid_shape']
             )
 
             # Process any flushed results
             for result_frame_idx, relevance_grid, inf_time, num_processed_tiles in batch_results:
-                # pruned_tiles_prop should reflect tiles NOT processed, not tiles with low scores
+                meta = frame_metadata.get(result_frame_idx, {})
                 result_pruned_prop = (relevance_grid.size - num_processed_tiles) / relevance_grid.size if relevance_grid.size > 0 else 0.0
-
-                result_transform_time = frame_transform_times.get(result_frame_idx, 0.0)
-                overall_end_time = time.time_ns() / 1e6
 
                 frame_entry = {
                     "frame_idx": result_frame_idx,
-                    "timestamp": result_frame_idx / fps if fps > 0 else 0,
-                    "frame_size": [height, width],
+                    "timestamp": result_frame_idx / meta.get('fps', 30) if meta.get('fps', 30) > 0 else 0,
+                    "frame_size": [meta.get('height', 0), meta.get('width', 0)],
                     "tile_size": tile_size,
-                    "runtime": format_time(transform=result_transform_time, inference=inf_time,
-                                          overall=overall_end_time - overall_start_time),
+                    "runtime": format_time(transform=meta.get('transform_time', 0.0), inference=inf_time,
+                                          overall=meta.get('transform_time', 0.0) + inf_time),
                     "classification_size": relevance_grid.shape,
                     "classification_hex": relevance_grid.flatten().tobytes().hex(),
                     "pruned_tiles_prop": result_pruned_prop
                 }
-                completed_results[result_frame_idx] = frame_entry
 
-                # Update prev_relevance_grid with most recent result
-                if result_frame_idx >= start_frame + frame_offset - 1:
-                    prev_relevance_grid = relevance_grid
+                with lock:
+                    results_dict[result_frame_idx] = frame_entry
 
-        # Update progress
-        command_queue.put((device, {'completed': frame_offset + 1}))
+                frames_processed += 1
+                if frames_processed % 100 == 0:
+                    print(f"Inference: Processed {frames_processed} frames, {readers_done}/{num_readers} readers done")
 
-    # Flush any remaining tiles in batch
+                # Send result back to the reader that owns this frame
+                splice_idx = meta.get('splice_idx')
+                if splice_idx is not None and splice_idx in result_queues:
+                    result_queues[splice_idx].put({
+                        'frame_idx': result_frame_idx,
+                        'relevance_grid': relevance_grid
+                    })
+
+    # Flush any remaining tiles
+    print(f"Inference: All {num_readers} readers done, flushing final batch...")
     final_results = tile_batch.flush()
     for result_frame_idx, relevance_grid, inf_time, num_processed_tiles in final_results:
-        # pruned_tiles_prop should reflect tiles NOT processed, not tiles with low scores
+        meta = frame_metadata.get(result_frame_idx, {})
         result_pruned_prop = (relevance_grid.size - num_processed_tiles) / relevance_grid.size if relevance_grid.size > 0 else 0.0
-
-        result_transform_time = frame_transform_times.get(result_frame_idx, 0.0)
-        overall_end_time = time.time_ns() / 1e6
 
         frame_entry = {
             "frame_idx": result_frame_idx,
-            "timestamp": result_frame_idx / fps if fps > 0 else 0,
-            "frame_size": [height, width],
+            "timestamp": result_frame_idx / meta.get('fps', 30) if meta.get('fps', 30) > 0 else 0,
+            "frame_size": [meta.get('height', 0), meta.get('width', 0)],
             "tile_size": tile_size,
-            "runtime": format_time(transform=result_transform_time, inference=inf_time,
-                                  overall=overall_end_time - overall_start_time),
+            "runtime": format_time(transform=meta.get('transform_time', 0.0), inference=inf_time,
+                                  overall=meta.get('transform_time', 0.0) + inf_time),
             "classification_size": relevance_grid.shape,
             "classification_hex": relevance_grid.flatten().tobytes().hex(),
             "pruned_tiles_prop": result_pruned_prop
         }
-        completed_results[result_frame_idx] = frame_entry
 
-    cap.release()
+        with lock:
+            results_dict[result_frame_idx] = frame_entry
 
-    # Return results in frame order
-    sorted_results = [completed_results[frame_idx] for frame_idx in sorted(completed_results.keys())]
-    return sorted_results
-
-
-def mark_neighbor_tiles(relevance_grid: np.ndarray, threshold: float) -> np.ndarray:
-    """
-    relevance_grid: either float in [0,1] or uint8 in [0,255]
-    threshold: if <=1, interpreted as [0,1] probability; if >1, treated as raw level
-    """
-    # normalize threshold to the grid's dtype/range
-    if relevance_grid.dtype == np.uint8:
-        thr = int(round(threshold * 255)) if threshold <= 1.0 else int(round(threshold))
-    else:  # float grid assumed in [0,1]
-        thr = float(threshold if threshold <= 1.0 else threshold / 255.0)
-
-    mask = relevance_grid >= thr
-    if not mask.any():
-        return np.array([], dtype=int)
-
-    dilated = binary_dilation(mask, structure=np.ones((3, 3), dtype=bool))
-    return np.flatnonzero(dilated)
+        # Send result back to readers
+        splice_idx = meta.get('splice_idx')
+        if splice_idx is not None and splice_idx in result_queues:
+            result_queues[splice_idx].put({
+                'frame_idx': result_frame_idx,
+                'relevance_grid': relevance_grid
+            })
 
 def pixel_difference(prev_frame: np.ndarray, current_frame: np.ndarray, tile_size: int, diff_threshold: int) -> np.ndarray:
     """
@@ -658,193 +787,100 @@ def pixel_difference(prev_frame: np.ndarray, current_frame: np.ndarray, tile_siz
     
 #     return relevant_indices
 
-def merge_and_write_splice_results(splice_results_list: List[List[dict]], output_path: str):
+def process_video_threaded(video_path: str, cache_video_dir: str, classifier: str,
+                           tile_size: int, filter_type: str, batch_size: int,
+                           num_readers: int, gpu_id: int, splice_boundaries: List[Tuple[int, int]]):
     """
-    Merge results from multiple splices and write to JSONL file.
+    Process a video using multiple reader threads feeding a single GPU inference thread.
 
-    Args:
-        splice_results_list: List of result lists, one per splice
-        output_path: Path to output JSONL file
-    """
-    # Concatenate all splice results
-    all_results = []
-    for splice_results in splice_results_list:
-        all_results.extend(splice_results)
-
-    # Sort by frame_idx to ensure correct order
-    all_results.sort(key=lambda x: x['frame_idx'])
-
-    # Write to JSONL
-    with open(output_path, 'w') as f:
-        for frame_entry in all_results:
-            f.write(json.dumps(frame_entry) + '\n')
-
-
-def _run_splice_and_store_result(func: Callable, idx: int, results_dict: dict, gpu_id: int, command_queue: mp.Queue):
-    """
-    Wrapper function to run a splice task and store its result in a shared dictionary.
-    Must be defined at module level for pickling.
-    """
-    result = func(gpu_id, command_queue)
-    results_dict[idx] = result
-
-
-def process_video_task(video_path: str, cache_video_dir: str, classifier: str,
-                    tile_size: int, filter_type: str, gpu_id: int, command_queue: mp.Queue):
-    """
-    Process a single video file and save tile classification results to a JSONL file.
-    
-    This function reads a video file frame by frame, processes each frame to classify
-    tiles using the trained classifier model for the specified tile size, and saves the
-    results in JSONL format. Each line in the output file represents one frame with
-    its tile classifications and runtime measurement.
-    
     Args:
         video_path: Path to the video file
         cache_video_dir: Path to the cache directory for this video
         classifier: Classifier name to use
         tile_size: Tile size to use
-        filter_type (str): The type of filter to apply ('none', 'neighbor').
+        filter_type: The type of filter to apply ('none', 'neighbor')
+        batch_size: Maximum number of tiles to batch together
+        num_readers: Number of reader threads to use
         gpu_id: GPU ID to use for processing
-        command_queue: Queue for progress updates
-            
-    Note:
-        - Video is processed frame by frame to minimize memory usage
-        - Progress is displayed using a progress bar
-        - Results are flushed to disk after each frame for safety
-        - Video metadata (FPS, dimensions, frame count) is extracted and logged
-        - Each frame entry includes frame index, timestamp, frame dimensions, tile classifications, and runtime
-        - The function handles various video formats (.mp4, .avi, .mov, .mkv)
-        
-    Output Format:
-        Each line in the JSONL file contains a JSON object with:
-        - frame_idx (int): Zero-based frame index
-        - timestamp (float): Frame timestamp in seconds
-        - frame_size (list[int]): [height, width] of the frame
-        - tile_size (int): Tile size used for processing (30, 60, or 120)
-        - tile_classifications (list[list[float]]): Relevance scores grid for the specified tile size
-        - runtime (float): Runtime in seconds for the ClassifyRelevance model inference
+        splice_boundaries: List of (start_frame, end_frame) tuples for each reader
+
+    Returns:
+        Dictionary mapping frame_idx to frame result
     """
     device = f'cuda:{gpu_id}'
-    
+
     # Load the trained model for this specific video, classifier, and tile size
-    model = load_model(cache_video_dir, tile_size, classifier)
-    model = model.to(device)
-    # try:
-    #     model.compile()
-    #     # model = torch.compile(model)
-    # except Exception as e:
-    #     print(f"Failed to compile model: {e}")
-    
+    model = load_model(cache_video_dir, tile_size, classifier, device=device)
+
     # Create output directory structure
-    output_dir = os.path.join(cache_video_dir, 'relevancy') # This is now a base, specific dir is next
-    
-    # Create score directory for this classifier and tile size
+    output_dir = os.path.join(cache_video_dir, 'relevancy')
     classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}_{filter_type}')
     if os.path.exists(classifier_dir):
         shutil.rmtree(classifier_dir)
     os.makedirs(classifier_dir)
-    
-    # Create score directory for this tile size
+
     score_dir = os.path.join(classifier_dir, 'score')
-    if os.path.exists(score_dir):
-        shutil.rmtree(score_dir)
-    os.makedirs(score_dir)
+    os.makedirs(score_dir, exist_ok=True)
     output_path = os.path.join(score_dir, 'score.jsonl')
-    
-    # print(f"Processing video: {video_path}")
-    
-    cap = cv2.VideoCapture(video_path)
-    assert cap.isOpened(), f"Could not open video {video_path}"
-    
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
+    # Shared data structures
+    tile_queue = queue.Queue(maxsize=batch_size * 4)  # Limit queue size to prevent memory issues
+    result_queues = {i: queue.Queue() for i in range(num_readers)}
+    results_dict = {}
+    lock = threading.Lock()
+
+    # Start inference thread
+    inference_thread = threading.Thread(
+        target=inference_thread_fn,
+        args=(model, device, tile_size, batch_size, tile_queue, results_dict,
+              result_queues, num_readers, lock),
+        daemon=False
+    )
+    inference_thread.start()
+
+    # Start reader threads
+    reader_threads = []
+    for splice_idx, (start_frame, end_frame) in enumerate(splice_boundaries):
+        thread = threading.Thread(
+            target=reader_thread_fn,
+            args=(video_path, start_frame, end_frame, tile_size, filter_type,
+                  device, tile_queue, result_queues[splice_idx], splice_idx),
+            daemon=False
+        )
+        thread.start()
+        reader_threads.append(thread)
+
+    print(f"Started {num_readers} reader threads and 1 inference thread, processing frames...")
+
+    # Wait for all readers to finish
+    for thread in reader_threads:
+        thread.join()
+
+    # Wait for inference thread to finish
+    inference_thread.join()
+
+    # Write results to file
+    sorted_results = [results_dict[frame_idx] for frame_idx in sorted(results_dict.keys())]
     with open(output_path, 'w') as f:
-        frame_idx = 0
-        description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier}"
-        command_queue.put((device, {'description': description,
-                                    'completed': 0, 'total': frame_count}))
-        prev_relevance_grid = None # no previous frame yet
-        prev_frame = None
-        threshold = 0.5 # modify if necessary
-        overall_start_time = time.time_ns() / 1e6
-
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            # only use if flag is on
-            relevant_indices = None
-            pruned_tiles_prop = 0.0
-
-            # get relevant indices for neighbor
-            if filter_type == 'neighbor':
-                if frame_idx > 0 and prev_relevance_grid is not None:
-                    # For subsequent frames, determine relevant tiles based on the previous frame
-                    relevant_indices = mark_neighbor_tiles(prev_relevance_grid, threshold)
-                    video_name = os.path.basename(video_path)
-                    manual_include = np.array(MANUALLY_INCLUDE.get(video_name, None))
-                    if manual_include is not None:
-                        relevant_indices = np.union1d(relevant_indices, manual_include)
-            # 'none' filter or frame 0: relevant_indices remains None to process all tiles.
-            
-            # process tiles
-            current_relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, relevant_indices, device)
-
-            if relevant_indices is not None:
-                num_pruned = current_relevance_grid.size - len(relevant_indices)
-                pruned_tiles_prop = num_pruned / current_relevance_grid.size if current_relevance_grid.size > 0 else 0.0
-            
-            # Update the relevance grid for the next loop iteration
-            prev_relevance_grid = current_relevance_grid
-            prev_frame = frame
-
-            # Add overall time to runtime metrics before writing
-            overall_end_time = time.time_ns() / 1e6
-            runtime.append({'op': 'overall', 'time': overall_end_time - overall_start_time})
-
-            num_tiles = (current_relevance_grid.shape[0] * current_relevance_grid.shape[1])
-            # Create result entry for this frame
-            frame_entry = {
-                "frame_idx": frame_idx,
-                "timestamp": frame_idx / fps if fps > 0 else 0,
-                "frame_size": [height, width],
-                "tile_size": tile_size,
-                "runtime": runtime,
-                "classification_size": current_relevance_grid.shape,
-                "classification_hex": current_relevance_grid.flatten().tobytes().hex(),
-                "pruned_tiles_prop": pruned_tiles_prop
-            }
-            
-            # Write to JSONL file
+        for frame_entry in sorted_results:
             f.write(json.dumps(frame_entry) + '\n')
-            if frame_idx % 100 == 0:
-                f.flush()
-            
-            frame_idx += 1
-            command_queue.put((device, {'completed': frame_idx}))
 
-            # Reset overall timer for the next frame
-            overall_start_time = time.time_ns() / 1e6
+    print(f"Completed {os.path.basename(video_path)} - {classifier}_{tile_size}: {output_path}")
 
-    cap.release()
-    # print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
+    return results_dict
+
+
 
 
 def main(args):
     """
-    Main function that orchestrates the video tile classification process using parallel processing.
+    Main function that orchestrates the video tile classification process using threading and GPU assignment.
 
     This function serves as the entry point for the script. It:
     1. Validates the dataset directory exists
-    2. Creates splice tasks for each video/classifier/tile_size combination
-    3. Uses multiprocessing to process splices in parallel across available GPUs
-    4. Merges splice results and saves classification results
+    2. Creates video tasks for each video/classifier/tile_size combination
+    3. Assigns one GPU per video, processes videos sequentially (or in parallel if multiple GPUs)
+    4. Each video uses multiple reader threads feeding a single GPU inference thread
 
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
@@ -865,7 +901,7 @@ def main(args):
         - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/relevancy/score/{classifier_name}_{tile_size}/score.jsonl
         - If no trained model is found for a video, that video is skipped with a warning
     """
-    mp.set_start_method('spawn', force=True)
+    print("Starting main function...")
 
     dataset_dir = os.path.join(DATA_DIR, args.dataset)
 
@@ -916,93 +952,52 @@ def main(args):
             'splice_boundaries': splice_boundaries
         }
 
-    # Create splice tasks
-    funcs: list[Callable[[int, mp.Queue], None]] = []
-    task_metadata = []  # Track which task corresponds to which video/classifier/tile_size/splice
+    # Get available GPUs
+    num_gpus = torch.cuda.device_count()
+    assert num_gpus > 0, "No GPUs available"
 
+    print(f"Processing {len(video_metadata)} videos with {num_gpus} GPUs")
+    print(f"Using {args.num_readers} reader threads per video")
+
+    # Clear output directories if --clear flag is specified
+    if args.clear:
+        for video_file in video_metadata.keys():
+            cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
+            output_dir = os.path.join(cache_video_dir, 'relevancy')
+            if os.path.exists(output_dir):
+                print(f"Clearing output directory: {output_dir}")
+                shutil.rmtree(output_dir)
+
+    # Process each video/classifier/tile_size combination
+    # Assign GPUs in round-robin fashion
+    gpu_idx = 0
     for video_file in sorted(video_metadata.keys()):
         metadata = video_metadata[video_file]
         video_file_path = metadata['path']
         cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
 
-        output_dir = os.path.join(cache_video_dir, 'relevancy')
-
-        # Clear output directory if --clear flag is specified
-        if args.clear and os.path.exists(output_dir):
-            print(f"Clearing output directory: {output_dir}")
-            shutil.rmtree(output_dir)
-        os.makedirs(output_dir, exist_ok=True)
-
         for classifier in args.classifiers:
             for tile_size in tile_sizes_to_process:
-                # Create one task per splice
-                for splice_idx, (start_frame, end_frame) in enumerate(metadata['splice_boundaries']):
-                    func = partial(
-                        process_video_splice,
-                        video_file_path,
-                        start_frame,
-                        end_frame,
-                        cache_video_dir,
-                        classifier,
-                        tile_size,
-                        args.filter,
-                        args.batch_size,
-                        splice_idx=splice_idx
-                    )
-                    funcs.append(func)
-                    task_metadata.append({
-                        'video_file': video_file,
-                        'classifier': classifier,
-                        'tile_size': tile_size,
-                        'splice_idx': splice_idx,
-                        'num_splices': metadata['num_readers']
-                    })
+                # Assign GPU for this video
+                assigned_gpu = gpu_idx % num_gpus
+                gpu_idx += 1
 
-    # Set up multiprocessing with ProgressBar
-    num_gpus = torch.cuda.device_count()
-    assert num_gpus > 0, "No GPUs available"
+                print(f"\nProcessing {video_file} - {classifier}_{tile_size} on GPU {assigned_gpu}")
 
-    print(f"Processing {len(video_metadata)} videos with {num_gpus} GPUs")
-    print(f"Total splice tasks: {len(funcs)}")
+                # Process video with threading
+                process_video_threaded(
+                    video_path=video_file_path,
+                    cache_video_dir=cache_video_dir,
+                    classifier=classifier,
+                    tile_size=tile_size,
+                    filter_type=args.filter,
+                    batch_size=args.batch_size,
+                    num_readers=metadata['num_readers'],
+                    gpu_id=assigned_gpu,
+                    splice_boundaries=metadata['splice_boundaries']
+                )
 
-    # Create a manager for shared results dictionary
-    manager = mp.Manager()
-    results_dict = manager.dict()
-
-    # Wrap all functions with partial to bind idx and results_dict
-    wrapped_funcs = [partial(_run_splice_and_store_result, func, idx, results_dict)
-                     for idx, func in enumerate(funcs)]
-
-    # Run all splice tasks in parallel
-    ProgressBar(num_workers=num_gpus, num_tasks=len(wrapped_funcs)).run_all(wrapped_funcs)
-
-    # Group results by (video, classifier, tile_size) and merge splices
-    result_groups = {}
-    for idx in range(len(funcs)):
-        result = results_dict.get(idx)
-        if result is None:
-            print(f"Warning: No result for task {idx}")
-            continue
-        meta = task_metadata[idx]
-        key = (meta['video_file'], meta['classifier'], meta['tile_size'])
-        if key not in result_groups:
-            result_groups[key] = {}
-        result_groups[key][meta['splice_idx']] = result
-
-    # Merge and write results for each group
-    for (video_file, classifier, tile_size), splice_results in result_groups.items():
-        cache_video_dir = os.path.join(CACHE_DIR, args.dataset, video_file)
-        classifier_dir = os.path.join(cache_video_dir, 'relevancy', f'{classifier}_{tile_size}_{args.filter}')
-        score_dir = os.path.join(classifier_dir, 'score')
-        os.makedirs(score_dir, exist_ok=True)
-        output_path = os.path.join(score_dir, 'score.jsonl')
-
-        # Sort splices by index and merge
-        sorted_splice_indices = sorted(splice_results.keys())
-        sorted_splice_results = [splice_results[idx] for idx in sorted_splice_indices]
-
-        merge_and_write_splice_results(sorted_splice_results, output_path)
-        print(f"Completed {video_file} - {classifier}_{tile_size}: {output_path}")
+    print("\nAll videos processed successfully!")
             
 
 if __name__ == '__main__':
