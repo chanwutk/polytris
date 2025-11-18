@@ -207,6 +207,7 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
         shutil.rmtree(score_dir)
     os.makedirs(score_dir)
     output_path = os.path.join(score_dir, 'score.jsonl')
+    runtime_path = os.path.join(score_dir, 'runtime.jsonl')
 
     # print(f"Processing video: {video_path}")
 
@@ -214,7 +215,6 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
     assert cap.isOpened(), f"Could not open video {video_path}"
 
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
@@ -230,7 +230,7 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
     normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device).view(1, 6, 1, 1)
 
     # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
-    with open(output_path, 'w') as f:
+    with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
         description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier}"
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': frame_count}))
@@ -242,6 +242,12 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
             frames.append(frame)
         cap.release()
         assert len(frames) == frame_count, f"Expected {frame_count} frames, got {len(frames)}"
+
+        # Warm up the model
+        for frame_idx, frame in enumerate(frames[:16]):
+            previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
+            relevance_grid, runtime = process_frame_tiles(frame, previous_frame, model, tile_size, device, 
+                                                         normalize_mean, normalize_std)  # type: ignore
         
         for frame_idx, frame in enumerate(frames):
             # Process frame with the model
@@ -251,17 +257,14 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
 
             # Create result entry for this frame
             frame_entry = {
-                "frame_idx": frame_idx,
-                "timestamp": frame_idx / fps if fps > 0 else 0,
-                "frame_size": [height, width],
-                "tile_size": tile_size,
-                "runtime": runtime,
                 "classification_size": relevance_grid.shape,
                 "classification_hex": relevance_grid.flatten().tobytes().hex(),
+                "idx": frame_idx,
             }
 
             # Write to JSONL file
             f.write(json.dumps(frame_entry) + '\n')
+            fr.write(json.dumps(runtime) + '\n')
             command_queue.put((device, {'completed': frame_idx}))
 
 
