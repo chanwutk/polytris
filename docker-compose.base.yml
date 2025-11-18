@@ -17,7 +17,7 @@ services:
       - ${HOME}/.ssh:/root/.ssh
       - ${HOME}/.config:/root/.config
       - ${HOME}/.claude:/root/.claude
-      - /data/alenachao/data/hota_outputs:/sota-results
+      - /data/alenachao/outputs/hota_outputs:/sota-results
     tmpfs:
       - /tmp
     network_mode: "host"
