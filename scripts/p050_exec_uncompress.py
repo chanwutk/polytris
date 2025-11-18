@@ -9,8 +9,6 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-import torch
-
 from polyis.utilities import TILEPADDING_MODES, ProgressBar, create_timer, get_config
 
 
@@ -182,16 +180,16 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
-    # print(f"Saving unpacked detections to {unpacked_output_dir}")
+    print(f"Saving unpacked detections to {unpacked_output_dir}")
     runtime_file = os.path.join(unpacked_output_dir, 'runtime.jsonl')
     
     images_not_in_any_tile_dir = os.path.join(unpacked_output_dir, 'images_not_in_any_tile')
     os.makedirs(images_not_in_any_tile_dir, exist_ok=True)
-    # print(f"Saving images not in any tile to {images_not_in_any_tile_dir}")
+    print(f"Saving images not in any tile to {images_not_in_any_tile_dir}")
 
     images_center_not_in_any_tile_dir = os.path.join(unpacked_output_dir, 'images_center_not_in_any_tile')
     os.makedirs(images_center_not_in_any_tile_dir, exist_ok=True)
-    # print(f"Saving images center not in any tile to {images_center_not_in_any_tile_dir}")
+    print(f"Saving images center not in any tile to {images_center_not_in_any_tile_dir}")
 
     relevancy_scores_file = os.path.join(video_path, '020_relevancy', f'{classifier}_{tilesize}', 'score', 'score.jsonl')
     with open(relevancy_scores_file, 'r') as f:
@@ -207,7 +205,7 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
         contents = f.readlines()
         description = f"{video_path} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS)}} {tilepadding}"
         kwargs = {'completed': 0, 'total': len(contents), 'description': description}
-        mod = max(1, int(len(contents) * 0.05))
+        mod = max(1, int(len(contents) * 0.1))
         command_queue.put((device, kwargs))
         timer, flush = create_timer(fr)
         for idx, line in enumerate(contents):
@@ -326,9 +324,9 @@ def main():
         print(f"Found {len(videos)} video files in dataset {dataset}")
         
         for video in sorted(videos):
-            uncompressed_detections_dir = os.path.join(cache_dir, video, '050_uncompressed_detections')
-            if os.path.exists(uncompressed_detections_dir):
-                shutil.rmtree(uncompressed_detections_dir)
+            # uncompressed_detections_dir = os.path.join(cache_dir, video, '050_uncompressed_detections')
+            # if os.path.exists(uncompressed_detections_dir):
+            #     shutil.rmtree(uncompressed_detections_dir)
                 
             for classifier in CLASSIFIERS:
                 for tilesize in TILE_SIZES:
@@ -336,7 +334,7 @@ def main():
                             funcs.append(partial(unpack, dataset,  video, classifier, tilesize, tilepadding))
     
     print(f"Created {len(funcs)} tasks to process")
-    ProgressBar(num_workers=torch.cuda.device_count(), num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
+    ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 
 

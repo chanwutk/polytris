@@ -4,10 +4,10 @@ import argparse
 from functools import partial
 import json
 import os
-import shutil
 import multiprocessing as mp
+import shutil
 import sys
-from typing import Any, Callable, override
+from typing import Callable, override
 import warnings
 
 import numpy as np
@@ -18,7 +18,12 @@ import trackeval
 from trackeval.metrics import HOTA, CLEAR, Identity, Count
 
 from polyis.trackeval.dataset import Dataset
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
+from polyis.utilities import get_config
+
+
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -35,10 +40,6 @@ class NumpyEncoder(json.JSONEncoder):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Evaluate tracking accuracy using TrackEval')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
     parser.add_argument('--metrics', type=str, default='HOTA',  #,Identity,CLEAR',
                         help='Comma-separated list of metrics to evaluate')
     parser.add_argument('--no_parallel', action='store_true', default=False,
@@ -293,7 +294,7 @@ def main(args):
           └── LOG.txt (evaluation logs)
         - Multiple metrics are evaluated: HOTA, CLEAR (MOTA), and Identity (IDF1)
     """
-    print(f"Starting tracking accuracy evaluation for datasets: {args.datasets}")
+    print(f"Starting tracking accuracy evaluation for datasets: {DATASETS}")
 
     # Parse metrics from comma-separated string into list
     # Remove any whitespace and split by comma
@@ -304,7 +305,7 @@ def main(args):
     eval_tasks: list[Callable[[int, "mp.Queue"], None]] = []
 
     # Process each dataset separately
-    for dataset in args.datasets:
+    for dataset in DATASETS:
         print(f"Processing dataset: {dataset}")
 
         # Find all videos and classifier/tilesize/tilepadding combinations for this dataset
@@ -313,11 +314,12 @@ def main(args):
         # Create evaluation directory path for this dataset
         evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
 
-        # # Clear evaluation directory
-        # if args.clear and os.path.exists(evaluation_dir):
-        #     shutil.rmtree(evaluation_dir)
-        #     print(f"Cleared existing 070_accuracy directory: {evaluation_dir}")
-        # os.makedirs(evaluation_dir, exist_ok=True)
+        # Clear evaluation directory
+        if os.path.exists(evaluation_dir):
+            shutil.rmtree(evaluation_dir)
+            print(f"Cleared existing 070_accuracy directory: {evaluation_dir}")
+        os.makedirs(evaluation_dir, exist_ok=True)
+        os.makedirs(os.path.join(evaluation_dir, 'raw'), exist_ok=True)
 
         # Create one evaluation task per classifier/tilesize/tilepadding combination
         # Each task will evaluate all videos in the dataset for that combination

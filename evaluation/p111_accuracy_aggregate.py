@@ -1,21 +1,17 @@
 #!/usr/local/bin/python
 
-import argparse
 import json
 import os
+import shutil
 
 import pandas as pd
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
+from polyis.utilities import get_config
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Aggregate raw accuracy results from p070_accuracy_compute.py into CSV files')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    return parser.parse_args()
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 
 def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, str]]:
@@ -202,7 +198,7 @@ def aggregate_accuracy_results(dataset: str, output_dir: str) -> tuple[pd.DataFr
     return individual_results, combined_results
 
 
-def main(args):
+def main():
     """
     Main function that orchestrates the accuracy result aggregation process.
     
@@ -210,10 +206,7 @@ def main(args):
     1. Finds all classifier/tilesize/tilepadding combinations with saved accuracy results
     2. Loads raw JSON result files and parses them into DataFrames
     3. Saves aggregated results as CSV files for further analysis
-    
-    Args:
-        args (argparse.Namespace): Parsed command line arguments
-        
+
     Note:
         - The script expects accuracy results from p070_accuracy_compute.py in:
           {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{tilepadding}/
@@ -222,10 +215,10 @@ def main(args):
           └── LOG.txt (evaluation logs)
         - CSV files are saved to: {CACHE_DIR}/{dataset}/evaluation/071_accuracy_aggregate/
     """
-    print(f"Starting accuracy result aggregation for datasets: {args.datasets}")
+    print(f"Starting accuracy result aggregation for datasets: {DATASETS}")
     
     # Process each dataset separately
-    for dataset in args.datasets:
+    for dataset in DATASETS:
         print(f"\nProcessing dataset: {dataset}")
         
         # Create output directory for this dataset's aggregated results
@@ -238,4 +231,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()

@@ -34,7 +34,7 @@ CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 DATASETS = config['EXEC']['DATASETS']
-CLASSIFIERS = config['EXEC']['CLASSIFIERS']
+CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
 
 
 def parse_args():

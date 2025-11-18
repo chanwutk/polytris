@@ -10,21 +10,20 @@ from typing import Callable
 import cv2
 import torch
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES, DATASETS_DIR
+from polyis.utilities import get_config
 from polyis.train.benchmark_model_optimization import benchmark_model_optimization
+
+
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS_DIR = config['DATA']['DATASETS_DIR']
+TILE_SIZES = config['EXEC']['TILE_SIZES']
+DATASETS = config['EXEC']['DATASETS']
+CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Benchmark optimization methods for trained classifier models')
-    parser.add_argument('--classifiers', required=False,
-                        default=CLASSIFIERS_TO_TEST,
-                        choices=CLASSIFIERS_CHOICES,
-                        nargs='+',
-                        help='Model types to benchmark (can specify multiple)')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names to search for trained models (space-separated)')
     parser.add_argument('--iterations', type=int, default=128,
                         help='Number of iterations for benchmarking')
     return parser.parse_args()
@@ -127,7 +126,7 @@ def main(args):
     mp.set_start_method('spawn', force=True)
 
     resolutions: dict[tuple[int, int], list[str]] = {}
-    for dataset in args.datasets:
+    for dataset in DATASETS:
         width, height = get_video_resolution(dataset)
         if (width, height) not in resolutions:
             resolutions[(width, height)] = []
@@ -136,7 +135,7 @@ def main(args):
     
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for width, height in resolutions.keys():
-        for classifier_name in args.classifiers:
+        for classifier_name in CLASSIFIERS:
             for tile_size in TILE_SIZES:
                 func = partial(benchmark_classifier, resolutions[(width, height)], width,
                                height, classifier_name, tile_size, args.iterations)

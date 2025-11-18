@@ -7,6 +7,9 @@ import multiprocessing as mp
 import functools
 import queue
 import random
+import contextlib
+import sys
+import inspect
 
 import cv2
 import numpy as np
@@ -885,6 +888,14 @@ class ProgressBar:
     
     def __enter__(self):
         """Enter the context manager - set up queues and start progress process."""
+        # Get the running script name and create log directory
+        script_path = sys.modules['__main__'].__file__
+        assert script_path is not None
+        script_name = os.path.splitext(os.path.basename(script_path))[0]
+        
+        # Create log directory: {CACHE_DIR}/LOGS/{script_name}
+        self.log_dir = os.path.join(CACHE_DIR, 'LOGS', script_name)
+        os.makedirs(self.log_dir, exist_ok=True)
 
         # Populate worker ID queue
         for worker_id in range(self.num_workers):
@@ -925,9 +936,13 @@ class ProgressBar:
         """Run func in a new process with a worker ID."""
         worker_id = self.worker_id_queue.get()
         self.update_overall_progress(1)
+        
+        # Generate log file path if log_dir is set and no explicit stdout_file provided
+        stdout_file = os.path.join(self.log_dir, f'worker_{worker_id}.log')
+        stderr_file = os.path.join(self.log_dir, f'worker_{worker_id}.err')
         process = mp.Process(target=ProgressBar.run_with_worker_id,
                              args=(func, worker_id, self.command_queue,
-                                   self.worker_id_queue))
+                                   self.worker_id_queue, stdout_file, stderr_file))
         process.start()
         return process
     
@@ -950,15 +965,59 @@ class ProgressBar:
 
 
     @staticmethod
-    def run_with_worker_id(func: typing.Callable[[int, mp.Queue], None],
-                           worker_id: int, command_queue: mp.Queue,
-                           worker_id_queue: mp.Queue):
-        """Run func with a worker ID and command queue."""
-        try: func(worker_id, command_queue)
+    def run_with_worker_id(func: typing.Callable[[int, mp.Queue], None], worker_id: int,
+                           command_queue: mp.Queue, worker_id_queue: mp.Queue,
+                           stdout_file: str, stderr_file: str):
+        """Run func with a worker ID and command queue. Redirect stdout and stderr to files."""
+        try:
+            with contextlib.ExitStack() as stack:
+                # Open file in append mode
+                f_out = stack.enter_context(open(stdout_file, 'a', encoding='utf-8'))
+                
+                # Write function name and parameters before redirecting
+                func_name = ProgressBar._get_function_name(func)
+                func_params = ProgressBar._get_function_parameters(func)
+                f_out.write(f"\n\n{'='*80}\n")
+                f_out.write(f"Function: {func_name} ( {func_params} )\n")
+                f_out.write(f"{'='*80}\n")
+                f_out.flush()
+                stack.enter_context(contextlib.redirect_stdout(f_out))
+                
+                # Open file in append mode
+                f_err = stack.enter_context(open(stderr_file, 'a', encoding='utf-8'))
+                stack.enter_context(contextlib.redirect_stderr(f_err))
+                
+                func(worker_id, command_queue)
         finally:
             kwargs = {'completed': 0, 'description': 'Done', 'total': 1}
             command_queue.put((f'cuda:{worker_id}', kwargs))
             worker_id_queue.put(worker_id)
+    
+    @staticmethod
+    def _get_function_name(func: typing.Callable) -> str:
+        """Get the name of a function, handling functools.partial."""
+        if isinstance(func, functools.partial):
+            return func.func.__name__
+        return func.__name__
+    
+    @staticmethod
+    def _get_function_parameters(func: typing.Callable) -> str:
+        """Get the parameters of a function as a string, handling functools.partial."""
+        assert isinstance(func, functools.partial)
+        # Get the underlying function
+        underlying_func = func.func
+        # Get bound arguments
+        bound_args = func.keywords.copy() if func.keywords else {}
+        # Add positional arguments
+        sig = inspect.signature(underlying_func)
+        param_names = list(sig.parameters.keys())
+        for i, arg in enumerate(func.args):
+            if i < len(param_names):
+                bound_args[param_names[i]] = arg
+        
+        # Format as string
+        param_strs = [f"{k}={repr(v)}" for k, v in bound_args.items()]
+        return ", ".join(param_strs)
 
 
 def gcp_run(funcs: list[typing.Callable[[int, mp.Queue], None]]):

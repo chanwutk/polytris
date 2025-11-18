@@ -3,14 +3,11 @@
 import argparse
 import json
 import os
-import shutil
 import time
 import numpy as np
 import multiprocessing as mp
 from functools import partial
 from typing import Callable
-
-import torch
 
 from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config
 
@@ -230,9 +227,9 @@ def main(args: argparse.Namespace):
         # Find all videos with uncompressed detection results
         cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
         for video in os.listdir(videosets_dir):
-            uncompressed_tracking_dir = os.path.join(cache_dir, video, '060_uncompressed_tracks')
-            if os.path.exists(uncompressed_tracking_dir):
-                shutil.rmtree(uncompressed_tracking_dir)
+            # uncompressed_tracking_dir = os.path.join(cache_dir, video, '060_uncompressed_tracks')
+            # if os.path.exists(uncompressed_tracking_dir):
+            #     shutil.rmtree(uncompressed_tracking_dir)
 
             for classifier in CLASSIFIERS:
                 for tilesize in TILE_SIZES:
@@ -242,7 +239,7 @@ def main(args: argparse.Namespace):
     print(f"Created {len(funcs)} tasks to process")
     
     # Set up multiprocessing with ProgressBar
-    ProgressBar(num_workers=torch.cuda.device_count(), num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 
 

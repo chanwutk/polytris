@@ -149,8 +149,8 @@ def gather_query_execution_data(datasets_videos):
         video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
         
         # Groundtruth detection and tracking (no tilesize)
-        groundtruth_detection_path = os.path.join(video_path, '000_groundtruth', 'detections.jsonl')
-        groundtruth_tracking_path = os.path.join(video_path, '000_groundtruth', 'tracking_runtimes.jsonl')
+        groundtruth_detection_path = os.path.join(video_path, '000_groundtruth', 'detection_runtime.jsonl')
+        groundtruth_tracking_path = os.path.join(video_path, '000_groundtruth', 'tracking_runtime.jsonl')
         assert os.path.exists(groundtruth_detection_path), \
             f"Groundtruth detection path {groundtruth_detection_path} does not exist"
         assert os.path.exists(groundtruth_tracking_path), \
@@ -185,7 +185,7 @@ def gather_query_execution_data(datasets_videos):
                     cl_ts_tp = f'{classifier}_{tilesize}_{tilepadding}'
 
                     # 020_exec_classify.py
-                    classify_path = os.path.join(video_path, '020_relevancy', cl_ts, 'score', 'score.jsonl')
+                    classify_path = os.path.join(video_path, '020_relevancy', cl_ts, 'score', 'runtime.jsonl')
                     assert os.path.exists(classify_path), f"Classify path {classify_path} does not exist"
                     runtime_files.append(('020_exec_classify', classify_path))
                     
