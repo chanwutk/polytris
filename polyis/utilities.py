@@ -280,8 +280,6 @@ def register_tracked_detections(
             # Add interpolated points to trajectories
             trajectories[track_id].append((e_frame_idx, e_box))
 
-        # trajectories[track_id].append((frame_idx, box_array))
-
 
 def get_track_color(track_id: int, track_ids: list[int] | None = None) -> tuple[int, int, int]:
     """
