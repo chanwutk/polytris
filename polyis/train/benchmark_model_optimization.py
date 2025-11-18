@@ -5,7 +5,7 @@ import json
 
 
 def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_size: int,
-                                 batch_size: int, iterations: int = 32):
+                                 batch_size: int, iterations: int = 128):
     """
     Benchmark different acceleration methods and save results to JSONL file.
     
@@ -28,6 +28,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
     results = []
     
     # 1. Baseline (eager)
+    print(f"Running baseline (eager) for {iterations} iterations...")
     with torch.no_grad():
         torch.cuda.synchronize()
         start = time.time_ns() / 1e6
@@ -41,6 +42,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
     })
     
     # 2. torch.compile
+    print(f"Running torch.compile for {iterations} iterations...")
     try:
         compiled_model = torch.compile(model, mode="reduce-overhead")
         with torch.no_grad():
@@ -65,6 +67,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
         })
     
     # 2a. channels-last (without torch.compile)
+    print(f"Running channels-last (without torch.compile) for {iterations} iterations...")
     try:
         model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
         with torch.no_grad():
@@ -92,6 +95,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
         })
     
     # 2b. torch.compile + channels-last
+    print(f"Running torch.compile + channels-last for {iterations} iterations...")
     try:
         model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
         compiled_channels_last_model = torch.compile(model_cl, mode="reduce-overhead")
@@ -120,6 +124,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
         })
     
     # 3. TorchScript Trace
+    print(f"Running TorchScript Trace for {iterations} iterations...")
     traced_model = None
     try:
         traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
@@ -146,6 +151,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
         traced_model = None
     
     # 4. TorchScript Trace + Optimize
+    print(f"Running TorchScript Trace + Optimize for {iterations} iterations...")
     try:
         if traced_model is None:
             traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
@@ -173,6 +179,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
         })
     
     # 5. CUDA Graph (only if input size is fixed - may not work for variable batch sizes)
+    print(f"Running CUDA Graph for {iterations} iterations...")
     try:
         # CUDA Graph requires fixed input/output sizes
         static_image = dummy_image.clone()
@@ -211,6 +218,7 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
         })
     
     # 5b. channels-last + CUDA Graph
+    print(f"Running channels-last + CUDA Graph for {iterations} iterations...")
     try:
         model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
         static_input_cl = dummy_image.to(memory_format=torch.channels_last).clone()  # type: ignore
@@ -250,5 +258,6 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
             'error': str(e)
         })
     
+    print(f"Benchmarking completed... done")
     return results
 

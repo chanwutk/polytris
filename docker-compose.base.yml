@@ -13,6 +13,7 @@ services:
       - ${DATA}/polyis-data:/polyis-data
       - ${DATA}/polyis-cache:/polyis-cache
       - ${DATA}/otif-dataset:/otif-dataset
+      - ${WORK}/../data/polytris-data:/polytris-data
       - ${HOME}/.ssh:/root/.ssh
       - ${HOME}/.config:/root/.config
       - ${HOME}/.claude:/root/.claude

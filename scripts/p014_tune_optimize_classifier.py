@@ -25,7 +25,7 @@ def parse_args():
                         default=DATASETS_TO_TEST,
                         nargs='+',
                         help='Dataset names to search for trained models (space-separated)')
-    parser.add_argument('--iterations', type=int, default=32,
+    parser.add_argument('--iterations', type=int, default=128,
                         help='Number of iterations for benchmarking')
     return parser.parse_args()
 
@@ -99,19 +99,23 @@ def benchmark_classifier(datasets: list[str], width: int, height: int, classifie
     batch_size = (width * height) // (tile_size * tile_size)
         
     # Load the model
+    print(f"Loading model from {model_path}...")
     model = torch.load(model_path, map_location=device, weights_only=False)
+    print(f"Model loaded from {model_path}... done")
     model = model.to(device)
     model.eval()
     
     # Run benchmark
     results_sorted = benchmark_model_optimization(model, device, tile_size, batch_size, iterations)
-    
     for dataset in datasets:
         # Create results directory per dataset
         results_dir = os.path.join(
             CACHE_DIR, dataset, 'indexing', 'training', 'results',
             f'{classifier_name}_{tile_size}'
         )
+        # print(f"Saving results", results_sorted)
+        # Ensure directory exists before writing
+        os.makedirs(results_dir, exist_ok=True)
         # Save to JSONL file
         output_path = os.path.join(results_dir, 'model_compilation.jsonl')
         with open(output_path, 'w') as f:
@@ -134,7 +138,7 @@ def main(args):
     for width, height in resolutions.keys():
         for classifier_name in args.classifiers:
             for tile_size in TILE_SIZES:
-                func = partial(benchmark_classifier, resolutions[width, height], width,
+                func = partial(benchmark_classifier, resolutions[(width, height)], width,
                                height, classifier_name, tile_size, args.iterations)
                 funcs.append(func)
     
@@ -142,7 +146,9 @@ def main(args):
     num_gpus = torch.cuda.device_count()
     assert num_gpus > 0, "No GPUs available"
     
-    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
+    # ProgressBar(num_workers=1, num_tasks=len(funcs), off=True).run_all(funcs)
+    for func in funcs:
+        func(0, mp.Queue())
 
 
 if __name__ == '__main__':

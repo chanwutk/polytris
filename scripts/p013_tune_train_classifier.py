@@ -464,6 +464,26 @@ def format_throughput(throughput: dict[str, float | int | str], prefix: str):
     })
 
 
+def save_model(model: "torch.nn.Module", ema_model: "torch.nn.Module | None", results_dir: str, name: str | None = None):
+    # Save EMA weights if available, otherwise raw weights
+    if ema_model is not None:
+        best_model_wts = ema_model.state_dict()
+        best_raw_model_wts = model.state_dict()
+        # Clear any accumulated gradients to save memory in saved model
+        ema_model.zero_grad(set_to_none=True)
+        with open(os.path.join(results_dir, name or 'model_best.pth'), 'wb') as f:
+            torch.save(ema_model, f)
+    else:
+        best_model_wts = model.state_dict()
+        best_raw_model_wts = model.state_dict()
+        # Clear any accumulated gradients to save memory in saved model
+        model.zero_grad(set_to_none=True)
+        with open(os.path.join(results_dir, name or 'model_best.pth'), 'wb') as f:
+            torch.save(model, f)
+    
+    return best_model_wts, best_raw_model_wts
+
+
 def train(
     model: "torch.nn.Module",
     loss_fn: "torch.nn.modules.loss._Loss",
@@ -481,8 +501,8 @@ def train(
     frozen: bool = False,
     initial_best_loss: float = float('inf')
 ):
-    early_stopping_tolerance = 5
-    early_stopping_threshold = 0.001
+    early_stopping_tolerance = 10
+    early_stopping_threshold = 0.01
     
     epoch_train_losses: list[dict] = []
     epoch_test_losses: list[dict] = []
@@ -578,22 +598,9 @@ def train(
                                        throughput_per_epoch, frozen)
             
             # Save best model and check early stopping
+            save_model(model, ema_model, results_dir, name=f'model_{epoch:02d}.pth')
             if val_result['cumulative_loss'] < best_loss:
-                # Save EMA weights if available, otherwise raw weights
-                if ema_model is not None:
-                    best_model_wts = ema_model.state_dict()
-                    best_raw_model_wts = model.state_dict()
-                    # Clear any accumulated gradients to save memory in saved model
-                    ema_model.zero_grad(set_to_none=True)
-                    with open(os.path.join(results_dir, 'model.pth'), 'wb') as f:
-                        torch.save(ema_model, f)
-                else:
-                    best_model_wts = model.state_dict()
-                    best_raw_model_wts = model.state_dict()
-                    # Clear any accumulated gradients to save memory in saved model
-                    model.zero_grad(set_to_none=True)
-                    with open(os.path.join(results_dir, 'model.pth'), 'wb') as f:
-                        torch.save(model, f)
+                best_model_wts, best_raw_model_wts = save_model(model, ema_model, results_dir)
                 best_epoch = epoch
                 best_loss = val_result['cumulative_loss']
                 early_stopping_counter = 0
@@ -765,8 +772,8 @@ def train_classifier(dataset: str, tile_size: int, model_type: str,
                 lr_unfrozen = 1e-4 * lr_scale
 
                 # # Scale down the learning rate
-                # lr_frozen = lr_frozen * 0.1
-                # lr_unfrozen = lr_unfrozen * 0.1
+                lr_frozen = lr_frozen * 0.5
+                lr_unfrozen = lr_unfrozen * 0.5
                 
                 # Stage 1: Train with base model frozen (higher learning rate)
                 # Train adapter, pos_encoder, and classifier head

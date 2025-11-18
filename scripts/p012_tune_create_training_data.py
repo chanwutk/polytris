@@ -68,16 +68,17 @@ def create_training_data(dataset_name: str, video_file: str, gpu_id: int, comman
         }))
         for detections_str in detections_lines:
             frame_idx, dets, _ = json.loads(detections_str)
-            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, max(0, frame_idx - 1))
 
+            ret, prev_frame = cap.read()
+            assert ret, f"Failed to read frame {frame_idx - 1} from {dataset_video_path}"
             ret, frame = cap.read()
             assert ret, f"Failed to read frame {frame_idx} from {dataset_video_path}"
 
-            ret, next_frame = cap.read()
-            if not ret:
-                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx - 1)
-                ret, next_frame = cap.read()
-                assert ret, f"Failed to read frame {frame_idx - 1} from {dataset_video_path}"
+            if frame_idx == 0:
+                tmp = prev_frame
+                prev_frame = frame
+                frame = tmp
 
             for tile_size in TILE_SIZES:
                 split_start_time = time.time_ns() / 1e6
@@ -85,7 +86,7 @@ def create_training_data(dataset_name: str, video_file: str, gpu_id: int, comman
                 training_diff_path = os.path.join(training_base_dir, 'diff', f'tilesize_{tile_size}')
 
                 patched = get_patched(frame, tile_size)
-                diffs = get_patched(np.abs(frame.astype(np.int16) - next_frame.astype(np.int16)).astype(np.uint8), tile_size)
+                diffs = get_patched(np.abs(frame.astype(np.int16) - prev_frame.astype(np.int16)).astype(np.uint8), tile_size)
                 split_time = (time.time_ns() / 1e6) - split_start_time
                 frs[tile_size].write(json.dumps({
                     'op': 'split',

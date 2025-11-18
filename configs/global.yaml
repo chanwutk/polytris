@@ -17,7 +17,7 @@ EXEC:
     - test
   CLASSIFIERS:
     - YoloN
-    # - ShuffleNet05
+    - ShuffleNet05
     - MobileNetS
     # - Perfect
   TILE_SIZES:
