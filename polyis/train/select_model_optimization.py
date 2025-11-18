@@ -22,7 +22,7 @@ class CUDAGraphWrapper:
         self.device = device
         self.tile_size = tile_size
         
-        dummy_image = torch.randn(expected_batch_size, 3, tile_size, tile_size, device=device)
+        dummy_image = torch.randn(expected_batch_size, 6, tile_size, tile_size, device=device)
         dummy_pos = torch.randn(expected_batch_size, 2, device=device)
         self._ensure_graph_captured(dummy_image, dummy_pos)
     
@@ -86,7 +86,7 @@ class ChannelsLastCUDAGraphWrapper(CUDAGraphWrapper):
         self.tile_size = tile_size
         
         # Create dummy inputs in channels-last format for graph capture
-        dummy_image = torch.randn(expected_batch_size, 3, tile_size, tile_size, device=device)
+        dummy_image = torch.randn(expected_batch_size, 6, tile_size, tile_size, device=device)
         dummy_image = dummy_image.to(memory_format=torch.channels_last)  # type: ignore
         dummy_pos = torch.randn(expected_batch_size, 2, device=device)
         self._ensure_graph_captured(dummy_image, dummy_pos)
@@ -149,14 +149,14 @@ def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[
     
     elif method == 'torchscript_trace':
         # Create dummy inputs for tracing
-        dummy_image = torch.randn(batch_size, 3, tile_size, tile_size, device=device)
+        dummy_image = torch.randn(batch_size, 6, tile_size, tile_size, device=device)
         dummy_pos = torch.randn(batch_size, 2, device=device)
         traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
         return traced_model
     
     elif method == 'torchscript_optimize':
         # Trace, freeze, and optimize
-        dummy_image = torch.randn(batch_size, 3, tile_size, tile_size, device=device)
+        dummy_image = torch.randn(batch_size, 6, tile_size, tile_size, device=device)
         dummy_pos = torch.randn(batch_size, 2, device=device)
         traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
         optimized_model = torch.jit.freeze(traced_model)
