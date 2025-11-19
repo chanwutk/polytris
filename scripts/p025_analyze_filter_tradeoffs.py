@@ -52,7 +52,15 @@ def gather_data(dataset: str, classifiers: list[str], filters: list[str]) -> pd.
                     if not score_file.exists():
                         print(f"Warning: Score file not found, skipping: {score_file}")
                         continue
-                    
+
+                    # Load wall-clock time from metadata file (if available)
+                    metadata_file = base_path / 'score' / 'metadata.json'
+                    wall_clock_time_seconds = None
+                    if metadata_file.exists():
+                        with open(metadata_file, 'r') as f:
+                            metadata = json.load(f)
+                            wall_clock_time_seconds = metadata.get('total_wall_clock_time_seconds')
+
                     inference_runtime = 0
                     overall_runtime = 0
                     with open(score_file, 'r') as f:
@@ -63,6 +71,10 @@ def gather_data(dataset: str, classifiers: list[str], filters: list[str]) -> pd.
                                     inference_runtime += op['time']
                                 if op['op'] == 'overall':
                                     overall_runtime += op['time']
+
+                    # Use wall-clock time if available, otherwise fall back to summed overall runtime
+                    if wall_clock_time_seconds is not None:
+                        overall_runtime = wall_clock_time_seconds * 1000  # Convert to ms for consistency
 
                     all_data.append({
                         'video': video,
@@ -142,15 +154,15 @@ def create_comparison_charts(df: pd.DataFrame, output_dir: Path):
             filters_present = video_df['filter'].unique()
             y_pos = np.arange(len(filters_present))
 
-            # 1. Overall Runtime
+            # 1. Overall Runtime (Wall-Clock)
             ax = axes[i, 0]
             runtimes = video_df['overall_runtime_ms'] / 1000  # to seconds
             bars = ax.barh(y_pos, runtimes, align='center')
             ax.bar_label(bars, fmt='%.2fs', padding=3)
             ax.set_yticks(y_pos, labels=video_df['filter'])
             ax.invert_yaxis()
-            ax.set_xlabel('Overall Runtime (s)')
-            if i == 0: ax.set_title('Overall Runtime')
+            ax.set_xlabel('Wall-Clock Runtime (s)')
+            if i == 0: ax.set_title('Wall-Clock Runtime')
             ax.set_ylabel(video.replace('.mp4', ''), rotation=0, size='large', ha='right', va='center')
             ax.margins(x=0.1)
 
@@ -180,7 +192,7 @@ def create_comparison_charts(df: pd.DataFrame, output_dir: Path):
             ax.bar_label(bars, fmt='%.2fx', padding=3)
             ax.axvline(1, color='grey', linestyle='--')
             ax.set_xlabel('Speedup (x)')
-            if i == 0: ax.set_title('Overall Speedup vs. No Filter')
+            if i == 0: ax.set_title('Wall-Clock Speedup vs. No Filter')
             ax.margins(x=0.1)
 
             # 5. Inference Speedup (relative to 'none')

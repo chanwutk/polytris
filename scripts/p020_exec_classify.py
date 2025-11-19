@@ -807,6 +807,9 @@ def process_video_threaded(video_path: str, cache_video_dir: str, classifier: st
     Returns:
         Dictionary mapping frame_idx to frame result
     """
+    # Start tracking wall-clock time for this video
+    video_start_time = time.time()
+
     device = f'cuda:{gpu_id}'
 
     # Load the trained model for this specific video, classifier, and tile size
@@ -859,13 +862,33 @@ def process_video_threaded(video_path: str, cache_video_dir: str, classifier: st
     # Wait for inference thread to finish
     inference_thread.join()
 
+    # Calculate total wall-clock time
+    video_end_time = time.time()
+    total_wall_clock_time = video_end_time - video_start_time
+
     # Write results to file
     sorted_results = [results_dict[frame_idx] for frame_idx in sorted(results_dict.keys())]
     with open(output_path, 'w') as f:
         for frame_entry in sorted_results:
             f.write(json.dumps(frame_entry) + '\n')
 
+    # Save wall-clock time to metadata file
+    metadata_path = os.path.join(score_dir, 'metadata.json')
+    metadata = {
+        'total_wall_clock_time_seconds': total_wall_clock_time,
+        'total_frames': len(sorted_results),
+        'video_file': os.path.basename(video_path),
+        'classifier': classifier,
+        'tile_size': tile_size,
+        'filter_type': filter_type,
+        'num_readers': num_readers,
+        'batch_size': batch_size
+    }
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f, indent=2)
+
     print(f"Completed {os.path.basename(video_path)} - {classifier}_{tile_size}: {output_path}")
+    print(f"Total wall-clock time: {total_wall_clock_time:.2f} seconds ({total_wall_clock_time/60:.2f} minutes)")
 
     return results_dict
 
