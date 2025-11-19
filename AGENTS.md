@@ -1,5 +1,10 @@
 # Repository Guidelines
 
+## Executing commands
+- Execute commands inside the container:
+  - This project is developed inside a docker container.
+  - Any command should be executed using `docker exec polyis` if this environment is not already inside a container.
+
 ## Execution Pipeline (scripts/)
 - Primary entrypoint: scripts in `scripts/` run the full pipeline; numeric prefixes define order.
 - Typical flow: `p000_preprocess_dataset.py` → `p020_exec_classify.py` → `p030_exec_compress.py` → `p040_exec_detect.py` → `p050_exec_uncompress.py` → `p060_exec_track.py` → `p070_results_statistics_acc.py`/`p090_results_track_visualize.py`.

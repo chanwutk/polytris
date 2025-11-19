@@ -24,43 +24,59 @@ def parse_args():
 def load_sota_data(sota_dir: str) -> pd.DataFrame:
     """
     Load SOTA tradeoff data from CSV files in the specified directory.
-    SOTA data is available for caldot1 and caldot2, excluding split data.
+    SOTA data is organized in subdirectories by dataset name.
+    Each subdirectory contains CSV files like 'otif_{dataset}.csv'.
 
     Args:
-        sota_dir: Directory containing SOTA results CSV files
+        sota_dir: Directory containing SOTA results CSV files organized in subdirectories
 
     Returns:
-        pd.DataFrame: Combined SOTA tradeoff data for caldot1 and caldot2
+        pd.DataFrame: Combined SOTA tradeoff data for all available datasets
     """
     sota_data = []
 
-    # Process each CSV file in the SOTA directory
-    for filename in os.listdir(sota_dir):
-        if filename.endswith('.csv'):
-            # Include both full and split data files
-            # Skip other types of split data files if any
-            if 'split' in filename and 'otif' not in filename:
-                print(f"Skipping non-OTIF split data file: {filename}")
+    # Process each subdirectory in the SOTA directory
+    for subdir_name in os.listdir(sota_dir):
+        subdir_path = os.path.join(sota_dir, subdir_name)
+        
+        # Skip if not a directory
+        if not os.path.isdir(subdir_path):
+            continue
+        
+        # Extract dataset name from subdirectory name
+        dataset_name = subdir_name
+        
+        # Process each CSV file in the subdirectory
+        for filename in os.listdir(subdir_path):
+            if not filename.endswith('.csv'):
                 continue
-
-            filepath = os.path.join(sota_dir, filename)
-
-            # Extract system name and dataset from filename
-            # Examples: 'otif_caldot1_full.csv' -> system='otif_full', dataset='caldot1'
-            #          'otif_caldot2_full.csv' -> system='otif_full', dataset='caldot2'
-            #          'otif_caldot1_split.csv' -> system='otif_split', dataset='caldot1'
+            
+            filepath = os.path.join(subdir_path, filename)
+            
+            # Extract system name from filename
+            # Examples: 'otif_caldot1.csv' -> system='otif'
+            #          'otif_jnc0.csv' -> system='otif'
             base_name = filename.replace('.csv', '')
-            if '_caldot1_' in base_name:
-                system_name = base_name.replace('_caldot1', '')
-                dataset_name = 'caldot1'
-            elif '_caldot2_' in base_name:
-                system_name = base_name.replace('_caldot2', '')
-                dataset_name = 'caldot2'
-            else:
-                print(f"  Warning: Cannot determine dataset from filename {filename}, skipping")
+            
+            # Check if filename matches expected pattern: otif_{dataset}.csv
+            expected_prefix = f'otif_{dataset_name}'
+            if not base_name.startswith(expected_prefix):
+                print(f"  Warning: Filename {filename} doesn't match expected pattern 'otif_{dataset_name}.csv', skipping")
                 continue
-
-            print(f"Loading SOTA data from: {filename} (system: {system_name}, dataset: {dataset_name})")
+            
+            # Extract system name (everything before the dataset name)
+            system_name = 'otif'  # Default to 'otif' for now
+            
+            # Check for system variants (e.g., 'otif_full', 'otif_split')
+            # If filename has additional parts after dataset name, extract them
+            remaining = base_name.replace(f'otif_{dataset_name}', '')
+            if remaining.startswith('_'):
+                # Handle cases like 'otif_caldot1_full' -> system='otif_full'
+                variant = remaining[1:]  # Remove leading underscore
+                if variant:
+                    system_name = f'otif_{variant}'
+            
+            print(f"Loading SOTA data from: {subdir_name}/{filename} (system: {system_name}, dataset: {dataset_name})")
 
             # Read CSV file - the format appears to be: 0,1,2,3,4,5,6,hota,fps
             # The first row is the header, but the data contains JSON strings
@@ -72,8 +88,8 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
                 runtime_col = 'runtime'
 
             # Handle different column names for HOTA score
-            if 'hota' in df.columns:
-                hota_col = 'hota'
+            if 'HOTA' in df.columns:
+                hota_col = 'HOTA'
             elif 'avg_hota' in df.columns:
                 hota_col = 'avg_hota'
             else:
@@ -82,7 +98,8 @@ def load_sota_data(sota_dir: str) -> pd.DataFrame:
             # Map system names to display names using a dictionary
             system_name_map = {
                 'otif_full': 'OTIF-Full',
-                'otif_split': 'OTIF'
+                'otif_split': 'OTIF',
+                'otif': 'OTIF'  # Default mapping for 'otif'
             }
             display_system_name = system_name_map.get(system_name, system_name)
 

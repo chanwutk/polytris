@@ -13,9 +13,9 @@ import pytest
 import numpy as np
 import time
 from polyis.pack.cython.group_tiles import group_tiles as group_tiles_cython
-from polyis.pack.python.pack_ffd import pack_all as pack_all_python
+from polyis.pack.python.pack import pack as pack_python
 from polyis.pack.group_tiles import group_tiles as group_tiles_c
-from polyis.pack.pack_ffd import pack_all as pack_all_c, PyPolyominoPosition
+from polyis.pack.pack import pack as pack_c, PyPolyominoPosition
 from polyis.pack.adapters import convert_collages_to_bitmap
 
 
@@ -191,11 +191,11 @@ class TestPackFFDBasic:
         polyominoes_stacks = []
         h, w = 10, 10
 
-        result_python = pack_all_python(np.array(polyominoes_stacks, dtype=np.uint64), h, w)
+        result_python = pack_python(np.array(polyominoes_stacks, dtype=np.uint64), h, w, 0)
         
         # C implementation raises ValueError for empty input
         with pytest.raises(ValueError, match="polyominoes_stacks cannot be empty"):
-            pack_all_c(np.array(polyominoes_stacks, dtype=np.uint64), h, w)
+            pack_c(np.array(polyominoes_stacks, dtype=np.uint64), h, w, 0)
 
         assert len(result_python) == 0
 
@@ -212,7 +212,7 @@ class TestPackFFDBasic:
 
         # Test C implementation only (due to memory corruption bug)
         c_stack = group_tiles_c(bitmap, 0)
-        result_c = pack_all_c(np.array([c_stack], dtype=np.uint64), h, w)
+        result_c = pack_c(np.array([c_stack], dtype=np.uint64), h, w, 0)
         
         # Convert coordinate format to bitmap format
         convert_collages_to_bitmap(result_c)
@@ -230,68 +230,70 @@ class TestPackFFDBasic:
 
     def test_multiple_polyominoes_single_frame(self):
         """Test with multiple polyominoes in a single frame."""
-        bitmap = np.array([
-            [1, 1, 0, 1, 1],
-            [1, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 1],
-            [1, 0, 0, 0, 1]
-        ], dtype=np.uint8)
+        for mode in [0, 1, 2]:
+            bitmap = np.array([
+                [1, 1, 0, 1, 1],
+                [1, 0, 0, 1, 1],
+                [0, 0, 0, 0, 0],
+                [1, 0, 0, 0, 1],
+                [1, 0, 0, 0, 1]
+            ], dtype=np.uint8)
 
-        # Get polyominoes for both implementations
-        python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
+            # Get polyominoes for both implementations
+            python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
 
-        h, w = 10, 10
+            h, w = 10, 10
 
-        result_python = pack_all_python(np.array([python_stack], dtype=np.uint64), h, w)
-        result_c = pack_all_c(np.array([c_stack], dtype=np.uint64), h, w)
-        
-        # Convert C result from coordinate format to bitmap format
-        convert_collages_to_bitmap(result_c)
+            result_python = pack_python(np.array([python_stack], dtype=np.uint64), h, w, mode)
+            result_c = pack_c(np.array([c_stack], dtype=np.uint64), h, w, mode)
+            
+            # Convert C result from coordinate format to bitmap format
+            convert_collages_to_bitmap(result_c)
 
-        # Compare results
-        assert compare_polyomino_positions(result_python, result_c, verbose=True)
+            # Compare results
+            assert compare_polyomino_positions(result_python, result_c, verbose=True)
 
-        # Verify packing properties - note: can't use stacks for verification as they're consumed
-        stats_python = verify_packing_properties(result_python, [], h, w)
-        stats_c = verify_packing_properties(result_c, [], h, w)
+            # Verify packing properties - note: can't use stacks for verification as they're consumed
+            stats_python = verify_packing_properties(result_python, [], h, w)
+            stats_c = verify_packing_properties(result_c, [], h, w)
 
-        assert stats_python['valid'], f"Python packing invalid: {stats_python['errors']}"
-        assert stats_c['valid'], f"C packing invalid: {stats_c['errors']}"
+            assert stats_python['valid'], f"Python packing invalid: {stats_python['errors']}"
+            assert stats_c['valid'], f"C packing invalid: {stats_c['errors']}"
 
     def test_multiple_frames(self):
         """Test with multiple frames, each containing polyominoes."""
-        bitmaps = [
-            np.array([[1, 1], [1, 0]], dtype=np.uint8),
-            np.array([[1, 1], [1, 1]], dtype=np.uint8),
-            np.array([[1, 0], [0, 1]], dtype=np.uint8),
-        ]
+        for mode in [0, 1, 2]:
+            bitmaps = [
+                np.array([[1, 1], [1, 0]], dtype=np.uint8),
+                np.array([[1, 1], [1, 1]], dtype=np.uint8),
+                np.array([[1, 0], [0, 1]], dtype=np.uint8),
+            ]
 
-        # Get polyominoes for both implementations for each frame
-        python_stacks = np.empty(len(bitmaps), dtype=np.uint64)
-        c_stacks = np.empty(len(bitmaps), dtype=np.uint64)
-        for idx, bitmap in enumerate(bitmaps):
-            python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
-            python_stacks[idx] = python_stack
-            c_stacks[idx] = c_stack
+            # Get polyominoes for both implementations for each frame
+            python_stacks = np.empty(len(bitmaps), dtype=np.uint64)
+            c_stacks = np.empty(len(bitmaps), dtype=np.uint64)
+            for idx, bitmap in enumerate(bitmaps):
+                python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
+                python_stacks[idx] = python_stack
+                c_stacks[idx] = c_stack
 
-        h, w = 8, 8
+            h, w = 8, 8
 
-        result_python = pack_all_python(python_stacks, h, w)
-        result_c = pack_all_c(c_stacks, h, w)
-        
-        # Convert C result from coordinate format to bitmap format
-        convert_collages_to_bitmap(result_c)
+            result_python = pack_python(python_stacks, h, w, mode)
+            result_c = pack_c(c_stacks, h, w, mode)
+            
+            # Convert C result from coordinate format to bitmap format
+            convert_collages_to_bitmap(result_c)
 
-        # Compare results
-        assert compare_polyomino_positions(result_python, result_c, verbose=True)
+            # Compare results
+            assert compare_polyomino_positions(result_python, result_c, verbose=True)
 
-        # Verify packing properties
-        stats_python = verify_packing_properties(result_python, [], h, w)
-        stats_c = verify_packing_properties(result_c, [], h, w)
+            # Verify packing properties
+            stats_python = verify_packing_properties(result_python, [], h, w)
+            stats_c = verify_packing_properties(result_c, [], h, w)
 
-        assert stats_python['valid'], f"Python packing invalid: {stats_python['errors']}"
-        assert stats_c['valid'], f"C packing invalid: {stats_c['errors']}"
+            assert stats_python['valid'], f"Python packing invalid: {stats_python['errors']}"
+            assert stats_c['valid'], f"C packing invalid: {stats_c['errors']}"
 
 
 class TestPackFFDRandom:
@@ -302,57 +304,59 @@ class TestPackFFDRandom:
     @pytest.mark.parametrize("seed", [42, 123, 456])
     def test_random_bitmaps(self, density, size, seed):
         """Test with randomly generated bitmaps."""
-        bitmap = generate_test_bitmap(size, density=density, seed=seed)
+        for mode in [0, 1, 2]:
+            bitmap = generate_test_bitmap(size, density=density, seed=seed)
 
-        # Get polyominoes for both implementations
-        python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
+            # Get polyominoes for both implementations
+            python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
 
-        h, w = 50, 50
+            h, w = 50, 50
 
-        result_python = pack_all_python(np.array([python_stack], dtype=np.uint64), h, w)
-        result_c = pack_all_c(np.array([c_stack], dtype=np.uint64), h, w)
-        
-        # Convert C result from coordinate format to bitmap format
-        convert_collages_to_bitmap(result_c)
+            result_python = pack_python(np.array([python_stack], dtype=np.uint64), h, w, mode)
+            result_c = pack_c(np.array([c_stack], dtype=np.uint64), h, w, mode)
+            
+            # Convert C result from coordinate format to bitmap format
+            convert_collages_to_bitmap(result_c)
 
-        # Compare results
-        assert compare_polyomino_positions(result_python, result_c, verbose=False), \
-            f"Mismatch for size={size}, density={density}, seed={seed}"
+            # Compare results
+            assert compare_polyomino_positions(result_python, result_c, verbose=False), \
+                f"Mismatch for size={size}, density={density}, seed={seed}"
 
-        # Verify packing properties
-        stats_c = verify_packing_properties(result_c, [], h, w)
-        assert stats_c['valid'], f"C packing invalid: {stats_c['errors']}"
+            # Verify packing properties
+            stats_c = verify_packing_properties(result_c, [], h, w)
+            assert stats_c['valid'], f"C packing invalid: {stats_c['errors']}"
 
     def test_multiple_random_frames(self):
         """Test with multiple frames of random bitmaps."""
         num_frames = 5
-        bitmaps = [generate_test_bitmap((15, 15), density=0.3, seed=i*10) for i in range(num_frames)]
+        for mode in [0, 1, 2]:
+            bitmaps = [generate_test_bitmap((15, 15), density=0.3, seed=i*10) for i in range(num_frames)]
 
-        # Get polyominoes for both implementations for each frame
-        python_stacks = np.empty(num_frames, dtype=np.uint64)
-        c_stacks = np.empty(num_frames, dtype=np.uint64)
-        for idx, bitmap in enumerate(bitmaps):
-            python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
-            python_stacks[idx] = python_stack
-            c_stacks[idx] = c_stack
+            # Get polyominoes for both implementations for each frame
+            python_stacks = np.empty(num_frames, dtype=np.uint64)
+            c_stacks = np.empty(num_frames, dtype=np.uint64)
+            for idx, bitmap in enumerate(bitmaps):
+                python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
+                python_stacks[idx] = python_stack
+                c_stacks[idx] = c_stack
 
-        h, w = 40, 40
+            h, w = 40, 40
 
-        result_python = pack_all_python(python_stacks, h, w)
-        result_c = pack_all_c(c_stacks, h, w)
-        
-        # Convert C result from coordinate format to bitmap format
-        convert_collages_to_bitmap(result_c)
+            result_python = pack_python(python_stacks, h, w, mode)
+            result_c = pack_c(c_stacks, h, w, mode)
+            
+            # Convert C result from coordinate format to bitmap format
+            convert_collages_to_bitmap(result_c)
 
-        # Compare results
-        assert compare_polyomino_positions(result_python, result_c, verbose=True)
+            # Compare results
+            assert compare_polyomino_positions(result_python, result_c, verbose=True)
 
-        # Verify packing properties
-        stats_python = verify_packing_properties(result_python, [], h, w)
-        stats_c = verify_packing_properties(result_c, [], h, w)
+            # Verify packing properties
+            stats_python = verify_packing_properties(result_python, [], h, w)
+            stats_c = verify_packing_properties(result_c, [], h, w)
 
-        assert stats_python['valid'], f"Python packing invalid: {stats_python['errors']}"
-        assert stats_c['valid'], f"C packing invalid: {stats_c['errors']}"
+            assert stats_python['valid'], f"Python packing invalid: {stats_python['errors']}"
+            assert stats_c['valid'], f"C packing invalid: {stats_c['errors']}"
 
 
 class TestPackFFDPerformance:
@@ -366,49 +370,50 @@ class TestPackFFDPerformance:
             ((10, 10), 0.3, 3),   # Small: 10 frames of 10x10
             ((20, 20), 0.3, 5),   # Medium: 20 frames of 20x20
         ]
+        for mode in [0, 1, 2]:
+            print(f"Mode: {mode}")
+            print(f"{'Size':<12} {'Frames':<8} {'Python (s)':<12} {'C (s)':<12} {'Speedup':<10}")
+            print("-" * 60)
 
-        print(f"{'Size':<12} {'Frames':<8} {'Python (s)':<12} {'C (s)':<12} {'Speedup':<10}")
-        print("-" * 60)
+            for (h_bitmap, w_bitmap), density, num_frames in test_cases:
+                # Generate test data
+                bitmaps = [generate_test_bitmap((h_bitmap, w_bitmap), density=density, seed=i*10)
+                        for i in range(num_frames)]
 
-        for (h_bitmap, w_bitmap), density, num_frames in test_cases:
-            # Generate test data
-            bitmaps = [generate_test_bitmap((h_bitmap, w_bitmap), density=density, seed=i*10)
-                      for i in range(num_frames)]
+                # Get polyominoes for both implementations for each frame
+                python_stacks = np.empty(num_frames, dtype=np.uint64)
+                c_stacks = np.empty(num_frames, dtype=np.uint64)
+                for idx, bitmap in enumerate(bitmaps):
+                    python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
+                    python_stacks[idx] = python_stack
+                    c_stacks[idx] = c_stack
 
-            # Get polyominoes for both implementations for each frame
-            python_stacks = np.empty(num_frames, dtype=np.uint64)
-            c_stacks = np.empty(num_frames, dtype=np.uint64)
-            for idx, bitmap in enumerate(bitmaps):
-                python_stack, c_stack = get_polyominoes_for_both_implementations(bitmap, 0)
-                python_stacks[idx] = python_stack
-                c_stacks[idx] = c_stack
+                h, w = 128, 128
 
-            h, w = 128, 128
+                # Time Python implementation
+                start = time.perf_counter()
+                result_python = pack_python(python_stacks, h, w, mode)
+                python_time = time.perf_counter() - start
 
-            # Time Python implementation
-            start = time.perf_counter()
-            result_python = pack_all_python(python_stacks, h, w)
-            python_time = time.perf_counter() - start
+                # Time C implementation
+                start = time.perf_counter()
+                result_c = pack_c(c_stacks, h, w, mode)
+                c_time = time.perf_counter() - start
+                
+                # Convert C result from coordinate format to bitmap format for comparison
+                convert_collages_to_bitmap(result_c)
 
-            # Time C implementation
-            start = time.perf_counter()
-            result_c = pack_all_c(c_stacks, h, w)
-            c_time = time.perf_counter() - start
-            
-            # Convert C result from coordinate format to bitmap format for comparison
-            convert_collages_to_bitmap(result_c)
+                speedup = python_time / c_time if c_time > 0 else float('inf')
 
-            speedup = python_time / c_time if c_time > 0 else float('inf')
+                size_str = f"{h_bitmap}x{w_bitmap}"
+                print(f"{size_str:<12} {num_frames:<8} {python_time:<12.6f} {c_time:<12.6f} {speedup:<10.2f}x")
+                
+                assert speedup >= 1, \
+                    f"C implementation not sufficiently faster for size={size_str}, frames={num_frames}"
 
-            size_str = f"{h_bitmap}x{w_bitmap}"
-            print(f"{size_str:<12} {num_frames:<8} {python_time:<12.6f} {c_time:<12.6f} {speedup:<10.2f}x")
-            
-            assert speedup >= 1, \
-                f"C implementation not sufficiently faster for size={size_str}, frames={num_frames}"
-
-            # Compare results to ensure both implementations produce same output
-            assert compare_polyomino_positions(result_python, result_c, verbose=False), \
-                f"Results differ for size={size_str}, frames={num_frames}"
+                # Compare results to ensure both implementations produce same output
+                assert compare_polyomino_positions(result_python, result_c, verbose=False), \
+                    f"Results differ for size={size_str}, frames={num_frames}"
 
 
 class TestConvertCollagesToBitmap:

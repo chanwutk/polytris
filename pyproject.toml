@@ -7,3 +7,4 @@ extraPaths = [
     "./modules/TrackEval",
     "./modules/darknet"
 ]
+typeCheckingMode = "basic"

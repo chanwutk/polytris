@@ -1,3 +1,13 @@
+/**
+ * @file pack.c
+ * @brief Implementation of Best-Fit-Descending (BFD) polyomino packing algorithm
+ *
+ * This file implements a flexible packing algorithm that supports multiple fit
+ * strategies (First-Fit, Best-Fit, Easiest-Fit) for placing polyominoes into
+ * fixed-size collages. The algorithm sorts polyominoes by size and uses region
+ * tracking to efficiently find placement positions.
+ */
+
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -116,7 +126,7 @@ static inline void place(CoordinateArray *coords, uint8_t *occupied_tiles,
     }
 }
 
-// Try to pack a polyomino (as coordinate array) into the collage
+// Try to place a polyomino (as coordinate array) into the collage
 // ph and pw are the height and width of the polyomino bounding box
 static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, int h,
                             int w, int16_t ph, int16_t pw, Placement *placement_out) {
@@ -160,16 +170,20 @@ static inline bool try_place(CoordinateArray *coords, uint8_t *occupied_tiles, i
 // Main Packing Algorithm
 // ============================================================================
 
-// Pack all polyominoes into collages
-// Args:
-//   polyominoes_arrays: Array of pointers to PolyominoArray
-//   num_arrays: Number of arrays in the array
-//   h: Height of each collage
-//   w: Width of each collage
-//   mode: Packing mode to use
-// Returns:
-//   CollageArray containing all packed collages with polyomino positions
-CollageArray* pack_all_(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode) {
+/**
+ * Implementation of pack() - see pack.h for full API documentation.
+ *
+ * Algorithm implementation:
+ * 1. Collect all polyominoes from input arrays and tag with frame indices
+ * 2. Sort polyominoes by size (descending) for optimal packing
+ * 3. For each polyomino, find placement position based on selected mode:
+ *    - First_Fit: First collage that has space
+ *    - Best_Fit: Collage with least empty space that fits
+ *    - Easiest_Fit: Collage with most empty space
+ * 4. Create new collages as needed when no existing collage works
+ * 5. Update occupied regions and metadata after each placement
+ */
+CollageArray* pack(PolyominoArray **polyominoes_arrays, int num_arrays, int h, int w, PackMode mode) {
     // Initialize storage for all polyominoes with their frame indices
     PolyominoWithFrameArray all_polyominoes;
     PolyominoWithFrameArray_init(&all_polyominoes, 128);

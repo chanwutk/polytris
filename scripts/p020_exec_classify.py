@@ -14,33 +14,16 @@ from functools import partial
 
 from polyis.images import splitHWC, padHWC
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_CHOICES, CLASSIFIERS_TO_TEST, DATASETS_DIR, format_time, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
+from polyis.train.select_model_optimization import select_model_optimization
+from polyis.utilities import format_time, ProgressBar, get_config
 
 
-def parse_args():
-    """
-    Parse command line arguments for the script.
-
-    Returns:
-        argparse.Namespace: Parsed command line arguments containing:
-            - datasets (List[str]): Dataset names to process (default: ['b3d'])
-            - tile_size (int | str): Tile size to use for classification (choices: 30, 60, 120, 'all')
-            - classifiers (List[str]): List of classifier models to use (default: multiple classifiers)
-    """
-    parser = argparse.ArgumentParser(description='Execute trained classifier models to classify video tiles')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
-                        help='Tile size to use for classification (or "all" for all tile sizes)')
-    parser.add_argument('--classifiers', required=False, nargs='+',
-                        default=CLASSIFIERS_TO_TEST,
-                        choices=CLASSIFIERS_CHOICES,
-                        help='Specific classifiers to analyze (if not specified, all classifiers will be analyzed)')
-    parser.add_argument('--clear', action='store_true',
-                        help='Clear the output directory before processing')
-    return parser.parse_args()
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS_DIR = config['DATA']['DATASETS_DIR']
+TILE_SIZES = config['EXEC']['TILE_SIZES']
+CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
+DATASETS = config['EXEC']['DATASETS']
 
 
 def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: str) -> "torch.nn.Module":
@@ -68,7 +51,7 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
     model_path = os.path.join(results_path, 'model.pth')
 
     if os.path.exists(model_path):
-        print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
+        # print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
         model = torch.load(model_path, map_location=device, weights_only=False)
         model.eval()
         return model
@@ -76,7 +59,8 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
     raise FileNotFoundError(f"No trained model found for {classifier_name} tile size {tile_size} in {results_path}")
 
 
-def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: int, device: str) -> tuple[np.ndarray, list[dict]]:
+def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: torch.nn.Module, tile_size: int, device: str, 
+                       normalize_mean: torch.Tensor, normalize_std: torch.Tensor) -> tuple[np.ndarray, list[dict]]:
     """
     Process a single video frame with the specified tile size and return relevance scores and timing information.
 
@@ -86,9 +70,12 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
     Args:
         frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3)
             where H and W are the frame height and width, and 3 represents RGB channels
+        previous_frame (np.ndarray): Previous video frame as a numpy array with shape (H, W, 3)
         model (torch.nn.Module): Trained model for the specified tile size
         tile_size (int): Size of tiles to use for processing (30, 60, or 120)
         device (str): Device to use for processing
+        normalize_mean (torch.Tensor): Pre-created mean tensor for ImageNet normalization
+        normalize_std (torch.Tensor): Pre-created std tensor for ImageNet normalization
 
     Returns:
         tuple[np.ndarray, list[dict[str, float]]]: A tuple containing:
@@ -105,7 +92,12 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
     with torch.no_grad():
         start_time = (time.time_ns() / 1e6)
         # Convert frame to tensor and ensure it's in HWC format
-        frame_tensor = torch.from_numpy(frame).to(device).float()
+        frame_tensor = torch.from_numpy(frame).to(device)
+        previous_frame_tensor = torch.from_numpy(previous_frame).to(device)
+
+        diff = torch.abs(frame_tensor.to(torch.int16) - previous_frame_tensor.to(torch.int16)).to(torch.uint8)
+        frame_tensor = torch.cat([frame_tensor, diff], dim=2)
+        channels = frame_tensor.shape[2]
 
         # Pad frame to be divisible by tile_size
         padded_frame = padHWC(frame_tensor, tile_size, tile_size)  # type: ignore
@@ -115,19 +107,38 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
 
         # Flatten tiles for batch processing
         num_tiles = tiles.shape[0] * tiles.shape[1]
-        tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 3)
+        tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, channels)
 
-        # Normalize to [0, 1] range
-        tiles_flat = tiles_flat / 255.0
+        # Create position tensor representing (y, x) indices of tiles_flat
+        grid_height, grid_width = tiles.shape[:2]
+        y_indices = torch.arange(grid_height, device=device, dtype=torch.uint8).repeat_interleave(grid_width)
+        x_indices = torch.arange(grid_width, device=device, dtype=torch.uint8).repeat(grid_height)
+        positions = torch.stack([y_indices, x_indices], dim=1).float()
+
+        # Identify all-black tiles (all pixels are zero)
+        # Check if any pixel in each tile is non-zero
+        non_black_mask = tiles_flat.reshape(num_tiles, -1).any(dim=1).to(torch.uint8)
+
+        # Normalize to [0, 1] range (equivalent to ToTensor())
+        tiles_flat = tiles_flat.float() / 255.0
 
         # Convert to NCHW format for the model
         tiles_nchw = tiles_flat.permute(0, 3, 1, 2)
+        
+        # Apply ImageNet normalization to match training transform
+        # Using manual normalization for ~1.9x speedup vs torchvision.Normalize
+        tiles_nchw = (tiles_nchw - normalize_mean) / normalize_std
+        
         transform_runtime = (time.time_ns() / 1e6) - start_time
 
         # Run inference
         start_time = (time.time_ns() / 1e6)
-        predictions = torch.sigmoid(model(tiles_nchw))
-        probabilities = (predictions * 255).to(torch.uint8).cpu().numpy().flatten()
+        predictions = torch.sigmoid(model(tiles_nchw, positions))
+        
+        # Convert to uint8 and transfer to CPU
+        probabilities = (predictions * 255).to(torch.uint8)
+        predictions = predictions * non_black_mask.view(-1, 1)
+        probabilities = probabilities.cpu().numpy().flatten()
 
         # Reshape back to grid format
         grid_height, grid_width = tiles.shape[:2]
@@ -138,8 +149,7 @@ def process_frame_tiles(frame: np.ndarray, model: torch.nn.Module, tile_size: in
     return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
 
 
-def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str, classifier: str,
-                      tile_size: int, gpu_id: int, command_queue: mp.Queue):
+def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
 
@@ -149,13 +159,12 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
     its tile classifications and runtime measurement.
 
     Args:
-        video_path: Path to the video file
-        cache_video_dir: Path to the cache directory for this video
+        dataset: Name of the dataset
+        video: Name of the video
         classifier: Classifier name to use
         tile_size: Tile size to use
         gpu_id: GPU ID to use for processing
         command_queue: Queue for progress updates
-        dataset_name: Name of the dataset (used to locate the trained model)
 
     Note:
         - Video is processed frame by frame to minimize memory usage
@@ -177,13 +186,11 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
     device = f'cuda:{gpu_id}'
 
     # Load the trained model for this dataset, classifier, and tile size
-    model = load_model(dataset_name, tile_size, classifier, device)
+    model = load_model(dataset, tile_size, classifier, device)
     model = model.to(device)
-    # try:
-    #     model.compile()
-    #     # model = torch.compile(model)
-    # except Exception as e:
-    #     print(f"Failed to compile model: {e}")
+
+    video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
+    cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
 
     # Create output directory structure
     output_dir = os.path.join(cache_video_dir, '020_relevancy')
@@ -200,6 +207,7 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
         shutil.rmtree(score_dir)
     os.makedirs(score_dir)
     output_path = os.path.join(score_dir, 'score.jsonl')
+    runtime_path = os.path.join(score_dir, 'runtime.jsonl')
 
     # print(f"Processing video: {video_path}")
 
@@ -207,48 +215,60 @@ def process_video_task(video_path: str, cache_video_dir: str, dataset_name: str,
     assert cap.isOpened(), f"Could not open video {video_path}"
 
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+    # Select the best model optimization method based on the benchmark results and apply it to the model
+    with open(os.path.join(CACHE_DIR, dataset, 'indexing', 'training', 'results',
+                           f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
+        benchmark_results = [json.loads(line) for line in f]
+    model = select_model_optimization(model, benchmark_results, device, tile_size,
+                                      (width * height) // (tile_size * tile_size))
+
+    # Pre-create normalization tensors for ImageNet normalization (1.9x speedup vs torchvision.Normalize)
+    normalize_mean = torch.tensor([0.485, 0.456, 0.406] * 2, device=device).view(1, 6, 1, 1)
+    normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device).view(1, 6, 1, 1)
+
     # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
-    with open(output_path, 'w') as f:
-        frame_idx = 0
+    with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
         description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier}"
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': frame_count}))
+        frames = []
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
+            frames.append(frame)
+        cap.release()
+        assert len(frames) == frame_count, f"Expected {frame_count} frames, got {len(frames)}"
 
+        # Warm up the model
+        for frame_idx, frame in enumerate(frames[:16]):
+            previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
+            relevance_grid, runtime = process_frame_tiles(frame, previous_frame, model, tile_size, device, 
+                                                         normalize_mean, normalize_std)  # type: ignore
+        
+        for frame_idx, frame in enumerate(frames):
             # Process frame with the model
-            relevance_grid, runtime = process_frame_tiles(frame, model, tile_size, device)
+            previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
+            relevance_grid, runtime = process_frame_tiles(frame, previous_frame, model, tile_size, device, 
+                                                         normalize_mean, normalize_std)  # type: ignore
 
             # Create result entry for this frame
             frame_entry = {
-                "frame_idx": frame_idx,
-                "timestamp": frame_idx / fps if fps > 0 else 0,
-                "frame_size": [height, width],
-                "tile_size": tile_size,
-                "runtime": runtime,
                 "classification_size": relevance_grid.shape,
                 "classification_hex": relevance_grid.flatten().tobytes().hex(),
+                "idx": frame_idx,
             }
 
             # Write to JSONL file
             f.write(json.dumps(frame_entry) + '\n')
-            if frame_idx % 100 == 0:
-                f.flush()
-
-            frame_idx += 1
+            fr.write(json.dumps(runtime) + '\n')
             command_queue.put((device, {'completed': frame_idx}))
 
-    cap.release()
-    # print(f"Completed processing {frame_idx} frames. Results saved to {output_path}")
 
-
-def main(args):
+def main():
     """
     Main function that orchestrates the video tile classification process using parallel processing.
 
@@ -258,12 +278,6 @@ def main(args):
     3. Uses multiprocessing to process tasks in parallel across available GPUs
     4. Processes each video and saves classification results
 
-    Args:
-        args (argparse.Namespace): Parsed command line arguments containing:
-            - datasets (List[str]): Names of the datasets to process
-            - tile_size (str): Tile size to use for classification ('30', '60', '120', or 'all')
-            - classifiers (List[str]): List of classifier models to use (default: multiple classifiers)
-
     Note:
         - The script expects a specific directory structure:
           {DATASETS_DIR}/{dataset}/ - contains video files
@@ -271,25 +285,15 @@ def main(args):
           where DATASETS_DIR and DATA_CACHE are both /polyis-data/video-datasets-low
         - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
         - A separate model is loaded for each video directory, classifier, and tile size combination
-        - When tile_size is 'all', all three tile sizes (30, 60, 120) are processed
         - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/020_relevancy/score/{classifier_name}_{tile_size}/score.jsonl
         - If no trained model is found for a video, that video is skipped with a warning
     """
     mp.set_start_method('spawn', force=True)
 
-    # Determine which tile sizes to process
-    if args.tile_size == 'all':
-        tile_sizes_to_process = TILE_SIZES
-        print(f"Processing all tile sizes: {tile_sizes_to_process}")
-    else:
-        tile_sizes_to_process = [int(args.tile_size)]
-        print(f"Processing tile size: {tile_sizes_to_process[0]}")
-
     # Create tasks list with all video/classifier/tile_size combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-
-    for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
+    for dataset in DATASETS:
+        dataset_dir = os.path.join(DATASETS_DIR, dataset)
 
         for videoset in ['test']:
             videoset_dir = os.path.join(dataset_dir, videoset)
@@ -298,32 +302,18 @@ def main(args):
                 continue
 
             # Get all video files from the dataset directory
-            video_files = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-
-            for video_file in sorted(video_files):
-                video_file_path = os.path.join(videoset_dir, video_file)
-                cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
-
-                output_dir = os.path.join(cache_video_dir, '020_relevancy')
-
-                # Clear output directory if --clear flag is specified
-                if args.clear and os.path.exists(output_dir):
-                    print(f"Clearing output directory: {output_dir}")
-                    shutil.rmtree(output_dir)
-                os.makedirs(output_dir, exist_ok=True)
-
-                for classifier in args.classifiers:
-                    for tile_size in tile_sizes_to_process:
-                        func = partial(process_video_task, video_file_path, cache_video_dir,
-                                    dataset_name, classifier, tile_size)
+            videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+            for video in sorted(videos):
+                for classifier in CLASSIFIERS:
+                    for tile_size in TILE_SIZES:
+                        func = partial(classify, dataset, video, classifier, tile_size)
                         funcs.append(func)
 
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()
     assert num_gpus > 0, "No GPUs available"
-
     ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()

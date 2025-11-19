@@ -13,7 +13,7 @@ import numpy as np
 import torch
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, VIDEO_SETS, format_time, ProgressBar, DATASETS_TO_TEST
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, format_time, ProgressBar, DATASETS_TO_TEST
 
 
 def parse_args():

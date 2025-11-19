@@ -54,6 +54,7 @@ RUN apt-get -qq update -y && \
     git \
     ffmpeg \
     curl \
+    tmux \
     make && \
     rm -rf /var/lib/apt/lists/*
 

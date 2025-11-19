@@ -15,22 +15,22 @@ ImgGHWC = NewType('ImgGHWC', torch.Tensor)
 
 
 def isCHW(img: torch.Tensor) -> TypeGuard[ImgCHW]:
-    return img.dim() == 3 and img.shape[0] in {1, 3}
+    return img.dim() == 3 and img.shape[0] in {1, 3, 6}
 
 def isHWC(img: torch.Tensor) -> TypeGuard[ImgHWC]:
-    return img.dim() == 3 and img.shape[2] in {1, 3}
+    return img.dim() == 3 and img.shape[2] in {1, 3, 6}
 
 def isNCHW(img: torch.Tensor) -> TypeGuard[ImgNCHW]:
-    return img.dim() == 4 and img.shape[1] in {1, 3}
+    return img.dim() == 4 and img.shape[1] in {1, 3, 6}
 
 def isNHWC(img: torch.Tensor) -> TypeGuard[ImgNHWC]:
-    return img.dim() == 4 and img.shape[3] in {1, 3}
+    return img.dim() == 4 and img.shape[3] in {1, 3, 6}
 
 def isGCHW(img: torch.Tensor) -> TypeGuard[ImgGCHW]:
-    return img.dim() == 5 and img.shape[2] in {1, 3}
+    return img.dim() == 5 and img.shape[2] in {1, 3, 6}
 
 def isGHWC(img: torch.Tensor) -> TypeGuard[ImgGHWC]:
-    return img.dim() == 5 and img.shape[4] in {1, 3}
+    return img.dim() == 5 and img.shape[4] in {1, 3, 6}
 
 
 def padCHW(img: ImgCHW, h: int, w: int) -> ImgCHW:

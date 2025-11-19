@@ -1,9 +1,14 @@
 from typing import Dict, Any
 import torch
+import os
 import ultralytics.nn.tasks
 from ultralytics import YOLO
 import ultralytics.nn.modules.head
 import ultralytics.nn.tasks
+
+
+# Set environment variable to suppress verbose output
+os.environ['YOLO_VERBOSE'] = 'False'
 
 # Map model sizes to actual model names
 MODEL_SIZE_MAP = {
@@ -54,11 +59,7 @@ class YoloClassifier(torch.nn.Module):
         self.classify = classifier.model[-1]
         assert isinstance(self.classify, ultralytics.nn.modules.head.Classify)
 
-        linear = self.classify.linear
-        self.classify.linear = torch.nn.Linear(linear.in_features, 1,
-                                               bias=linear.bias is not None,
-                                               device=linear.weight.device,
-                                               dtype=linear.weight.dtype)
+        self.num_features = self.classify.linear.in_features
         self.train()
         
         # Store model configuration
@@ -72,13 +73,13 @@ class YoloClassifier(torch.nn.Module):
             img: Input image tensor of shape (batch_size, 3, height, width) with dtype uint8 and values in [0, 255]
             
         Returns:
-            Car logits as a tensor of shape (batch_size,)
+            Car features as a tensor of shape (batch_size,)
         """
         x = img
         x = self.convs(x)
         c = self.classify
-        x = c.linear(c.drop(c.pool(c.conv(x)).flatten(1)))
-        return x  # Return logits instead of sigmoid probabilities
+        x = c.drop(c.pool(c.conv(x)).flatten(1))
+        return x  # Return features instead of classification
     
     def get_model_info(self) -> Dict[str, Any]:
         """Return information about the loaded model."""

@@ -126,9 +126,9 @@ INDEX_DATA_ACCESSORS = {
 }
 
 QUERY_DATA_ACCESSORS = {
-    '001_preprocess_groundtruth_detection': lambda row: row['runtime'],
+    '001_preprocess_groundtruth_detection': lambda row: row,
     '002_preprocess_groundtruth_tracking': lambda row: row['runtime'],
-    '020_exec_classify': lambda row: row['runtime'],
+    '020_exec_classify': lambda row: row,
     '030_exec_compress': lambda row: row['runtime'],
     '040_exec_detect': lambda row: row,
     '050_exec_uncompress': lambda row: row,
