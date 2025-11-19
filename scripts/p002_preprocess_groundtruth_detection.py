@@ -14,7 +14,7 @@ import polyis.models.detector
 from polyis.utilities import format_time, ProgressBar, gcp_run, get_num_frames, get_config
 
 
-CONFIG = get_config('global.yaml')
+CONFIG = get_config()
 EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
 VIDEO_SETS = CONFIG['EXEC']['VIDEO_SETS']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
@@ -153,7 +153,7 @@ def main(args):
         
         # Get all video files from the dataset directory
         video_files: list[str] = []
-        for videoset in VIDEO_SETS:
+        for videoset in ['test']:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])

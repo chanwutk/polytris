@@ -12,7 +12,7 @@ from typing import Callable
 from polyis.utilities import TILEPADDING_MODES, ProgressBar, create_timer, get_config
 
 
-CONFIG = get_config('global.yaml')
+CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']
 DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']

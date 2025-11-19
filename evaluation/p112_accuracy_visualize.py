@@ -9,7 +9,12 @@ import numpy as np
 import altair as alt
 import pandas as pd
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
+from polyis.utilities import get_config
+
+
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -21,15 +26,6 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(o, np.integer):
             return int(o)
         return super().default(o)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Create visualizations for tracking accuracy results from p070_accuracy_compute.py')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    return parser.parse_args()
 
 
 def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xlabel: str, output_path: str):
@@ -144,7 +140,7 @@ def visualize_tracking_accuracy(results: pd.DataFrame, output_dir: str, combined
                                         os.path.join(output_dir, f'{prefix}{metric_name}.png'))
 
 
-def main(args):
+def main():
     """
     Main function that orchestrates the tracking accuracy visualization process.
     
@@ -154,9 +150,6 @@ def main(args):
     3. Creates visualizations comparing accuracy across videos, classifiers, tile sizes, and tilepadding values
     4. Generates summary reports and charts for each dataset
     
-    Args:
-        args (argparse.Namespace): Parsed command line arguments
-        
     Note:
         - The script expects accuracy results from p070_accuracy_compute.py in:
           {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{tilepadding}/
@@ -166,10 +159,10 @@ def main(args):
         - Multiple metrics are visualized: HOTA, CLEAR (MOTA)
         - Visualizations are saved to: {CACHE_DIR}/{dataset}/evaluation/071_accuracy_visualize/
     """
-    print(f"Starting tracking accuracy visualization for datasets: {args.datasets}")
+    print(f"Starting tracking accuracy visualization for datasets: {DATASETS}")
     
     # Process each dataset separately to create independent visualizations
-    for dataset in args.datasets:
+    for dataset in DATASETS:
         print(f"\nProcessing dataset: {dataset}")
         results_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
         
@@ -193,4 +186,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()

@@ -10,6 +10,7 @@ import random
 import contextlib
 import sys
 import inspect
+import logging
 
 import cv2
 import numpy as np
@@ -940,9 +941,10 @@ class ProgressBar:
         # Generate log file path if log_dir is set and no explicit stdout_file provided
         stdout_file = os.path.join(self.log_dir, f'worker_{worker_id}.log')
         stderr_file = os.path.join(self.log_dir, f'worker_{worker_id}.err')
+        log_file = os.path.join(self.log_dir, f'worker_{worker_id}.log')
         process = mp.Process(target=ProgressBar.run_with_worker_id,
                              args=(func, worker_id, self.command_queue,
-                                   self.worker_id_queue, stdout_file, stderr_file))
+                                   self.worker_id_queue, stdout_file, stderr_file, log_file))
         process.start()
         return process
     
@@ -967,8 +969,8 @@ class ProgressBar:
     @staticmethod
     def run_with_worker_id(func: typing.Callable[[int, mp.Queue], None], worker_id: int,
                            command_queue: mp.Queue, worker_id_queue: mp.Queue,
-                           stdout_file: str, stderr_file: str):
-        """Run func with a worker ID and command queue. Redirect stdout and stderr to files."""
+                           stdout_file: str, stderr_file: str, log_file: str):
+        """Run func with a worker ID and command queue. Redirect stdout, stderr, and logging to files."""
         try:
             with contextlib.ExitStack() as stack:
                 # Open file in append mode
@@ -987,7 +989,36 @@ class ProgressBar:
                 f_err = stack.enter_context(open(stderr_file, 'a', encoding='utf-8'))
                 stack.enter_context(contextlib.redirect_stderr(f_err))
                 
-                func(worker_id, command_queue)
+                # Configure logging to write to log file
+                # Open log file in append mode
+                f_log = stack.enter_context(open(log_file, 'a', encoding='utf-8'))
+                
+                # Get root logger and remove all existing handlers
+                root_logger = logging.getLogger()
+                # Store original handlers to restore later
+                original_handlers = root_logger.handlers[:]
+                root_logger.handlers.clear()
+                
+                # Create file handler for logging
+                file_handler = logging.StreamHandler(f_log)
+                file_handler.setLevel(logging.DEBUG)
+                # Use a format that includes timestamp, level, and message
+                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                file_handler.setFormatter(formatter)
+                
+                # Add file handler to root logger
+                root_logger.addHandler(file_handler)
+                root_logger.setLevel(logging.DEBUG)
+                
+                # Ensure all loggers inherit from root
+                logging.captureWarnings(True)
+                
+                try:
+                    func(worker_id, command_queue)
+                finally:
+                    # Restore original handlers
+                    root_logger.handlers.clear()
+                    root_logger.handlers.extend(original_handlers)
         finally:
             kwargs = {'completed': 0, 'description': 'Done', 'total': 1}
             command_queue.put((f'cuda:{worker_id}', kwargs))
