@@ -1,0 +1,33 @@
+EXEC:
+  DATASETS:
+    # - caldot2
+    - caldot2-y05
+    - caldot2-y11
+    - caldot2-f
+    # - caldot2-r
+  VIDEO_SETS:
+    - train
+    - valid
+    - test
+  CLASSIFIERS:
+    # - YoloN
+    - ShuffleNet05
+    - MobileNetS
+    - Perfect
+  TILE_SIZES:
+    - 60
+  TILEPADDING_MODES:
+    - none
+    - connected
+    # - disconnected
+
+DATA:
+  SOURCE_DIR: /polyis-data/sources
+  DATASETS_DIR: /polyis-data/datasets
+  CACHE_DIR: /polyis-cache/
+
+OPS:
+  preprocess_dataset:
+    batch_size: 128
+    segment_size: 60
+    num_segments: 18

@@ -61,7 +61,7 @@ def get_evaluation_scripts() -> List[str]:
                 number = int(number_str)
 
                 # Include files in range [111, 200]
-                if 111 <= number <= 200:
+                if 110 <= number <= 200:
                     evaluation_scripts.append(filename)
             except (ValueError, IndexError):
                 # Skip files that don't match the expected pattern

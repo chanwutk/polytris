@@ -25,7 +25,7 @@ def get_detector(device: str, model_path: str):
         torch.nn.Module: Configured YOLOv5 model for vehicle detection
     """
     # print(f"Loading YOLOv5 detector for dataset on {device}")
-    model = ultralytics.YOLO(model_path)  # type: ignore
+    model = ultralytics.YOLO(model_path, verbose=False)  # type: ignore
     # print(f"Loaded YOLOv5 detector for dataset on {device}")
     model.fuse()
     # print(f"Fused YOLOv5 detector for dataset on {device}")

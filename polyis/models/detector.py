@@ -87,9 +87,10 @@ def detect(image, detector: Any, threshold: float = 0.25):
         return polyis.models.yolov3.detect(image, detector, threshold)
     elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         return polyis.models.retinanet_b3d.detect(image, detector, threshold)
-    
-    else:
+    elif isinstance(detector, ultralytics.YOLO):  # type: ignore
         return polyis.models.ultralytics.detect(image, detector)
+    else:
+        return polyis.models.torch_vision.detect(image, detector)
 
 
 def detect_batch(

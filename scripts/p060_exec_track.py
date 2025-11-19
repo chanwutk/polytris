@@ -12,7 +12,7 @@ from typing import Callable
 from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config
 
 
-CONFIG = get_config('global.yaml')
+CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']
 DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
