@@ -52,7 +52,8 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
     param_str = f'{classifier}_{tilesize}_{tilepadding}'
     
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
-    assert os.path.exists(compressed_frames_dir)
+    assert os.path.exists(compressed_frames_dir), \
+        f"Compressed frames directory {compressed_frames_dir} does not exist"
 
     # Create output directory for detections
     detections_output_dir = os.path.join(cache_dir, '040_compressed_detections', param_str)
@@ -67,7 +68,8 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
     detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len(image_files))
 
     with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
-          open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
+          open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr,
+          torch.no_grad()):
         description = f"{dataset} {video} {tilesize:>3} {classifier[:3]} {tilepadding[:3]}"
         kwargs = {'completed': 0, 'total': len(image_files), 'description': description}
         command_queue.put((device, kwargs))
@@ -78,16 +80,15 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
             batch_files = image_files[batch_start:batch_end]
             
             # Read all images in the batch
-            batch_images: list[polyis.dtypes.NPImage] = []
-            batch_runtimes: list[dict] = []
+            batch_images_: list[polyis.dtypes.NPImage] = []
             for image_file in batch_files:
                 image_path = os.path.join(compressed_frames_dir, image_file)
                 frame = cv2.imread(image_path)
                 assert frame is not None
                 assert polyis.dtypes.is_np_image(frame)
-                batch_images.append(frame)
-                batch_runtimes.append({'image_file': image_file})
-            batch_outputs = polyis.models.detector.detect_batch(batch_images, detector)
+                batch_images_.append(frame)
+            batch_outputs = polyis.models.detector.detect_batch(batch_images_, detector)
+        torch.cuda.synchronize()
         
         # Process images in batches
         for batch_start in range(0, len(image_files), batch_size):

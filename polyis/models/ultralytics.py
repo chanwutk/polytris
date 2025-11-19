@@ -1,7 +1,11 @@
+import os
 import numpy as np
 import ultralytics
 
 import polyis.dtypes
+
+# Set environment variable to suppress verbose output
+os.environ['YOLO_VERBOSE'] = 'False'
 
 
 # COCO class indices: car=2, bus=5, truck=7
@@ -21,7 +25,7 @@ def get_detector(device: str, model_path: str):
         torch.nn.Module: Configured YOLOv5 model for vehicle detection
     """
     # print(f"Loading YOLOv5 detector for dataset on {device}")
-    model = ultralytics.YOLO(model_path)
+    model = ultralytics.YOLO(model_path)  # type: ignore
     # print(f"Loaded YOLOv5 detector for dataset on {device}")
     model.fuse()
     # print(f"Fused YOLOv5 detector for dataset on {device}")
@@ -32,7 +36,10 @@ def get_detector(device: str, model_path: str):
     return model
 
 
-def detect(image: np.ndarray, model: ultralytics.YOLO) -> polyis.dtypes.DetArray:
+def detect(
+    image: np.ndarray,
+    model: "ultralytics.YOLO"  # type: ignore
+) -> polyis.dtypes.DetArray:
     """
     Detect vehicles in an image using YOLOv5.
 
@@ -46,7 +53,7 @@ def detect(image: np.ndarray, model: ultralytics.YOLO) -> polyis.dtypes.DetArray
     """
 
     # Filter classes during prediction for better performance
-    results = model(image, classes=VEHICLE_CLASSES, verbose=False)[0]
+    results = model(image, verbose=False)[0]
 
     if results.boxes is None or len(results.boxes) == 0:
         res = np.empty((0, 5))
@@ -68,7 +75,7 @@ def detect(image: np.ndarray, model: ultralytics.YOLO) -> polyis.dtypes.DetArray
 
 def detect_batch(
     images: list[polyis.dtypes.NPImage],
-    model: ultralytics.YOLO
+    model: "ultralytics.YOLO"  # type: ignore
 ) -> list[polyis.dtypes.DetArray]:
     """
     Detect vehicles in a batch of images using YOLOv5.
@@ -81,8 +88,10 @@ def detect_batch(
         list[np.ndarray]: Detection results as array of shape (N, 5)
                     where each row is [x1, y1, x2, y2, confidence]
     """
-
-    all_results = model(np.stack(images), classes=VEHICLE_CLASSES, verbose=False)
+    print('detect_batch')
+    # Pass images as a list instead of stacking them
+    # Ultralytics handles batching internally and expects a list of images
+    all_results = model(images, verbose=False)
     all_detections: list[polyis.dtypes.DetArray] = []
     for results in all_results:
         if results.boxes is None or len(results.boxes) == 0:

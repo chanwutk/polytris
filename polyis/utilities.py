@@ -1365,7 +1365,7 @@ TilePadding = typing.Literal['none', 'connected', 'disconnected']
 TILEPADDING_MODES: "dict[TilePadding, int]" = {
     'none': 0,
     'connected': 1,
-    'disconnected': 2,
+    # 'disconnected': 2,
 }
 TILEPADDING_MAPS: "dict[TilePadding, int]" = TILEPADDING_MODES
 
@@ -1537,7 +1537,8 @@ def seed_everything(seed: int = 42):
 CONFIG_DIR = 'configs'
 
 
-def get_config(config_name: str = 'global.yaml'):
+def get_config(config_name: str | None = None):
+    config_name = config_name or os.environ.get('CONFIG', 'global.yaml')
     config_path = os.path.join(CONFIG_DIR, config_name)
     import yaml
     with open(config_path, 'r') as f:

@@ -1,10 +1,14 @@
 dataset_name_mapping:
   caldot1: caldot
   caldot2: caldot
-  caldot1-yolo12: caldot-yolo12
-  caldot2-yolo12: caldot-yolo12
-  caldot1-fasterrcnn: caldot-fasterrcnn
-  caldot2-fasterrcnn: caldot-fasterrcnn
+  caldot1-y05: caldot-yolo5-1
+  caldot2-y05: caldot-yolo5-2
+  caldot1-y11: caldot-yolo11-1
+  caldot2-y11: caldot-yolo11-2
+  caldot1-f: caldot-fasterrcnn-1
+  caldot2-f: caldot-fasterrcnn-2
+  caldot1-r: caldot-retinanet-1
+  caldot2-r: caldot-retinanet-2
   jnc0: b3d
   jnc2: b3d
   jnc6: b3d
@@ -23,8 +27,31 @@ dataset_detector_mapping:
   caldot-yolo5:
     detector: yolo5
     model_path: yolov5x6u.pt
-  caldot-yolo12:
-    detector: yolo12
-    model_path: yolo12x.pt
-  caldot-fasterrcnn:
-    detector: fasterrcnn
+  caldot-yolo5-1:
+    detector: ultralytics
+    model_path: /polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt
+  caldot-yolo5-2:
+    detector: ultralytics
+    model_path: /polyis-data/training/ultralytics/caldot2/weights/yolov5x6/weights/best.pt
+  caldot-yolo11-1:
+    detector: ultralytics
+    model_path: /polyis-data/training/ultralytics/caldot1/weights/yolo11x/weights/best.pt
+  caldot-yolo11-2:
+    detector: ultralytics
+    model_path: /polyis-data/training/ultralytics/caldot2/weights/yolo11x/weights/best.pt
+  caldot-fasterrcnn-1:
+    detector: torchvision
+    model_type: fasterrcnn
+    model_path: /polyis-data/training/torchvision/caldot1/weights/fasterrcnn/model_best.pth
+  caldot-fasterrcnn-2:
+    detector: torchvision
+    model_type: fasterrcnn
+    model_path: /polyis-data/training/torchvision/caldot2/weights/fasterrcnn/model_best.pth
+  caldot-retinanet-1:
+    detector: torchvision
+    model_type: retinanet
+    model_path: /polyis-data/training/torchvision/caldot1/weights/retinanet/model_best.pth
+  caldot-retinanet-2:
+    detector: torchvision
+    model_type: retinanet
+    model_path: /polyis-data/training/torchvision/caldot2/weights/retinanet/model_best.pth

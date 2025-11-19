@@ -16,7 +16,7 @@ EXEC:
     - valid
     - test
   CLASSIFIERS:
-    - YoloN
+    # - YoloN
     - ShuffleNet05
     - MobileNetS
     - Perfect
@@ -25,7 +25,7 @@ EXEC:
   TILEPADDING_MODES:
     - none
     - connected
-    - disconnected
+    # - disconnected
 
 DATA:
   SOURCE_DIR: /polyis-data/sources

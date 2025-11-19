@@ -7,10 +7,12 @@ allowing the system to automatically choose the appropriate detector
 """
 
 from typing import Any
+import ultralytics
 
 import polyis.models.retinanet_b3d
 import polyis.models.yolov3
-import polyis.models.yolo
+import polyis.models.ultralytics
+import polyis.models.torch_vision
 import polyis.dtypes
 from polyis.utilities import get_config
 
@@ -57,11 +59,11 @@ def get_detector(dataset_name: str, gpu_id, batch_size: int = 16, num_images: in
             num_images=num_images,
         )
     
-    elif detector_type == 'yolov5':
-        return polyis.models.yolo.get_detector(device=device, model_path=dataset_config['model_path'])
+    elif detector_type == 'ultralytics':
+        return polyis.models.ultralytics.get_detector(device=device, model_path=dataset_config['model_path'])
     
-    elif detector_type == 'yolo12':
-        return polyis.models.yolo.get_detector(device=device, model_path=dataset_config['model_path'])
+    elif detector_type == 'torchvision':
+        return polyis.models.torch_vision.get_detector(device=device, model_path=dataset_config['model_path'], model_type=dataset_config['model_type'])
     
     else:
         raise ValueError(f"Unknown detector type: {detector_type}")
@@ -85,8 +87,9 @@ def detect(image, detector: Any, threshold: float = 0.25):
         return polyis.models.yolov3.detect(image, detector, threshold)
     elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         return polyis.models.retinanet_b3d.detect(image, detector, threshold)
+    
     else:
-        return polyis.models.yolo.detect(image, detector)
+        return polyis.models.ultralytics.detect(image, detector)
 
 
 def detect_batch(
@@ -101,8 +104,10 @@ def detect_batch(
         return polyis.models.yolov3.detect_batch(images, detector, threshold)
     elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         return polyis.models.retinanet_b3d.detect_batch(images, detector, threshold)
+    elif isinstance(detector, ultralytics.YOLO):  # type: ignore
+        return polyis.models.ultralytics.detect_batch(images, detector)
     else:
-        return polyis.models.yolo.detect_batch(images, detector)
+        return polyis.models.torch_vision.detect_batch(images, detector)
 
 
 def get_detector_info(dataset_name: str) -> dict:
