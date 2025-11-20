@@ -11,7 +11,7 @@ import queue
 import shutil
 
 import polyis.models.detector
-from polyis.utilities import format_time, ProgressBar, gcp_run, get_num_frames, get_config
+from polyis.utilities import format_time, ProgressBar, get_num_frames, get_config
 
 
 CONFIG = get_config()
@@ -175,10 +175,7 @@ def main(args):
     print(f"Using {max_processes} processes (limited by {num_gpus} GPUs)")
     
     # Use ProgressBar for parallel processing
-    if not args.gcp:
-        ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
-    else:
-        gcp_run(funcs)
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
 
 
 if __name__ == '__main__':
