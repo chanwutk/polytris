@@ -2,10 +2,10 @@ EXEC:
   DATASETS:
     # - caldot1-yolo12
     # - caldot2-yolo12
-    - jnc0
-    - jnc2
-    - jnc6
-    - jnc7
+    # - jnc0
+    # - jnc2
+    # - jnc6
+    # - jnc7
     - caldot1
     - caldot2
     # - caldot1-fasterrcnn

@@ -20,6 +20,7 @@ ultralytics
 rich
 seaborn
 pytest
+PyYAML
 
 git+https://github.com/facebookresearch/detectron2.git
 

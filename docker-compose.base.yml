@@ -12,7 +12,8 @@ services:
       # Change /data/chawutk/polyis-dataset to your local path
       - ${DATA}/polyis-data:/polyis-data
       - ${DATA}/polyis-cache:/polyis-cache
-      - ${DATA}/otif-dataset:/otif-dataset
+      # - ${DATA}/otif-dataset:/otif-dataset
+      - ${WORK}/../data/otif-dataset:/otif-dataset
       # - ${WORK}/../data/polytris-data:/polytris-data
       - ${HOME}/.ssh:/root/.ssh
       - ${HOME}/.config:/root/.config

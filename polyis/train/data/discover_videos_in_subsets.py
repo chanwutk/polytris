@@ -38,7 +38,11 @@ def discover_videos_in_subsets(
             continue
 
         # Find annotations directory with highest resolution for this subset
-        anno_dir = find_highest_resolution_annotations(subset_root)
+        try:
+            anno_dir = find_highest_resolution_annotations(subset_root)
+        except FileNotFoundError:
+            print(f"No annotations found for{subset_root}")
+            continue
 
         # Gather videos for this subset
         video_files = sorted([f for f in video_dir.glob("*.mp4")])

@@ -7,26 +7,30 @@ Extracts frames from videos and converts annotations to Ultralytics format.
 
 import argparse
 import json
+import random
+import re
 from pathlib import Path
 import shutil
+from typing import Any, Optional
 
 import cv2
+import numpy as np
+from matplotlib.path import Path as MplPath
 from tqdm import tqdm
 
 from polyis.train.data import (
-    adjust_val_frames_for_prefix,
     collect_valid_frames,
     discover_videos_in_subsets,
-    find_highest_resolution_annotations,
     get_dataset_subsets,
     get_video_annotation_path,
     split_frames_train_val,
     get_adjusted_frame_stride,
 )
 from polyis.train.data.ultralytics import create_data_yaml
+from polyis.b3d.nms import nms
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Create Ultralytics dataset from CalDOT videos and annotations"
     )
@@ -54,11 +58,111 @@ def parse_args():
         default=5,
         help="Extract every Nth frame (default: 5)",
     )
+    parser.add_argument(
+        "--exclude-area",
+        type=str,
+        default=None,
+        help="Path to XML file containing polygon definition for exclusion area",
+    )
+    parser.add_argument(
+        "--nms-threshold",
+        type=float,
+        default=0.5,
+        help="IoU threshold for Non-Maximum Suppression (default: 0.5)",
+    )
     return parser.parse_args()
 
 
-def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train_label_dir, 
-                                   val_image_dir, val_label_dir, video_id, frame_stride, val_frames):
+def parse_polygon_points(polygon_xml: str) -> Optional[np.ndarray]:
+    """
+    Parse polygon points from XML string.
+    
+    Args:
+        polygon_xml: XML string containing polygon points in format
+                     'points="x1,y1;x2,y2;x3,y3;..."'
+    
+    Returns:
+        Array of shape (N, 2) with (x, y) points, or None if parsing fails
+    """
+    # Extract points attribute from XML string using regex
+    # Pattern matches: points="..." or points='...'
+    match = re.search(r'points=["\']([^"\']+)["\']', polygon_xml)
+    if not match:
+        return None
+    
+    points_str = match.group(1)
+    
+    # Parse points: format is "x1,y1;x2,y2;x3,y3;..."
+    # Replace semicolons with commas for easier parsing
+    points_str = points_str.replace(';', ',')
+    # Split by comma and convert to float array
+    coords = [float(pt) for pt in points_str.split(',')]
+    # Reshape to (N, 2) array of (x, y) points
+    polygon_points = np.array(coords).reshape((-1, 2))
+    
+    return polygon_points
+
+
+def intersects_polygon(left: float, top: float, right: float, bottom: float, polygon_xml: str) -> bool:
+    """
+    Check if a bounding box intersects with a polygon defined in XML format.
+    
+    Args:
+        left: Left coordinate of bounding box
+        top: Top coordinate of bounding box
+        right: Right coordinate of bounding box
+        bottom: Bottom coordinate of bounding box
+        polygon_xml: XML string containing polygon points in format
+                     'points="x1,y1;x2,y2;x3,y3;..."'
+    
+    Returns:
+        True if the bounding box intersects with the polygon, False otherwise
+    """
+    # Parse polygon points from XML
+    polygon_points = parse_polygon_points(polygon_xml)
+    if polygon_points is None:
+        return False
+    
+    # Create matplotlib Path from polygon points
+    polygon_path = MplPath(polygon_points)
+    
+    # Get bounding box corners
+    bbox_corners = np.array([
+        [left, top],      # Top-left
+        [right, top],     # Top-right
+        [right, bottom],  # Bottom-right
+        [left, bottom],   # Bottom-left
+    ])
+    
+    # Check if any corner of the bounding box is inside the polygon
+    if polygon_path.contains_points(bbox_corners).any():
+        return True
+    
+    # Check if any vertex of the polygon is inside the bounding box
+    # A point is inside a bounding box if: left <= x <= right and top <= y <= bottom
+    polygon_inside_bbox = (
+        (polygon_points[:, 0] >= left) & (polygon_points[:, 0] <= right) &
+        (polygon_points[:, 1] >= top) & (polygon_points[:, 1] <= bottom)
+    )
+    if polygon_inside_bbox.any():
+        return True
+    
+    return False
+
+
+def extract_frames_and_annotations(
+    video_path: Path,
+    anno_path: Path,
+    train_image_dir: Path,
+    train_label_dir: Path,
+    val_image_dir: Path,
+    val_label_dir: Path,
+    video_id: str,
+    frame_stride: int,
+    val_frames: Optional[list[int]],
+    polygon_xml: Optional[str] = None,
+    nms_threshold: float = 0.5,
+) -> tuple[int, int]:
     """
     Extract frames from video and save Ultralytics format annotations.
 
@@ -79,7 +183,7 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train
     """
     # Load annotations from JSON file
     with open(anno_path, 'r') as f:
-        annotations = json.load(f)
+        annotations: list[list[dict[str, Any]]] = json.load(f)
 
     # Open video capture
     cap = cv2.VideoCapture(str(video_path))
@@ -90,6 +194,9 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train
     train_frames_extracted = 0
     val_frames_extracted = 0
     frame_idx = 0
+
+    debug_dir = Path("./runs/debug")
+    debug_dir.mkdir(parents=True, exist_ok=True)
 
     while True:
         ret, frame = cap.read()
@@ -136,37 +243,99 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train
 
         # Convert annotations to Ultralytics format and save
         # Create label file even if empty (for negative examples)
+        # Collect all valid annotations (after class and polygon filtering) for NMS
+        valid_boxes = []
+        confidence_scores = []
+        picked_boxes = []
+        
+        if frame_annos:
+            for obj in frame_annos:
+                # Extract bounding box coordinates
+                left = obj["left"]
+                top = obj["top"]
+                right = obj["right"]
+                bottom = obj["bottom"]
+                cls = obj["class"]
+                score = obj["score"]
+                if cls not in ['bus', 'car', 'truck']: 
+                    continue
+
+                # ignore bounding boxes that intersect with the polygon
+                if polygon_xml and intersects_polygon(left, top, right, bottom, polygon_xml):
+                    continue
+
+                # Convert to Ultralytics format: class_id center_x center_y width height (normalized 0-1)
+                bbox_width = right - left
+                bbox_height = bottom - top
+
+                # Skip invalid boxes
+                if bbox_width <= 0 or bbox_height <= 0:
+                    raise Exception(f"Invalid box: {left}, {top}, {right}, {bottom}")
+
+                # Store valid bounding box for NMS
+                valid_boxes.append([left, top, right, bottom])
+                confidence_scores.append(score)
+            
+            # Run NMS to remove overlapping detections
+            if valid_boxes:
+                picked_boxes, picked_scores = nms(valid_boxes, confidence_scores, nms_threshold)
+        
+        # Write filtered annotations to label file
         label_path = target_label_dir / label_filename
         with open(label_path, 'w') as label_file:
-            # Only write annotations if frame has objects
-            if frame_annos:
-                for obj in frame_annos:
-                    # Extract bounding box coordinates
-                    left = obj.get("left", 0)
-                    top = obj.get("top", 0)
-                    right = obj.get("right", 0)
-                    bottom = obj.get("bottom", 0)
+            # Write filtered annotations after NMS
+            for picked_box in picked_boxes:
+                left, top, right, bottom = picked_box
+                bbox_width = right - left
+                bbox_height = bottom - top
 
-                    # Convert to Ultralytics format: class_id center_x center_y width height (normalized 0-1)
-                    bbox_width = right - left
-                    bbox_height = bottom - top
+                # Calculate normalized center coordinates and dimensions
+                center_x = (left + bbox_width / 2.0) / width
+                center_y = (top + bbox_height / 2.0) / height
+                norm_width = bbox_width / width
+                norm_height = bbox_height / height
 
-                    # Skip invalid boxes
-                    if bbox_width <= 0 or bbox_height <= 0:
-                        raise Exception(f"Invalid box: {left}, {top}, {right}, {bottom}")
+                # Class ID (0 for "car" in CalDOT dataset)
+                class_id = 0
 
-                    # Calculate normalized center coordinates and dimensions
-                    center_x = (left + bbox_width / 2.0) / width
-                    center_y = (top + bbox_height / 2.0) / height
-                    norm_width = bbox_width / width
-                    norm_height = bbox_height / height
+                # Write Ultralytics format line
+                label_file.write(f"{class_id} {center_x:.6f} {center_y:.6f} {norm_width:.6f} {norm_height:.6f}\n")
+            # If no picked boxes, label file will be empty (negative example)
 
-                    # Class ID (0 for "car" in CalDOT dataset)
-                    class_id = 0
-
-                    # Write Ultralytics format line
-                    label_file.write(f"{class_id} {center_x:.6f} {center_y:.6f} {norm_width:.6f} {norm_height:.6f}\n")
-            # If frame_annos is empty, label file will be empty (negative example)
+        # Randomly save debug image with bounding boxes overlaid (small probability for checking)
+        if random.random() < 0.01:  # 1% probability
+            # Create a copy of the frame for drawing
+            debug_frame = frame.copy()
+            
+            # Draw polygon exclusion area if provided
+            if polygon_xml:
+                polygon_points = parse_polygon_points(polygon_xml)
+                if polygon_points is not None:
+                    # Convert to integer coordinates for OpenCV
+                    polygon_int = polygon_points.astype(np.int32)
+                    # Draw filled polygon with semi-transparent overlay
+                    overlay = debug_frame.copy()
+                    cv2.fillPoly(overlay, [polygon_int], (0, 0, 255), lineType=cv2.LINE_AA)
+                    cv2.addWeighted(overlay, 0.3, debug_frame, 0.7, 0, debug_frame)
+                    # Draw polygon outline
+                    cv2.polylines(debug_frame, [polygon_int], isClosed=True, color=(0, 0, 255), thickness=2, lineType=cv2.LINE_AA)
+            
+            # Draw original valid boxes (before NMS) as white
+            for box in valid_boxes:
+                left, top, right, bottom = box
+                # Draw rectangle (BGR color: white)
+                cv2.rectangle(debug_frame, (int(left), int(top)), (int(right), int(bottom)), (255, 255, 255), 2)
+            
+            # Draw valid boxes (after NMS) as green
+            for box in picked_boxes:
+                left, top, right, bottom = box
+                # Draw rectangle (BGR color: green)
+                cv2.rectangle(debug_frame, (int(left), int(top)), (int(right), int(bottom)), (0, 255, 0), 2)
+            
+            # Save debug image to current working directory
+            debug_filename = f"./runs/debug/debug_{video_id}_{frame_idx:06d}_{'val' if is_val else 'train'}.jpg"
+            debug_path = Path.cwd() / debug_filename
+            cv2.imwrite(str(debug_path), debug_frame)
 
         if is_val:
             val_frames_extracted += 1
@@ -175,10 +344,10 @@ def extract_frames_and_annotations(video_path, anno_path, train_image_dir, train
         frame_idx += 1
 
     cap.release()
-    return (train_frames_extracted, val_frames_extracted)
+    return train_frames_extracted, val_frames_extracted
 
 
-def setup_output_directories(output_dir):
+def setup_output_directories(output_dir: Path) -> tuple[Path, Path, Path, Path]:
     """
     Create output directory structure for Ultralytics dataset.
 
@@ -211,10 +380,19 @@ def setup_output_directories(output_dir):
     return train_image_dir, val_image_dir, train_label_dir, val_label_dir
 
 
-def process_video_file(video_file, anno_dir, val_frames,
-                       train_image_dir, val_image_dir,
-                       train_label_dir, val_label_dir,
-                       frame_stride, id_prefix: str = ""):
+def process_video_file(
+    video_file: Path,
+    anno_dir: Path,
+    val_frames: Optional[list[int]],
+    train_image_dir: Path,
+    val_image_dir: Path,
+    train_label_dir: Path,
+    val_label_dir: Path,
+    frame_stride: int,
+    id_prefix: str = "",
+    polygon_xml: Optional[str] = None,
+    nms_threshold: float = 0.5,
+) -> tuple[int, int]:
     """
     Process a single video file and extract frames with annotations.
 
@@ -242,14 +420,23 @@ def process_video_file(video_file, anno_dir, val_frames,
     train_count, val_count = extract_frames_and_annotations(
         video_file, anno_file, train_image_dir, train_label_dir,
         val_image_dir, val_label_dir, prefixed_video_id, frame_stride,
-        val_frames
+        val_frames, polygon_xml, nms_threshold
     )
 
-    return (train_count, val_count)
+    return train_count, val_count
 
 
 def main():
     args = parse_args()
+
+    # Read exclude area polygon XML file if provided
+    polygon_xml = None
+    if args.exclude_area:
+        exclude_area_path = Path(args.exclude_area)
+        if not exclude_area_path.exists():
+            raise FileNotFoundError(f"Exclude area XML file not found: {exclude_area_path}")
+        with open(exclude_area_path, 'r') as f:
+            polygon_xml = f.read().strip()
 
     # Setup paths for CalDOT dataset structure
     base_root = Path("/otif-dataset/dataset")
@@ -282,13 +469,10 @@ def main():
             total_counts[subset_name] += 1
 
     # Print subset information
-    for subset_name, subset_root in subsets:
-        if subset_root.exists():
-            video_dir = subset_root / "video"
-            if video_dir.exists():
-                anno_dir = find_highest_resolution_annotations(subset_root)
-                print(f"Using annotations for '{subset_name}' from: {anno_dir.name}")
-                print(f"Found {total_counts[subset_name]} videos in '{subset_name}'")
+    for info in video_info:
+        subset_name, video_file, anno_dir = info
+        print(f"Using annotations for '{subset_name}' from: {anno_dir.name}")
+        print(f"Found {total_counts[subset_name]} videos in '{subset_name}'")
 
     # First pass: Collect all valid frames from all videos
     print("\nCollecting valid frames from all videos...")
@@ -323,7 +507,8 @@ def main():
             video_file, anno_dir, val_frames_map[(subset_name, video_id)],
             train_image_dir, val_image_dir,
             train_label_dir, val_label_dir,
-            args.frame_stride, id_prefix=f"{subset_name}_"
+            args.frame_stride, id_prefix=f"{subset_name}_",
+            polygon_xml=polygon_xml, nms_threshold=args.nms_threshold
         )
 
         # Track frame counts
