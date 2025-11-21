@@ -1,9 +1,9 @@
 EXEC:
   DATASETS:
-    # - caldot1
+    - caldot1
     - caldot1-y05
     - caldot1-y11
-    - caldot1-f
+    # - caldot1-f
     # - caldot1-r
   VIDEO_SETS:
     - train

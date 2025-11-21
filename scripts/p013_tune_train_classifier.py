@@ -4,7 +4,6 @@ import argparse
 import json
 import os
 import shutil
-import subprocess
 import tempfile
 import time
 import multiprocessing as mp

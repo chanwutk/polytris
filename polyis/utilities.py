@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import time
 import typing
@@ -908,6 +909,8 @@ class ProgressBar:
         
         # Create log directory: {CACHE_DIR}/LOGS/{script_name}
         self.log_dir = os.path.join(CACHE_DIR, 'LOGS', script_name)
+        if os.path.exists(self.log_dir):
+            shutil.rmtree(self.log_dir)
         os.makedirs(self.log_dir, exist_ok=True)
 
         # Populate worker ID queue
@@ -951,8 +954,8 @@ class ProgressBar:
         self.update_overall_progress(1)
         
         # Generate log file path if log_dir is set and no explicit stdout_file provided
-        stdout_file = os.path.join(self.log_dir, f'worker_{worker_id}.log')
-        stderr_file = os.path.join(self.log_dir, f'worker_{worker_id}.err')
+        stdout_file = os.path.join(self.log_dir, f'worker_{worker_id}.stdout')
+        stderr_file = os.path.join(self.log_dir, f'worker_{worker_id}.stderr')
         log_file = os.path.join(self.log_dir, f'worker_{worker_id}.log')
         process = mp.Process(target=ProgressBar.run_with_worker_id,
                              args=(func, worker_id, self.command_queue,

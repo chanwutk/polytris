@@ -7,8 +7,12 @@ from pathlib import Path
 
 import cv2
 
-from polyis.utilities import CACHE_DIR, DATA_DIR, DATASETS_TO_TEST
+from polyis.utilities import get_config
 
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS_DIR = config['DATA']['DATASETS_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 SELECTIVITY = 0.05
 CLASSIFIER_SIZES = [32, 64, 128]
@@ -19,10 +23,6 @@ DIFF_SCALE = [1, 2, 4]
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Tune parameters for the model.")
-    parser.add_argument("--datasets", type=str,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help="The dataset names (space-separated).")
     parser.add_argument("--selectivity", type=float,
                         default=SELECTIVITY,
                         help="Selectivity parameter for tuning.")
@@ -32,9 +32,6 @@ def parse_args():
     parser.add_argument("--tracking_selectivity_multiplier", type=int,
                         default=4,
                         help="Multiplier for tracking selectivity.")
-    parser.add_argument("--datasets_dir", type=str,
-                        default=DATA_DIR,
-                        help="Directory containing the dataset.")
     return parser.parse_args()
 
 
@@ -66,14 +63,12 @@ def main(args):
         Video files are not actually extracted (commented out) - only metadata is generated.
         Output structure: {dataset}/indexing/segment/{video_file}.segments.jsonl
     """
-    datasets_dir = args.datasets_dir
-    datasets = args.datasets
     selectivity = args.selectivity
 
-    for dataset in datasets:
+    for dataset in DATASETS:
         print(f"Processing dataset: {dataset}")
         
-        dataset_path = Path(datasets_dir) / dataset
+        dataset_path = Path(DATASETS_DIR) / dataset
         output_dir = Path(dataset) / 'indexing' / 'segment'
 
         cache_output_dir = Path(CACHE_DIR) / output_dir
