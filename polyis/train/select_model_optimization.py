@@ -102,7 +102,7 @@ class ChannelsLastCUDAGraphWrapper(CUDAGraphWrapper):
         
 
 def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[dict[str, Any]],
-                              device: str, tile_size: int, batch_size: int) -> Any:
+                              device: str, tile_size: int, batch_size: int) -> tuple[Any, str]:
     """
     Select and apply the best optimization method based on benchmark results.
     
@@ -123,36 +123,37 @@ def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[
     
     if not valid_results:
         # All methods failed, return baseline model
-        return model
+        return model, 'baseline'
     
     # Sort by runtime (ascending - fastest first)
+    valid_results = [*filter(lambda x: 'cuda_graph' not in x['method'], valid_results)]
     valid_results.sort(key=lambda x: x['runtime_ms'])
     best_result = valid_results[0]
     method = best_result['method']
     
     # Apply the best optimization method
     if method == 'baseline':
-        return model
+        return model, method
     
     elif method == 'torch_compile':
-        return torch.compile(model, mode="reduce-overhead")
+        return torch.compile(model, mode="reduce-overhead"), method
     
     elif method == 'channels_last':
         # Convert model to channels-last
         model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
-        return model_cl
+        return model_cl, method
     
     elif method == 'torch_compile_channels_last':
         # Convert to channels-last and compile
         model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
-        return torch.compile(model_cl, mode="reduce-overhead")
+        return torch.compile(model_cl, mode="reduce-overhead"), method
     
     elif method == 'torchscript_trace':
         # Create dummy inputs for tracing
         dummy_image = torch.randn(batch_size, 6, tile_size, tile_size, device=device)
         dummy_pos = torch.randn(batch_size, 2, device=device)
         traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
-        return traced_model
+        return traced_model, method
     
     elif method == 'torchscript_optimize':
         # Trace, freeze, and optimize
@@ -161,18 +162,18 @@ def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[
         traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
         optimized_model = torch.jit.freeze(traced_model)
         optimized_model = torch.jit.optimize_for_inference(optimized_model)
-        return optimized_model
+        return optimized_model, method
     
     elif method == 'cuda_graph':
         # Create CUDA Graph wrapper
-        return CUDAGraphWrapper(model, batch_size, device, tile_size)
+        return CUDAGraphWrapper(model, batch_size, device, tile_size), method
     
     elif method == 'channels_last_cuda_graph':
         # Convert to channels-last and create CUDA Graph wrapper
         model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
-        return ChannelsLastCUDAGraphWrapper(model_cl, batch_size, device, tile_size)
+        return ChannelsLastCUDAGraphWrapper(model_cl, batch_size, device, tile_size), method
     
     else:
         # Unknown method, return baseline
-        return model
+        return model, method
 

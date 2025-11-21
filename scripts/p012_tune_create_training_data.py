@@ -70,7 +70,7 @@ def create_training_data(dataset_name: str, video_file: str, gpu_id: int, comman
             'completed': frame_idx,
             'total': frame_count,
         }))
-        always_relevant_tiles: "np.ndarray | None" = None
+        always_relevant_tiles: "dict[int, np.ndarray]" = {}
         for detections_str in detections_lines:
             frame_idx, dets, _ = json.loads(detections_str)
             cap.set(cv2.CAP_PROP_POS_FRAMES, max(0, frame_idx - 1))
@@ -104,9 +104,9 @@ def create_training_data(dataset_name: str, video_file: str, gpu_id: int, comman
 
                 save_start_time = time.time_ns() / 1e6
                 relevancy_bitmap = mark_detections(dets, frame.shape[1], frame.shape[0], tile_size)
-                if always_relevant_tiles is None:
-                    always_relevant_tiles = relevancy_bitmap
-                always_relevant_tiles |= relevancy_bitmap
+                if tile_size not in always_relevant_tiles:
+                    always_relevant_tiles[tile_size] = relevancy_bitmap
+                always_relevant_tiles[tile_size] |= relevancy_bitmap
                 for y in range(patched.shape[0]):
                     for x in range(patched.shape[1]):
                         filename = f'{video_file}_{frame_idx}_{y}_{x}.jpg'
@@ -135,8 +135,9 @@ def create_training_data(dataset_name: str, video_file: str, gpu_id: int, comman
                 'completed': frame_idx,
                 'total': frame_count,
             }))
-        assert always_relevant_tiles is not None, f"Always relevant tiles is None for {video_file}"
-        np.save(os.path.join(always_relevant_tiles_path, f'{video_file}.npy'), always_relevant_tiles)
+        for tile_size in TILE_SIZES:
+            assert tile_size in always_relevant_tiles, f"Always relevant tiles is not found for tile size {tile_size} for {video_file}"
+            np.save(os.path.join(always_relevant_tiles_path, f'{tile_size}_{video_file}.npy'), always_relevant_tiles[tile_size])
 
     cap.release()
     for fr in frs.values():

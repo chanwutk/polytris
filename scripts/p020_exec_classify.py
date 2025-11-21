@@ -48,7 +48,7 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
         ValueError: If the classifier is not supported
     """
     results_path = os.path.join(CACHE_DIR, dataset_name, 'indexing', 'training', 'results', f'{classifier_name}_{tile_size}')
-    model_path = os.path.join(results_path, 'model.pth')
+    model_path = os.path.join(results_path, 'model_best.pth')
 
     if os.path.exists(model_path):
         # print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
@@ -222,7 +222,7 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
     with open(os.path.join(CACHE_DIR, dataset, 'indexing', 'training', 'results',
                            f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
         benchmark_results = [json.loads(line) for line in f]
-    model = select_model_optimization(model, benchmark_results, device, tile_size,
+    model, method_name = select_model_optimization(model, benchmark_results, device, tile_size,
                                       (width * height) // (tile_size * tile_size))
 
     # Pre-create normalization tensors for ImageNet normalization (1.9x speedup vs torchvision.Normalize)
@@ -231,7 +231,7 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
 
     # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
-        description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier}"
+        description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier} {method_name}"
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': frame_count}))
         frames = []
