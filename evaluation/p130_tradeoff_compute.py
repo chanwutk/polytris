@@ -1,26 +1,19 @@
 #!/usr/local/bin/python
 
-import argparse
 from functools import partial
-import json
 import os
 import shutil
-from typing import Dict, List, Literal, Tuple, Any
 from multiprocessing import Pool
 
 from rich.progress import track
 import pandas as pd
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_TO_TEST, METRICS, get_video_frame_count
+from polyis.utilities import METRICS, get_video_frame_count, get_config
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Compute accuracy-throughput tradeoff data')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    return parser.parse_args()
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 
 def load_accuracy_results(dataset: str):
@@ -285,7 +278,7 @@ def process_dataset(dataset: str):
     naive_combined.to_csv(os.path.join(output_dir, f'naive_combined.csv'), index=False)
 
 
-def main(args):
+def main():
     """
     Main function that orchestrates the accuracy-throughput tradeoff computation.
     
@@ -310,9 +303,9 @@ def main(args):
         - Only query execution runtime is used (index construction time is ignored)
         - Metrics are automatically detected from the accuracy results
     """
-    print(f"Processing datasets: {args.datasets}")
+    print(f"Processing datasets: {DATASETS}")
 
-    for dataset in args.datasets:
+    for dataset in DATASETS:
         output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
@@ -321,12 +314,12 @@ def main(args):
     
     # Process datasets in parallel with progress tracking
     with Pool() as pool:
-        ires = pool.imap(process_dataset, args.datasets)
+        ires = pool.imap(process_dataset, DATASETS)
         # ires = map(process_dataset, args.datasets)
         
         # Process datasets in parallel using imap with rich track
-        _ = [*track(ires, total=len(args.datasets))]
+        _ = [*track(ires, total=len(DATASETS))]
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()

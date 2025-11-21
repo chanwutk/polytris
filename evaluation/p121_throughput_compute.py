@@ -10,17 +10,12 @@ import multiprocessing as mp
 
 import pandas as pd
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, ProgressBar
+from polyis.utilities import ProgressBar, get_config
 
 
-def parse_args():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='Process runtime measurement data for throughput analysis')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    return parser.parse_args()
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 
 def load_data_tables(data_dir: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -243,10 +238,8 @@ def compute(dataset: str, worker_id: int, command_queue: "mp.Queue[dict]"):
 
 def main():
     """Main function to process runtime measurement data."""
-    args = parse_args()
-    
     tasks: list[Callable[[int, "mp.Queue"], None]] = []
-    for dataset in args.datasets:
+    for dataset in DATASETS:
         tasks.append(partial(compute, dataset))
 
     ProgressBar(num_tasks=len(tasks), num_workers=mp.cpu_count()).run_all(tasks)

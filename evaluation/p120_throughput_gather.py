@@ -1,21 +1,20 @@
 #!/usr/local/bin/python
 
-import argparse
 import os
 import shutil
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST, DATASETS_DIR, DATASETS_TO_TEST, TILE_SIZES, TILEPADDING_MODES
 
 import pandas as pd
 
+from polyis.utilities import TILEPADDING_MODES, get_config
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Gather throughput data from pipeline stages')
-    parser.add_argument('--datasets', required=False, default=DATASETS_TO_TEST, nargs='+',
-                        help='Dataset names (space-separated)')
-    return parser.parse_args()
 
-CLASSIFIERS = CLASSIFIERS_TO_TEST
-EXEC_CLASSIFIERS = CLASSIFIERS_TO_TEST + ['Perfect']
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS_DIR = config['DATA']['DATASETS_DIR']
+TILE_SIZES = config['EXEC']['TILE_SIZES']
+CLASSIFIERS = config['EXEC']['CLASSIFIERS']
+DATASETS = config['EXEC']['DATASETS']
+TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
 
 
 def discover_available_videos(datasets: list[str]):
@@ -108,6 +107,8 @@ def gather_index_construction_data(datasets):
         assert os.path.exists(training_results_dir), f"Training results directory {training_results_dir} does not exist"
         for tilesize in TILE_SIZES:
             for classifier in CLASSIFIERS:
+                if classifier == 'Perfect':
+                    continue
                 classifier_dir = os.path.join(training_results_dir, f'{classifier}_{tilesize}')
                 assert os.path.exists(classifier_dir), f"Training results directory {classifier_dir} does not exist"
 
@@ -177,7 +178,7 @@ def gather_query_execution_data(datasets_videos):
         })
 
         # Classifier-based stages
-        for classifier in EXEC_CLASSIFIERS:
+        for classifier in CLASSIFIERS:
             for tilesize in TILE_SIZES:
                 cl_ts = f'{classifier}_{tilesize}'
                 for tilepadding in TILEPADDING_MODES:
@@ -314,25 +315,23 @@ def save_query_execution_data(query_data, dataset, output_dir):
         print_query_execution_table(dataset_data, write_line=fwrite)
 
 
-def main(args):
+def main():
     """Main function to gather and print runtime data."""
     # Clear the 080_throughput directory
-    for dataset in args.datasets:
+    for dataset in DATASETS:
         output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
         if os.path.exists(output_dir):
             print(f"Clearing directory: {output_dir}")
             shutil.rmtree(output_dir)
 
     print("Gathering runtime data from all stages and configurations...")
-
-    datasets = args.datasets
     
     # Discover available videos from execution directories
-    datasets_videos = discover_available_videos(datasets)
+    datasets_videos = discover_available_videos(DATASETS)
     print(f"Found {len(datasets_videos)} dataset/video combinations")
     
     # Gather data
-    index_data = gather_index_construction_data(datasets)
+    index_data = gather_index_construction_data(DATASETS)
     query_data = gather_query_execution_data(datasets_videos)
     
     # Print tables
@@ -346,4 +345,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()
