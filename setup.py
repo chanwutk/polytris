@@ -8,6 +8,8 @@ import os
 import glob
 import multiprocessing as mp
 
+from mypyc.build import mypycify
+
 
 ARGS = ["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"]
 MACROS: list[tuple[str, str | None]] = [("NPY_NO_DEPRECATED_API", "NPY_2_3_API_VERSION")]
@@ -234,6 +236,67 @@ class BuildExt(build_ext):
         self.inplace = True
 
 
+ext_modules = cythonize(
+    extensions,
+    nthreads=mp.cpu_count() // 2,
+    compiler_directives={
+        "language_level": 3,
+        # Performance optimizations
+        "boundscheck": False,
+        "wraparound": False,
+        "initializedcheck": False,
+        "nonecheck": False,
+        "freethreading_compatible": True,
+        "subinterpreters_compatible": 'own_gil',
+        "overflowcheck": False,
+        "overflowcheck.fold": False,
+        "embedsignature": False,
+        "cdivision": True,
+        "cpow": True,
+        "optimize.use_switch": True,
+        "optimize.unpack_method_calls": True,
+        "warn.undeclared": False,
+        "warn.unreachable": False,
+        "warn.maybe_uninitialized": False,
+        "warn.unused": False,
+        "warn.unused_arg": False,
+        "warn.unused_result": False,
+        "warn.multiple_declarators": False,
+        # Additional performance settings
+        "infer_types": True,
+        "infer_types.verbose": False,
+        "profile": False,
+        "linetrace": False,
+        "emit_code_comments": False,
+        "annotation_typing": False,
+        "c_string_type": "str",
+        "c_string_encoding": "ascii",
+        "type_version_tag": True,
+        "unraisable_tracebacks": False,
+        "iterable_coroutine": True,
+        # "async_gil": True,
+        # "freelist": 1000,
+        "fast_gil": True,
+        # "fast_math": True,
+    },
+    annotate=True
+)
+
+mypyc_extensions = mypycify([
+    'polyis/tracker/kalman_filter.py',
+    'polyis/tracker/sort.py',
+])
+# Add optimization flags and include directories to mypyc-compiled extensions
+for ext in mypyc_extensions:
+    ext.extra_compile_args = ARGS
+    ext.define_macros = MACROS
+    # Add numpy include directory if not already present
+    if numpy.get_include() not in (ext.include_dirs or []):
+        if ext.include_dirs is None:
+            ext.include_dirs = []
+        ext.include_dirs.append(numpy.get_include())
+ext_modules.extend(mypyc_extensions)
+
 setup(
     name="polyis",
     version="0.1.0",
@@ -243,51 +306,7 @@ setup(
         'build_ext': BuildExt,
         'doc': DocCommand,
     },
-    ext_modules=cythonize(
-        extensions,
-        nthreads=mp.cpu_count() // 2,
-        compiler_directives={
-            "language_level": 3,
-            # Performance optimizations
-            "boundscheck": False,
-            "wraparound": False,
-            "initializedcheck": False,
-            "nonecheck": False,
-            "freethreading_compatible": True,
-            "subinterpreters_compatible": 'own_gil',
-            "overflowcheck": False,
-            "overflowcheck.fold": False,
-            "embedsignature": False,
-            "cdivision": True,
-            "cpow": True,
-            "optimize.use_switch": True,
-            "optimize.unpack_method_calls": True,
-            "warn.undeclared": False,
-            "warn.unreachable": False,
-            "warn.maybe_uninitialized": False,
-            "warn.unused": False,
-            "warn.unused_arg": False,
-            "warn.unused_result": False,
-            "warn.multiple_declarators": False,
-            # Additional performance settings
-            "infer_types": True,
-            "infer_types.verbose": False,
-            "profile": False,
-            "linetrace": False,
-            "emit_code_comments": False,
-            "annotation_typing": False,
-            "c_string_type": "str",
-            "c_string_encoding": "ascii",
-            "type_version_tag": True,
-            "unraisable_tracebacks": False,
-            "iterable_coroutine": True,
-            # "async_gil": True,
-            # "freelist": 1000,
-            "fast_gil": True,
-            # "fast_math": True,
-        },
-        annotate=True
-    ),
+    ext_modules=ext_modules,
     zip_safe=False,
 )
 

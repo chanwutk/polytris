@@ -120,8 +120,8 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
 
 
 def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
-                               tilesize: int, tilepadding: str, metrics_list: list[str], output_dir: str,
-                               worker_id: int, worker_id_queue: "mp.Queue"):
+                               tilesize: int, tilepadding: str, metrics_list: list[str],
+                               output_dir: str, worker_id: int, worker_id_queue: "mp.Queue"):
     """
     Evaluate tracking accuracy for multiple videos using TrackEval.
 
@@ -147,14 +147,20 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
 
     # Create classifier-tilesize-tilepadding identifier for naming
     clts = f'{classifier}_{tilesize}_{tilepadding}'
+    input_track = os.path.join('060_uncompressed_tracks', clts, 'tracking.jsonl')
+    if classifier == 'None' or tilesize == 0 or tilepadding == 'None':
+        assert classifier == 'None' and tilesize == 0 and tilepadding == 'None', \
+            "classifier and tilepadding must be None and tilesize must be 0 if not provided, " \
+            f"but got {classifier}, {tilesize}, and {tilepadding}"
+        input_track = os.path.join('000_groundtruth', 'tracking.jsonl')
 
     # Create TrackEval dataset configuration
     # This configures how TrackEval will find and process the data files
     dataset_config = {
         'output_fol': output_dir,  # Where TrackEval will write its output
         'output_sub_fol': f'{dataset}_{clts}',  # Subdirectory name for this evaluation
-        'input_gt': os.path.join('000_groundtruth', 'tracking.jsonl'),  # Relative path to groundtruth files
-        'input_track': os.path.join('060_uncompressed_tracks', clts, 'tracking.jsonl'),  # Relative path to tracking files
+        'input_gt': os.path.join('000_groundtruth', 'tracking_.jsonl'),  # Relative path to groundtruth files
+        'input_track': input_track,  # Relative path to tracking files
         'skip': 1,  # Process every frame (no frame skipping)
         'tracker': clts,  # Tracker name identifier
         'seq_list': videos,  # List of sequences (videos) to evaluate
@@ -328,6 +334,8 @@ def main(args):
             # Create a partial function with all arguments bound except the function call
             eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos,
                                       cl, ts, tilepadding, metrics_list, output_dir))
+        output_dir = os.path.join(evaluation_dir, 'raw', 'None_0_None')
+        eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos, 'None', 0, 'None', metrics_list, output_dir))
 
     # Validate that we found some evaluation tasks
     assert len(eval_tasks) > 0, "No tracking results found. Please ensure 060_exec_track.py has been run first."
