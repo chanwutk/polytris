@@ -157,8 +157,20 @@ def match_accuracy_throughput_data(
 
     is_naive = throughput['stage'].isin(NAIVE_STAGES)
     throughput_ = throughput[~is_naive]
+    naive_throughput_ = throughput[is_naive].copy()
     assert isinstance(throughput_, pd.DataFrame)
     throughput = prepare_throughput(throughput_)
+
+    # naive_throughput_ = throughput[is_naive].copy()
+    naive_throughput_['classifier'] = 'Groundtruth'
+    naive_throughput_['tilesize'] = 0
+    naive_throughput_['tilepadding'] = 'Groundtruth'
+    assert isinstance(naive_throughput_, pd.DataFrame)
+    naive_throughput = prepare_throughput(naive_throughput_)
+
+    throughput = pd.concat([throughput, naive_throughput], ignore_index=True, axis=0)
+    # print(throughput)
+    print(accuracy)
 
     # Merge accuracy data with runtime data
     assert len(throughput) == len(accuracy), \

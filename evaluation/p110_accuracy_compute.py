@@ -148,9 +148,9 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
     # Create classifier-tilesize-tilepadding identifier for naming
     clts = f'{classifier}_{tilesize}_{tilepadding}'
     input_track = os.path.join('060_uncompressed_tracks', clts, 'tracking.jsonl')
-    if classifier == 'None' or tilesize == 0 or tilepadding == 'None':
-        assert classifier == 'None' and tilesize == 0 and tilepadding == 'None', \
-            "classifier and tilepadding must be None and tilesize must be 0 if not provided, " \
+    if classifier == 'Groundtruth' or tilesize == 0 or tilepadding == 'Groundtruth':
+        assert classifier == 'Groundtruth' and tilesize == 0 and tilepadding == 'Groundtruth', \
+            "classifier and tilepadding must be Groundtruth and tilesize must be 0 if not provided, " \
             f"but got {classifier}, {tilesize}, and {tilepadding}"
         input_track = os.path.join('000_groundtruth', 'tracking.jsonl')
 
@@ -334,8 +334,8 @@ def main(args):
             # Create a partial function with all arguments bound except the function call
             eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos,
                                       cl, ts, tilepadding, metrics_list, output_dir))
-        output_dir = os.path.join(evaluation_dir, 'raw', 'None_0_None')
-        eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos, 'None', 0, 'None', metrics_list, output_dir))
+        output_dir = os.path.join(evaluation_dir, 'raw', 'Groundtruth_0_Groundtruth')
+        eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos, 'Groundtruth', 0, 'Groundtruth', metrics_list, output_dir))
 
     # Validate that we found some evaluation tasks
     assert len(eval_tasks) > 0, "No tracking results found. Please ensure 060_exec_track.py has been run first."

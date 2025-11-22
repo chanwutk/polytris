@@ -52,16 +52,16 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: lis
         # Create scatter plot and baseline using shared function
         scatter, baseline = tradeoff_scatter_and_naive_baseline(
             base_chart, x_column, x_title, accuracy_col, metric_name,
-            size_range=(50, 300), scatter_opacity=0.8,
+            size=20, scatter_opacity=0.8,
             baseline_stroke_width=3, baseline_opacity=0.9,
-            size_field='tilepadding'
+            shape_field='tilepadding'
         )
         
         # Add dataset to tooltip for all datasets visualization
         scatter = scatter.encode(tooltip=['dataset', 'video', 'classifier', 'tilesize', 'tilepadding', x_column, accuracy_col])
         
         # Create the combined chart with dataset facets
-        combined_chart = (scatter + baseline).facet(
+        combined_chart = (scatter).facet(
             facet=alt.Facet('dataset:N', title=None,
                             header=alt.Header(labelExpr="'Dataset: ' + datum.value")),
             columns=3

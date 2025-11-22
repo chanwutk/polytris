@@ -1253,6 +1253,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
                                         accuracy_col: str, metric_name: str,
                                         size_range: tuple[int, int] = (20, 200), scatter_opacity: float = 0.7, 
                                         size: int | None = None, baseline_stroke_width: int = 2, 
+                                        shape_field: str = 'tilepadding',
                                         baseline_opacity: float = 0.8, size_field: str = 'tilesize') -> "tuple[alt.Chart, alt.LayerChart]":
     """
     Create both a scatter plot and naive baseline visualization with common styling.
@@ -1267,6 +1268,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         size_range: Tuple of (min, max) for tile size scale
         scatter_opacity: Opacity for the scatter points
         size: Fixed size for scatter points (if None, uses size_field encoding)
+        shape_field: Column name for shape encoding (default: 'tilepadding')
         baseline_stroke_width: Width of the baseline rule line
         baseline_opacity: Opacity of the baseline rule line
         size_field: Column name for size encoding (default: 'tilesize')
@@ -1277,7 +1279,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
     import altair as alt
     # Create scatter plot
     scale = {'scale': alt.Scale(domain=[0, 1])} if metric_name != 'Count' else {}
-    scatter = base_chart.mark_circle(opacity=scatter_opacity).encode(
+    scatter = base_chart.mark_point(opacity=scatter_opacity).encode(
         x=alt.X(f'{x_column}:Q', title=x_title),
         y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **scale),  # type: ignore
         color=alt.Color('classifier:N', title='Classifier'),
@@ -1292,7 +1294,10 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         scatter = scatter.encode(size=alt.Size(f'{size_field}:O',
                                  title='Tile Size',
                                  scale=alt.Scale(range=size_range)))
-    
+
+    if shape_field is not None:
+        scatter = scatter.encode(shape=alt.Shape(f'{shape_field}:O', title='Tile Padding'))
+
     # Create naive baseline as a point at 1.0 accuracy score
     baseline = base_chart.mark_point(
         color='red',

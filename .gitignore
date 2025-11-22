@@ -17,6 +17,8 @@ build
 weights
 runs
 
+*.so
+
 **/model.pth
 
 **/track-accuracy-*/*
