@@ -211,7 +211,7 @@ def compare_tracking_results(
                 'max_bbox_diff': float(max_diff),
                 'type': 'bbox_mismatch'
             })
-            continue
+            assert False, f"Bboxes differ: {bboxes_b3d} != {bboxes_tracker}"
         
         comparison['frames_match'] += 1
     

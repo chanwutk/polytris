@@ -140,14 +140,14 @@ def associate_detections_to_trackers(
     detections: npt.NDArray[np.float64], 
     trackers: npt.NDArray[np.float64], 
     iou_threshold: float = 0.3
-) -> tuple[npt.NDArray[np.int16], npt.NDArray[np.int16]]:
+) -> tuple[list[npt.NDArray[np.int16]], list[np.uint16]]:
   """
   Assigns detections to tracked object (both represented as bounding boxes)
 
   Returns 3 lists of matches, unmatched_detections and unmatched_trackers
   """
   if(len(trackers)==0):
-    return np.empty((0,2),dtype=np.int16), np.arange(len(detections), dtype=np.int16)
+    return [], list(map(np.uint16, range(len(detections))))
 
   iou_matrix: npt.NDArray[np.float64] = iou_batch(detections, trackers)
 
@@ -161,24 +161,21 @@ def associate_detections_to_trackers(
   else:
     matched_indices = np.empty(shape=(0,2), dtype=int)
 
-  unmatched_detections: list[int] = []
+  unmatched_detections: list[np.uint16] = []
   for d in range(len(detections)):
     if(d not in matched_indices[:,0]):
-      unmatched_detections.append(d)
+      unmatched_detections.append(np.uint16(d))
 
   #filter out matched with low IOU
   matches: list[npt.NDArray[np.int16]] = []
+  m: npt.NDArray[np.int16]
   for m in matched_indices:
     if(iou_matrix[m[0], m[1]]<iou_threshold):
       unmatched_detections.append(m[0])
     else:
-      matches.append(m.reshape(1,2))
-  if(len(matches)==0):
-    matches_array: npt.NDArray[np.int16] = np.empty((0, 2), dtype=np.int16)
-  else:
-    matches_array = np.concatenate(matches, axis=0, dtype=np.int16)
+      matches.append(m)
 
-  return matches_array, np.array(unmatched_detections)
+  return matches, unmatched_detections
 
 
 class Sort(object):
@@ -214,15 +211,17 @@ class Sort(object):
     trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
     for t in reversed(to_del):
       self.trackers.pop(t)
-    matched: npt.NDArray[np.int16]
-    unmatched_dets: npt.NDArray[np.int16]
+    matched: list[npt.NDArray[np.int16]]
+    unmatched_dets: list[np.uint16]
     matched, unmatched_dets = associate_detections_to_trackers(dets,trks, self.iou_threshold)
 
     # update matched trackers with assigned detections
+    m: npt.NDArray[np.int16]
     for m in matched:
       self.trackers[m[1]].update(dets[m[0], :])
 
     # create and initialise new trackers for unmatched detections
+    i: np.uint16
     for i in unmatched_dets:
         trk: KalmanBoxTracker = KalmanBoxTracker(dets[i,:])
         self.trackers.append(trk)
