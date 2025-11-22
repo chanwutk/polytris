@@ -21,7 +21,7 @@ from typing import ClassVar
 import numpy as np
 import numpy.typing as npt
 
-from polyis.tracker.kalman_filter import KalmanFilter
+from polyis.tracker.kalman_filter import KalmanFilter7x4
 import lap  # type: ignore
 
 np.random.seed(0)
@@ -86,7 +86,7 @@ class KalmanBoxTracker(object):
     Initialises a tracker using initial bounding box.
     """
     #define constant velocity model
-    self.kf: KalmanFilter = KalmanFilter(dim_x=7, dim_z=4) 
+    self.kf: KalmanFilter7x4 = KalmanFilter7x4()
     self.kf.F = np.array([[1,0,0,0,1,0,0],[0,1,0,0,0,1,0],[0,0,1,0,0,0,1],[0,0,0,1,0,0,0],  [0,0,0,0,1,0,0],[0,0,0,0,0,1,0],[0,0,0,0,0,0,1]])
     self.kf.H = np.array([[1,0,0,0,0,0,0],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0],[0,0,0,1,0,0,0]])
 

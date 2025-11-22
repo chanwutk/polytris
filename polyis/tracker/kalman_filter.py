@@ -1,33 +1,24 @@
-from copy import deepcopy
 import numpy as np
 import numpy.typing as npt
 from numpy import dot, zeros, eye
 
 
-class KalmanFilter:
-    def __init__(self, dim_x: int, dim_z: int) -> None:
-        if dim_x < 1:
-            raise ValueError('dim_x must be 1 or greater')
-        if dim_z < 1:
-            raise ValueError('dim_z must be 1 or greater')
+I7 = np.eye(7)
 
-        self.dim_x: int = dim_x
-        self.dim_z: int = dim_z
 
-        self.x: npt.NDArray[np.float64] = zeros((dim_x, 1))        # state
-        self.P: npt.NDArray[np.float64] = eye(dim_x)               # uncertainty covariance
-        self.Q: npt.NDArray[np.float64] = eye(dim_x)               # process uncertainty
-        self.F: npt.NDArray[np.float64] = eye(dim_x)               # state transition matrix
-        self.H: npt.NDArray[np.float64] = zeros((dim_z, dim_x))    # Measurement function
-        self.R: npt.NDArray[np.float64] = eye(dim_z)               # state uncertainty
+class KalmanFilter7x4:
+    def __init__(self) -> None:
+        self.x: npt.NDArray[np.float64] = zeros((7, 1))        # state
+        self.P: npt.NDArray[np.float64] = eye(7)               # uncertainty covariance
+        self.Q: npt.NDArray[np.float64] = eye(7)               # process uncertainty
+        self.F: npt.NDArray[np.float64] = eye(7)               # state transition matrix
+        self.H: npt.NDArray[np.float64] = zeros((4, 7))        # Measurement function
+        self.R: npt.NDArray[np.float64] = eye(4)               # state uncertainty
 
         # gain and residual are computed during the innovation step. We
         # save them so that in case you want to inspect them for various
         # purposes
-        self.y: npt.NDArray[np.float64] = zeros((dim_z, 1))
-
-        # identity matrix. Do not alter this.
-        self._I: npt.NDArray[np.float64] = np.eye(dim_x)
+        self.y: npt.NDArray[np.float64] = zeros((4, 1))
 
 
     def predict(self) -> None:
@@ -69,5 +60,5 @@ class KalmanFilter:
         # and works for non-optimal K vs the equation
         # P = (I-KH)P usually seen in the literature.
 
-        I_KH: npt.NDArray[np.float64] = self._I - dot(K, H)
+        I_KH: npt.NDArray[np.float64] = I7 - dot(K, H)
         self.P = dot(dot(I_KH, self.P), I_KH.T) + dot(dot(K, R), K.T)
