@@ -45,7 +45,9 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
 
     df = results.copy()
     df['Score'] = df[score_field]
-    df['Classifier_Tile_Padding'] = df['Classifier'] + '_' + df['Tile_Padding']
+    df['Classifier_Tile_Padding'] = df['Classifier'].str.slice(0, 3) + '_' + df['Tile_Padding'].str.slice(0, 3)
+
+    df['Tile_Padding'] = df['Tile_Padding'].apply(lambda x: {'connected': 'padded (+)', 'none': 'none'}.get(x, 'Naive'))
     
     # Create horizontal bar chart with text labels inside bars
     # Main bars showing the scores
@@ -61,7 +63,7 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
         tooltip=['Video', 'Tile_Size', 'Tile_Padding', 'Classifier', alt.Tooltip('Score:Q', format='.2f')]
     ).properties(
         width=200,
-        height=200
+        height=120
     )
     
     # Add score text labels inside the bars (white text)
@@ -70,7 +72,7 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
         baseline='middle',
         dx=-3,  # Small offset from the right edge of the bar
         color='white'
-    ).transform_calculate(text='datum.Score > 0.01 ? format(datum.Score, ".2f") : ""').encode(
+    ).transform_calculate(text='parseInt(datum.Score * 100)').encode(
         x=alt.X('Score:Q'),
         text=alt.Text('text:N'),
         # yOffset=alt.YOffset('Dilate:N')
@@ -99,7 +101,7 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
         # detail=alt.Detail('Tile_Padding:N'),
         # color=alt.Color('Tile_Padding:N', title='Tile Padding')
     ).resolve_scale(y='independent').facet(
-        row=alt.Row('Tile_Size:O', title='Tile Size'),
+        # row=alt.Row('Tile_Size:O', title='Tile Size'),
         column=alt.Column('Video:N', title=None),
         # column=alt.Column('Tile_Padding:N', title='Tile Padding'),
         # facet=alt.Facet('Video:N', title=None)

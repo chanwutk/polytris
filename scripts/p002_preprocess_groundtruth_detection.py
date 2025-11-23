@@ -11,7 +11,7 @@ import queue
 import shutil
 
 import polyis.models.detector
-from polyis.utilities import format_time, ProgressBar, gcp_run, get_num_frames, get_config
+from polyis.utilities import format_time, ProgressBar, get_num_frames, get_config
 
 
 CONFIG = get_config()
@@ -19,12 +19,6 @@ EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
 VIDEO_SETS = CONFIG['EXEC']['VIDEO_SETS']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Execute object detection on preprocessed videos')
-    parser.add_argument('--gcp', action='store_true', help='Execute the code in GCP')
-    return parser.parse_args()
 
 
 def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: queue.Queue):
@@ -81,6 +75,14 @@ def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: qu
             'completed': 0,
             'total': frame_count
         }))
+
+        # warm up the model
+        for _ in range(32):
+            ret, frame = cap.read()
+            _ = polyis.models.detector.detect(frame, detector)
+            torch.cuda.synchronize()
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
         while cap.isOpened():
             # Measure frame reading time
             start_time = (time.time_ns() / 1e6)
@@ -119,7 +121,7 @@ def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: qu
 setattr(detect_objects, 'gcp', 'p002g_preprocess_groundtruth_detection.py')
 
 
-def main(args):
+def main():
     """
     Main function that orchestrates the object detection process on preprocessed videos.
     
@@ -129,17 +131,13 @@ def main(args):
     3. Determines the number of available GPUs
     4. Creates separate processes for each video, each using a different GPU
     5. Limits the total number of processes to the number of available GPUs
-    
-    Args:
-        args (argparse.Namespace): Parsed command line arguments containing:
-            - datasets (list): List of dataset names to process (detector auto-selected)
             
     Note:
         - The script expects preprocessed videos from 000_preprocess_dataset.py in:
           {DATASETS_DIR}/{dataset}/
-        - Videos are identified by common video file extensions (.mp4, .avi, .mov, .mkv)
+        - Videos are identified by common video file extensions (.mp4)
         - Object detection results are saved to:
-          {CACHE_DIR}/{dataset}/{video_file}/000_groundtruth/detections.jsonl
+          {CACHE_DIR}/{dataset}/{video_file}/000_groundtruth/detection.jsonl
         - The detector model is automatically selected based on the dataset name
         - Runtime measurements include frame reading and object detection times
         - Processing is parallelized across available GPUs for improved performance
@@ -156,7 +154,7 @@ def main(args):
         for videoset in ['test']:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
-            video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])
+            video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith('.mp4')])
         assert len(video_files) > 0, f"No video files found in {dataset_dir}"
         
         for video_file in video_files:
@@ -175,11 +173,8 @@ def main(args):
     print(f"Using {max_processes} processes (limited by {num_gpus} GPUs)")
     
     # Use ProgressBar for parallel processing
-    if not args.gcp:
-        ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
-    else:
-        gcp_run(funcs)
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()

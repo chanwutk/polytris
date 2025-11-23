@@ -1,2 +1,3 @@
 altair
 pandas
+rich

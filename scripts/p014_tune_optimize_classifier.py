@@ -88,7 +88,7 @@ def benchmark_classifier(datasets: list[str], width: int, height: int, classifie
     # Find the trained model for this classifier, tile size, and dataset
     model_path = os.path.join(
         CACHE_DIR, datasets[0], 'indexing', 'training', 'results',
-        f'{classifier_name}_{tile_size}', 'model.pth'
+        f'{classifier_name}_{tile_size}', 'model_best.pth'
     )
     
     if not os.path.exists(model_path):

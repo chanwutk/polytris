@@ -9,7 +9,7 @@ from functools import partial
 from polyis.utilities import CACHE_DIR, DATASETS_DIR, PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, load_detection_results, get_config
 
 
-CONFIG = get_config('global.yaml')
+CONFIG = get_config()
 EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
 
 
@@ -40,7 +40,7 @@ def visualize_video(video_file: str, cache_dir: str, dataset: str, speed_up: int
         progress_queue (Queue): Queue for progress updates
     """
     # Load tracking results
-    tracking_results_raw = load_detection_results(cache_dir, dataset, video_file, tracking=True)
+    tracking_results_raw = load_detection_results(cache_dir, dataset, video_file, tracking=True, filename='tracking.jsonl')
     
     # Convert to the format expected by create_tracking_visualization
     tracking_results = {}
@@ -128,7 +128,7 @@ def main(args):
     assert len(funcs) > 0, "No videos found to process across all datasets"
     
     # Determine number of processes to use
-    num_processes = min(mp.cpu_count(), len(funcs), 20)  # Cap at 20 processes
+    num_processes = min(mp.cpu_count(), len(funcs), 40)  # Cap at 20 processes
 
     mp.set_start_method('spawn', force=True)
     ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)

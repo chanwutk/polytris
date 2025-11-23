@@ -1,21 +1,16 @@
 #!/usr/local/bin/python
 
-import argparse
 from functools import partial
 import os
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, METRICS, load_all_datasets_tradeoff_data, print_best_data_points, tradeoff_scatter_and_naive_baseline
+from polyis.utilities import METRICS, load_all_datasets_tradeoff_data, print_best_data_points, tradeoff_scatter_and_naive_baseline, get_config
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Visualize all dataset-wide accuracy-throughput tradeoffs')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    return parser.parse_args()
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 
 def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: list[str], 
@@ -57,16 +52,16 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: lis
         # Create scatter plot and baseline using shared function
         scatter, baseline = tradeoff_scatter_and_naive_baseline(
             base_chart, x_column, x_title, accuracy_col, metric_name,
-            size_range=(50, 300), scatter_opacity=0.8,
+            size=20, scatter_opacity=0.8,
             baseline_stroke_width=3, baseline_opacity=0.9,
-            size_field='tilepadding'
+            shape_field='tilepadding'
         )
         
         # Add dataset to tooltip for all datasets visualization
         scatter = scatter.encode(tooltip=['dataset', 'video', 'classifier', 'tilesize', 'tilepadding', x_column, accuracy_col])
         
         # Create the combined chart with dataset facets
-        combined_chart = (scatter + baseline).facet(
+        combined_chart = (scatter).facet(
             facet=alt.Facet('dataset:N', title=None,
                             header=alt.Header(labelExpr="'Dataset: ' + datum.value")),
             columns=3
@@ -116,7 +111,7 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     visualize(x_column='throughput_fps', x_title='Throughput (frames/second)', plot_suffix='throughput')
 
 
-def main(args):
+def main():
     """
     Main function that orchestrates the all datasets accuracy-throughput tradeoff visualization.
     
@@ -125,20 +120,17 @@ def main(args):
     and creates visualizations showing the tradeoff between accuracy and query execution 
     runtime/throughput across all datasets.
     
-    Args:
-        args (argparse.Namespace): Parsed command line arguments
-        
     Note:
         - The script expects tradeoff data from p090_tradeoff_compute.py in:
           {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/accuracy_{suffix}_tradeoff_combined.csv
         - Results are saved to: {CACHE_DIR}/evaluation/092_tradeoff_all/
         - Please run p090_tradeoff_compute.py first to generate the required CSV files
     """
-    print(f"Processing datasets: {args.datasets}")
+    print(f"Processing datasets: {DATASETS}")
     
     # Create visualizations for all datasets
-    visualize_all_datasets_tradeoffs(args.datasets)
+    visualize_all_datasets_tradeoffs(DATASETS)
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()

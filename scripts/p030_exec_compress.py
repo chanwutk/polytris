@@ -1,10 +1,10 @@
 #!/usr/local/bin/python
 
 import argparse
+from enum import IntEnum
 import json
 import os
-import sys
-from typing import Callable, Literal
+from typing import Callable, Literal, NamedTuple
 import cv2
 import numpy as np
 import shutil
@@ -13,131 +13,63 @@ import multiprocessing as mp
 from functools import partial
 
 import torch
-import torch.nn.functional as F
 
 from polyis import dtypes
-from polyis.utilities import (
-    CACHE_DIR, CLASSIFIERS_CHOICES,
-    DATASETS_DIR, TILEPADDING_MODES, format_time,
-    load_classification_results,
-    CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
-)
-from polyis.pack.cython.pack_append import pack_append
-from polyis.pack.cython.group_tiles import free_polyimino_stack, group_tiles
+from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS
+from polyis.pack.group_tiles import group_tiles
+from polyis.pack.pack_ffd import pack_all
+
+
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS_DIR = config['DATA']['DATASETS_DIR']
+TILE_SIZES = config['EXEC']['TILE_SIZES']
+CLASSIFIERS = config['EXEC']['CLASSIFIERS']
+DATASETS = config['EXEC']['DATASETS']
+TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
+
+
+class PackMode(IntEnum):
+    """Packing mode options for bin packing algorithms."""
+    Easiest_Fit = 0  # Pack into collage with most empty space
+    First_Fit = 1    # Pack into first collage that fits
+    Best_Fit = 2     # Pack into collage with least empty space that fits
+
+
+class PolyominoPosition(NamedTuple):
+    oy: int
+    ox: int
+    py: int
+    px: int
+    frame: int
+    shape: np.ndarray
+
+
+TilePaddingMode = Literal['none', 'connected', 'disconnected']
+
+
+OUTPUT_DIR_MAP = {
+    PackMode.Best_Fit: '033_compressed_frames',
+    PackMode.Easiest_Fit: '034_compressed_frames',
+    PackMode.First_Fit: '035_compressed_frames',
+}
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute compression of video tiles into images based on classification results')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    parser.add_argument('--tilesize', type=str, choices=['30', '60', '120', 'all'], default='all',
-                        help='Tile size to use for compression (or "all" for all tile sizes)')
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification probability (0.0 to 1.0)')
-    parser.add_argument('--classifiers', required=False,
-                        default=CLASSIFIERS_TO_TEST + ['Perfect'],
-                        choices=CLASSIFIERS_CHOICES + ['Perfect'],
-                        nargs='+',
-                        help='Classifier names to use (can specify multiple): '
-                             f'{", ".join(CLASSIFIERS_CHOICES)}. For example: '
-                             '--classifiers YoloN ShuffleNet05 ResNet18')
-    parser.add_argument('--clear', action='store_true',
-                        help='Remove and recreate the compressed frames folder')
-    parser.add_argument('--tilepadding', type=str, choices=['none', 'connected', 'disconnected'],
-                        nargs='+', default=['none', 'connected', 'disconnected'],
-                        help='Apply padding to the classification results (space-separated list of none/connected/disconnected)')
+    parser.add_argument('--mode', type=lambda x: PackMode[x], 
+                        default=PackMode.Best_Fit,
+                        help='Packing mode for the pack_all function. Options: Easiest_Fit, First_Fit, Best_Fit (default: Best_Fit)')
     return parser.parse_args()
 
 
-def render(canvas: dtypes.NPImage, positions: list[dtypes.PolyominoPositions], 
-           frame: dtypes.NPImage, tile_size: int):
-    """
-    Render packed polyominoes onto the canvas.
-    
-    Args:
-        canvas: The canvas to render onto
-        positions: List of packed polyominoe positions
-        frame: Source frame
-        chunk_size: Size of each tile/chunk
-        
-    Returns:
-        np.ndarray: Updated canvas
-    """
-    ts = tile_size
-
-    # TODO: use Torch, Cython, or Numba.
-    for y, x, mask, offset in positions:
-        yfrom = y * ts
-        xfrom = x * ts
-        yoffset, xoffset = offset
-        
-        # Get mask indices where True
-        for i, j in mask.reshape(-1, 2).astype(np.uint16):
-            sy = (i + yoffset) * ts
-            sx = (j + xoffset) * ts
-
-            dy = yfrom + (ts * i)
-            dx = xfrom + (ts * j)
-
-            canvas[dy:dy+ts, dx:dx+ts] = frame[sy:sy+ts, sx:sx+ts]
-
-def apply_pack(
-    positions: list[dtypes.PolyominoPositions],
-    canvas: dtypes.NPImage,
-    index_map: dtypes.IndexMap,
-    offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]],
-    frame_idx: int,
-    frame: dtypes.NPImage,
-    tilesize: int,
-    step_times: dict[str, float],
-):
-    """
-    Apply packed results to the canvas, index_map, and offset_lookup.
-    
-    Args:
-        positions: The positions of the packed polyominoes
-        canvas: The canvas to render onto
-        index_map: The index map to update
-        offset_lookup: The offset lookup to update
-        frame_idx: The index of the frame
-        frame: The frame to render
-        tilesize: The size of the tile
-        step_times: The step times to update
-        
-    Returns:
-        dtypes.NPImage: canvas
-    """
-    # Profile: Render packed polyominoes onto canvas
-    step_start = (time.time_ns() / 1e6)
-    render(canvas, positions, frame, tilesize)
-    step_times['render_canvas'] = (time.time_ns() / 1e6) - step_start
-
-    assert index_map is not None
-    
-    # Profile: Update index_map and det_info
-    step_start = (time.time_ns() / 1e6)
-    # Start gid from the current length of offset_lookup
-    start_gid = len(offset_lookup)
-    for i, (y, x, mask, offset) in enumerate(positions):
-        gid = start_gid + i + 1
-        # mask is a 1D array of positions in format [x, y, x, y, x, y, ...]
-        # Reshape to get x and y coordinates as separate arrays
-        coords = mask.reshape(-1, 2).astype(np.uint16)  # Shape: (n_coords, 2) where each row is [x, y]
-        mask_y = coords[:, 0]  # All y coordinates
-        mask_x = coords[:, 1]  # All x coordinates
-        # Set the gid at all positions at once using vectorized operations
-        index_map[y + mask_y, x + mask_x] = gid
-        offset_lookup.append(((y, x), offset, frame_idx))
-    step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
-
-    return canvas
+OffsetLookup = tuple[tuple[int, int], tuple[int, int], int]
 
 
-def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap,
-                      offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]],
-                      start_idx: int, frame_idx: int, output_dir: str, step_times: dict):
+def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap, offset_lookup: list[OffsetLookup],
+                      collage_idx: int, start_idx: int, frame_idx: int, output_dir: str, step_times: dict):
     """
     Save the packed image, index_map, and offset_lookup.
     
@@ -156,27 +88,32 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap,
 
     # Profile: Save canvas
     step_start = (time.time_ns() / 1e6)
-    img_path = os.path.join(image_dir, f'{start_idx:08d}_{frame_idx:08d}.jpg')
+    img_path = os.path.join(image_dir, f'{collage_idx:04d}_{start_idx:04d}_{frame_idx:04d}.jpg')
     cv2.imwrite(img_path, canvas)
     step_times['save_canvas'] = (time.time_ns() / 1e6) - step_start
 
     # Profile: Save index_map and offset_lookup
     step_start = (time.time_ns() / 1e6)
-    index_map_path = os.path.join(index_map_dir, f'{start_idx:08d}_{frame_idx:08d}.npy')
+    index_map_path = os.path.join(index_map_dir, f'{collage_idx:04d}_{start_idx:04d}_{frame_idx:04d}.npy')
     np.save(index_map_path, index_map)
 
-    offset_lookup_path = os.path.join(offset_lookup_dir, f'{start_idx:08d}_{frame_idx:08d}.jsonl')
+    offset_lookup_path = os.path.join(offset_lookup_dir, f'{collage_idx:04d}_{start_idx:04d}_{frame_idx:04d}.jsonl')
     with open(offset_lookup_path, 'w') as f:
         for offset in offset_lookup:
             f.write(json.dumps(offset) + '\n')
     step_times['save_mapping_files'] = (time.time_ns() / 1e6) - step_start
 
 
-def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesize: int,
-             threshold: float, tilepadding: Literal['none', 'connected', 'disconnected'], gpu_id: int, command_queue: mp.Queue):
+# PolyominoPosition = tuple[int, int, int, int, int, int, np.ndarray]
+Collage = list[PolyominoPosition]
+
+
+def compress(dataset: str, video: str, classifier: str, tilesize: int,
+             tilepadding: TilePaddingMode, threshold: float, mode: PackMode,
+             gpu_id: int, command_queue: mp.Queue):
     """
-    Compress a single video with a specific classifier and tile size.
-    
+    Compress a single video by batch processing all frames at once using pack_all.
+
     Args:
         video_file_path: Path to the video file
         cache_video_dir: Path to the cache directory for this video
@@ -188,220 +125,241 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
         command_queue: Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    video_name = os.path.basename(video_file_path)
-    
+    video_name = video
+    cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
+    video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
+
     # Load classification results
-    dataset = os.path.basename(os.path.dirname(os.path.dirname(cache_video_dir)))
-    video_file = os.path.basename(cache_video_dir)
-    results = load_classification_results(CACHE_DIR, dataset, video_file,
-                                          tilesize, classifier, execution_dir=True)
+    results = load_classification_results(CACHE_DIR, dataset, video, tilesize, classifier)
     
     # Create output directory for compression results
-    output_dir = os.path.join(cache_video_dir, '030_compressed_frames',
-                              f'{classifier}_{tilesize}_{tilepadding}')
+    output_dir_name = OUTPUT_DIR_MAP[mode]
+    output_dir = os.path.join(cache_video_dir, output_dir_name, f'{classifier}_{tilesize}_{tilepadding}')
     if os.path.exists(output_dir):
-        # Remove the entire directory
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
-    
+
+    # Create subdirectories
+    image_dir = os.path.join(output_dir, 'images')
+    os.makedirs(image_dir)
+    index_map_dir = os.path.join(output_dir, 'index_maps')
+    os.makedirs(index_map_dir)
+    offset_lookup_dir = os.path.join(output_dir, 'offset_lookups')
+    os.makedirs(offset_lookup_dir)
+
     # Send initial progress update
-    description = f"{video_name} {tilesize:>3} {classifier} {tilepadding}"
-    command_queue.put((device, {
-        'description': description + ' 0',
-        'completed': 0,
-        'total': len(results)
-    }))
+    description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]}"
     
-    # # Process the video for compression
-    # print(f"Processing video for compression: {video_file_path}")
-    
-    # Open video to get dimensions and initialize capture
-    cap = cv2.VideoCapture(video_file_path)
-    if not cap.isOpened():
-        print(f"Error: Could not open video {video_file_path}")
-        return
-    
+    # Open video to get dimensions
+    cap = cv2.VideoCapture(video_path)
+    assert cap.isOpened(), f"Error: Could not open video {video_path}"
+
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    num_frames_total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    image_dir = os.path.join(output_dir, 'images')
-    if os.path.exists(image_dir):
-        shutil.rmtree(image_dir)
-    os.makedirs(image_dir)
+    assert num_frames_total == len(results), f"Expected {len(results)} frames, got {num_frames_total}"
 
-    index_map_dir = os.path.join(output_dir, 'index_maps')
-    if os.path.exists(index_map_dir):
-        shutil.rmtree(index_map_dir)
-    os.makedirs(index_map_dir)
-
-    offset_lookup_dir = os.path.join(output_dir, 'offset_lookups')
-    if os.path.exists(offset_lookup_dir):
-        shutil.rmtree(offset_lookup_dir)
-    os.makedirs(offset_lookup_dir)
-    
     # Calculate grid dimensions
     grid_height = height // tilesize
     grid_width = width // tilesize
 
-    def init_compression_variables():
+    # Step 1: Group tiles for all frames to get polyominoes
+    timing_data = []
+
+    polyominoes_stacks = np.empty(len(results), dtype=np.uint64)
+    for frame_idx, frame_result in enumerate(results):
+        step_times = {}
+
+        # Get classification results
+        step_start = (time.time_ns() / 1e6)
+        classifications: str = frame_result['classification_hex']
+        classification_size: tuple[int, int] = frame_result['classification_size']
+        step_times['get_classifications'] = (time.time_ns() / 1e6) - step_start
+
+        # Create bitmap from classifications
+        step_start = (time.time_ns() / 1e6)
+        bitmap_frame = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size)
+        bitmap_frame = bitmap_frame > (threshold * 255)
+        bitmap_frame = bitmap_frame.astype(np.uint8)
+        assert dtypes.is_bitmap(bitmap_frame), bitmap_frame.shape
+        step_times['create_bitmap'] = (time.time_ns() / 1e6) - step_start
+
+        # Group connected tiles into polyominoes
+        step_start = (time.time_ns() / 1e6)
+        polyominoes = group_tiles(bitmap_frame, TILEPADDING_MAPS[tilepadding])
+        polyominoes_stacks[frame_idx] = polyominoes
+        step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
+
+        timing_data.append({'step': 'group_tiles', 'frame_idx': frame_idx, 'runtime': format_time(**step_times)})
+
+        # # Update progress
+        # if frame_idx % max(1, len(results) // 100) == 0:
+        #     command_queue.put((device, {'description': description + ' grouping', 'completed': frame_idx}))
+
+    # Step 2: Pack all polyominoes in batches (10 equal parts)
+    num_batches = 1
+    batch_size = len(polyominoes_stacks) // num_batches
+    # Handle case where len(polyominoes_stacks) < num_batches
+    if batch_size == 0:
+        batch_size = 1
+        num_batches = len(polyominoes_stacks)
+
+    command_queue.put((device, {'description': description + ' packing', 'completed': 0, 'total': num_batches}))
+
+    # Initialize empty list to store all collages from all batches
+    collages = []
+    total_pack_time = 0.0
+
+    # Process each batch
+    for batch_idx in range(num_batches):
+        # Calculate batch boundaries
+        start_idx = batch_idx * batch_size
+        # For the last batch, include any remaining frames
+        if batch_idx == num_batches - 1:
+            end_idx = len(polyominoes_stacks)
+        else:
+            end_idx = start_idx + batch_size
+
+        # Extract batch of polyominoes
+        batch_polyominoes = polyominoes_stacks[start_idx:end_idx]
+
+        # Pack this batch
+        batch_start = (time.time_ns() / 1e6)
+        batch_collages_ = pack_all(batch_polyominoes, grid_height, grid_width, int(mode))
+        batch_pack_time = (time.time_ns() / 1e6) - batch_start
+        total_pack_time += batch_pack_time
+
+        # Adjust frame indices in batch_collages to be relative to the full video
+        # pack_all returns frame indices relative to the batch (0-indexed within batch)
+        # We need to offset them by start_idx to get the actual frame index
+        batch_collages: list[list[PolyominoPosition]] = []
+        for collage in batch_collages_:
+            batch_collages.append([
+                PolyominoPosition(oy=poly_pos.oy, ox=poly_pos.ox,
+                                  py=poly_pos.py, px=poly_pos.px,
+                                  frame=poly_pos.frame + start_idx,
+                                  shape=poly_pos.shape)
+                for poly_pos in collage
+            ])
+
+        # Merge batch collages into the overall collages list
+        collages.extend(batch_collages)
+
+        # Record timing for this batch
+        timing_data.append({
+            'step': f'pack_batch_{batch_idx}',
+            'frames': f'{start_idx}-{end_idx-1}',
+            'runtime': format_time(pack_batch=batch_pack_time)
+        })
+
+        # Update progress
+        command_queue.put((device, {'description': description + ' packing', 'completed': batch_idx + 1}))
+
+    # # Record total packing time
+    # timing_data.append({'step': 'pack_all_total', 'runtime': format_time(pack_all_total=total_pack_time)})
+
+    # Step 3: Read all frames from video
+    command_queue.put((device, {'description': description + ' reading', 'completed': 0, 'total': num_frames_total}))
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    frames = []
+    mod = max(1, num_frames_total // 20)
+    for idx in range(num_frames_total):
+        ret, frame = cap.read()
+        if not ret:
+            break
+        assert dtypes.is_np_image(frame), frame.shape
+        frames.append(frame)
+        if idx % mod == 0:
+            command_queue.put((device, {'description': description + ' reading', 'completed': idx}))
+    
+    assert len(frames) == num_frames_total, f"Expected {num_frames_total} frames, got {len(frames)}"
+    assert cap.read()[0] is False, "Expected no more frames"
+    cap.release()
+
+    # Step 4: Render and save each collage
+    command_queue.put((device, {'description': description + ' rendering', 'completed': 0, 'total': len(collages)}))
+
+    mod = max(1, len(collages) // 20)
+    for collage_idx, collage in enumerate(collages):
+        assert len(collage) > 0, f"Expected at least one polyomino in collage {collage_idx}"
+        step_times = {}
+
+        # Initialize canvas and metadata structures
+        step_start = (time.time_ns() / 1e6)
         canvas = np.zeros((height, width, 3), dtype=np.uint8)
         assert dtypes.is_np_image(canvas), canvas.shape
-        occupied_tiles = np.zeros((grid_height, grid_width), dtype=np.uint8)
-        assert dtypes.is_bitmap(occupied_tiles), occupied_tiles.shape
         index_map = np.zeros((grid_height, grid_width), dtype=np.uint16)
         assert dtypes.is_index_map(index_map), index_map.shape
         offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]] = []
-        return canvas, occupied_tiles, index_map, offset_lookup, True, False
-    
-    # Initialize compression variables
-    canvas, occupied_tiles, index_map, offset_lookup, clean, full = init_compression_variables()
-    start_idx = 0
-    last_frame_idx = -1
-    read_frame_idx = -1
-    frame_idx = -1
-    count_compressed_images = 0
-    
-    # Initialize profiling output file
+        step_times['initialize_canvas'] = (time.time_ns() / 1e6) - step_start
+
+        # Get frame range for this collage
+        frame_indices = [pos.frame for pos in collage]
+        start_frame = min(frame_indices)
+        end_frame = max(frame_indices)
+
+        # Process each polyomino in this collage
+        step_start = (time.time_ns() / 1e6)
+        for gid, poly_pos in enumerate(collage, start=1):
+            oy, ox, py, px, frame_idx, shape = poly_pos
+
+            # Get source frame
+            frame = frames[frame_idx]
+
+            # Optimized tile rendering: vectorized coordinate computation with slice-based copying
+            # Slice operations use optimized block memory copy (memcpy-like) which is faster than per-pixel
+            i_coords = shape[:, 0]
+            j_coords = shape[:, 1]
+            
+            # Compute all tile corner positions at once (vectorized)
+            sy_coords = (oy + i_coords) * tilesize
+            sx_coords = (ox + j_coords) * tilesize
+            dy_coords = (py + i_coords) * tilesize
+            dx_coords = (px + j_coords) * tilesize
+            
+            # Copy tiles using optimized slice operations (block memory copy)
+            for idx in range(len(shape)):
+                sy, sx = sy_coords[idx], sx_coords[idx]
+                dy, dx = dy_coords[idx], dx_coords[idx]
+                canvas[dy:dy+tilesize, dx:dx+tilesize] = frame[sy:sy+tilesize, sx:sx+tilesize]
+
+            # Update index_map (vectorized)
+            index_map[py + i_coords, px + j_coords] = gid
+
+            # Update offset_lookup
+            offset_lookup.append(((py, px), (oy, ox), frame_idx))
+        step_times['render_tiles'] = (time.time_ns() / 1e6) - step_start
+
+        # Save the collage
+        step_start = (time.time_ns() / 1e6)
+        save_packed_image(canvas, index_map, offset_lookup, collage_idx, start_frame, end_frame, output_dir, step_times)
+        step_times['save_collage'] = (time.time_ns() / 1e6) - step_start
+
+        timing_data.append({'step': 'process_collage', 'runtime': format_time(**step_times)})
+
+        # Update progress
+        if collage_idx % mod == 0:
+            command_queue.put((device, {'description': description + ' rendering', 'completed': collage_idx + 1}))
+
+    # # Free polyomino stacks
+    # print('free polyominoes')
+    # step_start = (time.time_ns() / 1e6)
+    # command_queue.put((device, {'description': description + ' freeing polyominoes', 'completed': 0, 'total': len(polyominoes_stacks)}))
+    # for idx, polyominoes in enumerate(polyominoes_stacks):
+    #     free_polyimino_stack(polyominoes)
+    #     command_queue.put((device, {'description': description + ' freeing polyominoes', 'completed': idx}))
+    # end_time = (time.time_ns() / 1e6)
+    # timing_data.append({'step': 'free_polyominoes', 'runtime': format_time(free_polyominoes=end_time - step_start)})
+    # print('free polyominoes done')
+
+    # Save runtime data
     runtime_file = os.path.join(output_dir, 'runtime.jsonl')
-    
-    # print(f"Processing {len(results)} frames with tile size {tilesize}")
-
-    add_margin = torch.tensor(
-        [[[[0, 1, 0],
-        [1, 1, 1],
-        [0, 1, 0]]]],
-        dtype=torch.uint8,
-        requires_grad=False,
-    )
-
     with open(runtime_file, 'w') as f:
-        # Process each frame
-        fail_count = 0
-        mod = int(len(results) * 0.01)
-        for frame_idx, frame_result in enumerate(results):
-            # Start profiling for this frame
-            # frame_start_time = (time.time_ns() / 1e6)
-            step_times = {}
-            
-            # Assert that frame_idx is increasing
-            assert frame_idx > last_frame_idx, f"Frame index must be increasing, got {frame_idx} after {last_frame_idx}"
-            last_frame_idx = frame_idx
-                
-            # Profile: Read frame from video
-            step_start = (time.time_ns() / 1e6)
-            ret = False
-            frame = None
-            while read_frame_idx < frame_idx:
-                ret = cap.grab()
-                read_frame_idx += 1
-            assert ret
-            ret, frame = cap.retrieve()
-            assert ret
-            assert dtypes.is_np_image(frame), frame.shape
-            step_times['read_frame'] = (time.time_ns() / 1e6) - step_start
-            
-            # Profile: Get classification results
-            step_start = (time.time_ns() / 1e6)
-            classifications: str = frame_result['classification_hex']
-            classification_size: tuple[int, int] = frame_result['classification_size']
-            step_times['get_classifications'] = (time.time_ns() / 1e6) - step_start
-            
-            # Profile: Create bitmap from classifications
-            step_start = (time.time_ns() / 1e6)
-            bitmap_frame = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size)
-            bitmap_frame = bitmap_frame > (threshold * 255)
-            bitmap_frame = bitmap_frame.astype(np.uint8)
-            assert dtypes.is_bitmap(bitmap_frame), bitmap_frame.shape
-            step_times['create_bitmap'] = (time.time_ns() / 1e6) - step_start
+        for data in timing_data:
+            f.write(json.dumps(data) + '\n')
 
-            # Profile: Group connected tiles into polyominoes
-            step_start = (time.time_ns() / 1e6)
-            polyominoes = group_tiles(bitmap_frame, TILEPADDING_MODES[tilepadding])
-            step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
-            
-            # # Profile: Sort polyominoes by size
-            # step_start = (time.time_ns() / 1e6)
-            # polyominoes = sorted(polyominoes, key=lambda x: x[0].sum(), reverse=True)
-            # step_times['sort_polyominoes'] = (time.time_ns() / 1e6) - step_start
-            
-            # Profile: Try compressing polyominoes
-            step_start = (time.time_ns() / 1e6)
-            positions = None if full else pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
-
-            if positions is not None:
-                step_times['pack_append'] = (time.time_ns() / 1e6) - step_start
-                canvas = apply_pack(positions, canvas, index_map, offset_lookup,
-                                    frame_idx, frame, tilesize, step_times)
-                clean = False
-            else:
-                # If compression fails, save current compressed image and start new one
-                step_times['pack_append'] = (time.time_ns() / 1e6) - step_start
-                
-                # Profile: Save compressed image
-                save_packed_image(canvas, index_map, offset_lookup, start_idx, frame_idx, output_dir, step_times)
-                count_compressed_images += 1
-                
-                # Profile: Reset variables
-                step_start = (time.time_ns() / 1e6)
-                canvas, occupied_tiles, index_map, offset_lookup, clean, full = init_compression_variables()
-                start_idx = frame_idx
-                step_times['reset_variables'] = (time.time_ns() / 1e6) - step_start
-
-                # Profile: Retry compression for current frame
-                step_start = (time.time_ns() / 1e6)
-                positions = pack_append(polyominoes, grid_height, grid_width, occupied_tiles)
-                if positions is not None:
-                    step_times['pack_append_retry'] = (time.time_ns() / 1e6) - step_start
-                    canvas = apply_pack(positions, canvas, index_map, offset_lookup,
-                                        frame_idx, frame, tilesize, step_times)
-                    clean = False
-                else:
-                    step_times['pack_append_retry'] = (time.time_ns() / 1e6) - step_start
-
-                    # If retry compression fails, save the entire frame as a single polyomino
-                    fail_count += 1
-                    # print(f"Failed to compress frame {frame_idx} even after reset, saving entire frame as single polyomino")
-                    
-                    # Render the entire frame onto canvas
-                    # canvas = frame
-                    # step_times['render_canvas'] = 0
-
-                    # Profile: Update index_map and det_info for the full frame polyomino
-                    step_start = (time.time_ns() / 1e6)
-                    # Use the next available group ID
-                    # TODO: on this case, save index_map as something recognizable like ([0]),
-                    # uncompresser should by pass uncompressing and use detection as is.
-                    _index_map = np.ones((grid_height, grid_width), dtype=np.uint16)
-                    assert dtypes.is_index_map(_index_map), _index_map.shape
-                    _offset_lookup = [((0, 0), (0, 0), frame_idx)]
-                    step_times['update_mapping'] = (time.time_ns() / 1e6) - step_start
-                    
-                    save_packed_image(frame, _index_map, _offset_lookup, start_idx, frame_idx, output_dir, step_times)
-                    count_compressed_images += 1
-
-            num_polyominoes = free_polyimino_stack(polyominoes)
-
-            # Save profiling data for this frame
-            profiling_data = {
-                'frame_idx': frame_idx,
-                'runtime': format_time(**step_times),
-                'num_polyominoes': num_polyominoes,
-            }
-            
-            f.write(json.dumps(profiling_data) + '\n')
-            if frame_idx % mod == 0:
-                command_queue.put((device, {'description': description + f' {fail_count:>3}', 'completed': frame_idx}))
-    
-    # Release video capture
-    cap.release()
-    
-    # Save final compressed image if exists
-    if not clean:
-        save_packed_image(canvas, index_map, offset_lookup, start_idx, frame_idx, output_dir, {})
-        count_compressed_images += 1
-
-    # print(f"Completed compression for video. Created {count_compressed_images} compressed images.")
-    # print(f"Runtime profiling data saved to: {runtime_file}")
+    command_queue.put((device, {'description': description + ' done', 'completed': len(collages)}))
 
 
 def main(args):
@@ -416,40 +374,27 @@ def main(args):
     
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
-            - datasets (List[str]): Names of the datasets to process
-            - tilesize (str): Tile size to use for compression ('30', '60', '120', or 'all')
             - threshold (float): Threshold for classification probability (0.0 to 1.0)
-            - classifiers (list): List of classifier names to use (default: CLASSIFIERS_TO_TEST)
-            - clear (bool): Whether to remove and recreate the compressed frames folder
+            - mode (PackMode): Packing mode for the pack_all function. Options: Easiest_Fit, First_Fit, Best_Fit (default: Best_Fit)
             
     Note:
         - The script expects classification results from 020_exec_classify.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/{classifier}_{tilesize}/score/
+          {CACHE_DIR}/{dataset}/execution/{video}/020_relevancy/{classifier}_{tilesize}/score/
         - Looks for score.jsonl files
         - Videos are read from {DATASETS_DIR}/{dataset}/
-        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/images/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/index_maps/
-        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/offset_lookups/
-        - When tilesize is 'all', all tile sizes (30, 60, 120) are processed
-        - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST are processed
+        - Compressed images are saved to {CACHE_DIR}/{dataset}/execution/{video}/03{mode+3}_compressed_frames/{classifier}_{tilesize}/images/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video}/03{mode+3}_compressed_frames/{classifier}_{tilesize}/index_maps/
+        - Mappings are saved to {CACHE_DIR}/{dataset}/execution/{video}/03{mode+3}_compressed_frames/{classifier}_{tilesize}/offset_lookups/
         - If no classification results are found for a video, that video is skipped with a warning
-        - Tiles with classification probability > threshold are considered relevant for compression
     """
     mp.set_start_method('spawn', force=True)
-    
-    # Determine which tile sizes to process
-    if args.tilesize == 'all':
-        tilesizes_to_process = TILE_SIZES
-        print(f"Processing all tile sizes: {tilesizes_to_process}")
-    else:
-        tilesizes_to_process = [int(args.tilesize)]
-        print(f"Processing tile size: {tilesizes_to_process[0]}")
+    threshold = args.threshold
+    mode = args.mode
     
     # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    
-    for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
+    for dataset in DATASETS:
+        dataset_dir = os.path.join(DATASETS_DIR, dataset)
 
         for videoset in ['test']:
             videoset_dir = os.path.join(dataset_dir, videoset)
@@ -458,39 +403,16 @@ def main(args):
                 continue
             
             # Get all video files from the dataset directory
-            video_files = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-            
-            for video_file in sorted(video_files):
-                video_file_path = os.path.join(videoset_dir, video_file)
-                cache_video_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file)
-
-                compressed_frames_base_dir = os.path.join(cache_video_dir, '030_compressed_frames')
-                if args.clear and os.path.exists(compressed_frames_base_dir):
-                    shutil.rmtree(compressed_frames_base_dir)
-                    print(f"Cleared existing compressed frames folder: {compressed_frames_base_dir}")
-                
-                for classifier in args.classifiers:
-                    for tilesize in tilesizes_to_process:
-                        score_file = os.path.join(cache_video_dir, '020_relevancy',
-                                                f'{classifier}_{tilesize}', 'score', 'score.jsonl')
-                        if not os.path.exists(score_file):
-                            print(f"No score file found for {video_file} {classifier} {tilesize}, skipping")
-                            continue
-
-                        for tilepadding in set[Literal['none', 'connected', 'disconnected']](args.tilepadding):
-                            funcs.append(partial(compress, video_file_path, cache_video_dir,
-                                                classifier, tilesize, args.threshold, tilepadding))
+            videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+            for video in sorted(videos):
+                for classifier in CLASSIFIERS:
+                    for tilesize in TILE_SIZES:
+                        for tilepadding in TILEPADDING_MODES:
+                            funcs.append(partial(compress, dataset, video, classifier, tilesize, tilepadding, threshold, mode))
     
     print(f"Created {len(funcs)} tasks to process")
     
-    # Set up multiprocessing with ProgressBar
-    num_processes = int(mp.cpu_count() * 0.1)
-    # num_processes = max(1, torch.cuda.device_count() // 2)
-    # num_processes = 1
-    if len(funcs) < num_processes:
-        num_processes = len(funcs)
-    
-    ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=2).run_all(funcs)
+    ProgressBar(num_workers=torch.cuda.device_count(), num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 
 

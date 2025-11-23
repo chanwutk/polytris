@@ -9,6 +9,8 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
+import torch
+
 from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config
 
 
@@ -237,9 +239,11 @@ def main(args: argparse.Namespace):
                         funcs.append(partial(track, dataset, video, classifier, tilesize, tilepadding, args.no_interpolate))
     
     print(f"Created {len(funcs)} tasks to process")
+
+    num_gpus = torch.cuda.device_count()
     
     # Set up multiprocessing with ProgressBar
-    ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 
 

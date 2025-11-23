@@ -83,7 +83,7 @@ class VideoCapture:
         Raises:
             RuntimeError: If the video is not open or if reading fails.
         """
-        assert self._is_opened and self._process is not None, \
+        assert self.is_opened and self._process is not None, \
             "VideoCapture is not open. Call open() first."
 
         assert self._process.stdout is not None, \
@@ -172,40 +172,40 @@ class VideoCapture:
             self.release()
 
     @property
-    def width(self) -> Optional[int]:
+    def width(self) -> int:
         """Get the width of the video frames.
 
         Returns:
-            Width in pixels, or None if not yet opened.
+            Width in pixels.
         """
         return self._width
 
     @property
-    def height(self) -> Optional[int]:
+    def height(self) -> int:
         """Get the height of the video frames.
 
         Returns:
-            Height in pixels, or None if not yet opened.
+            Height in pixels.
         """
         return self._height
 
     @property
-    def fps(self) -> Optional[float]:
+    def fps(self) -> float:
         """Get the frame rate of the video.
 
         Returns:
-            Frames per second, or None if not yet opened.
+            Frames per second.
         """
         return self._fps
 
     @property
-    def frame_count(self) -> Optional[int]:
+    def frame_count(self) -> int:
         """Get the total number of frames in the video.
 
         Returns:
-            Total frame count, or None if not available.
+            Total frame count.
         """
-        return self._frame_count
+        return self._frame_count if self._frame_count is not None else -1
 
     @property
     def is_opened(self) -> bool:

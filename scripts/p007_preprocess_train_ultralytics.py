@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument(
         "--imgsz",
         type=int,
-        default=720,
+        default=1280,
         help="Image size for training (default: 720)",
     )
     parser.add_argument(

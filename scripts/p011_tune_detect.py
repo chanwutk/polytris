@@ -13,15 +13,17 @@ import numpy as np
 import torch
 
 import polyis.models.detector
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, format_time, ProgressBar, DATASETS_TO_TEST
+from polyis.utilities import format_time, ProgressBar, get_config
+
+
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS_DIR = config['DATA']['DATASETS_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute object detection on uniformly sampled video frames')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
     parser.add_argument('--selectivity', type=float, default=0.1,
                         help='Fraction of frames to uniformly sample from video (default: 0.1)')
     parser.add_argument('--batch_size', type=int, default=16,
@@ -137,13 +139,12 @@ def main(args):
         
         Batch processing improves GPU utilization and overall performance.
     """
-    datasets = args.datasets
     selectivity = args.selectivity
     batch_size = args.batch_size
 
     # Create task functions
     funcs = []
-    for dataset in datasets:
+    for dataset in DATASETS:
         dataset_dir = Path(DATASETS_DIR) / dataset
         assert dataset_dir.exists(), f"Dataset directory {dataset_dir} does not exist"
 

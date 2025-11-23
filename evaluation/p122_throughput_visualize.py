@@ -2,7 +2,6 @@
 
 from functools import partial
 import os
-import argparse
 import shutil
 import altair as alt
 import pandas as pd
@@ -10,8 +9,12 @@ import multiprocessing as mp
 
 from rich.progress import track
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
+from polyis.utilities import get_config
 
+
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 # Global constant for naive baseline stages
 NAIVE_STAGES = ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking']
@@ -29,16 +32,6 @@ RUNTIME_STAGE_MAPPING = {
     '050_exec_uncompress': 'Uncompression',
     '060_exec_track': 'Tracking'
 }
-
-
-def parse_args():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='Visualize runtime breakdown of training configurations')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    return parser.parse_args()
 
 
 def load_measurements(measurements_dir: str):
@@ -295,10 +288,9 @@ def visualize_overal_runtime_all(index_overall: pd.DataFrame, query_overall: pd.
 
 def main():
     """Main function to create runtime breakdown visualizations."""
-    args = parse_args()
 
     # Clear the 082_throughput_visualize directory
-    for dataset in args.datasets:
+    for dataset in DATASETS:
         output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
         if os.path.exists(output_dir):
             print(f"Clearing directory: {output_dir}")
@@ -309,7 +301,7 @@ def main():
     all_query_overall_list = []
     
     tasks = []
-    for dataset in args.datasets:
+    for dataset in DATASETS:
         print(f"Loading processed measurements for dataset: {dataset}")
         measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
         print(f"Measurements directory: {measurements_dir}")
