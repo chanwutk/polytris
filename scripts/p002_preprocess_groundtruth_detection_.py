@@ -55,7 +55,7 @@ def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: qu
     assert os.path.exists(gt_json_path), f"Groundtruth JSON file not found: {gt_json_path}"
     
     video_name = video_filename
-    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '000_groundtruth', 'detection_.jsonl')
+    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '003_groundtruth', 'detection.jsonl')
     
     # Load groundtruth annotations from JSON file
     with open(gt_json_path, 'r') as f:
@@ -139,13 +139,14 @@ def main():
         
         # Get all video files from the dataset directory
         videos: list[str] = []
-        for videoset in ['test']:
+        for videoset in VIDEO_SETS:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             videos.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])
         assert len(videos) > 0, f"No video files found in {dataset_dir}"
         
         for video in videos:
+            print(f"Processing {dataset}/{video}")
             funcs.append(partial(detect_objects, dataset, video))
     
     # Determine number of available GPUs

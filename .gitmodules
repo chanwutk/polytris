@@ -8,3 +8,6 @@
 [submodule "modules/vision_references"]
 	path = modules/vision_references
 	url = git@github.com:chanwutk/vision_references.git
+[submodule "modules/lap"]
+	path = modules/lap
+	url = git@github.com:chanwutk/lap.git

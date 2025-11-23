@@ -1,14 +1,21 @@
-# Force compiling with Python 3 
 # cython: language_level=3
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: cdivision=True
+# cython: nonecheck=False
 
 from libc.string cimport memset, memcpy
 from libc.math cimport fabs
-from polyis.tracker.cython._kalman_filter cimport KalmanFilter
+from polyis.tracker.cython.kalman_filter cimport KalmanFilter
+import cython
 
 # Global identity matrix
 cdef double I7[49]
 
 # Helper functions for matrix operations
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void matmul(double *A, double *B, double *C, int m, int n, int k) noexcept nogil:
     """C = A * B where A is (m x n), B is (n x k)"""
     cdef int i, j, l
@@ -20,6 +27,9 @@ cdef void matmul(double *A, double *B, double *C, int m, int n, int k) noexcept 
                 val += A[i * n + l] * B[l * k + j]
             C[i * k + j] = val
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void mat_transpose(double *A, double *B, int m, int n) noexcept nogil:
     """B = A^T where A is (m x n)"""
     cdef int i, j
@@ -27,18 +37,27 @@ cdef void mat_transpose(double *A, double *B, int m, int n) noexcept nogil:
         for j in range(n):
             B[j * m + i] = A[i * n + j]
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void mat_add(double *A, double *B, double *C, int size) noexcept nogil:
     """C = A + B"""
     cdef int i
     for i in range(size):
         C[i] = A[i] + B[i]
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void mat_sub(double *A, double *B, double *C, int size) noexcept nogil:
     """C = A - B"""
     cdef int i
     for i in range(size):
         C[i] = A[i] - B[i]
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void mat_eye(double *A, int n) noexcept nogil:
     """Set A to identity matrix of size n x n"""
     memset(A, 0, n * n * sizeof(double))
@@ -46,10 +65,16 @@ cdef void mat_eye(double *A, int n) noexcept nogil:
     for i in range(n):
         A[i * n + i] = 1.0
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void mat_zeros(double *A, int size) noexcept nogil:
     """Set A to zeros"""
     memset(A, 0, size * sizeof(double))
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef int mat_inv_4x4(double *A, double *inv) noexcept nogil:
     """
     Invert 4x4 matrix A using Gauss-Jordan elimination.
@@ -101,6 +126,9 @@ mat_eye(I7, 7)
 
 # Implementation of public functions declared in .pxd
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void kf_init(KalmanFilter *kf) noexcept nogil:
     # Initialize state vector (7x1)
     mat_zeros(kf.x, 7)
@@ -115,6 +143,9 @@ cdef void kf_init(KalmanFilter *kf) noexcept nogil:
     # Initialize state uncertainty (4x4)
     mat_eye(<double*>kf.R, 4)
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void kf_predict(KalmanFilter *kf) noexcept nogil:
     # x = F * x
     cdef double new_x[7]
@@ -133,6 +164,9 @@ cdef void kf_predict(KalmanFilter *kf) noexcept nogil:
     
     mat_add(FPFt, <double*>kf.Q, <double*>kf.P, 49)
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void kf_update(KalmanFilter *kf, double *z) noexcept nogil:
     # y = z - H * x
     cdef double Hx[4]

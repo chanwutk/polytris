@@ -1,5 +1,8 @@
-# Force compiling with Python 3 
 # cython: language_level=3
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: cdivision=True
+# cython: nonecheck=False
 
 from __future__ import print_function
 
@@ -7,13 +10,20 @@ import numpy as np
 cimport numpy as cnp
 cimport cython
 from numpy cimport ndarray
-from libc.math cimport sqrt, fmax, fmin
-from libc.stdlib cimport malloc, free
+from libc.math cimport sqrt, fmax, fmin, isnan
+from libc.stdlib cimport malloc, calloc, free
 from libc.stdint cimport uint64_t
 from libcpp.vector cimport vector
 
-from polyis.tracker.cython._kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update
-from polyis.tracker.cython._lapjv import lapjv
+from polyis.tracker.cython.kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update
+
+
+cdef extern from "lapjv.h" nogil:
+    ctypedef signed int int_t
+    ctypedef unsigned int uint_t
+
+    int lapjv_internal(const uint_t n, double *cost[], int_t *x, int_t *y)
+
 
 # Set random seed for reproducibility
 np.random.seed(0)
@@ -27,39 +37,86 @@ def reset_tracker_count():
     _kalman_box_tracker_count = 0
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def linear_assignment(cnp.ndarray[cnp.float64_t, ndim=2] cost_matrix):
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
+cdef int linear_assignment(
+    cnp.float64_t[:, :] cost_c,
+    cnp.int16_t[:, :] matches
+) noexcept nogil:
     """
     Solve linear assignment problem using lapjv.
     
     Args:
         cost_matrix: Cost matrix for assignment
-        
+        matches: Array of matched pairs [[row, col], ...]
+    
     Returns:
-        Array of matched pairs [[row, col], ...]
+        Number of matches
     """
-    x, y = lapjv(cost_matrix, extend_cost=True, return_cost=False)
+
+    cdef int_t n_rows = cost_c.shape[0]
+    cdef int_t n_cols = cost_c.shape[1]
+    cdef int_t n = 0
+
+    n = max(n_rows, n_cols)
+    cdef double *cost_extended = <double *> calloc(n * n, sizeof(double))
+    cdef int i, j
+    for i in range(n_rows):
+        for j in range(n_cols):
+            cost_extended[i * n + j] = cost_c[i, j]
+
+    cdef double **cost_ptr
+    cost_ptr = <double **> malloc(n * sizeof(double *))
+    for i in range(n):
+        cost_ptr[i] = &cost_extended[i * n]
+
+    cdef int_t *x_c = <int_t *> malloc(n * sizeof(int_t))
+    cdef int_t *y_c = <int_t *> malloc(n * sizeof(int_t))
+
+    cdef int ret = lapjv_internal(n, cost_ptr, x_c, y_c)
+    free(cost_ptr)
+    free(cost_extended)
+    # if ret != 0:
+    #     free(x_c)
+    #     free(y_c)
+    #     if ret == -1:
+    #         raise MemoryError('Out of memory.')
+    #     raise RuntimeError('Unknown error (lapjv_internal returned %d).' % ret)
+
     # Convert to array of pairs
-    cdef list pairs = []
-    cdef int i
-    for i in range(len(x)):
-        if x[i] >= 0:
-            pairs.append([y[x[i]], x[i]])
-    return np.array(pairs, dtype=np.int16)
+    cdef int x, y
+    cdef int count = 0
+    for i in range(n_rows):
+        x = x_c[i]
+        y = y_c[x]
+        if x >= n_cols:
+            x = -1
+        if y >= n_rows:
+            y = -1
+        if x >= 0:
+            matches[count, 0] = y
+            matches[count, 1] = x
+            count += 1
+    free(x_c)
+    free(y_c)
+    return count
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_batch(double[:, :] bb_test, double[:, :] bb_gt):
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
+cdef void iou_batch(
+    cnp.float64_t[:, :] bb_test,
+    cnp.float64_t[:, :] bb_gt,
+    cnp.float64_t[:, :] o_view
+) noexcept nogil:
     """
     Compute IOU between two sets of bboxes in the form [x1,y1,x2,y2].
     Optimized with memory views and C loops.
     """
     cdef int N = bb_test.shape[0]
     cdef int M = bb_gt.shape[0]
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] o = np.zeros((N, M), dtype=np.float64)
-    cdef double[:, :] o_view = o
     
     cdef int i, j
     cdef double xx1, yy1, xx2, yy2, w, h, wh, area_test, area_gt
@@ -79,12 +136,11 @@ cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_batch(double[:, :] bb_test, double[:
             area_gt = (bb_gt[j, 2] - bb_gt[j, 0]) * (bb_gt[j, 3] - bb_gt[j, 1])
             
             o_view[i, j] = wh / (area_test + area_gt - wh)
-            
-    return o
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void convert_bbox_to_z(double *bbox, double *z) noexcept nogil:
     """
     Convert bounding box from [x1,y1,x2,y2] to [x,y,s,r] format.
@@ -101,8 +157,9 @@ cdef void convert_bbox_to_z(double *bbox, double *z) noexcept nogil:
     z[3] = w / h
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void convert_x_to_bbox(double *x, double *bbox) noexcept nogil:
     """
     Convert bounding box from [x,y,s,r] to [x1,y1,x2,y2] format.
@@ -127,7 +184,10 @@ cdef struct KalmanBoxTracker:
     int hit_streak
     int age
     # cdef public list history
-    
+
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void KalmanBoxTracker_init(KalmanBoxTracker *self, double *bbox, int id) noexcept nogil:
     """
     Initialize tracker using initial bounding box.
@@ -184,6 +244,9 @@ cdef void KalmanBoxTracker_init(KalmanBoxTracker *self, double *bbox, int id) no
     self.hit_streak = 0
     self.age = 0
     
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox) noexcept nogil:
     """
     Update state vector with observed bbox.
@@ -201,6 +264,9 @@ cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox) noexcept
     
     kf_update(&self.kf, z)
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void KalmanBoxTracker_predict(KalmanBoxTracker *self, double *bbox) noexcept nogil:
     """
     Advance state vector and return predicted bounding box estimate.
@@ -220,6 +286,9 @@ cdef void KalmanBoxTracker_predict(KalmanBoxTracker *self, double *bbox) noexcep
     
     convert_x_to_bbox(self.kf.x, bbox)
 
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 cdef void KalmanBoxTracker_get_state(KalmanBoxTracker *self, double *bbox) noexcept nogil:
     """
     Return current bounding box estimate.
@@ -230,12 +299,13 @@ cdef void KalmanBoxTracker_get_state(KalmanBoxTracker *self, double *bbox) noexc
     convert_x_to_bbox(self.kf.x, bbox)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
 def associate_detections_to_trackers(
-    cnp.ndarray[cnp.float64_t, ndim=2] detections,
-    cnp.ndarray[cnp.float64_t, ndim=2] trackers,
-    double iou_threshold = 0.3
+    cnp.float64_t[:, :] detections,
+    cnp.float64_t[:, :] trackers,
+    double iou_threshold
 ):
     """
     Assign detections to tracked objects (both represented as bounding boxes).
@@ -250,16 +320,22 @@ def associate_detections_to_trackers(
         - matches: List of matched pairs [det_idx, trk_idx]
         - unmatched_detections: List of unmatched detection indices
     """
-    if len(trackers) == 0:
-        return [], [np.int16(i) for i in range(len(detections))]
+    cdef int N = detections.shape[0]
+    cdef int M = trackers.shape[0]
+    
+    if M == 0:
+        return [], [i for i in range(N)]
     
     # Compute IOU matrix
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_matrix = iou_batch(detections, trackers)
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_matrix = np.zeros((N, M), dtype=np.float64)
+    iou_batch(detections, trackers, iou_matrix)
+    cdef cnp.float64_t[:, :] iou_matrix_view = iou_matrix
     
-    cdef cnp.ndarray[cnp.int16_t, ndim=2] matched_indices
     cdef cnp.ndarray[cnp.int16_t, ndim=2] a
-    cdef int min_dim
-    min_dim = min(iou_matrix.shape[0], iou_matrix.shape[1])
+    cdef int min_dim = min(N, M)
+    cdef size
+    cdef cnp.int16_t[:, :] matched_indices
+    
     if min_dim > 0:
         a = (iou_matrix > iou_threshold).astype(np.int16)
         if a.sum(1).max() == 1 and a.sum(0).max() == 1:
@@ -267,7 +343,9 @@ def associate_detections_to_trackers(
             matched_indices = np.stack(np.where(a), axis=1).astype(np.int16)
         else:
             # Use linear assignment
-            matched_indices = linear_assignment(-iou_matrix)
+            matched_indices = np.empty((iou_matrix.shape[0], 2), dtype=np.int16)
+            size = linear_assignment(-iou_matrix, matched_indices)
+            matched_indices = matched_indices[:size]
     else:
         matched_indices = np.empty(shape=(0, 2), dtype=np.int16)
     
@@ -275,19 +353,21 @@ def associate_detections_to_trackers(
     cdef list unmatched_detections = []
     cdef set[int] matched_indices_set = set(matched_indices[:, 0])
     cdef int i
-    for i in range(len(detections)):
+    for i in range(N):
         if i not in matched_indices_set:
             unmatched_detections.append(i)
     
     # Filter out matches with low IOU
     cdef list matches = []
-    cdef cnp.ndarray[cnp.int16_t, ndim=1] m
-    for i in range(len(matched_indices)):
-        m = matched_indices[i]
-        if iou_matrix[m[0], m[1]] < iou_threshold:
-            unmatched_detections.append(m[0])
+    cdef int det_idx, trk_idx
+    
+    for i in range(matched_indices.shape[0]):
+        det_idx = matched_indices[i, 0]
+        trk_idx = matched_indices[i, 1]
+        if iou_matrix_view[det_idx, trk_idx] < iou_threshold:
+            unmatched_detections.append(det_idx)
         else:
-            matches.append(m)
+            matches.append(matched_indices[i])
     
     return matches, unmatched_detections
 
@@ -296,11 +376,11 @@ cdef public class PySort [object PySortObject, type PySortType]:
     """
     SORT tracker implementation in Cython.
     """
-    cdef public int max_age
-    cdef public int min_hits
-    cdef public double iou_threshold
+    cdef int max_age
+    cdef int min_hits
+    cdef double iou_threshold
     cdef vector[KalmanBoxTracker*] trackers
-    cdef public int frame_count
+    cdef int frame_count
     
     def __init__(self, int max_age=1, int min_hits=3, double iou_threshold=0.3):
         """
@@ -315,6 +395,14 @@ cdef public class PySort [object PySortObject, type PySortType]:
         self.min_hits = min_hits
         self.iou_threshold = iou_threshold
         self.frame_count = 0
+    
+    def __dealloc__(self):
+        """
+        Clean up allocated memory for trackers.
+        """
+        cdef int i
+        for i in range(<int>self.trackers.size()):
+            free(self.trackers[i])
     
     def update(self, cnp.ndarray[cnp.float64_t, ndim=2] dets):
         """
@@ -341,13 +429,19 @@ cdef public class PySort [object PySortObject, type PySortType]:
         for t in range(num_trackers):
             tracker = self.trackers[t]
             KalmanBoxTracker_predict(tracker, pos)
-            trks[t, :] = [(pos[0]), (pos[1]), (pos[2]), (pos[3]), 0]
-            if np.any(np.isnan(pos)):
+            # trks[t, :] = [(pos[0]), (pos[1]), (pos[2]), (pos[3]), 0]
+            trks[t, 0] = pos[0]
+            trks[t, 1] = pos[1]
+            trks[t, 2] = pos[2]
+            trks[t, 3] = pos[3]
+            trks[t, 4] = 0
+            if isnan(pos[0]) or isnan(pos[1]) or isnan(pos[2]) or isnan(pos[3]):
                 to_del.push_back(t)
         
         # Remove invalid trackers
         trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
-        for t in reversed(to_del):
+        for t in range(<int>to_del.size() - 1, -1, -1):
+            free(self.trackers[t])
             self.trackers.erase(self.trackers.begin() + t)
         
         # Associate detections to trackers
@@ -359,17 +453,15 @@ cdef public class PySort [object PySortObject, type PySortType]:
         
         # Update matched trackers with assigned detections
         cdef int i
-        cdef cnp.ndarray[cnp.int16_t, ndim=1] m
         for i in range(len(matched)):
-            m = matched[i]
-            tracker = self.trackers[m[1]]
-            KalmanBoxTracker_update(tracker, &dets[m[0], 0])
+            tracker = self.trackers[matched[i][1]]
+            KalmanBoxTracker_update(tracker, &dets[<int>matched[i][0], 0])
         
         # Create and initialize new trackers for unmatched detections
-        for det_idx in unmatched_dets:
+        for i in range(len(unmatched_dets)):
             tracker = <KalmanBoxTracker*>malloc(sizeof(KalmanBoxTracker))
             global _kalman_box_tracker_count
-            KalmanBoxTracker_init(tracker, &dets[<int>det_idx, 0], _kalman_box_tracker_count)
+            KalmanBoxTracker_init(tracker, &dets[<int>unmatched_dets[i], 0], _kalman_box_tracker_count)
             _kalman_box_tracker_count += 1
             self.trackers.push_back(tracker)
         
@@ -384,6 +476,7 @@ cdef public class PySort [object PySortObject, type PySortType]:
                 ret.append(np.array([[pos[0], pos[1], pos[2], pos[3], tracker.id + 1]], dtype=np.float64))
             # Remove dead tracklet
             if tracker.time_since_update > self.max_age:
+                free(self.trackers[idx])
                 self.trackers.erase(self.trackers.begin() + idx)
 
         
