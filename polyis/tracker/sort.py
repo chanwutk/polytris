@@ -140,14 +140,14 @@ def associate_detections_to_trackers(
     detections: npt.NDArray[np.float64], 
     trackers: npt.NDArray[np.float64], 
     iou_threshold: float = 0.3
-) -> tuple[list[npt.NDArray[np.int16]], list[np.uint16]]:
+) -> tuple[list[npt.NDArray[np.int16]], list[np.int16]]:
   """
   Assigns detections to tracked object (both represented as bounding boxes)
 
   Returns 3 lists of matches, unmatched_detections and unmatched_trackers
   """
   if(len(trackers)==0):
-    return [], list(map(np.uint16, range(len(detections))))
+    return [], list(map(np.int16, range(len(detections))))
 
   iou_matrix: npt.NDArray[np.float64] = iou_batch(detections, trackers)
 
@@ -161,10 +161,10 @@ def associate_detections_to_trackers(
   else:
     matched_indices = np.empty(shape=(0,2), dtype=int)
 
-  unmatched_detections: list[np.uint16] = []
+  unmatched_detections: list[np.int16] = []
   for d in range(len(detections)):
     if(d not in matched_indices[:,0]):
-      unmatched_detections.append(np.uint16(d))
+      unmatched_detections.append(np.int16(d))
 
   #filter out matched with low IOU
   matches: list[npt.NDArray[np.int16]] = []
@@ -212,7 +212,7 @@ class Sort(object):
     for t in reversed(to_del):
       self.trackers.pop(t)
     matched: list[npt.NDArray[np.int16]]
-    unmatched_dets: list[np.uint16]
+    unmatched_dets: list[np.int16]
     matched, unmatched_dets = associate_detections_to_trackers(dets,trks, self.iou_threshold)
 
     # update matched trackers with assigned detections
@@ -221,7 +221,7 @@ class Sort(object):
       self.trackers[m[1]].update(dets[m[0], :])
 
     # create and initialise new trackers for unmatched detections
-    i: np.uint16
+    i: np.int16
     for i in unmatched_dets:
         trk: KalmanBoxTracker = KalmanBoxTracker(dets[i,:])
         self.trackers.append(trk)

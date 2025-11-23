@@ -291,15 +291,15 @@ def test_sort_comparison():
     # Initialize all trackers with the same parameters
     tracker_b3d = SortB3D(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
     tracker_tracker = SortTracker(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
-    # Type assertion: SortCython is not None at this point (checked at function start)
-    assert SortCython is not None, "SortCython should not be None"
     tracker_cython = SortCython(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)  # type: ignore[call-arg]
     
     # Reset tracker counters to ensure consistent IDs
     from polyis.b3d.sort import KalmanBoxTracker as KalmanBoxTrackerB3D
     from polyis.tracker.sort import KalmanBoxTracker as KalmanBoxTrackerTracker
+    from polyis.tracker.cython._sort import reset_tracker_count
     KalmanBoxTrackerB3D.count = 0
     KalmanBoxTrackerTracker.count = 0
+    reset_tracker_count()
     
     # Run all trackers on the same detections with performance measurement
     print("\n=== Running B3D SORT ===")
@@ -308,14 +308,13 @@ def test_sort_comparison():
     # Reset counters again for fair comparison
     KalmanBoxTrackerB3D.count = 0
     KalmanBoxTrackerTracker.count = 0
+    reset_tracker_count()
     
     print("\n=== Running Tracker SORT ===")
     results_tracker, perf_tracker = run_tracker(tracker_tracker, detection_results)
     
-    # print("\n=== Running Cython SORT ===")
-    # results_cython, perf_cython = run_tracker(tracker_cython, detection_results)
-    results_cython = None
-    perf_cython = None
+    print("\n=== Running Cython SORT ===")
+    results_cython, perf_cython = run_tracker(tracker_cython, detection_results)
     
     # Compare results
     comparison = compare_tracking_results(results_b3d, results_tracker, results_cython)
