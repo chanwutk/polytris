@@ -9,7 +9,7 @@ cimport cython
 from numpy cimport ndarray
 from libc.math cimport sqrt, fmax, fmin
 
-from polyis.tracker.cython._kalman_filter import KalmanFilter7x4
+from polyis.tracker.cython._kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update
 # from polyis.tracker.cython._lapjv import lapjv
 from lap import lapjv
 
@@ -131,7 +131,7 @@ cdef class KalmanBoxTracker:
     """
     Internal state of individual tracked objects observed as bbox.
     """
-    cdef public object kf
+    cdef KalmanFilter kf
     cdef public int time_since_update
     cdef public int id
     cdef public list history
@@ -146,34 +146,52 @@ cdef class KalmanBoxTracker:
         Args:
             bbox: Initial bounding box [x1, y1, x2, y2]
         """
+        # Initialize Kalman Filter struct
+        kf_init(&self.kf)
+        
         # Define constant velocity model
-        self.kf = KalmanFilter7x4()
-        self.kf.F = np.array([
-            [1, 0, 0, 0, 1, 0, 0],
-            [0, 1, 0, 0, 0, 1, 0],
-            [0, 0, 1, 0, 0, 0, 1],
-            [0, 0, 0, 1, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0, 0, 1]
-        ], dtype=np.float64)
-        self.kf.H = np.array([
-            [1, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0]
-        ], dtype=np.float64)
+        # F is identity from init. Set specific values.
+        self.kf.F[0][4] = 1.0
+        self.kf.F[1][5] = 1.0
+        self.kf.F[2][6] = 1.0
+        
+        # H is zeros from init. Set specific values.
+        self.kf.H[0][0] = 1.0
+        self.kf.H[1][1] = 1.0
+        self.kf.H[2][2] = 1.0
+        self.kf.H[3][3] = 1.0
         
         # Adjust covariance matrices
-        self.kf.R[2:, 2:] *= 10.0
+        # R[2:, 2:] *= 10.0
+        self.kf.R[2][2] *= 10.0
+        self.kf.R[3][3] *= 10.0
+        
         # Give high uncertainty to the unobservable initial velocities
-        self.kf.P[4:, 4:] *= 1000.0
-        self.kf.P *= 10.0
-        self.kf.Q[-1, -1] *= 0.01
-        self.kf.Q[4:, 4:] *= 0.01
+        # P[4:, 4:] *= 1000.0
+        self.kf.P[4][4] *= 1000.0
+        self.kf.P[5][5] *= 1000.0
+        self.kf.P[6][6] *= 1000.0
+        
+        # P *= 10.0
+        cdef int i, j
+        for i in range(7):
+            for j in range(7):
+                self.kf.P[i][j] *= 10.0
+                
+        # Q[-1, -1] *= 0.01
+        self.kf.Q[6][6] *= 0.01
+        # Q[4:, 4:] *= 0.01
+        self.kf.Q[4][4] *= 0.01
+        self.kf.Q[5][5] *= 0.01
+        self.kf.Q[6][6] *= 0.01 # Applied twice as in original code
         
         # Initialize state with bbox
-        self.kf.x[:4] = convert_bbox_to_z(bbox)
+        cdef cnp.ndarray[cnp.float64_t, ndim=2] z = convert_bbox_to_z(bbox)
+        self.kf.x[0] = z[0, 0]
+        self.kf.x[1] = z[1, 0]
+        self.kf.x[2] = z[2, 0]
+        self.kf.x[3] = z[3, 0]
+        
         self.time_since_update = 0
         global _kalman_box_tracker_count
         self.id = _kalman_box_tracker_count
@@ -194,7 +212,15 @@ cdef class KalmanBoxTracker:
         self.history = []
         self.hits += 1
         self.hit_streak += 1
-        self.kf.update(convert_bbox_to_z(bbox))
+        
+        cdef cnp.ndarray[cnp.float64_t, ndim=2] z_np = convert_bbox_to_z(bbox)
+        cdef double z[4]
+        z[0] = z_np[0, 0]
+        z[1] = z_np[1, 0]
+        z[2] = z_np[2, 0]
+        z[3] = z_np[3, 0]
+        
+        kf_update(&self.kf, z)
     
     def predict(self):
         """
@@ -203,18 +229,23 @@ cdef class KalmanBoxTracker:
         Returns:
             Predicted bounding box [x1, y1, x2, y2]
         """
-        # Check condition and modify if needed (matching original implementation)
-        # Original: if((self.kf.x[6]+self.kf.x[2])<=0): self.kf.x[6] *= 0.0
-        x = self.kf.x
-        # x is a 2D array (7, 1), access as x[6, 0] and x[2, 0]
-        if (x[6] + x[2]) <= 0:
-            x[6] *= 0.0
-        self.kf.predict()
+        if (self.kf.x[6] + self.kf.x[2]) <= 0:
+            self.kf.x[6] = 0.0
+            
+        kf_predict(&self.kf)
+        
         self.age += 1
         if self.time_since_update > 0:
             self.hit_streak = 0
         self.time_since_update += 1
-        cdef object bbox = convert_x_to_bbox(self.kf.x)
+        
+        # Convert kf.x to numpy array for convert_x_to_bbox
+        cdef cnp.ndarray[cnp.float64_t, ndim=2] x_np = np.zeros((7, 1), dtype=np.float64)
+        cdef int i
+        for i in range(7):
+            x_np[i, 0] = self.kf.x[i]
+            
+        cdef object bbox = convert_x_to_bbox(x_np)
         self.history.append(bbox)
         return self.history[len(self.history) - 1]
     
@@ -225,7 +256,12 @@ cdef class KalmanBoxTracker:
         Returns:
             Current bounding box [x1, y1, x2, y2]
         """
-        return convert_x_to_bbox(self.kf.x)
+        cdef cnp.ndarray[cnp.float64_t, ndim=2] x_np = np.zeros((7, 1), dtype=np.float64)
+        cdef int i
+        for i in range(7):
+            x_np[i, 0] = self.kf.x[i]
+            
+        return convert_x_to_bbox(x_np)
 
 
 @cython.boundscheck(False)
