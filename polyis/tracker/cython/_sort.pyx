@@ -233,8 +233,8 @@ cdef void KalmanBoxTracker_get_state(KalmanBoxTracker *self, double *bbox) noexc
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def associate_detections_to_trackers(
-    cnp.ndarray[cnp.float64_t, ndim=2] detections,
-    cnp.ndarray[cnp.float64_t, ndim=2] trackers,
+    double[:, :] detections,
+    double[:, :] trackers,
     double iou_threshold = 0.3
 ):
     """
@@ -250,16 +250,20 @@ def associate_detections_to_trackers(
         - matches: List of matched pairs [det_idx, trk_idx]
         - unmatched_detections: List of unmatched detection indices
     """
-    if len(trackers) == 0:
-        return [], [np.int16(i) for i in range(len(detections))]
+    cdef int N = detections.shape[0]
+    cdef int M = trackers.shape[0]
+    
+    if M == 0:
+        return [], [i for i in range(N)]
     
     # Compute IOU matrix
     cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_matrix = iou_batch(detections, trackers)
+    cdef double[:, :] iou_matrix_view = iou_matrix
     
     cdef cnp.ndarray[cnp.int16_t, ndim=2] matched_indices
     cdef cnp.ndarray[cnp.int16_t, ndim=2] a
-    cdef int min_dim
-    min_dim = min(iou_matrix.shape[0], iou_matrix.shape[1])
+    cdef int min_dim = min(N, M)
+    
     if min_dim > 0:
         a = (iou_matrix > iou_threshold).astype(np.int16)
         if a.sum(1).max() == 1 and a.sum(0).max() == 1:
@@ -271,23 +275,27 @@ def associate_detections_to_trackers(
     else:
         matched_indices = np.empty(shape=(0, 2), dtype=np.int16)
     
+    cdef short[:, :] matched_indices_view = matched_indices
+    
     # Find unmatched detections
     cdef list unmatched_detections = []
     cdef set[int] matched_indices_set = set(matched_indices[:, 0])
     cdef int i
-    for i in range(len(detections)):
+    for i in range(N):
         if i not in matched_indices_set:
             unmatched_detections.append(i)
     
     # Filter out matches with low IOU
     cdef list matches = []
-    cdef cnp.ndarray[cnp.int16_t, ndim=1] m
-    for i in range(len(matched_indices)):
-        m = matched_indices[i]
-        if iou_matrix[m[0], m[1]] < iou_threshold:
-            unmatched_detections.append(m[0])
+    cdef int det_idx, trk_idx
+    
+    for i in range(matched_indices.shape[0]):
+        det_idx = matched_indices_view[i, 0]
+        trk_idx = matched_indices_view[i, 1]
+        if iou_matrix_view[det_idx, trk_idx] < iou_threshold:
+            unmatched_detections.append(det_idx)
         else:
-            matches.append(m)
+            matches.append(matched_indices[i])
     
     return matches, unmatched_detections
 
@@ -359,17 +367,15 @@ cdef public class PySort [object PySortObject, type PySortType]:
         
         # Update matched trackers with assigned detections
         cdef int i
-        cdef cnp.ndarray[cnp.int16_t, ndim=1] m
         for i in range(len(matched)):
-            m = matched[i]
-            tracker = self.trackers[m[1]]
-            KalmanBoxTracker_update(tracker, &dets[m[0], 0])
+            tracker = self.trackers[matched[i][1]]
+            KalmanBoxTracker_update(tracker, &dets[<int>matched[i][0], 0])
         
         # Create and initialize new trackers for unmatched detections
-        for det_idx in unmatched_dets:
+        for i in range(len(unmatched_dets)):
             tracker = <KalmanBoxTracker*>malloc(sizeof(KalmanBoxTracker))
             global _kalman_box_tracker_count
-            KalmanBoxTracker_init(tracker, &dets[<int>det_idx, 0], _kalman_box_tracker_count)
+            KalmanBoxTracker_init(tracker, &dets[<int>unmatched_dets[i], 0], _kalman_box_tracker_count)
             _kalman_box_tracker_count += 1
             self.trackers.push_back(tracker)
         
