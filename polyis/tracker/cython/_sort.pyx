@@ -87,26 +87,20 @@ def iou_batch(cnp.ndarray[cnp.float64_t, ndim=2] bb_test,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def convert_bbox_to_z(cnp.ndarray[cnp.float64_t, ndim=1] bbox):
+cdef void convert_bbox_to_z(cnp.ndarray[cnp.float64_t, ndim=1] bbox, double *z):
     """
     Convert bounding box from [x1,y1,x2,y2] to [x,y,s,r] format.
     
     Args:
         bbox: Bounding box [x1, y1, x2, y2]
-        
-    Returns:
-        State vector [x, y, s, r] where:
-        - x, y: center of the box
-        - s: scale/area
-        - r: aspect ratio
+        z: Pointer to array of size 4 to store result [x, y, s, r]
     """
     cdef double w = bbox[2] - bbox[0]
     cdef double h = bbox[3] - bbox[1]
-    cdef double x = bbox[0] + w / 2.0
-    cdef double y = bbox[1] + h / 2.0
-    cdef double s = w * h  # scale is just area
-    cdef double r = w / h
-    return np.array([x, y, s, r], dtype=np.float64).reshape((4, 1))
+    z[0] = bbox[0] + w / 2.0
+    z[1] = bbox[1] + h / 2.0
+    z[2] = w * h  # scale is just area
+    z[3] = w / h
 
 
 @cython.boundscheck(False)
@@ -186,11 +180,7 @@ cdef class KalmanBoxTracker:
         self.kf.Q[6][6] *= 0.01 # Applied twice as in original code
         
         # Initialize state with bbox
-        cdef cnp.ndarray[cnp.float64_t, ndim=2] z = convert_bbox_to_z(bbox)
-        self.kf.x[0] = z[0, 0]
-        self.kf.x[1] = z[1, 0]
-        self.kf.x[2] = z[2, 0]
-        self.kf.x[3] = z[3, 0]
+        convert_bbox_to_z(bbox, self.kf.x)
         
         self.time_since_update = 0
         global _kalman_box_tracker_count
@@ -213,12 +203,8 @@ cdef class KalmanBoxTracker:
         self.hits += 1
         self.hit_streak += 1
         
-        cdef cnp.ndarray[cnp.float64_t, ndim=2] z_np = convert_bbox_to_z(bbox)
         cdef double z[4]
-        z[0] = z_np[0, 0]
-        z[1] = z_np[1, 0]
-        z[2] = z_np[2, 0]
-        z[3] = z_np[3, 0]
+        convert_bbox_to_z(bbox, z)
         
         kf_update(&self.kf, z)
     
