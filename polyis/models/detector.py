@@ -128,3 +128,17 @@ def get_detector_info(dataset_name: str) -> dict:
         'description': f"Using {dataset_config['detector']} detector for dataset '{dataset_name}'",
         **dataset_config
     }
+
+
+def delete(detector: Any):
+    """
+    Delete detector.
+    """
+    if hasattr(detector, 'net'):
+        pass
+    else:
+        try:
+            detector.to('cpu')
+        except:
+            pass
+        del detector

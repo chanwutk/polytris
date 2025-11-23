@@ -1,18 +1,20 @@
 EXEC:
   DATASETS:
-    # - caldot1-yolo12
-    # - caldot2-yolo12
-    # - jnc0
-    # - jnc2
-    # - jnc6
-    # - jnc7
-    - caldot1
-    - caldot2
+    - caldot1-y11
+    - caldot2-y11
+    - caldot1-y05
+    - caldot2-y05
+    - jnc0
+    - jnc2
+    - jnc6
+    - jnc7
+    # - caldot1
+    # - caldot2
     # - caldot1-fasterrcnn
     # - caldot2-fasterrcnn
     # - ams
   VIDEO_SETS:
-    - train
+    # - train
     - valid
     - test
   CLASSIFIERS:
@@ -24,8 +26,8 @@ EXEC:
     - 60
   TILEPADDING_MODES:
     - none
-    - connected
-    # - disconnected
+    # - connected
+    - disconnected
 
 DATA:
   SOURCE_DIR: /polyis-data/sources

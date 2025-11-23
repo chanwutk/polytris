@@ -33,7 +33,7 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     detection_results = load_detection_results(CACHE_DIR, dataset, video_file, filename='detection_.jsonl')
 
     # Create output path for tracking results
-    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '000_groundtruth', 'tracking_.jsonl')
+    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '003_groundtruth', 'tracking.jsonl')
 
     # print(f"Processing video: {video_file}")
     # Create tracker
@@ -149,7 +149,7 @@ def main():
         
         # Get all video files from the dataset directory
         video_files: list[str] = []
-        for videoset in ['test']:
+        for videoset in VIDEO_SETS:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])

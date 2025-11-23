@@ -1,3 +1,9 @@
+# cython: language_level=3
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: cdivision=True
+# cython: nonecheck=False
+
 cdef struct KalmanFilter:
     double x[7]
     double P[7][7]
