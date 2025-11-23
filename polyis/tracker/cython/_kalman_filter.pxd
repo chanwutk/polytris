@@ -6,6 +6,6 @@ cdef struct KalmanFilter:
     double H[4][7]
     double R[4][4]
 
-cdef void kf_init(KalmanFilter *kf)
-cdef void kf_predict(KalmanFilter *kf)
-cdef void kf_update(KalmanFilter *kf, double *z)
+cdef void kf_init(KalmanFilter *kf) noexcept nogil
+cdef void kf_predict(KalmanFilter *kf) noexcept nogil
+cdef void kf_update(KalmanFilter *kf, double *z) noexcept nogil

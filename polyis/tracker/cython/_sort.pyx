@@ -132,7 +132,7 @@ cdef struct KalmanBoxTracker:
     int age
     # cdef public list history
     
-cdef void KalmanBoxTracker_init(KalmanBoxTracker *self, double *bbox):
+cdef void KalmanBoxTracker_init(KalmanBoxTracker *self, double *bbox, int id) noexcept nogil:
     """
     Initialize tracker using initial bounding box.
     
@@ -182,15 +182,13 @@ cdef void KalmanBoxTracker_init(KalmanBoxTracker *self, double *bbox):
     convert_bbox_to_z(bbox, self.kf.x)
     
     self.time_since_update = 0
-    global _kalman_box_tracker_count
-    self.id = _kalman_box_tracker_count
-    _kalman_box_tracker_count += 1
+    self.id = id
     # self.history = []
     self.hits = 0
     self.hit_streak = 0
     self.age = 0
     
-cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox):
+cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox) noexcept nogil:
     """
     Update state vector with observed bbox.
     
@@ -207,7 +205,7 @@ cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox):
     
     kf_update(&self.kf, z)
 
-cdef void KalmanBoxTracker_predict(KalmanBoxTracker *self, double *bbox):
+cdef void KalmanBoxTracker_predict(KalmanBoxTracker *self, double *bbox) noexcept nogil:
     """
     Advance state vector and return predicted bounding box estimate.
     
@@ -226,14 +224,13 @@ cdef void KalmanBoxTracker_predict(KalmanBoxTracker *self, double *bbox):
     
     convert_x_to_bbox(self.kf.x, bbox)
 
-cdef void KalmanBoxTracker_get_state(KalmanBoxTracker *self, double *bbox):
+cdef void KalmanBoxTracker_get_state(KalmanBoxTracker *self, double *bbox) noexcept nogil:
     """
     Return current bounding box estimate.
     
     Returns:
         Current bounding box [x1, y1, x2, y2]
     """
-    # cdef double bbox[4]
     convert_x_to_bbox(self.kf.x, bbox)
 
 
@@ -321,7 +318,6 @@ cdef public class PySort [object PySortObject, type PySortType]:
         self.max_age = max_age
         self.min_hits = min_hits
         self.iou_threshold = iou_threshold
-        # self.trackers = []
         self.frame_count = 0
     
     def update(self, cnp.ndarray[cnp.float64_t, ndim=2] dets):
@@ -340,7 +336,7 @@ cdef public class PySort [object PySortObject, type PySortType]:
         # Get predicted locations from existing trackers
         cdef int num_trackers = self.trackers.size()
         cdef cnp.ndarray[cnp.float64_t, ndim=2] trks = np.zeros((num_trackers, 5), dtype=np.float64)
-        cdef list to_del = []
+        cdef vector[int] to_del
         cdef list ret = []
         cdef int t
         cdef double pos[4]
@@ -351,7 +347,7 @@ cdef public class PySort [object PySortObject, type PySortType]:
             KalmanBoxTracker_predict(tracker, pos)
             trks[t, :] = [(pos[0]), (pos[1]), (pos[2]), (pos[3]), 0]
             if np.any(np.isnan(pos)):
-                to_del.append(t)
+                to_del.push_back(t)
         
         # Remove invalid trackers
         trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
@@ -374,26 +370,24 @@ cdef public class PySort [object PySortObject, type PySortType]:
             KalmanBoxTracker_update(tracker, &dets[m[0], 0])
         
         # Create and initialize new trackers for unmatched detections
-        cdef KalmanBoxTracker *new_trk
         for det_idx in unmatched_dets:
-            new_trk = <KalmanBoxTracker*>malloc(sizeof(KalmanBoxTracker))
-            KalmanBoxTracker_init(new_trk, &dets[<int>det_idx, 0])
-            self.trackers.push_back(new_trk)
+            tracker = <KalmanBoxTracker*>malloc(sizeof(KalmanBoxTracker))
+            global _kalman_box_tracker_count
+            KalmanBoxTracker_init(tracker, &dets[<int>det_idx, 0], _kalman_box_tracker_count)
+            _kalman_box_tracker_count += 1
+            self.trackers.push_back(tracker)
         
         # Collect results and remove dead tracklets
-        cdef cnp.uint64_t trk_ptr
-        cdef KalmanBoxTracker *trk
-        cdef double d[4]
         for idx in range(self.trackers.size() - 1, -1, -1):
-            trk = self.trackers[idx]
-            KalmanBoxTracker_get_state(trk, d)
-            if (trk.time_since_update < 1) and (
-                trk.hit_streak >= self.min_hits or self.frame_count <= self.min_hits
+            tracker = self.trackers[idx]
+            KalmanBoxTracker_get_state(tracker, pos)
+            if (tracker.time_since_update < 1) and (
+                tracker.hit_streak >= self.min_hits or self.frame_count <= self.min_hits
             ):
                 # +1 as MOT benchmark requires positive IDs
-                ret.append(np.array([[d[0], d[1], d[2], d[3], trk.id + 1]], dtype=np.float64))
+                ret.append(np.array([[pos[0], pos[1], pos[2], pos[3], tracker.id + 1]], dtype=np.float64))
             # Remove dead tracklet
-            if trk.time_since_update > self.max_age:
+            if tracker.time_since_update > self.max_age:
                 self.trackers.erase(self.trackers.begin() + idx)
 
         

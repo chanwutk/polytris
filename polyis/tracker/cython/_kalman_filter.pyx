@@ -9,7 +9,7 @@ from polyis.tracker.cython._kalman_filter cimport KalmanFilter
 cdef double I7[49]
 
 # Helper functions for matrix operations
-cdef void matmul(double *A, double *B, double *C, int m, int n, int k):
+cdef void matmul(double *A, double *B, double *C, int m, int n, int k) noexcept nogil:
     """C = A * B where A is (m x n), B is (n x k)"""
     cdef int i, j, l
     cdef double val
@@ -20,37 +20,37 @@ cdef void matmul(double *A, double *B, double *C, int m, int n, int k):
                 val += A[i * n + l] * B[l * k + j]
             C[i * k + j] = val
 
-cdef void mat_transpose(double *A, double *B, int m, int n):
+cdef void mat_transpose(double *A, double *B, int m, int n) noexcept nogil:
     """B = A^T where A is (m x n)"""
     cdef int i, j
     for i in range(m):
         for j in range(n):
             B[j * m + i] = A[i * n + j]
 
-cdef void mat_add(double *A, double *B, double *C, int size):
+cdef void mat_add(double *A, double *B, double *C, int size) noexcept nogil:
     """C = A + B"""
     cdef int i
     for i in range(size):
         C[i] = A[i] + B[i]
 
-cdef void mat_sub(double *A, double *B, double *C, int size):
+cdef void mat_sub(double *A, double *B, double *C, int size) noexcept nogil:
     """C = A - B"""
     cdef int i
     for i in range(size):
         C[i] = A[i] - B[i]
 
-cdef void mat_eye(double *A, int n):
+cdef void mat_eye(double *A, int n) noexcept nogil:
     """Set A to identity matrix of size n x n"""
     memset(A, 0, n * n * sizeof(double))
     cdef int i
     for i in range(n):
         A[i * n + i] = 1.0
 
-cdef void mat_zeros(double *A, int size):
+cdef void mat_zeros(double *A, int size) noexcept nogil:
     """Set A to zeros"""
     memset(A, 0, size * sizeof(double))
 
-cdef int mat_inv_4x4(double *A, double *inv):
+cdef int mat_inv_4x4(double *A, double *inv) noexcept nogil:
     """
     Invert 4x4 matrix A using Gauss-Jordan elimination.
     Returns 1 on success, 0 on failure (singular).
@@ -101,7 +101,7 @@ mat_eye(I7, 7)
 
 # Implementation of public functions declared in .pxd
 
-cdef void kf_init(KalmanFilter *kf):
+cdef void kf_init(KalmanFilter *kf) noexcept nogil:
     # Initialize state vector (7x1)
     mat_zeros(kf.x, 7)
     # Initialize uncertainty covariance (7x7)
@@ -115,7 +115,7 @@ cdef void kf_init(KalmanFilter *kf):
     # Initialize state uncertainty (4x4)
     mat_eye(<double*>kf.R, 4)
 
-cdef void kf_predict(KalmanFilter *kf):
+cdef void kf_predict(KalmanFilter *kf) noexcept nogil:
     # x = F * x
     cdef double new_x[7]
     matmul(<double*>kf.F, kf.x, new_x, 7, 7, 1)
@@ -133,7 +133,7 @@ cdef void kf_predict(KalmanFilter *kf):
     
     mat_add(FPFt, <double*>kf.Q, <double*>kf.P, 49)
 
-cdef void kf_update(KalmanFilter *kf, double *z):
+cdef void kf_update(KalmanFilter *kf, double *z) noexcept nogil:
     # y = z - H * x
     cdef double Hx[4]
     matmul(<double*>kf.H, kf.x, Hx, 4, 7, 1)
@@ -156,7 +156,7 @@ cdef void kf_update(KalmanFilter *kf, double *z):
     
     # SI = inv(S)
     cdef double SI[16]
-    if not mat_inv_4x4(S, SI):
+    if mat_inv_4x4(S, SI) == 0:
         return 
         
     # K = P * H^T * SI = PHt * SI
