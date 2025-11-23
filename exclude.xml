@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<annotations>
+  <version>1.1</version>
+  <meta>
+    <job>
+      <id>3294058</id>
+      <size>1</size>
+      <mode>annotation</mode>
+      <overlap>0</overlap>
+      <bugtracker></bugtracker>
+      <created>2025-11-20 23:56:16.855806+00:00</created>
+      <updated>2025-11-20 23:58:20.234219+00:00</updated>
+      <subset>default</subset>
+      <start_frame>0</start_frame>
+      <stop_frame>0</stop_frame>
+      <frame_filter></frame_filter>
+      <segments>
+        <segment>
+          <id>3295419</id>
+          <start>0</start>
+          <stop>0</stop>
+          <url>https://app.cvat.ai/api/jobs/3294058</url>
+        </segment>
+      </segments>
+      <owner>
+        <username>chanwutk</username>
+        <email>chanwutk@gmail.com</email>
+      </owner>
+      <assignee></assignee>
+      <labels>
+        <label>
+          <name>domain</name>
+          <color>#612d6e</color>
+          <type>polygon</type>
+          <attributes>
+          </attributes>
+        </label>
+      </labels>
+    </job>
+    <dumped>2025-11-20 23:58:37.932344+00:00</dumped>
+  </meta>
+  <image id="0" name="debug_train_32_001060_train.jpg" width="1280" height="720">
+    <polygon label="domain" source="manual" occluded="0" points="5.10,243.90;103.40,282.20;155.70,311.50;213.10,357.50;331.20,448.70;601.10,523.40;721.70,515.10;817.40,494.66;879.30,476.80;865.30,438.50;761.90,405.30;613.20,345.30;479.20,289.20;409.70,254.10;428.80,194.10;504.10,156.50;565.36,152.64;631.08,203.69;1034.30,256.70;1272.35,237.51;1276.20,5.20;1.30,2.70" z_order="0">
+    </polygon>
+  </image>
+</annotations>

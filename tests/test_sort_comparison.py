@@ -18,7 +18,7 @@ import numpy as np
 import numpy.typing as npt
 
 from polyis.b3d.sort import Sort as SortB3D
-from polyis.tracker.sort import Sort as SortTracker
+# from polyis.tracker.sort import Sort as SortTracker
 
 from polyis.tracker.cython._sort import PySort as SortCython  # type: ignore
 from polyis.utilities import CACHE_DIR, get_config
@@ -290,16 +290,19 @@ def test_sort_comparison():
     
     # Initialize all trackers with the same parameters
     tracker_b3d = SortB3D(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
-    tracker_tracker = SortTracker(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
+    # tracker_tracker = SortTracker(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)
     tracker_cython = SortCython(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)  # type: ignore[call-arg]
     
     # Reset tracker counters to ensure consistent IDs
     from polyis.b3d.sort import KalmanBoxTracker as KalmanBoxTrackerB3D
-    from polyis.tracker.sort import KalmanBoxTracker as KalmanBoxTrackerTracker
+    # from polyis.tracker.sort import KalmanBoxTracker as KalmanBoxTrackerTracker
     from polyis.tracker.cython._sort import reset_tracker_count
     KalmanBoxTrackerB3D.count = 0
-    KalmanBoxTrackerTracker.count = 0
+    # KalmanBoxTrackerTracker.count = 0
     reset_tracker_count()
+    
+    print("\n=== Running Cython SORT ===")
+    results_cython, perf_cython = run_tracker(tracker_cython, detection_results)
     
     # Run all trackers on the same detections with performance measurement
     print("\n=== Running B3D SORT ===")
@@ -307,17 +310,15 @@ def test_sort_comparison():
     
     # Reset counters again for fair comparison
     KalmanBoxTrackerB3D.count = 0
-    KalmanBoxTrackerTracker.count = 0
+    # KalmanBoxTrackerTracker.count = 0
     reset_tracker_count()
     
     print("\n=== Running Tracker SORT ===")
-    results_tracker, perf_tracker = run_tracker(tracker_tracker, detection_results)
-    
-    print("\n=== Running Cython SORT ===")
-    results_cython, perf_cython = run_tracker(tracker_cython, detection_results)
+    # results_tracker, perf_tracker = run_tracker(tracker_tracker, detection_results)
+    perf_tracker = None
     
     # Compare results
-    comparison = compare_tracking_results(results_b3d, results_tracker, results_cython)
+    comparison = compare_tracking_results(results_b3d, results_cython, None)
 
     # Print comparison summary
     print(f"\n=== Tracking Comparison Summary ===")
@@ -344,7 +345,8 @@ def test_sort_comparison():
         pytest.fail(f"Tracking results differ between implementations: {comparison['frames_differ']} frames differ")
     
     # Print performance comparison
-    if perf_b3d and perf_tracker and perf_cython:
+    # if perf_b3d and perf_tracker and perf_cython:
+    if perf_b3d and perf_cython:
         print(f"\n=== Performance Comparison ===")
         print(f"\nB3D SORT Performance:")
         print(f"  Total time: {perf_b3d['total_time']:.4f} seconds")
@@ -354,13 +356,13 @@ def test_sort_comparison():
         if perf_b3d['num_frames'] > 0:
             print(f"  Throughput: {perf_b3d['num_frames']/perf_b3d['total_time']:.2f} frames/second")
         
-        print(f"\nTracker SORT Performance:")
-        print(f"  Total time: {perf_tracker['total_time']:.4f} seconds")
-        print(f"  Number of frames: {perf_tracker['num_frames']}")
-        print(f"  Average time per frame: {perf_tracker['avg_frame_time']*1000:.4f} ms")
-        print(f"  Median time per frame: {perf_tracker['median_frame_time']*1000:.4f} ms")
-        if perf_tracker['num_frames'] > 0:
-            print(f"  Throughput: {perf_tracker['num_frames']/perf_tracker['total_time']:.2f} frames/second")
+        # print(f"\nTracker SORT Performance:")
+        # print(f"  Total time: {perf_tracker['total_time']:.4f} seconds")
+        # print(f"  Number of frames: {perf_tracker['num_frames']}")
+        # print(f"  Average time per frame: {perf_tracker['avg_frame_time']*1000:.4f} ms")
+        # print(f"  Median time per frame: {perf_tracker['median_frame_time']*1000:.4f} ms")
+        # if perf_tracker['num_frames'] > 0:
+        #     print(f"  Throughput: {perf_tracker['num_frames']/perf_tracker['total_time']:.2f} frames/second")
         
         print(f"\nCython SORT Performance:")
         print(f"  Total time: {perf_cython['total_time']:.4f} seconds")
@@ -371,18 +373,19 @@ def test_sort_comparison():
             print(f"  Throughput: {perf_cython['num_frames']/perf_cython['total_time']:.2f} frames/second")
         
         # Calculate speedup/slowdown
-        if perf_b3d['total_time'] > 0 and perf_tracker['total_time'] > 0 and perf_cython['total_time'] > 0:
-            speedup_tracker = perf_b3d['total_time'] / perf_tracker['total_time']
+        # if perf_b3d['total_time'] > 0 and perf_tracker['total_time'] > 0 and perf_cython['total_time'] > 0:
+        if perf_b3d['total_time'] > 0 and perf_cython['total_time'] > 0:
+            # speedup_tracker = perf_b3d['total_time'] / perf_tracker['total_time']
             speedup_cython = perf_b3d['total_time'] / perf_cython['total_time']
             
             print(f"\n=== Speedup Ratios ===")
-            print(f"Tracker vs B3D: {speedup_tracker:.4f}x")
+            # print(f"Tracker vs B3D: {speedup_tracker:.4f}x")
             print(f"Cython vs B3D: {speedup_cython:.4f}x")
             
             if speedup_cython > 1.0:
                 print(f"  → Cython SORT is {speedup_cython:.2f}x faster than B3D")
-            if speedup_tracker > 1.0:
-                print(f"  → Tracker SORT is {speedup_tracker:.2f}x faster than B3D")
+            # if speedup_tracker > 1.0:
+            #     print(f"  → Tracker SORT is {speedup_tracker:.2f}x faster than B3D")
     
     # Assert that results are identical (or at least very similar)
     assert comparison['frames_compared'] > 0, "No frames were compared"

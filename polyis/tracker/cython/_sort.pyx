@@ -51,39 +51,35 @@ def linear_assignment(cnp.ndarray[cnp.float64_t, ndim=2] cost_matrix):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def iou_batch(cnp.ndarray[cnp.float64_t, ndim=2] bb_test, 
-              cnp.ndarray[cnp.float64_t, ndim=2] bb_gt):
+cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_batch(double[:, :] bb_test, double[:, :] bb_gt):
     """
     Compute IOU between two sets of bboxes in the form [x1,y1,x2,y2].
-    
-    Args:
-        bb_test: Test bounding boxes (N, 4)
-        bb_gt: Ground truth bounding boxes (M, 4)
-        
-    Returns:
-        IOU matrix (N, M)
+    Optimized with memory views and C loops.
     """
-    # Expand dimensions for broadcasting
-    cdef cnp.ndarray[cnp.float64_t, ndim=3] bb_gt_ = np.expand_dims(bb_gt, 0)  # (1, M, 4)
-    cdef cnp.ndarray[cnp.float64_t, ndim=3] bb_test_ = np.expand_dims(bb_test, 1)  # (N, 1, 4)
+    cdef int N = bb_test.shape[0]
+    cdef int M = bb_gt.shape[0]
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] o = np.zeros((N, M), dtype=np.float64)
+    cdef double[:, :] o_view = o
     
-    # Compute intersection coordinates
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] xx1 = np.maximum(bb_test_[..., 0], bb_gt_[..., 0])
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] yy1 = np.maximum(bb_test_[..., 1], bb_gt_[..., 1])
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] xx2 = np.minimum(bb_test_[..., 2], bb_gt_[..., 2])
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] yy2 = np.minimum(bb_test_[..., 3], bb_gt_[..., 3])
+    cdef int i, j
+    cdef double xx1, yy1, xx2, yy2, w, h, wh, area_test, area_gt
     
-    # Compute width and height of intersection
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] w = np.maximum(0., xx2 - xx1)
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] h = np.maximum(0., yy2 - yy1)
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] wh = w * h
-    
-    # Compute IOU
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] o = wh / (
-        (bb_test_[..., 2] - bb_test_[..., 0]) * (bb_test_[..., 3] - bb_test_[..., 1]) +
-        (bb_gt_[..., 2] - bb_gt_[..., 0]) * (bb_gt_[..., 3] - bb_gt_[..., 1]) - wh
-    )
-    
+    for i in range(N):
+        area_test = (bb_test[i, 2] - bb_test[i, 0]) * (bb_test[i, 3] - bb_test[i, 1])
+        for j in range(M):
+            xx1 = fmax(bb_test[i, 0], bb_gt[j, 0])
+            yy1 = fmax(bb_test[i, 1], bb_gt[j, 1])
+            xx2 = fmin(bb_test[i, 2], bb_gt[j, 2])
+            yy2 = fmin(bb_test[i, 3], bb_gt[j, 3])
+            
+            w = fmax(0.0, xx2 - xx1)
+            h = fmax(0.0, yy2 - yy1)
+            wh = w * h
+            
+            area_gt = (bb_gt[j, 2] - bb_gt[j, 0]) * (bb_gt[j, 3] - bb_gt[j, 1])
+            
+            o_view[i, j] = wh / (area_test + area_gt - wh)
+            
     return o
 
 

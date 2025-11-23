@@ -8,7 +8,7 @@ import os
 import glob
 import multiprocessing as mp
 
-from mypyc.build import mypycify
+# from mypyc.build import mypycify
 
 
 ARGS = ["-O3", "-ffast-math", "-march=native", "-mtune=native", "-finline-functions"]
@@ -308,20 +308,20 @@ ext_modules = cythonize(
     annotate=True
 )
 
-mypyc_extensions = mypycify([
-    'polyis/tracker/kalman_filter.py',
-    'polyis/tracker/sort.py',
-])
-# Add optimization flags and include directories to mypyc-compiled extensions
-for ext in mypyc_extensions:
-    ext.extra_compile_args = ARGS
-    ext.define_macros = MACROS
-    # Add numpy include directory if not already present
-    if numpy.get_include() not in (ext.include_dirs or []):
-        if ext.include_dirs is None:
-            ext.include_dirs = []
-        ext.include_dirs.append(numpy.get_include())
-ext_modules.extend(mypyc_extensions)
+# mypyc_extensions = mypycify([
+#     'polyis/tracker/kalman_filter.py',
+#     'polyis/tracker/sort.py',
+# ])
+# # Add optimization flags and include directories to mypyc-compiled extensions
+# for ext in mypyc_extensions:
+#     ext.extra_compile_args = ARGS
+#     ext.define_macros = MACROS
+#     # Add numpy include directory if not already present
+#     if numpy.get_include() not in (ext.include_dirs or []):
+#         if ext.include_dirs is None:
+#             ext.include_dirs = []
+#         ext.include_dirs.append(numpy.get_include())
+# ext_modules.extend(mypyc_extensions)
 
 setup(
     name="polyis",
