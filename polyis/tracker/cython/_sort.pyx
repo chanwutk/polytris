@@ -277,19 +277,19 @@ def associate_detections_to_trackers(
     
     # Find unmatched detections
     cdef list unmatched_detections = []
-    cdef int d
-    for d in range(len(detections)):
-        if d not in matched_indices[:, 0]:
-            unmatched_detections.append(np.int16(d))
+    cdef set[int] matched_indices_set = set(matched_indices[:, 0])
+    cdef int i
+    for i in range(len(detections)):
+        if i not in matched_indices_set:
+            unmatched_detections.append(i)
     
     # Filter out matches with low IOU
     cdef list matches = []
-    cdef int i
     cdef cnp.ndarray[cnp.int16_t, ndim=1] m
     for i in range(len(matched_indices)):
         m = matched_indices[i]
         if iou_matrix[m[0], m[1]] < iou_threshold:
-            unmatched_detections.append(np.int16(m[0]))
+            unmatched_detections.append(m[0])
         else:
             matches.append(m)
     
