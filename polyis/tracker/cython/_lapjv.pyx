@@ -16,8 +16,7 @@ cdef extern from "lapjv.h" nogil:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def lapjv(cnp.ndarray cost not None, char extend_cost=False,
-          double cost_limit=np.inf, char return_cost=True):
+def lapjv(cnp.ndarray[cnp.float64_t, ndim=2] cost not None):
     """Solve linear assignment problem using Jonker-Volgenant algorithm.
 
     Parameters
@@ -25,17 +24,9 @@ def lapjv(cnp.ndarray cost not None, char extend_cost=False,
     cost: (N,N) ndarray
         Cost matrix. Entry `cost[i, j]` is the cost of assigning row `i` to
         column `j`.
-    extend_cost: bool, optional
-        Whether or not extend a non-square matrix. Default: False.
-    cost_limit: double, optional
-        An upper limit for a cost of a single assignment. Default: `np.inf`.
-    return_cost: bool, optional
-        Whether or not to return the assignment cost.
 
     Returns
     -------
-    opt: double
-        Assignment cost. Not returned if `return_cost is False`.
     x: (N,) ndarray
         Assignment. `x[i]` specifies the column to which row `i` is assigned.
     y: (N,) ndarray
@@ -43,12 +34,9 @@ def lapjv(cnp.ndarray cost not None, char extend_cost=False,
 
     Notes
     -----
-    For non-square matrices (with `extend_cost is True`) or `cost_limit` set
-    low enough, there will be unmatched rows, columns in the solution `x`, `y`.
+    For non-square matrices, there will be unmatched rows, columns in the solution `x`, `y`.
     All such entries are set to -1.
     """
-    if cost.ndim != 2:
-        raise ValueError('2-dimensional array expected')
     cdef cnp.ndarray[cnp.double_t, ndim=2, mode='c'] cost_c = \
         np.ascontiguousarray(cost, dtype=np.double)
     cdef cnp.ndarray[cnp.double_t, ndim=2, mode='c'] cost_c_extended
@@ -57,23 +45,11 @@ def lapjv(cnp.ndarray cost not None, char extend_cost=False,
     cdef uint_t n = 0
     if n_rows == n_cols:
         n = n_rows
-    else:
-        if not extend_cost:
-            raise ValueError(
-                    'Square cost array expected. If cost is intentionally '
-                    'non-square, pass extend_cost=True.')
-    if cost_limit < np.inf:
-        n = n_rows + n_cols
-        cost_c_extended = np.empty((n, n), dtype=np.double)
-        cost_c_extended[:] = cost_limit / 2.
-        cost_c_extended[n_rows:, n_cols:] = 0
-        cost_c_extended[:n_rows, :n_cols] = cost_c
-        cost_c = cost_c_extended
-    elif extend_cost:
-        n = max(n_rows, n_cols)
-        cost_c_extended = np.zeros((n, n), dtype=np.double)
-        cost_c_extended[:n_rows, :n_cols] = cost_c
-        cost_c = cost_c_extended
+
+    n = max(n_rows, n_cols)
+    cost_c_extended = np.zeros((n, n), dtype=np.double)
+    cost_c_extended[:n_rows, :n_cols] = cost_c
+    cost_c = cost_c_extended
 
     cdef double **cost_ptr
     cost_ptr = <double **> malloc(n * sizeof(double *))
@@ -93,19 +69,10 @@ def lapjv(cnp.ndarray cost not None, char extend_cost=False,
             raise MemoryError('Out of memory.')
         raise RuntimeError('Unknown error (lapjv_internal returned %d).' % ret)
 
-    cdef double opt = np.nan
-    if cost_limit < np.inf or extend_cost:
-        x_c[x_c >= n_cols] = -1
-        y_c[y_c >= n_rows] = -1
-        x_c = x_c[:n_rows]
-        y_c = y_c[:n_cols]
-        if return_cost:
-            opt = cost_c[np.nonzero(x_c != -1)[0], x_c[x_c != -1]].sum()
-    elif return_cost:
-        opt = cost_c[np.arange(n_rows), x_c].sum()
+    x_c[x_c >= n_cols] = -1
+    y_c[y_c >= n_rows] = -1
+    x_c = x_c[:n_rows]
+    y_c = y_c[:n_cols]
 
-    if return_cost:
-        return opt, x_c, y_c
-    else:
-        return x_c, y_c
+    return x_c, y_c
 

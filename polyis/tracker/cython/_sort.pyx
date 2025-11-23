@@ -29,7 +29,7 @@ def reset_tracker_count():
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def linear_assignment(cnp.ndarray[cnp.float64_t, ndim=2] cost_matrix):
+def linear_assignment(cnp.ndarray[cnp.float64_t, ndim=2] cost_matrix not None):
     """
     Solve linear assignment problem using lapjv.
     
@@ -39,7 +39,7 @@ def linear_assignment(cnp.ndarray[cnp.float64_t, ndim=2] cost_matrix):
     Returns:
         Array of matched pairs [[row, col], ...]
     """
-    x, y = lapjv(cost_matrix, extend_cost=True, return_cost=False)
+    x, y = lapjv(cost_matrix)
     # Convert to array of pairs
     cdef list pairs = []
     cdef int i
@@ -51,15 +51,17 @@ def linear_assignment(cnp.ndarray[cnp.float64_t, ndim=2] cost_matrix):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_batch(double[:, :] bb_test, double[:, :] bb_gt):
+cdef void iou_batch(
+    cnp.float64_t[:, :] bb_test,
+    cnp.float64_t[:, :] bb_gt,
+    cnp.float64_t[:, :] o_view
+) noexcept nogil:
     """
     Compute IOU between two sets of bboxes in the form [x1,y1,x2,y2].
     Optimized with memory views and C loops.
     """
     cdef int N = bb_test.shape[0]
     cdef int M = bb_gt.shape[0]
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] o = np.zeros((N, M), dtype=np.float64)
-    cdef double[:, :] o_view = o
     
     cdef int i, j
     cdef double xx1, yy1, xx2, yy2, w, h, wh, area_test, area_gt
@@ -79,8 +81,6 @@ cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_batch(double[:, :] bb_test, double[:
             area_gt = (bb_gt[j, 2] - bb_gt[j, 0]) * (bb_gt[j, 3] - bb_gt[j, 1])
             
             o_view[i, j] = wh / (area_test + area_gt - wh)
-            
-    return o
 
 
 @cython.boundscheck(False)
@@ -233,8 +233,8 @@ cdef void KalmanBoxTracker_get_state(KalmanBoxTracker *self, double *bbox) noexc
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def associate_detections_to_trackers(
-    double[:, :] detections,
-    double[:, :] trackers,
+    cnp.float64_t[:, :] detections,
+    cnp.float64_t[:, :] trackers,
     double iou_threshold = 0.3
 ):
     """
@@ -257,8 +257,9 @@ def associate_detections_to_trackers(
         return [], [i for i in range(N)]
     
     # Compute IOU matrix
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_matrix = iou_batch(detections, trackers)
-    cdef double[:, :] iou_matrix_view = iou_matrix
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] iou_matrix = np.zeros((N, M), dtype=np.float64)
+    iou_batch(detections, trackers, iou_matrix)
+    cdef cnp.float64_t[:, :] iou_matrix_view = iou_matrix
     
     cdef cnp.ndarray[cnp.int16_t, ndim=2] matched_indices
     cdef cnp.ndarray[cnp.int16_t, ndim=2] a
@@ -324,6 +325,14 @@ cdef public class PySort [object PySortObject, type PySortType]:
         self.iou_threshold = iou_threshold
         self.frame_count = 0
     
+    def __dealloc__(self):
+        """
+        Clean up allocated memory for trackers.
+        """
+        cdef int i
+        for i in range(self.trackers.size()):
+            free(self.trackers[i])
+    
     def update(self, cnp.ndarray[cnp.float64_t, ndim=2] dets):
         """
         Update tracker with new detections.
@@ -356,6 +365,7 @@ cdef public class PySort [object PySortObject, type PySortType]:
         # Remove invalid trackers
         trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
         for t in reversed(to_del):
+            free(self.trackers[t])
             self.trackers.erase(self.trackers.begin() + t)
         
         # Associate detections to trackers
@@ -390,6 +400,7 @@ cdef public class PySort [object PySortObject, type PySortType]:
                 ret.append(np.array([[pos[0], pos[1], pos[2], pos[3], tracker.id + 1]], dtype=np.float64))
             # Remove dead tracklet
             if tracker.time_since_update > self.max_age:
+                free(self.trackers[idx])
                 self.trackers.erase(self.trackers.begin() + idx)
 
         
