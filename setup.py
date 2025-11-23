@@ -77,16 +77,16 @@ extensions = [
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.tracker.cython._kalman_filter",
-        ["polyis/tracker/cython/_kalman_filter.pyx"],
+        "polyis.tracker.cython.kalman_filter",
+        ["polyis/tracker/cython/kalman_filter.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.tracker.cython._sort",
+        "polyis.tracker.cython.sort",
         [
-            "polyis/tracker/cython/_sort.pyx",
+            "polyis/tracker/cython/sort.pyx",
             "modules/lap/_lapjv_cpp/lapjv.cpp",
         ],
         include_dirs=["modules/lap/_lapjv_cpp", numpy.get_include()],
