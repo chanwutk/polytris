@@ -10,8 +10,6 @@ EXEC:
     - jnc7
     # - caldot1
     # - caldot2
-    # - caldot1-fasterrcnn
-    # - caldot2-fasterrcnn
     # - ams
   VIDEO_SETS:
     # - train
