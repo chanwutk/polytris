@@ -60,7 +60,8 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
 
 
 def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: torch.nn.Module, tile_size: int, device: str, 
-                       normalize_mean: torch.Tensor, normalize_std: torch.Tensor) -> tuple[np.ndarray, list[dict]]:
+                       normalize_mean: torch.Tensor, normalize_std: torch.Tensor, 
+                       always_relevant_mask: torch.Tensor) -> tuple[np.ndarray, list[dict]]:
     """
     Process a single video frame with the specified tile size and return relevance scores and timing information.
 
@@ -76,6 +77,8 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
         device (str): Device to use for processing
         normalize_mean (torch.Tensor): Pre-created mean tensor for ImageNet normalization
         normalize_std (torch.Tensor): Pre-created std tensor for ImageNet normalization
+        always_relevant_mask (torch.Tensor): Flattened mask indicating tiles that have been relevant
+            at some point in the dataset. Shape: (num_tiles,). None if no optimization is available.
 
     Returns:
         tuple[np.ndarray, list[dict[str, float]]]: A tuple containing:
@@ -88,6 +91,7 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
         - Input frame is normalized to [0, 1] range before inference
         - Model outputs logits, which are converted to probabilities using sigmoid
         - Timing information includes preprocessing and model inference times
+        - Tiles that are all-black or have never been relevant are filtered out
     """
     with torch.no_grad():
         start_time = (time.time_ns() / 1e6)
@@ -119,6 +123,9 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
         # Check if any pixel in each tile is non-zero
         non_black_mask = tiles_flat.reshape(num_tiles, -1).any(dim=1).to(torch.uint8)
 
+        # Combine with always_relevant_mask to filter out tiles that have never been relevant
+        valid_tiles_mask = non_black_mask & always_relevant_mask
+
         # Normalize to [0, 1] range (equivalent to ToTensor())
         tiles_flat = tiles_flat.float() / 255.0
 
@@ -137,7 +144,8 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
         
         # Convert to uint8 and transfer to CPU
         probabilities = (predictions * 255).to(torch.uint8)
-        predictions = predictions * non_black_mask.view(-1, 1)
+        # Filter predictions using the combined mask
+        predictions = predictions * valid_tiles_mask.view(-1, 1)
         probabilities = probabilities.cpu().numpy().flatten()
 
         # Reshape back to grid format
@@ -229,6 +237,15 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
     normalize_mean = torch.tensor([0.485, 0.456, 0.406] * 2, device=device).view(1, 6, 1, 1)
     normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device).view(1, 6, 1, 1)
 
+    # Load always_relevant bitmap if available to filter out tiles that have never been relevant
+    always_relevant_path = os.path.join(CACHE_DIR, dataset, 'indexing', 'always_relevant', f'{tile_size}_all.npy')
+    assert os.path.exists(always_relevant_path), f"Always relevant bitmap not found for {dataset} {tile_size}"
+
+    # Load the bitmap (2D array where 1 = relevant at some point, 0 = never relevant)
+    always_relevant_bitmap = np.load(always_relevant_path)
+    # Flatten to match the tile processing order and convert to tensor
+    always_relevant_mask = torch.from_numpy(always_relevant_bitmap.flatten()).to(device).to(torch.uint8)
+
     # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
         description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier} {method_name}"
@@ -247,13 +264,13 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
         for frame_idx, frame in enumerate(frames[:16]):
             previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
             relevance_grid, runtime = process_frame_tiles(frame, previous_frame, model, tile_size, device, 
-                                                         normalize_mean, normalize_std)  # type: ignore
+                                                         normalize_mean, normalize_std, always_relevant_mask)  # type: ignore
         
         for frame_idx, frame in enumerate(frames):
             # Process frame with the model
             previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
             relevance_grid, runtime = process_frame_tiles(frame, previous_frame, model, tile_size, device, 
-                                                         normalize_mean, normalize_std)  # type: ignore
+                                                         normalize_mean, normalize_std, always_relevant_mask)  # type: ignore
 
             # Create result entry for this frame
             frame_entry = {

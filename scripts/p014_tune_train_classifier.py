@@ -40,8 +40,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Preprocess video dataset')
     parser.add_argument('--clear', action='store_true',
                         help='Clear existing results directories before training')
-    parser.add_argument('--visualize', action='store_true',
-                        help='Generate training progress visualizations during training')
+    parser.add_argument('--no_visualize', action='store_true', default=False,
+                        help='Disable training progress visualizations during training')
     return parser.parse_args()
 
 
@@ -646,11 +646,12 @@ MODEL_ZOO = {
 class ImageFolderWithPosition(ImageFolder):
     def __init__(self, root: str, transform: typing.Callable | None = None):
         super().__init__(root, transform)
-        self.mem = {}
+        self.mem: list[tuple[torch.Tensor, torch.Tensor, int, tuple[int, int]] | None] = [None] * len(self.samples)
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int, torch.Tensor]:
-        if index in self.mem:
-            sample, diff_sample, target, pos = self.mem[index]
+        mem = self.mem[index]
+        if mem is not None:
+            sample, diff_sample, target, pos = mem
         else:
             path, target = self.samples[index]
             sample = self.loader(path)
@@ -824,7 +825,7 @@ def main(args):
 
         for classifier in CLASSIFIERS:
             for tile_size in TILE_SIZES:
-                func = partial(train_classifier, dataset_name, tile_size, classifier, args.visualize)
+                func = partial(train_classifier, dataset_name, tile_size, classifier, not args.no_visualize)
                 funcs.append(func)
 
     # Set up multiprocessing with ProgressBar

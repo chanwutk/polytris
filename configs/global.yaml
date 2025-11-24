@@ -25,7 +25,7 @@ EXEC:
   TILEPADDING_MODES:
     - none
     # - connected
-    - disconnected
+    - plus
 
 DATA:
   SOURCE_DIR: /polyis-data/sources

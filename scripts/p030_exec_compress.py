@@ -17,7 +17,7 @@ import torch
 from polyis import dtypes
 from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS
 from polyis.pack.group_tiles import group_tiles
-from polyis.pack.pack_ffd import pack_all
+from polyis.pack.pack import pack
 
 
 config = get_config()
@@ -226,7 +226,7 @@ def compress(dataset: str, video: str, classifier: str, tilesize: int,
 
         # Pack this batch
         batch_start = (time.time_ns() / 1e6)
-        batch_collages_ = pack_all(batch_polyominoes, grid_height, grid_width, int(mode))
+        batch_collages_ = pack(batch_polyominoes, grid_height, grid_width, int(mode))
         batch_pack_time = (time.time_ns() / 1e6) - batch_start
         total_pack_time += batch_pack_time
 

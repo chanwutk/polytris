@@ -189,6 +189,7 @@ def main():
         assert len(videos) > 0, f"No videos with segments found in {segments_dir}"
 
         # Create training directories
+        print(f'Creating training directories for {dataset_name}')
         training_base_dir = os.path.join(cache_dir, 'indexing', 'training')
         if os.path.exists(training_base_dir):
             shutil.rmtree(training_base_dir)

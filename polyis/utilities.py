@@ -142,7 +142,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tracki
     """
     if filename is None:
         filename = 'tracking.jsonl' if tracking else 'detection.jsonl'
-    detection_path = os.path.join(cache_dir, dataset, 'execution', video_file, '000_groundtruth', filename)
+    detection_path = os.path.join(cache_dir, dataset, 'execution', video_file, '002_naive', filename)
     
     if not os.path.exists(detection_path):
         raise FileNotFoundError(f"Detection results not found: {detection_path}")
@@ -176,7 +176,7 @@ def load_tracking_results(cache_dir: str, dataset: str, video_file: str, verbose
     Raises:
         FileNotFoundError: If no tracking results file is found
     """
-    tracking_path = os.path.join(cache_dir, dataset, 'execution', video_file, '000_groundtruth', 'tracking.jsonl')
+    tracking_path = os.path.join(cache_dir, dataset, 'execution', video_file, '002_naive', 'tracking.jsonl')
     
     if not os.path.exists(tracking_path):
         raise FileNotFoundError(f"Tracking results not found: {tracking_path}")
@@ -468,6 +468,10 @@ def create_tracker(tracker_name: str):
             from polyis.b3d.sort import Sort
             config = yaml.safe_load(f)['sort']
             return Sort(max_age=config['max_age'], min_hits=config['min_hits'], iou_threshold=config['iou_threshold'])
+        if tracker_name == 'sort-cython':
+            from polyis.tracker.cython.sort import Sort as SortCython
+            config = yaml.safe_load(f)['sort']
+            return SortCython(max_age=config['max_age'], min_hits=config['min_hits'], iou_threshold=config['iou_threshold'])
         else:
             raise ValueError(f"Unknown tracker: {tracker_name}")
 
@@ -1412,10 +1416,11 @@ PARAMS = [
     'tilepadding',
 ]
 
-TilePadding = typing.Literal['none', 'connected', 'disconnected']
+TilePadding = typing.Literal['none', 'plus', 'connected', 'disconnected']
 TILEPADDING_MODES: "dict[TilePadding, int]" = {
     'none': 0,
-    'connected': 1,
+    'plus': 1,
+    # 'connected': 1,
     # 'disconnected': 2,
 }
 TILEPADDING_MAPS: "dict[TilePadding, int]" = TILEPADDING_MODES

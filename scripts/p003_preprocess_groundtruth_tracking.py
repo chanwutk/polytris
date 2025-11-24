@@ -34,12 +34,13 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     detection_results = load_detection_results(CACHE_DIR, dataset, video_file)
 
     # Create output path for tracking results
-    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '003_naive', 'tracking.jsonl')
+    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '002_naive', 'tracking.jsonl')
     runtime_path = output_path.replace('tracking.jsonl', 'tracking_runtime.jsonl')
 
     # print(f"Processing video: {video_file}")
     # Create tracker
     tracker = create_tracker('sort')
+    tracker_cython = create_tracker('sort-cython')
 
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
@@ -83,19 +84,26 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
             step_times['convert_detections'] = (time.time_ns() / 1e6) - step_start
 
             # Update tracker
+            dets_python = dets.copy()
             step_start = (time.time_ns() / 1e6)
-            tracked_dets = tracker.update(dets)
+            tracked_dets = tracker.update(dets_python)
             step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
+
+            step_start = (time.time_ns() / 1e6)
+            tracked_dets_cython = tracker_cython.update(dets)
+            step_times['tracker_update_cython'] = (time.time_ns() / 1e6) - step_start
+
+            assert np.array_equal(tracked_dets, tracked_dets_cython), f"Tracking results mismatch: {tracked_dets} != {tracked_dets_cython}"
 
             # Process tracking results
             step_start = (time.time_ns() / 1e6)
-            register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories, False)
+            register_tracked_detections(tracked_dets_cython, frame_idx, frame_tracks, trajectories, False)
             step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
             runtime_data = {
                 'frame_idx': frame_idx,
                 'runtime': format_time(**step_times),
                 'num_detections': len(dets),
-                'num_tracks': tracked_dets.size if tracked_dets.size > 0 else 0
+                'num_tracks': tracked_dets_cython.size if tracked_dets_cython.size > 0 else 0
             }
             runtime_file.write(json.dumps(runtime_data) + '\n')
 

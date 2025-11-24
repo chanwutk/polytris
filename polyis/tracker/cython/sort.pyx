@@ -372,7 +372,7 @@ def associate_detections_to_trackers(
     return matches, unmatched_detections
 
 
-cdef public class PySort [object PySortObject, type PySortType]:
+cdef public class Sort [object SortObject, type SortType]:
     """
     SORT tracker implementation in Cython.
     """
