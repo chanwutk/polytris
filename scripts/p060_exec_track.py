@@ -111,7 +111,7 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding:
     output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tilesize}_{tilepadding}', 'tracking.jsonl')
     
     # Create tracker
-    tracker = create_tracker('sort')
+    tracker = create_tracker('sort-cython')
     
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}

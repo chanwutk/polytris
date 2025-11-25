@@ -90,7 +90,7 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
 
             # Construct paths to tracking and groundtruth files
             tracking_path = os.path.join(tracking_dir, f'{classifier}_{ts}_{tilepadding}', 'tracking.jsonl')
-            groundtruth_path = os.path.join(video_dir, '000_groundtruth', 'tracking.jsonl')
+            groundtruth_path = os.path.join(video_dir, '003_groundtruth', 'tracking.jsonl')
 
             # Verify both tracking results and groundtruth exist
             assert os.path.exists(tracking_path), f"Tracking path {tracking_path} does not exist"
@@ -152,14 +152,14 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         assert classifier == 'Groundtruth' and tilesize == 0 and tilepadding == 'Groundtruth', \
             "classifier and tilepadding must be Groundtruth and tilesize must be 0 if not provided, " \
             f"but got {classifier}, {tilesize}, and {tilepadding}"
-        input_track = os.path.join('000_groundtruth', 'tracking.jsonl')
+        input_track = os.path.join('002_naive', 'tracking.jsonl')
 
     # Create TrackEval dataset configuration
     # This configures how TrackEval will find and process the data files
     dataset_config = {
         'output_fol': output_dir,  # Where TrackEval will write its output
         'output_sub_fol': f'{dataset}_{clts}',  # Subdirectory name for this evaluation
-        'input_gt': os.path.join('000_groundtruth', 'tracking_.jsonl'),  # Relative path to groundtruth files
+        'input_gt': os.path.join('003_groundtruth', 'tracking.jsonl'),  # Relative path to groundtruth files
         'input_track': input_track,  # Relative path to tracking files
         'skip': 1,  # Process every frame (no frame skipping)
         'tracker': clts,  # Tracker name identifier

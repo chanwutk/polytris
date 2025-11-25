@@ -55,7 +55,7 @@ def visualize_video(video_file: str, cache_dir: str, dataset: str, speed_up: int
     
     # Create output path for visualization
     output_path = os.path.join(cache_dir, dataset, 'execution', video_file,
-                               '000_groundtruth', f'annotated_{video_file}')
+                               '002_naive', f'annotated_{video_file}')
     
     # Create visualization
     create_tracking_visualization(video_path, tracking_results, output_path, speed_up,
@@ -109,8 +109,8 @@ def main(args):
         video_dirs = []
         for item in os.listdir(execution_dir):
             item_path = os.path.join(execution_dir, item)
-            if os.path.isdir(item_path):
-                tracking_path = os.path.join(item_path, '000_groundtruth', 'tracking.jsonl')
+            if item.startswith('te') and os.path.isdir(item_path):
+                tracking_path = os.path.join(item_path, '002_naive', 'tracking.jsonl')
                 if os.path.exists(tracking_path):
                     video_dirs.append(item)
         

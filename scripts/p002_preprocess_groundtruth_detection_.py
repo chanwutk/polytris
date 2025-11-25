@@ -139,7 +139,7 @@ def main():
         
         # Get all video files from the dataset directory
         videos: list[str] = []
-        for videoset in VIDEO_SETS:
+        for videoset in ['test']:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             videos.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])

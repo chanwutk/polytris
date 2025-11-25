@@ -30,7 +30,7 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
         command_queue (Queue): Queue for progress updates
     """
     # Load detection results
-    detection_results = load_detection_results(CACHE_DIR, dataset, video_file, filename='detection_.jsonl')
+    detection_results = load_detection_results(CACHE_DIR, dataset, video_file, filename='detection.jsonl', groundtruth=True)
 
     # Create output path for tracking results
     output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '003_groundtruth', 'tracking.jsonl')
@@ -38,6 +38,7 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     # print(f"Processing video: {video_file}")
     # Create tracker
     tracker = create_tracker('sort')
+    tracker_cython = create_tracker('sort-cython')
 
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
@@ -80,13 +81,20 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
         step_times['convert_detections'] = (time.time_ns() / 1e6) - step_start
 
         # Update tracker
+        dets_python = dets.copy()
         step_start = (time.time_ns() / 1e6)
-        tracked_dets = tracker.update(dets)
+        tracked_dets = tracker.update(dets_python)
         step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
+
+        step_start = (time.time_ns() / 1e6)
+        tracked_dets_cython = tracker_cython.update(dets)
+        step_times['tracker_update_cython'] = (time.time_ns() / 1e6) - step_start
+
+        assert np.array_equal(tracked_dets, tracked_dets_cython), f"Tracking results mismatch: {tracked_dets} != {tracked_dets_cython}"
 
         # Process tracking results
         step_start = (time.time_ns() / 1e6)
-        register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories, False)
+        register_tracked_detections(tracked_dets_cython, frame_idx, frame_tracks, trajectories, False)
         step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
 
         # Send progress update
@@ -149,7 +157,7 @@ def main():
         
         # Get all video files from the dataset directory
         video_files: list[str] = []
-        for videoset in VIDEO_SETS:
+        for videoset in ['test']:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])
