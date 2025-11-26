@@ -8,11 +8,10 @@ EXEC:
     - jnc2
     - jnc6
     - jnc7
-    # - caldot1
-    # - caldot2
+    - caldot1
+    - caldot2
     # - ams
   VIDEO_SETS:
-    # - train
     - valid
     - test
   CLASSIFIERS:
@@ -24,7 +23,6 @@ EXEC:
     - 60
   TILEPADDING_MODES:
     - none
-    # - connected
     - plus
 
 DATA:

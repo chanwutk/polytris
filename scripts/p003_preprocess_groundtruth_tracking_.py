@@ -8,7 +8,7 @@ from functools import partial
 import queue
 import multiprocessing as mp
 
-from polyis.utilities import create_tracker, load_detection_results, ProgressBar, register_tracked_detections, get_config
+from polyis.utilities import create_tracker, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
 
 CONFIG = get_config()
@@ -37,8 +37,9 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
 
     # print(f"Processing video: {video_file}")
     # Create tracker
-    tracker = create_tracker('sort')
-    tracker_cython = create_tracker('sort-cython')
+    # tracker = create_tracker('sort')
+    # tracker_cython = create_tracker('sort-cython')
+    tracker = create_tracker('sort-cython')
 
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
@@ -80,21 +81,22 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
             dets = np.empty((0, 5))
         step_times['convert_detections'] = (time.time_ns() / 1e6) - step_start
 
-        # Update tracker
-        dets_python = dets.copy()
+        # # Update tracker
+        # dets_python = dets.copy()
+        # step_start = (time.time_ns() / 1e6)
+        # tracked_dets = tracker.update(dets_python)
+        # step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
+
         step_start = (time.time_ns() / 1e6)
-        tracked_dets = tracker.update(dets_python)
+        tracked_dets = tracker.update(dets)
+        # step_times['tracker_update_cython'] = (time.time_ns() / 1e6) - step_start
         step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
 
-        step_start = (time.time_ns() / 1e6)
-        tracked_dets_cython = tracker_cython.update(dets)
-        step_times['tracker_update_cython'] = (time.time_ns() / 1e6) - step_start
-
-        assert np.array_equal(tracked_dets, tracked_dets_cython), f"Tracking results mismatch: {tracked_dets} != {tracked_dets_cython}"
+        # assert np.array_equal(tracked_dets, tracked_dets_cython), f"Tracking results mismatch: {tracked_dets} != {tracked_dets_cython}"
 
         # Process tracking results
         step_start = (time.time_ns() / 1e6)
-        register_tracked_detections(tracked_dets_cython, frame_idx, frame_tracks, trajectories, False)
+        register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories, False)
         step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
 
         # Send progress update
@@ -110,23 +112,24 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     output_dir = os.path.dirname(output_path)
     os.makedirs(output_dir, exist_ok=True)
 
-    with open(output_path, 'w') as f:
-        frame_ids = frame_tracks.keys()
-        if len(frame_ids) == 0:
-            return
+    save_tracking_results(frame_tracks, output_path)
+    # with open(output_path, 'w') as f:
+    #     frame_ids = frame_tracks.keys()
+    #     if len(frame_ids) == 0:
+    #         return
 
-        first_idx = min(frame_ids)
-        last_idx = max(frame_ids)
+    #     first_idx = min(frame_ids)
+    #     last_idx = max(frame_ids)
 
-        for frame_idx in range(first_idx, last_idx + 1):
-            if frame_idx not in frame_tracks:
-                frame_tracks[frame_idx] = []
+    #     for frame_idx in range(first_idx, last_idx + 1):
+    #         if frame_idx not in frame_tracks:
+    #             frame_tracks[frame_idx] = []
 
-            frame_data = {
-                "frame_idx": frame_idx,
-                "tracks": frame_tracks[frame_idx]
-            }
-            f.write(json.dumps(frame_data) + '\n')
+    #         frame_data = {
+    #             "frame_idx": frame_idx,
+    #             "tracks": frame_tracks[frame_idx]
+    #         }
+    #         f.write(json.dumps(frame_data) + '\n')
 
     # print(f"Tracking results saved successfully. Total frames: {len(frame_tracks)}")
 

@@ -65,7 +65,7 @@ def parse_runtime_file(file_path: str, stage: str, accessor: Callable[[dict], li
         raise FileNotFoundError(f"File not found: {file_path}")
     
     timings: list[dict] = []
-    ignored_ops = ['total_frame_time', 'read_frame', 'save_canvas', 'save_mapping_files', 'tracker_update']
+    ignored_ops = ['total_frame_time', 'read_frame', 'save_canvas', 'save_mapping_files']
     
     with open(file_path, 'r') as f:
         if file_path.endswith('.jsonl'):

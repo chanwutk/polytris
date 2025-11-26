@@ -219,18 +219,18 @@ def interpolate_trajectory(trajectory: list[tuple[int, np.ndarray]], nxt: tuple[
         dif_det = nxt_det - prv_det
         dif_det = dif_det.reshape(1, -1)
 
-        scale = np.arange(0, nxt[0] - prv[0], dtype=np.float32).reshape(-1, 1) / (nxt[0] - prv[0])
+        scale = np.arange(1, nxt[0] - prv[0], dtype=np.float32).reshape(-1, 1) / (nxt[0] - prv[0])
         
         int_dets = (scale @ dif_det) + prv_det.reshape(1, -1)
 
-        for idx, int_det in enumerate(int_dets[:-1]):
+        for idx, int_det in enumerate(int_dets):
             extend.append((prv[0] + idx + 1, int_det))
 
     return extend
 
 
 def register_tracked_detections(
-    tracked_dets: np.ndarray,
+    tracked_dets: np.ndarray | list[tuple[float, float, float, float, int]],
     frame_idx: int,
     frame_tracks: dict[int, list[list[float]]],
     trajectories: dict[int, list[tuple[int, np.ndarray]]],
@@ -247,7 +247,7 @@ def register_tracked_detections(
         no_interpolate (bool): Whether to not perform trajectory interpolation
     """
 
-    if tracked_dets.size == 0:
+    if len(tracked_dets) == 0:
         return
 
     if frame_idx not in frame_tracks:
@@ -268,14 +268,13 @@ def register_tracked_detections(
 
         if track_id not in trajectories:
             trajectories[track_id] = []
-        box_array = np.array([x1, y1, x2, y2], dtype=np.float16)
+        box_array = np.array([x1, y1, x2, y2], dtype=np.float32)
         
         # Add to trajectories for interpolation (if enabled)
         if no_interpolate:
-            continue
-
-        extend = interpolate_trajectory(trajectories[track_id],
-                                        (frame_idx, box_array))
+            extend = []
+        else:
+            extend = interpolate_trajectory(trajectories[track_id], (frame_idx, box_array))
         
         # Add interpolated points to frame tracks
         for e in extend + [(frame_idx, box_array)]:
@@ -289,6 +288,33 @@ def register_tracked_detections(
 
             # Add interpolated points to trajectories
             trajectories[track_id].append((e_frame_idx, e_box))
+
+
+def save_tracking_results(frame_tracks: dict[int, list[list[float]]], output_path: str):
+    """
+    Save tracking results to a JSONL file.
+    
+    Args:
+        frame_tracks (dict[int, list[list[float]]]): Frame tracks
+        output_path (str): Path to save the tracking results
+    """
+    with open(output_path, 'w') as f:
+        frame_ids = frame_tracks.keys()
+        if len(frame_ids) == 0:
+            return
+        
+        first_idx = min(frame_ids)
+        last_idx = max(frame_ids)
+
+        for frame_idx in range(first_idx, last_idx + 1):
+            if frame_idx not in frame_tracks:
+                frame_tracks[frame_idx] = []
+                
+            frame_data = {
+                "frame_idx": frame_idx,
+                "tracks": frame_tracks[frame_idx]
+            }
+            f.write(json.dumps(frame_data) + '\n')
 
 
 def get_track_color(track_id: int, track_ids: list[int] | None = None) -> tuple[int, int, int]:

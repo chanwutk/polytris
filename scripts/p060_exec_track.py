@@ -11,7 +11,7 @@ from typing import Callable
 
 import torch
 
-from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config
+from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
 
 CONFIG = get_config()
@@ -178,23 +178,24 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding:
     output_dir = os.path.dirname(output_path)
     os.makedirs(output_dir, exist_ok=True)
     
-    with open(output_path, 'w') as f:
-        frame_ids = frame_tracks.keys()
-        if len(frame_ids) == 0:
-            return
+    save_tracking_results(frame_tracks, output_path)
+    # with open(output_path, 'w') as f:
+    #     frame_ids = frame_tracks.keys()
+    #     if len(frame_ids) == 0:
+    #         return
         
-        first_idx = min(frame_ids)
-        last_idx = max(frame_ids)
+    #     first_idx = min(frame_ids)
+    #     last_idx = max(frame_ids)
 
-        for frame_idx in range(first_idx, last_idx + 1):
-            if frame_idx not in frame_tracks:
-                frame_tracks[frame_idx] = []
+    #     for frame_idx in range(first_idx, last_idx + 1):
+    #         if frame_idx not in frame_tracks:
+    #             frame_tracks[frame_idx] = []
                 
-            frame_data = {
-                "frame_idx": frame_idx,
-                "tracks": frame_tracks[frame_idx]
-            }
-            f.write(json.dumps(frame_data) + '\n')
+    #         frame_data = {
+    #             "frame_idx": frame_idx,
+    #             "tracks": frame_tracks[frame_idx]
+    #         }
+    #         f.write(json.dumps(frame_data) + '\n')
 
 
 def main(args: argparse.Namespace):
