@@ -1,6 +1,5 @@
 #!/usr/local/bin/python
 
-import argparse
 import json
 import os
 
@@ -12,11 +11,6 @@ from polyis.utilities import get_config
 config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Join OTIF accuracy results to stat.csv by param_id')
-    return parser.parse_args()
 
 
 def extract_accuracy_metrics(result: dict) -> dict:
@@ -61,7 +55,7 @@ def extract_accuracy_metrics(result: dict) -> dict:
     return accuracy_metrics
 
 
-def load_accuracy_results(dataset: str) -> pd.DataFrame:
+def load_accuracy_results(dataset: str, system: str) -> pd.DataFrame:
     """
     Load accuracy results for all param_ids from DATASET.json files.
     
@@ -70,13 +64,17 @@ def load_accuracy_results(dataset: str) -> pd.DataFrame:
     
     Args:
         dataset (str): Dataset name
+        system (str): System name ('otif' or 'leap')
         
     Returns:
         pd.DataFrame: DataFrame with param_id and accuracy metrics columns
     """
     # Construct path to accuracy results directory
-    accuracy_dir = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset, 'accuracy', 'raw')
+    accuracy_dir = os.path.join(CACHE_DIR, 'SOTA', system, dataset, 'accuracy', 'raw')
     assert os.path.exists(accuracy_dir), f"Accuracy directory {accuracy_dir} does not exist"
+    # if not os.path.exists(accuracy_dir):
+    #     # Return empty DataFrame if directory doesn't exist
+    #     return pd.DataFrame()
     
     # Collect accuracy results for all param_ids
     accuracy_results = []
@@ -106,39 +104,46 @@ def load_accuracy_results(dataset: str) -> pd.DataFrame:
         
         # Add to results list
         accuracy_results.append(accuracy_metrics)
-        print(f"Loaded accuracy results for param_id {param_id}")
+        print(f"Loaded {system.upper()} accuracy results for param_id {param_id}")
     
     # Convert results list to DataFrame
     if not accuracy_results:
-        raise ValueError(f"No accuracy results found for dataset {dataset}")
+        return pd.DataFrame()
     
     return pd.DataFrame.from_records(accuracy_results)
 
 
-def join_accuracy_to_stat(dataset: str):
+def join_accuracy_to_stat(dataset: str, system: str):
     """
     Join accuracy results to stat.csv file by param_id.
     
     Reads the existing stat.csv file, loads accuracy results, and merges them
-    together by param_id. The merged results are saved to stat_with_accuracy.csv.
+    together by param_id. The merged results are saved to tradeoff.csv.
     
     Args:
         dataset (str): Dataset name
+        system (str): System name ('otif' or 'leap')
     """
     # Construct path to stat.csv file
-    stat_csv_path = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset, 'stat.csv')
-    assert os.path.exists(stat_csv_path), f"stat.csv not found: {stat_csv_path}"
+    stat_csv_path = os.path.join(CACHE_DIR, 'SOTA', system, dataset, 'stat.csv')
+    if not os.path.exists(stat_csv_path):
+        print(f"  Warning: stat.csv not found: {stat_csv_path}, skipping")
+        return
     
     # Load existing stat.csv file
     stat_df = pd.read_csv(stat_csv_path)
-    print(f"Loaded stat.csv with {len(stat_df)} rows")
+    print(f"Loaded {system.upper()} stat.csv with {len(stat_df)} rows")
     
     # Validate that param_id column exists
     assert 'param_id' in stat_df.columns, f"param_id column not found in stat.csv"
     
     # Load accuracy results
-    accuracy_df = load_accuracy_results(dataset)
-    print(f"Loaded accuracy results for {len(accuracy_df)} param_ids")
+    accuracy_df = load_accuracy_results(dataset, system)
+    if accuracy_df.empty:
+        print(f"  Warning: No accuracy results found for {system.upper()}, skipping")
+        return
+    
+    print(f"Loaded {system.upper()} accuracy results for {len(accuracy_df)} param_ids")
     
     # Merge accuracy results into stat.csv by param_id
     # This performs a left join, keeping all rows from stat_df
@@ -147,16 +152,16 @@ def join_accuracy_to_stat(dataset: str):
     # Validate that all param_ids in stat.csv have corresponding accuracy results
     missing_param_ids = merged_df[merged_df['HOTA_HOTA'].isna()]['param_id'].tolist()
     if missing_param_ids:
-        raise ValueError(f"Missing accuracy results for param_ids: {missing_param_ids}")
+        raise ValueError(f"Missing {system.upper()} accuracy results for param_ids: {missing_param_ids}")
     
     # Save merged results to a new file with accuracy metrics
-    output_csv_path = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset, 'tradeoff.csv')
+    output_csv_path = os.path.join(CACHE_DIR, 'SOTA', system, dataset, 'tradeoff.csv')
     merged_df.to_csv(output_csv_path, index=False)
-    print(f"Saved merged results with accuracy metrics: {output_csv_path}")
+    print(f"Saved merged {system.upper()} results with accuracy metrics: {output_csv_path}")
     print(f"Added columns: {list(accuracy_df.columns)}")
 
 
-def main(args):
+def main():
     """
     Main function that orchestrates the accuracy-to-stat joining process.
     
@@ -165,16 +170,16 @@ def main(args):
     2. Joins accuracy metrics to the existing stat.csv file by param_id
     3. Saves the updated stat.csv file with accuracy metrics included
     
-    Args:
-        args (argparse.Namespace): Parsed command line arguments
-        
     Note:
         - The script expects accuracy results from p141_otif_accuracy.py in:
           {CACHE_DIR}/SOTA/otif/{dataset}/accuracy/raw/{param_id:03d}/DATASET.json
+          {CACHE_DIR}/SOTA/leap/{dataset_in}/accuracy/raw/{param_id:03d}/DATASET.json
         - The stat.csv file should exist at:
           {CACHE_DIR}/SOTA/otif/{dataset}/stat.csv
+          {CACHE_DIR}/SOTA/leap/{dataset}/stat.csv
         - Merged results are saved to:
-          {CACHE_DIR}/SOTA/otif/{dataset}/stat_with_accuracy.csv
+          {CACHE_DIR}/SOTA/otif/{dataset}/tradeoff.csv
+          {CACHE_DIR}/SOTA/leap/{dataset}/tradeoff.csv
         - Output CSV will include additional columns:
           HOTA_HOTA, HOTA_AssA, HOTA_DetA, Count_DetsMAPE, Count_TracksMAPE
     """
@@ -184,17 +189,19 @@ def main(args):
     for dataset in DATASETS:
         print(f"\nProcessing dataset: {dataset}")
         
-        try:
-            # Join accuracy results to stat.csv for this dataset
-            join_accuracy_to_stat(dataset)
-            print(f"Successfully processed dataset: {dataset}")
-        except Exception as e:
-            print(f"Error processing dataset {dataset}: {e}")
-            raise
+        # Process both OTIF and LEAP
+        for system in ['otif', 'leap']:
+            try:
+                # Join accuracy results to stat.csv for this dataset and system
+                join_accuracy_to_stat(dataset, system)
+                print(f"Successfully processed {system.upper()} for dataset: {dataset}")
+            except Exception as e:
+                print(f"Error processing {system.upper()} for dataset {dataset}: {e}")
+                raise
     
     print(f"\nAccuracy-to-stat joining complete for all datasets")
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()
 

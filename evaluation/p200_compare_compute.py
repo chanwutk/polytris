@@ -1,49 +1,45 @@
 #!/usr/local/bin/python
 
-import argparse
 from functools import partial
 import os
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, METRICS, STR_NA, load_all_datasets_tradeoff_data, print_best_data_points
+from polyis.utilities import CACHE_DIR, STR_NA, load_all_datasets_tradeoff_data, print_best_data_points, get_config
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Compare our tradeoff results with OTIF tradeoff results')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    return parser.parse_args()
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS = config['EXEC']['DATASETS']
 
 
-def load_otif_tradeoff_data(datasets: list[str]) -> pd.DataFrame:
+def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
     """
-    Load OTIF tradeoff data from tradeoff.csv files created by p142_otif_tradeoff.py.
+    Load SOTA (OTIF or LEAP) tradeoff data from tradeoff.csv files created by p142_otif_tradeoff.py.
     
-    Each dataset has a tradeoff.csv file at {CACHE_DIR}/SOTA/otif/{dataset}/tradeoff.csv
+    Each dataset has a tradeoff.csv file at {CACHE_DIR}/SOTA/{system}/{dataset}/tradeoff.csv
     containing param_id, runtime, and accuracy metrics (HOTA_HOTA, etc.).
 
     Args:
         datasets: List of dataset names to load tradeoff data for
+        system: System name ('otif' or 'leap')
 
     Returns:
-        pd.DataFrame: Combined OTIF tradeoff data for all specified datasets
+        pd.DataFrame: Combined SOTA tradeoff data for all specified datasets
     """
-    otif_data = []
+    sota_data = []
 
     # Process each dataset
     for dataset_name in datasets:
         # Construct path to tradeoff.csv file
-        tradeoff_csv_path = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset_name, 'tradeoff.csv')
+        tradeoff_csv_path = os.path.join(CACHE_DIR, 'SOTA', system, dataset_name, 'tradeoff.csv')
         
         # Skip if tradeoff.csv doesn't exist
         if not os.path.exists(tradeoff_csv_path):
-            print(f"  Warning: tradeoff.csv not found for dataset {dataset_name}, skipping")
+            print(f"  Warning: {system.upper()} tradeoff.csv not found for dataset {dataset_name}, skipping")
             continue
         
-        print(f"Loading OTIF tradeoff data from: {tradeoff_csv_path} (dataset: {dataset_name})")
+        print(f"Loading {system.upper()} tradeoff data from: {tradeoff_csv_path} (dataset: {dataset_name})")
         
         # Read tradeoff.csv file
         df = pd.read_csv(tradeoff_csv_path)
@@ -54,78 +50,80 @@ def load_otif_tradeoff_data(datasets: list[str]) -> pd.DataFrame:
         if missing_columns:
             raise ValueError(f"Missing required columns in {tradeoff_csv_path}: {missing_columns}")
         
-        # Create OTIF data with consistent structure for visualization
+        # Create SOTA data with consistent structure for visualization
         clean_df = pd.DataFrame({
-            'system': 'OTIF',  # Display name for OTIF system
+            'system': system.upper(),  # Display name for SOTA system
             'dataset': dataset_name,
-            'video': 'dataset_level',  # OTIF data is aggregated at dataset level
-            'classifier': STR_NA,  # OTIF doesn't use our classifier system
-            'tilesize': 0,  # OTIF doesn't have explicit tile size
-            'tilepadding': STR_NA,  # OTIF doesn't have explicit tile padding
+            'video': 'dataset_level',  # SOTA data is aggregated at dataset level
+            'classifier': STR_NA,  # SOTA doesn't use our classifier system
+            'tilesize': 0,  # SOTA doesn't have explicit tile size
+            'tilepadding': STR_NA,  # SOTA doesn't have explicit tile padding
             'HOTA_HOTA': df['HOTA_HOTA'],  # Already in decimal format (0-1)
-            'MOTA_MOTA': -1,  # Not available for OTIF
+            'MOTA_MOTA': -1,  # Not available for SOTA
             'time': df['runtime'],  # Runtime in seconds
             'throughput_fps': float('nan'),  # Not available in tradeoff.csv
             'time_mspf': float('nan'),  # Not available without frame count
         })
         
-        otif_data.append(clean_df)
-        print(f"  Loaded {len(df)} data points for OTIF on {dataset_name}")
+        sota_data.append(clean_df)
+        print(f"  Loaded {len(df)} data points for {system.upper()} on {dataset_name}")
 
-    assert len(otif_data) > 0, f"No OTIF tradeoff data found for datasets: {datasets}"
+    if not sota_data:
+        return pd.DataFrame()
 
-    # Combine all OTIF data
-    combined_otif_df = pd.concat(otif_data, ignore_index=True)
-    datasets_covered = combined_otif_df['dataset'].unique()
-    print(f"Combined OTIF data: {len(combined_otif_df)} total rows (datasets: {list(datasets_covered)})")
+    # Combine all SOTA data
+    combined_sota_df = pd.concat(sota_data, ignore_index=True)
+    datasets_covered = combined_sota_df['dataset'].unique()
+    print(f"Combined {system.upper()} data: {len(combined_sota_df)} total rows (datasets: {list(datasets_covered)})")
 
-    return combined_otif_df
+    return combined_sota_df
 
 
-def merge_otif_with_naive_baselines(df_combined: pd.DataFrame, df_otif: pd.DataFrame,
-                                    x_column: str) -> pd.DataFrame:
+def merge_sota_with_naive_baselines(df_combined: pd.DataFrame, df_sota: pd.DataFrame,
+                                    x_column: str, system: str) -> pd.DataFrame:
     """
-    Merge OTIF data with our system's naive baselines for consistent comparison.
+    Merge SOTA (OTIF or LEAP) data with our system's naive baselines for consistent comparison.
 
     Args:
         df_combined: Combined DataFrame with our system's data (already merged with naive data)
-        df_otif: DataFrame with OTIF tradeoff data
+        df_sota: DataFrame with SOTA tradeoff data
         x_column: Column name for the metric being compared (e.g., 'time', 'throughput_fps')
+        system: System name ('otif' or 'leap')
 
     Returns:
-        pd.DataFrame: Combined data with OTIF results added, using our naive baselines
+        pd.DataFrame: Combined data with SOTA results added, using our naive baselines
     """
-    assert not df_otif.empty, "No OTIF data found"
+    assert not df_sota.empty, f"No {system.upper()} data found"
 
     # Naive column is automatically created from merge with suffix '_naive'
     naive_column = f'{x_column}_naive'
 
-    # Get unique datasets from OTIF data
-    otif_datasets = df_otif['dataset'].unique()
-    print(f"Adding OTIF data for datasets: {list(otif_datasets)}")
+    # Get unique datasets from SOTA data
+    sota_datasets = df_sota['dataset'].unique()
+    print(f"Adding {system.upper()} data for datasets: {list(sota_datasets)}")
 
     # Get naive baselines from our data for each dataset
     our_naive_baselines = df_combined.groupby('dataset')[naive_column].first().reset_index()
     our_naive_baselines.columns = ['dataset', naive_column]
 
-    # Filter OTIF data to only include datasets we have data for
-    df_otif_filtered = df_otif[df_otif['dataset'].isin(our_naive_baselines['dataset'])]
+    # Filter SOTA data to only include datasets we have data for
+    df_sota_filtered = df_sota[df_sota['dataset'].isin(our_naive_baselines['dataset'])]
 
     # Warn about any skipped datasets
-    skipped_datasets = set(otif_datasets) - set(our_naive_baselines['dataset'])
+    skipped_datasets = set(sota_datasets) - set(our_naive_baselines['dataset'])
     for dataset in skipped_datasets:
-        print(f"  Warning: No our data found for dataset {dataset}, skipping OTIF data")
+        print(f"  Warning: No our data found for dataset {dataset}, skipping {system.upper()} data")
 
-    # Merge OTIF data with our naive baselines using pandas merge
-    assert not df_otif_filtered.empty, f"No OTIF data found for datasets: {list(otif_datasets)}"
+    # Merge SOTA data with our naive baselines using pandas merge
+    assert not df_sota_filtered.empty, f"No {system.upper()} data found for datasets: {list(sota_datasets)}"
 
-    df_otif_with_naive = df_otif_filtered.merge(our_naive_baselines, on='dataset', how='left')
+    df_sota_with_naive = df_sota_filtered.merge(our_naive_baselines, on='dataset', how='left')
 
     # Combine with existing data
-    return df_otif_with_naive
+    return df_sota_with_naive
 
 
-def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_otif: pd.DataFrame,
+def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dict[str, pd.DataFrame],
                                    metrics_list: list[str], x_column: str, x_title: str,
                                    plot_suffix: str, output_dir: str):
     """
@@ -133,7 +131,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_otif: pd.DataF
     
     Args:
         df_combined: Combined DataFrame with data from all datasets (already merged with naive data)
-        df_otif: DataFrame with OTIF tradeoff data
+        df_sota_dict: Dictionary mapping system names ('otif', 'leap') to their tradeoff DataFrames
         metrics_list: list of metrics to visualize
         x_column: Column name for x-axis data
         x_title: Title for x-axis
@@ -145,16 +143,19 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_otif: pd.DataF
     # Print best data points tables first
     print_best_data_points(df_combined, metrics_list, x_column, plot_suffix, include_system=True)
 
-    # Add OTIF data to appropriate datasets if available
-    # Skip if x_column is not available in OTIF data (e.g., throughput_fps, time_mspf)
-    if x_column in df_otif.columns and not df_otif[x_column].isna().all():
-        otif_with_naive = merge_otif_with_naive_baselines(df_combined, df_otif, x_column)
-        df_combined = pd.concat([df_combined, otif_with_naive], ignore_index=True)
-    else:
-        print(f"  Warning: {x_column} not available in OTIF data, skipping OTIF for this visualization")
+    # Add SOTA data (OTIF and LEAP) to appropriate datasets if available
+    # Skip if x_column is not available in SOTA data (e.g., throughput_fps, time_mspf)
+    for system, df_sota in df_sota_dict.items():
+        if df_sota.empty:
+            continue
+        if x_column in df_sota.columns and not df_sota[x_column].isna().all():
+            sota_with_naive = merge_sota_with_naive_baselines(df_combined, df_sota, x_column, system)
+            df_combined = pd.concat([df_combined, sota_with_naive], ignore_index=True)
+        else:
+            print(f"  Warning: {x_column} not available in {system.upper()} data, skipping {system.upper()} for this visualization")
     
     # Filter out rows where classifier == 'Perfect'
-    df_combined = df_combined[df_combined['classifier'] != 'Perfect']
+    df_combined = df_combined.query("classifier != 'Perfect'")
     
     # Convert tilepadding to string for shape encoding
     # Handle both numeric and string values, and STR_NA
@@ -163,7 +164,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_otif: pd.DataF
     
     # Update system column: rows with classifier=='Groundtruth' should have system='Groundtruth'
     # This identifies the naive baseline points in our results
-    df_combined.loc[df_combined['classifier'] == 'Groundtruth', 'system'] = 'Groundtruth'
+    df_combined.loc[df_combined['classifier'] == 'Groundtruth', 'system'] = 'Naive'
     
     # Create base chart
     base_chart = alt.Chart(df_combined)
@@ -193,17 +194,17 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_otif: pd.DataF
             x=alt.X(f'{x_column}:Q', title=x_title),
             y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **y_scale),
             color=alt.Color('system:N', title='System', 
-                          scale=alt.Scale(domain=['Polytris', 'OTIF', 'Groundtruth'],
-                                        range=['#1f77b4', '#ff7f0e', '#2ca02c'])),
+                          scale=alt.Scale(domain=['Polytris', 'OTIF', 'LEAP', 'Naive'],
+                                        range=['#1f77b4', '#ff7f0e', '#2ca02c', '#9467bd'])),
             size=alt.condition(
-                alt.datum.system == 'Groundtruth',
+                alt.datum.system == 'Naive',
                 alt.value(100),  # Larger size for groundtruth
                 alt.value(50)   # Normal size for others
             ),
             shape=alt.condition(
-                (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Groundtruth'),
+                (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Naive'),
                 alt.Shape('classifier:N', title='Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['square', 'triangle'])),
-                alt.value('circle')  # Circle for non-Polytris points (OTIF, Groundtruth)
+                alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
             ),
             tooltip=['system', 'dataset', 'classifier', 'tilepadding', x_column, accuracy_col]
         ).properties(
@@ -231,7 +232,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_otif: pd.DataF
 
 def visualize_all_datasets_tradeoffs(datasets: list[str]):
     """
-    Create runtime tradeoff visualizations for all datasets comparing with OTIF.
+    Create runtime tradeoff visualizations for all datasets comparing with OTIF and LEAP.
     
     Args:
         datasets: list of dataset names
@@ -246,9 +247,16 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     metrics_list = ['HOTA']
     print(f"Using metrics: {metrics_list}")
     
-    # Load OTIF tradeoff data
-    print("Loading OTIF tradeoff data...")
-    df_otif = load_otif_tradeoff_data(datasets)
+    # Load SOTA tradeoff data (OTIF and LEAP)
+    print("Loading SOTA tradeoff data...")
+    df_sota_dict = {}
+    for system in ['otif', 'leap']:
+        df_sota = load_sota_tradeoff_data(datasets, system)
+        if not df_sota.empty:
+            df_sota_dict[system] = df_sota
+    
+    if not df_sota_dict:
+        print("  Warning: No SOTA tradeoff data found, proceeding without SOTA comparison")
     
     # Load tradeoff data for all datasets
     combined_df, naive_df = load_all_datasets_tradeoff_data(datasets, system_name='Polytris')
@@ -264,36 +272,35 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     # Since combined data has video='dataset_level' for each dataset, merge on 'dataset'
     combined_with_naive = combined_df.merge(naive_df, on='dataset', how='left', suffixes=('', '_naive'))
 
-    # Visualize HOTA_HOTA vs runtime (OTIF has runtime data)
-    visualize = partial(visualize_all_datasets_tradeoff, combined_with_naive, df_otif, metrics_list, output_dir=output_dir)
+    # Visualize HOTA_HOTA vs runtime (SOTA has runtime data)
+    visualize = partial(visualize_all_datasets_tradeoff, combined_with_naive, df_sota_dict, metrics_list, output_dir=output_dir)
     visualize(x_column='time', x_title='Query Execution Runtime (seconds)', plot_suffix='runtime')
 
 
-def main(args):
+def main():
     """
-    Main function that orchestrates the comparison between our tradeoff results and OTIF results.
+    Main function that orchestrates the comparison between our tradeoff results and SOTA (OTIF/LEAP) results.
     
     This function serves as the entry point for the script. It loads pre-computed 
     tradeoff data from CSV files created by p090_tradeoff_compute.py for our system
-    and OTIF tradeoff results from tradeoff.csv files created by p142_otif_tradeoff.py,
-    then creates comparison visualizations showing both systems' performance.
+    and SOTA tradeoff results from tradeoff.csv files created by p142_otif_tradeoff.py,
+    then creates comparison visualizations showing all systems' performance.
     
-    Args:
-        args (argparse.Namespace): Parsed command line arguments
-        
     Note:
         - The script expects tradeoff data from p090_tradeoff_compute.py in:
           {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/tradeoff_combined.csv
         - The script expects OTIF tradeoff results from p142_otif_tradeoff.py in:
           {CACHE_DIR}/SOTA/otif/{dataset}/tradeoff.csv
+        - The script expects LEAP tradeoff results from p142_otif_tradeoff.py in:
+          {CACHE_DIR}/SOTA/leap/{dataset}/tradeoff.csv
         - Results are saved to: {CACHE_DIR}/SUMMARY/100_compare_compute/
         - Please run p090_tradeoff_compute.py and p142_otif_tradeoff.py first to generate the required CSV files
     """
-    print(f"Processing datasets: {args.datasets}")
+    print(f"Processing datasets: {DATASETS}")
     
     # Create comparison visualizations
-    visualize_all_datasets_tradeoffs(args.datasets)
+    visualize_all_datasets_tradeoffs(DATASETS)
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()

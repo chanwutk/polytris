@@ -25,6 +25,13 @@ config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
+DATASETS_IN_MAP = {
+    'caldot1-y05': 'caldot1_y5',
+    'caldot1-y11': 'caldot1_y11',
+    'caldot2-y05': 'caldot2_y5',
+    'caldot2-y11': 'caldot2_y11',
+}
+
 
 class NumpyEncoder(json.JSONEncoder):
     @override
@@ -39,53 +46,60 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Calculate HOTA scores for OTIF tracking results')
+    parser = argparse.ArgumentParser(description='Calculate HOTA scores for OTIF and LEAP tracking results')
     parser.add_argument('--no_parallel', action='store_true', default=False,
                         help='Whether to disable parallel processing')
     return parser.parse_args()
 
 
-def find_otif_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[int]]:
+def find_sota_tracking_results(cache_dir: str, dataset: str, system: str) -> tuple[set[str], set[int]]:
     """
-    Find all videos and param_id combinations with OTIF tracking results.
+    Find all videos and param_id combinations with SOTA tracking results.
 
-    Scans the OTIF directory to discover all available videos and their
+    Scans the SOTA directory (OTIF or LEAP) to discover all available videos and their
     corresponding param_id combinations that have both tracking results
     and groundtruth data available.
 
     Args:
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
+        system (str): System name ('otif' or 'leap')
 
     Returns:
         tuple[set[str], set[int]]: Set of video names and set of param_id values
     """
-    # Construct path to OTIF dataset directory
-    otif_dir = os.path.join(cache_dir, 'SOTA', 'otif', dataset)
-    assert os.path.exists(otif_dir), f"OTIF dataset directory {otif_dir} does not exist"
+    # Construct path to SOTA dataset directory
+    sota_dir = os.path.join(cache_dir, 'SOTA', system, dataset)
+    if not os.path.exists(sota_dir):
+        return set(), set()
+
 
     # Collect all video-param_id combinations
     video_param_combinations: list[tuple[str, int]] = []
 
-    # Iterate through all video directories in the OTIF dataset directory
-    for video_filename in os.listdir(otif_dir):
-        video_dir = os.path.join(otif_dir, video_filename)
+    # Iterate through all video directories in the SOTA dataset directory
+    for video_filename in os.listdir(sota_dir):
+        video_dir = os.path.join(sota_dir, video_filename)
         if not os.path.isdir(video_dir):
+            # assert video_filename == 'stat.csv', f"Video directory {video_dir} is not a directory"
+            continue
+            
+        if not video_filename.endswith('.mp4'):
+            assert video_filename == 'accuracy'
             continue
 
         # Check for tracking_results subdirectory
         tracking_results_dir = os.path.join(video_dir, 'tracking_results')
-        if not os.path.exists(tracking_results_dir):
-            continue
+        assert os.path.exists(tracking_results_dir), f"Tracking results directory {tracking_results_dir} does not exist"
 
         # Check for param_id subdirectories in tracking_results
         for param_item in os.listdir(tracking_results_dir):
             # Parse param_id from directory name
-            if not param_item.isdigit():
-                continue
+            assert param_item.isdigit(), f"Param item {param_item} is not a digit"
+
             param_id = int(param_item)
             param_path = os.path.join(tracking_results_dir, param_item)
-            assert os.path.isdir(param_path), f"Param directory {param_path} is not a directory"
+            assert os.path.isdir(param_path), f"Param path {param_path} is not a directory"
 
             # Construct paths to tracking and groundtruth files
             tracking_path = os.path.join(param_path, 'tracking.jsonl')
@@ -97,31 +111,31 @@ def find_otif_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], 
 
             # Add this combination to our list
             video_param_combinations.append((video_filename, param_id))
-            print(f"Found OTIF tracking results: {video_filename} with param_id {param_id}")
+            print(f"Found {system.upper()} tracking results: {video_filename} with param_id {param_id}")
 
     # Extract unique param_ids and video names
     param_ids = set(param_id for _, param_id in video_param_combinations)
     videos = set(video for video, _ in video_param_combinations)
 
-    # Validate that all videos have results for all param_ids
-    # This ensures we have complete data for multi-video evaluation
-    video_param_combinations_set = set(video_param_combinations)
-    assert len(video_param_combinations_set) == len(video_param_combinations), \
-        f"Duplicate video-param combinations: {video_param_combinations_set}"
+    # Validate that all videos have results for all param_ids (only for OTIF)
+    if system == 'otif' and videos and param_ids:
+        video_param_combinations_set = set(video_param_combinations)
+        assert len(video_param_combinations_set) == len(video_param_combinations), \
+            f"Duplicate video-param combinations: {video_param_combinations_set}"
 
-    # Check completeness: every video should have results for every param_id
-    for video in videos:
-        for param_id in param_ids:
-            assert (video, param_id) in video_param_combinations_set, \
-                f"Video-param combination {video}-{param_id} ({dataset}) not found"
+        # Check completeness: every video should have results for every param_id
+        for video in videos:
+            for param_id in param_ids:
+                assert (video, param_id) in video_param_combinations_set, \
+                    f"Video-param combination {video}-{param_id} ({dataset}) not found"
 
     return videos, param_ids
 
 
-def evaluate_otif_tracking_accuracy(dataset: str, videos: set[str], param_id: int,
-                                     output_dir: str, worker_id: int, worker_id_queue: "mp.Queue"):
+def evaluate_sota_tracking_accuracy(dataset: str, videos: set[str], param_id: int,
+                                     system: str, output_dir: str, worker_id: int, worker_id_queue: "mp.Queue"):
     """
-    Evaluate tracking accuracy for OTIF results for a specific param_id.
+    Evaluate tracking accuracy for SOTA results (OTIF or LEAP) for a specific param_id.
 
     Performs a single evaluation across all videos in the dataset for the given param_id.
     Generates both combined dataset results and individual video results in a flattened directory structure.
@@ -129,7 +143,8 @@ def evaluate_otif_tracking_accuracy(dataset: str, videos: set[str], param_id: in
     Args:
         dataset (str): Dataset name
         videos (set[str]): Set of video names to evaluate (all videos in dataset)
-        param_id (int): OTIF parameter ID
+        param_id (int): Parameter ID
+        system (str): System name ('otif' or 'leap')
         output_dir (str): Output directory for results
 
     Output Structure:
@@ -137,13 +152,13 @@ def evaluate_otif_tracking_accuracy(dataset: str, videos: set[str], param_id: in
         - {video}.json: Individual video results
         - LOG.txt: Evaluation logs and errors
     """
-    print(f"Evaluating {len(videos)} videos with param_id {param_id}")
+    print(f"Evaluating {len(videos)} videos with param_id {param_id} for {system.upper()}")
 
-    # Use the OTIF directory as the base (tracking files and groundtruth files are already there)
-    otif_dir = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset)
+    # Use the SOTA directory as the base (tracking files and groundtruth files are already there)
+    sota_dir = os.path.join(CACHE_DIR, 'SOTA', system, dataset)
 
-    # Create tracker identifier (use fixed name 'otif' for all OTIF evaluations)
-    tracker_name = 'otif'
+    # Create tracker identifier
+    tracker_name = system
     input_track = os.path.join('tracking_results', f'{param_id:03d}', 'tracking.jsonl')
 
     # Create TrackEval dataset configuration
@@ -156,7 +171,7 @@ def evaluate_otif_tracking_accuracy(dataset: str, videos: set[str], param_id: in
         'skip': 1,  # Process every frame (no frame skipping)
         'tracker': tracker_name,  # Tracker name identifier
         'seq_list': videos,  # List of sequences (videos) to evaluate
-        'input_dir': otif_dir  # Base directory for relative paths (OTIF directory with copied groundtruth)
+        'input_dir': sota_dir  # Base directory for relative paths (SOTA directory with copied groundtruth)
     }
 
     # Create TrackEval evaluator configuration
@@ -256,10 +271,10 @@ def evaluate_otif_tracking_accuracy(dataset: str, videos: set[str], param_id: in
 
 def main(args):
     """
-    Main function that orchestrates the OTIF tracking accuracy evaluation process.
+    Main function that orchestrates the OTIF and LEAP tracking accuracy evaluation process.
     
     This function serves as the entry point for the script. It:
-    1. Finds all videos with OTIF tracking results for the specified datasets and param_id combinations
+    1. Finds all videos with OTIF and LEAP tracking results for the specified datasets and param_id combinations
     2. Groups videos by dataset and param_id combination
     3. Runs accuracy evaluation using TrackEval for each combination (evaluating all videos simultaneously)
     4. Generates both combined dataset results and individual video results
@@ -270,15 +285,20 @@ def main(args):
     Note:
         - The script expects OTIF tracking results in:
           {CACHE_DIR}/SOTA/otif/{dataset}/{video_file}/tracking_results/{param_id:03d}/tracking.jsonl
+        - The script expects LEAP tracking results in:
+          {CACHE_DIR}/SOTA/leap/{dataset_in}/{video_file}/tracking_results/000/tracking.jsonl
         - Groundtruth data should be in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/003_groundtruth/tracking.jsonl
-        - Results are saved to:
-          {CACHE_DIR}/otif/{dataset}/accuracy/raw/{param_id:03d}/
+        - OTIF results are saved to:
+          {CACHE_DIR}/SOTA/otif/{dataset}/accuracy/raw/{param_id:03d}/
+        - LEAP results are saved to:
+          {CACHE_DIR}/SOTA/leap/{dataset_in}/accuracy/raw/000/
+        - Both include:
           ├── DATASET.json (combined results)
           ├── {video}.json (individual video results)
           └── LOG.txt (evaluation logs)
     """
-    print(f"Starting OTIF tracking accuracy evaluation for datasets: {DATASETS}")
+    print(f"Starting OTIF and LEAP tracking accuracy evaluation for datasets: {DATASETS}")
     
     # Find tracking results for all datasets and create evaluation tasks
     eval_tasks: list[Callable[[int, "mp.Queue"], None]] = []
@@ -287,52 +307,58 @@ def main(args):
     for dataset in DATASETS:
         print(f"Processing dataset: {dataset}")
         
-        # Find all videos and param_id combinations for this dataset
-        videos, param_ids = find_otif_tracking_results(CACHE_DIR, dataset)
-        
-        # Create evaluation directory path for this dataset
-        evaluation_dir = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset, 'accuracy')
-        
-        # Clear evaluation directory
-        if os.path.exists(evaluation_dir):
-            shutil.rmtree(evaluation_dir)
-            print(f"Cleared existing accuracy directory: {evaluation_dir}")
-        os.makedirs(evaluation_dir, exist_ok=True)
-        os.makedirs(os.path.join(evaluation_dir, 'raw'), exist_ok=True)
-        
-        # Copy groundtruth files to OTIF directory structure (before parallel execution to avoid race conditions)
-        # TrackEval expects: {input_dir}/{video}/003_groundtruth/tracking.jsonl
-        otif_dir = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset)
-        execution_dir = os.path.join(CACHE_DIR, dataset, 'execution')
-        for video_file in videos:
-            # Construct paths for this video
-            groundtruth_source = os.path.join(execution_dir, video_file, '003_groundtruth', 'tracking.jsonl')
-            video_otif_dir = os.path.join(otif_dir, video_file)
-            groundtruth_dest_dir = os.path.join(video_otif_dir, '003_groundtruth')
-            groundtruth_dest = os.path.join(groundtruth_dest_dir, 'tracking.jsonl')
+        # Process both OTIF and LEAP results
+        # for system in ['otif', 'leap']:
+        for system in ['leap']:
+            videos, param_ids = find_sota_tracking_results(CACHE_DIR, dataset, system)
+            print(videos, param_ids)
             
-            # Check if groundtruth file exists
-            assert os.path.exists(groundtruth_source), f"Groundtruth file not found: {groundtruth_source}"
+            if not videos or not param_ids:
+                continue
             
-            # Create groundtruth directory in OTIF directory for this video
-            os.makedirs(groundtruth_dest_dir, exist_ok=True)
+            # Create evaluation directory path for this dataset
+            evaluation_dir = os.path.join(CACHE_DIR, 'SOTA', system, dataset, 'accuracy')
             
-            # Copy groundtruth file to OTIF directory
-            if os.path.exists(groundtruth_dest):
-                # Remove existing file if it exists
-                os.remove(groundtruth_dest)
-            shutil.copy2(groundtruth_source, groundtruth_dest)
-        
-        # Create one evaluation task per param_id combination
-        # Each task will evaluate all videos in the dataset for that param_id
-        for param_id in param_ids:
-            output_dir = os.path.join(evaluation_dir, 'raw', f'{param_id:03d}')
-            # Create a partial function with all arguments bound except the function call
-            eval_tasks.append(partial(evaluate_otif_tracking_accuracy, dataset, videos,
-                                      param_id, output_dir))
+            # Clear evaluation directory
+            if os.path.exists(evaluation_dir):
+                shutil.rmtree(evaluation_dir)
+                print(f"Cleared existing {system.upper()} accuracy directory: {evaluation_dir}")
+            os.makedirs(evaluation_dir, exist_ok=True)
+            os.makedirs(os.path.join(evaluation_dir, 'raw'), exist_ok=True)
+            
+            # Copy groundtruth files to SOTA directory structure (before parallel execution to avoid race conditions)
+            # TrackEval expects: {input_dir}/{video}/003_groundtruth/tracking.jsonl
+            sota_dir = os.path.join(CACHE_DIR, 'SOTA', system, dataset)
+            execution_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+            for video_file in videos:
+                # Construct paths for this video
+                groundtruth_source = os.path.join(execution_dir, video_file, '003_groundtruth', 'tracking.jsonl')
+                video_sota_dir = os.path.join(sota_dir, video_file)
+                groundtruth_dest_dir = os.path.join(video_sota_dir, '003_groundtruth')
+                groundtruth_dest = os.path.join(groundtruth_dest_dir, 'tracking.jsonl')
+                
+                # Check if groundtruth file exists
+                assert os.path.exists(groundtruth_source), f"Groundtruth file not found: {groundtruth_source}"
+                
+                # Create groundtruth directory in SOTA directory for this video
+                os.makedirs(groundtruth_dest_dir, exist_ok=True)
+                
+                # Copy groundtruth file to SOTA directory
+                if os.path.exists(groundtruth_dest):
+                    # Remove existing file if it exists
+                    os.remove(groundtruth_dest)
+                shutil.copy2(groundtruth_source, groundtruth_dest)
+            
+            # Create one evaluation task per param_id combination
+            # Each task will evaluate all videos in the dataset for that param_id
+            for param_id in param_ids:
+                output_dir = os.path.join(evaluation_dir, 'raw', f'{param_id:03d}')
+                # Create a partial function with all arguments bound except the function call
+                eval_tasks.append(partial(evaluate_sota_tracking_accuracy, dataset, videos,
+                                          param_id, system, output_dir))
     
     # Validate that we found some evaluation tasks
-    assert len(eval_tasks) > 0, "No OTIF tracking results found. Please ensure p140_otif_transform.py has been run first."
+    assert len(eval_tasks) > 0, "No OTIF or LEAP tracking results found. Please ensure p140_otif_transform.py has been run first."
     print(f"Found {len(eval_tasks)} param_id combinations to evaluate")
 
     # Execute evaluation tasks either sequentially or in parallel
