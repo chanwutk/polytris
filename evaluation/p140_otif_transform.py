@@ -216,7 +216,7 @@ def process_leap_dataset(sota_dir: str, dataset: str, cache_dir: str):
     input_df = pd.read_csv(stat_csv_input)
     
     # Find the row where video_name == "total"
-    total_row = input_df[input_df['video_name'] == 'total']
+    total_row = input_df.query("video_name == 'total'")
     assert len(total_row) == 1, f"Expected exactly one row with video_name=='total', found {len(total_row)}"
     
     # Extract runtime components and sum them
@@ -225,8 +225,8 @@ def process_leap_dataset(sota_dir: str, dataset: str, cache_dir: str):
         assert col in input_df.columns, f"Column {col} not found in LEAP CSV"
     
     # Extract values from the total row (convert to dict for easier access)
-    input_df['runtime'] = input_df['inference_total'] - input_df['decode']
-    total_runtime = input_df['runtime'].iloc[0]
+    total_row['runtime'] = total_row['inference_total'] - total_row['decode']
+    total_runtime = total_row['runtime'].iloc[0]
     
     # Create output DataFrame with single row for param_id == 0
     output_df = pd.DataFrame({
