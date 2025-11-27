@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, METRICS, STR_NA, load_all_datasets_tradeoff_data, print_best_data_points, tradeoff_scatter_and_naive_baseline
+from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, METRICS, STR_NA, load_all_datasets_tradeoff_data, print_best_data_points
 
 
 def parse_args():
@@ -153,6 +153,18 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_otif: pd.DataF
     else:
         print(f"  Warning: {x_column} not available in OTIF data, skipping OTIF for this visualization")
     
+    # Filter out rows where classifier == 'Perfect'
+    df_combined = df_combined[df_combined['classifier'] != 'Perfect']
+    
+    # Convert tilepadding to string for shape encoding
+    # Handle both numeric and string values, and STR_NA
+    if 'tilepadding' in df_combined.columns:
+        df_combined['tilepadding'] = df_combined['tilepadding'].astype(str)
+    
+    # Update system column: rows with classifier=='Groundtruth' should have system='Groundtruth'
+    # This identifies the naive baseline points in our results
+    df_combined.loc[df_combined['classifier'] == 'Groundtruth', 'system'] = 'Groundtruth'
+    
     # Create base chart
     base_chart = alt.Chart(df_combined)
     
@@ -161,30 +173,52 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_otif: pd.DataF
         if metric == 'HOTA':
             accuracy_col = 'HOTA_HOTA'
             metric_name = 'HOTA'
+            y_scale = {'scale': alt.Scale(domain=[0, 1])}
         elif metric == 'CLEAR':
             accuracy_col = 'MOTA_MOTA'
             metric_name = 'MOTA'
+            y_scale = {'scale': alt.Scale(domain=[0, 1])}
         elif metric == 'Count':
             accuracy_col = 'Count_TracksMAPE'
             metric_name = 'Count'
+            y_scale = {}
         else:
             continue
         
-        # Create scatter plot and baseline using shared function
-        scatter, baseline = tradeoff_scatter_and_naive_baseline(
-            base_chart, x_column, x_title, accuracy_col, metric_name,
-            size_range=(50, 300), scatter_opacity=0.8,
-            baseline_stroke_width=3, baseline_opacity=0.9,
-            size_field='tilepadding'
+        # Create scatter plot with color by system and shape by tilepadding
+        # Use conditional encoding to handle groundtruth points differently
+        scatter = base_chart.mark_point(
+            opacity=0.8
+        ).encode(
+            x=alt.X(f'{x_column}:Q', title=x_title),
+            y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **y_scale),
+            color=alt.Color('system:N', title='System', 
+                          scale=alt.Scale(domain=['Polytris', 'OTIF', 'Groundtruth'],
+                                        range=['#1f77b4', '#ff7f0e', '#2ca02c'])),
+            size=alt.condition(
+                alt.datum.system == 'Groundtruth',
+                alt.value(100),  # Larger size for groundtruth
+                alt.value(50)   # Normal size for others
+            ),
+            shape=alt.condition(
+                (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Groundtruth'),
+                alt.Shape('classifier:N', title='Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['square', 'triangle'])),
+                alt.value('circle')  # Circle for non-Polytris points (OTIF, Groundtruth)
+            ),
+            tooltip=['system', 'dataset', 'classifier', 'tilepadding', x_column, accuracy_col]
+        ).properties(
+            width=150,
+            height=150
         )
         
         # Create the combined chart with dataset facets
-        combined_chart = (scatter + baseline).facet(
+        combined_chart = scatter.facet(
             facet=alt.Facet('dataset:N', title=None,
                             header=alt.Header(labelExpr="'Dataset: ' + datum.value")),
             columns=3
         ).resolve_scale(
-            x='independent'
+            x='independent',
+            y='independent'
         ).properties(
             title=f'{metric_name} vs {x_title} Tradeoff',
         )

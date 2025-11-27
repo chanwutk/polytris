@@ -69,7 +69,7 @@ def transform_tracking_json(input_json_path: str, output_jsonl_path: str):
             
             # frame_detection['tracks'].append([int(track_id), float(left), float(top), float(right), float(bottom)])
             register_tracked_detections([(float(left), float(top), float(right), float(bottom), int(track_id))],
-                                        frame_idx, frame_tracks, trajectories, no_interpolate=False)
+                                        frame_idx, frame_tracks, trajectories, no_interpolate=True)
         frame_detections.append(frame_detection)
     
     # Create output directory if it doesn't exist
