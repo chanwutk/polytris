@@ -6,6 +6,7 @@ import pandas as pd
 import altair as alt
 
 from polyis.utilities import CACHE_DIR, STR_NA, load_all_datasets_tradeoff_data, print_best_data_points, get_config
+from evaluation.utilities import ColorScheme
 
 
 config = get_config()
@@ -148,7 +149,9 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
     for system, df_sota in df_sota_dict.items():
         if df_sota.empty:
             continue
-        if x_column in df_sota.columns and not df_sota[x_column].isna().all():
+        x_column_is_na = df_sota[x_column].isna().all()
+        assert not isinstance(x_column_is_na, pd.Series), f"x_column_is_na is a Series, not a bool: {x_column_is_na}"
+        if x_column in df_sota.columns and not x_column_is_na:
             sota_with_naive = merge_sota_with_naive_baselines(df_combined, df_sota, x_column, system)
             df_combined = pd.concat([df_combined, sota_with_naive], ignore_index=True)
         else:
@@ -188,14 +191,12 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
         
         # Create scatter plot with color by system and shape by tilepadding
         # Use conditional encoding to handle groundtruth points differently
-        scatter = base_chart.mark_point(
-            opacity=0.8
+        color_scale=alt.Scale(domain=['Polytris', 'OTIF', 'LEAP', 'Naive'], range=ColorScheme.CarbonDark)
+        base_point = base_chart.mark_point(
+            fillOpacity=1,
+            stroke=None
         ).encode(
-            x=alt.X(f'{x_column}:Q', title=x_title),
-            y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **y_scale),
-            color=alt.Color('system:N', title='System', 
-                          scale=alt.Scale(domain=['Polytris', 'OTIF', 'LEAP', 'Naive'],
-                                        range=['#1f77b4', '#ff7f0e', '#2ca02c', '#9467bd'])),
+            fill=alt.Fill('system:N', title='System', scale=color_scale),
             size=alt.condition(
                 alt.datum.system == 'Naive',
                 alt.value(100),  # Larger size for groundtruth
@@ -203,10 +204,20 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
             ),
             shape=alt.condition(
                 (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Naive'),
-                alt.Shape('classifier:N', title='Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['square', 'triangle'])),
+                alt.Shape('classifier:N', title='Polytris\' Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['triangle', 'diamond'])),
                 alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
             ),
             tooltip=['system', 'dataset', 'classifier', 'tilepadding', x_column, accuracy_col]
+        )
+        
+        base_line = base_chart.mark_line(
+            strokeWidth=1.5,
+            strokeOpacity=1
+        ).encode(stroke=alt.Stroke('system:N', title='System', scale=color_scale))
+        
+        scatter = (base_point + base_line).encode(
+            x=alt.X(f'{x_column}:Q', title=x_title),
+            y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score'),
         ).properties(
             width=150,
             height=150
