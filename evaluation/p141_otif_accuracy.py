@@ -15,7 +15,7 @@ from rich.progress import track
 
 sys.path.append('/polyis/modules/TrackEval')
 import trackeval
-from trackeval.metrics import HOTA, CLEAR, Identity, Count
+from trackeval.metrics import HOTA, Count
 
 from polyis.trackeval.dataset import Dataset
 from polyis.utilities import get_config
@@ -39,103 +39,97 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Evaluate tracking accuracy using TrackEval')
-    parser.add_argument('--metrics', type=str, default='HOTA',  #,Identity,CLEAR',
-                        help='Comma-separated list of metrics to evaluate')
+    parser = argparse.ArgumentParser(description='Calculate HOTA scores for OTIF tracking results')
     parser.add_argument('--no_parallel', action='store_true', default=False,
                         help='Whether to disable parallel processing')
     return parser.parse_args()
 
 
-def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[tuple[str, int, str]]]:
+def find_otif_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[int]]:
     """
-    Find all videos and classifier/tilesize/tilepadding combinations with tracking results.
+    Find all videos and param_id combinations with OTIF tracking results.
 
-    Scans the execution directory to discover all available videos and their
-    corresponding classifier/tilesize/tilepadding combinations that have both tracking
-    results and groundtruth data available.
+    Scans the OTIF directory to discover all available videos and their
+    corresponding param_id combinations that have both tracking results
+    and groundtruth data available.
 
     Args:
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
 
     Returns:
-        tuple[set[str], set[tuple[str, int, str]]]: Set of video names and set of (classifier, tilesize, tilepadding) tuples
+        tuple[set[str], set[int]]: Set of video names and set of param_id values
     """
-    # Construct path to dataset execution directory
-    dataset_cache_dir = os.path.join(cache_dir, dataset, 'execution')
-    assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
+    # Construct path to OTIF dataset directory
+    otif_dir = os.path.join(cache_dir, 'SOTA', 'otif', dataset)
+    assert os.path.exists(otif_dir), f"OTIF dataset directory {otif_dir} does not exist"
 
-    # Collect all video-classifier-tilesize-tilepadding combinations
-    video_tile_combinations: list[tuple[str, str, int, str]] = []
+    # Collect all video-param_id combinations
+    video_param_combinations: list[tuple[str, int]] = []
 
-    # Iterate through all video directories in the dataset
-    for video_filename in os.listdir(dataset_cache_dir):
-        video_dir = os.path.join(dataset_cache_dir, video_filename)
-        assert os.path.isdir(video_dir), f"Video directory {video_dir} is not a directory"
-
-        # Check for tracking results directory
-        tracking_dir = os.path.join(video_dir, '060_uncompressed_tracks')
-        if not os.path.exists(tracking_dir):
+    # Iterate through all video directories in the OTIF dataset directory
+    for video_filename in os.listdir(otif_dir):
+        video_dir = os.path.join(otif_dir, video_filename)
+        if not os.path.isdir(video_dir):
             continue
-        # assert os.path.exists(tracking_dir), f"Tracking directory {tracking_dir} does not exist"
 
-        # Iterate through all classifier-tilesize-tilepadding combinations
-        for classifier_tilesize_tilepadding in os.listdir(tracking_dir):
-            # Parse classifier, tile size, and tilepadding from directory name
-            parts = classifier_tilesize_tilepadding.split('_')
-            assert len(parts) == 3, f"Expected format 'classifier_tilesize_tilepadding', got '{classifier_tilesize_tilepadding}'"
-            classifier, tilesize, tilepadding = parts
-            ts = int(tilesize)
+        # Check for tracking_results subdirectory
+        tracking_results_dir = os.path.join(video_dir, 'tracking_results')
+        if not os.path.exists(tracking_results_dir):
+            continue
+
+        # Check for param_id subdirectories in tracking_results
+        for param_item in os.listdir(tracking_results_dir):
+            # Parse param_id from directory name
+            if not param_item.isdigit():
+                continue
+            param_id = int(param_item)
+            param_path = os.path.join(tracking_results_dir, param_item)
+            assert os.path.isdir(param_path), f"Param directory {param_path} is not a directory"
 
             # Construct paths to tracking and groundtruth files
-            tracking_path = os.path.join(tracking_dir, f'{classifier}_{ts}_{tilepadding}', 'tracking.jsonl')
-            groundtruth_path = os.path.join(video_dir, '003_groundtruth', 'tracking.jsonl')
+            tracking_path = os.path.join(param_path, 'tracking.jsonl')
+            groundtruth_path = os.path.join(cache_dir, dataset, 'execution', video_filename, '003_groundtruth', 'tracking.jsonl')
 
             # Verify both tracking results and groundtruth exist
             assert os.path.exists(tracking_path), f"Tracking path {tracking_path} does not exist"
             assert os.path.exists(groundtruth_path), f"Groundtruth path {groundtruth_path} does not exist"
 
             # Add this combination to our list
-            video_tile_combinations.append((video_filename, classifier, ts, tilepadding))
-            print(f"Found tracking results: {video_filename} with tile size {ts} and tilepadding {tilepadding}")
+            video_param_combinations.append((video_filename, param_id))
+            print(f"Found OTIF tracking results: {video_filename} with param_id {param_id}")
 
-    # Extract unique classifier-tilesize-tilepadding combinations and video names
-    classifier_tilesizes = set((cl, ts, tilepadding) for _, cl, ts, tilepadding in video_tile_combinations)
-    videos = set(video for video, _, _, _ in video_tile_combinations)
+    # Extract unique param_ids and video names
+    param_ids = set(param_id for _, param_id in video_param_combinations)
+    videos = set(video for video, _ in video_param_combinations)
 
-    # Validate that all videos have results for all classifier-tilesize-tilepadding combinations
+    # Validate that all videos have results for all param_ids
     # This ensures we have complete data for multi-video evaluation
-    video_tile_combinations_set = set(video_tile_combinations)
-    assert len(video_tile_combinations_set) == len(video_tile_combinations), \
-        f"Duplicate video-tile combinations: {video_tile_combinations_set}"
+    video_param_combinations_set = set(video_param_combinations)
+    assert len(video_param_combinations_set) == len(video_param_combinations), \
+        f"Duplicate video-param combinations: {video_param_combinations_set}"
 
-    # Check completeness: every video should have results for every classifier-tilesize-tilepadding combination
+    # Check completeness: every video should have results for every param_id
     for video in videos:
-        for cl, ts, tilepadding in classifier_tilesizes:
-            assert (video, cl, ts, tilepadding) in video_tile_combinations_set, \
-                f"Video-tile combination {video}-{cl}-{ts}-{tilepadding} ({dataset}) not found"
+        for param_id in param_ids:
+            assert (video, param_id) in video_param_combinations_set, \
+                f"Video-param combination {video}-{param_id} ({dataset}) not found"
 
-    return videos, classifier_tilesizes
+    return videos, param_ids
 
 
-def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
-                               tilesize: int, tilepadding: str, metrics_list: list[str],
-                               output_dir: str, worker_id: int, worker_id_queue: "mp.Queue"):
+def evaluate_otif_tracking_accuracy(dataset: str, videos: set[str], param_id: int,
+                                     output_dir: str, worker_id: int, worker_id_queue: "mp.Queue"):
     """
-    Evaluate tracking accuracy for multiple videos using TrackEval.
+    Evaluate tracking accuracy for OTIF results for a specific param_id.
 
-    Performs a single evaluation across all videos in the dataset for the given
-    classifier, tile size, and tilepadding combination. Generates both combined dataset results
-    and individual video results in a flattened directory structure.
+    Performs a single evaluation across all videos in the dataset for the given param_id.
+    Generates both combined dataset results and individual video results in a flattened directory structure.
 
     Args:
         dataset (str): Dataset name
         videos (set[str]): Set of video names to evaluate (all videos in dataset)
-        classifier (str): Classifier used
-        tilesize (int): Tile size used
-        tilepadding (str): Tile padding parameter ('padded' or 'unpadded')
-        metrics_list (list[str]): List of metrics to evaluate
+        param_id (int): OTIF parameter ID
         output_dir (str): Output directory for results
 
     Output Structure:
@@ -143,28 +137,26 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         - {video}.json: Individual video results
         - LOG.txt: Evaluation logs and errors
     """
-    print(f"Evaluating {len(videos)} videos with classifier {classifier}, tile size {tilesize}, and tilepadding {tilepadding}")
+    print(f"Evaluating {len(videos)} videos with param_id {param_id}")
 
-    # Create classifier-tilesize-tilepadding identifier for naming
-    clts = f'{classifier}_{tilesize}_{tilepadding}'
-    input_track = os.path.join('060_uncompressed_tracks', clts, 'tracking.jsonl')
-    if classifier == 'Groundtruth' or tilesize == 0 or tilepadding == 'Groundtruth':
-        assert classifier == 'Groundtruth' and tilesize == 0 and tilepadding == 'Groundtruth', \
-            "classifier and tilepadding must be Groundtruth and tilesize must be 0 if not provided, " \
-            f"but got {classifier}, {tilesize}, and {tilepadding}"
-        input_track = os.path.join('002_naive', 'tracking.jsonl')
+    # Use the OTIF directory as the base (tracking files and groundtruth files are already there)
+    otif_dir = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset)
+
+    # Create tracker identifier (use fixed name 'otif' for all OTIF evaluations)
+    tracker_name = 'otif'
+    input_track = os.path.join('tracking_results', f'{param_id:03d}', 'tracking.jsonl')
 
     # Create TrackEval dataset configuration
     # This configures how TrackEval will find and process the data files
     dataset_config = {
         'output_fol': output_dir,  # Where TrackEval will write its output
-        'output_sub_fol': f'{dataset}_{clts}',  # Subdirectory name for this evaluation
+        'output_sub_fol': f'{dataset}_{tracker_name}_{param_id:03d}',  # Subdirectory name for this evaluation
         'input_gt': os.path.join('003_groundtruth', 'tracking.jsonl'),  # Relative path to groundtruth files
         'input_track': input_track,  # Relative path to tracking files
         'skip': 1,  # Process every frame (no frame skipping)
-        'tracker': clts,  # Tracker name identifier
+        'tracker': tracker_name,  # Tracker name identifier
         'seq_list': videos,  # List of sequences (videos) to evaluate
-        'input_dir': os.path.join(CACHE_DIR, dataset, 'execution')  # Base directory for relative paths
+        'input_dir': otif_dir  # Base directory for relative paths (OTIF directory with copied groundtruth)
     }
 
     # Create TrackEval evaluator configuration
@@ -185,19 +177,8 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
 
     os.makedirs(output_dir, exist_ok=True)
 
-    # Create TrackEval metric objects based on requested metrics
-    # Each metric is configured with appropriate thresholds and settings
-    metrics = []
-    for metric_name in metrics_list:
-        if metric_name == 'HOTA':
-            # Higher Order Tracking Accuracy metric with 0.5 IoU threshold
-            metrics.append(HOTA())
-        elif metric_name == 'CLEAR':
-            # CLEAR metrics (MOTA, MOTP, etc.) with 0.5 IoU threshold
-            metrics.append(CLEAR({'THRESHOLD': 0.5, 'PRINT_CONFIG': False}))
-        elif metric_name == 'Identity':
-            # Identity metrics (IDF1, etc.) with 0.5 IoU threshold
-            metrics.append(Identity({'THRESHOLD': 0.5}))
+    # Create TrackEval metric objects
+    metrics = [HOTA()]
 
     # Create TrackEval dataset and evaluator objects
     # The dataset object handles data loading and preprocessing
@@ -211,7 +192,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         # This returns results for both individual videos and combined dataset
         results = evaluator.evaluate([eval_dataset], metrics)
 
-    # TrackEval returns results in structure: results[0]["Dataset"]["sort"][sequence]["vehicle"]
+    # TrackEval returns results in structure: results[0]["Dataset"]['sort'][sequence]["vehicle"]
     # where sequence can be individual video names or "COMBINED_SEQ" for aggregated results
     # results[0] contains the actual evaluation results
     # results[1] contains the evaluation status
@@ -220,8 +201,8 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
 
     # Extract evaluation results from TrackEval output structure
     # Navigate through the nested result structure to get to the actual data
-    dataset_result = results[0].get('Dataset', {})
-    tracker_results = dataset_result.get('sort', {})
+    dataset_result = results[0]['Dataset']
+    tracker_results = dataset_result['sort']
 
     # Ensure output directory exists for saving results
     os.makedirs(output_dir, exist_ok=True)
@@ -260,9 +241,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         result_data = {
             'video': None if seq == 'COMBINED_SEQ' else seq,  # None for combined results
             'dataset': dataset,
-            'classifier': classifier,
-            'tilesize': tilesize,
-            'tilepadding': tilepadding,
+            'param_id': param_id,
             'metrics': seq_metrics,
         }
 
@@ -277,69 +256,84 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
 
 def main(args):
     """
-    Main function that orchestrates the tracking accuracy evaluation process.
-
+    Main function that orchestrates the OTIF tracking accuracy evaluation process.
+    
     This function serves as the entry point for the script. It:
-    1. Finds all videos with tracking results for the specified datasets and classifier/tilesize/tilepadding combinations
-    2. Groups videos by dataset and classifier/tilesize/tilepadding combination
+    1. Finds all videos with OTIF tracking results for the specified datasets and param_id combinations
+    2. Groups videos by dataset and param_id combination
     3. Runs accuracy evaluation using TrackEval for each combination (evaluating all videos simultaneously)
     4. Generates both combined dataset results and individual video results
-
+    
     Args:
         args (argparse.Namespace): Parsed command line arguments
-
+        
     Note:
-        - The script expects tracking results from 060_exec_track.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tilesize}_{tilepadding}/tracking.jsonl
+        - The script expects OTIF tracking results in:
+          {CACHE_DIR}/SOTA/otif/{dataset}/{video_file}/tracking_results/{param_id:03d}/tracking.jsonl
         - Groundtruth data should be in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/003_groundtruth/tracking.jsonl
         - Results are saved to:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{tilepadding}/
+          {CACHE_DIR}/otif/{dataset}/accuracy/raw/{param_id:03d}/
           ├── DATASET.json (combined results)
           ├── {video}.json (individual video results)
           └── LOG.txt (evaluation logs)
-        - Multiple metrics are evaluated: HOTA, CLEAR (MOTA), and Identity (IDF1)
     """
-    print(f"Starting tracking accuracy evaluation for datasets: {DATASETS}")
-
-    # Parse metrics from comma-separated string into list
-    # Remove any whitespace and split by comma
-    metrics_list = [m.strip() for m in args.metrics.split(',')]
-    print(f"Evaluating metrics: {metrics_list}")
-
+    print(f"Starting OTIF tracking accuracy evaluation for datasets: {DATASETS}")
+    
     # Find tracking results for all datasets and create evaluation tasks
     eval_tasks: list[Callable[[int, "mp.Queue"], None]] = []
-
+    
     # Process each dataset separately
     for dataset in DATASETS:
         print(f"Processing dataset: {dataset}")
-
-        # Find all videos and classifier/tilesize/tilepadding combinations for this dataset
-        videos, classifier_tilesizes = find_tracking_results(CACHE_DIR, dataset)
-
+        
+        # Find all videos and param_id combinations for this dataset
+        videos, param_ids = find_otif_tracking_results(CACHE_DIR, dataset)
+        
         # Create evaluation directory path for this dataset
-        evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
-
+        evaluation_dir = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset, 'accuracy')
+        
         # Clear evaluation directory
         if os.path.exists(evaluation_dir):
             shutil.rmtree(evaluation_dir)
-            print(f"Cleared existing 070_accuracy directory: {evaluation_dir}")
+            print(f"Cleared existing accuracy directory: {evaluation_dir}")
         os.makedirs(evaluation_dir, exist_ok=True)
         os.makedirs(os.path.join(evaluation_dir, 'raw'), exist_ok=True)
-
-        # Create one evaluation task per classifier/tilesize/tilepadding combination
-        # Each task will evaluate all videos in the dataset for that combination
-        for cl, ts, tilepadding in classifier_tilesizes:
-            output_dir = os.path.join(evaluation_dir, 'raw', f'{cl}_{ts}_{tilepadding}')
+        
+        # Copy groundtruth files to OTIF directory structure (before parallel execution to avoid race conditions)
+        # TrackEval expects: {input_dir}/{video}/003_groundtruth/tracking.jsonl
+        otif_dir = os.path.join(CACHE_DIR, 'SOTA', 'otif', dataset)
+        execution_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+        for video_file in videos:
+            # Construct paths for this video
+            groundtruth_source = os.path.join(execution_dir, video_file, '003_groundtruth', 'tracking.jsonl')
+            video_otif_dir = os.path.join(otif_dir, video_file)
+            groundtruth_dest_dir = os.path.join(video_otif_dir, '003_groundtruth')
+            groundtruth_dest = os.path.join(groundtruth_dest_dir, 'tracking.jsonl')
+            
+            # Check if groundtruth file exists
+            assert os.path.exists(groundtruth_source), f"Groundtruth file not found: {groundtruth_source}"
+            
+            # Create groundtruth directory in OTIF directory for this video
+            os.makedirs(groundtruth_dest_dir, exist_ok=True)
+            
+            # Copy groundtruth file to OTIF directory
+            if os.path.exists(groundtruth_dest):
+                # Remove existing file if it exists
+                os.remove(groundtruth_dest)
+            shutil.copy2(groundtruth_source, groundtruth_dest)
+        
+        # Create one evaluation task per param_id combination
+        # Each task will evaluate all videos in the dataset for that param_id
+        for param_id in param_ids:
+            output_dir = os.path.join(evaluation_dir, 'raw', f'{param_id:03d}')
             # Create a partial function with all arguments bound except the function call
-            eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos,
-                                      cl, ts, tilepadding, metrics_list, output_dir))
-        output_dir = os.path.join(evaluation_dir, 'raw', 'Groundtruth_0_Groundtruth')
-        eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos, 'Groundtruth', 0, 'Groundtruth', metrics_list, output_dir))
-
+            eval_tasks.append(partial(evaluate_otif_tracking_accuracy, dataset, videos,
+                                      param_id, output_dir))
+    
     # Validate that we found some evaluation tasks
-    assert len(eval_tasks) > 0, "No tracking results found. Please ensure 060_exec_track.py has been run first."
-    print(f"Found {len(eval_tasks)} classifier-tile size-tilepadding combinations to evaluate")
+    assert len(eval_tasks) > 0, "No OTIF tracking results found. Please ensure p140_otif_transform.py has been run first."
+    print(f"Found {len(eval_tasks)} param_id combinations to evaluate")
 
     # Execute evaluation tasks either sequentially or in parallel
     # Parallel execution: start all processes simultaneously
@@ -363,3 +357,4 @@ def main(args):
 
 if __name__ == '__main__':
     main(parse_args())
+

@@ -110,7 +110,7 @@ def process_dataset(sota_dir: str, dataset: str, cache_dir: str):
 
     input_df = pd.read_csv(stat_csv_input)
     input_df.columns = input_df.columns.str.replace('Unnamed: 0', 'param_id')
-    input_df = input_df[['param_id', 'detector_cfg', 'segmentation_cfg', 'tracker_cfg', 'runtime', 'fps']]
+    input_df = input_df[['param_id', 'detector_cfg', 'segmentation_cfg', 'tracker_cfg', 'runtime']]
     input_df.to_csv(stat_csv_output, index=False)
     
     # Process tracking outputs
@@ -125,10 +125,6 @@ def process_dataset(sota_dir: str, dataset: str, cache_dir: str):
         assert os.path.isdir(param_dir), f"Param directory not found: {param_dir}"
         print(f"  Processing param_id: {param_id}")
         
-        # Create output directory for this param_id
-        output_param_dir = os.path.join(output_dataset_dir, f"{param_id:03d}")
-        os.makedirs(output_param_dir, exist_ok=True)
-        
         # Process each video JSON file
         for video_file in os.listdir(param_dir):
             assert video_file.endswith('.json'), f"Video file not found: {video_file}"
@@ -136,9 +132,18 @@ def process_dataset(sota_dir: str, dataset: str, cache_dir: str):
             # Extract video_id from filename (remove .json extension)
             video_id = int(video_file.replace('.json', ''))
             
+            # Construct video_file name (e.g., 'te01.mp4')
+            video_file_name = f'te{video_id:02d}.mp4'
+            
+            # Create output directory structure: {dataset}/{video_file}/tracking_results/{param_id:03d}/
+            output_video_dir = os.path.join(output_dataset_dir, video_file_name)
+            output_tracking_results_dir = os.path.join(output_video_dir, 'tracking_results')
+            output_param_dir = os.path.join(output_tracking_results_dir, f"{param_id:03d}")
+            os.makedirs(output_param_dir, exist_ok=True)
+            
             # Construct input and output paths
             input_json_path = os.path.join(param_dir, str(video_file))
-            output_jsonl_path = os.path.join(output_param_dir, f'te{video_id:02d}.mp4.jsonl')
+            output_jsonl_path = os.path.join(output_param_dir, 'tracking.jsonl')
             
             print(f"    Transforming: {input_json_path} -> {output_jsonl_path}")
             transform_tracking_json(input_json_path, output_jsonl_path)
@@ -162,7 +167,7 @@ def main(args):
           {sota_dir}/{dataset}/otif_{dataset}_tracks/{param_id}/{video_id}.json
         - Transformed data is saved to:
           {CACHE_DIR}/SOTA/otif/{dataset}/stat.csv
-          {CACHE_DIR}/SOTA/otif/{dataset}/{param_id}/te{video_id}.mp4.jsonl
+          {CACHE_DIR}/SOTA/otif/{dataset}/{video_file}/tracking_results/{param_id:03d}/tracking.jsonl
     """
     sota_dir = args.sota_dir
     assert os.path.exists(sota_dir), f"SOTA directory {sota_dir} does not exist"
