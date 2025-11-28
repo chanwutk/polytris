@@ -54,11 +54,7 @@ def detect(
     """
 
     # Filter classes during prediction for better performance
-    timage = torch.from_numpy(image).to(model.device)
-    timage = timage.permute(2, 0, 1)  # HWC to CHW
-    timage = timage.float() / 255.0
-    timage = timage.unsqueeze(0)  # Add batch dimension
-    results = model(timage, verbose=False)[0]
+    results = model(image[:, :, ::-1], verbose=False)[0]
 
     if results.boxes is None or len(results.boxes) == 0:
         res = np.empty((0, 5))
@@ -96,10 +92,7 @@ def detect_batch(
     print('detect_batch')
     # Pass images as a list instead of stacking them
     # Ultralytics handles batching internally and expects a list of images
-    timages = [torch.from_numpy(image) for image in images]
-    timages = torch.stack(timages)
-    timages = timages.permute(0, 3, 1, 2)  # HWC to CHW
-    timages = timages.float() / 255.0
+    timages = [i[:, :, ::-1] for i in images]
     all_results = model(timages, verbose=False)
     all_detections: list[polyis.dtypes.DetArray] = []
     for results in all_results:

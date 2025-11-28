@@ -69,9 +69,9 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
     with the trained model, and returns relevance scores for each tile along with timing information.
 
     Args:
-        frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3)
+        frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3) in RGB format
             where H and W are the frame height and width, and 3 represents RGB channels
-        previous_frame (np.ndarray): Previous video frame as a numpy array with shape (H, W, 3)
+        previous_frame (np.ndarray): Previous video frame as a numpy array with shape (H, W, 3) in RGB format
         model (torch.nn.Module): Trained model for the specified tile size
         tile_size (int): Size of tiles to use for processing (30, 60, or 120)
         device (str): Device to use for processing
@@ -251,12 +251,13 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
         description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier} {method_name}"
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': frame_count}))
-        frames = []
+        # RGB frames
+        frames: list[np.ndarray] = []
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
-            frames.append(frame)
+            frames.append(frame[:, :, ::-1])  # BGR to RGB
         cap.release()
         assert len(frames) == frame_count, f"Expected {frame_count} frames, got {len(frames)}"
 
