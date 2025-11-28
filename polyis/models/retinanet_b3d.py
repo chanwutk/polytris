@@ -87,9 +87,9 @@ def detect_batch(
 
     with torch.no_grad():
         # Apply pre-processing to image.
-        if detector.input_format == "RGB":
-            # whether the model expects BGR inputs or RGB
-            images_stack = images_stack[:, :, :, ::-1]
+        # if detector.input_format == "RGB":
+        #     # whether the model expects BGR inputs or RGB
+        #     images_stack = images_stack[:, :, :, ::-1]
 
         images_stack = images_stack.permute(0, 3, 1, 2)  # NCHW -> NCHW
         images_stack = images_stack.to(dtype=torch.float32)

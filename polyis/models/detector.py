@@ -74,7 +74,7 @@ def detect(image, detector: Any, threshold: float = 0.25):
     Generic object detection function that works with any pre-loaded detector.
     
     Args:
-        image: Input image as numpy array
+        image: Input image as numpy array (RGB)
         detector: Pre-loaded detector instance (RetinaNet, YOLOv3, or YOLOv5)
         threshold: Detection confidence threshold
         

@@ -92,6 +92,7 @@ def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: qu
             
             if not ret:
                 break
+            frame = frame[:, :, ::-1]  # BGR to RGB
             
             # Measure object detection time
             start_time = (time.time_ns() / 1e6)
@@ -154,7 +155,7 @@ def main():
         
         # Get all video files from the dataset directory
         video_files: list[str] = []
-        for videoset in VIDEO_SETS:
+        for videoset in ['test']:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith('.mp4')])

@@ -79,6 +79,7 @@ def detect_objects(video: str, split: str, dataset: str, target_fps: int, batch_
                 # Set cap to the target frame
                 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
                 ret, frame = cap.read()
+                frame = frame[:, :, ::-1]  # BGR to RGB
                 end_time = time.time_ns() / 1e6
                 read_time = end_time - start_time
                 read_times.append(read_time)
