@@ -103,7 +103,6 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
                 image_path = os.path.join(compressed_frames_dir, image_file)
                 frame = cv2.imread(image_path)
                 assert frame is not None
-                frame = frame[:, :, ::-1]  # BGR to RGB
                 assert polyis.dtypes.is_np_image(frame)
                 batch_images.append(frame)
                 batch_runtimes.append({'image_file': image_file})

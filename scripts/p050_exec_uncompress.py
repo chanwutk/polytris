@@ -9,7 +9,7 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import TILEPADDING_MODES, ProgressBar, create_timer, get_config
+from polyis.utilities import TILEPADDING_MODES, ProgressBar, create_timer, get_config, get_num_frames
 
 
 CONFIG = get_config()
@@ -191,9 +191,10 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
     os.makedirs(images_center_not_in_any_tile_dir, exist_ok=True)
     print(f"Saving images center not in any tile to {images_center_not_in_any_tile_dir}")
 
-    relevancy_scores_file = os.path.join(video_path, '020_relevancy', f'{classifier}_{tilesize}', 'score', 'score.jsonl')
-    with open(relevancy_scores_file, 'r') as f:
-        num_frames = max(json.loads(line)['idx'] for line in f if line.strip())
+    # relevancy_scores_file = os.path.join(video_path, '020_relevancy', f'{classifier}_{tilesize}', 'score', 'score.jsonl')
+    # with open(relevancy_scores_file, 'r') as f:
+    #     num_frames = max(json.loads(line)['idx'] for line in f if line.strip())
+    num_frames = get_num_frames(os.path.join(DATASETS_DIR, dataset, 'test', video))
 
     # dictionary to store all frame detections
     all_frame_detections: dict[int, list[list[float]]] = {

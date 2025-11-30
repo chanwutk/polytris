@@ -64,28 +64,28 @@ def detect(
 
 
 def detect_batch(
-    images: list[np.ndarray],
+    images: list[polyis.dtypes.NPImage],
     detector: "DefaultPredictor",
     nms_threshold: float = 0.5
 ) -> list[polyis.dtypes.DetArray]:
     """
     Detect vehicles in a batch of images using RetinaNet.
     """
-    model: "RetinaNet" = detector.model
-    image = images[0]
-    height, width = image.shape[:2]
-    transform = detector.aug.get_transform(image)
-    new_h: int = transform.new_h  # type: ignore
-    new_w: int = transform.new_w  # type: ignore
-    images_stack = torch.from_numpy(np.stack(images)).to(device=detector.cfg.MODEL.DEVICE)
-
-    assert str(model.pixel_mean.device) == str(detector.cfg.MODEL.DEVICE), \
-        f"Model pixel mean device {model.pixel_mean.device} does " \
-        f"not match detector device {detector.cfg.MODEL.DEVICE}"
-    
-    all_detections = []
-
     with torch.no_grad():
+        model: "RetinaNet" = detector.model
+        image = images[0]
+        height, width = image.shape[:2]
+        transform = detector.aug.get_transform(image)
+        new_h: int = transform.new_h  # type: ignore
+        new_w: int = transform.new_w  # type: ignore
+        images_stack = torch.from_numpy(np.stack(images)).to(device=detector.cfg.MODEL.DEVICE)
+
+        assert str(model.pixel_mean.device) == str(detector.cfg.MODEL.DEVICE), \
+            f"Model pixel mean device {model.pixel_mean.device} does " \
+            f"not match detector device {detector.cfg.MODEL.DEVICE}"
+        
+        all_detections = []
+
         # Apply pre-processing to image.
         # if detector.input_format == "RGB":
         #     # whether the model expects BGR inputs or RGB

@@ -45,7 +45,7 @@ def detect(
     Detect vehicles in an image using YOLOv5.
 
     Args:
-        image: Input image as numpy array (H, W, C) in RGB format
+        image: Input image as numpy array (H, W, C) in BGR format
         model: YOLOv5 model instance
 
     Returns:
@@ -54,7 +54,7 @@ def detect(
     """
 
     # Filter classes during prediction for better performance
-    results = model(image[:, :, ::-1], verbose=False)[0]
+    results = model(image, verbose=False)[0]
 
     if results.boxes is None or len(results.boxes) == 0:
         res = np.empty((0, 5))
@@ -82,7 +82,7 @@ def detect_batch(
     Detect vehicles in a batch of images using YOLOv5.
 
     Args:
-        images: Input images as numpy array (H, W, C) in RGB format
+        images: Input images as numpy array (H, W, C) in BGR format
         model: YOLOv5 model instance
 
     Returns:
@@ -92,8 +92,7 @@ def detect_batch(
     print('detect_batch')
     # Pass images as a list instead of stacking them
     # Ultralytics handles batching internally and expects a list of images
-    timages = [i[:, :, ::-1] for i in images]
-    all_results = model(timages, verbose=False)
+    all_results = model(images, verbose=False)
     all_detections: list[polyis.dtypes.DetArray] = []
     for results in all_results:
         if results.boxes is None or len(results.boxes) == 0:

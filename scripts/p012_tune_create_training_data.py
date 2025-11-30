@@ -197,12 +197,14 @@ def main():
         for tile_size in TILE_SIZES:
             runtime_path = os.path.join(training_base_dir, 'runtime', f'tilesize_{tile_size}')
             if os.path.exists(runtime_path):
+                print(f'Removing existing runtime directory {runtime_path}')
                 shutil.rmtree(runtime_path)
             os.makedirs(runtime_path, exist_ok=True)
 
             for subpath in ['data', 'diff']:
                 training_data_path = os.path.join(training_base_dir, subpath, f'tilesize_{tile_size}')
                 if os.path.exists(training_data_path):
+                    print(f'Removing existing training data directory {training_data_path}')
                     shutil.rmtree(training_data_path)
                 os.makedirs(training_data_path, exist_ok=True)
                 for label in ['pos', 'neg']:
@@ -215,6 +217,7 @@ def main():
     num_gpus = torch.cuda.device_count()
     assert num_gpus > 0, "No GPUs available"
     ProgressBar(num_workers=20, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
+    print('Training data created')
 
 
 if __name__ == '__main__':

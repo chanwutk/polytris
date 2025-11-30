@@ -92,7 +92,6 @@ def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: qu
             
             if not ret:
                 break
-            frame = frame[:, :, ::-1]  # BGR to RGB
             
             # Measure object detection time
             start_time = (time.time_ns() / 1e6)

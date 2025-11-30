@@ -154,6 +154,7 @@ def main():
         Images are removed based on the naming convention: {video_file}_{frame_idx}_{y}_{x}.jpg
         where (y, x) are tile positions that have never been marked as relevant across the entire dataset.
     """
+    print('Optimizing training data...')
     funcs = []
     
     for dataset_name in DATASETS_TO_TEST:
@@ -174,7 +175,7 @@ def main():
     
     # Use ProgressBar for parallel processing
     ProgressBar(num_workers=20, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
-
+    print('Training data optimized')
 
 if __name__ == '__main__':
     main()
