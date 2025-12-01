@@ -860,7 +860,7 @@ class Timer:
 
 
 def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
-                  refresh_per_second: float = 1):
+                  refresh_per_second: float = 1, script_name: str = ""):
     with progress.Progress(
         "[progress.description]{task.description}",
         progress.BarColumn(),
@@ -871,7 +871,7 @@ def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
         refresh_per_second=refresh_per_second,
     ) as p:
         bars: dict[str, progress.TaskID] = {}
-        overall_progress = p.add_task(f"[green]Processing {num_tasks} tasks",
+        overall_progress = p.add_task(f"[green]Processing {num_tasks} tasks for `{script_name}`",
                                       total=num_tasks, completed=-num_workers)
         bars['overall'] = overall_progress
         for gpu_id in range(num_workers):
@@ -919,6 +919,10 @@ class ProgressBar:
         self.num_tasks = num_tasks
         self.refresh_per_second = refresh_per_second
         
+        # Get the running script name for progress bar display
+        script_path = sys.modules['__main__'].__file__
+        self.script_name = os.path.basename(script_path) if script_path else ""
+        
         # Initialize queues
         self.command_queue: "mp.Queue[tuple[str, dict] | None]" = mp.Queue()
         self.worker_id_queue: "mp.Queue[int]" = mp.Queue(maxsize=num_workers)
@@ -927,7 +931,7 @@ class ProgressBar:
             self.progress_process = mp.Process(
                 target=progress_bars,
                 args=(self.command_queue, self.num_workers,
-                    self.num_tasks, self.refresh_per_second),
+                    self.num_tasks, self.refresh_per_second, self.script_name),
                 daemon=True
             )
     

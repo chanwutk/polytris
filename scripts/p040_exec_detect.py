@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument('--clear', action='store_true',
                         help='Remove and recreate the 040_compressed_detections folder for each video')
     parser.add_argument('--batch_size', type=int, default=4,
-                        help='Batch size for detection processing (default: 8)')
+                        help='Batch size for detection processing (default: 4)')
     return parser.parse_args()
 
 
@@ -55,18 +55,12 @@ def detect_worker(dataset: str, batch_queue: mp.Queue, result_queue: mp.Queue,
     # Set the current device for this process
     torch.cuda.set_device(gpu_id)
     
+    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len_images)
+    
     with torch.no_grad(), torch.inference_mode():
-        # Create detector in this process's context
-        # Each process has its own model instance and CUDA context
-        detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len_images)
-        
         # Process images in batches
         while True:
-            try:
-                batch_data = batch_queue.get(timeout=1)
-            except queue.Empty:
-                continue
-            
+            batch_data = batch_queue.get(block=True)
             if batch_data is None:
                 break
             
@@ -166,7 +160,8 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         results_dict: dict[int, polyis.dtypes.DetArray] = {}
         completed_batches = 0
         while completed_batches < num_batches:
-            batch_start, batch_end, batch_output = result_queue.get(block=True)
+            result_data = result_queue.get(block=True)
+            batch_start, batch_end, batch_output = result_data
             # Store results by batch start index
             for i, detection in enumerate(batch_output):
                 results_dict[batch_start + i] = detection
@@ -191,7 +186,8 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
-                   tilepadding: TilePadding, batch_size: int, gpu_id: int, command_queue: mp.Queue):
+                   tilepadding: TilePadding, batch_size: int, gpu_id: int,
+                   command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
     
@@ -334,7 +330,7 @@ def main(args):
             for classifier in CLASSIFIERS:
                 for tilesize in TILE_SIZES:
                     for tilepadding in TILEPADDING:
-                        funcs.append(partial(detect_parallel, dataset, video, classifier,
+                        funcs.append(partial(detect_objects, dataset, video, classifier,
                                              tilesize, tilepadding, args.batch_size))
     
     print(f"Created {len(funcs)} tasks to process")
