@@ -257,7 +257,8 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
             ret, frame = cap.read()
             if not ret:
                 break
-            frames.append(frame[:, :, ::-1])  # BGR to RGB
+            # frames.append(frame)
+            frames.append(np.ascontiguousarray(frame[:, :, ::-1]))  # BGR to RGB
         cap.release()
         assert len(frames) == frame_count, f"Expected {frame_count} frames, got {len(frames)}"
 

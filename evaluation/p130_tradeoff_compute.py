@@ -14,6 +14,7 @@ from polyis.utilities import METRICS, get_video_frame_count, get_config
 config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
+TILEPADDING = config['EXEC']['TILEPADDING_MODES']
 
 
 def load_accuracy_results(dataset: str):

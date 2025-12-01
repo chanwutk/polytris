@@ -5,7 +5,7 @@ import shutil
 
 import pandas as pd
 
-from polyis.utilities import TILEPADDING_MODES, get_config
+from polyis.utilities import get_config
 
 
 config = get_config()

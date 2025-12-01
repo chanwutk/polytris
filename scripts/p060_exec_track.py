@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import shutil
 import time
 import numpy as np
 import multiprocessing as mp
@@ -230,9 +231,9 @@ def main(args: argparse.Namespace):
         # Find all videos with uncompressed detection results
         cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
         for video in os.listdir(videosets_dir):
-            # uncompressed_tracking_dir = os.path.join(cache_dir, video, '060_uncompressed_tracks')
-            # if os.path.exists(uncompressed_tracking_dir):
-            #     shutil.rmtree(uncompressed_tracking_dir)
+            uncompressed_tracking_dir = os.path.join(cache_dir, video, '060_uncompressed_tracks')
+            if os.path.exists(uncompressed_tracking_dir):
+                shutil.rmtree(uncompressed_tracking_dir)
 
             for classifier in CLASSIFIERS:
                 for tilesize in TILE_SIZES:
