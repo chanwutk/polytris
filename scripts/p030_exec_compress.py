@@ -158,7 +158,7 @@ def compress(dataset: str, video: str, classifier: str, tilesize: int,
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     num_frames_total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    assert num_frames_total == len(results), f"Expected {len(results)} frames, got {num_frames_total}"
+    assert num_frames_total == len(results), f"Expected {len(results)} frames, got {num_frames_total}, {video_path} {classifier} {tilesize} {tilepadding}"
 
     # Calculate grid dimensions
     grid_height = height // tilesize

@@ -145,7 +145,7 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
         # Convert to uint8 and transfer to CPU
         probabilities = (predictions * 255).to(torch.uint8)
         # Filter predictions using the combined mask
-        predictions = predictions * valid_tiles_mask.view(-1, 1)
+        probabilities = probabilities * valid_tiles_mask.view(-1, 1)
         probabilities = probabilities.cpu().numpy().flatten()
 
         # Reshape back to grid format

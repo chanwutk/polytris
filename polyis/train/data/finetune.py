@@ -587,35 +587,35 @@ def visualize_annotations(
         # Draw bounding box
         cv2.rectangle(img, (x1, y1), (x2, y2), box_color, box_thickness)
         
-        # Draw class label
-        label = class_name
-        font_scale = 0.6
-        font_thickness = 2
-        font = cv2.FONT_HERSHEY_SIMPLEX
+        # # Draw class label
+        # label = class_name
+        # font_scale = 0.6
+        # font_thickness = 2
+        # font = cv2.FONT_HERSHEY_SIMPLEX
         
-        # Calculate text size and position
-        (text_width, text_height), baseline = cv2.getTextSize(
-            label, font, font_scale, font_thickness
-        )
+        # # Calculate text size and position
+        # (text_width, text_height), baseline = cv2.getTextSize(
+        #     label, font, font_scale, font_thickness
+        # )
         
-        # Position text above the bounding box
-        text_x = x1
-        text_y = max(y1 - 10, text_height + 5)
+        # # Position text above the bounding box
+        # text_x = x1
+        # text_y = max(y1 - 10, text_height + 5)
         
-        # Draw text background for better visibility
-        cv2.rectangle(
-            img,
-            (text_x - 2, text_y - text_height - 2),
-            (text_x + text_width + 2, text_y + baseline + 2),
-            box_color,
-            -1
-        )
+        # # Draw text background for better visibility
+        # cv2.rectangle(
+        #     img,
+        #     (text_x - 2, text_y - text_height - 2),
+        #     (text_x + text_width + 2, text_y + baseline + 2),
+        #     box_color,
+        #     -1
+        # )
         
-        # Draw text in white
-        cv2.putText(
-            img, label, (text_x, text_y),
-            font, font_scale, (255, 255, 255), font_thickness
-        )
+        # # Draw text in white
+        # cv2.putText(
+        #     img, label, (text_x, text_y),
+        #     font, font_scale, (255, 255, 255), font_thickness
+        # )
     
     # Save visualized image
     output_path = Path(output_path)

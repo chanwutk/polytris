@@ -14,8 +14,8 @@ Output formats supported:
 
 import argparse
 import json
-import os
 import random
+import shutil
 from pathlib import Path
 
 import cv2
@@ -39,24 +39,24 @@ from polyis.train.data.finetune import (
 )
 
 
+CONFIG = get_config()
+DETECTORS_CONFIG = get_config('detectors.yaml')
+DATASETS = CONFIG['EXEC']['DATASETS']
+TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
+TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
+CACHE_DIR = Path(CONFIG['DATA']['CACHE_DIR'])
+DATASETS_DIR = Path(CONFIG['DATA']['DATASETS_DIR'])
+CLASSIFIERS = CONFIG['EXEC']['CLASSIFIERS']
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Create fine-tuning datasets from compressed frames')
-    parser.add_argument('--dataset', type=str, nargs='*', default=None,
-                        help='Dataset name(s) to process (default: all from config)')
-    parser.add_argument('--tilesize', type=int, nargs='*', default=None,
-                        help='Tile size(s) to process (default: all from config)')
-    parser.add_argument('--tilepadding', type=str, nargs='*', default=None,
-                        help='Tile padding mode(s) to process (default: all from config)')
-    parser.add_argument('--output-dir', type=str, default=None,
-                        help='Override output directory (default: /polyis-cache/{dataset}/finetune/{tilesize}_{tilepadding}/)')
     parser.add_argument('--val-split', type=float, default=0.2,
                         help='Fraction for validation split (default: 0.2)')
-    parser.add_argument('--format', type=str, default='both',
-                        choices=['ultralytics', 'coco', 'darknet', 'all', 'both', 'intermediate-only'],
-                        help='Output format: ultralytics, coco, darknet, all, both (ultralytics+coco), intermediate-only (default: both)')
-    parser.add_argument('--skip-intermediate', action='store_true',
-                        help='Skip intermediate dataset creation, convert existing')
+    parser.add_argument('--format', type=str, default=None,
+                        choices=['ultralytics', 'coco', 'darknet'],
+                        help='Override output format (default: determined from detector config)')
     parser.add_argument('--no-visualize', action='store_true',
                         help='Disable visualization (visualization enabled by default)')
     parser.add_argument('--num-visualize', type=int, default=10,
@@ -64,11 +64,82 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_required_format_for_dataset(dataset: str) -> str:
+    """
+    Determine the required dataset format based on detector configuration.
+    
+    Args:
+        dataset: Dataset name
+        
+    Returns:
+        Required format: 'ultralytics', 'coco', or 'darknet'
+        
+    Raises:
+        ValueError: If dataset is not found in detector configuration
+    """
+    dataset_name_mapping = DETECTORS_CONFIG['dataset_name_mapping']
+    dataset_detector_mapping = DETECTORS_CONFIG['dataset_detector_mapping']
+    
+    # Get the detector config key for this dataset
+    if dataset not in dataset_name_mapping:
+        raise ValueError(f"Dataset '{dataset}' not found in detector configuration")
+    
+    detector_config_key = dataset_name_mapping[dataset]
+    
+    # Get the detector type
+    if detector_config_key not in dataset_detector_mapping:
+        raise ValueError(f"Detector config key '{detector_config_key}' not found in detector configuration")
+    
+    detector_type = dataset_detector_mapping[detector_config_key]['detector']
+    
+    # Map detector type to dataset format
+    if detector_type == 'ultralytics':
+        return 'ultralytics'
+    elif detector_type == 'yolov3':
+        return 'darknet'
+    elif detector_type in ['retina', 'torchvision']:
+        return 'coco'
+    else:
+        raise ValueError(f"Unknown detector type '{detector_type}' for dataset '{dataset}'")
+
+
+def cleanup_existing_directories(
+    output_dir: Path,
+    dataset: str,
+    tilesize: int,
+    tilepadding: str,
+) -> None:
+    """
+    Clean up existing directories before creating new dataset.
+    
+    Removes:
+    - Output directory for the dataset
+    - Visualization directories for this dataset/tilesize/tilepadding combination
+    
+    Args:
+        output_dir: Output directory path to clean up
+        dataset: Dataset name
+        tilesize: Tile size used for compression
+        tilepadding: Tile padding mode
+    """
+    # Remove output directory if it exists
+    if output_dir.exists():
+        print(f"Cleaning up existing output directory: {output_dir}")
+        shutil.rmtree(output_dir)
+    
+    # Remove visualization directories
+    tilesize_tilepadding = f"{tilesize}_{tilepadding}"
+    viz_base_dir = Path("/polyis/output/visualizations/finetune") / dataset / tilesize_tilepadding
+    
+    if viz_base_dir.exists():
+        print(f"Cleaning up existing visualization directory: {viz_base_dir}")
+        shutil.rmtree(viz_base_dir)
+
+
 def create_intermediate_dataset(
     dataset: str,
     tilesize: int,
     tilepadding: str,
-    config: dict,
 ) -> list[CompressedImageAnnotation]:
     """
     Create intermediate dataset combining all videos and classifiers.
@@ -77,19 +148,15 @@ def create_intermediate_dataset(
         dataset: Dataset name
         tilesize: Tile size used for compression
         tilepadding: Tile padding mode
-        config: Configuration dictionary
         
     Returns:
         List of CompressedImageAnnotation entries
     """
-    cache_dir = Path(config['DATA']['CACHE_DIR'])
-    datasets_dir = Path(config['DATA']['DATASETS_DIR'])
-    classifiers = config['EXEC']['CLASSIFIERS']
     
     entries: list[CompressedImageAnnotation] = []
     
     # Get all test videos for this dataset
-    video_dir = datasets_dir / dataset / "test"
+    video_dir = DATASETS_DIR / dataset / "test"
     if not video_dir.exists():
         print(f"Warning: Video directory {video_dir} does not exist, skipping...")
         return entries
@@ -99,18 +166,12 @@ def create_intermediate_dataset(
     
     for video in tqdm(videos, desc=f"Processing {dataset}"):
         # Load ground truth tracking for this video
-        try:
-            tracking_results = load_tracking_results(
-                str(cache_dir), dataset, video, verbose=False
-            )
-        except FileNotFoundError:
-            print(f"Warning: Tracking results not found for {dataset}/{video}, skipping...")
-            continue
+        tracking_results = load_tracking_results(str(CACHE_DIR), dataset, video)
         
-        for classifier in classifiers:
+        for classifier in CLASSIFIERS:
             # Construct path to compressed frames
             param_str = f"{classifier}_{tilesize}_{tilepadding}"
-            compressed_dir = cache_dir / dataset / "execution" / video / "033_compressed_frames" / param_str
+            compressed_dir = CACHE_DIR / dataset / "execution" / video / "033_compressed_frames" / param_str
             
             # Skip if compressed frames don't exist
             if not compressed_dir.exists():
@@ -470,69 +531,64 @@ def print_summary(entries: list[CompressedImageAnnotation], output_dir: Path):
 def main():
     """Main function to create fine-tuning datasets."""
     args = parse_args()
-    config = get_config()
     
     # Set random seed for reproducible visualization sampling
     random.seed(42)
     
     # Determine datasets, tilesizes, tilepaddings to process
-    datasets = args.dataset or config['EXEC']['DATASETS']
-    tilesizes = args.tilesize or config['EXEC']['TILE_SIZES']
-    tilepaddings = args.tilepadding or config['EXEC']['TILEPADDING_MODES']
-    
-    print(f"Processing datasets: {datasets}")
-    print(f"Tile sizes: {tilesizes}")
-    print(f"Tile paddings: {tilepaddings}")
-    print(f"Output format: {args.format}")
+    print(f"Processing datasets: {DATASETS}")
+    print(f"Tile sizes: {TILE_SIZES}")
+    print(f"Tile paddings: {TILEPADDING_MODES}")
     print(f"Validation split: {args.val_split}")
+    if args.format:
+        print(f"Format override: {args.format}")
     
-    for dataset in datasets:
-        for tilesize in tilesizes:
-            for tilepadding in tilepaddings:
+    for dataset in DATASETS:
+        # Determine required format for this dataset
+        required_format = get_required_format_for_dataset(dataset)
+        # Use override if provided, otherwise use determined format
+        target_format = args.format if args.format else required_format
+        print(f"\nDataset '{dataset}' uses detector format: {required_format}")
+        if args.format and args.format != required_format:
+            print(f"Warning: Overriding format to {args.format} (detector expects {required_format})")
+        
+        for tilesize in TILE_SIZES:
+            for tilepadding in TILEPADDING_MODES:
                 print(f"\n{'='*60}")
                 print(f"Processing: {dataset} / tilesize={tilesize} / tilepadding={tilepadding}")
+                print(f"Target format: {target_format}")
                 print(f"{'='*60}")
                 
                 # Create output directory
-                if args.output_dir:
-                    # Use provided output directory
-                    output_dir = Path(args.output_dir) / f"{dataset}_{tilesize}_{tilepadding}"
-                else:
-                    # Use default structure: /polyis-cache/{dataset}/finetune/{tilesize}_{tilepadding}/
-                    output_dir = Path(f"/polyis-cache/{dataset}/finetune/{tilesize}_{tilepadding}")
+                # Use default structure: /polyis-cache/{dataset}/finetune/{tilesize}_{tilepadding}/
+                output_dir = Path(f"/polyis-cache/{dataset}/finetune/{tilesize}_{tilepadding}")
+                
+                # Clean up existing directories before creating new dataset
+                cleanup_existing_directories(output_dir, dataset, tilesize, tilepadding)
+                
                 output_dir.mkdir(parents=True, exist_ok=True)
                 
                 # Stage 1: Create or load intermediate dataset
                 intermediate_path = output_dir / "intermediate.jsonl"
                 
-                if not args.skip_intermediate:
-                    # Create intermediate dataset
-                    print("Creating intermediate dataset...")
-                    intermediate = create_intermediate_dataset(
-                        dataset, tilesize, tilepadding, config
-                    )
-                    
-                    if len(intermediate) == 0:
-                        print(f"Warning: No data found for {dataset}/{tilesize}/{tilepadding}")
-                        continue
-                    
-                    # Save intermediate dataset
-                    save_intermediate_dataset(intermediate, intermediate_path)
-                    print(f"Saved intermediate dataset to {intermediate_path}")
-                else:
-                    # Load existing intermediate dataset
-                    if not intermediate_path.exists():
-                        print(f"Error: Intermediate dataset not found at {intermediate_path}")
-                        continue
-                    print(f"Loading existing intermediate dataset from {intermediate_path}")
-                    intermediate = load_intermediate_dataset(intermediate_path)
+                # Create intermediate dataset
+                print("Creating intermediate dataset...")
+                intermediate = create_intermediate_dataset(dataset, tilesize, tilepadding)
+                
+                if len(intermediate) == 0:
+                    print(f"Warning: No data found for {dataset}/{tilesize}/{tilepadding}")
+                    continue
+                
+                # Save intermediate dataset
+                save_intermediate_dataset(intermediate, intermediate_path)
+                print(f"Saved intermediate dataset to {intermediate_path}")
                 
                 # Visualize intermediate dataset if enabled
                 if not args.no_visualize:
                     visualize_intermediate_dataset(intermediate, output_dir, args.num_visualize, dataset)
                 
-                # Stage 2: Convert to requested formats
-                if args.format in ['ultralytics', 'both', 'all']:
+                # Stage 2: Convert to required format
+                if target_format == 'ultralytics':
                     print("\nConverting to Ultralytics format...")
                     convert_to_ultralytics(
                         intermediate,
@@ -543,7 +599,7 @@ def main():
                     if not args.no_visualize:
                         visualize_ultralytics_format(output_dir, args.num_visualize, dataset)
                 
-                if args.format in ['coco', 'both', 'all']:
+                elif target_format == 'coco':
                     print("\nConverting to COCO format...")
                     convert_to_coco(
                         intermediate,
@@ -554,7 +610,7 @@ def main():
                     if not args.no_visualize:
                         visualize_coco_format(output_dir, args.num_visualize, dataset)
                 
-                if args.format in ['darknet', 'all']:
+                elif target_format == 'darknet':
                     print("\nConverting to Darknet format...")
                     convert_to_darknet(
                         intermediate,

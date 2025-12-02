@@ -180,6 +180,8 @@ def process_otif_dataset(sota_dir: str, dataset: str, cache_dir: str):
 
     input_df = pd.read_csv(stat_csv_input)
     input_df.columns = input_df.columns.str.replace('Unnamed: 0', 'param_id')
+    runtime_column = 'runtime' if 'runtime' in input_df.columns else 'runtime_total'
+    input_df['runtime'] = input_df[runtime_column]
     input_df = input_df[['param_id', 'detector_cfg', 'segmentation_cfg', 'tracker_cfg', 'runtime']]
     input_df.to_csv(stat_csv_output, index=False)
     
