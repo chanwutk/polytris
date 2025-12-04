@@ -19,7 +19,7 @@ from pathlib import Path
 
 import torch
 
-from polyis.utilities import TILEPADDING_MODES, get_config
+from polyis.utilities import get_config
 
 # Import discovery function from p042
 # Add scripts directory to path for import
@@ -39,8 +39,8 @@ def parse_args():
         description='Orchestrate fine-tuning training across all datasets')
     parser.add_argument('--epochs', type=int, default=13,
                         help='Training epochs (default: 13)')
-    parser.add_argument('--batch', type=int, default=-1,
-                        help='Batch size (-1 for auto, default: -1)')
+    parser.add_argument('--batch', type=int, default=1,
+                        help='Batch size (1 for auto, default: 1)')
     parser.add_argument('--devices', type=str, required=True,
                         help='Comma-separated device IDs to use (e.g., "0,1,2"). Overrides auto-assignment.')
     parser.add_argument('--session-name', type=str, default=None,
@@ -48,46 +48,34 @@ def parse_args():
     return parser.parse_args()
 
 
-def discover_finetune_datasets(base_path: Path) -> list[tuple[str, int, str]]:
+def get_tasks_from_config(config: dict, cache_dir: Path) -> list[tuple[str, int, str]]:
     """
-    Discover all available fine-tuning datasets.
+    Get training tasks from config file, verifying datasets exist.
     
     Args:
-        base_path: Base path to scan (typically /polyis-cache)
+        config: Configuration dictionary
+        cache_dir: Cache directory path
         
     Returns:
-        List of (dataset, tilesize, tilepadding) tuples
+        List of (dataset, tilesize, tilepadding) tuples that exist
     """
-    datasets = []
+    tasks = []
     
-    assert base_path.exists(), f"Base path {base_path} does not exist"
+    datasets = config['EXEC']['DATASETS']
+    tile_sizes = config['EXEC']['TILE_SIZES']
+    tilepadding_modes = config['EXEC']['TILEPADDING_MODES']
     
-    # Scan for /polyis-cache/{dataset}/finetune/{tilesize}_{tilepadding}/ directories
-    for dataset_dir in base_path.iterdir():
-        if not dataset_dir.is_dir():
-            continue
-        
-        finetune_dir = dataset_dir / "finetune"
-        if not finetune_dir.exists():
-            continue
-        
-        # Look for directories matching {tilesize}_{tilepadding} pattern
-        for combo_dir in finetune_dir.iterdir():
-            if not combo_dir.is_dir():
-                continue
-            
-            # Parse tilesize_tilepadding from directory name
-            parts = combo_dir.name.split('_')
-            if len(parts) != 2:
-                continue
-            
-            tilesize = int(parts[0])
-            tilepadding = parts[1]
-            assert tilesize > 0, f"Invalid tilesize: {tilesize}"
-            assert tilepadding in TILEPADDING_MODES, f"Invalid tilepadding: {tilepadding}"
-            datasets.append((dataset_dir.name, tilesize, tilepadding))
+    for dataset in datasets:
+        for tilesize in tile_sizes:
+            for tilepadding in tilepadding_modes:
+                # Check if the dataset directory exists
+                dataset_dir = cache_dir / dataset / "finetune" / f"{tilesize}_{tilepadding}"
+                if dataset_dir.exists():
+                    tasks.append((dataset, tilesize, tilepadding))
+                else:
+                    print(f"Warning: Dataset directory not found: {dataset_dir}, skipping...")
     
-    return datasets
+    return tasks
 
 
 def generate_session_name() -> str:
@@ -221,15 +209,19 @@ def main():
     """Main function to orchestrate training."""
     args = parse_args()
     
-    # Discover all fine-tuning datasets
-    print("Discovering fine-tuning datasets...")
-    all_tasks = discover_finetune_datasets(CACHE_DIR)
+    # Get training tasks from config
+    print("Getting training tasks from config...")
+    print(f"  Datasets: {CONFIG['EXEC']['DATASETS']}")
+    print(f"  Tile sizes: {CONFIG['EXEC']['TILE_SIZES']}")
+    print(f"  Tile padding modes: {CONFIG['EXEC']['TILEPADDING_MODES']}")
+    
+    all_tasks = get_tasks_from_config(CONFIG, CACHE_DIR)
     
     if not all_tasks:
-        print("No fine-tuning datasets found. Please run p041_exec_detect_finetune_dataset.py first.")
+        print("No valid fine-tuning datasets found. Please run p041_exec_detect_finetune_dataset.py first.")
         return
     
-    print(f"Found {len(all_tasks)} dataset combinations:")
+    print(f"\nFound {len(all_tasks)} valid dataset combinations:")
     for dataset, tilesize, tilepadding in all_tasks:
         print(f"  {dataset} / tilesize={tilesize} / tilepadding={tilepadding}")
     

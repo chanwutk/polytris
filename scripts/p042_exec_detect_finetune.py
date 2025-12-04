@@ -456,10 +456,26 @@ def train_darknet(
     if not cfg_file.exists():
         raise FileNotFoundError(f"Config file not found: {cfg_file}")
     
-    # Read and validate Darknet config file, create temporary copy with corrected batch/subdivisions if needed
+    # Read and validate Darknet config file, create temporary copy with corrected batch/subdivisions/width/height if needed
     batch_size = None
     subdivisions = None
+    config_width = None
+    config_height = None
+    config_random = None  # Track random resize setting
     config_lines = []
+    
+    # Get actual image dimensions from dataset
+    images_dir = darknet_dir / "images"
+    actual_width = None
+    actual_height = None
+    if images_dir.exists():
+        image_files = list(images_dir.glob("*.jpg")) + list(images_dir.glob("*.png"))
+        if image_files:
+            # Read first image to get dimensions
+            test_img = cv2.imread(str(image_files[0]))
+            if test_img is not None:
+                actual_height, actual_width = test_img.shape[:2]
+                print(f"[{dataset}/{tilesize}/{tilepadding}] Detected image dimensions: {actual_width}x{actual_height}")
     
     with open(cfg_file, 'r') as f:
         for line in f:
@@ -472,7 +488,7 @@ def train_darknet(
                 line_parse = line_stripped
                 if '#' in line_parse:
                     line_parse = line_parse.split('#')[0].strip()
-                # Parse batch and subdivisions
+                # Parse batch, subdivisions, width, and height
                 if '=' in line_parse:
                     key, value = line_parse.split('=', 1)
                     key = key.strip()
@@ -487,6 +503,21 @@ def train_darknet(
                             subdivisions = int(value)
                         except ValueError:
                             pass
+                    elif key == 'width':
+                        try:
+                            config_width = int(value)
+                        except ValueError:
+                            pass
+                    elif key == 'height':
+                        try:
+                            config_height = int(value)
+                        except ValueError:
+                            pass
+                    elif key == 'random':
+                        try:
+                            config_random = float(value)
+                        except ValueError:
+                            pass
             config_lines.append(original_line)
     
     if batch_size is None or subdivisions is None:
@@ -495,29 +526,94 @@ def train_darknet(
             f"Found batch={batch_size}, subdivisions={subdivisions}"
         )
     
-    actual_batch_size = batch_size * subdivisions
+    # In Darknet: mini_batch = batch / subdivisions
+    # The mini_batch is what gets processed at once (memory usage)
+    # The total batch size for gradient update is 'batch'
+    mini_batch_size = batch_size // subdivisions if subdivisions > 0 else batch_size
     needs_fix = False
     fixed_batch = batch_size
     fixed_subdivisions = subdivisions
+    fixed_width = config_width
+    fixed_height = config_height
+    fixed_random = config_random  # Disable random resize to prevent CUDA errors
     temp_cfg_path = None
     
-    if actual_batch_size == 1:
-        # Fix to recommended values
+    # Check if batch/subdivisions need fixing
+    # In Darknet: mini_batch = batch / subdivisions (this is what uses GPU memory)
+    if mini_batch_size == 1 or mini_batch_size == 0:
+        # Fix to reasonable values with subdivisions to avoid memory issues
+        # Use batch=64 with subdivisions=8: mini_batch = 64/8 = 8 images at once
         fixed_batch = 64
-        fixed_subdivisions = 64
+        fixed_subdivisions = 8  # mini_batch = 64/8 = 8, reducing memory usage
         needs_fix = True
         print(
-            f"Warning: Darknet config has invalid batch={batch_size} * subdivisions={subdivisions} = {actual_batch_size}. "
-            f"Creating temporary config with batch={fixed_batch}, subdivisions={fixed_subdivisions}."
+            f"Warning: Darknet config has invalid mini_batch={mini_batch_size} (batch={batch_size} / subdivisions={subdivisions}). "
+            f"Creating temporary config with batch={fixed_batch}, subdivisions={fixed_subdivisions} (mini_batch={fixed_batch // fixed_subdivisions})."
         )
-    elif actual_batch_size < 8:
-        # Fix to minimum acceptable values
-        fixed_batch = 8
-        fixed_subdivisions = 1
+    elif mini_batch_size > 16:
+        # If mini_batch is too large, increase subdivisions to reduce memory usage
+        # Try to keep mini_batch around 8-16
+        if mini_batch_size <= 32:
+            fixed_batch = batch_size
+            fixed_subdivisions = max(2, batch_size // 16)  # Aim for mini_batch ~16
+        elif mini_batch_size <= 64:
+            fixed_batch = batch_size
+            fixed_subdivisions = max(4, batch_size // 16)  # Aim for mini_batch ~16
+        else:
+            # For very large mini_batch, cap at reasonable size
+            fixed_batch = 64
+            fixed_subdivisions = 8  # mini_batch = 8
         needs_fix = True
         print(
-            f"Warning: Darknet config has actual_batch_size={actual_batch_size} (batch={batch_size} * subdivisions={subdivisions}). "
-            f"Creating temporary config with batch={fixed_batch}, subdivisions={fixed_subdivisions}."
+            f"Warning: Darknet config has large mini_batch={mini_batch_size} (batch={batch_size} / subdivisions={subdivisions}), "
+            f"which may cause memory issues. Creating temporary config with batch={fixed_batch}, subdivisions={fixed_subdivisions} (mini_batch={fixed_batch // fixed_subdivisions})."
+        )
+    elif mini_batch_size < 2:
+        # Fix to minimum acceptable values
+        fixed_batch = 16
+        fixed_subdivisions = 2  # mini_batch = 16/2 = 8
+        needs_fix = True
+        print(
+            f"Warning: Darknet config has small mini_batch={mini_batch_size} (batch={batch_size} / subdivisions={subdivisions}). "
+            f"Creating temporary config with batch={fixed_batch}, subdivisions={fixed_subdivisions} (mini_batch={fixed_batch // fixed_subdivisions})."
+        )
+    
+    # Check if width/height need updating to match actual image dimensions
+    if actual_width is not None and actual_height is not None:
+        # Round to nearest multiple of 32 (Darknet requirement)
+        def round_to_multiple(value: int, multiple: int = 32) -> int:
+            return int(round(value / multiple) * multiple)
+        
+        rounded_width = round_to_multiple(actual_width)
+        rounded_height = round_to_multiple(actual_height)
+        
+        # Update if config dimensions don't match or are missing
+        if config_width is None or config_height is None:
+            needs_fix = True
+            fixed_width = rounded_width
+            fixed_height = rounded_height
+            print(
+                f"Warning: Darknet config missing width/height settings. "
+                f"Setting to width={fixed_width}, height={fixed_height} based on image dimensions {actual_width}x{actual_height} (rounded to multiple of 32)."
+            )
+        elif config_width != rounded_width or config_height != rounded_height:
+            needs_fix = True
+            fixed_width = rounded_width
+            fixed_height = rounded_height
+            print(
+                f"Warning: Darknet config has width={config_width}, height={config_height}, "
+                f"but images are {actual_width}x{actual_height}. "
+                f"Updating config to width={fixed_width}, height={fixed_height} (rounded to multiple of 32)."
+            )
+    
+    # Disable random resize to prevent CUDA errors from large random dimensions
+    # Random resize can cause Darknet to try dimensions like 1024x704 which may exceed GPU memory
+    if config_random is not None and config_random != 0:
+        needs_fix = True
+        fixed_random = 0
+        print(
+            f"Warning: Disabling random resize (was {config_random}) to prevent CUDA errors. "
+            f"Training will use fixed dimensions {fixed_width}x{fixed_height}."
         )
     
     # Create temporary config file if needed
@@ -548,6 +644,18 @@ def train_darknet(
                         # Replace subdivisions value
                         temp_cfg.write(f"subdivisions={fixed_subdivisions}{comment_part}\n")
                         continue
+                    elif key == 'width' and fixed_width is not None:
+                        # Replace width value
+                        temp_cfg.write(f"width={fixed_width}{comment_part}\n")
+                        continue
+                    elif key == 'height' and fixed_height is not None:
+                        # Replace height value
+                        temp_cfg.write(f"height={fixed_height}{comment_part}\n")
+                        continue
+                    elif key == 'random' and fixed_random is not None:
+                        # Replace random value (disable random resize)
+                        temp_cfg.write(f"random={fixed_random}{comment_part}\n")
+                        continue
             
             # Write original line
             temp_cfg.write(line)
@@ -556,7 +664,7 @@ def train_darknet(
         cfg_file = temp_cfg_path
         batch_size = fixed_batch
         subdivisions = fixed_subdivisions
-        actual_batch_size = batch_size * subdivisions
+        mini_batch_size = batch_size // subdivisions
         print(f"Created temporary config file: {cfg_file}")
     
     weights_file = Path(detector_config['model_path'])
@@ -566,9 +674,32 @@ def train_darknet(
     pretrained_weights = str(weights_file)
     
     # Set GPU device
+    # Set CUDA_VISIBLE_DEVICES to restrict visible GPUs, then use GPU 0 from Darknet's perspective
     env = os.environ.copy()
-    if device is not None:
-        env["CUDA_VISIBLE_DEVICES"] = device
+    
+    # Check if CUDA_VISIBLE_DEVICES is already set externally
+    cuda_visible_devices = env.get("CUDA_VISIBLE_DEVICES")
+    
+    if cuda_visible_devices is not None:
+        # If CUDA_VISIBLE_DEVICES is set externally, always use GPU 0 (first visible GPU)
+        gpu_index = 0
+        print(f"[{dataset}/{tilesize}/{tilepadding}] CUDA_VISIBLE_DEVICES={cuda_visible_devices} detected, using GPU index 0")
+    elif device is not None:
+        # Extract first GPU ID from device string (e.g., "0" from "0" or "0,1,2")
+        device_id = device.split(',')[0].strip()
+        try:
+            device_num = int(device_id)
+            # Set CUDA_VISIBLE_DEVICES to make only this GPU visible
+            env["CUDA_VISIBLE_DEVICES"] = str(device_num)
+            # After setting CUDA_VISIBLE_DEVICES, the first visible GPU becomes GPU 0
+            gpu_index = 0
+            print(f"[{dataset}/{tilesize}/{tilepadding}] Setting CUDA_VISIBLE_DEVICES={device_num}, using GPU index 0")
+        except ValueError:
+            print(f"[{dataset}/{tilesize}/{tilepadding}] Warning: Invalid device '{device}', using GPU 0")
+            gpu_index = 0
+    else:
+        # If no device specified, use default GPU 0
+        gpu_index = 0
     
     # Build Darknet training command
     cmd = [
@@ -582,8 +713,10 @@ def train_darknet(
     
     # Add flags
     cmd.extend([
+        "-i", str(gpu_index),  # Specify GPU index directly
         "-dont_show",  # Don't show visualization window
-        "-map",        # Calculate mAP during training
+        # Note: -map is disabled to avoid CUDA context issues during mAP network initialization
+        # You can calculate mAP separately after training if needed
     ])
     
     # Print configuration
@@ -591,7 +724,8 @@ def train_darknet(
     print(f"  Darknet binary: {darknet_bin}")
     print(f"  Data file: {data_file}")
     print(f"  Config file: {cfg_file}")
-    print(f"  Config batch: {batch_size}, subdivisions: {subdivisions}, actual_batch_size: {actual_batch_size}")
+    mini_batch = batch_size // subdivisions if subdivisions > 0 else batch_size
+    print(f"  Config batch: {batch_size}, subdivisions: {subdivisions}, mini_batch: {mini_batch}")
     print(f"  Pretrained weights: {pretrained_weights}")
     print(f"  Output dir: {weights_dir}")
     print(f"  Command: {' '.join(cmd)}")

@@ -156,7 +156,7 @@ def create_intermediate_dataset(
     entries: list[CompressedImageAnnotation] = []
     
     # Get all test videos for this dataset
-    video_dir = DATASETS_DIR / dataset / "test"
+    video_dir = DATASETS_DIR / dataset / "train"
     if not video_dir.exists():
         print(f"Warning: Video directory {video_dir} does not exist, skipping...")
         return entries
@@ -612,10 +612,21 @@ def main():
                 
                 elif target_format == 'darknet':
                     print("\nConverting to Darknet format...")
+                    # Get target dimensions from detector config
+                    detector_config_key = DETECTORS_CONFIG['dataset_name_mapping'][dataset]
+                    detector_config = DETECTORS_CONFIG['dataset_detector_mapping'][detector_config_key]
+                    target_width = detector_config.get('width')
+                    target_height = detector_config.get('height')
+                    
+                    if target_width is not None or target_height is not None:
+                        print(f"Resizing images to {target_width}x{target_height} (from detector config)")
+                    
                     convert_to_darknet(
                         intermediate,
                         output_dir / "darknet",
-                        args.val_split
+                        args.val_split,
+                        target_width=target_width,
+                        target_height=target_height,
                     )
                     # Visualize Darknet format if enabled
                     if not args.no_visualize:

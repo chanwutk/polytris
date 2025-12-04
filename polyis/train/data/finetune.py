@@ -449,12 +449,14 @@ def convert_to_darknet(
     output_dir: Path,
     val_split: float = 0.2,
     seed: int = 42,
+    target_width: int | None = None,
+    target_height: int | None = None,
 ):
     """
     Convert intermediate dataset to Darknet YOLOv3 format.
     
     Creates:
-        - {output_dir}/images/*.jpg (symlinks)
+        - {output_dir}/images/*.jpg (resized images if target dimensions specified, otherwise symlinks)
         - {output_dir}/labels/*.txt (YOLO format labels)
         - {output_dir}/train.txt (list of training image paths)
         - {output_dir}/val.txt (list of validation image paths)
@@ -466,6 +468,8 @@ def convert_to_darknet(
         output_dir: Directory to write the Darknet dataset
         val_split: Fraction of data for validation
         seed: Random seed for reproducible splits
+        target_width: Target image width (if None, use original image width)
+        target_height: Target image height (if None, use original image height)
     """
     # Create output directories
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -490,33 +494,76 @@ def convert_to_darknet(
             source_path = Path(entry.image_path)
             unique_name = f"{entry.dataset}_{entry.video}_{entry.classifier}_{source_path.stem}"
             
-            # Create symlink for image (fallback to copy)
+            # Determine target dimensions
+            final_width = target_width if target_width is not None else entry.image_width
+            final_height = target_height if target_height is not None else entry.image_height
+            needs_resize = (target_width is not None and target_width != entry.image_width) or \
+                          (target_height is not None and target_height != entry.image_height)
+            
+            # Create image file (resize if needed, otherwise symlink or copy)
             image_dest = output_dir / "images" / f"{unique_name}.jpg"
-            try:
-                if image_dest.exists() or image_dest.is_symlink():
-                    image_dest.unlink()
-                image_dest.symlink_to(source_path.resolve())
-            except OSError:
-                shutil.copy2(source_path, image_dest)
+            if image_dest.exists() or image_dest.is_symlink():
+                image_dest.unlink()
+            
+            if needs_resize:
+                # Load and resize image
+                img = cv2.imread(str(source_path))
+                if img is None:
+                    print(f"Warning: Could not read image {source_path}, skipping...")
+                    continue
+                
+                # Resize image
+                resized_img = cv2.resize(img, (final_width, final_height), interpolation=cv2.INTER_LINEAR)
+                cv2.imwrite(str(image_dest), resized_img)
+            else:
+                # Create symlink (fallback to copy)
+                try:
+                    image_dest.symlink_to(source_path.resolve())
+                except OSError:
+                    shutil.copy2(source_path, image_dest)
             
             # Add to paths list (use absolute path for Darknet)
             paths_list.append(str(image_dest.resolve()))
             
+            # Calculate scale factors for bounding box adjustment
+            scale_x = final_width / entry.image_width
+            scale_y = final_height / entry.image_height
+            
             # Create label file with YOLO format annotations
             # YOLO format: class_id x_center y_center width height (normalized 0-1)
-            label_dest = output_dir / "labels" / f"{unique_name}.txt"
-            with open(label_dest, 'w') as f:
+            # Store label in labels directory first
+            label_dest_labels = output_dir / "labels" / f"{unique_name}.txt"
+            with open(label_dest_labels, 'w') as f:
                 for ann in entry.annotations:
                     x1, y1, x2, y2 = ann['bbox']
                     
+                    # Adjust bounding box coordinates if image was resized
+                    if needs_resize:
+                        x1 = x1 * scale_x
+                        y1 = y1 * scale_y
+                        x2 = x2 * scale_x
+                        y2 = y2 * scale_y
+                    
                     # Convert to YOLO format (normalized center x, center y, width, height)
-                    x_center = ((x1 + x2) / 2) / entry.image_width
-                    y_center = ((y1 + y2) / 2) / entry.image_height
-                    width = (x2 - x1) / entry.image_width
-                    height = (y2 - y1) / entry.image_height
+                    x_center = ((x1 + x2) / 2) / final_width
+                    y_center = ((y1 + y2) / 2) / final_height
+                    width = (x2 - x1) / final_width
+                    height = (y2 - y1) / final_height
                     
                     # Class 0 for 'car'
                     f.write(f"0 {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n")
+            
+            # Darknet expects label files next to images (it resolves symlinks)
+            # Create label file in images directory as well
+            label_dest_images = output_dir / "images" / f"{unique_name}.txt"
+            if label_dest_images.exists() or label_dest_images.is_symlink():
+                label_dest_images.unlink()
+            try:
+                # Try to create symlink first
+                label_dest_images.symlink_to(label_dest_labels.resolve())
+            except OSError:
+                # Fallback to copy if symlink fails
+                shutil.copy2(label_dest_labels, label_dest_images)
     
     # Write train.txt
     train_txt = output_dir / "train.txt"

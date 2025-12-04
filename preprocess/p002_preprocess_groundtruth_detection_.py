@@ -167,6 +167,25 @@ def main():
         - Processing is parallelized across available GPUs for improved performance
     """
 
+    parser = argparse.ArgumentParser(description='Preprocess groundtruth detection data')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--train', action='store_true', help='Process train videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    args = parser.parse_args()
+    
+    # Determine which videosets to process based on arguments
+    splits = []
+    if args.test:
+        splits.append('test')
+    if args.train:
+        splits.append('train')
+    if args.valid:
+        splits.append('valid')
+    
+    # If no videosets are specified, default to all three
+    if not splits:
+        splits = ['test']
+
     # Create task functions
     funcs = []
     for dataset in EXEC_DATASETS:
@@ -175,7 +194,7 @@ def main():
         
         # Get all video files from the dataset directory
         videos: list[str] = []
-        for videoset in ['test']:
+        for videoset in splits:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             videos.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])
