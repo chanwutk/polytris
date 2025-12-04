@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import argparse
 from functools import partial
 import json
 import os
@@ -19,6 +20,14 @@ EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
 VIDEO_SETS = CONFIG['EXEC']['VIDEO_SETS']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Preprocess groundtruth detection data')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--train', action='store_true', help='Process train videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
 
 
 def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: queue.Queue):
@@ -142,6 +151,21 @@ def main():
         - Runtime measurements include frame reading and object detection times
         - Processing is parallelized across available GPUs for improved performance
     """
+    args = parse_args()
+    
+    # Determine which videosets to process based on arguments
+    splits = []
+    if args.test:
+        splits.append('test')
+    if args.train:
+        splits.append('train')
+    if args.valid:
+        splits.append('valid')
+    
+    # If no videosets are specified, default to test
+    if not splits:
+        splits = ['test']
+    
     mp.set_start_method('spawn', force=True)
 
     # Create task functions
@@ -154,7 +178,7 @@ def main():
         
         # Get all video files from the dataset directory
         video_files: list[str] = []
-        for videoset in ['test']:
+        for videoset in splits:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith('.mp4')])

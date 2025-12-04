@@ -146,6 +146,14 @@ def copy_detection_b3d(dataset: str, video_file: str, gpu_id: int, command_queue
     shutil.copy2(source_path, output_path)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Preprocess groundtruth detection data')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--train', action='store_true', help='Process train videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
+
+
 def main():
     """
     Main function that orchestrates the groundtruth detection loading process.
@@ -166,12 +174,7 @@ def main():
         - Groundtruth annotations are converted to [x1, y1, x2, y2, score] format with score=1.0
         - Processing is parallelized across available GPUs for improved performance
     """
-
-    parser = argparse.ArgumentParser(description='Preprocess groundtruth detection data')
-    parser.add_argument('--test', action='store_true', help='Process test videoset')
-    parser.add_argument('--train', action='store_true', help='Process train videoset')
-    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
-    args = parser.parse_args()
+    args = parse_args()
     
     # Determine which videosets to process based on arguments
     splits = []

@@ -19,6 +19,14 @@ DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Preprocess groundtruth tracking data')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--train', action='store_true', help='Process train videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
+
+
 def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queue[tuple[str, dict]]"):
     """
     Execute object tracking on detection results and save tracking results to JSONL.
@@ -163,6 +171,21 @@ def main():
         - Linear interpolation is performed to fill missing detections in tracks
         - Processing is parallelized across available GPUs for improved performance
     """
+    args = parse_args()
+    
+    # Determine which videosets to process based on arguments
+    splits = []
+    if args.test:
+        splits.append('test')
+    if args.train:
+        splits.append('train')
+    if args.valid:
+        splits.append('valid')
+    
+    # If no videosets are specified, default to test
+    if not splits:
+        splits = ['test']
+    
     funcs = []
     for dataset in EXEC_DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
@@ -170,7 +193,7 @@ def main():
         
         # Get all video files from the dataset directory
         video_files: list[str] = []
-        for videoset in VIDEO_SETS:
+        for videoset in splits:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])

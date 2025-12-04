@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 
-import json
+import argparse
 import os
 import time
 import numpy as np
@@ -16,6 +16,14 @@ EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
 VIDEO_SETS = CONFIG['EXEC']['VIDEO_SETS']
 DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Preprocess groundtruth tracking data')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--train', action='store_true', help='Process train videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
 
 
 def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queue[tuple[str, dict]]"):
@@ -113,25 +121,6 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     os.makedirs(output_dir, exist_ok=True)
 
     save_tracking_results(frame_tracks, output_path)
-    # with open(output_path, 'w') as f:
-    #     frame_ids = frame_tracks.keys()
-    #     if len(frame_ids) == 0:
-    #         return
-
-    #     first_idx = min(frame_ids)
-    #     last_idx = max(frame_ids)
-
-    #     for frame_idx in range(first_idx, last_idx + 1):
-    #         if frame_idx not in frame_tracks:
-    #             frame_tracks[frame_idx] = []
-
-    #         frame_data = {
-    #             "frame_idx": frame_idx,
-    #             "tracks": frame_tracks[frame_idx]
-    #         }
-    #         f.write(json.dumps(frame_data) + '\n')
-
-    # print(f"Tracking results saved successfully. Total frames: {len(frame_tracks)}")
 
 
 def main():
@@ -153,6 +142,21 @@ def main():
         - Linear interpolation is performed to fill missing detections in tracks
         - Processing is parallelized across available GPUs for improved performance
     """
+    args = parse_args()
+    
+    # Determine which videosets to process based on arguments
+    splits = []
+    if args.test:
+        splits.append('test')
+    if args.train:
+        splits.append('train')
+    if args.valid:
+        splits.append('valid')
+    
+    # If no videosets are specified, default to test
+    if not splits:
+        splits = ['test']
+    
     funcs = []
     for dataset in EXEC_DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
@@ -160,7 +164,7 @@ def main():
         
         # Get all video files from the dataset directory
         video_files: list[str] = []
-        for videoset in ['test']:
+        for videoset in splits:
             videoset_dir = os.path.join(dataset_dir, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])
