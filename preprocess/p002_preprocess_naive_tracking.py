@@ -1,14 +1,15 @@
 #!/usr/local/bin/python
 
 import argparse
+import json
 import os
 import time
 import numpy as np
+import torch
 from functools import partial
 import queue
-import multiprocessing as mp
 
-from polyis.utilities import create_tracker, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
+from polyis.utilities import create_tracker, format_time, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
 
 CONFIG = get_config()
@@ -38,10 +39,11 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
         command_queue (Queue): Queue for progress updates
     """
     # Load detection results
-    detection_results = load_detection_results(CACHE_DIR, dataset, video_file, filename='detection.jsonl', groundtruth=True)
+    detection_results = load_detection_results(CACHE_DIR, dataset, video_file)
 
     # Create output path for tracking results
-    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '003_groundtruth', 'tracking.jsonl')
+    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '002_naive', 'tracking.jsonl')
+    runtime_path = output_path.replace('tracking.jsonl', 'tracking_runtime.jsonl')
 
     # print(f"Processing video: {video_file}")
     # Create tracker
@@ -61,55 +63,63 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
         'total': len(detection_results)
     }))
 
-    # Process each frame
-    mod = max(1, int(len(detection_results) * 0.05))
-    for fidx, frame_result in enumerate(detection_results):
-        frame_idx = frame_result['frame_idx']
-        assert frame_idx == fidx, f"Frame index mismatch: {frame_idx} != {fidx}"
-        detections = frame_result['detections']
+    with open(runtime_path, 'w') as runtime_file:
+        # Process each frame
+        mod = max(1, int(len(detection_results) * 0.05))
+        for fidx, frame_result in enumerate(detection_results):
+            frame_idx = frame_result['frame_idx']
+            assert frame_idx == fidx, f"Frame index mismatch: {frame_idx} != {fidx}"
+            detections = frame_result['detections']
 
-        # Start timing for this frame
-        step_times = {}
+            # Start timing for this frame
+            step_times = {}
 
-        # Convert detections to numpy array format expected by SORT
-        step_start = (time.time_ns() / 1e6)
-        if detections:
-            # SORT expects format: [[x1, y1, x2, y2, score], ...]
-            dets = np.array(detections)
-            if dets.size > 0:
-                # Ensure we have the right format
-                if dets.shape[1] >= 5:
-                    dets = dets[:, :5]  # Take first 5 columns: x1, y1, x2, y2, score
+            # Convert detections to numpy array format expected by SORT
+            step_start = (time.time_ns() / 1e6)
+            if detections:
+                # SORT expects format: [[x1, y1, x2, y2, score], ...]
+                dets = np.array(detections)
+                if dets.size > 0:
+                    # Ensure we have the right format
+                    if dets.shape[1] >= 5:
+                        dets = dets[:, :5]  # Take first 5 columns: x1, y1, x2, y2, score
+                    else:
+                        # If we don't have scores, add default score of 1.0
+                        dets = np.column_stack([dets, np.ones(dets.shape[0])])
                 else:
-                    # If we don't have scores, add default score of 1.0
-                    dets = np.column_stack([dets, np.ones(dets.shape[0])])
+                    dets = np.empty((0, 5))
             else:
                 dets = np.empty((0, 5))
-        else:
-            dets = np.empty((0, 5))
-        step_times['convert_detections'] = (time.time_ns() / 1e6) - step_start
+            step_times['convert_detections'] = (time.time_ns() / 1e6) - step_start
 
-        # # Update tracker
-        # dets_python = dets.copy()
-        # step_start = (time.time_ns() / 1e6)
-        # tracked_dets = tracker.update(dets_python)
-        # step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
+            # # Update tracker
+            # dets_python = dets.copy()
+            # step_start = (time.time_ns() / 1e6)
+            # tracked_dets = tracker.update(dets_python)
+            # step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
 
-        step_start = (time.time_ns() / 1e6)
-        tracked_dets = tracker.update(dets)
-        # step_times['tracker_update_cython'] = (time.time_ns() / 1e6) - step_start
-        step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
+            step_start = (time.time_ns() / 1e6)
+            tracked_dets = tracker.update(dets)
+            # step_times['tracker_update_cython'] = (time.time_ns() / 1e6) - step_start
+            step_times['tracker_update'] = (time.time_ns() / 1e6) - step_start
 
-        # assert np.array_equal(tracked_dets, tracked_dets_cython), f"Tracking results mismatch: {tracked_dets} != {tracked_dets_cython}"
+            # assert np.array_equal(tracked_dets, tracked_dets_cython), f"Tracking results mismatch: {tracked_dets} != {tracked_dets_cython}"
 
-        # Process tracking results
-        step_start = (time.time_ns() / 1e6)
-        register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories, False)
-        step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
+            # Process tracking results
+            step_start = (time.time_ns() / 1e6)
+            register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories, False)
+            step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
+            runtime_data = {
+                'frame_idx': frame_idx,
+                'runtime': format_time(**step_times),
+                'num_detections': len(dets),
+                'num_tracks': tracked_dets.size if tracked_dets.size > 0 else 0
+            }
+            runtime_file.write(json.dumps(runtime_data) + '\n')
 
-        # Send progress update
-        if fidx % mod == 0:
-            command_queue.put((f'cuda:{gpu_id}', {'completed': fidx + 1}))
+            # Send progress update
+            if fidx % mod == 0:
+                command_queue.put((f'cuda:{gpu_id}', {'completed': fidx + 1}))
 
     # print(f"Tracking completed. Found {len(trajectories)} unique tracks.")
 
@@ -121,6 +131,25 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     os.makedirs(output_dir, exist_ok=True)
 
     save_tracking_results(frame_tracks, output_path)
+    # with open(output_path, 'w') as f:
+    #     frame_ids = frame_tracks.keys()
+    #     if len(frame_ids) == 0:
+    #         return
+
+    #     first_idx = min(frame_ids)
+    #     last_idx = max(frame_ids)
+
+    #     for frame_idx in range(first_idx, last_idx + 1):
+    #         if frame_idx not in frame_tracks:
+    #             frame_tracks[frame_idx] = []
+
+    #         frame_data = {
+    #             "frame_idx": frame_idx,
+    #             "tracks": frame_tracks[frame_idx]
+    #         }
+    #         f.write(json.dumps(frame_data) + '\n')
+
+    # print(f"Tracking results saved successfully. Total frames: {len(frame_tracks)}")
 
 
 def main():
@@ -175,12 +204,15 @@ def main():
             funcs.append(partial(track, dataset, video))
     
     # Determine number of available GPUs
+    num_gpus = torch.cuda.device_count()
+    print(f"Available GPUs: {num_gpus}")
     
     # Limit the number of processes to the number of available GPUs
-    max_processes = min(len(funcs), int(mp.cpu_count() * 0.8))
+    max_processes = min(len(funcs), num_gpus)
+    print(f"Using {max_processes} processes (limited by {num_gpus} GPUs)")
     
     # Use ProgressBar for parallel processing
-    ProgressBar(num_workers=max_processes, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
 
 
 if __name__ == '__main__':
