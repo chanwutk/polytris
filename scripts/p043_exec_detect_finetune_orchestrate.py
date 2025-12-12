@@ -20,6 +20,7 @@ from pathlib import Path
 import torch
 
 from polyis.utilities import get_config
+from polyis.models.detector import get_detector_info
 
 # Import discovery function from p042
 # Add scripts directory to path for import
@@ -37,15 +38,35 @@ P042_SCRIPT = SCRIPT_DIR / "p042_exec_detect_finetune.py"
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Orchestrate fine-tuning training across all datasets')
-    parser.add_argument('--epochs', type=int, default=13,
-                        help='Training epochs (default: 13)')
+    parser.add_argument('--epochs', type=int, default=6,
+                        help='Training epochs (default: 6)')
     parser.add_argument('--batch', type=int, default=1,
                         help='Batch size (1 for auto, default: 1)')
     parser.add_argument('--devices', type=str, required=True,
                         help='Comma-separated device IDs to use (e.g., "0,1,2"). Overrides auto-assignment.')
     parser.add_argument('--session-name', type=str, default=None,
                         help='Tmux session name (default: random)')
+    parser.add_argument('--dry-run', action='store_true',
+                        help='Show which models are being trained and what commands would be executed without actually running them')
     return parser.parse_args()
+
+
+def is_darknet_task(dataset: str) -> bool:
+    """
+    Check if a dataset uses darknet (yolov3) detector.
+    
+    Args:
+        dataset: Dataset name
+        
+    Returns:
+        True if the dataset uses darknet, False otherwise
+    """
+    try:
+        detector_info = get_detector_info(dataset)
+        return detector_info['detector'] == 'yolov3'
+    except (KeyError, ValueError):
+        # If we can't determine, assume it's not darknet
+        return False
 
 
 def get_tasks_from_config(config: dict, cache_dir: Path) -> list[tuple[str, int, str]]:
@@ -221,9 +242,24 @@ def main():
         print("No valid fine-tuning datasets found. Please run p041_exec_detect_finetune_dataset.py first.")
         return
     
+    # Sort tasks so darknet models are trained last
+    # Split tasks into non-darknet and darknet
+    non_darknet_tasks = []
+    darknet_tasks = []
+    for task in all_tasks:
+        dataset, _, _ = task
+        if is_darknet_task(dataset):
+            darknet_tasks.append(task)
+        else:
+            non_darknet_tasks.append(task)
+    
+    # Reorder: non-darknet first, then darknet
+    all_tasks = non_darknet_tasks + darknet_tasks
+    
     print(f"\nFound {len(all_tasks)} valid dataset combinations:")
     for dataset, tilesize, tilepadding in all_tasks:
-        print(f"  {dataset} / tilesize={tilesize} / tilepadding={tilepadding}")
+        model_type = "darknet" if is_darknet_task(dataset) else "other"
+        print(f"  {dataset} / tilesize={tilesize} / tilepadding={tilepadding} ({model_type})")
     
     # Get number of GPUs
     num_gpus = get_num_gpus()
@@ -240,15 +276,54 @@ def main():
     session_name = args.session_name or generate_session_name()
     print(f"Tmux session name: {session_name}")
     
-    # Create tmux session
-    create_tmux_session(session_name, num_gpus)
-    
     # Distribute tasks across GPUs
     gpu_tasks = distribute_tasks(all_tasks, len(all_devices))
     
     print(f"\nTask distribution:")
     for device_id, tasks in enumerate(gpu_tasks):
         print(f"  Device {all_devices[device_id]}: {len(tasks)} tasks")
+    
+    if args.dry_run:
+        print(f"\n{'='*80}")
+        print("DRY RUN MODE - No commands will be executed")
+        print(f"{'='*80}\n")
+        
+        # Show which models are being trained and what commands would be executed
+        for device_id, tasks in enumerate(gpu_tasks):
+            if not tasks:
+                continue
+            
+            print(f"Tmux Session: {session_name}")
+            print(f"Window: {device_id} (GPU Device: {all_devices[device_id]})")
+            print(f"Number of models to train: {len(tasks)}")
+            print(f"\nModels to train:")
+            for idx, (dataset, tilesize, tilepadding) in enumerate(tasks, 1):
+                model_type = "darknet" if is_darknet_task(dataset) else "other"
+                print(f"  {idx}. Dataset: {dataset}, Tile size: {tilesize}, Tile padding: {tilepadding} ({model_type})")
+            
+            print(f"\nCommands that would be executed:")
+            commands = []
+            for dataset, tilesize, tilepadding in tasks:
+                cmd = build_training_command(
+                    dataset, tilesize, tilepadding,
+                    all_devices[device_id], args.epochs, args.batch
+                )
+                commands.append(cmd)
+            
+            # Chain commands with &&
+            full_command = ' && '.join(commands)
+            print(f"  {full_command}")
+            print(f"\n{'-'*80}\n")
+        
+        print(f"Summary:")
+        print(f"  Total models to train: {len(all_tasks)}")
+        print(f"  Tmux session: {session_name}")
+        print(f"  Number of windows: {len(all_devices)}")
+        print(f"\nTo actually run, remove --dry-run flag")
+        return
+    
+    # Create tmux session
+    create_tmux_session(session_name, num_gpus)
     
     # Build and send commands to each window
     print(f"\nSending commands to tmux windows...")

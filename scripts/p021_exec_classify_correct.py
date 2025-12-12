@@ -57,7 +57,7 @@ def process_frame_tiles(width: int, height: int, detections: list[list[float]], 
     return relevance_grid, format_time(inference=runtime, transform=0)
     
 
-def process_video(dataset: str, video: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
+def process_video(dataset: str, videoset: str, video: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
@@ -67,6 +67,7 @@ def process_video(dataset: str, video: str, tile_size: int, gpu_id: int, command
     
     Args:
         dataset (str): Dataset name
+        videoset (str): Videoset name (test, train, or valid)
         video (str): Video filename
         tile_size (int): Tile size used for processing (30, 60, or 120)
         gpu_id (int): GPU ID to use for processing
@@ -103,7 +104,7 @@ def process_video(dataset: str, video: str, tile_size: int, gpu_id: int, command
     
     # Process the video
     device = f'cuda:{gpu_id}'
-    video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
+    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f"Error: Could not open video {video_path}"
     
@@ -139,6 +140,14 @@ def process_video(dataset: str, video: str, tile_size: int, gpu_id: int, command
                 command_queue.put((device, {'completed': frame_idx}))
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Execute tile classification using groundtruth detections')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--train', action='store_true', help='Process train videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
+
+
 def main():
     """
     Main function that orchestrates the video tile classification process using parallel processing.
@@ -160,6 +169,21 @@ def main():
         - Output files are saved in {CACHE_DIR}/{dataset}/execution/{video_file}/020_relevancy/Perfect_{tile_size}/score/score.jsonl
         - If no tracking results are found for a video, that video is skipped with a warning
     """
+    args = parse_args()
+    
+    # Determine which videosets to process based on arguments
+    selected_videosets = []
+    if args.test:
+        selected_videosets.append('test')
+    if args.train:
+        selected_videosets.append('train')
+    if args.valid:
+        selected_videosets.append('valid')
+    
+    # If no videosets are specified, default to all three
+    if not selected_videosets:
+        selected_videosets = ['test']
+    
     mp.set_start_method('spawn', force=True)
     
     # Create functions list with all video/tile_size combinations
@@ -167,7 +191,7 @@ def main():
     
     for dataset in DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        for videoset in ['test']:
+        for videoset in selected_videosets:
             videoset_dir = os.path.join(dataset_dir, videoset)
             if not os.path.exists(videoset_dir):
                 print(f"Videoset directory {videoset_dir} does not exist, skipping...")
@@ -177,7 +201,7 @@ def main():
             videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
             for video in sorted(videos):
                 for tile_size in TILE_SIZES:
-                    funcs.append(partial(process_video, dataset, video, tile_size))
+                    funcs.append(partial(process_video, dataset, videoset, video, tile_size))
     
     print(f"Created {len(funcs)} tasks to process")
     num_processes = min(torch.cuda.device_count(), len(funcs))

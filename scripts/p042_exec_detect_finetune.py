@@ -421,7 +421,7 @@ def train_darknet(
         data_dir: Path to the dataset directory
         detector_config: Detector configuration dict (must contain config_path and model_path)
         imgsz: Image size for training (not used for Darknet, but kept for consistency)
-        epochs: Number of training epochs (not used for Darknet, but kept for consistency)
+        epochs: Number of training epochs (converted to max_batches for Darknet)
         batch: Batch size (not used for Darknet, but kept for consistency)
         device: Device string (e.g., "0")
     """
@@ -456,26 +456,30 @@ def train_darknet(
     if not cfg_file.exists():
         raise FileNotFoundError(f"Config file not found: {cfg_file}")
     
-    # Read and validate Darknet config file, create temporary copy with corrected batch/subdivisions/width/height if needed
+    # Read and validate Darknet config file, create temporary copy with corrected batch/subdivisions/width/height/max_batches if needed
     batch_size = None
     subdivisions = None
     config_width = None
     config_height = None
     config_random = None  # Track random resize setting
+    config_max_batches = None  # Track max_batches setting
     config_lines = []
     
-    # Get actual image dimensions from dataset
+    # Get actual image dimensions from dataset and count training images
     images_dir = darknet_dir / "images"
     actual_width = None
     actual_height = None
+    num_training_images = 0
     if images_dir.exists():
         image_files = list(images_dir.glob("*.jpg")) + list(images_dir.glob("*.png"))
+        num_training_images = len(image_files)
         if image_files:
             # Read first image to get dimensions
             test_img = cv2.imread(str(image_files[0]))
             if test_img is not None:
                 actual_height, actual_width = test_img.shape[:2]
                 print(f"[{dataset}/{tilesize}/{tilepadding}] Detected image dimensions: {actual_width}x{actual_height}")
+        print(f"[{dataset}/{tilesize}/{tilepadding}] Found {num_training_images} training images")
     
     with open(cfg_file, 'r') as f:
         for line in f:
@@ -488,7 +492,7 @@ def train_darknet(
                 line_parse = line_stripped
                 if '#' in line_parse:
                     line_parse = line_parse.split('#')[0].strip()
-                # Parse batch, subdivisions, width, and height
+                # Parse batch, subdivisions, width, height, and max_batches
                 if '=' in line_parse:
                     key, value = line_parse.split('=', 1)
                     key = key.strip()
@@ -518,6 +522,11 @@ def train_darknet(
                             config_random = float(value)
                         except ValueError:
                             pass
+                    elif key == 'max_batches':
+                        try:
+                            config_max_batches = int(value)
+                        except ValueError:
+                            pass
             config_lines.append(original_line)
     
     if batch_size is None or subdivisions is None:
@@ -536,9 +545,10 @@ def train_darknet(
     fixed_width = config_width
     fixed_height = config_height
     fixed_random = config_random  # Disable random resize to prevent CUDA errors
+    fixed_max_batches = config_max_batches
     temp_cfg_path = None
     
-    # Check if batch/subdivisions need fixing
+    # Check if batch/subdivisions need fixing first, so we can use the final batch_size for max_batches calculation
     # In Darknet: mini_batch = batch / subdivisions (this is what uses GPU memory)
     if mini_batch_size == 1 or mini_batch_size == 0:
         # Fix to reasonable values with subdivisions to avoid memory issues
@@ -576,6 +586,31 @@ def train_darknet(
         print(
             f"Warning: Darknet config has small mini_batch={mini_batch_size} (batch={batch_size} / subdivisions={subdivisions}). "
             f"Creating temporary config with batch={fixed_batch}, subdivisions={fixed_subdivisions} (mini_batch={fixed_batch // fixed_subdivisions})."
+        )
+    
+    # Calculate max_batches based on epochs using the final batch_size (fixed_batch)
+    # max_batches = (num_images / batch_size) * epochs
+    final_batch_size = fixed_batch  # Use the final batch size (may be fixed)
+    if num_training_images > 0 and final_batch_size > 0:
+        batches_per_epoch = max(1, num_training_images // final_batch_size)
+        calculated_max_batches = batches_per_epoch * epochs
+        if config_max_batches is None or config_max_batches != calculated_max_batches:
+            needs_fix = True
+            fixed_max_batches = calculated_max_batches
+            print(
+                f"[{dataset}/{tilesize}/{tilepadding}] Setting max_batches={fixed_max_batches} "
+                f"based on {num_training_images} images, batch_size={final_batch_size}, and {epochs} epochs "
+                f"(batches_per_epoch={batches_per_epoch})"
+            )
+    elif config_max_batches is None:
+        # If we can't calculate, but max_batches is missing, set a default
+        # Use a reasonable default: 1000 batches per epoch * epochs
+        default_batches_per_epoch = 1000
+        fixed_max_batches = default_batches_per_epoch * epochs
+        needs_fix = True
+        print(
+            f"[{dataset}/{tilesize}/{tilepadding}] Warning: Cannot calculate max_batches from dataset. "
+            f"Setting default max_batches={fixed_max_batches} ({default_batches_per_epoch} batches/epoch * {epochs} epochs)"
         )
     
     # Check if width/height need updating to match actual image dimensions
@@ -622,6 +657,8 @@ def train_darknet(
         temp_cfg = tempfile.NamedTemporaryFile(mode='w', suffix='.cfg', delete=False)
         temp_cfg_path = Path(temp_cfg.name)
         
+        max_batches_added = False  # Track if we've added max_batches
+        
         for line in config_lines:
             line_stripped = line.strip()
             # Check if this line needs to be modified
@@ -643,6 +680,10 @@ def train_darknet(
                     elif key == 'subdivisions':
                         # Replace subdivisions value
                         temp_cfg.write(f"subdivisions={fixed_subdivisions}{comment_part}\n")
+                        # If max_batches needs to be added and we haven't added it yet, add it after subdivisions
+                        if fixed_max_batches is not None and config_max_batches is None and not max_batches_added:
+                            temp_cfg.write(f"max_batches={fixed_max_batches}\n")
+                            max_batches_added = True
                         continue
                     elif key == 'width' and fixed_width is not None:
                         # Replace width value
@@ -656,9 +697,18 @@ def train_darknet(
                         # Replace random value (disable random resize)
                         temp_cfg.write(f"random={fixed_random}{comment_part}\n")
                         continue
+                    elif key == 'max_batches' and fixed_max_batches is not None:
+                        # Replace max_batches value
+                        temp_cfg.write(f"max_batches={fixed_max_batches}{comment_part}\n")
+                        max_batches_added = True
+                        continue
             
             # Write original line
             temp_cfg.write(line)
+        
+        # If max_batches was not found in the config and we haven't added it yet, append it at the end
+        if fixed_max_batches is not None and config_max_batches is None and not max_batches_added:
+            temp_cfg.write(f"max_batches={fixed_max_batches}\n")
         
         temp_cfg.close()
         cfg_file = temp_cfg_path
@@ -724,8 +774,10 @@ def train_darknet(
     print(f"  Darknet binary: {darknet_bin}")
     print(f"  Data file: {data_file}")
     print(f"  Config file: {cfg_file}")
-    mini_batch = batch_size // subdivisions if subdivisions > 0 else batch_size
-    print(f"  Config batch: {batch_size}, subdivisions: {subdivisions}, mini_batch: {mini_batch}")
+    mini_batch = fixed_batch // fixed_subdivisions if fixed_subdivisions > 0 else fixed_batch
+    print(f"  Config batch: {fixed_batch}, subdivisions: {fixed_subdivisions}, mini_batch: {mini_batch}")
+    if fixed_max_batches is not None:
+        print(f"  Max batches: {fixed_max_batches} (from {epochs} epochs, {num_training_images} images, batch_size={fixed_batch})")
     print(f"  Pretrained weights: {pretrained_weights}")
     print(f"  Output dir: {weights_dir}")
     print(f"  Command: {' '.join(cmd)}")

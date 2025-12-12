@@ -157,7 +157,7 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
     return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
 
 
-def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
+def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
 
@@ -168,6 +168,7 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
 
     Args:
         dataset: Name of the dataset
+        videoset: Videoset name (test, train, or valid)
         video: Name of the video
         classifier: Classifier name to use
         tile_size: Tile size to use
@@ -197,7 +198,7 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
     model = load_model(dataset, tile_size, classifier, device)
     model = model.to(device)
 
-    video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
+    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
     cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
 
     # Create output directory structure
@@ -287,6 +288,14 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
             command_queue.put((device, {'completed': frame_idx}))
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Execute tile classification using trained models')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--train', action='store_true', help='Process train videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
+
+
 def main():
     """
     Main function that orchestrates the video tile classification process using parallel processing.
@@ -307,6 +316,21 @@ def main():
         - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/020_relevancy/score/{classifier_name}_{tile_size}/score.jsonl
         - If no trained model is found for a video, that video is skipped with a warning
     """
+    args = parse_args()
+    
+    # Determine which videosets to process based on arguments
+    selected_videosets = []
+    if args.test:
+        selected_videosets.append('test')
+    if args.train:
+        selected_videosets.append('train')
+    if args.valid:
+        selected_videosets.append('valid')
+    
+    # If no videosets are specified, default to all three
+    if not selected_videosets:
+        selected_videosets = ['test']
+    
     mp.set_start_method('spawn', force=True)
 
     # Create tasks list with all video/classifier/tile_size combinations
@@ -314,7 +338,7 @@ def main():
     for dataset in DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
 
-        for videoset in ['test']:
+        for videoset in selected_videosets:
             videoset_dir = os.path.join(dataset_dir, videoset)
             if not os.path.exists(videoset_dir):
                 print(f"Dataset directory {videoset_dir} does not exist, skipping...")
@@ -325,7 +349,7 @@ def main():
             for video in sorted(videos):
                 for classifier in CLASSIFIERS:
                     for tile_size in TILE_SIZES:
-                        func = partial(classify, dataset, video, classifier, tile_size)
+                        func = partial(classify, dataset, videoset, video, classifier, tile_size)
                         funcs.append(func)
 
     # Set up multiprocessing with ProgressBar
