@@ -10,17 +10,18 @@ from rich.progress import track
 from typing import Any, Dict, List
 import multiprocessing as mp
 
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, mark_detections, DATASETS_TO_TEST, TILE_SIZES
+from polyis.utilities import get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, mark_detections, get_config
+
+
+config = get_config()
+CACHE_DIR = config['DATA']['CACHE_DIR']
+DATASETS_DIR = config['DATA']['DATASETS_DIR']
+TILE_SIZES = config['EXEC']['TILE_SIZES']
+DATASETS = config['EXEC']['DATASETS']
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Compare accuracy-throughput tradeoff of classifiers')
-    parser.add_argument('--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    parser.add_argument('--tile_size', type=str, choices=['30', '60', '120', 'all'], default='all',
-                        help='Tile size to use for classification (or "all" for all tile sizes)')
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Threshold for classification visualization (0.0 to 1.0)')
     return parser.parse_args()
@@ -111,27 +112,28 @@ def load_throughput_data(cache_dir: str, dataset: str, video_file: str,
         tuple[float, float, int]: Average throughput in frames per second,
                                   total runtime in milliseconds, number of frames
     """
-    score_file = os.path.join(cache_dir, dataset, 'execution', video_file, '020_relevancy', 
-                                f'{classifier}_{tile_size}', 'score', 'score.jsonl')
+    runtime_file = os.path.join(cache_dir, dataset, 'execution', video_file, '020_relevancy', 
+                                f'{classifier}_{tile_size}', 'score', 'runtime.jsonl')
     
-    if not os.path.exists(score_file):
-        raise FileNotFoundError(f"Score file not found: {score_file}")
+    if not os.path.exists(runtime_file):
+        raise FileNotFoundError(f"Score file not found: {runtime_file}")
     
     total_runtime_ms = 0.0
     frame_count = 0
     
-    with open(score_file, 'r') as f:
+    with open(runtime_file, 'r') as f:
         for line in f:
             if line.strip():
                 data = json.loads(line)
                 frame_count += 1
                 
                 # Sum up all runtime operations for this frame
-                runtime_data = data.get('runtime', [])
+                runtime_data = data
                 frame_runtime_ms = 0.0
                 for op_data in runtime_data:
-                    if isinstance(op_data, dict) and 'time' in op_data:
-                        frame_runtime_ms += float(op_data['time'])
+                    assert isinstance(op_data, dict), f"Op data is not a dict for {runtime_file}"
+                    assert 'time' in op_data, f"Op data is missing time for {runtime_file}"
+                    frame_runtime_ms += float(op_data['time'])
                 
                 total_runtime_ms += frame_runtime_ms
     
@@ -171,7 +173,7 @@ def evaluate_classifier_tile(args) -> dict:
     for video_file in video_files:
         # Load classification results
         results = load_classification_results(CACHE_DIR, dataset_name, video_file,
-                                              tile_size, classifier_name, execution_dir=True)
+                                              tile_size, classifier_name)
         
         # Load groundtruth detections for comparison
         groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
@@ -219,7 +221,7 @@ def evaluate_classifier_tile(args) -> dict:
     }
 
 
-def visualize_tradeoff(dataset_name: str, results: List[Dict], output_dir: str):
+def visualize_tradeoff(dataset_name: str, results: list[dict], output_dir: str):
     """
     Create accuracy-throughput tradeoff visualizations.
     
@@ -308,12 +310,12 @@ def process_dataset(args):
     Worker function to process a single video for multiprocessing.
     
     Args:
-        args: Tuple containing (video_files, dataset_name, tile_sizes, threshold)
+        args: Tuple containing (video_files, dataset_name, videoset, threshold)
     
     Returns:
         str: Status message about processing completion
     """
-    video_files, dataset_name, videoset, tile_sizes, threshold = args
+    video_files, dataset_name, videoset, threshold = args
     
     classifier_tilesizes: set[tuple[str, int]] | None = None
     for video_file in video_files:
@@ -327,7 +329,7 @@ def process_dataset(args):
             if '_' in file:
                 classifier_name = file.split('_')[0]
                 tile_size = int(file.split('_')[1])
-                if classifier_name != 'groundtruth' and tile_size in tile_sizes:
+                if classifier_name != 'groundtruth' and tile_size in TILE_SIZES:
                     _classifier_tilesizes.add((classifier_name, tile_size))
 
         if classifier_tilesizes is None:
@@ -352,7 +354,7 @@ def process_dataset(args):
         ))
     
     # Create output directory for this video
-    output_dir = os.path.join(CACHE_DIR, 'summary', dataset_name, 'classifiers', 'tradeoff')
+    output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '024_exec_classify_tradeoff', dataset_name)
     os.makedirs(output_dir, exist_ok=True)
     
     # Create visualizations
@@ -375,14 +377,6 @@ def main(args):
     if not 0.0 <= args.threshold <= 1.0:
         raise ValueError("Threshold must be between 0.0 and 1.0")
 
-    # Determine which tile sizes to process
-    if args.tile_size == 'all':
-        tile_sizes_to_process = TILE_SIZES
-        print(f"Processing all tile sizes: {tile_sizes_to_process}")
-    else:
-        tile_sizes_to_process = [int(args.tile_size)]
-        print(f"Processing tile size: {tile_sizes_to_process[0]}")
-
     print(f"Using threshold: {args.threshold}")
 
     mp.set_start_method('spawn', force=True)
@@ -390,7 +384,7 @@ def main(args):
     dataset_args = []
 
     # Process each dataset
-    for dataset_name in args.datasets:
+    for dataset_name in DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
         
         for videoset in ['test']:
@@ -410,7 +404,7 @@ def main(args):
             # # Prepare arguments for parallel processing
             # worker_args = [(video_file, dataset_name, tile_sizes_to_process, args.threshold)
             #                for video_file in sorted(video_files)]
-            dataset_args.append((video_files, dataset_name, videoset, tile_sizes_to_process, args.threshold))
+            dataset_args.append((video_files, dataset_name, videoset, args.threshold))
 
     # # Process videos in parallel
     # with mp.Pool(processes=num_processes) as pool:

@@ -5,7 +5,7 @@ import shutil
 
 import pandas as pd
 
-from polyis.utilities import TILEPADDING_MODES, get_config
+from polyis.utilities import get_config
 
 
 config = get_config()
@@ -150,8 +150,8 @@ def gather_query_execution_data(datasets_videos):
         video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
         
         # Groundtruth detection and tracking (no tilesize)
-        groundtruth_detection_path = os.path.join(video_path, '000_groundtruth', 'detection_runtime.jsonl')
-        groundtruth_tracking_path = os.path.join(video_path, '000_groundtruth', 'tracking_runtime.jsonl')
+        groundtruth_detection_path = os.path.join(video_path, '002_naive', 'detection_runtime.jsonl')
+        groundtruth_tracking_path = os.path.join(video_path, '002_naive', 'tracking_runtime.jsonl')
         assert os.path.exists(groundtruth_detection_path), \
             f"Groundtruth detection path {groundtruth_detection_path} does not exist"
         assert os.path.exists(groundtruth_tracking_path), \

@@ -25,7 +25,8 @@ def parse_args():
 
 
 def visualize_video(video_file: str, cache_dir: str, dataset: str, speed_up: int,
-                    track_ids: list[int] | None, detection_only: bool, process_id: int, progress_queue: Queue):
+                    track_ids: list[int] | None, detection_only: bool, groundtruth: bool,
+                    process_id: int, progress_queue: Queue):
     """
     Process visualization for a single video file.
     
@@ -40,7 +41,8 @@ def visualize_video(video_file: str, cache_dir: str, dataset: str, speed_up: int
         progress_queue (Queue): Queue for progress updates
     """
     # Load tracking results
-    tracking_results_raw = load_detection_results(cache_dir, dataset, video_file, tracking=True, filename='tracking.jsonl')
+    tracking_results_raw = load_detection_results(cache_dir, dataset, video_file, tracking=True,
+                                                  filename='tracking.jsonl', groundtruth=groundtruth)
     
     # Convert to the format expected by create_tracking_visualization
     tracking_results = {}
@@ -55,7 +57,8 @@ def visualize_video(video_file: str, cache_dir: str, dataset: str, speed_up: int
     
     # Create output path for visualization
     output_path = os.path.join(cache_dir, dataset, 'execution', video_file,
-                               '000_groundtruth', f'annotated_{video_file}')
+                               '003_groundtruth' if groundtruth else '002_naive',
+                               f'annotated_{video_file}')
     
     # Create visualization
     create_tracking_visualization(video_path, tracking_results, output_path, speed_up,
@@ -109,8 +112,8 @@ def main(args):
         video_dirs = []
         for item in os.listdir(execution_dir):
             item_path = os.path.join(execution_dir, item)
-            if os.path.isdir(item_path):
-                tracking_path = os.path.join(item_path, '000_groundtruth', 'tracking.jsonl')
+            if item.startswith('te') and os.path.isdir(item_path):
+                tracking_path = os.path.join(item_path, '002_naive', 'tracking.jsonl')
                 if os.path.exists(tracking_path):
                     video_dirs.append(item)
         
@@ -120,10 +123,12 @@ def main(args):
         
         print(f"Found {len(video_dirs)} videos with tracking results")
         
-        funcs.extend(
-            partial(visualize_video, video_file, CACHE_DIR, dataset, args.speed_up, args.track_ids, args.detection_only)
-            for video_file in video_dirs
-        )
+        for groundtruth in [True, False]:
+            funcs.extend(
+                partial(visualize_video, video_file, CACHE_DIR, dataset,
+                        args.speed_up, args.track_ids, args.detection_only, groundtruth)
+                for video_file in video_dirs
+            )
     
     assert len(funcs) > 0, "No videos found to process across all datasets"
     

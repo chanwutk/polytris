@@ -44,7 +44,7 @@ def detect(
     Detect vehicles in an image using YOLOv5.
 
     Args:
-        image: Input image as numpy array (H, W, C)
+        image: Input image as numpy array (H, W, C) in BGR format
         model: YOLOv5 model instance
 
     Returns:
@@ -81,7 +81,7 @@ def detect_batch(
     Detect vehicles in a batch of images using YOLOv5.
 
     Args:
-        images: Input images as numpy array (H, W, C)
+        images: Input images as numpy array (H, W, C) in BGR format
         model: YOLOv5 model instance
 
     Returns:

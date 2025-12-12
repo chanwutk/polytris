@@ -24,14 +24,14 @@ DATASETS = config['EXEC']['DATASETS']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute object detection on uniformly sampled video frames')
-    parser.add_argument('--selectivity', type=float, default=0.1,
-                        help='Fraction of frames to uniformly sample from video (default: 0.1)')
+    parser.add_argument('--target_fps', type=int, default=5,
+                        help='Target frames per second for video (default: 10)')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='Batch size for detection processing (default: 64)')
     return parser.parse_args()
 
 
-def detect_objects(video: str, split: str, dataset: str, selectivity: float, batch_size: int, gpu_id: int, command_queue: Queue):
+def detect_objects(video: str, split: str, dataset: str, target_fps: int, batch_size: int, gpu_id: int, command_queue: Queue):
     # New output path structure
     output_path = Path(CACHE_DIR) / dataset / 'indexing' / 'segment' / 'detection' / f'{video}.detections.jsonl'
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -39,6 +39,8 @@ def detect_objects(video: str, split: str, dataset: str, selectivity: float, bat
     # Construct the path to the video file in the dataset directory
     dataset_video_path = os.path.join(DATASETS_DIR, dataset, split, video)
     cap = cv2.VideoCapture(dataset_video_path)
+    original_fps = cap.get(cv2.CAP_PROP_FPS)
+    selectivity = target_fps / original_fps
 
     # Get total frame count from video
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -77,6 +79,7 @@ def detect_objects(video: str, split: str, dataset: str, selectivity: float, bat
                 # Set cap to the target frame
                 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
                 ret, frame = cap.read()
+                frame = frame[:, :, ::-1]  # BGR to RGB
                 end_time = time.time_ns() / 1e6
                 read_time = end_time - start_time
                 read_times.append(read_time)
@@ -139,7 +142,7 @@ def main(args):
         
         Batch processing improves GPU utilization and overall performance.
     """
-    selectivity = args.selectivity
+    target_fps = args.target_fps
     batch_size = args.batch_size
 
     # Create task functions
@@ -163,7 +166,7 @@ def main(args):
             print(f"Found {len(videos)} videos to process in dataset {dataset}")
 
             funcs.extend(
-                partial(detect_objects, video, split, dataset, selectivity, batch_size)
+                partial(detect_objects, video, split, dataset, target_fps, batch_size)
                 for video in videos
             )
 

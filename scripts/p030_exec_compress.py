@@ -17,7 +17,7 @@ import torch
 from polyis import dtypes
 from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS
 from polyis.pack.group_tiles import group_tiles
-from polyis.pack.pack_ffd import pack_all
+from polyis.pack.pack import pack
 
 
 config = get_config()
@@ -62,6 +62,9 @@ def parse_args():
     parser.add_argument('--mode', type=lambda x: PackMode[x], 
                         default=PackMode.Best_Fit,
                         help='Packing mode for the pack_all function. Options: Easiest_Fit, First_Fit, Best_Fit (default: Best_Fit)')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--train', action='store_true', help='Process train videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
     return parser.parse_args()
 
 
@@ -108,15 +111,16 @@ def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap, offset
 Collage = list[PolyominoPosition]
 
 
-def compress(dataset: str, video: str, classifier: str, tilesize: int,
+def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
              tilepadding: TilePaddingMode, threshold: float, mode: PackMode,
              gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video by batch processing all frames at once using pack_all.
 
     Args:
-        video_file_path: Path to the video file
-        cache_video_dir: Path to the cache directory for this video
+        dataset: Name of the dataset
+        videoset: Videoset name (test, train, or valid)
+        video: Name of the video
         classifier: Classifier name to use
         tilesize: Tile size to use
         threshold: Threshold for classification probability
@@ -127,7 +131,7 @@ def compress(dataset: str, video: str, classifier: str, tilesize: int,
     device = f'cuda:{gpu_id}'
     video_name = video
     cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
+    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
 
     # Load classification results
     results = load_classification_results(CACHE_DIR, dataset, video, tilesize, classifier)
@@ -158,7 +162,7 @@ def compress(dataset: str, video: str, classifier: str, tilesize: int,
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     num_frames_total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    assert num_frames_total == len(results), f"Expected {len(results)} frames, got {num_frames_total}"
+    assert num_frames_total == len(results), f"Expected {len(results)} frames, got {num_frames_total}, {video_path} {classifier} {tilesize} {tilepadding}"
 
     # Calculate grid dimensions
     grid_height = height // tilesize
@@ -226,7 +230,7 @@ def compress(dataset: str, video: str, classifier: str, tilesize: int,
 
         # Pack this batch
         batch_start = (time.time_ns() / 1e6)
-        batch_collages_ = pack_all(batch_polyominoes, grid_height, grid_width, int(mode))
+        batch_collages_ = pack(batch_polyominoes, grid_height, grid_width, int(mode))
         batch_pack_time = (time.time_ns() / 1e6) - batch_start
         total_pack_time += batch_pack_time
 
@@ -391,12 +395,25 @@ def main(args):
     threshold = args.threshold
     mode = args.mode
     
+    # Determine which videosets to process based on arguments
+    videosets = []
+    if args.test:
+        videosets.append('test')
+    if args.train:
+        videosets.append('train')
+    if args.valid:
+        videosets.append('valid')
+    
+    # If no videosets are specified, default to all three
+    if not videosets:
+        videosets = ['test']
+    
     # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for dataset in DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
 
-        for videoset in ['test']:
+        for videoset in videosets:
             videoset_dir = os.path.join(dataset_dir, videoset)
             if not os.path.exists(videoset_dir):
                 print(f"Videoset directory {videoset_dir} does not exist, skipping...")
@@ -408,7 +425,7 @@ def main(args):
                 for classifier in CLASSIFIERS:
                     for tilesize in TILE_SIZES:
                         for tilepadding in TILEPADDING_MODES:
-                            funcs.append(partial(compress, dataset, video, classifier, tilesize, tilepadding, threshold, mode))
+                            funcs.append(partial(compress, dataset, videoset, video, classifier, tilesize, tilepadding, threshold, mode))
     
     print(f"Created {len(funcs)} tasks to process")
     

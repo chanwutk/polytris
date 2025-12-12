@@ -56,6 +56,8 @@ RUN apt-get -qq update -y && \
     curl \
     tmux \
     make && \
+    apt-get -qq -y autoremove --purge && \
+    apt-get -qq -y autoclean && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/usr/local/cuda/bin:${PATH}"
@@ -70,7 +72,8 @@ RUN conda env update --file /polyis/environment.yml --prune --name base && \
     conda clean --all --yes
 
 COPY ./requirements.txt /polyis/requirements.txt
-RUN pip install --no-build-isolation -r /polyis/requirements.txt
+RUN pip install --no-build-isolation --no-cache-dir -r /polyis/requirements.txt && \
+    pip cache purge
 
 # RUN git clone https://github.com/chanwutk/lazyvim.git ~/.config/nvim
 

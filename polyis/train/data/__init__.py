@@ -10,6 +10,18 @@ from .get_adjusted_frame_stride import get_adjusted_frame_stride
 from .get_dataset_subsets import get_dataset_subsets
 from .get_video_annotation_path import get_video_annotation_path
 from .split_frames_train_val import split_frames_train_val
+from .finetune import (
+    load_offset_lookup,
+    load_index_map,
+    get_annotations_for_compressed_image,
+    save_intermediate_dataset,
+    load_intermediate_dataset,
+    convert_to_ultralytics,
+    convert_to_coco,
+    convert_to_darknet,
+    split_dataset,
+    CompressedImageAnnotation,
+)
 
 __all__ = [
     "adjust_val_frames_for_prefix",
@@ -20,5 +32,16 @@ __all__ = [
     "get_dataset_subsets",
     "get_video_annotation_path",
     "split_frames_train_val",
+    # Finetune dataset utilities
+    "load_offset_lookup",
+    "load_index_map",
+    "get_annotations_for_compressed_image",
+    "save_intermediate_dataset",
+    "load_intermediate_dataset",
+    "convert_to_ultralytics",
+    "convert_to_coco",
+    "convert_to_darknet",
+    "split_dataset",
+    "CompressedImageAnnotation",
 ]
 

@@ -60,7 +60,8 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
 
 
 def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: torch.nn.Module, tile_size: int, device: str, 
-                       normalize_mean: torch.Tensor, normalize_std: torch.Tensor) -> tuple[np.ndarray, list[dict]]:
+                       normalize_mean: torch.Tensor, normalize_std: torch.Tensor, 
+                       always_relevant_mask: torch.Tensor) -> tuple[np.ndarray, list[dict]]:
     """
     Process a single video frame with the specified tile size and return relevance scores and timing information.
 
@@ -68,14 +69,16 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
     with the trained model, and returns relevance scores for each tile along with timing information.
 
     Args:
-        frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3)
+        frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3) in RGB format
             where H and W are the frame height and width, and 3 represents RGB channels
-        previous_frame (np.ndarray): Previous video frame as a numpy array with shape (H, W, 3)
+        previous_frame (np.ndarray): Previous video frame as a numpy array with shape (H, W, 3) in RGB format
         model (torch.nn.Module): Trained model for the specified tile size
         tile_size (int): Size of tiles to use for processing (30, 60, or 120)
         device (str): Device to use for processing
         normalize_mean (torch.Tensor): Pre-created mean tensor for ImageNet normalization
         normalize_std (torch.Tensor): Pre-created std tensor for ImageNet normalization
+        always_relevant_mask (torch.Tensor): Flattened mask indicating tiles that have been relevant
+            at some point in the dataset. Shape: (num_tiles,). None if no optimization is available.
 
     Returns:
         tuple[np.ndarray, list[dict[str, float]]]: A tuple containing:
@@ -88,6 +91,7 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
         - Input frame is normalized to [0, 1] range before inference
         - Model outputs logits, which are converted to probabilities using sigmoid
         - Timing information includes preprocessing and model inference times
+        - Tiles that are all-black or have never been relevant are filtered out
     """
     with torch.no_grad():
         start_time = (time.time_ns() / 1e6)
@@ -119,6 +123,9 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
         # Check if any pixel in each tile is non-zero
         non_black_mask = tiles_flat.reshape(num_tiles, -1).any(dim=1).to(torch.uint8)
 
+        # Combine with always_relevant_mask to filter out tiles that have never been relevant
+        valid_tiles_mask = non_black_mask & always_relevant_mask
+
         # Normalize to [0, 1] range (equivalent to ToTensor())
         tiles_flat = tiles_flat.float() / 255.0
 
@@ -137,7 +144,8 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
         
         # Convert to uint8 and transfer to CPU
         probabilities = (predictions * 255).to(torch.uint8)
-        predictions = predictions * non_black_mask.view(-1, 1)
+        # Filter predictions using the combined mask
+        probabilities = probabilities * valid_tiles_mask.view(-1, 1)
         probabilities = probabilities.cpu().numpy().flatten()
 
         # Reshape back to grid format
@@ -149,7 +157,7 @@ def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: to
     return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
 
 
-def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
+def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
 
@@ -160,6 +168,7 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
 
     Args:
         dataset: Name of the dataset
+        videoset: Videoset name (test, train, or valid)
         video: Name of the video
         classifier: Classifier name to use
         tile_size: Tile size to use
@@ -189,7 +198,7 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
     model = load_model(dataset, tile_size, classifier, device)
     model = model.to(device)
 
-    video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
+    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
     cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
 
     # Create output directory structure
@@ -229,17 +238,28 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
     normalize_mean = torch.tensor([0.485, 0.456, 0.406] * 2, device=device).view(1, 6, 1, 1)
     normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device).view(1, 6, 1, 1)
 
+    # Load always_relevant bitmap if available to filter out tiles that have never been relevant
+    always_relevant_path = os.path.join(CACHE_DIR, dataset, 'indexing', 'always_relevant', f'{tile_size}_all.npy')
+    assert os.path.exists(always_relevant_path), f"Always relevant bitmap not found for {dataset} {tile_size}"
+
+    # Load the bitmap (2D array where 1 = relevant at some point, 0 = never relevant)
+    always_relevant_bitmap = np.load(always_relevant_path)
+    # Flatten to match the tile processing order and convert to tensor
+    always_relevant_mask = torch.from_numpy(always_relevant_bitmap.flatten()).to(device).to(torch.uint8)
+
     # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
         description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier} {method_name}"
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': frame_count}))
-        frames = []
+        # RGB frames
+        frames: list[np.ndarray] = []
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
-            frames.append(frame)
+            # frames.append(frame)
+            frames.append(np.ascontiguousarray(frame[:, :, ::-1]))  # BGR to RGB
         cap.release()
         assert len(frames) == frame_count, f"Expected {frame_count} frames, got {len(frames)}"
 
@@ -247,13 +267,13 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
         for frame_idx, frame in enumerate(frames[:16]):
             previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
             relevance_grid, runtime = process_frame_tiles(frame, previous_frame, model, tile_size, device, 
-                                                         normalize_mean, normalize_std)  # type: ignore
+                                                         normalize_mean, normalize_std, always_relevant_mask)  # type: ignore
         
         for frame_idx, frame in enumerate(frames):
             # Process frame with the model
             previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
             relevance_grid, runtime = process_frame_tiles(frame, previous_frame, model, tile_size, device, 
-                                                         normalize_mean, normalize_std)  # type: ignore
+                                                         normalize_mean, normalize_std, always_relevant_mask)  # type: ignore
 
             # Create result entry for this frame
             frame_entry = {
@@ -266,6 +286,14 @@ def classify(dataset: str, video: str, classifier: str, tile_size: int, gpu_id: 
             f.write(json.dumps(frame_entry) + '\n')
             fr.write(json.dumps(runtime) + '\n')
             command_queue.put((device, {'completed': frame_idx}))
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Execute tile classification using trained models')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--train', action='store_true', help='Process train videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
 
 
 def main():
@@ -288,6 +316,21 @@ def main():
         - Output files are saved in {DATA_CACHE}/{dataset}/{video_file_name}/020_relevancy/score/{classifier_name}_{tile_size}/score.jsonl
         - If no trained model is found for a video, that video is skipped with a warning
     """
+    args = parse_args()
+    
+    # Determine which videosets to process based on arguments
+    selected_videosets = []
+    if args.test:
+        selected_videosets.append('test')
+    if args.train:
+        selected_videosets.append('train')
+    if args.valid:
+        selected_videosets.append('valid')
+    
+    # If no videosets are specified, default to all three
+    if not selected_videosets:
+        selected_videosets = ['test']
+    
     mp.set_start_method('spawn', force=True)
 
     # Create tasks list with all video/classifier/tile_size combinations
@@ -295,7 +338,7 @@ def main():
     for dataset in DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
 
-        for videoset in ['test']:
+        for videoset in selected_videosets:
             videoset_dir = os.path.join(dataset_dir, videoset)
             if not os.path.exists(videoset_dir):
                 print(f"Dataset directory {videoset_dir} does not exist, skipping...")
@@ -306,7 +349,7 @@ def main():
             for video in sorted(videos):
                 for classifier in CLASSIFIERS:
                     for tile_size in TILE_SIZES:
-                        func = partial(classify, dataset, video, classifier, tile_size)
+                        func = partial(classify, dataset, videoset, video, classifier, tile_size)
                         funcs.append(func)
 
     # Set up multiprocessing with ProgressBar

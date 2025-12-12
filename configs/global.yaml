@@ -8,13 +8,10 @@ EXEC:
     - jnc2
     - jnc6
     - jnc7
-    # - caldot1
-    # - caldot2
-    # - caldot1-fasterrcnn
-    # - caldot2-fasterrcnn
+    - caldot1
+    - caldot2
     # - ams
   VIDEO_SETS:
-    # - train
     - valid
     - test
   CLASSIFIERS:
@@ -26,8 +23,7 @@ EXEC:
     - 60
   TILEPADDING_MODES:
     - none
-    # - connected
-    - disconnected
+    - plus
 
 DATA:
   SOURCE_DIR: /polyis-data/sources
@@ -39,3 +35,10 @@ OPS:
     batch_size: 128
     segment_size: 60
     num_segments: 18
+  
+  classify:
+    normalize_mean: [0.485, 0.456, 0.406]
+    normalize_std: [0.229, 0.224, 0.225]
+
+SETTINGS:
+  GPU_WARMUP: true

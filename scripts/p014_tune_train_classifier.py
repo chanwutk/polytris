@@ -40,8 +40,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Preprocess video dataset')
     parser.add_argument('--clear', action='store_true',
                         help='Clear existing results directories before training')
-    parser.add_argument('--visualize', action='store_true',
-                        help='Generate training progress visualizations during training')
+    parser.add_argument('--no_visualize', action='store_true', default=False,
+                        help='Disable training progress visualizations during training')
     return parser.parse_args()
 
 
@@ -192,13 +192,13 @@ def plot_training_progress(train_history: History, val_history: History,
         assert not bar_df.empty
         # Create stacked bar chart
         chart2 = alt.Chart(bar_df).mark_bar().encode(
-            x='Phase:N',
+            x=alt.X('Phase:N', axis=alt.Axis(labelAngle=0)),
             y='ms_per_frame:Q',
             color='Operation:N',
             tooltip=['Phase', 'Operation', alt.Tooltip('ms_per_frame:Q', format='.2f')]
         ).properties(
             title='Milliseconds per Frame by Operation',
-            width=300,
+            width=150,
             height=300
         ).resolve_scale(color='independent')
 
@@ -500,8 +500,8 @@ def train(
     frozen: bool = False,
     initial_best_loss: float = float('inf')
 ):
-    early_stopping_tolerance = 10
-    early_stopping_threshold = 0.01
+    early_stopping_tolerance = 5
+    early_stopping_threshold = 0.001
     
     epoch_train_losses: list[dict] = []
     epoch_test_losses: list[dict] = []
@@ -597,10 +597,10 @@ def train(
                                        throughput_per_epoch, frozen)
             
             # Save best model and check early stopping
-            save_model(model, ema_model, results_dir, name=f'model_{epoch:02d}.pth')
+            # save_model(model, ema_model, results_dir, name=f'model_{epoch:02d}.pth')
             if val_result['cumulative_loss'] < best_loss:
                 best_model_wts, best_raw_model_wts = save_model(model, ema_model, results_dir)
-                best_epoch = epoch
+                # best_epoch = epoch
                 best_loss = val_result['cumulative_loss']
                 early_stopping_counter = 0
             else:
@@ -646,11 +646,12 @@ MODEL_ZOO = {
 class ImageFolderWithPosition(ImageFolder):
     def __init__(self, root: str, transform: typing.Callable | None = None):
         super().__init__(root, transform)
-        self.mem = {}
+        self.mem: list[tuple[torch.Tensor, torch.Tensor, int, tuple[int, int]] | None] = [None] * len(self.samples)
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int, torch.Tensor]:
-        if index in self.mem:
-            sample, diff_sample, target, pos = self.mem[index]
+        mem = self.mem[index]
+        if mem is not None:
+            sample, diff_sample, target, pos = mem
         else:
             path, target = self.samples[index]
             sample = self.loader(path)
@@ -824,7 +825,7 @@ def main(args):
 
         for classifier in CLASSIFIERS:
             for tile_size in TILE_SIZES:
-                func = partial(train_classifier, dataset_name, tile_size, classifier, args.visualize)
+                func = partial(train_classifier, dataset_name, tile_size, classifier, not args.no_visualize)
                 funcs.append(func)
 
     # Set up multiprocessing with ProgressBar

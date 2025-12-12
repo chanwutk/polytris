@@ -46,3 +46,10 @@ echo "Installing pip packages from requirements.txt in the 'polyis' environment.
 # Install pip packages in the polyis conda environment
 # This replicates Dockerfile line 72: pip install --no-build-isolation -r /polyis/requirements.txt
 conda run -n polyis pip install --no-build-isolation -r requirements.txt
+
+# Install Dev requirements if requirements.dev.txt exists
+if [ -f "requirements.dev.txt" ]; then
+    echo "Installing pip development packages from requirements.dev.txt in the 'polyis' environment..."
+    conda run -n polyis pip install --no-build-isolation -r requirements.dev.txt
+fi
+

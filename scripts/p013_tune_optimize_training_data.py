@@ -34,6 +34,7 @@ def optimize_training_data(dataset_name: str, tile_size: int, gpu_id: int, comma
     always_relevant_dir = os.path.join(cache_dir, 'indexing', 'always_relevant')
     training_base_dir = os.path.join(cache_dir, 'indexing', 'training')
     training_data_path = os.path.join(training_base_dir, 'data', f'tilesize_{tile_size}')
+    device = f'cuda:{gpu_id}'
     
     # Check if always_relevant directory exists
     if not os.path.exists(always_relevant_dir):
@@ -87,19 +88,28 @@ def optimize_training_data(dataset_name: str, tile_size: int, gpu_id: int, comma
             num_files_before += int(subprocess.check_output(f'ls -1 {label_dir} | wc -l', shell=True, text=True).strip())
     
     # Process both pos and neg directories
-    for label in ['pos', 'neg']:
+    for label in ['neg']:
         label_dir = os.path.join(training_data_path, label)
         
         if not os.path.exists(label_dir):
             continue
         
+        command_queue.put((device, {
+            'description': f'Removing training data for {label} for {len(never_relevant_yx)} never-relevant tiles',
+            'completed': 0,
+            'total': len(never_relevant_yx),
+        }))
         # For each never-relevant tile position, find and remove matching files from all videos
-        for y, x in never_relevant_yx:
+        for i, (y, x) in enumerate(never_relevant_yx):
             # Pattern: *_{y}_{x}.jpg matches any video_file and any frame_idx
             # The pattern matches: {video_file}_{frame_idx}_{y}_{x}.jpg
             pattern = os.path.join(label_dir, f'*_*_{y}_{x}.jpg')
-            subprocess.run(f'rm {pattern}', shell=True, check=False)
-    
+            subprocess.run(f'rm -f {pattern}', shell=True, check=False)
+            command_queue.put((device, {
+                'description': f'Removed training data for {label} for {y}_{x}',
+                'completed': i,
+                'total': len(never_relevant_yx),
+            }))
     # Count files after removal
     num_files_after = 0
     for label in ['pos', 'neg']:
@@ -144,6 +154,7 @@ def main():
         Images are removed based on the naming convention: {video_file}_{frame_idx}_{y}_{x}.jpg
         where (y, x) are tile positions that have never been marked as relevant across the entire dataset.
     """
+    print('Optimizing training data...')
     funcs = []
     
     for dataset_name in DATASETS_TO_TEST:
@@ -164,7 +175,7 @@ def main():
     
     # Use ProgressBar for parallel processing
     ProgressBar(num_workers=20, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
-
+    print('Training data optimized')
 
 if __name__ == '__main__':
     main()

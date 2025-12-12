@@ -6,6 +6,7 @@ allowing the system to automatically choose the appropriate detector
 (RetinaNet or YOLOv3) for each dataset.
 """
 
+from enum import Enum
 from typing import Any
 import ultralytics
 
@@ -20,6 +21,11 @@ from polyis.utilities import get_config
 CONFIG = get_config('detectors.yaml')
 DATASET_NAME_MAPPING = CONFIG['dataset_name_mapping']
 DATASET_DETECTOR_CONFIG = CONFIG['dataset_detector_mapping']
+
+
+class DetectorMode(Enum):
+    BGR = 'BGR'
+    RGB = 'RGB'
 
 
 def get_detector(dataset_name: str, gpu_id, batch_size: int = 16, num_images: int = 0):
@@ -69,12 +75,17 @@ def get_detector(dataset_name: str, gpu_id, batch_size: int = 16, num_images: in
         raise ValueError(f"Unknown detector type: {detector_type}")
 
 
-def detect(image, detector: Any, threshold: float = 0.25):
+def detect(
+    image,
+    detector: Any,
+    threshold: float = 0.25,
+    mode: DetectorMode = DetectorMode.BGR
+) -> polyis.dtypes.DetArray:
     """
     Generic object detection function that works with any pre-loaded detector.
     
     Args:
-        image: Input image as numpy array
+        image: Input image as numpy array (RGB)
         detector: Pre-loaded detector instance (RetinaNet, YOLOv3, or YOLOv5)
         threshold: Detection confidence threshold
         
@@ -84,30 +95,47 @@ def detect(image, detector: Any, threshold: float = 0.25):
     """
     # Use the appropriate detect function based on detector type
     if hasattr(detector, 'net'):  # YOLOv3 detector
+        if mode == DetectorMode.BGR:
+            image = image[:, :, ::-1]
         return polyis.models.yolov3.detect(image, detector, threshold)
     elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
+        if mode == DetectorMode.RGB:
+            image = image[:, :, ::-1]
         return polyis.models.retinanet_b3d.detect(image, detector, threshold)
     elif isinstance(detector, ultralytics.YOLO):  # type: ignore
+        if mode == DetectorMode.RGB:
+            image = image[:, :, ::-1]
         return polyis.models.ultralytics.detect(image, detector)
     else:
+        if mode == DetectorMode.BGR:
+            image = image[:, :, ::-1]
         return polyis.models.torch_vision.detect(image, detector)
 
 
 def detect_batch(
     images: list[polyis.dtypes.NPImage],
     detector: Any,
-    threshold: float = 0.25
+    threshold: float = 0.25,
+    mode: DetectorMode = DetectorMode.BGR
 ) -> "list[polyis.dtypes.DetArray]":
     """
     Detect vehicles in a batch of images using the appropriate detector.
     """
     if hasattr(detector, 'net'):  # YOLOv3 detector
+        if mode == DetectorMode.BGR:
+            images = [image[:, :, ::-1] for image in images]
         return polyis.models.yolov3.detect_batch(images, detector, threshold)
     elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
+        if mode == DetectorMode.RGB:
+            images = [image[:, :, ::-1] for image in images]
         return polyis.models.retinanet_b3d.detect_batch(images, detector, threshold)
     elif isinstance(detector, ultralytics.YOLO):  # type: ignore
+        if mode == DetectorMode.RGB:
+            images = [image[:, :, ::-1] for image in images]
         return polyis.models.ultralytics.detect_batch(images, detector)
     else:
+        if mode == DetectorMode.BGR:
+            images = [image[:, :, ::-1] for image in images]
         return polyis.models.torch_vision.detect_batch(images, detector)
 
 
