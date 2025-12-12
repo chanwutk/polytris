@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""
+Sync script for rsync-based file synchronization from local to remote.
+
+This script reads configuration from configs/sync.yaml and uses rsync to
+synchronize code files from the local machine to a remote server.
+
+Usage:
+    ./sync [--dry-run] [--config CONFIG_FILE]
+
+Options:
+    --dry-run      Preview changes without actually syncing
+    --config FILE  Use alternative config file (default: configs/sync.yaml)
+"""
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+from typing import List, Optional
+
+import yaml
+
+
+def load_config(config_path: Path) -> dict:
+    """Load and validate sync configuration from YAML file."""
+    if not config_path.exists():
+        print(f"Error: Config file not found: {config_path}", file=sys.stderr)
+        sys.exit(1)
+    
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    
+    # Validate required fields
+    required_fields = ['remote']
+    for field in required_fields:
+        if field not in config:
+            print(f"Error: Missing required field '{field}' in config", file=sys.stderr)
+            sys.exit(1)
+    
+    if 'host' not in config['remote']:
+        print("Error: Missing 'remote.host' in config", file=sys.stderr)
+        sys.exit(1)
+    
+    if 'path' not in config['remote']:
+        print("Error: Missing 'remote.path' in config", file=sys.stderr)
+        sys.exit(1)
+    
+    # Set defaults
+    config.setdefault('local_path', '.')
+    config.setdefault('includes', [])
+    config.setdefault('excludes', [])
+    config.setdefault('rsync_options', ['-a', '-v', '-z', '-h'])
+    
+    return config
+
+
+def build_rsync_command(
+    config: dict,
+    dry_run: bool = False
+) -> list[str]:
+    """
+    Build rsync command from configuration.
+    
+    Args:
+        config: Configuration dictionary
+        dry_run: If True, add --dry-run flag
+    
+    Returns:
+        List of command arguments for subprocess
+    """
+    # Base rsync command
+    cmd = ['rsync']
+    
+    # Add rsync options from config
+    rsync_opts = config.get('rsync_options', [])
+    cmd.extend(rsync_opts)
+    
+    # Add dry-run if requested (override config)
+    if dry_run and '--dry-run' not in cmd:
+        cmd.append('--dry-run')
+    elif not dry_run and '--dry-run' in cmd:
+        # Remove dry-run from config if not requested
+        cmd = [arg for arg in cmd if arg != '--dry-run']
+    
+    # Get include and exclude patterns
+    includes = config.get('includes', [])
+    excludes = config.get('excludes', [])
+    
+    # If includes are specified, we need to handle directory traversal
+    # Rsync requires directories to be included for traversal
+    if includes:
+        # First, include all directories (needed for traversal)
+        # This allows rsync to descend into directories
+        cmd.extend(['--include', '*/'])
+        
+        # Then add all include patterns
+        for pattern in includes:
+            cmd.extend(['--include', pattern])
+        
+        # Add exclude patterns (these take precedence over includes)
+        for pattern in excludes:
+            cmd.extend(['--exclude', pattern])
+        
+        # Finally, exclude everything else
+        # This must come last to ensure only explicitly included files are synced
+        cmd.extend(['--exclude', '*'])
+    else:
+        # No includes specified, just use excludes
+        # This means sync everything except what's excluded
+        for pattern in excludes:
+            cmd.extend(['--exclude', pattern])
+    
+    # Source path (with trailing slash to sync contents, not directory itself)
+    local_path = Path(config.get('local_path', '.')).resolve()
+    if local_path.is_dir():
+        source = str(local_path) + '/'
+    else:
+        source = str(local_path)
+    
+    # Destination path
+    remote_host = config['remote']['host']
+    remote_path = config['remote']['path']
+    destination = f"{remote_host}:{remote_path}/"
+    
+    cmd.extend([source, destination])
+    
+    return cmd
+
+
+def main():
+    """Main entry point for sync script."""
+    parser = argparse.ArgumentParser(
+        description='Sync code files from local to remote using rsync',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__
+    )
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='Preview changes without actually syncing'
+    )
+    parser.add_argument(
+        '--config',
+        type=Path,
+        default=Path('configs/sync.yaml'),
+        help='Path to config file (default: configs/sync.yaml)'
+    )
+    
+    args = parser.parse_args()
+    
+    # Load configuration
+    config = load_config(args.config)
+    
+    # Build rsync command
+    cmd = build_rsync_command(config, dry_run=args.dry_run)
+    
+    # Print command (especially important for dry-run to see what would be executed)
+    if args.dry_run:
+        print("DRY-RUN MODE: Preview of rsync command (no files will be transferred):")
+    else:
+        print("Executing rsync command:")
+    print(" ".join(cmd))
+    print()
+    
+    # Execute rsync
+    try:
+        result = subprocess.run(cmd, check=False)
+        sys.exit(result.returncode)
+    except KeyboardInterrupt:
+        print("\nSync interrupted by user", file=sys.stderr)
+        sys.exit(130)
+    except Exception as e:
+        print(f"Error executing rsync: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
