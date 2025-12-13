@@ -28,6 +28,107 @@ CONFIG = get_config()
 CACHE_DIR = Path(CONFIG['DATA']['CACHE_DIR'])
 
 
+def create_logger(dataset: str, tilesize: int, tilepadding: str):
+    """
+    Create a logger function with pre-bound context.
+
+    Args:
+        dataset: Dataset name
+        tilesize: Tile size
+        tilepadding: Tile padding mode
+
+    Returns:
+        A function that takes a message and logs it with the pre-bound context
+    """
+    def log(message: str):
+        print(f"[{dataset}/{tilesize}/{tilepadding}] {message}")
+    return log
+
+
+def count_training_images_from_coco(
+    coco_json_path: Path,
+    log: callable
+) -> int:
+    """
+    Count training images from COCO annotations file.
+
+    Args:
+        coco_json_path: Path to COCO annotations JSON file
+        log: Logger function for progress messages
+
+    Returns:
+        Number of training images, or 0 if count fails
+    """
+    import json
+
+    # Count training images from COCO annotations
+    num_training_images = 0
+    try:
+        with open(coco_json_path) as f:
+            coco_data = json.load(f)
+            num_training_images = len(coco_data.get('images', []))
+    except (json.JSONDecodeError, KeyError):
+        log(f"Warning: Could not read training image count from {coco_json_path}")
+
+    return num_training_images
+
+
+def count_training_images_from_directory(
+    images_dir: Path,
+    log: callable
+) -> int:
+    """
+    Count training images from image directory.
+
+    Args:
+        images_dir: Path to images directory
+        log: Logger function for progress messages
+
+    Returns:
+        Number of training images
+    """
+    num_training_images = 0
+    if images_dir.exists():
+        image_files = list(images_dir.glob("*.jpg")) + list(images_dir.glob("*.png"))
+        num_training_images = len(image_files)
+        log(f"Found {num_training_images} training images")
+
+    return num_training_images
+
+
+def calculate_max_iterations(
+    num_training_images: int,
+    batch_size: int,
+    epochs: int,
+    log: callable,
+) -> int:
+    """
+    Calculate max iterations (batches) based on dataset size and epochs.
+
+    Formula: max_iter = (num_images / batch_size) * epochs
+
+    Args:
+        num_training_images: Number of images in training set
+        batch_size: Batch size for training
+        epochs: Number of epochs
+        log: Logger function for progress messages
+
+    Returns:
+        Calculated max iterations
+    """
+    # Calculate max_iter based on epochs and dataset size
+    assert num_training_images >= 0, "num_training_images must be non-negative"
+    assert batch_size > 0, "batch_size must be positive"
+
+    batches_per_epoch = max(1, num_training_images // batch_size)
+    max_iter = batches_per_epoch * epochs
+    log(
+        f"Setting max_iter={max_iter} based on {num_training_images} images, "
+        f"batch_size={batch_size}, and {epochs} epochs (batches_per_epoch={batches_per_epoch})"
+    )
+    return max_iter
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Train detector models on fine-tuning datasets')
@@ -226,24 +327,27 @@ def train_ultralytics(
     """
     import ultralytics
     from polyis.train.data.ultralytics import verify_dataset, parse_device_string
-    
+
+    # Create logger
+    log = create_logger(dataset, tilesize, tilepadding)
+
     # Paths
     ultralytics_dir = data_dir / "ultralytics"
     data_yaml = ultralytics_dir / "data.yaml"
-    
+
     # Determine model variant from detector config
     model_path = detector_config['model_path']
     model_variant = get_ultralytics_model_variant(model_path)
     weights_dir = data_dir / "weights" / f"yolov{model_variant}"
-    
+
     # Verify dataset exists
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Verifying dataset at {ultralytics_dir}")
+    log(f"Verifying dataset at {ultralytics_dir}")
     verify_dataset(str(ultralytics_dir))
-    
+
     # Load model with pretrained weights from detector config
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Loading model: {model_path}")
+    log(f"Loading model: {model_path}")
     model = ultralytics.YOLO(model_path)  # type: ignore
-    
+
     # Training configuration
     train_kwargs = {
         "data": str(data_yaml),
@@ -256,27 +360,27 @@ def train_ultralytics(
         "exist_ok": True,
         "plots": True,
     }
-    
+
     # Set batch size if specified
     if batch > 0:
         train_kwargs["batch"] = batch
-    
+
     # Set device if specified
     parsed_device = parse_device_string(device)
     if parsed_device is not None:
         train_kwargs["device"] = parsed_device
-    
+
     # Print configuration
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Training configuration:")
+    log("Training configuration:")
     for key, value in train_kwargs.items():
         print(f"  {key}: {value}")
-    
+
     # Start training
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Starting training...")
+    log("Starting training...")
     model.train(**train_kwargs)
-    
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Training complete!")
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Weights saved to: {weights_dir}")
+
+    log("Training complete!")
+    log(f"Weights saved to: {weights_dir}")
 
 
 def train_detectron2(
@@ -292,7 +396,7 @@ def train_detectron2(
 ):
     """
     Train using Detectron2.
-    
+
     Args:
         dataset: Dataset name
         tilesize: Tile size
@@ -310,26 +414,32 @@ def train_detectron2(
     from detectron2.config import get_cfg  # type: ignore
     from detectron2.data.datasets import register_coco_instances  # type: ignore
     from detectron2.engine import DefaultTrainer  # type: ignore
-    
+
+    # Create logger
+    log = create_logger(dataset, tilesize, tilepadding)
+
     # Paths
     coco_dir = data_dir / "coco"
     weights_dir = data_dir / "weights" / "detectron2"
     weights_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Verify COCO dataset exists
     train_json = coco_dir / "annotations" / "instances_train2017.json"
     val_json = coco_dir / "annotations" / "instances_val2017.json"
-    
+
     if not train_json.exists():
         raise FileNotFoundError(f"Training annotations not found: {train_json}")
     if not val_json.exists():
         raise FileNotFoundError(f"Validation annotations not found: {val_json}")
-    
+
+    # Count training images from COCO annotations
+    num_training_images = count_training_images_from_coco(train_json, log)
+
     # Create unique dataset names
     dataset_name = f"finetune_{dataset}_{tilesize}_{tilepadding}"
-    
+
     # Register datasets
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Registering COCO datasets...")
+    log("Registering COCO datasets...")
     register_coco_instances(
         f"{dataset_name}_train", {},
         str(train_json),
@@ -340,20 +450,20 @@ def train_detectron2(
         str(val_json),
         str(coco_dir / "val2017")
     )
-    
+
     # Load Detectron2 config
     d2_config = load_detectron2_config(dataset, detector_config)
-    
+
     # Configure Detectron2
     cfg = get_cfg()
     cfg.merge_from_file(
         model_zoo.get_config_file(d2_config['config_file'])
     )
-    
+
     # Dataset configuration
     cfg.DATASETS.TRAIN = (f"{dataset_name}_train",)
     cfg.DATASETS.TEST = (f"{dataset_name}_val",)
-    
+
     # Model configuration
     if d2_config['weights']:
         # Use weights from config (for RetinaNet)
@@ -361,43 +471,44 @@ def train_detectron2(
     else:
         # Use model zoo checkpoint (for other models)
         cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(d2_config['config_file'])
-    
+
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = d2_config['num_classes']
-    
+
     # Solver configuration
-    if d2_config['max_iter']:
-        cfg.SOLVER.MAX_ITER = d2_config['max_iter']
-    else:
-        cfg.SOLVER.MAX_ITER = epochs * 1000  # Rough conversion from epochs
-    
+    # Always calculate max_iter from --epochs argument (overrides config defaults)
+    ims_per_batch = batch if batch > 0 else d2_config['ims_per_batch']
+    cfg.SOLVER.MAX_ITER = calculate_max_iterations(
+        num_training_images, ims_per_batch, epochs, log
+    )
+
     cfg.SOLVER.IMS_PER_BATCH = batch if batch > 0 else d2_config['ims_per_batch']
     cfg.SOLVER.BASE_LR = d2_config['base_lr']
     cfg.SOLVER.STEPS = []  # No LR decay
-    
+
     # Output configuration
     cfg.OUTPUT_DIR = str(weights_dir)
-    
+
     # Device configuration
     if device is not None:
         cfg.MODEL.DEVICE = f"cuda:{device}"
-    
+
     # Print configuration
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Training configuration:")
+    log("Training configuration:")
     print(f"  Model: {d2_config['config_file']}")
     print(f"  Train dataset: {dataset_name}_train")
     print(f"  Val dataset: {dataset_name}_val")
     print(f"  Max iterations: {cfg.SOLVER.MAX_ITER}")
     print(f"  Batch size: {cfg.SOLVER.IMS_PER_BATCH}")
     print(f"  Output dir: {cfg.OUTPUT_DIR}")
-    
+
     # Start training
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Starting training...")
+    log("Starting training...")
     trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=False)
     trainer.train()
-    
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Training complete!")
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Weights saved to: {weights_dir}")
+
+    log("Training complete!")
+    log(f"Weights saved to: {weights_dir}")
 
 
 def train_darknet(
@@ -425,6 +536,9 @@ def train_darknet(
         batch: Batch size (not used for Darknet, but kept for consistency)
         device: Device string (e.g., "0")
     """
+    # Create logger
+    log = create_logger(dataset, tilesize, tilepadding)
+
     # Paths
     darknet_dir = data_dir / "darknet"
     data_file = darknet_dir / "obj.data"
@@ -478,8 +592,8 @@ def train_darknet(
             test_img = cv2.imread(str(image_files[0]))
             if test_img is not None:
                 actual_height, actual_width = test_img.shape[:2]
-                print(f"[{dataset}/{tilesize}/{tilepadding}] Detected image dimensions: {actual_width}x{actual_height}")
-        print(f"[{dataset}/{tilesize}/{tilepadding}] Found {num_training_images} training images")
+                log(f"Detected image dimensions: {actual_width}x{actual_height}")
+        log(f"Found {num_training_images} training images")
     
     with open(cfg_file, 'r') as f:
         for line in f:
@@ -597,19 +711,17 @@ def train_darknet(
         if config_max_batches is None or config_max_batches != calculated_max_batches:
             needs_fix = True
             fixed_max_batches = calculated_max_batches
-            print(
-                f"[{dataset}/{tilesize}/{tilepadding}] Setting max_batches={fixed_max_batches} "
-                f"based on {num_training_images} images, batch_size={final_batch_size}, and {epochs} epochs "
-                f"(batches_per_epoch={batches_per_epoch})"
+            log(
+                f"Setting max_batches={fixed_max_batches} based on {num_training_images} images, "
+                f"batch_size={final_batch_size}, and {epochs} epochs (batches_per_epoch={batches_per_epoch})"
             )
     elif config_max_batches is None:
         # If we can't calculate, but max_batches is missing, set a default
-        # Use a reasonable default: 1000 batches per epoch * epochs
         default_batches_per_epoch = 1000
         fixed_max_batches = default_batches_per_epoch * epochs
         needs_fix = True
-        print(
-            f"[{dataset}/{tilesize}/{tilepadding}] Warning: Cannot calculate max_batches from dataset. "
+        log(
+            f"Warning: Cannot calculate max_batches from dataset. "
             f"Setting default max_batches={fixed_max_batches} ({default_batches_per_epoch} batches/epoch * {epochs} epochs)"
         )
     
@@ -726,14 +838,14 @@ def train_darknet(
     # Set GPU device
     # Set CUDA_VISIBLE_DEVICES to restrict visible GPUs, then use GPU 0 from Darknet's perspective
     env = os.environ.copy()
-    
+
     # Check if CUDA_VISIBLE_DEVICES is already set externally
     cuda_visible_devices = env.get("CUDA_VISIBLE_DEVICES")
-    
+
     if cuda_visible_devices is not None:
         # If CUDA_VISIBLE_DEVICES is set externally, always use GPU 0 (first visible GPU)
         gpu_index = 0
-        print(f"[{dataset}/{tilesize}/{tilepadding}] CUDA_VISIBLE_DEVICES={cuda_visible_devices} detected, using GPU index 0")
+        log(f"CUDA_VISIBLE_DEVICES={cuda_visible_devices} detected, using GPU index 0")
     elif device is not None:
         # Extract first GPU ID from device string (e.g., "0" from "0" or "0,1,2")
         device_id = device.split(',')[0].strip()
@@ -743,9 +855,9 @@ def train_darknet(
             env["CUDA_VISIBLE_DEVICES"] = str(device_num)
             # After setting CUDA_VISIBLE_DEVICES, the first visible GPU becomes GPU 0
             gpu_index = 0
-            print(f"[{dataset}/{tilesize}/{tilepadding}] Setting CUDA_VISIBLE_DEVICES={device_num}, using GPU index 0")
+            log(f"Setting CUDA_VISIBLE_DEVICES={device_num}, using GPU index 0")
         except ValueError:
-            print(f"[{dataset}/{tilesize}/{tilepadding}] Warning: Invalid device '{device}', using GPU 0")
+            log(f"Warning: Invalid device '{device}', using GPU 0")
             gpu_index = 0
     else:
         # If no device specified, use default GPU 0
@@ -770,7 +882,7 @@ def train_darknet(
     ])
     
     # Print configuration
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Training configuration:")
+    log("Training configuration:")
     print(f"  Darknet binary: {darknet_bin}")
     print(f"  Data file: {data_file}")
     print(f"  Config file: {cfg_file}")
@@ -803,12 +915,12 @@ def train_darknet(
     # Since images are symlinked to original locations, we need to create label files there
     images_dir = darknet_dir / "images"
     labels_dir = darknet_dir / "labels"
-    
+
     if images_dir.exists() and labels_dir.exists():
-        print(f"[{dataset}/{tilesize}/{tilepadding}] Creating label files at original image locations...")
+        log("Creating label files at original image locations...")
         label_count = 0
         missing_labels = []
-        
+
         for image_file in images_dir.glob("*.jpg"):
             if image_file.is_symlink():
                 # Resolve symlink to get original image path
@@ -816,17 +928,17 @@ def train_darknet(
                 # Get label name from symlink (in Darknet dataset labels directory)
                 label_name_in_dataset = image_file.stem + ".txt"
                 label_file = labels_dir / label_name_in_dataset
-                
+
                 if label_file.exists():
                     # Create label file next to original image (where symlink points)
                     # Use original image's stem (not the symlink's stem) for the label filename
                     # Darknet resolves symlinks and expects labels to match the original image name
                     original_label_name = original_image_path.stem + ".txt"
                     original_label_path = original_image_path.parent / original_label_name
-                    
+
                     # Create parent directory if it doesn't exist
                     original_label_path.parent.mkdir(parents=True, exist_ok=True)
-                    
+
                     # Copy label file to original location with the correct name
                     if original_label_path.exists():
                         original_label_path.unlink()
@@ -835,16 +947,16 @@ def train_darknet(
                     label_count += 1
                 else:
                     missing_labels.append(image_file.name)
-        
+
         if missing_labels:
-            print(f"[{dataset}/{tilesize}/{tilepadding}] Warning: {len(missing_labels)} images missing corresponding labels")
-        
-        print(f"[{dataset}/{tilesize}/{tilepadding}] Created {label_count} label files at original image locations")
-    
+            log(f"Warning: {len(missing_labels)} images missing corresponding labels")
+
+        log(f"Created {label_count} label files at original image locations")
+
     # Start training
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Starting Darknet training...")
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Note: Training will save weights to {weights_dir}")
-    print(f"[{dataset}/{tilesize}/{tilepadding}] Note: Best weights will be saved as {cfg_file.stem}_best.weights")
+    log("Starting Darknet training...")
+    log(f"Note: Training will save weights to {weights_dir}")
+    log(f"Note: Best weights will be saved as {cfg_file.stem}_best.weights")
     
     # Run Darknet training
     result = subprocess.run(
@@ -854,18 +966,18 @@ def train_darknet(
     )
     
     if result.returncode != 0:
-        print(f"[{dataset}/{tilesize}/{tilepadding}] Warning: Darknet training exited with code {result.returncode}")
+        log(f"Warning: Darknet training exited with code {result.returncode}")
     else:
-        print(f"[{dataset}/{tilesize}/{tilepadding}] Training complete!")
-        print(f"[{dataset}/{tilesize}/{tilepadding}] Weights saved to: {weights_dir}")
-    
+        log("Training complete!")
+        log(f"Weights saved to: {weights_dir}")
+
     # Clean up temporary config file if created
     if temp_cfg_path is not None and temp_cfg_path.exists():
         try:
             temp_cfg_path.unlink()
-            print(f"[{dataset}/{tilesize}/{tilepadding}] Cleaned up temporary config file")
+            log("Cleaned up temporary config file")
         except Exception as e:
-            print(f"[{dataset}/{tilesize}/{tilepadding}] Warning: Failed to clean up temporary config file: {e}")
+            log(f"Warning: Failed to clean up temporary config file: {e}")
 
 
 
