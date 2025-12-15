@@ -20,7 +20,7 @@ import numpy.typing as npt
 from polyis.b3d.sort import Sort as SortB3D
 # from polyis.tracker.sort import Sort as SortTracker
 
-from polyis.tracker.cython.sort import PySort as SortCython  # type: ignore
+from polyis.tracker.cython.sort import Sort as SortCython  # type: ignore
 from polyis.utilities import CACHE_DIR, get_config
 
 

@@ -1447,12 +1447,15 @@ PARAMS = [
     'tilepadding',
 ]
 
-TilePadding = typing.Literal['none', 'plus', 'connected', 'disconnected']
+TilePadding = typing.Literal['none', 'plus', 'tl', 'tr', 'bl', 'br', 'square']
 TILEPADDING_MODES: "dict[TilePadding, int]" = {
     'none': 0,
     'plus': 1,
-    # 'connected': 1,
-    # 'disconnected': 2,
+    # 'tl': 2,
+    'tr': 3,
+    'bl': 4,
+    # 'br': 5,
+    'square': 6,
 }
 TILEPADDING_MAPS: "dict[TilePadding, int]" = TILEPADDING_MODES
 

@@ -24,6 +24,11 @@ EXEC:
   TILEPADDING_MODES:
     - none
     - plus
+    # - tl
+    - tr
+    - bl
+    # - br
+    - square
 
 DATA:
   SOURCE_DIR: /polyis-data/sources

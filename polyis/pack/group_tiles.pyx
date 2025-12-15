@@ -44,8 +44,12 @@ cdef extern from "c/group_tiles.h":
     # height: height of the bitmap
     # tilepadding_mode: The mode of tile padding to apply
     #                   - 0: No padding
-    #                   - 1: Disconnected padding
-    #                   - 2: Connected padding
+    #                   - 1: Plus padding
+    #                   - 2: Top-left padding
+    #                   - 3: Top-right padding
+    #                   - 4: Bottom-left padding
+    #                   - 5: Bottom-right padding
+    #                   - 6: Square padding
     # Returns: Pointer to PolyominoArray containing all found polyominoes
     PolyominoArray* group_tiles_ "group_tiles"(
         uint8_t *bitmap_input,
@@ -72,8 +76,12 @@ def group_tiles(cnp.uint8_t[:, :] bitmap_input, int8_t mode) -> np.uint64:
                      must be contiguous
         mode: The mode of tile padding to apply
                          - 0: No padding
-                         - 1: Disconnected padding
-                         - 2: Connected padding
+                         - 1: Plus padding
+                         - 2: Top-left padding
+                         - 3: Top-right padding
+                         - 4: Bottom-left padding
+                         - 5: Bottom-right padding
+                         - 6: Square padding
 
     Returns:
         numpy.uint64: Memory address (as uint64) pointing to a PolyominoArray

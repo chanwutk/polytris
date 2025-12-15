@@ -24,6 +24,39 @@ static const int16_t DIRECTIONS_Y[4] = {-1, 0, 1, 0};  /**< Y-offsets for 4 dire
 static const int16_t DIRECTIONS_X[4] = {0, -1, 0, 1};  /**< X-offsets for 4 directions */
 
 /**
+ * @brief Direction arrays for top-left padding (top, left, and top-left corner neighbors)
+ */
+static const int16_t DIRECTIONS_Y_TL[3] = {-1, 0, -1};  /**< Y-offsets for top-left */
+static const int16_t DIRECTIONS_X_TL[3] = {0, -1, -1};  /**< X-offsets for top-left */
+
+/**
+ * @brief Direction arrays for top-right padding (top, right, and top-right corner neighbors)
+ */
+static const int16_t DIRECTIONS_Y_TR[3] = {-1, 0, -1};  /**< Y-offsets for top-right */
+static const int16_t DIRECTIONS_X_TR[3] = {0, 1, 1};  /**< X-offsets for top-right */
+
+/**
+ * @brief Direction arrays for bottom-left padding (bottom, left, and bottom-left corner neighbors)
+ */
+static const int16_t DIRECTIONS_Y_BL[3] = {1, 0, 1};  /**< Y-offsets for bottom-left */
+static const int16_t DIRECTIONS_X_BL[3] = {0, -1, -1};  /**< X-offsets for bottom-left */
+
+/**
+ * @brief Direction arrays for bottom-right padding (bottom, right, and bottom-right corner neighbors)
+ */
+static const int16_t DIRECTIONS_Y_BR[3] = {1, 0, 1};  /**< Y-offsets for bottom-right */
+static const int16_t DIRECTIONS_X_BR[3] = {0, 1, 1};  /**< X-offsets for bottom-right */
+
+/**
+ * @brief Direction arrays for 8-connectivity movement (including diagonals)
+ *
+ * These arrays define the eight directions: top-left, top, top-right, left, right,
+ * bottom-left, bottom, bottom-right. Used for square padding operations.
+ */
+static const int16_t DIRECTIONS_Y_8[8] = {-1, -1, -1, 0, 0, 1, 1, 1};  /**< Y-offsets for 8 directions */
+static const int16_t DIRECTIONS_X_8[8] = {-1, 0, 1, -1, 1, -1, 0, 1};  /**< X-offsets for 8 directions */
+
+/**
  * @brief Comparison function for qsort to sort polyominoes by size (descending)
  *
  * This comparator sorts polyominoes in descending order by the number of tiles
@@ -113,7 +146,7 @@ static CoordinateArray find_connected_tiles(
                 // (meaning they haven't been visited yet)
                 if (next_group != 0 && next_group != value) {
                     // Check padding mode conditions
-                    if (mode != 1 || curr_occupancy == 1 || bitmap_input[yy * w + xx] == 1) {
+                    if (mode == 0 || curr_occupancy == 1 || bitmap_input[yy * w + xx] == 1) {
                         CoordinateArray_push(&stack, (Coordinate){.y = yy, .x = xx});
                     }
                 }
@@ -136,12 +169,21 @@ static CoordinateArray find_connected_tiles(
  * @param bitmap Binary bitmap to modify (0=empty, 1=occupied, 2=padding after execution)
  * @param h Height of the bitmap
  * @param w Width of the bitmap
+ * @param directions_y Array of Y-offsets for directions to check
+ * @param directions_x Array of X-offsets for directions to check
+ * @param num_directions Number of directions to check
  *
  * @note The bitmap is modified in-place
- * @note Only orthogonal neighbors (4-connectivity) receive padding
  * @note Padding tiles are marked with value 2 to distinguish from original tiles
  */
-static inline void add_padding(uint8_t *bitmap, int16_t h, int16_t w) {
+static inline void add_padding(
+    uint8_t *bitmap,
+    int16_t h,
+    int16_t w,
+    const int16_t *directions_y,
+    const int16_t *directions_x,
+    int16_t num_directions
+) {
     for (int16_t y = 0; y < h; y++) {
         for (int16_t x = 0; x < w; x++) {
             // Only process occupied tiles (value == 1)
@@ -149,10 +191,10 @@ static inline void add_padding(uint8_t *bitmap, int16_t h, int16_t w) {
                 continue;
             }
 
-            // Check all 4 directions
-            for (int16_t i = 0; i < 4; i++) {
-                int16_t yy = y + DIRECTIONS_Y[i];
-                int16_t xx = x + DIRECTIONS_X[i];
+            // Check all specified directions
+            for (int16_t i = 0; i < num_directions; i++) {
+                int16_t yy = y + directions_y[i];
+                int16_t xx = x + directions_x[i];
 
                 // If neighbor is within bounds and empty, mark as padding (value == 2)
                 if (0 <= yy && yy < h && 0 <= xx && xx < w && bitmap[yy * w + xx] == 0) {
@@ -183,9 +225,38 @@ PolyominoArray * group_tiles(
     PolyominoArray *polyomino_array = (PolyominoArray *)malloc(sizeof(PolyominoArray));
     PolyominoArray_init(polyomino_array, 16);
 
-    // Add padding if mode is not 0
-    if (mode != 0) {
-        add_padding(bitmap_input, height, width);
+    // Add padding based on mode
+    switch (mode) {
+        case 0:
+            // No padding
+            break;
+        case 1:
+            // Plus padding (all 4 orthogonal neighbors)
+            add_padding(bitmap_input, height, width, DIRECTIONS_Y, DIRECTIONS_X, 4);
+            break;
+        case 2:
+            // Top-left padding
+            add_padding(bitmap_input, height, width, DIRECTIONS_Y_TL, DIRECTIONS_X_TL, 3);
+            break;
+        case 3:
+            // Top-right padding
+            add_padding(bitmap_input, height, width, DIRECTIONS_Y_TR, DIRECTIONS_X_TR, 3);
+            break;
+        case 4:
+            // Bottom-left padding
+            add_padding(bitmap_input, height, width, DIRECTIONS_Y_BL, DIRECTIONS_X_BL, 3);
+            break;
+        case 5:
+            // Bottom-right padding
+            add_padding(bitmap_input, height, width, DIRECTIONS_Y_BR, DIRECTIONS_X_BR, 3);
+            break;
+        case 6:
+            // Square padding (all 8 neighbors including diagonals)
+            add_padding(bitmap_input, height, width, DIRECTIONS_Y_8, DIRECTIONS_X_8, 8);
+            break;
+        default:
+            // Unknown mode, treat as no padding
+            break;
     }
 
     // Create groups array with unique IDs

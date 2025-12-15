@@ -788,11 +788,13 @@ def train_darknet(
                     key = key.strip()
                     if key == 'batch':
                         # Replace batch value
-                        temp_cfg.write(f"batch={fixed_batch}{comment_part}\n")
+                        spacing = ' ' if comment_part else ''
+                        temp_cfg.write(f"batch={fixed_batch}{spacing}{comment_part}\n")
                         continue
                     elif key == 'subdivisions':
                         # Replace subdivisions value
-                        temp_cfg.write(f"subdivisions={fixed_subdivisions}{comment_part}\n")
+                        spacing = ' ' if comment_part else ''
+                        temp_cfg.write(f"subdivisions={fixed_subdivisions}{spacing}{comment_part}\n")
                         # If max_batches needs to be added and we haven't added it yet, add it after subdivisions
                         if fixed_max_batches is not None and config_max_batches is None and not max_batches_added:
                             temp_cfg.write(f"max_batches={fixed_max_batches}\n")
@@ -800,19 +802,23 @@ def train_darknet(
                         continue
                     elif key == 'width' and fixed_width is not None:
                         # Replace width value
-                        temp_cfg.write(f"width={fixed_width}{comment_part}\n")
+                        spacing = ' ' if comment_part else ''
+                        temp_cfg.write(f"width={fixed_width}{spacing}{comment_part}\n")
                         continue
                     elif key == 'height' and fixed_height is not None:
                         # Replace height value
-                        temp_cfg.write(f"height={fixed_height}{comment_part}\n")
+                        spacing = ' ' if comment_part else ''
+                        temp_cfg.write(f"height={fixed_height}{spacing}{comment_part}\n")
                         continue
                     elif key == 'random' and fixed_random is not None:
                         # Replace random value (disable random resize)
-                        temp_cfg.write(f"random={fixed_random}{comment_part}\n")
+                        spacing = ' ' if comment_part else ''
+                        temp_cfg.write(f"random={fixed_random}{spacing}{comment_part}\n")
                         continue
                     elif key == 'max_batches' and fixed_max_batches is not None:
                         # Replace max_batches value
-                        temp_cfg.write(f"max_batches={fixed_max_batches}{comment_part}\n")
+                        spacing = ' ' if comment_part else ''
+                        temp_cfg.write(f"max_batches={fixed_max_batches}{spacing}{comment_part}\n")
                         max_batches_added = True
                         continue
             
