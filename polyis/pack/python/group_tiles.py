@@ -24,10 +24,29 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int, original_bitmap: np
     filled: list[tuple[int, int]] = []
     while len(q) > 0:
         i, j = q.pop()
+        # print(i, j)
         bitmap[i, j] = value
         filled.append((i, j))
         # Check all 4 orthogonal neighbors
-        for _i, _j in [(-1, 0), (0, -1), (+1, 0), (0, +1)]:
+        directions = [(-1, 0), (0, -1), (+1, 0), (0, +1)]
+        extra_directions = []
+        # if original_bitmap[i, j] == 1:
+        if mode == 2:
+            # top left
+            extra_directions = [(-1, -1)]
+        elif mode == 3:
+            # top right
+            extra_directions = [(-1, +1)]
+        elif mode == 4:
+            # bottom left
+            extra_directions = [(+1, -1)]
+        elif mode == 5:
+            # bottom right
+            extra_directions = [(+1, +1)]
+        elif mode == 6:
+            # square
+            extra_directions = [(-1, -1), (-1, +1), (+1, -1), (+1, +1)]
+        for _i, _j in directions:
             _i += i
             _j += j
             # If neighbor is non-zero and unvisited
@@ -37,6 +56,22 @@ def find_connected_tiles(bitmap: np.ndarray, i: int, j: int, original_bitmap: np
                 #           This prevents padding tiles (value 2) from connecting to other padding tiles
                 if mode == 0 or original_bitmap[i, j] == 1 or original_bitmap[_i, _j] == 1:
                     q.append((_i, _j))
+        for _i, _j in extra_directions:
+            if original_bitmap[i, j] == 1:
+                _i = i + _i
+                _j = j + _j
+            else:
+                _i = i - _i
+                _j = j - _j
+            # If neighbor is non-zero and unvisited
+            if bitmap[_i, _j] != 0 and bitmap[_i, _j] != value:
+                # Mode 0: Always connect any non-zero neighbors
+                # Mode 1-6: Only connect if current cell or neighbor is an original tile (value 1)
+                #           This prevents padding tiles (value 2) from connecting to other padding tiles
+                if mode == 0 or original_bitmap[i, j] == 1 or original_bitmap[_i, _j] == 1:
+                    q.append((_i, _j))
+    # print(q, filled)
+    # print('---------------')
     return filled
 
 
@@ -148,6 +183,15 @@ exp = np.array([[2, 2, 0],
               [0, 0, 0]])
 assert np.array_equal(res, exp), f"\n{res}\n{exp}"
 
+# Test case for mode 2 (top-left padding)
+res = _add_padding(np.array([[0, 0, 0, 0],
+                           [1, 0, 0, 1],
+                           [0, 0, 0, 0]]), mode=2)
+exp = np.array([[2, 0, 2, 2],
+              [1, 0, 2, 1],
+              [0, 0, 0, 0]])
+assert np.array_equal(res, exp), f"\n{res}\n{exp}"
+
 # Test case for mode 3 (top-right padding)
 res = _add_padding(np.array([[0, 0, 0],
                            [0, 1, 0],
@@ -205,6 +249,7 @@ def group_tiles(bitmap: np.ndarray, mode: int = 0) -> list[tuple[np.ndarray, tup
     """
     # Apply padding based on mode
     bitmap = _add_padding(bitmap, mode)
+    # print('mode', mode)
 
     h, w = bitmap.shape
     _groups = np.arange(h * w, dtype=np.int16) + 1
