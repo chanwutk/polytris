@@ -17,6 +17,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from typing import Callable
 
 import cv2
 
@@ -47,7 +48,7 @@ def create_logger(dataset: str, tilesize: int, tilepadding: str):
 
 def count_training_images_from_coco(
     coco_json_path: Path,
-    log: callable
+    log: Callable[[str], None]
 ) -> int:
     """
     Count training images from COCO annotations file.
@@ -75,7 +76,7 @@ def count_training_images_from_coco(
 
 def count_training_images_from_directory(
     images_dir: Path,
-    log: callable
+    log: Callable[[str], None]
 ) -> int:
     """
     Count training images from image directory.
@@ -100,7 +101,7 @@ def calculate_max_iterations(
     num_training_images: int,
     batch_size: int,
     epochs: int,
-    log: callable,
+    log: Callable[[str], None],
 ) -> int:
     """
     Calculate max iterations (batches) based on dataset size and epochs.
