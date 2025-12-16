@@ -80,8 +80,52 @@ static int compare_polyomino_by_mask_length(const void *a, const void *b) {
     return poly_b->mask.size - poly_a->mask.size;
 }
 
-static void move(int16_t *bitmap, int8_t mode, uint8_t *bitmap_input, CoordinateArray *stack,
-                 int16_t h, int16_t w, int16_t y, int16_t x, int16_t yy, int16_t xx, int16_t value, uint8_t curr_occupancy) {
+/**
+ * @brief Check if a neighbor tile should be added to the flood-fill stack
+ *
+ * This helper function validates whether a neighbor position at (yy, xx) should be
+ * added to the flood-fill work stack. It performs boundary checking, verifies that
+ * the tile hasn't been visited yet, and applies padding mode-specific connectivity
+ * rules.
+ *
+ * Connectivity rules depend on the occupancy of the current tile:
+ * - If current tile is occupied (curr_occupancy == 1): add unvisited neighbors,
+ *   applying mode-specific padding rules
+ * - If current tile is padding (curr_occupancy == 2): only add occupied neighbors
+ *   to maintain proper connectivity in padding modes
+ *
+ * @param bitmap Working array of group IDs used to track visited tiles
+ * @param mode Padding mode that affects connectivity rules (unused in this function
+ *             but kept for consistency with calling context)
+ * @param bitmap_input Original binary bitmap indicating occupied tiles (1) vs empty (0)
+ * @param stack Work stack for iterative flood-fill; new candidates are pushed here
+ * @param h Height of the bitmap
+ * @param w Width of the bitmap
+ * @param y Current tile Y-coordinate (used for context, not bounds checking)
+ * @param x Current tile X-coordinate (used for context, not bounds checking)
+ * @param yy Neighbor tile Y-coordinate to validate and potentially add
+ * @param xx Neighbor tile X-coordinate to validate and potentially add
+ * @param value Current group ID; tiles with this value have already been visited
+ * @param curr_occupancy Occupancy type of current tile: 1=occupied, 2=padding
+ *
+ * @note Modifies the stack by pushing new coordinates if conditions are met
+ * @note Tiles are marked as visited (assigned the current value) separately in
+ *       the main flood-fill loop; this function only validates conditions for adding
+ */
+static void move(
+    int16_t *bitmap,
+    int8_t mode,
+    uint8_t *bitmap_input,
+    CoordinateArray *stack,
+    int16_t h,
+    int16_t w,
+    int16_t y,
+    int16_t x,
+    int16_t yy,
+    int16_t xx,
+    int16_t value,
+    uint8_t curr_occupancy
+) {
     // Check bounds
     if (0 <= yy && yy < h && 0 <= xx && xx < w) {
         int16_t next_group = bitmap[yy * w + xx];
@@ -90,7 +134,7 @@ static void move(int16_t *bitmap, int8_t mode, uint8_t *bitmap_input, Coordinate
         // (meaning they haven't been visited yet)
         if (next_group != 0 && next_group != value) {
             // Check padding mode conditions
-            if (mode == 0 || curr_occupancy == 1 || bitmap_input[yy * w + xx] == 1) {
+            if (curr_occupancy == 1 || bitmap_input[yy * w + xx] == 1) {
                 CoordinateArray_push(stack, (Coordinate){.y = yy, .x = xx});
             }
         }
@@ -163,6 +207,7 @@ static CoordinateArray find_connected_tiles(
         }
 
         if (curr_occupancy == 1) {
+            // relevant tiles move to diagonal padding tiles.
             for (int16_t i = 0; i < EXTRA_DIRECTIONS_COUNT[mode]; i++) {
                 int16_t yy = y + DIRECTIONS_Y_ALL[mode][i];
                 int16_t xx = x + DIRECTIONS_X_ALL[mode][i];
@@ -171,6 +216,7 @@ static CoordinateArray find_connected_tiles(
         }
 
         if (curr_occupancy == 2) {
+            // diagonal padding tiles move backward to relevant tiles.
             for (int16_t i = 0; i < EXTRA_DIRECTIONS_COUNT[mode]; i++) {
                 int16_t yy = y - DIRECTIONS_Y_ALL[mode][i];
                 int16_t xx = x - DIRECTIONS_X_ALL[mode][i];
@@ -251,7 +297,8 @@ PolyominoArray * group_tiles(
     PolyominoArray_init(polyomino_array, 16);
 
     // Add padding based on mode
-    add_padding(bitmap_input, height, width, DIRECTIONS_Y_ALL[mode], DIRECTIONS_X_ALL[mode], DIRECTIONS_COUNT[mode]);
+    add_padding(bitmap_input, height, width, DIRECTIONS_Y_ALL[mode],
+                DIRECTIONS_X_ALL[mode], DIRECTIONS_COUNT[mode]);
 
     // Create groups array with unique IDs
     int16_t *groups = (int16_t *)calloc((size_t)(height * width), sizeof(int16_t));
