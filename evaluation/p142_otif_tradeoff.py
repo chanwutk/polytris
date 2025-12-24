@@ -55,6 +55,31 @@ def extract_accuracy_metrics(result: dict) -> dict:
     return accuracy_metrics
 
 
+def calculate_max_gap(data: dict) -> int:
+    """
+    Calculate the maximum gap between thresholds in the given data.
+    From https://github.com/chanwutk/otif/blob/eeab850bcaef03964b6effdd5154c1c162a410f0/pipeline2/lib/tracker.go#L172-L189
+    
+    :param data: Input data containing "Thresholds"
+    :type data: dict
+    :return: Maximum gap between thresholds
+    :rtype: int
+    """
+    thresholds = data.get("Thresholds", [])
+    
+    if len(thresholds) < 2:
+        return 1
+        
+    gap = 1
+    # Iterate starting from index 1
+    for threshold in thresholds[1:]:
+        if threshold == 1.0:
+            return gap
+        gap *= 2
+        
+    return gap
+
+
 def load_accuracy_results(dataset: str, system: str) -> pd.DataFrame:
     """
     Load accuracy results for all param_ids from DATASET.json files.

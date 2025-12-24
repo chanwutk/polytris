@@ -3,7 +3,7 @@
 
 # Remote host configuration
 remote:
-  host: user@remote-host.example.com  # SSH host (user@hostname or hostname)
+  host: chanwutk@freddie.millennium.berkeley.edu  # SSH host (user@hostname or hostname)
   path: /work/cwkt/projects/polyis    # Destination path on remote machine
 
 # Local source directory (defaults to current directory if not specified)
@@ -21,11 +21,11 @@ local_path: .
 # - If no includes are specified, all files are synced except excludes
 # - Directory patterns should end with / (e.g., "configs/**")
 includes:
-  # Allow directory traversal
-  - "*/"
+  # # Allow directory traversal
+  # - "*/"
   
-  # Include all files in project root
-  - "*"
+  # # Include all files in project root
+  # - "*"
   
   # Include Python, C, Cython, and config files in specific directories
   # .claude directory
@@ -103,6 +103,7 @@ includes:
   - "configs/**/*.cpp"
   - "configs/**/*.yaml"
   - "configs/**/*.yml"
+  - "configs/**/*.yaml"
   - "configs/**/*.json"
   - "configs/**/*.toml"
   
@@ -211,6 +212,12 @@ excludes:
   - "**/*.pyc"
   - "**/*.pyo"
   - "**/*.so"
+
+  - ".venv/**"
+  - "venv/**"
+  - "venv"
+  - ".git/**"
+  - ".git"
 
 # Rsync options
 # Common options:

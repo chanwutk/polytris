@@ -90,21 +90,24 @@ def build_rsync_command(
     # If includes are specified, we need to handle directory traversal
     # Rsync requires directories to be included for traversal
     if includes:
-        # First, include all directories (needed for traversal)
+        # CRITICAL: Add exclude patterns FIRST so they take precedence
+        # Excludes must come before includes to prevent excluded directories
+        # from being matched by the '*/' pattern below
+        for pattern in excludes:
+            cmd.extend(['--exclude', pattern])
+        
+        # Then include all directories (needed for traversal)
         # This allows rsync to descend into directories
+        # Note: Excludes above will prevent excluded dirs from being matched here
         cmd.extend(['--include', '*/'])
         
         # Then add all include patterns
         for pattern in includes:
             cmd.extend(['--include', pattern])
         
-        # Add exclude patterns (these take precedence over includes)
-        for pattern in excludes:
-            cmd.extend(['--exclude', pattern])
-        
-        # Finally, exclude everything else
-        # This must come last to ensure only explicitly included files are synced
-        cmd.extend(['--exclude', '*'])
+        # # Finally, exclude everything else
+        # # This must come last to ensure only explicitly included files are synced
+        # cmd.extend(['--exclude', '*'])
     else:
         # No includes specified, just use excludes
         # This means sync everything except what's excluded
