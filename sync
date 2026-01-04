@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!./venv/bin/python
 """
 Sync script for rsync-based file synchronization from local to remote.
 
@@ -75,6 +75,11 @@ def build_rsync_command(
     # Add rsync options from config
     rsync_opts = config.get('rsync_options', [])
     cmd.extend(rsync_opts)
+    
+    # Add itemize-changes to show detailed file transfer information
+    # This shows which files are being sent with change indicators
+    if '--itemize-changes' not in cmd and '-i' not in cmd:
+        cmd.append('--itemize-changes')
     
     # Add dry-run if requested (override config)
     if dry_run and '--dry-run' not in cmd:

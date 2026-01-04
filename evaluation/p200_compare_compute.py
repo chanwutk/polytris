@@ -51,7 +51,11 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
         if missing_columns:
             raise ValueError(f"Missing required columns in {tradeoff_csv_path}: {missing_columns}")
         
-        # Create SOTA data with consistent structure for visualization
+        # Define all possible submetrics that might be in the CSV
+        submetric_columns = ['HOTA_HOTA', 'HOTA_AssA', 'HOTA_DetA', 'MOTA_MOTA', 
+                            'Count_DetsMAPE', 'Count_TracksMAPE']
+        
+        # Create base DataFrame with required columns
         clean_df = pd.DataFrame({
             'system': system.upper(),  # Display name for SOTA system
             'dataset': dataset_name,
@@ -59,12 +63,18 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
             'classifier': STR_NA,  # SOTA doesn't use our classifier system
             'tilesize': 0,  # SOTA doesn't have explicit tile size
             'tilepadding': STR_NA,  # SOTA doesn't have explicit tile padding
-            'HOTA_HOTA': df['HOTA_HOTA'],  # Already in decimal format (0-1)
-            'MOTA_MOTA': -1,  # Not available for SOTA
             'time': df['runtime'],  # Runtime in seconds
             'throughput_fps': float('nan'),  # Not available in tradeoff.csv
             'time_mspf': float('nan'),  # Not available without frame count
         })
+        
+        # Add all available submetrics from the CSV
+        for submetric in submetric_columns:
+            if submetric in df.columns:
+                clean_df[submetric] = df[submetric]
+            else:
+                # Set to NaN if not available (for consistency)
+                clean_df[submetric] = float('nan')
         
         sota_data.append(clean_df)
         print(f"  Loaded {len(df)} data points for {system.upper()} on {dataset_name}")
@@ -128,12 +138,12 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                                    metrics_list: list[str], x_column: str, x_title: str,
                                    plot_suffix: str, output_dir: str):
     """
-    Create visualization showing all dataset-wide trade-offs for a specific metric and axis.
+    Create visualization showing all dataset-wide trade-offs for all submetrics.
     
     Args:
         df_combined: Combined DataFrame with data from all datasets (already merged with naive data)
         df_sota_dict: Dictionary mapping system names ('otif', 'leap') to their tradeoff DataFrames
-        metrics_list: list of metrics to visualize
+        metrics_list: list of main metrics to visualize (e.g., ['HOTA', 'Count'])
         x_column: Column name for x-axis data
         x_title: Title for x-axis
         plot_suffix: Suffix for plot filename
@@ -169,76 +179,105 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
     # This identifies the naive baseline points in our results
     df_combined.loc[df_combined['classifier'] == 'Groundtruth', 'system'] = 'Naive'
     
+    # Define mapping of submetrics to their display names and y-axis scales
+    # Each main metric maps to a list of (submetric_column, display_name, y_scale_dict) tuples
+    submetrics_map = {
+        'HOTA': [
+            ('HOTA_HOTA', 'HOTA', {'scale': alt.Scale(domain=[0, 1])}),
+            ('HOTA_AssA', 'AssA', {'scale': alt.Scale(domain=[0, 1])}),
+            ('HOTA_DetA', 'DetA', {'scale': alt.Scale(domain=[0, 1])}),
+        ],
+        'CLEAR': [
+            ('MOTA_MOTA', 'MOTA', {'scale': alt.Scale(domain=[0, 1])}),
+        ],
+        'Count': [
+            ('Count_DetsMAPE', 'Dets MAPE', {}),
+            ('Count_TracksMAPE', 'Tracks MAPE', {}),
+        ],
+    }
+    
     # Create base chart
     base_chart = alt.Chart(df_combined)
     
-    # Create visualizations for each metric - focus on HOTA_HOTA
-    for metric in metrics_list:
-        if metric == 'HOTA':
-            accuracy_col = 'HOTA_HOTA'
-            metric_name = 'HOTA'
-            y_scale = {'scale': alt.Scale(domain=[0, 1])}
-        elif metric == 'CLEAR':
-            accuracy_col = 'MOTA_MOTA'
-            metric_name = 'MOTA'
-            y_scale = {'scale': alt.Scale(domain=[0, 1])}
-        elif metric == 'Count':
-            accuracy_col = 'Count_TracksMAPE'
-            metric_name = 'Count'
-            y_scale = {}
-        else:
+    # Create visualizations for each submetric
+    for main_metric in metrics_list:
+        if main_metric not in submetrics_map:
+            print(f"  Warning: Unknown metric '{main_metric}', skipping")
             continue
         
-        # Create scatter plot with color by system and shape by tilepadding
-        # Use conditional encoding to handle groundtruth points differently
-        color_scale=alt.Scale(domain=['Polytris', 'OTIF', 'LEAP', 'Naive'], range=ColorScheme.CarbonDark)
-        base_point = base_chart.mark_point(
-            fillOpacity=1,
-            stroke=None
-        ).encode(
-            fill=alt.Fill('system:N', title='System', scale=color_scale),
-            size=alt.condition(
-                alt.datum.system == 'Naive',
-                alt.value(100),  # Larger size for groundtruth
-                alt.value(50)   # Normal size for others
-            ),
-            shape=alt.condition(
-                (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Naive'),
-                alt.Shape('classifier:N', title='Polytris\' Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['triangle', 'diamond'])),
-                alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
-            ),
-            tooltip=['system', 'dataset', 'classifier', 'tilepadding', x_column, accuracy_col]
-        )
-        
-        base_line = base_chart.mark_line(
-            strokeWidth=1.5,
-            strokeOpacity=1
-        ).encode(stroke=alt.Stroke('system:N', title='System', scale=color_scale))
-        
-        scatter = (base_point + base_line).encode(
-            x=alt.X(f'{x_column}:Q', title=x_title),
-            y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score'),
-        ).properties(
-            width=150,
-            height=150
-        )
-        
-        # Create the combined chart with dataset facets
-        combined_chart = scatter.facet(
-            facet=alt.Facet('dataset:N', title=None,
-                            header=alt.Header(labelExpr="'Dataset: ' + datum.value")),
-            columns=3
-        ).resolve_scale(
-            x='independent',
-            y='independent'
-        ).properties(
-            title=f'{metric_name} vs {x_title} Tradeoff',
-        )
-        
-        # Save the chart
-        plot_path = os.path.join(output_dir, f'{metric.lower()}_{plot_suffix}_comparison.png')
-        combined_chart.save(plot_path, scale_factor=4)
-        print(f"Saved all datasets {metric_name} {plot_suffix} comparison plot to: {plot_path}")
+        # Iterate over all submetrics for this main metric
+        for accuracy_col, metric_name, y_scale in submetrics_map[main_metric]:
+            # Check if this submetric exists in the data
+            if accuracy_col not in df_combined.columns:
+                print(f"  Warning: Submetric '{accuracy_col}' not found in data, skipping")
+                continue
+            
+            # Check if there's any non-NaN data for this submetric
+            if bool(df_combined[accuracy_col].isna().all()):
+                print(f"  Warning: Submetric '{accuracy_col}' has no valid data, skipping")
+                continue
+            
+            # Create scatter plot with color by system and shape by tilepadding
+            # Use conditional encoding to handle groundtruth points differently
+            color_scale=alt.Scale(domain=['Polytris', 'OTIF', 'LEAP', 'Naive'], range=ColorScheme.CarbonDark)
+            base_point = base_chart.mark_point(
+                fillOpacity=1,
+                stroke=None
+            ).encode(
+                fill=alt.Fill('system:N', title='System', scale=color_scale),
+                size=alt.condition(
+                    alt.datum.system == 'Naive',
+                    alt.value(100),  # Larger size for groundtruth
+                    alt.value(50)   # Normal size for others
+                ),
+                shape=alt.condition(
+                    (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Naive'),
+                    alt.Shape('classifier:N', title='Polytris\' Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['triangle', 'diamond'])),
+                    alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
+                ),
+                tooltip=['system', 'dataset', 'classifier', 'tilepadding', x_column, accuracy_col]
+            )
+            
+            base_line = base_chart.mark_line(
+                strokeWidth=1.5,
+                strokeOpacity=1
+            ).encode(stroke=alt.Stroke('system:N', title='System', scale=color_scale))
+            
+            scatter = (base_point + base_line).encode(
+                x=alt.X(f'{x_column}:Q', title=x_title),
+                y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **y_scale),
+            ).properties(
+                width=150,
+                height=150
+            )
+            
+            # Create the combined chart with dataset facets
+            combined_chart = scatter.facet(
+                facet=alt.Facet('dataset:N', title=None,
+                                header=alt.Header(labelExpr="'Dataset: ' + datum.value")),
+                columns=3
+            ).resolve_scale(
+                x='independent',
+                y='independent'
+            ).properties(
+                title=f'{metric_name} vs {x_title} Tradeoff',
+            )
+            
+            # Save the chart with submetric name in filename in multiple formats
+            # Save PNG format (raster image)
+            plot_path_png = os.path.join(output_dir, f'{accuracy_col.lower()}_{plot_suffix}_comparison.png')
+            combined_chart.save(plot_path_png, scale_factor=4)
+            print(f"Saved all datasets {metric_name} {plot_suffix} comparison plot (PNG) to: {plot_path_png}")
+            
+            # Save SVG format (static vector image)
+            plot_path_svg = os.path.join(output_dir, f'{accuracy_col.lower()}_{plot_suffix}_comparison.svg')
+            combined_chart.save(plot_path_svg)
+            print(f"Saved all datasets {metric_name} {plot_suffix} comparison plot (SVG) to: {plot_path_svg}")
+            
+            # Save HTML format (interactive SVG with tooltips)
+            plot_path_html = os.path.join(output_dir, f'{accuracy_col.lower()}_{plot_suffix}_comparison.html')
+            combined_chart.save(plot_path_html)
+            print(f"Saved all datasets {metric_name} {plot_suffix} comparison plot (HTML with tooltips) to: {plot_path_html}")
 
 
 def visualize_all_datasets_tradeoffs(datasets: list[str]):
@@ -254,9 +293,9 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '100_compare_compute')
     os.makedirs(output_dir, exist_ok=True)
     
-    # Focus on HOTA metric for visualization
-    metrics_list = ['HOTA']
-    print(f"Using metrics: {metrics_list}")
+    # Use all available metrics for visualization (will visualize all submetrics)
+    metrics_list = ['HOTA', 'Count']
+    print(f"Using metrics: {metrics_list} (will visualize all submetrics)")
     
     # Load SOTA tradeoff data (OTIF and LEAP)
     print("Loading SOTA tradeoff data...")
