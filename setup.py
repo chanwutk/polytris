@@ -94,6 +94,34 @@ extensions = [
         extra_compile_args=ARGS + ["-std=c++11"],
         language="c++",
     ),
+    Extension(
+        "polyis.tracker.ocsort.cython.kalman_filter",
+        ["polyis/tracker/ocsort/cython/kalman_filter.pyx"],
+        include_dirs=[numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
+    ),
+    Extension(
+        "polyis.tracker.ocsort.cython.association",
+        [
+            "polyis/tracker/ocsort/cython/association.pyx",
+            "modules/lap/_lapjv_cpp/lapjv.cpp",
+        ],
+        include_dirs=["modules/lap/_lapjv_cpp", numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c++11"],
+        language="c++",
+    ),
+    Extension(
+        "polyis.tracker.ocsort.cython.ocsort",
+        [
+            "polyis/tracker/ocsort/cython/ocsort.pyx",
+        ],
+        include_dirs=[numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c++11"],
+        language="c++",
+    ),
 ]
 
 
