@@ -8,6 +8,7 @@ import time
 import cv2
 import torch.multiprocessing as mp
 import queue
+import threading
 from functools import partial
 from typing import Callable
 import numpy as np
@@ -36,25 +37,29 @@ def parse_args():
     return parser.parse_args()
 
 
-def detect_worker(dataset: str, batch_queue: mp.Queue, result_queue: mp.Queue,
-                  len_images: int, batch_size: int, gpu_id: int):
+def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: queue.Queue,
+                         len_images: int, batch_size: int, gpu_id: int, stream: torch.cuda.Stream):
     """
-    Worker process for detecting objects in compressed images using auto-selected detector.
+    Worker thread for detecting objects in compressed images using auto-selected detector with CUDA streams.
     
-    Each process runs independently with its own Python interpreter and CUDA context,
-    enabling true parallel execution without GIL limitations.
+    Each thread uses its own CUDA stream to enable true parallel execution on the GPU.
+    The stream ensures that operations from different threads don't block each other.
+    All GPU operations (data transfer and inference) happen within the stream context,
+    and data transfers use non_blocking=True to allow overlap with computation.
     
     Args:
         dataset (str): Name of the dataset (used to auto-select detector)
-        batch_queue (mp.Queue): Queue containing batches of images to process (batch_start, batch_images)
-        result_queue (mp.Queue): Queue to send results back (batch_start, batch_end, detections)
+        batch_queue (queue.Queue): Queue containing batches of images to process (batch_start, batch_images)
+        result_queue (queue.Queue): Queue to send results back (batch_start, batch_end, detections)
         len_images (int): Total number of images to detect
         batch_size (int): Batch size for detection processing
         gpu_id (int): GPU ID to use for processing
+        stream (torch.cuda.Stream): CUDA stream for this thread's operations
     """
-    # Set the current device for this process
+    # Set the current device for this thread
     torch.cuda.set_device(gpu_id)
     
+    # Get detector instance for this thread
     detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len_images)
     
     with torch.no_grad(), torch.inference_mode():
@@ -67,17 +72,26 @@ def detect_worker(dataset: str, batch_queue: mp.Queue, result_queue: mp.Queue,
             batch_start, batch_images = batch_data
             batch_end = min(batch_start + len(batch_images), len_images)
             
-            # Run detection on the batch of images (already numpy arrays)
-            batch_output = polyis.models.detector.detect_batch(batch_images, detector)
+            # Run detection within the stream context for true parallelism
+            # All PyTorch operations (including data transfers and model inference) will
+            # be queued to this specific stream, allowing parallel execution with other streams
+            with torch.cuda.stream(stream):
+                # Run detection on the batch of images (already numpy arrays)
+                # The detect_batch function will handle device placement, and since we're
+                # in a stream context, PyTorch operations will use this stream
+                batch_output = polyis.models.detector.detect_batch(batch_images, detector)
             
-            # Send results back to main process
+            # Send results back to main thread
             result_queue.put((batch_start, batch_end, batch_output))
 
 
 def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
                     tilepadding: TilePadding, batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
-    Detect objects in compressed images using auto-selected detector.
+    Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
+    
+    Uses threading with CUDA streams to enable parallel execution of multiple detection operations
+    on the same GPU without blocking each other.
     
     Args:
         dataset_name (str): Name of the dataset (used to auto-select detector)
@@ -88,6 +102,9 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
+    # Enable cuDNN benchmarking for optimal performance
+    torch.backends.cudnn.benchmark = True
+    
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
     param_str = f'{classifier}_{tilesize}_{tilepadding}'
@@ -109,7 +126,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
     image_files.sort()  # Ensure consistent ordering
     print(f"Found {len(image_files)} image files")
     
-    # Read all images in the main process to avoid I/O overhead in worker processes
+    # Read all images in the main thread to avoid I/O overhead in worker threads
     print(f"Reading {len(image_files)} frames")
     frames: list[np.ndarray] = []
     for image_file in image_files:
@@ -120,24 +137,31 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         frames.append(frame)
     print(f"Read {len(frames)} frames")
 
-    num_processes = 2
+    num_threads = 2
     command_queue.put((device, {'description': f"{dataset} {video} {tilesize:>3} {classifier[:3]} {tilepadding[:3]}", 'completed': 0, 'total': len(image_files)}))
     with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
-        # Use multiprocessing queues for inter-process communication
-        batch_queue = mp.Queue()
-        result_queue = mp.Queue()
+        # Use thread-safe queues for inter-thread communication
+        batch_queue = queue.Queue()
+        result_queue = queue.Queue()
 
-        # Start worker processes
-        # Each process has its own Python interpreter and CUDA context, enabling true parallelism
-        processes = []
-        print(f"Starting {num_processes} processes for parallel GPU execution")
-        for i in range(num_processes):
-            process = mp.Process(target=detect_worker,
-                                 args=(dataset, batch_queue, result_queue,
-                                       len(image_files), batch_size, gpu_id))
-            processes.append(process)
-            process.start()
+        # Set device for main thread
+        torch.cuda.set_device(gpu_id)
+        
+        # Create unique CUDA streams for each worker thread
+        # Each stream allows independent parallel execution on the GPU
+        streams = [torch.cuda.Stream(device=gpu_id) for _ in range(num_threads)]
+        
+        # Start worker threads
+        # Each thread uses its own CUDA stream to enable true parallelism
+        threads = []
+        print(f"Starting {num_threads} threads with CUDA streams for parallel GPU execution")
+        for i in range(num_threads):
+            thread = threading.Thread(target=detect_worker_thread,
+                                       args=(dataset, batch_queue, result_queue,
+                                             len(image_files), batch_size, gpu_id, streams[i]))
+            threads.append(thread)
+            thread.start()
 
         # Queue all batches with images for processing
         num_batches = (len(image_files) + batch_size - 1) // batch_size
@@ -151,11 +175,11 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
             # Pass batch of numpy arrays through queue
             batch_queue.put((batch_start, batch_images))
         
-        # Signal processes to stop by sending None for each process
-        for i in range(num_processes):
+        # Signal threads to stop by sending None for each thread
+        for i in range(num_threads):
             batch_queue.put(None)
         
-        # Collect results from all processes
+        # Collect results from all threads
         # Results may arrive out of order, so we collect them all first
         results_dict: dict[int, polyis.dtypes.DetArray] = {}
         completed_batches = 0
@@ -168,12 +192,13 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
             completed_batches += 1
             command_queue.put((device, {'completed': min(batch_end, len(image_files))}))
         
-        # Wait for all processes to finish
-        for process in processes:
-            process.join()
-            process.terminate()
+        # Wait for all threads to finish
+        for thread in threads:
+            thread.join()
         
-        # Ensure all GPU work is complete
+        # Synchronize all streams to ensure all GPU work is complete
+        for stream in streams:
+            stream.synchronize()
         torch.cuda.synchronize()
         end_time = (time.time_ns() / 1e6)
         
