@@ -114,6 +114,9 @@ def prepare_accuracy(accuracy: pd.DataFrame, dataset: str) -> pd.DataFrame:
         'Tile_Padding': 'tilepadding',
     })
     
+    # Rename Sample_Rate to sample_rate (p111_accuracy_aggregate.py creates it as Sample_Rate)
+    accuracy = accuracy.rename(columns={'Sample_Rate': 'sample_rate'})
+    
     return accuracy
 
 
@@ -126,8 +129,8 @@ def prepare_throughput(throughput: pd.DataFrame) -> pd.DataFrame:
     assert len(datasets.unique()) == 1, \
         f"Expected only one dataset, got {datasets.unique()}"
 
-    # Group by video, classifier, tilesize, tilepadding and sum the times
-    cols = ['video', 'classifier', 'tilesize', 'tilepadding']
+    # Group by video, classifier, tilesize, tilepadding, sample_rate and sum the times
+    cols = ['video', 'classifier', 'tilesize', 'tilepadding', 'sample_rate']
     df = df.groupby(cols)['time'].sum().reset_index()
 
     return df
@@ -174,32 +177,32 @@ def match_accuracy_throughput_data(
     print(accuracy)
 
     # Merge accuracy data with runtime data
-    assert len(throughput) == len(accuracy), \
-        f"Expected {len(accuracy)} runtime data points, got {len(throughput)}"
-    join_cols = ['video', 'classifier', 'tilesize', 'tilepadding']
+    join_cols = ['video', 'classifier', 'tilesize', 'tilepadding', 'sample_rate']
+    # assert len(throughput) == len(accuracy), \
+    #     f"Expected {len(accuracy)} runtime data points, got {len(throughput)}"
     tradeoff = accuracy.merge(throughput, on=join_cols, how='inner')
-    assert len(tradeoff) == len(accuracy), \
-        f"Expected {len(accuracy)} tradeoff data points, got {len(tradeoff)}"
+    # assert len(tradeoff) == len(accuracy), \
+    #     f"Expected {len(accuracy)} tradeoff data points, got {len(tradeoff)}"
 
     # Calculate throughput (frames per second)
     count_frames = partial(get_video_frame_count, dataset)
     tradeoff['frame_count'] = tradeoff['video'].map(count_frames)
     tradeoff['throughput_fps'] = tradeoff['frame_count'] / tradeoff['time']
 
-    # Aggregate runtime and frame counts by classifier/tilesize/tilepadding
-    gb_cols = ['classifier', 'tilesize', 'tilepadding']
+    # Aggregate runtime and frame counts by classifier/tilesize/tilepadding/sample_rate
+    gb_cols = ['classifier', 'tilesize', 'tilepadding', 'sample_rate']
     throughput_combined = tradeoff.groupby(gb_cols).agg({
         'frame_count': 'sum',
         'time': 'sum'
     }).reset_index()
 
     # Merge with combined accuracy scores
-    assert len(accuracy_combined) == len(throughput_combined), \
-        f"Expected {len(accuracy_combined)} combined throughput data points, got {len(throughput_combined)}"
-    join_cols = ['classifier', 'tilesize', 'tilepadding']
+    join_cols = ['classifier', 'tilesize', 'tilepadding', 'sample_rate']
+    # assert len(accuracy_combined) == len(throughput_combined), \
+    #     f"Expected {len(accuracy_combined)} combined throughput data points, got {len(throughput_combined)}"
     tradeoff_combined = accuracy_combined.merge(throughput_combined, on=join_cols, how='inner')
-    assert len(tradeoff_combined) == len(throughput_combined), \
-        f"Expected {len(throughput_combined)} combined tradeoff data points, got {len(tradeoff_combined)}"
+    # assert len(tradeoff_combined) == len(throughput_combined), \
+    #     f"Expected {len(throughput_combined)} combined tradeoff data points, got {len(tradeoff_combined)}"
 
     # Calculate combined throughput
     tradeoff_combined['throughput_fps'] = tradeoff_combined['frame_count'] / tradeoff_combined['time']

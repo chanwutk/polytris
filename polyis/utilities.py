@@ -1318,7 +1318,7 @@ def tradeoff_scatter_and_naive_baseline(base_chart: "alt.Chart", x_column: str, 
         x=alt.X(f'{x_column}:Q', title=x_title),
         y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **scale),  # type: ignore
         color=alt.Color('classifier:N', title='Classifier'),
-        tooltip=['video', 'classifier', size_field, x_column, accuracy_col]
+        tooltip=['video', 'classifier', size_field, 'sample_rate', 'tilepadding', x_column, accuracy_col]
     ).properties(
         width=150,
         height=150

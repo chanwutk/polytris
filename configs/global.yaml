@@ -1,22 +1,22 @@
 EXEC:
   DATASETS:
-    - caldot1-y11
-    - caldot2-y11
+    # - caldot1-y11
+    # - caldot2-y11
     - caldot1-y05
     - caldot2-y05
     - jnc0
     - jnc2
     - jnc6
     - jnc7
-    - caldot1
-    - caldot2
+    # - caldot1
+    # - caldot2
     # - ams
   VIDEO_SETS:
     - valid
     - test
   CLASSIFIERS:
     # - YoloN
-    - ShuffleNet05
+    # - ShuffleNet05
     - MobileNetS
     - Perfect
   TILE_SIZES:
@@ -29,6 +29,13 @@ EXEC:
     - bl
     # - br
     - square
+
+  SAMPLE_RATES:
+    - 1
+    - 2
+    - 4
+    - 8
+    # - 16
 
 DATA:
   SOURCE_DIR: /polyis-data/sources

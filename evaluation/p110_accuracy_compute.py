@@ -24,6 +24,7 @@ from polyis.utilities import get_config
 config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
+SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -47,12 +48,12 @@ def parse_args():
     return parser.parse_args()
 
 
-def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[tuple[str, int, str]]]:
+def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[tuple[str, int, str, int]]]:
     """
-    Find all videos and classifier/tilesize/tilepadding combinations with tracking results.
+    Find all videos and classifier/tilesize/tilepadding/sample_rate combinations with tracking results.
 
     Scans the execution directory to discover all available videos and their
-    corresponding classifier/tilesize/tilepadding combinations that have both tracking
+    corresponding classifier/tilesize/tilepadding/sample_rate combinations that have both tracking
     results and groundtruth data available.
 
     Args:
@@ -60,14 +61,14 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
         dataset (str): Dataset name
 
     Returns:
-        tuple[set[str], set[tuple[str, int, str]]]: Set of video names and set of (classifier, tilesize, tilepadding) tuples
+        tuple[set[str], set[tuple[str, int, str, int]]]: Set of video names and set of (classifier, tilesize, tilepadding, sample_rate) tuples
     """
     # Construct path to dataset execution directory
     dataset_cache_dir = os.path.join(cache_dir, dataset, 'execution')
     assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
 
-    # Collect all video-classifier-tilesize-tilepadding combinations
-    video_tile_combinations: list[tuple[str, str, int, str]] = []
+    # Collect all video-classifier-tilesize-tilepadding-sample_rate combinations
+    video_tile_combinations: list[tuple[str, str, int, str, int]] = []
 
     # Iterate through all video directories in the dataset
     for video_filename in os.listdir(dataset_cache_dir):
@@ -80,16 +81,17 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
             continue
         # assert os.path.exists(tracking_dir), f"Tracking directory {tracking_dir} does not exist"
 
-        # Iterate through all classifier-tilesize-tilepadding combinations
-        for classifier_tilesize_tilepadding in os.listdir(tracking_dir):
-            # Parse classifier, tile size, and tilepadding from directory name
-            parts = classifier_tilesize_tilepadding.split('_')
-            assert len(parts) == 3, f"Expected format 'classifier_tilesize_tilepadding', got '{classifier_tilesize_tilepadding}'"
-            classifier, tilesize, tilepadding = parts
+        # Iterate through all classifier-tilesize-tilepadding-sample_rate combinations
+        for classifier_tilesize_tilepadding_samplerate in os.listdir(tracking_dir):
+            # Parse classifier, tile size, tilepadding, and sample_rate from directory name
+            parts = classifier_tilesize_tilepadding_samplerate.split('_')
+            assert len(parts) == 4, f"Expected format 'classifier_tilesize_tilepadding_samplerate', got '{classifier_tilesize_tilepadding_samplerate}'"
+            classifier, tilesize, tilepadding, sample_rate_str = parts
             ts = int(tilesize)
+            sample_rate = int(sample_rate_str)
 
             # Construct paths to tracking and groundtruth files
-            tracking_path = os.path.join(tracking_dir, f'{classifier}_{ts}_{tilepadding}', 'tracking.jsonl')
+            tracking_path = os.path.join(tracking_dir, f'{classifier}_{ts}_{tilepadding}_{sample_rate}', 'tracking.jsonl')
             groundtruth_path = os.path.join(video_dir, '003_groundtruth', 'tracking.jsonl')
 
             # Verify both tracking results and groundtruth exist
@@ -97,36 +99,36 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
             assert os.path.exists(groundtruth_path), f"Groundtruth path {groundtruth_path} does not exist"
 
             # Add this combination to our list
-            video_tile_combinations.append((video_filename, classifier, ts, tilepadding))
-            print(f"Found tracking results: {video_filename} with tile size {ts} and tilepadding {tilepadding}")
+            video_tile_combinations.append((video_filename, classifier, ts, tilepadding, sample_rate))
+            print(f"Found tracking results: {video_filename} with tile size {ts}, tilepadding {tilepadding}, and sample_rate {sample_rate}")
 
-    # Extract unique classifier-tilesize-tilepadding combinations and video names
-    classifier_tilesizes = set((cl, ts, tilepadding) for _, cl, ts, tilepadding in video_tile_combinations)
-    videos = set(video for video, _, _, _ in video_tile_combinations)
+    # Extract unique classifier-tilesize-tilepadding-sample_rate combinations and video names
+    classifier_tilesizes = set((cl, ts, tilepadding, sample_rate) for _, cl, ts, tilepadding, sample_rate in video_tile_combinations)
+    videos = set(video for video, _, _, _, _ in video_tile_combinations)
 
-    # Validate that all videos have results for all classifier-tilesize-tilepadding combinations
+    # Validate that all videos have results for all classifier-tilesize-tilepadding-sample_rate combinations
     # This ensures we have complete data for multi-video evaluation
     video_tile_combinations_set = set(video_tile_combinations)
     assert len(video_tile_combinations_set) == len(video_tile_combinations), \
         f"Duplicate video-tile combinations: {video_tile_combinations_set}"
 
-    # Check completeness: every video should have results for every classifier-tilesize-tilepadding combination
+    # Check completeness: every video should have results for every classifier-tilesize-tilepadding-sample_rate combination
     for video in videos:
-        for cl, ts, tilepadding in classifier_tilesizes:
-            assert (video, cl, ts, tilepadding) in video_tile_combinations_set, \
-                f"Video-tile combination {video}-{cl}-{ts}-{tilepadding} ({dataset}) not found"
+        for cl, ts, tilepadding, sample_rate in classifier_tilesizes:
+            assert (video, cl, ts, tilepadding, sample_rate) in video_tile_combinations_set, \
+                f"Video-tile combination {video}-{cl}-{ts}-{tilepadding}-{sample_rate} ({dataset}) not found"
 
     return videos, classifier_tilesizes
 
 
 def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
-                               tilesize: int, tilepadding: str, metrics_list: list[str],
+                               tilesize: int, tilepadding: str, sample_rate: int, metrics_list: list[str],
                                output_dir: str, worker_id: int, worker_id_queue: "mp.Queue"):
     """
     Evaluate tracking accuracy for multiple videos using TrackEval.
 
     Performs a single evaluation across all videos in the dataset for the given
-    classifier, tile size, and tilepadding combination. Generates both combined dataset results
+    classifier, tile size, tilepadding, and sample_rate combination. Generates both combined dataset results
     and individual video results in a flattened directory structure.
 
     Args:
@@ -135,6 +137,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         classifier (str): Classifier used
         tilesize (int): Tile size used
         tilepadding (str): Tile padding parameter ('padded' or 'unpadded')
+        sample_rate (int): Sample rate used
         metrics_list (list[str]): List of metrics to evaluate
         output_dir (str): Output directory for results
 
@@ -143,10 +146,10 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         - {video}.json: Individual video results
         - LOG.txt: Evaluation logs and errors
     """
-    print(f"Evaluating {len(videos)} videos with classifier {classifier}, tile size {tilesize}, and tilepadding {tilepadding}")
+    print(f"Evaluating {len(videos)} videos with classifier {classifier}, tile size {tilesize}, tilepadding {tilepadding}, and sample_rate {sample_rate}")
 
-    # Create classifier-tilesize-tilepadding identifier for naming
-    clts = f'{classifier}_{tilesize}_{tilepadding}'
+    # Create classifier-tilesize-tilepadding-sample_rate identifier for naming
+    clts = f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}'
     input_track = os.path.join('060_uncompressed_tracks', clts, 'tracking.jsonl')
     if classifier == 'Groundtruth' or tilesize == 0 or tilepadding == 'Groundtruth':
         assert classifier == 'Groundtruth' and tilesize == 0 and tilepadding == 'Groundtruth', \
@@ -263,6 +266,7 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
             'classifier': classifier,
             'tilesize': tilesize,
             'tilepadding': tilepadding,
+            'sample_rate': sample_rate,
             'metrics': seq_metrics,
         }
 
@@ -290,11 +294,11 @@ def main(args):
 
     Note:
         - The script expects tracking results from 060_exec_track.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tilesize}_{tilepadding}/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tilesize}_{tilepadding}_{sample_rate}/tracking.jsonl
         - Groundtruth data should be in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/003_groundtruth/tracking.jsonl
         - Results are saved to:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{tilepadding}/
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{tilepadding}_{sample_rate}/
           ├── DATASET.json (combined results)
           ├── {video}.json (individual video results)
           └── LOG.txt (evaluation logs)
@@ -327,19 +331,19 @@ def main(args):
         os.makedirs(evaluation_dir, exist_ok=True)
         os.makedirs(os.path.join(evaluation_dir, 'raw'), exist_ok=True)
 
-        # Create one evaluation task per classifier/tilesize/tilepadding combination
+        # Create one evaluation task per classifier/tilesize/tilepadding/sample_rate combination
         # Each task will evaluate all videos in the dataset for that combination
-        for cl, ts, tilepadding in classifier_tilesizes:
-            output_dir = os.path.join(evaluation_dir, 'raw', f'{cl}_{ts}_{tilepadding}')
+        for cl, ts, tilepadding, sample_rate in classifier_tilesizes:
+            output_dir = os.path.join(evaluation_dir, 'raw', f'{cl}_{ts}_{tilepadding}_{sample_rate}')
             # Create a partial function with all arguments bound except the function call
             eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos,
-                                      cl, ts, tilepadding, metrics_list, output_dir))
-        output_dir = os.path.join(evaluation_dir, 'raw', 'Groundtruth_0_Groundtruth')
-        eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos, 'Groundtruth', 0, 'Groundtruth', metrics_list, output_dir))
+                                      cl, ts, tilepadding, sample_rate, metrics_list, output_dir))
+        output_dir = os.path.join(evaluation_dir, 'raw', 'Groundtruth_0_Groundtruth_1')
+        eval_tasks.append(partial(evaluate_tracking_accuracy, dataset, videos, 'Groundtruth', 0, 'Groundtruth', 1, metrics_list, output_dir))
 
     # Validate that we found some evaluation tasks
     assert len(eval_tasks) > 0, "No tracking results found. Please ensure 060_exec_track.py has been run first."
-    print(f"Found {len(eval_tasks)} classifier-tile size-tilepadding combinations to evaluate")
+    print(f"Found {len(eval_tasks)} classifier-tile size-tilepadding-sample_rate combinations to evaluate")
 
     # Execute evaluation tasks either sequentially or in parallel
     # Parallel execution: start all processes simultaneously

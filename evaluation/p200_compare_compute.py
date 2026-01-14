@@ -230,12 +230,12 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                     alt.value(100),  # Larger size for groundtruth
                     alt.value(50)   # Normal size for others
                 ),
-                shape=alt.condition(
-                    (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Naive'),
-                    alt.Shape('classifier:N', title='Polytris\' Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['triangle', 'diamond'])),
-                    alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
-                ),
-                tooltip=['system', 'dataset', 'classifier', 'tilepadding', x_column, accuracy_col]
+                # shape=alt.condition(
+                #     (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Naive'),
+                #     alt.Shape('classifier:N', title='Polytris\' Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['triangle', 'diamond'])),
+                #     alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
+                # ),
+                tooltip=['system', 'dataset', 'classifier', 'tilepadding', 'sample_rate', x_column, accuracy_col]
             )
             
             base_line = base_chart.mark_line(

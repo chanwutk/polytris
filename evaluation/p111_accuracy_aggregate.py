@@ -14,11 +14,11 @@ CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
-def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, str]]:
+def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, str, int]]:
     """
-    Find all classifier/tilesize/tilepadding combinations with saved accuracy results.
+    Find all classifier/tilesize/tilepadding/sample_rate combinations with saved accuracy results.
     
-    Scans the evaluation directory to discover all classifier/tilesize/tilepadding combinations
+    Scans the evaluation directory to discover all classifier/tilesize/tilepadding/sample_rate combinations
     that have completed accuracy evaluation results available.
     
     Args:
@@ -26,7 +26,7 @@ def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, str
         dataset (str): Dataset name
         
     Returns:
-        list[tuple[str, int, str]]: list of (classifier, tilesize, tilepadding) tuples
+        list[tuple[str, int, str, int]]: list of (classifier, tilesize, tilepadding, sample_rate) tuples
     """
     # Construct path to evaluation directory for this dataset
     evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_accuracy')
@@ -36,24 +36,25 @@ def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, str
     raw_dir = os.path.join(evaluation_dir, 'raw')
     assert os.path.exists(raw_dir), f"Raw results directory {raw_dir} does not exist"
     
-    # Collect all classifier/tilesize/tilepadding combinations
-    classifier_tile_combinations: list[tuple[str, int, str]] = []
+    # Collect all classifier/tilesize/tilepadding/sample_rate combinations
+    classifier_tile_combinations: list[tuple[str, int, str, int]] = []
     
-    # Iterate through all classifier-tilesize-tilepadding directories
-    for classifier_tilesize_tilepadding in os.listdir(raw_dir):
-        # Parse classifier, tile size, and tilepadding from directory name
-        parts = classifier_tilesize_tilepadding.split('_')
-        assert len(parts) == 3, f"Expected format 'classifier_tilesize_tilepadding', got '{classifier_tilesize_tilepadding}'"
-        classifier, tilesize, tilepadding = parts
+    # Iterate through all classifier-tilesize-tilepadding-sample_rate directories
+    for classifier_tilesize_tilepadding_samplerate in os.listdir(raw_dir):
+        # Parse classifier, tile size, tilepadding, and sample_rate from directory name
+        parts = classifier_tilesize_tilepadding_samplerate.split('_')
+        assert len(parts) == 4, f"Expected format 'classifier_tilesize_tilepadding_samplerate', got '{classifier_tilesize_tilepadding_samplerate}'"
+        classifier, tilesize, tilepadding, sample_rate_str = parts
         ts = int(tilesize)
+        sample_rate = int(sample_rate_str)
         
         # Verify that the required DATASET.json file exists
         # This ensures the evaluation was completed successfully
-        dataset_results_path = os.path.join(raw_dir, f'{classifier}_{ts}_{tilepadding}', 'DATASET.json')
+        dataset_results_path = os.path.join(raw_dir, f'{classifier}_{ts}_{tilepadding}_{sample_rate}', 'DATASET.json')
         assert os.path.exists(dataset_results_path), f"Dataset results path {dataset_results_path} does not exist"
         
         # Add this combination to our list
-        classifier_tile_combinations.append((classifier, ts, tilepadding))
+        classifier_tile_combinations.append((classifier, ts, tilepadding, sample_rate))
     
     return classifier_tile_combinations
 
@@ -77,6 +78,7 @@ def parse_result(result: dict) -> dict:
         'Classifier': result['classifier'],
         'Tile_Size': result['tilesize'],
         'Tile_Padding': result['tilepadding'],
+        'Sample_Rate': result.get('sample_rate', 1),  # Default to 1 for backward compatibility
     }
 
     metrics = result['metrics']
@@ -123,9 +125,9 @@ def load_saved_results(dataset: str, combined: bool = False) -> pd.DataFrame:
     evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
     raw_dir = os.path.join(evaluation_dir, 'raw')
     
-    # Process each classifier/tilesize/tilepadding combination
-    for classifier, tilesize, tilepadding in classifier_tile_combinations:
-        combination_dir = os.path.join(raw_dir, f'{classifier}_{tilesize}_{tilepadding}')
+    # Process each classifier/tilesize/tilepadding/sample_rate combination
+    for classifier, tilesize, tilepadding, sample_rate in classifier_tile_combinations:
+        combination_dir = os.path.join(raw_dir, f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}')
         
         # Load result files based on the combined parameter
         for filename in os.listdir(combination_dir):
