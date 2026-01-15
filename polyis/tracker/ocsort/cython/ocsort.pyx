@@ -4,8 +4,6 @@
 # cython: cdivision=True
 # cython: nonecheck=False
 
-from __future__ import print_function
-
 import numpy as np
 cimport numpy as cnp
 cimport cython
@@ -339,11 +337,11 @@ cdef void k_previous_obs_internal(double *history_obs, int history_len, int age,
 cdef class KalmanBoxTrackerPy:
     cdef KalmanBoxTracker *tracker
     cdef object observations_dict  # Python dict for observations
-    cdef object history_observations  # Python list for history
+    cdef int history_len
     cdef double *history_obs_array
     cdef int history_array_size
     
-    def __cinit__(self, bbox, delta_t=3):
+    def __cinit__(self, bbox, delta_t) -> None:
         global _kalman_box_tracker_count
         self.tracker = <KalmanBoxTracker*>malloc(sizeof(KalmanBoxTracker))
         cdef double bbox_arr[4]
@@ -355,7 +353,6 @@ cdef class KalmanBoxTrackerPy:
         _kalman_box_tracker_count += 1
         
         self.observations_dict = {}
-        self.history_observations = []
         self.history_array_size = 1000
         self.history_obs_array = <double*>calloc(self.history_array_size * 4, sizeof(double))
     
@@ -367,7 +364,7 @@ cdef class KalmanBoxTrackerPy:
     
     def update(self, bbox):
         cdef double bbox_arr[5]
-        cdef int history_len = len(self.history_observations)
+        cdef int history_len = self.history_len
 
         if bbox is not None:
             bbox_arr[0] = bbox[0]
@@ -381,8 +378,6 @@ cdef class KalmanBoxTrackerPy:
 
             # Update observations dict
             self.observations_dict[self.tracker.age] = bbox
-            # Add to history observations
-            self.history_observations.append(bbox)
 
             # Update Kalman filter
             KalmanBoxTracker_update(self.tracker, bbox_arr, self.history_obs_array, &history_len)
