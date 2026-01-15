@@ -181,17 +181,14 @@ cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox, double *
     cdef int obs_idx
     cdef double sum_val
     cdef double w, h
-    cdef int hist_idx
     cdef KalmanFilter *kf_ptr
-    cdef int hist_len
-    cdef int max_hist
-    
+
     if bbox is not NULL:
         # Check if we have a previous observation
         if self.last_observation[0] >= 0:
             # Find previous box for velocity calculation
             found = 0
-            
+
             # Try to find observation delta_t steps ago
             for i in range(self.delta_t):
                 dt = self.delta_t - i
@@ -215,12 +212,12 @@ cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox, double *
                             prev_bbox[1] = previous_box[1] - h/2.0
                             prev_bbox[2] = previous_box[0] + w/2.0
                             prev_bbox[3] = previous_box[1] + h/2.0
-                            
+
                             speed_direction_internal(prev_bbox, bbox, self.velocity)
                             self.has_velocity = 1
                             found = 1
                             break
-            
+
             if not found:
                 # Use last observation
                 prev_bbox[0] = self.last_observation[0]
@@ -229,7 +226,7 @@ cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox, double *
                 prev_bbox[3] = self.last_observation[3]
                 speed_direction_internal(prev_bbox, bbox, self.velocity)
                 self.has_velocity = 1
-        
+
         # Update last observation
         self.last_observation[0] = bbox[0]
         self.last_observation[1] = bbox[1]
@@ -237,37 +234,22 @@ cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox, double *
         self.last_observation[3] = bbox[3]
         if bbox[4] > 0:
             self.last_observation[4] = bbox[4]
-        
-        # Add to history (convert bbox to z format)
-        convert_bbox_to_z(bbox, z)
-        if history_len[0] < self.max_history:
-            hist_idx = history_len[0] * 4
-            history_obs[hist_idx + 0] = z[0]
-            history_obs[hist_idx + 1] = z[1]
-            history_obs[hist_idx + 2] = z[2]
-            history_obs[hist_idx + 3] = z[3]
-            history_len[0] += 1
-        
+
+        # Note: History is NOT added here to avoid double-addition with Python wrapper
+        # The Python wrapper manages history_observations list entirely
+
         self.time_since_update = 0
         self.hits += 1
         self.hit_streak += 1
-        
+
         # Update Kalman filter
-        # Check if we need to unfreeze (got observation after freeze)
         kf_ptr = &self.kf
-        hist_len = history_len[0]
-        max_hist = self.max_history
-        if not self.kf.observed and self.kf.has_saved:
-            # Unfreeze and perform online smoothing
-            kf_unfreeze(kf_ptr, history_obs, hist_len, max_hist)
+        convert_bbox_to_z(bbox, z)
         kf_update(kf_ptr, z)
     else:
-        # No observation - freeze the filter
+        # No observation - update without measurement
         kf_ptr = &self.kf
-        if self.kf.observed:
-            kf_freeze(kf_ptr)
-        self.kf.observed = 0
-        # Update with None (no-op in our implementation, but mark as not observed)
+        convert_bbox_to_z(bbox, z)
         kf_update(kf_ptr, NULL)
 
 
@@ -385,10 +367,8 @@ cdef class KalmanBoxTrackerPy:
     
     def update(self, bbox):
         cdef double bbox_arr[5]
-        cdef double z[4]
         cdef int history_len = len(self.history_observations)
-        cdef int idx
-        
+
         if bbox is not None:
             bbox_arr[0] = bbox[0]
             bbox_arr[1] = bbox[1]
@@ -398,22 +378,16 @@ cdef class KalmanBoxTrackerPy:
                 bbox_arr[4] = bbox[4]
             else:
                 bbox_arr[4] = 1.0
-            
+
             # Update observations dict
             self.observations_dict[self.tracker.age] = bbox
+            # Add to history observations
             self.history_observations.append(bbox)
-            
+
+            # Update Kalman filter
             KalmanBoxTracker_update(self.tracker, bbox_arr, self.history_obs_array, &history_len)
-            
-            # Sync history array
-            if len(self.history_observations) <= self.history_array_size:
-                convert_bbox_to_z(bbox_arr, z)
-                idx = (len(self.history_observations) - 1) * 4
-                self.history_obs_array[idx + 0] = z[0]
-                self.history_obs_array[idx + 1] = z[1]
-                self.history_obs_array[idx + 2] = z[2]
-                self.history_obs_array[idx + 3] = z[3]
         else:
+            # Update without observation
             KalmanBoxTracker_update(self.tracker, NULL, self.history_obs_array, &history_len)
     
     def predict(self):
@@ -424,7 +398,8 @@ cdef class KalmanBoxTrackerPy:
     def get_state(self):
         cdef double bbox[4]
         KalmanBoxTracker_get_state(self.tracker, bbox)
-        return np.array([bbox[0], bbox[1], bbox[2], bbox[3]])
+        # Return shape (1, 4) to match Python version
+        return np.array([bbox[0], bbox[1], bbox[2], bbox[3]]).reshape((1, 4))
     
     @property
     def time_since_update(self):
@@ -636,7 +611,7 @@ cdef public class OCSort [object OCSortObject, type OCSortType]:
         i = len(self.trackers)
         for trk in reversed(self.trackers):
             if trk.last_observation.sum() < 0:
-                d = trk.get_state()
+                d = trk.get_state()[0]
             else:
                 d = trk.last_observation[:4]
             if (trk.time_since_update < 1) and (trk.hit_streak >= self.min_hits or self.frame_count <= self.min_hits):
