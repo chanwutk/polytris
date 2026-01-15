@@ -54,6 +54,7 @@ TRACK_COLORS = [
 
 
 video_frame_counts: dict[tuple[str, str], int] = {}
+video_resolutions: dict[tuple[str, str], tuple[int, int]] = {}
 
 
 def get_video_frame_count(dataset: str, video: str) -> int:
@@ -82,6 +83,37 @@ def get_video_frame_count(dataset: str, video: str) -> int:
 
     video_frame_counts[(dataset, video)] = frame_count
     return frame_count
+
+
+def get_video_resolution(dataset: str, video: str) -> tuple[int, int]:
+    """
+    Get the resolution (width, height) of a video using OpenCV.
+
+    Args:
+        dataset (str): Dataset name
+        video (str): Video name (with extension, e.g., 'te01.mp4')
+
+    Returns:
+        tuple[int, int]: Video resolution as (width, height)
+    """
+    if (dataset, video) in video_resolutions:
+        return video_resolutions[(dataset, video)]
+    
+    split = {'te': 'test', 'va': 'valid', 'tr': 'train'}
+    video_path = os.path.join(DATASETS_DIR, dataset, split[video[:2]], video)
+    assert os.path.exists(video_path), f"Video file not found for {dataset}/{video}"
+    
+    # Open video and get resolution
+    cap = cv2.VideoCapture(video_path)
+    assert cap.isOpened(), f"Could not open video {video_path}"
+    
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    cap.release()
+
+    resolution = (width, height)
+    video_resolutions[(dataset, video)] = resolution
+    return resolution
 
 
 def get_num_frames(video_file_path: str) -> int:
@@ -473,15 +505,13 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str,
     return results
 
 
-def create_tracker(tracker_name: str):
+def create_tracker(tracker_name: str, img_size: tuple[int, int]):
     """
     Create a tracker instance based on the specified algorithm.
     
     Args:
         tracker_name (str): Name of the tracking algorithm
-        max_age (int): Maximum age for SORT tracker
-        min_hits (int): Minimum hits for SORT tracker
-        iou_threshold (float): IOU threshold for SORT tracker
+        img_size (tuple[int, int]): Image size as (height, width)
         
     Returns:
         Tracker instance
@@ -504,6 +534,21 @@ def create_tracker(tracker_name: str):
             from polyis.tracker.ocsort.ocsort_wrapper import OCSort
             config = configs['ocsort']
             return OCSort(
+                img_size=img_size,
+                det_thresh=config['det_thresh'],
+                max_age=config['max_age'],
+                min_hits=config['min_hits'],
+                iou_threshold=config['iou_threshold'],
+                delta_t=config['delta_t'],
+                asso_func=config['asso_func'],
+                inertia=config['inertia'],
+                use_byte=config['use_byte']
+            )
+        if tracker_name == 'ocsortcython':
+            from polyis.tracker.ocsort.cython.ocsort_wrapper import OCSort as OCSortCython
+            config = configs['ocsort']
+            return OCSortCython(
+                img_size=img_size,
                 det_thresh=config['det_thresh'],
                 max_age=config['max_age'],
                 min_hits=config['min_hits'],
@@ -517,6 +562,7 @@ def create_tracker(tracker_name: str):
             from polyis.tracker.bytetrack import ByteTrack
             config = configs['bytetrack']
             return ByteTrack(
+                img_size=img_size,
                 track_thresh=config['track_thresh'],
                 match_thresh=config['match_thresh'],
                 track_buffer=config['track_buffer'],

@@ -20,8 +20,8 @@ import numpy as np
 import numpy.typing as npt
 
 from polyis.b3d.sort import Sort as SortB3D
-from polyis.tracker.cython.sort import Sort as SortCython  # type: ignore
-from polyis.tracker.cython.sort import reset_tracker_count as reset_sort_count
+from polyis.tracker.sort.cython.sort import Sort as SortCython  # type: ignore
+from polyis.tracker.sort.cython.sort import reset_tracker_count as reset_sort_count
 from polyis.tracker.ocsort.ocsort import OCSort as OCSortPython
 from polyis.tracker.ocsort.cython.ocsort import OCSort as OCSortCython  # type: ignore
 from polyis.tracker.ocsort.cython.ocsort import reset_tracker_count as reset_ocsort_count

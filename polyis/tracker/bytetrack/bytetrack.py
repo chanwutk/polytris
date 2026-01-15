@@ -43,6 +43,7 @@ class ByteTrack:
     
     def __init__(
         self,
+        img_size: tuple[int, int],
         track_thresh: float = 0.5,
         match_thresh: float = 0.8,
         track_buffer: int = 30,
@@ -53,6 +54,7 @@ class ByteTrack:
         Initialize ByteTrack tracker.
         
         Args:
+            img_size: Image size as (height, width)
             track_thresh: Detection confidence threshold for tracking
             match_thresh: IOU threshold for matching detections to tracks
             track_buffer: Number of frames to keep lost tracks before removal
@@ -67,6 +69,7 @@ class ByteTrack:
         )
         self.tracker = _BYTETracker(args, frame_rate=frame_rate)
         self.frame_count = 0
+        self.img_size = img_size
         
     def update(self, dets: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
@@ -100,22 +103,10 @@ class ByteTrack:
         # ByteTrack expects [x1, y1, x2, y2, score] or [x1, y1, x2, y2, score, class]
         output_results = np.column_stack([bboxes, scores])
         
-        # ByteTrack requires img_info and img_size for scaling bboxes
-        # Since we don't have this info, estimate from bboxes or use defaults
-        # Set img_size equal to img_info so scale = 1.0 (no scaling)
-        # TODO: Fix this
-        if len(bboxes) > 0:
-            max_h = int(np.max(bboxes[:, 3]) + 1)
-            max_w = int(np.max(bboxes[:, 2]) + 1)
-            img_info = (max_h, max_w)
-            img_size = img_info
-        else:
-            # Default HD resolution when no detections
-            img_info = (1080, 1920)
-            img_size = img_info
+        img_info = self.img_size
         
         # Update ByteTrack tracker
-        online_targets = self.tracker.update(output_results, img_info, img_size)
+        online_targets = self.tracker.update(output_results, img_info, img_info)
         
         # Convert STrack objects to output format [[x1, y1, x2, y2, id], ...]
         if len(online_targets) == 0:

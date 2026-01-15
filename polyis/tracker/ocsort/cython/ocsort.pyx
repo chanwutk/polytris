@@ -166,7 +166,7 @@ cdef void KalmanBoxTracker_init(KalmanBoxTracker *self, double *bbox, int id, in
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox, double *history_obs, int *history_len) noexcept nogil:
+cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox, double *history_obs, int history_len) noexcept nogil:
     """
     Update state vector with observed bbox.
     """
@@ -190,10 +190,10 @@ cdef void KalmanBoxTracker_update(KalmanBoxTracker *self, double *bbox, double *
             # Try to find observation delta_t steps ago
             for i in range(self.delta_t):
                 dt = self.delta_t - i
-                if self.age - dt >= 0 and self.age - dt < history_len[0]:
+                if self.age - dt >= 0 and self.age - dt < history_len:
                     # Check if observation exists (not all zeros)
                     obs_idx = (self.age - dt) * 4
-                    if obs_idx < history_len[0] * 4:
+                    if obs_idx < history_len * 4:
                         sum_val = 0.0
                         for j in range(4):
                             sum_val += fabs(history_obs[obs_idx + j])
@@ -366,24 +366,25 @@ cdef class KalmanBoxTrackerPy:
         cdef double bbox_arr[5]
         cdef int history_len = self.history_len
 
-        if bbox is not None:
-            bbox_arr[0] = bbox[0]
-            bbox_arr[1] = bbox[1]
-            bbox_arr[2] = bbox[2]
-            bbox_arr[3] = bbox[3]
-            if len(bbox) > 4:
-                bbox_arr[4] = bbox[4]
-            else:
-                bbox_arr[4] = 1.0
-
-            # Update observations dict
-            self.observations_dict[self.tracker.age] = bbox
-
-            # Update Kalman filter
-            KalmanBoxTracker_update(self.tracker, bbox_arr, self.history_obs_array, &history_len)
+        bbox_arr[0] = bbox[0]
+        bbox_arr[1] = bbox[1]
+        bbox_arr[2] = bbox[2]
+        bbox_arr[3] = bbox[3]
+        if len(bbox) > 4:
+            bbox_arr[4] = bbox[4]
         else:
-            # Update without observation
-            KalmanBoxTracker_update(self.tracker, NULL, self.history_obs_array, &history_len)
+            bbox_arr[4] = 1.0
+
+        # Update observations dict
+        self.observations_dict[self.tracker.age] = bbox
+
+        # Update Kalman filter
+        KalmanBoxTracker_update(self.tracker, bbox_arr, self.history_obs_array, history_len)
+    
+    def update_none(self):
+        # Update without observation
+        cdef int history_len = self.history_len
+        KalmanBoxTracker_update(self.tracker, NULL, self.history_obs_array, history_len)
     
     def predict(self):
         cdef double bbox[4]
@@ -596,7 +597,7 @@ cdef public class OCSort [object OCSortObject, type OCSortType]:
                 unmatched_trks = np.setdiff1d(unmatched_trks, np.array(to_remove_trk_indices))
         
         for m in unmatched_trks:
-            self.trackers[m].update(None)
+            self.trackers[m].update_none()
         
         # Create and initialize new trackers for unmatched detections
         for i in unmatched_dets:
