@@ -16,6 +16,7 @@ CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 DATASETS = config['EXEC']['DATASETS']
 TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
 SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
+TRACKERS = config['EXEC']['TRACKERS']
 
 
 def discover_available_videos(datasets: list[str]):
@@ -208,21 +209,36 @@ def gather_query_execution_data(datasets_videos):
                         assert os.path.exists(uncompress_path), f"Uncompress path {uncompress_path} does not exist"
                         runtime_files.append(('050_exec_uncompress', uncompress_path))
                         
-                        # 060_exec_track.py
-                        track_path = os.path.join(video_path, '060_uncompressed_tracks', cl_ts_tp_sr, 'runtimes.jsonl')
-                        assert os.path.exists(track_path), f"Track path {track_path} does not exist"
-                        runtime_files.append(('060_exec_track', track_path))
+                        # Add non-tracking stages
+                        for stage, runtime_file in runtime_files:
+                            query_data.append({
+                                'dataset': dataset,
+                                'video': video,
+                                'classifier': classifier,
+                                'tilesize': tilesize,
+                                'tilepadding': tilepadding,
+                                'sample_rate': sample_rate,
+                                'tracker': None,
+                                'stage': stage,
+                                'runtime_file': runtime_file
+                            })
                         
-                        query_data.extend({
-                            'dataset': dataset,
-                            'video': video,
-                            'classifier': classifier,
-                            'tilesize': tilesize,
-                            'tilepadding': tilepadding,
-                            'sample_rate': sample_rate,
-                            'stage': stage,
-                            'runtime_file': runtime_file
-                        } for stage, runtime_file in runtime_files)
+                        # 060_exec_track.py - loop over trackers
+                        for tracker_name in TRACKERS:
+                            cl_ts_tp_sr_tr = f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}_{tracker_name}'
+                            track_path = os.path.join(video_path, '060_uncompressed_tracks', cl_ts_tp_sr_tr, 'runtimes.jsonl')
+                            assert os.path.exists(track_path), f"Track path {track_path} does not exist"
+                            query_data.append({
+                                'dataset': dataset,
+                                'video': video,
+                                'classifier': classifier,
+                                'tilesize': tilesize,
+                                'tilepadding': tilepadding,
+                                'sample_rate': sample_rate,
+                                'tracker': tracker_name,
+                                'stage': '060_exec_track',
+                                'runtime_file': track_path
+                            })
     
     return query_data
 
@@ -250,7 +266,7 @@ def print_query_execution_table(query_data, write_line=print):
     write_line()
 
     df = pd.DataFrame.from_dict(query_data)
-    sizes = df.groupby(['dataset', 'classifier', 'tilesize', 'tilepadding', 'sample_rate']).size()
+    sizes = df.groupby(['dataset', 'classifier', 'tilesize', 'tilepadding', 'sample_rate', 'tracker']).size()
     assert isinstance(sizes, pd.Series), "sizes is not a pandas DataFrame"
     write_line(sizes.reset_index(name='count').to_string(index=False))
 

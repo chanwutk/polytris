@@ -3,3 +3,20 @@ sort:
   min_hits: 1
   iou_threshold: 0.1
 
+ocsort:
+  det_thresh: 0.3
+  max_age: 30
+  min_hits: 1
+  iou_threshold: 0.3
+  delta_t: 3
+  asso_func: iou
+  inertia: 0.2
+  use_byte: false
+
+bytetrack:
+  track_thresh: 0.5
+  match_thresh: 0.8
+  track_buffer: 30
+  frame_rate: 30
+  mot20: false
+

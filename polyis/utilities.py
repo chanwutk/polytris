@@ -490,15 +490,39 @@ def create_tracker(tracker_name: str):
         ValueError: If the tracker name is not supported
     """
     with open('configs/trackers.yaml', 'r') as f:
+        configs = yaml.safe_load(f)
         if tracker_name == 'sort':
             # print(f"Creating SORT tracker with max_age={max_age}, min_hits={min_hits}, iou_threshold={iou_threshold}")
             from polyis.b3d.sort import Sort
-            config = yaml.safe_load(f)['sort']
+            config = configs['sort']
             return Sort(max_age=config['max_age'], min_hits=config['min_hits'], iou_threshold=config['iou_threshold'])
-        if tracker_name == 'sort-cython':
-            from polyis.tracker.cython.sort import Sort as SortCython
-            config = yaml.safe_load(f)['sort']
+        if tracker_name == 'sortcython':
+            from polyis.tracker.sort.cython.sort import Sort as SortCython
+            config = configs['sort']
             return SortCython(max_age=config['max_age'], min_hits=config['min_hits'], iou_threshold=config['iou_threshold'])
+        if tracker_name == 'ocsort':
+            from polyis.tracker.ocsort.ocsort_wrapper import OCSort
+            config = configs['ocsort']
+            return OCSort(
+                det_thresh=config['det_thresh'],
+                max_age=config['max_age'],
+                min_hits=config['min_hits'],
+                iou_threshold=config['iou_threshold'],
+                delta_t=config['delta_t'],
+                asso_func=config['asso_func'],
+                inertia=config['inertia'],
+                use_byte=config['use_byte']
+            )
+        if tracker_name == 'bytetrack':
+            from polyis.tracker.bytetrack import ByteTrack
+            config = configs['bytetrack']
+            return ByteTrack(
+                track_thresh=config['track_thresh'],
+                match_thresh=config['match_thresh'],
+                track_buffer=config['track_buffer'],
+                frame_rate=config['frame_rate'],
+                mot20=config['mot20']
+            )
         else:
             raise ValueError(f"Unknown tracker: {tracker_name}")
 

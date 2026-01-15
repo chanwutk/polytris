@@ -77,16 +77,16 @@ extensions = [
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.tracker.cython.kalman_filter",
-        ["polyis/tracker/cython/kalman_filter.pyx"],
+        "polyis.tracker.sort.cython.kalman_filter",
+        ["polyis/tracker/sort/cython/kalman_filter.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.tracker.cython.sort",
+        "polyis.tracker.sort.cython.sort",
         [
-            "polyis/tracker/cython/sort.pyx",
+            "polyis/tracker/sort/cython/sort.pyx",
             "modules/lap/_lapjv_cpp/lapjv.cpp",
         ],
         include_dirs=["modules/lap/_lapjv_cpp", numpy.get_include()],
@@ -121,6 +121,13 @@ extensions = [
         define_macros=MACROS,
         extra_compile_args=ARGS + ["-std=c++11"],
         language="c++",
+    ),
+    Extension(
+        "polyis.tracker.bytetrack.src.cython_bbox",
+        ["polyis/tracker/bytetrack/src/cython_bbox.pyx"],
+        include_dirs=[numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
     ),
 ]
 

@@ -18,7 +18,7 @@ EXEC:
     # - YoloN
     # - ShuffleNet05
     - MobileNetS
-    - Perfect
+    # - Perfect
   TILE_SIZES:
     - 60
   TILEPADDING_MODES:
@@ -29,7 +29,10 @@ EXEC:
     - bl
     # - br
     - square
-
+  TRACKERS:
+    - sortcython
+    # - ocsort
+    - bytetrack
   SAMPLE_RATES:
     - 1
     - 2
