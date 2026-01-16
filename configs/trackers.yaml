@@ -14,8 +14,8 @@ ocsort:
   use_byte: true
 
 bytetrack:
-  track_thresh: 0.6
-  match_thresh: 0.9
+  track_thresh: 0.5
+  match_thresh: 0.8
   track_buffer: 30
   frame_rate: 30
   mot20: false

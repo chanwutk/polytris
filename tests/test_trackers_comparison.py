@@ -5,10 +5,12 @@ Test suite for comparing tracking results and performance from multiple tracker 
 - polyis/tracker/sort/cython/sort.pyx (SORT Cython)
 - polyis/tracker/ocsort/ocsort.py (OC-SORT Python)
 - polyis/tracker/ocsort/cython/ocsort.pyx (OC-SORT Cython)
+- polyis/tracker/bytetrack/byte_tracker.py (ByteTrack Python)
+- polyis/tracker/bytetrack/cython/bytetrack.pyx (ByteTrack Cython)
 
 This test:
-1. Compares Python vs Cython correctness for both SORT and OC-SORT
-2. Compares performance (speed) across all four implementations
+1. Compares Python vs Cython correctness for SORT, OC-SORT, and ByteTrack
+2. Compares performance (speed) across all six implementations
 """
 
 import json
@@ -25,6 +27,9 @@ from polyis.tracker.sort.cython.sort import reset_tracker_count as reset_sort_co
 from polyis.tracker.ocsort.ocsort import OCSort as OCSortPython
 from polyis.tracker.ocsort.cython.ocsort import OCSort as OCSortCython  # type: ignore
 from polyis.tracker.ocsort.cython.ocsort import reset_tracker_count as reset_ocsort_count
+from polyis.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
+from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython  # type: ignore
+from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count  # type: ignore
 from polyis.utilities import CACHE_DIR, get_config
 
 
@@ -200,6 +205,95 @@ def run_ocsort_tracker(
     return tracking_results, performance_metrics
 
 
+def run_bytetrack_tracker(
+    tracker, 
+    detection_results: list[dict],
+    img_info: tuple[int, int] = (1080, 1920),
+    img_size: tuple[int, int] = (1080, 1920)
+) -> tuple[dict[int, npt.NDArray[np.floating]], dict[str, Any] | None]:
+    """
+    Run a ByteTrack tracker on detection results and collect tracking outputs.
+    
+    Args:
+        tracker: Tracker instance (BYTETrackerPython or BYTETrackerCython)
+        detection_results: List of frame detection results
+        img_info: Image info tuple (height, width)
+        img_size: Image size tuple (height, width)
+        
+    Returns:
+        tuple: (tracking_results, performance_metrics)
+    """
+    tracking_results: dict[int, npt.NDArray[np.floating]] = {}
+    performance_metrics = {
+        'total_time': 0.0,
+        'frame_times': [],
+        'num_frames': 0,
+        'num_detections': [],
+    }
+    
+    start_total = time.perf_counter()
+    
+    for frame_result in detection_results:
+        frame_idx = frame_result['frame_idx']
+        detections = frame_result.get('detections', frame_result.get('bboxes', []))
+        
+        if len(detections) > 0:
+            dets = np.array(detections, dtype=np.float64)
+            if dets.size > 0:
+                if dets.shape[1] < 5:
+                    scores = np.ones((dets.shape[0], 1), dtype=np.float64)
+                    dets = np.concatenate([dets, scores], axis=1)
+                dets = dets[:, :5]
+            else:
+                dets = np.empty((0, 5), dtype=np.float64)
+        else:
+            dets = np.empty((0, 5), dtype=np.float64)
+        
+        start_frame = time.perf_counter()
+        performance_metrics['num_detections'].append(len(dets))
+        
+        tracked_objs = tracker.update(dets, img_info, img_size)
+        
+        # Convert tracked objects to numpy array
+        # Cython implementation returns numpy array directly
+        if isinstance(tracked_objs, np.ndarray):
+            tracked_dets = tracked_objs
+        # Python implementation returns list of STrack objects
+        elif len(tracked_objs) > 0:
+            tracked_dets = np.array([[t.tlbr[0], t.tlbr[1], t.tlbr[2], t.tlbr[3], t.track_id]
+                                     for t in tracked_objs], dtype=np.float64)
+        else:
+            tracked_dets = np.empty((0, 5), dtype=np.float64)
+        
+        frame_time = time.perf_counter() - start_frame
+        performance_metrics['frame_times'].append(frame_time)
+        performance_metrics['num_frames'] += 1
+        
+        tracking_results[frame_idx] = tracked_dets
+    
+    performance_metrics['total_time'] = time.perf_counter() - start_total
+    
+    if performance_metrics['frame_times']:
+        frame_times_array = np.array(performance_metrics['frame_times'])
+        performance_metrics['avg_frame_time'] = float(np.mean(frame_times_array))
+        performance_metrics['min_frame_time'] = float(np.min(frame_times_array))
+        performance_metrics['max_frame_time'] = float(np.max(frame_times_array))
+        performance_metrics['std_frame_time'] = float(np.std(frame_times_array))
+        performance_metrics['median_frame_time'] = float(np.median(frame_times_array))
+        performance_metrics['p95_frame_time'] = float(np.percentile(frame_times_array, 95))
+        performance_metrics['p99_frame_time'] = float(np.percentile(frame_times_array, 99))
+    else:
+        performance_metrics['avg_frame_time'] = 0.0
+        performance_metrics['min_frame_time'] = 0.0
+        performance_metrics['max_frame_time'] = 0.0
+        performance_metrics['std_frame_time'] = 0.0
+        performance_metrics['median_frame_time'] = 0.0
+        performance_metrics['p95_frame_time'] = 0.0
+        performance_metrics['p99_frame_time'] = 0.0
+    
+    return tracking_results, performance_metrics
+
+
 def compare_tracking_results(
     results_python: dict[int, npt.NDArray[np.floating]],
     results_cython: dict[int, npt.NDArray[np.floating]],
@@ -292,7 +386,7 @@ def test_trackers_comparison():
     1. Loads detection results from the specified JSONL file
     2. Initializes all trackers with the same parameters
     3. Runs all trackers on the same detections
-    4. Compares Python vs Cython correctness for both SORT and OC-SORT
+    4. Compares Python vs Cython correctness for SORT, OC-SORT, and ByteTrack
     5. Compares performance across all implementations
     """
     
@@ -334,6 +428,14 @@ def test_trackers_comparison():
         ocsort_asso_func = ocsort_config.get('asso_func', 'iou')
         ocsort_inertia = ocsort_config.get('inertia', 0.2)
         ocsort_use_byte = ocsort_config.get('use_byte', False)
+        
+        # ByteTrack config
+        bytetrack_config = tracker_config.get('bytetrack', {})
+        bytetrack_track_thresh = bytetrack_config.get('track_thresh', 0.6)
+        bytetrack_match_thresh = bytetrack_config.get('match_thresh', 0.9)
+        bytetrack_track_buffer = bytetrack_config.get('track_buffer', 30)
+        bytetrack_frame_rate = bytetrack_config.get('frame_rate', 30)
+        bytetrack_mot20 = bytetrack_config.get('mot20', False)
     else:
         # Default values
         sort_max_age = 20
@@ -347,8 +449,13 @@ def test_trackers_comparison():
         ocsort_asso_func = 'iou'
         ocsort_inertia = 0.2
         ocsort_use_byte = False
+        bytetrack_track_thresh = 0.6
+        bytetrack_match_thresh = 0.9
+        bytetrack_track_buffer = 30
+        bytetrack_frame_rate = 30
+        bytetrack_mot20 = False
     
-    # Image info for OC-SORT
+    # Image info for OC-SORT and ByteTrack
     img_info = (1080, 1920)
     img_size = (1080, 1920)
     
@@ -393,6 +500,29 @@ def test_trackers_comparison():
         inertia=ocsort_inertia,
         use_byte=ocsort_use_byte
     )
+    
+    # Initialize ByteTrack trackers
+    from polyis.tracker.bytetrack.basetrack import BaseTrack
+    BaseTrack._count = 0
+    reset_tracker_count()
+    
+    # Create args object for ByteTrack
+    class ByteTrackArgs:
+        def __init__(self, track_thresh, match_thresh, track_buffer, mot20):
+            self.track_thresh = track_thresh
+            self.match_thresh = match_thresh
+            self.track_buffer = track_buffer
+            self.mot20 = mot20
+    
+    bytetrack_args = ByteTrackArgs(
+        track_thresh=bytetrack_track_thresh,
+        match_thresh=bytetrack_match_thresh,
+        track_buffer=bytetrack_track_buffer,
+        mot20=bytetrack_mot20
+    )
+    
+    bytetrack_python = BYTETrackerPython(bytetrack_args, frame_rate=bytetrack_frame_rate)
+    bytetrack_cython = BYTETrackerCython(bytetrack_args, frame_rate=bytetrack_frame_rate)
     
     # Run all trackers
     print("\n=== Running SORT Python ===")
@@ -470,6 +600,26 @@ def test_trackers_comparison():
         ocsort_cython, detection_results, img_info, img_size
     )
     
+    BaseTrack._count = 0
+    reset_tracker_count()
+    bytetrack_python = BYTETrackerPython(bytetrack_args, frame_rate=bytetrack_frame_rate)
+    bytetrack_cython = BYTETrackerCython(bytetrack_args, frame_rate=bytetrack_frame_rate)
+    
+    print("\n=== Running ByteTrack Python ===")
+    results_bytetrack_python, perf_bytetrack_python = run_bytetrack_tracker(
+        bytetrack_python, detection_results, img_info, img_size
+    )
+    
+    BaseTrack._count = 0
+    reset_tracker_count()
+    bytetrack_python = BYTETrackerPython(bytetrack_args, frame_rate=bytetrack_frame_rate)
+    bytetrack_cython = BYTETrackerCython(bytetrack_args, frame_rate=bytetrack_frame_rate)
+    
+    print("\n=== Running ByteTrack Cython ===")
+    results_bytetrack_cython, perf_bytetrack_cython = run_bytetrack_tracker(
+        bytetrack_cython, detection_results, img_info, img_size
+    )
+    
     # Compare SORT Python vs Cython
     print("\n=== SORT Python vs Cython Comparison ===")
     sort_comparison = compare_tracking_results(results_sort_python, results_sort_cython)
@@ -506,6 +656,24 @@ def test_trackers_comparison():
             for diff in ocsort_comparison['frame_differences'][:5]:
                 print(f"  Frame {diff['frame_idx']}: Python={diff['python_count']}, Cython={diff['cython_count']}")
     
+    # Compare ByteTrack Python vs Cython
+    print("\n=== ByteTrack Python vs Cython Comparison ===")
+    bytetrack_comparison = compare_tracking_results(results_bytetrack_python, results_bytetrack_cython)
+    print(f"Frames compared: {bytetrack_comparison['frames_compared']}")
+    print(f"Frames match: {bytetrack_comparison['frames_match']}")
+    print(f"Frames differ: {bytetrack_comparison['frames_differ']}")
+    print(f"Total tracks (Python): {bytetrack_comparison['total_tracks_python']}")
+    print(f"Total tracks (Cython): {bytetrack_comparison['total_tracks_cython']}")
+    
+    if bytetrack_comparison['frames_differ'] == 0:
+        print("✓ All ByteTrack frames match exactly!")
+    else:
+        print(f"⚠ {bytetrack_comparison['frames_differ']} ByteTrack frames differ")
+        if bytetrack_comparison['frame_differences']:
+            print(f"First 5 differences:")
+            for diff in bytetrack_comparison['frame_differences'][:5]:
+                print(f"  Frame {diff['frame_idx']}: Python={diff['python_count']}, Cython={diff['cython_count']}")
+    
     # Performance comparison
     print("\n=== Performance Comparison ===")
     all_perfs = {
@@ -513,6 +681,8 @@ def test_trackers_comparison():
         'SORT Cython': perf_sort_cython,
         'OC-SORT Python': perf_ocsort_python,
         'OC-SORT Cython': perf_ocsort_cython,
+        'ByteTrack Python': perf_bytetrack_python,
+        'ByteTrack Cython': perf_bytetrack_cython,
     }
     
     for name, perf in all_perfs.items():
@@ -539,6 +709,12 @@ def test_trackers_comparison():
         if ocsort_speedup > 1.0:
             print(f"  → OC-SORT Cython is {ocsort_speedup:.2f}x faster than Python")
     
+    if perf_bytetrack_python and perf_bytetrack_cython and perf_bytetrack_python['total_time'] > 0 and perf_bytetrack_cython['total_time'] > 0:
+        bytetrack_speedup = perf_bytetrack_python['total_time'] / perf_bytetrack_cython['total_time']
+        print(f"ByteTrack Cython vs Python: {bytetrack_speedup:.4f}x")
+        if bytetrack_speedup > 1.0:
+            print(f"  → ByteTrack Cython is {bytetrack_speedup:.2f}x faster than Python")
+    
     # Cross-comparison (relative performance)
     if (perf_sort_python and perf_ocsort_python and 
         perf_sort_python['total_time'] > 0 and perf_ocsort_python['total_time'] > 0):
@@ -553,6 +729,7 @@ def test_trackers_comparison():
     # Assertions
     assert sort_comparison['frames_compared'] > 0, "No SORT frames were compared"
     assert ocsort_comparison['frames_compared'] > 0, "No OC-SORT frames were compared"
+    assert bytetrack_comparison['frames_compared'] > 0, "No ByteTrack frames were compared"
     
     # Check correctness (Python vs Cython should match)
     if sort_comparison['frames_differ'] > 0:
@@ -561,8 +738,11 @@ def test_trackers_comparison():
     if ocsort_comparison['frames_differ'] > 0:
         pytest.fail(f"OC-SORT Python and Cython results differ: {ocsort_comparison['frames_differ']} frames differ")
     
+    if bytetrack_comparison['frames_differ'] > 0:
+        pytest.fail(f"ByteTrack Python and Cython results differ: {bytetrack_comparison['frames_differ']} frames differ")
+    
     print("\n✓ All correctness checks passed!")
-    print("✓ Python and Cython implementations produce identical results for both SORT and OC-SORT!")
+    print("✓ Python and Cython implementations produce identical results for SORT, OC-SORT, and ByteTrack!")
 
 
 if __name__ == '__main__':

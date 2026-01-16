@@ -32,6 +32,7 @@ cdef void iou_batch_internal(
 ) noexcept nogil:
     """
     Compute IOU between two sets of bboxes in the form [x1,y1,x2,y2].
+    Uses PASCAL VOC formula with +1 to match the original Python implementation.
     """
     cdef int N = bboxes1.shape[0]
     cdef int M = bboxes2.shape[0]
@@ -40,18 +41,21 @@ cdef void iou_batch_internal(
     cdef double xx1, yy1, xx2, yy2, w, h, wh, area1, area2
 
     for i in range(N):
-        area1 = (bboxes1[i, 2] - bboxes1[i, 0]) * (bboxes1[i, 3] - bboxes1[i, 1])
+        # Add +1 to match PASCAL VOC formula used in cython_bbox
+        area1 = (bboxes1[i, 2] - bboxes1[i, 0] + 1.0) * (bboxes1[i, 3] - bboxes1[i, 1] + 1.0)
         for j in range(M):
             xx1 = fmax(bboxes1[i, 0], bboxes2[j, 0])
             yy1 = fmax(bboxes1[i, 1], bboxes2[j, 1])
             xx2 = fmin(bboxes1[i, 2], bboxes2[j, 2])
             yy2 = fmin(bboxes1[i, 3], bboxes2[j, 3])
 
-            w = fmax(0.0, xx2 - xx1)
-            h = fmax(0.0, yy2 - yy1)
+            # Add +1 to intersection dimensions
+            w = fmax(0.0, xx2 - xx1 + 1.0)
+            h = fmax(0.0, yy2 - yy1 + 1.0)
             wh = w * h
 
-            area2 = (bboxes2[j, 2] - bboxes2[j, 0]) * (bboxes2[j, 3] - bboxes2[j, 1])
+            # Add +1 to area2 calculation
+            area2 = (bboxes2[j, 2] - bboxes2[j, 0] + 1.0) * (bboxes2[j, 3] - bboxes2[j, 1] + 1.0)
 
             output[i, j] = wh / (area1 + area2 - wh + 1e-9)
 

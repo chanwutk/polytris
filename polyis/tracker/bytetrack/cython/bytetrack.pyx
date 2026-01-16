@@ -49,7 +49,7 @@ cdef void tlwh_to_xyah(double *tlwh, double *xyah) noexcept nogil:
     """
     xyah[0] = tlwh[0] + tlwh[2] / 2.0
     xyah[1] = tlwh[1] + tlwh[3] / 2.0
-    xyah[2] = tlwh[2] / (tlwh[3] + 1e-6)
+    xyah[2] = tlwh[2] / tlwh[3]
     xyah[3] = tlwh[3]
 
 
@@ -430,6 +430,18 @@ cdef class STrackPy:
     def start_frame(self):
         return self.track.start_frame
 
+    @property
+    def mean(self):
+        return np.array([self.track.mean[i] for i in range(8)])
+
+    @property
+    def covariance(self):
+        cov = np.zeros((8, 8), dtype=np.float64)
+        for i in range(8):
+            for j in range(8):
+                cov[i, j] = self.track.covariance[i * 8 + j]
+        return cov
+
 
 def joint_stracks(tlista, tlistb):
     """Combine two track lists, removing duplicates."""
@@ -486,9 +498,9 @@ cdef public class BYTETracker [object BYTETrackerObject, type BYTETrackerType]:
     """
     ByteTrack tracker implementation in Cython.
     """
-    cdef object tracked_stracks
-    cdef object lost_stracks
-    cdef object removed_stracks
+    cdef public object tracked_stracks
+    cdef public object lost_stracks
+    cdef public object removed_stracks
     cdef int frame_id
     cdef object args
     cdef double det_thresh
