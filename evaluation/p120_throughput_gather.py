@@ -185,46 +185,46 @@ def gather_query_execution_data(datasets_videos):
                 cl_ts = f'{classifier}_{tilesize}'
                 for tilepadding in TILEPADDING_MODES:
                     for sample_rate in SAMPLE_RATES:
-                        runtime_files = []
-                        cl_ts_tp = f'{classifier}_{tilesize}_{tilepadding}'
-                        cl_ts_tp_sr = f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}'
-
-                        # 020_exec_classify.py
-                        classify_path = os.path.join(video_path, '020_relevancy', cl_ts, 'score', 'runtime.jsonl')
-                        assert os.path.exists(classify_path), f"Classify path {classify_path} does not exist"
-                        runtime_files.append(('020_exec_classify', classify_path))
-                        
-                        # 030_exec_compress.py
-                        compress_path = os.path.join(video_path, '033_compressed_frames', cl_ts_tp, 'runtime.jsonl')
-                        assert os.path.exists(compress_path), f"Compress path {compress_path} does not exist"
-                        runtime_files.append(('030_exec_compress', compress_path))
-                        
-                        # 040_exec_detect.py
-                        detect_path = os.path.join(video_path, '040_compressed_detections', cl_ts_tp, 'runtimes.jsonl')
-                        assert os.path.exists(detect_path), f"Detect path {detect_path} does not exist"
-                        runtime_files.append(('040_exec_detect', detect_path))
-
-                        # 050_exec_uncompress.py
-                        uncompress_path = os.path.join(video_path, '050_uncompressed_detections', cl_ts_tp, 'runtime.jsonl')
-                        assert os.path.exists(uncompress_path), f"Uncompress path {uncompress_path} does not exist"
-                        runtime_files.append(('050_exec_uncompress', uncompress_path))
-                        
-                        # Add non-tracking stages
-                        for stage, runtime_file in runtime_files:
-                            query_data.append({
-                                'dataset': dataset,
-                                'video': video,
-                                'classifier': classifier,
-                                'tilesize': tilesize,
-                                'tilepadding': tilepadding,
-                                'sample_rate': sample_rate,
-                                'tracker': None,
-                                'stage': stage,
-                                'runtime_file': runtime_file
-                            })
-                        
-                        # 060_exec_track.py - loop over trackers
                         for tracker_name in TRACKERS:
+                            runtime_files = []
+                            cl_ts_tp = f'{classifier}_{tilesize}_{tilepadding}'
+                            cl_ts_tp_sr = f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}'
+
+                            # 020_exec_classify.py
+                            classify_path = os.path.join(video_path, '020_relevancy', cl_ts, 'score', 'runtime.jsonl')
+                            assert os.path.exists(classify_path), f"Classify path {classify_path} does not exist"
+                            runtime_files.append(('020_exec_classify', classify_path))
+                            
+                            # 030_exec_compress.py
+                            compress_path = os.path.join(video_path, '033_compressed_frames', cl_ts_tp, 'runtime.jsonl')
+                            assert os.path.exists(compress_path), f"Compress path {compress_path} does not exist"
+                            runtime_files.append(('030_exec_compress', compress_path))
+                            
+                            # 040_exec_detect.py
+                            detect_path = os.path.join(video_path, '040_compressed_detections', cl_ts_tp, 'runtimes.jsonl')
+                            assert os.path.exists(detect_path), f"Detect path {detect_path} does not exist"
+                            runtime_files.append(('040_exec_detect', detect_path))
+
+                            # 050_exec_uncompress.py
+                            uncompress_path = os.path.join(video_path, '050_uncompressed_detections', cl_ts_tp, 'runtime.jsonl')
+                            assert os.path.exists(uncompress_path), f"Uncompress path {uncompress_path} does not exist"
+                            runtime_files.append(('050_exec_uncompress', uncompress_path))
+                            
+                            # Add non-tracking stages
+                            for stage, runtime_file in runtime_files:
+                                query_data.append({
+                                    'dataset': dataset,
+                                    'video': video,
+                                    'classifier': classifier,
+                                    'tilesize': tilesize,
+                                    'tilepadding': tilepadding,
+                                    'sample_rate': sample_rate,
+                                    'tracker': tracker_name,
+                                    'stage': stage,
+                                    'runtime_file': runtime_file
+                                })
+                            
+                            # 060_exec_track.py - loop over trackers
                             cl_ts_tp_sr_tr = f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}_{tracker_name}'
                             track_path = os.path.join(video_path, '060_uncompressed_tracks', cl_ts_tp_sr_tr, 'runtimes.jsonl')
                             assert os.path.exists(track_path), f"Track path {track_path} does not exist"

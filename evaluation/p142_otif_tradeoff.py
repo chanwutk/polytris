@@ -179,6 +179,10 @@ def join_accuracy_to_stat(dataset: str, system: str):
     if missing_param_ids:
         raise ValueError(f"Missing {system.upper()} accuracy results for param_ids: {missing_param_ids}")
     
+    # Calculate max gap between thresholds
+    max_gap = merged_df['tracker_cfg'].apply(lambda x: calculate_max_gap(json.loads(x)) if isinstance(x, str) else 1)
+    merged_df['sample_rate'] = max_gap
+
     # Save merged results to a new file with accuracy metrics
     output_csv_path = os.path.join(CACHE_DIR, 'SOTA', system, dataset, 'tradeoff.csv')
     merged_df.to_csv(output_csv_path, index=False)

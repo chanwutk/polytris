@@ -53,7 +53,7 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
         
         # Define all possible submetrics that might be in the CSV
         submetric_columns = ['HOTA_HOTA', 'HOTA_AssA', 'HOTA_DetA', 'MOTA_MOTA', 
-                            'Count_DetsMAPE', 'Count_TracksMAPE']
+                            'Count_DetsMAPE', 'Count_TracksMAPE', 'sample_rate']
         
         # Create base DataFrame with required columns
         clean_df = pd.DataFrame({
@@ -63,6 +63,8 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
             'classifier': STR_NA,  # SOTA doesn't use our classifier system
             'tilesize': 0,  # SOTA doesn't have explicit tile size
             'tilepadding': STR_NA,  # SOTA doesn't have explicit tile padding
+            'sample_rate': df['sample_rate'],
+            'tracker': STR_NA,  # SOTA doesn't use our tracker system
             'time': df['runtime'],  # Runtime in seconds
             'throughput_fps': float('nan'),  # Not available in tradeoff.csv
             'time_mspf': float('nan'),  # Not available without frame count
@@ -235,7 +237,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                 #     alt.Shape('classifier:N', title='Polytris\' Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['triangle', 'diamond'])),
                 #     alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
                 # ),
-                tooltip=['system', 'dataset', 'classifier', 'tilepadding', 'sample_rate', x_column, accuracy_col]
+                tooltip=['system', 'dataset', 'classifier', 'tilepadding', 'sample_rate', 'tracker', x_column, accuracy_col]
             )
             
             base_line = base_chart.mark_line(
@@ -310,6 +312,17 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     
     # Load tradeoff data for all datasets
     combined_df, naive_df = load_all_datasets_tradeoff_data(datasets, system_name='Polytris')
+    
+    # Handle backward compatibility: add sample_rate and tracker if missing
+    if 'sample_rate' not in combined_df.columns:
+        combined_df['sample_rate'] = 1
+    if 'tracker' not in combined_df.columns:
+        combined_df['tracker'] = 'unknown'
+    if 'sample_rate' not in naive_df.columns:
+        naive_df['sample_rate'] = 1
+    if 'tracker' not in naive_df.columns:
+        naive_df['tracker'] = 'unknown'
+    
     combined_df['time_mspf'] = combined_df['time'] * 1000 / combined_df['frame_count']
     naive_df['time_mspf'] = naive_df['time'] * 1000 / naive_df['frame_count']
     
@@ -337,14 +350,15 @@ def main():
     then creates comparison visualizations showing all systems' performance.
     
     Note:
-        - The script expects tradeoff data from p090_tradeoff_compute.py in:
+        - The script expects tradeoff data from p130_tradeoff_compute.py in:
           {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/tradeoff_combined.csv
         - The script expects OTIF tradeoff results from p142_otif_tradeoff.py in:
           {CACHE_DIR}/SOTA/otif/{dataset}/tradeoff.csv
         - The script expects LEAP tradeoff results from p142_otif_tradeoff.py in:
           {CACHE_DIR}/SOTA/leap/{dataset}/tradeoff.csv
         - Results are saved to: {CACHE_DIR}/SUMMARY/100_compare_compute/
-        - Please run p090_tradeoff_compute.py and p142_otif_tradeoff.py first to generate the required CSV files
+        - Please run p130_tradeoff_compute.py and p142_otif_tradeoff.py first to generate the required CSV files
+        - Supports sample_rate and tracker dimensions with backward compatibility
     """
     print(f"Processing datasets: {DATASETS}")
     

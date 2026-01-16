@@ -30,10 +30,10 @@ class NumpyEncoder(json.JSONEncoder):
 
 def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xlabel: str, output_path: str):
     """
-    Create a comparison plot for tracking accuracy scores by video, tile size, and tilepadding.
+    Create a comparison plot for tracking accuracy scores by video, tile size, tilepadding, sample rate, and tracker.
     
     Creates a faceted bar chart showing accuracy scores for different classifiers
-    across videos, tile sizes, and tilepadding values. Each facet shows one video-tilesize-tilepadding combination,
+    across videos, tile sizes, tilepadding values, sample rates, and trackers. Each facet shows one video-tilesize-tilepadding-sample_rate-tracker combination,
     with bars representing different classifiers sorted by performance.
     
     Args:
@@ -45,9 +45,24 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
 
     df = results.copy()
     df['Score'] = df[score_field]
-    df['Classifier_Tile_Padding'] = df['Classifier'].str.slice(0, 3) + '_' + df['Tile_Padding'].str.slice(0, 3)
+    # Create label that includes classifier, tile padding, sample rate, and tracker
+    # Handle missing columns for backward compatibility
+    if 'Sample_Rate' not in df.columns:
+        df['Sample_Rate'] = 1
+    if 'Tracker' not in df.columns:
+        df['Tracker'] = 'unknown'
+    
+    df['Classifier_Tile_Padding'] = df['Classifier'].str.slice(0, 3) + '_' + df['Tile_Padding'].str.slice(0, 3) + '_SR' + df['Sample_Rate'].astype(str) + '_' + df['Tracker'].str.slice(0, 6)
 
     df['Tile_Padding'] = df['Tile_Padding'].apply(lambda x: {'connected': 'padded (+)', 'none': 'none'}.get(x, 'Naive'))
+    
+    # Create combined identifier for sample rate and tracker if needed for faceting
+    # Check if we need additional faceting for sample rate and tracker
+    has_multiple_sample_rates = df['Sample_Rate'].nunique() > 1
+    has_multiple_trackers = df['Tracker'].nunique() > 1
+    if has_multiple_sample_rates and has_multiple_trackers:
+        # Create a combined identifier for sample rate and tracker to use as row facet
+        df['SR_Tracker'] = df['Sample_Rate'].astype(str) + '_' + df['Tracker']
     
     # Create horizontal bar chart with text labels inside bars
     # Main bars showing the scores
@@ -60,7 +75,7 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
         x=x_encoding,
         # yOffset=alt.YOffset('Dilate:N'),
         color=alt.Color('Tile_Padding:N', title='Tile Padding'),
-        tooltip=['Video', 'Tile_Size', 'Tile_Padding', 'Classifier', alt.Tooltip('Score:Q', format='.2f')]
+        tooltip=['Video', 'Tile_Size', 'Tile_Padding', 'Classifier', 'Sample_Rate', 'Tracker', alt.Tooltip('Score:Q', format='.2f')]
     ).properties(
         width=200,
         height=120
@@ -94,18 +109,36 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
     )
     
     # Layer the charts (bars + labels + text) and apply faceting
-    # Facet by tile size (rows), tilepadding (columns), and video (sub-columns)
-    chart = (bars + labels + text).encode(
+    # Facet by video (columns), with sample rate and tracker included in labels and tooltips
+    # Apply faceting - use row for sample rate or tracker if multiple values exist
+    # Keep video as column facet, and add row facet for additional dimensions
+    base_chart = (bars + labels + text).encode(
         y=alt.Y('Classifier_Tile_Padding:N', sort='-x', axis=alt.Axis(labels=False, ticks=False, title=None)),
-        # yOffset=alt.YOffset('Tile_Padding:N'),
-        # detail=alt.Detail('Tile_Padding:N'),
-        # color=alt.Color('Tile_Padding:N', title='Tile Padding')
-    ).resolve_scale(y='independent').facet(
-        # row=alt.Row('Tile_Size:O', title='Tile Size'),
-        column=alt.Column('Video:N', title=None),
-        # column=alt.Column('Tile_Padding:N', title='Tile Padding'),
-        # facet=alt.Facet('Video:N', title=None)
-    ).resolve_scale(y='independent').properties(padding=0)
+    ).resolve_scale(y='independent')
+    
+    if has_multiple_sample_rates and has_multiple_trackers:
+        # Facet by video (columns) and combined sample rate/tracker (rows)
+        chart = base_chart.facet(
+            column=alt.Column('Video:N', title=None),
+            row=alt.Row('SR_Tracker:N', title='Sample Rate / Tracker'),
+        ).resolve_scale(y='independent').properties(padding=0)
+    elif has_multiple_sample_rates:
+        # Facet by video (columns) and sample rate (rows)
+        chart = base_chart.facet(
+            column=alt.Column('Video:N', title=None),
+            row=alt.Row('Sample_Rate:O', title='Sample Rate'),
+        ).resolve_scale(y='independent').properties(padding=0)
+    elif has_multiple_trackers:
+        # Facet by video (columns) and tracker (rows)
+        chart = base_chart.facet(
+            column=alt.Column('Video:N', title=None),
+            row=alt.Row('Tracker:N', title='Tracker'),
+        ).resolve_scale(y='independent').properties(padding=0)
+    else:
+        # Only facet by video (original behavior)
+        chart = base_chart.facet(
+            column=alt.Column('Video:N', title=None),
+        ).resolve_scale(y='independent').properties(padding=0)
     
     # Save the chart as PNG with high resolution
     chart.save(output_path, scale_factor=2)
@@ -116,7 +149,7 @@ def visualize_tracking_accuracy(results: pd.DataFrame, output_dir: str, combined
     Create visualizations for tracking accuracy results using Altair.
     
     Processes evaluation results and creates comparison charts showing
-    accuracy scores across different classifiers, videos, and tile sizes.
+    accuracy scores across different classifiers, videos, tile sizes, sample rates, and trackers.
     
     Args:
         results (pd.DataFrame): DataFrame of evaluation results
@@ -136,7 +169,7 @@ def visualize_tracking_accuracy(results: pd.DataFrame, output_dir: str, combined
     ]
     
     # Create comparison plots for HOTA, AssA, and MOTA scores
-    # Each plot shows classifiers ranked by performance for each video-tilesize-tilepadding combination
+    # Each plot shows classifiers ranked by performance for each video-tilesize-tilepadding-sample_rate-tracker combination
     for metric_name, metric_label in metrics:
         visualize_compared_accuracy_bar(results, metric_name, metric_label,
                                         os.path.join(output_dir, f'{prefix}{metric_name}.png'))
@@ -147,19 +180,16 @@ def main():
     Main function that orchestrates the tracking accuracy visualization process.
     
     This function serves as the entry point for the script. It:
-    1. Finds all classifier/tilesize/tilepadding combinations with saved accuracy results
-    2. Loads individual video result files from the new evaluation directory structure
-    3. Creates visualizations comparing accuracy across videos, classifiers, tile sizes, and tilepadding values
+    1. Finds all classifier/tilesize/tilepadding/sample_rate/tracker combinations with saved accuracy results
+    2. Loads CSV files generated by p111_accuracy_aggregate.py
+    3. Creates visualizations comparing accuracy across videos, classifiers, tile sizes, tilepadding values, sample rates, and trackers
     4. Generates summary reports and charts for each dataset
     
     Note:
-        - The script expects accuracy results from p070_accuracy_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{tilepadding}/
-          ├── DATASET.json (combined results)
-          ├── {video_name}.json (individual video results)
-          └── LOG.txt (evaluation logs)
-        - Multiple metrics are visualized: HOTA, CLEAR (MOTA)
-        - Visualizations are saved to: {CACHE_DIR}/{dataset}/evaluation/071_accuracy_visualize/
+        - The script expects accuracy results CSV files from p111_accuracy_aggregate.py in:
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/accuracy.csv and accuracy_combined.csv
+        - Multiple metrics are visualized: HOTA, AssA, DetA, Count MAPE
+        - Visualizations are saved to: {CACHE_DIR}/{dataset}/evaluation/072_accuracy_visualize/
     """
     print(f"Starting tracking accuracy visualization for datasets: {DATASETS}")
     

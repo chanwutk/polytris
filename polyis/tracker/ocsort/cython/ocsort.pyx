@@ -507,6 +507,8 @@ cdef public class OCSort [object OCSortObject, type OCSortType]:
         self.frame_count += 1
         
         # Post-process detections
+        if output_results.shape[1] == 4:
+            output_results = np.concatenate((output_results, np.ones((len(output_results), 1))), axis=1)
         if output_results.shape[1] == 5:
             scores = output_results[:, 4]
             bboxes = output_results[:, :4]
