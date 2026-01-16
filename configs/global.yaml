@@ -32,13 +32,13 @@ EXEC:
   TRACKERS:
     - sortcython
     - ocsortcython
-    - bytetrack
+    - bytetrackcython
   SAMPLE_RATES:
     - 1
     - 2
     - 4
     - 8
-    # - 16
+    - 16
 
 DATA:
   SOURCE_DIR: /polyis-data/sources

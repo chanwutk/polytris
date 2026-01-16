@@ -189,7 +189,7 @@ def match_accuracy_throughput_data(
     naive_throughput_['tilesize'] = 0
     naive_throughput_['tilepadding'] = 'Groundtruth'
     # Set tracker for naive throughput (groundtruth doesn't use a tracker)
-    naive_throughput_['tracker'] = 'sortcython'
+    naive_throughput_['tracker'] = 'groundtruth'
     assert isinstance(naive_throughput_, pd.DataFrame)
     naive_throughput = prepare_throughput(naive_throughput_)
 
@@ -200,13 +200,11 @@ def match_accuracy_throughput_data(
     # Merge accuracy data with runtime data
     # Include tracker in join columns if both dataframes have it
     join_cols = ['video', 'classifier', 'tilesize', 'tilepadding', 'sample_rate', 'tracker']
-    # if 'tracker' in accuracy.columns and 'tracker' in throughput.columns:
-    #     join_cols.append('tracker')
-    # assert len(throughput) == len(accuracy), \
-    #     f"Expected {len(accuracy)} runtime data points, got {len(throughput)}"
+    assert len(throughput) == len(accuracy), \
+        f"Expected {len(accuracy)} runtime data points, got {len(throughput)}"
     tradeoff = accuracy.merge(throughput, on=join_cols, how='inner')
-    # assert len(tradeoff) == len(accuracy), \
-    #     f"Expected {len(accuracy)} tradeoff data points, got {len(tradeoff)}"
+    assert len(tradeoff) == len(accuracy), \
+        f"Expected {len(accuracy)} tradeoff data points, got {len(tradeoff)}"
 
     # Calculate throughput (frames per second)
     count_frames = partial(get_video_frame_count, dataset)
@@ -215,8 +213,6 @@ def match_accuracy_throughput_data(
 
     # Aggregate runtime and frame counts by classifier/tilesize/tilepadding/sample_rate/tracker
     gb_cols = ['classifier', 'tilesize', 'tilepadding', 'sample_rate', 'tracker']
-    # if 'tracker' in tradeoff.columns:
-    #     gb_cols.append('tracker')
     throughput_combined = tradeoff.groupby(gb_cols).agg({
         'frame_count': 'sum',
         'time': 'sum'
@@ -224,13 +220,11 @@ def match_accuracy_throughput_data(
 
     # Merge with combined accuracy scores
     join_cols = ['classifier', 'tilesize', 'tilepadding', 'sample_rate', 'tracker']
-    # if 'tracker' in accuracy_combined.columns and 'tracker' in throughput_combined.columns:
-    #     join_cols.append('tracker')
-    # assert len(accuracy_combined) == len(throughput_combined), \
-    #     f"Expected {len(accuracy_combined)} combined throughput data points, got {len(throughput_combined)}"
+    assert len(accuracy_combined) == len(throughput_combined), \
+        f"Expected {len(accuracy_combined)} combined throughput data points, got {len(throughput_combined)}"
     tradeoff_combined = accuracy_combined.merge(throughput_combined, on=join_cols, how='inner')
-    # assert len(tradeoff_combined) == len(throughput_combined), \
-    #     f"Expected {len(throughput_combined)} combined tradeoff data points, got {len(tradeoff_combined)}"
+    assert len(tradeoff_combined) == len(throughput_combined), \
+        f"Expected {len(throughput_combined)} combined tradeoff data points, got {len(tradeoff_combined)}"
 
     # Calculate combined throughput
     tradeoff_combined['throughput_fps'] = tradeoff_combined['frame_count'] / tradeoff_combined['time']
