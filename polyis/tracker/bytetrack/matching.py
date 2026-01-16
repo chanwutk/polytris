@@ -4,8 +4,8 @@ import scipy
 import lap
 from scipy.spatial.distance import cdist
 
-from polyis.tracker.bytetrack.src.cython_bbox import bbox_overlaps as bbox_ious
-import polyis.tracker.bytetrack.src.kalman_filter as kalman_filter
+from polyis.tracker.bytetrack.cython_bbox import bbox_overlaps as bbox_ious
+from . import kalman_filter
 import time
 
 def merge_matches(m1, m2, shape):

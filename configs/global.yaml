@@ -31,7 +31,7 @@ EXEC:
     - square
   TRACKERS:
     - sortcython
-    # - ocsort
+    - ocsortcython
     - bytetrack
   SAMPLE_RATES:
     - 1

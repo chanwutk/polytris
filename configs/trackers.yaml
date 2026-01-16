@@ -11,11 +11,11 @@ ocsort:
   delta_t: 3
   asso_func: iou
   inertia: 0.2
-  use_byte: false
+  use_byte: true
 
 bytetrack:
-  track_thresh: 0.5
-  match_thresh: 0.8
+  track_thresh: 0.6
+  match_thresh: 0.9
   track_buffer: 30
   frame_rate: 30
   mot20: false

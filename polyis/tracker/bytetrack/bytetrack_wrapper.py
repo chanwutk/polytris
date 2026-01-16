@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from polyis.tracker.bytetrack.src.byte_tracker import BYTETracker as _BYTETracker  # type: ignore
+from polyis.tracker.bytetrack.byte_tracker import BYTETracker as _BYTETracker  # type: ignore
 
 
 class ByteTrackArgs:
@@ -20,8 +20,8 @@ class ByteTrackArgs:
     """
     def __init__(
         self,
-        track_thresh: float = 0.5,
-        match_thresh: float = 0.8,
+        track_thresh: float = 0.6,
+        match_thresh: float = 0.9,
         track_buffer: int = 30,
         mot20: bool = False
     ):
