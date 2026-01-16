@@ -123,11 +123,39 @@ extensions = [
         language="c++",
     ),
     Extension(
-        "polyis.tracker.bytetrack.src.cython_bbox",
-        ["polyis/tracker/bytetrack/src/cython_bbox.pyx"],
+        "polyis.tracker.bytetrack.cython_bbox",
+        ["polyis/tracker/bytetrack/cython_bbox.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
+    ),
+    Extension(
+        "polyis.tracker.bytetrack.cython.kalman_filter",
+        ["polyis/tracker/bytetrack/cython/kalman_filter.pyx"],
+        include_dirs=[numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
+    ),
+    Extension(
+        "polyis.tracker.bytetrack.cython.matching",
+        [
+            "polyis/tracker/bytetrack/cython/matching.pyx",
+            "modules/lap/_lapjv_cpp/lapjv.cpp",
+        ],
+        include_dirs=["modules/lap/_lapjv_cpp", numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c++11"],
+        language="c++",
+    ),
+    Extension(
+        "polyis.tracker.bytetrack.cython.bytetrack",
+        [
+            "polyis/tracker/bytetrack/cython/bytetrack.pyx",
+        ],
+        include_dirs=[numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c++11"],
+        language="c++",
     ),
 ]
 
