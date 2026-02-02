@@ -792,7 +792,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str]):
         # 3. Compute and visualize speedup at accuracy levels
         print(f"\n3. Computing speedup at accuracy levels for {accuracy_name}...")
         df_speedup = compute_speedup_at_accuracy_levels(
-            polytris_df, df_sota_dict, accuracy_col, 'time', increment=0.02
+            polytris_df, df_sota_dict, accuracy_col, 'time', increment=0.005
         )
 
         if not df_speedup.empty:
@@ -806,7 +806,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str]):
         # 4. Compute and visualize accuracy gain at runtime levels
         print(f"\n4. Computing accuracy gain at runtime levels for {accuracy_name}...")
         df_accuracy_gain = compute_accuracy_gain_at_runtime_levels(
-            polytris_df, df_sota_dict, accuracy_col, 'time', increment=50.0
+            polytris_df, df_sota_dict, accuracy_col, 'time', increment=5.0
         )
 
         if not df_accuracy_gain.empty:

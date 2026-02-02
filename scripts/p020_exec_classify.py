@@ -61,48 +61,6 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
     raise FileNotFoundError(f"No trained model found for {classifier_name} tile size {tile_size} in {results_path}")
 
 
-def prepare_frame_tiles(
-    grid_width: int,
-    grid_height: int,
-    positions: torch.Tensor,
-    frame: np.ndarray,
-    previous_frame_tensor: torch.Tensor,
-    tile_size: int,
-    device: str,
-    normalize_mean: torch.Tensor,
-    normalize_std: torch.Tensor,
-    always_relevant_mask: torch.Tensor,
-) -> tuple[
-    torch.Tensor, torch.Tensor, torch.Tensor, int, torch.Tensor
-]:
-    """
-    Prepare tiles for one frame (diff, pad, split, mask, normalize). No inference.
-    Returns (tiles_nchw_valid, positions_valid, valid_tiles_mask, num_tiles, frame_tensor).
-    """
-    frame_tensor = torch.from_numpy(frame).to(device)
-    diff = torch.abs(
-        frame_tensor.to(torch.int16) - previous_frame_tensor.to(torch.int16)
-    ).to(torch.uint8)
-    frame_tensor_ = torch.cat([frame_tensor, diff], dim=2)
-    tiles = splitHWC(cast(ImgHWC, frame_tensor_), tile_size, tile_size)
-    num_tiles = tiles.shape[0] * tiles.shape[1]
-    tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, 6)
-    non_black_mask = tiles_flat.reshape(num_tiles, -1).any(dim=1).to(torch.bool)
-    valid_tiles_mask = (non_black_mask & always_relevant_mask).to(torch.bool)
-    positions_valid = positions[valid_tiles_mask]
-    tiles_flat_valid = tiles_flat[valid_tiles_mask]
-    tiles_flat_valid = tiles_flat_valid.float() / 255.0
-    tiles_nchw_valid = tiles_flat_valid.permute(0, 3, 1, 2)
-    tiles_nchw_valid = (tiles_nchw_valid - normalize_mean) / normalize_std
-    return (
-        tiles_nchw_valid,
-        positions_valid,
-        valid_tiles_mask,
-        num_tiles,
-        frame_tensor,
-    )
-
-
 def process_batch(
     grid_width: int,
     grid_height: int,
@@ -115,7 +73,7 @@ def process_batch(
     normalize_mean: torch.Tensor,
     normalize_std: torch.Tensor,
     always_relevant_mask: torch.Tensor,
-) -> tuple[list[np.ndarray], list[list[dict]], torch.Tensor]:
+) -> tuple[list[np.ndarray], list[dict], torch.Tensor]:
     """
     Process up to BATCH_SIZE frames in one batch: prepare tiles for each frame,
     run inference once on all valid tiles, scatter results per frame.
@@ -200,31 +158,8 @@ def process_batch(
 
         collect_runtime = time.time_ns() / 1e6 - collect_start
 
-        runtimes = [format_time(inference=inference_runtime, collect=collect_runtime, reshape=reshape_runtime, mask=mask_runtime, diff=diff_runtime, send=send_runtime)]
-    return relevance_grids, runtimes, prev_tensor
-
-
-def process_frame_tiles(grid_width: int, grid_height: int, positions: torch.Tensor, frame: np.ndarray, previous_frame: torch.Tensor, model: torch.nn.Module, tile_size: int, device: str, 
-                       normalize_mean: torch.Tensor, normalize_std: torch.Tensor, 
-                       always_relevant_mask: torch.Tensor) -> tuple[np.ndarray, list[dict], torch.Tensor]:
-    """
-    Process a single video frame with the specified tile size and return relevance scores and timing information.
-    Runs one inference for this frame (used for warmup and for trailing frames when batch size does not divide frame count).
-    """
-    grids, runtimes, frame_tensor = process_batch(
-        grid_width,
-        grid_height,
-        positions,
-        [frame],
-        previous_frame,
-        model,
-        tile_size,
-        device,
-        normalize_mean,
-        normalize_std,
-        always_relevant_mask,
-    )
-    return grids[0], runtimes[0], frame_tensor
+        runtime = format_time(inference=inference_runtime, collect=collect_runtime, reshape=reshape_runtime, mask=mask_runtime, diff=diff_runtime, send=send_runtime)
+    return relevance_grids, runtime, prev_tensor
 
 
 def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
@@ -345,11 +280,11 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         # Warm up the model (single-frame inference)
         for frame_idx, frame in enumerate(frames[:16]):
             previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
-            _, _, _ = process_frame_tiles(
+            _, _, _ = process_batch(
                 grid_width,
                 grid_height,
                 positions,
-                frame,
+                [frame],
                 torch.from_numpy(previous_frame).to(device),
                 model,
                 tile_size,
@@ -365,7 +300,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         while frame_idx < frame_count:
             batch_end = min(frame_idx + BATCH_SIZE, frame_count)
             batch_frames = [frames[i] for i in range(frame_idx, batch_end)]
-            relevance_grids, runtimes, previous_frame = process_batch(
+            relevance_grids, runtime, previous_frame = process_batch(
                 grid_width,
                 grid_height,
                 positions,
@@ -378,7 +313,8 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
                 normalize_std,
                 always_relevant_mask,
             )
-            for j, (relevance_grid, runtime) in enumerate(zip(relevance_grids, runtimes)):
+            fr.write(json.dumps(runtime) + '\n')
+            for j, relevance_grid in enumerate(relevance_grids):
                 idx = frame_idx + j
                 frame_entry = {
                     "classification_size": relevance_grid.shape,
@@ -386,7 +322,6 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
                     "idx": idx,
                 }
                 f.write(json.dumps(frame_entry) + '\n')
-                fr.write(json.dumps(runtime) + '\n')
                 command_queue.put((device, {'completed': idx}))
             frame_idx = batch_end
 
