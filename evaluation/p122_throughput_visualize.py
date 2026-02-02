@@ -83,12 +83,27 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
     # Filter relevant stages
     df = df[df['stage'].isin(stage_mapping.keys())]
 
+    # Handle backward compatibility: add sample_rate and tracker if missing
+    if 'sample_rate' not in df.columns:
+        df['sample_rate'] = 1
+    if 'tracker' not in df.columns:
+        df['tracker'] = 'unknown'
+    
     # Transform data: create Config labels and map stage names
-    df['Config'] = df['classifier'].str[:5] + ' ' + df['tilesize'].astype(str) + ' ' + df['tilepadding'].str[:4]
+    # Include sample_rate and tracker in Config label
+    df['Config'] = (df['classifier'].str[:5] + ' ' + df['tilesize'].astype(str) + ' ' + 
+                    df['tilepadding'].str[:4] + ' SR' + df['sample_rate'].astype(str) + ' ' + 
+                    df['tracker'].str[:6])
     df['Stage'] = df['stage'].map(stage_mapping)
 
     # Aggregate data by grouping and summing times
-    df = df.groupby(['Stage', 'Config', 'op']).agg({'time': 'sum'}).reset_index()
+    # Include sample_rate and tracker in grouping to preserve them
+    group_cols = ['Stage', 'Config', 'op']
+    if 'sample_rate' in df.columns:
+        group_cols.append('sample_rate')
+    if 'tracker' in df.columns:
+        group_cols.append('tracker')
+    df = df.groupby(group_cols).agg({'time': 'sum'}).reset_index()
 
     # Calculate total runtime per config within each stage for sorting
     config_totals = df.groupby(['Stage', 'Config'])['time'].sum().reset_index()
@@ -108,7 +123,7 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
                     orient='bottom',
                     columns=3,
                 )),
-                tooltip=['Config', 'op', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
+                tooltip=['Config', 'op', 'sample_rate', 'tracker', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
             ).properties(
                 title=f'{stage_name} Runtime by Operation',
                 width=300,
@@ -143,15 +158,35 @@ def transform_query_data(query_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
     """
     # Transform execution data: filter, create category labels, map operations, and aggregate
     exec_df = query_data[~query_data['stage'].isin(NAIVE_STAGES)].copy()
-    exec_df['Category'] = exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' + exec_df['tilepadding'].str[:4]
+    
+    # Handle backward compatibility: add sample_rate and tracker if missing
+    if 'sample_rate' not in exec_df.columns:
+        exec_df['sample_rate'] = 1
+    if 'tracker' not in exec_df.columns:
+        exec_df['tracker'] = 'unknown'
+    
+    # Include sample_rate and tracker in Category label
+    exec_df['Category'] = (exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' + 
+                          exec_df['tilepadding'].str[:4] + ' SR' + exec_df['sample_rate'].astype(str) + ' ' + 
+                          exec_df['tracker'].str[:6])
     exec_df['Operation'] = exec_df['stage'].map(RUNTIME_STAGE_MAPPING)
-    exec_df = exec_df.groupby(['dataset', 'Category', 'Operation']).agg({'time': 'sum'}).reset_index()
+    
+    # Include sample_rate and tracker in grouping to preserve them
+    group_cols = ['dataset', 'Category', 'Operation']
+    if 'sample_rate' in exec_df.columns:
+        group_cols.append('sample_rate')
+    if 'tracker' in exec_df.columns:
+        group_cols.append('tracker')
+    exec_df = exec_df.groupby(group_cols).agg({'time': 'sum'}).reset_index()
     
     # Transform naive baseline data: filter naive stages and aggregate
-    naive_df = query_data[query_data['stage'].isin(NAIVE_STAGES)]
+    naive_df = query_data[query_data['stage'].isin(NAIVE_STAGES)].copy()
     naive_df = naive_df.groupby(['dataset', 'stage']).agg({'time': 'sum'}).reset_index()
     naive_df['Category'] = 'Naive'
     naive_df['Operation'] = naive_df['stage'].map(RUNTIME_STAGE_MAPPING)
+    # Add sample_rate and tracker columns for consistency (Naive doesn't use these)
+    naive_df['sample_rate'] = 1
+    naive_df['tracker'] = 'N/A'
     
     return exec_df, naive_df
 
@@ -173,7 +208,7 @@ def create_runtime_chart(df: pd.DataFrame, title: str, height: int) -> alt.Chart
         color=alt.Color('Operation:N', legend=alt.Legend(orient='top')),
         stroke=alt.condition(alt.datum.Category == 'Naive', alt.value('black'), alt.value('none')),
         strokeWidth=alt.condition(alt.datum.Category == 'Naive', alt.value(4), alt.value(0)),
-        tooltip=['Category', 'Operation', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
+        tooltip=['Category', 'Operation', 'sample_rate', 'tracker', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
     ).properties(
         title=title,
         width=800,
@@ -210,6 +245,9 @@ def visualize_overall_runtime(index_overall: pd.DataFrame, query_overall: pd.Dat
     index_df = index_overall.groupby('stage').agg({'time': 'sum'}).reset_index()
     index_df['Category'] = 'Index Constr.'
     index_df['Operation'] = index_df['stage'].map(RUNTIME_STAGE_MAPPING)
+    # Index construction doesn't have sample_rate or tracker, so set defaults for consistency
+    index_df['sample_rate'] = 1
+    index_df['tracker'] = 'N/A'
 
     # Transform query execution data using common function
     exec_df, naive_df = transform_query_data(video_query_data)

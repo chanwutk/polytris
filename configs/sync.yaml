@@ -1,0 +1,239 @@
+# Sync configuration for rsync-based file synchronization
+# This config specifies how to sync code files from local to remote
+
+# Remote host configuration
+remote:
+  host: chanwutk@freddie.millennium.berkeley.edu  # SSH host (user@hostname or hostname)
+  path: /work/cwkt/projects/polyis    # Destination path on remote machine
+
+# Local source directory (defaults to current directory if not specified)
+local_path: .
+
+# File inclusion/exclusion patterns
+# Patterns follow rsync include/exclude syntax (supports wildcards: *, ?, **)
+# 
+# Pattern matching rules:
+# - * matches any characters except /
+# - ** matches any characters including /
+# - ? matches a single character
+# - Patterns are matched in order (first match wins)
+# - If includes are specified, only matching files are synced
+# - If no includes are specified, all files are synced except excludes
+# - Directory patterns should end with / (e.g., "configs/**")
+includes:
+  # # Allow directory traversal
+  # - "*/"
+  
+  # # Include all files in project root
+  # - "*"
+  
+  # Include Python, C, Cython, and config files in specific directories
+  # .claude directory
+  - ".claude/**/*.py"
+  - ".claude/**/*.pyx"
+  - ".claude/**/*.pyi"
+  - ".claude/**/*.c"
+  - ".claude/**/*.h"
+  - ".claude/**/*.hpp"
+  - ".claude/**/*.cpp"
+  - ".claude/**/*.yaml"
+  - ".claude/**/*.yml"
+  - ".claude/**/*.json"
+  - ".claude/**/*.toml"
+  
+  # .cursor directory
+  - ".cursor/**/*.py"
+  - ".cursor/**/*.pyx"
+  - ".cursor/**/*.pyi"
+  - ".cursor/**/*.c"
+  - ".cursor/**/*.h"
+  - ".cursor/**/*.hpp"
+  - ".cursor/**/*.cpp"
+  - ".cursor/**/*.yaml"
+  - ".cursor/**/*.yml"
+  - ".cursor/**/*.json"
+  - ".cursor/**/*.toml"
+  
+  # .github directory
+  - ".github/**/*.py"
+  - ".github/**/*.pyx"
+  - ".github/**/*.pyi"
+  - ".github/**/*.c"
+  - ".github/**/*.h"
+  - ".github/**/*.hpp"
+  - ".github/**/*.cpp"
+  - ".github/**/*.yaml"
+  - ".github/**/*.yml"
+  - ".github/**/*.json"
+  - ".github/**/*.toml"
+  
+  # .vscode directory
+  - ".vscode/**/*.py"
+  - ".vscode/**/*.pyx"
+  - ".vscode/**/*.pyi"
+  - ".vscode/**/*.c"
+  - ".vscode/**/*.h"
+  - ".vscode/**/*.hpp"
+  - ".vscode/**/*.cpp"
+  - ".vscode/**/*.yaml"
+  - ".vscode/**/*.yml"
+  - ".vscode/**/*.json"
+  - ".vscode/**/*.toml"
+  
+  # assets directory
+  - "assets/**/*.py"
+  - "assets/**/*.pyx"
+  - "assets/**/*.pyi"
+  - "assets/**/*.c"
+  - "assets/**/*.h"
+  - "assets/**/*.hpp"
+  - "assets/**/*.cpp"
+  - "assets/**/*.yaml"
+  - "assets/**/*.yml"
+  - "assets/**/*.json"
+  - "assets/**/*.toml"
+  
+  # configs directory
+  - "configs/**/*.py"
+  - "configs/**/*.pyx"
+  - "configs/**/*.pyi"
+  - "configs/**/*.c"
+  - "configs/**/*.h"
+  - "configs/**/*.hpp"
+  - "configs/**/*.cpp"
+  - "configs/**/*.yaml"
+  - "configs/**/*.yml"
+  - "configs/**/*.yaml"
+  - "configs/**/*.json"
+  - "configs/**/*.toml"
+  
+  # copy directory
+  - "copy/**/*.py"
+  - "copy/**/*.pyx"
+  - "copy/**/*.pyi"
+  - "copy/**/*.c"
+  - "copy/**/*.h"
+  - "copy/**/*.hpp"
+  - "copy/**/*.cpp"
+  - "copy/**/*.yaml"
+  - "copy/**/*.yml"
+  - "copy/**/*.json"
+  - "copy/**/*.toml"
+  
+  # evaluation directory
+  - "evaluation/**/*.py"
+  - "evaluation/**/*.pyx"
+  - "evaluation/**/*.pyi"
+  - "evaluation/**/*.c"
+  - "evaluation/**/*.h"
+  - "evaluation/**/*.hpp"
+  - "evaluation/**/*.cpp"
+  - "evaluation/**/*.yaml"
+  - "evaluation/**/*.yml"
+  - "evaluation/**/*.json"
+  - "evaluation/**/*.toml"
+  
+  # gcp directory
+  - "gcp/**/*.py"
+  - "gcp/**/*.pyx"
+  - "gcp/**/*.pyi"
+  - "gcp/**/*.c"
+  - "gcp/**/*.h"
+  - "gcp/**/*.hpp"
+  - "gcp/**/*.cpp"
+  - "gcp/**/*.yaml"
+  - "gcp/**/*.yml"
+  - "gcp/**/*.json"
+  - "gcp/**/*.toml"
+  
+  # polyis directory
+  - "polyis/**/*.py"
+  - "polyis/**/*.pyx"
+  - "polyis/**/*.pyi"
+  - "polyis/**/*.c"
+  - "polyis/**/*.h"
+  - "polyis/**/*.hpp"
+  - "polyis/**/*.cpp"
+  - "polyis/**/*.yaml"
+  - "polyis/**/*.yml"
+  - "polyis/**/*.json"
+  - "polyis/**/*.toml"
+  
+  # preprocess directory
+  - "preprocess/**/*.py"
+  - "preprocess/**/*.pyx"
+  - "preprocess/**/*.pyi"
+  - "preprocess/**/*.c"
+  - "preprocess/**/*.h"
+  - "preprocess/**/*.hpp"
+  - "preprocess/**/*.cpp"
+  - "preprocess/**/*.yaml"
+  - "preprocess/**/*.yml"
+  - "preprocess/**/*.json"
+  - "preprocess/**/*.toml"
+  
+  # scripts directory
+  - "scripts/**/*.py"
+  - "scripts/**/*.pyx"
+  - "scripts/**/*.pyi"
+  - "scripts/**/*.c"
+  - "scripts/**/*.h"
+  - "scripts/**/*.hpp"
+  - "scripts/**/*.cpp"
+  - "scripts/**/*.yaml"
+  - "scripts/**/*.yml"
+  - "scripts/**/*.json"
+  - "scripts/**/*.toml"
+  
+  # tests directory
+  - "tests/**/*.py"
+  - "tests/**/*.pyx"
+  - "tests/**/*.pyi"
+  - "tests/**/*.c"
+  - "tests/**/*.h"
+  - "tests/**/*.hpp"
+  - "tests/**/*.cpp"
+  - "tests/**/*.yaml"
+  - "tests/**/*.yml"
+  - "tests/**/*.json"
+  - "tests/**/*.toml"
+
+# Exclusion patterns (applied after includes)
+# These patterns exclude files/directories that shouldn't be synced
+excludes:
+  # Model weights (exclude from root and all subdirectories)
+  - "*.pth"
+  - "*.pt"
+  - "**/*.pth"
+  - "**/*.pt"
+  
+  # Python cache and compiled files
+  - "**/__pycache__/"
+  - "**/*.pyc"
+  - "**/*.pyo"
+  - "**/*.so"
+
+  - ".venv/**"
+  - "venv/**"
+  - "venv"
+  - ".git/**"
+  - ".git"
+
+# Rsync options
+# Common options:
+# -a: archive mode (preserves permissions, timestamps, etc.)
+# -v: verbose
+# -z: compress during transfer
+# -h: human-readable output
+# --delete: delete files on remote that don't exist locally (use with caution)
+# --dry-run: preview changes without actually syncing
+rsync_options:
+  - "-a"           # Archive mode
+  - "-v"           # Verbose
+  - "-z"           # Compress
+  - "-h"           # Human-readable
+  - "--progress"   # Show progress
+  # Uncomment the following for dry-run (preview only):
+  # - "--dry-run"
+  # Uncomment to delete files on remote that don't exist locally:
+  # - "--delete"

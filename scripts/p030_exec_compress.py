@@ -15,7 +15,7 @@ from functools import partial
 import torch
 
 from polyis import dtypes
-from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS
+from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding
 from polyis.pack.group_tiles import group_tiles
 from polyis.pack.pack import pack
 
@@ -43,9 +43,6 @@ class PolyominoPosition(NamedTuple):
     px: int
     frame: int
     shape: np.ndarray
-
-
-TilePaddingMode = Literal['none', 'connected', 'disconnected']
 
 
 OUTPUT_DIR_MAP = {
@@ -112,7 +109,7 @@ Collage = list[PolyominoPosition]
 
 
 def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
-             tilepadding: TilePaddingMode, threshold: float, mode: PackMode,
+             tilepadding: TilePadding, threshold: float, mode: PackMode,
              gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video by batch processing all frames at once using pack_all.

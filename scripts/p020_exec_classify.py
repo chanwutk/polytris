@@ -3,7 +3,7 @@
 import argparse
 import json
 import os
-from typing import Callable
+from typing import Callable, cast
 import cv2
 import torch
 import numpy as np
@@ -12,7 +12,7 @@ import shutil
 import multiprocessing as mp
 from functools import partial
 
-from polyis.images import splitHWC, padHWC
+from polyis.images import ImgHWC, ImgNHWC, splitHWC, splitNHWC, padHWC
 
 from polyis.train.select_model_optimization import select_model_optimization
 from polyis.utilities import format_time, ProgressBar, get_config
@@ -24,6 +24,7 @@ DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
 DATASETS = config['EXEC']['DATASETS']
+BATCH_SIZE = 16
 
 
 def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: str) -> "torch.nn.Module":
@@ -54,107 +55,111 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
         # print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
         model = torch.load(model_path, map_location=device, weights_only=False)
         model.eval()
+        model.half()
         return model
 
     raise FileNotFoundError(f"No trained model found for {classifier_name} tile size {tile_size} in {results_path}")
 
 
-def process_frame_tiles(frame: np.ndarray, previous_frame: np.ndarray, model: torch.nn.Module, tile_size: int, device: str, 
-                       normalize_mean: torch.Tensor, normalize_std: torch.Tensor, 
-                       always_relevant_mask: torch.Tensor) -> tuple[np.ndarray, list[dict]]:
+def process_batch(
+    grid_width: int,
+    grid_height: int,
+    positions: torch.Tensor,
+    batch_frames: list[np.ndarray],
+    initial_previous_frame: torch.Tensor,
+    model: torch.nn.Module,
+    tile_size: int,
+    device: str,
+    normalize_mean: torch.Tensor,
+    normalize_std: torch.Tensor,
+    always_relevant_mask: torch.Tensor,
+) -> tuple[list[np.ndarray], list[dict], torch.Tensor]:
     """
-    Process a single video frame with the specified tile size and return relevance scores and timing information.
-
-    This function splits the input frame into tiles of the specified size, runs inference
-    with the trained model, and returns relevance scores for each tile along with timing information.
-
-    Args:
-        frame (np.ndarray): Input video frame as a numpy array with shape (H, W, 3) in RGB format
-            where H and W are the frame height and width, and 3 represents RGB channels
-        previous_frame (np.ndarray): Previous video frame as a numpy array with shape (H, W, 3) in RGB format
-        model (torch.nn.Module): Trained model for the specified tile size
-        tile_size (int): Size of tiles to use for processing (30, 60, or 120)
-        device (str): Device to use for processing
-        normalize_mean (torch.Tensor): Pre-created mean tensor for ImageNet normalization
-        normalize_std (torch.Tensor): Pre-created std tensor for ImageNet normalization
-        always_relevant_mask (torch.Tensor): Flattened mask indicating tiles that have been relevant
-            at some point in the dataset. Shape: (num_tiles,). None if no optimization is available.
-
-    Returns:
-        tuple[np.ndarray, list[dict[str, float]]]: A tuple containing:
-            - 2D grid of relevance scores where each element represents the relevance score
-              (probability between 0 and 1) for the corresponding tile in the frame
-            - List of dictionaries with 'op' (operation) and 'time' keys for preprocessing and model inference
-
-    Note:
-        - Frame is padded if necessary to ensure divisibility by tile size
-        - Input frame is normalized to [0, 1] range before inference
-        - Model outputs logits, which are converted to probabilities using sigmoid
-        - Timing information includes preprocessing and model inference times
-        - Tiles that are all-black or have never been relevant are filtered out
+    Process up to BATCH_SIZE frames in one batch: prepare tiles for each frame,
+    run inference once on all valid tiles, scatter results per frame.
+    Returns (list of relevance_grids, list of runtime dicts, last frame_tensor).
     """
+    batch_size = len(batch_frames)
+    num_tiles = grid_height * grid_width
+
     with torch.no_grad():
-        start_time = (time.time_ns() / 1e6)
-        # Convert frame to tensor and ensure it's in HWC format
-        frame_tensor = torch.from_numpy(frame).to(device)
-        previous_frame_tensor = torch.from_numpy(previous_frame).to(device)
+        send_start = time.time_ns() / 1e6
+        # 1. Stack on CPU then send to GPU (one transfer is faster than N)
+        frames_stacked = np.stack(batch_frames, axis=0)
+        frames_tensor = torch.from_numpy(frames_stacked).to(device)
+        send_runtime = time.time_ns() / 1e6 - send_start
 
-        diff = torch.abs(frame_tensor.to(torch.int16) - previous_frame_tensor.to(torch.int16)).to(torch.uint8)
-        frame_tensor = torch.cat([frame_tensor, diff], dim=2)
-        channels = frame_tensor.shape[2]
+        diff_start = time.time_ns() / 1e6
+        # 2. Reuse stacked frames to construct prev_frames (N, H, W, C)
+        prev_frames = torch.cat(
+            [initial_previous_frame.unsqueeze(0), frames_tensor[:-1]], dim=0
+        )
+        # 3. Find diff
+        diff = torch.abs(
+            frames_tensor.to(torch.int16) - prev_frames.to(torch.int16)
+        ).to(torch.uint8)
+        # 4. Cat frames and diff
+        frames_6ch = torch.cat([frames_tensor, diff], dim=-1)
+        diff_runtime = time.time_ns() / 1e6 - diff_start
 
-        # Pad frame to be divisible by tile_size
-        padded_frame = padHWC(frame_tensor, tile_size, tile_size)  # type: ignore
+        reshape_start = time.time_ns() / 1e6
+        # 5. Split
+        tiles_nghwc = splitNHWC(cast(ImgNHWC, frames_6ch), tile_size, tile_size)
+        # 6. Flat tiles (batch_size*num_tiles, tile_size, tile_size, 6)
+        tiles_flat = tiles_nghwc.reshape(
+            batch_size * num_tiles, tile_size, tile_size, 6
+        )
+        reshape_runtime = time.time_ns() / 1e6 - reshape_start
 
-        # Split frame into tiles
-        tiles = splitHWC(padded_frame, tile_size, tile_size)
+        mask_start = time.time_ns() / 1e6
+        # 7. Same as non-batched: non_black, valid mask, normalize
+        non_black_mask = (
+            tiles_flat.reshape(batch_size * num_tiles, -1).any(dim=1).to(torch.bool)
+        )
+        always_relevant_expanded = (
+            always_relevant_mask.to(torch.bool)
+            .unsqueeze(0)
+            .expand(batch_size, -1)
+            .reshape(-1)
+        )
+        valid_flat_idx = (non_black_mask & always_relevant_expanded).nonzero().squeeze(1)
+        tiles_valid = tiles_flat[valid_flat_idx].float() / 255.0
+        tiles_nchw_valid = tiles_valid.permute(0, 3, 1, 2)
+        tiles_nchw_valid = (tiles_nchw_valid - normalize_mean) / normalize_std
+        positions_expanded = (
+            positions.unsqueeze(0)
+            .expand(batch_size, -1, -1)
+            .reshape(batch_size * num_tiles, 2)
+        )
+        all_positions = positions_expanded[valid_flat_idx]
+        mask_runtime = (time.time_ns() / 1e6) - mask_start
+        # transform_times = [transform_runtime / batch_size] * batch_size
 
-        # Flatten tiles for batch processing
-        num_tiles = tiles.shape[0] * tiles.shape[1]
-        tiles_flat = tiles.reshape(num_tiles, tile_size, tile_size, channels)
+        inference_start = time.time_ns() / 1e6
+        all_tiles = tiles_nchw_valid.half()
+        all_positions = all_positions.half()
+        prev_tensor = frames_tensor[-1]
 
-        # Create position tensor representing (y, x) indices of tiles_flat
-        grid_height, grid_width = tiles.shape[:2]
-        y_indices = torch.arange(grid_height, device=device, dtype=torch.uint8).repeat_interleave(grid_width)
-        x_indices = torch.arange(grid_width, device=device, dtype=torch.uint8).repeat(grid_height)
-        positions = torch.stack([y_indices, x_indices], dim=1).float()
+        predictions = torch.sigmoid(model(all_tiles, all_positions))
+        inference_runtime = time.time_ns() / 1e6 - inference_start
 
-        # Identify all-black tiles (all pixels are zero)
-        # Check if any pixel in each tile is non-zero
-        non_black_mask = tiles_flat.reshape(num_tiles, -1).any(dim=1).to(torch.uint8)
+        collect_start = time.time_ns() / 1e6
+        # Recover probabilities for all tiles, then split by frame
+        predictions_uint8 = (predictions * 255).to(torch.uint8)
+        probabilities_full = torch.zeros(
+            batch_size * num_tiles, 1, device=device, dtype=torch.uint8
+        )
+        probabilities_full[valid_flat_idx] = predictions_uint8
+        probabilities_per_frame = probabilities_full.reshape(
+            batch_size, grid_height, grid_width
+        )
+        relevance_grids_np = probabilities_per_frame.cpu().numpy()
+        relevance_grids = list(relevance_grids_np)
 
-        # Combine with always_relevant_mask to filter out tiles that have never been relevant
-        valid_tiles_mask = non_black_mask & always_relevant_mask
+        collect_runtime = time.time_ns() / 1e6 - collect_start
 
-        # Normalize to [0, 1] range (equivalent to ToTensor())
-        tiles_flat = tiles_flat.float() / 255.0
-
-        # Convert to NCHW format for the model
-        tiles_nchw = tiles_flat.permute(0, 3, 1, 2)
-        
-        # Apply ImageNet normalization to match training transform
-        # Using manual normalization for ~1.9x speedup vs torchvision.Normalize
-        tiles_nchw = (tiles_nchw - normalize_mean) / normalize_std
-        
-        transform_runtime = (time.time_ns() / 1e6) - start_time
-
-        # Run inference
-        start_time = (time.time_ns() / 1e6)
-        predictions = torch.sigmoid(model(tiles_nchw, positions))
-        
-        # Convert to uint8 and transfer to CPU
-        probabilities = (predictions * 255).to(torch.uint8)
-        # Filter predictions using the combined mask
-        probabilities = probabilities * valid_tiles_mask.view(-1, 1)
-        probabilities = probabilities.cpu().numpy().flatten()
-
-        # Reshape back to grid format
-        grid_height, grid_width = tiles.shape[:2]
-        relevance_grid = probabilities.reshape(grid_height, grid_width)
-        end_time = (time.time_ns() / 1e6)
-        inference_runtime = end_time - start_time
-
-    return relevance_grid, format_time(transform=transform_runtime, inference=inference_runtime)
+        runtime = format_time(inference=inference_runtime, collect=collect_runtime, reshape=reshape_runtime, mask=mask_runtime, diff=diff_runtime, send=send_runtime)
+    return relevance_grids, runtime, prev_tensor
 
 
 def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
@@ -234,9 +239,9 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     model, method_name = select_model_optimization(model, benchmark_results, device, tile_size,
                                       (width * height) // (tile_size * tile_size))
 
-    # Pre-create normalization tensors for ImageNet normalization (1.9x speedup vs torchvision.Normalize)
-    normalize_mean = torch.tensor([0.485, 0.456, 0.406] * 2, device=device).view(1, 6, 1, 1)
-    normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device).view(1, 6, 1, 1)
+    # Pre-create normalization tensors for ImageNet normalization (1.9x speedup vs torchvision.Normalize); half for model.half()
+    normalize_mean = torch.tensor([0.485, 0.456, 0.406] * 2, device=device, dtype=torch.float16).view(1, 6, 1, 1)
+    normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device, dtype=torch.float16).view(1, 6, 1, 1)
 
     # Load always_relevant bitmap if available to filter out tiles that have never been relevant
     always_relevant_path = os.path.join(CACHE_DIR, dataset, 'indexing', 'always_relevant', f'{tile_size}_all.npy')
@@ -246,6 +251,15 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     always_relevant_bitmap = np.load(always_relevant_path)
     # Flatten to match the tile processing order and convert to tensor
     always_relevant_mask = torch.from_numpy(always_relevant_bitmap.flatten()).to(device).to(torch.uint8)
+
+    assert width % tile_size == 0, f"Width {width} is not divisible by tile size {tile_size}"
+    assert height % tile_size == 0, f"Height {height} is not divisible by tile size {tile_size}"
+    grid_width = width // tile_size
+    grid_height = height // tile_size
+
+    y_indices = torch.arange(grid_height, device=device, dtype=torch.uint8).repeat_interleave(grid_width)
+    x_indices = torch.arange(grid_width, device=device, dtype=torch.uint8).repeat(grid_height)
+    positions = torch.stack([y_indices, x_indices], dim=1).float()
 
     # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
@@ -263,29 +277,53 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         cap.release()
         assert len(frames) == frame_count, f"Expected {frame_count} frames, got {len(frames)}"
 
-        # Warm up the model
+        # Warm up the model (single-frame inference)
         for frame_idx, frame in enumerate(frames[:16]):
             previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
-            relevance_grid, runtime = process_frame_tiles(frame, previous_frame, model, tile_size, device, 
-                                                         normalize_mean, normalize_std, always_relevant_mask)  # type: ignore
-        
-        for frame_idx, frame in enumerate(frames):
-            # Process frame with the model
-            previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
-            relevance_grid, runtime = process_frame_tiles(frame, previous_frame, model, tile_size, device, 
-                                                         normalize_mean, normalize_std, always_relevant_mask)  # type: ignore
+            _, _, _ = process_batch(
+                grid_width,
+                grid_height,
+                positions,
+                [frame],
+                torch.from_numpy(previous_frame).to(device),
+                model,
+                tile_size,
+                device,
+                normalize_mean,
+                normalize_std,
+                always_relevant_mask,
+            )
+        previous_frame = torch.from_numpy(frames[1]).to(device)
 
-            # Create result entry for this frame
-            frame_entry = {
-                "classification_size": relevance_grid.shape,
-                "classification_hex": relevance_grid.flatten().tobytes().hex(),
-                "idx": frame_idx,
-            }
-
-            # Write to JSONL file
-            f.write(json.dumps(frame_entry) + '\n')
+        # Process frames in batches of BATCH_SIZE; one inference per batch
+        frame_idx = 0
+        while frame_idx < frame_count:
+            batch_end = min(frame_idx + BATCH_SIZE, frame_count)
+            batch_frames = [frames[i] for i in range(frame_idx, batch_end)]
+            relevance_grids, runtime, previous_frame = process_batch(
+                grid_width,
+                grid_height,
+                positions,
+                batch_frames,
+                previous_frame,
+                model,
+                tile_size,
+                device,
+                normalize_mean,
+                normalize_std,
+                always_relevant_mask,
+            )
             fr.write(json.dumps(runtime) + '\n')
-            command_queue.put((device, {'completed': frame_idx}))
+            for j, relevance_grid in enumerate(relevance_grids):
+                idx = frame_idx + j
+                frame_entry = {
+                    "classification_size": relevance_grid.shape,
+                    "classification_hex": relevance_grid.flatten().tobytes().hex(),
+                    "idx": idx,
+                }
+                f.write(json.dumps(frame_entry) + '\n')
+                command_queue.put((device, {'completed': idx}))
+            frame_idx = batch_end
 
 
 def parse_args():

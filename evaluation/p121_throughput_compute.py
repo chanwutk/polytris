@@ -147,7 +147,11 @@ def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[d
     device = f'cuda:{worker_id}'
     command_queue.put((device, kwargs))
     for idx, row in df.iterrows():
-        dataset, video, classifier, tilesize, tilepadding, stage, runtime_file = row
+        # Extract sample_rate from row, default to 1 if not present (for backward compatibility)
+        sample_rate = row.get('sample_rate', 1) if ('sample_rate' in row and not pd.isna(row['sample_rate'])) else 1
+        # Extract tracker from row, default to None if not present (for backward compatibility)
+        tracker = row.get('tracker', 'unknown') if ('tracker' in row and not pd.isna(row['tracker'])) else None
+        dataset, video, classifier, tilesize, tilepadding, stage, runtime_file = row['dataset'], row['video'], row['classifier'], row['tilesize'], row['tilepadding'], row['stage'], row['runtime_file']
         file_timings = parse_runtime_file(runtime_file, stage, accessors[stage])
         assert file_timings is not None, f"File timings are None for {stage}, {runtime_file}, {video}"
         excluded_ops = EXCLUDED_OPS.get(stage, [])
@@ -156,12 +160,20 @@ def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[d
             f"File timings are not a pandas DataFrame for {stage}, {runtime_file}, {video}"
 
         per_op = aggregate_per_op(file_timings)
+        
+        # Divide runtime by sample_rate for stages that process frames at sample_rate intervals
+        stages_to_divide = ['020_exec_classify', '021_exec_classify_correct', '030_exec_compress', '040_exec_detect']
+        if stage in stages_to_divide:
+            per_op['time'] = per_op['time'] / sample_rate
+        
         per_op['stage'] = stage
         per_op['dataset'] = dataset
         per_op['video'] = video
         per_op['classifier'] = classifier
         per_op['tilesize'] = tilesize
         per_op['tilepadding'] = tilepadding
+        per_op['sample_rate'] = sample_rate
+        per_op['tracker'] = tracker
         
         if len(per_op) > 0:
             all_per_op.append(per_op)
@@ -174,6 +186,8 @@ def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[d
             'classifier': classifier,
             'tilesize': tilesize,
             'tilepadding': tilepadding,
+            'sample_rate': sample_rate,
+            'tracker': tracker,
             'time': total_time
         })
         command_queue.put((device, {'completed': idx}))
@@ -205,6 +219,12 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
     
     # Save metadata
     videos = sorted(query_overall['video'].unique())
+    if any(isinstance(sr, float) and pd.isna(sr) for sr in query_overall['sample_rate'].unique()):
+        raise ValueError(f"Sample rate is NaN for {query_overall['sample_rate'].unique()}, {dataset}, {output_dir}")
+    # Extract trackers, filtering out None values
+    trackers = []
+    if 'tracker' in query_overall.columns:
+        trackers = sorted([t for t in query_overall['tracker'].unique() if t is not None and not pd.isna(t)])
     metadata = {
         'dataset': dataset,
         'videos': sorted(query_overall['video'].unique()),
@@ -212,6 +232,8 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
         # np.int64 cannot be serialized to JSON
         'tilesizes': sorted(int(ts) for ts in query_overall['tilesize'].unique()),
         'tilepadding_values': sorted(query_overall['tilepadding'].unique()),
+        'sample_rates': sorted(int(sr) for sr in query_overall['sample_rate'].unique()) if 'sample_rate' in query_overall.columns else [1],
+        'trackers': trackers,
         'index_stages': sorted(index_overall['stage'].unique()),
         'query_stages': sorted(query_overall['stage'].unique()),
     }

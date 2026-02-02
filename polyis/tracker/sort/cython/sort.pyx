@@ -15,7 +15,7 @@ from libc.stdlib cimport malloc, calloc, free
 from libc.stdint cimport uint64_t
 from libcpp.vector cimport vector
 
-from polyis.tracker.cython.kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update
+from polyis.tracker.sort.cython.kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update
 
 
 cdef extern from "lapjv.h" nogil:
