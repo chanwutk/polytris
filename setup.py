@@ -157,6 +157,20 @@ extensions = [
         extra_compile_args=ARGS + ["-std=c++11"],
         language="c++",
     ),
+    Extension(
+        "polyis.sample.cython.greedy_prune",
+        ["polyis/sample/cython/greedy_prune.pyx"],
+        include_dirs=[numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
+    ),
+    Extension(
+        "polyis.sample.cython.tile_extractor",
+        ["polyis/sample/cython/tile_extractor.pyx"],
+        include_dirs=[numpy.get_include()],
+        define_macros=MACROS,
+        extra_compile_args=ARGS,
+    ),
 ]
 
 
@@ -171,14 +185,20 @@ class CleanCommand(Command):
         'polyis/pack/cython/**/*.c',
         'polyis/pack/cython/*.c',
         'polyis/pack/*.c',
+        'polyis/sample/cython/**/*.c',
+        'polyis/sample/cython/*.c',
     ]
     so_patterns = [
         'polyis/pack/**/*.so',
         'polyis/pack/*.so',
+        'polyis/sample/**/*.so',
+        'polyis/sample/*.so',
     ]
     html_patterns = [
         'polyis/pack/**/*.html',
         'polyis/pack/*.html',
+        'polyis/sample/**/*.html',
+        'polyis/sample/*.html',
     ]
     
     def initialize_options(self):
