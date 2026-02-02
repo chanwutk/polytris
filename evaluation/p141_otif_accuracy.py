@@ -308,8 +308,7 @@ def main(args):
         print(f"Processing dataset: {dataset}")
         
         # Process both OTIF and LEAP results
-        # for system in ['otif', 'leap']:
-        for system in ['leap']:
+        for system in ['otif', 'leap']:
             videos, param_ids = find_sota_tracking_results(CACHE_DIR, dataset, system)
             print(videos, param_ids)
             

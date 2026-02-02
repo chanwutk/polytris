@@ -39,10 +39,10 @@ Examples:
 
 def get_evaluation_scripts() -> List[str]:
     """
-    Get all evaluation scripts from p111 to p200 in the evaluation directory.
+    Get all evaluation scripts from p110 to p200 in the evaluation directory.
 
     Returns:
-        List[str]: Sorted list of script filenames in range [p111, p200]
+        List[str]: Sorted list of script filenames in range [p110, p200]
     """
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -50,7 +50,7 @@ def get_evaluation_scripts() -> List[str]:
     # List all Python files in the evaluation directory
     all_files = [f for f in os.listdir(script_dir) if f.endswith('.py')]
 
-    # Filter files in the range p111-p200
+    # Filter files in the range p110-p200
     evaluation_scripts = []
     for filename in all_files:
         # Check if filename matches pattern pXXX_*.py where XXX is a number

@@ -8,7 +8,7 @@ from functools import partial
 import queue
 import multiprocessing as mp
 
-from polyis.utilities import create_tracker, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
+from polyis.utilities import create_tracker, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
 
 CONFIG = get_config()
@@ -47,7 +47,9 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     # Create tracker
     # tracker = create_tracker('sort')
     # tracker_cython = create_tracker('sort-cython')
-    tracker = create_tracker('sort-cython')
+    resolution = get_video_resolution(dataset, video_file)
+    width, height = resolution
+    tracker = create_tracker('bytetrack', img_size=(height, width))
 
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}

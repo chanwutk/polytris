@@ -21,7 +21,7 @@ from typing import ClassVar
 import numpy as np
 import numpy.typing as npt
 
-from polyis.tracker.kalman_filter import KalmanFilter7x4
+from polyis.tracker.sort.kalman_filter import KalmanFilter7x4
 import lap  # type: ignore
 
 np.random.seed(0)

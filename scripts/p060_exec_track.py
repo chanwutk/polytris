@@ -12,7 +12,7 @@ from typing import Callable
 
 import torch
 
-from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results
+from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results, get_video_resolution
 
 
 CONFIG = get_config()
@@ -22,7 +22,8 @@ CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 CLASSIFIERS = CONFIG['EXEC']['CLASSIFIERS']
 TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
 TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
-
+SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
+TRACKERS = CONFIG['EXEC']['TRACKERS']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute object tracking on detection results')
@@ -82,9 +83,9 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
 
 
 def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding: str,
-          no_interpolate: bool, gpu_id: int, command_queue: mp.Queue):
+          sample_rate: int, tracker_name: str, no_interpolate: bool, gpu_id: int, command_queue: mp.Queue):
     """
-    Process tracking for a single video/classifier/tilesize combination.
+    Process tracking for a single video/classifier/tilesize/tracker combination.
     This function is designed to be called in parallel.
     
     Args:
@@ -93,6 +94,8 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding:
         classifier (str): Classifier name used for detections
         tilesize (int): Tile size used for detections
         tilepadding (str): Whether padding was applied to classification results
+        sample_rate (int): Sample rate for tracking
+        tracker_name (str): Name of the tracker to use
         no_interpolate (bool): Whether to not perform trajectory interpolation
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
@@ -109,10 +112,12 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding:
 
     # Create output path for tracking results
     uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset, 'execution', video, '060_uncompressed_tracks')
-    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tilesize}_{tilepadding}', 'tracking.jsonl')
+    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}_{tracker_name}', 'tracking.jsonl')
     
     # Create tracker
-    tracker = create_tracker('sort-cython')
+    resolution = get_video_resolution(dataset, video)
+    width, height = resolution
+    tracker = create_tracker(tracker_name, img_size=(height, width))
     
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
@@ -122,7 +127,7 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding:
     
     # Send initial progress update
     command_queue.put((device, {
-        'description': f"{video} {'sort'} {classifier} {tilesize}",
+        'description': f"{video} {tracker_name} {classifier} {tilesize}",
         'completed': 0,
         'total': len(detection_results)
     }))
@@ -138,6 +143,8 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding:
         for frame_result in detection_results:
             frame_idx = frame_result['frame_idx']
             bboxes = frame_result['bboxes']
+            if frame_idx % sample_rate != 0:
+                continue
             
             # Start timing for this frame
             step_times = {}
@@ -238,14 +245,16 @@ def main(args: argparse.Namespace):
             for classifier in CLASSIFIERS:
                 for tilesize in TILE_SIZES:
                     for tilepadding in TILEPADDING_MODES:
-                        funcs.append(partial(track, dataset, video, classifier, tilesize, tilepadding, args.no_interpolate))
+                        for sample_rate in SAMPLE_RATES:
+                            for tracker_name in TRACKERS:
+                                funcs.append(partial(track, dataset, video, classifier, tilesize, tilepadding, sample_rate, tracker_name, args.no_interpolate))
     
     print(f"Created {len(funcs)} tasks to process")
 
     num_gpus = torch.cuda.device_count()
     
     # Set up multiprocessing with ProgressBar
-    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=40, num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 
 

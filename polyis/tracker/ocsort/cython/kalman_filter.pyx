@@ -5,8 +5,8 @@
 # cython: nonecheck=False
 
 from libc.string cimport memset, memcpy
-from libc.math cimport fabs
-from polyis.tracker.cython.kalman_filter cimport KalmanFilter
+from libc.math cimport fabs, sqrt
+from polyis.tracker.ocsort.cython.kalman_filter cimport KalmanFilter
 import cython
 
 # Global identity matrix
@@ -142,6 +142,9 @@ cdef void kf_init(KalmanFilter *kf) noexcept nogil:
     mat_zeros(<double*>kf.H, 28)
     # Initialize state uncertainty (4x4)
     mat_eye(<double*>kf.R, 4)
+    # Initialize freeze/unfreeze state
+    kf.has_saved = 0
+    kf.observed = 0
 
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
@@ -168,6 +171,11 @@ cdef void kf_predict(KalmanFilter *kf) noexcept nogil:
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
 cdef void kf_update(KalmanFilter *kf, double *z) noexcept nogil:
+    # Handle NULL z (no observation)
+    if z is NULL:
+        kf.observed = 0
+        return
+    
     # y = z - H * x
     cdef double Hx[4]
     matmul(<double*>kf.H, kf.x, Hx, 4, 7, 1)
@@ -236,3 +244,114 @@ cdef void kf_update(KalmanFilter *kf, double *z) noexcept nogil:
     
     # P = Term1 + Term2
     mat_add(Term1, Term2, <double*>kf.P, 49)
+    
+    # Mark as observed
+    kf.observed = 1
+
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
+cdef void kf_freeze(KalmanFilter *kf) noexcept nogil:
+    """Save the parameters before non-observation forward"""
+    memcpy(kf.x_saved, kf.x, 7 * sizeof(double))
+    memcpy(<double*>kf.P_saved, <double*>kf.P, 49 * sizeof(double))
+    kf.has_saved = 1
+
+@cython.boundscheck(False)  # type: ignore
+@cython.wraparound(False)  # type: ignore
+@cython.nonecheck(False)  # type: ignore
+cdef void kf_unfreeze(KalmanFilter *kf, double *history_obs, int history_len, int max_history) noexcept nogil:
+    """
+    Unfreeze and perform online smoothing.
+    history_obs is a flat array of observations, each observation is 4 doubles (x, y, s, r).
+    Only valid observations (non-None) are stored, with None represented as all zeros.
+    """
+    if kf.has_saved == 0:
+        return
+    
+    # Restore saved state
+    memcpy(kf.x, kf.x_saved, 7 * sizeof(double))
+    memcpy(<double*>kf.P, <double*>kf.P_saved, 49 * sizeof(double))
+    
+    # Find last two valid observations
+    cdef int i, j
+    cdef int index1 = -1
+    cdef int index2 = -1
+    cdef int valid_count = 0
+    cdef int is_valid
+    
+    # Count valid observations and find last two
+    for i in range(history_len - 1, -1, -1):
+        # Check if observation is valid (not all zeros)
+        is_valid = 0
+        for j in range(4):
+            if fabs(history_obs[i * 4 + j]) > 1e-9:
+                is_valid = 1
+                break
+        
+        if is_valid:
+            valid_count += 1
+            if index2 == -1:
+                index2 = i
+            elif index1 == -1:
+                index1 = i
+                break
+    
+    if index1 == -1 or index2 == -1:
+        return
+    
+    # Declare all variables at the top
+    cdef double x1, y1, s1, r1, w1, h1
+    cdef double x2, y2, s2, r2, w2, h2
+    cdef int time_gap
+    cdef double dx, dy, dw, dh
+    cdef double x, y, w, h, s, r
+    cdef double new_box[4]
+    
+    # Extract box1 and box2
+    x1 = history_obs[index1 * 4 + 0]
+    y1 = history_obs[index1 * 4 + 1]
+    s1 = history_obs[index1 * 4 + 2]
+    r1 = history_obs[index1 * 4 + 3]
+    w1 = sqrt(s1 * r1)
+    h1 = s1 / w1
+    
+    x2 = history_obs[index2 * 4 + 0]
+    y2 = history_obs[index2 * 4 + 1]
+    s2 = history_obs[index2 * 4 + 2]
+    r2 = history_obs[index2 * 4 + 3]
+    w2 = sqrt(s2 * r2)
+    h2 = s2 / w2
+    
+    time_gap = index2 - index1
+    if time_gap <= 0:
+        return
+    
+    dx = (x2 - x1) / time_gap
+    dy = (y2 - y1) / time_gap
+    dw = (w2 - w1) / time_gap
+    dh = (h2 - h1) / time_gap
+    
+    # Generate virtual trajectory
+    for i in range(time_gap):
+        x = x1 + (i + 1) * dx
+        y = y1 + (i + 1) * dy
+        w = w1 + (i + 1) * dw
+        h = h1 + (i + 1) * dh
+        s = w * h
+        r = w / h
+        
+        new_box[0] = x
+        new_box[1] = y
+        new_box[2] = s
+        new_box[3] = r
+        
+        # Update with virtual observation
+        kf_update(kf, new_box)
+        
+        # Predict for next step (except last)
+        if i < time_gap - 1:
+            kf_predict(kf)
+    
+    kf.has_saved = 0
+

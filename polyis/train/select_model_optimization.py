@@ -6,7 +6,7 @@ class CUDAGraphWrapper:
     """
     Wrapper for CUDA Graph with multi-input support (image, position).
     """
-    def __init__(self, model: "torch.nn.Module", expected_batch_size: int, device: str, tile_size: int):
+    def __init__(self, model: "torch.nn.Module", expected_batch_size: int, device: str, tile_size: int, dtype: torch.dtype):
         """
         Initialize CUDA Graph wrapper.
         
@@ -22,8 +22,8 @@ class CUDAGraphWrapper:
         self.device = device
         self.tile_size = tile_size
         
-        dummy_image = torch.randn(expected_batch_size, 6, tile_size, tile_size, device=device)
-        dummy_pos = torch.randn(expected_batch_size, 2, device=device)
+        dummy_image = torch.randn(expected_batch_size, 6, tile_size, tile_size, device=device, dtype=dtype)
+        dummy_pos = torch.randn(expected_batch_size, 2, device=device, dtype=dtype)
         self._ensure_graph_captured(dummy_image, dummy_pos)
     
     def _ensure_graph_captured(self, input_tensor: torch.Tensor, pos_tensor: torch.Tensor):
@@ -69,7 +69,7 @@ class ChannelsLastCUDAGraphWrapper(CUDAGraphWrapper):
     """
     Wrapper for channels-last + CUDA Graph with multi-input support.
     """
-    def __init__(self, model: "torch.nn.Module", expected_batch_size: int, device: str, tile_size: int):
+    def __init__(self, model: "torch.nn.Module", expected_batch_size: int, device: str, tile_size: int, dtype: torch.dtype):
         """
         Initialize CUDA Graph wrapper with channels-last memory format.
         
@@ -86,9 +86,9 @@ class ChannelsLastCUDAGraphWrapper(CUDAGraphWrapper):
         self.tile_size = tile_size
         
         # Create dummy inputs in channels-last format for graph capture
-        dummy_image = torch.randn(expected_batch_size, 6, tile_size, tile_size, device=device)
+        dummy_image = torch.randn(expected_batch_size, 6, tile_size, tile_size, device=device, dtype=dtype)
         dummy_image = dummy_image.to(memory_format=torch.channels_last)  # type: ignore
-        dummy_pos = torch.randn(expected_batch_size, 2, device=device)
+        dummy_pos = torch.randn(expected_batch_size, 2, device=device, dtype=dtype)
         self._ensure_graph_captured(dummy_image, dummy_pos)
     
     def __call__(self, input_tensor: torch.Tensor, pos_tensor: torch.Tensor) -> torch.Tensor:
@@ -130,6 +130,8 @@ def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[
     valid_results.sort(key=lambda x: x['runtime_ms'])
     best_result = valid_results[0]
     method = best_result['method']
+
+    dtype = next(iter(model.parameters())).dtype
     
     # Apply the best optimization method
     if method == 'baseline':
@@ -150,15 +152,15 @@ def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[
     
     elif method == 'torchscript_trace':
         # Create dummy inputs for tracing
-        dummy_image = torch.randn(batch_size, 6, tile_size, tile_size, device=device)
-        dummy_pos = torch.randn(batch_size, 2, device=device)
+        dummy_image = torch.randn(batch_size, 6, tile_size, tile_size, device=device, dtype=dtype)
+        dummy_pos = torch.randn(batch_size, 2, device=device, dtype=dtype)
         traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
         return traced_model, method
     
     elif method == 'torchscript_optimize':
         # Trace, freeze, and optimize
-        dummy_image = torch.randn(batch_size, 6, tile_size, tile_size, device=device)
-        dummy_pos = torch.randn(batch_size, 2, device=device)
+        dummy_image = torch.randn(batch_size, 6, tile_size, tile_size, device=device, dtype=dtype)
+        dummy_pos = torch.randn(batch_size, 2, device=device, dtype=dtype)
         traced_model = torch.jit.trace(model, (dummy_image, dummy_pos))
         optimized_model = torch.jit.freeze(traced_model)
         optimized_model = torch.jit.optimize_for_inference(optimized_model)
@@ -166,12 +168,12 @@ def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[
     
     elif method == 'cuda_graph':
         # Create CUDA Graph wrapper
-        return CUDAGraphWrapper(model, batch_size, device, tile_size), method
+        return CUDAGraphWrapper(model, batch_size, device, tile_size, dtype), method
     
     elif method == 'channels_last_cuda_graph':
         # Convert to channels-last and create CUDA Graph wrapper
         model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
-        return ChannelsLastCUDAGraphWrapper(model_cl, batch_size, device, tile_size), method
+        return ChannelsLastCUDAGraphWrapper(model_cl, batch_size, device, tile_size, dtype), method
     
     else:
         # Unknown method, return baseline
