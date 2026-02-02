@@ -12,6 +12,7 @@ ImgNHWC = NewType('ImgNHWC', torch.Tensor)
 
 ImgGCHW = NewType('ImgGCHW', torch.Tensor)
 ImgGHWC = NewType('ImgGHWC', torch.Tensor)
+ImgNGHWC = NewType('ImgNGHWC', torch.Tensor)
 
 
 def isCHW(img: torch.Tensor) -> TypeGuard[ImgCHW]:
@@ -32,6 +33,9 @@ def isGCHW(img: torch.Tensor) -> TypeGuard[ImgGCHW]:
 def isGHWC(img: torch.Tensor) -> TypeGuard[ImgGHWC]:
     return img.dim() == 5 and img.shape[4] in {1, 3, 6}
 
+def isNGHWC(img: torch.Tensor) -> TypeGuard[ImgNGHWC]:
+    return img.dim() == 6 and img.shape[5] in {1, 3, 6}
+
 
 def padCHW(img: ImgCHW, h: int, w: int) -> ImgCHW:
     C, H, W = img.shape
@@ -41,10 +45,14 @@ def padCHW(img: ImgCHW, h: int, w: int) -> ImgCHW:
     assert isCHW(ret), ret.shape
     return ret
 
-def padHWC(img: ImgHWC, h: int, w: int) -> ImgHWC:
+def getPadHWC(img: ImgHWC, h: int, w: int) -> tuple[int, int]:
     H, W, C = img.shape
     pad_h = (h - H % h) % h
     pad_w = (w - W % w) % w
+    return pad_h, pad_w
+
+def padHWC(img: ImgHWC, h: int, w: int) -> ImgHWC:
+    pad_h, pad_w = getPadHWC(img, h, w)
     ret = torch.nn.functional.pad(img, (0, 0, 0, pad_w, 0, pad_h))
     assert isHWC(ret), ret.shape
     return ret
@@ -70,6 +78,17 @@ def splitHWC(img: ImgHWC, h: int, w: int) -> ImgGHWC:
         .permute(0, 1, 3, 4, 2)
     )
     assert isGHWC(ret), ret.shape
+    return ret
+
+def splitNHWC(img: ImgNHWC, h: int, w: int) -> ImgNGHWC:
+    assert img.shape[1] % h == 0
+    assert img.shape[2] % w == 0
+    ret = (img
+        .unfold(1, h, h)
+        .unfold(2, w, w)
+        .permute(0, 1, 2, 4, 5, 3)
+    )
+    assert isNGHWC(ret), ret.shape
     return ret
 
 
