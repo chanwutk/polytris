@@ -132,6 +132,49 @@ cdef list[tuple[np.ndarray, tuple[int, int]]] format_polyominoes(cnp.uint64_t po
     return bins
 
 
+def group_tiles_all(cnp.uint8_t[:, :, :] bitmaps, int tilepadding_mode) -> tuple[cnp.int16_t[:, :, :], list[list[int]]]:
+    """
+    Group all connected tiles into polyominoes using C implementation.
+
+    Parameters:
+        bitmaps: 3D numpy array of uint8 representing the tile grid
+                 bitmaps[i, :, :] is the i-th bitmap
+        tilepadding_mode: The mode of tile padding to apply
+                         - 0: No padding
+                         - 1: Connected padding
+                         - 2: Disconnected padding
+
+    Returns:
+        Tuple of:
+        - tile_to_polyomino_id: 3D numpy array of int16 representing the tile to polyomino id mapping
+                  tile_to_polyomino_id[i, :, :] is the i-th tile to polyomino id mapping
+                  tile_to_polyomino_id[i, j, k] is the polyomino id of the polyomino that covers the tile (j, j) in the i-th bitmap
+                  if the tile is not covered by any polyomino, tile_to_polyomino_id[i, j, k] is -1.
+                  the polyomino id is tile_to_polyomino_id[i, j, k].
+        - lengths: list of lists of lengths of the polyominoes
+                    lengths[i][j] is the length of the polyomino with id `j` in the i-th bitmap
+    """
+    cdef cnp.int16_t[:, :, :] tile_to_polyomino_id = np.zeros_like(bitmaps, dtype=np.int16) - 1
+    cdef int i, j, k
+    cdef PolyominoArray *polyomino_array
+    cdef list[list[int]] lengths = []
+
+    for i in range(bitmaps.shape[0]):
+        bitmap_input = bitmaps[i, :, :]
+        polyomino_array = <PolyominoArray*><cnp.uint64_t>group_tiles(bitmap_input, tilepadding_mode)
+
+        for j in range(polyomino_array.size):
+            mask = polyomino_array.data[j].mask
+            lengths[i].append(mask.size)
+
+            for k in range(mask.size):
+                tile_i = mask.data[k].y  # type: ignore
+                tile_j = mask.data[k].x  # type: ignore
+                tile_to_polyomino_id[i, tile_i, tile_j] = j
+
+    return tile_to_polyomino_id, lengths
+
+
 def convert_collages_to_bitmap(collages):
     """
     Convert PyPolyominoPosition ``shape`` from coordinate lists to bitmap masks.

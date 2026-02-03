@@ -1,24 +1,24 @@
 EXEC:
   DATASETS:
-    # - caldot1-y11
-    # - caldot2-y11
+    - caldot1-y11
+    - caldot2-y11
     - caldot1-y05
     - caldot2-y05
     - jnc0
     - jnc2
     - jnc6
     - jnc7
-    # - caldot1
-    # - caldot2
+    - caldot1
+    - caldot2
     # - ams
   VIDEO_SETS:
     - valid
     - test
   CLASSIFIERS:
     # - YoloN
-    # - ShuffleNet05
+    - ShuffleNet05
     - MobileNetS
-    # - Perfect
+    - Perfect
   TILE_SIZES:
     - 60
   TILEPADDING_MODES:
@@ -50,7 +50,7 @@ OPS:
     batch_size: 128
     segment_size: 60
     num_segments: 18
-  
+
   classify:
     normalize_mean: [0.485, 0.456, 0.406]
     normalize_std: [0.229, 0.224, 0.225]
