@@ -12,7 +12,7 @@ import shutil
 import multiprocessing as mp
 from functools import partial
 
-from polyis.images import ImgHWC, ImgNHWC, splitHWC, splitNHWC, padHWC
+from polyis.images import ImgNHWC, splitNHWC
 
 from polyis.train.select_model_optimization import select_model_optimization
 from polyis.utilities import format_time, ProgressBar, get_config
@@ -61,7 +61,7 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
     raise FileNotFoundError(f"No trained model found for {classifier_name} tile size {tile_size} in {results_path}")
 
 
-def process_batch(
+def classify_batch(
     grid_width: int,
     grid_height: int,
     positions: torch.Tensor,
@@ -180,14 +180,6 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         gpu_id: GPU ID to use for processing
         command_queue: Queue for progress updates
 
-    Note:
-        - Video is processed frame by frame to minimize memory usage
-        - Progress is displayed using a progress bar
-        - Results are flushed to disk after each frame for safety
-        - Video metadata (FPS, dimensions, frame count) is extracted and logged
-        - Each frame entry includes frame index, timestamp, frame dimensions, tile classifications, and runtime
-        - The function handles various video formats (.mp4, .avi, .mov, .mkv)
-
     Output Format:
         Each line in the JSONL file contains a JSON object with:
         - frame_idx (int): Zero-based frame index
@@ -280,7 +272,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         # Warm up the model (single-frame inference)
         for frame_idx, frame in enumerate(frames[:16]):
             previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
-            _, _, _ = process_batch(
+            _, _, _ = classify_batch(
                 grid_width,
                 grid_height,
                 positions,
@@ -300,7 +292,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         while frame_idx < frame_count:
             batch_end = min(frame_idx + BATCH_SIZE, frame_count)
             batch_frames = [frames[i] for i in range(frame_idx, batch_end)]
-            relevance_grids, runtime, previous_frame = process_batch(
+            relevance_grids, runtime, previous_frame = classify_batch(
                 grid_width,
                 grid_height,
                 positions,
@@ -355,7 +347,7 @@ def main():
         - If no trained model is found for a video, that video is skipped with a warning
     """
     args = parse_args()
-    
+
     # Determine which videosets to process based on arguments
     selected_videosets = []
     if args.test:
@@ -364,11 +356,11 @@ def main():
         selected_videosets.append('train')
     if args.valid:
         selected_videosets.append('valid')
-    
+
     # If no videosets are specified, default to all three
     if not selected_videosets:
         selected_videosets = ['test']
-    
+
     mp.set_start_method('spawn', force=True)
 
     # Create tasks list with all video/classifier/tile_size combinations

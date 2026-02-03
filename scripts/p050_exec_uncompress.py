@@ -80,7 +80,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
     center_not_in_any_tile_detections: list[list[float]] = []
 
     # Process each detection
-    for x1, y1, x2, y2 in detections:
+    for x1, y1, x2, y2, *_ in detections:
         # Get the center point of the detection in compressed coordinates
         center_x = (x1 + x2) / 2.0
         center_y = (y1 + y2) / 2.0
@@ -111,10 +111,10 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
             center_in_any_tile = False
         
         if not center_in_any_tile:
-            center_not_in_any_tile_detections.append([x1, y1, x2, y2])
+            center_not_in_any_tile_detections.append([x1, y1, x2, y2, *_])
         
         if group_id is None:
-            not_in_any_tile_detections.append([x1, y1, x2, y2])
+            not_in_any_tile_detections.append([x1, y1, x2, y2, *_])
             continue
 
         # Convert group_id to 0-based index
@@ -135,6 +135,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
             y1 + offset_y,
             x2 + offset_x,
             y2 + offset_y,
+            *_
         ]
         
         # Add to frame detections
@@ -238,7 +239,7 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
 
                 # draw the detections
                 for det in not_in_any_tile_detections:
-                    x1, y1, x2, y2 = det
+                    x1, y1, x2, y2, *_ = det
                     image = cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
 
                     center_x = (x1 + x2) / 2
@@ -256,7 +257,7 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
 
                 # draw the detections
                 for det in center_not_in_any_tile_detections:
-                    x1, y1, x2, y2 = det
+                    x1, y1, x2, y2, *_ = det
                     image = cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
 
                     center_x = (x1 + x2) / 2
