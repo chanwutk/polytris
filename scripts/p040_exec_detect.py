@@ -206,7 +206,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         for i in range(len(image_files)):
             output_detection = results_dict[i]
             assert output_detection is not None
-            f.write(json.dumps({ 'image_file': image_files[i], 'bboxes': output_detection[:, :4].tolist() }) + '\n')
+            f.write(json.dumps({ 'image_file': image_files[i], 'bboxes': output_detection.tolist() }) + '\n')
             fr.write(json.dumps(format_time(detect=(end_time - start_time) / len(image_files))) + '\n')
 
 
@@ -299,8 +299,8 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
                 runtime['read'] = read_time_per_image
                 runtime['detect'] = detect_time_per_image
 
-                # Extract bounding boxes (x1, y1, x2, y2) format
-                bounding_boxes = outputs[:, :4].tolist()
+                # Extract bounding boxes (x1, y1, x2, y2, score, ...) format
+                bounding_boxes = outputs.tolist()
 
                 # Save detection results
                 f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
