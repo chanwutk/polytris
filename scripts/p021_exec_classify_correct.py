@@ -20,6 +20,7 @@ CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 DATASETS = config['EXEC']['DATASETS']
+SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 
 
 def process_frame_tiles(width: int, height: int, detections: list[list[float]], tile_size: int) -> tuple[np.ndarray, list[dict]]:
@@ -57,7 +58,7 @@ def process_frame_tiles(width: int, height: int, detections: list[list[float]], 
     return relevance_grid, format_time(inference=runtime, transform=0)
     
 
-def process_video(dataset: str, videoset: str, video: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
+def process_video(dataset: str, videoset: str, video: str, tile_size: int, sample_rate: int, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
     
@@ -70,6 +71,7 @@ def process_video(dataset: str, videoset: str, video: str, tile_size: int, gpu_i
         videoset (str): Videoset name (test, train, or valid)
         video (str): Video filename
         tile_size (int): Tile size used for processing (30, 60, or 120)
+        sample_rate (int): Sample rate for frame sampling (1 = all frames, 2 = every 2nd frame, etc.)
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     Note:
@@ -93,7 +95,7 @@ def process_video(dataset: str, videoset: str, video: str, tile_size: int, gpu_i
     output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video, '020_relevancy')
     os.makedirs(output_dir, exist_ok=True)
 
-    classifier_dir = os.path.join(output_dir, f'Perfect_{tile_size}')
+    classifier_dir = os.path.join(output_dir, f'Perfect_{tile_size}_{sample_rate}')
     os.makedirs(classifier_dir, exist_ok=True)
     
     # Create score directory for this tile size
@@ -112,32 +114,39 @@ def process_video(dataset: str, videoset: str, video: str, tile_size: int, gpu_i
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
+    # Filter to sampled frames only (frame_idx % sample_rate == 0)
+    sampled_indices = [idx for idx in range(frame_count) if idx % sample_rate == 0]
+    # Always include the last frame
+    last_idx = frame_count - 1
+    if last_idx >= 0 and (not sampled_indices or sampled_indices[-1] != last_idx):
+        sampled_indices.append(last_idx)
+
     # print(f"Video info: {width}x{height}, {frame_count} frames")
     with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
-        description = f"{video_path.split('/')[-1]} {tile_size:>3}"
+        description = f"{video_path.split('/')[-1]} {tile_size:>3} sr{sample_rate}"
         command_queue.put((device, {'description': description,
-                                    'completed': 0, 'total': frame_count}))
-        
-        mod = int(max(1, frame_count * 0.02))
-        for frame_idx in range(frame_count):
+                                    'completed': 0, 'total': len(sampled_indices)}))
+
+        mod = int(max(1, len(sampled_indices) * 0.02))
+        for i, frame_idx in enumerate(sampled_indices):
             # Get detections for this frame (empty list if no detections)
             detections = frame_detections.get(frame_idx, [])
-            
+
             # Process frame with groundtruth detections
             relevance_grid, runtime = process_frame_tiles(width, height, detections, tile_size)
-            
+
             # Create result entry for this frame
             frame_entry = {
                 "classification_size": relevance_grid.shape,
                 "classification_hex": relevance_grid.flatten().tobytes().hex(),
                 "idx": frame_idx,
             }
-            
+
             # Write to JSONL file
             f.write(json.dumps(frame_entry) + '\n')
             fr.write(json.dumps(runtime) + '\n')
-            if frame_idx % mod == 0:
-                command_queue.put((device, {'completed': frame_idx}))
+            if i % mod == 0:
+                command_queue.put((device, {'completed': i}))
 
 
 def parse_args():
@@ -201,7 +210,8 @@ def main():
             videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
             for video in sorted(videos):
                 for tile_size in TILE_SIZES:
-                    funcs.append(partial(process_video, dataset, videoset, video, tile_size))
+                    for sample_rate in SAMPLE_RATES:
+                        funcs.append(partial(process_video, dataset, videoset, video, tile_size, sample_rate))
     
     print(f"Created {len(funcs)} tasks to process")
     num_processes = min(torch.cuda.device_count(), len(funcs))
