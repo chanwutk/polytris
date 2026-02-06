@@ -25,6 +25,7 @@ DATASETS_DIR = config['DATA']['DATASETS_DIR']
 CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 DATASETS = config['EXEC']['DATASETS']
+SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TILEPADDING = config['EXEC']['TILEPADDING_MODES']
 
 
@@ -86,29 +87,30 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
 
 
 def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
-                    tilepadding: TilePadding, batch_size: int, gpu_id: int, command_queue: mp.Queue):
+                    tilepadding: TilePadding, sample_rate: int, batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
-    
+
     Uses threading with CUDA streams to enable parallel execution of multiple detection operations
     on the same GPU without blocking each other.
-    
+
     Args:
         dataset_name (str): Name of the dataset (used to auto-select detector)
         video (str): Name of the video file
         classifier (str): Classifier name used for compression
         tilesize (int): Tile size used for compression
         tilepadding (TilePadding): Whether padding was applied to classification results
+        sample_rate (int): Sample rate for frame sampling
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     # Enable cuDNN benchmarking for optimal performance
     torch.backends.cudnn.benchmark = True
-    
+
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = f'{classifier}_{tilesize}_{tilepadding}'
-    
+    param_str = f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}'
+
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
         f"Compressed frames directory {compressed_frames_dir} does not exist"
@@ -211,24 +213,25 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
-                   tilepadding: TilePadding, batch_size: int, gpu_id: int,
+                   tilepadding: TilePadding, sample_rate: int, batch_size: int, gpu_id: int,
                    command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
-    
+
     Args:
         dataset_name (str): Name of the dataset (used to auto-select detector)
         video (str): Name of the video file
         classifier (str): Classifier name used for compression
         tilesize (int): Tile size used for compression
         tilepadding (TilePadding): Whether padding was applied to classification results
+        sample_rate (int): Sample rate for frame sampling
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = f'{classifier}_{tilesize}_{tilepadding}'
-    
+    param_str = f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}'
+
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
         f"Compressed frames directory {compressed_frames_dir} does not exist"
@@ -355,8 +358,9 @@ def main(args):
             for classifier in CLASSIFIERS:
                 for tilesize in TILE_SIZES:
                     for tilepadding in TILEPADDING:
-                        funcs.append(partial(detect_objects, dataset, video, classifier,
-                                             tilesize, tilepadding, args.batch_size))
+                        for sample_rate in SAMPLE_RATES:
+                            funcs.append(partial(detect_objects, dataset, video, classifier,
+                                                 tilesize, tilepadding, sample_rate, args.batch_size))
     
     print(f"Created {len(funcs)} tasks to process")
     

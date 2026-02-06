@@ -39,10 +39,10 @@ def parse_args():
 
 
 def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesize: int,
-                           classifier: str, tilepadding: str | None = None, verbose: bool = False):
+                           classifier: str, tilepadding: str | None = None, sample_rate: int = 1, verbose: bool = False):
     """
     Load detection results from the uncompressed detections JSONL file.
-    
+
     Args:
         cache_dir (str): Cache directory path
         dataset (str): Dataset name
@@ -50,10 +50,11 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
         tilesize (int): Tile size used for detections
         classifier (str): Classifier name used for detections
         tilepadding (str): Whether padding was applied to classification results
+        sample_rate (int): Sample rate for frame sampling (default: 1)
         verbose (bool): Whether to print verbose output
     Returns:
         list[dict]: list of frame detection results
-        
+
     Raises:
         FileNotFoundError: If no detection results file is found
     """
@@ -62,7 +63,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
         tilepadding_str = f"_{tilepadding}"
     detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
                                   '050_uncompressed_detections',
-                                  f'{classifier}_{tilesize}{tilepadding_str}',
+                                  f'{classifier}_{tilesize}{tilepadding_str}_{sample_rate}',
                                   'detections.jsonl')
     
     if not os.path.exists(detection_path):
@@ -101,14 +102,14 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding:
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    
+
     # Check if uncompressed detections exist
     detection_path = os.path.join(CACHE_DIR, dataset, 'execution', video, '050_uncompressed_detections',
-                                  f'{classifier}_{tilesize}_{tilepadding}', 'detections.jsonl')
+                                  f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}', 'detections.jsonl')
     assert os.path.exists(detection_path), f"Detections not found: {detection_path}"
 
     # Load detection results
-    detection_results = load_detection_results(CACHE_DIR, dataset, video, tilesize, classifier, tilepadding)
+    detection_results = load_detection_results(CACHE_DIR, dataset, video, tilesize, classifier, tilepadding, sample_rate)
 
     # Create output path for tracking results
     uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset, 'execution', video, '060_uncompressed_tracks')
@@ -138,14 +139,15 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding:
     os.makedirs(runtime_dir, exist_ok=True)
     
     with open(runtime_path, 'w') as runtime_file:
+        # Note: Sampling is now applied at classification stage (p020)
+        # Non-sampled frames will have empty bboxes arrays, which naturally
+        # result in empty detections that the tracker skips
         # Process each frame
         mod = max(1, int(len(detection_results) * 0.05))
         for frame_result in detection_results:
             frame_idx = frame_result['frame_idx']
             bboxes = frame_result['bboxes']
-            if frame_idx % sample_rate != 0:
-                continue
-            
+
             # Start timing for this frame
             step_times = {}
             
