@@ -24,6 +24,7 @@ DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
 DATASETS = config['EXEC']['DATASETS']
+SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 BATCH_SIZE = 16
 
 
@@ -66,18 +67,18 @@ def classify_batch(
     grid_height: int,
     positions: torch.Tensor,
     batch_frames: list[np.ndarray],
-    initial_previous_frame: torch.Tensor,
+    batch_prev_frames: list[np.ndarray],
     model: torch.nn.Module,
     tile_size: int,
     device: str,
     normalize_mean: torch.Tensor,
     normalize_std: torch.Tensor,
     always_relevant_mask: torch.Tensor,
-) -> tuple[list[np.ndarray], list[dict], torch.Tensor]:
+) -> tuple[list[np.ndarray], list[dict]]:
     """
     Process up to BATCH_SIZE frames in one batch: prepare tiles for each frame,
     run inference once on all valid tiles, scatter results per frame.
-    Returns (list of relevance_grids, list of runtime dicts, last frame_tensor).
+    Returns (list of relevance_grids, runtime dict).
     """
     batch_size = len(batch_frames)
     num_tiles = grid_height * grid_width
@@ -87,14 +88,13 @@ def classify_batch(
         # 1. Stack on CPU then send to GPU (one transfer is faster than N)
         frames_stacked = np.stack(batch_frames, axis=0)
         frames_tensor = torch.from_numpy(frames_stacked).to(device)
+        # Stack previous frames from original video ordering and send to GPU
+        prev_stacked = np.stack(batch_prev_frames, axis=0)
+        prev_frames = torch.from_numpy(prev_stacked).to(device)
         send_runtime = time.time_ns() / 1e6 - send_start
 
         diff_start = time.time_ns() / 1e6
-        # 2. Reuse stacked frames to construct prev_frames (N, H, W, C)
-        prev_frames = torch.cat(
-            [initial_previous_frame.unsqueeze(0), frames_tensor[:-1]], dim=0
-        )
-        # 3. Find diff
+        # 2. Find diff
         diff = torch.abs(
             frames_tensor.to(torch.int16) - prev_frames.to(torch.int16)
         ).to(torch.uint8)
@@ -138,7 +138,6 @@ def classify_batch(
         inference_start = time.time_ns() / 1e6
         all_tiles = tiles_nchw_valid.half()
         all_positions = all_positions.half()
-        prev_tensor = frames_tensor[-1]
 
         predictions = torch.sigmoid(model(all_tiles, all_positions))
         inference_runtime = time.time_ns() / 1e6 - inference_start
@@ -159,14 +158,14 @@ def classify_batch(
         collect_runtime = time.time_ns() / 1e6 - collect_start
 
         runtime = format_time(inference=inference_runtime, collect=collect_runtime, reshape=reshape_runtime, mask=mask_runtime, diff=diff_runtime, send=send_runtime)
-    return relevance_grids, runtime, prev_tensor
+    return relevance_grids, runtime
 
 
-def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size: int, gpu_id: int, command_queue: mp.Queue):
+def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size: int, sample_rate: int, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
 
-    This function reads a video file frame by frame, processes each frame to classify
+    This function reads a video file frame by frame, processes sampled frames to classify
     tiles using the trained classifier model for the specified tile size, and saves the
     results in JSONL format. Each line in the output file represents one frame with
     its tile classifications and runtime measurement.
@@ -177,6 +176,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         video: Name of the video
         classifier: Classifier name to use
         tile_size: Tile size to use
+        sample_rate: Sample rate for frame sampling (1 = all frames, 2 = every 2nd frame, etc.)
         gpu_id: GPU ID to use for processing
         command_queue: Queue for progress updates
 
@@ -201,8 +201,8 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     # Create output directory structure
     output_dir = os.path.join(cache_video_dir, '020_relevancy')
 
-    # Create score directory for this classifier and tile size
-    classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}')
+    # Create score directory for this classifier, tile size, and sample rate
+    classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}_{sample_rate}')
     if os.path.exists(classifier_dir):
         shutil.rmtree(classifier_dir)
     os.makedirs(classifier_dir)
@@ -255,29 +255,41 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
 
     # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
-        description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier} {method_name}"
-        command_queue.put((device, {'description': description,
-                                    'completed': 0, 'total': frame_count}))
-        # RGB frames
+        # Read all frames from video
         frames: list[np.ndarray] = []
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
-            # frames.append(frame)
             frames.append(np.ascontiguousarray(frame[:, :, ::-1]))  # BGR to RGB
         cap.release()
         assert len(frames) == frame_count, f"Expected {frame_count} frames, got {len(frames)}"
 
-        # Warm up the model (single-frame inference)
-        for frame_idx, frame in enumerate(frames[:16]):
-            previous_frame = frames[frame_idx - 1] if frame_idx > 0 else frames[1]
-            _, _, _ = classify_batch(
+        # Filter to sampled frames only (frame_idx % sample_rate == 0)
+        sampled_indices = [idx for idx in range(len(frames)) if idx % sample_rate == 0]
+        last_idx = len(frames) - 1
+        if last_idx >= 0 and (not sampled_indices or sampled_indices[-1] != last_idx):
+            sampled_indices.append(last_idx)
+        sampled_frames = [frames[idx] for idx in sampled_indices]
+
+        # Update progress tracking to use sampled frame count
+        description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier} {method_name} sr{sample_rate}"
+        command_queue.put((device, {'description': description,
+                                    'completed': 0, 'total': len(sampled_frames)}))
+
+        # Warm up the model with first 16 sampled frames (or fewer if not enough sampled frames)
+        warmup_count = min(16, len(sampled_indices))
+        for i in range(warmup_count):
+            frame_idx = sampled_indices[i]
+            frame = frames[frame_idx]
+            # Get previous frame from original video ordering
+            prev_frame = frames[frame_idx - 1] if frame_idx > 0 else frame
+            _, _ = classify_batch(
                 grid_width,
                 grid_height,
                 positions,
                 [frame],
-                torch.from_numpy(previous_frame).to(device),
+                [prev_frame],
                 model,
                 tile_size,
                 device,
@@ -285,19 +297,22 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
                 normalize_std,
                 always_relevant_mask,
             )
-        previous_frame = torch.from_numpy(frames[1]).to(device)
 
-        # Process frames in batches of BATCH_SIZE; one inference per batch
-        frame_idx = 0
-        while frame_idx < frame_count:
-            batch_end = min(frame_idx + BATCH_SIZE, frame_count)
-            batch_frames = [frames[i] for i in range(frame_idx, batch_end)]
-            relevance_grids, runtime, previous_frame = classify_batch(
+        # Process sampled frames in batches of BATCH_SIZE; one inference per batch
+        frame_idx_in_sampled = 0
+        while frame_idx_in_sampled < len(sampled_frames):
+            batch_end = min(frame_idx_in_sampled + BATCH_SIZE, len(sampled_frames))
+            batch_frames = [sampled_frames[i] for i in range(frame_idx_in_sampled, batch_end)]
+            batch_indices = [sampled_indices[i] for i in range(frame_idx_in_sampled, batch_end)]
+            # Get previous frames from original video ordering for each frame in batch
+            batch_prev_frames = [frames[idx - 1] if idx > 0 else frames[idx + 1] for idx in batch_indices]
+
+            relevance_grids, runtime = classify_batch(
                 grid_width,
                 grid_height,
                 positions,
                 batch_frames,
-                previous_frame,
+                batch_prev_frames,
                 model,
                 tile_size,
                 device,
@@ -307,15 +322,16 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
             )
             fr.write(json.dumps(runtime) + '\n')
             for j, relevance_grid in enumerate(relevance_grids):
-                idx = frame_idx + j
+                absolute_idx = batch_indices[j]  # Use absolute frame index from original video
                 frame_entry = {
                     "classification_size": relevance_grid.shape,
                     "classification_hex": relevance_grid.flatten().tobytes().hex(),
-                    "idx": idx,
+                    "idx": absolute_idx,  # CRITICAL: Store absolute frame index, not relative
                 }
                 f.write(json.dumps(frame_entry) + '\n')
-                command_queue.put((device, {'completed': idx}))
-            frame_idx = batch_end
+                command_queue.put((device, {'completed': frame_idx_in_sampled + j + 1}))
+
+            frame_idx_in_sampled = batch_end
 
 
 def parse_args():
@@ -363,7 +379,7 @@ def main():
 
     mp.set_start_method('spawn', force=True)
 
-    # Create tasks list with all video/classifier/tile_size combinations
+    # Create tasks list with all video/classifier/tile_size/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for dataset in DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
@@ -379,8 +395,9 @@ def main():
             for video in sorted(videos):
                 for classifier in CLASSIFIERS:
                     for tile_size in TILE_SIZES:
-                        func = partial(classify, dataset, videoset, video, classifier, tile_size)
-                        funcs.append(func)
+                        for sample_rate in SAMPLE_RATES:
+                            func = partial(classify, dataset, videoset, video, classifier, tile_size, sample_rate)
+                            funcs.append(func)
 
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()
