@@ -215,6 +215,7 @@ def main():
     
     print(f"Created {len(funcs)} tasks to process")
     num_processes = min(torch.cuda.device_count(), len(funcs))
+    num_processes = 40
     assert num_processes > 0, "No GPUs available"
     ProgressBar(num_workers=num_processes, num_tasks=len(funcs), refresh_per_second=10).run_all(funcs)
     

@@ -110,7 +110,7 @@ Collage = list[PolyominoPosition]
 
 
 def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
-             tilepadding: TilePadding, sample_rate: int, threshold: float, mode: PackMode,
+             sample_rate: int, tilepadding: TilePadding, threshold: float, mode: PackMode,
              gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video by batch processing all sampled frames at once using pack_all.
@@ -137,7 +137,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
 
     # Create output directory for compression results
     output_dir_name = OUTPUT_DIR_MAP[mode]
-    output_dir = os.path.join(cache_video_dir, output_dir_name, f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}')
+    output_dir = os.path.join(cache_video_dir, output_dir_name, f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}')
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -445,7 +445,7 @@ def main(args):
                     for tilesize in TILE_SIZES:
                         for tilepadding in TILEPADDING_MODES:
                             for sample_rate in SAMPLE_RATES:
-                                funcs.append(partial(compress, dataset, videoset, video, classifier, tilesize, tilepadding, sample_rate, threshold, mode))
+                                funcs.append(partial(compress, dataset, videoset, video, classifier, tilesize, sample_rate, tilepadding, threshold, mode))
     
     print(f"Created {len(funcs)} tasks to process")
     

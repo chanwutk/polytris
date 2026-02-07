@@ -554,7 +554,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         x=alt.X(f'{time_col}:Q'),
         y=alt.Y(f'{accuracy_col}:Q'),
         color=alt.Color('system:N', scale=color_scale),
-        tooltip=['system', 'dataset', 'classifier', 'tilepadding', 'sample_rate', 'tracker', time_col, accuracy_col]
+        tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', time_col, accuracy_col]
     )
 
     # Combine layers
@@ -733,7 +733,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str]):
         print(f"\n1. Computing Pareto fronts for {accuracy_name}...")
 
         # Columns to keep for tooltip display
-        tooltip_cols = ['system', 'dataset', 'classifier', 'tilepadding', 'sample_rate', 'tracker', 'time', accuracy_col]
+        tooltip_cols = ['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', 'time', accuracy_col]
 
         # Polytris Pareto fronts (per dataset)
         pareto_data_list = []

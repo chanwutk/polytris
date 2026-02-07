@@ -87,7 +87,7 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
 
 
 def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
-                    tilepadding: TilePadding, sample_rate: int, batch_size: int, gpu_id: int, command_queue: mp.Queue):
+                    sample_rate: int, tilepadding: TilePadding, batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
 
@@ -109,7 +109,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}'
+    param_str = f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}'
 
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
@@ -213,7 +213,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
-                   tilepadding: TilePadding, sample_rate: int, batch_size: int, gpu_id: int,
+                   sample_rate: int, tilepadding: TilePadding, batch_size: int, gpu_id: int,
                    command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
@@ -230,7 +230,7 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
     """
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}'
+    param_str = f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}'
 
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
@@ -360,7 +360,7 @@ def main(args):
                     for tilepadding in TILEPADDING:
                         for sample_rate in SAMPLE_RATES:
                             funcs.append(partial(detect_objects, dataset, video, classifier,
-                                                 tilesize, tilepadding, sample_rate, args.batch_size))
+                                                 tilesize, sample_rate, tilepadding, args.batch_size))
 
     print(f"Created {len(funcs)} tasks to process")
 
