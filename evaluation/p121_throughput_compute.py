@@ -1,8 +1,9 @@
 #!/usr/local/bin/python
 
 from functools import partial
-import os
 import json
+import math
+import os
 import argparse
 import queue
 from typing import Callable, Generator, TextIO, Tuple
@@ -135,63 +136,88 @@ EXCLUDED_OPS = {
 }
 
 
-def parse_runtime(df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[dict]]],
+def _valid_scalar(val: object) -> bool:
+    """Return False if value is missing or NaN (for use in row dicts from DataFrame.to_dict())."""
+    if val is None:
+        return False
+    if isinstance(val, float):
+        return not math.isnan(val)
+    return True
+
+
+def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame | None, dict]:
+    """
+    Process a single runtime row (for use with multiprocessing.Pool).
+    Returns (row_index, per_op_df, overall_dict) so the caller can preserve order.
+    Uses module-level INDEX_DATA_ACCESSORS or QUERY_DATA_ACCESSORS by name to avoid pickling lambdas.
+    """
+    row_dict, accessors_key, row_idx = args
+    accessors = INDEX_DATA_ACCESSORS if accessors_key == 'index' else QUERY_DATA_ACCESSORS
+    _sr = row_dict.get('sample_rate')
+    sample_rate = _sr if ('sample_rate' in row_dict and _valid_scalar(_sr)) else 1
+    _tr = row_dict.get('tracker')
+    tracker = _tr if ('tracker' in row_dict and _valid_scalar(_tr)) else None
+    dataset = row_dict['dataset']
+    video = row_dict['video']
+    classifier = row_dict['classifier']
+    tilesize = row_dict['tilesize']
+    tilepadding = row_dict['tilepadding']
+    stage = row_dict['stage']
+    runtime_file = row_dict['runtime_file']
+    file_timings = parse_runtime_file(runtime_file, stage, accessors[stage])
+    assert file_timings is not None, f"File timings are None for {stage}, {runtime_file}, {video}"
+    excluded_ops = EXCLUDED_OPS.get(stage, [])
+    file_timings = file_timings[~file_timings['op'].isin(excluded_ops)]
+    assert isinstance(file_timings, pd.DataFrame), (
+        f"File timings are not a pandas DataFrame for {stage}, {runtime_file}, {video}"
+    )
+    per_op = aggregate_per_op(file_timings)
+    per_op['stage'] = stage
+    per_op['dataset'] = dataset
+    per_op['video'] = video
+    per_op['classifier'] = classifier
+    per_op['tilesize'] = tilesize
+    per_op['tilepadding'] = tilepadding
+    per_op['sample_rate'] = sample_rate
+    per_op['tracker'] = tracker
+    total_time = float(per_op['time'].sum())
+    overall = {
+        'stage': stage,
+        'dataset': dataset,
+        'video': video,
+        'classifier': classifier,
+        'tilesize': tilesize,
+        'tilepadding': tilepadding,
+        'sample_rate': sample_rate,
+        'tracker': tracker,
+        'time': total_time,
+    }
+    return (row_idx, per_op if len(per_op) > 0 else None, overall)
+
+
+def parse_runtime(accessors_key: str, df: pd.DataFrame, accessors: dict[str, Callable[[dict], list[dict]]],
                   worker_id: int, command_queue: "mp.Queue") -> tuple[pd.DataFrame, pd.DataFrame]:
     all_per_op: list[pd.DataFrame] = []
     overall: list[dict] = []
-
-    kwargs = {'completed': 0,
-            'total': len(df),
-            'description': f"{df['dataset'].unique()[0]}",
-            'completed': 0}
+    accessors_key = 'index' if accessors is INDEX_DATA_ACCESSORS else 'query'
+    rows_with_key = [(row.to_dict(), accessors_key, idx) for idx, (_, row) in enumerate(df.iterrows())]
+    total = len(rows_with_key)
+    kwargs = {'completed': 0, 'total': total, 'description': f"{df['dataset'].unique()[0]} {accessors_key}"}
     device = f'cuda:{worker_id}'
     command_queue.put((device, kwargs))
-    for idx, row in df.iterrows():
-        # Extract sample_rate from row, default to 1 if not present (for backward compatibility)
-        sample_rate = row.get('sample_rate', 1) if ('sample_rate' in row and not pd.isna(row['sample_rate'])) else 1
-        # Extract tracker from row, default to None if not present (for backward compatibility)
-        tracker = row.get('tracker', 'unknown') if ('tracker' in row and not pd.isna(row['tracker'])) else None
-        dataset, video, classifier, tilesize, tilepadding, stage, runtime_file = row['dataset'], row['video'], row['classifier'], row['tilesize'], row['tilepadding'], row['stage'], row['runtime_file']
-        file_timings = parse_runtime_file(runtime_file, stage, accessors[stage])
-        assert file_timings is not None, f"File timings are None for {stage}, {runtime_file}, {video}"
-        excluded_ops = EXCLUDED_OPS.get(stage, [])
-        file_timings = file_timings[~file_timings['op'].isin(excluded_ops)]
-        assert isinstance(file_timings, pd.DataFrame), \
-            f"File timings are not a pandas DataFrame for {stage}, {runtime_file}, {video}"
-
-        per_op = aggregate_per_op(file_timings)
-        
-        # Divide runtime by sample_rate for stages that process frames at sample_rate intervals
-        stages_to_divide = ['020_exec_classify', '021_exec_classify_correct', '030_exec_compress', '040_exec_detect']
-        if stage in stages_to_divide:
-            per_op['time'] = per_op['time'] / sample_rate
-        
-        per_op['stage'] = stage
-        per_op['dataset'] = dataset
-        per_op['video'] = video
-        per_op['classifier'] = classifier
-        per_op['tilesize'] = tilesize
-        per_op['tilepadding'] = tilepadding
-        per_op['sample_rate'] = sample_rate
-        per_op['tracker'] = tracker
-        
-        if len(per_op) > 0:
+    n_workers = max(1, min(mp.cpu_count() - 1, total))
+    results_by_idx: dict[int, tuple[pd.DataFrame | None, dict]] = {}
+    with mp.Pool(processes=n_workers) as pool:
+        completed = 0
+        for row_idx, per_op, overall_item in pool.imap_unordered(_process_runtime_row, rows_with_key, chunksize=1):
+            results_by_idx[row_idx] = (per_op, overall_item)
+            completed += 1
+            command_queue.put((device, {'completed': completed}))
+    for idx in range(total):
+        per_op, overall_item = results_by_idx[idx]
+        if per_op is not None:
             all_per_op.append(per_op)
-
-        total_time = float(per_op['time'].sum())
-        overall.append({
-            'stage': stage,
-            'dataset': dataset,
-            'video': video,
-            'classifier': classifier,
-            'tilesize': tilesize,
-            'tilepadding': tilepadding,
-            'sample_rate': sample_rate,
-            'tracker': tracker,
-            'time': total_time
-        })
-        command_queue.put((device, {'completed': idx}))
-
+        overall.append(overall_item)
     return pd.concat(all_per_op, ignore_index=True), pd.DataFrame.from_records(overall)
 
 
@@ -250,9 +276,9 @@ def compute(dataset: str, worker_id: int, command_queue: "mp.Queue[dict]"):
     data_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
     index_data, query_data = load_data_tables(data_dir)
     
-    index_timings, index_summaries = parse_runtime(index_data, INDEX_DATA_ACCESSORS, worker_id, command_queue)
+    index_timings, index_summaries = parse_runtime('index', index_data, INDEX_DATA_ACCESSORS, worker_id, command_queue)
     
-    query_timings, query_summaries = parse_runtime(query_data, QUERY_DATA_ACCESSORS, worker_id, command_queue)
+    query_timings, query_summaries = parse_runtime('query', query_data, QUERY_DATA_ACCESSORS, worker_id, command_queue)
     
     measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
     save_measurements(index_timings, index_summaries, query_timings, query_summaries, measurements_dir, dataset)

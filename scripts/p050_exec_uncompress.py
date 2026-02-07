@@ -148,7 +148,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
     return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
-def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding: str, sample_rate: int, gpu_id: int, command_queue: mp.Queue):
+def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int, tilepadding: str, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
@@ -168,19 +168,19 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
 
     # Check if compressed detections exist
     detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}', 'detections.jsonl')
+                                   f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}', 'detections.jsonl')
     assert os.path.exists(detections_file), f"Detections file not found: {detections_file}"
 
     # Check if compressed frames directory exists
     compressed_frames_dir = os.path.join(video_path, '033_compressed_frames',
-                                         f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}')
+                                         f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}')
     assert os.path.exists(compressed_frames_dir), f"Compressed frames directory not found: {compressed_frames_dir}"
 
     detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}', 'detections.jsonl')
+                                   f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}', 'detections.jsonl')
 
     unpacked_output_dir = os.path.join(video_path, '050_uncompressed_detections',
-                                       f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}')
+                                       f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}')
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -340,7 +340,7 @@ def main():
                 for tilesize in TILE_SIZES:
                     for tilepadding in TILEPADDING_MODES:
                         for sample_rate in SAMPLE_RATES:
-                            funcs.append(partial(unpack, dataset, video, classifier, tilesize, tilepadding, sample_rate))
+                            funcs.append(partial(unpack, dataset, video, classifier, tilesize, sample_rate, tilepadding))
 
     print(f"Created {len(funcs)} tasks to process")
     ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)

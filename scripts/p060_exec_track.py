@@ -39,7 +39,7 @@ def parse_args():
 
 
 def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesize: int,
-                           classifier: str, tilepadding: str | None = None, sample_rate: int = 1, verbose: bool = False):
+                           classifier: str, sample_rate: int = 1, tilepadding: str | None = None, verbose: bool = False):
     """
     Load detection results from the uncompressed detections JSONL file.
 
@@ -63,7 +63,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
         tilepadding_str = f"_{tilepadding}"
     detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
                                   '050_uncompressed_detections',
-                                  f'{classifier}_{tilesize}{tilepadding_str}_{sample_rate}',
+                                  f'{classifier}_{tilesize}_{sample_rate}{tilepadding_str}',
                                   'detections.jsonl')
     
     if not os.path.exists(detection_path):
@@ -83,8 +83,8 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
     return results
 
 
-def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding: str,
-          sample_rate: int, tracker_name: str, no_interpolate: bool, gpu_id: int, command_queue: mp.Queue):
+def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int,
+          tilepadding: str, tracker_name: str, no_interpolate: bool, gpu_id: int, command_queue: mp.Queue):
     """
     Process tracking for a single video/classifier/tilesize/tracker combination.
     This function is designed to be called in parallel.
@@ -105,15 +105,15 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, tilepadding:
 
     # Check if uncompressed detections exist
     detection_path = os.path.join(CACHE_DIR, dataset, 'execution', video, '050_uncompressed_detections',
-                                  f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}', 'detections.jsonl')
+                                  f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}', 'detections.jsonl')
     assert os.path.exists(detection_path), f"Detections not found: {detection_path}"
 
     # Load detection results
-    detection_results = load_detection_results(CACHE_DIR, dataset, video, tilesize, classifier, tilepadding, sample_rate)
+    detection_results = load_detection_results(CACHE_DIR, dataset, video, tilesize, classifier, sample_rate, tilepadding)
 
     # Create output path for tracking results
     uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset, 'execution', video, '060_uncompressed_tracks')
-    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tilesize}_{tilepadding}_{sample_rate}_{tracker_name}', 'tracking.jsonl')
+    output_path = os.path.join(uncompressed_tracking_dir, f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}_{tracker_name}', 'tracking.jsonl')
     
     # Create tracker
     resolution = get_video_resolution(dataset, video)
@@ -249,7 +249,7 @@ def main(args: argparse.Namespace):
                     for tilepadding in TILEPADDING_MODES:
                         for sample_rate in SAMPLE_RATES:
                             for tracker_name in TRACKERS:
-                                funcs.append(partial(track, dataset, video, classifier, tilesize, tilepadding, sample_rate, tracker_name, args.no_interpolate))
+                                funcs.append(partial(track, dataset, video, classifier, tilesize, sample_rate, tilepadding, tracker_name, args.no_interpolate))
     
     print(f"Created {len(funcs)} tasks to process")
 
