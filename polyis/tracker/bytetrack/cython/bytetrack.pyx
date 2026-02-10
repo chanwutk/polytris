@@ -507,7 +507,7 @@ cdef public class BYTETracker [object BYTETrackerObject, type BYTETrackerType]:
     cdef int buffer_size
     cdef int max_time_lost
 
-    def __init__(self, args, frame_rate=30):
+    def __init__(self, args, frame_rate=15):
         """
         Initialize ByteTrack tracker.
 

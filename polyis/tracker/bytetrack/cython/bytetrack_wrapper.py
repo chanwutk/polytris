@@ -46,8 +46,8 @@ class ByteTrack:
         img_size: tuple[int, int],
         track_thresh: float = 0.5,
         match_thresh: float = 0.8,
-        track_buffer: int = 30,
-        frame_rate: int = 30,
+        track_buffer: int = 15,
+        frame_rate: int = 15,
     ):
         """
         Initialize ByteTrack tracker.

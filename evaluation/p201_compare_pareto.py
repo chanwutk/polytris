@@ -9,6 +9,7 @@ This script extends p200_compare_compute.py by:
 3. Adding visualizations showing accuracy gains at runtime increments
 """
 
+import argparse
 import os
 import numpy as np
 import pandas as pd
@@ -443,7 +444,8 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str) -> al
     return faceted_chart
 
 
-def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name: str) -> alt.Chart:
+def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name: str,
+                               log_scale: bool = False) -> alt.Chart:
     """
     Create faceted line chart showing accuracy gain vs runtime level.
 
@@ -469,16 +471,19 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
     # Base chart
     base = alt.Chart(df_clean)
 
+    # X-axis uses log scale for runtime (seconds) if enabled
+    x_scale = alt.Scale(type='log') if log_scale else alt.Undefined
+    x_enc = alt.X('runtime_level:Q', title='Runtime (seconds)', scale=x_scale)
     # Line chart showing accuracy gain (no tooltip - lines are not easily hoverable)
     line = base.mark_line(strokeWidth=2).encode(
-        x=alt.X('runtime_level:Q', title='Runtime (seconds)'),
+        x=x_enc,
         y=alt.Y('accuracy_gain:Q', title=f'{accuracy_col_name} Gain (Polytris - Other)'),
         color=alt.Color('comparison_system:N', title='Compared To', scale=color_scale),
     )
 
     # Add points for better visibility (with tooltip for interactivity)
     points = base.mark_point(size=30, filled=True).encode(
-        x=alt.X('runtime_level:Q'),
+        x=x_enc,
         y=alt.Y('accuracy_gain:Q'),
         color=alt.Color('comparison_system:N', scale=color_scale),
         tooltip=['dataset', 'runtime_level', 'comparison_system', 'accuracy_gain',
@@ -512,7 +517,8 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
 
 
 def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
-                                   accuracy_col_name: str, time_col: str = 'time') -> alt.Chart:
+                                   accuracy_col_name: str, time_col: str = 'time',
+                                   log_scale: bool = False) -> alt.Chart:
     """
     Create faceted line chart showing Pareto fronts for all systems.
 
@@ -541,9 +547,12 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     # Base chart for Pareto fronts (with lines)
     base_pareto = alt.Chart(df_clean)
 
+    # X-axis uses log scale for runtime (seconds) if enabled
+    x_scale = alt.Scale(type='log') if log_scale else alt.Undefined
+    x_enc = alt.X(f'{time_col}:Q', title='Runtime (seconds)', scale=x_scale)
     # Line chart showing Pareto fronts (no tooltip - lines are not easily hoverable)
     line = base_pareto.mark_line(strokeWidth=2).encode(
-        x=alt.X(f'{time_col}:Q', title='Runtime (seconds)'),
+        x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q', title=f'{accuracy_col_name} Score',
                 scale=alt.Scale(domain=[0, 1])),
         color=alt.Color('system:N', title='System', scale=color_scale),
@@ -551,7 +560,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
 
     # Add points for Pareto fronts (with tooltip for interactivity)
     points_pareto = base_pareto.mark_point(size=50, filled=True).encode(
-        x=alt.X(f'{time_col}:Q'),
+        x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q'),
         color=alt.Color('system:N', scale=color_scale),
         tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', time_col, accuracy_col]
@@ -639,7 +648,7 @@ def save_chart(chart: alt.Chart, output_dir: str, base_name: str):
     print(f"  Saved HTML: {html_path}")
 
 
-def visualize_all_datasets_tradeoffs_pareto(datasets: list[str]):
+def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool = False):
     """
     Create Pareto front comparison visualizations for all datasets.
 
@@ -784,7 +793,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str]):
         # 2. Create Pareto front comparison chart
         print(f"\n2. Creating Pareto comparison chart for {accuracy_name}...")
         pareto_chart = create_pareto_comparison_chart(
-            df_pareto_combined, accuracy_col, accuracy_name
+            df_pareto_combined, accuracy_col, accuracy_name, log_scale=log_scale
         )
         save_chart(pareto_chart, output_dir,
                    f'{accuracy_col.lower()}_runtime_pareto_comparison')
@@ -811,7 +820,8 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str]):
 
         if not df_accuracy_gain.empty:
             print(f"  Accuracy gain data: {len(df_accuracy_gain)} comparison points")
-            accuracy_gain_chart = create_accuracy_gain_chart(df_accuracy_gain, accuracy_name)
+            accuracy_gain_chart = create_accuracy_gain_chart(df_accuracy_gain, accuracy_name,
+                                                               log_scale=log_scale)
             save_chart(accuracy_gain_chart, output_dir,
                        f'{accuracy_col.lower()}_accuracy_gain_at_runtime')
         else:
@@ -823,10 +833,18 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str]):
     print('='*60)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log', action='store_true',
+                        help='Use log scale for time x-axes')
+    return parser.parse_args()
+
+
 def main():
     """Main entry point."""
+    args = parse_args()
     print(f"Processing datasets: {DATASETS}")
-    visualize_all_datasets_tradeoffs_pareto(DATASETS)
+    visualize_all_datasets_tradeoffs_pareto(DATASETS, log_scale=args.log)
 
 
 if __name__ == '__main__':
