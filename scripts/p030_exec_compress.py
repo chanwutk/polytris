@@ -4,7 +4,7 @@ import argparse
 from enum import IntEnum
 import json
 import os
-from typing import Callable, Literal, NamedTuple
+from typing import Callable, NamedTuple
 import cv2
 import numpy as np
 import shutil

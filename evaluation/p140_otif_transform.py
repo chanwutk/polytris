@@ -50,6 +50,11 @@ def transform_tracking_json(input_json_path: str, output_jsonl_path: str):
     print(len(otif_data))
     # assert otif_data is not None, f"OTIF data is None for {input_json_path}"
     
+    # Sample frames by 2 if the last frame index exceeds 1500
+    # TODO: This is a hack to adjusting sample_rate.
+    last_frame_idx = (len(otif_data) - 1) if otif_data else 0
+    sample_rate = 2 if last_frame_idx > 1500 else 1
+
     # Group detections by frame_idx
     # OTIF format could be a list of detections or a dict keyed by frame
     # We'll handle both cases
@@ -60,8 +65,11 @@ def transform_tracking_json(input_json_path: str, output_jsonl_path: str):
     frame_tracks: dict[int, list[list[float]]] = {}
 
     for frame_idx, detections in enumerate(otif_data):
-        
-        frame_detection: dict = {"frame_idx": frame_idx, "tracks": []}
+        # Skip odd frames when sampling by 2
+        if frame_idx % sample_rate != 0:
+            continue
+
+        frame_detection: dict = {"frame_idx": frame_idx // sample_rate, "tracks": []}
         for detection in detections or []:
             # Extract bounding box and track_id
             track_id = detection['track_id']
@@ -76,7 +84,7 @@ def transform_tracking_json(input_json_path: str, output_jsonl_path: str):
             
             # frame_detection['tracks'].append([int(track_id), float(left), float(top), float(right), float(bottom)])
             register_tracked_detections([(float(left), float(top), float(right), float(bottom), int(track_id))],
-                                        frame_idx, frame_tracks, trajectories, no_interpolate=False)
+                                        frame_idx // sample_rate, frame_tracks, trajectories, no_interpolate=False)
         frame_detections.append(frame_detection)
     
     # Create output directory if it doesn't exist

@@ -84,14 +84,33 @@ def classify_batch(
     num_tiles = grid_height * grid_width
 
     with torch.no_grad():
+        # 1. Send individual frames to GPU then stack on GPU
+        # Stack on GPU
         send_start = time.time_ns() / 1e6
-        # 1. Stack on CPU then send to GPU (one transfer is faster than N)
-        frames_stacked = np.stack(batch_frames, axis=0)
-        frames_tensor = torch.from_numpy(frames_stacked).to(device)
-        # Stack previous frames from original video ordering and send to GPU
-        prev_stacked = np.stack(batch_prev_frames, axis=0)
-        prev_frames = torch.from_numpy(prev_stacked).to(device)
+        frames_gpu = [torch.from_numpy(f).to(device) for f in batch_frames]
+        frames_tensor = torch.stack(frames_gpu, dim=0)
+
+        prev_gpu = [torch.from_numpy(f).to(device) for f in batch_prev_frames]
+        prev_frames = torch.stack(prev_gpu, dim=0)
         send_runtime = time.time_ns() / 1e6 - send_start
+
+        # Resize images to (tile_size * grid_height, tile_size * grid_width) to ensure exact tile alignment
+        target_h = tile_size * grid_height
+        target_w = tile_size * grid_width
+        current_h, current_w = frames_tensor.shape[1:3]
+
+        # Only resize if dimensions don't match
+        if (current_h, current_w) != (target_h, target_w):
+            frames_tensor = torch.nn.functional.interpolate(
+                frames_tensor.permute(0, 3, 1, 2).half(),
+                size=(target_h, target_w), mode='bilinear',
+                align_corners=False
+            ).to(torch.uint8).permute(0, 2, 3, 1)
+            prev_frames = torch.nn.functional.interpolate(
+                prev_frames.permute(0, 3, 1, 2).half(),
+                size=(target_h, target_w), mode='bilinear',
+                align_corners=False
+            ).to(torch.uint8).permute(0, 2, 3, 1)
 
         diff_start = time.time_ns() / 1e6
         # 2. Find diff

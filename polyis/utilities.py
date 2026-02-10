@@ -568,7 +568,7 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int]):
                 match_thresh=config['match_thresh'],
                 track_buffer=config['track_buffer'],
                 frame_rate=config['frame_rate'],
-                mot20=config['mot20']
+                # mot20=config['mot20']
             )
         if tracker_name == 'bytetrackcython':
             from polyis.tracker.bytetrack.cython.bytetrack_wrapper import ByteTrack as ByteTrackCython
