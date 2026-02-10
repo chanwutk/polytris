@@ -95,6 +95,7 @@ def classify_batch(
         send_runtime = time.time_ns() / 1e6 - send_start
 
         # Resize images to (tile_size * grid_height, tile_size * grid_width) to ensure exact tile alignment
+        resize_start = time.time_ns() / 1e6
         target_h = tile_size * grid_height
         target_w = tile_size * grid_width
         current_h, current_w = frames_tensor.shape[1:3]
@@ -111,6 +112,7 @@ def classify_batch(
                 size=(target_h, target_w), mode='bilinear',
                 align_corners=False
             ).to(torch.uint8).permute(0, 2, 3, 1)
+        resize_runtime = time.time_ns() / 1e6 - resize_start
 
         diff_start = time.time_ns() / 1e6
         # 2. Find diff
@@ -176,7 +178,7 @@ def classify_batch(
 
         collect_runtime = time.time_ns() / 1e6 - collect_start
 
-        runtime = format_time(inference=inference_runtime, collect=collect_runtime, reshape=reshape_runtime, mask=mask_runtime, diff=diff_runtime, send=send_runtime)
+        runtime = format_time(inference=inference_runtime, collect=collect_runtime, reshape=reshape_runtime, mask=mask_runtime, diff=diff_runtime, send=send_runtime, resize=resize_runtime)
     return relevance_grids, runtime
 
 
@@ -248,7 +250,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
                            f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
         benchmark_results = [json.loads(line) for line in f]
     model, method_name = select_model_optimization(model, benchmark_results, device, tile_size,
-                                      (width * height) // (tile_size * tile_size))
+                                      (width // tile_size) * (height // tile_size))
 
     # Pre-create normalization tensors for ImageNet normalization (1.9x speedup vs torchvision.Normalize); half for model.half()
     normalize_mean = torch.tensor([0.485, 0.456, 0.406] * 2, device=device, dtype=torch.float16).view(1, 6, 1, 1)
@@ -263,8 +265,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     # Flatten to match the tile processing order and convert to tensor
     always_relevant_mask = torch.from_numpy(always_relevant_bitmap.flatten()).to(device).to(torch.uint8)
 
-    assert width % tile_size == 0, f"Width {width} is not divisible by tile size {tile_size}"
-    assert height % tile_size == 0, f"Height {height} is not divisible by tile size {tile_size}"
+    # Compute tile grid dimensions (remaining pixels beyond the last full tile are dropped)
     grid_width = width // tile_size
     grid_height = height // tile_size
 
