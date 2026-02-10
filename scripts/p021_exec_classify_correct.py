@@ -48,7 +48,20 @@ def process_frame_tiles(width: int, height: int, detections: list[list[float]], 
         - Tiles without detections are marked as irrelevant (0)
     """
     start_time = (time.time_ns() / 1e6)
-    
+
+    # Scale detection coordinates to match the resized resolution used in the pipeline
+    target_w = (width // tile_size) * tile_size
+    target_h = (height // tile_size) * tile_size
+    if (width, height) != (target_w, target_h):
+        scale_x = target_w / width
+        scale_y = target_h / height
+        detections = [
+            [d[0] * scale_x, d[1] * scale_y, d[2] * scale_x, d[3] * scale_y]
+            for d in detections
+        ]
+        width = target_w
+        height = target_h
+
     # Create bitmap marking relevant tiles
     relevance_grid = mark_detections(detections, width, height, tile_size) * 255
     

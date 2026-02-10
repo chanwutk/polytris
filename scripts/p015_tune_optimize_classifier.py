@@ -95,7 +95,8 @@ def benchmark_classifier(datasets: list[str], width: int, height: int, classifie
         print(f"No trained model found for {classifier_name} (tile_size={tile_size}, dataset={datasets})")
         return
 
-    batch_size = (width * height) // (tile_size * tile_size)
+    # Compute tile grid matching the resized resolution used in the pipeline
+    batch_size = (width // tile_size) * (height // tile_size)
         
     # Load the model
     print(f"Loading model from {model_path}...")

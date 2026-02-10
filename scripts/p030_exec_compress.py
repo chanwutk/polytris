@@ -330,22 +330,36 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
             # Get source frame using absolute frame index
             frame = frame_idx_to_frame[frame_idx]
 
-            # Optimized tile rendering: vectorized coordinate computation with slice-based copying
-            # Slice operations use optimized block memory copy (memcpy-like) which is faster than per-pixel
+            # Tile rendering: scale grid positions to raw video resolution
             i_coords = shape[:, 0]
             j_coords = shape[:, 1]
-            
-            # Compute all tile corner positions at once (vectorized)
-            sy_coords = (oy + i_coords) * tilesize
-            sx_coords = (ox + j_coords) * tilesize
-            dy_coords = (py + i_coords) * tilesize
-            dx_coords = (px + j_coords) * tilesize
-            
-            # Copy tiles using optimized slice operations (block memory copy)
+
+            # Compute tile boundaries scaled to raw video resolution (vectorized)
+            sy_starts = (oy + i_coords) * height // grid_height
+            sx_starts = (ox + j_coords) * width // grid_width
+            sy_ends = (oy + i_coords + 1) * height // grid_height
+            sx_ends = (ox + j_coords + 1) * width // grid_width
+            dy_starts = (py + i_coords) * height // grid_height
+            dx_starts = (px + j_coords) * width // grid_width
+            dy_ends = (py + i_coords + 1) * height // grid_height
+            dx_ends = (px + j_coords + 1) * width // grid_width
+
+            # Precompute tile sizes and padding (vectorized)
+            dst_hs = (dy_ends - dy_starts).astype(int)
+            dst_ws = (dx_ends - dx_starts).astype(int)
+            src_hs = (sy_ends - sy_starts).astype(int)
+            src_ws = (sx_ends - sx_starts).astype(int)
+            pad_hs = np.maximum(0, dst_hs - src_hs)
+            pad_ws = np.maximum(0, dst_ws - src_ws)
+            needs_padding = (pad_hs > 0) | (pad_ws > 0)
+
+            # Copy tiles, repeating last row/column if sizes differ
             for idx in range(len(shape)):
-                sy, sx = sy_coords[idx], sx_coords[idx]
-                dy, dx = dy_coords[idx], dx_coords[idx]
-                canvas[dy:dy+tilesize, dx:dx+tilesize] = frame[sy:sy+tilesize, sx:sx+tilesize]
+                src_tile = frame[sy_starts[idx]:sy_ends[idx], sx_starts[idx]:sx_ends[idx]]
+                # Pad with repeated edge pixels if source tile is smaller than destination
+                if needs_padding[idx]:
+                    src_tile = np.pad(src_tile, ((0, pad_hs[idx]), (0, pad_ws[idx]), (0, 0)), mode='edge')
+                canvas[dy_starts[idx]:dy_ends[idx], dx_starts[idx]:dx_ends[idx]] = src_tile[:dst_hs[idx], :dst_ws[idx]]
 
             # Update index_map (vectorized)
             index_map[py + i_coords, px + j_coords] = gid
