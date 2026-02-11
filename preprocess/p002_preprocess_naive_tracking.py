@@ -51,7 +51,7 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     # tracker_cython = create_tracker('sort-cython')
     resolution = get_video_resolution(dataset, video_file)
     width, height = resolution
-    tracker = create_tracker('bytetrack', img_size=(height, width))
+    tracker = create_tracker('bytetrackcython', img_size=(height, width))
 
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
@@ -109,7 +109,7 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
 
             # Process tracking results
             step_start = (time.time_ns() / 1e6)
-            register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories, False)
+            register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories)
             step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
             runtime_data = {
                 'frame_idx': frame_idx,

@@ -237,7 +237,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                 #     alt.Shape('classifier:N', title='Polytris\' Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['triangle', 'diamond'])),
                 #     alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
                 # ),
-                tooltip=['system', 'dataset', 'classifier', 'tilepadding', 'sample_rate', 'tracker', x_column, accuracy_col]
+                tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', x_column, accuracy_col]
             )
             
             base_line = base_chart.mark_line(

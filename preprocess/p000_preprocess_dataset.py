@@ -5,7 +5,6 @@ from functools import partial
 import os
 import shutil
 import subprocess
-import json
 from xml.etree import ElementTree
 from multiprocessing import Queue
 
@@ -13,35 +12,52 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
+import yaml
 from matplotlib.path import Path
 
-from polyis.utilities import DATASETS_DIR, SOURCE_DIR, ProgressBar, DATASETS_TO_TEST
+from polyis.utilities import ProgressBar, get_config
+
+CONFIG = get_config()
+DATASETS = CONFIG['EXEC']['DATASETS']
+DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
+SOURCE_DIR = CONFIG['DATA']['SOURCE_DIR']
 
 
 def parse_args():
+    preprocess_ops = CONFIG.get('OPS', {}).get('preprocess_dataset', {})
     parser = argparse.ArgumentParser(description='Preprocess video dataset')
-    parser.add_argument('-i', '--input', required=False,
-                        default=SOURCE_DIR,
-                        help='Video Dataset directory')
-    parser.add_argument('-o', '--output', required=False,
-                        default=DATASETS_DIR,
-                        help='Processed Dataset directory')
     parser.add_argument('-b', '--batch_size', required=False,
-                        default=128,
+                        default=preprocess_ops.get('batch_size', 128),
                         type=int,
                         help='Batch size')
-    parser.add_argument('-d', '--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
-    parser.add_argument('--segment_size', type=int, default=60,
-                        help='Video segment size in seconds')
-    parser.add_argument('--num_segments', type=int, default=18,
+    parser.add_argument('--num_segments', type=int,
+                        default=preprocess_ops.get('num_segments', 18),
                         help='Number of segments to split the video into')
     
     args = parser.parse_args()
     
     return args
+
+
+OUTPUT_FPS = 15
+FPS_15_LO = 14.9
+FPS_15_HI = 15.1
+FPS_30_LO = 29.9
+FPS_30_HI = 30.1
+FPS_60_LO = 59.0
+FPS_60_HI = 60.1
+
+
+def assert_fps_and_get_step(fps: float) -> int:
+    if FPS_15_LO <= fps <= FPS_15_HI:
+        return 1
+    if FPS_30_LO <= fps <= FPS_30_HI:
+        return 2
+    if FPS_60_LO <= fps <= FPS_60_HI:
+        return 4
+    raise AssertionError(
+        f"Video FPS {fps} is not allowed; must be 15, 29.9–30, or 59–60"
+    )
 
 
 def process_b3d_video(file: str, videodir: str, outputdir: str, mask: str, batch_size: int,
@@ -62,11 +78,11 @@ def process_b3d_video(file: str, videodir: str, outputdir: str, mask: str, batch
     video_path = os.path.join(videodir, file)
     cap = cv2.VideoCapture(video_path)
     iwidth, iheight = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    
-    # Get total frame count for progress tracking
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
+    input_fps = cap.get(cv2.CAP_PROP_FPS)
+    step = assert_fps_and_get_step(input_fps)
     cap.release()
+    output_frame_count = (total_frames + step - 1) // step
 
     domains = img.findall('.//polygon[@label="domain"]')
     bitmaps = []
@@ -94,7 +110,7 @@ def process_b3d_video(file: str, videodir: str, outputdir: str, mask: str, batch
 
     command_queue.put(('cuda:' + str(gpuIdx), {
         'completed': 0,
-        'total': total_frames
+        'total': output_frame_count
     }))
     processed_frames = 0
     for i in [*range(num_segments)][::-1]:
@@ -119,18 +135,17 @@ def process_b3d_segment(file: str, videodir: str, outputfile: str, batch_size: i
 
     video_path = os.path.join(videodir, file)
     cap = cv2.VideoCapture(video_path)
-    iwidth, iheight = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    
-    # Calculate output fps and frame sampling based on whether isr or target_fps was provided
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    
-    owidth, oheight = WIDTH, HEIGHT
+    input_fps = cap.get(cv2.CAP_PROP_FPS)
+    step = assert_fps_and_get_step(input_fps)
 
+    owidth, oheight = WIDTH, HEIGHT
     masked_height = bottom - top
     masked_width = right - left
     is_vertical = masked_height > masked_width
 
-    writer = cv2.VideoWriter(outputfile, cv2.VideoWriter.fourcc(*'mp4v'), fps, (owidth, oheight))
+    writer = cv2.VideoWriter(
+        outputfile, cv2.VideoWriter.fourcc(*'mp4v'), OUTPUT_FPS, (owidth, oheight)
+    )
 
     cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
 
@@ -139,30 +154,28 @@ def process_b3d_segment(file: str, videodir: str, outputfile: str, batch_size: i
     with torch.no_grad():
         while cap.isOpened() and not done:
             frames = []
-            # print('start', fidx)
-            for i in range(batch_size):
+            while len(frames) < batch_size:
                 ret, frame = cap.read()
                 fidx += 1
                 if not ret or fidx > end_frame:
                     done = True
                     break
-
+                if (fidx - 1) % step != 0:
+                    continue
                 frame = frame[top:bottom, left:right, :]
                 frames.append(frame)
-
                 processed_frames += 1
-                # Send progress update
-                command_queue.put(('cuda:' + str(gpuIdx), { 'completed': processed_frames }))
+                command_queue.put(('cuda:' + str(gpuIdx), {'completed': processed_frames}))
 
-            # print('mask', fidx)
+            if not frames:
+                break
+
             frames_gpu = torch.from_numpy(np.array(frames)).to(f'cuda:{gpuIdx}')
             frames_gpu = frames_gpu * bitmask
 
             if is_vertical:
-                # Rotate frames: (batch, height, width, channels) -> (batch, width, height, channels)
-                frames_gpu = torch.rot90(frames_gpu, k=-1, dims=(1, 2))  # k=-1 for clockwise
+                frames_gpu = torch.rot90(frames_gpu, k=-1, dims=(1, 2))
 
-            # print('scale', fidx)
             frames_gpu = frames_gpu.permute(0, 3, 1, 2)
             frames_gpu = F.interpolate(frames_gpu.float(), size=(oheight, owidth),
                                        mode='bilinear', align_corners=False)
@@ -170,7 +183,6 @@ def process_b3d_segment(file: str, videodir: str, outputfile: str, batch_size: i
             frames_gpu = frames_gpu.permute(0, 2, 3, 1)
             frames = frames_gpu.detach().to(torch.uint8).cpu().numpy()
 
-            # print('write', fidx)
             for frame in frames:
                 writer.write(np.ascontiguousarray(frame))
 
@@ -183,13 +195,11 @@ def process_b3d_segment(file: str, videodir: str, outputfile: str, batch_size: i
 def process_b3d(args: argparse.Namespace, dataset: str):
     funcs = []
 
-    videodir = os.path.join(args.input, dataset)
-    outputdir = os.path.join(args.output, dataset)
-    mask = os.path.join(args.input, 'b3d', 'annotations.xml')
+    videodir = os.path.join(SOURCE_DIR, dataset)
+    outputdir = os.path.join(DATASETS_DIR, dataset)
+    mask = os.path.join(SOURCE_DIR, 'b3d', 'annotations.xml')
     batch_size = args.batch_size
     assert batch_size is not None and batch_size > 0
-    segment_size = args.segment_size
-    assert segment_size is not None and segment_size > 0
     num_segments = args.num_segments
     assert num_segments is not None and num_segments > 0
 
@@ -217,12 +227,16 @@ def process_b3d(args: argparse.Namespace, dataset: str):
 
 
 def process_caldot_video(video_file: str, videodir: str, outputdir: str,
-                         worker_id: int, command_queue: Queue):
+                         dataset: str, worker_id: int, command_queue: Queue):
     video_path = os.path.join(videodir, video_file)
 
+    cap = cv2.VideoCapture(video_path)
+    input_fps = cap.get(cv2.CAP_PROP_FPS)
+    cap.release()
+    assert_fps_and_get_step(input_fps)
+
     video_file = f"{int(video_file.split('.')[0]):02d}.mp4"
-    
-    # Send initial progress update
+
     command_queue.put(('cuda:' + str(worker_id), {
         'description': f'{video_file}',
         'completed': 0,
@@ -231,24 +245,38 @@ def process_caldot_video(video_file: str, videodir: str, outputdir: str,
 
     os.makedirs(outputdir, exist_ok=True)
 
-    # Use ffmpeg to extract the segment with scale to 720x480 (no audio)
+    # Load detector config from detectors.yaml to get resolution
+    with open('configs/detectors.yaml', 'r') as f:
+        detector_configs = yaml.safe_load(f)
+
+    dataset_mapping = detector_configs['dataset_name_mapping']
+    dataset_detector_mapping = detector_configs['dataset_detector_mapping']
+
+    # Map dataset name to canonical name
+    canonical_dataset = dataset_mapping[dataset]
+    detector_info = dataset_detector_mapping[canonical_dataset]
+
+    # Get width and height from detector config, with fallback to defaults
+    width = detector_info['width']
+    height = detector_info['height']
+
     cmd = [
-        'ffmpeg', '-y',  # Overwrite output file
+        'ffmpeg', '-y',
         "-hide_banner", "-loglevel", "warning", "-threads", "4",
-        '-i', video_path,  # Input file
-        "-vf", 'scale=720:480,setsar=1',  # Scale with square pixels per ffmpeg filter syntax
-        '-c:v', 'libx264',  # Re-encode video with H.264
-        '-an',  # Disable audio
+        '-i', video_path,
+        "-vf", f'scale={width}:{height},setsar=1,fps={OUTPUT_FPS}',
+        '-c:v', 'libx264',
+        '-an',
         os.path.join(outputdir, video_file)
     ]
-    
+
     subprocess.run(cmd, capture_output=True, text=True, check=True)
-    command_queue.put(('cuda:' + str(worker_id), { 'completed': 1 }))
+    command_queue.put(('cuda:' + str(worker_id), {'completed': 1}))
     
 
-def process_caldot(args: argparse.Namespace, dataset: str):
-    video_dataset_dir = os.path.join(args.input, dataset)
-    output_dataset_dir = os.path.join(args.output, dataset)
+def process_caldot(dataset: str):
+    video_dataset_dir = os.path.join(SOURCE_DIR, dataset)
+    output_dataset_dir = os.path.join(DATASETS_DIR, dataset)
 
     if os.path.exists(output_dataset_dir):
         shutil.rmtree(output_dataset_dir)
@@ -266,20 +294,18 @@ def process_caldot(args: argparse.Namespace, dataset: str):
         output_dir = os.path.join(output_dataset_dir, videoset)
 
         for video_file in video_files:
-            funcs.append(partial(process_caldot_video, video_file, videoset_dir, output_dir))
+            funcs.append(partial(process_caldot_video, video_file, videoset_dir, output_dir, dataset))
 
     return funcs
 
 def main(args):
-    datasets = args.datasets
-
     funcs = []
-    for dataset in datasets:
+    for dataset in DATASETS:
         print(f"Processing dataset: {dataset}")
         if dataset.startswith('jnc'):
             funcs.extend(process_b3d(args, dataset))
-        elif dataset.startswith('caldot'):
-            funcs.extend(process_caldot(args, dataset))
+        elif dataset.startswith('caldot') or dataset.startswith('ams'):
+            funcs.extend(process_caldot(dataset))
         else:
             raise ValueError(f'Unknown dataset: {dataset}')
     
@@ -290,7 +316,7 @@ def main(args):
     print(f"Available GPUs: {num_gpus}")
     
     # Use ProgressBar for parallel processing
-    ProgressBar(num_workers=10, num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
 
 
 if __name__ == '__main__':

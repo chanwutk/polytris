@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import argparse
 import json
 import os
 import shutil
@@ -21,6 +22,13 @@ DATASETS_TO_TEST = config['EXEC']['DATASETS']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Create training data from detections with FPS-based subsampling')
+    parser.add_argument('--target_fps', type=int, default=5,
+                        help='Target frames per second for subsampling (default: 5)')
+    return parser.parse_args()
+
+
 def get_patched(frame: np.ndarray, tile_size: int) -> np.ndarray:
     padded_frame = torch.from_numpy(frame).to('cuda')
     assert polyis.images.isHWC(padded_frame), padded_frame.shape
@@ -31,7 +39,7 @@ def get_patched(frame: np.ndarray, tile_size: int) -> np.ndarray:
     return patched.contiguous().numpy()
 
 
-def create_training_data(dataset_name: str, video_file: str, gpu_id: int, command_queue: mp.Queue):
+def create_training_data(dataset_name: str, video_file: str, target_fps: int, gpu_id: int, command_queue: mp.Queue):
     device = f'cuda:{gpu_id}'
     dataset_dir = os.path.join(DATASETS_DIR, dataset_name, 'train')
     segments_dir = os.path.join(CACHE_DIR, dataset_name, 'indexing', 'segment', 'detection')
@@ -61,18 +69,30 @@ def create_training_data(dataset_name: str, video_file: str, gpu_id: int, comman
 
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
+    # Compute subsampled frame indices based on target_fps
+    original_fps = cap.get(cv2.CAP_PROP_FPS)
+    selectivity = target_fps / original_fps
+    frames_to_sample = max(1, int(frame_count * selectivity))
+    frame_indices_set = set(np.linspace(0, frame_count - 1, frames_to_sample, dtype=int).tolist())
+
     with open(detections_path, 'r') as detections_f:
         detections_lines = [*detections_f.readlines()]
 
         frame_idx = 0
         command_queue.put((device, {
             'description': f'{dataset_name} {video_file}',
-            'completed': frame_idx,
-            'total': frame_count,
+            'completed': 0,
+            'total': frames_to_sample,
         }))
+        processed_frames = 0
         always_relevant_tiles: "dict[int, np.ndarray]" = {}
         for detections_str in detections_lines:
             frame_idx, dets, _ = json.loads(detections_str)
+
+            # Skip frames not in the subsampled set
+            if frame_idx not in frame_indices_set:
+                continue
+
             cap.set(cv2.CAP_PROP_POS_FRAMES, max(0, frame_idx - 1))
 
             ret, prev_frame = cap.read()
@@ -86,24 +106,44 @@ def create_training_data(dataset_name: str, video_file: str, gpu_id: int, comman
                 frame = tmp
 
             for tile_size in TILE_SIZES:
+                # Scale down resolution to fit tile size if not divisible
+                target_h = (frame.shape[0] // tile_size) * tile_size
+                target_w = (frame.shape[1] // tile_size) * tile_size
+                if (frame.shape[0], frame.shape[1]) != (target_h, target_w):
+                    resized_frame = cv2.resize(frame, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
+                    resized_prev = cv2.resize(prev_frame, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
+                    # Scale detection coordinates (x1, y1, x2, y2) to match resized resolution
+                    # Preserve any extra columns (e.g., confidence score) unchanged
+                    scale_x = target_w / frame.shape[1]
+                    scale_y = target_h / frame.shape[0]
+                    resized_dets = [
+                        [d[0] * scale_x, d[1] * scale_y, d[2] * scale_x, d[3] * scale_y] + d[4:]
+                        for d in dets
+                    ]
+                else:
+                    resized_frame = frame
+                    resized_prev = prev_frame
+                    resized_dets = dets
+
                 split_start_time = time.time_ns() / 1e6
                 training_data_path = os.path.join(training_base_dir, 'data', f'tilesize_{tile_size}')
                 training_diff_path = os.path.join(training_base_dir, 'diff', f'tilesize_{tile_size}')
 
-                patched = get_patched(frame, tile_size)
-                diffs = get_patched(np.abs(frame.astype(np.int16) - prev_frame.astype(np.int16)).astype(np.uint8), tile_size)
+                patched = get_patched(resized_frame, tile_size)
+                diffs = get_patched(np.abs(resized_frame.astype(np.int16) - resized_prev.astype(np.int16)).astype(np.uint8), tile_size)
                 split_time = (time.time_ns() / 1e6) - split_start_time
                 frs[tile_size].write(json.dumps({
                     'op': 'split',
                     'time': split_time,
                     'frame': frame_idx,
                     'tile_size': tile_size,
-                    'frame_shape': frame.shape,
+                    'frame_shape': resized_frame.shape,
                     'patched_shape': patched.shape,
                 }) + '\n')
 
                 save_start_time = time.time_ns() / 1e6
-                relevancy_bitmap = mark_detections(dets, frame.shape[1], frame.shape[0], tile_size)
+                # Use slice(0, 4) since bboxes have 5 values [x1, y1, x2, y2, score]
+                relevancy_bitmap = mark_detections(resized_dets, resized_frame.shape[1], resized_frame.shape[0], tile_size, detection_slice=slice(0, 4))
                 if tile_size not in always_relevant_tiles:
                     always_relevant_tiles[tile_size] = relevancy_bitmap
                 always_relevant_tiles[tile_size] |= relevancy_bitmap
@@ -126,14 +166,13 @@ def create_training_data(dataset_name: str, video_file: str, gpu_id: int, comman
                     'time': save_time,
                     'frame': frame_idx,
                     'tile_size': tile_size,
-                    'frame_shape': frame.shape,
+                    'frame_shape': resized_frame.shape,
                     'patched_shape': patched.shape,
                 }) + '\n')
 
+            processed_frames += 1
             command_queue.put((device, {
-                'description': f'{dataset_name} {video_file}',
-                'completed': frame_idx,
-                'total': frame_count,
+                'completed': processed_frames,
             }))
         for tile_size in TILE_SIZES:
             assert tile_size in always_relevant_tiles, f"Always relevant tiles is not found for tile size {tile_size} for {video_file}"
@@ -143,32 +182,14 @@ def create_training_data(dataset_name: str, video_file: str, gpu_id: int, comman
     for fr in frs.values():
         fr.close()
 
-def main():
+def main(args):
     """
-    Main function to create training data from video segments and detections.
+    Create training data from video detections with FPS-based subsampling.
 
-    This function:
-    1. Iterates through each dataset and video in the cache directory
-    2. Creates training data directories for different tile sizes (30, 60, 120)
-    3. Processes each frame in detection segments
-    4. Splits frames into tiles of specified sizes
-    5. Saves positive tiles (containing detections) and negative tiles (no detections)
-    6. Records runtime performance metrics for each operation
-
-    Note:
-        The function expects the following directory structure:
-        - CACHE_DIR/dataset_name/indexing/segment/detection/{video_file}.segments.jsonl (input segments)
-        - CACHE_DIR/dataset_name/indexing/segment/detection/detections.jsonl (input detections)
-        - DATASETS_DIR/dataset_name/{video_file} (original video file)
-
-        Output structure created:
-        - CACHE_DIR/dataset_name/indexing/training/data/tilesize_X/pos/ (positive tiles)
-        - CACHE_DIR/dataset_name/indexing/training/data/tilesize_X/neg/ (negative tiles)
-        - CACHE_DIR/dataset_name/indexing/training/runtime/tilesize_X/{video_file}_creating_training_data.jsonl (performance metrics)
-
-        Tiles are saved as JPG images with naming format: {video_file}_{frame_idx}_y_x.jpg
-        Performance metrics include timing for split and save operations.
+    Reads full-frame detections from p011, subsamples based on --target_fps,
+    splits frames into tiles, and saves positive/negative training images.
     """
+    target_fps = args.target_fps
     funcs = []
     for dataset_name in DATASETS_TO_TEST:
         cache_dir = os.path.join(CACHE_DIR, dataset_name)
@@ -211,7 +232,7 @@ def main():
                     os.makedirs(os.path.join(training_data_path, label), exist_ok=True)
 
         for video_file in videos:
-            funcs.append(partial(create_training_data, dataset_name, video_file))
+            funcs.append(partial(create_training_data, dataset_name, video_file, target_fps))
     
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()
@@ -221,4 +242,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(parse_args())

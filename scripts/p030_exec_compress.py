@@ -4,7 +4,7 @@ import argparse
 from enum import IntEnum
 import json
 import os
-from typing import Callable, Literal, NamedTuple
+from typing import Callable, NamedTuple
 import cv2
 import numpy as np
 import shutil
@@ -26,6 +26,7 @@ DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 DATASETS = config['EXEC']['DATASETS']
+SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
 
 
@@ -109,10 +110,10 @@ Collage = list[PolyominoPosition]
 
 
 def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
-             tilepadding: TilePadding, threshold: float, mode: PackMode,
+             sample_rate: int, tilepadding: TilePadding, threshold: float, mode: PackMode,
              gpu_id: int, command_queue: mp.Queue):
     """
-    Compress a single video by batch processing all frames at once using pack_all.
+    Compress a single video by batch processing all sampled frames at once using pack_all.
 
     Args:
         dataset: Name of the dataset
@@ -120,8 +121,9 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         video: Name of the video
         classifier: Classifier name to use
         tilesize: Tile size to use
-        threshold: Threshold for classification probability
         tilepadding: Whether to apply padding to classification results
+        sample_rate: Sample rate for frame sampling (1 = all frames)
+        threshold: Threshold for classification probability
         gpu_id: GPU ID to use for processing
         command_queue: Queue for progress updates
     """
@@ -130,12 +132,12 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
     video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
 
-    # Load classification results
-    results = load_classification_results(CACHE_DIR, dataset, video, tilesize, classifier)
-    
+    # Load classification results for the specified sample rate
+    results = load_classification_results(CACHE_DIR, dataset, video, tilesize, classifier, sample_rate)
+
     # Create output directory for compression results
     output_dir_name = OUTPUT_DIR_MAP[mode]
-    output_dir = os.path.join(cache_video_dir, output_dir_name, f'{classifier}_{tilesize}_{tilepadding}')
+    output_dir = os.path.join(cache_video_dir, output_dir_name, f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}')
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -159,7 +161,8 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     num_frames_total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    assert num_frames_total == len(results), f"Expected {len(results)} frames, got {num_frames_total}, {video_path} {classifier} {tilesize} {tilepadding}"
+    # Note: results contains only sampled frames (frame_idx % sample_rate == 0)
+    # The total video frame count may be larger than len(results)
 
     # Calculate grid dimensions
     grid_height = height // tilesize
@@ -168,8 +171,12 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     # Step 1: Group tiles for all frames to get polyominoes
     timing_data = []
 
+    # Create mapping from array index to absolute frame index
+    # This is CRITICAL: results contains only sampled frames, but we need absolute frame indices
+    array_idx_to_frame_idx = {i: result['idx'] for i, result in enumerate(results)}
+
     polyominoes_stacks = np.empty(len(results), dtype=np.uint64)
-    for frame_idx, frame_result in enumerate(results):
+    for array_idx, frame_result in enumerate(results):
         step_times = {}
 
         # Get classification results
@@ -189,10 +196,12 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         # Group connected tiles into polyominoes
         step_start = (time.time_ns() / 1e6)
         polyominoes = group_tiles(bitmap_frame, TILEPADDING_MAPS[tilepadding])
-        polyominoes_stacks[frame_idx] = polyominoes
+        polyominoes_stacks[array_idx] = polyominoes
         step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
 
-        timing_data.append({'step': 'group_tiles', 'frame_idx': frame_idx, 'runtime': format_time(**step_times)})
+        # Use absolute frame index in timing data
+        absolute_frame_idx = array_idx_to_frame_idx[array_idx]
+        timing_data.append({'step': 'group_tiles', 'frame_idx': absolute_frame_idx, 'runtime': format_time(**step_times)})
 
         # # Update progress
         # if frame_idx % max(1, len(results) // 100) == 0:
@@ -231,15 +240,16 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         batch_pack_time = (time.time_ns() / 1e6) - batch_start
         total_pack_time += batch_pack_time
 
-        # Adjust frame indices in batch_collages to be relative to the full video
+        # Adjust frame indices in batch_collages to use absolute frame indices
         # pack_all returns frame indices relative to the batch (0-indexed within batch)
-        # We need to offset them by start_idx to get the actual frame index
+        # We need to map these through our array_idx_to_frame_idx mapping to get absolute frame indices
         batch_collages: list[list[PolyominoPosition]] = []
         for collage in batch_collages_:
             batch_collages.append([
                 PolyominoPosition(oy=poly_pos.oy, ox=poly_pos.ox,
                                   py=poly_pos.py, px=poly_pos.px,
-                                  frame=poly_pos.frame + start_idx,
+                                  # Map from batch-relative index to absolute frame index
+                                  frame=array_idx_to_frame_idx[poly_pos.frame + start_idx],
                                   shape=poly_pos.shape)
                 for poly_pos in collage
             ])
@@ -260,21 +270,33 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     # # Record total packing time
     # timing_data.append({'step': 'pack_all_total', 'runtime': format_time(pack_all_total=total_pack_time)})
 
-    # Step 3: Read all frames from video
-    command_queue.put((device, {'description': description + ' reading', 'completed': 0, 'total': num_frames_total}))
+    # Step 3: Read ONLY sampled frames from video (only frames in results)
+    command_queue.put((device, {'description': description + ' reading', 'completed': 0, 'total': len(results)}))
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-    frames = []
-    mod = max(1, num_frames_total // 20)
+
+    # Create set of sampled frame indices for fast lookup
+    sampled_indices_set = {result['idx'] for result in results}
+    # Create mapping from absolute frame index to frame data
+    # This allows us to access frames by their absolute index in the original video
+    frame_idx_to_frame: dict[int, np.ndarray] = {}
+    mod = max(1, len(results) // 20)
+    frames_read = 0
+
     for idx in range(num_frames_total):
         ret, frame = cap.read()
         if not ret:
             break
-        assert dtypes.is_np_image(frame), frame.shape
-        frames.append(frame)
-        if idx % mod == 0:
-            command_queue.put((device, {'description': description + ' reading', 'completed': idx}))
-    
-    assert len(frames) == num_frames_total, f"Expected {num_frames_total} frames, got {len(frames)}"
+
+        # Only store frames that are in the sampled set
+        if idx in sampled_indices_set:
+            assert dtypes.is_np_image(frame), frame.shape
+            frame_idx_to_frame[idx] = frame
+            frames_read += 1
+            if frames_read % mod == 0:
+                command_queue.put((device, {'description': description + ' reading',
+                                           'completed': frames_read}))
+
+    assert len(frame_idx_to_frame) == len(results), f"Expected {len(results)} sampled frames, got {len(frame_idx_to_frame)}"
     assert cap.read()[0] is False, "Expected no more frames"
     cap.release()
 
@@ -305,25 +327,39 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         for gid, poly_pos in enumerate(collage, start=1):
             oy, ox, py, px, frame_idx, shape = poly_pos
 
-            # Get source frame
-            frame = frames[frame_idx]
+            # Get source frame using absolute frame index
+            frame = frame_idx_to_frame[frame_idx]
 
-            # Optimized tile rendering: vectorized coordinate computation with slice-based copying
-            # Slice operations use optimized block memory copy (memcpy-like) which is faster than per-pixel
+            # Tile rendering: scale grid positions to raw video resolution
             i_coords = shape[:, 0]
             j_coords = shape[:, 1]
-            
-            # Compute all tile corner positions at once (vectorized)
-            sy_coords = (oy + i_coords) * tilesize
-            sx_coords = (ox + j_coords) * tilesize
-            dy_coords = (py + i_coords) * tilesize
-            dx_coords = (px + j_coords) * tilesize
-            
-            # Copy tiles using optimized slice operations (block memory copy)
+
+            # Compute tile boundaries scaled to raw video resolution (vectorized)
+            sy_starts = (oy + i_coords) * height // grid_height
+            sx_starts = (ox + j_coords) * width // grid_width
+            sy_ends = (oy + i_coords + 1) * height // grid_height
+            sx_ends = (ox + j_coords + 1) * width // grid_width
+            dy_starts = (py + i_coords) * height // grid_height
+            dx_starts = (px + j_coords) * width // grid_width
+            dy_ends = (py + i_coords + 1) * height // grid_height
+            dx_ends = (px + j_coords + 1) * width // grid_width
+
+            # Precompute tile sizes and padding (vectorized)
+            dst_hs = (dy_ends - dy_starts).astype(int)
+            dst_ws = (dx_ends - dx_starts).astype(int)
+            src_hs = (sy_ends - sy_starts).astype(int)
+            src_ws = (sx_ends - sx_starts).astype(int)
+            pad_hs = np.maximum(0, dst_hs - src_hs)
+            pad_ws = np.maximum(0, dst_ws - src_ws)
+            needs_padding = (pad_hs > 0) | (pad_ws > 0)
+
+            # Copy tiles, repeating last row/column if sizes differ
             for idx in range(len(shape)):
-                sy, sx = sy_coords[idx], sx_coords[idx]
-                dy, dx = dy_coords[idx], dx_coords[idx]
-                canvas[dy:dy+tilesize, dx:dx+tilesize] = frame[sy:sy+tilesize, sx:sx+tilesize]
+                src_tile = frame[sy_starts[idx]:sy_ends[idx], sx_starts[idx]:sx_ends[idx]]
+                # Pad with repeated edge pixels if source tile is smaller than destination
+                if needs_padding[idx]:
+                    src_tile = np.pad(src_tile, ((0, pad_hs[idx]), (0, pad_ws[idx]), (0, 0)), mode='edge')
+                canvas[dy_starts[idx]:dy_ends[idx], dx_starts[idx]:dx_ends[idx]] = src_tile[:dst_hs[idx], :dst_ws[idx]]
 
             # Update index_map (vectorized)
             index_map[py + i_coords, px + j_coords] = gid
@@ -405,7 +441,7 @@ def main(args):
     if not videosets:
         videosets = ['test']
     
-    # Create tasks list with all video/classifier/tilesize combinations
+    # Create tasks list with all video/classifier/tilesize/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for dataset in DATASETS:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
@@ -415,14 +451,15 @@ def main(args):
             if not os.path.exists(videoset_dir):
                 print(f"Videoset directory {videoset_dir} does not exist, skipping...")
                 continue
-            
+
             # Get all video files from the dataset directory
             videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
             for video in sorted(videos):
                 for classifier in CLASSIFIERS:
                     for tilesize in TILE_SIZES:
                         for tilepadding in TILEPADDING_MODES:
-                            funcs.append(partial(compress, dataset, videoset, video, classifier, tilesize, tilepadding, threshold, mode))
+                            for sample_rate in SAMPLE_RATES:
+                                funcs.append(partial(compress, dataset, videoset, video, classifier, tilesize, sample_rate, tilepadding, threshold, mode))
     
     print(f"Created {len(funcs)} tasks to process")
     
