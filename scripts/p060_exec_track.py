@@ -168,7 +168,7 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
             # Profile: Process tracking results
             step_start = (time.time_ns() / 1e6)
             register_tracked_detections(tracked_dets, frame_idx, frame_tracks,
-                                        trajectories, no_interpolate)
+                                        trajectories, interpolate=not no_interpolate)
             step_times['interpolate_trajectory'] = (time.time_ns() / 1e6) - step_start
             
             # Save runtime data for this frame
