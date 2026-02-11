@@ -23,6 +23,7 @@ TRACKERS = CONFIG['EXEC']['TRACKERS']
 TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
 
 SAMPLE_RATES = [1, 2, 4, 8, 16]
+ACCURACY_THRESHOLDS = [60, 70, 80, 90, 95, 100]
 
 
 def parse_args():
@@ -393,9 +394,9 @@ def process_video_tracker(
     gt_tracks = run_tracker_on_detections(scaled_dets, total_frames, tracker_name,
                                           (target_h, target_w), sample_rate=1)
 
-    # Compute per-tile accuracy for each sample rate
-    # Shape: (num_rates, grid_h, grid_w) — Laplace-smoothed accuracy per tile
-    partial_accuracy = np.zeros((len(SAMPLE_RATES), grid_h, grid_w), dtype=np.float32)
+    # Compute per-tile counts for each sample rate
+    # Shape: (num_rates, grid_h, grid_w, 2) where last dim is [correct, incorrect]
+    partial_counts = np.zeros((len(SAMPLE_RATES), grid_h, grid_w, 2), dtype=np.int64)
 
     for rate_idx, rate in enumerate(SAMPLE_RATES):
         # Run sampled tracker
@@ -404,18 +405,14 @@ def process_video_tracker(
 
         # Compute per-tile correct/incorrect counts using temporal consistency
         counts = calculate_misstrack_stats_per_tile(gt_tracks, sampled_tracks, rate, tile_size, grid_h, grid_w, iou_threshold)
-
-        # Compute Laplace-smoothed per-tile accuracy: (correct + 1) / (correct + incorrect + 2)
-        correct = counts[:, :, 0].astype(np.float32)
-        incorrect = counts[:, :, 1].astype(np.float32)
-        partial_accuracy[rate_idx] = (correct + 1) / (correct + incorrect + 2)
+        partial_counts[rate_idx] = counts
 
         # Send progress update
         command_queue.put((device, {'completed': rate_idx + 1}))
 
-    # Save partial per-video accuracy
+    # Save partial per-video counts
     os.makedirs(partial_dir, exist_ok=True)
-    np.save(os.path.join(partial_dir, f'{video}.npy'), partial_accuracy)
+    np.save(os.path.join(partial_dir, f'{video}.npy'), partial_counts)
 
 
 def main(args):
@@ -462,23 +459,54 @@ def main(args):
                 # Run in parallel (CPU-only tracking)
                 ProgressBar(num_workers=args.num_workers, num_tasks=len(funcs)).run_all(funcs)
 
-                # Aggregate per-video accuracies by averaging
-                all_accuracies = []
+                # Aggregate per-video counts by summing across all videos
+                total_counts = None
                 for video in videos:
-                    partial_path = partial_dir / f'{video}.npy'
-                    assert partial_path.exists(), f"Partial results not found: {partial_path}"
-                    all_accuracies.append(np.load(str(partial_path)))
+                    counts_path = partial_dir / f'{video}.npy'
+                    assert counts_path.exists(), f"Partial counts not found: {counts_path}"
+                    video_counts = np.load(str(counts_path))
 
-                # Mean accuracy across videos: shape (num_rates, grid_h, grid_w)
-                accuracy = np.mean(np.stack(all_accuracies, axis=0), axis=0)
+                    if total_counts is None:
+                        total_counts = video_counts.copy()
+                    else:
+                        total_counts += video_counts
+
+                assert total_counts is not None, "No partial results to aggregate"
+
+                # Compute Laplace-smoothed accuracy from aggregated counts
+                correct = total_counts[:, :, :, 0].astype(np.float32)
+                incorrect = total_counts[:, :, :, 1].astype(np.float32)
+                accuracy = (correct + 1) / (correct + incorrect + 2)
+
+                # Build lookup table: for each threshold, find the lowest (least frequent)
+                # sampling rate that still achieves the required accuracy per tile.
+                # Shape: (grid_h, grid_w, num_threshold_levels)
+                grid_h = accuracy.shape[1]
+                grid_w = accuracy.shape[2]
+                num_thresholds = len(ACCURACY_THRESHOLDS)
+                max_rate_table = np.full((grid_h, grid_w, num_thresholds), SAMPLE_RATES[0], dtype=np.int32)
+
+                for t_idx, threshold_pct in enumerate(ACCURACY_THRESHOLDS):
+                    threshold = threshold_pct / 100.0
+                    # Iterate rates from lowest (most frequent) to highest (least frequent);
+                    # each qualifying rate overwrites the previous, so the final value is
+                    # the highest (least frequent) rate that still meets the threshold.
+                    for rate_idx in range(len(SAMPLE_RATES)):
+                        # Overwrite with this rate wherever accuracy meets the threshold
+                        meets = accuracy[rate_idx] >= threshold
+                        max_rate_table[:, :, t_idx] = np.where(meets, SAMPLE_RATES[rate_idx],
+                                                               max_rate_table[:, :, t_idx])
 
                 # Save results
                 os.makedirs(str(output_dir), exist_ok=True)
                 np.save(str(output_dir / 'accuracy.npy'), accuracy)
+                np.save(str(output_dir / 'counts.npy'), total_counts)
+                np.save(str(output_dir / 'max_rate_table.npy'), max_rate_table)
                 with open(str(output_dir / 'sample_rates.json'), 'w') as f:
                     json.dump(SAMPLE_RATES, f)
 
-                print(f"    Saved accuracy.npy {accuracy.shape}")
+                print(f"    Saved accuracy.npy {accuracy.shape}, counts.npy {total_counts.shape}, "
+                      f"max_rate_table.npy {max_rate_table.shape}")
 
     print("All tracking rate evaluations completed!")
 
