@@ -9,7 +9,7 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import TILEPADDING_MODES, ProgressBar, create_timer, get_config, get_num_frames
+from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames
 
 
 CONFIG = get_config()
@@ -18,19 +18,21 @@ DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 CLASSIFIERS = CONFIG['EXEC']['CLASSIFIERS']
 TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
+SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
+TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
 
 
 def load_mapping_file(index_map_path: str, offset_lookup_path: str):
     """
     Load mapping file that contains the index_map and offset_lookup for unpacking.
-    
+
     Args:
         index_map_path (str): Path to the index map file
         offset_lookup_path (str): Path to the offset lookup file
-        
+
     Returns:
         tuple[np.ndarray, list[tuple[tuple[int, int], tuple[int, int], int]]]: Mapping information containing index_map, offset_lookup, etc.
-        
+
     Raises:
         FileNotFoundError: If index map or offset lookup file doesn't exist
     """
@@ -38,11 +40,11 @@ def load_mapping_file(index_map_path: str, offset_lookup_path: str):
         raise FileNotFoundError(f"Index map file not found: {index_map_path}")
     if not os.path.exists(offset_lookup_path):
         raise FileNotFoundError(f"Offset lookup file not found: {offset_lookup_path}")
-    
+
     index_map = np.load(index_map_path)
     with open(offset_lookup_path, 'r') as f:
         offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]] = [json.loads(line) for line in f]
-    
+
     return index_map, offset_lookup
 
 
@@ -52,18 +54,18 @@ FrameIdToDets = dict[int, Dets]
 UnpackedDets = tuple[FrameIdToDets, Dets, Dets]
 
 
-def unpack_detections(detections: list[list[float]], index_map: np.ndarray, 
-                      offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]], 
+def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
+                      offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]],
                       tilesize: int) -> UnpackedDets:
     """
     Unpack detections from compressed coordinates back to original frame coordinates.
-    
+
     Args:
         detections (list[list[float]]): list of bounding boxes in compressed coordinates [x1, y1, x2, y2]
         index_map (np.ndarray): Index map from the mapping file (2D array with group_ids)
         offset_lookup (list[tuple[tuple[int, int], tuple[int, int], int]]): Offset lookup from the mapping file
         tilesize (int): Size of tiles used for compression
-        
+
     Returns:
         tuple[
             dict[int, list[list[float]]],
@@ -84,7 +86,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         # Get the center point of the detection in compressed coordinates
         center_x = (x1 + x2) / 2.0
         center_y = (y1 + y2) / 2.0
-        
+
         # center, top-left, top-right, bottom-left, bottom-right
         xs = [center_x, x1, x2, x1, x2]
         ys = [center_y, y1, y1, y2, y2]
@@ -96,23 +98,23 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
             # Convert to tile coordinates in the compressed image
             tile_x = int(x // tilesize)
             tile_y = int(y // tilesize)
-            
+
             # Ensure tile coordinates are within bounds
-            if (tile_y < 0 or tile_y >= index_map.shape[0] or 
+            if (tile_y < 0 or tile_y >= index_map.shape[0] or
                 tile_x < 0 or tile_x >= index_map.shape[1]):
                 continue
-            
+
             # Get the group ID for this tile
             group_id_ = int(index_map[tile_y, tile_x])
-            
+
             if group_id_ != 0:
                 group_id = group_id_
                 break
             center_in_any_tile = False
-        
+
         if not center_in_any_tile:
             center_not_in_any_tile_detections.append([x1, y1, x2, y2, *_])
-        
+
         if group_id is None:
             not_in_any_tile_detections.append([x1, y1, x2, y2, *_])
             continue
@@ -123,12 +125,12 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         # Get the offset information for this group
         assert 0 <= group_id < len(offset_lookup), f"Group {group_id} not found in offset lookup"
         (packed_y, packed_x), (original_offset_y, original_offset_x), frame_idx = offset_lookup[group_id]
-        
+
         # Calculate the offset to convert from compressed to original coordinates
         # The offset represents how much the tile was moved during compression
         offset_x = (original_offset_x - packed_x) * tilesize
         offset_y = (original_offset_y - packed_y) * tilesize
-        
+
         # Convert detection back to original frame coordinates
         original_det = [
             x1 + offset_x,
@@ -137,53 +139,54 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
             y2 + offset_y,
             *_
         ]
-        
+
         # Add to frame detections
         if frame_idx not in frame_detections:
             frame_detections[frame_idx] = []
         frame_detections[frame_idx].append(original_det)
-    
+
     return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
-def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding: str, gpu_id: int, command_queue: mp.Queue):
+def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int, tilepadding: str, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
-    
+
     Args:
         dataset (str): Name of the dataset
         video (str): Name of the video file
         classifier (str): Classifier name used for compression and detection
         tilesize (int): Tile size used for compression
         tilepadding (str): Whether padding was applied to classification results
+        sample_rate (int): Sample rate for frame sampling
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
     video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    
+
     # Check if compressed detections exist
     detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{tilepadding}', 'detections.jsonl')
+                                   f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}', 'detections.jsonl')
     assert os.path.exists(detections_file), f"Detections file not found: {detections_file}"
-    
+
     # Check if compressed frames directory exists
     compressed_frames_dir = os.path.join(video_path, '033_compressed_frames',
-                                         f'{classifier}_{tilesize}_{tilepadding}')
+                                         f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}')
     assert os.path.exists(compressed_frames_dir), f"Compressed frames directory not found: {compressed_frames_dir}"
-    
+
     detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{tilepadding}', 'detections.jsonl')
-    
+                                   f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}', 'detections.jsonl')
+
     unpacked_output_dir = os.path.join(video_path, '050_uncompressed_detections',
-                                       f'{classifier}_{tilesize}_{tilepadding}')
+                                       f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}')
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
     print(f"Saving unpacked detections to {unpacked_output_dir}")
     runtime_file = os.path.join(unpacked_output_dir, 'runtime.jsonl')
-    
+
     images_not_in_any_tile_dir = os.path.join(unpacked_output_dir, 'images_not_in_any_tile')
     os.makedirs(images_not_in_any_tile_dir, exist_ok=True)
     print(f"Saving images not in any tile to {images_not_in_any_tile_dir}")
@@ -192,16 +195,17 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
     os.makedirs(images_center_not_in_any_tile_dir, exist_ok=True)
     print(f"Saving images center not in any tile to {images_center_not_in_any_tile_dir}")
 
-    # relevancy_scores_file = os.path.join(video_path, '020_relevancy', f'{classifier}_{tilesize}', 'score', 'score.jsonl')
-    # with open(relevancy_scores_file, 'r') as f:
-    #     num_frames = max(json.loads(line)['idx'] for line in f if line.strip())
+    # Get total number of frames from original video
+    # This is important: we create entries for ALL frames (0 to num_frames-1)
+    # Non-sampled frames will have empty bbox arrays
     num_frames = get_num_frames(os.path.join(DATASETS_DIR, dataset, 'test', video))
 
-    # dictionary to store all frame detections
+    # Create entries for ALL frames (0 to num_frames-1), not just sampled ones
+    # Non-sampled frames (frame_idx % sample_rate != 0) will remain as empty arrays
     all_frame_detections: dict[int, list[list[float]]] = {
-        i: [] for i in range(num_frames + 1)
+        i: [] for i in range(num_frames)
     }
-    
+
     with open(detections_file, 'r') as f, open(runtime_file, 'w') as fr:
         # Process each detection file
         contents = f.readlines()
@@ -218,13 +222,13 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
             # Construct paths
             index_map_path = os.path.join(compressed_frames_dir, 'index_maps', f'{prefix}.npy')
             offset_lookup_path = os.path.join(compressed_frames_dir, 'offset_lookups', f'{prefix}.jsonl')
-            
+
             # Load detection results
             detections: list[list[float]] = content['bboxes']
-            
+
             # Load corresponding mapping file
             index_map, offset_lookup = load_mapping_file(index_map_path, offset_lookup_path)
-            
+
             with timer('unpack_detections'):
                 # Unpack detections
                 frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections \
@@ -245,7 +249,7 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
                     center_x = (x1 + x2) / 2
                     center_y = (y1 + y2) / 2
                     image = cv2.circle(image, (int(center_x), int(center_y)), 5, (0, 0, 255), -1)
-                
+
                 # save the image
                 cv2.imwrite(os.path.join(images_not_in_any_tile_dir, image_file), image)
 
@@ -263,10 +267,12 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
                     center_x = (x1 + x2) / 2
                     center_y = (y1 + y2) / 2
                     image = cv2.circle(image, (int(center_x), int(center_y)), 5, (0, 0, 255), -1)
-                
+
                 # save the image
                 cv2.imwrite(os.path.join(images_center_not_in_any_tile_dir, image_file), image)
-            
+
+            # Note: Only sampled frames (frame_idx % sample_rate == 0) have detections from upstream
+            # Non-sampled frames will remain as empty arrays
             # Merge with existing frame detections
             for frame_idx, bboxes in frame_detections.items():
                 all_frame_detections[frame_idx].extend(bboxes)
@@ -276,13 +282,13 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
                                             'description': description,
                                             'total': len(contents)}))
             flush()
-    
+
         with timer('sort_frames'):
             # Save unpacked detections organized by frame
             # Sort frames by index
             sorted_frames = sorted(all_frame_detections.keys())
         flush()
-    
+
     # Save each frame's detections
     with open(os.path.join(unpacked_output_dir, 'detections.jsonl'), 'w') as f:
         for frame_idx in sorted_frames:
@@ -293,7 +299,7 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, tilepadding
 def main():
     """
     Main function that orchestrates the detection unpacking process using parallel processing.
-    
+
     This function serves as the entry point for the script. It:
     1. Validates the dataset directories exist
     2. Creates a list of all video/classifier/tilesize/tilepadding combinations to process
@@ -313,28 +319,29 @@ def main():
         - The number of processes equals the number of available GPUs
     """
     # mp.set_start_method('spawn', force=True)
-    
+
     # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for dataset in DATASETS:
         cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
         videosets_dir = os.path.join(dataset_dir, 'test')
-        
+
         # Get all video files from the dataset directory
         videos = [f for f in os.listdir(videosets_dir) if f.endswith('.mp4')]
         print(f"Found {len(videos)} video files in dataset {dataset}")
-        
+
         for video in sorted(videos):
             # uncompressed_detections_dir = os.path.join(cache_dir, video, '050_uncompressed_detections')
             # if os.path.exists(uncompressed_detections_dir):
             #     shutil.rmtree(uncompressed_detections_dir)
-                
+
             for classifier in CLASSIFIERS:
                 for tilesize in TILE_SIZES:
                     for tilepadding in TILEPADDING_MODES:
-                            funcs.append(partial(unpack, dataset,  video, classifier, tilesize, tilepadding))
-    
+                        for sample_rate in SAMPLE_RATES:
+                            funcs.append(partial(unpack, dataset, video, classifier, tilesize, sample_rate, tilepadding))
+
     print(f"Created {len(funcs)} tasks to process")
     ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")

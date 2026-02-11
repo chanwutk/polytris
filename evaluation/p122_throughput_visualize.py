@@ -91,8 +91,8 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
     
     # Transform data: create Config labels and map stage names
     # Include sample_rate and tracker in Config label
-    df['Config'] = (df['classifier'].str[:5] + ' ' + df['tilesize'].astype(str) + ' ' + 
-                    df['tilepadding'].str[:4] + ' SR' + df['sample_rate'].astype(str) + ' ' + 
+    df['Config'] = (df['classifier'].str[:5] + ' ' + df['tilesize'].astype(str) + ' ' +
+                    'SR' + df['sample_rate'].astype(str) + ' ' + df['tilepadding'].str[:4] + ' ' +
                     df['tracker'].str[:6])
     df['Stage'] = df['stage'].map(stage_mapping)
 
@@ -166,8 +166,8 @@ def transform_query_data(query_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
         exec_df['tracker'] = 'unknown'
     
     # Include sample_rate and tracker in Category label
-    exec_df['Category'] = (exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' + 
-                          exec_df['tilepadding'].str[:4] + ' SR' + exec_df['sample_rate'].astype(str) + ' ' + 
+    exec_df['Category'] = (exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' +
+                          'SR' + exec_df['sample_rate'].astype(str) + ' ' + exec_df['tilepadding'].str[:4] + ' ' +
                           exec_df['tracker'].str[:6])
     exec_df['Operation'] = exec_df['stage'].map(RUNTIME_STAGE_MAPPING)
     

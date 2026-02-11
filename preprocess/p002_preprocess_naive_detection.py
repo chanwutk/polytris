@@ -183,11 +183,6 @@ def main():
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith('.mp4')])
         assert len(video_files) > 0, f"No video files found in {dataset_dir}"
-
-        output_dir = os.path.join(CACHE_DIR, dataset, 'execution', '002_naive')
-        if os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
-        os.makedirs(output_dir, exist_ok=True)
         
         for video_file in video_files:
             video_file_path = os.path.join(dataset_dir, video_file)

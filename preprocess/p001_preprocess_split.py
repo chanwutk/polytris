@@ -5,15 +5,15 @@ import os
 import shutil
 import random
 
-from polyis.utilities import DATASETS_DIR, DATASETS_TO_TEST
+from polyis.utilities import get_config  # Import config loader
+
+CONFIG = get_config()  # Load global configuration
+DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']  # Resolve datasets directory
+DATASETS = CONFIG['EXEC']['DATASETS']  # Resolve datasets to process
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Split dataset into train, valid, test sets')
-    parser.add_argument('-d', '--datasets', required=False,
-                        default=DATASETS_TO_TEST,
-                        nargs='+',
-                        help='Dataset names (space-separated)')
     parser.add_argument('--split', type=str, default='8:5:5',
                         help='Exact file counts in format tr:va:te (default: 8:5:5)')
     parser.add_argument('--force', action='store_true',
@@ -39,7 +39,7 @@ def parse_args():
 
 
 def split_dataset_files(dataset_dir: str, train_count: int, valid_count: int, 
-                       test_count: int, force: bool) -> None:
+                        test_count: int, force: bool) -> None:
     """
     Split dataset files into train, valid, test directories.
     
@@ -114,11 +114,12 @@ def split_dataset_files(dataset_dir: str, train_count: int, valid_count: int,
         os.makedirs(split_dir, exist_ok=True)
         
         print(f"Moving {len(files)} files to {split_name}/")
-        for file in files:
-            src_path = os.path.join(dataset_dir, file)
-            dst_path = os.path.join(split_dir, split_name[:2] + file)
-            shutil.move(src_path, dst_path)
-            print(f"  Moved {file} -> {split_name}/{file}")
+        for file in files:  # Iterate files to move
+            prefixed_name = split_name[:2] + file  # Build prefixed file name
+            src_path = os.path.join(dataset_dir, file)  # Build source file path
+            dst_path = os.path.join(split_dir, prefixed_name)  # Build destination path
+            shutil.move(src_path, dst_path)  # Move file into split directory
+            print(f"  Moved {file} -> {split_name}/{prefixed_name}")  # Log move
 
 
 def split_dataset(args: argparse.Namespace, dataset: str) -> None:
@@ -138,10 +139,28 @@ def split_dataset(args: argparse.Namespace, dataset: str) -> None:
     print(f"\nProcessing dataset: {dataset}")
     print(f"Dataset directory: {dataset_dir}")
     
-    # Check if dataset already has train/valid/test structure
-    existing_splits = [d for d in ['train', 'valid', 'test'] 
-                      if os.path.exists(os.path.join(dataset_dir, d))]
-    
+    # Check if dataset already has train/valid/test structure and fix file prefixes
+    existing_splits = [d for d in ['train', 'valid', 'test']  # Collect split names
+                      if os.path.exists(os.path.join(dataset_dir, d))]  # Filter existing dirs
+    for split_name in existing_splits:  # Iterate each existing split
+        split_path = os.path.join(dataset_dir, split_name)  # Build split directory path
+        prefix = split_name[:2]  # Derive expected file prefix
+        for file_name in os.listdir(split_path):  # Iterate files in split
+            file_path = os.path.join(split_path, file_name)  # Build full file path
+            if not os.path.isfile(file_path):  # Skip non-file entries
+                continue  # Move to next entry
+            if file_name.startswith(prefix):  # Skip correctly prefixed files
+                continue  # Move to next entry
+            prefixed_name = prefix + file_name  # Build new prefixed name
+            prefixed_path = os.path.join(split_path, prefixed_name)  # Build destination path
+            suffix = 1  # Initialize suffix counter
+            while os.path.exists(prefixed_path):  # Ensure unique destination name
+                prefixed_name = f"{prefix}{suffix}_{file_name}"  # Build unique prefixed name
+                prefixed_path = os.path.join(split_path, prefixed_name)  # Update destination path
+                suffix += 1  # Increment suffix counter
+            os.rename(file_path, prefixed_path)  # Rename file to include prefix
+            print(f"Dataset {dataset}: renamed {split_name}/{file_name} -> {split_name}/{prefixed_name}")  # Log rename
+
     if existing_splits and not args.force:
         print(f"Dataset {dataset} already has splits: {existing_splits}")
         print("Use --force to recreate splits")
@@ -172,12 +191,11 @@ def main(args):
     Args:
         args: Parsed command line arguments
     """
-    datasets = args.datasets
     
-    print(f"Splitting datasets: {datasets}")
+    print(f"Splitting datasets: {DATASETS}")
     print(f"Split counts: {args.split} (train={args.train_count}, valid={args.valid_count}, test={args.test_count})")
     
-    for dataset in datasets:
+    for dataset in DATASETS:
         try:
             split_dataset(args, dataset)
         except Exception as e:

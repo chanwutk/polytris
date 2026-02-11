@@ -500,7 +500,7 @@ def train(
     frozen: bool = False,
     initial_best_loss: float = float('inf')
 ):
-    early_stopping_tolerance = 5
+    early_stopping_tolerance = 3
     early_stopping_threshold = 0.001
     
     epoch_train_losses: list[dict] = []
@@ -626,18 +626,15 @@ MODEL_ZOO = {
     'YoloM': YoloM,
     'YoloL': YoloL,
     'YoloX': YoloX,
-    # 'ShuffleNet05Q': ShuffleNet05Q_factory,
     'ShuffleNet05': ShuffleNet05_factory,
     'ShuffleNet20': ShuffleNet20_factory,
     'MobileNetL': MobileNetL_factory,
-    # 'MobileNetLQ': MobileNetLQ_factory,
     'MobileNetS': MobileNetS_factory,
     'WideResNet50': WideResNet50_factory,
     'WideResNet101': WideResNet101_factory,
     'ResNet152': ResNet152_factory,
     'ResNet101': ResNet101_factory,
     'ResNet18': ResNet18_factory,
-    # 'ResNet18Q': ResNet18Q_factory,
     'EfficientNetS': EfficientNetS_factory,
     'EfficientNetL': EfficientNetL_factory,
 }
@@ -717,20 +714,8 @@ def train_classifier(dataset: str, tile_size: int, model_type: str,
         assert os.path.exists(training_data_path), \
             f"Training data directory {training_data_path} does not exist. " \
             "Please run p012_tune_create_training_data.py first."
-
-        # # Count files directly from directories using simple shell commands
-        # neg_dir = os.path.join(training_data_path, 'neg')
-        # pos_dir = os.path.join(training_data_path, 'pos')
-        
-        # # Use ls -1 | wc -l to count files (simple and fast)
-        # neg_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {neg_dir} | wc -l'], text=True).strip())
-        # pos_count = int(subprocess.check_output(['sh', '-c', f'ls -1 {pos_dir} | wc -l'], text=True).strip())
-        
-        # # Calculate pos_weight for binary classification (inverse frequency weighting)
-        # pos_weight = neg_count / pos_count
         
         # Use BCEWithLogitsLoss with pos_weight to handle class imbalance
-        # loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight)).to(device)
         loss_fn = torch.nn.BCEWithLogitsLoss().to(device)
         
         # Apply ImageNet normalization to all 6 channels (3 from image + 3 from diff)
@@ -779,7 +764,7 @@ def train_classifier(dataset: str, tile_size: int, model_type: str,
                 # Train adapter, pos_encoder, and classifier head
                 model.freeze_base_model()
                 optimizer_frozen = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr_frozen, weight_decay=0.01)
-                _, best_raw_wts_stage1, best_loss_stage1 = run_train(model, loss_fn, optimizer_frozen, train_loader, test_loader, n_epochs=25, frozen=True)
+                _, best_raw_wts_stage1, best_loss_stage1 = run_train(model, loss_fn, optimizer_frozen, train_loader, test_loader, n_epochs=7, frozen=True)
                 
                 # Load best raw model weights from stage 1 (not EMA) to continue training
                 model.load_state_dict(best_raw_wts_stage1)
@@ -789,7 +774,7 @@ def train_classifier(dataset: str, tile_size: int, model_type: str,
                 # Pass best_loss from stage 1 to ensure stage 2 only saves if it improves
                 model.unfreeze_base_model()
                 optimizer_unfrozen = AdamW(model.parameters(), lr=lr_unfrozen, weight_decay=0.01)
-                run_train(model, loss_fn, optimizer_unfrozen, train_loader, test_loader, n_epochs=50, initial_best_loss=best_loss_stage1)
+                run_train(model, loss_fn, optimizer_unfrozen, train_loader, test_loader, n_epochs=7, initial_best_loss=best_loss_stage1)
                 
                 break  # Success, exit the retry loop
 
