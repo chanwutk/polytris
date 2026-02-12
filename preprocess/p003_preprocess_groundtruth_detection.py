@@ -12,6 +12,7 @@ import shutil
 
 from polyis.io.video_capture import VideoCapture
 from polyis.utilities import format_time, ProgressBar, get_num_frames, get_config
+from polyis.utils import intersects_polygon
 
 
 CONFIG = get_config()
@@ -19,6 +20,8 @@ EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
 VIDEO_SETS = CONFIG['EXEC']['VIDEO_SETS']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
+# Per-dataset exclude area XML paths (may be absent or empty)
+EXCLUDE_AREA: dict[str, str] = CONFIG['DATA'].get('EXCLUDE_AREA', {}) or {}
 
 
 def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_queue: queue.Queue):
@@ -43,6 +46,14 @@ def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_qu
         - frame_idx (int): Zero-based frame index
         - detections (list): List of detection results in [x1, y1, x2, y2, score] format
     """
+
+    # Load exclude-area polygon XML for this dataset (if configured)
+    polygon_xml = None
+    exclude_area_path = EXCLUDE_AREA.get(dataset.split('-')[0])
+    if exclude_area_path:
+        assert os.path.exists(exclude_area_path), f"Exclude area XML file not found: {exclude_area_path}"
+        with open(exclude_area_path, 'r') as f:
+            polygon_xml = f.read().strip()
 
     # Extract videoset and video filename from video_file (e.g., "test/0.mp4")
     videoset = video_file.split('/')[0]
@@ -96,6 +107,10 @@ def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_qu
                 cls = obj["class"]
                 assert cls == "car", f"Class {cls} is not supported"
                 score = obj["score"]
+                
+                # Ignore bounding boxes that intersect with the exclusion polygon
+                if polygon_xml and intersects_polygon(left, top, right, bottom, polygon_xml):
+                    continue
                 
                 # Convert to [x1, y1, x2, y2, score] format
                 detections.append([float(left), float(top), float(right), float(bottom), score])

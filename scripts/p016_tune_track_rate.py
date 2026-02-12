@@ -505,6 +505,11 @@ def main(args):
                 with open(str(output_dir / 'sample_rates.json'), 'w') as f:
                     json.dump(SAMPLE_RATES, f)
 
+                # Save max rate table as text files, one per threshold level
+                for t_idx, threshold_pct in enumerate(ACCURACY_THRESHOLDS):
+                    txt_path = output_dir / f'max_rate_{threshold_pct:03d}.txt'
+                    np.savetxt(str(txt_path), max_rate_table[:, :, t_idx], fmt='%2d')
+
                 print(f"    Saved accuracy.npy {accuracy.shape}, counts.npy {total_counts.shape}, "
                       f"max_rate_table.npy {max_rate_table.shape}")
 
