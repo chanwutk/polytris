@@ -9,7 +9,7 @@ import numpy as np
 
 from polyis.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
 from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython
-from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count
+# from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count
 from polyis.utilities import get_config
 
 
@@ -72,7 +72,7 @@ def test_track_32():
                 tracker_python.update(dets, img_info, img_size)
 
     # Run Cython tracker to frame 649
-    reset_tracker_count()
+    # reset_tracker_count()
     tracker_cython = BYTETrackerCython(args)
 
     with open(detection_path, 'r') as f:
