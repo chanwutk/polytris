@@ -11,7 +11,7 @@ from polyis.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPyth
 from polyis.tracker.bytetrack import matching as matching_python
 from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython, STrackPy
 from polyis.tracker.bytetrack.cython import matching as matching_cython
-from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count, joint_stracks as joint_stracks_cython
+from polyis.tracker.bytetrack.cython.bytetrack import joint_stracks as joint_stracks_cython
 from polyis.tracker.bytetrack.byte_tracker import joint_stracks as joint_stracks_python
 from polyis.utilities import get_config
 
@@ -22,11 +22,13 @@ def test_association():
     # Load configuration
     config = get_config()
     cache_dir = config['DATA']['CACHE_DIR']
+    cache_dir = '/polyis-cache/ORIGINAL'
 
     # Path to detection results file
     detection_path = os.path.join(
         cache_dir, 'jnc0', 'execution', 'te04.mp4', '002_naive', 'detection.jsonl'
     )
+    detection_path = './tests/data/detection.jsonl'
 
     # Create args
     class Args:
@@ -64,7 +66,7 @@ def test_association():
                 tracker_python.update(dets, img_info, img_size)
 
     # Run Cython tracker to frame 664
-    reset_tracker_count()
+    # reset_tracker_count()
     tracker_cython = BYTETrackerCython(args)
 
     with open(detection_path, 'r') as f:

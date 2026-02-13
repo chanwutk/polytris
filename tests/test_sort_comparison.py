@@ -20,7 +20,7 @@ import numpy.typing as npt
 from polyis.b3d.sort import Sort as SortB3D
 # from polyis.tracker.sort import Sort as SortTracker
 
-from polyis.tracker.cython.sort import Sort as SortCython  # type: ignore
+from polyis.tracker.sort.cython.sort import Sort as SortCython  # type: ignore
 from polyis.utilities import CACHE_DIR, get_config
 
 
@@ -296,7 +296,7 @@ def test_sort_comparison():
     # Reset tracker counters to ensure consistent IDs
     from polyis.b3d.sort import KalmanBoxTracker as KalmanBoxTrackerB3D
     # from polyis.tracker.sort import KalmanBoxTracker as KalmanBoxTrackerTracker
-    from polyis.tracker.cython.sort import reset_tracker_count
+    from polyis.tracker.sort.cython.sort import reset_tracker_count
     KalmanBoxTrackerB3D.count = 0
     # KalmanBoxTrackerTracker.count = 0
     reset_tracker_count()
