@@ -24,9 +24,7 @@ from libcpp.vector cimport vector
 from libcpp.map cimport map as cppmap
 
 from polyis.tracker.bytetrack.cython.kalman_filter cimport KalmanFilter, kf_init, kf_initiate, kf_predict, kf_update
-from polyis.tracker.bytetrack.cython.matching cimport compute_iou_cost_c, fuse_score_c, linear_assignment_c
-# Keep Python import for backward-compat def wrappers
-from polyis.tracker.bytetrack.cython.matching import iou_distance, fuse_score, linear_assignment
+from polyis.tracker.bytetrack.cython.matching cimport compute_iou_cost, fuse_score, linear_assignment
 
 
 # Track state enum
@@ -324,7 +322,7 @@ cdef void STrack_get_tlbr(STrack *self, double *tlbr) noexcept nogil:
 # Track list helper cdef functions (using vector / map)
 # ============================================================
 
-cdef void joint_stracks_c(vector[STrack*] *a, vector[STrack*] *b, vector[STrack*] *out):
+cdef void joint_stracks(vector[STrack*] *a, vector[STrack*] *b, vector[STrack*] *out):
     """Combine two track lists into out, removing duplicates by track_id (map)."""
     cdef cppmap[int, int] exists
     cdef int i
@@ -340,7 +338,7 @@ cdef void joint_stracks_c(vector[STrack*] *a, vector[STrack*] *b, vector[STrack*
             out[0].push_back(b[0][i])
 
 
-cdef void sub_stracks_c(vector[STrack*] *a, vector[STrack*] *b, vector[STrack*] *out):
+cdef void sub_stracks(vector[STrack*] *a, vector[STrack*] *b, vector[STrack*] *out):
     """Remove from a any track whose track_id appears in b (map)."""
     cdef cppmap[int, int] b_ids
     cdef int i
@@ -354,7 +352,7 @@ cdef void sub_stracks_c(vector[STrack*] *a, vector[STrack*] *b, vector[STrack*] 
             out[0].push_back(a[0][i])
 
 
-cdef void remove_duplicate_stracks_c(
+cdef void remove_duplicate_stracks(
     vector[STrack*] *stracksa, vector[STrack*] *stracksb,
     vector[STrack*] *out_a, vector[STrack*] *out_b
 ):
@@ -379,7 +377,7 @@ cdef void remove_duplicate_stracks_c(
 
     # Compute IOU cost matrix (1 - IOU)
     cdef double *cost = <double*>malloc(na * nb * sizeof(double))
-    compute_iou_cost_c(atlbrs, na, btlbrs, nb, cost)
+    compute_iou_cost(atlbrs, na, btlbrs, nb, cost)
 
     # Find duplicates (cost < 0.15 means IOU > 0.85)
     cdef int *dup_a = <int*>calloc(na, sizeof(int))
@@ -563,7 +561,7 @@ cdef class BYTETracker:
 
         # ---- Step 2: First association with high-score detections ----
         cdef vector[STrack*] strack_pool
-        joint_stracks_c(&tracked, &self._lost_stracks, &strack_pool)
+        joint_stracks(&tracked, &self._lost_stracks, &strack_pool)
 
         # Predict current location for all tracks in pool
         for i in range(<int>strack_pool.size()):
@@ -603,14 +601,14 @@ cdef class BYTETracker:
 
             # Compute IOU cost matrix
             cost_mat = <double*>malloc(n_pool * n_det * sizeof(double))
-            compute_iou_cost_c(pool_tlbrs, n_pool, det_tlbrs, n_det, cost_mat)
+            compute_iou_cost(pool_tlbrs, n_pool, det_tlbrs, n_det, cost_mat)
 
             # Fuse detection scores if not MOT20
             if self._mot20 == 0:
                 det_sc_tmp = <double*>malloc(n_det * sizeof(double))
                 for i in range(n_det):
                     det_sc_tmp[i] = detections[i].score
-                fuse_score_c(cost_mat, det_sc_tmp, n_pool, n_det)
+                fuse_score(cost_mat, det_sc_tmp, n_pool, n_det)
                 free(det_sc_tmp)
 
             # Solve linear assignment
@@ -619,7 +617,7 @@ cdef class BYTETracker:
             match_b = <int*>malloc((min_dim + 1) * sizeof(int))
             unmatched_trk = <int*>malloc((n_pool + 1) * sizeof(int))
             unmatched_det = <int*>malloc((n_det + 1) * sizeof(int))
-            linear_assignment_c(cost_mat, n_pool, n_det, self._match_thresh,
+            linear_assignment(cost_mat, n_pool, n_det, self._match_thresh,
                               match_a, match_b, &n_matches,
                               unmatched_trk, &n_unmatched_trk,
                               unmatched_det, &n_unmatched_det)
@@ -697,14 +695,14 @@ cdef class BYTETracker:
 
             # Compute cost and solve assignment
             cost_mat = <double*>malloc(n_rtracked * n_det2 * sizeof(double))
-            compute_iou_cost_c(pool_tlbrs, n_rtracked, det_tlbrs, n_det2, cost_mat)
+            compute_iou_cost(pool_tlbrs, n_rtracked, det_tlbrs, n_det2, cost_mat)
 
             min_dim = n_rtracked if n_rtracked < n_det2 else n_det2
             match_a2 = <int*>malloc((min_dim + 1) * sizeof(int))
             match_b2 = <int*>malloc((min_dim + 1) * sizeof(int))
             unmatched_trk2 = <int*>malloc((n_rtracked + 1) * sizeof(int))
             unmatched_det2 = <int*>malloc((n_det2 + 1) * sizeof(int))
-            linear_assignment_c(cost_mat, n_rtracked, n_det2, 0.5,
+            linear_assignment(cost_mat, n_rtracked, n_det2, 0.5,
                               match_a2, match_b2, &n_matches2,
                               unmatched_trk2, &n_unmatched_trk2,
                               unmatched_det2, &n_unmatched_det2)
@@ -773,13 +771,13 @@ cdef class BYTETracker:
 
             # Compute cost, fuse scores, solve assignment
             cost_mat = <double*>malloc(n_unconf * n_remaining * sizeof(double))
-            compute_iou_cost_c(pool_tlbrs, n_unconf, det_tlbrs, n_remaining, cost_mat)
+            compute_iou_cost(pool_tlbrs, n_unconf, det_tlbrs, n_remaining, cost_mat)
 
             if self._mot20 == 0:
                 det_sc_tmp = <double*>malloc(n_remaining * sizeof(double))
                 for i in range(n_remaining):
                     det_sc_tmp[i] = remaining_dets[i].score
-                fuse_score_c(cost_mat, det_sc_tmp, n_unconf, n_remaining)
+                fuse_score(cost_mat, det_sc_tmp, n_unconf, n_remaining)
                 free(det_sc_tmp)
 
             min_dim = n_unconf if n_unconf < n_remaining else n_remaining
@@ -787,7 +785,7 @@ cdef class BYTETracker:
             match_b3 = <int*>malloc((min_dim + 1) * sizeof(int))
             u_unconf = <int*>malloc((n_unconf + 1) * sizeof(int))
             u_det3 = <int*>malloc((n_remaining + 1) * sizeof(int))
-            linear_assignment_c(cost_mat, n_unconf, n_remaining, 0.7,
+            linear_assignment(cost_mat, n_unconf, n_remaining, 0.7,
                               match_a3, match_b3, &n_matches3,
                               u_unconf, &n_u_unconf,
                               u_det3, &n_u_det3)
@@ -849,16 +847,16 @@ cdef class BYTETracker:
 
         # tracked = joint(tracked, activated)
         cdef vector[STrack*] tmp1
-        joint_stracks_c(&new_tracked, &activated_starcks, &tmp1)
+        joint_stracks(&new_tracked, &activated_starcks, &tmp1)
 
         # tracked = joint(tracked, refind)
         cdef vector[STrack*] tmp2
-        joint_stracks_c(&tmp1, &refind_stracks_v, &tmp2)
+        joint_stracks(&tmp1, &refind_stracks_v, &tmp2)
         self._tracked_stracks = tmp2
 
         # lost = sub(lost, tracked)
         cdef vector[STrack*] tmp3
-        sub_stracks_c(&self._lost_stracks, &self._tracked_stracks, &tmp3)
+        sub_stracks(&self._lost_stracks, &self._tracked_stracks, &tmp3)
 
         # lost.extend(lost_local)
         for i in range(<int>lost_stracks_v.size()):
@@ -870,12 +868,12 @@ cdef class BYTETracker:
 
         # lost = sub(lost, removed) — now includes newly removed tracks
         cdef vector[STrack*] tmp4
-        sub_stracks_c(&tmp3, &self._removed_stracks, &tmp4)
+        sub_stracks(&tmp3, &self._removed_stracks, &tmp4)
         self._lost_stracks = tmp4
 
         # Deduplicate between tracked and lost
         cdef vector[STrack*] out_tracked, out_lost
-        remove_duplicate_stracks_c(&self._tracked_stracks, &self._lost_stracks, &out_tracked, &out_lost)
+        remove_duplicate_stracks(&self._tracked_stracks, &self._lost_stracks, &out_tracked, &out_lost)
         self._tracked_stracks = out_tracked
         self._lost_stracks = out_lost
 
@@ -1080,177 +1078,3 @@ cdef STrackView _make_view(STrack *ptr):
     cdef STrackView v = STrackView.__new__(STrackView)
     v._ptr = ptr
     return v
-
-
-# ============================================================
-# Backward-compatible Python wrappers (for debug tests)
-# ============================================================
-
-# Module-level counter (kept for reset_tracker_count backward compat)
-_strack_count = 0
-
-def reset_tracker_count():
-    """Reset the tracker counter. Kept for backward compatibility with tests."""
-    global _strack_count
-    _strack_count = 0
-
-
-# Python wrapper class for STrack (kept for debug tests that import STrackPy)
-cdef class STrackPy:
-    cdef STrack *track
-
-    def __cinit__(self, tlwh, score):
-        self.track = <STrack*>malloc(sizeof(STrack))
-        cdef double tlwh_arr[4]
-        tlwh_arr[0] = tlwh[0]
-        tlwh_arr[1] = tlwh[1]
-        tlwh_arr[2] = tlwh[2]
-        tlwh_arr[3] = tlwh[3]
-        # Don't assign ID yet - it will be assigned on activation
-        STrack_init(self.track, tlwh_arr, score, -1)
-
-    def __dealloc__(self):
-        if self.track is not NULL:
-            free(self.track)
-
-    def predict(self):
-        STrack_predict(self.track)
-
-    def activate(self, frame_id):
-        global _strack_count
-        _strack_count += 1
-        self.track.track_id = _strack_count
-        cdef double xyah[4]
-        tlwh_to_xyah(self.track._tlwh, xyah)
-        kf_initiate(&self.track.kf, xyah, self.track.mean, self.track.covariance)
-        self.track.tracklet_len = 0
-        self.track.state = TrackState.Tracked
-        if frame_id == 1:
-            self.track.is_activated = 1
-        self.track.frame_id = frame_id
-        self.track.start_frame = frame_id
-
-    def re_activate(self, new_track, frame_id, new_id=False):
-        cdef double tlwh[4]
-        cdef cnp.ndarray[cnp.float64_t, ndim=1] tlwh_arr = new_track.tlwh
-        tlwh[0] = tlwh_arr[0]
-        tlwh[1] = tlwh_arr[1]
-        tlwh[2] = tlwh_arr[2]
-        tlwh[3] = tlwh_arr[3]
-        global _strack_count
-        cdef int counter = _strack_count
-        STrack_re_activate(self.track, tlwh, new_track.score, frame_id, 1 if new_id else 0, &counter)
-        _strack_count = counter
-
-    def update(self, new_track, frame_id):
-        cdef double tlwh[4]
-        cdef cnp.ndarray[cnp.float64_t, ndim=1] tlwh_arr = new_track.tlwh
-        tlwh[0] = tlwh_arr[0]
-        tlwh[1] = tlwh_arr[1]
-        tlwh[2] = tlwh_arr[2]
-        tlwh[3] = tlwh_arr[3]
-        STrack_update(self.track, tlwh, new_track.score, frame_id)
-
-    def mark_lost(self):
-        STrack_mark_lost(self.track)
-
-    def mark_removed(self):
-        STrack_mark_removed(self.track)
-
-    @property
-    def tlwh(self):
-        cdef double tlwh[4]
-        STrack_get_tlwh(self.track, tlwh)
-        return np.array([tlwh[0], tlwh[1], tlwh[2], tlwh[3]])
-
-    @property
-    def tlbr(self):
-        cdef double tlbr[4]
-        STrack_get_tlbr(self.track, tlbr)
-        return np.array([tlbr[0], tlbr[1], tlbr[2], tlbr[3]])
-
-    @property
-    def score(self):
-        return self.track.score
-
-    @property
-    def track_id(self):
-        return self.track.track_id
-
-    @property
-    def state(self):
-        return self.track.state
-
-    @property
-    def is_activated(self):
-        return self.track.is_activated != 0
-
-    @property
-    def frame_id(self):
-        return self.track.frame_id
-
-    @property
-    def start_frame(self):
-        return self.track.start_frame
-
-    @property
-    def mean(self):
-        return np.array([self.track.mean[i] for i in range(8)])
-
-    @property
-    def covariance(self):
-        cov = np.zeros((8, 8), dtype=np.float64)
-        for i in range(8):
-            for j in range(8):
-                cov[i, j] = self.track.covariance[i * 8 + j]
-        return cov
-
-
-def joint_stracks(tlista, tlistb):
-    """Combine two track lists, removing duplicates. (backward compat)"""
-    exists = {}
-    res = []
-    for t in tlista:
-        exists[t.track_id] = 1
-        res.append(t)
-    for t in tlistb:
-        tid = t.track_id
-        if not exists.get(tid, 0):
-            exists[tid] = 1
-            res.append(t)
-    return res
-
-
-def sub_stracks(tlista, tlistb):
-    """Remove tracks from tlista that appear in tlistb. (backward compat)"""
-    stracks = {}
-    for t in tlista:
-        stracks[t.track_id] = t
-    for t in tlistb:
-        tid = t.track_id
-        if stracks.get(tid, 0):
-            del stracks[tid]
-    return list(stracks.values())
-
-
-def remove_duplicate_stracks(stracksa, stracksb):
-    """Remove duplicate tracks based on IOU. (backward compat)"""
-    if len(stracksa) == 0 or len(stracksb) == 0:
-        return stracksa, stracksb
-
-    # Compute pairwise IOU distance
-    pdist = iou_distance(stracksa, stracksb)
-    pairs = np.where(pdist < 0.15)
-
-    dupa, dupb = list(), list()
-    for p, q in zip(*pairs):
-        timep = stracksa[p].frame_id - stracksa[p].start_frame
-        timeq = stracksb[q].frame_id - stracksb[q].start_frame
-        if timep > timeq:
-            dupb.append(q)
-        else:
-            dupa.append(p)
-
-    resa = [t for i, t in enumerate(stracksa) if i not in dupa]
-    resb = [t for i, t in enumerate(stracksb) if i not in dupb]
-    return resa, resb

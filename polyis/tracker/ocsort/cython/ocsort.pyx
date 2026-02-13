@@ -24,9 +24,7 @@ from libcpp.vector cimport vector
 from libcpp.map cimport map as cppmap
 
 from polyis.tracker.ocsort.cython.kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update, kf_freeze, kf_unfreeze
-from polyis.tracker.ocsort.cython.association cimport iou_batch_c, asso_dispatch_c, linear_assignment_c, associate_c
-# Keep Python import for backward-compat def wrappers
-from polyis.tracker.ocsort.cython.association import iou_batch, giou_batch, diou_batch, ciou_batch, ct_dist, associate, linear_assignment
+from polyis.tracker.ocsort.cython.association cimport iou_batch, asso_dispatch, linear_assignment, associate
 
 
 # ============================================================
@@ -287,7 +285,7 @@ cdef void KalmanBoxTracker_get_state(KalmanBoxTracker *self, double *bbox) noexc
 @cython.boundscheck(False)  # type: ignore
 @cython.wraparound(False)  # type: ignore
 @cython.nonecheck(False)  # type: ignore
-cdef void k_previous_obs_c(KalmanBoxTracker *trk, double *result) noexcept nogil:
+cdef void k_previous_obs(KalmanBoxTracker *trk, double *result) noexcept nogil:
     """Get previous observation delta_t steps ago. Returns [x1,y1,x2,y2,score] or [-1,...,-1]."""
     cdef int i, j, dt, obs_idx
     cdef double sum_val
@@ -505,7 +503,7 @@ cdef class OCSort:
                 velocities[t * 2 + 1] = self._trackers[t].velocity[1]
             for k in range(5):
                 last_boxes[t * 5 + k] = self._trackers[t].last_observation[k]
-            k_previous_obs_c(self._trackers[t], &k_obs[t * 5])
+            k_previous_obs(self._trackers[t], &k_obs[t * 5])
 
         # ---- First round association ----
         min_dim = n_dets if n_dets < n_trks else n_trks
@@ -514,7 +512,7 @@ cdef class OCSort:
         unmatched_d = <int *>malloc((n_dets + 1) * sizeof(int))
         unmatched_t = <int *>malloc((n_trks + 1) * sizeof(int))
 
-        associate_c(dets, n_dets, trks, n_trks,
+        associate(dets, n_dets, trks, n_trks,
                     self._iou_threshold, velocities, k_obs, self._inertia,
                     match_a, match_b, &n_matches,
                     unmatched_d, &n_unmatched_d,
@@ -545,7 +543,7 @@ cdef class OCSort:
             for i in range(n_second):
                 for k in range(4):
                     sec_bb[i * 4 + k] = dets_sec[i * 5 + k]
-            asso_dispatch_c(self._asso_func_type, sec_bb, n_second, u_trk_bb, n_ut, iou_left)
+            asso_dispatch(self._asso_func_type, sec_bb, n_second, u_trk_bb, n_ut, iou_left)
             free(sec_bb)
             free(u_trk_bb)
 
@@ -561,7 +559,7 @@ cdef class OCSort:
                 byte_min = n_second if n_second < n_ut else n_ut
                 bm_a = <int *>malloc((byte_min + 1) * sizeof(int))
                 bm_b = <int *>malloc((byte_min + 1) * sizeof(int))
-                linear_assignment_c(neg_iou, n_second, n_ut, bm_a, bm_b, &n_bm)
+                linear_assignment(neg_iou, n_second, n_ut, bm_a, bm_b, &n_bm)
                 free(neg_iou)
 
                 to_remove_trk = <int *>malloc((n_bm + 1) * sizeof(int))
@@ -613,7 +611,7 @@ cdef class OCSort:
                     left_trk_bb[i * 4 + k] = last_boxes[t * 5 + k]
 
             iou_left2 = <double *>malloc(n_ld * n_lt * sizeof(double))
-            asso_dispatch_c(self._asso_func_type, left_det_bb, n_ld, left_trk_bb, n_lt, iou_left2)
+            asso_dispatch(self._asso_func_type, left_det_bb, n_ld, left_trk_bb, n_lt, iou_left2)
             free(left_det_bb)
             free(left_trk_bb)
 
@@ -629,7 +627,7 @@ cdef class OCSort:
                 ocr_min = n_ld if n_ld < n_lt else n_lt
                 om_a = <int *>malloc((ocr_min + 1) * sizeof(int))
                 om_b = <int *>malloc((ocr_min + 1) * sizeof(int))
-                linear_assignment_c(neg_iou2, n_ld, n_lt, om_a, om_b, &n_om)
+                linear_assignment(neg_iou2, n_ld, n_lt, om_a, om_b, &n_om)
                 free(neg_iou2)
 
                 to_rm_d = <int *>malloc((n_om + 1) * sizeof(int))
@@ -869,118 +867,3 @@ cdef KalmanBoxTrackerView _make_tracker_view(KalmanBoxTracker *ptr):
     cdef KalmanBoxTrackerView v = KalmanBoxTrackerView.__new__(KalmanBoxTrackerView)
     v._ptr = ptr
     return v
-
-
-# ============================================================
-# Backward-compatible Python wrappers
-# ============================================================
-
-_kalman_box_tracker_count = 0
-
-def reset_tracker_count():
-    """Reset the tracker counter. Used for testing."""
-    global _kalman_box_tracker_count
-    _kalman_box_tracker_count = 0
-
-
-ASSO_FUNCS = {
-    "iou": iou_batch,
-    "giou": giou_batch,
-    "ciou": ciou_batch,
-    "diou": diou_batch,
-    "ct_dist": ct_dist
-}
-
-
-def k_previous_obs(observations, cur_age, k):
-    """Get previous observation k steps ago (backward compat)."""
-    if len(observations) == 0:
-        return np.array([-1, -1, -1, -1, -1])
-    for i in range(k):
-        dt = k - i
-        if cur_age - dt in observations:
-            return observations[cur_age - dt]
-    max_age = max(observations.keys())
-    return observations[max_age]
-
-
-cdef class KalmanBoxTrackerPy:
-    """Python wrapper class for KalmanBoxTracker (backward compat)."""
-    cdef KalmanBoxTracker *tracker
-    cdef object observations_dict
-    cdef int history_len
-    cdef double *history_obs_array
-    cdef int history_array_size
-
-    def __cinit__(self, bbox, delta_t) -> None:
-        global _kalman_box_tracker_count
-        self.tracker = <KalmanBoxTracker*>malloc(sizeof(KalmanBoxTracker))
-        cdef double bbox_arr[4]
-        bbox_arr[0] = bbox[0]
-        bbox_arr[1] = bbox[1]
-        bbox_arr[2] = bbox[2]
-        bbox_arr[3] = bbox[3]
-        KalmanBoxTracker_init(self.tracker, bbox_arr, _kalman_box_tracker_count, delta_t)
-        _kalman_box_tracker_count += 1
-        self.observations_dict = {}
-        self.history_array_size = 1000
-        self.history_obs_array = <double*>calloc(self.history_array_size * 4, sizeof(double))
-
-    def __dealloc__(self):
-        if self.tracker is not NULL:
-            KalmanBoxTracker_destroy(self.tracker)
-            free(self.tracker)
-        if self.history_obs_array is not NULL:
-            free(self.history_obs_array)
-
-    def update(self, bbox):
-        cdef double bbox_arr[5]
-        bbox_arr[0] = bbox[0]
-        bbox_arr[1] = bbox[1]
-        bbox_arr[2] = bbox[2]
-        bbox_arr[3] = bbox[3]
-        bbox_arr[4] = bbox[4] if len(bbox) > 4 else 1.0
-        self.observations_dict[self.tracker.age] = bbox
-        KalmanBoxTracker_update(self.tracker, bbox_arr)
-
-    def update_none(self):
-        KalmanBoxTracker_update(self.tracker, NULL)
-
-    def predict(self):
-        cdef double bbox[4]
-        KalmanBoxTracker_predict(self.tracker, bbox)
-        return np.array([bbox[0], bbox[1], bbox[2], bbox[3]])
-
-    def get_state(self):
-        cdef double bbox[4]
-        KalmanBoxTracker_get_state(self.tracker, bbox)
-        return np.array([bbox[0], bbox[1], bbox[2], bbox[3]]).reshape((1, 4))
-
-    @property
-    def time_since_update(self):
-        return self.tracker.time_since_update
-    @property
-    def id(self):
-        return self.tracker.id
-    @property
-    def hits(self):
-        return self.tracker.hits
-    @property
-    def hit_streak(self):
-        return self.tracker.hit_streak
-    @property
-    def age(self):
-        return self.tracker.age
-    @property
-    def last_observation(self):
-        if self.tracker.last_observation[0] < 0:
-            return np.array([-1, -1, -1, -1, -1])
-        return np.array([self.tracker.last_observation[i] for i in range(5)])
-    @property
-    def velocity(self):
-        if self.tracker.has_velocity:
-            return np.array([self.tracker.velocity[0], self.tracker.velocity[1]])
-        return None
-    @property
-    def observations(self):
-        return self.observations_dict

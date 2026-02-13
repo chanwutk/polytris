@@ -18,7 +18,7 @@ import numpy.typing as npt
 
 from polyis.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
 from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython  # type: ignore
-from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count
+# from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count
 from polyis.utilities import CACHE_DIR, get_config
 
 
