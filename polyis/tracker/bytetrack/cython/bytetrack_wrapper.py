@@ -2,7 +2,8 @@
 ByteTrack tracker wrapper.
 
 This wrapper adapts the ByteTrack implementation to match the interface
-used by SORT and OC-SORT trackers in this project.
+used by SORT and OC-SORT trackers in this project. The track ID counter
+is stored on the wrapper (Python) side.
 """
 
 from __future__ import annotations
@@ -39,6 +40,9 @@ class ByteTrack:
     tracking pipeline. It accepts detections in the format
     [[x1, y1, x2, y2, score], ...] and returns tracked detections in the
     format [[x1, y1, x2, y2, id], ...].
+
+    The track ID counter is managed here on the Python side and passed
+    to the Cython BYTETracker via the public track_id_counter attribute.
     """
 
     def __init__(
@@ -49,26 +53,27 @@ class ByteTrack:
         track_buffer: int = 15,
         frame_rate: int = 15,
     ):
-        """
-        Initialize ByteTrack tracker.
-
-        Args:
-            img_size: Image size as (height, width)
-            track_thresh: Detection confidence threshold for tracking
-            match_thresh: IOU threshold for matching detections to tracks
-            track_buffer: Number of frames to keep lost tracks before removal
-            frame_rate: Video frame rate (used to compute buffer size)
-            mot20: Whether to use MOT20-specific settings
-        """
+        # Build args object for the Cython tracker
         args = ByteTrackArgs(
             track_thresh=track_thresh,
             match_thresh=match_thresh,
             track_buffer=track_buffer,
             mot20=False,
         )
+        # Create Cython tracker (track_id_counter starts at 0)
         self.tracker = _BYTETracker(args, frame_rate=frame_rate)
         self.frame_count = 0
         self.img_size = img_size
+
+    @property
+    def track_id_counter(self) -> int:
+        """Read the track ID counter from the Cython tracker."""
+        return self.tracker.track_id_counter
+
+    @track_id_counter.setter
+    def track_id_counter(self, value: int) -> None:
+        """Set the track ID counter on the Cython tracker."""
+        self.tracker.track_id_counter = value
 
     def update(self, dets: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
@@ -85,20 +90,14 @@ class ByteTrack:
         if dets is None or dets.size == 0:
             return np.empty((0, 5), dtype=np.float64)
 
+        # Pass image info for scale computation (scale = 1.0 since img_info == img_size)
         img_info = self.img_size
 
-        # Update ByteTrack tracker
+        # Update Cython tracker (returns Nx5 numpy array)
         online_targets = self.tracker.update(dets, img_info, img_info)
 
-        # Convert STrack objects to output format [[x1, y1, x2, y2, id], ...]
+        # Return directly since update() now returns a numpy array
         if len(online_targets) == 0:
             return np.empty((0, 5), dtype=np.float64)
 
-        results = []
-        for track in online_targets:
-            # Get bounding box in tlbr format (x1, y1, x2, y2)
-            bbox = track[:4]
-            track_id = track[4]
-            results.append([bbox[0], bbox[1], bbox[2], bbox[3], track_id])
-
-        return np.array(results, dtype=np.float64)
+        return np.asarray(online_targets, dtype=np.float64)

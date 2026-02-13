@@ -284,7 +284,7 @@ def test_bytetrack_comparison():
     # Reset tracker counters to ensure consistent IDs
     from polyis.tracker.bytetrack.basetrack import BaseTrack
     BaseTrack._count = 0
-    reset_tracker_count()
+    # reset_tracker_count()
 
     # Image info and size (default values, can be adjusted based on actual data)
     img_info = (1080, 1920)
@@ -297,7 +297,7 @@ def test_bytetrack_comparison():
 
     # Reset counters again for fair comparison
     BaseTrack._count = 0
-    reset_tracker_count()
+    # reset_tracker_count()
 
     # Reinitialize trackers
     tracker_python = BYTETrackerPython(args)
