@@ -13,6 +13,56 @@ config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
+# Define the chart size multiplier for all rendered tradeoff charts.
+CHART_SIZE_SCALE = 5
+
+# Define fixed classifier-to-shape categories for deterministic chart encoding.
+CLASSIFIER_SHAPE_DOMAIN = ['MobileNetS', 'ShuffleNet05', 'Baseline/NA', 'Other']
+
+# Define the marker glyph for each classifier shape category.
+CLASSIFIER_SHAPE_RANGE = ['triangle-up', 'diamond', 'circle', 'square']
+
+# Define fixed classifier-to-color categories for deterministic chart encoding.
+CLASSIFIER_COLOR_DOMAIN = ['MobileNetS', 'ShuffleNet05', 'Baseline/NA', 'Other']
+
+# Define the color for each classifier category.
+CLASSIFIER_COLOR_RANGE = ColorScheme.CarbonDark[:len(CLASSIFIER_COLOR_DOMAIN)]
+
+
+def add_classifier_shape_key(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add a normalized classifier shape key for trade-off chart point encoding.
+
+    Args:
+        df: Input DataFrame with 'system' and 'classifier' columns.
+
+    Returns:
+        pd.DataFrame: Copy of input DataFrame with classifier_shape_key column added.
+    """
+    # Work on a copy to keep caller-side DataFrame mutations explicit.
+    df_with_shape = df.copy()
+
+    # Normalize classifier values to strings and replace nulls with STR_NA.
+    classifier_values = df_with_shape['classifier'].fillna(STR_NA).astype(str)
+
+    # Mark baseline rows: non-Polytris systems or NA-like classifier labels.
+    baseline_rows = (
+        (df_with_shape['system'] != 'Polytris')
+        | classifier_values.isin({STR_NA, 'Groundtruth', 'Naive', 'nan', 'NaN'})
+    )
+
+    # Assign baseline label first, then keep explicit classifier labels for Polytris rows.
+    classifier_shape_key = classifier_values.where(~baseline_rows, 'Baseline/NA')
+
+    # Collapse unknown classifier labels into a stable fallback category.
+    known_shape_labels = {'MobileNetS', 'ShuffleNet05', 'Baseline/NA'}
+    df_with_shape['classifier_shape_key'] = classifier_shape_key.where(
+        classifier_shape_key.isin(known_shape_labels),
+        'Other'
+    )
+
+    return df_with_shape
+
 
 def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
     """
@@ -180,6 +230,9 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
     # Update system column: rows with classifier=='Groundtruth' should have system='Groundtruth'
     # This identifies the naive baseline points in our results
     df_combined.loc[df_combined['classifier'] == 'Groundtruth', 'system'] = 'Naive'
+
+    # Add normalized classifier shape labels for deterministic marker encoding.
+    df_combined = add_classifier_shape_key(df_combined)
     
     # Define mapping of submetrics to their display names and y-axis scales
     # Each main metric maps to a list of (submetric_column, display_name, y_scale_dict) tuples
@@ -219,38 +272,41 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                 print(f"  Warning: Submetric '{accuracy_col}' has no valid data, skipping")
                 continue
             
-            # Create scatter plot with color by system and shape by tilepadding
+            # Create scatter plot with color and shape encoded by classifier.
             # Use conditional encoding to handle groundtruth points differently
-            color_scale=alt.Scale(domain=['Polytris', 'OTIF', 'LEAP', 'Naive'], range=ColorScheme.CarbonDark)
+            color_scale = alt.Scale(domain=CLASSIFIER_COLOR_DOMAIN, range=CLASSIFIER_COLOR_RANGE)
             base_point = base_chart.mark_point(
                 fillOpacity=1,
                 stroke=None
             ).encode(
-                fill=alt.Fill('system:N', title='System', scale=color_scale),
+                fill=alt.Fill('classifier_shape_key:N', title='Classifier', scale=color_scale),
                 size=alt.condition(
                     alt.datum.system == 'Naive',
                     alt.value(100),  # Larger size for groundtruth
                     alt.value(50)   # Normal size for others
                 ),
-                # shape=alt.condition(
-                #     (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Naive'),
-                #     alt.Shape('classifier:N', title='Polytris\' Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['triangle', 'diamond'])),
-                #     alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
-                # ),
+                shape=alt.Shape(
+                    'classifier_shape_key:N',
+                    title='Classifier',
+                    scale=alt.Scale(domain=CLASSIFIER_SHAPE_DOMAIN, range=CLASSIFIER_SHAPE_RANGE)
+                ),
                 tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', x_column, accuracy_col]
             )
             
             base_line = base_chart.mark_line(
                 strokeWidth=1.5,
                 strokeOpacity=1
-            ).encode(stroke=alt.Stroke('system:N', title='System', scale=color_scale))
+            ).encode(
+                stroke=alt.Stroke('classifier_shape_key:N', title='Classifier', scale=color_scale),
+                detail=alt.Detail('classifier_shape_key:N')
+            )
             
             scatter = (base_point + base_line).encode(
                 x=alt.X(f'{x_column}:Q', title=x_title),
                 y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **y_scale),
             ).properties(
-                width=150,
-                height=150
+                width=150 * CHART_SIZE_SCALE,
+                height=150 * CHART_SIZE_SCALE
             )
             
             # Create the combined chart with dataset facets

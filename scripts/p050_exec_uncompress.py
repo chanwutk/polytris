@@ -20,6 +20,18 @@ CLASSIFIERS = CONFIG['EXEC']['CLASSIFIERS']
 TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
 SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
 TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
+CANVAS_SCALES = CONFIG['EXEC']['CANVAS_SCALE']
+
+
+def _scale_to_percent(canvas_scale: float) -> int:
+    # Convert a floating-point canvas scale to an integer percentage for stable folder names.
+    return int(round(float(canvas_scale) * 100))
+
+
+def _build_param_str(classifier: str, tilesize: int, sample_rate: int,
+                     tilepadding: str, canvas_scale: float) -> str:
+    # Build a shared stage parameter key that includes classifier, tile settings, and canvas scale.
+    return f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{_scale_to_percent(canvas_scale)}'
 
 
 def load_mapping_file(index_map_path: str, offset_lookup_path: str):
@@ -148,7 +160,8 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
     return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
-def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int, tilepadding: str, gpu_id: int, command_queue: mp.Queue):
+def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int,
+           tilepadding: str, canvas_scale: float, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
@@ -160,27 +173,30 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate
         tilesize (int): Tile size used for compression
         tilepadding (str): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
+        canvas_scale (float): Canvas scale used for compression outputs
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
     video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
+    # Build the shared key used by all 03x/04x/05x stage folders.
+    param_str = _build_param_str(classifier, tilesize, sample_rate, tilepadding, canvas_scale)
 
     # Check if compressed detections exist
     detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}', 'detections.jsonl')
+                                   param_str, 'detections.jsonl')
     assert os.path.exists(detections_file), f"Detections file not found: {detections_file}"
 
     # Check if compressed frames directory exists
     compressed_frames_dir = os.path.join(video_path, '033_compressed_frames',
-                                         f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}')
+                                         param_str)
     assert os.path.exists(compressed_frames_dir), f"Compressed frames directory not found: {compressed_frames_dir}"
 
     detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}', 'detections.jsonl')
+                                   param_str, 'detections.jsonl')
 
     unpacked_output_dir = os.path.join(video_path, '050_uncompressed_detections',
-                                       f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}')
+                                       param_str)
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -340,7 +356,9 @@ def main():
                 for tilesize in TILE_SIZES:
                     for tilepadding in TILEPADDING_MODES:
                         for sample_rate in SAMPLE_RATES:
-                            funcs.append(partial(unpack, dataset, video, classifier, tilesize, sample_rate, tilepadding))
+                            for canvas_scale in CANVAS_SCALES:
+                                funcs.append(partial(unpack, dataset, video, classifier, tilesize,
+                                                     sample_rate, tilepadding, canvas_scale))
 
     print(f"Created {len(funcs)} tasks to process")
     ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)

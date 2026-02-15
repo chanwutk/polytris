@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import load_all_datasets_tradeoff_data, get_config
+from polyis.utilities import STR_NA, load_all_datasets_tradeoff_data, get_config
 from evaluation.utilities import ColorScheme
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
@@ -27,6 +27,56 @@ CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
 SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TRACKERS = config['EXEC']['TRACKERS']
+
+# Define the chart size multiplier for all rendered comparison charts.
+CHART_SIZE_SCALE = 5
+
+# Define fixed classifier-to-shape categories for deterministic chart encoding.
+CLASSIFIER_SHAPE_DOMAIN = ['MobileNetS', 'ShuffleNet05', 'Baseline/NA', 'Other']
+
+# Define the marker glyph for each classifier shape category.
+CLASSIFIER_SHAPE_RANGE = ['triangle-up', 'diamond', 'circle', 'square']
+
+# Define fixed classifier-to-color categories for deterministic chart encoding.
+CLASSIFIER_COLOR_DOMAIN = ['MobileNetS', 'ShuffleNet05', 'Baseline/NA', 'Other']
+
+# Define the color for each classifier category.
+CLASSIFIER_COLOR_RANGE = ColorScheme.CarbonDark[:len(CLASSIFIER_COLOR_DOMAIN)]
+
+
+def add_classifier_shape_key(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add a normalized classifier shape key for Pareto point encoding.
+
+    Args:
+        df: Input DataFrame with 'system' and 'classifier' columns.
+
+    Returns:
+        pd.DataFrame: Copy of input DataFrame with classifier_shape_key column added.
+    """
+    # Work on a copy to keep caller-side DataFrame mutations explicit.
+    df_with_shape = df.copy()
+
+    # Normalize classifier values to strings and replace nulls with STR_NA.
+    classifier_values = df_with_shape['classifier'].fillna(STR_NA).astype(str)
+
+    # Mark baseline rows: non-Polytris systems or NA-like classifier labels.
+    baseline_rows = (
+        (df_with_shape['system'] != 'Polytris')
+        | classifier_values.isin({STR_NA, 'Groundtruth', 'Naive', 'nan', 'NaN'})
+    )
+
+    # Assign baseline label first, then keep explicit classifier labels for Polytris rows.
+    classifier_shape_key = classifier_values.where(~baseline_rows, 'Baseline/NA')
+
+    # Collapse unknown classifier labels into a stable fallback category.
+    known_shape_labels = {'MobileNetS', 'ShuffleNet05', 'Baseline/NA'}
+    df_with_shape['classifier_shape_key'] = classifier_shape_key.where(
+        classifier_shape_key.isin(known_shape_labels),
+        'Other'
+    )
+
+    return df_with_shape
 
 
 def val_gte(val: float, best_val: float) -> bool:
@@ -425,8 +475,8 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str) -> al
 
     # Combine layers
     chart = (line + points + rule).properties(
-        width=200,
-        height=150
+        width=200 * CHART_SIZE_SCALE,
+        height=150 * CHART_SIZE_SCALE
     )
 
     # Facet by dataset
@@ -497,8 +547,8 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
 
     # Combine layers
     chart = (line + points + rule).properties(
-        width=200,
-        height=150
+        width=200 * CHART_SIZE_SCALE,
+        height=150 * CHART_SIZE_SCALE
     )
 
     # Facet by dataset
@@ -537,12 +587,14 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     if df_clean.empty:
         return alt.Chart().mark_text().encode(text=alt.value('No data available'))
 
-    # Define consistent color scale for all systems (Polytris, OTIF, LEAP, Naive)
-    all_systems = ['Polytris', 'OTIF', 'LEAP', 'Naive']
+    # Define consistent color scale for classifier categories.
     color_scale = alt.Scale(
-        domain=all_systems,
-        range=ColorScheme.CarbonDark[:len(all_systems)]
+        domain=CLASSIFIER_COLOR_DOMAIN,
+        range=CLASSIFIER_COLOR_RANGE
     )
+
+    # Add normalized classifier shape labels for deterministic marker encoding.
+    df_clean = add_classifier_shape_key(df_clean)
 
     # Base chart for Pareto fronts (with lines)
     base_pareto = alt.Chart(df_clean)
@@ -555,21 +607,27 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q', title=f'{accuracy_col_name} Score',
                 scale=alt.Scale(domain=[0, 1])),
-        color=alt.Color('system:N', title='System', scale=color_scale),
+        color=alt.Color('classifier_shape_key:N', title='Classifier', scale=color_scale),
+        detail=['system:N', 'classifier_shape_key:N']
     )
 
     # Add points for Pareto fronts (with tooltip for interactivity)
     points_pareto = base_pareto.mark_point(size=50, filled=True).encode(
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q'),
-        color=alt.Color('system:N', scale=color_scale),
+        color=alt.Color('classifier_shape_key:N', title='Classifier', scale=color_scale),
+        shape=alt.Shape(
+            'classifier_shape_key:N',
+            title='Classifier',
+            scale=alt.Scale(domain=CLASSIFIER_SHAPE_DOMAIN, range=CLASSIFIER_SHAPE_RANGE)
+        ),
         tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', time_col, accuracy_col]
     )
 
     # Combine layers
     chart = (line + points_pareto).properties(
-        width=200,
-        height=150
+        width=200 * CHART_SIZE_SCALE,
+        height=150 * CHART_SIZE_SCALE
     )
 
     # Facet by dataset
@@ -744,16 +802,32 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         # Columns to keep for tooltip display
         tooltip_cols = ['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', 'time', accuracy_col]
 
-        # Polytris Pareto fronts (per dataset)
+        # Polytris Pareto fronts (per dataset and classifier)
         pareto_data_list = []
         for dataset in datasets:
+            # Select Polytris rows for the current dataset.
             dataset_df = polytris_df[polytris_df['dataset'] == dataset]
             if dataset_df.empty:
                 continue
-            pareto = compute_pareto_front(dataset_df, 'time', accuracy_col)
-            if not pareto.empty:
+
+            # Compute a separate Pareto front for each classifier inside this dataset.
+            for classifier, classifier_df in dataset_df.groupby('classifier', dropna=False):
+                if classifier_df.empty:
+                    continue
+
+                # Restrict Pareto optimization to the current classifier slice.
+                pareto = compute_pareto_front(classifier_df, 'time', accuracy_col)
+                if pareto.empty:
+                    continue
+
+                # Set explicit system/classifier labels for downstream chart encoding.
                 pareto['system'] = 'Polytris'
-                # Keep columns that exist in the dataframe
+                if 'classifier' in pareto.columns:
+                    pareto['classifier'] = pareto['classifier'].fillna(classifier)
+                else:
+                    pareto['classifier'] = classifier
+
+                # Keep columns that exist in the dataframe.
                 cols_to_keep = [c for c in tooltip_cols if c in pareto.columns]
                 pareto_data_list.append(pareto[cols_to_keep])
 
