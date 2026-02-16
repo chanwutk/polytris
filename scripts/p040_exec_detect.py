@@ -16,7 +16,7 @@ import torch
 
 import polyis.models.detector
 import polyis.dtypes
-from polyis.utilities import TILEPADDING_MODES, TilePadding, format_time, ProgressBar, get_config
+from polyis.utilities import TILEPADDING_MODES, TilePadding, format_time, ProgressBar, get_config, build_param_str
 
 
 config = get_config()
@@ -28,17 +28,6 @@ DATASETS = config['EXEC']['DATASETS']
 SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TILEPADDING = config['EXEC']['TILEPADDING_MODES']
 CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
-
-
-def _scale_to_percent(canvas_scale: float) -> int:
-    # Convert a floating-point canvas scale to an integer percentage for stable folder names.
-    return int(round(float(canvas_scale) * 100))
-
-
-def _build_param_str(classifier: str, tilesize: int, sample_rate: int,
-                     tilepadding: TilePadding, canvas_scale: float) -> str:
-    # Build a shared stage parameter key that includes classifier, tile settings, and canvas scale.
-    return f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{_scale_to_percent(canvas_scale)}'
 
 
 def parse_args():
@@ -123,7 +112,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = _build_param_str(classifier, tilesize, sample_rate, tilepadding, canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
 
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
@@ -245,7 +234,7 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
     """
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = _build_param_str(classifier, tilesize, sample_rate, tilepadding, canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
 
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
@@ -343,9 +332,9 @@ def main(args):
 
     Note:
         - The script expects compressed images from 030_exec_compress.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/images/
+          {CACHE_DIR}/{dataset}/execution/{video_file}/033_compressed_frames/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_percent}/images/
         - Detection results are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tilesize}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_percent}/detections.jsonl
         - Each line in the output JSONL file contains one bounding box [x1, y1, x2, y2]
         - When tilesize is 'all', all available tile sizes are processed
         - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST + ['Perfect'] are processed

@@ -142,18 +142,20 @@ def load_compression_data(dataset: str, verbose: bool = False) -> dict[str, pd.D
 
 def create_config_label(row: pd.Series) -> str:
     """
-    Create a configuration label from classifier, tilesize, and tilepadding.
+    Create a configuration label from classifier, tilesize, sample_rate, tilepadding, and scale.
 
     Args:
-        row: DataFrame row with classifier, tilesize, tilepadding columns
+        row: DataFrame row with classifier, tilesize, sample_rate, tilepadding, scale columns
 
     Returns:
         Configuration label string
     """
     classifier = str(row['classifier'])[:4]
     tilesize = str(row['tilesize'])[:4]
+    sample_rate = str(row['sample_rate'])
     tilepadding = str(row['tilepadding'])[:4]
-    return f"{classifier}_{tilesize}_{tilepadding}"
+    scale_pct = int(float(row['scale']) * 100)
+    return f"{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_pct}"
 
 
 def create_num_images_chart(df: pd.DataFrame, dataset: str, output_path: str, verbose: bool = False):

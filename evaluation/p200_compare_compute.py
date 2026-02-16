@@ -290,7 +290,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                     title='Classifier',
                     scale=alt.Scale(domain=CLASSIFIER_SHAPE_DOMAIN, range=CLASSIFIER_SHAPE_RANGE)
                 ),
-                tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', x_column, accuracy_col]
+                tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker', x_column, accuracy_col]
             )
             
             base_line = base_chart.mark_line(
@@ -369,15 +369,19 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     # Load tradeoff data for all datasets
     combined_df, naive_df = load_all_datasets_tradeoff_data(datasets, system_name='Polytris')
     
-    # Handle backward compatibility: add sample_rate and tracker if missing
+    # Handle backward compatibility: add sample_rate, tracker, and canvas_scale if missing
     if 'sample_rate' not in combined_df.columns:
         combined_df['sample_rate'] = 1
     if 'tracker' not in combined_df.columns:
         combined_df['tracker'] = 'unknown'
+    if 'canvas_scale' not in combined_df.columns:
+        combined_df['canvas_scale'] = 1.0
     if 'sample_rate' not in naive_df.columns:
         naive_df['sample_rate'] = 1
     if 'tracker' not in naive_df.columns:
         naive_df['tracker'] = 'unknown'
+    if 'canvas_scale' not in naive_df.columns:
+        naive_df['canvas_scale'] = 1.0
     
     combined_df['time_mspf'] = combined_df['time'] * 1000 / combined_df['frame_count']
     naive_df['time_mspf'] = naive_df['time'] * 1000 / naive_df['frame_count']

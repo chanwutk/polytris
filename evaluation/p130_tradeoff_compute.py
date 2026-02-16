@@ -122,6 +122,13 @@ def prepare_accuracy(accuracy: pd.DataFrame, dataset: str) -> pd.DataFrame:
         # Backward compatibility: default to 1 if not present
         accuracy['sample_rate'] = 1
     
+    # Rename Canvas_Scale to canvas_scale (p111_accuracy_aggregate.py creates it as Canvas_Scale)
+    if 'Canvas_Scale' in accuracy.columns:
+        accuracy = accuracy.rename(columns={'Canvas_Scale': 'canvas_scale'})
+    elif 'canvas_scale' not in accuracy.columns:
+        # Backward compatibility: default to 1.0 if not present
+        accuracy['canvas_scale'] = 1.0
+    
     # Rename Tracker to tracker (p111_accuracy_aggregate.py creates it as Tracker)
     if 'Tracker' in accuracy.columns:
         accuracy = accuracy.rename(columns={'Tracker': 'tracker'})
@@ -141,14 +148,16 @@ def prepare_throughput(throughput: pd.DataFrame) -> pd.DataFrame:
     assert len(datasets.unique()) == 1, \
         f"Expected only one dataset, got {datasets.unique()}"
 
-    # Handle backward compatibility: add sample_rate and tracker if missing
+    # Handle backward compatibility: add sample_rate, canvas_scale, and tracker if missing
     if 'sample_rate' not in df.columns:
         df['sample_rate'] = 1
+    if 'canvas_scale' not in df.columns:
+        df['canvas_scale'] = 1.0
     if 'tracker' not in df.columns:
         df['tracker'] = 'unknown'
 
-    # Group by video, classifier, tilesize, sample_rate, tilepadding, and tracker, then sum the times
-    cols = ['video', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'tracker']
+    # Group by video, classifier, tilesize, sample_rate, tilepadding, canvas_scale, and tracker, then sum the times
+    cols = ['video', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker']
     df = df.groupby(cols)['time'].sum().reset_index()
 
     return df
@@ -161,7 +170,7 @@ def match_accuracy_throughput_data(
     dataset: str,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Match accuracy and throughput data by video/classifier/tilesize/sample_rate/tilepadding/tracker combination.
+    Match accuracy and throughput data by video/classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combination.
 
     Args:
         accuracy: DataFrame of individual video accuracy evaluation results
@@ -190,6 +199,8 @@ def match_accuracy_throughput_data(
     naive_throughput_['tilepadding'] = 'Groundtruth'
     # Set tracker for naive throughput (groundtruth doesn't use a tracker)
     naive_throughput_['tracker'] = 'groundtruth'
+    # Set canvas_scale for naive throughput (groundtruth uses scale 1.0)
+    naive_throughput_['canvas_scale'] = 1.0
     assert isinstance(naive_throughput_, pd.DataFrame)
     naive_throughput = prepare_throughput(naive_throughput_)
 
@@ -198,8 +209,8 @@ def match_accuracy_throughput_data(
     print(accuracy)
 
     # Merge accuracy data with runtime data
-    # Include tracker in join columns if both dataframes have it
-    join_cols = ['video', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'tracker']
+    # Include canvas_scale and tracker in join columns
+    join_cols = ['video', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker']
     assert len(throughput) == len(accuracy), \
         f"Expected {len(accuracy)} runtime data points, got {len(throughput)}"
     tradeoff = accuracy.merge(throughput, on=join_cols, how='inner')
@@ -211,15 +222,15 @@ def match_accuracy_throughput_data(
     tradeoff['frame_count'] = tradeoff['video'].map(count_frames)
     tradeoff['throughput_fps'] = tradeoff['frame_count'] / tradeoff['time']
 
-    # Aggregate runtime and frame counts by classifier/tilesize/sample_rate/tilepadding/tracker
-    gb_cols = ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'tracker']
+    # Aggregate runtime and frame counts by classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker
+    gb_cols = ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker']
     throughput_combined = tradeoff.groupby(gb_cols).agg({
         'frame_count': 'sum',
         'time': 'sum'
     }).reset_index()
 
     # Merge with combined accuracy scores
-    join_cols = ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'tracker']
+    join_cols = ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker']
     assert len(accuracy_combined) == len(throughput_combined), \
         f"Expected {len(accuracy_combined)} combined throughput data points, got {len(throughput_combined)}"
     tradeoff_combined = accuracy_combined.merge(throughput_combined, on=join_cols, how='inner')
@@ -233,7 +244,7 @@ def match_accuracy_throughput_data(
     # Print combined accuracy scores for verification
     for _, row in tradeoff_combined.iterrows():
         tracker_str = f"_{row['tracker']}" if 'tracker' in row else ""
-        print(f"Using actual combined accuracy scores for {row['classifier']}_{row['tilesize']}_SR{row['sample_rate']}_{row['tilepadding']}{tracker_str}: " \
+        print(f"Using actual combined accuracy scores for {row['classifier']}_{row['tilesize']}_SR{row['sample_rate']}_{row['tilepadding']}_s{int(row['canvas_scale'] * 100)}{tracker_str}: " \
               f"HOTA={row['HOTA_HOTA']:.3f}, Count_DetsMAPE={row['Count_DetsMAPE']:.3f}")
 
     print(f"Created {len(tradeoff_combined)} combined tradeoff data points")
@@ -250,6 +261,8 @@ def prepare_naive_throughput(throughput: pd.DataFrame, dataset: str):
     naive['classifier'] = naive['classifier'].fillna('Groundtruth')
     naive['tilepadding'] = naive['tilepadding'].fillna('Groundtruth')
     naive['tracker'] = naive['tracker'].fillna('groundtruth')
+    # Groundtruth uses canvas_scale 1.0
+    naive['canvas_scale'] = naive['canvas_scale'].fillna(1.0)
     naive = prepare_throughput(naive)
 
     count_frames = partial(get_video_frame_count, dataset)
@@ -331,7 +344,7 @@ def main():
     1. Loads accuracy results from CSV files generated by p111_accuracy_aggregate.py
     2. Loads throughput results from p121_throughput_compute.py
     3. Gets video frame counts using OpenCV
-    4. Matches the data by video/classifier/tilesize/sample_rate/tilepadding/tracker combination
+    4. Matches the data by video/classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combination
     5. Computes tradeoff data showing accuracy vs query execution runtime relationships
     6. Computes tradeoff data showing accuracy vs throughput (frames/second) relationships
     
@@ -347,7 +360,7 @@ def main():
         - Video files are expected in {DATA_DIR}/{dataset}/{video_name}.mp4 (or other extensions)
         - Only query execution runtime is used (index construction time is ignored)
         - Metrics are automatically detected from the accuracy results
-        - Supports sample_rate and tracker dimensions with backward compatibility
+        - Supports sample_rate, canvas_scale, and tracker dimensions with backward compatibility
     """
     print(f"Processing datasets: {DATASETS}")
 

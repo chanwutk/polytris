@@ -11,7 +11,7 @@ import pandas as pd
 import altair as alt
 from tqdm import tqdm
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
+from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, scale_to_percent
 
 
 def parse_args() -> argparse.Namespace:
@@ -40,13 +40,13 @@ def list_video_dirs(dataset: str) -> list[str]:
     video_dirs: list[str] = []
     for entry in os.listdir(dataset_cache_dir):
         full_path = os.path.join(dataset_cache_dir, entry)
-        if os.path.isdir(full_path) and os.path.isdir(os.path.join(full_path, "030_compressed_frames")):
+        if os.path.isdir(full_path) and os.path.isdir(os.path.join(full_path, "033_compressed_frames")):
             video_dirs.append(full_path)
     return sorted(video_dirs)
 
 
 def list_classifier_tile_dirs(video_cache_dir: str) -> list[str]:
-    packing_dir = os.path.join(video_cache_dir, "030_compressed_frames")
+    packing_dir = os.path.join(video_cache_dir, "033_compressed_frames")
     if not os.path.isdir(packing_dir):
         return []
     dirs: list[str] = []
@@ -59,12 +59,18 @@ def list_classifier_tile_dirs(video_cache_dir: str) -> list[str]:
     return sorted(dirs)
 
 
-def parse_classifier_and_tile(dir_name: str) -> tuple[str, int, str]:
-    # dir_name is like "SimpleCNN_64" or possibly classifier names with underscores
-    # Split on the last underscore
+def parse_classifier_and_tile(dir_name: str) -> tuple[str, int, int, str, float]:
+    # dir_name format: classifier_tilesize_samplerate_tilepadding_s{pct}
+    # e.g. "SimpleCNN_60_1_connected_s100"
     split = dir_name.split("_")
-    assert len(split) == 3, split
-    return split[0], int(split[1]), split[2]
+    assert len(split) == 5, f"Expected 5 parts in dir name, got {len(split)}: {split}"
+    classifier = split[0]
+    tilesize = int(split[1])
+    sample_rate = int(split[2])
+    tilepadding = split[3]
+    # Extract canvas scale from scale string (e.g., 's100' -> 1.0)
+    canvas_scale = int(split[4][1:]) / 100.0
+    return classifier, tilesize, sample_rate, tilepadding, canvas_scale
 
 
 def list_index_map_files(classifier_tile_dir: str) -> list[str]:
@@ -286,17 +292,17 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
     # Output paths
     series_name = os.path.basename(classifier_tile_dir)
     video_name = os.path.basename(video_cache_dir)
-    classifier, tilesize, tilepadding = parse_classifier_and_tile(series_name)
+    classifier, tilesize, sample_rate, tilepadding, canvas_scale = parse_classifier_and_tile(series_name)
 
     # Prepare summary output locations
     base_dir, each_dir = ensure_summary_dirs(dataset)
     safe_video = video_name
     safe_classifier = classifier
     # Filenames include identifiers to keep one file per series
-    plot_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}_{tilepadding}__compress_content_ratio.png")
-    json_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}_{tilepadding}__compress_content_ratio.json")
+    plot_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_to_percent(canvas_scale)}__compress_content_ratio.png")
+    json_path = os.path.join(each_dir, f"{safe_video}__{safe_classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_to_percent(canvas_scale)}__compress_content_ratio.json")
 
-    title = f"{video_name} | {classifier} | tile {tilesize} | {tilepadding}"
+    title = f"{video_name} | {classifier} | tile {tilesize} | sr {sample_rate} | {tilepadding} | s{scale_to_percent(canvas_scale)}"
     plot_series(x_values, y_values, avg_value, title, plot_path)
     print(f"Saved plot: {plot_path}")
 
@@ -306,7 +312,9 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
         "series": series_name,
         "classifier": classifier,
         "tilesize": tilesize,
+        "sample_rate": sample_rate,
         "tilepadding": tilepadding,
+        "canvas_scale": canvas_scale,
         "x_values": x_values,
         "content_ratios": y_values,
         "average_content_ratio": avg_value,
@@ -316,16 +324,16 @@ def process_series_for_dir(dataset: str, video_cache_dir: str, classifier_tile_d
         json.dump(metrics, f, indent=2)
     print(f"Saved metrics: {json_path}")
 
-    label = f"{video_name}|{classifier}|{tilesize}|{tilepadding}"
+    label = f"{video_name}|{classifier}|{tilesize}|{sample_rate}|{tilepadding}|s{scale_to_percent(canvas_scale)}"
     return label, x_values, y_values, avg_value, classifier, tilesize, tilepadding
 
 
-def process_video_worker(args_tuple: tuple[str, str, int]) -> list[tuple[str, list[int], list[float], float, str, int]]:
+def process_video_worker(args_tuple: tuple[str, str, int]) -> list[tuple[str, list[int], list[float], float, str, int, str]]:
     """
     Worker function for multiprocessing that processes a single video directory.
     
     Returns:
-        List of tuples containing (label, x_values, y_values, avg_value, classifier, tilesize)
+        List of tuples containing (label, x_values, y_values, avg_value, classifier, tilesize, tilepadding)
         for each classifier/tile combination in the video.
     """
     dataset, video_cache_dir, idx = args_tuple
