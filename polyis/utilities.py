@@ -506,6 +506,29 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str,
     return results
 
 
+def scale_to_percent(canvas_scale: float) -> int:
+    # Convert a floating-point canvas scale to an integer percentage for stable folder names.
+    return int(round(float(canvas_scale) * 100))
+
+
+def build_param_str(*, classifier: str, tilesize: int,
+                    sample_rate: int | None = None,
+                    tilepadding: str | None = None,
+                    canvas_scale: float | None = None,
+                    tracker: str | None = None) -> str:
+    # Build a parameter string for pipeline stage directory naming.
+    parts = [classifier, str(tilesize)]
+    if sample_rate is not None:
+        parts.append(str(sample_rate))
+    if tilepadding is not None:
+        parts.append(str(tilepadding))
+    if canvas_scale is not None:
+        parts.append(f's{scale_to_percent(canvas_scale)}')
+    if tracker is not None:
+        parts.append(tracker)
+    return '_'.join(parts)
+
+
 def create_tracker(tracker_name: str, img_size: tuple[int, int]):
     """
     Create a tracker instance based on the specified algorithm.

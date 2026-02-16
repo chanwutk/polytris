@@ -9,7 +9,7 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames
+from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str
 
 
 CONFIG = get_config()
@@ -21,17 +21,6 @@ TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
 SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
 TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
 CANVAS_SCALES = CONFIG['EXEC']['CANVAS_SCALE']
-
-
-def _scale_to_percent(canvas_scale: float) -> int:
-    # Convert a floating-point canvas scale to an integer percentage for stable folder names.
-    return int(round(float(canvas_scale) * 100))
-
-
-def _build_param_str(classifier: str, tilesize: int, sample_rate: int,
-                     tilepadding: str, canvas_scale: float) -> str:
-    # Build a shared stage parameter key that includes classifier, tile settings, and canvas scale.
-    return f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{_scale_to_percent(canvas_scale)}'
 
 
 def load_mapping_file(index_map_path: str, offset_lookup_path: str):
@@ -180,7 +169,7 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate
     device = f'cuda:{gpu_id}'
     video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
     # Build the shared key used by all 03x/04x/05x stage folders.
-    param_str = _build_param_str(classifier, tilesize, sample_rate, tilepadding, canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
 
     # Check if compressed detections exist
     detections_file = os.path.join(video_path, '040_compressed_detections',
@@ -324,11 +313,11 @@ def main():
 
     Note:
         - The script expects compressed detections from 040_exec_detect.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tilesize}_{tilepadding}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_percent}/detections.jsonl
         - The script expects mapping files from 030_exec_compress.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}_{tilepadding}/
+          {CACHE_DIR}/{dataset}/execution/{video_file}/033_compressed_frames/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_percent}/
         - Unpacked detections are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tilesize}_{tilepadding}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/050_uncompressed_detections/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_percent}/detections.jsonl
         - Each line in the output JSONL file contains one bounding box [x1, y1, x2, y2] in original frame coordinates
         - All available video/classifier/tilesize/tilepadding combinations are processed
         - If no compressed detections are found for a video/tilesize/tilepadding combination, that combination is skipped

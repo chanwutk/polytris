@@ -12,7 +12,7 @@ from typing import Callable
 
 import torch
 
-from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results, get_video_resolution
+from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results, get_video_resolution, build_param_str
 
 
 CONFIG = get_config()
@@ -25,19 +25,6 @@ TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
 SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
 TRACKERS = CONFIG['EXEC']['TRACKERS']
 CANVAS_SCALES = CONFIG['EXEC']['CANVAS_SCALE']
-
-
-def _scale_to_percent(canvas_scale: float) -> int:
-    # Convert a floating-point canvas scale to an integer percentage for stable folder names.
-    return int(round(float(canvas_scale) * 100))
-
-
-def _build_param_str(classifier: str, tilesize: int, sample_rate: int,
-                     tilepadding: str | None, canvas_scale: float) -> str:
-    # Build a shared stage parameter key that includes classifier, tile settings, and canvas scale.
-    if tilepadding is None:
-        return f'{classifier}_{tilesize}_{sample_rate}_s{_scale_to_percent(canvas_scale)}'
-    return f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{_scale_to_percent(canvas_scale)}'
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute object tracking on detection results')
@@ -75,7 +62,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
         FileNotFoundError: If no detection results file is found
     """
     # Build the shared key used by 050 and 060 stage folders.
-    param_str = _build_param_str(classifier, tilesize, sample_rate, tilepadding, canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
     detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
                                   '050_uncompressed_detections',
                                   param_str,
@@ -120,7 +107,7 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
     """
     device = f'cuda:{gpu_id}'
     # Build the shared key used by 050 and 060 stage folders.
-    param_str = _build_param_str(classifier, tilesize, sample_rate, tilepadding, canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
 
     # Check if uncompressed detections exist
     detection_path = os.path.join(CACHE_DIR, dataset, 'execution', video, '050_uncompressed_detections',
@@ -133,7 +120,7 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
 
     # Create output path for tracking results
     uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset, 'execution', video, '060_uncompressed_tracks')
-    output_path = os.path.join(uncompressed_tracking_dir, f'{param_str}_{tracker_name}', 'tracking.jsonl')
+    output_path = os.path.join(uncompressed_tracking_dir, build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name), 'tracking.jsonl')
     
     # Create tracker
     resolution = get_video_resolution(dataset, video)

@@ -15,7 +15,7 @@ from functools import partial
 import torch
 
 from polyis import dtypes
-from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding
+from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding, build_param_str, scale_to_percent
 from polyis.pack.group_tiles import group_tiles
 from polyis.pack.pack import pack
 
@@ -54,17 +54,6 @@ OUTPUT_DIR_MAP = {
 }
 
 OffsetLookup = tuple[tuple[int, int], tuple[int, int], int]
-
-
-def _scale_to_percent(canvas_scale: float) -> int:
-    # Convert a floating-point canvas scale to an integer percentage for stable folder names.
-    return int(round(float(canvas_scale) * 100))
-
-
-def _build_param_str(classifier: str, tilesize: int, sample_rate: int,
-                     tilepadding: TilePadding, canvas_scale: float) -> str:
-    # Build a shared stage parameter key that includes classifier, tile settings, and canvas scale.
-    return f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{_scale_to_percent(canvas_scale)}'
 
 
 def _compute_polyomino_tile_boundaries(
@@ -350,7 +339,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
 
     # Create output directory for compression results
     output_dir_name = OUTPUT_DIR_MAP[mode]
-    param_str = _build_param_str(classifier, tilesize, sample_rate, tilepadding, canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
     output_dir = os.path.join(cache_video_dir, output_dir_name, param_str)
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
@@ -365,7 +354,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     os.makedirs(offset_lookup_dir)
 
     # Send initial progress update
-    description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]} s{_scale_to_percent(canvas_scale)}"
+    description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]} s{scale_to_percent(canvas_scale)}"
     
     # Open video to get dimensions
     cap = cv2.VideoCapture(video_path)

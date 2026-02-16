@@ -79,7 +79,7 @@ def _create_tile_comparison_chart_base(df: pd.DataFrame, dataset: str, normalize
     df['occupancy_ratio'] = df['occupied_tiles'] / df['total_tiles'].replace(0, 1)
     df['non_padding_occupied'] = df['occupied_tiles'] - df['padding_tiles']
     df['config_label'] = df.apply(
-        lambda row: f"{row['classifier'][:3]}_{row['tilesize']}_{row['tilepadding'][:3]}", axis=1
+        lambda row: f"{row['classifier'][:4]}_{row['tilesize']}_{row['sample_rate']}_{row['tilepadding'][:4]}_s{int(row['canvas_scale'] * 100)}", axis=1
     )
     
     # Sort by total tiles for better visualization
@@ -92,7 +92,9 @@ def _create_tile_comparison_chart_base(df: pd.DataFrame, dataset: str, normalize
         chart_data.append({
             'classifier': row['classifier'],
             'tilesize': row['tilesize'],
+            'sample_rate': row['sample_rate'],
             'tilepadding': row['tilepadding'],
+            'canvas_scale': row['canvas_scale'],
             'tile_type': 'Empty',
             'count': row['empty_tiles'],
             'config_label': row['config_label'],
@@ -102,7 +104,9 @@ def _create_tile_comparison_chart_base(df: pd.DataFrame, dataset: str, normalize
         chart_data.append({
             'classifier': row['classifier'],
             'tilesize': row['tilesize'],
+            'sample_rate': row['sample_rate'],
             'tilepadding': row['tilepadding'],
+            'canvas_scale': row['canvas_scale'],
             'tile_type': 'Occupied',
             'count': row['non_padding_occupied'],
             'config_label': row['config_label'],
@@ -112,7 +116,9 @@ def _create_tile_comparison_chart_base(df: pd.DataFrame, dataset: str, normalize
         chart_data.append({
             'classifier': row['classifier'],
             'tilesize': row['tilesize'],
+            'sample_rate': row['sample_rate'],
             'tilepadding': row['tilepadding'],
+            'canvas_scale': row['canvas_scale'],
             'tile_type': 'Padding',
             'count': row['padding_tiles'],
             'config_label': row['config_label'],
@@ -137,12 +143,12 @@ def _create_tile_comparison_chart_base(df: pd.DataFrame, dataset: str, normalize
     title_suffix_full = f'{title_suffix} by Configuration' if include_config else title_suffix
     chart = alt.Chart(chart_df).mark_bar(opacity=0.8).encode(
         x=alt.X('count:Q', title=x_title, stack=stack_mode, axis=x_axis),
-        y=alt.Y('config_label:N', title='Configuration (Classifier_Tilesize_Tilepadding)', 
+        y=alt.Y('config_label:N', title='Configuration', 
                 sort=alt.SortField('count', order='descending')),
         color=alt.Color('tile_type:N', title='Tile Type',
                        scale=alt.Scale(domain=['Occupied', 'Padding', 'Empty'],
-                                      range=['#4caf50', '#ff9800', '#e0e0e0'])),
-        tooltip=['config_label', 'tile_type', 'count', 'occupancy_ratio:Q', 'classifier', 'tilesize', 'tilepadding']
+                                       range=['#4caf50', '#ff9800', '#e0e0e0'])),
+        tooltip=['config_label', 'tile_type', 'count', 'occupancy_ratio:Q', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale']
     ).properties(
         width=800,
         height=400,
@@ -203,7 +209,7 @@ def _create_image_count_chart_base(df: pd.DataFrame, dataset: str, original_coun
     # Prepare data
     chart_df = df.copy()
     chart_df['config_label'] = chart_df.apply(
-        lambda row: f"{row['classifier'][:3]}_{row['tilesize']}_{row['tilepadding'][:3]}", axis=1
+        lambda row: f"{row['classifier'][:4]}_{row['tilesize']}_{row['sample_rate']}_{row['tilepadding'][:4]}_s{int(row['canvas_scale'] * 100)}", axis=1
     )
     
     # Sort by number of images
@@ -213,10 +219,10 @@ def _create_image_count_chart_base(df: pd.DataFrame, dataset: str, original_coun
     title_suffix = ' by Configuration' if include_config else ''
     chart = alt.Chart(chart_df).mark_bar(opacity=0.8).encode(
         x=alt.X('num_images:Q', title='Number of Compressed Images'),
-        y=alt.Y('config_label:N', title='Configuration (Classifier_Tilesize_Tilepadding)',
+        y=alt.Y('config_label:N', title='Configuration',
                 sort=alt.SortField('num_images', order='descending')),
         color=alt.Color('classifier:N', title='Classifier'),
-        tooltip=['config_label', 'num_images', 'classifier', 'tilesize', 'tilepadding']
+        tooltip=['config_label', 'num_images', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale']
     ).properties(
         width=800,
         height=400,

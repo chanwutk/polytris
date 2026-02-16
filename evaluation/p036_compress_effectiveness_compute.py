@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 from rich.progress import Progress, BarColumn, TextColumn
 
-from polyis.utilities import CACHE_DIR, get_config, load_classification_results
+from polyis.utilities import CACHE_DIR, get_config, load_classification_results, scale_to_percent
 
 
 # Compression stage directory to analyze
@@ -259,20 +259,20 @@ def count_tiles_for_path(config_path: Path, dataset: str, video: str,
     return int(empty_tiles), int(occupied_tiles), int(padding_tiles)
 
 
-def process_video_dir(args_tuple: Tuple[Path, str, List[str], List[int], List[str], bool]) -> Tuple[List[dict], dict]:
+def process_video_dir(args_tuple: Tuple[Path, str, List[str], List[int], List[str], List[float], bool]) -> Tuple[List[dict], dict]:
     """
     Process a single video directory and return records and statistics.
     
     This function is designed to be used with multiprocessing.Pool.
     
     Args:
-        args_tuple: Tuple containing (video_dir, dataset, classifiers, tilesizes, tilepaddings, verbose)
+        args_tuple: Tuple containing (video_dir, dataset, classifiers, tilesizes, tilepaddings, canvas_scales, verbose)
         
     Returns:
         Tuple of (records_list, stats_dict) where stats_dict contains:
             videos_with_compression, total_config_dirs, skipped_invalid_format, skipped_not_in_target
     """
-    video_dir, dataset, classifiers, tilesizes, tilepaddings, verbose = args_tuple
+    video_dir, dataset, classifiers, tilesizes, tilepaddings, canvas_scales, verbose = args_tuple
     video_name = video_dir.name
     
     records = []
@@ -303,11 +303,11 @@ def process_video_dir(args_tuple: Tuple[Path, str, List[str], List[int], List[st
         
         total_config_dirs += 1
         
-        # Parse configuration name: classifier_tilesize_tilepadding
+        # Parse configuration name: classifier_tilesize_samplerate_tilepadding_s{pct}
         config_name = config_dir.name
         parts = config_name.split('_')
         
-        if len(parts) != 3:
+        if len(parts) != 5:
             skipped_invalid_format += 1
             if verbose:
                 print(f"    Warning: Skipping invalid config name: {config_name} (parts: {parts})")
@@ -321,7 +321,17 @@ def process_video_dir(args_tuple: Tuple[Path, str, List[str], List[int], List[st
             if verbose:
                 print(f"    Warning: Invalid tilesize in {config_name}")
             continue
-        tilepadding = parts[2]
+        try:
+            sample_rate = int(parts[2])
+        except ValueError:
+            skipped_invalid_format += 1
+            if verbose:
+                print(f"    Warning: Invalid sample_rate in {config_name}")
+            continue
+        tilepadding = parts[3]
+        scale_str = parts[4]
+        # Extract canvas scale from scale string (e.g., 's100' -> 1.0)
+        canvas_scale = int(scale_str[1:]) / 100.0
         
         # Check if this configuration is in our target list
         if classifier not in classifiers:
@@ -339,6 +349,11 @@ def process_video_dir(args_tuple: Tuple[Path, str, List[str], List[int], List[st
             if verbose:
                 print(f"    Skipping {config_name}: tilepadding '{tilepadding}' not in target list")
             continue
+        if canvas_scale not in canvas_scales:
+            skipped_not_in_target += 1
+            if verbose:
+                print(f"    Skipping {config_name}: canvas_scale {canvas_scale} not in target list")
+            continue
         
         # Count images and tiles
         num_images = count_images_for_path(config_dir)
@@ -351,7 +366,9 @@ def process_video_dir(args_tuple: Tuple[Path, str, List[str], List[int], List[st
             'video': video_name,
             'classifier': classifier,
             'tilesize': tilesize,
+            'sample_rate': sample_rate,
             'tilepadding': tilepadding,
+            'canvas_scale': canvas_scale,
             'num_images': num_images,
             'empty_tiles': empty_tiles,
             'occupied_tiles': occupied_tiles,
@@ -367,7 +384,8 @@ def process_video_dir(args_tuple: Tuple[Path, str, List[str], List[int], List[st
 
 
 def collect_dataset_data(dataset: str, classifiers: List[str], tilesizes: List[int], 
-                         tilepaddings: List[str], verbose: bool = False) -> pd.DataFrame:
+                         tilepaddings: List[str], canvas_scales: List[float],
+                         verbose: bool = False) -> pd.DataFrame:
     """
     Collect compression effectiveness data for a dataset.
     
@@ -376,11 +394,12 @@ def collect_dataset_data(dataset: str, classifiers: List[str], tilesizes: List[i
         classifiers: List of classifier names to analyze
         tilesizes: List of tile sizes to analyze
         tilepaddings: List of tile padding modes to analyze
+        canvas_scales: List of canvas scale factors to analyze
         verbose: Whether to print verbose output
         
     Returns:
-        DataFrame with columns: dataset, video, classifier, tilesize, tilepadding,
-                               num_images, empty_tiles, occupied_tiles, padding_tiles
+        DataFrame with columns: dataset, video, classifier, tilesize, sample_rate, tilepadding,
+                               canvas_scale, num_images, empty_tiles, occupied_tiles, padding_tiles
     """
     dataset_cache_dir = Path(CACHE_DIR) / dataset / 'execution'
     
@@ -404,7 +423,7 @@ def collect_dataset_data(dataset: str, classifiers: List[str], tilesizes: List[i
     
     # Prepare arguments for parallel processing
     process_args = [
-        (video_dir, dataset, classifiers, tilesizes, tilepaddings, verbose)
+        (video_dir, dataset, classifiers, tilesizes, tilepaddings, canvas_scales, verbose)
         for video_dir in video_dirs
     ]
     
@@ -487,13 +506,13 @@ def aggregate_dataset_data(df: pd.DataFrame) -> pd.DataFrame:
         df: DataFrame with per-video data
         
     Returns:
-        DataFrame aggregated by dataset, classifier, tilesize, tilepadding
+        DataFrame aggregated by dataset, classifier, tilesize, sample_rate, tilepadding, canvas_scale
     """
     if len(df) == 0:
         return pd.DataFrame()
     
     # Aggregate across videos
-    agg_df = df.groupby(['dataset', 'classifier', 'tilesize', 'tilepadding']).agg({
+    agg_df = df.groupby(['dataset', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale']).agg({
         'num_images': 'sum',
         'empty_tiles': 'sum',
         'occupied_tiles': 'sum',
@@ -504,7 +523,8 @@ def aggregate_dataset_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def process_dataset(dataset: str, classifiers: List[str], tilesizes: List[int], 
-                    tilepaddings: List[str], output_dir: Path, verbose: bool = False) -> pd.DataFrame | None:
+                    tilepaddings: List[str], canvas_scales: List[float],
+                    output_dir: Path, verbose: bool = False) -> pd.DataFrame | None:
     """
     Process a single dataset and compute metrics.
     
@@ -513,6 +533,7 @@ def process_dataset(dataset: str, classifiers: List[str], tilesizes: List[int],
         classifiers: List of classifier names to analyze
         tilesizes: List of tile sizes to analyze
         tilepaddings: List of tile padding modes to analyze
+        canvas_scales: List of canvas scales to analyze
         output_dir: Output directory for CSV files
         verbose: Whether to print verbose output
         
@@ -523,7 +544,7 @@ def process_dataset(dataset: str, classifiers: List[str], tilesizes: List[int],
         print(f"\nProcessing dataset: {dataset}")
     
     # Collect data
-    df = collect_dataset_data(dataset, classifiers, tilesizes, tilepaddings, verbose)
+    df = collect_dataset_data(dataset, classifiers, tilesizes, tilepaddings, canvas_scales, verbose)
     
     if len(df) == 0:
         if verbose:
@@ -575,11 +596,12 @@ def main(args):
     # Load configuration
     config = get_config()
     
-    # Get datasets, classifiers, tilesizes, and tilepaddings from config
+    # Get datasets, classifiers, tilesizes, tilepaddings, and canvas_scales from config
     datasets = config['EXEC']['DATASETS']
     classifiers = config['EXEC']['CLASSIFIERS']
     tilesizes = config['EXEC']['TILE_SIZES']
     tilepaddings = config['EXEC']['TILEPADDING_MODES']
+    canvas_scales = [float(s) for s in config['EXEC']['CANVAS_SCALE']]
     
     # Set output directory to {CACHE_DIR}/SUMMARY/036_compress_effectiveness
     output_dir = Path(CACHE_DIR) / 'SUMMARY' / '036_compress_effectiveness'
@@ -591,6 +613,7 @@ def main(args):
         print(f"Classifiers: {classifiers}")
         print(f"Tile sizes: {tilesizes}")
         print(f"Tile paddings: {tilepaddings}")
+        print(f"Canvas scales: {canvas_scales}")
         print(f"Cache directory: {CACHE_DIR}")
         print(f"Output directory: {output_dir}")
         print("=" * 80)
@@ -600,7 +623,7 @@ def main(args):
     
     # Process each dataset
     for dataset in datasets:
-        process_dataset(dataset, classifiers, tilesizes, tilepaddings, output_dir, args.verbose)
+        process_dataset(dataset, classifiers, tilesizes, tilepaddings, canvas_scales, output_dir, args.verbose)
     
     print(f"\nComputation complete. CSV files saved to: {output_dir}")
 
