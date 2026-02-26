@@ -37,11 +37,12 @@ CLASSIFIER_SHAPE_DOMAIN = ['MobileNetS', 'ShuffleNet05', 'Baseline/NA', 'Other']
 # Define the marker glyph for each classifier shape category.
 CLASSIFIER_SHAPE_RANGE = ['triangle-up', 'diamond', 'circle', 'square']
 
-# Define fixed classifier-to-color categories for deterministic chart encoding.
-CLASSIFIER_COLOR_DOMAIN = ['MobileNetS', 'ShuffleNet05', 'Baseline/NA', 'Other']
+# Define fixed canvas-scale-to-color categories for deterministic chart encoding.
+# Scale keys follow the s{percent} convention; non-Polytris systems map to 'Baseline/NA'.
+CANVAS_SCALE_COLOR_DOMAIN = ['s100', 's125', 's150', 'Baseline/NA']
 
-# Define the color for each classifier category.
-CLASSIFIER_COLOR_RANGE = ColorScheme.CarbonDark[:len(CLASSIFIER_COLOR_DOMAIN)]
+# Define the color for each canvas scale category.
+CANVAS_SCALE_COLOR_RANGE = ColorScheme.CarbonDark[:len(CANVAS_SCALE_COLOR_DOMAIN)]
 
 
 def add_classifier_shape_key(df: pd.DataFrame) -> pd.DataFrame:
@@ -587,14 +588,24 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     if df_clean.empty:
         return alt.Chart().mark_text().encode(text=alt.value('No data available'))
 
-    # Define consistent color scale for classifier categories.
+    # Define consistent color scale for canvas scale categories.
     color_scale = alt.Scale(
-        domain=CLASSIFIER_COLOR_DOMAIN,
-        range=CLASSIFIER_COLOR_RANGE
+        domain=CANVAS_SCALE_COLOR_DOMAIN,
+        range=CANVAS_SCALE_COLOR_RANGE
     )
 
     # Add normalized classifier shape labels for deterministic marker encoding.
     df_clean = add_classifier_shape_key(df_clean)
+
+    # Add canvas_scale color key for color encoding by scale.
+    # Ensure canvas_scale column exists with default 1.0.
+    if 'canvas_scale' not in df_clean.columns:
+        df_clean['canvas_scale'] = 1.0
+    # For Polytris rows, label by scale percent; for other systems, use 'Baseline/NA'.
+    df_clean['canvas_scale_key'] = df_clean.apply(
+        lambda r: f"s{int(r['canvas_scale'] * 100)}" if r.get('system') == 'Polytris' else 'Baseline/NA',
+        axis=1
+    )
 
     # Base chart for Pareto fronts (with lines)
     base_pareto = alt.Chart(df_clean)
@@ -607,21 +618,21 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q', title=f'{accuracy_col_name} Score',
                 scale=alt.Scale(domain=[0, 1])),
-        color=alt.Color('classifier_shape_key:N', title='Classifier', scale=color_scale),
-        detail=['system:N', 'classifier_shape_key:N']
+        color=alt.Color('canvas_scale_key:N', title='Canvas Scale', scale=color_scale),
+        detail=['system:N', 'classifier_shape_key:N', 'canvas_scale_key:N']
     )
 
     # Add points for Pareto fronts (with tooltip for interactivity)
     points_pareto = base_pareto.mark_point(size=50, filled=True).encode(
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q'),
-        color=alt.Color('classifier_shape_key:N', title='Classifier', scale=color_scale),
+        color=alt.Color('canvas_scale_key:N', title='Canvas Scale', scale=color_scale),
         shape=alt.Shape(
             'classifier_shape_key:N',
             title='Classifier',
             scale=alt.Scale(domain=CLASSIFIER_SHAPE_DOMAIN, range=CLASSIFIER_SHAPE_RANGE)
         ),
-        tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', time_col, accuracy_col]
+        tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker', time_col, accuracy_col]
     )
 
     # Combine layers
@@ -729,6 +740,8 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         combined_df['sample_rate'] = 1
     if 'tracker' not in combined_df.columns:
         combined_df['tracker'] = 'unknown'
+    if 'canvas_scale' not in combined_df.columns:
+        combined_df['canvas_scale'] = 1.0
 
     # Filter out non-data points (e.g., classifier == 'Perfect')
     combined_df = combined_df.query("classifier != 'Perfect'")
@@ -800,9 +813,9 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         print(f"\n1. Computing Pareto fronts for {accuracy_name}...")
 
         # Columns to keep for tooltip display
-        tooltip_cols = ['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', 'time', accuracy_col]
+        tooltip_cols = ['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker', 'time', accuracy_col]
 
-        # Polytris Pareto fronts (per dataset and classifier)
+        # Polytris Pareto fronts (per dataset, classifier, and canvas_scale)
         pareto_data_list = []
         for dataset in datasets:
             # Select Polytris rows for the current dataset.
@@ -810,13 +823,13 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             if dataset_df.empty:
                 continue
 
-            # Compute a separate Pareto front for each classifier inside this dataset.
-            for classifier, classifier_df in dataset_df.groupby('classifier', dropna=False):
-                if classifier_df.empty:
+            # Compute a separate Pareto front for each (classifier, canvas_scale) combination.
+            for (classifier, canvas_scale), group_df in dataset_df.groupby(['classifier', 'canvas_scale'], dropna=False):
+                if group_df.empty:
                     continue
 
-                # Restrict Pareto optimization to the current classifier slice.
-                pareto = compute_pareto_front(classifier_df, 'time', accuracy_col)
+                # Restrict Pareto optimization to the current group slice.
+                pareto = compute_pareto_front(group_df, 'time', accuracy_col)
                 if pareto.empty:
                     continue
 
@@ -826,6 +839,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
                     pareto['classifier'] = pareto['classifier'].fillna(classifier)
                 else:
                     pareto['classifier'] = classifier
+                pareto['canvas_scale'] = canvas_scale
 
                 # Keep columns that exist in the dataframe.
                 cols_to_keep = [c for c in tooltip_cols if c in pareto.columns]

@@ -21,9 +21,12 @@ dataset_detector_mapping:
   b3d:
     detector: retina
   ams:
-    detector: ultralytics
+    detector: yolov3
+    detector_label: generic
     width: 1280
-    height: 720
+    height: 736
+    model_path: /otif-dataset/yolov3/generic/yolov3-1280x736.best
+    config_path: /otif-dataset/yolov3/generic/yolov3-1280x736-test.cfg
   ams-y05:
     detector: ultralytics
     width: 1280
