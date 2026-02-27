@@ -122,13 +122,17 @@ def load_model(
         temp_files.append(tmp_obj_names)
         
         # Create temporary obj.data file
+        num_classes = None
         with open(meta_path, 'r') as f:
             tmp_meta_buf = ''
             for line in f.readlines():
                 line = line.strip()
-                if line.startswith('names='):
+                if line.startswith('names=') or line.startswith('names ='):
                     line = f'names={tmp_obj_names}'
+                if line.startswith('classes=') or line.startswith('classes ='):
+                    num_classes = int(line.split('=')[1].strip())
                 tmp_meta_buf += line + "\n"
+        assert num_classes is not None, "classes= entry not found in obj.data"
         
         tmp_obj_meta = tempfile.mktemp(suffix='.data')
         with open(tmp_obj_meta, 'w') as f:
@@ -153,8 +157,8 @@ def load_model(
             os.dup2(old_stderr, 2)
             os.close(devnull)
         
-        if len(class_names) != 1:
-            raise ValueError(f'Expected 1 class, but got {len(class_names)}')
+        if len(class_names) != num_classes:
+            raise ValueError(f'Expected {num_classes} classes, but got {len(class_names)}')
         
         return net, class_names
         

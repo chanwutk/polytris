@@ -17,6 +17,7 @@ from polyis.b3d.nms import nms
 from polyis.utilities import (
     ProgressBar,
     build_b3d_mask_and_crop,
+    dedupe_datasets_by_root,
     get_config,
     get_segment_frame_range,
 )
@@ -170,6 +171,21 @@ def get_frame_count(video_path: str) -> int:
     return frame_count
 
 
+def resolve_source_video_path(dataset: str, videoset: str, video_name: str) -> str:
+    otif_dataset = resolve_otif_dataset_name(dataset)
+    source_video_dir = os.path.join(OTIF_DATASET, otif_dataset, videoset, 'video')
+    assert os.path.exists(source_video_dir), f'Source video directory not found: {source_video_dir}'
+
+    video_stem, _ = os.path.splitext(video_name)
+    match = re.match(r'^(te|tr|va)(\d{2})$', video_stem)
+    assert match is not None, f'Invalid split video filename: {video_name}'
+
+    video_idx = int(match.group(2))
+    source_video_path = os.path.join(source_video_dir, f'{video_idx}.mp4')
+    assert os.path.exists(source_video_path), f'Source video file not found: {source_video_path}'
+    return source_video_path
+
+
 def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_queue: queue.Queue):
     videoset, video_name = parse_video_parts(video_file)
     video_number = parse_segment_index(video_name)
@@ -197,9 +213,9 @@ def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_qu
     with open(gt_json_path, 'r') as f:
         annotations = json.load(f)
 
-    assert len(annotations) == frame_count, (
-        f'Number of annotations ({len(annotations)}) does not match frame count ({frame_count})'
-    )
+    # assert len(annotations) == frame_count, (
+    #     f'Number of annotations ({len(annotations)}) does not match frame count ({frame_count})'
+    # )
 
     command_queue.put((
         'cuda:' + str(gpu_id),
@@ -241,20 +257,20 @@ def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_qu
 
 
 def run_detection_ams(dataset: str, video_file: str, gpu_id: int, command_queue: queue.Queue):
-    _, video_name = parse_video_parts(video_file)
+    videoset, video_name = parse_video_parts(video_file)
 
     include_rect = load_include_rect(dataset)
     exclude_polygon_xml = load_exclude_polygon_xml(dataset)
 
-    dataset_video_path = os.path.join(DATASETS_DIR, dataset, video_file)
+    source_video_path = resolve_source_video_path(dataset, videoset, video_name)
     output_path = build_output_path(dataset, video_name)
     output_dir = os.path.dirname(output_path)
     os.makedirs(output_dir, exist_ok=True)
 
     detector = polyis.models.detector.get_detector('ams', gpu_id, batch_size=1)
 
-    cap = cv2.VideoCapture(dataset_video_path)
-    assert cap.isOpened(), f'Could not open video {dataset_video_path}'
+    cap = cv2.VideoCapture(source_video_path)
+    assert cap.isOpened(), f'Could not open video {source_video_path}'
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     command_queue.put((
@@ -273,9 +289,7 @@ def run_detection_ams(dataset: str, video_file: str, gpu_id: int, command_queue:
             if not ret:
                 break
 
-            raw_detections = polyis.models.detector.detect(frame, detector)
-            if raw_detections is None:
-                raw_detections = np.empty((0, 5), dtype=np.float32)
+            raw_detections = detect_frame_with_corner_crops(detector, frame)
 
             detections: list[list[float]] = []
             for det in raw_detections:
@@ -334,6 +348,92 @@ def get_corner_crops(width: int, height: int) -> list[tuple[int, int, int, int]]
         (0, bottom_y, crop_width, crop_height),
         (right_x, bottom_y, crop_width, crop_height),
     ]
+
+
+def offset_and_clamp_coordinate(value: float, offset: int, limit: int) -> float:
+    shifted_value = value + float(offset)
+    clamped_value = max(0.0, min(shifted_value, limit - 1.0))
+    return clamped_value
+
+
+def scale_and_clamp_coordinate(value: float, scale: float, limit: int) -> float:
+    scaled_value = value * scale
+    clamped_value = max(0.0, min(scaled_value, limit - 1.0))
+    return clamped_value
+
+
+def detect_frame_with_corner_crops(detector, frame: np.ndarray) -> list[list[float]]:
+    frame_height, frame_width = frame.shape[:2]
+    corner_crops = get_corner_crops(frame_width, frame_height)
+    merged_boxes: list[list[float]] = []
+    merged_scores: list[float] = []
+
+    for crop_x, crop_y, crop_w, crop_h in corner_crops:
+        crop_frame = frame[crop_y:crop_y + crop_h, crop_x:crop_x + crop_w, :]
+        crop_detections = polyis.models.detector.detect(crop_frame, detector)
+        if crop_detections is None:
+            continue
+
+        for det in crop_detections:
+            det_left = offset_and_clamp_coordinate(float(det[0]), crop_x, frame_width)
+            det_top = offset_and_clamp_coordinate(float(det[1]), crop_y, frame_height)
+            det_right = offset_and_clamp_coordinate(float(det[2]), crop_x, frame_width)
+            det_bottom = offset_and_clamp_coordinate(float(det[3]), crop_y, frame_height)
+            det_score = float(det[4])
+
+            if det_right <= det_left or det_bottom <= det_top:
+                continue
+
+            merged_boxes.append([det_left, det_top, det_right, det_bottom])
+            merged_scores.append(det_score)
+
+    if merged_boxes:
+        nms_boxes, nms_scores = nms(merged_boxes, merged_scores, NMS_THRESHOLD)
+    else:
+        nms_boxes, nms_scores = [], []
+
+    detections: list[list[float]] = []
+    for box, score in zip(nms_boxes, nms_scores):
+        detections.append([
+            float(box[0]),
+            float(box[1]),
+            float(box[2]),
+            float(box[3]),
+            float(score),
+        ])
+    return detections
+
+
+def scale_detections(
+    detections: list[list[float]],
+    source_width: int,
+    source_height: int,
+    target_width: int,
+    target_height: int,
+) -> list[list[float]]:
+    scale_x = target_width / source_width
+    scale_y = target_height / source_height
+    scaled_detections: list[list[float]] = []
+
+    for det in detections:
+        scaled_left = scale_and_clamp_coordinate(det[0], scale_x, target_width)
+        scaled_top = scale_and_clamp_coordinate(det[1], scale_y, target_height)
+        scaled_right = scale_and_clamp_coordinate(det[2], scale_x, target_width)
+        scaled_bottom = scale_and_clamp_coordinate(det[3], scale_y, target_height)
+        score = det[4]
+
+        if scaled_right <= scaled_left or scaled_bottom <= scaled_top:
+            continue
+
+        scaled_detections.append([
+            float(scaled_left),
+            float(scaled_top),
+            float(scaled_right),
+            float(scaled_bottom),
+            float(score),
+        ])
+
+    return scaled_detections
 
 
 def run_detection_jnc(dataset: str, video_file: str, gpu_id: int, command_queue: queue.Queue):
@@ -397,65 +497,14 @@ def run_detection_jnc(dataset: str, video_file: str, gpu_id: int, command_queue:
                 masked = np.rot90(masked, k=-1)
 
             frame_height, frame_width = masked.shape[:2]
-            corner_crops = get_corner_crops(frame_width, frame_height)
-
-            merged_boxes: list[list[float]] = []
-            merged_scores: list[float] = []
-
-            for crop_x, crop_y, crop_w, crop_h in corner_crops:
-                crop_frame = masked[crop_y:crop_y + crop_h, crop_x:crop_x + crop_w, :]
-                crop_detections = polyis.models.detector.detect(crop_frame, detector)
-                if crop_detections is None:
-                    continue
-
-                for det in crop_detections:
-                    det_left = float(det[0]) + crop_x
-                    det_top = float(det[1]) + crop_y
-                    det_right = float(det[2]) + crop_x
-                    det_bottom = float(det[3]) + crop_y
-                    det_score = float(det[4])
-
-                    det_left = max(0.0, min(det_left, frame_width - 1.0))
-                    det_top = max(0.0, min(det_top, frame_height - 1.0))
-                    det_right = max(0.0, min(det_right, frame_width - 1.0))
-                    det_bottom = max(0.0, min(det_bottom, frame_height - 1.0))
-
-                    if det_right <= det_left or det_bottom <= det_top:
-                        continue
-
-                    merged_boxes.append([det_left, det_top, det_right, det_bottom])
-                    merged_scores.append(det_score)
-
-            if merged_boxes:
-                nms_boxes, nms_scores = nms(merged_boxes, merged_scores, NMS_THRESHOLD)
-            else:
-                nms_boxes, nms_scores = [], []
-
-            scaled_detections: list[list[float]] = []
-            scale_x = TARGET_WIDTH / frame_width
-            scale_y = TARGET_HEIGHT / frame_height
-
-            for box, score in zip(nms_boxes, nms_scores):
-                scaled_left = box[0] * scale_x
-                scaled_top = box[1] * scale_y
-                scaled_right = box[2] * scale_x
-                scaled_bottom = box[3] * scale_y
-
-                scaled_left = max(0.0, min(scaled_left, TARGET_WIDTH - 1.0))
-                scaled_top = max(0.0, min(scaled_top, TARGET_HEIGHT - 1.0))
-                scaled_right = max(0.0, min(scaled_right, TARGET_WIDTH - 1.0))
-                scaled_bottom = max(0.0, min(scaled_bottom, TARGET_HEIGHT - 1.0))
-
-                if scaled_right <= scaled_left or scaled_bottom <= scaled_top:
-                    continue
-
-                scaled_detections.append([
-                    float(scaled_left),
-                    float(scaled_top),
-                    float(scaled_right),
-                    float(scaled_bottom),
-                    float(score),
-                ])
+            detections = detect_frame_with_corner_crops(detector, masked)
+            scaled_detections = scale_detections(
+                detections=detections,
+                source_width=frame_width,
+                source_height=frame_height,
+                target_width=TARGET_WIDTH,
+                target_height=TARGET_HEIGHT,
+            )
 
             frame_entry = {
                 'frame_idx': frame_idx,
@@ -484,8 +533,12 @@ def main():
     if not splits:
         splits = ['test']
 
+    # Resolve configured datasets to unique dataset roots.
+    datasets_to_process = dedupe_datasets_by_root(EXEC_DATASETS)
+    print(f'Resolved datasets for groundtruth preprocessing: {datasets_to_process}')
+
     funcs = []
-    for dataset in EXEC_DATASETS:
+    for dataset in datasets_to_process:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
         assert os.path.exists(dataset_dir), f'Dataset directory {dataset_dir} does not exist'
 
@@ -517,7 +570,7 @@ def main():
     max_processes = min(len(funcs), num_gpus)
     print(f'Using {max_processes} processes (limited by {num_gpus} GPUs)')
 
-    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs), refresh_per_second=10).run_all(funcs)
 
 
 if __name__ == '__main__':

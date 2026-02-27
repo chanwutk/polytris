@@ -25,7 +25,7 @@ dataset_detector_mapping:
     detector_label: generic
     width: 1280
     height: 736
-    model_path: /otif-dataset/yolov3/generic/yolov3-1280x736.best
+    model_path: /otif-dataset/yolov3/generic/yolov3.best
     config_path: /otif-dataset/yolov3/generic/yolov3-1280x736-test.cfg
   ams-y05:
     detector: ultralytics
