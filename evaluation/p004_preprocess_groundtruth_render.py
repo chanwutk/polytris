@@ -6,7 +6,7 @@ import multiprocessing as mp
 from multiprocessing import Queue
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, load_detection_results, get_config
+from polyis.utilities import CACHE_DIR, DATASETS_DIR, PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, dedupe_datasets_by_root, load_detection_results, get_config
 
 
 CONFIG = get_config()
@@ -83,18 +83,22 @@ def main(args):
         
     Note:
         - The script expects tracking results from p002_preprocess_groundtruth_tracking.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/tracking.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/003_groundtruth/tracking.jsonl
         - Original videos are read from {DATASETS_DIR}/{dataset}/
         - Visualization videos are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/000_groundtruth/annotated_{video_file}
+          {CACHE_DIR}/{dataset}/execution/{video_file}/003_groundtruth/annotated_{video_file}
         - Each track ID gets a unique color from a predefined palette
         - Processing is parallelized for improved performance
     """
     print(f"Speed up factor: {args.speed_up} (processing every {args.speed_up}th frame)")
     
+    # Resolve configured datasets to unique dataset roots.
+    datasets_to_process = dedupe_datasets_by_root(EXEC_DATASETS)
+    print(f'Resolved datasets for groundtruth render preprocessing: {datasets_to_process}')
+
     # Create task functions
     funcs = []
-    for dataset in EXEC_DATASETS:
+    for dataset in datasets_to_process:
         print(f"Processing dataset: {dataset}")
         
         # Find all videos with tracking results
@@ -113,7 +117,7 @@ def main(args):
         for item in os.listdir(execution_dir):
             item_path = os.path.join(execution_dir, item)
             if item.startswith('te') and os.path.isdir(item_path):
-                tracking_path = os.path.join(item_path, '002_naive', 'tracking.jsonl')
+                tracking_path = os.path.join(item_path, '003_groundtruth', 'tracking.jsonl')
                 if os.path.exists(tracking_path):
                     video_dirs.append(item)
         
@@ -123,7 +127,7 @@ def main(args):
         
         print(f"Found {len(video_dirs)} videos with tracking results")
         
-        for groundtruth in [True, False]:
+        for groundtruth in [True]:
             funcs.extend(
                 partial(visualize_video, video_file, CACHE_DIR, dataset,
                         args.speed_up, args.track_ids, args.detection_only, groundtruth)
