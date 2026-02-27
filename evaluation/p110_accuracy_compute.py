@@ -49,6 +49,32 @@ def parse_args():
     return parser.parse_args()
 
 
+def resolve_groundtruth_tracking_dataset(dataset: str) -> str:
+    """
+    Resolve the dataset that provides tracking groundtruth for evaluation.
+
+    Detector variants for caldot and ams should be evaluated against the
+    corresponding base dataset tracking groundtruth.
+
+    Args:
+        dataset (str): Dataset name used for tracking outputs
+
+    Returns:
+        str: Dataset name used for tracking groundtruth
+    """
+    # Map caldot1 detector variants to the shared caldot1 groundtruth tracks.
+    if dataset.startswith('caldot1-y'):
+        return 'caldot1'
+    # Map caldot2 detector variants to the shared caldot2 groundtruth tracks.
+    if dataset.startswith('caldot2-y'):
+        return 'caldot2'
+    # Map ams detector variants to the shared ams groundtruth tracks.
+    if dataset.startswith('ams-y'):
+        return 'ams'
+    # Keep all other datasets on their own groundtruth tracks.
+    return dataset
+
+
 def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[tuple[str, int, int, str, float, str]]]:
     """
     Find all videos and classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations with tracking results.
@@ -67,6 +93,12 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
     # Construct path to dataset execution directory
     dataset_cache_dir = os.path.join(cache_dir, dataset, 'execution')
     assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
+    # Resolve the dataset root that supplies groundtruth tracks for this dataset.
+    groundtruth_dataset = resolve_groundtruth_tracking_dataset(dataset)
+    # Build the execution directory path where groundtruth tracks are expected.
+    groundtruth_execution_dir = os.path.join(cache_dir, groundtruth_dataset, 'execution')
+    assert os.path.exists(groundtruth_execution_dir), \
+        f"Groundtruth execution directory {groundtruth_execution_dir} does not exist"
 
     # Collect all video-classifier-tilesize-sample_rate-tilepadding-canvas_scale-tracker combinations
     video_tile_combinations: list[tuple[str, str, int, int, str, float, str]] = []
@@ -96,7 +128,7 @@ def find_tracking_results(cache_dir: str, dataset: str) -> tuple[set[str], set[t
 
             # Construct paths to tracking and groundtruth files
             tracking_path = os.path.join(tracking_dir, f'{classifier}_{ts}_{sample_rate}_{tilepadding}_s{scale_to_percent(canvas_scale)}_{tracker_name}', 'tracking.jsonl')
-            groundtruth_path = os.path.join(video_dir, '003_groundtruth', 'tracking.jsonl')
+            groundtruth_path = os.path.join(groundtruth_execution_dir, video_filename, '003_groundtruth', 'tracking.jsonl')
 
             # Verify both tracking results and groundtruth exist
             assert os.path.exists(tracking_path), f"Tracking path {tracking_path} does not exist"
@@ -157,6 +189,19 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
 
     # Create classifier-tilesize-sample_rate-tilepadding-scale-tracker identifier for naming
     clts = f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_to_percent(canvas_scale)}_{tracker_name}'
+    # Resolve the execution directory that provides tracking predictions.
+    track_execution_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+    # Resolve the dataset and execution directory that provide groundtruth tracks.
+    groundtruth_dataset = resolve_groundtruth_tracking_dataset(dataset)
+    gt_execution_dir = os.path.join(CACHE_DIR, groundtruth_dataset, 'execution')
+    assert os.path.exists(track_execution_dir), f"Tracking execution directory {track_execution_dir} does not exist"
+    assert os.path.exists(gt_execution_dir), f"Groundtruth execution directory {gt_execution_dir} does not exist"
+
+    # Validate that every sequence has groundtruth data in the resolved GT dataset.
+    for video in videos:
+        groundtruth_path = os.path.join(gt_execution_dir, video, '003_groundtruth', 'tracking.jsonl')
+        assert os.path.exists(groundtruth_path), f"Groundtruth path {groundtruth_path} does not exist"
+
     input_track = os.path.join('060_uncompressed_tracks', clts, 'tracking.jsonl')
     if classifier == 'Groundtruth' or tilesize == 0 or tilepadding == 'Groundtruth':
         assert classifier == 'Groundtruth' and tilesize == 0 and tilepadding == 'Groundtruth', \
@@ -174,7 +219,9 @@ def evaluate_tracking_accuracy(dataset: str, videos: set[str], classifier: str,
         'skip': 1,  # Process every frame (no frame skipping)
         'tracker': clts,  # Tracker name identifier
         'seq_list': videos,  # List of sequences (videos) to evaluate
-        'input_dir': os.path.join(CACHE_DIR, dataset, 'execution')  # Base directory for relative paths
+        'input_dir': track_execution_dir,  # Backward-compatible base directory for relative paths
+        'input_gt_dir': gt_execution_dir,  # Base directory for relative GT paths
+        'input_track_dir': track_execution_dir,  # Base directory for relative tracking paths
     }
 
     # Create TrackEval evaluator configuration
@@ -305,7 +352,9 @@ def main(args):
         - The script expects tracking results from 060_exec_track.py in:
           {CACHE_DIR}/{dataset}/execution/{video_file}/060_uncompressed_tracks/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{pct}_{tracker}/tracking.jsonl
         - Groundtruth data should be in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/003_groundtruth/tracking.jsonl
+          {CACHE_DIR}/{gt_dataset}/execution/{video_file}/003_groundtruth/tracking.jsonl
+          where gt_dataset is remapped as:
+          caldot1-y** -> caldot1, caldot2-y** -> caldot2, ams-y** -> ams
         - Results are saved to:
           {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{pct}_{tracker}/
           ├── DATASET.json (combined results)
