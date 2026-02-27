@@ -5,9 +5,9 @@ sort:
 
 ocsort:
   det_thresh: 0.3
-  max_age: 30
+  max_age: 20
   min_hits: 1
-  iou_threshold: 0.3
+  iou_threshold: 0.1
   delta_t: 3
   asso_func: iou
   inertia: 0.2
@@ -16,7 +16,7 @@ ocsort:
 bytetrack:
   track_thresh: 0.5
   match_thresh: 0.8
-  track_buffer: 15
+  track_buffer: 40  # similar to max_age, but scales with frame rate. At FPS=15, 40 is retaining tracks for 20 frames.
   frame_rate: 15
   mot20: false
 

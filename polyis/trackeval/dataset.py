@@ -24,6 +24,8 @@ class Dataset(_BaseDataset):
         self.output_fol = config.get('output_fol', 'output-eval')
         self.output_sub_fol = config.get('output_sub_fol', None)
         self.input_dir = config['input_dir']
+        self.input_gt_dir = config.get('input_gt_dir', self.input_dir)
+        self.input_track_dir = config.get('input_track_dir', self.input_dir)
         self.input_gt = config['input_gt']
         self.input_track = config['input_track']
         self.skip = config['skip']
@@ -46,9 +48,10 @@ class Dataset(_BaseDataset):
         """
         data = {}
         prefix = 'gt_' if is_gt else 'tracker_'
+        input_dir = self.input_gt_dir if is_gt else self.input_track_dir
         file = self.input_gt if is_gt else self.input_track
 
-        with open(os.path.join(self.input_dir, seq, file), 'r') as f:
+        with open(os.path.join(input_dir, seq, file), 'r') as f:
             lines = f.readlines()
 
         raw: dict[int, list[tuple[int, float, float, float, float]]] = {}

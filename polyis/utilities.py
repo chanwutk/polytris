@@ -683,7 +683,7 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int], **override_para
                 img_size=img_size,
                 track_thresh=config['track_thresh'],
                 match_thresh=config['match_thresh'],
-                track_buffer=config['track_buffer'],
+                track_buffer=override_params.get('track_buffer', config['track_buffer']),
                 frame_rate=override_params.get('frame_rate', config['frame_rate']),
                 # mot20=config['mot20']
             )
@@ -694,7 +694,7 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int], **override_para
                 img_size=img_size,
                 track_thresh=config['track_thresh'],
                 match_thresh=config['match_thresh'],
-                track_buffer=config['track_buffer'],
+                track_buffer=override_params.get('track_buffer', config['track_buffer']),
                 frame_rate=override_params.get('frame_rate', config['frame_rate']),
                 # mot20=config['mot20']
             )
@@ -960,7 +960,7 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         # Send initial progress update
         if progress_queue is not None:
             progress_queue.put((f'cuda:{process_id}', {
-                'description': video_path[-15:],
+                'description': video_path[-min(20, len(video_path) - 1):],
                 'completed': 0,
                 'total': frame_count
             }))
