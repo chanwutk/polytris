@@ -289,7 +289,9 @@ def run_detection_ams(dataset: str, video_file: str, gpu_id: int, command_queue:
             if not ret:
                 break
 
-            raw_detections = detect_frame_with_corner_crops(detector, frame)
+            raw_detections = polyis.models.detector.detect(frame, detector)
+            if raw_detections is None:
+                raw_detections = np.empty((0, 5), dtype=np.float32)
 
             detections: list[list[float]] = []
             for det in raw_detections:

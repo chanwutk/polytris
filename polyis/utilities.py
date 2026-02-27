@@ -623,7 +623,7 @@ def build_param_str(*, classifier: str, tilesize: int,
     return '_'.join(parts)
 
 
-def create_tracker(tracker_name: str, img_size: tuple[int, int]):
+def create_tracker(tracker_name: str, img_size: tuple[int, int], **override_params):
     """
     Create a tracker instance based on the specified algorithm.
 
@@ -684,7 +684,7 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int]):
                 track_thresh=config['track_thresh'],
                 match_thresh=config['match_thresh'],
                 track_buffer=config['track_buffer'],
-                frame_rate=config['frame_rate'],
+                frame_rate=override_params.get('frame_rate', config['frame_rate']),
                 # mot20=config['mot20']
             )
         if tracker_name == 'bytetrackcython':
@@ -695,7 +695,7 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int]):
                 track_thresh=config['track_thresh'],
                 match_thresh=config['match_thresh'],
                 track_buffer=config['track_buffer'],
-                frame_rate=config['frame_rate'],
+                frame_rate=override_params.get('frame_rate', config['frame_rate']),
                 # mot20=config['mot20']
             )
         else:
@@ -960,7 +960,7 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         # Send initial progress update
         if progress_queue is not None:
             progress_queue.put((f'cuda:{process_id}', {
-                'description': video_path[:-15],
+                'description': video_path[-15:],
                 'completed': 0,
                 'total': frame_count
             }))
