@@ -1100,7 +1100,8 @@ def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
 
         while True:
             val = command_queue.get()
-            if val is None: break
+            if val is None:
+                break
             progress_id, kwargs = val
             # if kwargs.get('remove', False):
             #     p.remove_task(bars[progress_id])
@@ -1365,10 +1366,10 @@ def load_tradeoff_data(dataset: str):
     # Construct paths to CSV files created by p090_tradeoff_compute.py
     tradeoff_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
 
-    tradeoff_path = os.path.join(tradeoff_dir, f'tradeoff.csv')
-    tradeoff_combined_path = os.path.join(tradeoff_dir, f'tradeoff_combined.csv')
-    naive_path = os.path.join(tradeoff_dir, f'naive.csv')
-    naive_combined_path = os.path.join(tradeoff_dir, f'naive_combined.csv')
+    tradeoff_path = os.path.join(tradeoff_dir, 'tradeoff.csv')
+    tradeoff_combined_path = os.path.join(tradeoff_dir, 'tradeoff_combined.csv')
+    naive_path = os.path.join(tradeoff_dir, 'naive.csv')
+    naive_combined_path = os.path.join(tradeoff_dir, 'naive_combined.csv')
 
     # Check if CSV files exist
     assert os.path.exists(tradeoff_path), \
