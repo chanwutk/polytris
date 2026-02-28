@@ -1,23 +1,25 @@
 EXEC:
   DATASETS:
-    - caldot1-y11
-    - caldot2-y11
+    # - caldot1-y11
+    # - caldot2-y11
     - caldot1-y05
     - caldot2-y05
     - jnc0
     - jnc2
     - jnc6
     - jnc7
-    - caldot1
-    - caldot2
+    # - caldot1
+    # - caldot2
     # - ams
+    - ams-y05
+    # - ams-y11
   VIDEO_SETS:
     - valid
     - test
   CLASSIFIERS:
     # - YoloN
     - ShuffleNet05
-    - MobileNetS
+    # - MobileNetS
     - Perfect
   TILE_SIZES:
     - 60
@@ -29,21 +31,28 @@ EXEC:
     - bl
     # - br
     - square
+  CANVAS_SCALE:
+    - 1
+    # - 1.25
+    # - 1.5
   TRACKERS:
-    - sortcython
+    # - sortcython
     - ocsortcython
     - bytetrackcython
   SAMPLE_RATES:
     - 1
     - 2
     - 4
-    - 8
-    - 16
+    # - 8
+    # - 16
 
 DATA:
   SOURCE_DIR: /polyis-data/sources
   DATASETS_DIR: /polyis-data/datasets
   CACHE_DIR: /polyis-cache/
+  EXCLUDE_AREA:
+    ams: /polyis/data/exclude/ams.xml
+  OTIF_DATASET: /otif-dataset/dataset
 
 OPS:
   preprocess_dataset:
