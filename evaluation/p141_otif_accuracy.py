@@ -18,7 +18,7 @@ import trackeval
 from trackeval.metrics import HOTA, Count
 
 from polyis.trackeval.dataset import Dataset
-from polyis.utilities import get_config
+from polyis.utilities import dataset_root_name, get_config
 
 
 config = get_config()
@@ -103,7 +103,9 @@ def find_sota_tracking_results(cache_dir: str, dataset: str, system: str) -> tup
 
             # Construct paths to tracking and groundtruth files
             tracking_path = os.path.join(param_path, 'tracking.jsonl')
-            groundtruth_path = os.path.join(cache_dir, dataset, 'execution', video_filename, '003_groundtruth', 'tracking.jsonl')
+            # Resolve to root dataset name (e.g., caldot1-y05 -> caldot1) for GT path
+            gt_dataset = dataset_root_name(dataset)
+            groundtruth_path = os.path.join(cache_dir, gt_dataset, 'execution', video_filename, '003_groundtruth', 'tracking.jsonl')
 
             # Verify both tracking results and groundtruth exist
             assert os.path.exists(tracking_path), f"Tracking path {tracking_path} does not exist"
@@ -328,7 +330,9 @@ def main(args):
             # Copy groundtruth files to SOTA directory structure (before parallel execution to avoid race conditions)
             # TrackEval expects: {input_dir}/{video}/003_groundtruth/tracking.jsonl
             sota_dir = os.path.join(CACHE_DIR, 'SOTA', system, dataset)
-            execution_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+            # Resolve to root dataset name (e.g., caldot1-y05 -> caldot1) for GT path
+            gt_dataset = dataset_root_name(dataset)
+            execution_dir = os.path.join(CACHE_DIR, gt_dataset, 'execution')
             for video_file in videos:
                 # Construct paths for this video
                 groundtruth_source = os.path.join(execution_dir, video_file, '003_groundtruth', 'tracking.jsonl')
