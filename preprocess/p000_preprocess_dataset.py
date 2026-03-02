@@ -12,8 +12,6 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-import yaml
-
 from polyis.utilities import (
     ProgressBar,
     build_b3d_mask_and_crop,
@@ -222,26 +220,12 @@ def process_caldot_video(video_file: str, videodir: str, outputdir: str,
 
     os.makedirs(outputdir, exist_ok=True)
 
-    # Load detector config from detectors.yaml to get resolution
-    with open('configs/detectors.yaml', 'r') as f:
-        detector_configs = yaml.safe_load(f)
-
-    dataset_mapping = detector_configs['dataset_name_mapping']
-    dataset_detector_mapping = detector_configs['dataset_detector_mapping']
-
-    # Map dataset name to canonical name
-    canonical_dataset = dataset_mapping[dataset]
-    detector_info = dataset_detector_mapping[canonical_dataset]
-
-    # Get width and height from detector config, with fallback to defaults
-    width = detector_info['width']
-    height = detector_info['height']
-
+    # Convert to target FPS using PTS-based rounding (default "near") and set square pixel aspect ratio
     cmd = [
         'ffmpeg', '-y',
         "-hide_banner", "-loglevel", "warning", "-threads", "4",
         '-i', video_path,
-        "-vf", f'scale={width}:{height},setsar=1,fps={OUTPUT_FPS}',
+        "-vf", f'setsar=1,fps={OUTPUT_FPS}',
         '-c:v', 'libx264',
         '-an',
         os.path.join(outputdir, video_file)

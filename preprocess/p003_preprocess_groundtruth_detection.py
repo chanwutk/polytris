@@ -164,6 +164,7 @@ def apply_include_exclude_masks(
 
 
 def get_frame_count(video_path: str) -> int:
+    """Return frame count for the given video."""
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f'Could not open video {video_path}'
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -207,6 +208,7 @@ def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_qu
     output_dir = os.path.dirname(output_path)
     os.makedirs(output_dir, exist_ok=True)
 
+    # Read preprocessed video frame count
     dataset_video_path = os.path.join(DATASETS_DIR, dataset, video_file)
     frame_count = get_frame_count(dataset_video_path)
 
@@ -234,11 +236,17 @@ def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_qu
                 if cls != 'car':
                     continue
 
+                # Extract GT detection coordinates
+                left = float(obj['left'])
+                top = float(obj['top'])
+                right = float(obj['right'])
+                bottom = float(obj['bottom'])
+
                 processed = apply_include_exclude_masks(
-                    left=float(obj['left']),
-                    top=float(obj['top']),
-                    right=float(obj['right']),
-                    bottom=float(obj['bottom']),
+                    left=left,
+                    top=top,
+                    right=right,
+                    bottom=bottom,
                     score=float(obj['score']),
                     include_rect=include_rect,
                     exclude_polygon_xml=exclude_polygon_xml,

@@ -89,13 +89,13 @@ def transform_tracking_json(input_json_path: str, output_jsonl_path: str) -> int
             top = detection['top']
             right = detection['right']
             bottom = detection['bottom']
-            
+
             # Validate required fields
             if track_id is None or left is None or top is None or right is None or bottom is None:
                 raise ValueError(f"Missing required fields in detection: {detection}")
-            
+
             # frame_detection['tracks'].append([int(track_id), float(left), float(top), float(right), float(bottom)])
-            register_tracked_detections([(float(left), float(top), float(right), float(bottom), int(track_id))],
+            register_tracked_detections([(left, top, right, bottom, int(track_id))],
                                         frame_idx // sample_rate, frame_tracks, trajectories)
         frame_detections.append(frame_detection)
     
