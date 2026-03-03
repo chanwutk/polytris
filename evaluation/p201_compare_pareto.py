@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import STR_NA, load_all_datasets_tradeoff_data, get_config
+from polyis.utilities import load_all_datasets_tradeoff_data, get_config
 from evaluation.utilities import ColorScheme
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
@@ -31,53 +31,11 @@ TRACKERS = config['EXEC']['TRACKERS']
 # Define the chart size multiplier for all rendered comparison charts.
 CHART_SIZE_SCALE = 5
 
-# Define fixed classifier-to-shape categories for deterministic chart encoding.
-CLASSIFIER_SHAPE_DOMAIN = ['MobileNetS', 'ShuffleNet05', 'Baseline/NA', 'Other']
+# Define fixed system-to-color categories for deterministic chart encoding.
+SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
 
-# Define the marker glyph for each classifier shape category.
-CLASSIFIER_SHAPE_RANGE = ['triangle-up', 'diamond', 'circle', 'square']
-
-# Define fixed canvas-scale-to-color categories for deterministic chart encoding.
-# Scale keys follow the s{percent} convention; non-Polytris systems map to 'Baseline/NA'.
-CANVAS_SCALE_COLOR_DOMAIN = ['s100', 's125', 's150', 'Baseline/NA']
-
-# Define the color for each canvas scale category.
-CANVAS_SCALE_COLOR_RANGE = ColorScheme.CarbonDark[:len(CANVAS_SCALE_COLOR_DOMAIN)]
-
-
-def add_classifier_shape_key(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Add a normalized classifier shape key for Pareto point encoding.
-
-    Args:
-        df: Input DataFrame with 'system' and 'classifier' columns.
-
-    Returns:
-        pd.DataFrame: Copy of input DataFrame with classifier_shape_key column added.
-    """
-    # Work on a copy to keep caller-side DataFrame mutations explicit.
-    df_with_shape = df.copy()
-
-    # Normalize classifier values to strings and replace nulls with STR_NA.
-    classifier_values = df_with_shape['classifier'].fillna(STR_NA).astype(str)
-
-    # Mark baseline rows: non-Polytris systems or NA-like classifier labels.
-    baseline_rows = (
-        (df_with_shape['system'] != 'Polytris')
-        | classifier_values.isin({STR_NA, 'Groundtruth', 'Naive', 'nan', 'NaN'})
-    )
-
-    # Assign baseline label first, then keep explicit classifier labels for Polytris rows.
-    classifier_shape_key = classifier_values.where(~baseline_rows, 'Baseline/NA')
-
-    # Collapse unknown classifier labels into a stable fallback category.
-    known_shape_labels = {'MobileNetS', 'ShuffleNet05', 'Baseline/NA'}
-    df_with_shape['classifier_shape_key'] = classifier_shape_key.where(
-        classifier_shape_key.isin(known_shape_labels),
-        'Other'
-    )
-
-    return df_with_shape
+# Define the color for each system category.
+SYSTEM_COLOR_RANGE = ColorScheme.CarbonDark[:len(SYSTEM_COLOR_DOMAIN)]
 
 
 def val_gte(val: float, best_val: float) -> bool:
@@ -588,23 +546,10 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     if df_clean.empty:
         return alt.Chart().mark_text().encode(text=alt.value('No data available'))
 
-    # Define consistent color scale for canvas scale categories.
+    # Define consistent color scale for systems.
     color_scale = alt.Scale(
-        domain=CANVAS_SCALE_COLOR_DOMAIN,
-        range=CANVAS_SCALE_COLOR_RANGE
-    )
-
-    # Add normalized classifier shape labels for deterministic marker encoding.
-    df_clean = add_classifier_shape_key(df_clean)
-
-    # Add canvas_scale color key for color encoding by scale.
-    # Ensure canvas_scale column exists with default 1.0.
-    if 'canvas_scale' not in df_clean.columns:
-        df_clean['canvas_scale'] = 1.0
-    # For Polytris rows, label by scale percent; for other systems, use 'Baseline/NA'.
-    df_clean['canvas_scale_key'] = df_clean.apply(
-        lambda r: f"s{int(r['canvas_scale'] * 100)}" if r.get('system') == 'Polytris' else 'Baseline/NA',
-        axis=1
+        domain=SYSTEM_COLOR_DOMAIN,
+        range=SYSTEM_COLOR_RANGE
     )
 
     # Base chart for Pareto fronts (with lines)
@@ -618,20 +563,15 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q', title=f'{accuracy_col_name} Score',
                 scale=alt.Scale(domain=[0, 1])),
-        color=alt.Color('canvas_scale_key:N', title='Canvas Scale', scale=color_scale),
-        detail=['system:N', 'classifier_shape_key:N', 'canvas_scale_key:N']
+        color=alt.Color('system:N', title='System', scale=color_scale),
+        detail=['system:N', 'classifier:N', 'canvas_scale:N']
     )
 
     # Add points for Pareto fronts (with tooltip for interactivity)
     points_pareto = base_pareto.mark_point(size=50, filled=True).encode(
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q'),
-        color=alt.Color('canvas_scale_key:N', title='Canvas Scale', scale=color_scale),
-        shape=alt.Shape(
-            'classifier_shape_key:N',
-            title='Classifier',
-            scale=alt.Scale(domain=CLASSIFIER_SHAPE_DOMAIN, range=CLASSIFIER_SHAPE_RANGE)
-        ),
+        color=alt.Color('system:N', title='System', scale=color_scale),
         tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker', time_col, accuracy_col]
     )
 
