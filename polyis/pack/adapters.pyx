@@ -163,14 +163,21 @@ def group_tiles_all(cnp.uint8_t[:, :, :] bitmaps, int tilepadding_mode) -> tuple
         bitmap_input = bitmaps[i, :, :]
         polyomino_array = <PolyominoArray*><cnp.uint64_t>group_tiles(bitmap_input, tilepadding_mode)
 
+        frame_lengths = []
         for j in range(polyomino_array.size):
             mask = polyomino_array.data[j].mask
-            lengths[i].append(mask.size)
+            frame_lengths.append(mask.size)
 
+            offset_y = polyomino_array.data[j].offset_y
+            offset_x = polyomino_array.data[j].offset_x
             for k in range(mask.size):
-                tile_i = mask.data[k].y  # type: ignore
-                tile_j = mask.data[k].x  # type: ignore
+                tile_i = mask.data[k].y + offset_y  # type: ignore
+                tile_j = mask.data[k].x + offset_x  # type: ignore
                 tile_to_polyomino_id[i, tile_i, tile_j] = j
+
+        lengths.append(frame_lengths)
+        PolyominoArray_cleanup(polyomino_array)
+        free(<void*>polyomino_array)
 
     return tile_to_polyomino_id, lengths
 
