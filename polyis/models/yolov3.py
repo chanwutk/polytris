@@ -33,7 +33,9 @@ class YOLOv3Detector:
     """YOLOv3 detector wrapper for consistent interface with other detectors."""
     
     def __init__(self, net, remaining_net, class_names: list, width: int, height: int, 
-                 batch_size: int = 1, threshold: float = 0.25, nms_threshold: float = 0.45):
+                 batch_size: int = 1, threshold: float = 0.25, nms_threshold: float = 0.45,
+                 detector_label: str = DEFAULT_DETECTOR_LABEL,
+                 target_class_index: int = 0):
         self.net = net
         # self.remaining_net = remaining_net
         self.class_names = class_names
@@ -42,6 +44,42 @@ class YOLOv3Detector:
         self.batch_size = batch_size
         self.threshold = threshold
         self.nms_threshold = nms_threshold
+        self.detector_label = detector_label
+        self.target_class_index = target_class_index
+
+
+def normalize_detector_label(detector_label: str) -> str:
+    # Keep a mutable copy for normalization.
+    normalized_label = detector_label
+    # Collapse caldot variants to the shared detector label.
+    if normalized_label.startswith('caldot'):
+        normalized_label = 'caldot'
+    # Map legacy names to the generic COCO detector label.
+    if normalized_label in ['amsterdam', 'jackson']:
+        normalized_label = 'generic'
+    # Return normalized detector label.
+    return normalized_label
+
+
+def decode_class_name(class_name: str | bytes) -> str:
+    # Decode bytes labels returned by darknet bindings when needed.
+    if isinstance(class_name, bytes):
+        return class_name.decode('utf-8').strip().lower()
+    # Normalize string labels for stable class matching.
+    return class_name.strip().lower()
+
+
+def resolve_target_class_index(class_names: list[str | bytes]) -> int:
+    # Use class index 0 directly for single-class detectors.
+    if len(class_names) <= 1:
+        return 0
+    # Normalize class names once during detector creation.
+    normalized_class_names = [decode_class_name(name) for name in class_names]
+    # Always choose the car class index when available.
+    if 'car' in normalized_class_names:
+        return normalized_class_names.index('car')
+    # Keep legacy class index 0 fallback when car label is unavailable.
+    return 0
 
 
 def load_model(
@@ -58,15 +96,9 @@ def load_model(
     """
     # Set defaults
     data_root = data_root or DEFAULT_DATA_ROOT
-    detector_label = detector_label or DEFAULT_DETECTOR_LABEL
+    detector_label = normalize_detector_label(detector_label or DEFAULT_DETECTOR_LABEL)
     width = width or DEFAULT_WIDTH
     height = height or DEFAULT_HEIGHT
-    
-    # Normalize detector label
-    if detector_label.startswith('caldot'):
-        detector_label = 'caldot'
-    if detector_label in ['amsterdam', 'jackson']:
-        detector_label = 'generic'
     
     detector_label_path = Path(data_root) / 'yolov3' / detector_label
     
@@ -122,13 +154,17 @@ def load_model(
         temp_files.append(tmp_obj_names)
         
         # Create temporary obj.data file
+        num_classes = None
         with open(meta_path, 'r') as f:
             tmp_meta_buf = ''
             for line in f.readlines():
                 line = line.strip()
-                if line.startswith('names='):
+                if line.startswith('names=') or line.startswith('names ='):
                     line = f'names={tmp_obj_names}'
+                if line.startswith('classes=') or line.startswith('classes ='):
+                    num_classes = int(line.split('=')[1].strip())
                 tmp_meta_buf += line + "\n"
+        assert num_classes is not None, "classes= entry not found in obj.data"
         
         tmp_obj_meta = tempfile.mktemp(suffix='.data')
         with open(tmp_obj_meta, 'w') as f:
@@ -153,8 +189,8 @@ def load_model(
             os.dup2(old_stderr, 2)
             os.close(devnull)
         
-        if len(class_names) != 1:
-            raise ValueError(f'Expected 1 class, but got {len(class_names)}')
+        if len(class_names) != num_classes:
+            raise ValueError(f'Expected {num_classes} classes, but got {len(class_names)}')
         
         return net, class_names
         
@@ -202,12 +238,14 @@ def get_detector(
 
     # Set defaults
     data_root = data_root or DEFAULT_DATA_ROOT
-    detector_label = detector_label or DEFAULT_DETECTOR_LABEL
+    detector_label = normalize_detector_label(detector_label or DEFAULT_DETECTOR_LABEL)
     width = width or DEFAULT_WIDTH
     height = height or DEFAULT_HEIGHT
 
     net, class_names = load_model(gpu_id, config_path, model_path, data_root,
                                   detector_label, width, height, batch_size)
+    # Resolve the single class index to emit for this detector.
+    target_class_index = resolve_target_class_index(class_names)
     # if num_images % batch_size != 0:
     #     r_net, r_class_names = load_model(gpu_id, config_path, model_path, data_root,
     #                                       detector_label, width, height, num_images % batch_size)
@@ -224,7 +262,9 @@ def get_detector(
         height=height,
         batch_size=batch_size,
         threshold=threshold or DEFAULT_THRESHOLD,
-        nms_threshold=nms_threshold or DEFAULT_NMS_THRESHOLD
+        nms_threshold=nms_threshold or DEFAULT_NMS_THRESHOLD,
+        detector_label=detector_label,
+        target_class_index=target_class_index,
     )
 
 
@@ -271,18 +311,21 @@ def detect(
     raw_dlist = raw_detections[0].dets
     darknet.do_nms_obj(raw_dlist, num, len(detector.class_names), detector.nms_threshold)
     # raw_dlist = darknet.remove_negatives(raw_dlist, detector.class_names, num)
+    # Read only the configured class index for this detector.
+    target_class_index = detector.target_class_index
     
     predictions: list[tuple[float, float, float, float, float]] = []
     for i in range(num):
         det = raw_dlist[i]
-        if det.prob[0] > 0:
+        score = float(det.prob[target_class_index])
+        if score > 0:
             bbox = det.bbox
             cx, cy, w, h = bbox.x, bbox.y, bbox.w, bbox.h
             if int(w) == 0 or int(h) == 0:
-                print(f"Zero detected ({det.prob[0]}): {cx}, {cy}, {w}, {h}")
+                print(f"Zero detected ({score}): {cx}, {cy}, {w}, {h}")
                 continue
             predictions.append((int(cx-w/2), int(cy-h/2), int(cx+w/2),
-                                int(cy+h/2), det.prob[0]))
+                                int(cy+h/2), score))
     # predictions = []
     # for _cls, score, (cx, cy, w, h) in raw_dlist:
     #     predictions.append((int(cx-w/2), int(cy-h/2), int(cx+w/2),
@@ -347,6 +390,8 @@ def detect_batch(
     raw_detections = darknet.network_predict_batch(
         net, darknet_images, detector.batch_size, detector.width,
         detector.height, threshold, 0.5, None, 0, 0)
+    # Read only the configured class index for this detector.
+    target_class_index = detector.target_class_index
 
     all_detections: list[polyis.dtypes.DetArray] = []
     for i in range(len(images)):
@@ -359,14 +404,15 @@ def detect_batch(
         predictions: list[tuple[float, float, float, float, float]] = []
         for j in range(num):
             det = raw_dlist[j]
-            if det.prob[0] > 0:
+            score = float(det.prob[target_class_index])
+            if score > 0:
                 bbox = det.bbox
                 cx, cy, w, h = bbox.x, bbox.y, bbox.w, bbox.h
                 if int(w) == 0 or int(h) == 0:
-                    print(f"Zero detected ({det.prob[0]}): {cx}, {cy}, {w}, {h}")
+                    print(f"Zero detected ({score}): {cx}, {cy}, {w}, {h}")
                     continue
                 predictions.append((int(cx-w/2), int(cy-h/2), int(cx+w/2),
-                                    int(cy+h/2), det.prob[0]))
+                                    int(cy+h/2), score))
         
         detections = np.array(predictions) if len(predictions) > 0 else np.empty((0, 5))
 

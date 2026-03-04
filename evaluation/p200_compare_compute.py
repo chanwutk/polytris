@@ -13,6 +13,15 @@ config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
+# Define the chart size multiplier for all rendered tradeoff charts.
+CHART_SIZE_SCALE = 5
+
+# Define fixed system-to-color categories for deterministic chart encoding.
+SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
+
+# Define the color for each system category.
+SYSTEM_COLOR_RANGE = ColorScheme.CarbonDark[:len(SYSTEM_COLOR_DOMAIN)]
+
 
 def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
     """
@@ -180,7 +189,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
     # Update system column: rows with classifier=='Groundtruth' should have system='Groundtruth'
     # This identifies the naive baseline points in our results
     df_combined.loc[df_combined['classifier'] == 'Groundtruth', 'system'] = 'Naive'
-    
+
     # Define mapping of submetrics to their display names and y-axis scales
     # Each main metric maps to a list of (submetric_column, display_name, y_scale_dict) tuples
     submetrics_map = {
@@ -219,9 +228,8 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                 print(f"  Warning: Submetric '{accuracy_col}' has no valid data, skipping")
                 continue
             
-            # Create scatter plot with color by system and shape by tilepadding
-            # Use conditional encoding to handle groundtruth points differently
-            color_scale=alt.Scale(domain=['Polytris', 'OTIF', 'LEAP', 'Naive'], range=ColorScheme.CarbonDark)
+            # Create scatter plot with color encoded by system.
+            color_scale = alt.Scale(domain=SYSTEM_COLOR_DOMAIN, range=SYSTEM_COLOR_RANGE)
             base_point = base_chart.mark_point(
                 fillOpacity=1,
                 stroke=None
@@ -229,28 +237,26 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                 fill=alt.Fill('system:N', title='System', scale=color_scale),
                 size=alt.condition(
                     alt.datum.system == 'Naive',
-                    alt.value(100),  # Larger size for groundtruth
+                    alt.value(100),  # Larger size for naive baseline
                     alt.value(50)   # Normal size for others
                 ),
-                # shape=alt.condition(
-                #     (alt.datum.system == 'Polytris') & (alt.datum.classifier != 'Naive'),
-                #     alt.Shape('classifier:N', title='Polytris\' Classifier', scale=alt.Scale(domain=['MobileNetS', 'ShuffleNet05'], range=['triangle', 'diamond'])),
-                #     alt.value('circle')  # Circle for non-Polytris points (OTIF, Naive)
-                # ),
-                tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'tracker', x_column, accuracy_col]
+                tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker', x_column, accuracy_col]
             )
-            
+
             base_line = base_chart.mark_line(
                 strokeWidth=1.5,
                 strokeOpacity=1
-            ).encode(stroke=alt.Stroke('system:N', title='System', scale=color_scale))
+            ).encode(
+                stroke=alt.Stroke('system:N', title='System', scale=color_scale),
+                detail=alt.Detail('system:N')
+            )
             
             scatter = (base_point + base_line).encode(
                 x=alt.X(f'{x_column}:Q', title=x_title),
                 y=alt.Y(f'{accuracy_col}:Q', title=f'{metric_name} Score', **y_scale),
             ).properties(
-                width=150,
-                height=150
+                width=150 * CHART_SIZE_SCALE,
+                height=150 * CHART_SIZE_SCALE
             )
             
             # Create the combined chart with dataset facets
@@ -313,15 +319,19 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     # Load tradeoff data for all datasets
     combined_df, naive_df = load_all_datasets_tradeoff_data(datasets, system_name='Polytris')
     
-    # Handle backward compatibility: add sample_rate and tracker if missing
+    # Handle backward compatibility: add sample_rate, tracker, and canvas_scale if missing
     if 'sample_rate' not in combined_df.columns:
         combined_df['sample_rate'] = 1
     if 'tracker' not in combined_df.columns:
         combined_df['tracker'] = 'unknown'
+    if 'canvas_scale' not in combined_df.columns:
+        combined_df['canvas_scale'] = 1.0
     if 'sample_rate' not in naive_df.columns:
         naive_df['sample_rate'] = 1
     if 'tracker' not in naive_df.columns:
         naive_df['tracker'] = 'unknown'
+    if 'canvas_scale' not in naive_df.columns:
+        naive_df['canvas_scale'] = 1.0
     
     combined_df['time_mspf'] = combined_df['time'] * 1000 / combined_df['frame_count']
     naive_df['time_mspf'] = naive_df['time'] * 1000 / naive_df['frame_count']

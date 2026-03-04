@@ -157,6 +157,8 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
     sample_rate = _sr if ('sample_rate' in row_dict and _valid_scalar(_sr)) else 1
     _tr = row_dict.get('tracker')
     tracker = _tr if ('tracker' in row_dict and _valid_scalar(_tr)) else None
+    _cs = row_dict.get('canvas_scale')
+    canvas_scale = _cs if ('canvas_scale' in row_dict and _valid_scalar(_cs)) else None
     dataset = row_dict['dataset']
     video = row_dict['video']
     classifier = row_dict['classifier']
@@ -179,6 +181,7 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
     per_op['tilesize'] = tilesize
     per_op['tilepadding'] = tilepadding
     per_op['sample_rate'] = sample_rate
+    per_op['canvas_scale'] = canvas_scale
     per_op['tracker'] = tracker
     total_time = float(per_op['time'].sum())
     overall = {
@@ -189,6 +192,7 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
         'tilesize': tilesize,
         'tilepadding': tilepadding,
         'sample_rate': sample_rate,
+        'canvas_scale': canvas_scale,
         'tracker': tracker,
         'time': total_time,
     }
@@ -251,6 +255,10 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
     trackers = []
     if 'tracker' in query_overall.columns:
         trackers = sorted([t for t in query_overall['tracker'].unique() if t is not None and not pd.isna(t)])
+    # Extract canvas scales, filtering out None/NaN values
+    canvas_scales = []
+    if 'canvas_scale' in query_overall.columns:
+        canvas_scales = sorted([float(cs) for cs in query_overall['canvas_scale'].unique() if cs is not None and not pd.isna(cs)])
     metadata = {
         'dataset': dataset,
         'videos': sorted(query_overall['video'].unique()),
@@ -259,6 +267,7 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
         'tilesizes': sorted(int(ts) for ts in query_overall['tilesize'].unique()),
         'tilepadding_values': sorted(query_overall['tilepadding'].unique()),
         'sample_rates': sorted(int(sr) for sr in query_overall['sample_rate'].unique()) if 'sample_rate' in query_overall.columns else [1],
+        'canvas_scales': canvas_scales,
         'trackers': trackers,
         'index_stages': sorted(index_overall['stage'].unique()),
         'query_stages': sorted(query_overall['stage'].unique()),

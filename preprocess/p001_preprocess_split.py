@@ -5,7 +5,7 @@ import os
 import shutil
 import random
 
-from polyis.utilities import get_config  # Import config loader
+from polyis.utilities import dedupe_datasets_by_root, get_config  # Import config loader
 
 CONFIG = get_config()  # Load global configuration
 DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']  # Resolve datasets directory
@@ -192,10 +192,11 @@ def main(args):
         args: Parsed command line arguments
     """
     
-    print(f"Splitting datasets: {DATASETS}")
+    datasets_to_split = dedupe_datasets_by_root(DATASETS)
+    print(f"Splitting datasets: {datasets_to_split}")
     print(f"Split counts: {args.split} (train={args.train_count}, valid={args.valid_count}, test={args.test_count})")
     
-    for dataset in DATASETS:
+    for dataset in datasets_to_split:
         try:
             split_dataset(args, dataset)
         except Exception as e:

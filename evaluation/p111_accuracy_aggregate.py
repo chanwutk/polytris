@@ -14,11 +14,11 @@ CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
-def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, int, str, str, str]]:
+def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, int, str, float, str, str]]:
     """
-    Find all classifier/tilesize/sample_rate/tilepadding/tracker combinations with saved accuracy results.
+    Find all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations with saved accuracy results.
 
-    Scans the evaluation directory to discover all classifier/tilesize/sample_rate/tilepadding/tracker combinations
+    Scans the evaluation directory to discover all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations
     that have completed accuracy evaluation results available.
 
     Args:
@@ -26,7 +26,7 @@ def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, int
         dataset (str): Dataset name
 
     Returns:
-        list[tuple[str, int, int, str, str, str]]: list of (classifier, tilesize, sample_rate, tilepadding, tracker, dir_name) tuples
+        list[tuple[str, int, int, str, float, str, str]]: list of (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, dir_name) tuples
     """
     # Construct path to evaluation directory for this dataset
     evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_accuracy')
@@ -36,37 +36,30 @@ def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, int
     raw_dir = os.path.join(evaluation_dir, 'raw')
     assert os.path.exists(raw_dir), f"Raw results directory {raw_dir} does not exist"
     
-    # Collect all classifier/tilesize/sample_rate/tilepadding/tracker combinations
-    classifier_tile_combinations: list[tuple[str, int, int, str, str, str]] = []
+    # Collect all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations
+    classifier_tile_combinations: list[tuple[str, int, int, str, float, str, str]] = []
 
-    # Iterate through all classifier-tilesize-sample_rate-tilepadding-tracker directories
-    for classifier_tilesize_samplerate_tilepadding_tracker in os.listdir(raw_dir):
-        # Parse classifier, tile size, sample_rate, tilepadding, and tracker from directory name
-        parts = classifier_tilesize_samplerate_tilepadding_tracker.split('_')
+    # Iterate through all classifier-tilesize-sample_rate-tilepadding-scale-tracker directories
+    for dir_name in os.listdir(raw_dir):
+        # Parse classifier, tile size, sample_rate, tilepadding, scale, and tracker from directory name
+        # Format: classifier_tilesize_samplerate_tilepadding_s{pct}_tracker (6 parts)
+        parts = dir_name.split('_')
         
-        # Support both old format (4 parts) and new format (5+ parts with tracker)
-        if len(parts) == 4:
-            # Old format: classifier_tilesize_samplerate_tilepadding (backward compatibility)
-            classifier, tilesize, sample_rate_str, tilepadding = parts
-            tracker_name = 'unknown'  # Default tracker for old format
-        elif len(parts) >= 5:
-            # New format: classifier_tilesize_samplerate_tilepadding_tracker
-            classifier, tilesize, sample_rate_str, tilepadding = parts[0], parts[1], parts[2], parts[3]
-            # Tracker name may contain underscores, so join all remaining parts
-            tracker_name = '_'.join(parts[4:])
-        else:
-            raise ValueError(f"Expected format 'classifier_tilesize_samplerate_tilepadding' or 'classifier_tilesize_samplerate_tilepadding_tracker', got '{classifier_tilesize_samplerate_tilepadding_tracker}'")
+        assert len(parts) == 6, f"Expected format 'classifier_tilesize_samplerate_tilepadding_s{{pct}}_tracker', got '{dir_name}'"
+        classifier, tilesize, sample_rate_str, tilepadding, scale_str, tracker_name = parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]
         
         ts = int(tilesize)
         sample_rate = int(sample_rate_str)
+        # Extract canvas scale from scale string (e.g., 's100' -> 1.0)
+        canvas_scale = int(scale_str[1:]) / 100.0
         
         # Verify that the required DATASET.json file exists
         # This ensures the evaluation was completed successfully
-        dataset_results_path = os.path.join(raw_dir, classifier_tilesize_samplerate_tilepadding_tracker, 'DATASET.json')
+        dataset_results_path = os.path.join(raw_dir, dir_name, 'DATASET.json')
         assert os.path.exists(dataset_results_path), f"Dataset results path {dataset_results_path} does not exist"
 
         # Add this combination to our list, including the original directory name
-        classifier_tile_combinations.append((classifier, ts, sample_rate, tilepadding, tracker_name, classifier_tilesize_samplerate_tilepadding_tracker))
+        classifier_tile_combinations.append((classifier, ts, sample_rate, tilepadding, canvas_scale, tracker_name, dir_name))
     
     return classifier_tile_combinations
 
@@ -91,6 +84,7 @@ def parse_result(result: dict) -> dict:
         'Tile_Size': result['tilesize'],
         'Tile_Padding': result['tilepadding'],
         'Sample_Rate': result.get('sample_rate', 1),  # Default to 1 for backward compatibility
+        'Canvas_Scale': result.get('canvas_scale', 1.0),  # Default to 1.0 for backward compatibility
         'Tracker': result.get('tracker', 'unknown'),  # Default to 'unknown' for backward compatibility
     }
 
@@ -129,7 +123,7 @@ def load_saved_results(dataset: str, combined: bool = False) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame of parsed evaluation results
     """
-    # Find all classifier/tilesize/sample_rate/tilepadding/tracker combinations with available results
+    # Find all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations with available results
     classifier_tile_combinations = find_saved_results(CACHE_DIR, dataset)
     assert len(classifier_tile_combinations) > 0, f"No saved results found for dataset {dataset}"
 
@@ -138,8 +132,8 @@ def load_saved_results(dataset: str, combined: bool = False) -> pd.DataFrame:
     evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
     raw_dir = os.path.join(evaluation_dir, 'raw')
     
-    # Process each classifier/tilesize/sample_rate/tilepadding/tracker combination
-    for classifier, tilesize, sample_rate, tilepadding, tracker, dir_name in classifier_tile_combinations:
+    # Process each classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combination
+    for classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, dir_name in classifier_tile_combinations:
         # Use the original directory name to handle tracker names with underscores correctly
         combination_dir = os.path.join(raw_dir, dir_name)
         
@@ -219,13 +213,13 @@ def main():
     Main function that orchestrates the accuracy result aggregation process.
     
     This function serves as the entry point for the script. It:
-    1. Finds all classifier/tilesize/sample_rate/tilepadding/tracker combinations with saved accuracy results
+    1. Finds all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations with saved accuracy results
     2. Loads raw JSON result files and parses them into DataFrames
     3. Saves aggregated results as CSV files for further analysis
 
     Note:
         - The script expects accuracy results from p110_accuracy_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_{tracker}/
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_percent}_{tracker}/
           ├── DATASET.json (combined results)
           ├── {video}.json (individual video results)
           └── LOG.txt (evaluation logs)
