@@ -3,7 +3,8 @@
 ## Executing commands
 - Execute commands inside the container:
   - This project is developed inside a docker container.
-  - Any command should be executed using `docker exec polyis` if this environment is not already inside a container.
+  - Any scripts in the repository should be executed using `docker exec polyis` if this environment is not already inside a container.
+    - Note: read and write command may be executed directly without `docker exec polyis`.
 
 ## Execution Pipeline (scripts/)
 - Primary entrypoint: scripts in `scripts/` run the full pipeline; numeric prefixes define order.

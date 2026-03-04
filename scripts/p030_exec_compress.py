@@ -15,7 +15,7 @@ from functools import partial
 import torch
 
 from polyis import dtypes
-from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding
+from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding, build_param_str, scale_to_percent
 from polyis.pack.group_tiles import group_tiles
 from polyis.pack.pack import pack
 
@@ -28,6 +28,7 @@ CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 DATASETS = config['EXEC']['DATASETS']
 SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
+CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
 
 
 class PackMode(IntEnum):
@@ -52,6 +53,209 @@ OUTPUT_DIR_MAP = {
     PackMode.First_Fit: '035_compressed_frames',
 }
 
+OffsetLookup = tuple[tuple[int, int], tuple[int, int], int]
+
+
+def _compute_polyomino_tile_boundaries(
+    oy: int,
+    ox: int,
+    py: int,
+    px: int,
+    i_coords: np.ndarray,
+    j_coords: np.ndarray,
+    src_grid_y_starts: np.ndarray,
+    src_grid_y_ends: np.ndarray,
+    src_grid_x_starts: np.ndarray,
+    src_grid_x_ends: np.ndarray,
+    dst_grid_y_starts: np.ndarray,
+    dst_grid_y_ends: np.ndarray,
+    dst_grid_x_starts: np.ndarray,
+    dst_grid_x_ends: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    # Compute source row boundaries via lookup to avoid repeated integer arithmetic.
+    sy_starts = src_grid_y_starts[oy + i_coords]
+    # Compute source column boundaries via lookup to avoid repeated integer arithmetic.
+    sx_starts = src_grid_x_starts[ox + j_coords]
+    # Compute source row end boundaries via lookup to avoid repeated integer arithmetic.
+    sy_ends = src_grid_y_ends[oy + i_coords]
+    # Compute source column end boundaries via lookup to avoid repeated integer arithmetic.
+    sx_ends = src_grid_x_ends[ox + j_coords]
+    # Compute destination row boundaries via lookup to avoid repeated integer arithmetic.
+    dy_starts = dst_grid_y_starts[py + i_coords]
+    # Compute destination column boundaries via lookup to avoid repeated integer arithmetic.
+    dx_starts = dst_grid_x_starts[px + j_coords]
+    # Compute destination row end boundaries via lookup to avoid repeated integer arithmetic.
+    dy_ends = dst_grid_y_ends[py + i_coords]
+    # Compute destination column end boundaries via lookup to avoid repeated integer arithmetic.
+    dx_ends = dst_grid_x_ends[px + j_coords]
+    return sy_starts, sx_starts, sy_ends, sx_ends, dy_starts, dx_starts, dy_ends, dx_ends
+
+
+def _copy_same_shape_tiles(
+    canvas: np.ndarray,
+    frame: np.ndarray,
+    sy_starts: np.ndarray,
+    sx_starts: np.ndarray,
+    sy_ends: np.ndarray,
+    sx_ends: np.ndarray,
+    dy_starts: np.ndarray,
+    dx_starts: np.ndarray,
+    dy_ends: np.ndarray,
+    dx_ends: np.ndarray,
+    same_shape: np.ndarray,
+):
+    # Iterate over tile indices where source and destination shapes already match.
+    for idx in np.flatnonzero(same_shape):
+        # Copy a same-size source tile directly into the destination tile.
+        canvas[dy_starts[idx]:dy_ends[idx], dx_starts[idx]:dx_ends[idx]] = frame[sy_starts[idx]:sy_ends[idx], sx_starts[idx]:sx_ends[idx]]
+
+
+def _copy_mismatched_tiles_with_edge_repeat(
+    canvas: np.ndarray,
+    frame: np.ndarray,
+    sy_starts: np.ndarray,
+    sx_starts: np.ndarray,
+    sy_ends: np.ndarray,
+    sx_ends: np.ndarray,
+    dy_starts: np.ndarray,
+    dx_starts: np.ndarray,
+    dy_ends: np.ndarray,
+    dx_ends: np.ndarray,
+    src_hs: np.ndarray,
+    src_ws: np.ndarray,
+    dst_hs: np.ndarray,
+    dst_ws: np.ndarray,
+    same_shape: np.ndarray,
+):
+    # Iterate over tile indices where source and destination shapes are different.
+    for idx in np.flatnonzero(~same_shape):
+        # Read source row bounds for this tile.
+        sy_start = sy_starts[idx]
+        # Read source row end for this tile.
+        sy_end = sy_ends[idx]
+        # Read source column bounds for this tile.
+        sx_start = sx_starts[idx]
+        # Read source column end for this tile.
+        sx_end = sx_ends[idx]
+        # Read destination row bounds for this tile.
+        dy_start = dy_starts[idx]
+        # Read destination row end for this tile.
+        dy_end = dy_ends[idx]
+        # Read destination column bounds for this tile.
+        dx_start = dx_starts[idx]
+        # Read destination column end for this tile.
+        dx_end = dx_ends[idx]
+
+        # Read source tile height for this tile.
+        src_h = src_hs[idx]
+        # Read source tile width for this tile.
+        src_w = src_ws[idx]
+        # Read destination tile height for this tile.
+        dst_h = dst_hs[idx]
+        # Read destination tile width for this tile.
+        dst_w = dst_ws[idx]
+
+        # Skip degenerate tiles to avoid invalid indexing.
+        if src_h <= 0 or src_w <= 0 or dst_h <= 0 or dst_w <= 0:
+            continue
+
+        # Compute copied height as the overlap between source and destination heights.
+        copy_h = min(src_h, dst_h)
+        # Compute copied width as the overlap between source and destination widths.
+        copy_w = min(src_w, dst_w)
+
+        # Create a destination tile view for in-place writes.
+        dst_tile = canvas[dy_start:dy_end, dx_start:dx_end]
+        # Create a source tile view for reading source pixels.
+        src_tile = frame[sy_start:sy_end, sx_start:sx_end]
+
+        # Copy the overlapping source area into the destination tile.
+        dst_tile[:copy_h, :copy_w] = src_tile[:copy_h, :copy_w]
+
+        # Extend the last copied row downward when destination height is larger.
+        if dst_h > copy_h:
+            dst_tile[copy_h:dst_h, :copy_w] = src_tile[copy_h - 1:copy_h, :copy_w]
+
+        # Extend the last copied column rightward when destination width is larger.
+        if dst_w > copy_w:
+            dst_tile[:, copy_w:dst_w] = dst_tile[:, copy_w - 1:copy_w]
+
+
+def _copy_polyomino_tiles_to_canvas(
+    canvas: np.ndarray,
+    frame: np.ndarray,
+    sy_starts: np.ndarray,
+    sx_starts: np.ndarray,
+    sy_ends: np.ndarray,
+    sx_ends: np.ndarray,
+    dy_starts: np.ndarray,
+    dx_starts: np.ndarray,
+    dy_ends: np.ndarray,
+    dx_ends: np.ndarray,
+):
+    # Precompute destination tile heights.
+    dst_hs = (dy_ends - dy_starts)
+    # Precompute destination tile widths.
+    dst_ws = (dx_ends - dx_starts)
+    # Precompute source tile heights.
+    src_hs = (sy_ends - sy_starts)
+    # Precompute source tile widths.
+    src_ws = (sx_ends - sx_starts)
+    # Identify tiles where source and destination shapes already match.
+    same_shape = (src_hs == dst_hs) & (src_ws == dst_ws)
+
+    # Copy same-shape tiles with direct slicing.
+    _copy_same_shape_tiles(
+        canvas=canvas,
+        frame=frame,
+        sy_starts=sy_starts,
+        sx_starts=sx_starts,
+        sy_ends=sy_ends,
+        sx_ends=sx_ends,
+        dy_starts=dy_starts,
+        dx_starts=dx_starts,
+        dy_ends=dy_ends,
+        dx_ends=dx_ends,
+        same_shape=same_shape,
+    )
+
+    # Copy mismatched tiles with in-place edge-repeat behavior.
+    _copy_mismatched_tiles_with_edge_repeat(
+        canvas=canvas,
+        frame=frame,
+        sy_starts=sy_starts,
+        sx_starts=sx_starts,
+        sy_ends=sy_ends,
+        sx_ends=sx_ends,
+        dy_starts=dy_starts,
+        dx_starts=dx_starts,
+        dy_ends=dy_ends,
+        dx_ends=dx_ends,
+        src_hs=src_hs,
+        src_ws=src_ws,
+        dst_hs=dst_hs,
+        dst_ws=dst_ws,
+        same_shape=same_shape,
+    )
+
+
+def _update_polyomino_metadata(
+    index_map: dtypes.IndexMap,
+    offset_lookup: list[OffsetLookup],
+    gid: int,
+    py: int,
+    px: int,
+    oy: int,
+    ox: int,
+    frame_idx: int,
+    i_coords: np.ndarray,
+    j_coords: np.ndarray,
+):
+    # Write the group id into index_map positions covered by this polyomino.
+    index_map[py + i_coords, px + j_coords] = gid
+    # Append the mapping tuple for decompression lookup.
+    offset_lookup.append(((py, px), (oy, ox), frame_idx))
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute compression of video tiles into images based on classification results')
@@ -64,9 +268,6 @@ def parse_args():
     parser.add_argument('--train', action='store_true', help='Process train videoset')
     parser.add_argument('--valid', action='store_true', help='Process valid videoset')
     return parser.parse_args()
-
-
-OffsetLookup = tuple[tuple[int, int], tuple[int, int], int]
 
 
 def save_packed_image(canvas: dtypes.NPImage, index_map: dtypes.IndexMap, offset_lookup: list[OffsetLookup],
@@ -110,8 +311,8 @@ Collage = list[PolyominoPosition]
 
 
 def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
-             sample_rate: int, tilepadding: TilePadding, threshold: float, mode: PackMode,
-             gpu_id: int, command_queue: mp.Queue):
+             sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+             threshold: float, mode: PackMode, gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video by batch processing all sampled frames at once using pack_all.
 
@@ -123,6 +324,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         tilesize: Tile size to use
         tilepadding: Whether to apply padding to classification results
         sample_rate: Sample rate for frame sampling (1 = all frames)
+        canvas_scale: Canvas grid scale factor relative to the source classification grid
         threshold: Threshold for classification probability
         gpu_id: GPU ID to use for processing
         command_queue: Queue for progress updates
@@ -137,7 +339,8 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
 
     # Create output directory for compression results
     output_dir_name = OUTPUT_DIR_MAP[mode]
-    output_dir = os.path.join(cache_video_dir, output_dir_name, f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}')
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    output_dir = os.path.join(cache_video_dir, output_dir_name, param_str)
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -151,7 +354,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     os.makedirs(offset_lookup_dir)
 
     # Send initial progress update
-    description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]}"
+    description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]} s{scale_to_percent(canvas_scale)}"
     
     # Open video to get dimensions
     cap = cv2.VideoCapture(video_path)
@@ -164,9 +367,15 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     # Note: results contains only sampled frames (frame_idx % sample_rate == 0)
     # The total video frame count may be larger than len(results)
 
-    # Calculate grid dimensions
-    grid_height = height // tilesize
-    grid_width = width // tilesize
+    # Calculate source grid dimensions from the original video using fixed tile size.
+    src_grid_height = height // tilesize
+    src_grid_width = width // tilesize
+    # Calculate destination grid dimensions by scaling source grid tile counts.
+    dst_grid_height = max(1, int(round(src_grid_height * canvas_scale)))
+    dst_grid_width = max(1, int(round(src_grid_width * canvas_scale)))
+    # Calculate canvas pixel dimensions from scaled grid dimensions and fixed tile size.
+    canvas_height = dst_grid_height * tilesize
+    canvas_width = dst_grid_width * tilesize
 
     # Step 1: Group tiles for all frames to get polyominoes
     timing_data = []
@@ -207,7 +416,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         # if frame_idx % max(1, len(results) // 100) == 0:
         #     command_queue.put((device, {'description': description + ' grouping', 'completed': frame_idx}))
 
-    # Step 2: Pack all polyominoes in batches (10 equal parts)
+    # Step 2: Pack all polyominoes in batches
     num_batches = 1
     batch_size = len(polyominoes_stacks) // num_batches
     # Handle case where len(polyominoes_stacks) < num_batches
@@ -236,7 +445,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
 
         # Pack this batch
         batch_start = (time.time_ns() / 1e6)
-        batch_collages_ = pack(batch_polyominoes, grid_height, grid_width, int(mode))
+        batch_collages_ = pack(batch_polyominoes, dst_grid_height, dst_grid_width, int(mode))
         batch_pack_time = (time.time_ns() / 1e6) - batch_start
         total_pack_time += batch_pack_time
 
@@ -303,6 +512,32 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     # Step 4: Render and save each collage
     command_queue.put((device, {'description': description + ' rendering', 'completed': 0, 'total': len(collages)}))
 
+    # Build source grid row indices to precompute source tile pixel boundaries.
+    src_grid_rows = np.arange(src_grid_height, dtype=np.int32)
+    # Build source grid column indices to precompute source tile pixel boundaries.
+    src_grid_cols = np.arange(src_grid_width, dtype=np.int32)
+    # Precompute source row starts as exact fixed-size tile boundaries.
+    src_grid_y_starts = src_grid_rows * tilesize
+    # Precompute source row ends as exact fixed-size tile boundaries.
+    src_grid_y_ends = src_grid_y_starts + tilesize
+    # Precompute source column starts as exact fixed-size tile boundaries.
+    src_grid_x_starts = src_grid_cols * tilesize
+    # Precompute source column ends as exact fixed-size tile boundaries.
+    src_grid_x_ends = src_grid_x_starts + tilesize
+
+    # Build destination grid row indices to precompute destination tile pixel boundaries.
+    dst_grid_rows = np.arange(dst_grid_height, dtype=np.int32)
+    # Build destination grid column indices to precompute destination tile pixel boundaries.
+    dst_grid_cols = np.arange(dst_grid_width, dtype=np.int32)
+    # Precompute destination row starts as exact fixed-size tile boundaries.
+    dst_grid_y_starts = dst_grid_rows * tilesize
+    # Precompute destination row ends as exact fixed-size tile boundaries.
+    dst_grid_y_ends = dst_grid_y_starts + tilesize
+    # Precompute destination column starts as exact fixed-size tile boundaries.
+    dst_grid_x_starts = dst_grid_cols * tilesize
+    # Precompute destination column ends as exact fixed-size tile boundaries.
+    dst_grid_x_ends = dst_grid_x_starts + tilesize
+
     mod = max(1, len(collages) // 20)
     for collage_idx, collage in enumerate(collages):
         assert len(collage) > 0, f"Expected at least one polyomino in collage {collage_idx}"
@@ -310,9 +545,9 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
 
         # Initialize canvas and metadata structures
         step_start = (time.time_ns() / 1e6)
-        canvas = np.zeros((height, width, 3), dtype=np.uint8)
+        canvas = np.zeros((canvas_height, canvas_width, 3), dtype=np.uint8)
         assert dtypes.is_np_image(canvas), canvas.shape
-        index_map = np.zeros((grid_height, grid_width), dtype=np.uint16)
+        index_map = np.zeros((dst_grid_height, dst_grid_width), dtype=np.uint16)
         assert dtypes.is_index_map(index_map), index_map.shape
         offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]] = []
         step_times['initialize_canvas'] = (time.time_ns() / 1e6) - step_start
@@ -324,7 +559,15 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
 
         # Process each polyomino in this collage
         step_start = (time.time_ns() / 1e6)
+        render_fetch_time = 0.0
+        render_tile_bound_time = 0.0
+        render_tile_size_time = 0.0
+        render_crop_time = 0.0
+        render_pad_time = 0.0
+        render_copy_time = 0.0
+        render_metadata_time = 0.0
         for gid, poly_pos in enumerate(collage, start=1):
+            step_start = (time.time_ns() / 1e6)
             oy, ox, py, px, frame_idx, shape = poly_pos
 
             # Get source frame using absolute frame index
@@ -333,40 +576,68 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
             # Tile rendering: scale grid positions to raw video resolution
             i_coords = shape[:, 0]
             j_coords = shape[:, 1]
+            render_fetch_time += (time.time_ns() / 1e6) - step_start
 
-            # Compute tile boundaries scaled to raw video resolution (vectorized)
-            sy_starts = (oy + i_coords) * height // grid_height
-            sx_starts = (ox + j_coords) * width // grid_width
-            sy_ends = (oy + i_coords + 1) * height // grid_height
-            sx_ends = (ox + j_coords + 1) * width // grid_width
-            dy_starts = (py + i_coords) * height // grid_height
-            dx_starts = (px + j_coords) * width // grid_width
-            dy_ends = (py + i_coords + 1) * height // grid_height
-            dx_ends = (px + j_coords + 1) * width // grid_width
+            step_start = (time.time_ns() / 1e6)
+            # Compute all source and destination tile boundaries for this polyomino.
+            sy_starts, sx_starts, sy_ends, sx_ends, dy_starts, dx_starts, dy_ends, dx_ends = _compute_polyomino_tile_boundaries(
+                oy=oy,
+                ox=ox,
+                py=py,
+                px=px,
+                i_coords=i_coords,
+                j_coords=j_coords,
+                src_grid_y_starts=src_grid_y_starts,
+                src_grid_y_ends=src_grid_y_ends,
+                src_grid_x_starts=src_grid_x_starts,
+                src_grid_x_ends=src_grid_x_ends,
+                dst_grid_y_starts=dst_grid_y_starts,
+                dst_grid_y_ends=dst_grid_y_ends,
+                dst_grid_x_starts=dst_grid_x_starts,
+                dst_grid_x_ends=dst_grid_x_ends,
+            )
+            render_tile_bound_time += (time.time_ns() / 1e6) - step_start
 
-            # Precompute tile sizes and padding (vectorized)
-            dst_hs = (dy_ends - dy_starts).astype(int)
-            dst_ws = (dx_ends - dx_starts).astype(int)
-            src_hs = (sy_ends - sy_starts).astype(int)
-            src_ws = (sx_ends - sx_starts).astype(int)
-            pad_hs = np.maximum(0, dst_hs - src_hs)
-            pad_ws = np.maximum(0, dst_ws - src_ws)
-            needs_padding = (pad_hs > 0) | (pad_ws > 0)
+            step_start = (time.time_ns() / 1e6)
+            # Copy all tiles for this polyomino and collect detailed copy timings.
+            _copy_polyomino_tiles_to_canvas(
+                canvas=canvas,
+                frame=frame,
+                sy_starts=sy_starts,
+                sx_starts=sx_starts,
+                sy_ends=sy_ends,
+                sx_ends=sx_ends,
+                dy_starts=dy_starts,
+                dx_starts=dx_starts,
+                dy_ends=dy_ends,
+                dx_ends=dx_ends,
+            )
+            # Accumulate time spent in tile-size preparation.
+            render_copy_time += (time.time_ns() / 1e6) - step_start
 
-            # Copy tiles, repeating last row/column if sizes differ
-            for idx in range(len(shape)):
-                src_tile = frame[sy_starts[idx]:sy_ends[idx], sx_starts[idx]:sx_ends[idx]]
-                # Pad with repeated edge pixels if source tile is smaller than destination
-                if needs_padding[idx]:
-                    src_tile = np.pad(src_tile, ((0, pad_hs[idx]), (0, pad_ws[idx]), (0, 0)), mode='edge')
-                canvas[dy_starts[idx]:dy_ends[idx], dx_starts[idx]:dx_ends[idx]] = src_tile[:dst_hs[idx], :dst_ws[idx]]
-
-            # Update index_map (vectorized)
-            index_map[py + i_coords, px + j_coords] = gid
-
-            # Update offset_lookup
-            offset_lookup.append(((py, px), (oy, ox), frame_idx))
-        step_times['render_tiles'] = (time.time_ns() / 1e6) - step_start
+            step_start = (time.time_ns() / 1e6)
+            # Update all metadata structures for this polyomino placement.
+            _update_polyomino_metadata(
+                index_map=index_map,
+                offset_lookup=offset_lookup,
+                gid=gid,
+                py=py,
+                px=px,
+                oy=oy,
+                ox=ox,
+                frame_idx=frame_idx,
+                i_coords=i_coords,
+                j_coords=j_coords,
+            )
+            render_metadata_time += (time.time_ns() / 1e6) - step_start
+        # step_times['render_tiles'] = (time.time_ns() / 1e6) - step_start
+        step_times['render_fetch'] = render_fetch_time
+        step_times['render_tile_bound'] = render_tile_bound_time
+        step_times['render_tile_size'] = render_tile_size_time
+        step_times['render_crop'] = render_crop_time
+        step_times['render_pad'] = render_pad_time
+        step_times['render_copy'] = render_copy_time
+        step_times['render_metadata'] = render_metadata_time
 
         # Save the collage
         step_start = (time.time_ns() / 1e6)
@@ -459,7 +730,10 @@ def main(args):
                     for tilesize in TILE_SIZES:
                         for tilepadding in TILEPADDING_MODES:
                             for sample_rate in SAMPLE_RATES:
-                                funcs.append(partial(compress, dataset, videoset, video, classifier, tilesize, sample_rate, tilepadding, threshold, mode))
+                                for canvas_scale in CANVAS_SCALES:
+                                    funcs.append(partial(compress, dataset, videoset, video, classifier,
+                                                         tilesize, sample_rate, tilepadding, canvas_scale,
+                                                         threshold, mode))
     
     print(f"Created {len(funcs)} tasks to process")
     

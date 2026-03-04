@@ -18,8 +18,6 @@ import numpy.typing as npt
 
 from polyis.tracker.ocsort.ocsort import OCSort as OCSortPython
 from polyis.tracker.ocsort.cython.ocsort import OCSort as OCSortCython  # type: ignore
-from polyis.tracker.ocsort.cython.ocsort import reset_tracker_count
-from polyis.utilities import CACHE_DIR, get_config
 
 
 def load_detection_results(detection_path: str) -> list[dict]:
@@ -241,13 +239,7 @@ def test_ocsort_comparison():
     """
     
     # Load configuration to get tracker parameters
-    config = get_config()
-    cache_dir = config['DATA']['CACHE_DIR']
-    
-    # Path to detection results file
-    detection_path = os.path.join(
-        cache_dir, 'jnc0', 'execution', 'te04.mp4', '002_naive', 'detection.jsonl'
-    )
+    detection_path = './tests/data/detection.jsonl'
     
     # Load detection results
     detection_results = load_detection_results(detection_path)
@@ -306,7 +298,7 @@ def test_ocsort_comparison():
     # Reset tracker counters to ensure consistent IDs
     from polyis.tracker.ocsort.ocsort import KalmanBoxTracker as KalmanBoxTrackerPython
     KalmanBoxTrackerPython.count = 0
-    reset_tracker_count()
+    # reset_tracker_count()
     
     # Image info and size (default values, can be adjusted based on actual data)
     img_info = (1080, 1920)
@@ -319,7 +311,7 @@ def test_ocsort_comparison():
     
     # Reset counters again for fair comparison
     KalmanBoxTrackerPython.count = 0
-    reset_tracker_count()
+    # reset_tracker_count()
     
     # Reinitialize trackers
     tracker_python = OCSortPython(

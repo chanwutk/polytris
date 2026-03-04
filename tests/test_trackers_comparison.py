@@ -23,13 +23,13 @@ import numpy.typing as npt
 
 from polyis.b3d.sort import Sort as SortB3D
 from polyis.tracker.sort.cython.sort import Sort as SortCython  # type: ignore
-from polyis.tracker.sort.cython.sort import reset_tracker_count as reset_sort_count
+# from polyis.tracker.sort.cython.sort import reset_tracker_count as reset_sort_count
 from polyis.tracker.ocsort.ocsort import OCSort as OCSortPython
 from polyis.tracker.ocsort.cython.ocsort import OCSort as OCSortCython  # type: ignore
-from polyis.tracker.ocsort.cython.ocsort import reset_tracker_count as reset_ocsort_count
+# from polyis.tracker.ocsort.cython.ocsort import reset_tracker_count as reset_ocsort_count
 from polyis.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
 from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython  # type: ignore
-from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count  # type: ignore
+# from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count  # type: ignore
 from polyis.utilities import CACHE_DIR, get_config
 
 
@@ -462,7 +462,7 @@ def test_trackers_comparison():
     # Initialize SORT trackers
     from polyis.b3d.sort import KalmanBoxTracker as KalmanBoxTrackerB3D
     KalmanBoxTrackerB3D.count = 0
-    reset_sort_count()
+    # reset_sort_count()
     
     sort_python = SortB3D(
         max_age=sort_max_age,
@@ -478,7 +478,7 @@ def test_trackers_comparison():
     # Initialize OC-SORT trackers
     from polyis.tracker.ocsort.ocsort import KalmanBoxTracker as KalmanBoxTrackerPython
     KalmanBoxTrackerPython.count = 0
-    reset_ocsort_count()
+    # reset_ocsort_count()
     
     ocsort_python = OCSortPython(
         det_thresh=ocsort_det_thresh,
@@ -504,7 +504,7 @@ def test_trackers_comparison():
     # Initialize ByteTrack trackers
     from polyis.tracker.bytetrack.basetrack import BaseTrack
     BaseTrack._count = 0
-    reset_tracker_count()
+    # reset_tracker_count()
     
     # Create args object for ByteTrack
     class ByteTrackArgs:
@@ -529,7 +529,7 @@ def test_trackers_comparison():
     results_sort_python, perf_sort_python = run_sort_tracker(sort_python, detection_results)
     
     KalmanBoxTrackerB3D.count = 0
-    reset_sort_count()
+    # reset_sort_count()
     sort_python = SortB3D(
         max_age=sort_max_age,
         min_hits=sort_min_hits,
@@ -545,7 +545,7 @@ def test_trackers_comparison():
     results_sort_cython, perf_sort_cython = run_sort_tracker(sort_cython, detection_results)
     
     KalmanBoxTrackerPython.count = 0
-    reset_ocsort_count()
+    # reset_ocsort_count()
     ocsort_python = OCSortPython(
         det_thresh=ocsort_det_thresh,
         max_age=ocsort_max_age,
@@ -573,7 +573,7 @@ def test_trackers_comparison():
     )
     
     KalmanBoxTrackerPython.count = 0
-    reset_ocsort_count()
+    # reset_ocsort_count()
     ocsort_python = OCSortPython(
         det_thresh=ocsort_det_thresh,
         max_age=ocsort_max_age,
@@ -601,7 +601,7 @@ def test_trackers_comparison():
     )
     
     BaseTrack._count = 0
-    reset_tracker_count()
+    # reset_tracker_count()
     bytetrack_python = BYTETrackerPython(bytetrack_args, frame_rate=bytetrack_frame_rate)
     bytetrack_cython = BYTETrackerCython(bytetrack_args, frame_rate=bytetrack_frame_rate)
     
@@ -611,7 +611,7 @@ def test_trackers_comparison():
     )
     
     BaseTrack._count = 0
-    reset_tracker_count()
+    # reset_tracker_count()
     bytetrack_python = BYTETrackerPython(bytetrack_args, frame_rate=bytetrack_frame_rate)
     bytetrack_cython = BYTETrackerCython(bytetrack_args, frame_rate=bytetrack_frame_rate)
     

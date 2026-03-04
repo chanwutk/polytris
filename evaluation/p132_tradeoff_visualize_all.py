@@ -58,7 +58,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, metrics_list: lis
         )
         
         # Add dataset to tooltip for all datasets visualization
-        scatter = scatter.encode(tooltip=['dataset', 'video', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', x_column, accuracy_col])
+        scatter = scatter.encode(tooltip=['dataset', 'video', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', x_column, accuracy_col])
         
         # Create the combined chart with dataset facets
         combined_chart = (scatter).facet(

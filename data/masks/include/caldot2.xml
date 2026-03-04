@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<annotations>
+  <version>1.1</version>
+  <meta>
+    <job>
+      <id>3622343</id>
+      <size>1</size>
+      <mode>annotation</mode>
+      <overlap>0</overlap>
+      <bugtracker></bugtracker>
+      <created>2026-02-13 18:25:12.979901+00:00</created>
+      <updated>2026-02-13 18:27:22.318930+00:00</updated>
+      <subset>default</subset>
+      <start_frame>0</start_frame>
+      <stop_frame>0</stop_frame>
+      <frame_filter></frame_filter>
+      <segments>
+        <segment>
+          <id>3622144</id>
+          <start>0</start>
+          <stop>0</stop>
+          <url>https://app.cvat.ai/api/jobs/3622343/dataset/export/api/jobs/3622343</url>
+        </segment>
+      </segments>
+      <owner>
+        <username>chanwutk</username>
+        <email>chanwutk@gmail.com</email>
+      </owner>
+      <assignee></assignee>
+      <labels>
+        <label>
+          <name>crop-area</name>
+          <color>#c49485</color>
+          <type>rectangle</type>
+          <attributes>
+          </attributes>
+        </label>
+      </labels>
+    </job>
+    <dumped>2026-02-13 18:27:27.286373+00:00</dumped>
+  </meta>
+  <image id="0" name="caldot2_first_frame.png" width="720" height="480">
+    <box label="crop-area" source="manual" occluded="0" xtl="0.00" ytl="200.00" xbr="441.00" ybr="480.00" z_order="0">
+    </box>
+  </image>
+</annotations>

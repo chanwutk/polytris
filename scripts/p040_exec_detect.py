@@ -16,7 +16,7 @@ import torch
 
 import polyis.models.detector
 import polyis.dtypes
-from polyis.utilities import TILEPADDING_MODES, TilePadding, format_time, ProgressBar, get_config
+from polyis.utilities import TILEPADDING_MODES, TilePadding, format_time, ProgressBar, get_config, build_param_str
 
 
 config = get_config()
@@ -27,6 +27,7 @@ TILE_SIZES = config['EXEC']['TILE_SIZES']
 DATASETS = config['EXEC']['DATASETS']
 SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TILEPADDING = config['EXEC']['TILEPADDING_MODES']
+CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
 
 
 def parse_args():
@@ -87,7 +88,8 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
 
 
 def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
-                    sample_rate: int, tilepadding: TilePadding, batch_size: int, gpu_id: int, command_queue: mp.Queue):
+                    sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+                    batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
 
@@ -101,6 +103,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         tilesize (int): Tile size used for compression
         tilepadding (TilePadding): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
+        canvas_scale (float): Canvas scale used for compression outputs
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
@@ -109,7 +112,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}'
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
 
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
@@ -213,8 +216,8 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
-                   sample_rate: int, tilepadding: TilePadding, batch_size: int, gpu_id: int,
-                   command_queue: mp.Queue):
+                   sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+                   batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
 
@@ -225,12 +228,13 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
         tilesize (int): Tile size used for compression
         tilepadding (TilePadding): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
+        canvas_scale (float): Canvas scale used for compression outputs
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}'
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
 
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
@@ -328,9 +332,9 @@ def main(args):
 
     Note:
         - The script expects compressed images from 030_exec_compress.py in:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/030_compressed_frames/{classifier}_{tilesize}/images/
+          {CACHE_DIR}/{dataset}/execution/{video_file}/033_compressed_frames/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_percent}/images/
         - Detection results are saved to:
-          {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tilesize}/detections.jsonl
+          {CACHE_DIR}/{dataset}/execution/{video_file}/040_compressed_detections/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_percent}/detections.jsonl
         - Each line in the output JSONL file contains one bounding box [x1, y1, x2, y2]
         - When tilesize is 'all', all available tile sizes are processed
         - When classifiers is not specified, all classifiers in CLASSIFIERS_TO_TEST + ['Perfect'] are processed
@@ -359,8 +363,10 @@ def main(args):
                 for tilesize in TILE_SIZES:
                     for tilepadding in TILEPADDING:
                         for sample_rate in SAMPLE_RATES:
-                            funcs.append(partial(detect_objects, dataset, video, classifier,
-                                                 tilesize, sample_rate, tilepadding, args.batch_size))
+                            for canvas_scale in CANVAS_SCALES:
+                                funcs.append(partial(detect_objects, dataset, video, classifier,
+                                                     tilesize, sample_rate, tilepadding, canvas_scale,
+                                                     args.batch_size))
 
     print(f"Created {len(funcs)} tasks to process")
 

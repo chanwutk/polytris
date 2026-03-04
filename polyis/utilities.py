@@ -13,8 +13,10 @@ import sys
 import inspect
 import logging
 import yaml
+from xml.etree import ElementTree
 
 import cv2
+from matplotlib.path import Path
 import numpy as np
 from rich import progress
 import torch
@@ -55,6 +57,98 @@ TRACK_COLORS = [
 
 video_frame_counts: dict[tuple[str, str], int] = {}
 video_resolutions: dict[tuple[str, str], tuple[int, int]] = {}
+
+
+def dataset_root_name(dataset: str) -> str:
+    # Normalize Amsterdam detector variants to the shared dataset key.
+    if dataset.startswith('ams'):
+        return 'ams'
+    # Drop detector suffixes so all variants share one preprocessed dataset.
+    return dataset.split('-')[0]
+
+
+def resolve_otif_dataset_name(dataset: str) -> str:
+    # Resolve the normalized dataset key first.
+    dataset_root = dataset_root_name(dataset)
+    # Map the Amsterdam key to the OTIF directory name.
+    if dataset_root == 'ams':
+        return 'amsterdam'
+    # Use the normalized root directly for all other datasets.
+    return dataset_root
+
+
+def dedupe_datasets_by_root(datasets: list[str]) -> list[str]:
+    # Track dataset roots that were already selected.
+    seen_roots: set[str] = set()
+    # Iterate configured datasets and keep only the first variant per root.
+    for dataset in datasets:
+        # Compute the shared root for this configured dataset.
+        dataset_root = dataset_root_name(dataset)
+        # Mark this root as already selected.
+        seen_roots.add(dataset_root)
+    # Return unique dataset roots.
+    return list(seen_roots)
+
+
+def get_segment_frame_range(total_frames: int, segment_idx: int, num_segments: int) -> tuple[int, int]:
+    # Validate that the segment index is within the allowed range.
+    assert 0 <= segment_idx < num_segments, (
+        f'Invalid segment index {segment_idx} for {num_segments} segments'
+    )
+    # Compute fractional segment size in source-frame units.
+    segment_size_frames = total_frames / num_segments
+    # Compute inclusive start frame for this segment.
+    start_frame = int(segment_idx * segment_size_frames)
+    # Compute exclusive end frame for this segment and clamp to total frames.
+    end_frame = min(int((segment_idx + 1) * segment_size_frames), total_frames)
+    # Return [start, end) frame interval.
+    return start_frame, end_frame
+
+
+def build_b3d_mask_and_crop(
+    file_name: str,
+    annotations_path: str,
+    frame_width: int,
+    frame_height: int,
+) -> tuple[int, int, int, int, np.ndarray]:
+    # Load annotation XML for B3D masks.
+    root = ElementTree.parse(annotations_path).getroot()
+    # Resolve the image annotation entry for this video.
+    img = root.find(f'.//image[@name="{file_name.replace(".mp4", ".jpg")}"]')
+    assert img is not None
+    # Resolve the crop box used by the original preprocessing pipeline.
+    box = img.find('.//box[@label="crop"]')
+    assert box is not None
+    # Parse crop bounds.
+    left = round(float(box.attrib['xtl']))
+    top = round(float(box.attrib['ytl']))
+    right = round(float(box.attrib['xbr']))
+    bottom = round(float(box.attrib['ybr']))
+
+    # Build per-domain bitmap masks.
+    domains = img.findall('.//polygon[@label="domain"]')
+    bitmaps = []
+    for domain in domains:
+        assert isinstance(domain, ElementTree.Element)
+        points = domain.attrib['points']
+        points = points.replace(';', ',')
+        points_array = np.array([float(pt) for pt in points.split(',')]).reshape((-1, 2))
+        domain_poly = Path(points_array)
+        x, y = np.meshgrid(np.arange(frame_width), np.arange(frame_height))
+        x, y = x.flatten(), y.flatten()
+        pixel_points = np.vstack((x, y)).T
+        bitmap = domain_poly.contains_points(pixel_points)
+        bitmap = bitmap.reshape((1, frame_height, frame_width, 1))
+        bitmaps.append(bitmap)
+
+    # Merge all domain masks and crop to the crop area.
+    bitmap = bitmaps[0]
+    for current_bitmap in bitmaps[1:]:
+        bitmap |= current_bitmap
+    bitmap = bitmap.astype(np.uint8) * 255
+    bitmap = bitmap[:, top:bottom, left:right, :]
+    # Return crop geometry and mask bitmap.
+    return top, bottom, left, right, bitmap
 
 
 def get_video_frame_count(dataset: str, video: str) -> int:
@@ -506,7 +600,30 @@ def load_classification_results(cache_dir: str, dataset: str, video_file: str,
     return results
 
 
-def create_tracker(tracker_name: str, img_size: tuple[int, int]):
+def scale_to_percent(canvas_scale: float) -> int:
+    # Convert a floating-point canvas scale to an integer percentage for stable folder names.
+    return int(round(float(canvas_scale) * 100))
+
+
+def build_param_str(*, classifier: str, tilesize: int,
+                    sample_rate: int | None = None,
+                    tilepadding: str | None = None,
+                    canvas_scale: float | None = None,
+                    tracker: str | None = None) -> str:
+    # Build a parameter string for pipeline stage directory naming.
+    parts = [classifier, str(tilesize)]
+    if sample_rate is not None:
+        parts.append(str(sample_rate))
+    if tilepadding is not None:
+        parts.append(str(tilepadding))
+    if canvas_scale is not None:
+        parts.append(f's{scale_to_percent(canvas_scale)}')
+    if tracker is not None:
+        parts.append(tracker)
+    return '_'.join(parts)
+
+
+def create_tracker(tracker_name: str, img_size: tuple[int, int], **override_params):
     """
     Create a tracker instance based on the specified algorithm.
 
@@ -566,8 +683,8 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int]):
                 img_size=img_size,
                 track_thresh=config['track_thresh'],
                 match_thresh=config['match_thresh'],
-                track_buffer=config['track_buffer'],
-                frame_rate=config['frame_rate'],
+                track_buffer=override_params.get('track_buffer', config['track_buffer']),
+                frame_rate=override_params.get('frame_rate', config['frame_rate']),
                 # mot20=config['mot20']
             )
         if tracker_name == 'bytetrackcython':
@@ -577,8 +694,8 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int]):
                 img_size=img_size,
                 track_thresh=config['track_thresh'],
                 match_thresh=config['match_thresh'],
-                track_buffer=config['track_buffer'],
-                frame_rate=config['frame_rate'],
+                track_buffer=override_params.get('track_buffer', config['track_buffer']),
+                frame_rate=override_params.get('frame_rate', config['frame_rate']),
                 # mot20=config['mot20']
             )
         else:
@@ -843,7 +960,7 @@ def create_tracking_visualization(video_path: str, tracking_results: dict[int, l
         # Send initial progress update
         if progress_queue is not None:
             progress_queue.put((f'cuda:{process_id}', {
-                'description': os.path.basename(video_path),
+                'description': video_path[-min(20, len(video_path) - 1):],
                 'completed': 0,
                 'total': frame_count
             }))
@@ -983,7 +1100,8 @@ def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
 
         while True:
             val = command_queue.get()
-            if val is None: break
+            if val is None:
+                break
             progress_id, kwargs = val
             # if kwargs.get('remove', False):
             #     p.remove_task(bars[progress_id])
@@ -1248,10 +1366,10 @@ def load_tradeoff_data(dataset: str):
     # Construct paths to CSV files created by p090_tradeoff_compute.py
     tradeoff_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
 
-    tradeoff_path = os.path.join(tradeoff_dir, f'tradeoff.csv')
-    tradeoff_combined_path = os.path.join(tradeoff_dir, f'tradeoff_combined.csv')
-    naive_path = os.path.join(tradeoff_dir, f'naive.csv')
-    naive_combined_path = os.path.join(tradeoff_dir, f'naive_combined.csv')
+    tradeoff_path = os.path.join(tradeoff_dir, 'tradeoff.csv')
+    tradeoff_combined_path = os.path.join(tradeoff_dir, 'tradeoff_combined.csv')
+    naive_path = os.path.join(tradeoff_dir, 'naive.csv')
+    naive_combined_path = os.path.join(tradeoff_dir, 'naive_combined.csv')
 
     # Check if CSV files exist
     assert os.path.exists(tradeoff_path), \

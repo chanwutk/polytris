@@ -8,7 +8,7 @@ from functools import partial
 import queue
 import multiprocessing as mp
 
-from polyis.utilities import create_tracker, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
+from polyis.utilities import create_tracker, dedupe_datasets_by_root, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
 
 CONFIG = get_config()
@@ -24,6 +24,24 @@ def parse_args():
     parser.add_argument('--train', action='store_true', help='Process train videoset')
     parser.add_argument('--valid', action='store_true', help='Process valid videoset')
     return parser.parse_args()
+
+
+def prepare_frame_tracks_for_save(
+    frame_tracks: dict[int, list[list[float]]],
+    detection_frame_count: int,
+    frame_rate: float
+) -> dict[int, list[list[float]]]:
+    # Keep original frame mapping for 15 FPS inputs.
+    if frame_rate <= 15:
+        return frame_tracks
+
+    # Build output tracks sampled every two source frames with sequential indices.
+    sampled_frame_tracks: dict[int, list[list[float]]] = {}
+    output_frame_idx = 0
+    for source_frame_idx in range(0, detection_frame_count, 2):
+        sampled_frame_tracks[output_frame_idx] = frame_tracks.get(source_frame_idx, [])
+        output_frame_idx += 1
+    return sampled_frame_tracks
 
 
 def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queue[tuple[str, dict]]"):
@@ -49,7 +67,15 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     # tracker_cython = create_tracker('sort-cython')
     resolution = get_video_resolution(dataset, video_file)
     width, height = resolution
-    tracker = create_tracker('bytetrack', img_size=(height, width))
+    # Use detection frame count to infer the effective video duration category.
+    detection_frame_count = len(detection_results)
+    # Use 15 FPS tracking parameters for shorter clips.
+    if detection_frame_count < 1000:
+        frame_rate = 15
+    # Use 29.97 FPS only for JNC datasets; use 30 FPS for other long clips.
+    else:
+        frame_rate = 29.97 if dataset.startswith('jnc') else 30
+    tracker = create_tracker('bytetrackcython', img_size=(height, width), frame_rate=frame_rate, track_buffer=40 if frame_rate == 15 else 20)
 
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
@@ -122,7 +148,9 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     output_dir = os.path.dirname(output_path)
     os.makedirs(output_dir, exist_ok=True)
 
-    save_tracking_results(frame_tracks, output_path)
+    # Prepare frame tracks for saving based on effective tracking frame rate.
+    output_frame_tracks = prepare_frame_tracks_for_save(frame_tracks, detection_frame_count, frame_rate)
+    save_tracking_results(output_frame_tracks, output_path)
 
 
 def main():
@@ -159,8 +187,12 @@ def main():
     if not splits:
         splits = ['test']
     
+    # Resolve configured datasets to unique dataset roots.
+    datasets_to_process = dedupe_datasets_by_root(EXEC_DATASETS)
+    print(f'Resolved datasets for groundtruth tracking preprocessing: {datasets_to_process}')
+
     funcs = []
-    for dataset in EXEC_DATASETS:
+    for dataset in datasets_to_process:
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
         assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
         
@@ -182,7 +214,7 @@ def main():
     max_processes = min(len(funcs), int(mp.cpu_count() * 0.8))
     
     # Use ProgressBar for parallel processing
-    ProgressBar(num_workers=max_processes, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
+    ProgressBar(num_workers=max_processes, num_tasks=len(funcs), refresh_per_second=10).run_all(funcs)
 
 
 if __name__ == '__main__':
