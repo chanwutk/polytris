@@ -25,6 +25,7 @@ TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
 SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
 TRACKERS = CONFIG['EXEC']['TRACKERS']
 CANVAS_SCALES = CONFIG['EXEC']['CANVAS_SCALE']
+TRACKING_ACCURACY_THRESHOLDS = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute object tracking on detection results')
@@ -41,7 +42,9 @@ def parse_args():
 
 def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesize: int,
                            classifier: str, sample_rate: int = 1, tilepadding: str | None = None,
-                           canvas_scale: float = 1.0, verbose: bool = False):
+                           canvas_scale: float = 1.0, tracker: str | None = None,
+                           tracking_accuracy_threshold: float | None = None,
+                           verbose: bool = False):
     """
     Load detection results from the uncompressed detections JSONL file.
 
@@ -54,6 +57,8 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
         tilepadding (str): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling (default: 1)
         canvas_scale (float): Canvas scale used for compression outputs
+        tracker (str | None): Tracker name for upstream pruning
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning
         verbose (bool): Whether to print verbose output
     Returns:
         list[dict]: list of frame detection results
@@ -62,7 +67,7 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
         FileNotFoundError: If no detection results file is found
     """
     # Build the shared key used by 050 and 060 stage folders.
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
     detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
                                   '050_uncompressed_detections',
                                   param_str,
@@ -86,12 +91,13 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
 
 
 def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int,
-          tilepadding: str, canvas_scale: float, tracker_name: str, no_interpolate: bool,
-          gpu_id: int, command_queue: mp.Queue):
+          tilepadding: str, canvas_scale: float, tracker_name: str,
+          tracking_accuracy_threshold: float | None,
+          no_interpolate: bool, gpu_id: int, command_queue: mp.Queue):
     """
     Process tracking for a single video/classifier/tilesize/tracker combination.
     This function is designed to be called in parallel.
-    
+
     Args:
         dataset (str): Name of the dataset
         video (str): Name of the video file to process
@@ -101,13 +107,14 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
         sample_rate (int): Sample rate for tracking
         canvas_scale (float): Canvas scale used for compression outputs
         tracker_name (str): Name of the tracker to use
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
         no_interpolate (bool): Whether to not perform trajectory interpolation
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
     # Build the shared key used by 050 and 060 stage folders.
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     # Check if uncompressed detections exist
     detection_path = os.path.join(CACHE_DIR, dataset, 'execution', video, '050_uncompressed_detections',
@@ -116,11 +123,12 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
 
     # Load detection results
     detection_results = load_detection_results(CACHE_DIR, dataset, video, tilesize, classifier,
-                                               sample_rate, tilepadding, canvas_scale)
+                                               sample_rate, tilepadding, canvas_scale,
+                                               tracker_name, tracking_accuracy_threshold)
 
     # Create output path for tracking results
     uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset, 'execution', video, '060_uncompressed_tracks')
-    output_path = os.path.join(uncompressed_tracking_dir, build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name), 'tracking.jsonl')
+    output_path = os.path.join(uncompressed_tracking_dir, param_str, 'tracking.jsonl')
     
     # Create tracker
     resolution = get_video_resolution(dataset, video)
@@ -257,9 +265,11 @@ def main(args: argparse.Namespace):
                         for sample_rate in SAMPLE_RATES:
                             for canvas_scale in CANVAS_SCALES:
                                 for tracker_name in TRACKERS:
-                                    funcs.append(partial(track, dataset, video, classifier, tilesize,
-                                                         sample_rate, tilepadding, canvas_scale,
-                                                         tracker_name, args.no_interpolate))
+                                    for tracking_accuracy_threshold in TRACKING_ACCURACY_THRESHOLDS:
+                                        funcs.append(partial(track, dataset, video, classifier, tilesize,
+                                                             sample_rate, tilepadding, canvas_scale,
+                                                             tracker_name, tracking_accuracy_threshold,
+                                                             args.no_interpolate))
     
     print(f"Created {len(funcs)} tasks to process")
 

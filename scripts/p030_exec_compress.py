@@ -15,7 +15,7 @@ from functools import partial
 import torch
 
 from polyis import dtypes
-from polyis.utilities import format_time, load_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding, build_param_str, scale_to_percent
+from polyis.utilities import format_time, load_classification_results, load_pruned_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding, build_param_str, scale_to_percent
 from polyis.pack.group_tiles import group_tiles
 from polyis.pack.pack import pack
 
@@ -29,6 +29,8 @@ DATASETS = config['EXEC']['DATASETS']
 SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
 CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
+TRACKERS = config['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
 class PackMode(IntEnum):
@@ -312,6 +314,7 @@ Collage = list[PolyominoPosition]
 
 def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
              sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+             tracker: str, tracking_accuracy_threshold: float | None,
              threshold: float, mode: PackMode, gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video by batch processing all sampled frames at once using pack_all.
@@ -325,6 +328,8 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         tilepadding: Whether to apply padding to classification results
         sample_rate: Sample rate for frame sampling (1 = all frames)
         canvas_scale: Canvas grid scale factor relative to the source classification grid
+        tracker: Tracker name for upstream pruning
+        tracking_accuracy_threshold: Accuracy threshold for pruning (None = no pruning)
         threshold: Threshold for classification probability
         gpu_id: GPU ID to use for processing
         command_queue: Queue for progress updates
@@ -334,12 +339,17 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
     video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
 
-    # Load classification results for the specified sample rate
-    results = load_classification_results(CACHE_DIR, dataset, video, tilesize, classifier, sample_rate)
+    # Load classification results: from p022 (pruned) or p020 (unpruned)
+    if tracking_accuracy_threshold is not None:
+        results = load_pruned_classification_results(
+            CACHE_DIR, dataset, video, tilesize, classifier, tracker,
+            tracking_accuracy_threshold, sample_rate)
+    else:
+        results = load_classification_results(CACHE_DIR, dataset, video, tilesize, classifier, sample_rate)
 
     # Create output directory for compression results
     output_dir_name = OUTPUT_DIR_MAP[mode]
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
     output_dir = os.path.join(cache_video_dir, output_dir_name, param_str)
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
@@ -731,9 +741,12 @@ def main(args):
                         for tilepadding in TILEPADDING_MODES:
                             for sample_rate in SAMPLE_RATES:
                                 for canvas_scale in CANVAS_SCALES:
-                                    funcs.append(partial(compress, dataset, videoset, video, classifier,
-                                                         tilesize, sample_rate, tilepadding, canvas_scale,
-                                                         threshold, mode))
+                                    for tracker in TRACKERS:
+                                        for tracking_accuracy_threshold in TRACKING_ACCURACY_THRESHOLDS:
+                                            funcs.append(partial(compress, dataset, videoset, video, classifier,
+                                                                 tilesize, sample_rate, tilepadding, canvas_scale,
+                                                                 tracker, tracking_accuracy_threshold,
+                                                                 threshold, mode))
     
     print(f"Created {len(funcs)} tasks to process")
     

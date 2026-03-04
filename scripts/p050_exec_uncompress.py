@@ -21,6 +21,8 @@ TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
 SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
 TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
 CANVAS_SCALES = CONFIG['EXEC']['CANVAS_SCALE']
+TRACKERS = CONFIG['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
 def load_mapping_file(index_map_path: str, offset_lookup_path: str):
@@ -150,7 +152,8 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
 
 def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int,
-           tilepadding: str, canvas_scale: float, gpu_id: int, command_queue: mp.Queue):
+           tilepadding: str, canvas_scale: float, tracker: str,
+           tracking_accuracy_threshold: float | None, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
@@ -163,13 +166,15 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate
         tilepadding (str): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
         canvas_scale (float): Canvas scale used for compression outputs
+        tracker (str): Tracker name for upstream pruning
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
     video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
     # Build the shared key used by all 03x/04x/05x stage folders.
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     # Check if compressed detections exist
     detections_file = os.path.join(video_path, '040_compressed_detections',
@@ -346,8 +351,11 @@ def main():
                     for tilepadding in TILEPADDING_MODES:
                         for sample_rate in SAMPLE_RATES:
                             for canvas_scale in CANVAS_SCALES:
-                                funcs.append(partial(unpack, dataset, video, classifier, tilesize,
-                                                     sample_rate, tilepadding, canvas_scale))
+                                for tracker in TRACKERS:
+                                    for tracking_accuracy_threshold in TRACKING_ACCURACY_THRESHOLDS:
+                                        funcs.append(partial(unpack, dataset, video, classifier, tilesize,
+                                                             sample_rate, tilepadding, canvas_scale,
+                                                             tracker, tracking_accuracy_threshold))
 
     print(f"Created {len(funcs)} tasks to process")
     ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)

@@ -28,6 +28,8 @@ DATASETS = config['EXEC']['DATASETS']
 SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TILEPADDING = config['EXEC']['TILEPADDING_MODES']
 CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
+TRACKERS = config['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
 def parse_args():
@@ -89,6 +91,7 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
 
 def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
                     sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+                    tracker: str, tracking_accuracy_threshold: float | None,
                     batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
@@ -104,6 +107,8 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         tilepadding (TilePadding): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
         canvas_scale (float): Canvas scale used for compression outputs
+        tracker (str): Tracker name for upstream pruning
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
@@ -112,7 +117,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
@@ -217,6 +222,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
                    sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+                   tracker: str, tracking_accuracy_threshold: float | None,
                    batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
@@ -229,12 +235,14 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
         tilepadding (TilePadding): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
         canvas_scale (float): Canvas scale used for compression outputs
+        tracker (str): Tracker name for upstream pruning
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
     cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
@@ -364,9 +372,12 @@ def main(args):
                     for tilepadding in TILEPADDING:
                         for sample_rate in SAMPLE_RATES:
                             for canvas_scale in CANVAS_SCALES:
-                                funcs.append(partial(detect_objects, dataset, video, classifier,
-                                                     tilesize, sample_rate, tilepadding, canvas_scale,
-                                                     args.batch_size))
+                                for tracker in TRACKERS:
+                                    for tracking_accuracy_threshold in TRACKING_ACCURACY_THRESHOLDS:
+                                        funcs.append(partial(detect_objects, dataset, video, classifier,
+                                                             tilesize, sample_rate, tilepadding, canvas_scale,
+                                                             tracker, tracking_accuracy_threshold,
+                                                             args.batch_size))
 
     print(f"Created {len(funcs)} tasks to process")
 
