@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 from typing import Callable
@@ -18,9 +19,9 @@ from polyis.utilities import format_time, load_tracking_results, mark_detections
 config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS_DIR = config['DATA']['DATASETS_DIR']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-DATASETS = config['EXEC']['DATASETS']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
 
 
 def process_frame_tiles(width: int, height: int, detections: list[list[float]], tile_size: int) -> tuple[np.ndarray, list[dict]]:
@@ -202,29 +203,23 @@ def main():
     if args.valid:
         selected_videosets.append('valid')
     
-    # If no videosets are specified, default to all three
+    # If no videosets are specified, default to valid and test
     if not selected_videosets:
-        selected_videosets = ['test']
+        selected_videosets = ['valid', 'test']
     
     mp.set_start_method('spawn', force=True)
     
     # Create functions list with all video/tile_size combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     
-    for dataset in DATASETS:
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        for videoset in selected_videosets:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            if not os.path.exists(videoset_dir):
-                print(f"Videoset directory {videoset_dir} does not exist, skipping...")
-                continue
+        videoset_dir = os.path.join(dataset_dir, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             
-            # Get all video files from the dataset directory
-            videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-            for video in sorted(videos):
-                for tile_size in TILE_SIZES:
-                    for sample_rate in SAMPLE_RATES:
-                        funcs.append(partial(process_video, dataset, videoset, video, tile_size, sample_rate))
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, tile_size, sample_rate in itertools.product(sorted(videos), TILE_SIZES, SAMPLE_RATES):
+            funcs.append(partial(process_video, dataset, videoset, video, tile_size, sample_rate))
     
     print(f"Created {len(funcs)} tasks to process")
     num_processes = min(torch.cuda.device_count(), len(funcs))

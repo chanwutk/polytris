@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 import time
@@ -17,11 +18,12 @@ from polyis.utilities import format_time, ProgressBar, get_config, load_classifi
 config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS_DIR = config['DATA']['DATASETS_DIR']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-CLASSIFIERS = config['EXEC']['CLASSIFIERS']
-DATASETS = config['EXEC']['DATASETS']
-TRACKERS = config['EXEC']['TRACKERS']
-TRACKING_ACCURACY_THRESHOLDS = [t for t in config['EXEC']['TRACKING_ACCURACY_THRESHOLDS'] if t is not None]
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+CLASSIFIERS: list[str] = config['EXEC']['CLASSIFIERS']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+TRACKERS: list[str] = config['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS: list[float] = [t for t in config['EXEC']['TRACKING_ACCURACY_THRESHOLDS'] if t is not None]
 
 TILEPADDING_MODE = 0  # 0: No padding, 1: Connected padding, 2: Disconnected padding
 
@@ -47,7 +49,7 @@ def load_max_sampling_rate(dataset: str, tracker: str, tile_size: int, accuracy_
     Load the max sampling rate table for each tile position at a given accuracy threshold.
     
     The table is stored as a 3D array [grid_height, grid_width, num_accuracy_thresholds]
-    in: {CACHE_DIR}/{dataset}/indexing/tracking_rate/{tracker}_{tile_size}/max_rate_table.npy
+    in: {CACHE_DIR}/{dataset}/indexing/track_rate/{tracker}_{tile_size}/max_rate_table.npy
     
     Args:
         dataset: Dataset name (e.g. 'caldot2-y05')
@@ -60,7 +62,7 @@ def load_max_sampling_rate(dataset: str, tracker: str, tile_size: int, accuracy_
         2D numpy array [grid_height, grid_width] of max sampling rates per tile
     """
     max_rate_path = os.path.join(
-        CACHE_DIR, dataset, 'indexing', 'tracking_rate',
+        CACHE_DIR, dataset, 'indexing', 'track_rate',
         f'{tracker}_{tile_size}', 'max_rate_table.npy'
     )
     
@@ -175,6 +177,7 @@ def process_video(
     video: str,
     classifier: str,
     tile_size: int,
+    sample_rate: int,
     tracker: str,
     tracking_accuracy_threshold: float,
     gpu_id: int,
@@ -189,6 +192,7 @@ def process_video(
         video: Video filename
         classifier: Classifier name
         tile_size: Tile size used for classification
+        sample_rate: Frame sampling stride used by upstream classification
         tracker: Tracker name
         tracking_accuracy_threshold: Accuracy threshold (float, e.g. 0.90)
         gpu_id: GPU ID (for progress tracking)
@@ -200,13 +204,17 @@ def process_video(
     
     # Load classification results
     print(f"[{video}] Loading classification results...", flush=True)
-    raw_results = load_classification_results(CACHE_DIR, dataset, video, tile_size, classifier, verbose=False)
+    raw_results = load_classification_results(
+        CACHE_DIR, dataset, video, tile_size, classifier, sample_rate, verbose=False
+    )
     
     classifications = []
+    frame_indices = []
     grid_height = None
     grid_width = None
     
     for frame_data in raw_results:
+        frame_indices.append(frame_data['idx'])
         if grid_height is None or grid_width is None:
             grid_height, grid_width = frame_data['classification_size']
         
@@ -230,7 +238,7 @@ def process_video(
         f"Max sampling rate shape {max_sampling_distance.shape} doesn't match grid ({grid_height}, {grid_width})"
     
     # Progress update
-    description = f"{video} {tile_size:>3} {classifier}"
+    description = f"{video} {tile_size:>3} sr{sample_rate} {classifier} {tracker} {tracking_accuracy_threshold}"
     command_queue.put((device, {
         'description': description,
         'completed': 0,
@@ -295,6 +303,7 @@ def process_video(
     
     # Create output directory using build_param_str for consistent naming
     param_str = build_param_str(classifier=classifier, tilesize=tile_size,
+                                sample_rate=sample_rate,
                                 tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
     output_dir = os.path.join(
         CACHE_DIR, dataset, 'execution', video, '022_pruned_polyominoes',
@@ -312,11 +321,11 @@ def process_video(
     runtime_path = os.path.join(score_dir, 'runtime.jsonl')
     
     with open(output_path, 'w') as f:
-        for idx, grid in enumerate(pruned_grids):
+        for frame_idx, grid in zip(frame_indices, pruned_grids):
             frame_entry = {
                 "classification_size": grid.shape,
                 "classification_hex": grid.flatten().tobytes().hex(),
-                "idx": idx,
+                "idx": frame_idx,
             }
             f.write(json.dumps(frame_entry) + '\n')
     # step_times['save_results'] = (time.time_ns() / 1e6) - step_start
@@ -342,11 +351,11 @@ def main():
     5. Outputs pruned tiles in same format as p021 (hex-encoded binary grids)
     
     Input:
-        - Classification results: {CACHE_DIR}/{dataset}/execution/{video}/020_relevancy/{classifier}_{tile_size}/score/score.jsonl
-        - Max sampling rate: {CACHE_DIR}/{dataset}/indexing/tracking_rate/{tracker}_{tile_size}/max_rate_table.npy
+        - Classification results: {CACHE_DIR}/{dataset}/execution/{video}/020_relevancy/{classifier}_{tile_size}_{sample_rate}/score/score.jsonl
+        - Max sampling rate: {CACHE_DIR}/{dataset}/indexing/track_rate/{tracker}_{tile_size}/max_rate_table.npy
     
     Output:
-        - Pruned classification: {CACHE_DIR}/{dataset}/execution/{video}/022_pruned_polyominoes/{classifier}_{tile_size}/score/score.jsonl
+        - Pruned classification: {CACHE_DIR}/{dataset}/execution/{video}/022_pruned_polyominoes/{classifier}_{tile_size}_{sample_rate}_{tracking_accuracy_threshold}_{tracker}/score/score.jsonl
     """
     args = parse_args()
 
@@ -359,51 +368,39 @@ def main():
         selected_videosets.append('valid')
 
     if not selected_videosets:
-        selected_videosets = ['test']
+        selected_videosets = ['valid', 'test']
 
     mp.set_start_method('spawn', force=True)
 
     funcs: list[Callable[[int, mp.Queue], None]] = []
 
     print(f"datasets: {DATASETS}")
+    print(f"sample_rates: {SAMPLE_RATES}")
     print(f"trackers: {TRACKERS}")
     print(f"tracking_accuracy_thresholds: {TRACKING_ACCURACY_THRESHOLDS}")
-    for dataset in DATASETS:
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
+        videoset_dir = os.path.join(dataset_dir, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
-        for videoset in selected_videosets:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            print(f"videoset_dir: {videoset_dir}")
-            if not os.path.exists(videoset_dir):
-                print(f"Videoset directory {videoset_dir} does not exist, skipping...")
-                continue
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, classifier, tile_size, sample_rate in itertools.product(sorted(videos), CLASSIFIERS, TILE_SIZES, SAMPLE_RATES):
+            score_path = os.path.join(CACHE_DIR, dataset, 'execution', video, '020_relevancy',
+                                      f'{classifier}_{tile_size}_{sample_rate}', 'score', 'score.jsonl')
+            assert os.path.exists(score_path), f"Score path {score_path} does not exist"
 
-            videos = [f for f in os.listdir(videoset_dir)
-                     if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-
-            for video in sorted(videos):
-                for classifier in CLASSIFIERS:
-                    for tile_size in TILE_SIZES:
-                        score_path = os.path.join(
-                            CACHE_DIR, dataset, 'execution', video, '020_relevancy',
-                            f'{classifier}_{tile_size}_1', 'score', 'score.jsonl'
-                        )
-                        if not os.path.exists(score_path):
-                            continue
-                        # Iterate over all tracker × threshold combinations
-                        for tracker in TRACKERS:
-                            for threshold in TRACKING_ACCURACY_THRESHOLDS:
-                                func = partial(
-                                    process_video,
-                                    dataset, videoset, video, classifier, tile_size,
-                                    tracker, threshold,
-                                )
-                                print(f"Added task for {video} {tile_size} {classifier} {tracker} {threshold}")
-                                funcs.append(func)
+            # Iterate over all tracker × threshold combinations for each sample_rate.
+            for tracker, threshold in itertools.product(TRACKERS, TRACKING_ACCURACY_THRESHOLDS):
+                func = partial(process_video, dataset, videoset, video, classifier, tile_size,
+                               sample_rate, tracker, threshold)
+                print(f"Added task for {video} {tile_size} sr{sample_rate} {classifier} {tracker} {threshold}")
+                funcs.append(func)
     
     print(f"Created {len(funcs)} tasks to process")
     
     num_workers = mp.cpu_count()
+    num_workers = mp.cpu_count() // 2
+    # num_workers = 2
     if len(funcs) > 0:
         ProgressBar(num_workers=num_workers, num_tasks=len(funcs)).run_all(funcs)
     

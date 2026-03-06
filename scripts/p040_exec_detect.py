@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 import shutil
@@ -16,20 +17,20 @@ import torch
 
 import polyis.models.detector
 import polyis.dtypes
-from polyis.utilities import TILEPADDING_MODES, TilePadding, format_time, ProgressBar, get_config, build_param_str
+from polyis.utilities import TilePadding, format_time, ProgressBar, get_config, build_param_str
 
 
 config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS_DIR = config['DATA']['DATASETS_DIR']
-CLASSIFIERS = config['EXEC']['CLASSIFIERS']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-DATASETS = config['EXEC']['DATASETS']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
-TILEPADDING = config['EXEC']['TILEPADDING_MODES']
-CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
-TRACKERS = config['EXEC']['TRACKERS']
-TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+CLASSIFIERS: list[str] = config['EXEC']['CLASSIFIERS']
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+TILEPADDING_MODES: list[TilePadding] = config['EXEC']['TILEPADDING_MODES']
+CANVAS_SCALES: list[float] = config['EXEC']['CANVAS_SCALE']
+TRACKERS: list[str] = config['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS: list[float] = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
 def parse_args():
@@ -91,7 +92,7 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
 
 def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
                     sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
-                    tracker: str, tracking_accuracy_threshold: float | None,
+                    tracker: str | None, tracking_accuracy_threshold: float | None,
                     batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
@@ -222,7 +223,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
                    sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
-                   tracker: str, tracking_accuracy_threshold: float | None,
+                   tracker: str | None, tracking_accuracy_threshold: float | None,
                    batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
@@ -364,20 +365,16 @@ def main(args):
                 if os.path.exists(compressed_detections_dir):
                     shutil.rmtree(compressed_detections_dir)
 
-    for dataset in DATASETS:
-        videoset_dir = os.path.join(DATASETS_DIR, dataset, 'test')
-        for video in sorted(os.listdir(videoset_dir)):
-            for classifier in CLASSIFIERS:
-                for tilesize in TILE_SIZES:
-                    for tilepadding in TILEPADDING:
-                        for sample_rate in SAMPLE_RATES:
-                            for canvas_scale in CANVAS_SCALES:
-                                for tracker in TRACKERS:
-                                    for tracking_accuracy_threshold in TRACKING_ACCURACY_THRESHOLDS:
-                                        funcs.append(partial(detect_objects, dataset, video, classifier,
-                                                             tilesize, sample_rate, tilepadding, canvas_scale,
-                                                             tracker, tracking_accuracy_threshold,
-                                                             args.batch_size))
+    for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
+        videoset_dir = os.path.join(DATASETS_DIR, dataset, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
+
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
+            sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
+            for tracker in [None] if threshold is None else TRACKERS:
+                funcs.append(partial(detect_objects, dataset, video, classifier, tilesize, sample_rate,
+                                     tilepadding, canvas_scale, tracker, threshold, args.batch_size))
 
     print(f"Created {len(funcs)} tasks to process")
 

@@ -625,7 +625,7 @@ def load_pruned_classification_results(cache_dir: str, dataset: str, video_file:
         FileNotFoundError: If no pruned classification results file is found
     """
     # Build param string for the pruned output directory
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize,
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                 tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
     score_dir = os.path.join(cache_dir, dataset, 'execution', video_file,
                              '022_pruned_polyominoes', param_str, 'score')
@@ -644,9 +644,7 @@ def load_pruned_classification_results(cache_dir: str, dataset: str, video_file:
         for line in f:
             if line.strip():
                 entry = json.loads(line)
-                # Apply sample_rate post-filter: keep frames where idx % sample_rate == 0
-                if entry['idx'] % sample_rate == 0:
-                    results.append(entry)
+                results.append(entry)
 
     if verbose:
         print(f"Loaded {len(results)} pruned frame classifications (sample_rate={sample_rate})")
@@ -661,6 +659,22 @@ def scale_to_percent(canvas_scale: float) -> int:
 def format_tracking_accuracy_threshold(threshold: float) -> str:
     # Convert a float accuracy threshold to a 3-digit zero-padded percentage string.
     return f'{int(round(threshold * 100)):03d}'
+
+
+def dataset_name_for_videoset(dataset: str, videoset: str) -> str:
+    # Use a dedicated dataset name for validation split in evaluation outputs.
+    if videoset == 'valid':
+        return f'{dataset}-val'
+    # Keep the original dataset name for all non-validation splits.
+    return dataset
+
+
+def split_dataset_name(dataset_name: str) -> tuple[str, str]:
+    # Map dataset names with "-val" suffix back to base dataset and videoset.
+    if dataset_name.endswith('-val'):
+        return dataset_name[:-4], 'valid'
+    # Default all non-suffixed dataset names to the test split for evaluation.
+    return dataset_name, 'test'
 
 
 def build_param_str(*, classifier: str, tilesize: int,
@@ -682,6 +696,70 @@ def build_param_str(*, classifier: str, tilesize: int,
     if tracker is not None:
         parts.append(tracker)
     return '_'.join(parts)
+
+
+def parse_execution_param_str(param_str: str) -> dict[str, typing.Any]:
+    # Split the encoded parameter string into underscore-delimited tokens.
+    parts = param_str.split('_')
+    # Require at least classifier and tile size tokens.
+    assert len(parts) >= 2, f"Invalid parameter string: {param_str}"
+
+    # Read classifier token.
+    classifier = parts[0]
+    # Parse tile size token.
+    tilesize = int(parts[1])
+    # Initialize cursor after required classifier/tile size tokens.
+    cursor = 2
+
+    # Initialize optional fields with defaults for missing dimensions.
+    sample_rate: int | None = None
+    tracking_accuracy_threshold: float | None = None
+    tilepadding: str | None = None
+    canvas_scale: float | None = None
+    tracker: str | None = None
+
+    # Parse optional sample rate token when present.
+    if cursor < len(parts) and parts[cursor].isdigit():
+        sample_rate = int(parts[cursor])
+        cursor += 1
+
+    # Parse optional threshold token (three-digit percentage) when present.
+    if cursor < len(parts) and len(parts[cursor]) == 3 and parts[cursor].isdigit():
+        tracking_accuracy_threshold = int(parts[cursor]) / 100.0
+        cursor += 1
+
+    # Collect remaining tokens for tilepadding/canvas_scale/tracker parsing.
+    remaining = parts[cursor:]
+    # Locate optional canvas-scale token (e.g., "s100") in remaining tokens.
+    scale_idx = next((i for i, token in enumerate(remaining)
+                      if token.startswith('s') and token[1:].isdigit()), None)
+
+    # Handle formats that include a canvas-scale token (stages 030-060 outputs).
+    if scale_idx is not None:
+        # Parse optional tilepadding token that precedes canvas-scale.
+        if scale_idx > 0:
+            tilepadding = remaining[0]
+        # Parse canvas-scale token to floating-point ratio.
+        canvas_scale = int(remaining[scale_idx][1:]) / 100.0
+        # Parse optional tracker token(s) that follow canvas-scale.
+        if scale_idx + 1 < len(remaining):
+            tracker = '_'.join(remaining[scale_idx + 1:])
+    # Handle formats without canvas-scale token (e.g., stage 022 outputs).
+    elif remaining:
+        # Parse the remaining token(s) as tracker identifier.
+        tracker = '_'.join(remaining)
+
+    # Return the normalized parameter dictionary.
+    return {
+        'classifier': classifier,
+        'tilesize': tilesize,
+        'sample_rate': sample_rate,
+        'tracking_accuracy_threshold': tracking_accuracy_threshold,
+        'tilepadding': tilepadding,
+        'canvas_scale': canvas_scale,
+        'tracker': tracker,
+        'param_str': param_str,
+    }
 
 
 def create_tracker(tracker_name: str, img_size: tuple[int, int], **override_params):
@@ -1471,9 +1549,16 @@ def load_all_datasets_tradeoff_data(datasets: list[str], system_name: str | None
     for dataset in datasets:
         # Use the load_tradeoff_data function
         _, combined, _, naive_combined = load_tradeoff_data(dataset)
-        # Add dataset column to combined data
-        combined['dataset'] = dataset
-        naive_combined['dataset'] = dataset
+        # Keep split-aware dataset labels when already present.
+        if 'dataset' not in combined.columns:
+            combined['dataset'] = dataset
+        # Keep split-aware dataset labels for naive rows when already present.
+        if 'dataset' not in naive_combined.columns:
+            naive_combined['dataset'] = dataset
+        # Add root dataset column for optional downstream diagnostics.
+        combined['dataset_root'] = dataset
+        # Add root dataset column for optional downstream diagnostics.
+        naive_combined['dataset_root'] = dataset
 
         # Add system column if specified
         if system_name is not None:

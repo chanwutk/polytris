@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import itertools
 import json
 import os
 import shutil
@@ -9,20 +10,20 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str
+from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str, TilePadding
 
 
 CONFIG = get_config()
-DATASETS = CONFIG['EXEC']['DATASETS']
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
-CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
-CLASSIFIERS = CONFIG['EXEC']['CLASSIFIERS']
-TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
-SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
-TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
-CANVAS_SCALES = CONFIG['EXEC']['CANVAS_SCALE']
-TRACKERS = CONFIG['EXEC']['TRACKERS']
-TRACKING_ACCURACY_THRESHOLDS = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+DATASETS: list[str] = CONFIG['EXEC']['DATASETS']
+DATASETS_DIR: str = CONFIG['DATA']['DATASETS_DIR']
+CACHE_DIR: str = CONFIG['DATA']['CACHE_DIR']
+CLASSIFIERS: list[str] = CONFIG['EXEC']['CLASSIFIERS']
+TILE_SIZES: list[int] = CONFIG['EXEC']['TILE_SIZES']
+SAMPLE_RATES: list[int] = CONFIG['EXEC']['SAMPLE_RATES']
+TILEPADDING_MODES: list[TilePadding] = CONFIG['EXEC']['TILEPADDING_MODES']
+CANVAS_SCALES: list[float] = CONFIG['EXEC']['CANVAS_SCALE']
+TRACKERS: list[str] = CONFIG['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS: list[float] = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
 def load_mapping_file(index_map_path: str, offset_lookup_path: str):
@@ -152,7 +153,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
 
 def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int,
-           tilepadding: str, canvas_scale: float, tracker: str,
+           tilepadding: str, canvas_scale: float, tracker: str | None,
            tracking_accuracy_threshold: float | None, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tilesize combination.
@@ -332,30 +333,19 @@ def main():
 
     # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for dataset in DATASETS:
-        cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+    for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        videosets_dir = os.path.join(dataset_dir, 'test')
+        videosets_dir = os.path.join(dataset_dir, videoset)
+        assert os.path.exists(videosets_dir), f"Videoset directory {videosets_dir} does not exist"
 
         # Get all video files from the dataset directory
         videos = [f for f in os.listdir(videosets_dir) if f.endswith('.mp4')]
-        print(f"Found {len(videos)} video files in dataset {dataset}")
+        print(f"Found {len(videos)} video files in dataset {dataset}/{videoset}")
 
-        for video in sorted(videos):
-            # uncompressed_detections_dir = os.path.join(cache_dir, video, '050_uncompressed_detections')
-            # if os.path.exists(uncompressed_detections_dir):
-            #     shutil.rmtree(uncompressed_detections_dir)
-
-            for classifier in CLASSIFIERS:
-                for tilesize in TILE_SIZES:
-                    for tilepadding in TILEPADDING_MODES:
-                        for sample_rate in SAMPLE_RATES:
-                            for canvas_scale in CANVAS_SCALES:
-                                for tracker in TRACKERS:
-                                    for tracking_accuracy_threshold in TRACKING_ACCURACY_THRESHOLDS:
-                                        funcs.append(partial(unpack, dataset, video, classifier, tilesize,
-                                                             sample_rate, tilepadding, canvas_scale,
-                                                             tracker, tracking_accuracy_threshold))
+        for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
+            sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
+            for tracker in [None] if threshold is None else TRACKERS:
+                funcs.append(partial(unpack, dataset, video, classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold))
 
     print(f"Created {len(funcs)} tasks to process")
     ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)

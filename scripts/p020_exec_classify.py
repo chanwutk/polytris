@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 from typing import Callable, cast
@@ -19,13 +20,13 @@ from polyis.utilities import format_time, ProgressBar, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
-DATASETS = config['EXEC']['DATASETS']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
-BATCH_SIZE = 16
+CACHE_DIR: str = config['DATA']['CACHE_DIR']
+DATASETS_DIR: str = config['DATA']['DATASETS_DIR']
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+CLASSIFIERS: list[str] = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+BATCH_SIZE: int = 16
 
 
 def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: str) -> "torch.nn.Module":
@@ -386,31 +387,25 @@ def main():
     if args.valid:
         selected_videosets.append('valid')
 
-    # If no videosets are specified, default to all three
+    # If no videosets are specified, default to valid and test
     if not selected_videosets:
-        selected_videosets = ['test']
+        selected_videosets = ['valid', 'test']
 
     mp.set_start_method('spawn', force=True)
 
     # Create tasks list with all video/classifier/tile_size/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for dataset in DATASETS:
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
+        videoset_dir = os.path.join(dataset_dir, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
-        for videoset in selected_videosets:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            if not os.path.exists(videoset_dir):
-                print(f"Dataset directory {videoset_dir} does not exist, skipping...")
-                continue
-
-            # Get all video files from the dataset directory
-            videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-            for video in sorted(videos):
-                for classifier in CLASSIFIERS:
-                    for tile_size in TILE_SIZES:
-                        for sample_rate in SAMPLE_RATES:
-                            func = partial(classify, dataset, videoset, video, classifier, tile_size, sample_rate)
-                            funcs.append(func)
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, classifier, tile_size, sample_rate in itertools.product(
+            sorted(videos), CLASSIFIERS, TILE_SIZES, SAMPLE_RATES
+        ):
+            func = partial(classify, dataset, videoset, video, classifier, tile_size, sample_rate)
+            funcs.append(func)   
 
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()

@@ -164,7 +164,7 @@ def main():
     
     # If no videosets are specified, default to test
     if not splits:
-        splits = ['test']
+        splits = ['test', 'valid']
     
     mp.set_start_method('spawn', force=True)
 

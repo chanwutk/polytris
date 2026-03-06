@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 import shutil
@@ -12,20 +13,20 @@ from typing import Callable
 
 import torch
 
-from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results, get_video_resolution, build_param_str
+from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results, get_video_resolution, build_param_str, TilePadding
 
 
 CONFIG = get_config()
-DATASETS = CONFIG['EXEC']['DATASETS']
+DATASETS: list[str] = CONFIG['EXEC']['DATASETS']
 DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
 CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
-CLASSIFIERS = CONFIG['EXEC']['CLASSIFIERS']
-TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
-TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
-SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
-TRACKERS = CONFIG['EXEC']['TRACKERS']
-CANVAS_SCALES = CONFIG['EXEC']['CANVAS_SCALE']
-TRACKING_ACCURACY_THRESHOLDS = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+CLASSIFIERS: list[str] = CONFIG['EXEC']['CLASSIFIERS']
+TILE_SIZES: list[int] = CONFIG['EXEC']['TILE_SIZES']
+TILEPADDING_MODES: list[TilePadding] = CONFIG['EXEC']['TILEPADDING_MODES']
+SAMPLE_RATES: list[int] = CONFIG['EXEC']['SAMPLE_RATES']
+TRACKERS: list[str] = CONFIG['EXEC']['TRACKERS']
+CANVAS_SCALES: list[float] = CONFIG['EXEC']['CANVAS_SCALE']
+TRACKING_ACCURACY_THRESHOLDS: list[float] = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute object tracking on detection results')
@@ -113,22 +114,25 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    # Build the shared key used by 050 and 060 stage folders.
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    # Input from p050: tracker only in param_str when pruning is active
+    input_tracker = tracker_name if tracking_accuracy_threshold is not None else None
+    input_param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=input_tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    # Output always includes tracker (p060 produces different results per tracker)
+    output_param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     # Check if uncompressed detections exist
     detection_path = os.path.join(CACHE_DIR, dataset, 'execution', video, '050_uncompressed_detections',
-                                  param_str, 'detections.jsonl')
+                                  input_param_str, 'detections.jsonl')
     assert os.path.exists(detection_path), f"Detections not found: {detection_path}"
 
-    # Load detection results
+    # Load detection results using input params (tracker=None when no pruning)
     detection_results = load_detection_results(CACHE_DIR, dataset, video, tilesize, classifier,
                                                sample_rate, tilepadding, canvas_scale,
-                                               tracker_name, tracking_accuracy_threshold)
+                                               input_tracker, tracking_accuracy_threshold)
 
     # Create output path for tracking results
     uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset, 'execution', video, '060_uncompressed_tracks')
-    output_path = os.path.join(uncompressed_tracking_dir, param_str, 'tracking.jsonl')
+    output_path = os.path.join(uncompressed_tracking_dir, output_param_str, 'tracking.jsonl')
     
     # Create tracker
     resolution = get_video_resolution(dataset, video)
@@ -247,30 +251,18 @@ def main(args: argparse.Namespace):
     """
     mp.set_start_method('spawn', force=True)
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for dataset in DATASETS:
+    for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
         print(f"Processing dataset: {dataset}")
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        videosets_dir = os.path.join(dataset_dir, 'test')
-        
-        # Find all videos with uncompressed detection results
-        cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
-        for video in os.listdir(videosets_dir):
-            uncompressed_tracking_dir = os.path.join(cache_dir, video, '060_uncompressed_tracks')
-            if os.path.exists(uncompressed_tracking_dir):
-                shutil.rmtree(uncompressed_tracking_dir)
+        videosets_dir = os.path.join(dataset_dir, videoset)
+        assert os.path.exists(videosets_dir), f"Videoset directory {videosets_dir} does not exist"
 
-            for classifier in CLASSIFIERS:
-                for tilesize in TILE_SIZES:
-                    for tilepadding in TILEPADDING_MODES:
-                        for sample_rate in SAMPLE_RATES:
-                            for canvas_scale in CANVAS_SCALES:
-                                for tracker_name in TRACKERS:
-                                    for tracking_accuracy_threshold in TRACKING_ACCURACY_THRESHOLDS:
-                                        funcs.append(partial(track, dataset, video, classifier, tilesize,
-                                                             sample_rate, tilepadding, canvas_scale,
-                                                             tracker_name, tracking_accuracy_threshold,
-                                                             args.no_interpolate))
-    
+        # Find all videos with uncompressed detection results
+        videos = [f for f in os.listdir(videosets_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold, tracker in itertools.product(
+            sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS, TRACKERS):
+            funcs.append(partial(track, dataset, video, classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold, args.no_interpolate))
+
     print(f"Created {len(funcs)} tasks to process")
 
     num_gpus = torch.cuda.device_count()

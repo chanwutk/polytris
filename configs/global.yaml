@@ -47,8 +47,8 @@ EXEC:
     # - 16
   TRACKING_ACCURACY_THRESHOLDS:
     - null    # No pruning, skip p022
-    - 0.6
-    - 0.8
+    # - 0.6
+    - 0.7
 
 DATA:
   SOURCE_DIR: /polyis-data/sources

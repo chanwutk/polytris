@@ -7,6 +7,7 @@ services:
       - TERM=xterm-256color
       - POLYIS_DATA=/polyis-data
       - POLYIS_CACHE=/polyis-cache
+      - PYTHONWARNINGS=ignore::UserWarning:numpy._core.getlimits
     volumes:
       - .:/polyis
       # Change /data/chawutk/polyis-dataset to your local path

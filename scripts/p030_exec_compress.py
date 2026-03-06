@@ -2,6 +2,7 @@
 
 import argparse
 from enum import IntEnum
+import itertools
 import json
 import os
 from typing import Callable, NamedTuple
@@ -21,16 +22,16 @@ from polyis.pack.pack import pack
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-CLASSIFIERS = config['EXEC']['CLASSIFIERS']
-DATASETS = config['EXEC']['DATASETS']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
-TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
-CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
-TRACKERS = config['EXEC']['TRACKERS']
-TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+CACHE_DIR: str = config['DATA']['CACHE_DIR']
+DATASETS_DIR: str = config['DATA']['DATASETS_DIR']
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+CLASSIFIERS: list[str] = config['EXEC']['CLASSIFIERS']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+TILEPADDING_MODES: list[TilePadding] = config['EXEC']['TILEPADDING_MODES']
+CANVAS_SCALES: list[float] = config['EXEC']['CANVAS_SCALE']
+TRACKERS: list[str] = config['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS: list[float] = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
 class PackMode(IntEnum):
@@ -314,7 +315,7 @@ Collage = list[PolyominoPosition]
 
 def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
              sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
-             tracker: str, tracking_accuracy_threshold: float | None,
+             tracker: str | None, tracking_accuracy_threshold: float | None,
              threshold: float, mode: PackMode, gpu_id: int, command_queue: mp.Queue):
     """
     Compress a single video by batch processing all sampled frames at once using pack_all.
@@ -338,14 +339,24 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     video_name = video
     cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
     video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
+    # Build a compact description string once so progress and skip logs are consistent.
+    description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]} s{scale_to_percent(canvas_scale)}"
 
-    # Load classification results: from p022 (pruned) or p020 (unpruned)
-    if tracking_accuracy_threshold is not None:
-        results = load_pruned_classification_results(
-            CACHE_DIR, dataset, video, tilesize, classifier, tracker,
-            tracking_accuracy_threshold, sample_rate)
-    else:
-        results = load_classification_results(CACHE_DIR, dataset, video, tilesize, classifier, sample_rate)
+    # Load classification results from either p022 (pruned) or p020/p021 (unpruned).
+    try:
+        # Branch to pruned inputs when an accuracy threshold is configured.
+        if tracking_accuracy_threshold is not None:
+            # Read pruned score.jsonl for this (tracker, threshold) tuple.
+            results = load_pruned_classification_results(
+                CACHE_DIR, dataset, video, tilesize, classifier, tracker,
+                tracking_accuracy_threshold, sample_rate)
+        else:
+            # Read unpruned score.jsonl for this (classifier, tile size, sample rate) tuple.
+            results = load_classification_results(
+                CACHE_DIR, dataset, video, tilesize, classifier, sample_rate)
+    except FileNotFoundError as exc:
+        # Re-raise so the caller sees the missing upstream cache as a hard failure.
+        raise
 
     # Create output directory for compression results
     output_dir_name = OUTPUT_DIR_MAP[mode]
@@ -363,9 +374,6 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     offset_lookup_dir = os.path.join(output_dir, 'offset_lookups')
     os.makedirs(offset_lookup_dir)
 
-    # Send initial progress update
-    description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]} s{scale_to_percent(canvas_scale)}"
-    
     # Open video to get dimensions
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f"Error: Could not open video {video_path}"
@@ -706,7 +714,7 @@ def main(args):
         - If no classification results are found for a video, that video is skipped with a warning
     """
     mp.set_start_method('spawn', force=True)
-    threshold = args.threshold
+    prediction_threshold = args.threshold
     mode = args.mode
     
     # Determine which videosets to process based on arguments
@@ -718,36 +726,25 @@ def main(args):
     if args.valid:
         videosets.append('valid')
     
-    # If no videosets are specified, default to all three
+    # If no videosets are specified, default to valid and test
     if not videosets:
-        videosets = ['test']
+        videosets = ['valid', 'test']
     
     # Create tasks list with all video/classifier/tilesize/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for dataset in DATASETS:
+    for dataset, videoset in itertools.product(DATASETS, videosets):
         dataset_dir = os.path.join(DATASETS_DIR, dataset)
+        videoset_dir = os.path.join(dataset_dir, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
-        for videoset in videosets:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            if not os.path.exists(videoset_dir):
-                print(f"Videoset directory {videoset_dir} does not exist, skipping...")
-                continue
+        # Get all video files from the dataset directory
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
+            sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
+            for tracker in [None] if threshold is None else TRACKERS:
+                funcs.append(partial(compress, dataset, videoset, video, classifier, tilesize, sample_rate,
+                                     tilepadding, canvas_scale, tracker, threshold, prediction_threshold, mode))
 
-            # Get all video files from the dataset directory
-            videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-            for video in sorted(videos):
-                for classifier in CLASSIFIERS:
-                    for tilesize in TILE_SIZES:
-                        for tilepadding in TILEPADDING_MODES:
-                            for sample_rate in SAMPLE_RATES:
-                                for canvas_scale in CANVAS_SCALES:
-                                    for tracker in TRACKERS:
-                                        for tracking_accuracy_threshold in TRACKING_ACCURACY_THRESHOLDS:
-                                            funcs.append(partial(compress, dataset, videoset, video, classifier,
-                                                                 tilesize, sample_rate, tilepadding, canvas_scale,
-                                                                 tracker, tracking_accuracy_threshold,
-                                                                 threshold, mode))
-    
     print(f"Created {len(funcs)} tasks to process")
     
     ProgressBar(num_workers=torch.cuda.device_count(), num_tasks=len(funcs)).run_all(funcs)
