@@ -165,7 +165,14 @@ def get_video_frame_count(dataset: str, video: str) -> int:
     if (dataset, video) in video_frame_counts:
         return video_frame_counts[(dataset, video)]
 
-    video_path = os.path.join(DATASETS_DIR, dataset, 'test', video)
+    # Resolve videoset directory from video filename prefix.
+    if video.startswith('va'):
+        videoset = 'valid'
+    elif video.startswith('tr'):
+        videoset = 'train'
+    else:
+        videoset = 'test'
+    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
     assert os.path.exists(video_path), f"Video file not found for {dataset}/{video}"
 
     # Open video and get frame count

@@ -101,6 +101,7 @@ def calculate_naive_runtime(video_name: str, query_overall: pd.DataFrame, datase
 
 
 NAIVE_STAGES = ['001_preprocess_groundtruth_detection', '002_preprocess_groundtruth_tracking']
+NO_THRESHOLD_SENTINEL = -1.0
 
 
 def prepare_accuracy(accuracy: pd.DataFrame, dataset: str) -> pd.DataFrame:
@@ -121,6 +122,13 @@ def prepare_accuracy(accuracy: pd.DataFrame, dataset: str) -> pd.DataFrame:
     elif 'sample_rate' not in accuracy.columns:
         # Backward compatibility: default to 1 if not present
         accuracy['sample_rate'] = 1
+
+    # Rename Tracking_Accuracy_Threshold to tracking_accuracy_threshold.
+    if 'Tracking_Accuracy_Threshold' in accuracy.columns:
+        accuracy = accuracy.rename(columns={'Tracking_Accuracy_Threshold': 'tracking_accuracy_threshold'})
+    elif 'tracking_accuracy_threshold' not in accuracy.columns:
+        # Backward compatibility: default to no-pruning if not present.
+        accuracy['tracking_accuracy_threshold'] = float('nan')
     
     # Rename Canvas_Scale to canvas_scale (p111_accuracy_aggregate.py creates it as Canvas_Scale)
     if 'Canvas_Scale' in accuracy.columns:
@@ -135,6 +143,9 @@ def prepare_accuracy(accuracy: pd.DataFrame, dataset: str) -> pd.DataFrame:
     elif 'tracker' not in accuracy.columns:
         # Backward compatibility: default to 'unknown' if not present
         accuracy['tracker'] = 'unknown'
+
+    # Fill NaN thresholds with a sentinel so joins/groupbys treat no-pruning values as equal.
+    accuracy['tracking_accuracy_threshold'] = accuracy['tracking_accuracy_threshold'].fillna(NO_THRESHOLD_SENTINEL)
     
     return accuracy
 
@@ -145,19 +156,23 @@ def prepare_throughput(throughput: pd.DataFrame) -> pd.DataFrame:
     datasets = df['dataset']
     assert isinstance(datasets, pd.Series), \
         f"datasets should be a Series, got {type(datasets)}"
-    assert len(datasets.unique()) == 1, \
-        f"Expected only one dataset, got {datasets.unique()}"
 
-    # Handle backward compatibility: add sample_rate, canvas_scale, and tracker if missing
+    # Handle backward compatibility: add sample_rate, threshold, canvas_scale, and tracker if missing
     if 'sample_rate' not in df.columns:
         df['sample_rate'] = 1
+    if 'tracking_accuracy_threshold' not in df.columns:
+        df['tracking_accuracy_threshold'] = float('nan')
     if 'canvas_scale' not in df.columns:
         df['canvas_scale'] = 1.0
     if 'tracker' not in df.columns:
         df['tracker'] = 'unknown'
 
-    # Group by video, classifier, tilesize, sample_rate, tilepadding, canvas_scale, and tracker, then sum the times
-    cols = ['video', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker']
+    # Fill NaN thresholds with a sentinel so joins/groupbys treat no-pruning values as equal.
+    df['tracking_accuracy_threshold'] = df['tracking_accuracy_threshold'].fillna(NO_THRESHOLD_SENTINEL)
+
+    # Group by dataset/video/params and sum stage runtimes into per-config runtime totals.
+    cols = ['dataset', 'video', 'classifier', 'tilesize', 'sample_rate',
+            'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale', 'tracker']
     df = df.groupby(cols)['time'].sum().reset_index()
 
     return df
@@ -199,6 +214,8 @@ def match_accuracy_throughput_data(
     naive_throughput_['tilepadding'] = 'Groundtruth'
     # Set tracker for naive throughput (groundtruth doesn't use a tracker)
     naive_throughput_['tracker'] = 'groundtruth'
+    # Set threshold for naive throughput (groundtruth uses no pruning).
+    naive_throughput_['tracking_accuracy_threshold'] = NO_THRESHOLD_SENTINEL
     # Set canvas_scale for naive throughput (groundtruth uses scale 1.0)
     naive_throughput_['canvas_scale'] = 1.0
     assert isinstance(naive_throughput_, pd.DataFrame)
@@ -208,34 +225,42 @@ def match_accuracy_throughput_data(
     # print(throughput)
     print(accuracy)
 
-    # Merge accuracy data with runtime data
-    # Include canvas_scale and tracker in join columns
-    join_cols = ['video', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker']
-    assert len(throughput) == len(accuracy), \
-        f"Expected {len(accuracy)} runtime data points, got {len(throughput)}"
+    # Merge accuracy data with runtime data.
+    # Include dataset and threshold so split datasets and pruning modes stay isolated.
+    join_cols = ['dataset', 'video', 'classifier', 'tilesize', 'sample_rate',
+                 'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale', 'tracker']
     tradeoff = accuracy.merge(throughput, on=join_cols, how='inner')
-    assert len(tradeoff) == len(accuracy), \
-        f"Expected {len(accuracy)} tradeoff data points, got {len(tradeoff)}"
+    assert len(tradeoff) > 0, "No matched accuracy/throughput rows found"
+    # Warn about accuracy rows without matching throughput rows (e.g., classifiers not in config).
+    missing_accuracy_rows = accuracy.merge(throughput, on=join_cols, how='left', indicator=True)
+    missing_accuracy_rows = missing_accuracy_rows[missing_accuracy_rows['_merge'] != 'both']
+    if len(missing_accuracy_rows) > 0:
+        missing_classifiers = sorted(missing_accuracy_rows['classifier'].unique())
+        print(f"WARNING: Skipping {len(missing_accuracy_rows)} accuracy rows without matching throughput "
+              f"(classifiers: {missing_classifiers})")
 
     # Calculate throughput (frames per second)
-    count_frames = partial(get_video_frame_count, dataset)
-    tradeoff['frame_count'] = tradeoff['video'].map(count_frames)
+    def resolve_frame_count(row: pd.Series) -> int:
+        dataset_name = str(row['dataset'])
+        base_dataset = dataset_name[:-4] if dataset_name.endswith('-val') else dataset_name
+        return get_video_frame_count(base_dataset, str(row['video']))
+
+    tradeoff['frame_count'] = tradeoff.apply(resolve_frame_count, axis=1)
     tradeoff['throughput_fps'] = tradeoff['frame_count'] / tradeoff['time']
 
-    # Aggregate runtime and frame counts by classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker
-    gb_cols = ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker']
+    # Aggregate runtime and frame counts by dataset and parameter configuration.
+    gb_cols = ['dataset', 'classifier', 'tilesize', 'sample_rate',
+               'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale', 'tracker']
     throughput_combined = tradeoff.groupby(gb_cols).agg({
         'frame_count': 'sum',
         'time': 'sum'
     }).reset_index()
 
     # Merge with combined accuracy scores
-    join_cols = ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker']
-    assert len(accuracy_combined) == len(throughput_combined), \
-        f"Expected {len(accuracy_combined)} combined throughput data points, got {len(throughput_combined)}"
+    join_cols = ['dataset', 'classifier', 'tilesize', 'sample_rate',
+                 'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale', 'tracker']
     tradeoff_combined = accuracy_combined.merge(throughput_combined, on=join_cols, how='inner')
-    assert len(tradeoff_combined) == len(throughput_combined), \
-        f"Expected {len(throughput_combined)} combined tradeoff data points, got {len(tradeoff_combined)}"
+    assert len(tradeoff_combined) > 0, "No combined matched accuracy/throughput rows found"
 
     # Calculate combined throughput
     tradeoff_combined['throughput_fps'] = tradeoff_combined['frame_count'] / tradeoff_combined['time']
@@ -244,8 +269,17 @@ def match_accuracy_throughput_data(
     # Print combined accuracy scores for verification
     for _, row in tradeoff_combined.iterrows():
         tracker_str = f"_{row['tracker']}" if 'tracker' in row else ""
-        print(f"Using actual combined accuracy scores for {row['classifier']}_{row['tilesize']}_SR{row['sample_rate']}_{row['tilepadding']}_s{int(row['canvas_scale'] * 100)}{tracker_str}: " \
+        threshold_str = (
+            f"_TA{int(round(float(row['tracking_accuracy_threshold']) * 100)):03d}"
+            if float(row['tracking_accuracy_threshold']) != NO_THRESHOLD_SENTINEL
+            else "_TA-none"
+        )
+        print(f"Using actual combined accuracy scores for {row['dataset']} {row['classifier']}_{row['tilesize']}_SR{row['sample_rate']}{threshold_str}_{row['tilepadding']}_s{int(row['canvas_scale'] * 100)}{tracker_str}: " \
               f"HOTA={row['HOTA_HOTA']:.3f}, Count_DetsMAPE={row['Count_DetsMAPE']:.3f}")
+
+    # Convert sentinel thresholds back to NA for output readability.
+    tradeoff['tracking_accuracy_threshold'] = tradeoff['tracking_accuracy_threshold'].replace(NO_THRESHOLD_SENTINEL, pd.NA)
+    tradeoff_combined['tracking_accuracy_threshold'] = tradeoff_combined['tracking_accuracy_threshold'].replace(NO_THRESHOLD_SENTINEL, pd.NA)
 
     print(f"Created {len(tradeoff_combined)} combined tradeoff data points")
     return tradeoff, tradeoff_combined
@@ -261,26 +295,35 @@ def prepare_naive_throughput(throughput: pd.DataFrame, dataset: str):
     naive['classifier'] = naive['classifier'].fillna('Groundtruth')
     naive['tilepadding'] = naive['tilepadding'].fillna('Groundtruth')
     naive['tracker'] = naive['tracker'].fillna('groundtruth')
+    # Groundtruth has no pruning threshold.
+    if 'tracking_accuracy_threshold' not in naive.columns:
+        naive['tracking_accuracy_threshold'] = NO_THRESHOLD_SENTINEL
+    else:
+        naive['tracking_accuracy_threshold'] = naive['tracking_accuracy_threshold'].fillna(NO_THRESHOLD_SENTINEL)
     # Groundtruth uses canvas_scale 1.0
     naive['canvas_scale'] = naive['canvas_scale'].fillna(1.0)
     naive = prepare_throughput(naive)
 
-    count_frames = partial(get_video_frame_count, dataset)
-    naive['frame_count'] = naive['video'].map(count_frames)
+    # Compute frame counts with split-aware dataset labels.
+    def resolve_frame_count(row: pd.Series) -> int:
+        dataset_name = str(row['dataset'])
+        base_dataset = dataset_name[:-4] if dataset_name.endswith('-val') else dataset_name
+        return get_video_frame_count(base_dataset, str(row['video']))
 
-    naive = naive.groupby(['video']).agg({
+    naive['frame_count'] = naive.apply(resolve_frame_count, axis=1)
+
+    naive = naive.groupby(['dataset', 'video']).agg({
         'time': 'sum',
         'frame_count': 'sum',
     }).reset_index()
     naive['throughput_fps'] = naive['frame_count'] / naive['time']
 
-    combined_naive = naive.agg({
+    combined_naive = naive.groupby(['dataset']).agg({
         'time': 'sum',
         'frame_count': 'sum',
-    }).to_frame().T.reset_index(drop=True)
+    }).reset_index()
     combined_naive['throughput_fps'] = combined_naive['frame_count'] / combined_naive['time']
-    assert len(combined_naive) == 1, \
-        f"Expected 1 combined naive throughput data point, got {len(combined_naive)}"
+    assert len(combined_naive) > 0, "No combined naive throughput data points found"
 
     return naive, combined_naive
 

@@ -43,16 +43,25 @@ def visualize_tradeoff(tradeoff: pd.DataFrame, combined: pd.DataFrame,
     
     assert len(naive) > 0, \
         f"No naive data available for {plot_suffix} visualization"
-    assert len(naive_combined) == 1, \
-        f"Expected 1 row of combined naive data, got {len(naive_combined)}"
+    assert len(naive_combined) > 0, \
+        f"No combined naive data available for {plot_suffix} visualization"
 
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
+
+    # Handle backward compatibility for dataset column.
+    if 'dataset' not in tradeoff.columns:
+        tradeoff['dataset'] = 'dataset'
+    if 'dataset' not in naive.columns:
+        naive['dataset'] = tradeoff['dataset']
+    if 'dataset' not in combined.columns:
+        combined['dataset'] = 'dataset'
+    if 'dataset' not in naive_combined.columns:
+        naive_combined['dataset'] = combined['dataset']
     
     # Create base charts
-    naive_combined['video'] = 'dataset_level'
-    base_individual = alt.Chart(tradeoff.merge(naive, on='video', how='left', suffixes=('', '_naive')))
-    base_aggregated = alt.Chart(combined.merge(naive_combined, on='video', how='left', suffixes=('', '_naive')))
+    base_individual = alt.Chart(tradeoff.merge(naive, on=['dataset', 'video'], how='left', suffixes=('', '_naive')))
+    base_aggregated = alt.Chart(combined.merge(naive_combined, on='dataset', how='left', suffixes=('', '_naive')))
     
     # Create scatter plots for each metric using Altair
     for metric in METRICS:

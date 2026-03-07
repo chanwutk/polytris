@@ -152,8 +152,8 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
     return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
-def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int,
-           tilepadding: str, canvas_scale: float, tracker: str | None,
+def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
+           sample_rate: int, tilepadding: str, canvas_scale: float, tracker: str | None,
            tracking_accuracy_threshold: float | None, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tilesize combination.
@@ -175,7 +175,9 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate
     device = f'cuda:{gpu_id}'
     video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
     # Build the shared key used by all 03x/04x/05x stage folders.
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
+                                tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
+                                tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     # Check if compressed detections exist
     detections_file = os.path.join(video_path, '040_compressed_detections',
@@ -209,7 +211,7 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate
     # Get total number of frames from original video
     # This is important: we create entries for ALL frames (0 to num_frames-1)
     # Non-sampled frames will have empty bbox arrays
-    num_frames = get_num_frames(os.path.join(DATASETS_DIR, dataset, 'test', video))
+    num_frames = get_num_frames(os.path.join(DATASETS_DIR, dataset, videoset, video))
 
     # Create entries for ALL frames (0 to num_frames-1), not just sampled ones
     # Non-sampled frames (frame_idx % sample_rate != 0) will remain as empty arrays
@@ -345,7 +347,7 @@ def main():
         for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
             sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
             for tracker in [None] if threshold is None else TRACKERS:
-                funcs.append(partial(unpack, dataset, video, classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold))
+                funcs.append(partial(unpack, dataset, videoset, video, classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold))
 
     print(f"Created {len(funcs)} tasks to process")
     ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)

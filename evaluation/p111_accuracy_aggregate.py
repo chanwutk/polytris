@@ -14,230 +14,247 @@ CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
-def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, int, int, str, float, str, str]]:
+def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, str]]:
     """
-    Find all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations with saved accuracy results.
-
-    Scans the evaluation directory to discover all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations
-    that have completed accuracy evaluation results available.
+    Find all split-aware parameter directories with saved accuracy results.
 
     Args:
         cache_dir (str): Cache directory path
-        dataset (str): Dataset name
+        dataset (str): Dataset root name
 
     Returns:
-        list[tuple[str, int, int, str, float, str, str]]: list of (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, dir_name) tuples
+        list[tuple[str, str]]: List of (split_dataset_name, param_str) tuples
     """
-    # Construct path to evaluation directory for this dataset
+    # Construct path to evaluation directory for this dataset root.
     evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_accuracy')
     assert os.path.exists(evaluation_dir), f"Evaluation directory {evaluation_dir} does not exist"
-    
-    # Construct path to raw results directory
+
+    # Construct path to raw-results directory.
     raw_dir = os.path.join(evaluation_dir, 'raw')
     assert os.path.exists(raw_dir), f"Raw results directory {raw_dir} does not exist"
-    
-    # Collect all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations
-    classifier_tile_combinations: list[tuple[str, int, int, str, float, str, str]] = []
 
-    # Iterate through all classifier-tilesize-sample_rate-tilepadding-scale-tracker directories
-    for dir_name in os.listdir(raw_dir):
-        # Parse classifier, tile size, sample_rate, tilepadding, scale, and tracker from directory name
-        # Format: classifier_tilesize_samplerate_tilepadding_s{pct}_tracker (6 parts)
-        parts = dir_name.split('_')
-        
-        assert len(parts) == 6, f"Expected format 'classifier_tilesize_samplerate_tilepadding_s{{pct}}_tracker', got '{dir_name}'"
-        classifier, tilesize, sample_rate_str, tilepadding, scale_str, tracker_name = parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]
-        
-        ts = int(tilesize)
-        sample_rate = int(sample_rate_str)
-        # Extract canvas scale from scale string (e.g., 's100' -> 1.0)
-        canvas_scale = int(scale_str[1:]) / 100.0
-        
-        # Verify that the required DATASET.json file exists
-        # This ensures the evaluation was completed successfully
-        dataset_results_path = os.path.join(raw_dir, dir_name, 'DATASET.json')
-        assert os.path.exists(dataset_results_path), f"Dataset results path {dataset_results_path} does not exist"
+    # Collect discovered split dataset / parameter combinations.
+    split_param_combinations: list[tuple[str, str]] = []
 
-        # Add this combination to our list, including the original directory name
-        classifier_tile_combinations.append((classifier, ts, sample_rate, tilepadding, canvas_scale, tracker_name, dir_name))
-    
-    return classifier_tile_combinations
+    # Iterate over split-aware dataset directories (e.g., dataset, dataset-val).
+    for split_dataset_name in sorted(os.listdir(raw_dir)):
+        # Build absolute path to split-dataset raw directory.
+        split_dataset_dir = os.path.join(raw_dir, split_dataset_name)
+        # Skip non-directory entries.
+        if not os.path.isdir(split_dataset_dir):
+            continue
+
+        # Iterate over per-configuration parameter directories.
+        for param_str in sorted(os.listdir(split_dataset_dir)):
+            # Build absolute path to parameter directory.
+            param_dir = os.path.join(split_dataset_dir, param_str)
+            # Skip non-directory entries.
+            if not os.path.isdir(param_dir):
+                continue
+
+            # Validate combined-result JSON exists to confirm completed evaluation.
+            dataset_results_path = os.path.join(param_dir, 'DATASET.json')
+            assert os.path.exists(dataset_results_path), f"Dataset results path {dataset_results_path} does not exist"
+
+            # Store this discovered split/parameter pair.
+            split_param_combinations.append((split_dataset_name, param_str))
+
+    # Return discovered split/parameter pairs.
+    return split_param_combinations
 
 
 def parse_result(result: dict) -> dict:
     """
     Parse raw accuracy result dictionary into flattened format for analysis.
-    
-    Converts nested metric structures into flat column names (e.g., HOTA.HOTA)
-    and computes derived metrics like MAPE for Count metrics.
-    
+
     Args:
         result (dict): Raw result dictionary from JSON file
-        
+
     Returns:
         dict: Parsed result with flattened metrics
     """
+    # Build base flattened metadata fields.
     parsed = {
         'Video': result['video'] or 'Combined',
         'Dataset': result['dataset'],
+        'Videoset': result.get('videoset', 'unknown'),
         'Classifier': result['classifier'],
         'Tile_Size': result['tilesize'],
         'Tile_Padding': result['tilepadding'],
-        'Sample_Rate': result.get('sample_rate', 1),  # Default to 1 for backward compatibility
-        'Canvas_Scale': result.get('canvas_scale', 1.0),  # Default to 1.0 for backward compatibility
-        'Tracker': result.get('tracker', 'unknown'),  # Default to 'unknown' for backward compatibility
+        'Sample_Rate': result.get('sample_rate', 1),  # Default for backward compatibility.
+        'Tracking_Accuracy_Threshold': result.get('tracking_accuracy_threshold', None),
+        'Canvas_Scale': result.get('canvas_scale', 1.0),  # Default for backward compatibility.
+        'Tracker': result.get('tracker', 'unknown'),  # Default for backward compatibility.
     }
 
+    # Extract nested metric payload.
     metrics = result['metrics']
+
+    # Parse HOTA metric family when present.
     if 'HOTA' in metrics:
         parsed['HOTA_HOTA'] = sum(metrics['HOTA']['HOTA']) / len(metrics['HOTA']['HOTA'])
         parsed['HOTA_AssA'] = sum(metrics['HOTA']['AssA']) / len(metrics['HOTA']['AssA'])
         parsed['HOTA_DetA'] = sum(metrics['HOTA']['DetA']) / len(metrics['HOTA']['DetA'])
+
+    # Parse CLEAR metric family when present.
     if 'CLEAR' in metrics:
         raise NotImplementedError("CLEAR metrics not implemented")
-        # base['CLEAR.MOTA'] = sum(metrics['CLEAR']['MOTA']) / len(metrics['CLEAR']['MOTA'])
+
+    # Parse Count metric family when present.
     if 'Count' in metrics:
         count = metrics['Count']
-        # mean absolute percentage error
+        # Calculate detection MAPE.
         parsed['Count_DetsMAPE'] = (abs(count['Dets'] - count['GT_Dets']) * 100 / count['GT_Dets']
                                     if count['GT_Dets'] > 0
                                     else (0 if count['Dets'] == 0 else float('inf')))
+        # Calculate track-ID MAPE.
         parsed['Count_TracksMAPE'] = (abs(count['IDs'] - count['GT_IDs']) * 100 / count['GT_IDs']
                                       if count['GT_IDs'] > 0
                                       else (0 if count['IDs'] == 0 else float('inf')))
+
+    # Return flattened result row.
     return parsed
 
 
 def load_saved_results(dataset: str, combined: bool = False) -> pd.DataFrame:
     """
     Load saved accuracy results from result files.
-    
-    Loads either individual video results or combined dataset results based on
-    the combined parameter. Individual results are used for per-video visualizations,
-    while combined results are used for dataset-level visualizations.
-    
+
     Args:
-        dataset (str): Dataset name
-        combined (bool): Whether to load combined results (DATASET.json) or individual video results
-        
+        dataset (str): Dataset root name
+        combined (bool): Whether to load combined results (`DATASET.json`)
+
     Returns:
         pd.DataFrame: DataFrame of parsed evaluation results
     """
-    # Find all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations with available results
-    classifier_tile_combinations = find_saved_results(CACHE_DIR, dataset)
-    assert len(classifier_tile_combinations) > 0, f"No saved results found for dataset {dataset}"
+    # Find split/parameter directories with available results.
+    split_param_combinations = find_saved_results(CACHE_DIR, dataset)
+    assert len(split_param_combinations) > 0, f"No saved results found for dataset {dataset}"
 
-    # Initialize results list
-    results = []
-    evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
-    raw_dir = os.path.join(evaluation_dir, 'raw')
-    
-    # Process each classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combination
-    for classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, dir_name in classifier_tile_combinations:
-        # Use the original directory name to handle tracker names with underscores correctly
-        combination_dir = os.path.join(raw_dir, dir_name)
-        
-        # Load result files based on the combined parameter
-        for filename in os.listdir(combination_dir):
-            # Load DATASET.json if combined=True, otherwise load individual video files
-            if filename.endswith('.json') and (filename == 'DATASET.json') == combined:
-                results_path = os.path.join(combination_dir, filename)
-                
-                print(f"Loading results from {results_path}")
-                # Load and parse JSON result file
-                with open(results_path, 'r') as f:
-                    result_data = json.load(f)
-                    results.append(parse_result(result_data))
-    
+    # Initialize collected parsed rows.
+    results: list[dict] = []
+
+    # Build raw results directory path.
+    raw_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy', 'raw')
+
+    # Process each discovered split/parameter directory.
+    for split_dataset_name, param_str in split_param_combinations:
+        # Build absolute directory path for this split/config pair.
+        combination_dir = os.path.join(raw_dir, split_dataset_name, param_str)
+
+        # Iterate over JSON files in this directory.
+        for filename in sorted(os.listdir(combination_dir)):
+            # Keep only JSON files matching requested combined/non-combined mode.
+            if not filename.endswith('.json'):
+                continue
+            if (filename == 'DATASET.json') != combined:
+                continue
+
+            # Build full path to result file.
+            results_path = os.path.join(combination_dir, filename)
+            # Log current file being loaded.
+            print(f"Loading results from {results_path}")
+
+            # Load result JSON payload.
+            with open(results_path, 'r') as f:
+                result_data = json.load(f)
+
+            # Parse and append flattened result row.
+            results.append(parse_result(result_data))
+
+    # Log number of loaded result rows.
     print(f"Loaded {len(results)} saved evaluation results")
+    # Return DataFrame built from parsed rows.
     return pd.DataFrame.from_records(results)
 
 
 def save_results_csv(results: pd.DataFrame, output_dir: str, combined: bool = False):
     """
     Save aggregated accuracy results to CSV file.
-    
-    Saves the results DataFrame to a CSV file in the specified output directory,
-    using the same naming convention as the visualization script.
-    
+
     Args:
-        results (pd.DataFrame): DataFrame of parsed accuracy results
-        output_dir (str): Output directory where CSV file will be saved
-        combined (bool): Whether these are combined results (affects filename prefix)
+        results (pd.DataFrame): Parsed accuracy results
+        output_dir (str): Output directory path
+        combined (bool): Whether these rows are combined split-level rows
     """
-    
-    # Ensure output directory exists
+    # Ensure output directory exists.
     os.makedirs(output_dir, exist_ok=True)
-    
-    # Save results to CSV for further analysis
+
+    # Build output CSV path based on combined flag.
     csv_file_path = os.path.join(output_dir, f'accuracy{'_combined' if combined else ''}.csv')
+    # Write CSV file.
     results.to_csv(csv_file_path, index=False)
+    # Log save location.
     print(f"Saved accuracy results to: {csv_file_path}")
 
 
 def aggregate_accuracy_results(dataset: str, output_dir: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Aggregate raw accuracy results and save CSV files.
-    
-    Loads both individual video results and combined dataset results from raw JSON files,
-    parses them into DataFrames, and saves CSV files to the output directory.
-    
+
     Args:
-        dataset (str): Dataset name
-        output_dir (str): Output directory where CSV files will be saved
-        
+        dataset (str): Dataset root name
+        output_dir (str): Output directory path
+
     Returns:
-        tuple[pd.DataFrame, pd.DataFrame]: 
-            - DataFrame of individual video results
-            - DataFrame of combined dataset results
+        tuple[pd.DataFrame, pd.DataFrame]: (individual_rows, combined_rows)
     """
+    # Log dataset being aggregated.
     print(f"Aggregating accuracy results for dataset: {dataset}")
-    
-    # Load individual video results for per-video analysis
+
+    # Load per-video rows.
     individual_results = load_saved_results(dataset, combined=False)
     assert len(individual_results) > 0, f"No individual results found for dataset {dataset}"
-    
-    # Load combined dataset results for dataset-level analysis
+
+    # Load combined split-level rows.
     combined_results = load_saved_results(dataset, combined=True)
     assert len(combined_results) > 0, f"No combined results found for dataset {dataset}"
-    
-    # Save CSV files using the same format as visualization script
+
+    # Save individual rows CSV.
     save_results_csv(individual_results, output_dir, combined=False)
+    # Save combined rows CSV.
     save_results_csv(combined_results, output_dir, combined=True)
-    
+
+    # Return both DataFrames.
     return individual_results, combined_results
 
 
 def main():
     """
     Main function that orchestrates the accuracy result aggregation process.
-    
-    This function serves as the entry point for the script. It:
-    1. Finds all classifier/tilesize/sample_rate/tilepadding/canvas_scale/tracker combinations with saved accuracy results
-    2. Loads raw JSON result files and parses them into DataFrames
-    3. Saves aggregated results as CSV files for further analysis
 
     Note:
-        - The script expects accuracy results from p110_accuracy_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_percent}_{tracker}/
-          ├── DATASET.json (combined results)
-          ├── {video}.json (individual video results)
-          └── LOG.txt (evaluation logs)
+        - The script expects raw accuracy results from p110_accuracy_compute.py in:
+          {CACHE_DIR}/{dataset}/evaluation/070_accuracy/raw/{dataset_or_dataset-val}/{param_str}/
+          ├── DATASET.json
+          ├── {video}.json
+          └── LOG.txt
         - CSV files are saved to: {CACHE_DIR}/{dataset}/evaluation/070_accuracy/
     """
+    # Log configured dataset roots.
     print(f"Starting accuracy result aggregation for datasets: {DATASETS}")
-    
-    # Process each dataset separately
+
+    # Process each configured dataset root.
     for dataset in DATASETS:
+        # Log current dataset root.
         print(f"\nProcessing dataset: {dataset}")
-        
-        # Create output directory for this dataset's aggregated results
+
+        # Build output directory path.
         output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
-        
-        # Aggregate and save results
+
+        # Aggregate and save result CSVs.
         aggregate_accuracy_results(dataset, output_dir)
-        
+
+        # Log output location.
         print(f"Results saved to: {output_dir}")
+
+
+def _cleanup_output_dirs():
+    # This helper is unused in normal runs; keep for local cleanup workflows.
+    for dataset in DATASETS:
+        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
 
 
 if __name__ == '__main__':

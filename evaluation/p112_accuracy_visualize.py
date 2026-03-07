@@ -45,14 +45,27 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
 
     df = results.copy()
     df['Score'] = df[score_field]
-    # Create label that includes classifier, sample rate, tile padding, and tracker
+    # Create label that includes classifier, sample rate, threshold, tile padding, and tracker
     # Handle missing columns for backward compatibility
     if 'Sample_Rate' not in df.columns:
         df['Sample_Rate'] = 1
+    if 'Tracking_Accuracy_Threshold' not in df.columns:
+        df['Tracking_Accuracy_Threshold'] = float('nan')
     if 'Tracker' not in df.columns:
         df['Tracker'] = 'unknown'
-    
-    df['Classifier_Tile_Padding'] = df['Classifier'].str.slice(0, 3) + '_SR' + df['Sample_Rate'].astype(str) + '_' + df['Tile_Padding'].str.slice(0, 3) + '_' + df['Tracker'].str.slice(0, 6)
+
+    # Build threshold label where NaN means no pruning.
+    df['Threshold_Label'] = df['Tracking_Accuracy_Threshold'].apply(
+        lambda x: 'TA-none' if pd.isna(x) else f'TA{int(round(float(x) * 100)):03d}'
+    )
+
+    df['Classifier_Tile_Padding'] = (
+        df['Classifier'].str.slice(0, 3)
+        + '_SR' + df['Sample_Rate'].astype(str)
+        + '_' + df['Threshold_Label']
+        + '_' + df['Tile_Padding'].str.slice(0, 3)
+        + '_' + df['Tracker'].str.slice(0, 6)
+    )
 
     df['Tile_Padding'] = df['Tile_Padding'].apply(lambda x: {'connected': 'padded (+)', 'none': 'none'}.get(x, 'Naive'))
     
@@ -75,7 +88,9 @@ def visualize_compared_accuracy_bar(results: pd.DataFrame, score_field: str, xla
         x=x_encoding,
         # yOffset=alt.YOffset('Dilate:N'),
         color=alt.Color('Tile_Padding:N', title='Tile Padding'),
-        tooltip=['Video', 'Tile_Size', 'Sample_Rate', 'Tile_Padding', 'Classifier', 'Tracker', alt.Tooltip('Score:Q', format='.2f')]
+        tooltip=['Video', 'Dataset', 'Videoset', 'Tile_Size', 'Sample_Rate',
+                 'Tracking_Accuracy_Threshold', 'Tile_Padding', 'Classifier',
+                 'Tracker', alt.Tooltip('Score:Q', format='.2f')]
     ).properties(
         width=200,
         height=120
@@ -198,7 +213,7 @@ def main():
         print(f"\nProcessing dataset: {dataset}")
         results_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
         
-        dataset_results = pd.read_csv(os.path.join(results_dir, 'accuracy_combined.csv'))
+        dataset_results = pd.read_csv(os.path.join(results_dir, 'accuracy.csv'))
         combined_results = pd.read_csv(os.path.join(results_dir, 'accuracy_combined.csv'))
         assert len(dataset_results) > 0, f"No results found for dataset {dataset}"
         assert len(combined_results) > 0, f"No combined results found for dataset {dataset}"

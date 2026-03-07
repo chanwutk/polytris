@@ -125,6 +125,7 @@ QUERY_DATA_ACCESSORS = {
     '001_preprocess_groundtruth_detection': lambda row: row,
     '002_preprocess_groundtruth_tracking': lambda row: row['runtime'],
     '020_exec_classify': lambda row: row,
+    '022_exec_prune_polyominoes': lambda row: row['runtime'],
     '030_exec_compress': lambda row: row['runtime'],
     '040_exec_detect': lambda row: row,
     '050_exec_uncompress': lambda row: row,
@@ -159,6 +160,8 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
     tracker = _tr if ('tracker' in row_dict and _valid_scalar(_tr)) else None
     _cs = row_dict.get('canvas_scale')
     canvas_scale = _cs if ('canvas_scale' in row_dict and _valid_scalar(_cs)) else None
+    _th = row_dict.get('tracking_accuracy_threshold')
+    tracking_accuracy_threshold = _th if ('tracking_accuracy_threshold' in row_dict and _valid_scalar(_th)) else None
     dataset = row_dict['dataset']
     video = row_dict['video']
     classifier = row_dict['classifier']
@@ -181,6 +184,7 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
     per_op['tilesize'] = tilesize
     per_op['tilepadding'] = tilepadding
     per_op['sample_rate'] = sample_rate
+    per_op['tracking_accuracy_threshold'] = tracking_accuracy_threshold
     per_op['canvas_scale'] = canvas_scale
     per_op['tracker'] = tracker
     total_time = float(per_op['time'].sum())
@@ -192,6 +196,7 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
         'tilesize': tilesize,
         'tilepadding': tilepadding,
         'sample_rate': sample_rate,
+        'tracking_accuracy_threshold': tracking_accuracy_threshold,
         'canvas_scale': canvas_scale,
         'tracker': tracker,
         'time': total_time,
@@ -255,6 +260,17 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
     trackers = []
     if 'tracker' in query_overall.columns:
         trackers = sorted([t for t in query_overall['tracker'].unique() if t is not None and not pd.isna(t)])
+    # Extract pruning thresholds, preserving explicit None when present.
+    tracking_accuracy_thresholds: list[float | None] = []
+    if 'tracking_accuracy_threshold' in query_overall.columns:
+        threshold_values = query_overall['tracking_accuracy_threshold'].unique()
+        has_none = any((th is None) or (isinstance(th, float) and pd.isna(th)) for th in threshold_values)
+        parsed_thresholds = sorted(
+            [float(th) for th in threshold_values if th is not None and not (isinstance(th, float) and pd.isna(th))]
+        )
+        if has_none:
+            tracking_accuracy_thresholds.append(None)
+        tracking_accuracy_thresholds.extend(parsed_thresholds)
     # Extract canvas scales, filtering out None/NaN values
     canvas_scales = []
     if 'canvas_scale' in query_overall.columns:
@@ -267,6 +283,7 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
         'tilesizes': sorted(int(ts) for ts in query_overall['tilesize'].unique()),
         'tilepadding_values': sorted(query_overall['tilepadding'].unique()),
         'sample_rates': sorted(int(sr) for sr in query_overall['sample_rate'].unique()) if 'sample_rate' in query_overall.columns else [1],
+        'tracking_accuracy_thresholds': tracking_accuracy_thresholds,
         'canvas_scales': canvas_scales,
         'trackers': trackers,
         'index_stages': sorted(index_overall['stage'].unique()),
