@@ -166,7 +166,7 @@ def create_intermediate_dataset(
     
     for video in tqdm(videos, desc=f"Processing {dataset}"):
         # Load ground truth tracking for this video
-        tracking_results = load_tracking_results(str(CACHE_DIR), dataset, video)
+        tracking_results = load_tracking_results(dataset, video)
         
         for classifier in CLASSIFIERS:
             # Construct path to compressed frames

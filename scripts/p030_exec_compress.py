@@ -19,11 +19,10 @@ from polyis import dtypes
 from polyis.utilities import format_time, load_classification_results, load_pruned_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding, build_param_str, scale_to_percent
 from polyis.pack.group_tiles import group_tiles
 from polyis.pack.pack import pack
+from polyis.io import cache, store
 
 
 config = get_config()
-CACHE_DIR: str = config['DATA']['CACHE_DIR']
-DATASETS_DIR: str = config['DATA']['DATASETS_DIR']
 TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
 CLASSIFIERS: list[str] = config['EXEC']['CLASSIFIERS']
 DATASETS: list[str] = config['EXEC']['DATASETS']
@@ -337,8 +336,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     """
     device = f'cuda:{gpu_id}'
     video_name = video
-    cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
+    video_path = store.dataset(dataset, videoset, video)
     # Build a compact description string once so progress and skip logs are consistent.
     description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]} s{scale_to_percent(canvas_scale)}"
 
@@ -348,12 +346,12 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         if tracking_accuracy_threshold is not None:
             # Read pruned score.jsonl for this (tracker, threshold) tuple.
             results = load_pruned_classification_results(
-                CACHE_DIR, dataset, video, tilesize, classifier, tracker,
+                dataset, video, tilesize, classifier, tracker,
                 tracking_accuracy_threshold, sample_rate)
         else:
             # Read unpruned score.jsonl for this (classifier, tile size, sample rate) tuple.
             results = load_classification_results(
-                CACHE_DIR, dataset, video, tilesize, classifier, sample_rate)
+                dataset, video, tilesize, classifier, sample_rate)
     except FileNotFoundError as exc:
         # Re-raise so the caller sees the missing upstream cache as a hard failure.
         raise
@@ -361,7 +359,11 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     # Create output directory for compression results
     output_dir_name = OUTPUT_DIR_MAP[mode]
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
-    output_dir = os.path.join(cache_video_dir, output_dir_name, param_str)
+    # Only '033_compressed_frames' (Best_Fit) is mapped in cache.exec; other modes use manual paths
+    if mode == PackMode.Best_Fit:
+        output_dir = cache.exec(dataset, 'comp-frames', video, param_str)
+    else:
+        output_dir = cache.exec(dataset, 'comp-frames', video).parent / output_dir_name / param_str
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -733,8 +735,7 @@ def main(args):
     # Create tasks list with all video/classifier/tilesize/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for dataset, videoset in itertools.product(DATASETS, videosets):
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        videoset_dir = os.path.join(dataset_dir, videoset)
+        videoset_dir = store.dataset(dataset, videoset)
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         # Get all video files from the dataset directory

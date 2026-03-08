@@ -6,31 +6,30 @@ import shutil
 
 import pandas as pd
 
+from polyis.io import cache
 from polyis.utilities import get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
-def find_saved_results(cache_dir: str, dataset: str) -> list[tuple[str, str]]:
+def find_saved_results(dataset: str) -> list[tuple[str, str]]:
     """
     Find all split-aware parameter directories with saved accuracy results.
 
     Args:
-        cache_dir (str): Cache directory path
         dataset (str): Dataset root name
 
     Returns:
         list[tuple[str, str]]: List of (split_dataset_name, param_str) tuples
     """
     # Construct path to evaluation directory for this dataset root.
-    evaluation_dir = os.path.join(cache_dir, dataset, 'evaluation', '070_accuracy')
+    evaluation_dir = cache.eval(dataset, 'acc')
     assert os.path.exists(evaluation_dir), f"Evaluation directory {evaluation_dir} does not exist"
 
     # Construct path to raw-results directory.
-    raw_dir = os.path.join(evaluation_dir, 'raw')
+    raw_dir = cache.eval(dataset, 'acc', 'raw')
     assert os.path.exists(raw_dir), f"Raw results directory {raw_dir} does not exist"
 
     # Collect discovered split dataset / parameter combinations.
@@ -128,14 +127,14 @@ def load_saved_results(dataset: str, combined: bool = False) -> pd.DataFrame:
         pd.DataFrame: DataFrame of parsed evaluation results
     """
     # Find split/parameter directories with available results.
-    split_param_combinations = find_saved_results(CACHE_DIR, dataset)
+    split_param_combinations = find_saved_results(dataset)
     assert len(split_param_combinations) > 0, f"No saved results found for dataset {dataset}"
 
     # Initialize collected parsed rows.
     results: list[dict] = []
 
     # Build raw results directory path.
-    raw_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy', 'raw')
+    raw_dir = cache.eval(dataset, 'acc', 'raw')
 
     # Process each discovered split/parameter directory.
     for split_dataset_name, param_str in split_param_combinations:
@@ -240,7 +239,7 @@ def main():
         print(f"\nProcessing dataset: {dataset}")
 
         # Build output directory path.
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+        output_dir = cache.eval(dataset, 'acc')
 
         # Aggregate and save result CSVs.
         aggregate_accuracy_results(dataset, output_dir)
@@ -252,7 +251,7 @@ def main():
 def _cleanup_output_dirs():
     # This helper is unused in normal runs; keep for local cleanup workflows.
     for dataset in DATASETS:
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+        output_dir = cache.eval(dataset, 'acc')
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
 

@@ -8,11 +8,11 @@ import shutil
 import numpy as np
 import pandas as pd
 
+from polyis.io import cache
 from polyis.utilities import get_config, register_tracked_detections, save_tracking_results
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 DATASETS_IN_MAP = {
@@ -167,46 +167,44 @@ def process_tracking_outputs(tracks_dir: str, output_dataset_dir: str, param_ids
     return video_sample_rates
 
 
-def setup_sota_dataset_paths(sota_dir: str, dataset: str, cache_dir: str, system: str) -> tuple[str, str, str, str]:
+def setup_sota_dataset_paths(sota_dir: str, dataset: str, system: str) -> tuple[str, str, str, str]:
     """
     Set up common paths and directories for SOTA dataset processing.
-    
+
     Args:
         sota_dir (str): Root directory containing SOTA results
         dataset (str): Dataset name
-        cache_dir (str): Cache directory for output
         system (str): System name ('otif' or 'leap')
-    
+
     Returns:
         tuple[str, str, str, str]: (dataset_in, sota_dataset_dir, output_dataset_dir, stat_csv_input)
     """
     dataset_in = DATASETS_IN_MAP.get(dataset, dataset)
     print(f"Processing {system.upper()} dataset: {dataset} ({dataset_in})")
-    
+
     # Construct paths
     sota_dataset_dir = os.path.join(sota_dir, dataset_in)
     assert os.path.exists(sota_dataset_dir), f"SOTA dataset directory {sota_dataset_dir} does not exist"
-    
-    output_dataset_dir = os.path.join(cache_dir, 'SOTA', system, dataset)
+
+    output_dataset_dir = cache.sota(system, dataset)
     os.makedirs(output_dataset_dir, exist_ok=True)
-    
+
     # Construct stat CSV paths
     stat_csv_input = os.path.join(sota_dataset_dir, f'{system}_{dataset_in}.csv')
-    
+
     return dataset_in, sota_dataset_dir, output_dataset_dir, stat_csv_input
 
 
-def process_otif_dataset(sota_dir: str, dataset: str, cache_dir: str):
+def process_otif_dataset(sota_dir: str, dataset: str):
     """
     Process a single dataset's OTIF data.
-    
+
     Args:
         sota_dir (str): Root directory containing SOTA results
         dataset (str): Dataset name
-        cache_dir (str): Cache directory for output
     """
     dataset_in, sota_dataset_dir, output_dataset_dir, stat_csv_input = setup_sota_dataset_paths(
-        sota_dir, dataset, cache_dir, 'otif'
+        sota_dir, dataset, 'otif'
     )
     
     # Process tracking outputs first to get sample_rates
@@ -230,21 +228,20 @@ def process_otif_dataset(sota_dir: str, dataset: str, cache_dir: str):
     input_df.to_csv(stat_csv_output, index=False)
 
 
-def process_leap_dataset(sota_dir: str, dataset: str, cache_dir: str):
+def process_leap_dataset(sota_dir: str, dataset: str):
     """
     Process a single dataset's LEAP data.
-    
+
     LEAP has only one parameter set (param_id == 0). The CSV has many rows,
     but we need the row where video_name == "total". The runtime is the sum
     of inference_total + detector + differencer + reid + match.
-    
+
     Args:
         sota_dir (str): Root directory containing SOTA results
         dataset (str): Dataset name
-        cache_dir (str): Cache directory for output
     """
     dataset_in, sota_dataset_dir, output_dataset_dir, stat_csv_input = setup_sota_dataset_paths(
-        sota_dir, dataset, cache_dir, 'leap'
+        sota_dir, dataset, 'leap'
     )
     
     # Process tracking outputs first to get sample_rates
@@ -286,30 +283,29 @@ def process_leap_dataset(sota_dir: str, dataset: str, cache_dir: str):
     print(f"  Calculated total runtime: {total_runtime}")
 
 
-def process_dataset(sota_dir: str, dataset: str, cache_dir: str):
+def process_dataset(sota_dir: str, dataset: str):
     """
     Process a single dataset's SOTA data (OTIF or LEAP).
-    
+
     Automatically detects whether the dataset is OTIF or LEAP based on
     the presence of corresponding CSV files.
-    
+
     Args:
         sota_dir (str): Root directory containing SOTA results
         dataset (str): Dataset name
-        cache_dir (str): Cache directory for output
     """
     dataset_in = DATASETS_IN_MAP.get(dataset, dataset)
     sota_dataset_dir = os.path.join(sota_dir, dataset_in)
     assert os.path.exists(sota_dataset_dir), f"SOTA dataset directory {sota_dataset_dir} does not exist"
-    
+
     # Check for OTIF or LEAP CSV files to determine dataset type
     otif_csv = os.path.join(sota_dataset_dir, f'otif_{dataset_in}.csv')
     leap_csv = os.path.join(sota_dataset_dir, f'leap_{dataset_in}.csv')
-    
+
     if os.path.exists(otif_csv):
-        process_otif_dataset(sota_dir, dataset, cache_dir)
+        process_otif_dataset(sota_dir, dataset)
     if os.path.exists(leap_csv):
-        process_leap_dataset(sota_dir, dataset, cache_dir)
+        process_leap_dataset(sota_dir, dataset)
 
 
 def main(args):
@@ -353,9 +349,9 @@ def main(args):
     
     # Process each dataset
     for dataset in DATASETS:
-        process_dataset(sota_dir, dataset, CACHE_DIR)
-    
-    print(f"\nTransformation complete. Output saved to: {os.path.join(CACHE_DIR, 'SOTA')}")
+        process_dataset(sota_dir, dataset)
+
+    print(f"\nTransformation complete. Output saved to: {cache.root('SOTA')}")
 
 
 if __name__ == '__main__':

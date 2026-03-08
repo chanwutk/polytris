@@ -12,14 +12,13 @@ import queue
 import shutil
 
 import polyis.models.detector
+from polyis.io import cache, store
 from polyis.utilities import format_time, ProgressBar, get_num_frames, get_config
 
 
 CONFIG = get_config()
 EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
 VIDEO_SETS = CONFIG['EXEC']['VIDEO_SETS']
-CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
 
 
 def parse_args():
@@ -54,11 +53,10 @@ def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: qu
         - runtime (dict): Runtime measurements for read and detect operations
     """
 
-    dataset_dir = os.path.join(DATASETS_DIR, dataset)
-    video_path = os.path.join(dataset_dir, video_file)
+    video_path = store.dataset(dataset, video_file)
     video_name = video_file.split('/')[1]
-    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '002_naive', 'detection.jsonl')
-    runtime_path = os.path.join(CACHE_DIR, dataset, 'execution', video_name, '002_naive', 'detection_runtime.jsonl')
+    output_path = cache.exec(dataset, 'naive', video_name, 'detection.jsonl')
+    runtime_path = cache.exec(dataset, 'naive', video_name, 'detection_runtime.jsonl')
     # print(f"Processing video: {video_path} on GPU {gpu_id}")
     
     # Load detector for this specific process and GPU (auto-selected based on dataset)
@@ -171,21 +169,21 @@ def main():
     # Create task functions
     funcs = []
     for dataset in EXEC_DATASETS:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
+        dataset_dir = store.dataset(dataset)
         assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
         detector = polyis.models.detector.get_detector(dataset, 0, batch_size=1)
         polyis.models.detector.delete(detector)
-        
+
         # Get all video files from the dataset directory
         video_files: list[str] = []
         for videoset in splits:
-            videoset_dir = os.path.join(dataset_dir, videoset)
+            videoset_dir = store.dataset(dataset, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith('.mp4')])
         assert len(video_files) > 0, f"No video files found in {dataset_dir}"
         
         for video_file in video_files:
-            video_file_path = os.path.join(dataset_dir, video_file)
+            video_file_path = store.dataset(dataset, video_file)
             print(f"Processing {dataset}/{video_file}")
             funcs.append((get_num_frames(video_file_path), partial(detect_objects, dataset, video_file)))
     

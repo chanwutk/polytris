@@ -6,7 +6,8 @@ import multiprocessing as mp
 from multiprocessing import Queue
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, dedupe_datasets_by_root, load_detection_results, get_config
+from polyis.io import cache, store
+from polyis.utilities import PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, dedupe_datasets_by_root, load_detection_results, get_config
 
 
 CONFIG = get_config()
@@ -24,15 +25,14 @@ def parse_args():
     return parser.parse_args()
 
 
-def visualize_video(video_file: str, cache_dir: str, dataset: str, speed_up: int,
+def visualize_video(video_file: str, dataset: str, speed_up: int,
                     track_ids: list[int] | None, detection_only: bool, groundtruth: bool,
                     process_id: int, progress_queue: Queue):
     """
     Process visualization for a single video file.
-    
+
     Args:
         video_file (str): Name of the video file to process
-        cache_dir (str): Cache directory path
         dataset (str): Dataset name
         speed_up (int): Speed up factor for visualization (process every Nth frame)
         track_ids (list[int] | None): List of track IDs to color (others will be grey)
@@ -41,7 +41,7 @@ def visualize_video(video_file: str, cache_dir: str, dataset: str, speed_up: int
         progress_queue (Queue): Queue for progress updates
     """
     # Load tracking results
-    tracking_results_raw = load_detection_results(cache_dir, dataset, video_file, tracking=True,
+    tracking_results_raw = load_detection_results(dataset, video_file, tracking=True,
                                                   filename='tracking.jsonl', groundtruth=groundtruth)
     
     # Convert to the format expected by create_tracking_visualization
@@ -52,13 +52,12 @@ def visualize_video(video_file: str, cache_dir: str, dataset: str, speed_up: int
         tracking_results[frame_idx] = tracks
     
     # Get path to original video
-    video_path = os.path.join(DATASETS_DIR, dataset, PREFIX_TO_VIDEOSET[video_file[:2]], video_file)
-    assert os.path.exists(video_path), f"Original video not found for {video_path}"
-    
+    video_path = store.dataset(dataset, PREFIX_TO_VIDEOSET[video_file[:2]], video_file)
+    assert video_path.exists(), f"Original video not found for {video_path}"
+
     # Create output path for visualization
-    output_path = os.path.join(cache_dir, dataset, 'execution', video_file,
-                               '003_groundtruth' if groundtruth else '002_naive',
-                               f'annotated_{video_file}')
+    stage = 'groundtruth' if groundtruth else 'naive'
+    output_path = cache.exec(dataset, stage, video_file, f'annotated_{video_file}')
     
     # Create visualization
     create_tracking_visualization(video_path, tracking_results, output_path, speed_up,
@@ -102,24 +101,18 @@ def main(args):
         print(f"Processing dataset: {dataset}")
         
         # Find all videos with tracking results
-        dataset_cache_dir = os.path.join(CACHE_DIR, dataset)
-        if not os.path.exists(dataset_cache_dir):
-            print(f"Dataset cache directory {dataset_cache_dir} does not exist, skipping...")
-            continue
-        
-        # Look for directories that contain tracking results in execution subdirectory
-        execution_dir = os.path.join(dataset_cache_dir, 'execution')
-        if not os.path.exists(execution_dir):
+        execution_dir = cache.execution(dataset)
+        if not execution_dir.exists():
             print(f"Execution directory {execution_dir} does not exist, skipping dataset {dataset}...")
             continue
-            
+
         video_dirs = []
         for item in os.listdir(execution_dir):
-            item_path = os.path.join(execution_dir, item)
-            if item.startswith('te') and os.path.isdir(item_path):
-                tracking_path = os.path.join(item_path, '003_groundtruth', 'tracking.jsonl')
-                if os.path.exists(tracking_path):
-                    video_dirs.append(item)
+            if not item.startswith('te') or not (execution_dir / item).is_dir():
+                continue
+            tracking_path = cache.exec(dataset, 'groundtruth', item, 'tracking.jsonl')
+            if tracking_path.exists():
+                video_dirs.append(item)
         
         if not video_dirs:
             print(f"No videos with tracking results found in {execution_dir}")
@@ -129,7 +122,7 @@ def main(args):
         
         for groundtruth in [True]:
             funcs.extend(
-                partial(visualize_video, video_file, CACHE_DIR, dataset,
+                partial(visualize_video, video_file, dataset,
                         args.speed_up, args.track_ids, args.detection_only, groundtruth)
                 for video_file in video_dirs
             )

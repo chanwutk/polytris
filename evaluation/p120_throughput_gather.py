@@ -6,12 +6,11 @@ import shutil
 
 import pandas as pd
 
+from polyis.io import cache, store
 from polyis.utilities import build_param_str, dataset_name_for_videoset, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 DATASETS = config['EXEC']['DATASETS']
@@ -41,7 +40,7 @@ def discover_available_videos(datasets: list[str]) -> list[tuple[str, str, str, 
         # Iterate over query-time splits.
         for videoset in ['valid', 'test']:
             # Build absolute split directory path.
-            videoset_dir = os.path.join(DATASETS_DIR, dataset, videoset)
+            videoset_dir = store.dataset(dataset, videoset)
             # Ensure split directory exists.
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
@@ -75,11 +74,8 @@ def gather_index_construction_data(datasets: list[str]):
 
     # Iterate dataset roots.
     for dataset in datasets:
-        # Build dataset cache root path.
-        dataset_path = os.path.join(CACHE_DIR, dataset)
-
         # Gather stage 011 runtime files.
-        indexing_detect_dir = os.path.join(dataset_path, 'indexing', 'segment', 'detection')
+        indexing_detect_dir = cache.index(dataset, 'det')
         assert os.path.exists(indexing_detect_dir), f"Indexing detect directory {indexing_detect_dir} does not exist"
         for video_file in os.listdir(indexing_detect_dir):
             if not video_file.endswith('.detections.jsonl'):
@@ -103,7 +99,7 @@ def gather_index_construction_data(datasets: list[str]):
             })
 
         # Gather stage 012 runtime files.
-        training_runtime_dir = os.path.join(dataset_path, 'indexing', 'training', 'runtime')
+        training_runtime_dir = cache.index(dataset, 'training', 'runtime')
         assert os.path.exists(training_runtime_dir), f"Training runtime directory {training_runtime_dir} does not exist"
         for tilesize in TILE_SIZES:
             tile_dir = os.path.join(training_runtime_dir, f'tilesize_{tilesize}')
@@ -130,7 +126,7 @@ def gather_index_construction_data(datasets: list[str]):
                 })
 
         # Gather stage 013 runtime files.
-        training_results_dir = os.path.join(dataset_path, 'indexing', 'training', 'results')
+        training_results_dir = cache.index(dataset, 'training', 'results')
         assert os.path.exists(training_results_dir), f"Training results directory {training_results_dir} does not exist"
         for tilesize in TILE_SIZES:
             for classifier in CLASSIFIERS:
@@ -176,7 +172,7 @@ def gather_query_execution_data(datasets_videos: list[tuple[str, str, str, str]]
     # Iterate discovered dataset/split/video tuples.
     for dataset_root, split_dataset_name, videoset, video in datasets_videos:
         # Build execution root for this video.
-        video_path = os.path.join(CACHE_DIR, dataset_root, 'execution', video)
+        video_path = cache.execution(dataset_root, video)
 
         # Gather naive detection runtime path.
         naive_detection_path = os.path.join(video_path, '002_naive', 'detection_runtime.jsonl')
@@ -440,7 +436,7 @@ def save_data_tables(index_data, query_data):
     # Save one set of files per dataset root.
     for dataset in datasets:
         # Build output directory path.
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
+        output_dir = cache.eval(dataset, 'tp')
         # Ensure output directory exists.
         os.makedirs(output_dir, exist_ok=True)
 

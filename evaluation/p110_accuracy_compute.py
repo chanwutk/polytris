@@ -18,6 +18,7 @@ import trackeval
 from trackeval.metrics import HOTA, CLEAR, Identity, Count
 
 from polyis.trackeval.dataset import Dataset
+from polyis.io import cache
 from polyis.utilities import (
     build_param_str,
     dataset_name_for_videoset,
@@ -27,7 +28,6 @@ from polyis.utilities import (
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
@@ -132,13 +132,13 @@ def find_tracking_results(dataset: str) -> dict[str, tuple[set[str], set[str]]]:
         dict[str, tuple[set[str], set[str]]]: Mapping of videoset -> (videos, param_strs)
     """
     # Construct path to dataset execution directory.
-    dataset_cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+    dataset_cache_dir = cache.execution(dataset)
     assert os.path.exists(dataset_cache_dir), f"Dataset cache directory {dataset_cache_dir} does not exist"
 
     # Resolve dataset root that supplies tracking groundtruth for this dataset.
     groundtruth_dataset = resolve_groundtruth_tracking_dataset(dataset)
     # Build execution path for resolved groundtruth dataset.
-    groundtruth_execution_dir = os.path.join(CACHE_DIR, groundtruth_dataset, 'execution')
+    groundtruth_execution_dir = cache.execution(groundtruth_dataset)
     assert os.path.exists(groundtruth_execution_dir), \
         f"Groundtruth execution directory {groundtruth_execution_dir} does not exist"
 
@@ -257,11 +257,11 @@ def evaluate_tracking_accuracy(dataset_root: str, dataset_name: str, videoset: s
     )
 
     # Resolve execution directory that provides tracking predictions.
-    track_execution_dir = os.path.join(CACHE_DIR, dataset_root, 'execution')
+    track_execution_dir = cache.execution(dataset_root)
     # Resolve dataset root that provides groundtruth tracking.
     groundtruth_dataset = resolve_groundtruth_tracking_dataset(dataset_root)
     # Build execution directory path for resolved GT dataset.
-    gt_execution_dir = os.path.join(CACHE_DIR, groundtruth_dataset, 'execution')
+    gt_execution_dir = cache.execution(groundtruth_dataset)
 
     # Validate tracking execution directory exists.
     assert os.path.exists(track_execution_dir), f"Tracking execution directory {track_execution_dir} does not exist"
@@ -461,7 +461,7 @@ def main(args):
         split_results = find_tracking_results(dataset)
 
         # Build evaluation directory path for this dataset root.
-        evaluation_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+        evaluation_dir = cache.eval(dataset, 'acc')
 
         # Clear previous evaluation directory to avoid stale outputs.
         if os.path.exists(evaluation_dir):

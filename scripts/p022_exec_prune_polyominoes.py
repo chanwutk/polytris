@@ -13,11 +13,10 @@ import pulp
 
 from polyis.pack.adapters import group_tiles_all
 from polyis.utilities import format_time, ProgressBar, get_config, load_classification_results, build_param_str
+from polyis.io import cache, store
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
 CLASSIFIERS: list[str] = config['EXEC']['CLASSIFIERS']
 DATASETS: list[str] = config['EXEC']['DATASETS']
@@ -61,8 +60,8 @@ def load_max_sampling_rate(dataset: str, tracker: str, tile_size: int, accuracy_
     Returns:
         2D numpy array [grid_height, grid_width] of max sampling rates per tile
     """
-    max_rate_path = os.path.join(
-        CACHE_DIR, dataset, 'indexing', 'track_rate',
+    max_rate_path = cache.index(
+        dataset, 'track_rates',
         f'{tracker}_{tile_size}', 'max_rate_table.npy'
     )
     
@@ -205,7 +204,7 @@ def process_video(
     # Load classification results
     print(f"[{video}] Loading classification results...", flush=True)
     raw_results = load_classification_results(
-        CACHE_DIR, dataset, video, tile_size, classifier, sample_rate, verbose=False
+        dataset, video, tile_size, classifier, sample_rate, verbose=False
     )
     
     classifications = []
@@ -305,8 +304,8 @@ def process_video(
     param_str = build_param_str(classifier=classifier, tilesize=tile_size,
                                 sample_rate=sample_rate,
                                 tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
-    output_dir = os.path.join(
-        CACHE_DIR, dataset, 'execution', video, '022_pruned_polyominoes',
+    output_dir = cache.exec(
+        dataset, 'pruned-polyominoes', video,
         param_str
     )
     os.makedirs(output_dir, exist_ok=True)
@@ -379,14 +378,13 @@ def main():
     print(f"trackers: {TRACKERS}")
     print(f"tracking_accuracy_thresholds: {TRACKING_ACCURACY_THRESHOLDS}")
     for dataset, videoset in itertools.product(DATASETS, selected_videosets):
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        videoset_dir = os.path.join(dataset_dir, videoset)
+        videoset_dir = store.dataset(dataset, videoset)
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
         for video, classifier, tile_size, sample_rate in itertools.product(sorted(videos), CLASSIFIERS, TILE_SIZES, SAMPLE_RATES):
-            score_path = os.path.join(CACHE_DIR, dataset, 'execution', video, '020_relevancy',
-                                      f'{classifier}_{tile_size}_{sample_rate}', 'score', 'score.jsonl')
+            score_path = cache.exec(dataset, 'relevancy', video,
+                                    f'{classifier}_{tile_size}_{sample_rate}', 'score', 'score.jsonl')
             assert os.path.exists(score_path), f"Score path {score_path} does not exist"
 
             # Iterate over all tracker × threshold combinations for each sample_rate.

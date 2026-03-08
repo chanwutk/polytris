@@ -8,11 +8,11 @@ from multiprocessing import Pool
 from rich.progress import track
 import pandas as pd
 
+from polyis.io import cache
 from polyis.utilities import METRICS, get_video_frame_count, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 TILEPADDING = config['EXEC']['TILEPADDING_MODES']
 
@@ -32,7 +32,7 @@ def load_accuracy_results(dataset: str):
             - Individual video evaluation results
             - Combined dataset evaluation results
     """
-    results_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+    results_dir = cache.eval(dataset, 'acc')
 
     # Load individual video results using the shared function (raw, unparsed results)
     individual_results = pd.read_csv(os.path.join(results_dir, 'accuracy.csv'))
@@ -56,7 +56,7 @@ def load_throughput_results(dataset: str) -> pd.DataFrame:
         pd.DataFrame: Query execution overall timing DataFrame
         dict: Metadata
     """
-    measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
+    measurements_dir = cache.eval(dataset, 'tp', 'measurements')
     assert os.path.exists(measurements_dir), \
         f"Throughput measurements directory {measurements_dir} does not exist"
 
@@ -372,7 +372,7 @@ def process_dataset(dataset: str):
         f"No combined matched data points found between accuracy and throughput results for {dataset}."
 
     # Save tradeoff data
-    output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
+    output_dir = cache.eval(dataset, 'tradeoff')
     tradeoff.to_csv(os.path.join(output_dir, f'tradeoff.csv'), index=False)
     tradeoff_combined.to_csv(os.path.join(output_dir, f'tradeoff_combined.csv'), index=False)
     naive.to_csv(os.path.join(output_dir, f'naive.csv'), index=False)
@@ -408,7 +408,7 @@ def main():
     print(f"Processing datasets: {DATASETS}")
 
     for dataset in DATASETS:
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
+        output_dir = cache.eval(dataset, 'tradeoff')
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
             print(f"Cleared existing 090_tradeoff directory: {output_dir}")

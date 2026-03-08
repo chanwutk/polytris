@@ -12,11 +12,10 @@ import torch
 
 from polyis.utilities import get_config
 from polyis.train.benchmark_model_optimization import benchmark_model_optimization
+from polyis.io import cache, store
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 DATASETS = config['EXEC']['DATASETS']
 CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
@@ -40,10 +39,10 @@ def get_video_resolution(dataset_name: str) -> tuple[int, int]:
         Width and height of the video
     """
     # Find a video file in the dataset
-    videoset_dir = os.path.join(DATASETS_DIR, dataset_name, 'test')
+    videoset_dir = store.dataset(dataset_name, 'test')
     if not os.path.exists(videoset_dir):
         # Try 'train' directory if 'test' doesn't exist
-        videoset_dir = os.path.join(DATASETS_DIR, dataset_name, 'train')
+        videoset_dir = store.dataset(dataset_name, 'train')
     
     if not os.path.exists(videoset_dir):
         # Fallback to default resolution if no video directory found
@@ -86,8 +85,8 @@ def benchmark_classifier(datasets: list[str], width: int, height: int, classifie
     device = f'cuda:{gpu_id}'
     
     # Find the trained model for this classifier, tile size, and dataset
-    model_path = os.path.join(
-        CACHE_DIR, datasets[0], 'indexing', 'training', 'results',
+    model_path = cache.index(
+        datasets[0], 'training', 'results',
         f'{classifier_name}_{tile_size}', 'model_best.pth'
     )
     
@@ -109,8 +108,8 @@ def benchmark_classifier(datasets: list[str], width: int, height: int, classifie
     results_sorted = benchmark_model_optimization(model, device, tile_size, batch_size, iterations)
     for dataset in datasets:
         # Create results directory per dataset
-        results_dir = os.path.join(
-            CACHE_DIR, dataset, 'indexing', 'training', 'results',
+        results_dir = cache.index(
+            dataset, 'training', 'results',
             f'{classifier_name}_{tile_size}'
         )
         # print(f"Saving results", results_sorted)

@@ -18,7 +18,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, get_video_frame_count
+from polyis.io import cache
+from polyis.utilities import DATASETS_TO_TEST, get_video_frame_count
 
 
 INPUT_DIRS = ['030_compressed_frames', '031_compressed_frames', '032_compressed_frames', '033_compressed_frames', '034_compressed_frames', '035_compressed_frames']
@@ -59,7 +60,7 @@ def build_config_paths_dataframe(datasets: List[str], verbose: bool = False) -> 
 
     # Scan all datasets, videos, input directories, and configurations
     for dataset in datasets:
-        dataset_cache_dir = Path(CACHE_DIR) / dataset / 'execution'
+        dataset_cache_dir = cache.execution(dataset)
 
         # Find all video directories
         for video_dir in dataset_cache_dir.iterdir():
@@ -303,7 +304,7 @@ def save_comparison_tables(df: pd.DataFrame, runtime_df: pd.DataFrame, verbose: 
     for dataset, group_df in df.groupby('dataset'):
         # Create output directory
         dataset_str = str(dataset)
-        output_dir = Path(CACHE_DIR) / dataset_str / 'evaluation' / OUTPUT_DIR
+        output_dir = cache.eval(dataset_str, 'compress')
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Select columns for image counts table (include stage)
@@ -340,7 +341,7 @@ def main(args):
     """
     if args.verbose:
         print("Starting compression comparison analysis...")
-        print(f"Cache directory: {CACHE_DIR}")
+        print(f"Cache directory: {cache.root('')}")
         print(f"Datasets to analyze: {args.datasets}")
 
     # Step 1: Build DataFrame of all configuration paths

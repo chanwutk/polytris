@@ -18,11 +18,10 @@ import torch
 import polyis.models.detector
 import polyis.dtypes
 from polyis.utilities import TilePadding, format_time, ProgressBar, get_config, build_param_str
+from polyis.io import cache, store
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
 CLASSIFIERS: list[str] = config['EXEC']['CLASSIFIERS']
 TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
 DATASETS: list[str] = config['EXEC']['DATASETS']
@@ -117,16 +116,15 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
     torch.backends.cudnn.benchmark = True
 
     device = f'cuda:{gpu_id}'
-    cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
-    compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
+    compressed_frames_dir = cache.exec(dataset, 'comp-frames', video, param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
         f"Compressed frames directory {compressed_frames_dir} does not exist"
 
     # Create output directory for detections
     print(f"Creating output directory for detections")
-    detections_output_dir = os.path.join(cache_dir, '040_compressed_detections', param_str)
+    detections_output_dir = cache.exec(dataset, 'comp-dets', video, param_str)
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -242,15 +240,14 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
-    compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
+    compressed_frames_dir = cache.exec(dataset, 'comp-frames', video, param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
         f"Compressed frames directory {compressed_frames_dir} does not exist"
 
     # Create output directory for detections
-    detections_output_dir = os.path.join(cache_dir, '040_compressed_detections', param_str)
+    detections_output_dir = cache.exec(dataset, 'comp-dets', video, param_str)
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -358,15 +355,18 @@ def main(args):
     if args.clear:
         print(f"Cleared existing 040_compressed_detections folder")
         for dataset in DATASETS:
-            cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
-            for video in sorted(os.listdir(cache_dir)):
-                compressed_detections_dir = os.path.join(cache_dir, video,
-                                                         '040_compressed_detections')
-                if os.path.exists(compressed_detections_dir):
-                    shutil.rmtree(compressed_detections_dir)
+            for videoset in ('valid', 'test'):
+                videoset_dir = store.dataset(dataset, videoset)
+                if not os.path.exists(videoset_dir):
+                    continue
+                videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+                for video in sorted(videos):
+                    compressed_detections_dir = cache.exec(dataset, 'comp-dets', video)
+                    if os.path.exists(compressed_detections_dir):
+                        shutil.rmtree(compressed_detections_dir)
 
     for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
-        videoset_dir = os.path.join(DATASETS_DIR, dataset, videoset)
+        videoset_dir = store.dataset(dataset, videoset)
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]

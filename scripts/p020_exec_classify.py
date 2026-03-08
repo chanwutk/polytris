@@ -16,12 +16,11 @@ from functools import partial
 from polyis.images import ImgNHWC, splitNHWC
 
 from polyis.train.select_model_optimization import select_model_optimization
+from polyis.io import cache, store
 from polyis.utilities import format_time, ProgressBar, get_config
 
 
 config = get_config()
-CACHE_DIR: str = config['DATA']['CACHE_DIR']
-DATASETS_DIR: str = config['DATA']['DATASETS_DIR']
 TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
 CLASSIFIERS: list[str] = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
 DATASETS: list[str] = config['EXEC']['DATASETS']
@@ -50,8 +49,8 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
         FileNotFoundError: If no trained model is found for the specified tile size
         ValueError: If the classifier is not supported
     """
-    results_path = os.path.join(CACHE_DIR, dataset_name, 'indexing', 'training', 'results', f'{classifier_name}_{tile_size}')
-    model_path = os.path.join(results_path, 'model_best.pth')
+    results_path = cache.index(dataset_name, 'training', 'results', f'{classifier_name}_{tile_size}')
+    model_path = results_path / 'model_best.pth'
 
     if os.path.exists(model_path):
         # print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
@@ -215,11 +214,8 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     model = load_model(dataset, tile_size, classifier, device)
     model = model.to(device)
 
-    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
-    cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-
-    # Create output directory structure
-    output_dir = os.path.join(cache_video_dir, '020_relevancy')
+    video_path = store.dataset(dataset, videoset, video)
+    output_dir = cache.exec(dataset, 'relevancy', video)
 
     # Create score directory for this classifier, tile size, and sample rate
     classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}_{sample_rate}')
@@ -245,8 +241,8 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # Select the best model optimization method based on the benchmark results and apply it to the model
-    with open(os.path.join(CACHE_DIR, dataset, 'indexing', 'training', 'results',
-                           f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
+    with open(cache.index(dataset, 'training', 'results',
+                          f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
         benchmark_results = [json.loads(line) for line in f]
     model, method_name = select_model_optimization(model, benchmark_results, device, tile_size,
                                       (width // tile_size) * (height // tile_size))
@@ -256,7 +252,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device, dtype=torch.float16).view(1, 6, 1, 1)
 
     # Load always_relevant bitmap if available to filter out tiles that have never been relevant
-    always_relevant_path = os.path.join(CACHE_DIR, dataset, 'indexing', 'always_relevant', f'{tile_size}_all.npy')
+    always_relevant_path = cache.index(dataset, 'never-relevant', f'{tile_size}_all.npy')
     assert os.path.exists(always_relevant_path), f"Always relevant bitmap not found for {dataset} {tile_size}"
 
     # Load the bitmap (2D array where 1 = relevant at some point, 0 = never relevant)
@@ -396,8 +392,7 @@ def main():
     # Create tasks list with all video/classifier/tile_size/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for dataset, videoset in itertools.product(DATASETS, selected_videosets):
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        videoset_dir = os.path.join(dataset_dir, videoset)
+        videoset_dir = store.dataset(dataset, videoset)
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]

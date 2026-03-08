@@ -5,11 +5,11 @@ import os
 import pandas as pd
 import altair as alt
 
+from polyis.io import cache
 from polyis.utilities import METRICS, load_all_datasets_tradeoff_data, print_best_data_points, tradeoff_scatter_and_naive_baseline, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
@@ -89,7 +89,7 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     print(f"Creating all datasets tradeoff visualizations for {len(datasets)} datasets...")
     
     # Create output directory
-    output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '092_tradeoff_all')
+    output_dir = cache.summary('092_tradeoff_all')
     os.makedirs(output_dir, exist_ok=True)
     
     # Use metrics from utilities

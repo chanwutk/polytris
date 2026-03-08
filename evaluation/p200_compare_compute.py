@@ -5,12 +5,12 @@ import os
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, STR_NA, load_all_datasets_tradeoff_data, print_best_data_points, get_config
+from polyis.io import cache
+from polyis.utilities import STR_NA, load_all_datasets_tradeoff_data, print_best_data_points, get_config
 from evaluation.utilities import ColorScheme
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 # Define the chart size multiplier for all rendered tradeoff charts.
@@ -42,7 +42,7 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
     # Process each dataset
     for dataset_name in datasets:
         # Construct path to tradeoff.csv file
-        tradeoff_csv_path = os.path.join(CACHE_DIR, 'SOTA', system, dataset_name, 'tradeoff.csv')
+        tradeoff_csv_path = cache.sota(system, dataset_name, 'tradeoff.csv')
         
         # Skip if tradeoff.csv doesn't exist
         if not os.path.exists(tradeoff_csv_path):
@@ -301,7 +301,7 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     print(f"Creating all datasets tradeoff visualizations for {len(datasets)} datasets...")
     
     # Create output directory
-    output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '100_compare_compute')
+    output_dir = cache.summary('100_compare_compute')
     os.makedirs(output_dir, exist_ok=True)
     
     # Use all available metrics for visualization (will visualize all submetrics)

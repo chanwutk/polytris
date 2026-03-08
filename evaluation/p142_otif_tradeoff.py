@@ -5,11 +5,11 @@ import os
 
 import pandas as pd
 
+from polyis.io import cache
 from polyis.utilities import get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
@@ -95,7 +95,7 @@ def load_accuracy_results(dataset: str, system: str) -> pd.DataFrame:
         pd.DataFrame: DataFrame with param_id and accuracy metrics columns
     """
     # Construct path to accuracy results directory
-    accuracy_dir = os.path.join(CACHE_DIR, 'SOTA', system, dataset, 'accuracy', 'raw')
+    accuracy_dir = cache.sota(system, dataset, 'accuracy', 'raw')
     assert os.path.exists(accuracy_dir), f"Accuracy directory {accuracy_dir} does not exist"
     # if not os.path.exists(accuracy_dir):
     #     # Return empty DataFrame if directory doesn't exist
@@ -150,7 +150,7 @@ def join_accuracy_to_stat(dataset: str, system: str):
         system (str): System name ('otif' or 'leap')
     """
     # Construct path to stat.csv file
-    stat_csv_path = os.path.join(CACHE_DIR, 'SOTA', system, dataset, 'stat.csv')
+    stat_csv_path = cache.sota(system, dataset, 'stat.csv')
     if not os.path.exists(stat_csv_path):
         print(f"  Warning: stat.csv not found: {stat_csv_path}, skipping")
         return
@@ -184,7 +184,7 @@ def join_accuracy_to_stat(dataset: str, system: str):
     merged_df['sample_rate'] = max_gap
 
     # Save merged results to a new file with accuracy metrics
-    output_csv_path = os.path.join(CACHE_DIR, 'SOTA', system, dataset, 'tradeoff.csv')
+    output_csv_path = cache.sota(system, dataset, 'tradeoff.csv')
     merged_df.to_csv(output_csv_path, index=False)
     print(f"Saved merged {system.upper()} results with accuracy metrics: {output_csv_path}")
     print(f"Added columns: {list(accuracy_df.columns)}")

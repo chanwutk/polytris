@@ -9,11 +9,11 @@ import numpy as np
 import altair as alt
 import pandas as pd
 
+from polyis.io import cache
 from polyis.utilities import get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
@@ -211,7 +211,7 @@ def main():
     # Process each dataset separately to create independent visualizations
     for dataset in DATASETS:
         print(f"\nProcessing dataset: {dataset}")
-        results_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '070_accuracy')
+        results_dir = cache.eval(dataset, 'acc')
         
         dataset_results = pd.read_csv(os.path.join(results_dir, 'accuracy.csv'))
         combined_results = pd.read_csv(os.path.join(results_dir, 'accuracy_combined.csv'))
@@ -219,7 +219,7 @@ def main():
         assert len(combined_results) > 0, f"No combined results found for dataset {dataset}"
         
         # Create output directory for this dataset's visualizations
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '072_accuracy_visualize')
+        output_dir = cache.eval(dataset, 'acc_vis')
         
         # Clean and recreate output directory to ensure fresh results
         if os.path.exists(output_dir):

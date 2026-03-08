@@ -9,11 +9,11 @@ import multiprocessing as mp
 
 from rich.progress import track
 
+from polyis.io import cache
 from polyis.utilities import get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 # Global constant for naive baseline stages
@@ -365,7 +365,7 @@ def main():
 
     # Clear the 082_throughput_visualize directory
     for dataset in DATASETS:
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
+        output_dir = cache.eval(dataset, 'tp-vis')
         if os.path.exists(output_dir):
             print(f"Clearing directory: {output_dir}")
             shutil.rmtree(output_dir)
@@ -377,7 +377,7 @@ def main():
     tasks = []
     for dataset in DATASETS:
         print(f"Loading processed measurements for dataset: {dataset}")
-        measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
+        measurements_dir = cache.eval(dataset, 'tp', 'measurements')
         print(f"Measurements directory: {measurements_dir}")
 
         assert os.path.exists(measurements_dir), f"Error: Measurements directory {measurements_dir} does not exist."
@@ -387,7 +387,7 @@ def main():
         # Collect query_overall for summary visualization
         all_query_overall_list.append(query_overall)
 
-        throughput_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
+        throughput_dir = cache.eval(dataset, 'tp-vis')
 
         os.makedirs(throughput_dir, exist_ok=True)
         videos = extract_video_names(query_overall)
@@ -398,7 +398,7 @@ def main():
     # Create summary visualization across all datasets
     print("Creating summary visualization across all datasets...")
     all_query_overall = pd.concat(all_query_overall_list, ignore_index=True)
-    summary_output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '082_throughput')
+    summary_output_dir = cache.summary('082_throughput')
     tasks.append(partial(visualize_summary_all_datasets, all_query_overall, summary_output_dir))
     print(f"Summary visualization saved to: {summary_output_dir}/overall_summary.png")
     

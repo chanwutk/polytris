@@ -9,11 +9,11 @@ from rich.progress import track
 import pandas as pd
 import altair as alt
 
+from polyis.io import cache
 from polyis.utilities import METRICS, load_tradeoff_data, tradeoff_scatter_and_naive_baseline, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
@@ -124,7 +124,7 @@ def visualize_tradeoffs(dataset: str):
     print(f"Creating tradeoff visualizations for dataset: {dataset}")
     
     # Create output directory
-    output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '091_tradeoff')
+    output_dir = cache.eval(dataset, 'tradeoff-vis')
     
     # Use metrics from utilities
     

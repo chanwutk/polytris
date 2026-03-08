@@ -15,13 +15,13 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
+from polyis.io import cache
 from polyis.utilities import get_config, load_tradeoff_data, split_dataset_name
 from evaluation.utilities import ColorScheme
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
@@ -949,7 +949,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     print(f"Creating Pareto front visualizations for {len(datasets)} datasets...")
 
     # Create output directory
-    output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '101_compare_pareto')
+    output_dir = cache.summary('101_compare_pareto')
     os.makedirs(output_dir, exist_ok=True)
     print(f"Output directory: {output_dir}")
 

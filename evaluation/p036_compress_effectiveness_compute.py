@@ -24,7 +24,8 @@ import numpy as np
 import pandas as pd
 from rich.progress import Progress, BarColumn, TextColumn
 
-from polyis.utilities import CACHE_DIR, get_config, load_classification_results, scale_to_percent
+from polyis.io import cache
+from polyis.utilities import get_config, load_classification_results, scale_to_percent
 
 
 # Compression stage directory to analyze
@@ -141,7 +142,7 @@ def count_tiles_for_path(config_path: Path, dataset: str, video: str,
     
     # Load classification results for this video
     try:
-        classification_results = load_classification_results(CACHE_DIR, dataset, video, tilesize, classifier)
+        classification_results = load_classification_results(dataset, video, tilesize, classifier)
     except FileNotFoundError:
         # If classification results not found, can't compute padding tiles
         # Fall back to basic counting
@@ -401,7 +402,7 @@ def collect_dataset_data(dataset: str, classifiers: List[str], tilesizes: List[i
         DataFrame with columns: dataset, video, classifier, tilesize, sample_rate, tilepadding,
                                canvas_scale, num_images, empty_tiles, occupied_tiles, padding_tiles
     """
-    dataset_cache_dir = Path(CACHE_DIR) / dataset / 'execution'
+    dataset_cache_dir = cache.execution(dataset)
     
     if not dataset_cache_dir.exists():
         if verbose:
@@ -604,7 +605,7 @@ def main(args):
     canvas_scales = [float(s) for s in config['EXEC']['CANVAS_SCALE']]
     
     # Set output directory to {CACHE_DIR}/SUMMARY/036_compress_effectiveness
-    output_dir = Path(CACHE_DIR) / 'SUMMARY' / '036_compress_effectiveness'
+    output_dir = cache.summary('036_compress_effectiveness')
     
     if args.verbose:
         print("Compression Effectiveness Computation")
@@ -614,7 +615,7 @@ def main(args):
         print(f"Tile sizes: {tilesizes}")
         print(f"Tile paddings: {tilepaddings}")
         print(f"Canvas scales: {canvas_scales}")
-        print(f"Cache directory: {CACHE_DIR}")
+        print(f"Cache directory: {cache.root('')}")
         print(f"Output directory: {output_dir}")
         print("=" * 80)
     

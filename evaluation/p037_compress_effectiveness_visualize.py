@@ -21,7 +21,8 @@ from pathlib import Path
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, get_config, get_video_frame_count
+from polyis.io import cache, store
+from polyis.utilities import get_config, get_video_frame_count
 
 
 def get_total_original_frames(dataset: str) -> int:
@@ -34,8 +35,8 @@ def get_total_original_frames(dataset: str) -> int:
     Returns:
         Total number of frames across all videos in the test set
     """
-    videoset_dir = os.path.join(DATASETS_DIR, dataset, 'test')
-    if not os.path.exists(videoset_dir):
+    videoset_dir = store.dataset(dataset, 'test')
+    if not videoset_dir.exists():
         print(f"  Videoset directory {videoset_dir} does not exist")
         return 0
     
@@ -444,8 +445,8 @@ def main():
     datasets = config['EXEC']['DATASETS']
     
     # Set data directory (where CSV files are stored) and output directory
-    data_dir = Path(CACHE_DIR) / 'SUMMARY' / '036_compress_effectiveness'
-    output_dir = Path(CACHE_DIR) / 'SUMMARY' / '036_compress_effectiveness'
+    data_dir = cache.summary('036_compress_effectiveness')
+    output_dir = cache.summary('036_compress_effectiveness')
     
     print("Compression Effectiveness Visualization")
     print("=" * 80)

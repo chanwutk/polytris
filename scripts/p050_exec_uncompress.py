@@ -11,12 +11,11 @@ from functools import partial
 from typing import Callable
 
 from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str, TilePadding
+from polyis.io import cache, store
 
 
 CONFIG = get_config()
 DATASETS: list[str] = CONFIG['EXEC']['DATASETS']
-DATASETS_DIR: str = CONFIG['DATA']['DATASETS_DIR']
-CACHE_DIR: str = CONFIG['DATA']['CACHE_DIR']
 CLASSIFIERS: list[str] = CONFIG['EXEC']['CLASSIFIERS']
 TILE_SIZES: list[int] = CONFIG['EXEC']['TILE_SIZES']
 SAMPLE_RATES: list[int] = CONFIG['EXEC']['SAMPLE_RATES']
@@ -173,27 +172,26 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
     # Build the shared key used by all 03x/04x/05x stage folders.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                 tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
                                 tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     # Check if compressed detections exist
-    detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   param_str, 'detections.jsonl')
+    detections_file = cache.exec(dataset, 'comp-dets', video,
+                                 param_str, 'detections.jsonl')
     assert os.path.exists(detections_file), f"Detections file not found: {detections_file}"
 
     # Check if compressed frames directory exists
-    compressed_frames_dir = os.path.join(video_path, '033_compressed_frames',
-                                         param_str)
+    compressed_frames_dir = cache.exec(dataset, 'comp-frames', video,
+                                       param_str)
     assert os.path.exists(compressed_frames_dir), f"Compressed frames directory not found: {compressed_frames_dir}"
 
-    detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   param_str, 'detections.jsonl')
+    detections_file = cache.exec(dataset, 'comp-dets', video,
+                                 param_str, 'detections.jsonl')
 
-    unpacked_output_dir = os.path.join(video_path, '050_uncompressed_detections',
-                                       param_str)
+    unpacked_output_dir = cache.exec(dataset, 'ucomp-dets', video,
+                                     param_str)
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -211,7 +209,7 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
     # Get total number of frames from original video
     # This is important: we create entries for ALL frames (0 to num_frames-1)
     # Non-sampled frames will have empty bbox arrays
-    num_frames = get_num_frames(os.path.join(DATASETS_DIR, dataset, videoset, video))
+    num_frames = get_num_frames(store.dataset(dataset, videoset, video))
 
     # Create entries for ALL frames (0 to num_frames-1), not just sampled ones
     # Non-sampled frames (frame_idx % sample_rate != 0) will remain as empty arrays
@@ -222,7 +220,7 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
     with open(detections_file, 'r') as f, open(runtime_file, 'w') as fr:
         # Process each detection file
         contents = f.readlines()
-        description = f"{video_path} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS)}} {tilepadding}"
+        description = f"{dataset}/{video} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS)}} {tilepadding}"
         kwargs = {'completed': 0, 'total': len(contents), 'description': description}
         mod = max(1, int(len(contents) * 0.1))
         command_queue.put((device, kwargs))
@@ -336,8 +334,7 @@ def main():
     # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        videosets_dir = os.path.join(dataset_dir, videoset)
+        videosets_dir = store.dataset(dataset, videoset)
         assert os.path.exists(videosets_dir), f"Videoset directory {videosets_dir} does not exist"
 
         # Get all video files from the dataset directory

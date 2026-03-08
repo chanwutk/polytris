@@ -17,12 +17,12 @@ sys.path.append('/polyis/modules/TrackEval')
 import trackeval
 from trackeval.metrics import HOTA, Count
 
+from polyis.io import cache
 from polyis.trackeval.dataset import Dataset
 from polyis.utilities import dataset_root_name, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 DATASETS_IN_MAP = {
@@ -52,7 +52,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def find_sota_tracking_results(cache_dir: str, dataset: str, system: str) -> tuple[set[str], set[int]]:
+def find_sota_tracking_results(dataset: str, system: str) -> tuple[set[str], set[int]]:
     """
     Find all videos and param_id combinations with SOTA tracking results.
 
@@ -61,7 +61,6 @@ def find_sota_tracking_results(cache_dir: str, dataset: str, system: str) -> tup
     and groundtruth data available.
 
     Args:
-        cache_dir (str): Cache directory path
         dataset (str): Dataset name
         system (str): System name ('otif' or 'leap')
 
@@ -69,7 +68,7 @@ def find_sota_tracking_results(cache_dir: str, dataset: str, system: str) -> tup
         tuple[set[str], set[int]]: Set of video names and set of param_id values
     """
     # Construct path to SOTA dataset directory
-    sota_dir = os.path.join(cache_dir, 'SOTA', system, dataset)
+    sota_dir = cache.sota(system, dataset)
     if not os.path.exists(sota_dir):
         return set(), set()
 
@@ -105,7 +104,7 @@ def find_sota_tracking_results(cache_dir: str, dataset: str, system: str) -> tup
             tracking_path = os.path.join(param_path, 'tracking.jsonl')
             # Resolve to root dataset name (e.g., caldot1-y05 -> caldot1) for GT path
             gt_dataset = dataset_root_name(dataset)
-            groundtruth_path = os.path.join(cache_dir, gt_dataset, 'execution', video_filename, '003_groundtruth', 'tracking.jsonl')
+            groundtruth_path = cache.exec(gt_dataset, 'groundtruth', video_filename, 'tracking.jsonl')
 
             # Verify both tracking results and groundtruth exist
             assert os.path.exists(tracking_path), f"Tracking path {tracking_path} does not exist"
@@ -157,7 +156,7 @@ def evaluate_sota_tracking_accuracy(dataset: str, videos: set[str], param_id: in
     print(f"Evaluating {len(videos)} videos with param_id {param_id} for {system.upper()}")
 
     # Use the SOTA directory as the base (tracking files and groundtruth files are already there)
-    sota_dir = os.path.join(CACHE_DIR, 'SOTA', system, dataset)
+    sota_dir = cache.sota(system, dataset)
 
     # Create tracker identifier
     tracker_name = system
@@ -311,14 +310,14 @@ def main(args):
         
         # Process both OTIF and LEAP results
         for system in ['otif', 'leap']:
-            videos, param_ids = find_sota_tracking_results(CACHE_DIR, dataset, system)
+            videos, param_ids = find_sota_tracking_results(dataset, system)
             print(videos, param_ids)
             
             if not videos or not param_ids:
                 continue
             
             # Create evaluation directory path for this dataset
-            evaluation_dir = os.path.join(CACHE_DIR, 'SOTA', system, dataset, 'accuracy')
+            evaluation_dir = cache.sota(system, dataset, 'accuracy')
             
             # Clear evaluation directory
             if os.path.exists(evaluation_dir):
@@ -329,10 +328,10 @@ def main(args):
             
             # Copy groundtruth files to SOTA directory structure (before parallel execution to avoid race conditions)
             # TrackEval expects: {input_dir}/{video}/003_groundtruth/tracking.jsonl
-            sota_dir = os.path.join(CACHE_DIR, 'SOTA', system, dataset)
+            sota_dir = cache.sota(system, dataset)
             # Resolve to root dataset name (e.g., caldot1-y05 -> caldot1) for GT path
             gt_dataset = dataset_root_name(dataset)
-            execution_dir = os.path.join(CACHE_DIR, gt_dataset, 'execution')
+            execution_dir = cache.execution(gt_dataset)
             for video_file in videos:
                 # Construct paths for this video
                 groundtruth_source = os.path.join(execution_dir, video_file, '003_groundtruth', 'tracking.jsonl')

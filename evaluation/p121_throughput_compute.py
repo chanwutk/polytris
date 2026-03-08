@@ -11,11 +11,11 @@ import multiprocessing as mp
 
 import pandas as pd
 
+from polyis.io import cache
 from polyis.utilities import ProgressBar, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
@@ -299,14 +299,14 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
 
 
 def compute(dataset: str, worker_id: int, command_queue: "mp.Queue[dict]"):
-    data_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
+    data_dir = cache.eval(dataset, 'tp')
     index_data, query_data = load_data_tables(data_dir)
     
     index_timings, index_summaries = parse_runtime('index', index_data, INDEX_DATA_ACCESSORS, worker_id, command_queue)
     
     query_timings, query_summaries = parse_runtime('query', query_data, QUERY_DATA_ACCESSORS, worker_id, command_queue)
     
-    measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
+    measurements_dir = cache.eval(dataset, 'tp', 'measurements')
     save_measurements(index_timings, index_summaries, query_timings, query_summaries, measurements_dir, dataset)
 
 

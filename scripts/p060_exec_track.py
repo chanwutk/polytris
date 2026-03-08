@@ -14,12 +14,11 @@ from typing import Callable
 import torch
 
 from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results, get_video_resolution, build_param_str, TilePadding
+from polyis.io import cache, store
 
 
 CONFIG = get_config()
 DATASETS: list[str] = CONFIG['EXEC']['DATASETS']
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
-CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 CLASSIFIERS: list[str] = CONFIG['EXEC']['CLASSIFIERS']
 TILE_SIZES: list[int] = CONFIG['EXEC']['TILE_SIZES']
 TILEPADDING_MODES: list[TilePadding] = CONFIG['EXEC']['TILEPADDING_MODES']
@@ -41,7 +40,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesize: int,
+def load_detection_results(dataset: str, video_file: str, tilesize: int,
                            classifier: str, sample_rate: int = 1, tilepadding: str | None = None,
                            canvas_scale: float = 1.0, tracker: str | None = None,
                            tracking_accuracy_threshold: float | None = None,
@@ -50,7 +49,6 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
     Load detection results from the uncompressed detections JSONL file.
 
     Args:
-        cache_dir (str): Cache directory path
         dataset (str): Dataset name
         video_file (str): Video file name
         tilesize (int): Tile size used for detections
@@ -69,10 +67,8 @@ def load_detection_results(cache_dir: str, dataset: str, video_file: str, tilesi
     """
     # Build the shared key used by 050 and 060 stage folders.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
-    detection_path = os.path.join(cache_dir, dataset, 'execution', video_file,
-                                  '050_uncompressed_detections',
-                                  param_str,
-                                  'detections.jsonl')
+    detection_path = cache.exec(dataset, 'ucomp-dets', video_file,
+                                param_str, 'detections.jsonl')
     
     if not os.path.exists(detection_path):
         raise FileNotFoundError(f"Detection results not found: {detection_path}")
@@ -121,18 +117,17 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
     output_param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     # Check if uncompressed detections exist
-    detection_path = os.path.join(CACHE_DIR, dataset, 'execution', video, '050_uncompressed_detections',
-                                  input_param_str, 'detections.jsonl')
+    detection_path = cache.exec(dataset, 'ucomp-dets', video,
+                                input_param_str, 'detections.jsonl')
     assert os.path.exists(detection_path), f"Detections not found: {detection_path}"
 
     # Load detection results using input params (tracker=None when no pruning)
-    detection_results = load_detection_results(CACHE_DIR, dataset, video, tilesize, classifier,
+    detection_results = load_detection_results(dataset, video, tilesize, classifier,
                                                sample_rate, tilepadding, canvas_scale,
                                                input_tracker, tracking_accuracy_threshold)
 
     # Create output path for tracking results
-    uncompressed_tracking_dir = os.path.join(CACHE_DIR, dataset, 'execution', video, '060_uncompressed_tracks')
-    output_path = os.path.join(uncompressed_tracking_dir, output_param_str, 'tracking.jsonl')
+    output_path = cache.exec(dataset, 'ucomp-tracks', video, output_param_str, 'tracking.jsonl')
     
     # Create tracker
     resolution = get_video_resolution(dataset, video)
@@ -253,8 +248,7 @@ def main(args: argparse.Namespace):
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
         print(f"Processing dataset: {dataset}")
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        videosets_dir = os.path.join(dataset_dir, videoset)
+        videosets_dir = store.dataset(dataset, videoset)
         assert os.path.exists(videosets_dir), f"Videoset directory {videosets_dir} does not exist"
 
         # Find all videos with uncompressed detection results
