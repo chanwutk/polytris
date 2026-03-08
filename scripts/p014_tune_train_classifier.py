@@ -26,11 +26,10 @@ from torch.optim import AdamW
 from polyis.models.classifier.classify_image_with_position import ClassifyImageWithPosition
 from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
 from polyis.utilities import format_time, ProgressBar, get_config
+from polyis.io import cache
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 DATASETS = config['EXEC']['DATASETS']
 CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
@@ -690,7 +689,7 @@ def train_classifier(dataset: str, tile_size: int, model_type: str,
     device = f'cuda:{gpu_id}'
     # print(f'Training {model_type} (tile_size={tile_size}) on {device}\n')
 
-    original_training_path = os.path.join(CACHE_DIR, dataset, 'indexing', 'training')
+    original_training_path = cache.index(dataset, 'training')
 
     # Create results directory early so we can save plots during training
     results_dir = os.path.join(original_training_path, 'results', f'{model_type}_{tile_size}')
@@ -796,14 +795,14 @@ def main(args):
     funcs: list[partial] = []
 
     for dataset_name in DATASETS:
-        dataset_dir = os.path.join(CACHE_DIR, dataset_name)
+        training_dir = cache.index(dataset_name, 'training')
 
-        if not os.path.exists(dataset_dir):
-            print(f"Dataset directory {dataset_dir} does not exist, skipping...")
+        if not os.path.exists(training_dir):
+            print(f"Training directory {training_dir} does not exist, skipping...")
             continue
 
         # Use dataset-level training data instead of video-level
-        results_dir = os.path.join(dataset_dir, 'indexing', 'training', 'results')
+        results_dir = os.path.join(training_dir, 'results')
         if args.clear and os.path.exists(results_dir):
             shutil.rmtree(results_dir)
         os.makedirs(results_dir, exist_ok=True)

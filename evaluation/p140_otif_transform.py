@@ -3,17 +3,19 @@
 import argparse
 import json
 import os
-import shutil
+import re
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+from evaluation.manifests import build_split_video_manifest
+from polyis.io import cache
 from polyis.utilities import get_config, register_tracked_detections, save_tracking_results
 
 
-config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS = config['EXEC']['DATASETS']
+CONFIG = get_config()
+DATASETS = CONFIG['EXEC']['DATASETS']
 
 DATASETS_IN_MAP = {
     'caldot1-y05': 'caldot1_y5',
@@ -31,331 +33,336 @@ def parse_args():
 
 
 def transform_tracking_json(input_json_path: str, output_jsonl_path: str) -> int:
-    """
-    Transform OTIF tracking JSON format to our JSONL format.
-
-    OTIF format: dict with keys like left, top, right, bottom, class, score, track_id
-    Our format: {"frame_idx": XX, "tracks": [[track_id, left, top, right, bottom], ...]}
-
-    Args:
-        input_json_path (str): Path to OTIF tracking JSON file
-        output_jsonl_path (str): Path to output JSONL file
-
-    Returns:
-        int: The sample_rate used for this video (1 or 2)
-    """
-    # Read OTIF tracking JSON file
+    # Fail fast when the input tracking JSON is missing.
     assert os.path.exists(input_json_path), f"Input JSON file {input_json_path} does not exist"
+
+    # Load the OTIF/LEAP tracking payload from disk.
     with open(input_json_path, 'r') as f:
         otif_data: list[list[dict] | None] = json.load(f)
+
+    # Normalize null payloads to an empty list so downstream logic stays uniform.
     if otif_data is None:
         otif_data = []
-    print(len(otif_data))
-    # assert otif_data is not None, f"OTIF data is None for {input_json_path}"
 
-    # Sample frames by 2 if the last frame index exceeds 1500
-    # TODO: This is a hack to adjusting sample_rate.
+    # Downsample very long sequences to match the upstream SOTA export convention.
     last_frame_idx = (len(otif_data) - 1) if otif_data else 0
     sample_rate = 2 if last_frame_idx > 1500 else 1
 
-    # Handle empty data early
+    # Create the parent directory before writing transformed tracking results.
+    os.makedirs(os.path.dirname(output_jsonl_path), exist_ok=True)
+
+    # Short-circuit empty inputs while still writing a valid empty JSONL file.
     if not otif_data:
-        # Create output directory if it doesn't exist
-        output_dir = os.path.dirname(output_jsonl_path)
-        os.makedirs(output_dir, exist_ok=True)
-        # Save empty tracking results
         save_tracking_results({}, output_jsonl_path)
         return sample_rate
 
-    # Group detections by frame_idx
-    # OTIF format could be a list of detections or a dict keyed by frame
-    # We'll handle both cases
-    frame_detections: list[dict] = []
-
-    # Initialize tracking data structures
+    # Accumulate per-frame tracks in the JSONL format expected by the rest of the pipeline.
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
     frame_tracks: dict[int, list[list[float]]] = {}
 
+    # Convert each sampled OTIF/LEAP detection into our shared frame-track representation.
     for frame_idx, detections in enumerate(otif_data):
-        # Skip odd frames when sampling by 2
+        # Skip the unsampled frames when the sequence uses a synthetic sample-rate 2 export.
         if frame_idx % sample_rate != 0:
             continue
 
-        frame_detection: dict = {"frame_idx": frame_idx // sample_rate, "tracks": []}
+        # Register each detection in the common tracking accumulator.
         for detection in detections or []:
-            # Extract bounding box and track_id
+            # Extract the required OTIF/LEAP tracking fields from the raw payload.
             track_id = detection['track_id']
             left = detection['left']
             top = detection['top']
             right = detection['right']
             bottom = detection['bottom']
 
-            # Validate required fields
+            # Validate that the raw detection contains a complete bounding box and track id.
             if track_id is None or left is None or top is None or right is None or bottom is None:
                 raise ValueError(f"Missing required fields in detection: {detection}")
 
-            # frame_detection['tracks'].append([int(track_id), float(left), float(top), float(right), float(bottom)])
-            register_tracked_detections([(left, top, right, bottom, int(track_id))],
-                                        frame_idx // sample_rate, frame_tracks, trajectories)
-        frame_detections.append(frame_detection)
-    
-    # Create output directory if it doesn't exist
-    output_dir = os.path.dirname(output_jsonl_path)
-    os.makedirs(output_dir, exist_ok=True)
+            # Append the converted detection to the shared frame/trajectory accumulators.
+            register_tracked_detections(
+                [(left, top, right, bottom, int(track_id))],
+                frame_idx // sample_rate,
+                frame_tracks,
+                trajectories,
+            )
 
+    # Persist the transformed tracking results in the shared JSONL format.
     save_tracking_results(frame_tracks, output_jsonl_path)
-    # with open(output_jsonl_path, 'w') as fw:
-    #     for frame_detection in frame_detections:
-    #         fw.write(json.dumps(frame_detection) + '\n')
 
-    # Return the sample_rate used for this video
     return sample_rate
 
 
-def process_tracking_outputs(tracks_dir: str, output_dataset_dir: str, param_ids: list[int]) -> dict[int, int]:
-    """
-    Process tracking outputs for a given tracks directory.
-
-    Iterates through param_id directories and transforms tracking JSON files
-    to the output format.
-
-    Args:
-        tracks_dir (str): Directory containing tracking results
-        output_dataset_dir (str): Output directory for transformed tracking data
-        param_ids: List of param_ids
-
-    Returns:
-        dict[int, int]: Dictionary mapping video_id to sample_rate used
-    """
-    assert os.path.exists(tracks_dir), f"Tracking directory not found: {tracks_dir}"
-
-    # Dictionary to store video_id -> sample_rate mapping
-    video_sample_rates: dict[int, int] = {}
-
-    # Iterate through param_id directories
-    for param_id in param_ids:
-        param_dir = os.path.join(tracks_dir, str(param_id))
-        assert os.path.isdir(param_dir), f"{param_dir} is not a directory"
-        print(f"  Processing param_id: {param_id}")
-        
-        # Process each video JSON file
-        for video_file in os.listdir(param_dir):
-            assert video_file.endswith('.json'), f"Video file not found: {video_file}"
-            
-            # Extract video_id from filename (remove .json extension)
-            video_id = int(video_file.replace('.json', ''))
-            
-            # Construct video_file name (e.g., 'te01.mp4')
-            video_file_name = f'te{video_id:02d}.mp4'
-            
-            # Create output directory structure: {dataset}/{video_file}/tracking_results/{param_id:03d}/
-            output_video_dir = os.path.join(output_dataset_dir, video_file_name)
-            output_tracking_results_dir = os.path.join(output_video_dir, 'tracking_results')
-            output_param_dir = os.path.join(output_tracking_results_dir, f"{param_id:03d}")
-            os.makedirs(output_param_dir, exist_ok=True)
-            
-            # Construct input and output paths
-            input_json_path = os.path.join(param_dir, str(video_file))
-            output_jsonl_path = os.path.join(output_param_dir, 'tracking.jsonl')
-
-            print(f"    Transforming: {input_json_path} -> {output_jsonl_path}")
-            # Transform and capture the sample_rate used for this video
-            sample_rate = transform_tracking_json(input_json_path, output_jsonl_path)
-            # Store sample_rate for this video_id (sample_rate is same across all param_ids for a given video)
-            video_sample_rates[video_id] = sample_rate
-
-    return video_sample_rates
+def dataset_name_in_sota(dataset: str) -> str:
+    # Map configured dataset names to the SOTA directory naming convention.
+    return DATASETS_IN_MAP.get(dataset, dataset)
 
 
-def setup_sota_dataset_paths(sota_dir: str, dataset: str, cache_dir: str, system: str) -> tuple[str, str, str, str]:
-    """
-    Set up common paths and directories for SOTA dataset processing.
-    
-    Args:
-        sota_dir (str): Root directory containing SOTA results
-        dataset (str): Dataset name
-        cache_dir (str): Cache directory for output
-        system (str): System name ('otif' or 'leap')
-    
-    Returns:
-        tuple[str, str, str, str]: (dataset_in, sota_dataset_dir, output_dataset_dir, stat_csv_input)
-    """
-    dataset_in = DATASETS_IN_MAP.get(dataset, dataset)
-    print(f"Processing {system.upper()} dataset: {dataset} ({dataset_in})")
-    
-    # Construct paths
-    sota_dataset_dir = os.path.join(sota_dir, dataset_in)
-    assert os.path.exists(sota_dataset_dir), f"SOTA dataset directory {sota_dataset_dir} does not exist"
-    
-    output_dataset_dir = os.path.join(cache_dir, 'SOTA', system, dataset)
-    os.makedirs(output_dataset_dir, exist_ok=True)
-    
-    # Construct stat CSV paths
-    stat_csv_input = os.path.join(sota_dataset_dir, f'{system}_{dataset_in}.csv')
-    
-    return dataset_in, sota_dataset_dir, output_dataset_dir, stat_csv_input
+def extract_video_id(video_name: str) -> int:
+    # Extract the numeric video id shared by filenames like te01.mp4 and 1.json.
+    match = re.search(r'(\d+)', Path(video_name).stem)
+    assert match is not None, f"Could not extract numeric video id from {video_name}"
+
+    return int(match.group(1))
 
 
-def process_otif_dataset(sota_dir: str, dataset: str, cache_dir: str):
-    """
-    Process a single dataset's OTIF data.
-    
-    Args:
-        sota_dir (str): Root directory containing SOTA results
-        dataset (str): Dataset name
-        cache_dir (str): Cache directory for output
-    """
-    dataset_in, sota_dataset_dir, output_dataset_dir, stat_csv_input = setup_sota_dataset_paths(
-        sota_dir, dataset, cache_dir, 'otif'
-    )
-    
-    # Process tracking outputs first to get sample_rates
-    tracks_dir = os.path.join(sota_dataset_dir, f'otif_{dataset_in}_tracks')
+def build_expected_test_video_manifest(dataset: str) -> pd.DataFrame:
+    # Materialize the configured test videos for the dataset from the shared dataset store.
+    video_df = build_split_video_manifest(datasets=[dataset], videosets=['test']).copy()
+    # Fail fast when the configured test split is empty.
+    assert not video_df.empty, f"No test videos found for dataset {dataset}"
 
-    # Load stat CSV to get param_ids
-    input_df = pd.read_csv(stat_csv_input)
-    input_df.columns = input_df.columns.str.replace('Unnamed: 0', 'param_id')
-    param_ids = [int(row['param_id']) for _, row in input_df.iterrows()]
+    # Derive the SOTA numeric video ids from the configured video filenames.
+    video_df['video_id'] = video_df['video'].map(extract_video_id)
+    # Fail fast when two configured videos collapse to the same numeric id.
+    duplicate_df = video_df[video_df.duplicated(subset=['video_id'], keep=False)]
+    assert duplicate_df.empty, f"Duplicate numeric video ids in test split for {dataset}:\n{duplicate_df}"
 
-    # Process tracking outputs and get video sample rates
-    video_sample_rates = process_tracking_outputs(tracks_dir, output_dataset_dir, param_ids)
-    print(f"  Video sample rates: {video_sample_rates}")
+    return video_df[['dataset', 'videoset', 'video', 'video_id']].drop_duplicates().reset_index(drop=True)
 
-    # Process stat measurement CSV
-    stat_csv_output = os.path.join(output_dataset_dir, 'stat.csv')
 
+def build_available_tracking_manifest(tracks_dir: str) -> pd.DataFrame:
+    # Fail fast when the raw SOTA tracking directory is missing.
+    assert os.path.isdir(tracks_dir), f"Tracking directory not found: {tracks_dir}"
+
+    # Collect all raw tracking JSON files under param-id directories.
+    tracking_paths = sorted(Path(tracks_dir).glob('*/*.json'))
+    # Fail fast when the tracking directory tree is unexpectedly empty.
+    assert tracking_paths, f"No tracking JSON files found in {tracks_dir}"
+
+    # Materialize the discovered tracking files as a DataFrame for vectorized validation.
+    tracking_df = pd.DataFrame.from_records([
+        {
+            'param_id': int(path.parent.name),
+            'video_id': int(path.stem),
+            'input_json_path': str(path),
+        }
+        for path in tracking_paths
+    ])
+
+    # Fail fast when duplicate param/video pairs would make the transform ambiguous.
+    duplicate_df = tracking_df[tracking_df.duplicated(subset=['param_id', 'video_id'], keep=False)]
+    assert duplicate_df.empty, f"Duplicate tracking files found in {tracks_dir}:\n{duplicate_df}"
+
+    return tracking_df
+
+
+def normalize_otif_stat_csv(stat_csv_input: str) -> pd.DataFrame:
+    # Load the raw OTIF stat CSV emitted by the SOTA system.
+    input_df = pd.read_csv(stat_csv_input).copy()
+    # Rename the unnamed index column to param_id when OTIF exported it that way.
+    input_df = input_df.rename(columns={'Unnamed: 0': 'param_id'})
+    # Fail fast when the raw OTIF CSV does not expose param ids.
+    assert 'param_id' in input_df.columns, f"param_id column not found in {stat_csv_input}"
+
+    # Pick the runtime column used by the current OTIF export version.
     runtime_column = 'runtime' if 'runtime' in input_df.columns else 'runtime_total'
-    input_df['runtime'] = input_df[runtime_column]
-    input_df = input_df[['param_id', 'detector_cfg', 'segmentation_cfg', 'tracker_cfg', 'runtime']]
-    input_df.to_csv(stat_csv_output, index=False)
+    assert runtime_column in input_df.columns, f"Runtime column not found in {stat_csv_input}"
+
+    # Keep the native OTIF parameter columns and expose the canonical runtime column.
+    stat_df = input_df.assign(
+        param_id=input_df['param_id'].astype(int),
+        runtime=input_df[runtime_column],
+    )[['param_id', 'detector_cfg', 'segmentation_cfg', 'tracker_cfg', 'runtime']].copy()
+
+    # Fail fast when the OTIF export contains duplicate param ids.
+    duplicate_df = stat_df[stat_df.duplicated(subset=['param_id'], keep=False)]
+    assert duplicate_df.empty, f"Duplicate OTIF param_id rows found in {stat_csv_input}:\n{duplicate_df}"
+
+    return stat_df.sort_values('param_id').reset_index(drop=True)
 
 
-def process_leap_dataset(sota_dir: str, dataset: str, cache_dir: str):
-    """
-    Process a single dataset's LEAP data.
-    
-    LEAP has only one parameter set (param_id == 0). The CSV has many rows,
-    but we need the row where video_name == "total". The runtime is the sum
-    of inference_total + detector + differencer + reid + match.
-    
-    Args:
-        sota_dir (str): Root directory containing SOTA results
-        dataset (str): Dataset name
-        cache_dir (str): Cache directory for output
-    """
-    dataset_in, sota_dataset_dir, output_dataset_dir, stat_csv_input = setup_sota_dataset_paths(
-        sota_dir, dataset, cache_dir, 'leap'
+def normalize_leap_stat_csv(stat_csv_input: str) -> pd.DataFrame:
+    # Load the raw LEAP stat CSV emitted by the SOTA system.
+    input_df = pd.read_csv(stat_csv_input).copy()
+
+    # Keep only the total row because LEAP exposes one effective parameter set.
+    total_df = input_df.query("video_name == 'total'").copy()
+    assert len(total_df) == 1, f"Expected exactly one LEAP total row in {stat_csv_input}, found {len(total_df)}"
+
+    # Validate the runtime columns required by the existing LEAP runtime contract.
+    for column in ['inference_total', 'decode']:
+        assert column in total_df.columns, f"Column {column} not found in {stat_csv_input}"
+
+    # Preserve the historical LEAP runtime derivation while normalizing the stat schema.
+    stat_df = total_df.assign(
+        param_id=0,
+        detector_cfg=pd.NA,
+        segmentation_cfg=pd.NA,
+        tracker_cfg=pd.NA,
+        runtime=total_df['inference_total'] - total_df['decode'],
+    )[['param_id', 'detector_cfg', 'segmentation_cfg', 'tracker_cfg', 'runtime']].copy()
+
+    return stat_df.reset_index(drop=True)
+
+
+def build_tracking_transform_manifest(system: str,
+                                      dataset: str,
+                                      stat_df: pd.DataFrame,
+                                      tracks_dir: str) -> pd.DataFrame:
+    # Materialize the configured test videos used by downstream SOTA evaluation.
+    expected_video_df = build_expected_test_video_manifest(dataset)
+    # Materialize the configured param ids from the normalized stat CSV.
+    expected_param_df = stat_df[['param_id']].drop_duplicates().sort_values('param_id').reset_index(drop=True)
+    # Cross join test videos and param ids so every configured pair is validated.
+    expected_df = expected_video_df.merge(expected_param_df, how='cross')
+
+    # Materialize the raw tracking files discovered on disk.
+    available_df = build_available_tracking_manifest(tracks_dir)
+    # Join the expected param/video grid to the discovered tracking paths.
+    transform_df = expected_df.merge(available_df, on=['param_id', 'video_id'], how='left')
+
+    # Fail fast when any configured param/video pair is missing a raw SOTA tracking file.
+    missing_df = transform_df[transform_df['input_json_path'].isna()]
+    assert missing_df.empty, (
+        "Missing SOTA tracking files for configured dataset/test videos:\n"
+        f"{missing_df[['dataset', 'videoset', 'video', 'param_id', 'video_id']]}"
     )
-    
-    # Process tracking outputs first to get sample_rates
-    tracks_dir = os.path.join(sota_dataset_dir, f'leap_{dataset_in}_tracks')
-    video_sample_rates = process_tracking_outputs(tracks_dir, output_dataset_dir, [0])
-    print(f"  Video sample rates: {video_sample_rates}")
 
-    # Process stat measurement CSV
-    stat_csv_output = os.path.join(output_dataset_dir, 'stat.csv')
+    # Warn when the raw SOTA export contains extra videos outside the configured test split.
+    unexpected_df = available_df.merge(
+        expected_df[['param_id', 'video_id']],
+        on=['param_id', 'video_id'],
+        how='left',
+        indicator=True,
+    )
+    unexpected_df = unexpected_df[unexpected_df['_merge'] == 'left_only'].drop(columns=['_merge'])
+    if not unexpected_df.empty:
+        print(
+            f"  Warning: Ignoring {len(unexpected_df)} extra raw tracking files outside the configured test split "
+            f"for {system.upper()} on {dataset}"
+        )
 
-    assert os.path.exists(stat_csv_input), f"Stat CSV not found: {stat_csv_input}"
-    print(f"  Processing stat CSV: {stat_csv_input} -> {stat_csv_output}")
+    # Resolve the transformed output path for every validated param/video pair.
+    transform_df['output_jsonl_path'] = [
+        str(cache.sota(system, dataset, video, 'tracking_results', f'{int(param_id):03d}', 'tracking.jsonl'))
+        for video, param_id in zip(transform_df['video'], transform_df['param_id'], strict=True)
+    ]
 
-    # Read LEAP CSV file
-    input_df = pd.read_csv(stat_csv_input)
-
-    # Find the row where video_name == "total"
-    total_row = input_df.query("video_name == 'total'")
-    assert len(total_row) == 1, f"Expected exactly one row with video_name=='total', found {len(total_row)}"
-
-    # Extract runtime components and sum them
-    runtime_components = ['inference_total', 'decode']
-    for col in runtime_components:
-        assert col in input_df.columns, f"Column {col} not found in LEAP CSV"
-
-    # Extract values from the total row (convert to dict for easier access)
-    total_row['runtime'] = total_row['inference_total'] - total_row['decode']
-    total_runtime = total_row['runtime'].iloc[0]
-
-    # Create output DataFrame with single row for param_id == 0
-    output_df = pd.DataFrame({
-        'param_id': [0],
-        'detector_cfg': [None],
-        'segmentation_cfg': [None],
-        'tracker_cfg': [None],
-        'runtime': [total_runtime]
-    })
-    output_df.to_csv(stat_csv_output, index=False)
-    print(f"  Calculated total runtime: {total_runtime}")
+    return transform_df[['dataset', 'videoset', 'video', 'video_id', 'param_id', 'input_json_path', 'output_jsonl_path']]
 
 
-def process_dataset(sota_dir: str, dataset: str, cache_dir: str):
-    """
-    Process a single dataset's SOTA data (OTIF or LEAP).
-    
-    Automatically detects whether the dataset is OTIF or LEAP based on
-    the presence of corresponding CSV files.
-    
-    Args:
-        sota_dir (str): Root directory containing SOTA results
-        dataset (str): Dataset name
-        cache_dir (str): Cache directory for output
-    """
-    dataset_in = DATASETS_IN_MAP.get(dataset, dataset)
+def transform_tracking_manifest(transform_df: pd.DataFrame) -> pd.DataFrame:
+    # Keep the manifest local so the caller receives the derived sample-rate summary.
+    transform_df = transform_df.copy()
+    # Convert each validated raw tracking file to the shared JSONL format.
+    transform_df['sample_rate_used'] = [
+        transform_tracking_json(str(row.input_json_path), str(row.output_jsonl_path))
+        for row in transform_df.itertuples(index=False)
+    ]
+
+    return transform_df
+
+
+def setup_dataset_paths(sota_dir: str, dataset: str, system: str) -> tuple[str, str, str]:
+    # Resolve the SOTA dataset directory name for the current configured dataset.
+    dataset_in = dataset_name_in_sota(dataset)
+    # Resolve the raw SOTA dataset directory on disk.
     sota_dataset_dir = os.path.join(sota_dir, dataset_in)
+    # Fail fast when the configured SOTA dataset directory is missing.
     assert os.path.exists(sota_dataset_dir), f"SOTA dataset directory {sota_dataset_dir} does not exist"
-    
-    # Check for OTIF or LEAP CSV files to determine dataset type
+
+    # Resolve the transformed output root for the current system/dataset pair.
+    output_dataset_dir = str(cache.sota(system, dataset))
+    # Ensure the transformed output root exists before writing files beneath it.
+    os.makedirs(output_dataset_dir, exist_ok=True)
+
+    return dataset_in, sota_dataset_dir, output_dataset_dir
+
+
+def process_otif_dataset(sota_dir: str, dataset: str):
+    # Resolve the OTIF input/output directories for the configured dataset.
+    dataset_in, sota_dataset_dir, output_dataset_dir = setup_dataset_paths(sota_dir, dataset, 'otif')
+    # Resolve the raw OTIF stat CSV and tracking directory.
+    stat_csv_input = os.path.join(sota_dataset_dir, f'otif_{dataset_in}.csv')
+    tracks_dir = os.path.join(sota_dataset_dir, f'otif_{dataset_in}_tracks')
+    # Normalize the OTIF stat CSV to the shared schema.
+    stat_df = normalize_otif_stat_csv(stat_csv_input)
+    # Build the validated transform manifest for all configured test videos and param ids.
+    transform_df = build_tracking_transform_manifest('otif', dataset, stat_df, tracks_dir)
+    # Run the actual file-by-file tracking conversion step.
+    transformed_df = transform_tracking_manifest(transform_df)
+
+    # Persist the normalized OTIF stat CSV used by downstream evaluation scripts.
+    stat_csv_output = os.path.join(output_dataset_dir, 'stat.csv')
+    stat_df.to_csv(stat_csv_output, index=False)
+
+    # Log a compact transform summary for traceability.
+    sample_rate_summary = (
+        transformed_df[['video', 'sample_rate_used']]
+        .drop_duplicates()
+        .sort_values('video')
+        .to_dict('records')
+    )
+    print(f"Processed OTIF dataset {dataset}: {len(transformed_df)} tracking files")
+    print(f"  Sample-rate summary: {sample_rate_summary}")
+    print(f"  Saved stat CSV: {stat_csv_output}")
+
+
+def process_leap_dataset(sota_dir: str, dataset: str):
+    # Resolve the LEAP input/output directories for the configured dataset.
+    dataset_in, sota_dataset_dir, output_dataset_dir = setup_dataset_paths(sota_dir, dataset, 'leap')
+    # Resolve the raw LEAP stat CSV and tracking directory.
+    stat_csv_input = os.path.join(sota_dataset_dir, f'leap_{dataset_in}.csv')
+    tracks_dir = os.path.join(sota_dataset_dir, f'leap_{dataset_in}_tracks')
+    # Normalize the LEAP stat CSV to the shared schema.
+    stat_df = normalize_leap_stat_csv(stat_csv_input)
+    # Build the validated transform manifest for the fixed LEAP param id.
+    transform_df = build_tracking_transform_manifest('leap', dataset, stat_df, tracks_dir)
+    # Run the actual file-by-file tracking conversion step.
+    transformed_df = transform_tracking_manifest(transform_df)
+
+    # Persist the normalized LEAP stat CSV used by downstream evaluation scripts.
+    stat_csv_output = os.path.join(output_dataset_dir, 'stat.csv')
+    stat_df.to_csv(stat_csv_output, index=False)
+
+    # Log a compact transform summary for traceability.
+    sample_rate_summary = (
+        transformed_df[['video', 'sample_rate_used']]
+        .drop_duplicates()
+        .sort_values('video')
+        .to_dict('records')
+    )
+    print(f"Processed LEAP dataset {dataset}: {len(transformed_df)} tracking files")
+    print(f"  Sample-rate summary: {sample_rate_summary}")
+    print(f"  Saved stat CSV: {stat_csv_output}")
+
+
+def process_dataset(sota_dir: str, dataset: str):
+    # Resolve the raw SOTA dataset directory so system detection stays explicit.
+    dataset_in = dataset_name_in_sota(dataset)
+    sota_dataset_dir = os.path.join(sota_dir, dataset_in)
+    # Fail fast when the configured dataset is absent from the SOTA export root.
+    assert os.path.exists(sota_dataset_dir), f"SOTA dataset directory {sota_dataset_dir} does not exist"
+
+    # Resolve the raw OTIF and LEAP stat CSVs used to detect available systems.
     otif_csv = os.path.join(sota_dataset_dir, f'otif_{dataset_in}.csv')
     leap_csv = os.path.join(sota_dataset_dir, f'leap_{dataset_in}.csv')
-    
+
+    # Transform OTIF outputs when the raw OTIF export exists for the dataset.
     if os.path.exists(otif_csv):
-        process_otif_dataset(sota_dir, dataset, cache_dir)
+        process_otif_dataset(sota_dir, dataset)
+
+    # Transform LEAP outputs when the raw LEAP export exists for the dataset.
     if os.path.exists(leap_csv):
-        process_leap_dataset(sota_dir, dataset, cache_dir)
+        process_leap_dataset(sota_dir, dataset)
 
 
 def main(args):
-    """
-    Main function that orchestrates the OTIF and LEAP data transformation process.
-    
-    This function serves as the entry point for the script. It:
-    1. Discovers all datasets in the SOTA directory (or uses provided list)
-    2. For each dataset, detects whether it's OTIF or LEAP format
-    3. Transforms stat CSV and tracking JSON files accordingly
-    4. Saves transformed data to the cache directory in our format
-    
-    Args:
-        args (argparse.Namespace): Parsed command line arguments
-        
-    Note:
-        - The script expects OTIF output data in:
-          {sota_dir}/{dataset}/otif_{dataset}.csv
-          {sota_dir}/{dataset}/otif_{dataset}_tracks/{param_id}/{video_id}.json
-        - The script expects LEAP output data in:
-          {sota_dir}/{dataset}/leap_{dataset}.csv (with video_name column, row with video_name=="total")
-          {sota_dir}/{dataset}/leap_{dataset}_tracks/{param_id}/{video_id}.json (param_id is always 0)
-        - Transformed OTIF data is saved to:
-          {CACHE_DIR}/SOTA/otif/{dataset}/stat.csv
-          {CACHE_DIR}/SOTA/otif/{dataset}/{video_file}/tracking_results/{param_id:03d}/tracking.jsonl
-        - Transformed LEAP data is saved to:
-          {CACHE_DIR}/SOTA/leap/{dataset}/stat.csv
-          {CACHE_DIR}/SOTA/leap/{dataset}/{video_file}/tracking_results/000/tracking.jsonl
-    """
+    # Resolve the raw SOTA export root requested by the caller.
     sota_dir = args.sota_dir
+    # Fail fast when the SOTA export root is missing.
     assert os.path.exists(sota_dir), f"SOTA directory {sota_dir} does not exist"
-    
-    # Discover datasets if not provided
-    datasets = []
-    for item in os.listdir(sota_dir):
-        item_path = os.path.join(sota_dir, item)
-        if os.path.isdir(item_path):
-            if item in DATASETS:
-                datasets.append(item)
-    print(f"Discovered {len(datasets)} datasets: {datasets}")
-    
-    # Process each dataset
+
+    # Log the configured datasets before starting the transform stage.
+    print(f"Processing configured datasets: {DATASETS}")
+
+    # Transform every configured dataset using the deterministic config-driven workflow.
     for dataset in DATASETS:
-        process_dataset(sota_dir, dataset, CACHE_DIR)
-    
-    print(f"\nTransformation complete. Output saved to: {os.path.join(CACHE_DIR, 'SOTA')}")
+        process_dataset(sota_dir, dataset)
+
+    # Log the destination root that now contains the transformed SOTA outputs.
+    print(f"\nTransformation complete. Output saved to: {cache.root('SOTA')}")
 
 
 if __name__ == '__main__':

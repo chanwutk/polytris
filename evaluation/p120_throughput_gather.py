@@ -1,370 +1,395 @@
 #!/usr/local/bin/python
 
 import os
-import shutil
 
 import pandas as pd
 
-from polyis.utilities import get_config, scale_to_percent
+from evaluation.manifests import (
+    build_index_video_manifest,
+    build_polytris_variant_manifest,
+    build_split_video_manifest,
+)
+from polyis.io import cache
+from polyis.utilities import build_param_str, get_config
 
 
-config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-CLASSIFIERS = config['EXEC']['CLASSIFIERS']
-DATASETS = config['EXEC']['DATASETS']
-TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
-TRACKERS = config['EXEC']['TRACKERS']
-CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
+CONFIG = get_config()
+DATASETS = CONFIG['EXEC']['DATASETS']
+
+QUERY_COLUMNS = [
+    'dataset',
+    'videoset',
+    'video',
+    'variant',
+    'variant_id',
+    'classifier',
+    'tilesize',
+    'sample_rate',
+    'tracking_accuracy_threshold',
+    'tilepadding',
+    'canvas_scale',
+    'tracker',
+    'stage',
+    'runtime_file',
+]
+INDEX_COLUMNS = [
+    'dataset',
+    'videoset',
+    'video',
+    'variant',
+    'variant_id',
+    'classifier',
+    'tilesize',
+    'sample_rate',
+    'tracking_accuracy_threshold',
+    'tilepadding',
+    'canvas_scale',
+    'tracker',
+    'stage',
+    'runtime_file',
+]
 
 
-def discover_available_videos(datasets: list[str]):
-    """
-    Discover available videos from execution directories for given datasets.
-    
-    Args:
-        datasets (list): List of dataset names to search
-        
-    Returns:
-        list[tuple[str, str]]: List of (dataset, video_file) tuples
-    """
-    datasets_videos = []
-    
+def assert_runtime_paths_exist(manifest_df: pd.DataFrame, label: str):
+    # Collect only the rows whose expected runtime file is missing.
+    missing_df = manifest_df[~manifest_df['runtime_file'].map(os.path.exists)]
+    # Fail fast with a compact preview when any configured runtime file is absent.
+    assert missing_df.empty, f"Missing {label} runtime paths:\n{missing_df[['stage', 'dataset', 'videoset', 'video', 'variant_id', 'runtime_file']].head(20)}"
+
+
+def add_default_param_columns(df: pd.DataFrame) -> pd.DataFrame:
+    # Work on a copy so the caller keeps its original frame unchanged.
+    result_df = df.copy()
+    # Add the shared query/index columns that are absent for the current frame.
+    for column in ['classifier', 'tilesize', 'sample_rate', 'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale', 'tracker']:
+        if column not in result_df.columns:
+            result_df[column] = pd.NA
+    return result_df
+
+
+def build_index_construction_manifest(datasets: list[str]) -> pd.DataFrame:
+    # Materialize the training videos used by the indexing stages.
+    index_video_df = build_index_video_manifest(datasets=datasets)
+    # Add the shared variant token for all index rows.
+    index_video_df['variant'] = 'index'
+    # Add the shared variant identifier for all index rows.
+    index_video_df['variant_id'] = 'index'
+    # Ensure the shared parameter columns exist even when a stage does not use them.
+    index_video_df = add_default_param_columns(index_video_df)
+
+    # Derive the path to the stage-011 runtime file from each train-split video.
+    detect_df = index_video_df.copy()
+    detect_df['stage'] = '011_tune_detect'
+    detect_df['runtime_file'] = detect_df.apply(
+        lambda row: cache.index(row['dataset'], 'det', f"{row['video']}.detections.jsonl"),
+        axis=1,
+    )
+
+    # Cross join train videos with tile sizes for stage-012 training-data generation.
+    tilesize_df = pd.DataFrame({'tilesize': CONFIG['EXEC']['TILE_SIZES']})
+    create_training_df = index_video_df[['dataset', 'videoset', 'video', 'variant', 'variant_id']].merge(tilesize_df, how='cross')
+    create_training_df = add_default_param_columns(create_training_df)
+    create_training_df['stage'] = '012_tune_create_training_data'
+    create_training_df['runtime_file'] = create_training_df.apply(
+        lambda row: cache.index(
+            row['dataset'],
+            'training',
+            'runtime',
+            f"tilesize_{int(row['tilesize'])}",
+            f"{row['video']}_creating_training_data.jsonl",
+        ),
+        axis=1,
+    )
+
+    # Cross join datasets with classifier/tile-size pairs for stage-013 training throughput.
+    train_rows = []
     for dataset in datasets:
-        videoset_dir = os.path.join(DATASETS_DIR, dataset, 'test')
-        assert os.path.exists(videoset_dir), \
-            f"Videoset directory {videoset_dir} does not exist"
-
-        for video_file in sorted(os.listdir(videoset_dir)):
-            if not video_file.endswith('.mp4'):
-                continue
-            datasets_videos.append((dataset, video_file))
-    
-    return datasets_videos
-
-
-def gather_index_construction_data(datasets):
-    """
-    Gather runtime data for index construction stages:
-    - 011_tune_detect.py
-    - 012_tune_create_training_data.py  
-    - 013_tune_train_classifier.py
-    
-    Args:
-        datasets (list): List of dataset names to process
-    
-    Returns list of dicts with columns: dataset, runtime_files
-    Note: Index construction is done at dataset level, not per video
-    """
-    index_data = []
-    
-    for dataset in datasets:
-        runtime_files = []
-        dataset_path = os.path.join(CACHE_DIR, dataset)
-        
-        # 011_tune_detect.py - per video detections in indexing/segment/detection/
-        indexing_detect_dir = os.path.join(dataset_path, 'indexing', 'segment', 'detection')
-        assert os.path.exists(indexing_detect_dir), f"Indexing detect directory {indexing_detect_dir} does not exist"
-        for video_file in os.listdir(indexing_detect_dir):
-            if not video_file.endswith('.detections.jsonl'):
-                continue
-            video_name = video_file.replace('.detections.jsonl', '')
-            detect_path = os.path.join(indexing_detect_dir, video_file)
-            assert os.path.exists(detect_path), f"Detect path {detect_path} does not exist"
-            index_data.append({
-                'dataset': dataset,
-                'video': video_name,
-                'classifier': '_NA_',
-                'tilesize': 0,
-                'tilepadding': '_NA_',
-                'stage': '011_tune_detect',
-                'runtime_file': detect_path,
-            })
-        
-        # 012_tune_create_training_data.py - per video runtime files for all tile sizes
-        training_runtime_dir = os.path.join(dataset_path, 'indexing', 'training', 'runtime')
-        assert os.path.exists(training_runtime_dir), f"Training runtime directory {training_runtime_dir} does not exist"
-        for tilesize in TILE_SIZES:
-            tile_dir = os.path.join(training_runtime_dir, f'tilesize_{tilesize}')
-            assert os.path.exists(tile_dir), f"Training runtime directory {tile_dir} does not exist"
-            for runtime_file in os.listdir(tile_dir):
-                if not runtime_file.endswith('_creating_training_data.jsonl'):
-                    continue
-                video_name = runtime_file.replace('_creating_training_data.jsonl', '')
-                training_data_path = os.path.join(tile_dir, runtime_file)
-                assert os.path.exists(training_data_path), f"Training data path {training_data_path} does not exist"
-                index_data.append({
-                    'dataset': dataset,
-                    'video': video_name,
-                    'classifier': '_NA_',
-                    'tilesize': tilesize,
-                    'tilepadding': '_NA_',
-                    'stage': '012_tune_create_training_data',
-                    'runtime_file': training_data_path,
-                })
-        
-        # 013_tune_train_classifier.py - per classifier/tilesize training results
-        training_results_dir = os.path.join(dataset_path, 'indexing', 'training', 'results')
-        assert os.path.exists(training_results_dir), f"Training results directory {training_results_dir} does not exist"
-        for tilesize in TILE_SIZES:
-            for classifier in CLASSIFIERS:
-                if classifier == 'Perfect':
-                    continue
-                classifier_dir = os.path.join(training_results_dir, f'{classifier}_{tilesize}')
-                assert os.path.exists(classifier_dir), f"Training results directory {classifier_dir} does not exist"
-
-                throughput_path = os.path.join(classifier_dir, 'throughput_per_epoch.jsonl')
-                assert os.path.exists(throughput_path), f"Throughput path {throughput_path} does not exist"
-                index_data.append({
-                    'dataset': dataset,
-                    'video': 'dataset_level',
-                    'classifier': classifier,
-                    'tilesize': tilesize,
-                    'tilepadding': '_NA_',
-                    'stage': '013_tune_train_classifier',
-                    'runtime_file': throughput_path,
-                })
-    
-    return index_data
-
-
-def gather_query_execution_data(datasets_videos):
-    """
-    Gather runtime data for query execution stages:
-    - 001_preprocess_groundtruth_detection.py
-    - 002_preprocess_groundtruth_tracking.py
-    - 020_exec_classify.py
-    - 030_exec_compress.py
-    - 040_exec_detect.py
-    - 050_exec_uncompress.py
-    - 060_exec_track.py
-    
-    Args:
-        datasets_videos (list): List of (dataset, video_file) tuples
-    
-    Returns list of dicts with columns: dataset/video, classifier, tilesize, runtime_files
-    Note: Query execution is done per video
-    """
-    query_data = []
-    
-    for dataset, video in datasets_videos:
-        video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
-        
-        # Groundtruth detection and tracking (no tilesize)
-        groundtruth_detection_path = os.path.join(video_path, '002_naive', 'detection_runtime.jsonl')
-        groundtruth_tracking_path = os.path.join(video_path, '002_naive', 'tracking_runtime.jsonl')
-        assert os.path.exists(groundtruth_detection_path), \
-            f"Groundtruth detection path {groundtruth_detection_path} does not exist"
-        assert os.path.exists(groundtruth_tracking_path), \
-            f"Groundtruth tracking path {groundtruth_tracking_path} does not exist"
-        
-        query_data.append({
+        train_rows.append({
             'dataset': dataset,
-            'video': video,
-            'classifier': '_NA_',
-            'tilesize': 0,
-            'tilepadding': '_NA_',
-            'stage': '001_preprocess_groundtruth_detection',
-            'runtime_file': groundtruth_detection_path
+            'videoset': 'train',
+            'video': 'dataset_level',
+            'variant': 'index',
+            'variant_id': 'index',
         })
-        
-        query_data.append({
-            'dataset': dataset,
-            'video': video,
-            'classifier': '_NA_',
-            'tilesize': 0,
-            'tilepadding': '_NA_',
-            'stage': '002_preprocess_groundtruth_tracking',
-            'runtime_file': groundtruth_tracking_path
-        })
+    train_df = pd.DataFrame.from_records(train_rows)
+    classifier_tile_df = pd.DataFrame.from_records([
+        {'classifier': classifier, 'tilesize': tilesize}
+        for classifier in CONFIG['EXEC']['CLASSIFIERS']
+        if classifier != 'Perfect'
+        for tilesize in CONFIG['EXEC']['TILE_SIZES']
+    ])
+    train_classifier_df = train_df.merge(classifier_tile_df, how='cross')
+    train_classifier_df = add_default_param_columns(train_classifier_df)
+    train_classifier_df['stage'] = '013_tune_train_classifier'
+    train_classifier_df['runtime_file'] = train_classifier_df.apply(
+        lambda row: cache.index(
+            row['dataset'],
+            'training',
+            'results',
+            f"{row['classifier']}_{int(row['tilesize'])}",
+            'throughput_per_epoch.jsonl',
+        ),
+        axis=1,
+    )
 
-        # Classifier-based stages
-        for classifier in CLASSIFIERS:
-            for tilesize in TILE_SIZES:
-                for tilepadding in TILEPADDING_MODES:
-                    for sample_rate in SAMPLE_RATES:
-                        for canvas_scale in CANVAS_SCALES:
-                            for tracker_name in TRACKERS:
-                                runtime_files = []
-                                cl_ts_sr = f'{classifier}_{tilesize}_{sample_rate}'
-                                cl_ts_sr_tp_sc = f'{classifier}_{tilesize}_{sample_rate}_{tilepadding}_s{scale_to_percent(canvas_scale)}'
+    # Combine the configured index-stage manifests into one canonical table.
+    manifest_df = pd.concat([detect_df, create_training_df, train_classifier_df], ignore_index=True)
+    # Validate that every configured index runtime file already exists.
+    assert_runtime_paths_exist(manifest_df, 'index')
 
-                                # 020_exec_classify.py
-                                classify_path = os.path.join(video_path, '020_relevancy', cl_ts_sr, 'score', 'runtime.jsonl')
-                                assert os.path.exists(classify_path), f"Classify path {classify_path} does not exist"
-                                runtime_files.append(('020_exec_classify', classify_path))
-                                
-                                # 030_exec_compress.py
-                                compress_path = os.path.join(video_path, '033_compressed_frames', cl_ts_sr_tp_sc, 'runtime.jsonl')
-                                assert os.path.exists(compress_path), f"Compress path {compress_path} does not exist"
-                                runtime_files.append(('030_exec_compress', compress_path))
-                                
-                                # 040_exec_detect.py
-                                detect_path = os.path.join(video_path, '040_compressed_detections', cl_ts_sr_tp_sc, 'runtimes.jsonl')
-                                assert os.path.exists(detect_path), f"Detect path {detect_path} does not exist"
-                                runtime_files.append(('040_exec_detect', detect_path))
-
-                                # 050_exec_uncompress.py
-                                uncompress_path = os.path.join(video_path, '050_uncompressed_detections', cl_ts_sr_tp_sc, 'runtime.jsonl')
-                                assert os.path.exists(uncompress_path), f"Uncompress path {uncompress_path} does not exist"
-                                runtime_files.append(('050_exec_uncompress', uncompress_path))
-                                
-                                # Add non-tracking stages
-                                for stage, runtime_file in runtime_files:
-                                    query_data.append({
-                                        'dataset': dataset,
-                                        'video': video,
-                                        'classifier': classifier,
-                                        'tilesize': tilesize,
-                                        'sample_rate': sample_rate,
-                                        'tilepadding': tilepadding,
-                                        'canvas_scale': canvas_scale,
-                                        'tracker': tracker_name,
-                                        'stage': stage,
-                                        'runtime_file': runtime_file
-                                    })
-                                
-                                # 060_exec_track.py - loop over trackers
-                                cl_ts_sr_tp_sc_tr = f'{cl_ts_sr_tp_sc}_{tracker_name}'
-                                track_path = os.path.join(video_path, '060_uncompressed_tracks', cl_ts_sr_tp_sc_tr, 'runtimes.jsonl')
-                                assert os.path.exists(track_path), f"Track path {track_path} does not exist"
-                                query_data.append({
-                                    'dataset': dataset,
-                                    'video': video,
-                                    'classifier': classifier,
-                                    'tilesize': tilesize,
-                                    'sample_rate': sample_rate,
-                                    'tilepadding': tilepadding,
-                                    'canvas_scale': canvas_scale,
-                                    'tracker': tracker_name,
-                                    'stage': '060_exec_track',
-                                    'runtime_file': track_path
-                                })
-    
-    return query_data
+    return manifest_df[INDEX_COLUMNS]
 
 
-def print_index_construction_table(index_data, write_line=print):
-    """Print index construction data as a table to stdout and optionally to a file."""
-    
-    write_line("INDEX CONSTRUCTION DATASET")
-    write_line("=" * 80)
-    write_line("Stages: 011_tune_detect, 012_tune_create_training_data, 013_tune_train_classifier")
+def build_naive_query_manifest(video_df: pd.DataFrame) -> pd.DataFrame:
+    # Start from the concrete query-time videos and tag them as the naive baseline.
+    naive_df = video_df.copy()
+    naive_df['variant'] = 'naive'
+    naive_df['variant_id'] = 'naive'
+    naive_df = add_default_param_columns(naive_df)
+
+    # Build the stage-001 runtime rows for the naive detection stage.
+    detect_df = naive_df.copy()
+    detect_df['stage'] = '001_preprocess_groundtruth_detection'
+    detect_df['runtime_file'] = detect_df.apply(
+        lambda row: cache.execution(row['dataset'], row['video'], '002_naive', 'detection_runtime.jsonl'),
+        axis=1,
+    )
+
+    # Build the stage-002 runtime rows for the naive tracking stage.
+    track_df = naive_df.copy()
+    track_df['stage'] = '002_preprocess_groundtruth_tracking'
+    track_df['runtime_file'] = track_df.apply(
+        lambda row: cache.execution(row['dataset'], row['video'], '002_naive', 'tracking_runtime.jsonl'),
+        axis=1,
+    )
+
+    # Combine the two naive runtime stages into one canonical query manifest.
+    manifest_df = pd.concat([detect_df, track_df], ignore_index=True)
+    # Validate that the configured naive runtime files already exist.
+    assert_runtime_paths_exist(manifest_df, 'naive query')
+
+    return manifest_df[QUERY_COLUMNS]
+
+
+def build_stage020_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
+    # Duplicate stage-020 rows across the downstream config space for simplicity.
+    stage_df = polytris_df.copy()
+    stage_df['stage'] = '020_exec_classify'
+    stage_df['runtime_file'] = stage_df.apply(
+        lambda row: cache.execution(
+            row['dataset'],
+            row['video'],
+            '020_relevancy',
+            f"{row['classifier']}_{int(row['tilesize'])}_{int(row['sample_rate'])}",
+            'score',
+            'runtime.jsonl',
+        ),
+        axis=1,
+    )
+    return stage_df[QUERY_COLUMNS]
+
+
+def build_stage022_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
+    # Keep only pruning-enabled rows because stage-022 is skipped without a threshold.
+    stage_df = polytris_df[polytris_df['tracking_accuracy_threshold'].notna()].copy()
+    # Return an empty manifest early when the config does not enable pruning.
+    if stage_df.empty:
+        stage_df['stage'] = pd.Series(dtype='object')
+        stage_df['runtime_file'] = pd.Series(dtype='object')
+        return stage_df.reindex(columns=QUERY_COLUMNS)
+
+    stage_df['stage'] = '022_exec_prune_polyominoes'
+    stage_df['runtime_file'] = [
+        os.path.join(
+            cache.execution(row.dataset, row.video),
+            '022_pruned_polyominoes',
+            build_param_str(
+                classifier=row.classifier,
+                tilesize=int(row.tilesize),
+                sample_rate=int(row.sample_rate),
+                tracker=row.tracker,
+                tracking_accuracy_threshold=float(row.tracking_accuracy_threshold),
+            ),
+            'score',
+            'runtime.jsonl',
+        )
+        for row in stage_df.itertuples(index=False)
+    ]
+    return stage_df[QUERY_COLUMNS]
+
+
+def resolve_upstream_tracker(row: pd.Series) -> str | None:
+    # Remove the tracker dimension upstream of stage-060 when pruning is disabled.
+    if pd.isna(row['tracking_accuracy_threshold']):
+        return None
+    return str(row['tracker'])
+
+
+def build_shared_execution_param(row: pd.Series) -> str:
+    # Encode the shared stage-030/040/050 parameter string for this runtime row.
+    return build_param_str(
+        classifier=row['classifier'],
+        tilesize=int(row['tilesize']),
+        sample_rate=int(row['sample_rate']),
+        tracking_accuracy_threshold=None if pd.isna(row['tracking_accuracy_threshold']) else float(row['tracking_accuracy_threshold']),
+        tilepadding=row['tilepadding'],
+        canvas_scale=float(row['canvas_scale']),
+        tracker=resolve_upstream_tracker(row),
+    )
+
+
+def build_stage030_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
+    # Build the stage-030 runtime rows from the full Polytris config space.
+    stage_df = polytris_df.copy()
+    stage_df['stage'] = '030_exec_compress'
+    stage_df['runtime_file'] = stage_df.apply(
+        lambda row: os.path.join(
+            cache.execution(row['dataset'], row['video']),
+            '033_compressed_frames',
+            build_shared_execution_param(row),
+            'runtime.jsonl',
+        ),
+        axis=1,
+    )
+    return stage_df[QUERY_COLUMNS]
+
+
+def build_stage040_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
+    # Build the stage-040 runtime rows from the full Polytris config space.
+    stage_df = polytris_df.copy()
+    stage_df['stage'] = '040_exec_detect'
+    stage_df['runtime_file'] = stage_df.apply(
+        lambda row: os.path.join(
+            cache.execution(row['dataset'], row['video']),
+            '040_compressed_detections',
+            build_shared_execution_param(row),
+            'runtimes.jsonl',
+        ),
+        axis=1,
+    )
+    return stage_df[QUERY_COLUMNS]
+
+
+def build_stage050_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
+    # Build the stage-050 runtime rows from the full Polytris config space.
+    stage_df = polytris_df.copy()
+    stage_df['stage'] = '050_exec_uncompress'
+    stage_df['runtime_file'] = stage_df.apply(
+        lambda row: os.path.join(
+            cache.execution(row['dataset'], row['video']),
+            '050_uncompressed_detections',
+            build_shared_execution_param(row),
+            'runtime.jsonl',
+        ),
+        axis=1,
+    )
+    return stage_df[QUERY_COLUMNS]
+
+
+def build_stage060_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
+    # Build the stage-060 runtime rows from the fully expanded Polytris config space.
+    stage_df = polytris_df.copy()
+    stage_df['stage'] = '060_exec_track'
+    stage_df['runtime_file'] = stage_df.apply(
+        lambda row: os.path.join(
+            cache.execution(row['dataset'], row['video']),
+            '060_uncompressed_tracks',
+            row['variant_id'],
+            'runtimes.jsonl',
+        ),
+        axis=1,
+    )
+    return stage_df[QUERY_COLUMNS]
+
+
+def build_query_execution_manifest(datasets: list[str]) -> pd.DataFrame:
+    # Materialize the concrete query-time videos from the configured split directories.
+    query_video_df = build_split_video_manifest(datasets=datasets)
+    # Materialize the fully expanded Polytris parameter grid.
+    polytris_variant_df = build_polytris_variant_manifest()
+    # Cross join videos and Polytris params so each downstream config gets one row.
+    polytris_df = query_video_df.merge(polytris_variant_df, how='cross')
+
+    # Build the naive manifest once from the concrete query-time videos.
+    naive_df = build_naive_query_manifest(query_video_df)
+    # Build the per-stage Polytris manifests from the full downstream grid.
+    stage_frames = [
+        build_stage020_manifest(polytris_df),
+        build_stage022_manifest(polytris_df),
+        build_stage030_manifest(polytris_df),
+        build_stage040_manifest(polytris_df),
+        build_stage050_manifest(polytris_df),
+        build_stage060_manifest(polytris_df),
+    ]
+    polytris_stage_df = pd.concat(stage_frames, ignore_index=True)
+    # Validate that all configured Polytris runtime files already exist.
+    assert_runtime_paths_exist(polytris_stage_df, 'Polytris query')
+
+    # Combine the Polytris and naive query manifests into one canonical table.
+    return pd.concat([naive_df, polytris_stage_df], ignore_index=True)
+
+
+def print_manifest_table(manifest_df: pd.DataFrame, title: str, group_columns: list[str], write_line=print):
+    # Print the section title so the text summary stays readable.
+    write_line(title)
+    write_line('=' * len(title))
     write_line()
 
-    df = pd.DataFrame.from_dict(index_data)
-    sizes = df.groupby(['dataset', 'stage', 'classifier', 'tilesize', 'tilepadding']).size()
-    assert isinstance(sizes, pd.Series), "sizes is not a pandas DataFrame"
-    write_line(sizes.reset_index(name='count').to_string(index=False))
+    # Summarize the manifest counts by the requested grouping columns.
+    summary_df = manifest_df.groupby(group_columns, dropna=False).size().reset_index(name='count')
+    write_line(summary_df.to_string(index=False))
 
 
-def print_query_execution_table(query_data, write_line=print):
-    """Print query execution data as a table to stdout and optionally to a file."""
-    
-    write_line("QUERY EXECUTION DATASET")
-    write_line("=" * 120)
-    write_line("Stages: 020_exec_classify, 030_exec_compress, 040_exec_detect, 050_exec_uncompress, 060_exec_track")
-    write_line()
-
-    df = pd.DataFrame.from_dict(query_data)
-    sizes = df.groupby(['dataset', 'classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker']).size()
-    assert isinstance(sizes, pd.Series), "sizes is not a pandas DataFrame"
-    write_line(sizes.reset_index(name='count').to_string(index=False))
-
-
-def save_data_tables(index_data, query_data):
-    """Save both data tables to cache directory."""
-    # Get unique datasets
-    datasets = set()
-    for entry in index_data:
-        dataset = entry['dataset']
-        datasets.add(dataset)
-    
-    for dataset in datasets:
-        # Create output directory
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
+def save_manifest_tables(index_df: pd.DataFrame, query_df: pd.DataFrame):
+    # Persist one manifest pair per configured dataset root.
+    for dataset in DATASETS:
+        # Resolve the dataset-local throughput evaluation directory.
+        output_dir = cache.eval(dataset, 'tp')
+        # Recreate the output directory before writing fresh manifest files.
         os.makedirs(output_dir, exist_ok=True)
-        
-        # Save index construction data
-        save_index_construction_data(index_data, dataset, output_dir)
-        
-        # Save query execution data
-        save_query_execution_data(query_data, dataset, output_dir)
-        
-        print(f"\nData tables saved to: {output_dir}")
 
+        # Select the dataset-local index and query rows.
+        dataset_index_df = index_df[index_df['dataset'] == dataset].copy()
+        dataset_query_df = query_df[query_df['dataset'] == dataset].copy()
 
-def save_index_construction_data(index_data, dataset, output_dir):
-    """Save index construction data in multiple formats."""
-    # Filter data for this dataset
-    dataset_data = [entry for entry in index_data if entry['dataset'] == dataset]
-    
-    # Save as JSON
-    # json_file = os.path.join(output_dir, 'index_construction.json')
-    # with open(json_file, 'w') as f:
-    #     json.dump(dataset_data, f, indent=2)
-    df = pd.DataFrame.from_dict(index_data)
-    df = df[df['dataset'] == dataset]
-    df.to_csv(os.path.join(output_dir, 'index_construction.csv'), index=False)
-    
-    # Save as text table using the print function
-    txt_file = os.path.join(output_dir, 'index_construction.txt')
-    with open(txt_file, 'w') as f:
-        def fwrite(text=""):
-            f.write(text + "\n")
-        print_index_construction_table(dataset_data, write_line=fwrite)
+        # Persist the canonical CSV manifests consumed by the compute stage.
+        dataset_index_df.to_csv(output_dir / 'index_construction.csv', index=False)
+        dataset_query_df.to_csv(output_dir / 'query_execution.csv', index=False)
 
-
-def save_query_execution_data(query_data, dataset, output_dir):
-    """Save query execution data in multiple formats."""
-    # Filter data for this dataset
-    dataset_data = [entry for entry in query_data if entry['dataset'] == dataset]
-    
-    # Save as JSON
-    # json_file = os.path.join(output_dir, 'query_execution.json')
-    # with open(json_file, 'w') as f:
-    #     json.dump(dataset_data, f, indent=2)
-    df = pd.DataFrame.from_dict(query_data)
-    df = df[df['dataset'] == dataset]
-    df.to_csv(os.path.join(output_dir, 'query_execution.csv'), index=False)
-    
-    # Save as text table using the print function
-    txt_file = os.path.join(output_dir, 'query_execution.txt')
-    with open(txt_file, 'w') as f:
-        def fwrite(text=""):
-            f.write(text + "\n")
-        print_query_execution_table(dataset_data, write_line=fwrite)
+        # Persist a compact text summary for quick manual inspection.
+        with open(output_dir / 'index_construction.txt', 'w') as f:
+            print_manifest_table(
+                dataset_index_df,
+                'INDEX CONSTRUCTION MANIFEST',
+                ['dataset', 'videoset', 'stage', 'classifier', 'tilesize'],
+                write_line=lambda text='': f.write(text + '\n'),
+            )
+        with open(output_dir / 'query_execution.txt', 'w') as f:
+            print_manifest_table(
+                dataset_query_df,
+                'QUERY EXECUTION MANIFEST',
+                ['dataset', 'videoset', 'variant', 'classifier', 'tilesize',
+                 'sample_rate', 'tracking_accuracy_threshold', 'tilepadding',
+                 'canvas_scale', 'tracker', 'stage'],
+                write_line=lambda text='': f.write(text + '\n'),
+            )
 
 
 def main():
-    """Main function to gather and print runtime data."""
-    # Clear the 080_throughput directory
-    for dataset in DATASETS:
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput')
-        if os.path.exists(output_dir):
-            print(f"Clearing directory: {output_dir}")
-            shutil.rmtree(output_dir)
+    # Log the configured datasets before manifest generation starts.
+    print(f"Building throughput manifests for datasets: {DATASETS}")
 
-    print("Gathering runtime data from all stages and configurations...")
-    
-    # Discover available videos from execution directories
-    datasets_videos = discover_available_videos(DATASETS)
-    print(f"Found {len(datasets_videos)} dataset/video combinations")
-    
-    # Gather data
-    index_data = gather_index_construction_data(DATASETS)
-    query_data = gather_query_execution_data(datasets_videos)
-    
-    # Print tables
-    print("\n1. INDEX CONSTRUCTION DATASET")
-    print_index_construction_table(index_data)
-    print("\n2. QUERY EXECUTION DATASET")  
-    print_query_execution_table(query_data)
-    
-    # Save data tables
-    save_data_tables(index_data, query_data)
+    # Materialize the deterministic index manifest for the configured datasets.
+    index_df = build_index_construction_manifest(DATASETS)
+    # Materialize the deterministic query manifest for the configured datasets.
+    query_df = build_query_execution_manifest(DATASETS)
+
+    # Fail fast when either manifest is unexpectedly empty.
+    assert not index_df.empty, "No index construction manifest rows found"
+    assert not query_df.empty, "No query execution manifest rows found"
+
+    # Persist the canonical CSV and text summaries consumed by later stages.
+    save_manifest_tables(index_df, query_df)
 
 
 if __name__ == '__main__':

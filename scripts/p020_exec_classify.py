@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 from typing import Callable, cast
@@ -15,17 +16,16 @@ from functools import partial
 from polyis.images import ImgNHWC, splitNHWC
 
 from polyis.train.select_model_optimization import select_model_optimization
+from polyis.io import cache, store
 from polyis.utilities import format_time, ProgressBar, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
-DATASETS = config['EXEC']['DATASETS']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
-BATCH_SIZE = 16
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+CLASSIFIERS: list[str] = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+BATCH_SIZE: int = 16
 
 
 def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: str) -> "torch.nn.Module":
@@ -49,8 +49,8 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
         FileNotFoundError: If no trained model is found for the specified tile size
         ValueError: If the classifier is not supported
     """
-    results_path = os.path.join(CACHE_DIR, dataset_name, 'indexing', 'training', 'results', f'{classifier_name}_{tile_size}')
-    model_path = os.path.join(results_path, 'model_best.pth')
+    results_path = cache.index(dataset_name, 'training', 'results', f'{classifier_name}_{tile_size}')
+    model_path = results_path / 'model_best.pth'
 
     if os.path.exists(model_path):
         # print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
@@ -214,11 +214,8 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     model = load_model(dataset, tile_size, classifier, device)
     model = model.to(device)
 
-    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
-    cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-
-    # Create output directory structure
-    output_dir = os.path.join(cache_video_dir, '020_relevancy')
+    video_path = store.dataset(dataset, videoset, video)
+    output_dir = cache.exec(dataset, 'relevancy', video)
 
     # Create score directory for this classifier, tile size, and sample rate
     classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}_{sample_rate}')
@@ -244,8 +241,8 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # Select the best model optimization method based on the benchmark results and apply it to the model
-    with open(os.path.join(CACHE_DIR, dataset, 'indexing', 'training', 'results',
-                           f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
+    with open(cache.index(dataset, 'training', 'results',
+                          f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
         benchmark_results = [json.loads(line) for line in f]
     model, method_name = select_model_optimization(model, benchmark_results, device, tile_size,
                                       (width // tile_size) * (height // tile_size))
@@ -255,7 +252,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device, dtype=torch.float16).view(1, 6, 1, 1)
 
     # Load always_relevant bitmap if available to filter out tiles that have never been relevant
-    always_relevant_path = os.path.join(CACHE_DIR, dataset, 'indexing', 'always_relevant', f'{tile_size}_all.npy')
+    always_relevant_path = cache.index(dataset, 'never-relevant', f'{tile_size}_all.npy')
     assert os.path.exists(always_relevant_path), f"Always relevant bitmap not found for {dataset} {tile_size}"
 
     # Load the bitmap (2D array where 1 = relevant at some point, 0 = never relevant)
@@ -291,7 +288,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         sampled_frames = [frames[idx] for idx in sampled_indices]
 
         # Update progress tracking to use sampled frame count
-        description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier} {method_name} sr{sample_rate}"
+        description = f"{os.path.basename(os.fspath(video_path))} {tile_size:>3} {classifier} {method_name} sr{sample_rate}"
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': len(sampled_frames)}))
 
@@ -386,31 +383,24 @@ def main():
     if args.valid:
         selected_videosets.append('valid')
 
-    # If no videosets are specified, default to all three
+    # If no videosets are specified, default to valid and test
     if not selected_videosets:
-        selected_videosets = ['test']
+        selected_videosets = ['valid', 'test']
 
     mp.set_start_method('spawn', force=True)
 
     # Create tasks list with all video/classifier/tile_size/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for dataset in DATASETS:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
+        videoset_dir = store.dataset(dataset, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
-        for videoset in selected_videosets:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            if not os.path.exists(videoset_dir):
-                print(f"Dataset directory {videoset_dir} does not exist, skipping...")
-                continue
-
-            # Get all video files from the dataset directory
-            videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-            for video in sorted(videos):
-                for classifier in CLASSIFIERS:
-                    for tile_size in TILE_SIZES:
-                        for sample_rate in SAMPLE_RATES:
-                            func = partial(classify, dataset, videoset, video, classifier, tile_size, sample_rate)
-                            funcs.append(func)
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, classifier, tile_size, sample_rate in itertools.product(
+            sorted(videos), CLASSIFIERS, TILE_SIZES, SAMPLE_RATES
+        ):
+            func = partial(classify, dataset, videoset, video, classifier, tile_size, sample_rate)
+            funcs.append(func)   
 
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()

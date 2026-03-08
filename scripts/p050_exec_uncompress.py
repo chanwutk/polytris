@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import itertools
 import json
 import os
 import shutil
@@ -9,18 +10,19 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str
+from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str, TilePadding
+from polyis.io import cache, store
 
 
 CONFIG = get_config()
-DATASETS = CONFIG['EXEC']['DATASETS']
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
-CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
-CLASSIFIERS = CONFIG['EXEC']['CLASSIFIERS']
-TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
-SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
-TILEPADDING_MODES = CONFIG['EXEC']['TILEPADDING_MODES']
-CANVAS_SCALES = CONFIG['EXEC']['CANVAS_SCALE']
+DATASETS: list[str] = CONFIG['EXEC']['DATASETS']
+CLASSIFIERS: list[str] = CONFIG['EXEC']['CLASSIFIERS']
+TILE_SIZES: list[int] = CONFIG['EXEC']['TILE_SIZES']
+SAMPLE_RATES: list[int] = CONFIG['EXEC']['SAMPLE_RATES']
+TILEPADDING_MODES: list[TilePadding] = CONFIG['EXEC']['TILEPADDING_MODES']
+CANVAS_SCALES: list[float] = CONFIG['EXEC']['CANVAS_SCALE']
+TRACKERS: list[str] = CONFIG['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS: list[float] = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
 def load_mapping_file(index_map_path: str, offset_lookup_path: str):
@@ -149,8 +151,9 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
     return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
-def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int,
-           tilepadding: str, canvas_scale: float, gpu_id: int, command_queue: mp.Queue):
+def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
+           sample_rate: int, tilepadding: str, canvas_scale: float, tracker: str | None,
+           tracking_accuracy_threshold: float | None, gpu_id: int, command_queue: mp.Queue):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
@@ -163,29 +166,32 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate
         tilepadding (str): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
         canvas_scale (float): Canvas scale used for compression outputs
+        tracker (str): Tracker name for upstream pruning
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    video_path = os.path.join(CACHE_DIR, dataset, 'execution', video)
     # Build the shared key used by all 03x/04x/05x stage folders.
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
+                                tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
+                                tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     # Check if compressed detections exist
-    detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   param_str, 'detections.jsonl')
+    detections_file = cache.exec(dataset, 'comp-dets', video,
+                                 param_str, 'detections.jsonl')
     assert os.path.exists(detections_file), f"Detections file not found: {detections_file}"
 
     # Check if compressed frames directory exists
-    compressed_frames_dir = os.path.join(video_path, '033_compressed_frames',
-                                         param_str)
+    compressed_frames_dir = cache.exec(dataset, 'comp-frames', video,
+                                       param_str)
     assert os.path.exists(compressed_frames_dir), f"Compressed frames directory not found: {compressed_frames_dir}"
 
-    detections_file = os.path.join(video_path, '040_compressed_detections',
-                                   param_str, 'detections.jsonl')
+    detections_file = cache.exec(dataset, 'comp-dets', video,
+                                 param_str, 'detections.jsonl')
 
-    unpacked_output_dir = os.path.join(video_path, '050_uncompressed_detections',
-                                       param_str)
+    unpacked_output_dir = cache.exec(dataset, 'ucomp-dets', video,
+                                     param_str)
     if os.path.exists(unpacked_output_dir):
         shutil.rmtree(unpacked_output_dir)
     os.makedirs(unpacked_output_dir, exist_ok=True)
@@ -203,7 +209,7 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate
     # Get total number of frames from original video
     # This is important: we create entries for ALL frames (0 to num_frames-1)
     # Non-sampled frames will have empty bbox arrays
-    num_frames = get_num_frames(os.path.join(DATASETS_DIR, dataset, 'test', video))
+    num_frames = get_num_frames(store.dataset(dataset, videoset, video))
 
     # Create entries for ALL frames (0 to num_frames-1), not just sampled ones
     # Non-sampled frames (frame_idx % sample_rate != 0) will remain as empty arrays
@@ -214,7 +220,7 @@ def unpack(dataset: str, video: str, classifier: str, tilesize: int, sample_rate
     with open(detections_file, 'r') as f, open(runtime_file, 'w') as fr:
         # Process each detection file
         contents = f.readlines()
-        description = f"{video_path} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS)}} {tilepadding}"
+        description = f"{dataset}/{video} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS)}} {tilepadding}"
         kwargs = {'completed': 0, 'total': len(contents), 'description': description}
         mod = max(1, int(len(contents) * 0.1))
         command_queue.put((device, kwargs))
@@ -327,27 +333,18 @@ def main():
 
     # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for dataset in DATASETS:
-        cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        videosets_dir = os.path.join(dataset_dir, 'test')
+    for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
+        videosets_dir = store.dataset(dataset, videoset)
+        assert os.path.exists(videosets_dir), f"Videoset directory {videosets_dir} does not exist"
 
         # Get all video files from the dataset directory
         videos = [f for f in os.listdir(videosets_dir) if f.endswith('.mp4')]
-        print(f"Found {len(videos)} video files in dataset {dataset}")
+        print(f"Found {len(videos)} video files in dataset {dataset}/{videoset}")
 
-        for video in sorted(videos):
-            # uncompressed_detections_dir = os.path.join(cache_dir, video, '050_uncompressed_detections')
-            # if os.path.exists(uncompressed_detections_dir):
-            #     shutil.rmtree(uncompressed_detections_dir)
-
-            for classifier in CLASSIFIERS:
-                for tilesize in TILE_SIZES:
-                    for tilepadding in TILEPADDING_MODES:
-                        for sample_rate in SAMPLE_RATES:
-                            for canvas_scale in CANVAS_SCALES:
-                                funcs.append(partial(unpack, dataset, video, classifier, tilesize,
-                                                     sample_rate, tilepadding, canvas_scale))
+        for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
+            sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
+            for tracker in [None] if threshold is None else TRACKERS:
+                funcs.append(partial(unpack, dataset, videoset, video, classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold))
 
     print(f"Created {len(funcs)} tasks to process")
     ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)

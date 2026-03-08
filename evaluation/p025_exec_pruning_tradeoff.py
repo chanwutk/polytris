@@ -39,13 +39,10 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # ── Config (same source as p022 via polyis config) ──────────────────────────
 try:
     sys.path.insert(0, '/polyis')
-    from polyis.utilities import get_config
-    config       = get_config()
-    CACHE_DIR    = config['DATA']['CACHE_DIR']
-    DATASETS_DIR = config['DATA']['DATASETS_DIR']
+    from polyis.io import cache, store
 except Exception:
-    CACHE_DIR    = '/polyis-cache'
-    DATASETS_DIR = '/polyis-data'
+    cache = None  # type: ignore
+    store = None  # type: ignore
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -73,15 +70,13 @@ def read_runtime_ms(runtime_path: str) -> float:
     return sum(entry['time'] for entry in row['runtime'])
 
 
-def collect_baseline(cache_dir: str, dataset: str, videos: list[str],
+def collect_baseline(dataset: str, videos: list[str],
                      classifier: str, tile_size: int) -> int:
     """Sum active tiles from 020_relevancy (binarized) across all videos."""
     total = 0
     for video in videos:
-        path = os.path.join(
-            cache_dir, dataset, 'execution', video,
-            '020_relevancy', f'{classifier}_{tile_size}', 'score', 'score.jsonl'
-        )
+        path = cache.exec(dataset, 'relevancy', video,
+                          f'{classifier}_{tile_size}', 'score', 'score.jsonl')
         if not os.path.exists(path):
             print(f'  [baseline] missing: {path}', flush=True)
             continue
@@ -89,7 +84,7 @@ def collect_baseline(cache_dir: str, dataset: str, videos: list[str],
     return total
 
 
-def collect_pruned(cache_dir: str, dataset: str, videos: list[str],
+def collect_pruned(dataset: str, videos: list[str],
                    classifier: str, tile_size: int,
                    accuracy_idx: int) -> tuple[int, float] | None:
     """
@@ -103,13 +98,10 @@ def collect_pruned(cache_dir: str, dataset: str, videos: list[str],
     found_any   = False
 
     for video in videos:
-        base = os.path.join(
-            cache_dir, dataset, 'execution', video,
-            '022_pruned_polyominoes', f'{classifier}_{tile_size}',
-            str(accuracy_idx), 'score'
-        )
-        score_path   = os.path.join(base, 'score.jsonl')
-        runtime_path = os.path.join(base, 'runtime.jsonl')
+        base = cache.exec(dataset, 'pruned-polyominoes', video,
+                          f'{classifier}_{tile_size}', str(accuracy_idx), 'score')
+        score_path   = base / 'score.jsonl'
+        runtime_path = base / 'runtime.jsonl'
 
         if not os.path.exists(score_path):
             continue
@@ -143,12 +135,12 @@ def main():
     tile_size  = args.tile_size
 
     # ── Discover videos ─────────────────────────────────────────────────────
-    videoset_dir = os.path.join(DATASETS_DIR, dataset, videoset)
-    if not os.path.isdir(videoset_dir):
-        exec_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+    videoset_dir = store.dataset(dataset, videoset)
+    if not videoset_dir.is_dir():
+        exec_dir = cache.execution(dataset)
         videos = sorted([
             d for d in os.listdir(exec_dir)
-            if os.path.isdir(os.path.join(exec_dir, d))
+            if (exec_dir / d).is_dir()
         ])
     else:
         videos = sorted([
@@ -163,7 +155,7 @@ def main():
 
     # ── Baseline (no pruning; runtime treated as 0) ──────────────────────────
     print('Computing baseline (020_relevancy, binarized)...')
-    baseline = collect_baseline(CACHE_DIR, dataset, videos, classifier, tile_size)
+    baseline = collect_baseline(dataset, videos, classifier, tile_size)
     print(f'  Baseline total tiles: {baseline:,}')
     print()
 
@@ -173,7 +165,7 @@ def main():
 
     for idx, _ in enumerate(ACCURACY_THRESHOLDS):
         label  = ACCURACY_LABELS[idx]
-        result = collect_pruned(CACHE_DIR, dataset, videos, classifier, tile_size, idx)
+        result = collect_pruned(dataset, videos, classifier, tile_size, idx)
         if result is None:
             print(f'  acc_idx={idx} ({label}): no results found, skipping.')
         else:

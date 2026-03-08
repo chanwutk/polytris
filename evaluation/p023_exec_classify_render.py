@@ -7,7 +7,8 @@ import numpy as np
 import multiprocessing as mp
 from functools import partial
 
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, load_classification_results, ProgressBar, to_h264, DATASETS_TO_TEST, TILE_SIZES
+from polyis.io import cache, store
+from polyis.utilities import load_classification_results, ProgressBar, to_h264, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -138,12 +139,11 @@ def render_scores(video_file: str, video_file_path: str, dataset_name: str,
     """
     # Load classification results
     results = load_classification_results(
-        CACHE_DIR, dataset_name, video_file, tile_size, classifier_name, execution_dir=True)
-    
+        dataset_name, video_file, tile_size, classifier_name, execution_dir=True)
+
     # Create output directory for visualizations
-    vis_output_dir = os.path.join(
-        CACHE_DIR, dataset_name, 'execution', video_file,
-        '020_relevancy', f'{classifier_name}_{tile_size}')
+    vis_output_dir = cache.exec(dataset_name, 'relevancy', video_file,
+                                f'{classifier_name}_{tile_size}')
     os.makedirs(vis_output_dir, exist_ok=True)
 
     # Open video
@@ -311,15 +311,15 @@ def main(args):
     
     # Process each dataset
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
-        
-        if not os.path.exists(dataset_dir):
+        dataset_dir = store.dataset(dataset_name)
+
+        if not dataset_dir.exists():
             print(f"Dataset directory {dataset_dir} does not exist, skipping...")
             continue
 
         for videoset in ['test']:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
+            videoset_dir = dataset_dir / videoset
+            assert videoset_dir.exists(), f"Videoset directory {videoset_dir} does not exist"
 
             print(f"\nProcessing dataset: {dataset_name}")
             
@@ -335,8 +335,8 @@ def main(args):
                 video_file_path = os.path.join(videoset_dir, video_file)
                 
                 # Get classifier tile sizes for this video
-                relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '020_relevancy')
-                if not os.path.exists(relevancy_dir):
+                relevancy_dir = cache.exec(dataset_name, 'relevancy', video_file)
+                if not relevancy_dir.exists():
                     print(f"Skipping {video_file}: No relevancy directory found")
                     continue
                     

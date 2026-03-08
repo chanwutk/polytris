@@ -5,25 +5,22 @@ import json
 import os
 import multiprocessing as mp
 from functools import partial
-from pathlib import Path
-
 import cv2
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 from polyis.b3d.sort import iou_batch
 from polyis.utilities import create_tracker, register_tracked_detections, ProgressBar, get_config, get_video_resolution, get_overlapping_tiles
+from polyis.io import cache, store
 
 
 CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
-CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 TRACKERS = CONFIG['EXEC']['TRACKERS']
 TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
 
 SAMPLE_RATES = [1, 2, 4, 8, 16]
-ACCURACY_THRESHOLDS = [60, 70, 80, 90, 95, 100]
+ACCURACY_THRESHOLDS = [30, 40, 50, 60, 70, 80, 90, 95, 100]
 
 
 def parse_args():
@@ -349,8 +346,7 @@ def process_video_tracker(
     }))
 
     # Load detections from p011 output
-    detections_path = os.path.join(CACHE_DIR, dataset, 'indexing', 'segment', 'detection',
-                                   f'{video}.detections.jsonl')
+    detections_path = cache.index(dataset, 'det', f'{video}.detections.jsonl')
     assert os.path.exists(detections_path), f"Detections not found: {detections_path}"
 
     all_dets: dict[int, np.ndarray] = {}
@@ -385,7 +381,7 @@ def process_video_tracker(
             scaled_dets[frame_idx] = dets
 
     # Get total frame count from video file
-    video_path = os.path.join(DATASETS_DIR, dataset, 'train', video)
+    video_path = store.dataset(dataset, 'train', video)
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
@@ -425,11 +421,11 @@ def main(args):
     mp.set_start_method('spawn', force=True)
 
     for dataset in DATASETS:
-        dataset_dir = Path(DATASETS_DIR) / dataset / 'train'
+        dataset_dir = store.dataset(dataset, 'train')
         assert dataset_dir.exists(), f"Dataset directory {dataset_dir} does not exist"
 
         # Get list of training videos with detections
-        det_dir = Path(CACHE_DIR) / dataset / 'indexing' / 'segment' / 'detection'
+        det_dir = cache.index(dataset, 'det')
         assert det_dir.exists(), f"Detection directory {det_dir} does not exist"
 
         videos = [
@@ -446,7 +442,7 @@ def main(args):
                 print(f"  Processing tracker={tracker_name}, tile_size={tile_size}")
 
                 # Output directory for this (dataset, tracker, tile_size) combination
-                output_dir = Path(CACHE_DIR) / dataset / 'indexing' / 'track_rate' / f'{tracker_name}_{tile_size}'
+                output_dir = cache.index(dataset, 'track_rates', f'{tracker_name}_{tile_size}')
                 partial_dir = output_dir / 'partial'
 
                 # Create task functions for each video

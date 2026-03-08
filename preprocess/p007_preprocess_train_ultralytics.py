@@ -11,6 +11,7 @@ import shutil
 
 import ultralytics
 
+from polyis.io import store
 from polyis.train.data.ultralytics import parse_device_string, verify_dataset
 
 
@@ -88,8 +89,8 @@ def main():
     model_name = os.path.splitext(pretrained_weights)[0]
     
     # Set up paths
-    data_dir = args.data_dir or f"/polyis-data/training/ultralytics/{args.dataset}/training-data"
-    weights_dir = f"/polyis-data/training/ultralytics/{args.dataset}/weights/{model_name}"
+    data_dir = args.data_dir or str(store.training('ultralytics', args.dataset, 'training-data'))
+    weights_dir = str(store.training('ultralytics', args.dataset, 'weights', model_name))
     # Set project to parent directory and name to model_name so Ultralytics saves to weights_dir/weights/
     project_dir = os.path.dirname(weights_dir)
     experiment_name = model_name

@@ -15,21 +15,22 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import load_all_datasets_tradeoff_data, get_config
+from polyis.io import cache
+from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 from evaluation.utilities import ColorScheme
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
 SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TRACKERS = config['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 # Define the chart size multiplier for all rendered comparison charts.
-CHART_SIZE_SCALE = 5
+CHART_SIZE_SCALE = 1.5
 
 # Define fixed system-to-color categories for deterministic chart encoding.
 SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
@@ -37,6 +38,17 @@ SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
 # Define the color for each system category.
 SYSTEM_COLOR_RANGE = ColorScheme.CarbonDark[:len(SYSTEM_COLOR_DOMAIN)]
 
+# Parameter columns used to transfer valid-Pareto parameter sets to test points.
+PARETO_PARAM_COLS = [
+    'variant_id',
+    'classifier',
+    'tilesize',
+    'sample_rate',
+    'tracking_accuracy_threshold',
+    'tilepadding',
+    'canvas_scale',
+    'tracker',
+]
 
 def val_gte(val: float, best_val: float) -> bool:
     return val >= best_val
@@ -152,11 +164,145 @@ def compute_pareto_fronts_by_group(df: pd.DataFrame, group_cols: list[str],
     """
     # Apply Pareto front computation to each group
     pareto_groups = (
-        df.groupby(group_cols, group_keys=False)
+        df.groupby(group_cols, group_keys=True, dropna=False)
         .apply(lambda g: compute_pareto_front(g, x_col, y_col), include_groups=False)
     )
 
+    # Restore grouping keys from the MultiIndex as regular columns.
+    pareto_groups = pareto_groups.reset_index(level=group_cols)
+
     return pareto_groups.reset_index(drop=True)
+
+
+def load_polytris_tradeoff_split_data(datasets: list[str]) -> pd.DataFrame:
+    """
+    Load the canonical split-level Polytris tradeoff table for all datasets.
+
+    Args:
+        datasets: Datasets to load
+
+    Returns:
+        Combined split-level tradeoff DataFrame
+    """
+    all_tradeoff_rows = []
+
+    # Load the canonical split-level tradeoff table for each configured dataset.
+    for dataset in datasets:
+        tradeoff_df = load_tradeoff_data(dataset)
+        if 'dataset' not in tradeoff_df.columns:
+            tradeoff_df['dataset'] = dataset
+        all_tradeoff_rows.append(tradeoff_df)
+
+    if not all_tradeoff_rows:
+        return pd.DataFrame()
+
+    return pd.concat(all_tradeoff_rows, ignore_index=True)
+
+
+def select_test_points_from_valid_pareto(
+    valid_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    accuracy_col: str,
+    time_col: str = 'time',
+) -> pd.DataFrame:
+    """
+    Select test points whose parameter sets appear on the valid Pareto front.
+
+    Args:
+        valid_df: Videoset-level Polytris rows for valid split
+        test_df: Videoset-level Polytris rows for test split
+        accuracy_col: Accuracy metric column used for Pareto computation
+        time_col: Runtime metric column used for Pareto computation
+
+    Returns:
+        Test rows matched to valid Pareto parameter sets
+    """
+    # Short-circuit when no test rows are available.
+    if test_df.empty:
+        print("  Warning: No test rows found; nothing to select")
+        return pd.DataFrame(columns=test_df.columns)
+
+    # Fall back to all test rows when no valid rows are available.
+    if valid_df.empty:
+        print("  Warning: No valid rows found; using all test rows")
+        return test_df.copy()
+
+    # Keep only parameter columns available in both valid and test DataFrames.
+    match_cols = [col for col in PARETO_PARAM_COLS if col in valid_df.columns and col in test_df.columns]
+    if not match_cols:
+        print("  Warning: No shared parameter columns between valid and test; using all test rows")
+        return test_df.copy()
+
+    # Keep valid rows with metric/time values required by Pareto computation.
+    valid_metric_df = valid_df.dropna(subset=[time_col, accuracy_col]).copy()
+    if valid_metric_df.empty:
+        print("  Warning: Valid rows have no metric/time values; using all test rows")
+        return test_df.copy()
+
+    # Compute valid Pareto points per dataset using DataFrame groupby+apply.
+    valid_pareto_df = compute_pareto_fronts_by_group(
+        valid_metric_df,
+        ['dataset'],
+        time_col,
+        accuracy_col,
+    )
+    if valid_pareto_df.empty:
+        print("  Warning: Valid Pareto is empty; using all test rows")
+        return test_df.copy()
+
+    # Build unique valid Pareto parameter sets per dataset.
+    merge_cols = ['dataset', *match_cols]
+    valid_param_sets = valid_pareto_df[merge_cols].drop_duplicates().copy()
+
+    # Build merge keys that treat NaN values as equal for parameter matching.
+    def build_merge_keys(df_in: pd.DataFrame, cols: list[str], prefix: str) -> tuple[pd.DataFrame, list[str]]:
+        df_out = df_in.copy()
+        key_cols: list[str] = []
+        for col in cols:
+            key_col = f'__{prefix}_{col}'
+            if pd.api.types.is_numeric_dtype(df_out[col]):
+                df_out[key_col] = df_out[col].fillna(-1_000_000_000.0)
+            else:
+                df_out[key_col] = df_out[col].astype('object').where(df_out[col].notna(), '__NA__')
+            key_cols.append(key_col)
+        return df_out, key_cols
+
+    # Construct merge-key DataFrames for valid-parameter sets and test rows.
+    valid_param_sets_keyed, merge_key_cols = build_merge_keys(valid_param_sets, merge_cols, 'valid')
+    test_df_keyed, _ = build_merge_keys(test_df, merge_cols, 'valid')
+    # Select test rows by matching merge keys against valid Pareto parameter sets.
+    matched_test_df = test_df_keyed.merge(
+        valid_param_sets_keyed[merge_key_cols].drop_duplicates(),
+        on=merge_key_cols,
+        how='inner'
+    )
+    # Drop temporary merge-key columns after match selection.
+    matched_test_df = matched_test_df.drop(columns=merge_key_cols)
+
+    # Fall back per-dataset to all test rows where no parameter match exists.
+    matched_datasets = matched_test_df['dataset'].dropna().unique().tolist() \
+        if 'dataset' in matched_test_df.columns else []
+    fallback_test_df = test_df[~test_df['dataset'].isin(matched_datasets)].copy()
+    selected_df = pd.concat([matched_test_df, fallback_test_df], ignore_index=True)
+
+    # Print a compact per-dataset summary using DataFrame joins.
+    summary_df = (
+        test_df.groupby('dataset').size().rename('all_test_rows').to_frame()
+        .join(valid_pareto_df.groupby('dataset').size().rename('valid_pareto_points'), how='left')
+        .join(valid_param_sets.groupby('dataset').size().rename('valid_param_sets'), how='left')
+        .join(matched_test_df.groupby('dataset').size().rename('matched_test_rows'), how='left')
+        .fillna(0)
+        .astype(int)
+        .reset_index()
+    )
+    print(summary_df.to_string(index=False))
+
+    # Warn once when fallback rows were required for unmatched datasets.
+    if not fallback_test_df.empty:
+        fallback_datasets = sorted(fallback_test_df['dataset'].dropna().astype(str).unique().tolist())
+        print(f"  Warning: No valid-parameter match for datasets {fallback_datasets}; used all test rows")
+
+    return selected_df
 
 
 def compute_speedup_at_accuracy_levels(df_polytris: pd.DataFrame,
@@ -564,6 +710,12 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         y=alt.Y(f'{accuracy_col}:Q', title=f'{accuracy_col_name} Score',
                 scale=alt.Scale(domain=[0, 1])),
         color=alt.Color('system:N', title='System', scale=color_scale),
+        # Group lines by the columns that define a single Pareto front.
+        # Polytris fronts are computed per (dataset, classifier, canvas_scale);
+        # SOTA fronts are computed per (dataset).  The chart is already faceted
+        # by dataset, so only system/classifier/canvas_scale are needed here.
+        # Including varying parameters (sample_rate, tilepadding, etc.) would
+        # split each front into isolated single-point "lines".
         detail=['system:N', 'classifier:N', 'canvas_scale:N']
     )
 
@@ -572,7 +724,9 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q'),
         color=alt.Color('system:N', title='System', scale=color_scale),
-        tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker', time_col, accuracy_col]
+        tooltip=['system', 'dataset', 'classifier', 'sample_rate',
+                 'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale',
+                 'tracker', time_col, accuracy_col]
     )
 
     # Combine layers
@@ -600,6 +754,7 @@ def filter_by_config(df: pd.DataFrame,
                      classifiers: list[str] | None = None,
                      tilepadding_modes: list[str] | None = None,
                      sample_rates: list[int] | None = None,
+                     tracking_accuracy_thresholds: list[float | None] | None = None,
                      trackers: list[str] | None = None) -> pd.DataFrame:
     """
     Filter DataFrame to only include rows matching configuration.
@@ -609,6 +764,7 @@ def filter_by_config(df: pd.DataFrame,
         classifiers: List of allowed classifier names (if column exists)
         tilepadding_modes: List of allowed tilepadding modes (if column exists)
         sample_rates: List of allowed sample rates (if column exists)
+        tracking_accuracy_thresholds: List of allowed thresholds (None means no pruning)
         trackers: List of allowed tracker names (if column exists)
 
     Returns:
@@ -630,6 +786,16 @@ def filter_by_config(df: pd.DataFrame,
     if sample_rates is not None and 'sample_rate' in filtered_df.columns:
         filtered_df = filtered_df[filtered_df['sample_rate'].isin(sample_rates)]
         print(f"  Filtered by sample_rates: {len(filtered_df)} rows remain")
+
+    # Filter by pruning threshold (if column exists and filter is specified).
+    if tracking_accuracy_thresholds is not None and 'tracking_accuracy_threshold' in filtered_df.columns:
+        allowed_thresholds = [th for th in tracking_accuracy_thresholds if th is not None]
+        include_no_pruning = any(th is None for th in tracking_accuracy_thresholds)
+        threshold_mask = filtered_df['tracking_accuracy_threshold'].isin(allowed_thresholds)
+        if include_no_pruning:
+            threshold_mask = threshold_mask | filtered_df['tracking_accuracy_threshold'].isna()
+        filtered_df = filtered_df[threshold_mask]
+        print(f"  Filtered by tracking_accuracy_thresholds: {len(filtered_df)} rows remain")
 
     # Filter by tracker (if column exists and filter is specified)
     if trackers is not None and 'tracker' in filtered_df.columns:
@@ -667,48 +833,75 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     print(f"Creating Pareto front visualizations for {len(datasets)} datasets...")
 
     # Create output directory
-    output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '101_compare_pareto')
+    output_dir = cache.summary('101_compare_pareto')
     os.makedirs(output_dir, exist_ok=True)
     print(f"Output directory: {output_dir}")
 
-    # Load Polytris tradeoff data
+    # Load the canonical split-level Polytris tradeoff rows.
     print("\nLoading Polytris tradeoff data...")
-    combined_df, _ = load_all_datasets_tradeoff_data(datasets, system_name='Polytris')
+    tradeoff_df = load_polytris_tradeoff_split_data(datasets)
 
-    # Handle backward compatibility
-    if 'sample_rate' not in combined_df.columns:
-        combined_df['sample_rate'] = 1
-    if 'tracker' not in combined_df.columns:
-        combined_df['tracker'] = 'unknown'
-    if 'canvas_scale' not in combined_df.columns:
-        combined_df['canvas_scale'] = 1.0
+    if tradeoff_df.empty:
+        print("  Warning: No Polytris tradeoff rows found")
+        return
 
-    # Filter out non-data points (e.g., classifier == 'Perfect')
-    combined_df = combined_df.query("classifier != 'Perfect'")
+    # Split the canonical table into Polytris and naive rows.
+    polytris_tradeoff_df, naive_tradeoff_df = split_tradeoff_variants(tradeoff_df)
 
-    # Extract naive baseline data BEFORE filtering by config
-    # This ensures naive baseline is always included regardless of config settings
-    # (naive_combined.csv only has runtime data, not accuracy metrics)
-    naive_df = combined_df[combined_df['classifier'] == 'Groundtruth'].copy()
+    # Filter out non-data points before valid/test selection.
+    polytris_tradeoff_df = polytris_tradeoff_df.query("classifier != 'Perfect'")
+
+    # Work directly on the canonical split-level table emitted by p130.
+    polytris_split_df = polytris_tradeoff_df.copy()
+    if polytris_split_df.empty:
+        print("  Warning: No split-level Polytris rows found")
+        return
+
+    # Print a quick split distribution for sanity checking.
+    split_counts = polytris_split_df['videoset'].value_counts(dropna=False).to_dict()
+    print(f"  Aggregated Polytris rows: {len(polytris_split_df)} (videoset counts: {split_counts})")
+
+    # Separate valid and test rows for the valid-to-test Pareto transfer workflow.
+    valid_all_df = polytris_split_df[polytris_split_df['videoset'] == 'valid'].copy()
+    test_all_df = polytris_split_df[polytris_split_df['videoset'] == 'test'].copy()
+    print(f"  Valid rows: {len(valid_all_df)}")
+    print(f"  Test rows: {len(test_all_df)}")
+    if valid_all_df.empty:
+        print("  Warning: No valid rows found; test-only fallback will be used")
+    if test_all_df.empty:
+        print("  Warning: No test rows found after videoset separation")
+
+    # Extract test naive baseline rows before config filtering.
+    naive_df = naive_tradeoff_df[naive_tradeoff_df['videoset'] == 'test'].copy()
     naive_df['system'] = 'Naive'
-    print(f"\nExtracted {len(naive_df)} naive baseline rows (always included)")
+    print(f"\nExtracted {len(naive_df)} naive baseline rows from test split")
 
-    # Filter by configuration settings (excluding Groundtruth/naive rows)
+    # Filter valid/test Polytris rows by configured parameter dimensions.
     print("\nFiltering Polytris data by configuration settings...")
-    non_naive_df = combined_df[combined_df['classifier'] != 'Groundtruth']
-    print(f"  Before filtering: {len(non_naive_df)} rows")
-    filtered_non_naive_df = filter_by_config(
-        non_naive_df,
+    valid_non_naive_df = valid_all_df.copy()
+    test_non_naive_df = test_all_df.copy()
+
+    print(f"  Valid rows before filtering: {len(valid_non_naive_df)}")
+    filtered_valid_non_naive_df = filter_by_config(
+        valid_non_naive_df,
         classifiers=CLASSIFIERS,
         tilepadding_modes=TILEPADDING_MODES,
         sample_rates=SAMPLE_RATES,
+        tracking_accuracy_thresholds=TRACKING_ACCURACY_THRESHOLDS,
         trackers=TRACKERS
     )
-    print(f"  After filtering: {len(filtered_non_naive_df)} rows")
+    print(f"  Valid rows after filtering: {len(filtered_valid_non_naive_df)}")
 
-    # Combine filtered Polytris data with naive baseline
-    combined_df = pd.concat([filtered_non_naive_df, naive_df], ignore_index=True)
-    print(f"  Total rows (Polytris + Naive): {len(combined_df)}")
+    print(f"  Test rows before filtering: {len(test_non_naive_df)}")
+    filtered_test_non_naive_df = filter_by_config(
+        test_non_naive_df,
+        classifiers=CLASSIFIERS,
+        tilepadding_modes=TILEPADDING_MODES,
+        sample_rates=SAMPLE_RATES,
+        tracking_accuracy_thresholds=TRACKING_ACCURACY_THRESHOLDS,
+        trackers=TRACKERS
+    )
+    print(f"  Test rows after filtering: {len(filtered_test_non_naive_df)}")
 
     # Load SOTA tradeoff data
     print("\nLoading SOTA tradeoff data...")
@@ -721,10 +914,6 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
 
     if not df_sota_dict:
         print("  Warning: No SOTA tradeoff data found")
-
-    # Exclude Groundtruth rows from Polytris data - they are added separately as Naive points
-    polytris_df = combined_df[combined_df['classifier'] != 'Groundtruth']
-    print(f"  Polytris data (excluding Groundtruth): {len(polytris_df)} rows")
 
     # Define metrics to visualize
     metrics_map = {
@@ -740,76 +929,83 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         print('='*60)
 
         # Check if metric exists in data
-        if accuracy_col not in combined_df.columns:
+        if accuracy_col not in polytris_split_df.columns:
             print(f"  Warning: {accuracy_col} not found in Polytris data, skipping")
             continue
 
         # Skip if all NaN
-        if combined_df[accuracy_col].isna().all():
+        if polytris_split_df[accuracy_col].isna().all():
             print(f"  Warning: {accuracy_col} has no valid data, skipping")
             continue
 
-        # 1. Compute Pareto fronts for all systems
-        print(f"\n1. Computing Pareto fronts for {accuracy_name}...")
+        # Select test rows based on parameter sets from the valid Pareto front.
+        print(f"\n1. Computing valid Pareto and selecting matched test rows for {accuracy_name}...")
+        polytris_df = select_test_points_from_valid_pareto(
+            filtered_valid_non_naive_df,
+            filtered_test_non_naive_df,
+            accuracy_col,
+            'time'
+        )
+        if polytris_df.empty:
+            print(f"  Warning: No Polytris test rows selected for {accuracy_name}, skipping")
+            continue
+        print(f"  Selected Polytris test rows: {len(polytris_df)}")
+
+        # 2. Compute Pareto fronts for visualization
+        print(f"\n2. Computing Pareto fronts for {accuracy_name}...")
 
         # Columns to keep for tooltip display
-        tooltip_cols = ['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker', 'time', accuracy_col]
+        tooltip_cols = ['system', 'dataset', 'videoset', 'classifier', 'sample_rate',
+                        'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale',
+                        'tracker', 'time', accuracy_col]
 
-        # Polytris Pareto fronts (per dataset, classifier, and canvas_scale)
+        # Collect Pareto rows from Polytris, Naive, and SOTA systems.
         pareto_data_list = []
-        for dataset in datasets:
-            # Select Polytris rows for the current dataset.
-            dataset_df = polytris_df[polytris_df['dataset'] == dataset]
-            if dataset_df.empty:
-                continue
 
-            # Compute a separate Pareto front for each (classifier, canvas_scale) combination.
-            for (classifier, canvas_scale), group_df in dataset_df.groupby(['classifier', 'canvas_scale'], dropna=False):
-                if group_df.empty:
-                    continue
+        # Compute Polytris Pareto fronts per dataset/classifier/canvas_scale using groupby.
+        polytris_group_cols = [col for col in ['dataset', 'classifier', 'canvas_scale'] if col in polytris_df.columns]
+        polytris_metric_df = polytris_df.dropna(subset=['time', accuracy_col]).copy()
+        if polytris_group_cols and not polytris_metric_df.empty:
+            polytris_pareto_df = compute_pareto_fronts_by_group(
+                polytris_metric_df,
+                polytris_group_cols,
+                'time',
+                accuracy_col
+            )
+            if not polytris_pareto_df.empty:
+                polytris_pareto_df['system'] = 'Polytris'
+                polytris_cols = [c for c in tooltip_cols if c in polytris_pareto_df.columns]
+                pareto_data_list.append(polytris_pareto_df[polytris_cols])
 
-                # Restrict Pareto optimization to the current group slice.
-                pareto = compute_pareto_front(group_df, 'time', accuracy_col)
-                if pareto.empty:
-                    continue
+        # Append Naive test points directly (Naive is a baseline point, not a front).
+        if accuracy_col in naive_df.columns:
+            naive_point_df = naive_df.dropna(subset=['time', accuracy_col]).copy()
+            if not naive_point_df.empty:
+                naive_cols = [c for c in tooltip_cols if c in naive_point_df.columns]
+                pareto_data_list.append(naive_point_df[naive_cols])
 
-                # Set explicit system/classifier labels for downstream chart encoding.
-                pareto['system'] = 'Polytris'
-                if 'classifier' in pareto.columns:
-                    pareto['classifier'] = pareto['classifier'].fillna(classifier)
-                else:
-                    pareto['classifier'] = classifier
-                pareto['canvas_scale'] = canvas_scale
-
-                # Keep columns that exist in the dataframe.
-                cols_to_keep = [c for c in tooltip_cols if c in pareto.columns]
-                pareto_data_list.append(pareto[cols_to_keep])
-
-        # Naive baseline points (per dataset) - single point representing groundtruth performance
-        # Naive data is extracted from combined_df where classifier == 'Groundtruth'
-        for dataset in datasets:
-            naive_dataset_df = naive_df[naive_df['dataset'] == dataset]
-            if naive_dataset_df.empty:
-                continue
-            # Naive is a single reference point, not a Pareto front
-            cols_to_keep = [c for c in tooltip_cols if c in naive_dataset_df.columns]
-            naive_point = naive_dataset_df[cols_to_keep].dropna(subset=['time', accuracy_col])
-            if not naive_point.empty:
-                pareto_data_list.append(naive_point)
-
-        # SOTA Pareto fronts (per dataset)
+        # Compute SOTA Pareto fronts per dataset using groupby.
+        sota_pareto_list = []
         for system_name, df_sota in df_sota_dict.items():
             if accuracy_col not in df_sota.columns:
                 continue
-            for dataset in datasets:
-                sota_dataset_df = df_sota[df_sota['dataset'] == dataset]
-                if sota_dataset_df.empty:
-                    continue
-                pareto = compute_pareto_front(sota_dataset_df, 'time', accuracy_col)
-                if not pareto.empty:
-                    pareto['system'] = system_name.upper()
-                    cols_to_keep = [c for c in tooltip_cols if c in pareto.columns]
-                    pareto_data_list.append(pareto[cols_to_keep])
+            sota_metric_df = df_sota.dropna(subset=['time', accuracy_col]).copy()
+            if sota_metric_df.empty:
+                continue
+            sota_pareto_df = compute_pareto_fronts_by_group(
+                sota_metric_df,
+                ['dataset'],
+                'time',
+                accuracy_col
+            )
+            if sota_pareto_df.empty:
+                continue
+            sota_pareto_df['system'] = system_name.upper()
+            sota_cols = [c for c in tooltip_cols if c in sota_pareto_df.columns]
+            sota_pareto_list.append(sota_pareto_df[sota_cols])
+
+        if sota_pareto_list:
+            pareto_data_list.extend(sota_pareto_list)
 
         if not pareto_data_list:
             print(f"  No Pareto data available for {accuracy_name}")
@@ -818,16 +1014,16 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         df_pareto_combined = pd.concat(pareto_data_list, ignore_index=True)
         print(f"  Combined Pareto data: {len(df_pareto_combined)} points")
 
-        # 2. Create Pareto front comparison chart
-        print(f"\n2. Creating Pareto comparison chart for {accuracy_name}...")
+        # 3. Create Pareto front comparison chart
+        print(f"\n3. Creating Pareto comparison chart for {accuracy_name}...")
         pareto_chart = create_pareto_comparison_chart(
             df_pareto_combined, accuracy_col, accuracy_name, log_scale=log_scale
         )
         save_chart(pareto_chart, output_dir,
                    f'{accuracy_col.lower()}_runtime_pareto_comparison')
 
-        # 3. Compute and visualize speedup at accuracy levels
-        print(f"\n3. Computing speedup at accuracy levels for {accuracy_name}...")
+        # 4. Compute and visualize speedup at accuracy levels
+        print(f"\n4. Computing speedup at accuracy levels for {accuracy_name}...")
         df_speedup = compute_speedup_at_accuracy_levels(
             polytris_df, df_sota_dict, accuracy_col, 'time', increment=0.005
         )
@@ -840,8 +1036,8 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         else:
             print("  No speedup data available")
 
-        # 4. Compute and visualize accuracy gain at runtime levels
-        print(f"\n4. Computing accuracy gain at runtime levels for {accuracy_name}...")
+        # 5. Compute and visualize accuracy gain at runtime levels
+        print(f"\n5. Computing accuracy gain at runtime levels for {accuracy_name}...")
         df_accuracy_gain = compute_accuracy_gain_at_runtime_levels(
             polytris_df, df_sota_dict, accuracy_col, 'time', increment=5.0
         )

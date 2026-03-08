@@ -1,151 +1,112 @@
 #!/usr/local/bin/python
 
-import argparse
-from functools import partial
 import os
-from typing import List
 
-from rich.progress import track
-import pandas as pd
 import altair as alt
+from rich.progress import track
 
-from polyis.utilities import METRICS, load_tradeoff_data, tradeoff_scatter_and_naive_baseline, get_config
+from polyis.io import cache
+from polyis.utilities import (
+    METRICS,
+    get_config,
+    load_tradeoff_data,
+    split_tradeoff_variants,
+    tradeoff_scatter_and_naive_baseline,
+)
 
 
-config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS = config['EXEC']['DATASETS']
+CONFIG = get_config()
+DATASETS = CONFIG['EXEC']['DATASETS']
 
 
-def visualize_tradeoff(tradeoff: pd.DataFrame, combined: pd.DataFrame,
-                       naive: pd.DataFrame, naive_combined: pd.DataFrame,
-                       output_dir: str, x_column: str, x_title: str, plot_suffix: str):
-    """
-    Create a single tradeoff visualization with configurable x-axis,
-    including dataset-wide aggregated subplot.
-    
-    Args:
-        df_individual: DataFrame with individual video data (already includes naive values)
-        df_aggregated: DataFrame with aggregated dataset data (already includes naive values)
-        output_dir: Output directory for visualizations
-        metrics_list: List of metrics to visualize
-        x_column: Column name for x-axis data
-        x_title: Title for x-axis
-        naive_column: Column name for naive baseline data
-        plot_suffix: Suffix for plot filename
-    """
-    print(f"Creating {plot_suffix} tradeoff visualizations...")
-    
-    assert len(tradeoff) > 0, \
-        f"No tradeoff data available for {plot_suffix} visualization"
-    assert len(combined) > 0, \
-        f"No combined tradeoff data available for {plot_suffix} visualization"
-    
-    assert len(naive) > 0, \
-        f"No naive data available for {plot_suffix} visualization"
-    assert len(naive_combined) == 1, \
-        f"Expected 1 row of combined naive data, got {len(naive_combined)}"
+def build_metric_columns(metric: str) -> tuple[str, str] | None:
+    # Map each supported metric family to the canonical tradeoff column name.
+    if metric == 'HOTA':
+        return 'HOTA_HOTA', 'HOTA'
+    # Map the CLEAR family to the canonical MOTA column when present.
+    if metric == 'CLEAR':
+        return 'MOTA_MOTA', 'MOTA'
+    # Map the Count family to the tracking MAPE column used in existing plots.
+    if metric == 'Count':
+        return 'Count_TracksMAPE', 'Count'
+    return None
 
-    # Create output directory
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Create base charts
-    naive_combined['video'] = 'dataset_level'
-    base_individual = alt.Chart(tradeoff.merge(naive, on='video', how='left', suffixes=('', '_naive')))
-    base_aggregated = alt.Chart(combined.merge(naive_combined, on='video', how='left', suffixes=('', '_naive')))
-    
-    # Create scatter plots for each metric using Altair
+
+def prepare_plot_df(tradeoff_df, x_column: str):
+    # Split the canonical tradeoff table into Polytris and naive subsets.
+    polytris_df, naive_df = split_tradeoff_variants(tradeoff_df)
+    # Fail fast when the canonical tradeoff table does not contain Polytris rows.
+    assert not polytris_df.empty, "No Polytris tradeoff rows found"
+    # Fail fast when the canonical tradeoff table does not contain naive rows.
+    assert not naive_df.empty, "No naive baseline rows found"
+
+    # Keep only the split-aware naive baseline columns needed for the merge.
+    naive_cols = ['dataset', 'videoset', x_column]
+    naive_merge_df = naive_df[naive_cols].rename(columns={x_column: f'{x_column}_naive'})
+
+    # Attach the split-specific naive baseline to each Polytris row.
+    plot_df = polytris_df.merge(naive_merge_df, on=['dataset', 'videoset'], how='left')
+    # Reuse the existing scatter utility by exposing the split name through the legacy video field.
+    plot_df['video'] = plot_df['videoset']
+
+    return plot_df
+
+
+def visualize_tradeoff(tradeoff_df, output_dir: str, x_column: str, x_title: str, plot_suffix: str):
+    # Prepare the merged split-aware plotting DataFrame for this x-axis.
+    plot_df = prepare_plot_df(tradeoff_df, x_column)
+    # Build the base Altair chart from the split-aware tradeoff rows.
+    base_chart = alt.Chart(plot_df)
+
+    # Render one chart per supported metric family.
     for metric in METRICS:
-        if metric == 'HOTA':
-            accuracy_col = 'HOTA_HOTA'
-            metric_name = 'HOTA'
-        elif metric == 'CLEAR':
-            accuracy_col = 'MOTA_MOTA'
-            metric_name = 'MOTA'
-        elif metric == 'Count':
-            accuracy_col = 'Count_TracksMAPE'
-            metric_name = 'Count'
-        else:
+        metric_info = build_metric_columns(metric)
+        if metric_info is None:
             continue
-        
-        # Create individual video scatter plot and baseline using combined function
-        individual_scatter, naive_lines_individual = tradeoff_scatter_and_naive_baseline(
-            base_individual, x_column, x_title, accuracy_col, metric_name,
+        accuracy_col, metric_name = metric_info
+
+        # Skip metrics that are absent in the current dataset.
+        if accuracy_col not in plot_df.columns or plot_df[accuracy_col].isna().all():
+            continue
+
+        # Reuse the shared tradeoff scatter helper for Polytris rows and naive baselines.
+        scatter, baseline = tradeoff_scatter_and_naive_baseline(
+            base_chart,
+            x_column,
+            x_title,
+            accuracy_col,
+            metric_name,
         )
-        
-        # Combine individual video charts
-        individual_chart = (individual_scatter + naive_lines_individual).facet(
-            facet=alt.Facet('video:N', title=None,
-                            header=alt.Header(labelExpr="'Video: ' + datum.value")),
-            columns=3
+
+        # Facet the split-level view by videoset instead of per-video.
+        chart = (scatter + baseline).facet(
+            column=alt.Column('videoset:N', title='Videoset'),
         ).resolve_scale(
-            x='independent'
-        ).properties(
-            title=f'{metric_name} vs {x_title} Tradeoff (By Video)',
+            x='independent',
         )
-        
-        # Create dataset-wide scatter plot and baseline using combined function
-        aggregated_scatter, naive_line_aggregated = tradeoff_scatter_and_naive_baseline(
-            base_aggregated, x_column, x_title, accuracy_col, metric_name,
-        )
-        
-        # Create dataset-wide chart
-        dataset_chart = (aggregated_scatter + naive_line_aggregated).properties(
-            title=f'{metric_name} vs {x_title} Tradeoff (Dataset Average)',
-            width=400,
-            height=300
-        )
-        
-        # Combine individual and dataset charts vertically
-        combined_chart = (individual_chart | dataset_chart).resolve_scale(x='independent')
-        
-        # Save the chart
-        plot_path = os.path.join(output_dir, f'{metric.lower()}_{plot_suffix}_tradeoff.png')
-        combined_chart.save(plot_path, scale_factor=2)
-        print(f"Saved {metric_name} {plot_suffix} tradeoff plot to: {plot_path}")
+
+        # Save the rendered plot for the current metric/x-axis pair.
+        chart.save(os.path.join(output_dir, f'{metric.lower()}_{plot_suffix}_tradeoff.png'), scale_factor=2)
 
 
 def visualize_tradeoffs(dataset: str):
-    """
-    Create both runtime and throughput tradeoff visualizations for a dataset.
-    
-    Args:
-        dataset: Dataset name
-    """
-    print(f"Creating tradeoff visualizations for dataset: {dataset}")
-    
-    # Create output directory
-    output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '091_tradeoff')
-    
-    # Use metrics from utilities
-    
-    # Create runtime visualization
-    tradeoff, combined, naive, naive_combined = load_tradeoff_data(dataset)
+    # Resolve the dataset-local tradeoff visualization directory.
+    output_dir = cache.eval(dataset, 'tradeoff-vis')
+    # Recreate the dataset-local output directory before rendering charts.
+    os.makedirs(output_dir, exist_ok=True)
 
-    visualize = partial(visualize_tradeoff, tradeoff, combined, naive, naive_combined, output_dir)
-    visualize(x_column='time', x_title='Query Execution Runtime (seconds)', plot_suffix='runtime')
-    visualize(x_column='throughput_fps', x_title='Throughput (frames/second)', plot_suffix='throughput')
+    # Load the canonical split-level tradeoff table.
+    tradeoff_df = load_tradeoff_data(dataset)
+    # Render both runtime and throughput visualizations from the same table.
+    visualize_tradeoff(tradeoff_df, str(output_dir), 'time', 'Query Execution Runtime (seconds)', 'runtime')
+    visualize_tradeoff(tradeoff_df, str(output_dir), 'throughput_fps', 'Throughput (frames/second)', 'throughput')
 
 
 def main():
-    """
-    Main function that orchestrates the accuracy-throughput tradeoff visualization.
-    
-    This function serves as the entry point for the script. It loads pre-computed 
-    tradeoff data from CSV files created by p090_tradeoff_compute.py and creates 
-    visualizations showing the tradeoff between accuracy and query execution runtime/throughput.
-        
-    Note:
-        - The script expects tradeoff data from p090_tradeoff_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/accuracy_{suffix}_tradeoff.csv
-          {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/accuracy_{suffix}_tradeoff_combined.csv
-        - Results are saved to: {CACHE_DIR}/{dataset}/evaluation/091_tradeoff/
-        - Please run p090_tradeoff_compute.py first to generate the required CSV files
-        - Metrics are automatically detected from the CSV files
-    """
+    # Log the configured datasets before visualization starts.
     print(f"Processing datasets: {DATASETS}")
-    
-    # Process datasets
+
+    # Render split-level tradeoff charts for each configured dataset.
     for dataset in track(DATASETS, description="Processing datasets"):
         visualize_tradeoffs(dataset)
 

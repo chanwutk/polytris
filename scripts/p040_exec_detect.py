@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 import shutil
@@ -16,18 +17,19 @@ import torch
 
 import polyis.models.detector
 import polyis.dtypes
-from polyis.utilities import TILEPADDING_MODES, TilePadding, format_time, ProgressBar, get_config, build_param_str
+from polyis.utilities import TilePadding, format_time, ProgressBar, get_config, build_param_str
+from polyis.io import cache, store
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
-CLASSIFIERS = config['EXEC']['CLASSIFIERS']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-DATASETS = config['EXEC']['DATASETS']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
-TILEPADDING = config['EXEC']['TILEPADDING_MODES']
-CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
+CLASSIFIERS: list[str] = config['EXEC']['CLASSIFIERS']
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+TILEPADDING_MODES: list[TilePadding] = config['EXEC']['TILEPADDING_MODES']
+CANVAS_SCALES: list[float] = config['EXEC']['CANVAS_SCALE']
+TRACKERS: list[str] = config['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS: list[float] = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
 def parse_args():
@@ -89,6 +91,7 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
 
 def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
                     sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+                    tracker: str | None, tracking_accuracy_threshold: float | None,
                     batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
@@ -104,6 +107,8 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         tilepadding (TilePadding): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
         canvas_scale (float): Canvas scale used for compression outputs
+        tracker (str): Tracker name for upstream pruning
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
@@ -111,16 +116,15 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
     torch.backends.cudnn.benchmark = True
 
     device = f'cuda:{gpu_id}'
-    cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
-    compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
+    compressed_frames_dir = cache.exec(dataset, 'comp-frames', video, param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
         f"Compressed frames directory {compressed_frames_dir} does not exist"
 
     # Create output directory for detections
     print(f"Creating output directory for detections")
-    detections_output_dir = os.path.join(cache_dir, '040_compressed_detections', param_str)
+    detections_output_dir = cache.exec(dataset, 'comp-dets', video, param_str)
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -217,6 +221,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
                    sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+                   tracker: str | None, tracking_accuracy_threshold: float | None,
                    batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector.
@@ -229,19 +234,20 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
         tilepadding (TilePadding): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
         canvas_scale (float): Canvas scale used for compression outputs
+        tracker (str): Tracker name for upstream pruning
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
         gpu_id (int): GPU ID to use for processing
         command_queue (mp.Queue): Queue for progress updates
     """
     device = f'cuda:{gpu_id}'
-    cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
-    compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
+    compressed_frames_dir = cache.exec(dataset, 'comp-frames', video, param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
         f"Compressed frames directory {compressed_frames_dir} does not exist"
 
     # Create output directory for detections
-    detections_output_dir = os.path.join(cache_dir, '040_compressed_detections', param_str)
+    detections_output_dir = cache.exec(dataset, 'comp-dets', video, param_str)
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -349,24 +355,26 @@ def main(args):
     if args.clear:
         print(f"Cleared existing 040_compressed_detections folder")
         for dataset in DATASETS:
-            cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
-            for video in sorted(os.listdir(cache_dir)):
-                compressed_detections_dir = os.path.join(cache_dir, video,
-                                                         '040_compressed_detections')
-                if os.path.exists(compressed_detections_dir):
-                    shutil.rmtree(compressed_detections_dir)
+            for videoset in ('valid', 'test'):
+                videoset_dir = store.dataset(dataset, videoset)
+                if not os.path.exists(videoset_dir):
+                    continue
+                videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+                for video in sorted(videos):
+                    compressed_detections_dir = cache.exec(dataset, 'comp-dets', video)
+                    if os.path.exists(compressed_detections_dir):
+                        shutil.rmtree(compressed_detections_dir)
 
-    for dataset in DATASETS:
-        videoset_dir = os.path.join(DATASETS_DIR, dataset, 'test')
-        for video in sorted(os.listdir(videoset_dir)):
-            for classifier in CLASSIFIERS:
-                for tilesize in TILE_SIZES:
-                    for tilepadding in TILEPADDING:
-                        for sample_rate in SAMPLE_RATES:
-                            for canvas_scale in CANVAS_SCALES:
-                                funcs.append(partial(detect_objects, dataset, video, classifier,
-                                                     tilesize, sample_rate, tilepadding, canvas_scale,
-                                                     args.batch_size))
+    for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
+        videoset_dir = store.dataset(dataset, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
+
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
+            sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
+            for tracker in [None] if threshold is None else TRACKERS:
+                funcs.append(partial(detect_objects, dataset, video, classifier, tilesize, sample_rate,
+                                     tilepadding, canvas_scale, tracker, threshold, args.batch_size))
 
     print(f"Created {len(funcs)} tasks to process")
 

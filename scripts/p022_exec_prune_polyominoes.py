@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 import time
@@ -11,30 +12,43 @@ from functools import partial
 import pulp
 
 from polyis.pack.adapters import group_tiles_all
-from polyis.utilities import format_time, ProgressBar, get_config, load_classification_results
+from polyis.utilities import format_time, ProgressBar, get_config, load_classification_results, build_param_str
+from polyis.io import cache, store
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-CLASSIFIERS = config['EXEC']['CLASSIFIERS']
-DATASETS = config['EXEC']['DATASETS']
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+CLASSIFIERS: list[str] = config['EXEC']['CLASSIFIERS']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+TRACKERS: list[str] = config['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS: list[float] = [t for t in config['EXEC']['TRACKING_ACCURACY_THRESHOLDS'] if t is not None]
 
 TILEPADDING_MODE = 0  # 0: No padding, 1: Connected padding, 2: Disconnected padding
 
 # Accuracy threshold indices into max_rate_table.npy (axis 2)
 # Index: 0=60%, 1=70%, 2=80%, 3=90%, 4=95%, 5=100%
-ACCURACY_THRESHOLDS = [0.60, 0.70, 0.80, 0.90, 0.95, 1.00]
-DEFAULT_ACCURACY_IDX = 5
+_ALL_ACCURACY_THRESHOLDS = [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.00]
+# Mapping from float threshold to index in max_rate_table.npy
+_ACCURACY_THRESHOLD_TO_IDX = {t: i for i, t in enumerate(_ALL_ACCURACY_THRESHOLDS)}
 
 
-def load_max_sampling_rate(dataset: str, tracker: str, tile_size: int, accuracy_idx: int = DEFAULT_ACCURACY_IDX) -> np.ndarray:
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Group and prune polyominoes from classification results using ILP'
+    )
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--train', action='store_true')
+    parser.add_argument('--valid', action='store_true')
+    return parser.parse_args()
+
+
+def load_max_sampling_rate(dataset: str, tracker: str, tile_size: int, accuracy_idx: int) -> np.ndarray:
     """
     Load the max sampling rate table for each tile position at a given accuracy threshold.
     
     The table is stored as a 3D array [grid_height, grid_width, num_accuracy_thresholds]
-    in: {CACHE_DIR}/{dataset}/indexing/tracking_rate/{tracker}_{tile_size}/max_rate_table.npy
+    in: {CACHE_DIR}/{dataset}/indexing/track_rate/{tracker}_{tile_size}/max_rate_table.npy
     
     Args:
         dataset: Dataset name (e.g. 'caldot2-y05')
@@ -46,8 +60,8 @@ def load_max_sampling_rate(dataset: str, tracker: str, tile_size: int, accuracy_
     Returns:
         2D numpy array [grid_height, grid_width] of max sampling rates per tile
     """
-    max_rate_path = os.path.join(
-        CACHE_DIR, dataset, 'indexing', 'tracking_rate',
+    max_rate_path = cache.index(
+        dataset, 'track_rates',
         f'{tracker}_{tile_size}', 'max_rate_table.npy'
     )
     
@@ -162,38 +176,45 @@ def process_video(
     video: str,
     classifier: str,
     tile_size: int,
+    sample_rate: int,
     tracker: str,
-    accuracy_idx: int,
+    tracking_accuracy_threshold: float,
     gpu_id: int,
     command_queue: mp.Queue,
-    max_frames: int | None = None,
 ):
     """
     Process a single video to group and prune polyominoes via ILP.
-    
+
     Args:
         dataset: Dataset name
         videoset: Videoset name (test, train, or valid)
         video: Video filename
         classifier: Classifier name
         tile_size: Tile size used for classification
+        sample_rate: Frame sampling stride used by upstream classification
+        tracker: Tracker name
+        tracking_accuracy_threshold: Accuracy threshold (float, e.g. 0.90)
         gpu_id: GPU ID (for progress tracking)
         command_queue: Queue for progress updates
     """
+    # Resolve float threshold to index in max_rate_table.npy
+    accuracy_idx = _ACCURACY_THRESHOLD_TO_IDX[tracking_accuracy_threshold]
     device = f'cuda:{gpu_id}'
     
     # Load classification results
     print(f"[{video}] Loading classification results...", flush=True)
-    raw_results = load_classification_results(CACHE_DIR, dataset, video, tile_size, classifier, verbose=False)
-    if max_frames is not None:
-        raw_results = raw_results[:max_frames]
+    raw_results = load_classification_results(
+        dataset, video, tile_size, classifier, sample_rate, verbose=False
+    )
     
     classifications = []
+    frame_indices = []
     grid_height = None
     grid_width = None
     
     for frame_data in raw_results:
-        if grid_height is None:
+        frame_indices.append(frame_data['idx'])
+        if grid_height is None or grid_width is None:
             grid_height, grid_width = frame_data['classification_size']
         
         # Create bitmap from classifications
@@ -216,7 +237,7 @@ def process_video(
         f"Max sampling rate shape {max_sampling_distance.shape} doesn't match grid ({grid_height}, {grid_width})"
     
     # Progress update
-    description = f"{video} {tile_size:>3} {classifier}"
+    description = f"{video} {tile_size:>3} sr{sample_rate} {classifier} {tracker} {tracking_accuracy_threshold}"
     command_queue.put((device, {
         'description': description,
         'completed': 0,
@@ -248,6 +269,8 @@ def process_video(
     total_polyominoes = sum(len(p) for p in polyomino_lengths)
     print(f"[{video}] Step 3: Solving ILP ({total_polyominoes} polyominoes across {num_frames} frames)...", flush=True)
     step_start = (time.time_ns() / 1e6)
+    assert grid_height is not None
+    assert grid_width is not None
     selected = solve_ilp(
         tile_to_polyomino_id,
         polyomino_lengths,
@@ -277,10 +300,13 @@ def process_video(
     step_times['extract_grids'] = (time.time_ns() / 1e6) - step_start
     print(f"[{video}] Step 4 done: extract_grids={step_times['extract_grids']:.1f}ms", flush=True)
     
-    # Create output directory  (accuracy_idx encoded in path so all thresholds coexist)
-    output_dir = os.path.join(
-        CACHE_DIR, dataset, 'execution', video, '022_pruned_polyominoes',
-        f'{classifier}_{tile_size}', str(accuracy_idx)
+    # Create output directory using build_param_str for consistent naming
+    param_str = build_param_str(classifier=classifier, tilesize=tile_size,
+                                sample_rate=sample_rate,
+                                tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    output_dir = cache.exec(
+        dataset, 'pruned-polyominoes', video,
+        param_str
     )
     os.makedirs(output_dir, exist_ok=True)
     
@@ -289,20 +315,20 @@ def process_video(
     
     # Step 5: Save results
     print(f"[{video}] Step 5: Saving results to {score_dir}...", flush=True)
-    step_start = (time.time_ns() / 1e6)
+    # step_start = (time.time_ns() / 1e6)
     output_path = os.path.join(score_dir, 'score.jsonl')
     runtime_path = os.path.join(score_dir, 'runtime.jsonl')
     
     with open(output_path, 'w') as f:
-        for idx, grid in enumerate(pruned_grids):
+        for frame_idx, grid in zip(frame_indices, pruned_grids):
             frame_entry = {
                 "classification_size": grid.shape,
                 "classification_hex": grid.flatten().tobytes().hex(),
-                "idx": idx,
+                "idx": frame_idx,
             }
             f.write(json.dumps(frame_entry) + '\n')
-    step_times['save_results'] = (time.time_ns() / 1e6) - step_start
-    print(f"[{video}] Step 5 done: save_results={step_times['save_results']:.1f}ms", flush=True)
+    # step_times['save_results'] = (time.time_ns() / 1e6) - step_start
+    # print(f"[{video}] Step 5 done: save_results={step_times['save_results']:.1f}ms", flush=True)
 
     # Save runtime data
     with open(runtime_path, 'w') as f:
@@ -310,25 +336,6 @@ def process_video(
     
     print(f"[{video}] All steps complete!", flush=True)
     command_queue.put((device, {'completed': 3}))
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Group and prune polyominoes from classification results using ILP'
-    )
-    parser.add_argument('--test', action='store_true', help='Process test videoset')
-    parser.add_argument('--train', action='store_true', help='Process train videoset')
-    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
-    parser.add_argument('--max-frames', type=int, default=None,
-                        help='Only process the first N frames of each video (useful for quick tests)')
-    parser.add_argument('--accuracy-idx', type=int, default=DEFAULT_ACCURACY_IDX,
-                        choices=list(range(len(ACCURACY_THRESHOLDS))),
-                        help=(
-                            'Index into accuracy thresholds used to select max sampling distance. '
-                            f'Choices map to {dict(enumerate(ACCURACY_THRESHOLDS))}. '
-                            f'Default: {DEFAULT_ACCURACY_IDX} ({ACCURACY_THRESHOLDS[DEFAULT_ACCURACY_IDX]*100:.0f}%%).'
-                        ))
-    return parser.parse_args()
 
 
 def main():
@@ -343,17 +350,14 @@ def main():
     5. Outputs pruned tiles in same format as p021 (hex-encoded binary grids)
     
     Input:
-        - Classification results: {CACHE_DIR}/{dataset}/execution/{video}/020_relevancy/{classifier}_{tile_size}/score/score.jsonl
-        - Max sampling rate: {CACHE_DIR}/{dataset}/indexing/tracking_rate/{tracker}_{tile_size}/max_rate_table.npy
+        - Classification results: {CACHE_DIR}/{dataset}/execution/{video}/020_relevancy/{classifier}_{tile_size}_{sample_rate}/score/score.jsonl
+        - Max sampling rate: {CACHE_DIR}/{dataset}/indexing/track_rate/{tracker}_{tile_size}/max_rate_table.npy
     
     Output:
-        - Pruned classification: {CACHE_DIR}/{dataset}/execution/{video}/022_pruned_polyominoes/{classifier}_{tile_size}/score/score.jsonl
+        - Pruned classification: {CACHE_DIR}/{dataset}/execution/{video}/022_pruned_polyominoes/{classifier}_{tile_size}_{sample_rate}_{tracking_accuracy_threshold}_{tracker}/score/score.jsonl
     """
     args = parse_args()
-    max_frames = args.max_frames
-    accuracy_idx = args.accuracy_idx
-    print(f"Accuracy threshold: {ACCURACY_THRESHOLDS[accuracy_idx]*100:.0f}% (idx={accuracy_idx})")
-    
+
     selected_videosets = []
     if args.test:
         selected_videosets.append('test')
@@ -361,50 +365,40 @@ def main():
         selected_videosets.append('train')
     if args.valid:
         selected_videosets.append('valid')
-    
+
     if not selected_videosets:
-        selected_videosets = ['test']
-    
+        selected_videosets = ['valid', 'test']
+
     mp.set_start_method('spawn', force=True)
-    
+
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    
+
     print(f"datasets: {DATASETS}")
-    for dataset in DATASETS:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        
-        for videoset in selected_videosets:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            print(f"videoset_dir: {videoset_dir}")
-            if not os.path.exists(videoset_dir):
-                print(f"Videoset directory {videoset_dir} does not exist, skipping...")
-                continue
-            
-            videos = [f for f in os.listdir(videoset_dir) 
-                     if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-            
-            for video in sorted(videos):
-                for classifier in CLASSIFIERS:
-                    for tile_size in TILE_SIZES:
-                        score_path = os.path.join(
-                            CACHE_DIR, dataset, 'execution', video, '020_relevancy',
-                            f'{classifier}_{tile_size}', 'score', 'score.jsonl'
-                        )
-                        print(f"score_path: {score_path}")
-                        if os.path.exists(score_path):
-                            # TODO: currently hardcoded to 'bytetrackcython' tracker
-                            func = partial(
-                                process_video,
-                                dataset, videoset, video, classifier, tile_size,
-                                'bytetrackcython', accuracy_idx,
-                                max_frames=max_frames
-                            )
-                            print(f"Added task for {video} {tile_size} {classifier}")
-                            funcs.append(func)
+    print(f"sample_rates: {SAMPLE_RATES}")
+    print(f"trackers: {TRACKERS}")
+    print(f"tracking_accuracy_thresholds: {TRACKING_ACCURACY_THRESHOLDS}")
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
+        videoset_dir = store.dataset(dataset, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
+
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, classifier, tile_size, sample_rate in itertools.product(sorted(videos), CLASSIFIERS, TILE_SIZES, SAMPLE_RATES):
+            score_path = cache.exec(dataset, 'relevancy', video,
+                                    f'{classifier}_{tile_size}_{sample_rate}', 'score', 'score.jsonl')
+            assert os.path.exists(score_path), f"Score path {score_path} does not exist"
+
+            # Iterate over all tracker × threshold combinations for each sample_rate.
+            for tracker, threshold in itertools.product(TRACKERS, TRACKING_ACCURACY_THRESHOLDS):
+                func = partial(process_video, dataset, videoset, video, classifier, tile_size,
+                               sample_rate, tracker, threshold)
+                print(f"Added task for {video} {tile_size} sr{sample_rate} {classifier} {tracker} {threshold}")
+                funcs.append(func)
     
     print(f"Created {len(funcs)} tasks to process")
     
     num_workers = mp.cpu_count()
+    num_workers = mp.cpu_count() // 2
+    # num_workers = 2
     if len(funcs) > 0:
         ProgressBar(num_workers=num_workers, num_tasks=len(funcs)).run_all(funcs)
     

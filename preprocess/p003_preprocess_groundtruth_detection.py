@@ -21,15 +21,12 @@ from polyis.utilities import (
     get_config,
     get_segment_frame_range,
 )
+from polyis.io import cache, store
 from polyis.utils import intersects_polygon
 
 
 CONFIG = get_config()
 EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
-CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
-SOURCE_DIR = CONFIG['DATA']['SOURCE_DIR']
-OTIF_DATASET = CONFIG['DATA']['OTIF_DATASET']
 NUM_SEGMENTS = CONFIG.get('OPS', {}).get('preprocess_dataset', {}).get('num_segments', 18)
 EXCLUDE_AREA: dict[str, str] = CONFIG['DATA'].get('EXCLUDE_AREA', {}) or {}
 
@@ -82,8 +79,8 @@ def parse_segment_index(video_name: str) -> int:
     return int(match.group(1))
 
 
-def build_output_path(dataset: str, video_name: str) -> str:
-    return os.path.join(CACHE_DIR, dataset, 'execution', video_name, '003_groundtruth', 'detection.jsonl')
+def build_output_path(dataset: str, video_name: str):
+    return cache.exec(dataset, 'groundtruth', video_name, 'detection.jsonl')
 
 
 def load_include_rect(dataset: str) -> tuple[float, float, float, float] | None:
@@ -174,7 +171,7 @@ def get_frame_count(video_path: str) -> int:
 
 def resolve_source_video_path(dataset: str, videoset: str, video_name: str) -> str:
     otif_dataset = resolve_otif_dataset_name(dataset)
-    source_video_dir = os.path.join(OTIF_DATASET, otif_dataset, videoset, 'video')
+    source_video_dir = store.otif(otif_dataset, videoset, 'video')
     assert os.path.exists(source_video_dir), f'Source video directory not found: {source_video_dir}'
 
     video_stem, _ = os.path.splitext(video_name)
@@ -182,7 +179,7 @@ def resolve_source_video_path(dataset: str, videoset: str, video_name: str) -> s
     assert match is not None, f'Invalid split video filename: {video_name}'
 
     video_idx = int(match.group(2))
-    source_video_path = os.path.join(source_video_dir, f'{video_idx}.mp4')
+    source_video_path = store.otif(otif_dataset, videoset, 'video', f'{video_idx}.mp4')
     assert os.path.exists(source_video_path), f'Source video file not found: {source_video_path}'
     return source_video_path
 
@@ -195,8 +192,7 @@ def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_qu
     exclude_polygon_xml = load_exclude_polygon_xml(dataset)
 
     otif_dataset = resolve_otif_dataset_name(dataset)
-    gt_json_path = os.path.join(
-        OTIF_DATASET,
+    gt_json_path = store.otif(
         otif_dataset,
         videoset,
         'yolov3-704x480',
@@ -209,7 +205,7 @@ def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_qu
     os.makedirs(output_dir, exist_ok=True)
 
     # Read preprocessed video frame count
-    dataset_video_path = os.path.join(DATASETS_DIR, dataset, video_file)
+    dataset_video_path = store.dataset(dataset, video_file)
     frame_count = get_frame_count(dataset_video_path)
 
     with open(gt_json_path, 'r') as f:
@@ -331,18 +327,18 @@ def run_detection_ams(dataset: str, video_file: str, gpu_id: int, command_queue:
 
 
 def get_single_source_video(dataset: str) -> str:
-    source_dataset_dir = os.path.join(SOURCE_DIR, dataset)
+    source_dataset_dir = store.source(dataset)
     assert os.path.exists(source_dataset_dir), f'Source dataset directory not found: {source_dataset_dir}'
 
     video_files = [
         file_name for file_name in os.listdir(source_dataset_dir)
-        if file_name.endswith('.mp4') and os.path.isfile(os.path.join(source_dataset_dir, file_name))
+        if file_name.endswith('.mp4') and os.path.isfile(store.source(dataset, file_name))
     ]
     assert len(video_files) == 1, (
         f'Expected exactly one source video in {source_dataset_dir}, found {len(video_files)}'
     )
 
-    return os.path.join(source_dataset_dir, video_files[0])
+    return store.source(dataset, video_files[0])
 
 
 def get_corner_crops(width: int, height: int) -> list[tuple[int, int, int, int]]:
@@ -462,7 +458,7 @@ def run_detection_jnc(dataset: str, video_file: str, gpu_id: int, command_queue:
     start_frame, end_frame = get_segment_frame_range(total_frames, segment_idx, NUM_SEGMENTS)
     total_segment_frames = max(0, end_frame - start_frame)
 
-    annotations_path = os.path.join(SOURCE_DIR, 'b3d', 'annotations.xml')
+    annotations_path = store.source('b3d', 'annotations.xml')
     top, bottom, left, right, bitmap = build_b3d_mask_and_crop(
         file_name=source_video_name,
         annotations_path=annotations_path,
@@ -549,12 +545,12 @@ def main():
 
     funcs = []
     for dataset in datasets_to_process:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
+        dataset_dir = store.dataset(dataset)
         assert os.path.exists(dataset_dir), f'Dataset directory {dataset_dir} does not exist'
 
         videos: list[str] = []
         for videoset in splits:
-            videoset_dir = os.path.join(dataset_dir, videoset)
+            videoset_dir = store.dataset(dataset, videoset)
             assert os.path.exists(videoset_dir), f'Videoset directory {videoset_dir} does not exist'
             videos.extend([
                 videoset + '/' + file_name
