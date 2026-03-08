@@ -136,7 +136,7 @@ def process_video(dataset: str, videoset: str, video: str, tile_size: int, sampl
 
     # print(f"Video info: {width}x{height}, {frame_count} frames")
     with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
-        description = f"{video_path.split('/')[-1]} {tile_size:>3} sr{sample_rate}"
+        description = f"{os.path.basename(os.fspath(video_path))} {tile_size:>3} sr{sample_rate}"
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': len(sampled_indices)}))
 

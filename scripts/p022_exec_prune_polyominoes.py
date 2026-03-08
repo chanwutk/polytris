@@ -28,7 +28,7 @@ TILEPADDING_MODE = 0  # 0: No padding, 1: Connected padding, 2: Disconnected pad
 
 # Accuracy threshold indices into max_rate_table.npy (axis 2)
 # Index: 0=60%, 1=70%, 2=80%, 3=90%, 4=95%, 5=100%
-_ALL_ACCURACY_THRESHOLDS = [0.60, 0.70, 0.80, 0.90, 0.95, 1.00]
+_ALL_ACCURACY_THRESHOLDS = [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.00]
 # Mapping from float threshold to index in max_rate_table.npy
 _ACCURACY_THRESHOLD_TO_IDX = {t: i for i, t in enumerate(_ALL_ACCURACY_THRESHOLDS)}
 

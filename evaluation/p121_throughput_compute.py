@@ -130,9 +130,48 @@ QUERY_DATA_ACCESSORS = {
     '060_exec_track': lambda row: row['runtime']
 }
 
-EXCLUDED_OPS = {
-    '030_exec_compress': ['save_collage', 'pack_all_total'],
+# Map throughput stages to their originating script paths so exclusion rules stay readable.
+STAGE_TO_SCRIPT_PATH = {
+    '001_preprocess_groundtruth_detection': 'preprocess/p003_preprocess_groundtruth_detection.py',
+    '002_preprocess_groundtruth_tracking': 'preprocess/p003_preprocess_groundtruth_tracking.py',
+    '011_tune_detect': 'scripts/p011_tune_detect.py',
+    '012_tune_create_training_data': 'scripts/p012_tune_create_training_data.py',
+    '013_tune_train_classifier': 'scripts/p014_tune_train_classifier.py',
+    '020_exec_classify': 'scripts/p020_exec_classify.py',
+    '022_exec_prune_polyominoes': 'scripts/p022_exec_prune_polyominoes.py',
+    '030_exec_compress': 'scripts/p030_exec_compress.py',
+    '040_exec_detect': 'scripts/p040_exec_detect.py',
+    '050_exec_uncompress': 'scripts/p050_exec_uncompress.py',
+    '060_exec_track': 'scripts/p060_exec_track.py',
 }
+
+# Keep global runtime exclusions here so the policy stays centralized and easy to extend.
+EXCLUDED_RUNTIME_OPS_BY_SCRIPT = {
+    'scripts/p022_exec_prune_polyominoes.py': {'solve_ilp'},
+    'scripts/p030_exec_compress.py': {'save_collage', 'pack_all_total'},
+}
+
+
+def excluded_runtime_ops(stage: str) -> set[str]:
+    # Resolve the originating script path for the current throughput stage.
+    script_path = STAGE_TO_SCRIPT_PATH.get(stage)
+    # Return an empty set when the stage has no explicit exclusion policy.
+    if script_path is None:
+        return set()
+
+    # Return the configured excluded ops for this script path.
+    return EXCLUDED_RUNTIME_OPS_BY_SCRIPT.get(script_path, set())
+
+
+def filter_excluded_runtime_ops(file_timings: pd.DataFrame, stage: str) -> pd.DataFrame:
+    # Resolve the stage-local exclusion policy once before filtering.
+    excluded_ops = excluded_runtime_ops(stage)
+    # Return the original timings unchanged when no exclusions are configured.
+    if not excluded_ops:
+        return file_timings
+
+    # Drop the excluded operations while preserving all other timing rows.
+    return file_timings[~file_timings['op'].isin(excluded_ops)].reset_index(drop=True)
 
 
 def _valid_scalar(val: object) -> bool:
@@ -175,8 +214,7 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
     runtime_file = row_dict['runtime_file']
     file_timings = parse_runtime_file(runtime_file, stage, accessors[stage])
     assert file_timings is not None, f"File timings are None for {stage}, {runtime_file}, {video}"
-    excluded_ops = EXCLUDED_OPS.get(stage, [])
-    file_timings = file_timings[~file_timings['op'].isin(excluded_ops)]
+    file_timings = filter_excluded_runtime_ops(file_timings, stage)
     assert isinstance(file_timings, pd.DataFrame), (
         f"File timings are not a pandas DataFrame for {stage}, {runtime_file}, {video}"
     )

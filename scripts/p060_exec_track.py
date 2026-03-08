@@ -148,8 +148,8 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
     }))
     
     # Create runtime output file
-    runtime_path = output_path.replace('tracking.jsonl', 'runtimes.jsonl')
-    runtime_dir = os.path.dirname(runtime_path)
+    runtime_path = output_path.with_name('runtimes.jsonl')
+    runtime_dir = runtime_path.parent
     os.makedirs(runtime_dir, exist_ok=True)
     
     with open(runtime_path, 'w') as runtime_file:
@@ -262,7 +262,7 @@ def main(args: argparse.Namespace):
     num_gpus = torch.cuda.device_count()
     
     # Set up multiprocessing with ProgressBar
-    ProgressBar(num_workers=40, num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 
 

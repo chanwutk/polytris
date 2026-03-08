@@ -288,7 +288,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         sampled_frames = [frames[idx] for idx in sampled_indices]
 
         # Update progress tracking to use sampled frame count
-        description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier} {method_name} sr{sample_rate}"
+        description = f"{os.path.basename(os.fspath(video_path))} {tile_size:>3} {classifier} {method_name} sr{sample_rate}"
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': len(sampled_frames)}))
 
