@@ -120,10 +120,10 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
         group_cols.append('canvas_scale')
     if 'tracker' in df.columns:
         group_cols.append('tracker')
-    df = df.groupby(group_cols).agg({'time': 'sum'}).reset_index()
+    df = df.groupby(group_cols, dropna=False).agg({'time': 'sum'}).reset_index()
 
     # Calculate total runtime per config within each stage for sorting
-    config_totals = df.groupby(['Stage', 'Config'])['time'].sum().reset_index()
+    config_totals = df.groupby(['Stage', 'Config'], dropna=False)['time'].sum().reset_index()
     config_totals = config_totals.rename(columns={'time': 'TotalRuntime'})
     df = df.merge(config_totals, on=['Stage', 'Config'])
 
@@ -175,6 +175,8 @@ def transform_query_data(query_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
     """
     # Transform execution data: filter, create category labels, map operations, and aggregate
     exec_df = query_data[~query_data['stage'].isin(NAIVE_STAGES)].copy()
+    if 'videoset' not in exec_df.columns:
+        exec_df['videoset'] = 'unknown'
     
     # Handle backward compatibility: add sample_rate, threshold, canvas_scale, and tracker if missing
     if 'sample_rate' not in exec_df.columns:
@@ -190,17 +192,21 @@ def transform_query_data(query_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
     exec_df['threshold_label'] = exec_df['tracking_accuracy_threshold'].apply(
         lambda x: 'TA-none' if pd.isna(x) else f'TA{int(round(float(x) * 100)):03d}'
     )
+    exec_df['videoset_label'] = exec_df['videoset'].fillna('unknown')
 
     # Include sample_rate, threshold, canvas_scale, and tracker in Category label
-    exec_df['Category'] = (exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' +
-                          'SR' + exec_df['sample_rate'].astype(str) + ' ' + exec_df['threshold_label'] + ' ' +
-                          exec_df['tilepadding'].str[:4] + ' ' +
-                          's' + (exec_df['canvas_scale'] * 100).astype(int).astype(str) + ' ' +
-                          exec_df['tracker'].str[:6])
+    exec_df['Category'] = (
+        exec_df['videoset_label'].str[:5] + ' ' +
+        exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' +
+        'SR' + exec_df['sample_rate'].astype(str) + ' ' + exec_df['threshold_label'] + ' ' +
+        exec_df['tilepadding'].str[:4] + ' ' +
+        's' + (exec_df['canvas_scale'] * 100).astype(int).astype(str) + ' ' +
+        exec_df['tracker'].str[:6]
+    )
     exec_df['Operation'] = exec_df['stage'].map(RUNTIME_STAGE_MAPPING)
     
     # Include sample_rate, threshold, canvas_scale, and tracker in grouping to preserve them
-    group_cols = ['dataset', 'Category', 'Operation']
+    group_cols = ['dataset', 'videoset', 'Category', 'Operation']
     if 'sample_rate' in exec_df.columns:
         group_cols.append('sample_rate')
     if 'tracking_accuracy_threshold' in exec_df.columns:
@@ -209,12 +215,14 @@ def transform_query_data(query_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
         group_cols.append('canvas_scale')
     if 'tracker' in exec_df.columns:
         group_cols.append('tracker')
-    exec_df = exec_df.groupby(group_cols).agg({'time': 'sum'}).reset_index()
+    exec_df = exec_df.groupby(group_cols, dropna=False).agg({'time': 'sum'}).reset_index()
     
     # Transform naive baseline data: filter naive stages and aggregate
     naive_df = query_data[query_data['stage'].isin(NAIVE_STAGES)].copy()
-    naive_df = naive_df.groupby(['dataset', 'stage']).agg({'time': 'sum'}).reset_index()
-    naive_df['Category'] = 'Naive'
+    if 'videoset' not in naive_df.columns:
+        naive_df['videoset'] = 'unknown'
+    naive_df = naive_df.groupby(['dataset', 'videoset', 'stage'], dropna=False).agg({'time': 'sum'}).reset_index()
+    naive_df['Category'] = naive_df['videoset'].fillna('unknown') + ' Naive'
     naive_df['Operation'] = naive_df['stage'].map(RUNTIME_STAGE_MAPPING)
     # Add sample_rate, threshold, canvas_scale, and tracker columns for consistency.
     naive_df['sample_rate'] = 1
@@ -240,9 +248,9 @@ def create_runtime_chart(df: pd.DataFrame, title: str, height: int) -> alt.Chart
         x=alt.X('time:Q', title='Runtime (seconds)'),
         y=alt.Y('Category:N', sort=alt.SortField(field='time', order='descending')),
         color=alt.Color('Operation:N', legend=alt.Legend(orient='top')),
-        stroke=alt.condition(alt.datum.Category == 'Naive', alt.value('black'), alt.value('none')),
-        strokeWidth=alt.condition(alt.datum.Category == 'Naive', alt.value(4), alt.value(0)),
-        tooltip=['Category', 'Operation', 'sample_rate', 'tracking_accuracy_threshold',
+        stroke=alt.condition("indexof(datum.Category, 'Naive') >= 0", alt.value('black'), alt.value('none')),
+        strokeWidth=alt.condition("indexof(datum.Category, 'Naive') >= 0", alt.value(4), alt.value(0)),
+        tooltip=['videoset', 'Category', 'Operation', 'sample_rate', 'tracking_accuracy_threshold',
                  'canvas_scale', 'tracker', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
     ).properties(
         title=title,
@@ -277,8 +285,9 @@ def visualize_overall_runtime(index_overall: pd.DataFrame, query_overall: pd.Dat
     os.makedirs(video_output_dir, exist_ok=True)
 
     # Transform index construction data: aggregate by stage and add labels
-    index_df = index_overall.groupby('stage').agg({'time': 'sum'}).reset_index()
-    index_df['Category'] = 'Index Constr.'
+    index_df = index_overall.groupby('stage', dropna=False).agg({'time': 'sum'}).reset_index()
+    index_df['videoset'] = 'train'
+    index_df['Category'] = 'train Index Constr.'
     index_df['Operation'] = index_df['stage'].map(RUNTIME_STAGE_MAPPING)
     # Index construction doesn't have sample_rate, canvas_scale, or tracker, so set defaults for consistency
     index_df['sample_rate'] = 1

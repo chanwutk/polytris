@@ -1495,43 +1495,54 @@ def gcp_run(funcs: list[typing.Callable[[int, mp.Queue], None]]):
 
 def load_tradeoff_data(dataset: str):
     """
-    Load pre-computed tradeoff data from CSV files created by p090_tradeoff_compute.py.
+    Load the canonical split-level tradeoff table for a dataset.
 
     Args:
         dataset: Dataset name
-        csv_suffix: Suffix for CSV files ('runtime' or 'throughput')
 
     Returns:
-        tuple[pd.DataFrame, pd.DataFrame]: Individual and aggregated data DataFrames
+        pd.DataFrame: Split-level tradeoff rows for the dataset
     """
-    # Construct paths to CSV files created by p090_tradeoff_compute.py
+    # Construct the canonical split-level tradeoff directory path.
     tradeoff_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
-
+    # Resolve the canonical split-level tradeoff CSV.
     tradeoff_path = os.path.join(tradeoff_dir, 'tradeoff.csv')
-    tradeoff_combined_path = os.path.join(tradeoff_dir, 'tradeoff_combined.csv')
-    naive_path = os.path.join(tradeoff_dir, 'naive.csv')
-    naive_combined_path = os.path.join(tradeoff_dir, 'naive_combined.csv')
-
-    # Check if CSV files exist
+    # Fail fast when the canonical tradeoff CSV is missing.
     assert os.path.exists(tradeoff_path), \
         f"Tradeoff data not found: {tradeoff_path}. " \
-        "Please run p090_tradeoff_compute.py first."
+        "Please run p130_tradeoff_compute.py first."
 
-    assert os.path.exists(tradeoff_combined_path), \
-        f"Combined tradeoff data not found: {tradeoff_combined_path}. " \
-        "Please run p090_tradeoff_compute.py first."
-
-    # Load CSV files
+    # Load the canonical split-level tradeoff CSV.
     import pandas as pd
     tradeoff = pd.read_csv(tradeoff_path)
-    combined = pd.read_csv(tradeoff_combined_path)
-    naive = pd.read_csv(naive_path)
-    naive_combined = pd.read_csv(naive_combined_path)
+    # Log the loaded split-level row count for traceability.
+    print(f"Loaded split-level tradeoff data: {len(tradeoff)} rows from {tradeoff_path}")
 
-    print(f"Loaded individual tradeoff data: {len(tradeoff)} rows from {tradeoff_path}")
-    print(f"Loaded combined tradeoff data: {len(combined)} rows from {tradeoff_combined_path}")
+    return tradeoff
 
-    return tradeoff, combined, naive, naive_combined
+
+def split_tradeoff_variants(tradeoff_df: "pd.DataFrame") -> tuple["pd.DataFrame", "pd.DataFrame"]:
+    """
+    Split the canonical tradeoff table into Polytris and naive subsets.
+
+    Args:
+        tradeoff_df: Canonical split-level tradeoff table
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: (polytris_rows, naive_rows)
+    """
+    # Work on a copy so callers keep their original frame unchanged.
+    tradeoff_df = tradeoff_df.copy()
+    # Backfill the legacy contract when variant is absent in older data.
+    if 'variant' not in tradeoff_df.columns:
+        tradeoff_df['variant'] = 'polytris'
+
+    # Select the real Polytris search-space rows.
+    polytris_df = tradeoff_df[tradeoff_df['variant'] == 'polytris'].copy()
+    # Select the dedicated naive baseline rows.
+    naive_df = tradeoff_df[tradeoff_df['variant'] == 'naive'].copy()
+
+    return polytris_df, naive_df
 
 
 def load_all_datasets_tradeoff_data(datasets: list[str], system_name: str | None = None):
@@ -1543,39 +1554,31 @@ def load_all_datasets_tradeoff_data(datasets: list[str], system_name: str | None
         system_name: Optional system name to add as a column (e.g., 'Polytris')
 
     Returns:
-        tuple[pd.DataFrame, pd.DataFrame]: Combined tradeoff data and naive data from all datasets
+        pd.DataFrame: Combined split-level tradeoff rows from all datasets
     """
-    all_combined = []
-    all_naive = []
+    all_tradeoff = []
 
     for dataset in datasets:
-        # Use the load_tradeoff_data function
-        _, combined, _, naive_combined = load_tradeoff_data(dataset)
-        # Keep split-aware dataset labels when already present.
-        if 'dataset' not in combined.columns:
-            combined['dataset'] = dataset
-        # Keep split-aware dataset labels for naive rows when already present.
-        if 'dataset' not in naive_combined.columns:
-            naive_combined['dataset'] = dataset
-        # Add root dataset column for optional downstream diagnostics.
-        combined['dataset_root'] = dataset
-        # Add root dataset column for optional downstream diagnostics.
-        naive_combined['dataset_root'] = dataset
+        # Load the canonical split-level tradeoff data for the current dataset.
+        tradeoff = load_tradeoff_data(dataset)
+        # Backfill the dataset column only when older data omitted it.
+        if 'dataset' not in tradeoff.columns:
+            tradeoff['dataset'] = dataset
+        # Add the root dataset column for optional downstream diagnostics.
+        tradeoff['dataset_root'] = dataset
 
-        # Add system column if specified
+        # Add the requested system label when the caller wants a shared schema.
         if system_name is not None:
-            combined['system'] = system_name
+            tradeoff['system'] = system_name
 
-        all_combined.append(combined)
-        all_naive.append(naive_combined)
+        all_tradeoff.append(tradeoff)
 
-    # Combine all datasets
+    # Combine the dataset-local tradeoff tables into one shared DataFrame.
     import pandas as pd
-    combined_df = pd.concat(all_combined, ignore_index=True)
-    naive_df = pd.concat(all_naive, ignore_index=True)
+    combined_df = pd.concat(all_tradeoff, ignore_index=True)
     print(f"Combined tradeoff data from {len(datasets)} datasets: {len(combined_df)} total rows")
 
-    return combined_df, naive_df
+    return combined_df
 
 
 def print_best_data_points(df_combined: "pd.DataFrame", metrics_list: list[str],

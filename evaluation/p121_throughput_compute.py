@@ -5,6 +5,7 @@ import json
 import math
 import os
 import argparse
+from pathlib import Path
 import queue
 from typing import Callable, Generator, TextIO, Tuple
 import multiprocessing as mp
@@ -19,13 +20,10 @@ config = get_config()
 DATASETS = config['EXEC']['DATASETS']
 
 
-def load_data_tables(data_dir: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def load_data_tables(data_dir: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load the index construction and query execution data tables."""
-    index_file = os.path.join(data_dir, 'index_construction.csv')
-    query_file = os.path.join(data_dir, 'query_execution.csv')
-    
-    index_data = pd.read_csv(index_file)
-    query_data = pd.read_csv(query_file)
+    index_data = pd.read_csv(data_dir / 'index_construction.csv')
+    query_data = pd.read_csv(data_dir / 'query_execution.csv')
     
     # print(f"Loaded {len(index_data)} index construction entries")
     # print(f"Loaded {len(query_data)} query execution entries")
@@ -155,18 +153,24 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
     row_dict, accessors_key, row_idx = args
     accessors = INDEX_DATA_ACCESSORS if accessors_key == 'index' else QUERY_DATA_ACCESSORS
     _sr = row_dict.get('sample_rate')
-    sample_rate = _sr if ('sample_rate' in row_dict and _valid_scalar(_sr)) else 1
+    sample_rate = _sr if ('sample_rate' in row_dict and _valid_scalar(_sr)) else None
     _tr = row_dict.get('tracker')
     tracker = _tr if ('tracker' in row_dict and _valid_scalar(_tr)) else None
     _cs = row_dict.get('canvas_scale')
     canvas_scale = _cs if ('canvas_scale' in row_dict and _valid_scalar(_cs)) else None
     _th = row_dict.get('tracking_accuracy_threshold')
     tracking_accuracy_threshold = _th if ('tracking_accuracy_threshold' in row_dict and _valid_scalar(_th)) else None
+    _classifier = row_dict.get('classifier')
+    classifier = _classifier if ('classifier' in row_dict and _valid_scalar(_classifier)) else None
+    _tilesize = row_dict.get('tilesize')
+    tilesize = _tilesize if ('tilesize' in row_dict and _valid_scalar(_tilesize)) else None
+    _tilepadding = row_dict.get('tilepadding')
+    tilepadding = _tilepadding if ('tilepadding' in row_dict and _valid_scalar(_tilepadding)) else None
+    videoset = row_dict.get('videoset')
+    variant = row_dict.get('variant')
+    variant_id = row_dict.get('variant_id')
     dataset = row_dict['dataset']
     video = row_dict['video']
-    classifier = row_dict['classifier']
-    tilesize = row_dict['tilesize']
-    tilepadding = row_dict['tilepadding']
     stage = row_dict['stage']
     runtime_file = row_dict['runtime_file']
     file_timings = parse_runtime_file(runtime_file, stage, accessors[stage])
@@ -179,7 +183,10 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
     per_op = aggregate_per_op(file_timings)
     per_op['stage'] = stage
     per_op['dataset'] = dataset
+    per_op['videoset'] = videoset
     per_op['video'] = video
+    per_op['variant'] = variant
+    per_op['variant_id'] = variant_id
     per_op['classifier'] = classifier
     per_op['tilesize'] = tilesize
     per_op['tilepadding'] = tilepadding
@@ -191,7 +198,10 @@ def _process_runtime_row(args: tuple[dict, str, int]) -> tuple[int, pd.DataFrame
     overall = {
         'stage': stage,
         'dataset': dataset,
+        'videoset': videoset,
         'video': video,
+        'variant': variant,
+        'variant_id': variant_id,
         'classifier': classifier,
         'tilesize': tilesize,
         'tilepadding': tilepadding,
@@ -254,35 +264,56 @@ def save_measurements(index_per_op: pd.DataFrame, index_overall: pd.DataFrame,
     
     # Save metadata
     videos = sorted(query_overall['video'].unique())
-    if any(isinstance(sr, float) and pd.isna(sr) for sr in query_overall['sample_rate'].unique()):
-        raise ValueError(f"Sample rate is NaN for {query_overall['sample_rate'].unique()}, {dataset}, {output_dir}")
-    # Extract trackers, filtering out None values
+    # Extract the non-null split labels written by the manifest stage.
+    videosets = sorted([videoset for videoset in query_overall['videoset'].dropna().unique()]) \
+        if 'videoset' in query_overall.columns else []
+    # Extract the non-null variant labels written by the manifest stage.
+    variants = sorted([variant for variant in query_overall['variant'].dropna().unique()]) \
+        if 'variant' in query_overall.columns else []
+    # Extract trackers, filtering out null values so the naive baseline stays unparameterized.
     trackers = []
     if 'tracker' in query_overall.columns:
-        trackers = sorted([t for t in query_overall['tracker'].unique() if t is not None and not pd.isna(t)])
-    # Extract pruning thresholds, preserving explicit None when present.
+        trackers = sorted([tracker for tracker in query_overall['tracker'].unique() if tracker is not None and not pd.isna(tracker)])
+    # Extract pruning thresholds while preserving the explicit no-threshold state.
     tracking_accuracy_thresholds: list[float | None] = []
     if 'tracking_accuracy_threshold' in query_overall.columns:
         threshold_values = query_overall['tracking_accuracy_threshold'].unique()
-        has_none = any((th is None) or (isinstance(th, float) and pd.isna(th)) for th in threshold_values)
+        has_none = any((threshold is None) or (isinstance(threshold, float) and pd.isna(threshold)) for threshold in threshold_values)
         parsed_thresholds = sorted(
-            [float(th) for th in threshold_values if th is not None and not (isinstance(th, float) and pd.isna(th))]
+            [float(threshold) for threshold in threshold_values if threshold is not None and not (isinstance(threshold, float) and pd.isna(threshold))]
         )
         if has_none:
             tracking_accuracy_thresholds.append(None)
         tracking_accuracy_thresholds.extend(parsed_thresholds)
-    # Extract canvas scales, filtering out None/NaN values
+    # Extract canvas scales, filtering out null values so the naive baseline stays unparameterized.
     canvas_scales = []
     if 'canvas_scale' in query_overall.columns:
-        canvas_scales = sorted([float(cs) for cs in query_overall['canvas_scale'].unique() if cs is not None and not pd.isna(cs)])
+        canvas_scales = sorted([float(canvas_scale) for canvas_scale in query_overall['canvas_scale'].unique() if canvas_scale is not None and not pd.isna(canvas_scale)])
+    # Extract sample rates, filtering out null values so the naive baseline stays unparameterized.
+    sample_rates = []
+    if 'sample_rate' in query_overall.columns:
+        sample_rates = sorted([int(sample_rate) for sample_rate in query_overall['sample_rate'].unique() if sample_rate is not None and not pd.isna(sample_rate)])
+    # Extract classifiers, filtering out null values for the naive baseline and index stages.
+    classifiers = []
+    if 'classifier' in query_overall.columns:
+        classifiers = sorted([classifier for classifier in query_overall['classifier'].unique() if classifier is not None and not pd.isna(classifier)])
+    # Extract tile sizes, filtering out null values for the naive baseline and stage-011 rows.
+    tilesizes = []
+    if 'tilesize' in query_overall.columns:
+        tilesizes = sorted([int(tilesize) for tilesize in query_overall['tilesize'].unique() if tilesize is not None and not pd.isna(tilesize)])
+    # Extract tile padding values, filtering out null values for the naive baseline.
+    tilepadding_values = []
+    if 'tilepadding' in query_overall.columns:
+        tilepadding_values = sorted([tilepadding for tilepadding in query_overall['tilepadding'].unique() if tilepadding is not None and not pd.isna(tilepadding)])
     metadata = {
         'dataset': dataset,
-        'videos': sorted(query_overall['video'].unique()),
-        'classifiers': sorted(query_overall['classifier'].unique()),
-        # np.int64 cannot be serialized to JSON
-        'tilesizes': sorted(int(ts) for ts in query_overall['tilesize'].unique()),
-        'tilepadding_values': sorted(query_overall['tilepadding'].unique()),
-        'sample_rates': sorted(int(sr) for sr in query_overall['sample_rate'].unique()) if 'sample_rate' in query_overall.columns else [1],
+        'videos': videos,
+        'videosets': videosets,
+        'variants': variants,
+        'classifiers': classifiers,
+        'tilesizes': tilesizes,
+        'tilepadding_values': tilepadding_values,
+        'sample_rates': sample_rates,
         'tracking_accuracy_thresholds': tracking_accuracy_thresholds,
         'canvas_scales': canvas_scales,
         'trackers': trackers,

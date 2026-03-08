@@ -16,7 +16,7 @@ import pandas as pd
 import altair as alt
 
 from polyis.io import cache
-from polyis.utilities import get_config, load_tradeoff_data, split_dataset_name
+from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 from evaluation.utilities import ColorScheme
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
@@ -38,15 +38,9 @@ SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
 # Define the color for each system category.
 SYSTEM_COLOR_RANGE = ColorScheme.CarbonDark[:len(SYSTEM_COLOR_DOMAIN)]
 
-# Map video filename prefixes to videoset names.
-VIDEO_PREFIX_TO_SET = {
-    'tr': 'train',
-    'va': 'valid',
-    'te': 'test',
-}
-
 # Parameter columns used to transfer valid-Pareto parameter sets to test points.
 PARETO_PARAM_COLS = [
+    'variant_id',
     'classifier',
     'tilesize',
     'sample_rate',
@@ -55,10 +49,6 @@ PARETO_PARAM_COLS = [
     'canvas_scale',
     'tracker',
 ]
-
-# Accuracy-like columns that are aggregated from per-video rows.
-POLYTRIS_ACCURACY_COLUMNS = ['HOTA_HOTA', 'HOTA_AssA', 'HOTA_DetA', 'Count_DetsMAPE', 'Count_TracksMAPE']
-
 
 def val_gte(val: float, best_val: float) -> bool:
     return val >= best_val
@@ -184,135 +174,29 @@ def compute_pareto_fronts_by_group(df: pd.DataFrame, group_cols: list[str],
     return pareto_groups.reset_index(drop=True)
 
 
-def add_videoset_column_from_video(df: pd.DataFrame) -> pd.DataFrame:
+def load_polytris_tradeoff_split_data(datasets: list[str]) -> pd.DataFrame:
     """
-    Add a normalized videoset column to a tradeoff DataFrame.
-
-    Args:
-        df: Polytris tradeoff DataFrame
-
-    Returns:
-        DataFrame with a normalized 'videoset' column
-    """
-    # Work on a copy so the original caller data is not mutated.
-    split_df = df.copy()
-
-    # Normalize explicit split columns if they already exist.
-    explicit_videoset = pd.Series(['unknown'] * len(split_df), index=split_df.index, dtype='object')
-    if 'videoset' in split_df.columns:
-        explicit_videoset = split_df['videoset'].astype(str).str.lower()
-    elif 'video_set' in split_df.columns:
-        explicit_videoset = split_df['video_set'].astype(str).str.lower()
-    elif 'split' in split_df.columns:
-        explicit_videoset = split_df['split'].astype(str).str.lower()
-
-    # Derive split labels from split-aware dataset naming (e.g., dataset-val -> valid).
-    dataset_videoset = pd.Series(['unknown'] * len(split_df), index=split_df.index, dtype='object')
-    dataset_base = pd.Series([None] * len(split_df), index=split_df.index, dtype='object')
-    if 'dataset' in split_df.columns:
-        parsed_dataset = split_df['dataset'].astype(str).map(split_dataset_name)
-        dataset_base = parsed_dataset.map(lambda x: x[0])
-        dataset_videoset = parsed_dataset.map(lambda x: x[1])
-        split_df['dataset_variant'] = split_df['dataset']
-        split_df['dataset'] = dataset_base
-
-    # Infer split from video prefix when available.
-    video_videoset = pd.Series(['unknown'] * len(split_df), index=split_df.index, dtype='object')
-    if 'video' in split_df.columns:
-        prefixes = split_df['video'].astype(str).str[:2].str.lower()
-        video_videoset = prefixes.map(VIDEO_PREFIX_TO_SET).fillna('unknown')
-
-    # Combine split sources with explicit column taking precedence.
-    split_df['videoset'] = explicit_videoset
-    split_df.loc[split_df['videoset'] == 'unknown', 'videoset'] = dataset_videoset[split_df['videoset'] == 'unknown']
-    split_df.loc[split_df['videoset'] == 'unknown', 'videoset'] = video_videoset[split_df['videoset'] == 'unknown']
-
-    return split_df
-
-
-def load_polytris_tradeoff_video_data(datasets: list[str]) -> pd.DataFrame:
-    """
-    Load per-video Polytris tradeoff data for all datasets.
+    Load the canonical split-level Polytris tradeoff table for all datasets.
 
     Args:
         datasets: Datasets to load
 
     Returns:
-        Combined per-video Polytris tradeoff DataFrame
+        Combined split-level tradeoff DataFrame
     """
     all_tradeoff_rows = []
 
-    # Load tradeoff.csv for each dataset and annotate with a normalized videoset.
+    # Load the canonical split-level tradeoff table for each configured dataset.
     for dataset in datasets:
-        tradeoff_df, _, _, _ = load_tradeoff_data(dataset)
-        tradeoff_df = add_videoset_column_from_video(tradeoff_df)
+        tradeoff_df = load_tradeoff_data(dataset)
         if 'dataset' not in tradeoff_df.columns:
             tradeoff_df['dataset'] = dataset
-        tradeoff_df['dataset_root'] = dataset
-        tradeoff_df['system'] = 'Polytris'
         all_tradeoff_rows.append(tradeoff_df)
 
     if not all_tradeoff_rows:
         return pd.DataFrame()
 
     return pd.concat(all_tradeoff_rows, ignore_index=True)
-
-
-def aggregate_polytris_by_videoset(tradeoff_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Aggregate per-video Polytris tradeoff rows into videoset-level rows per parameter set.
-
-    Args:
-        tradeoff_df: Per-video Polytris tradeoff rows
-
-    Returns:
-        Aggregated videoset-level Polytris DataFrame
-    """
-    if tradeoff_df.empty:
-        return tradeoff_df
-
-    # Work on a copy so filtering and default column additions stay local.
-    df = tradeoff_df.copy()
-
-    # Add backward-compatible defaults for dimensions used by filtering and matching.
-    if 'sample_rate' not in df.columns:
-        df['sample_rate'] = 1
-    if 'tracking_accuracy_threshold' not in df.columns:
-        df['tracking_accuracy_threshold'] = np.nan
-    if 'tracker' not in df.columns:
-        df['tracker'] = 'unknown'
-    if 'canvas_scale' not in df.columns:
-        df['canvas_scale'] = 1.0
-
-    # Group by dataset, videoset, and parameter dimensions.
-    group_cols = [
-        col for col in ['dataset', 'videoset', 'classifier', 'tilesize',
-                        'sample_rate', 'tracking_accuracy_threshold', 'tilepadding',
-                        'canvas_scale', 'tracker']
-        if col in df.columns
-    ]
-
-    # Sum runtime/frame_count and average accuracy-like metrics across videos.
-    agg_spec: dict[str, str] = {}
-    if 'time' in df.columns:
-        agg_spec['time'] = 'sum'
-    if 'frame_count' in df.columns:
-        agg_spec['frame_count'] = 'sum'
-    for accuracy_col in POLYTRIS_ACCURACY_COLUMNS:
-        if accuracy_col in df.columns:
-            agg_spec[accuracy_col] = 'mean'
-
-    aggregated_df = df.groupby(group_cols, dropna=False).agg(agg_spec).reset_index()
-
-    # Recompute throughput from the aggregated runtime/frame_count values when available.
-    if 'frame_count' in aggregated_df.columns and 'time' in aggregated_df.columns:
-        aggregated_df['throughput_fps'] = aggregated_df['frame_count'] / aggregated_df['time']
-
-    # Keep expected metadata columns for tooltip and chart compatibility.
-    aggregated_df['video'] = 'videoset_level'
-    aggregated_df['system'] = 'Polytris'
-
-    return aggregated_df
 
 
 def select_test_points_from_valid_pareto(
@@ -953,21 +837,24 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     os.makedirs(output_dir, exist_ok=True)
     print(f"Output directory: {output_dir}")
 
-    # Load Polytris per-video tradeoff rows and infer videoset labels.
+    # Load the canonical split-level Polytris tradeoff rows.
     print("\nLoading Polytris tradeoff data...")
-    polytris_video_df = load_polytris_tradeoff_video_data(datasets)
+    tradeoff_df = load_polytris_tradeoff_split_data(datasets)
 
-    if polytris_video_df.empty:
+    if tradeoff_df.empty:
         print("  Warning: No Polytris tradeoff rows found")
         return
 
-    # Filter out non-data points before split-level aggregation.
-    polytris_video_df = polytris_video_df.query("classifier != 'Perfect'")
+    # Split the canonical table into Polytris and naive rows.
+    polytris_tradeoff_df, naive_tradeoff_df = split_tradeoff_variants(tradeoff_df)
 
-    # Aggregate per-video rows to one row per videoset+parameter configuration.
-    polytris_split_df = aggregate_polytris_by_videoset(polytris_video_df)
+    # Filter out non-data points before valid/test selection.
+    polytris_tradeoff_df = polytris_tradeoff_df.query("classifier != 'Perfect'")
+
+    # Work directly on the canonical split-level table emitted by p130.
+    polytris_split_df = polytris_tradeoff_df.copy()
     if polytris_split_df.empty:
-        print("  Warning: No videoset-level Polytris rows after aggregation")
+        print("  Warning: No split-level Polytris rows found")
         return
 
     # Print a quick split distribution for sanity checking.
@@ -985,14 +872,14 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         print("  Warning: No test rows found after videoset separation")
 
     # Extract test naive baseline rows before config filtering.
-    naive_df = test_all_df[test_all_df['classifier'] == 'Groundtruth'].copy()
+    naive_df = naive_tradeoff_df[naive_tradeoff_df['videoset'] == 'test'].copy()
     naive_df['system'] = 'Naive'
     print(f"\nExtracted {len(naive_df)} naive baseline rows from test split")
 
     # Filter valid/test Polytris rows by configured parameter dimensions.
     print("\nFiltering Polytris data by configuration settings...")
-    valid_non_naive_df = valid_all_df[valid_all_df['classifier'] != 'Groundtruth']
-    test_non_naive_df = test_all_df[test_all_df['classifier'] != 'Groundtruth']
+    valid_non_naive_df = valid_all_df.copy()
+    test_non_naive_df = test_all_df.copy()
 
     print(f"  Valid rows before filtering: {len(valid_non_naive_df)}")
     filtered_valid_non_naive_df = filter_by_config(

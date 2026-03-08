@@ -16,10 +16,10 @@ EXEC_STAGE_MAP = {
     'ucomp-tracks': '060_uncompressed_tracks',
 }
 INDEX_STAGE_MAP = {
-'det': 'segment/detection',
-'training': 'training',
-'never-relevant': 'always_relevant' ,
-'track_rates': 'track_rate',
+    'det': 'segment/detection',
+    'training': 'training',
+    'never-relevant': 'always_relevant' ,
+    'track_rates': 'track_rate',
 }
 EVAL_STAGE_MAP = {
     'acc': '070_accuracy',
@@ -32,7 +32,7 @@ EVAL_STAGE_MAP = {
 }
 
 
-def root(dataset: str, *args):
+def root(dataset: str, *args: str):
     # Base cache path for a dataset
     path = Path(CACHE_DIR) / dataset
     for arg in args:
@@ -40,7 +40,7 @@ def root(dataset: str, *args):
     return path
 
 
-def execution(dataset: str, *args):
+def execution(dataset: str, *args: str):
     # Base execution directory for a dataset
     path = Path(CACHE_DIR) / dataset / 'execution'
     for arg in args:
@@ -48,28 +48,28 @@ def execution(dataset: str, *args):
     return path
 
 
-def exec(dataset: str, stage: str, video: str, *args):
+def exec(dataset: str, stage: str, video: str, *args: str):
     path = Path(CACHE_DIR) / dataset / 'execution'/ video / EXEC_STAGE_MAP[stage]
     for arg in args:
         path /= arg
     return path
 
 
-def index(dataset: str, stage: str, *args):
+def index(dataset: str, stage: str, *args: str):
     path = Path(CACHE_DIR) / dataset / 'indexing' / INDEX_STAGE_MAP[stage]
     for arg in args:
         path /= arg
     return path
 
 
-def eval(dataset: str, stage: str, *args):
+def eval(dataset: str, stage: str, *args: str):
     path = Path(CACHE_DIR) / dataset / 'evaluation' / EVAL_STAGE_MAP[stage]
     for arg in args:
         path /= arg
     return path
 
 
-def summary(stage, *args):
+def summary(stage, *args: str):
     # Cross-dataset summary path (uppercase SUMMARY)
     path = Path(CACHE_DIR) / 'SUMMARY' / stage
     for arg in args:
@@ -77,7 +77,7 @@ def summary(stage, *args):
     return path
 
 
-def summary_dataset(dataset, category, *args):
+def summary_dataset(dataset, category, *args: str):
     # Per-dataset summary path (lowercase summary)
     path = Path(CACHE_DIR) / 'summary' / dataset / category
     for arg in args:
@@ -85,7 +85,7 @@ def summary_dataset(dataset, category, *args):
     return path
 
 
-def sota(system, dataset, *args):
+def sota(system, dataset, *args: str):
     # SOTA system comparison path
     path = Path(CACHE_DIR) / 'SOTA' / system / dataset
     for arg in args:
