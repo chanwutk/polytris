@@ -221,7 +221,7 @@ def main():
     if args.valid:
         videosets.append('valid')
     if not videosets:
-        videosets = ['valid', 'test']
+        videosets = ['valid']
 
     df = collect_data(videosets)
     if df.empty:

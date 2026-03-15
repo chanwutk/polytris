@@ -78,16 +78,25 @@ def assert_and_filter_polytris_runtime_paths(manifest_df: pd.DataFrame, datasets
         )
         return manifest_df
 
-    # For test: filter to Pareto-optimal variants only.
-    all_pareto = pd.concat([load_pareto_params(ds) for ds in datasets])
-    pareto_variant_ids = set(all_pareto['variant_id'].dropna().unique())
-    filtered_df = manifest_df[manifest_df['variant_id'].isin(pareto_variant_ids)].copy()
-    # Assert that all Pareto-set test runtime files are present.
+    # For test: filter each dataset to its own Pareto-optimal variants only.
+    # Using a combined set across datasets would incorrectly include combos that are
+    # Pareto for one dataset but were never run for another.
+    parts = []
+    for ds in datasets:
+        ds_df = manifest_df[manifest_df['dataset'] == ds].copy()
+        pareto_variant_ids = set(load_pareto_params(ds)['variant_id'].dropna().unique())
+        parts.append(ds_df[ds_df['variant_id'].isin(pareto_variant_ids)])
+    filtered_df = pd.concat(parts, ignore_index=True)
+
+    # Warn and skip any Pareto-set test runtime files that are missing (e.g. interrupted
+    # runs that produced output data but did not record a runtime file).
     missing = filtered_df[~filtered_df['runtime_file'].map(os.path.exists)]
-    assert missing.empty, (
-        f"Missing Polytris test runtime paths:\n"
-        f"{missing[['stage', 'dataset', 'videoset', 'video', 'variant_id', 'runtime_file']].head(20)}"
-    )
+    if not missing.empty:
+        print(
+            f"WARNING: Skipping {len(missing)} missing Pareto test runtime paths:\n"
+            f"{missing[['stage', 'dataset', 'videoset', 'video', 'variant_id', 'runtime_file']].head(20)}"
+        )
+        filtered_df = filtered_df[filtered_df['runtime_file'].map(os.path.exists)].copy()
     return filtered_df
 
 
