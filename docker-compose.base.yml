@@ -10,6 +10,7 @@ services:
       - PYTHONWARNINGS=ignore::UserWarning:numpy._core.getlimits
     volumes:
       - .:/polyis
+      - ${HOME}/.gurobi/gurobi.lic:/opt/gurobi/gurobi.lic:ro
       # Change /data/chawutk/polyis-dataset to your local path
       - ${DATA}/polyis-data:/polyis-data
       - ${DATA}/polyis-cache:/polyis-cache

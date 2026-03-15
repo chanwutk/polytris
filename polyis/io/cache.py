@@ -29,6 +29,7 @@ EVAL_STAGE_MAP = {
     'compress': '083_compress',
     'tradeoff': '090_tradeoff',
     'tradeoff-vis': '091_tradeoff',
+    'prune-breakdown': '026_prune_breakdown',
 }
 
 
