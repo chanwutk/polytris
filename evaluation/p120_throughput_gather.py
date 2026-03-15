@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import argparse
 import os
 
 import pandas as pd
@@ -10,6 +11,7 @@ from evaluation.manifests import (
     build_split_video_manifest,
 )
 from polyis.io import cache
+from polyis.pareto import load_pareto_params, pareto_params_exist
 from polyis.utilities import build_param_str, get_config
 
 
@@ -50,11 +52,43 @@ INDEX_COLUMNS = [
 ]
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
+    return parser.parse_args()
+
+
 def assert_runtime_paths_exist(manifest_df: pd.DataFrame, label: str):
     # Collect only the rows whose expected runtime file is missing.
     missing_df = manifest_df[~manifest_df['runtime_file'].map(os.path.exists)]
     # Fail fast with a compact preview when any configured runtime file is absent.
     assert missing_df.empty, f"Missing {label} runtime paths:\n{missing_df[['stage', 'dataset', 'videoset', 'video', 'variant_id', 'runtime_file']].head(20)}"
+
+
+def assert_and_filter_polytris_runtime_paths(manifest_df: pd.DataFrame, datasets: list[str], videoset: str) -> pd.DataFrame:
+    """Assert runtime files exist; for test, keep only Pareto-optimal variants."""
+    if videoset == 'valid':
+        # Assert that all valid-split runtime files are present.
+        missing = manifest_df[~manifest_df['runtime_file'].map(os.path.exists)]
+        assert missing.empty, (
+            f"Missing Polytris valid runtime paths:\n"
+            f"{missing[['stage', 'dataset', 'videoset', 'video', 'variant_id', 'runtime_file']].head(20)}"
+        )
+        return manifest_df
+
+    # For test: filter to Pareto-optimal variants only.
+    all_pareto = pd.concat([load_pareto_params(ds) for ds in datasets])
+    pareto_variant_ids = set(all_pareto['variant_id'].dropna().unique())
+    filtered_df = manifest_df[manifest_df['variant_id'].isin(pareto_variant_ids)].copy()
+    # Assert that all Pareto-set test runtime files are present.
+    missing = filtered_df[~filtered_df['runtime_file'].map(os.path.exists)]
+    assert missing.empty, (
+        f"Missing Polytris test runtime paths:\n"
+        f"{missing[['stage', 'dataset', 'videoset', 'video', 'variant_id', 'runtime_file']].head(20)}"
+    )
+    return filtered_df
 
 
 def add_default_param_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -302,9 +336,9 @@ def build_stage060_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
     return stage_df[QUERY_COLUMNS]
 
 
-def build_query_execution_manifest(datasets: list[str]) -> pd.DataFrame:
-    # Materialize the concrete query-time videos from the configured split directories.
-    query_video_df = build_split_video_manifest(datasets=datasets)
+def build_query_execution_manifest(datasets: list[str], videoset: str) -> pd.DataFrame:
+    # Materialize only the requested videoset videos to avoid unnecessary cross-join overhead.
+    query_video_df = build_split_video_manifest(datasets=datasets, videosets=[videoset])
     # Materialize the fully expanded Polytris parameter grid.
     polytris_variant_df = build_polytris_variant_manifest()
     # Cross join videos and Polytris params so each downstream config gets one row.
@@ -322,8 +356,8 @@ def build_query_execution_manifest(datasets: list[str]) -> pd.DataFrame:
         build_stage060_manifest(polytris_df),
     ]
     polytris_stage_df = pd.concat(stage_frames, ignore_index=True)
-    # Validate that all configured Polytris runtime files already exist.
-    assert_runtime_paths_exist(polytris_stage_df, 'Polytris query')
+    # Assert valid-split files exist; for test-split assert and keep only Pareto-set files.
+    polytris_stage_df = assert_and_filter_polytris_runtime_paths(polytris_stage_df, DATASETS, videoset)
 
     # Combine the Polytris and naive query manifests into one canonical table.
     return pd.concat([naive_df, polytris_stage_df], ignore_index=True)
@@ -375,14 +409,23 @@ def save_manifest_tables(index_df: pd.DataFrame, query_df: pd.DataFrame):
             )
 
 
-def main():
+def main(args):
     # Log the configured datasets before manifest generation starts.
     print(f"Building throughput manifests for datasets: {DATASETS}")
+
+    # Resolve the single videoset from the mutually exclusive CLI flags.
+    videoset = 'test' if args.test else 'valid'
+
+    # Assert Pareto params exist when processing the test split.
+    if videoset == 'test':
+        for dataset in DATASETS:
+            assert pareto_params_exist(dataset), \
+                f"Pareto params not found for {dataset}. Run p135_pareto_extract.py first."
 
     # Materialize the deterministic index manifest for the configured datasets.
     index_df = build_index_construction_manifest(DATASETS)
     # Materialize the deterministic query manifest for the configured datasets.
-    query_df = build_query_execution_manifest(DATASETS)
+    query_df = build_query_execution_manifest(DATASETS, videoset)
 
     # Fail fast when either manifest is unexpectedly empty.
     assert not index_df.empty, "No index construction manifest rows found"
@@ -393,4 +436,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(parse_args())

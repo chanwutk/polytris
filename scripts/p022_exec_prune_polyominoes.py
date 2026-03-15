@@ -13,6 +13,7 @@ from functools import partial
 from polyis.pack.adapters import group_tiles_all
 from polyis.utilities import format_time, ProgressBar, get_config, load_classification_results, build_param_str
 from polyis.io import cache, store
+from polyis.pareto import build_pareto_combo_filter
 from polyis.sample.ilp.c.gurobi import solve_ilp
 
 
@@ -279,9 +280,16 @@ def main():
         selected_videosets.append('valid')
 
     if not selected_videosets:
-        selected_videosets = ['valid', 'test']
+        # Default to valid-only to avoid running the full grid on test unnecessarily.
+        selected_videosets = ['valid']
 
     mp.set_start_method('spawn', force=True)
+
+    # Build allowed-combo set for the test pass (None means no filtering applies).
+    allowed_combos = build_pareto_combo_filter(
+        DATASETS, selected_videosets,
+        ['classifier', 'tilesize', 'sample_rate', 'tracker', 'tracking_accuracy_threshold'],
+    )
 
     funcs: list[Callable[[int, mp.Queue], None]] = []
 
@@ -301,6 +309,10 @@ def main():
 
             # Iterate over all tracker × threshold combinations for each sample_rate.
             for tracker, threshold in itertools.product(TRACKERS, TRACKING_ACCURACY_THRESHOLDS):
+                # Skip parameter combos not on the Pareto front during the test pass.
+                combo = (classifier, tile_size, sample_rate, tracker, threshold)
+                if allowed_combos is not None and combo not in allowed_combos[dataset]:
+                    continue
                 func = partial(process_video, dataset, videoset, video, classifier, tile_size,
                                sample_rate, tracker, threshold)
                 print(f"Added task for {video} {tile_size} sr{sample_rate} {classifier} {tracker} {threshold}")

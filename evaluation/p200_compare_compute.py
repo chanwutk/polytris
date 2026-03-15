@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import argparse
 from functools import partial
 import os
 import pandas as pd
@@ -21,6 +22,14 @@ DATASETS = config['EXEC']['DATASETS']
 
 # Define the chart size multiplier for all rendered tradeoff charts.
 CHART_SIZE_SCALE = 5
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
+    return parser.parse_args()
 
 # Define fixed system-to-color categories for deterministic chart encoding.
 SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
@@ -379,31 +388,20 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     visualize(x_column='time', x_title='Query Execution Runtime (seconds)', plot_suffix='runtime')
 
 
-def main():
-    """
-    Main function that orchestrates the comparison between our tradeoff results and SOTA (OTIF/LEAP) results.
-    
-    This function serves as the entry point for the script. It loads pre-computed 
-    tradeoff data from CSV files created by p090_tradeoff_compute.py for our system
-    and SOTA tradeoff results from tradeoff.csv files created by p142_otif_tradeoff.py,
-    then creates comparison visualizations showing all systems' performance.
-    
-    Note:
-        - The script expects tradeoff data from p130_tradeoff_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/tradeoff.csv
-        - The script expects OTIF tradeoff results from p142_otif_tradeoff.py in:
-          {CACHE_DIR}/SOTA/otif/{dataset}/tradeoff.csv
-        - The script expects LEAP tradeoff results from p142_otif_tradeoff.py in:
-          {CACHE_DIR}/SOTA/leap/{dataset}/tradeoff.csv
-        - Results are saved to: {CACHE_DIR}/SUMMARY/100_compare_compute/
-        - Please run p130_tradeoff_compute.py and p142_otif_tradeoff.py first to generate the required CSV files
-        - Supports sample_rate and tracker dimensions with backward compatibility
-    """
+def main(args):
     print(f"Processing datasets: {DATASETS}")
-    
-    # Create comparison visualizations
+
+    # Resolve the single videoset from the mutually exclusive CLI flags.
+    videoset = 'test' if args.test else 'valid'
+
+    # This script compares test-split results; skip when test was not requested.
+    if videoset != 'test':
+        print("Skipping: comparison visualization requires --test.")
+        return
+
+    # Create comparison visualizations for the test split.
     visualize_all_datasets_tradeoffs(DATASETS)
 
 
 if __name__ == '__main__':
-    main()
+    main(parse_args())

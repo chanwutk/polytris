@@ -34,6 +34,9 @@ Examples:
         help='Skip compute scripts. If specified without arguments, skip all *_compute.py files. '
              'If arguments provided (e.g., accuracy, throughput, tradeoff), skip *_{TYPE}_compute.py files.'
     )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
     return parser.parse_args()
 
 
@@ -101,24 +104,16 @@ def should_skip_script(filename: str, no_compute_args: List[str]) -> bool:
     return False
 
 
-def execute_script(script_path: str) -> int:
-    """
-    Execute a Python script and return its exit code.
-
-    Args:
-        script_path (str): Absolute path to the script to execute
-
-    Returns:
-        int: Exit code from the script execution
-    """
+def execute_script(script_path: str, extra_args: list[str]) -> int:
+    # Print a section header so each script boundary is easy to spot in the log.
     print(f"\n{'='*80}")
     print(f"Executing: {os.path.basename(script_path)}")
     print(f"{'='*80}")
 
     try:
-        # Execute the script using subprocess
+        # Execute the script using subprocess, forwarding any extra CLI flags.
         result = subprocess.run(
-            [sys.executable, script_path],
+            [sys.executable, script_path, *extra_args],
             check=False  # Don't raise exception on non-zero exit
         )
 
@@ -135,21 +130,12 @@ def execute_script(script_path: str) -> int:
 
 
 def main(args):
-    """
-    Main function that orchestrates the execution of evaluation scripts.
-
-    This function:
-    1. Discovers all evaluation scripts in range p111-p201
-    2. Filters scripts based on --no_compute arguments
-    3. Executes scripts sequentially in numerical order
-    4. Reports execution status and failures
-
-    Args:
-        args (argparse.Namespace): Parsed command line arguments
-    """
     print("Starting evaluation pipeline execution")
 
-    # Get all evaluation scripts
+    # Resolve the single videoset flag to forward to child scripts.
+    videoset_flag = '--test' if args.test else '--valid'
+
+    # Discover all evaluation scripts in the configured range.
     scripts = get_evaluation_scripts()
 
     if not scripts:
@@ -158,12 +144,12 @@ def main(args):
 
     print(f"Found {len(scripts)} evaluation scripts")
 
-    # Determine which scripts to skip based on --no_compute
+    # Determine which scripts to skip based on --no_compute.
     scripts_to_execute = []
     scripts_to_skip = []
 
     if args.no_compute is not None:
-        # --no_compute was specified (either with or without arguments)
+        # --no_compute was specified (either with or without arguments).
         for script in scripts:
             if should_skip_script(script, args.no_compute):
                 scripts_to_skip.append(script)
@@ -175,7 +161,7 @@ def main(args):
             for script in scripts_to_skip:
                 print(f"  - {script}")
     else:
-        # No --no_compute specified, execute all scripts
+        # No --no_compute specified; execute all scripts.
         scripts_to_execute = scripts
 
     if not scripts_to_execute:
@@ -186,13 +172,19 @@ def main(args):
     for script in scripts_to_execute:
         print(f"  - {script}")
 
-    # Execute scripts in order
+    # Scripts in the p14x range are SOTA evaluation scripts that don't accept videoset flags.
+    SKIP_VIDEOSET_FLAGS_RANGE = range(140, 150)
+
+    # Execute scripts in order, forwarding the videoset flag to each child.
     script_dir = os.path.dirname(os.path.abspath(__file__))
     failed_scripts = []
 
     for script_name in scripts_to_execute:
         script_path = os.path.join(script_dir, script_name)
-        exit_code = execute_script(script_path)
+        # Determine whether this script accepts the videoset flag.
+        script_number = int(script_name.split('_')[0][1:])
+        extra_args = [videoset_flag] if script_number not in SKIP_VIDEOSET_FLAGS_RANGE else []
+        exit_code = execute_script(script_path, extra_args)
 
         if exit_code != 0:
             failed_scripts.append((script_name, exit_code))

@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import argparse
 from multiprocessing import Pool
 import os
 import shutil
@@ -14,6 +15,14 @@ from polyis.utilities import get_config, get_video_frame_count
 CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']
 KEY_COLUMNS = ['dataset', 'videoset', 'variant', 'variant_id']
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
+    return parser.parse_args()
 PARAM_COLUMNS = [
     'classifier',
     'tilesize',
@@ -132,7 +141,7 @@ def process_dataset(dataset: str):
     tradeoff_df.to_csv(output_dir / 'tradeoff.csv', index=False)
 
 
-def main():
+def main(args):
     # Log the configured datasets before tradeoff computation starts.
     print(f"Processing datasets: {DATASETS}")
 
@@ -149,4 +158,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(parse_args())

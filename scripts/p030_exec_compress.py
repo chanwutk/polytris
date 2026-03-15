@@ -20,6 +20,7 @@ from polyis.utilities import format_time, load_classification_results, load_prun
 from polyis.pack.group_tiles import group_tiles
 from polyis.pack.pack import pack
 from polyis.io import cache, store
+from polyis.pareto import build_pareto_combo_filter
 
 
 config = get_config()
@@ -728,10 +729,17 @@ def main(args):
     if args.valid:
         videosets.append('valid')
     
-    # If no videosets are specified, default to valid and test
+    # If no videosets are specified, default to valid only
     if not videosets:
-        videosets = ['valid', 'test']
-    
+        videosets = ['valid']
+
+    # Build allowed-combo set for the test pass (None means no filtering applies).
+    allowed_combos = build_pareto_combo_filter(
+        DATASETS, videosets,
+        ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
+         'tracker', 'tracking_accuracy_threshold'],
+    )
+
     # Create tasks list with all video/classifier/tilesize/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     for dataset, videoset in itertools.product(DATASETS, videosets):
@@ -743,6 +751,10 @@ def main(args):
         for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
             sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
             for tracker in [None] if threshold is None else TRACKERS:
+                # Skip parameter combos not on the Pareto front during the test pass.
+                combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
+                if allowed_combos is not None and combo not in allowed_combos[dataset]:
+                    continue
                 funcs.append(partial(compress, dataset, videoset, video, classifier, tilesize, sample_rate,
                                      tilepadding, canvas_scale, tracker, threshold, prediction_threshold, mode))
 

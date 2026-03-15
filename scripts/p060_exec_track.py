@@ -15,6 +15,7 @@ import torch
 
 from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results, get_video_resolution, build_param_str, TilePadding
 from polyis.io import cache, store
+from polyis.pareto import build_pareto_combo_filter
 
 
 CONFIG = get_config()
@@ -37,6 +38,8 @@ def parse_args():
                         help='IOU threshold for SORT tracker')
     parser.add_argument('--no_interpolate', action='store_true',
                         help='Whether to not perform trajectory interpolation')
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--valid', action='store_true')
     return parser.parse_args()
 
 
@@ -245,8 +248,26 @@ def main(args: argparse.Namespace):
         - The number of processes equals the number of available GPUs
     """
     mp.set_start_method('spawn', force=True)
+
+    # Determine which videosets to process based on arguments.
+    selected_videosets = []
+    if args.test:
+        selected_videosets.append('test')
+    if args.valid:
+        selected_videosets.append('valid')
+    # Default to valid only when no flags are provided.
+    if not selected_videosets:
+        selected_videosets = ['valid']
+
+    # Build allowed-combo set for the test pass (None means no filtering applies).
+    allowed_combos = build_pareto_combo_filter(
+        DATASETS, selected_videosets,
+        ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
+         'tracker', 'tracking_accuracy_threshold'],
+    )
+
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
         print(f"Processing dataset: {dataset}")
         videosets_dir = store.dataset(dataset, videoset)
         assert os.path.exists(videosets_dir), f"Videoset directory {videosets_dir} does not exist"
@@ -255,6 +276,10 @@ def main(args: argparse.Namespace):
         videos = [f for f in os.listdir(videosets_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
         for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold, tracker in itertools.product(
             sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS, TRACKERS):
+            # Skip parameter combos not on the Pareto front during the test pass.
+            combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
+            if allowed_combos is not None and combo not in allowed_combos[dataset]:
+                continue
             funcs.append(partial(track, dataset, video, classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold, args.no_interpolate))
 
     print(f"Created {len(funcs)} tasks to process")

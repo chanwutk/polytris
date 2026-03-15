@@ -18,6 +18,7 @@ from polyis.images import ImgNHWC, splitNHWC
 from polyis.train.select_model_optimization import select_model_optimization
 from polyis.io import cache, store
 from polyis.utilities import format_time, ProgressBar, get_config
+from polyis.pareto import build_pareto_combo_filter
 
 
 config = get_config()
@@ -383,11 +384,16 @@ def main():
     if args.valid:
         selected_videosets.append('valid')
 
-    # If no videosets are specified, default to valid and test
+    # If no videosets are specified, default to valid only
     if not selected_videosets:
-        selected_videosets = ['valid', 'test']
+        selected_videosets = ['valid']
 
     mp.set_start_method('spawn', force=True)
+
+    # Build allowed-combo set for the test pass (None means no filtering applies).
+    allowed_combos = build_pareto_combo_filter(
+        DATASETS, selected_videosets, ['classifier', 'tilesize', 'sample_rate']
+    )
 
     # Create tasks list with all video/classifier/tile_size/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
@@ -399,8 +405,12 @@ def main():
         for video, classifier, tile_size, sample_rate in itertools.product(
             sorted(videos), CLASSIFIERS, TILE_SIZES, SAMPLE_RATES
         ):
+            # Skip parameter combos not on the Pareto front during the test pass.
+            combo = (classifier, tile_size, sample_rate)
+            if allowed_combos is not None and combo not in allowed_combos[dataset]:
+                continue
             func = partial(classify, dataset, videoset, video, classifier, tile_size, sample_rate)
-            funcs.append(func)   
+            funcs.append(func)
 
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()

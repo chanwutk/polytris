@@ -21,6 +21,7 @@ from trackeval.metrics import CLEAR, Count, HOTA, Identity
 
 from evaluation.manifests import build_query_task_manifest
 from polyis.io import cache
+from polyis.pareto import load_pareto_params, pareto_params_exist
 from polyis.trackeval.dataset import Dataset
 from polyis.utilities import get_config
 
@@ -56,6 +57,9 @@ def parse_args():
                         help='Comma-separated list of metrics to evaluate')
     parser.add_argument('--no_parallel', action='store_true', default=False,
                         help='Whether to disable parallel processing')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
     return parser.parse_args()
 
 
@@ -281,9 +285,9 @@ def evaluate_tracking_accuracy(task_row: dict,
     worker_id_queue.put(worker_id)
 
 
-def build_accuracy_task_rows(dataset: str) -> list[tuple[dict, list[str], str]]:
-    # Materialize the dataset-local query manifest with both Polytris and naive variants.
-    manifest_df = build_query_task_manifest(datasets=[dataset], include_naive=True)
+def build_accuracy_task_rows(dataset: str, videoset: str) -> list[tuple[dict, list[str], str]]:
+    # Materialize the dataset-local query manifest for the single requested videoset.
+    manifest_df = build_query_task_manifest(datasets=[dataset], include_naive=True, videosets=[videoset])
     # Fail fast when the configured dataset has no manifest rows.
     assert not manifest_df.empty, f"No query task manifest rows found for dataset {dataset}"
 
@@ -302,6 +306,14 @@ def build_accuracy_task_rows(dataset: str) -> list[tuple[dict, list[str], str]]:
         task_row = group_df.iloc[0].to_dict()
         # Build the canonical raw output directory for this split-level task.
         output_dir = os.path.join(cache.eval(dataset, 'acc'), 'raw', task_row['videoset'], task_row['variant_id'])
+
+        # For test: only evaluate Pareto-optimal Polytris variants.
+        if videoset == 'test' and task_row['variant'] == 'polytris':
+            pareto_df = load_pareto_params(task_row['dataset'])
+            pareto_variant_ids = set(pareto_df['variant_id'].dropna().unique())
+            if task_row['variant_id'] not in pareto_variant_ids:
+                continue
+
         # Validate all required files before the task enters the worker queue.
         validate_task_inputs(task_row, videos)
         # Store the fully validated task tuple.
@@ -319,6 +331,15 @@ def main(args):
     # Log the normalized metric selection.
     print(f"Evaluating metrics: {metrics_list}")
 
+    # Resolve the single videoset from the mutually exclusive CLI flags.
+    videoset = 'test' if args.test else 'valid'
+
+    # Assert Pareto params exist when processing the test split.
+    if videoset == 'test':
+        for dataset in DATASETS:
+            assert pareto_params_exist(dataset), \
+                f"Pareto params not found for {dataset}. Run p135_pareto_extract.py first."
+
     # Collect the split-level evaluation tasks across all configured datasets.
     eval_tasks: list[Callable[[int, "mp.Queue"], None]] = []
 
@@ -333,7 +354,7 @@ def main(args):
         os.makedirs(evaluation_dir / 'raw', exist_ok=True)
 
         # Schedule one worker task per validated split-level variant.
-        for task_row, videos, output_dir in build_accuracy_task_rows(dataset):
+        for task_row, videos, output_dir in build_accuracy_task_rows(dataset, videoset):
             eval_tasks.append(partial(
                 evaluate_tracking_accuracy,
                 task_row,

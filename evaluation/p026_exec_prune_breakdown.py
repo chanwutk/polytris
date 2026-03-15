@@ -150,8 +150,8 @@ def create_runtime_breakdown_chart(df: pd.DataFrame, dataset: str) -> alt.Chart:
         value_name='runtime_ms',
     )
 
-    # Average across videos for each (config, operation) pair
-    agg = melted.groupby(['config', 'operation'], as_index=False)['runtime_ms'].mean()
+    # Sum across videos for each (config, operation) pair
+    agg = melted.groupby(['config', 'operation'], as_index=False)['runtime_ms'].sum()
 
     # Sort configs by descending total mean runtime
     totals = agg.groupby('config')['runtime_ms'].sum().reset_index()
@@ -176,23 +176,27 @@ def create_runtime_breakdown_chart(df: pd.DataFrame, dataset: str) -> alt.Chart:
 
 
 def create_scatter_chart(df: pd.DataFrame, operation: str) -> alt.Chart:
-    # Scatter plot of operation runtime vs retention rate, one panel per dataset
+    # Scatter plot of operation runtime vs retention rate, one panel per dataset.
+    # Aggregate across videos: sum runtime, average retention rate.
     plot_df = df.dropna(subset=[operation, 'retention_rate']).copy()
     plot_df['config'] = plot_df.apply(make_config_label, axis=1)
 
-    base = alt.Chart(plot_df).mark_circle(opacity=0.6, size=60).encode(
-        x=alt.X(f'{operation}:Q', title=f'{operation} runtime (ms)'),
-        y=alt.Y('retention_rate:Q', title='Retention Rate',
+    agg = plot_df.groupby(['dataset', 'config', 'threshold'], as_index=False).agg(
+        **{operation: (operation, 'sum'), 'retention_rate': ('retention_rate', 'mean')}
+    )
+
+    base = alt.Chart(agg).mark_circle(opacity=0.6, size=60).encode(
+        x=alt.X(f'{operation}:Q', title=f'{operation} total runtime (ms)'),
+        y=alt.Y('retention_rate:Q', title='Mean Retention Rate',
                 scale=alt.Scale(domain=[0, 1])),
         color=alt.Color('threshold:Q', title='Accuracy Threshold',
                         scale=alt.Scale(scheme='viridis')),
         tooltip=[
             alt.Tooltip('dataset:N', title='Dataset'),
-            alt.Tooltip('video:N', title='Video'),
             alt.Tooltip('config:N', title='Config'),
             alt.Tooltip('threshold:Q', format='.0%', title='Threshold'),
-            alt.Tooltip('retention_rate:Q', format='.3f', title='Retention Rate'),
-            alt.Tooltip(f'{operation}:Q', format='.1f', title='Runtime (ms)'),
+            alt.Tooltip('retention_rate:Q', format='.3f', title='Mean Retention Rate'),
+            alt.Tooltip(f'{operation}:Q', format='.1f', title='Total Runtime (ms)'),
         ],
     ).properties(width=400, height=300)
 

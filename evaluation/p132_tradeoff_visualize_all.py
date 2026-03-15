@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import argparse
 import os
 
 import altair as alt
@@ -17,6 +18,14 @@ from polyis.utilities import (
 
 CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
+    return parser.parse_args()
 
 
 def build_metric_columns(metric: str) -> tuple[str, str] | None:
@@ -110,7 +119,7 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     visualize_all_datasets_tradeoff(polytris_df, naive_df, 'throughput_fps', 'Throughput (frames/second)', 'throughput', str(output_dir))
 
 
-def main():
+def main(args):
     # Log the configured datasets before the all-datasets visualization stage starts.
     print(f"Processing datasets: {DATASETS}")
 
@@ -119,4 +128,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(parse_args())

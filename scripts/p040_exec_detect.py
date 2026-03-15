@@ -19,6 +19,7 @@ import polyis.models.detector
 import polyis.dtypes
 from polyis.utilities import TilePadding, format_time, ProgressBar, get_config, build_param_str
 from polyis.io import cache, store
+from polyis.pareto import build_pareto_combo_filter
 
 
 config = get_config()
@@ -38,6 +39,8 @@ def parse_args():
                         help='Remove and recreate the 040_compressed_detections folder for each video')
     parser.add_argument('--batch_size', type=int, default=4,
                         help='Batch size for detection processing (default: 4)')
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--valid', action='store_true')
     return parser.parse_args()
 
 
@@ -349,13 +352,31 @@ def main(args):
     """
     mp.set_start_method('spawn', force=True)
 
+    # Determine which videosets to process based on arguments.
+    selected_videosets = []
+    if args.test:
+        selected_videosets.append('test')
+    if args.valid:
+        selected_videosets.append('valid')
+    # Default to valid only when no flags are provided.
+    if not selected_videosets:
+        selected_videosets = ['valid']
+
+    # Build allowed-combo set for the test pass (None means no filtering applies).
+    allowed_combos = build_pareto_combo_filter(
+        DATASETS, selected_videosets,
+        ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
+         'tracker', 'tracking_accuracy_threshold'],
+    )
+
     # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
 
     if args.clear:
         print(f"Cleared existing 040_compressed_detections folder")
         for dataset in DATASETS:
-            for videoset in ('valid', 'test'):
+            # Use selected videosets so --clear respects the current pass scope.
+            for videoset in selected_videosets:
                 videoset_dir = store.dataset(dataset, videoset)
                 if not os.path.exists(videoset_dir):
                     continue
@@ -365,7 +386,7 @@ def main(args):
                     if os.path.exists(compressed_detections_dir):
                         shutil.rmtree(compressed_detections_dir)
 
-    for dataset, videoset in itertools.product(DATASETS, ('valid', 'test')):
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
         videoset_dir = store.dataset(dataset, videoset)
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
@@ -373,6 +394,10 @@ def main(args):
         for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
             sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
             for tracker in [None] if threshold is None else TRACKERS:
+                # Skip parameter combos not on the Pareto front during the test pass.
+                combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
+                if allowed_combos is not None and combo not in allowed_combos[dataset]:
+                    continue
                 funcs.append(partial(detect_objects, dataset, video, classifier, tilesize, sample_rate,
                                      tilepadding, canvas_scale, tracker, threshold, args.batch_size))
 

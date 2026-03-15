@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import argparse
 import os
 from pathlib import Path
 import shutil
@@ -13,6 +14,14 @@ from polyis.utilities import get_config
 
 CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
+    return parser.parse_args()
 
 
 def build_threshold_label(value: object) -> str:
@@ -114,7 +123,7 @@ def visualize_tracking_accuracy(results: pd.DataFrame, output_dir: Path):
         visualize_metric(results, metric_name, metric_label, output_dir / f'{metric_name}.png')
 
 
-def main():
+def main(args):
     # Log the configured datasets before visualization starts.
     print(f"Starting tracking accuracy visualization for datasets: {DATASETS}")
 
@@ -141,4 +150,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(parse_args())
