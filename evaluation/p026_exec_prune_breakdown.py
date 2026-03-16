@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from polyis.io import cache, store
+from polyis.pareto import build_pareto_combo_filter
 from polyis.utilities import build_param_str, get_config
 
 
@@ -104,6 +105,11 @@ def collect_row(args: tuple) -> dict | None:
 
 def collect_data(videosets: list[str]) -> pd.DataFrame:
     # Build task list then collect all rows in parallel
+    # For the test videoset, restrict to Pareto-optimal parameter combinations only.
+    pareto_filter = build_pareto_combo_filter(
+        DATASETS, videosets,
+        ['classifier', 'tilesize', 'sample_rate', 'tracker', 'tracking_accuracy_threshold'],
+    )
     tasks: list[tuple] = []
     for dataset in DATASETS:
         for videoset in videosets:
@@ -118,6 +124,10 @@ def collect_data(videosets: list[str]) -> pd.DataFrame:
                 videos, CLASSIFIERS, TILE_SIZES, SAMPLE_RATES, TRACKERS, TRACKING_ACCURACY_THRESHOLDS
             ):
                 video, classifier, tile_size, sample_rate, tracker, threshold = combo
+                # Skip non-Pareto combinations when processing the test split.
+                if videoset == 'test' and pareto_filter is not None:
+                    if (classifier, tile_size, sample_rate, tracker, threshold) not in pareto_filter[dataset]:
+                        continue
                 tasks.append((dataset, videoset, video, classifier, tile_size, sample_rate, tracker, threshold))
 
     print(f"Scanning {len(tasks)} parameter combinations...")

@@ -23,6 +23,7 @@ def parse_args():
     group.add_argument('--valid', action='store_true')
     group.add_argument('--test', action='store_true')
     return parser.parse_args()
+
 PARAM_COLUMNS = [
     'classifier',
     'tilesize',

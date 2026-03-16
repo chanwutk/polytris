@@ -186,6 +186,7 @@ def test_compare_mandatory_bridge_instance():
     (0,   5,   3,  3, 2.0),   # small
     (10, 128, 16, 16, 3.0),   # medium
     (10, 512, 16, 16, 16.0),   # large
+    (10, 1024, 16, 16, 16.0),   # xlarge
 ])
 def test_runtime_comparison(seed, num_frames, grid_h, grid_w, max_distance, capsys):
     """Print build/solve timing for all three implementations on the same instance."""

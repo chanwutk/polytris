@@ -29,8 +29,80 @@ def val_lte(val: float, best_val: float) -> bool:
     return val <= best_val
 
 
+def _prune_pareto_points(
+    x: np.ndarray,
+    y: np.ndarray,
+    num_points: int,
+) -> np.ndarray:
+    """
+    Prune Pareto front points to *num_points* by iteratively removing
+    the interior point with the widest vertex angle (most collinear).
+
+    Coordinates are min-max normalized to [0, 1] before angle computation
+    so that both axes contribute equally regardless of scale.
+
+    Args:
+        x: 1-D array of x coordinates (must be sorted ascending).
+        y: 1-D array of y coordinates.
+        num_points: Target number of points to keep (>= 2).
+
+    Returns:
+        Boolean mask of length ``len(x)``; True for points to keep.
+    """
+    n = len(x)
+    # Nothing to prune when we already have few enough points or only endpoints.
+    if n <= num_points or n <= 2:
+        return np.ones(n, dtype=bool)
+
+    # Min-max normalize both axes to [0, 1] so both contribute equally.
+    x_range = x.max() - x.min()
+    y_range = y.max() - y.min()
+    xn = (x - x.min()) / (x_range if x_range > 0 else 1.0)
+    yn = (y - y.min()) / (y_range if y_range > 0 else 1.0)
+
+    # Maintain a list of active point indices throughout the iterative pruning.
+    active = list(range(n))
+
+    while len(active) > num_points:
+        # Compute the cosine of the vertex angle at each interior point.
+        worst_cos = 2.0  # Cosine is in [-1, 1]; 2.0 is above any valid value.
+        worst_j = -1
+        for j in range(1, len(active) - 1):
+            # Vectors from the interior point to its two neighbors.
+            i_prev, i_curr, i_next = active[j - 1], active[j], active[j + 1]
+            v1x = xn[i_prev] - xn[i_curr]
+            v1y = yn[i_prev] - yn[i_curr]
+            v2x = xn[i_next] - xn[i_curr]
+            v2y = yn[i_next] - yn[i_curr]
+
+            # Magnitudes of both vectors.
+            mag1 = np.sqrt(v1x * v1x + v1y * v1y)
+            mag2 = np.sqrt(v2x * v2x + v2y * v2y)
+
+            # Cosine of the vertex angle via dot product.
+            if mag1 > 0 and mag2 > 0:
+                cos_angle = (v1x * v2x + v1y * v2y) / (mag1 * mag2)
+            else:
+                # Degenerate zero-length vector: treat as maximally collinear.
+                cos_angle = -1.0
+
+            # Track the point with the most negative cosine (widest angle).
+            if cos_angle < worst_cos:
+                worst_cos = cos_angle
+                worst_j = j
+
+        # Remove the most collinear interior point from the active list.
+        active.pop(worst_j)
+
+    # Build a boolean mask from the surviving active indices.
+    mask = np.zeros(n, dtype=bool)
+    mask[active] = True
+    return mask
+
+
 def compute_pareto_front(df: pd.DataFrame, x_col: str, y_col: str,
-                         minimize_x: bool = False, maximize_y: bool = True) -> pd.DataFrame:
+                         minimize_x: bool = False, maximize_y: bool = True,
+                         num_points: int | None = None) -> pd.DataFrame:
     """
     Compute Pareto-optimal points from DataFrame.
 
@@ -43,6 +115,8 @@ def compute_pareto_front(df: pd.DataFrame, x_col: str, y_col: str,
         y_col: Column name for y-axis (e.g., 'HOTA_HOTA')
         minimize_x: If True, lower x is better; if False, higher x is better
         maximize_y: If True, higher y is better; if False, lower y is better
+        num_points: If not None, prune the Pareto front to at most this many
+            points by iteratively removing the most collinear interior point.
 
     Returns:
         DataFrame containing only Pareto-optimal points, sorted by x_col
@@ -71,8 +145,19 @@ def compute_pareto_front(df: pd.DataFrame, x_col: str, y_col: str,
     # Reverse to maintain sorted order by x
     pareto_indices = list(reversed(pareto_indices))
 
-    # Return Pareto-optimal points
-    return df_sorted.loc[pareto_indices].reset_index(drop=True)
+    # Collect Pareto-optimal points into a DataFrame.
+    pareto_df = df_sorted.loc[pareto_indices].reset_index(drop=True)
+
+    # Optionally prune to a target number of points by removing the most collinear interior points.
+    if num_points is not None and len(pareto_df) > num_points:
+        mask = _prune_pareto_points(
+            pareto_df[x_col].values,
+            pareto_df[y_col].values,
+            num_points,
+        )
+        return pareto_df[mask].reset_index(drop=True)
+
+    return pareto_df
 
 
 def interpolate_pareto_line(pareto_df: pd.DataFrame, x_col: str, y_col: str,
@@ -120,7 +205,8 @@ def interpolate_pareto_line(pareto_df: pd.DataFrame, x_col: str, y_col: str,
 
 
 def compute_pareto_fronts_by_group(df: pd.DataFrame, group_cols: list[str],
-                                   x_col: str, y_col: str) -> pd.DataFrame:
+                                   x_col: str, y_col: str,
+                                   num_points: int = 8) -> pd.DataFrame:
     """
     Compute Pareto fronts for each group in the DataFrame.
 
@@ -129,14 +215,17 @@ def compute_pareto_fronts_by_group(df: pd.DataFrame, group_cols: list[str],
         group_cols: Columns to group by (e.g., ['dataset', 'system'])
         x_col: Column name for x-axis
         y_col: Column name for y-axis
+        num_points: Maximum number of Pareto points per group. Pass None to
+            disable pruning and keep all Pareto-optimal points.
 
     Returns:
         DataFrame with Pareto-optimal points for each group
     """
-    # Apply Pareto front computation to each group
+    # Apply Pareto front computation (with optional pruning) to each group.
     pareto_groups = (
         df.groupby(group_cols, group_keys=True, dropna=False)
-        .apply(lambda g: compute_pareto_front(g, x_col, y_col), include_groups=False)
+        .apply(lambda g: compute_pareto_front(g, x_col, y_col, num_points=num_points),
+               include_groups=False)
     )
 
     # Restore grouping keys from the MultiIndex as regular columns.
@@ -186,11 +275,13 @@ def select_test_points_from_valid_pareto(
         return test_df.copy()
 
     # Compute valid Pareto points per dataset using DataFrame groupby+apply.
+    # No pruning here: keep all Pareto points for complete parameter matching.
     valid_pareto_df = compute_pareto_fronts_by_group(
         valid_metric_df,
         ['dataset'],
         time_col,
         accuracy_col,
+        num_points=None,
     )
     if valid_pareto_df.empty:
         print("  Warning: Valid Pareto is empty; using all test rows")

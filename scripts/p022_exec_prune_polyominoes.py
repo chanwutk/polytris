@@ -32,7 +32,6 @@ TILEPADDING_MODE = 0  # 0: No padding, 1: Connected padding, 2: Disconnected pad
 _ALL_ACCURACY_THRESHOLDS = [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.00]
 # Mapping from float threshold to index in max_rate_table.npy
 _ACCURACY_THRESHOLD_TO_IDX = {t: i for i, t in enumerate(_ALL_ACCURACY_THRESHOLDS)}
-ILP_SOLVER_TIME_LIMIT_SECONDS = 10
 
 
 def parse_args():
@@ -324,7 +323,7 @@ def main():
     num_workers = mp.cpu_count() // 2
     # num_workers = 2
     if len(funcs) > 0:
-        ProgressBar(num_workers=num_workers, num_tasks=len(funcs)).run_all(funcs)
+        ProgressBar(num_workers=num_workers, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)
     
     print("All tasks completed!")
 

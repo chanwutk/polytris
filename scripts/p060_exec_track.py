@@ -285,6 +285,7 @@ def main(args: argparse.Namespace):
     print(f"Created {len(funcs)} tasks to process")
 
     num_gpus = torch.cuda.device_count()
+    num_gpus = 40
     
     # Set up multiprocessing with ProgressBar
     ProgressBar(num_workers=num_gpus, num_tasks=len(funcs)).run_all(funcs)

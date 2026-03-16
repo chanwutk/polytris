@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import numpy as np
 
 
-ILP_SOLVER_TIME_LIMIT_SECONDS = 5
+ILP_SOLVER_TIME_LIMIT_SECONDS = 0.5
 
 
 class ILPResult(NamedTuple):

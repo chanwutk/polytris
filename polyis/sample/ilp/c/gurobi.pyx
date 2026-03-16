@@ -91,7 +91,10 @@ cdef inline double _now_ms():
     return _monotonic() * 1000.0
 
 # ── Public solver ────────────────────────────────────────────────────────────
-from polyis.sample.ilp.gurobi import ILPResult, ILP_SOLVER_TIME_LIMIT_SECONDS
+from polyis.sample.ilp.gurobi import ILPResult
+
+
+DEF ILP_SOLVER_TIME_LIMIT_SECONDS = 0.5
 
 
 def solve_ilp(
@@ -204,8 +207,7 @@ def solve_ilp(
     free(type_arr); type_arr = NULL
 
     # Set per-model parameters via the model's own environment.
-    GRBsetdblparam(GRBgetenv(model), "TimeLimit",
-                   <double>ILP_SOLVER_TIME_LIMIT_SECONDS)
+    GRBsetdblparam(GRBgetenv(model), "TimeLimit", ILP_SOLVER_TIME_LIMIT_SECONDS)
 
     # Flush pending variable additions so indices are stable.
     GRBupdatemodel(model)
