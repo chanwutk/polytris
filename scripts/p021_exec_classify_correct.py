@@ -23,6 +23,13 @@ DATASETS: list[str] = config['EXEC']['DATASETS']
 SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Execute tile classification using groundtruth detections')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
+
+
 def process_frame_tiles(width: int, height: int, detections: list[list[float]], tile_size: int) -> tuple[np.ndarray, list[dict]]:
     """
     Process a single video frame with groundtruth detections and return relevance scores.
@@ -162,14 +169,6 @@ def process_video(dataset: str, videoset: str, video: str, tile_size: int, sampl
                 command_queue.put((device, {'completed': i}))
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Execute tile classification using groundtruth detections')
-    parser.add_argument('--test', action='store_true', help='Process test videoset')
-    parser.add_argument('--train', action='store_true', help='Process train videoset')
-    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
-    return parser.parse_args()
-
-
 def main():
     """
     Main function that orchestrates the video tile classification process using parallel processing.
@@ -197,8 +196,6 @@ def main():
     selected_videosets = []
     if args.test:
         selected_videosets.append('test')
-    if args.train:
-        selected_videosets.append('train')
     if args.valid:
         selected_videosets.append('valid')
     

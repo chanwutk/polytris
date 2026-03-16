@@ -39,7 +39,6 @@ def parse_args():
         description='Group and prune polyominoes from classification results using ILP'
     )
     parser.add_argument('--test', action='store_true')
-    parser.add_argument('--train', action='store_true')
     parser.add_argument('--valid', action='store_true')
     return parser.parse_args()
 
@@ -276,8 +275,6 @@ def main():
     selected_videosets = []
     if args.test:
         selected_videosets.append('test')
-    if args.train:
-        selected_videosets.append('train')
     if args.valid:
         selected_videosets.append('valid')
 
@@ -315,9 +312,8 @@ def main():
                 combo = (classifier, tile_size, sample_rate, tracker, threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
-                func = partial(process_video, dataset, videoset, video, classifier, tile_size,
-                               sample_rate, tracker, threshold)
-                print(f"Added task for {video} {tile_size} sr{sample_rate} {classifier} {tracker} {threshold}")
+                func = partial(process_video, dataset, videoset, video, classifier,
+                               tile_size, sample_rate, tracker, threshold)
                 funcs.append(func)
     
     print(f"Created {len(funcs)} tasks to process")

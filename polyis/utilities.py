@@ -57,6 +57,7 @@ TRACK_COLORS = [
 
 video_frame_counts: dict[tuple[str, str], int] = {}
 video_resolutions: dict[tuple[str, str], tuple[int, int]] = {}
+source_video_frame_counts: dict[tuple[str, str], int] = {}
 
 
 def dataset_root_name(dataset: str) -> str:
@@ -183,6 +184,41 @@ def get_video_frame_count(dataset: str, video: str) -> int:
     cap.release()
 
     video_frame_counts[(dataset, video)] = frame_count
+    return frame_count
+
+
+def get_source_video_frame_count(dataset: str, video: str) -> int:
+    # Normalize the dataset name by taking the part before the first '-' (e.g., 'caldot1-y05' → 'caldot1').
+    dataset = dataset.split('-')[0]
+
+    if (dataset, video) in source_video_frame_counts:
+        return source_video_frame_counts[(dataset, video)]
+
+    # Derive the split directory and strip the split prefix to get the source filename.
+    prefix_to_split = {'te': 'test', 'va': 'valid', 'tr': 'train'}
+    prefix = video[:2]
+    assert prefix in prefix_to_split, f"Unknown video prefix '{prefix}' in '{video}'"
+    split = prefix_to_split[prefix]
+
+    # Remove the 2-char split prefix and strip leading zeros from the numeric part
+    # (e.g., 'te01.mp4' → '1.mp4', 'te00.mp4' → '0.mp4').
+    stem, ext = os.path.splitext(video)
+    source_video = str(int(stem[2:])) + ext
+
+    # caldot and ams sources have an extra 'video/' subdirectory in their path.
+    if dataset.startswith('caldot') or dataset == 'ams':
+        video_path = os.path.join(SOURCE_DIR, dataset, split, 'video', source_video)
+    else:
+        video_path = os.path.join(SOURCE_DIR, dataset, split, source_video)
+    assert os.path.exists(video_path), f"Source video file not found: {video_path}"
+
+    cap = cv2.VideoCapture(video_path)
+    assert cap.isOpened(), f"Could not open source video {video_path}"
+
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+
+    source_video_frame_counts[(dataset, video)] = frame_count
     return frame_count
 
 
@@ -1233,8 +1269,10 @@ def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
         refresh_per_second=refresh_per_second,
     ) as p:
         bars: dict[str, progress.TaskID] = {}
-        overall_progress = p.add_task(f"[green]Processing {num_tasks} tasks for `{script_name}`",
-                                      total=num_tasks, completed=-num_workers)
+        task_id = script_name.split('_')[0]
+        task_name = script_name.split('_', 2)[2][:-len('.py')]
+        task_str = f"[green]{num_tasks} tasks: {task_id} {task_name}"
+        overall_progress = p.add_task(task_str, total=num_tasks, completed=-num_workers)
         bars['overall'] = overall_progress
         for gpu_id in range(num_workers):
             bars[f'cuda:{gpu_id}'] = p.add_task("")

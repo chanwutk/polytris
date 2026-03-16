@@ -29,6 +29,13 @@ SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
 BATCH_SIZE: int = 16
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Execute tile classification using trained models')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
+
+
 def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: str) -> "torch.nn.Module":
     """
     Load trained classifier model for the specified tile size from the dataset indexing directory.
@@ -181,7 +188,8 @@ def classify_batch(
     return probabilities_per_frame, runtime
 
 
-def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size: int, sample_rate: int, gpu_id: int, command_queue: mp.Queue):
+def classify(dataset: str, videoset: str, video: str, classifier: str,
+             tile_size: int, sample_rate: int, gpu_id: int, command_queue: mp.Queue):
     """
     Process a single video file and save tile classification results to a JSONL file.
 
@@ -345,14 +353,6 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
             f.write(json.dumps(frame_entry) + '\n')
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Execute tile classification using trained models')
-    parser.add_argument('--test', action='store_true', help='Process test videoset')
-    parser.add_argument('--train', action='store_true', help='Process train videoset')
-    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
-    return parser.parse_args()
-
-
 def main():
     """
     Main function that orchestrates the video tile classification process using parallel processing.
@@ -379,8 +379,6 @@ def main():
     selected_videosets = []
     if args.test:
         selected_videosets.append('test')
-    if args.train:
-        selected_videosets.append('train')
     if args.valid:
         selected_videosets.append('valid')
 
@@ -420,3 +418,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

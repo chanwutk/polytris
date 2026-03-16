@@ -19,10 +19,6 @@ from polyis.io import cache
 from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 from evaluation.utilities import ColorScheme
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
-from polyis.pareto import (
-    PARETO_PARAM_COLS, compute_pareto_front, compute_pareto_fronts_by_group,
-    interpolate_pareto_line, select_test_points_from_valid_pareto, val_gte, val_lte,
-)
 
 
 config = get_config()
@@ -101,21 +97,19 @@ def compute_speedup_at_accuracy_levels(df_polytris: pd.DataFrame,
         if polytris_data.empty:
             continue
 
-        # Compute Pareto front for Polytris (minimize time, maximize accuracy)
-        polytris_pareto = compute_pareto_front(polytris_data, time_col, accuracy_col)
+        # Use data directly (already Pareto-optimal from p022).
+        polytris_by_acc = polytris_data.dropna(subset=[time_col, accuracy_col]).sort_values(accuracy_col)
 
-        if polytris_pareto.empty:
+        if polytris_by_acc.empty:
             continue
 
         # Define accuracy query points based on data range
         min_acc = 0.0
-        max_acc = min(1.0, polytris_pareto[accuracy_col].max())
+        max_acc = min(1.0, polytris_by_acc[accuracy_col].max())
         accuracy_levels = np.arange(min_acc, max_acc + increment, increment)
 
-        # For speedup comparison, we need to interpolate time at given accuracy levels
-        # This requires inverting the Pareto front: given accuracy, find time
-        # Sort Pareto by accuracy for interpolation
-        polytris_by_acc = polytris_pareto.sort_values(accuracy_col)
+        # For speedup comparison, interpolate time at given accuracy levels
+        # by inverting the sorted data: given accuracy, find time
 
         # Interpolate Polytris time at each accuracy level
         polytris_times = np.interp(
@@ -132,14 +126,11 @@ def compute_speedup_at_accuracy_levels(df_polytris: pd.DataFrame,
             if sota_data.empty:
                 continue
 
-            # Compute Pareto front for SOTA
-            sota_pareto = compute_pareto_front(sota_data, time_col, accuracy_col)
+            # Use data directly.
+            sota_by_acc = sota_data.dropna(subset=[time_col, accuracy_col]).sort_values(accuracy_col)
 
-            if sota_pareto.empty:
+            if sota_by_acc.empty:
                 continue
-
-            # Sort by accuracy for interpolation
-            sota_by_acc = sota_pareto.sort_values(accuracy_col)
 
             # Interpolate SOTA time at each accuracy level
             sota_times = np.interp(
@@ -209,14 +200,11 @@ def compute_accuracy_gain_at_runtime_levels(df_polytris: pd.DataFrame,
         if polytris_data.empty:
             continue
 
-        # Compute Pareto front for Polytris
-        polytris_pareto = compute_pareto_front(polytris_data, time_col, accuracy_col)
+        # Use data directly (already Pareto-optimal from p022).
+        polytris_by_time = polytris_data.dropna(subset=[time_col, accuracy_col]).sort_values(time_col)
 
-        if polytris_pareto.empty:
+        if polytris_by_time.empty:
             continue
-
-        # Sort Pareto by time for interpolation
-        polytris_by_time = polytris_pareto.sort_values(time_col)
 
         # Determine runtime range based on all systems
         max_time = polytris_by_time[time_col].max()
@@ -251,14 +239,11 @@ def compute_accuracy_gain_at_runtime_levels(df_polytris: pd.DataFrame,
             if sota_data.empty:
                 continue
 
-            # Compute Pareto front for SOTA
-            sota_pareto = compute_pareto_front(sota_data, time_col, accuracy_col)
+            # Use data directly.
+            sota_by_time = sota_data.dropna(subset=[time_col, accuracy_col]).sort_values(time_col)
 
-            if sota_pareto.empty:
+            if sota_by_time.empty:
                 continue
-
-            # Sort by time for interpolation
-            sota_by_time = sota_pareto.sort_values(time_col)
 
             # Interpolate SOTA accuracy at each runtime level
             sota_accuracies = np.interp(
@@ -627,13 +612,9 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     split_counts = polytris_split_df['videoset'].value_counts(dropna=False).to_dict()
     print(f"  Aggregated Polytris rows: {len(polytris_split_df)} (videoset counts: {split_counts})")
 
-    # Separate valid and test rows for the valid-to-test Pareto transfer workflow.
-    valid_all_df = polytris_split_df[polytris_split_df['videoset'] == 'valid'].copy()
+    # Extract test rows only; valid split is no longer needed.
     test_all_df = polytris_split_df[polytris_split_df['videoset'] == 'test'].copy()
-    print(f"  Valid rows: {len(valid_all_df)}")
     print(f"  Test rows: {len(test_all_df)}")
-    if valid_all_df.empty:
-        print("  Warning: No valid rows found; test-only fallback will be used")
     if test_all_df.empty:
         print("  Warning: No test rows found after videoset separation")
 
@@ -642,25 +623,11 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     naive_df['system'] = 'Naive'
     print(f"\nExtracted {len(naive_df)} naive baseline rows from test split")
 
-    # Filter valid/test Polytris rows by configured parameter dimensions.
+    # Filter test Polytris rows by configured parameter dimensions.
     print("\nFiltering Polytris data by configuration settings...")
-    valid_non_naive_df = valid_all_df.copy()
-    test_non_naive_df = test_all_df.copy()
-
-    print(f"  Valid rows before filtering: {len(valid_non_naive_df)}")
-    filtered_valid_non_naive_df = filter_by_config(
-        valid_non_naive_df,
-        classifiers=CLASSIFIERS,
-        tilepadding_modes=TILEPADDING_MODES,
-        sample_rates=SAMPLE_RATES,
-        tracking_accuracy_thresholds=TRACKING_ACCURACY_THRESHOLDS,
-        trackers=TRACKERS
-    )
-    print(f"  Valid rows after filtering: {len(filtered_valid_non_naive_df)}")
-
-    print(f"  Test rows before filtering: {len(test_non_naive_df)}")
+    print(f"  Test rows before filtering: {len(test_all_df)}")
     filtered_test_non_naive_df = filter_by_config(
-        test_non_naive_df,
+        test_all_df,
         classifiers=CLASSIFIERS,
         tilepadding_modes=TILEPADDING_MODES,
         sample_rates=SAMPLE_RATES,
@@ -704,44 +671,30 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             print(f"  Warning: {accuracy_col} has no valid data, skipping")
             continue
 
-        # Select test rows based on parameter sets from the valid Pareto front.
-        print(f"\n1. Computing valid Pareto and selecting matched test rows for {accuracy_name}...")
-        polytris_df = select_test_points_from_valid_pareto(
-            filtered_valid_non_naive_df,
-            filtered_test_non_naive_df,
-            accuracy_col,
-            'time'
-        )
+        # Use filtered test rows directly (test data is already Pareto-optimal from p022).
+        polytris_df = filtered_test_non_naive_df.dropna(subset=['time', accuracy_col]).copy()
         if polytris_df.empty:
-            print(f"  Warning: No Polytris test rows selected for {accuracy_name}, skipping")
+            print(f"  Warning: No Polytris test rows found for {accuracy_name}, skipping")
             continue
-        print(f"  Selected Polytris test rows: {len(polytris_df)}")
+        print(f"  Polytris test rows: {len(polytris_df)}")
 
-        # 2. Compute Pareto fronts for visualization
-        print(f"\n2. Computing Pareto fronts for {accuracy_name}...")
+        # 2. Collect data for visualization
+        print(f"\n2. Collecting data for {accuracy_name}...")
 
         # Columns to keep for tooltip display
         tooltip_cols = ['system', 'dataset', 'videoset', 'classifier', 'sample_rate',
                         'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale',
                         'tracker', 'time', accuracy_col]
 
-        # Collect Pareto rows from Polytris, Naive, and SOTA systems.
+        # Collect rows from Polytris, Naive, and SOTA systems.
         pareto_data_list = []
 
-        # Compute Polytris Pareto fronts per dataset/classifier/canvas_scale using groupby.
-        polytris_group_cols = [col for col in ['dataset', 'classifier', 'canvas_scale'] if col in polytris_df.columns]
+        # Append all Polytris test rows directly (already Pareto-optimal from p022).
         polytris_metric_df = polytris_df.dropna(subset=['time', accuracy_col]).copy()
-        if polytris_group_cols and not polytris_metric_df.empty:
-            polytris_pareto_df = compute_pareto_fronts_by_group(
-                polytris_metric_df,
-                polytris_group_cols,
-                'time',
-                accuracy_col
-            )
-            if not polytris_pareto_df.empty:
-                polytris_pareto_df['system'] = 'Polytris'
-                polytris_cols = [c for c in tooltip_cols if c in polytris_pareto_df.columns]
-                pareto_data_list.append(polytris_pareto_df[polytris_cols])
+        if not polytris_metric_df.empty:
+            polytris_metric_df['system'] = 'Polytris'
+            polytris_cols = [c for c in tooltip_cols if c in polytris_metric_df.columns]
+            pareto_data_list.append(polytris_metric_df[polytris_cols])
 
         # Append Naive test points directly (Naive is a baseline point, not a front).
         if accuracy_col in naive_df.columns:
@@ -750,7 +703,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
                 naive_cols = [c for c in tooltip_cols if c in naive_point_df.columns]
                 pareto_data_list.append(naive_point_df[naive_cols])
 
-        # Compute SOTA Pareto fronts per dataset using groupby.
+        # Append all SOTA rows directly (no Pareto re-filtering needed).
         sota_pareto_list = []
         for system_name, df_sota in df_sota_dict.items():
             if accuracy_col not in df_sota.columns:
@@ -758,30 +711,22 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             sota_metric_df = df_sota.dropna(subset=['time', accuracy_col]).copy()
             if sota_metric_df.empty:
                 continue
-            sota_pareto_df = compute_pareto_fronts_by_group(
-                sota_metric_df,
-                ['dataset'],
-                'time',
-                accuracy_col
-            )
-            if sota_pareto_df.empty:
-                continue
-            sota_pareto_df['system'] = system_name.upper()
-            sota_cols = [c for c in tooltip_cols if c in sota_pareto_df.columns]
-            sota_pareto_list.append(sota_pareto_df[sota_cols])
+            sota_metric_df['system'] = system_name.upper()
+            sota_cols = [c for c in tooltip_cols if c in sota_metric_df.columns]
+            sota_pareto_list.append(sota_metric_df[sota_cols])
 
         if sota_pareto_list:
             pareto_data_list.extend(sota_pareto_list)
 
         if not pareto_data_list:
-            print(f"  No Pareto data available for {accuracy_name}")
+            print(f"  No data available for {accuracy_name}")
             continue
 
         df_pareto_combined = pd.concat(pareto_data_list, ignore_index=True)
-        print(f"  Combined Pareto data: {len(df_pareto_combined)} points")
+        print(f"  Combined data: {len(df_pareto_combined)} points")
 
-        # 3. Create Pareto front comparison chart
-        print(f"\n3. Creating Pareto comparison chart for {accuracy_name}...")
+        # 3. Create comparison chart
+        print(f"\n3. Creating comparison chart for {accuracy_name}...")
         pareto_chart = create_pareto_comparison_chart(
             df_pareto_combined, accuracy_col, accuracy_name, log_scale=log_scale
         )
