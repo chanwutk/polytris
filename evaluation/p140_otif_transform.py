@@ -29,6 +29,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Transform OTIF and LEAP runtime and tracking data into our format')
     parser.add_argument('--sota-dir', type=str, default='/sota-results',
                         help='Directory containing SOTA output data (OTIF and LEAP)')
+    parser.add_argument('--test', action='store_true', default=False,
+                        help='Process test videoset')
     return parser.parse_args()
 
 
@@ -351,6 +353,8 @@ def process_dataset(sota_dir: str, dataset: str):
 def main(args):
     # Resolve the raw SOTA export root requested by the caller.
     sota_dir = args.sota_dir
+    assert args.test, "This script only supports the test videoset"
+
     # Fail fast when the SOTA export root is missing.
     assert os.path.exists(sota_dir), f"SOTA directory {sota_dir} does not exist"
 

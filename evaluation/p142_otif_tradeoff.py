@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import argparse
 import json
 import os
 
@@ -13,6 +14,12 @@ from polyis.utilities import get_config
 CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']
 
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--test', action='store_true', default=False,
+                        help='Process test videoset')
+    return parser.parse_args()
 
 def extract_accuracy_metrics(result: dict) -> dict:
     # Resolve the nested TrackEval metric payload for the current param_id.
@@ -126,7 +133,9 @@ def join_accuracy_to_stat(dataset: str, system: str):
     print(f"Saved merged {system.upper()} results with accuracy metrics: {output_csv_path}")
 
 
-def main():
+def main(args):
+    assert args.test, "This script only supports the test videoset"
+
     # Log the configured datasets before the SOTA tradeoff join starts.
     print(f"Starting accuracy-to-stat joining for datasets: {DATASETS}")
 
@@ -138,4 +147,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(parse_args())

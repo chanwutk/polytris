@@ -6,37 +6,23 @@ import subprocess
 import sys
 from typing import List
 
+# Scripts that are unconditionally excluded from the test evaluation pipeline.
+ALWAYS_SKIP_NUMBERS = {131, 132, 135}
 
-def parse_args():
-    """Parse command line arguments for evaluation script orchestration."""
+# Range of script numbers disabled when --no-sota is passed.
+SOTA_RANGE = range(140, 151)
+
+
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Execute evaluation scripts (p111-p201) in the evaluation directory',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Run all evaluation scripts including compute scripts
-  python p100_evaluation.py
-
-  # Skip all compute scripts
-  python p100_evaluation.py --no_compute
-
-  # Skip specific compute scripts (accuracy and throughput)
-  python p100_evaluation.py --no_compute accuracy throughput
-
-  # Skip only tradeoff compute scripts
-  python p100_evaluation.py --no_compute tradeoff
-        """
+        description="Run the test evaluation pipeline."
     )
     parser.add_argument(
-        '--no_compute',
-        nargs='*',
-        metavar='TYPE',
-        help='Skip compute scripts. If specified without arguments, skip all *_compute.py files. '
-             'If arguments provided (e.g., accuracy, throughput, tradeoff), skip *_{TYPE}_compute.py files.'
+        "--no-sota",
+        action="store_true",
+        default=False,
+        help="Skip SOTA recomputation scripts (p140–p150).",
     )
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--valid', action='store_true')
-    group.add_argument('--test', action='store_true')
     return parser.parse_args()
 
 
@@ -63,8 +49,8 @@ def get_evaluation_scripts() -> List[str]:
                 number_str = filename.split('_')[0][1:]  # Remove 'p' prefix
                 number = int(number_str)
 
-                # Include files in range [111, 201]
-                if 110 <= number <= 201:
+                # Include files in range [110, 201], skipping permanently excluded numbers.
+                if 110 <= number <= 201 and number not in ALWAYS_SKIP_NUMBERS:
                     evaluation_scripts.append(filename)
             except (ValueError, IndexError):
                 # Skip files that don't match the expected pattern
@@ -104,7 +90,7 @@ def should_skip_script(filename: str, no_compute_args: List[str]) -> bool:
     return False
 
 
-def execute_script(script_path: str, extra_args: list[str]) -> int:
+def execute_script(script_path: str) -> int:
     # Print a section header so each script boundary is easy to spot in the log.
     print(f"\n{'='*80}")
     print(f"Executing: {os.path.basename(script_path)}")
@@ -113,7 +99,7 @@ def execute_script(script_path: str, extra_args: list[str]) -> int:
     try:
         # Execute the script using subprocess, forwarding any extra CLI flags.
         result = subprocess.run(
-            [sys.executable, script_path, *extra_args],
+            [sys.executable, script_path, '--test'],
             check=False  # Don't raise exception on non-zero exit
         )
 
@@ -129,14 +115,20 @@ def execute_script(script_path: str, extra_args: list[str]) -> int:
         return 1
 
 
-def main(args):
-    print("Starting evaluation pipeline execution")
+def main():
+    args = parse_args()
 
-    # Resolve the single videoset flag to forward to child scripts.
-    videoset_flag = '--test' if args.test else '--valid'
+    print("Starting evaluation pipeline execution")
 
     # Discover all evaluation scripts in the configured range.
     scripts = get_evaluation_scripts()
+
+    # Drop SOTA scripts (p140–p150) when --no-sota is requested.
+    if args.no_sota:
+        scripts = [
+            f for f in scripts
+            if int(f.split('_')[0][1:]) not in SOTA_RANGE
+        ]
 
     if not scripts:
         print("ERROR: No evaluation scripts found in range p111-p201")
@@ -144,47 +136,20 @@ def main(args):
 
     print(f"Found {len(scripts)} evaluation scripts")
 
-    # Determine which scripts to skip based on --no_compute.
-    scripts_to_execute = []
-    scripts_to_skip = []
+    if args.no_sota:
+        print("NOTE: SOTA scripts (p140–p150) are disabled via --no-sota")
 
-    if args.no_compute is not None:
-        # --no_compute was specified (either with or without arguments).
-        for script in scripts:
-            if should_skip_script(script, args.no_compute):
-                scripts_to_skip.append(script)
-            else:
-                scripts_to_execute.append(script)
-
-        if scripts_to_skip:
-            print(f"\nSkipping {len(scripts_to_skip)} compute script(s):")
-            for script in scripts_to_skip:
-                print(f"  - {script}")
-    else:
-        # No --no_compute specified; execute all scripts.
-        scripts_to_execute = scripts
-
-    if not scripts_to_execute:
-        print("\nNo scripts to execute after filtering")
-        return
-
-    print(f"\nExecuting {len(scripts_to_execute)} script(s):")
-    for script in scripts_to_execute:
+    print(f"\nExecuting {len(scripts)} script(s):")
+    for script in scripts:
         print(f"  - {script}")
 
-    # Scripts in the p14x range are SOTA evaluation scripts that don't accept videoset flags.
-    SKIP_VIDEOSET_FLAGS_RANGE = range(140, 150)
-
-    # Execute scripts in order, forwarding the videoset flag to each child.
+    # Execute scripts in order.
     script_dir = os.path.dirname(os.path.abspath(__file__))
     failed_scripts = []
 
-    for script_name in scripts_to_execute:
+    for script_name in scripts:
         script_path = os.path.join(script_dir, script_name)
-        # Determine whether this script accepts the videoset flag.
-        script_number = int(script_name.split('_')[0][1:])
-        extra_args = [videoset_flag] if script_number not in SKIP_VIDEOSET_FLAGS_RANGE else []
-        exit_code = execute_script(script_path, extra_args)
+        exit_code = execute_script(script_path)
 
         if exit_code != 0:
             failed_scripts.append((script_name, exit_code))
@@ -194,9 +159,8 @@ def main(args):
     print("EVALUATION PIPELINE SUMMARY")
     print(f"{'='*80}")
     print(f"Total scripts: {len(scripts)}")
-    print(f"Executed: {len(scripts_to_execute)}")
-    print(f"Skipped: {len(scripts_to_skip)}")
-    print(f"Succeeded: {len(scripts_to_execute) - len(failed_scripts)}")
+    print(f"Executed: {len(scripts)}")
+    print(f"Succeeded: {len(scripts) - len(failed_scripts)}")
     print(f"Failed: {len(failed_scripts)}")
 
     if failed_scripts:
@@ -210,4 +174,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()

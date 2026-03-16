@@ -43,6 +43,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Calculate HOTA scores for OTIF and LEAP tracking results')
     parser.add_argument('--no_parallel', action='store_true', default=False,
                         help='Whether to disable parallel processing')
+    parser.add_argument('--test', action='store_true', default=False,
+                        help='Process test videoset')
     return parser.parse_args()
 
 
@@ -199,6 +201,8 @@ def build_sota_tasks(dataset: str, system: str) -> list[tuple[int, list[str], st
 
 
 def main(args):
+    assert args.test, "This script only supports the test videoset"
+
     # Log the configured datasets before SOTA evaluation starts.
     print(f"Starting OTIF and LEAP tracking accuracy evaluation for datasets: {DATASETS}")
 

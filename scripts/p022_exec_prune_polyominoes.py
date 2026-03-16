@@ -147,6 +147,9 @@ def process_video(
     assert max_sampling_distance.shape == (grid_height, grid_width), \
         f"Max sampling rate shape {max_sampling_distance.shape} doesn't match grid ({grid_height}, {grid_width})"
     
+    max_sampling_distance //= sample_rate
+    max_sampling_distance = np.maximum(max_sampling_distance, 1)
+    
     # Progress update
     description = f"{video} {tile_size:>3} sr{sample_rate} {classifier} {tracker} {tracking_accuracy_threshold}"
     command_queue.put((device, {

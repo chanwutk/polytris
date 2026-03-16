@@ -206,7 +206,7 @@ def interpolate_pareto_line(pareto_df: pd.DataFrame, x_col: str, y_col: str,
 
 def compute_pareto_fronts_by_group(df: pd.DataFrame, group_cols: list[str],
                                    x_col: str, y_col: str,
-                                   num_points: int = 8) -> pd.DataFrame:
+                                   num_points: int = 10) -> pd.DataFrame:
     """
     Compute Pareto fronts for each group in the DataFrame.
 

@@ -31,6 +31,7 @@ def parse_args():
     group.add_argument('--test', action='store_true')
     return parser.parse_args()
 
+
 # Define fixed system-to-color categories for deterministic chart encoding.
 SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
 
