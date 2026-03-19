@@ -7,9 +7,6 @@ if TYPE_CHECKING:
     import numpy as np
 
 
-ILP_SOLVER_TIME_LIMIT_SECONDS = 0.5
-
-
 class ILPResult(NamedTuple):
     """Return value of solve_ilp, bundling the solution with build and solve timings."""
     selected: set[tuple[int, int]]
@@ -22,7 +19,8 @@ def solve_ilp(
     polyomino_lengths: list[list[int]],
     max_sampling_distance: "np.ndarray",
     grid_height: int,
-    grid_width: int
+    grid_width: int,
+    time_limit_seconds: float = 0.5,
 ) -> ILPResult:
     """
     Solve integer linear program to select minimum set of polyominoes.
@@ -33,6 +31,7 @@ def solve_ilp(
         max_sampling_distance: 2D array [grid_height, grid_width] of max sampling distance per tile
         grid_height: Height of the grid
         grid_width: Width of the grid
+        time_limit_seconds: Maximum solver wall-clock time in seconds
 
     Returns:
         ILPResult with selected polyominoes and build/solve timings in milliseconds
@@ -51,8 +50,8 @@ def solve_ilp(
     # Create optimization model within the managed environment.
     model = gurobipy.Model("MinCells", env=env)
 
-    # Set time limit to match the previous solver configuration.
-    model.Params.TimeLimit = ILP_SOLVER_TIME_LIMIT_SECONDS
+    # Set time limit for the optimizer to the caller-provided value.
+    model.Params.TimeLimit = time_limit_seconds
 
     # Create variables: x[b, k] = 1 if polyomino k in frame b is selected
     x = {}

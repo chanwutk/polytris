@@ -316,7 +316,7 @@ Collage = list[PolyominoPosition]
 def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
              sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
              tracker: str | None, tracking_accuracy_threshold: float | None,
-             threshold: float, mode: PackMode, gpu_id: int, command_queue: mp.Queue):
+             threshold: float, mode: PackMode):
     """
     Compress a single video by batch processing all sampled frames at once using pack_all.
 
@@ -332,14 +332,9 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         tracker: Tracker name for upstream pruning
         tracking_accuracy_threshold: Accuracy threshold for pruning (None = no pruning)
         threshold: Threshold for classification probability
-        gpu_id: GPU ID to use for processing
-        command_queue: Queue for progress updates
+        mode: Packing mode
     """
-    device = f'cuda:{gpu_id}'
-    video_name = video
     video_path = store.dataset(dataset, videoset, video)
-    # Build a compact description string once so progress and skip logs are consistent.
-    description = f"{dataset} {video_name.split('.')[0]} {tilesize:>3} {classifier[:4]} {tilepadding[:4]} s{scale_to_percent(canvas_scale)}"
 
     # Load classification results from either p022 (pruned) or p020/p021 (unpruned).
     try:
@@ -445,8 +440,6 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         batch_size = 1
         num_batches = len(polyominoes_stacks)
 
-    command_queue.put((device, {'description': description + ' packing', 'completed': 0, 'total': num_batches}))
-
     # Initialize empty list to store all collages from all batches
     collages = []
     total_pack_time = 0.0
@@ -494,14 +487,10 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
             'runtime': format_time(pack_batch=batch_pack_time)
         })
 
-        # Update progress
-        command_queue.put((device, {'description': description + ' packing', 'completed': batch_idx + 1}))
-
     # # Record total packing time
     # timing_data.append({'step': 'pack_all_total', 'runtime': format_time(pack_all_total=total_pack_time)})
 
     # Step 3: Read ONLY sampled frames from video (only frames in results)
-    command_queue.put((device, {'description': description + ' reading', 'completed': 0, 'total': len(results)}))
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     # Create set of sampled frame indices for fast lookup
@@ -509,8 +498,6 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     # Create mapping from absolute frame index to frame data
     # This allows us to access frames by their absolute index in the original video
     frame_idx_to_frame: dict[int, np.ndarray] = {}
-    mod = max(1, len(results) // 20)
-    frames_read = 0
 
     for idx in range(num_frames_total):
         ret, frame = cap.read()
@@ -521,17 +508,12 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         if idx in sampled_indices_set:
             assert dtypes.is_np_image(frame), frame.shape
             frame_idx_to_frame[idx] = frame
-            frames_read += 1
-            if frames_read % mod == 0:
-                command_queue.put((device, {'description': description + ' reading',
-                                           'completed': frames_read}))
 
     assert len(frame_idx_to_frame) == len(results), f"Expected {len(results)} sampled frames, got {len(frame_idx_to_frame)}"
     assert cap.read()[0] is False, "Expected no more frames"
     cap.release()
 
     # Step 4: Render and save each collage
-    command_queue.put((device, {'description': description + ' rendering', 'completed': 0, 'total': len(collages)}))
 
     # Build source grid row indices to precompute source tile pixel boundaries.
     src_grid_rows = np.arange(src_grid_height, dtype=np.int32)
@@ -559,7 +541,6 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     # Precompute destination column ends as exact fixed-size tile boundaries.
     dst_grid_x_ends = dst_grid_x_starts + tilesize
 
-    mod = max(1, len(collages) // 20)
     for collage_idx, collage in enumerate(collages):
         assert len(collage) > 0, f"Expected at least one polyomino in collage {collage_idx}"
         step_times = {}
@@ -667,10 +648,6 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
 
         timing_data.append({'step': 'process_collage', 'runtime': format_time(**step_times)})
 
-        # Update progress
-        if collage_idx % mod == 0:
-            command_queue.put((device, {'description': description + ' rendering', 'completed': collage_idx + 1}))
-
     # # Free polyomino stacks
     # print('free polyominoes')
     # step_start = (time.time_ns() / 1e6)
@@ -688,7 +665,26 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         for data in timing_data:
             f.write(json.dumps(data) + '\n')
 
-    command_queue.put((device, {'description': description + ' done', 'completed': len(collages)}))
+
+def compress_all(dataset: str, videoset: str, videos: list[str], classifier: str, tilesize: int,
+                 sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+                 tracker: str | None, tracking_accuracy_threshold: float | None,
+                 threshold: float, mode: PackMode, gpu_id: int, command_queue: mp.Queue):
+    device = f'cuda:{gpu_id}'
+    # Build a human-readable description for the progress bar.
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
+                                tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
+                                tracking_accuracy_threshold=tracking_accuracy_threshold)
+    description = f"{dataset} {param_str}"
+    # Report initial progress: 0 of N videos done.
+    command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
+    # Iterate over all videos in the split for this parameter combination.
+    for i, video in enumerate(videos):
+        compress(dataset, videoset, video, classifier, tilesize, sample_rate,
+                 tilepadding, canvas_scale, tracker, tracking_accuracy_threshold,
+                 threshold, mode)
+        # Advance the progress bar by one unit after each video completes.
+        command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 
 
 def main(args):
@@ -748,14 +744,14 @@ def main(args):
 
         # Get all video files from the dataset directory
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-        for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
-            sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
+        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
+            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
             for tracker in [None] if threshold is None else TRACKERS:
                 # Skip parameter combos not on the Pareto front during the test pass.
                 combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
-                funcs.append(partial(compress, dataset, videoset, video, classifier, tilesize, sample_rate,
+                funcs.append(partial(compress_all, dataset, videoset, sorted(videos), classifier, tilesize, sample_rate,
                                      tilepadding, canvas_scale, tracker, threshold, prediction_threshold, mode))
 
     print(f"Created {len(funcs)} tasks to process")

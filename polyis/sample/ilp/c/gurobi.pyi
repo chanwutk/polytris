@@ -7,6 +7,7 @@ def solve_ilp(
     max_sampling_distance_arr: np.ndarray,
     grid_height: int,
     grid_width: int,
+    time_limit_seconds: float = 0.1,
 ) -> ILPResult:
     """
     Solve the polyomino-pruning ILP using the Gurobi C API.
@@ -47,6 +48,7 @@ def solve_ilp(
             mandatory bridge constraint is inserted for tile ``(n, m)``.
         grid_height: Number of tile rows.
         grid_width: Number of tile columns.
+        time_limit_seconds: Maximum solver wall-clock time in seconds.
 
     Returns:
         ILPResult with the set of selected ``(frame, polyomino_id)`` pairs and

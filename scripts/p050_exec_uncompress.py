@@ -27,6 +27,13 @@ TRACKERS: list[str] = CONFIG['EXEC']['TRACKERS']
 TRACKING_ACCURACY_THRESHOLDS: list[float] = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Unpack compressed detections from 040_exec_detect.py')
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--valid', action='store_true')
+    return parser.parse_args()
+
+
 def load_mapping_file(index_map_path: str, offset_lookup_path: str):
     """
     Load mapping file that contains the index_map and offset_lookup for unpacking.
@@ -155,7 +162,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
 def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
            sample_rate: int, tilepadding: str, canvas_scale: float, tracker: str | None,
-           tracking_accuracy_threshold: float | None, gpu_id: int, command_queue: mp.Queue):
+           tracking_accuracy_threshold: float | None):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
@@ -170,10 +177,7 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
         canvas_scale (float): Canvas scale used for compression outputs
         tracker (str): Tracker name for upstream pruning
         tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
-        gpu_id (int): GPU ID to use for processing
-        command_queue (mp.Queue): Queue for progress updates
     """
-    device = f'cuda:{gpu_id}'
     # Build the shared key used by all 03x/04x/05x stage folders.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                 tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
@@ -222,10 +226,6 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
     with open(detections_file, 'r') as f, open(runtime_file, 'w') as fr:
         # Process each detection file
         contents = f.readlines()
-        description = f"{dataset}/{video} {tilesize:>3} {classifier:>{max(len(c) for c in CLASSIFIERS)}} {tilepadding}"
-        kwargs = {'completed': 0, 'total': len(contents), 'description': description}
-        mod = max(1, int(len(contents) * 0.1))
-        command_queue.put((device, kwargs))
         timer, flush = create_timer(fr)
         for idx, line in enumerate(contents):
             content = json.loads(line)
@@ -290,12 +290,6 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
             for frame_idx, bboxes in frame_detections.items():
                 all_frame_detections[frame_idx].extend(bboxes)
 
-            if idx % mod == 0:
-                command_queue.put((device, {'completed': idx + 1,
-                                            'description': description,
-                                            'total': len(contents)}))
-            flush()
-
         with timer('sort_frames'):
             # Save unpacked detections organized by frame
             # Sort frames by index
@@ -309,11 +303,23 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
             f.write(json.dumps({ 'frame_idx': frame_idx, 'bboxes': bboxes }) + '\n')
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Unpack compressed detections from 040_exec_detect.py')
-    parser.add_argument('--test', action='store_true')
-    parser.add_argument('--valid', action='store_true')
-    return parser.parse_args()
+def uncompress_all(dataset: str, videoset: str, videos: list[str], classifier: str, tilesize: int,
+                   sample_rate: int, tilepadding: str, canvas_scale: float, tracker: str | None,
+                   tracking_accuracy_threshold: float | None, gpu_id: int, command_queue: mp.Queue):
+    device = f'cuda:{gpu_id}'
+    # Build a human-readable description for the progress bar.
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
+                                tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
+                                tracking_accuracy_threshold=tracking_accuracy_threshold)
+    description = f"{dataset} {param_str}"
+    # Report initial progress: 0 of N videos done.
+    command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
+    # Iterate over all videos in the split for this parameter combination.
+    for i, video in enumerate(videos):
+        unpack(dataset, videoset, video, classifier, tilesize, sample_rate,
+               tilepadding, canvas_scale, tracker, tracking_accuracy_threshold)
+        # Advance the progress bar by one unit after each video completes.
+        command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 
 
 def main():
@@ -369,17 +375,18 @@ def main():
         videos = [f for f in os.listdir(videosets_dir) if f.endswith('.mp4')]
         print(f"Found {len(videos)} video files in dataset {dataset}/{videoset}")
 
-        for video, classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
-            sorted(videos), CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
+        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
+            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
             for tracker in [None] if threshold is None else TRACKERS:
                 # Skip parameter combos not on the Pareto front during the test pass.
                 combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
-                funcs.append(partial(unpack, dataset, videoset, video, classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold))
+                funcs.append(partial(uncompress_all, dataset, videoset, sorted(videos), classifier,
+                                     tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold))
 
     print(f"Created {len(funcs)} tasks to process")
-    ProgressBar(num_workers=int(mp.cpu_count() * 0.8), num_tasks=len(funcs)).run_all(funcs)
+    ProgressBar(num_workers=int(mp.cpu_count() // 2), num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 
 

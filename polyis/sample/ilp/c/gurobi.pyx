@@ -94,15 +94,13 @@ cdef inline double _now_ms():
 from polyis.sample.ilp.gurobi import ILPResult
 
 
-DEF ILP_SOLVER_TIME_LIMIT_SECONDS = 0.5
-
-
 def solve_ilp(
     cnp.ndarray tile_to_polyomino_id_arr not None,
     list polyomino_lengths,
     cnp.ndarray max_sampling_distance_arr not None,
     int grid_height,
     int grid_width,
+    double time_limit_seconds = 0.5,
 ) -> ILPResult:
     """
     Solve the polyomino-pruning ILP using the Gurobi C API.
@@ -113,6 +111,7 @@ def solve_ilp(
         max_sampling_distance_arr: float64 array [grid_height, grid_width]
         grid_height: grid height
         grid_width: grid width
+        time_limit_seconds: maximum solver wall-clock time in seconds
 
     Returns:
         ILPResult(selected, build_ms, solve_ms)
@@ -206,8 +205,8 @@ def solve_ilp(
     free(ub_arr);   ub_arr   = NULL
     free(type_arr); type_arr = NULL
 
-    # Set per-model parameters via the model's own environment.
-    GRBsetdblparam(GRBgetenv(model), "TimeLimit", ILP_SOLVER_TIME_LIMIT_SECONDS)
+    # Set per-model time limit via the model's own environment.
+    GRBsetdblparam(GRBgetenv(model), "TimeLimit", time_limit_seconds)
 
     # Flush pending variable additions so indices are stable.
     GRBupdatemodel(model)

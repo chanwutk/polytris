@@ -40,6 +40,9 @@ def parse_args():
     )
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--valid', action='store_true')
+    parser.add_argument('--time-limit', type=float, default=None,
+                        dest='time_limit',
+                        help='ILP solver wall-clock time limit in seconds (default: 0.5)')
     return parser.parse_args()
 
 
@@ -89,8 +92,7 @@ def process_video(
     sample_rate: int,
     tracker: str,
     tracking_accuracy_threshold: float,
-    gpu_id: int,
-    command_queue: mp.Queue,
+    time_limit: float | None,
 ):
     """
     Process a single video to group and prune polyominoes via ILP.
@@ -104,13 +106,16 @@ def process_video(
         sample_rate: Frame sampling stride used by upstream classification
         tracker: Tracker name
         tracking_accuracy_threshold: Accuracy threshold (float, e.g. 0.90)
-        gpu_id: GPU ID (for progress tracking)
-        command_queue: Queue for progress updates
+        time_limit: ILP solver wall-clock time limit in seconds (None for default 0.5s)
     """
+    # Assert that classification results exist before attempting to load.
+    score_path = cache.exec(dataset, 'relevancy', video,
+                            f'{classifier}_{tile_size}_{sample_rate}', 'score', 'score.jsonl')
+    assert os.path.exists(score_path), f"Score path {score_path} does not exist"
+
     # Resolve float threshold to index in max_rate_table.npy
     accuracy_idx = _ACCURACY_THRESHOLD_TO_IDX[tracking_accuracy_threshold]
-    device = f'cuda:{gpu_id}'
-    
+
     # Load classification results
     print(f"[{video}] Loading classification results...", flush=True)
     raw_results = load_classification_results(
@@ -149,14 +154,6 @@ def process_video(
     max_sampling_distance //= sample_rate
     max_sampling_distance = np.maximum(max_sampling_distance, 1)
     
-    # Progress update
-    description = f"{video} {tile_size:>3} sr{sample_rate} {classifier} {tracker} {tracking_accuracy_threshold}"
-    command_queue.put((device, {
-        'description': description,
-        'completed': 0,
-        'total': 3  # Group, Solve ILP, Save
-    }))
-    
     step_times = {}
 
     # Step 1: Prepare bitmaps
@@ -176,7 +173,6 @@ def process_video(
     tile_to_polyomino_id = np.asarray(tile_to_polyomino_id)  # convert memoryview -> numpy array
     step_times['group_tiles'] = (time.time_ns() / 1e6) - step_start
     print(f"[{video}] Step 2 done: group_tiles={step_times['group_tiles']:.1f}ms", flush=True)
-    command_queue.put((device, {'completed': 1}))
     
     # Step 3: Solve ILP to prune polyominoes
     total_polyominoes = sum(len(p) for p in polyomino_lengths)
@@ -188,13 +184,13 @@ def process_video(
         polyomino_lengths,
         max_sampling_distance,
         grid_height,
-        grid_width
+        grid_width,
+        time_limit_seconds=time_limit or 0.1,
     )
     selected = ilp_result.selected
     step_times['build_ilp'] = ilp_result.build_ms
     step_times['solve_ilp'] = ilp_result.solve_ms
     print(f"[{video}] Step 3 done: build_ilp={step_times['build_ilp']:.1f}ms solve_ilp={step_times['solve_ilp']:.1f}ms ({len(selected)} polyominoes selected)", flush=True)
-    command_queue.put((device, {'completed': 2}))
     
     # Step 4: Convert selected polyominoes back to binary grids (vectorized)
     print(f"[{video}] Step 4: Extracting pruned grids...", flush=True)
@@ -214,16 +210,23 @@ def process_video(
     step_times['extract_grids'] = (time.time_ns() / 1e6) - step_start
     print(f"[{video}] Step 4 done: extract_grids={step_times['extract_grids']:.1f}ms", flush=True)
     
-    # Create output directory using build_param_str for consistent naming
-    param_str = build_param_str(classifier=classifier, tilesize=tile_size,
-                                sample_rate=sample_rate,
+    # Create output directory using build_param_str for consistent naming.
+    # When a time limit is specified (i.e. the experiment mode), results go into a
+    # separate cache stage so they never overwrite the standard pipeline output.
+    param_str = build_param_str(classifier=classifier, tilesize=tile_size, sample_rate=sample_rate,
                                 tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
     output_dir = cache.exec(
         dataset, 'pruned-polyominoes', video,
         param_str
     )
+    if time_limit is not None:
+        output_dir = cache.exec(
+            dataset, 'pruned-polyominoes-tl', video,
+            param_str, f'tl{time_limit}'
+        )
+
     os.makedirs(output_dir, exist_ok=True)
-    
+
     score_dir = os.path.join(output_dir, 'score')
     os.makedirs(score_dir, exist_ok=True)
     
@@ -244,12 +247,37 @@ def process_video(
     # step_times['save_results'] = (time.time_ns() / 1e6) - step_start
     # print(f"[{video}] Step 5 done: save_results={step_times['save_results']:.1f}ms", flush=True)
 
-    # Save runtime data
+    # Save runtime data including the solver time limit used for this run.
     with open(runtime_path, 'w') as f:
-        f.write(json.dumps({'runtime': format_time(**step_times)}) + '\n')
+        f.write(json.dumps({'runtime': format_time(**step_times), 'time_limit': time_limit}) + '\n')
     
     print(f"[{video}] All steps complete!", flush=True)
-    command_queue.put((device, {'completed': 3}))
+
+
+def process_all(
+    dataset: str,
+    videoset: str,
+    videos: list[str],
+    classifier: str,
+    tile_size: int,
+    sample_rate: int,
+    tracker: str,
+    tracking_accuracy_threshold: float,
+    time_limit: float | None,
+    gpu_id: int,
+    command_queue: mp.Queue,
+):
+    device = f'cuda:{gpu_id}'
+    # Build a human-readable description for the progress bar.
+    description = f"{dataset} {classifier}_{tile_size} sr{sample_rate} {tracker} {tracking_accuracy_threshold}"
+    # Report initial progress: 0 of N videos done.
+    command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
+    # Iterate over all videos in the split for this parameter combination.
+    for i, video in enumerate(videos):
+        process_video(dataset, videoset, video, classifier, tile_size, sample_rate,
+                      tracker, tracking_accuracy_threshold, time_limit)
+        # Advance the progress bar by one unit after each video completes.
+        command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 
 
 def main():
@@ -282,6 +310,9 @@ def main():
         # Default to valid-only to avoid running the full grid on test unnecessarily.
         selected_videosets = ['valid']
 
+    # Solver time limit for this run (seconds).
+    time_limit: float | None = args.time_limit
+
     mp.set_start_method('spawn', force=True)
 
     # Build allowed-combo set for the test pass (None means no filtering applies).
@@ -296,24 +327,21 @@ def main():
     print(f"sample_rates: {SAMPLE_RATES}")
     print(f"trackers: {TRACKERS}")
     print(f"tracking_accuracy_thresholds: {TRACKING_ACCURACY_THRESHOLDS}")
+    print(f"time_limit: {time_limit}s")
     for dataset, videoset in itertools.product(DATASETS, selected_videosets):
         videoset_dir = store.dataset(dataset, videoset)
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-        for video, classifier, tile_size, sample_rate in itertools.product(sorted(videos), CLASSIFIERS, TILE_SIZES, SAMPLE_RATES):
-            score_path = cache.exec(dataset, 'relevancy', video,
-                                    f'{classifier}_{tile_size}_{sample_rate}', 'score', 'score.jsonl')
-            assert os.path.exists(score_path), f"Score path {score_path} does not exist"
-
+        for classifier, tile_size, sample_rate in itertools.product(CLASSIFIERS, TILE_SIZES, SAMPLE_RATES):
             # Iterate over all tracker × threshold combinations for each sample_rate.
             for tracker, threshold in itertools.product(TRACKERS, TRACKING_ACCURACY_THRESHOLDS):
                 # Skip parameter combos not on the Pareto front during the test pass.
                 combo = (classifier, tile_size, sample_rate, tracker, threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
-                func = partial(process_video, dataset, videoset, video, classifier,
-                               tile_size, sample_rate, tracker, threshold)
+                func = partial(process_all, dataset, videoset, sorted(videos), classifier,
+                               tile_size, sample_rate, tracker, threshold, time_limit)
                 funcs.append(func)
     
     print(f"Created {len(funcs)} tasks to process")

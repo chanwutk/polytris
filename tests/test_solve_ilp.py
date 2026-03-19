@@ -1,11 +1,7 @@
 import numpy as np
-import pytest
 
-import gurobipy  # noqa: F401
 
 from polyis.sample.ilp.gurobi import solve_ilp
-
-# pytestmark = pytest.mark.skipif(not HAS_GUROBI, reason="gurobipy not available or no license")
 
 
 def test_solve_ilp_selects_first_and_last_frame():
@@ -104,3 +100,45 @@ def test_solve_ilp_single_frame_no_constraints():
 
     # No constraints → minimizer selects nothing (objective drives all vars to 0).
     assert selected == set()
+
+
+def test_solve_ilp_default_time_limit():
+    # Verify the default time limit equals the module-level constant.
+    import inspect
+    sig = inspect.signature(solve_ilp)
+    default = sig.parameters["time_limit_seconds"].default
+    assert default == 0.5
+
+
+def test_solve_ilp_explicit_time_limit_produces_valid_result():
+    # Passing an explicit time_limit_seconds should still yield a correct solution.
+    tile_to_polyomino_id = np.zeros((3, 1, 1), dtype=np.int16)
+    polyomino_lengths = [[1], [100], [1]]
+    max_sampling_distance = np.array([[2.0]])
+
+    # Use a generous limit so the optimal solution is still found.
+    result = solve_ilp(
+        tile_to_polyomino_id, polyomino_lengths, max_sampling_distance, 1, 1,
+        time_limit_seconds=30.0,
+    )
+
+    # Optimal: frames 0 and 2 only (total 2 cells).
+    assert (0, 0) in result.selected
+    assert (2, 0) in result.selected
+    assert (1, 0) not in result.selected
+
+
+def test_solve_ilp_very_short_time_limit_returns_result():
+    # Even with an extremely short time limit the function must return without error.
+    # The solution may be suboptimal or empty, but no exception should be raised.
+    tile_to_polyomino_id = np.zeros((3, 1, 1), dtype=np.int16)
+    polyomino_lengths = [[1], [1], [1]]
+    max_sampling_distance = np.array([[10.0]])
+
+    result = solve_ilp(
+        tile_to_polyomino_id, polyomino_lengths, max_sampling_distance, 1, 1,
+        time_limit_seconds=1e-6,
+    )
+
+    # Result must be a set (possibly empty if the solver found nothing in time).
+    assert isinstance(result.selected, set)

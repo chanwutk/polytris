@@ -151,6 +151,32 @@ def test_compare_objective_medium(seed: int):
     )
 
 
+def test_compare_explicit_time_limit():
+    """All three solvers must accept an explicit time_limit_seconds and agree on objective."""
+    tile_to_polyomino_id = np.zeros((3, 2, 2), dtype=np.int16)
+    polyomino_lengths = [[1, 2], [3, 1], [2, 1]]
+    max_sampling_distance = np.full((2, 2), 2.0)
+
+    # Use a generous limit so the optimal solution is found by every backend.
+    # Note: the Cython solver uses different parameter names (_arr suffix) so we
+    # call all three with positional arguments to keep the calls uniform.
+    positional_args = (tile_to_polyomino_id, polyomino_lengths, max_sampling_distance, 2, 2)
+    time_limit = 30.0
+
+    selected_ref = solve_ilp_pulp(*positional_args, time_limit_seconds=time_limit)
+    selected_py  = solve_ilp_gurobi(*positional_args, time_limit_seconds=time_limit).selected
+    selected_cy  = solve_ilp_c(*positional_args, time_limit_seconds=time_limit).selected
+
+    obj_ref = compute_objective(selected_ref, polyomino_lengths)
+    obj_py  = compute_objective(selected_py,  polyomino_lengths)
+    obj_cy  = compute_objective(selected_cy,  polyomino_lengths)
+
+    assert obj_py == obj_ref, f"gurobipy objective {obj_py} != pulp objective {obj_ref}"
+    assert obj_cy == obj_ref, f"cython objective {obj_cy} != pulp objective {obj_ref}"
+    assert selected_py == selected_ref
+    assert selected_cy == selected_ref
+
+
 def test_compare_mandatory_bridge_instance():
     """Deterministic instance with a forced mandatory bridge — both solvers must agree."""
     # 4 frames, 1x1 grid. Gap between frames 1 and 3 (gap=2) exceeds max_distance=1.

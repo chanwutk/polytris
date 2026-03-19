@@ -10,6 +10,7 @@ EXEC_STAGE_MAP = {
     'groundtruth': '003_groundtruth',
     'relevancy': '020_relevancy',
     'pruned-polyominoes': '022_pruned_polyominoes',
+    'pruned-polyominoes-tl': '022t_pruned_polyominoes_timelimit',
     'comp-frames': '033_compressed_frames',
     'comp-dets': '040_compressed_detections',
     'ucomp-dets': '050_uncompressed_detections',

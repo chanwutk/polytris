@@ -1260,18 +1260,18 @@ class Timer:
 def progress_bars(command_queue: "mp.Queue", num_workers: int, num_tasks: int,
                   refresh_per_second: float = 1, script_name: str = ""):
     with progress.Progress(
-        "[progress.description]{task.description}",
-        progress.BarColumn(),
-        "[progress.percentage]{task.percentage:>3.0f}%",
-        # progress.TimeRemainingColumn(),
-        progress.MofNCompleteColumn(),
         progress.TimeElapsedColumn(),
+        progress.MofNCompleteColumn(),
+        progress.BarColumn(),
+        # "[progress.percentage]{task.percentage:>3.0f}%",
+        # progress.TimeRemainingColumn(),
+        "[progress.description]{task.description}",
         refresh_per_second=refresh_per_second,
     ) as p:
         bars: dict[str, progress.TaskID] = {}
         task_id = script_name.split('_')[0]
         task_name = script_name.split('_', 2)[2][:-len('.py')]
-        task_str = f"[green]{num_tasks} tasks: {task_id} {task_name}"
+        task_str = f"[green]{task_id} {task_name}"
         overall_progress = p.add_task(task_str, total=num_tasks, completed=-num_workers)
         bars['overall'] = overall_progress
         for gpu_id in range(num_workers):

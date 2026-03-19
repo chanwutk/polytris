@@ -5,18 +5,15 @@ if TYPE_CHECKING:
     import numpy as np
 
 
-ILP_SOLVER_TIME_LIMIT_SECONDS = 10
-
-
-def build_ilp_solver():
+def build_ilp_solver(time_limit_seconds: float):
     # Fail fast with an actionable error when the Gurobi backend is missing from PuLP.
     if not hasattr(pulp, 'GUROBI'):
         raise RuntimeError(
             "PuLP Gurobi solver is unavailable. Install `gurobipy` and configure a valid Gurobi license."
         )
 
-    # Use the in-process Gurobi backend and keep the existing solve time limit.
-    return pulp.GUROBI(msg=False, timeLimit=ILP_SOLVER_TIME_LIMIT_SECONDS)
+    # Use the in-process Gurobi backend with the caller-provided time limit.
+    return pulp.GUROBI(msg=False, timeLimit=time_limit_seconds)
 
 
 def solve_ilp(
@@ -24,7 +21,8 @@ def solve_ilp(
     polyomino_lengths: list[list[int]],
     max_sampling_distance: "np.ndarray",
     grid_height: int,
-    grid_width: int
+    grid_width: int,
+    time_limit_seconds: float = 0.5,
 ) -> set[tuple[int, int]]:
     """
     Solve integer linear program to select minimum set of polyominoes.
@@ -35,6 +33,7 @@ def solve_ilp(
         max_sampling_distance: 2D array [grid_height, grid_width] of max sampling distance per tile
         grid_height: Height of the grid
         grid_width: Width of the grid
+        time_limit_seconds: Maximum solver wall-clock time in seconds
 
     Returns:
         Set of (frame_idx, polyomino_id) tuples representing selected polyominoes
@@ -98,8 +97,8 @@ def solve_ilp(
             prob += x[(b_first, k_first)] == 1
             prob += x[(b_last, k_last)] == 1
 
-    # Build one solver for this problem, then close it to release WLS resources promptly.
-    solver = build_ilp_solver()
+    # Build one solver for this problem using the caller-provided time limit.
+    solver = build_ilp_solver(time_limit_seconds)
     # Solve the ILP with the configured Gurobi backend and a bounded solve time.
     prob.solve(solver)
     # Dispose of the solver model after the solve so the Gurobi environment can clean up.
