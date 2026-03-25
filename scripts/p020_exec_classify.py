@@ -375,10 +375,13 @@ def classify_all(dataset: str, videoset: str, videos: list[str], classifier: str
     warmup_batch = [first_frames[idx] for idx in sampled_indices[warmup_start:]]
     warmup_indices = sampled_indices[warmup_start:]
     warmup_prev = [first_frames[idx - 1] if idx > 0 else first_frames[idx + 1] for idx in warmup_indices]
+    # Warm up the model 16 times; report each iteration to the progress bar.
+    command_queue.put((device, {'completed': 0, 'total': 16, 'description': 'Warm up'}))
     with torch.no_grad():
-        for _ in range(16):
+        for warmup_i in range(16):
             classify_batch(grid_width, grid_height, positions, warmup_batch, warmup_prev, model,
                            tile_size, device, normalize_mean, normalize_std, always_relevant_mask)
+            command_queue.put((device, {'completed': warmup_i + 1, 'total': 16, 'description': 'Warm up'}))
     torch.cuda.synchronize()
 
     # Build a progress bar description from the optimization method selected.

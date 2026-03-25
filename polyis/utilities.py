@@ -187,41 +187,6 @@ def get_video_frame_count(dataset: str, video: str) -> int:
     return frame_count
 
 
-def get_source_video_frame_count(dataset: str, video: str) -> int:
-    # Normalize the dataset name by taking the part before the first '-' (e.g., 'caldot1-y05' → 'caldot1').
-    dataset = dataset.split('-')[0]
-
-    if (dataset, video) in source_video_frame_counts:
-        return source_video_frame_counts[(dataset, video)]
-
-    # Derive the split directory and strip the split prefix to get the source filename.
-    prefix_to_split = {'te': 'test', 'va': 'valid', 'tr': 'train'}
-    prefix = video[:2]
-    assert prefix in prefix_to_split, f"Unknown video prefix '{prefix}' in '{video}'"
-    split = prefix_to_split[prefix]
-
-    # Remove the 2-char split prefix and strip leading zeros from the numeric part
-    # (e.g., 'te01.mp4' → '1.mp4', 'te00.mp4' → '0.mp4').
-    stem, ext = os.path.splitext(video)
-    source_video = str(int(stem[2:])) + ext
-
-    # caldot and ams sources have an extra 'video/' subdirectory in their path.
-    if dataset.startswith('caldot') or dataset == 'ams':
-        video_path = os.path.join(SOURCE_DIR, dataset, split, 'video', source_video)
-    else:
-        video_path = os.path.join(SOURCE_DIR, dataset, split, source_video)
-    assert os.path.exists(video_path), f"Source video file not found: {video_path}"
-
-    cap = cv2.VideoCapture(video_path)
-    assert cap.isOpened(), f"Could not open source video {video_path}"
-
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    cap.release()
-
-    source_video_frame_counts[(dataset, video)] = frame_count
-    return frame_count
-
-
 def get_video_resolution(dataset: str, video: str) -> tuple[int, int]:
     """
     Get the resolution (width, height) of a video using OpenCV.

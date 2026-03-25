@@ -125,7 +125,7 @@ def join_accuracy_to_stat(dataset: str, system: str):
         tradeoff_df['sample_rate'] = 1
 
     # Scale runtime by the ratio of sampled to original frames saved by the transform stage.
-    tradeoff_df['time'] = tradeoff_df['runtime'] * tradeoff_df['adjustment_factor']
+    tradeoff_df['time'] = tradeoff_df['runtime']
 
     # Persist the native SOTA parameter columns alongside the split-aware metadata.
     output_csv_path = cache.sota(system, dataset, 'tradeoff.csv')

@@ -313,8 +313,10 @@ def detect_all(dataset: str, videos: list[str], classifier: str, tilesize: int,
     detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len(first_image_files))
 
     # Warm up the detector once using the first few frames of the first video.
+    warmup_starts = list(range(0, min(4, len(first_image_files)), batch_size))
+    command_queue.put((device, {'completed': 0, 'total': len(warmup_starts), 'description': 'Warm up'}))
     with torch.no_grad():
-        for batch_start in range(0, min(4, len(first_image_files)), batch_size):
+        for warmup_i, batch_start in enumerate(warmup_starts):
             batch_files = first_image_files[batch_start:batch_start + batch_size]
             warmup_images: list[polyis.dtypes.NPImage] = []
             for image_file in batch_files:
@@ -323,6 +325,7 @@ def detect_all(dataset: str, videos: list[str], classifier: str, tilesize: int,
                 assert polyis.dtypes.is_np_image(frame)
                 warmup_images.append(frame)
             polyis.models.detector.detect_batch(warmup_images, detector)
+            command_queue.put((device, {'completed': warmup_i + 1, 'total': len(warmup_starts), 'description': 'Warm up'}))
         torch.cuda.synchronize()
 
     # Report initial progress: 0 of N videos done.

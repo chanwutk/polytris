@@ -280,6 +280,9 @@ def main(args: argparse.Namespace):
 
         # Find all videos with uncompressed detection results
         videos = [f for f in os.listdir(videosets_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video in videos:
+            shutil.rmtree(cache.exec(dataset, 'ucomp-tracks', video), ignore_errors=True)
+
         for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold, tracker in itertools.product(
             CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS, TRACKERS):
             # Skip parameter combos not on the Pareto front during the test pass.

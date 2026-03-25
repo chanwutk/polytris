@@ -11,17 +11,19 @@ import pandas as pd
 
 from evaluation.manifests import build_split_video_manifest
 from polyis.io import cache
-from polyis.utilities import get_config, get_source_video_frame_count, register_tracked_detections, save_tracking_results
+from polyis.utilities import get_config, register_tracked_detections, save_tracking_results
 
 
 CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']
 
 DATASETS_IN_MAP = {
-    'caldot1-y05': 'caldot1_y5',
-    'caldot1-y11': 'caldot1_y11',
-    'caldot2-y05': 'caldot2_y5',
-    'caldot2-y11': 'caldot2_y11',
+    'caldot1-y05': 'caldot1-y5',
+    'caldot1-y11': 'caldot1-y11',
+    'caldot2-y05': 'caldot2-y5',
+    'caldot2-y11': 'caldot2-y11',
+    'ams-y05': 'amsterdam-y5',
+    'ams-y11': 'amsterdam-y11',
 }
 
 
@@ -34,30 +36,17 @@ def parse_args():
     return parser.parse_args()
 
 
-def transform_tracking_json(input_json_path: str, output_jsonl_path: str, dataset: str, video: str) -> tuple[int, int, int]:
+def transform_tracking_json(input_json_path: str, output_jsonl_path: str, dataset: str, video: str):
     # Fail fast when the input tracking JSON is missing.
     assert os.path.exists(input_json_path), f"Input JSON file {input_json_path} does not exist"
 
     # Load the OTIF/LEAP tracking payload from disk.
     with open(input_json_path, 'r') as f:
-        otif_data: list[list[dict] | None] = json.load(f)
+        otif_data: list[list[dict] | None] | None = json.load(f)
 
     # Normalize null payloads to an empty list so downstream logic stays uniform.
     if otif_data is None:
         otif_data = []
-
-    # jnc datasets are always downsampled; no need to read the source video.
-    # Other datasets read the actual frame count to decide whether to downsample.
-    dataset_root = dataset.split('-')[0]
-    if dataset_root.startswith('jnc'):
-        sample_rate = 2
-        original_frame_count = len(otif_data)
-    else:
-        original_frame_count = get_source_video_frame_count(dataset, video)
-        sample_rate = 2 if original_frame_count > 1500 else 1
-
-    # Count how many OTIF output frames survive the downsampling step.
-    sampled_frame_count = sum(1 for i in range(len(otif_data)) if i % sample_rate == 0)
 
     # Create the parent directory before writing transformed tracking results.
     os.makedirs(os.path.dirname(output_jsonl_path), exist_ok=True)
@@ -65,7 +54,6 @@ def transform_tracking_json(input_json_path: str, output_jsonl_path: str, datase
     # Short-circuit empty inputs while still writing a valid empty JSONL file.
     if not otif_data:
         save_tracking_results({}, output_jsonl_path)
-        return sample_rate, original_frame_count, sampled_frame_count
 
     # Accumulate per-frame tracks in the JSONL format expected by the rest of the pipeline.
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
@@ -73,9 +61,6 @@ def transform_tracking_json(input_json_path: str, output_jsonl_path: str, datase
 
     # Convert each sampled OTIF/LEAP detection into our shared frame-track representation.
     for frame_idx, detections in enumerate(otif_data):
-        # Skip the unsampled frames when the sequence uses a synthetic sample-rate 2 export.
-        if frame_idx % sample_rate != 0:
-            continue
 
         # Register each detection in the common tracking accumulator.
         for detection in detections or []:
@@ -93,15 +78,13 @@ def transform_tracking_json(input_json_path: str, output_jsonl_path: str, datase
             # Append the converted detection to the shared frame/trajectory accumulators.
             register_tracked_detections(
                 [(left, top, right, bottom, int(track_id))],
-                frame_idx // sample_rate,
+                frame_idx,
                 frame_tracks,
                 trajectories,
             )
 
     # Persist the transformed tracking results in the shared JSONL format.
     save_tracking_results(frame_tracks, output_jsonl_path)
-
-    return sample_rate, original_frame_count, sampled_frame_count
 
 
 def dataset_name_in_sota(dataset: str) -> str:
@@ -253,19 +236,12 @@ def build_tracking_transform_manifest(system: str,
     return transform_df[['dataset', 'videoset', 'video', 'video_id', 'param_id', 'input_json_path', 'output_jsonl_path']]
 
 
-def transform_tracking_manifest(transform_df: pd.DataFrame) -> pd.DataFrame:
+def transform_tracking_manifest(transform_df: pd.DataFrame):
     # Keep the manifest local so the caller receives the derived sample-rate summary.
     transform_df = transform_df.copy()
     # Convert each validated raw tracking file to the shared JSONL format.
-    results = [
+    for row in transform_df.itertuples(index=False):
         transform_tracking_json(str(row.input_json_path), str(row.output_jsonl_path), str(row.dataset), str(row.video))
-        for row in transform_df.itertuples(index=False)
-    ]
-    transform_df['sample_rate_used'] = [r[0] for r in results]
-    transform_df['original_frames'] = [r[1] for r in results]
-    transform_df['sampled_frames'] = [r[2] for r in results]
-
-    return transform_df
 
 
 def setup_dataset_paths(sota_dir: str, dataset: str, system: str) -> tuple[str, str, str]:
@@ -289,42 +265,17 @@ def process_otif_dataset(sota_dir: str, dataset: str):
     dataset_in, sota_dataset_dir, output_dataset_dir = setup_dataset_paths(sota_dir, dataset, 'otif')
     # Resolve the raw OTIF stat CSV and tracking directory.
     stat_csv_input = os.path.join(sota_dataset_dir, f'otif_{dataset_in}.csv')
-    tracks_dir = os.path.join(sota_dataset_dir, f'otif_{dataset_in}_tracks')
+    tracks_dir = os.path.join(sota_dataset_dir)  # , f'otif_{dataset_in}_tracks')
     # Normalize the OTIF stat CSV to the shared schema.
     stat_df = normalize_otif_stat_csv(stat_csv_input)
     # Build the validated transform manifest for all configured test videos and param ids.
     transform_df = build_tracking_transform_manifest('otif', dataset, stat_df, tracks_dir)
     # Run the actual file-by-file tracking conversion step.
-    transformed_df = transform_tracking_manifest(transform_df)
-
-    # Compute the frame-count adjustment factor from unique per-video frame counts.
-    # Each video is counted once since frame counts are identical across param_ids.
-    video_frames_df = transformed_df.groupby('video', as_index=False)[['original_frames', 'sampled_frames']].first()
-    total_original_frames = video_frames_df['original_frames'].sum()
-    total_sampled_frames = video_frames_df['sampled_frames'].sum()
-    adjustment_factor = total_sampled_frames / total_original_frames if total_original_frames > 0 else 1.0
-
-    # Embed the adjustment factor in the stat CSV for downstream runtime normalization.
-    stat_df = stat_df.copy()
-    stat_df['adjustment_factor'] = adjustment_factor
+    transform_tracking_manifest(transform_df)
 
     # Persist the normalized OTIF stat CSV used by downstream evaluation scripts.
     stat_csv_output = os.path.join(output_dataset_dir, 'stat.csv')
     stat_df.to_csv(stat_csv_output, index=False)
-
-    # Log a compact transform summary for traceability.
-    sample_rate_summary = (
-        transformed_df[['video', 'sample_rate_used']]
-        .drop_duplicates()
-        .sort_values('video')
-        .to_dict('records')
-    )
-    sampled_video_count = sum(1 for r in sample_rate_summary if r['sample_rate_used'] > 1)
-    print(f"Processed OTIF dataset {dataset}: {len(transformed_df)} tracking files")
-    print(f"  Videos requiring downsampling: {sampled_video_count}/{len(sample_rate_summary)}")
-    print(f"  Sample-rate summary: {sample_rate_summary}")
-    print(f"  Frame-count adjustment factor: {adjustment_factor:.4f} ({total_sampled_frames}/{total_original_frames} frames)")
-    print(f"  Saved stat CSV: {stat_csv_output}")
 
 
 def process_leap_dataset(sota_dir: str, dataset: str):
@@ -332,42 +283,17 @@ def process_leap_dataset(sota_dir: str, dataset: str):
     dataset_in, sota_dataset_dir, output_dataset_dir = setup_dataset_paths(sota_dir, dataset, 'leap')
     # Resolve the raw LEAP stat CSV and tracking directory.
     stat_csv_input = os.path.join(sota_dataset_dir, f'leap_{dataset_in}.csv')
-    tracks_dir = os.path.join(sota_dataset_dir, f'leap_{dataset_in}_tracks')
+    tracks_dir = os.path.join(sota_dataset_dir)  # , f'leap_{dataset_in}_tracks')
     # Normalize the LEAP stat CSV to the shared schema.
     stat_df = normalize_leap_stat_csv(stat_csv_input)
     # Build the validated transform manifest for the fixed LEAP param id.
     transform_df = build_tracking_transform_manifest('leap', dataset, stat_df, tracks_dir)
     # Run the actual file-by-file tracking conversion step.
-    transformed_df = transform_tracking_manifest(transform_df)
-
-    # Compute the frame-count adjustment factor from unique per-video frame counts.
-    # Each video is counted once since frame counts are identical across param_ids.
-    video_frames_df = transformed_df.groupby('video', as_index=False)[['original_frames', 'sampled_frames']].first()
-    total_original_frames = video_frames_df['original_frames'].sum()
-    total_sampled_frames = video_frames_df['sampled_frames'].sum()
-    adjustment_factor = total_sampled_frames / total_original_frames if total_original_frames > 0 else 1.0
-
-    # Embed the adjustment factor in the stat CSV for downstream runtime normalization.
-    stat_df = stat_df.copy()
-    stat_df['adjustment_factor'] = adjustment_factor
+    transform_tracking_manifest(transform_df)
 
     # Persist the normalized LEAP stat CSV used by downstream evaluation scripts.
     stat_csv_output = os.path.join(output_dataset_dir, 'stat.csv')
     stat_df.to_csv(stat_csv_output, index=False)
-
-    # Log a compact transform summary for traceability.
-    sample_rate_summary = (
-        transformed_df[['video', 'sample_rate_used']]
-        .drop_duplicates()
-        .sort_values('video')
-        .to_dict('records')
-    )
-    sampled_video_count = sum(1 for r in sample_rate_summary if r['sample_rate_used'] > 1)
-    print(f"Processed LEAP dataset {dataset}: {len(transformed_df)} tracking files")
-    print(f"  Videos requiring downsampling: {sampled_video_count}/{len(sample_rate_summary)}")
-    print(f"  Sample-rate summary: {sample_rate_summary}")
-    print(f"  Frame-count adjustment factor: {adjustment_factor:.4f} ({total_sampled_frames}/{total_original_frames} frames)")
-    print(f"  Saved stat CSV: {stat_csv_output}")
 
 
 def process_dataset(sota_dir: str, dataset: str):
