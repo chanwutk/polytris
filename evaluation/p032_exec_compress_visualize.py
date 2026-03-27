@@ -11,7 +11,8 @@ import pandas as pd
 import altair as alt
 from tqdm import tqdm
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST, scale_to_percent
+from polyis.io import cache
+from polyis.utilities import DATASETS_TO_TEST, scale_to_percent
 
 
 def parse_args() -> argparse.Namespace:
@@ -33,7 +34,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def list_video_dirs(dataset: str) -> list[str]:
-    dataset_cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+    dataset_cache_dir = cache.execution(dataset)
     if not os.path.isdir(dataset_cache_dir):
         raise FileNotFoundError(f"Dataset cache dir does not exist: {dataset_cache_dir}")
     # Only directories that contain a packing folder are relevant
@@ -106,7 +107,7 @@ def compute_content_ratio(index_map: np.ndarray) -> float:
 
 
 def ensure_summary_dirs(dataset: str) -> tuple[str, str]:
-    base = os.path.join(CACHE_DIR, "summary", dataset, "compression")
+    base = str(cache.summary_dataset(dataset, "compression"))
     each = os.path.join(base, "each")
     os.makedirs(each, exist_ok=True)
     return base, each

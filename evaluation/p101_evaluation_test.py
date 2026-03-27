@@ -6,33 +6,22 @@ import subprocess
 import sys
 from typing import List
 
+# Scripts that are unconditionally excluded from the test evaluation pipeline.
+ALWAYS_SKIP_NUMBERS = {131, 132, 135}
 
-def parse_args():
-    """Parse command line arguments for evaluation script orchestration."""
+# Range of script numbers disabled when --no-sota is passed.
+SOTA_RANGE = range(140, 151)
+
+
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Execute evaluation scripts (p111-p201) in the evaluation directory',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Run all evaluation scripts including compute scripts
-  python p100_evaluation.py
-
-  # Skip all compute scripts
-  python p100_evaluation.py --no_compute
-
-  # Skip specific compute scripts (accuracy and throughput)
-  python p100_evaluation.py --no_compute accuracy throughput
-
-  # Skip only tradeoff compute scripts
-  python p100_evaluation.py --no_compute tradeoff
-        """
+        description="Run the test evaluation pipeline."
     )
     parser.add_argument(
-        '--no_compute',
-        nargs='*',
-        metavar='TYPE',
-        help='Skip compute scripts. If specified without arguments, skip all *_compute.py files. '
-             'If arguments provided (e.g., accuracy, throughput, tradeoff), skip *_{TYPE}_compute.py files.'
+        "--no-sota",
+        action="store_true",
+        default=False,
+        help="Skip SOTA recomputation scripts (p140–p150).",
     )
     return parser.parse_args()
 
@@ -60,8 +49,8 @@ def get_evaluation_scripts() -> List[str]:
                 number_str = filename.split('_')[0][1:]  # Remove 'p' prefix
                 number = int(number_str)
 
-                # Include files in range [111, 201]
-                if 110 <= number <= 201:
+                # Include files in range [110, 201], skipping permanently excluded numbers.
+                if 110 <= number <= 201 and number not in ALWAYS_SKIP_NUMBERS:
                     evaluation_scripts.append(filename)
             except (ValueError, IndexError):
                 # Skip files that don't match the expected pattern
@@ -102,23 +91,15 @@ def should_skip_script(filename: str, no_compute_args: List[str]) -> bool:
 
 
 def execute_script(script_path: str) -> int:
-    """
-    Execute a Python script and return its exit code.
-
-    Args:
-        script_path (str): Absolute path to the script to execute
-
-    Returns:
-        int: Exit code from the script execution
-    """
+    # Print a section header so each script boundary is easy to spot in the log.
     print(f"\n{'='*80}")
     print(f"Executing: {os.path.basename(script_path)}")
     print(f"{'='*80}")
 
     try:
-        # Execute the script using subprocess
+        # Execute the script using subprocess, forwarding any extra CLI flags.
         result = subprocess.run(
-            [sys.executable, script_path],
+            [sys.executable, script_path, '--test'],
             check=False  # Don't raise exception on non-zero exit
         )
 
@@ -134,23 +115,20 @@ def execute_script(script_path: str) -> int:
         return 1
 
 
-def main(args):
-    """
-    Main function that orchestrates the execution of evaluation scripts.
+def main():
+    args = parse_args()
 
-    This function:
-    1. Discovers all evaluation scripts in range p111-p201
-    2. Filters scripts based on --no_compute arguments
-    3. Executes scripts sequentially in numerical order
-    4. Reports execution status and failures
-
-    Args:
-        args (argparse.Namespace): Parsed command line arguments
-    """
     print("Starting evaluation pipeline execution")
 
-    # Get all evaluation scripts
+    # Discover all evaluation scripts in the configured range.
     scripts = get_evaluation_scripts()
+
+    # Drop SOTA scripts (p140–p150) when --no-sota is requested.
+    if args.no_sota:
+        scripts = [
+            f for f in scripts
+            if int(f.split('_')[0][1:]) not in SOTA_RANGE
+        ]
 
     if not scripts:
         print("ERROR: No evaluation scripts found in range p111-p201")
@@ -158,39 +136,18 @@ def main(args):
 
     print(f"Found {len(scripts)} evaluation scripts")
 
-    # Determine which scripts to skip based on --no_compute
-    scripts_to_execute = []
-    scripts_to_skip = []
+    if args.no_sota:
+        print("NOTE: SOTA scripts (p140–p150) are disabled via --no-sota")
 
-    if args.no_compute is not None:
-        # --no_compute was specified (either with or without arguments)
-        for script in scripts:
-            if should_skip_script(script, args.no_compute):
-                scripts_to_skip.append(script)
-            else:
-                scripts_to_execute.append(script)
-
-        if scripts_to_skip:
-            print(f"\nSkipping {len(scripts_to_skip)} compute script(s):")
-            for script in scripts_to_skip:
-                print(f"  - {script}")
-    else:
-        # No --no_compute specified, execute all scripts
-        scripts_to_execute = scripts
-
-    if not scripts_to_execute:
-        print("\nNo scripts to execute after filtering")
-        return
-
-    print(f"\nExecuting {len(scripts_to_execute)} script(s):")
-    for script in scripts_to_execute:
+    print(f"\nExecuting {len(scripts)} script(s):")
+    for script in scripts:
         print(f"  - {script}")
 
-    # Execute scripts in order
+    # Execute scripts in order.
     script_dir = os.path.dirname(os.path.abspath(__file__))
     failed_scripts = []
 
-    for script_name in scripts_to_execute:
+    for script_name in scripts:
         script_path = os.path.join(script_dir, script_name)
         exit_code = execute_script(script_path)
 
@@ -202,9 +159,8 @@ def main(args):
     print("EVALUATION PIPELINE SUMMARY")
     print(f"{'='*80}")
     print(f"Total scripts: {len(scripts)}")
-    print(f"Executed: {len(scripts_to_execute)}")
-    print(f"Skipped: {len(scripts_to_skip)}")
-    print(f"Succeeded: {len(scripts_to_execute) - len(failed_scripts)}")
+    print(f"Executed: {len(scripts)}")
+    print(f"Succeeded: {len(scripts) - len(failed_scripts)}")
     print(f"Failed: {len(failed_scripts)}")
 
     if failed_scripts:
@@ -218,4 +174,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    main()

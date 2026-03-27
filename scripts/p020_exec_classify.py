@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 from typing import Callable, cast
@@ -15,17 +16,24 @@ from functools import partial
 from polyis.images import ImgNHWC, splitNHWC
 
 from polyis.train.select_model_optimization import select_model_optimization
+from polyis.io import cache, store
 from polyis.utilities import format_time, ProgressBar, get_config
+from polyis.pareto import build_pareto_combo_filter
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-CLASSIFIERS = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
-DATASETS = config['EXEC']['DATASETS']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
-BATCH_SIZE = 16
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+CLASSIFIERS: list[str] = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+BATCH_SIZE: int = 16
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Execute tile classification using trained models')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
 
 
 def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: str) -> "torch.nn.Module":
@@ -49,8 +57,8 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
         FileNotFoundError: If no trained model is found for the specified tile size
         ValueError: If the classifier is not supported
     """
-    results_path = os.path.join(CACHE_DIR, dataset_name, 'indexing', 'training', 'results', f'{classifier_name}_{tile_size}')
-    model_path = os.path.join(results_path, 'model_best.pth')
+    results_path = cache.index(dataset_name, 'training', 'results', f'{classifier_name}_{tile_size}')
+    model_path = results_path / 'model_best.pth'
 
     if os.path.exists(model_path):
         # print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
@@ -180,7 +188,10 @@ def classify_batch(
     return probabilities_per_frame, runtime
 
 
-def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size: int, sample_rate: int, gpu_id: int, command_queue: mp.Queue):
+def classify(dataset: str, videoset: str, video: str, classifier: str,
+             tile_size: int, sample_rate: int, device: str,
+             model: torch.nn.Module, normalize_mean: torch.Tensor,
+             normalize_std: torch.Tensor, always_relevant_mask: torch.Tensor):
     """
     Process a single video file and save tile classification results to a JSONL file.
 
@@ -196,8 +207,11 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         classifier: Classifier name to use
         tile_size: Tile size to use
         sample_rate: Sample rate for frame sampling (1 = all frames, 2 = every 2nd frame, etc.)
-        gpu_id: GPU ID to use for processing
-        command_queue: Queue for progress updates
+        device: CUDA device string (e.g. 'cuda:0'), passed from classify_all
+        model: Pre-initialized and optimized classifier model shared across all videos
+        normalize_mean: Pre-computed ImageNet normalization mean tensor
+        normalize_std: Pre-computed ImageNet normalization std tensor
+        always_relevant_mask: Pre-loaded bitmap of tiles that are ever relevant
 
     Output Format:
         Each line in the JSONL file contains a JSON object with:
@@ -208,17 +222,8 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
         - tile_classifications (list[list[float]]): Relevance scores grid for the specified tile size
         - runtime (float): Runtime in seconds for the ClassifyRelevance model inference
     """
-    device = f'cuda:{gpu_id}'
-
-    # Load the trained model for this dataset, classifier, and tile size
-    model = load_model(dataset, tile_size, classifier, device)
-    model = model.to(device)
-
-    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
-    cache_video_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-
-    # Create output directory structure
-    output_dir = os.path.join(cache_video_dir, '020_relevancy')
+    video_path = store.dataset(dataset, videoset, video)
+    output_dir = cache.exec(dataset, 'relevancy', video)
 
     # Create score directory for this classifier, tile size, and sample rate
     classifier_dir = os.path.join(output_dir, f'{classifier}_{tile_size}_{sample_rate}')
@@ -242,26 +247,6 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    # Select the best model optimization method based on the benchmark results and apply it to the model
-    with open(os.path.join(CACHE_DIR, dataset, 'indexing', 'training', 'results',
-                           f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
-        benchmark_results = [json.loads(line) for line in f]
-    model, method_name = select_model_optimization(model, benchmark_results, device, tile_size,
-                                      (width // tile_size) * (height // tile_size))
-
-    # Pre-create normalization tensors for ImageNet normalization (1.9x speedup vs torchvision.Normalize); half for model.half()
-    normalize_mean = torch.tensor([0.485, 0.456, 0.406] * 2, device=device, dtype=torch.float16).view(1, 6, 1, 1)
-    normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device, dtype=torch.float16).view(1, 6, 1, 1)
-
-    # Load always_relevant bitmap if available to filter out tiles that have never been relevant
-    always_relevant_path = os.path.join(CACHE_DIR, dataset, 'indexing', 'always_relevant', f'{tile_size}_all.npy')
-    assert os.path.exists(always_relevant_path), f"Always relevant bitmap not found for {dataset} {tile_size}"
-
-    # Load the bitmap (2D array where 1 = relevant at some point, 0 = never relevant)
-    always_relevant_bitmap = np.load(always_relevant_path)
-    # Flatten to match the tile processing order and convert to tensor
-    always_relevant_mask = torch.from_numpy(always_relevant_bitmap.flatten()).to(device).to(torch.uint8)
 
     # Compute tile grid dimensions (remaining pixels beyond the last full tile are dropped)
     grid_width = width // tile_size
@@ -290,20 +275,14 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
             sampled_indices.append(last_idx)
         sampled_frames = [frames[idx] for idx in sampled_indices]
 
-        # Update progress tracking to use sampled frame count
-        description = f"{video_path.split('/')[-1]} {tile_size:>3} {classifier} {method_name} sr{sample_rate}"
-        command_queue.put((device, {'description': description,
-                                    'completed': 0, 'total': len(sampled_frames)}))
-
         # Process sampled frames in batches of BATCH_SIZE; one inference per batch
-        frame_idx_in_sampled = -16 * BATCH_SIZE
+        frame_idx_in_sampled = 0
         all_probs = []
         runtimes = []
         while frame_idx_in_sampled < len(sampled_frames):
-            frame_idx = frame_idx_in_sampled if frame_idx_in_sampled >= 0 else len(sampled_frames) - BATCH_SIZE
-            batch_end = min(frame_idx + BATCH_SIZE, len(sampled_frames))
-            batch_frames = [sampled_frames[i] for i in range(frame_idx, batch_end)]
-            batch_indices = [sampled_indices[i] for i in range(frame_idx, batch_end)]
+            batch_end = min(frame_idx_in_sampled + BATCH_SIZE, len(sampled_frames))
+            batch_frames = [sampled_frames[i] for i in range(frame_idx_in_sampled, batch_end)]
+            batch_indices = [sampled_indices[i] for i in range(frame_idx_in_sampled, batch_end)]
             # Get previous frames from original video ordering for each frame in batch
             batch_prev_frames = [frames[idx - 1] if idx > 0 else frames[idx + 1] for idx in batch_indices]
 
@@ -320,9 +299,8 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
                 normalize_std,
                 always_relevant_mask,
             )
-            if frame_idx_in_sampled >= 0:
-                runtimes.append(runtime)
-                all_probs.append((probs, batch_indices))
+            runtimes.append(runtime)
+            all_probs.append((probs, batch_indices))
             frame_idx_in_sampled += BATCH_SIZE
         
         for runtime in runtimes:
@@ -339,7 +317,6 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
                     "idx": absolute_idx,  # CRITICAL: Store absolute frame index, not relative
                 }
                 entries.append(frame_entry)
-                # command_queue.put((device, {'completed': frame_idx_in_sampled + j + 1}))
         retrieve_runtime = time.time_ns() / 1e6 - retrieve_start
         fr.write(json.dumps(format_time(retrieve=retrieve_runtime)) + '\n')
 
@@ -347,12 +324,76 @@ def classify(dataset: str, videoset: str, video: str, classifier: str, tile_size
             f.write(json.dumps(frame_entry) + '\n')
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Execute tile classification using trained models')
-    parser.add_argument('--test', action='store_true', help='Process test videoset')
-    parser.add_argument('--train', action='store_true', help='Process train videoset')
-    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
-    return parser.parse_args()
+def classify_all(dataset: str, videoset: str, videos: list[str], classifier: str,
+                 tile_size: int, sample_rate: int, gpu_id: int, command_queue: mp.Queue):
+    device = f'cuda:{gpu_id}'
+
+    # Load and initialize the model once for all videos in this parameter combination.
+    model = load_model(dataset, tile_size, classifier, device)
+    model = model.to(device)
+
+    # Load compilation benchmark results and select the best optimization using the first video's dimensions.
+    with open(cache.index(dataset, 'training', 'results',
+                          f'{classifier}_{tile_size}', 'model_compilation.jsonl'), 'r') as f:
+        benchmark_results = [json.loads(line) for line in f]
+    first_cap = cv2.VideoCapture(store.dataset(dataset, videoset, videos[0]))
+    assert first_cap.isOpened(), f"Could not open video {videos[0]}"
+    width = int(first_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(first_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    model, method_name = select_model_optimization(model, benchmark_results, device, tile_size,
+                                                   (width // tile_size) * (height // tile_size))
+
+    # Pre-create normalization tensors for ImageNet normalization; half for model.half().
+    normalize_mean = torch.tensor([0.485, 0.456, 0.406] * 2, device=device, dtype=torch.float16).view(1, 6, 1, 1)
+    normalize_std = torch.tensor([0.229, 0.224, 0.225] * 2, device=device, dtype=torch.float16).view(1, 6, 1, 1)
+
+    # Load always_relevant bitmap to filter tiles that have never been relevant.
+    always_relevant_path = cache.index(dataset, 'never-relevant', f'{tile_size}_all.npy')
+    assert os.path.exists(always_relevant_path), f"Always relevant bitmap not found for {dataset} {tile_size}"
+    always_relevant_bitmap = np.load(always_relevant_path)
+    always_relevant_mask = torch.from_numpy(always_relevant_bitmap.flatten()).to(device).to(torch.uint8)
+
+    # Warm up the model once using the last batch of the first video repeated 16 times.
+    grid_width = width // tile_size
+    grid_height = height // tile_size
+    y_indices = torch.arange(grid_height, device=device, dtype=torch.uint8).repeat_interleave(grid_width)
+    x_indices = torch.arange(grid_width, device=device, dtype=torch.uint8).repeat(grid_height)
+    positions = torch.stack([y_indices, x_indices], dim=1).float()
+    # Read all frames from the first video for warmup.
+    first_frames: list[np.ndarray] = []
+    while first_cap.isOpened():
+        ret, frame = first_cap.read()
+        if not ret:
+            break
+        first_frames.append(np.ascontiguousarray(frame[:, :, ::-1]))
+    first_cap.release()
+    sampled_indices = [idx for idx in range(len(first_frames)) if idx % sample_rate == 0]
+    last_idx = len(first_frames) - 1
+    if last_idx >= 0 and (not sampled_indices or sampled_indices[-1] != last_idx):
+        sampled_indices.append(last_idx)
+    warmup_start = max(0, len(sampled_indices) - BATCH_SIZE)
+    warmup_batch = [first_frames[idx] for idx in sampled_indices[warmup_start:]]
+    warmup_indices = sampled_indices[warmup_start:]
+    warmup_prev = [first_frames[idx - 1] if idx > 0 else first_frames[idx + 1] for idx in warmup_indices]
+    # Warm up the model 16 times; report each iteration to the progress bar.
+    command_queue.put((device, {'completed': 0, 'total': 16, 'description': 'Warm up'}))
+    with torch.no_grad():
+        for warmup_i in range(16):
+            classify_batch(grid_width, grid_height, positions, warmup_batch, warmup_prev, model,
+                           tile_size, device, normalize_mean, normalize_std, always_relevant_mask)
+            command_queue.put((device, {'completed': warmup_i + 1, 'total': 16, 'description': 'Warm up'}))
+    torch.cuda.synchronize()
+
+    # Build a progress bar description from the optimization method selected.
+    description = f"{dataset} {classifier}_{tile_size} sr{sample_rate} [{method_name}]"
+    # Report initial progress: 0 of N videos done.
+    command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
+    # Iterate over all videos in the split for this parameter combination.
+    for i, video in enumerate(videos):
+        classify(dataset, videoset, video, classifier, tile_size, sample_rate,
+                 device, model, normalize_mean, normalize_std, always_relevant_mask)
+        # Advance the progress bar by one unit after each video completes.
+        command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 
 
 def main():
@@ -381,36 +422,36 @@ def main():
     selected_videosets = []
     if args.test:
         selected_videosets.append('test')
-    if args.train:
-        selected_videosets.append('train')
     if args.valid:
         selected_videosets.append('valid')
 
-    # If no videosets are specified, default to all three
+    # If no videosets are specified, default to valid only
     if not selected_videosets:
-        selected_videosets = ['test']
+        selected_videosets = ['valid']
 
     mp.set_start_method('spawn', force=True)
 
+    # Build allowed-combo set for the test pass (None means no filtering applies).
+    allowed_combos = build_pareto_combo_filter(
+        DATASETS, selected_videosets, ['classifier', 'tilesize', 'sample_rate']
+    )
+
     # Create tasks list with all video/classifier/tile_size/sample_rate combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
-    for dataset in DATASETS:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
+        videoset_dir = store.dataset(dataset, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
-        for videoset in selected_videosets:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            if not os.path.exists(videoset_dir):
-                print(f"Dataset directory {videoset_dir} does not exist, skipping...")
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for classifier, tile_size, sample_rate in itertools.product(
+            CLASSIFIERS, TILE_SIZES, SAMPLE_RATES
+        ):
+            # Skip parameter combos not on the Pareto front during the test pass.
+            combo = (classifier, tile_size, sample_rate)
+            if allowed_combos is not None and combo not in allowed_combos[dataset]:
                 continue
-
-            # Get all video files from the dataset directory
-            videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-            for video in sorted(videos):
-                for classifier in CLASSIFIERS:
-                    for tile_size in TILE_SIZES:
-                        for sample_rate in SAMPLE_RATES:
-                            func = partial(classify, dataset, videoset, video, classifier, tile_size, sample_rate)
-                            funcs.append(func)
+            func = partial(classify_all, dataset, videoset, sorted(videos), classifier, tile_size, sample_rate)
+            funcs.append(func)
 
     # Set up multiprocessing with ProgressBar
     num_gpus = torch.cuda.device_count()
@@ -420,3 +461,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

@@ -5,10 +5,10 @@ import os
 import shutil
 import random
 
+from polyis.io import store
 from polyis.utilities import dedupe_datasets_by_root, get_config  # Import config loader
 
 CONFIG = get_config()  # Load global configuration
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']  # Resolve datasets directory
 DATASETS = CONFIG['EXEC']['DATASETS']  # Resolve datasets to process
 
 
@@ -130,7 +130,7 @@ def split_dataset(args: argparse.Namespace, dataset: str) -> None:
         args: Parsed command line arguments
         dataset: Name of the dataset to process
     """
-    dataset_dir = os.path.join(DATASETS_DIR, dataset)
+    dataset_dir = store.dataset(dataset)
     
     if not os.path.exists(dataset_dir):
         print(f"Dataset directory not found: {dataset_dir}")

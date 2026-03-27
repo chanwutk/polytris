@@ -9,7 +9,8 @@ import pandas as pd
 import altair as alt
 import numpy as np
 
-from polyis.utilities import CACHE_DIR, CLASSIFIERS_TO_TEST
+from polyis.io import cache
+from polyis.utilities import CLASSIFIERS_TO_TEST
 
 
 def load_training_results(dataset_dir: str, classifiers_filter: List[str] | None = None) -> List[Dict[str, Any]]:
@@ -303,8 +304,8 @@ def parse_args():
 def main():
     args = parse_args()
 
-    dataset_dir = os.path.join(CACHE_DIR, args.dataset)
-    if not os.path.exists(dataset_dir):
+    dataset_dir = cache.root(args.dataset)
+    if not dataset_dir.exists():
         print(f"Dataset directory not found: {dataset_dir}")
         return
 
@@ -320,7 +321,7 @@ def main():
     print(f"Found {len(results)} training results")
 
     # Create output directory
-    output_base_dir = os.path.join(CACHE_DIR, 'summary', args.dataset, 'classifiers')
+    output_base_dir = cache.summary_dataset(args.dataset, 'classifiers')
     os.makedirs(output_base_dir, exist_ok=True)
 
     # Create average plots
