@@ -456,12 +456,19 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     # X-axis uses log scale for runtime (seconds) if enabled
     x_scale = alt.Scale(type='log') if log_scale else alt.Undefined
     x_enc = alt.X(f'{time_col}:Q', title='Runtime (seconds)', scale=x_scale)
+    # Opacity scale: full opacity for Polytris, reduced for other systems.
+    opacity_scale = alt.Scale(
+        domain=SYSTEM_COLOR_DOMAIN,
+        range=[1.0, 0.2, 0.2, 0.2]
+    )
+
     # Line chart showing Pareto fronts (no tooltip - lines are not easily hoverable)
     line = base_pareto.mark_line(strokeWidth=2).encode(
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q', title=f'{accuracy_col_name} Score',
                 scale=alt.Scale(domain=[0, 1])),
         color=alt.Color('system:N', title='System', scale=color_scale),
+        opacity=alt.Opacity('system:N', title='System', scale=opacity_scale),
         # Group lines by the columns that define a single Pareto front.
         # Polytris fronts are computed per (dataset, classifier, canvas_scale);
         # SOTA fronts are computed per (dataset).  The chart is already faceted
@@ -471,11 +478,19 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         detail=['system:N', 'classifier:N', 'canvas_scale:N']
     )
 
+    # Shape scale: square for Polytris, trangle for Naive, circle for others.
+    shape_scale = alt.Scale(
+        domain=SYSTEM_COLOR_DOMAIN,
+        range=['square', 'triangle', 'circle', 'circle']
+    )
+
     # Add points for Pareto fronts (with tooltip for interactivity)
     points_pareto = base_pareto.mark_point(size=50, filled=True).encode(
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q'),
         color=alt.Color('system:N', title='System', scale=color_scale),
+        opacity=alt.Opacity('system:N', title='System', scale=opacity_scale),
+        shape=alt.Shape('system:N', title='System', scale=shape_scale),
         tooltip=['system', 'dataset', 'classifier', 'sample_rate',
                  'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale',
                  'tracker', time_col, accuracy_col]
