@@ -111,7 +111,7 @@ def compress(video_file_path: str, cache_video_dir: str, classifier: str, tilesi
     # Load classification results
     dataset = os.path.basename(os.path.dirname(os.path.dirname(cache_video_dir)))
     video_file = os.path.basename(cache_video_dir)
-    results = load_classification_results(CACHE_DIR, dataset, video_file,
+    results = load_classification_results(dataset, video_file,
                                           tilesize, classifier, execution_dir=True)
     
     # Create output directory for compression results

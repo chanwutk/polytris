@@ -10,7 +10,8 @@ import multiprocessing as mp
 from functools import partial
 import pandas as pd
 
-from polyis.utilities import CACHE_DIR, DATASETS_DIR, load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
+from polyis.io import cache, store
+from polyis.utilities import load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():
@@ -609,16 +610,15 @@ def _process_classifier_tile_worker(video_file: str, dataset_name: str, classifi
     }))
 
     # Load classification results from execution directory
-    results = load_classification_results(CACHE_DIR, dataset_name, video_file, tile_size,
+    results = load_classification_results(dataset_name, video_file, tile_size,
                                           classifier_name, execution_dir=True)
-    
+
     # Load groundtruth detections for comparison
-    groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
-    
+    groundtruth_detections = load_detection_results(dataset_name, video_file, tracking=True)
+
     # Create output directory for statistics visualizations
-    stats_output_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file,
-                                    '020_relevancy', f'{classifier_name}_{tile_size}',
-                                    'statistics')
+    stats_output_dir = cache.exec(dataset_name, 'relevancy', video_file,
+                                  f'{classifier_name}_{tile_size}', 'statistics')
     
     # Create statistics visualizations
     create_statistics_visualizations(results, groundtruth_detections, tile_size,
@@ -668,10 +668,8 @@ def main(args):
     all_tasks = []
     
     for dataset_name in args.datasets:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
-        
-        videoset_dir = os.path.join(dataset_dir, 'test')
-        if not os.path.exists(videoset_dir):
+        videoset_dir = store.dataset(dataset_name, 'test')
+        if not videoset_dir.exists():
             print(f"Videoset directory {videoset_dir} does not exist, skipping...")
             continue
         
@@ -686,8 +684,8 @@ def main(args):
         
         for video_file in sorted(video_files):
             # Get classifier tile sizes for this video from execution directory
-            relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '020_relevancy')
-            if not os.path.exists(relevancy_dir):
+            relevancy_dir = cache.exec(dataset_name, 'relevancy', video_file)
+            if not relevancy_dir.exists():
                 print(f"Skipping {video_file}: No relevancy directory found in execution folder")
                 continue
                 

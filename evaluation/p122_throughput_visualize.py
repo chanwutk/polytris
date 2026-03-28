@@ -9,11 +9,11 @@ import multiprocessing as mp
 
 from rich.progress import track
 
+from polyis.io import cache
 from polyis.utilities import get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 # Global constant for naive baseline stages
@@ -27,6 +27,7 @@ RUNTIME_STAGE_MAPPING = {
     '012_tune_create_training_data': 'Create Training Data',
     '013_tune_train_classifier': 'Classifier Training',
     '020_exec_classify': 'Classification',
+    '022_exec_prune_polyominoes': 'Pruning',
     '030_exec_compress': 'Compression',
     '040_exec_detect': 'Detection',
     '050_exec_uncompress': 'Uncompression',
@@ -74,6 +75,7 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
     # Define stage mapping for display names
     stage_mapping = {
         '020_exec_classify': 'Classify',
+        '022_exec_prune_polyominoes': 'Prune',
         '030_exec_compress': 'Compress',
         '040_exec_detect': 'Detect',
         '050_exec_uncompress': 'Uncompress',
@@ -83,35 +85,45 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
     # Filter relevant stages
     df = df[df['stage'].isin(stage_mapping.keys())]
 
-    # Handle backward compatibility: add sample_rate, canvas_scale, and tracker if missing
+    # Handle backward compatibility: add sample_rate, threshold, canvas_scale, and tracker if missing
     if 'sample_rate' not in df.columns:
         df['sample_rate'] = 1
+    if 'tracking_accuracy_threshold' not in df.columns:
+        df['tracking_accuracy_threshold'] = float('nan')
     if 'canvas_scale' not in df.columns:
         df['canvas_scale'] = 1.0
     if 'tracker' not in df.columns:
         df['tracker'] = 'unknown'
-    
+
+    # Build threshold label where NaN means no pruning.
+    df['threshold_label'] = df['tracking_accuracy_threshold'].apply(
+        lambda x: 'TA-none' if pd.isna(x) else f'TA{int(round(float(x) * 100)):03d}'
+    )
+
     # Transform data: create Config labels and map stage names
-    # Include sample_rate, canvas_scale, and tracker in Config label
+    # Include sample_rate, threshold, canvas_scale, and tracker in Config label
     df['Config'] = (df['classifier'].str[:5] + ' ' + df['tilesize'].astype(str) + ' ' +
-                    'SR' + df['sample_rate'].astype(str) + ' ' + df['tilepadding'].str[:4] + ' ' +
+                    'SR' + df['sample_rate'].astype(str) + ' ' + df['threshold_label'] + ' ' +
+                    df['tilepadding'].str[:4] + ' ' +
                     's' + (df['canvas_scale'] * 100).astype(int).astype(str) + ' ' +
                     df['tracker'].str[:6])
     df['Stage'] = df['stage'].map(stage_mapping)
 
     # Aggregate data by grouping and summing times
-    # Include sample_rate, canvas_scale, and tracker in grouping to preserve them
+    # Include sample_rate, threshold, canvas_scale, and tracker in grouping to preserve them
     group_cols = ['Stage', 'Config', 'op']
     if 'sample_rate' in df.columns:
         group_cols.append('sample_rate')
+    if 'tracking_accuracy_threshold' in df.columns:
+        group_cols.append('tracking_accuracy_threshold')
     if 'canvas_scale' in df.columns:
         group_cols.append('canvas_scale')
     if 'tracker' in df.columns:
         group_cols.append('tracker')
-    df = df.groupby(group_cols).agg({'time': 'sum'}).reset_index()
+    df = df.groupby(group_cols, dropna=False).agg({'time': 'sum'}).reset_index()
 
     # Calculate total runtime per config within each stage for sorting
-    config_totals = df.groupby(['Stage', 'Config'])['time'].sum().reset_index()
+    config_totals = df.groupby(['Stage', 'Config'], dropna=False)['time'].sum().reset_index()
     config_totals = config_totals.rename(columns={'time': 'TotalRuntime'})
     df = df.merge(config_totals, on=['Stage', 'Config'])
 
@@ -128,7 +140,8 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
                     orient='bottom',
                     columns=3,
                 )),
-                tooltip=['Config', 'op', 'sample_rate', 'tracker', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
+                tooltip=['Config', 'op', 'sample_rate', 'tracking_accuracy_threshold', 'tracker',
+                         alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
             ).properties(
                 title=f'{stage_name} Runtime by Operation',
                 width=300,
@@ -136,15 +149,14 @@ def visualize_breakdown_query_execution(query_per_op: pd.DataFrame, output_dir: 
             )
             charts.append(chart)
 
-    # Combine charts in a 2x2 grid
-    combined_chart = alt.vconcat(
-        alt.hconcat(charts[0], charts[1], charts[2]).resolve_scale(
-            color='independent'
-        ),
-        alt.hconcat(charts[3], charts[4]).resolve_scale(
-            color='independent'
-        )
-    )
+    if len(charts) == 0:
+        return
+
+    # Combine charts in rows of up to three charts each.
+    chart_rows = []
+    for i in range(0, len(charts), 3):
+        chart_rows.append(alt.hconcat(*charts[i:i + 3]).resolve_scale(color='independent'))
+    combined_chart = alt.vconcat(*chart_rows)
 
     # Save combined chart
     combined_chart.save(os.path.join(output_dir, output_name), scale_factor=2)
@@ -163,39 +175,58 @@ def transform_query_data(query_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
     """
     # Transform execution data: filter, create category labels, map operations, and aggregate
     exec_df = query_data[~query_data['stage'].isin(NAIVE_STAGES)].copy()
+    if 'videoset' not in exec_df.columns:
+        exec_df['videoset'] = 'unknown'
     
-    # Handle backward compatibility: add sample_rate, canvas_scale, and tracker if missing
+    # Handle backward compatibility: add sample_rate, threshold, canvas_scale, and tracker if missing
     if 'sample_rate' not in exec_df.columns:
         exec_df['sample_rate'] = 1
+    if 'tracking_accuracy_threshold' not in exec_df.columns:
+        exec_df['tracking_accuracy_threshold'] = float('nan')
     if 'canvas_scale' not in exec_df.columns:
         exec_df['canvas_scale'] = 1.0
     if 'tracker' not in exec_df.columns:
         exec_df['tracker'] = 'unknown'
-    
-    # Include sample_rate, canvas_scale, and tracker in Category label
-    exec_df['Category'] = (exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' +
-                          'SR' + exec_df['sample_rate'].astype(str) + ' ' + exec_df['tilepadding'].str[:4] + ' ' +
-                          's' + (exec_df['canvas_scale'] * 100).astype(int).astype(str) + ' ' +
-                          exec_df['tracker'].str[:6])
+
+    # Build threshold label where NaN means no pruning.
+    exec_df['threshold_label'] = exec_df['tracking_accuracy_threshold'].apply(
+        lambda x: 'TA-none' if pd.isna(x) else f'TA{int(round(float(x) * 100)):03d}'
+    )
+    exec_df['videoset_label'] = exec_df['videoset'].fillna('unknown')
+
+    # Include sample_rate, threshold, canvas_scale, and tracker in Category label
+    exec_df['Category'] = (
+        exec_df['videoset_label'].str[:5] + ' ' +
+        exec_df['classifier'].str[:4] + ' ' + exec_df['tilesize'].astype(str) + ' ' +
+        'SR' + exec_df['sample_rate'].astype(str) + ' ' + exec_df['threshold_label'] + ' ' +
+        exec_df['tilepadding'].str[:4] + ' ' +
+        's' + (exec_df['canvas_scale'] * 100).astype(int).astype(str) + ' ' +
+        exec_df['tracker'].str[:6]
+    )
     exec_df['Operation'] = exec_df['stage'].map(RUNTIME_STAGE_MAPPING)
     
-    # Include sample_rate, canvas_scale, and tracker in grouping to preserve them
-    group_cols = ['dataset', 'Category', 'Operation']
+    # Include sample_rate, threshold, canvas_scale, and tracker in grouping to preserve them
+    group_cols = ['dataset', 'videoset', 'Category', 'Operation']
     if 'sample_rate' in exec_df.columns:
         group_cols.append('sample_rate')
+    if 'tracking_accuracy_threshold' in exec_df.columns:
+        group_cols.append('tracking_accuracy_threshold')
     if 'canvas_scale' in exec_df.columns:
         group_cols.append('canvas_scale')
     if 'tracker' in exec_df.columns:
         group_cols.append('tracker')
-    exec_df = exec_df.groupby(group_cols).agg({'time': 'sum'}).reset_index()
+    exec_df = exec_df.groupby(group_cols, dropna=False).agg({'time': 'sum'}).reset_index()
     
     # Transform naive baseline data: filter naive stages and aggregate
     naive_df = query_data[query_data['stage'].isin(NAIVE_STAGES)].copy()
-    naive_df = naive_df.groupby(['dataset', 'stage']).agg({'time': 'sum'}).reset_index()
-    naive_df['Category'] = 'Naive'
+    if 'videoset' not in naive_df.columns:
+        naive_df['videoset'] = 'unknown'
+    naive_df = naive_df.groupby(['dataset', 'videoset', 'stage'], dropna=False).agg({'time': 'sum'}).reset_index()
+    naive_df['Category'] = naive_df['videoset'].fillna('unknown') + ' Naive'
     naive_df['Operation'] = naive_df['stage'].map(RUNTIME_STAGE_MAPPING)
-    # Add sample_rate, canvas_scale, and tracker columns for consistency (Naive doesn't use these)
+    # Add sample_rate, threshold, canvas_scale, and tracker columns for consistency.
     naive_df['sample_rate'] = 1
+    naive_df['tracking_accuracy_threshold'] = float('nan')
     naive_df['canvas_scale'] = 1.0
     naive_df['tracker'] = 'N/A'
     
@@ -217,9 +248,10 @@ def create_runtime_chart(df: pd.DataFrame, title: str, height: int) -> alt.Chart
         x=alt.X('time:Q', title='Runtime (seconds)'),
         y=alt.Y('Category:N', sort=alt.SortField(field='time', order='descending')),
         color=alt.Color('Operation:N', legend=alt.Legend(orient='top')),
-        stroke=alt.condition(alt.datum.Category == 'Naive', alt.value('black'), alt.value('none')),
-        strokeWidth=alt.condition(alt.datum.Category == 'Naive', alt.value(4), alt.value(0)),
-        tooltip=['Category', 'Operation', 'sample_rate', 'canvas_scale', 'tracker', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
+        stroke=alt.condition("indexof(datum.Category, 'Naive') >= 0", alt.value('black'), alt.value('none')),
+        strokeWidth=alt.condition("indexof(datum.Category, 'Naive') >= 0", alt.value(4), alt.value(0)),
+        tooltip=['videoset', 'Category', 'Operation', 'sample_rate', 'tracking_accuracy_threshold',
+                 'canvas_scale', 'tracker', alt.Tooltip('time:Q', format='.2f', title='Runtime (s)')]
     ).properties(
         title=title,
         width=800,
@@ -253,8 +285,9 @@ def visualize_overall_runtime(index_overall: pd.DataFrame, query_overall: pd.Dat
     os.makedirs(video_output_dir, exist_ok=True)
 
     # Transform index construction data: aggregate by stage and add labels
-    index_df = index_overall.groupby('stage').agg({'time': 'sum'}).reset_index()
-    index_df['Category'] = 'Index Constr.'
+    index_df = index_overall.groupby('stage', dropna=False).agg({'time': 'sum'}).reset_index()
+    index_df['videoset'] = 'train'
+    index_df['Category'] = 'train Index Constr.'
     index_df['Operation'] = index_df['stage'].map(RUNTIME_STAGE_MAPPING)
     # Index construction doesn't have sample_rate, canvas_scale, or tracker, so set defaults for consistency
     index_df['sample_rate'] = 1
@@ -341,7 +374,7 @@ def main():
 
     # Clear the 082_throughput_visualize directory
     for dataset in DATASETS:
-        output_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
+        output_dir = cache.eval(dataset, 'tp-vis')
         if os.path.exists(output_dir):
             print(f"Clearing directory: {output_dir}")
             shutil.rmtree(output_dir)
@@ -353,7 +386,7 @@ def main():
     tasks = []
     for dataset in DATASETS:
         print(f"Loading processed measurements for dataset: {dataset}")
-        measurements_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '080_throughput', 'measurements')
+        measurements_dir = cache.eval(dataset, 'tp', 'measurements')
         print(f"Measurements directory: {measurements_dir}")
 
         assert os.path.exists(measurements_dir), f"Error: Measurements directory {measurements_dir} does not exist."
@@ -363,7 +396,7 @@ def main():
         # Collect query_overall for summary visualization
         all_query_overall_list.append(query_overall)
 
-        throughput_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '082_throughput_visualize')
+        throughput_dir = cache.eval(dataset, 'tp-vis')
 
         os.makedirs(throughput_dir, exist_ok=True)
         videos = extract_video_names(query_overall)
@@ -374,7 +407,7 @@ def main():
     # Create summary visualization across all datasets
     print("Creating summary visualization across all datasets...")
     all_query_overall = pd.concat(all_query_overall_list, ignore_index=True)
-    summary_output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '082_throughput')
+    summary_output_dir = cache.summary('082_throughput')
     tasks.append(partial(visualize_summary_all_datasets, all_query_overall, summary_output_dir))
     print(f"Summary visualization saved to: {summary_output_dir}/overall_summary.png")
     

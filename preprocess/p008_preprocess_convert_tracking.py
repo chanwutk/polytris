@@ -58,13 +58,13 @@ from xml.dom import minidom
 from functools import partial
 import multiprocessing as mp
 
+from polyis.io import cache, store
 from polyis.utilities import get_video_resolution, get_video_frame_count, ProgressBar, get_config
 
 
 CONFIG = get_config()
 EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
-CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
+EXEC_DIR_TO_STAGE = {v: k for k, v in cache.EXEC_STAGE_MAP.items()}
 
 
 def parse_args():
@@ -303,7 +303,8 @@ def convert_video(dataset: str, video_file: str, source_dir: str, output_format:
         output_format (str): Output format ('mot' or 'cvat')
     """
     # Load tracking results
-    tracking_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, source_dir, 'tracking.jsonl')
+    stage = EXEC_DIR_TO_STAGE[source_dir]
+    tracking_path = cache.exec(dataset, stage, video_file, 'tracking.jsonl')
     frame_tracks = load_tracking_results(tracking_path)
 
     # Skip if no tracking results
@@ -312,7 +313,7 @@ def convert_video(dataset: str, video_file: str, source_dir: str, output_format:
         return
 
     # Create output directory
-    output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video_file, source_dir, output_format)
+    output_dir = cache.exec(dataset, stage, video_file, output_format)
     os.makedirs(output_dir, exist_ok=True)
 
     if output_format == 'mot':
@@ -377,7 +378,7 @@ def main():
 
     # Process each dataset
     for dataset in EXEC_DATASETS:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
+        dataset_dir = store.dataset(dataset)
 
         # Validate dataset directory
         if not os.path.exists(dataset_dir):
@@ -387,7 +388,7 @@ def main():
         # Get all video files from the dataset directory
         video_files: list[str] = []
         for videoset in splits:
-            videoset_dir = os.path.join(dataset_dir, videoset)
+            videoset_dir = store.dataset(dataset, videoset)
             if not os.path.exists(videoset_dir):
                 print(f"Warning: Videoset directory {videoset_dir} does not exist, skipping...")
                 continue

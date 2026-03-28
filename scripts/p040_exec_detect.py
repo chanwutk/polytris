@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 import shutil
@@ -16,18 +17,20 @@ import torch
 
 import polyis.models.detector
 import polyis.dtypes
-from polyis.utilities import TILEPADDING_MODES, TilePadding, format_time, ProgressBar, get_config, build_param_str
+from polyis.utilities import TilePadding, format_time, ProgressBar, get_config, build_param_str
+from polyis.io import cache, store
+from polyis.pareto import build_pareto_combo_filter
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
-CLASSIFIERS = config['EXEC']['CLASSIFIERS']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-DATASETS = config['EXEC']['DATASETS']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
-TILEPADDING = config['EXEC']['TILEPADDING_MODES']
-CANVAS_SCALES = config['EXEC']['CANVAS_SCALE']
+CLASSIFIERS: list[str] = config['EXEC']['CLASSIFIERS']
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+TILEPADDING_MODES: list[TilePadding] = config['EXEC']['TILEPADDING_MODES']
+CANVAS_SCALES: list[float] = config['EXEC']['CANVAS_SCALE']
+TRACKERS: list[str] = config['EXEC']['TRACKERS']
+TRACKING_ACCURACY_THRESHOLDS: list[float] = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 
 def parse_args():
@@ -36,6 +39,8 @@ def parse_args():
                         help='Remove and recreate the 040_compressed_detections folder for each video')
     parser.add_argument('--batch_size', type=int, default=4,
                         help='Batch size for detection processing (default: 4)')
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--valid', action='store_true')
     return parser.parse_args()
 
 
@@ -89,7 +94,8 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
 
 def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
                     sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
-                    batch_size: int, gpu_id: int, command_queue: mp.Queue):
+                    tracker: str | None, tracking_accuracy_threshold: float | None,
+                    batch_size: int, gpu_id: int):
     """
     Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
 
@@ -104,23 +110,22 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         tilepadding (TilePadding): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
         canvas_scale (float): Canvas scale used for compression outputs
+        tracker (str): Tracker name for upstream pruning
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
         gpu_id (int): GPU ID to use for processing
-        command_queue (mp.Queue): Queue for progress updates
     """
     # Enable cuDNN benchmarking for optimal performance
     torch.backends.cudnn.benchmark = True
 
-    device = f'cuda:{gpu_id}'
-    cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
-    compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
+    compressed_frames_dir = cache.exec(dataset, 'comp-frames', video, param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
         f"Compressed frames directory {compressed_frames_dir} does not exist"
 
     # Create output directory for detections
     print(f"Creating output directory for detections")
-    detections_output_dir = os.path.join(cache_dir, '040_compressed_detections', param_str)
+    detections_output_dir = cache.exec(dataset, 'comp-dets', video, param_str)
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -143,7 +148,6 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
     print(f"Read {len(frames)} frames")
 
     num_threads = 2
-    command_queue.put((device, {'description': f"{dataset} {video} {tilesize:>3} {classifier[:3]} {tilepadding[:3]}", 'completed': 0, 'total': len(image_files)}))
     with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
         # Use thread-safe queues for inter-thread communication
@@ -195,7 +199,6 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
             for i, detection in enumerate(batch_output):
                 results_dict[batch_start + i] = detection
             completed_batches += 1
-            command_queue.put((device, {'completed': min(batch_end, len(image_files))}))
 
         # Wait for all threads to finish
         for thread in threads:
@@ -217,9 +220,10 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
                    sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
-                   batch_size: int, gpu_id: int, command_queue: mp.Queue):
+                   tracker: str | None, tracking_accuracy_threshold: float | None,
+                   batch_size: int, detector):
     """
-    Detect objects in compressed images using auto-selected detector.
+    Detect objects in compressed images using a pre-initialized detector.
 
     Args:
         dataset_name (str): Name of the dataset (used to auto-select detector)
@@ -229,19 +233,18 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
         tilepadding (TilePadding): Whether padding was applied to classification results
         sample_rate (int): Sample rate for frame sampling
         canvas_scale (float): Canvas scale used for compression outputs
-        gpu_id (int): GPU ID to use for processing
-        command_queue (mp.Queue): Queue for progress updates
+        tracker (str): Tracker name for upstream pruning
+        tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
+        detector: Pre-initialized detector instance shared across all videos in this parameter combo
     """
-    device = f'cuda:{gpu_id}'
-    cache_dir = os.path.join(CACHE_DIR, dataset, 'execution', video)
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
 
-    compressed_frames_dir = os.path.join(cache_dir, '033_compressed_frames', param_str, 'images')
+    compressed_frames_dir = cache.exec(dataset, 'comp-frames', video, param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
         f"Compressed frames directory {compressed_frames_dir} does not exist"
 
     # Create output directory for detections
-    detections_output_dir = os.path.join(cache_dir, '040_compressed_detections', param_str)
+    detections_output_dir = cache.exec(dataset, 'comp-dets', video, param_str)
     if os.path.exists(detections_output_dir):
         # Remove the entire directory
         shutil.rmtree(detections_output_dir)
@@ -250,31 +253,9 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
     # Get all compressed image files
     image_files = [f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg')]
 
-    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len(image_files))
-
     with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr,
           torch.no_grad()):
-        description = f"{dataset} {video} {tilesize:>3} {classifier[:3]} {tilepadding[:3]}"
-        kwargs = {'completed': 0, 'total': len(image_files), 'description': description}
-        command_queue.put((device, kwargs))
-
-        # Warm up
-        for batch_start in range(0, min(4, len(image_files)), batch_size):
-            batch_end = min(batch_start + batch_size, len(image_files))
-            batch_files = image_files[batch_start:batch_end]
-
-            # Read all images in the batch
-            batch_images_: list[polyis.dtypes.NPImage] = []
-            for image_file in batch_files:
-                image_path = os.path.join(compressed_frames_dir, image_file)
-                frame = cv2.imread(image_path)
-                assert frame is not None
-                assert polyis.dtypes.is_np_image(frame)
-                batch_images_.append(frame)
-            batch_outputs = polyis.models.detector.detect_batch(batch_images_, detector)
-        torch.cuda.synchronize()
-
         # Process images in batches
         for batch_start in range(0, len(image_files), batch_size):
             batch_end = min(batch_start + batch_size, len(image_files))
@@ -313,7 +294,49 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
                 f.write(json.dumps({ 'image_file': image_file, 'bboxes': bounding_boxes }) + '\n')
                 fr.write(json.dumps(format_time(**runtime)) + '\n')
 
-            command_queue.put((device, {'completed': batch_end + 1}))
+
+def detect_all(dataset: str, videos: list[str], classifier: str, tilesize: int,
+               sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
+               tracker: str | None, tracking_accuracy_threshold: float | None,
+               batch_size: int, gpu_id: int, command_queue: mp.Queue):
+    device = f'cuda:{gpu_id}'
+    # Build a human-readable description for the progress bar.
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
+                                tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
+                                tracking_accuracy_threshold=tracking_accuracy_threshold)
+    description = f"{dataset} {param_str}"
+
+    # Initialize the detector once for all videos in this parameter combination.
+    # Use the first video's image count as a representative batch-size hint.
+    first_compressed_frames_dir = cache.exec(dataset, 'comp-frames', videos[0], param_str, 'images')
+    first_image_files = sorted(f for f in os.listdir(first_compressed_frames_dir) if f.endswith('.jpg'))
+    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len(first_image_files))
+
+    # Warm up the detector once using the first few frames of the first video.
+    warmup_starts = list(range(0, min(4, len(first_image_files)), batch_size))
+    command_queue.put((device, {'completed': 0, 'total': len(warmup_starts), 'description': 'Warm up'}))
+    with torch.no_grad():
+        for warmup_i, batch_start in enumerate(warmup_starts):
+            batch_files = first_image_files[batch_start:batch_start + batch_size]
+            warmup_images: list[polyis.dtypes.NPImage] = []
+            for image_file in batch_files:
+                frame = cv2.imread(os.path.join(first_compressed_frames_dir, image_file))
+                assert frame is not None
+                assert polyis.dtypes.is_np_image(frame)
+                warmup_images.append(frame)
+            polyis.models.detector.detect_batch(warmup_images, detector)
+            command_queue.put((device, {'completed': warmup_i + 1, 'total': len(warmup_starts), 'description': 'Warm up'}))
+        torch.cuda.synchronize()
+
+    # Report initial progress: 0 of N videos done.
+    command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
+    # Iterate over all videos in the split for this parameter combination.
+    for i, video in enumerate(videos):
+        detect_objects(dataset, video, classifier, tilesize, sample_rate,
+                       tilepadding, canvas_scale, tracker, tracking_accuracy_threshold,
+                       batch_size, detector)
+        # Advance the progress bar by one unit after each video completes.
+        command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 
 
 def main(args):
@@ -343,30 +366,57 @@ def main(args):
     """
     mp.set_start_method('spawn', force=True)
 
+    # Determine which videosets to process based on arguments.
+    selected_videosets = []
+    if args.test:
+        selected_videosets.append('test')
+    if args.valid:
+        selected_videosets.append('valid')
+    # Default to valid only when no flags are provided.
+    if not selected_videosets:
+        selected_videosets = ['valid']
+
+    # Build allowed-combo set for the test pass (None means no filtering applies).
+    allowed_combos = build_pareto_combo_filter(
+        DATASETS, selected_videosets,
+        ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
+         'tracker', 'tracking_accuracy_threshold'],
+        collapse_tracker_when_no_threshold=True,
+    )
+
     # Create tasks list with all video/classifier/tilesize combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
 
     if args.clear:
         print(f"Cleared existing 040_compressed_detections folder")
         for dataset in DATASETS:
-            cache_dir = os.path.join(CACHE_DIR, dataset, 'execution')
-            for video in sorted(os.listdir(cache_dir)):
-                compressed_detections_dir = os.path.join(cache_dir, video,
-                                                         '040_compressed_detections')
-                if os.path.exists(compressed_detections_dir):
-                    shutil.rmtree(compressed_detections_dir)
+            # Use selected videosets so --clear respects the current pass scope.
+            for videoset in selected_videosets:
+                videoset_dir = store.dataset(dataset, videoset)
+                if not os.path.exists(videoset_dir):
+                    continue
+                videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+                for video in sorted(videos):
+                    compressed_detections_dir = cache.exec(dataset, 'comp-dets', video)
+                    if os.path.exists(compressed_detections_dir):
+                        shutil.rmtree(compressed_detections_dir)
 
-    for dataset in DATASETS:
-        videoset_dir = os.path.join(DATASETS_DIR, dataset, 'test')
-        for video in sorted(os.listdir(videoset_dir)):
-            for classifier in CLASSIFIERS:
-                for tilesize in TILE_SIZES:
-                    for tilepadding in TILEPADDING:
-                        for sample_rate in SAMPLE_RATES:
-                            for canvas_scale in CANVAS_SCALES:
-                                funcs.append(partial(detect_objects, dataset, video, classifier,
-                                                     tilesize, sample_rate, tilepadding, canvas_scale,
-                                                     args.batch_size))
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
+        videoset_dir = store.dataset(dataset, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
+
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video in videos:
+            shutil.rmtree(cache.exec(dataset, 'comp-dets', video), ignore_errors=True)
+        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
+            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
+            for tracker in [None] if threshold is None else TRACKERS:
+                # Skip parameter combos not on the Pareto front during the test pass.
+                combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
+                if allowed_combos is not None and combo not in allowed_combos[dataset]:
+                    continue
+                funcs.append(partial(detect_all, dataset, sorted(videos), classifier, tilesize, sample_rate,
+                                     tilepadding, canvas_scale, tracker, threshold, args.batch_size))
 
     print(f"Created {len(funcs)} tasks to process")
 

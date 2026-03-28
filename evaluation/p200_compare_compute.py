@@ -1,20 +1,36 @@
 #!/usr/local/bin/python
 
+import argparse
 from functools import partial
 import os
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, STR_NA, load_all_datasets_tradeoff_data, print_best_data_points, get_config
+from polyis.io import cache
+from polyis.utilities import (
+    STR_NA,
+    get_config,
+    load_all_datasets_tradeoff_data,
+    print_best_data_points,
+    split_tradeoff_variants,
+)
 from evaluation.utilities import ColorScheme
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 # Define the chart size multiplier for all rendered tradeoff charts.
 CHART_SIZE_SCALE = 5
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
+    return parser.parse_args()
+
 
 # Define fixed system-to-color categories for deterministic chart encoding.
 SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
@@ -42,7 +58,7 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
     # Process each dataset
     for dataset_name in datasets:
         # Construct path to tradeoff.csv file
-        tradeoff_csv_path = os.path.join(CACHE_DIR, 'SOTA', system, dataset_name, 'tradeoff.csv')
+        tradeoff_csv_path = cache.sota(system, dataset_name, 'tradeoff.csv')
         
         # Skip if tradeoff.csv doesn't exist
         if not os.path.exists(tradeoff_csv_path):
@@ -55,7 +71,8 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
         df = pd.read_csv(tradeoff_csv_path)
         
         # Validate required columns exist
-        required_columns = ['param_id', 'runtime', 'HOTA_HOTA']
+        runtime_column = 'time' if 'time' in df.columns else 'runtime'
+        required_columns = ['param_id', runtime_column, 'HOTA_HOTA']
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             raise ValueError(f"Missing required columns in {tradeoff_csv_path}: {missing_columns}")
@@ -68,13 +85,15 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
         clean_df = pd.DataFrame({
             'system': system.upper(),  # Display name for SOTA system
             'dataset': dataset_name,
-            'video': 'dataset_level',  # SOTA data is aggregated at dataset level
+            'videoset': df['videoset'] if 'videoset' in df.columns else 'test',
+            'video': 'test',  # Keep the tooltip schema aligned with the legacy plotting helpers.
             'classifier': STR_NA,  # SOTA doesn't use our classifier system
             'tilesize': 0,  # SOTA doesn't have explicit tile size
             'tilepadding': STR_NA,  # SOTA doesn't have explicit tile padding
             'sample_rate': df['sample_rate'],
+            'tracking_accuracy_threshold': pd.NA,  # SOTA doesn't use Polytris pruning threshold
             'tracker': STR_NA,  # SOTA doesn't use our tracker system
-            'time': df['runtime'],  # Runtime in seconds
+            'time': df[runtime_column],  # Runtime in seconds
             'throughput_fps': float('nan'),  # Not available in tradeoff.csv
             'time_mspf': float('nan'),  # Not available without frame count
         })
@@ -165,8 +184,8 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
     # Print best data points tables first
     print_best_data_points(df_combined, metrics_list, x_column, plot_suffix, include_system=True)
 
-    # Add SOTA data (OTIF and LEAP) to appropriate datasets if available
-    # Skip if x_column is not available in SOTA data (e.g., throughput_fps, time_mspf)
+    # Add SOTA data (OTIF and LEAP) to appropriate datasets if available.
+    # Skip systems that do not expose the requested x-axis column.
     for system, df_sota in df_sota_dict.items():
         if df_sota.empty:
             continue
@@ -178,17 +197,12 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
         else:
             print(f"  Warning: {x_column} not available in {system.upper()} data, skipping {system.upper()} for this visualization")
     
-    # Filter out rows where classifier == 'Perfect'
+    # Filter out rows where classifier == 'Perfect'.
     df_combined = df_combined.query("classifier != 'Perfect'")
     
-    # Convert tilepadding to string for shape encoding
-    # Handle both numeric and string values, and STR_NA
+    # Convert tilepadding to string for shape encoding.
     if 'tilepadding' in df_combined.columns:
         df_combined['tilepadding'] = df_combined['tilepadding'].astype(str)
-    
-    # Update system column: rows with classifier=='Groundtruth' should have system='Groundtruth'
-    # This identifies the naive baseline points in our results
-    df_combined.loc[df_combined['classifier'] == 'Groundtruth', 'system'] = 'Naive'
 
     # Define mapping of submetrics to their display names and y-axis scales
     # Each main metric maps to a list of (submetric_column, display_name, y_scale_dict) tuples
@@ -240,7 +254,9 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                     alt.value(100),  # Larger size for naive baseline
                     alt.value(50)   # Normal size for others
                 ),
-                tooltip=['system', 'dataset', 'classifier', 'sample_rate', 'tilepadding', 'canvas_scale', 'tracker', x_column, accuracy_col]
+                tooltip=['system', 'dataset', 'videoset', 'classifier', 'sample_rate',
+                         'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale',
+                         'tracker', x_column, accuracy_col]
             )
 
             base_line = base_chart.mark_line(
@@ -298,7 +314,7 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     print(f"Creating all datasets tradeoff visualizations for {len(datasets)} datasets...")
     
     # Create output directory
-    output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '100_compare_compute')
+    output_dir = cache.summary('100_compare_compute')
     os.makedirs(output_dir, exist_ok=True)
     
     # Use all available metrics for visualization (will visualize all submetrics)
@@ -317,64 +333,76 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
         print("  Warning: No SOTA tradeoff data found, proceeding without SOTA comparison")
     
     # Load tradeoff data for all datasets
-    combined_df, naive_df = load_all_datasets_tradeoff_data(datasets, system_name='Polytris')
-    
-    # Handle backward compatibility: add sample_rate, tracker, and canvas_scale if missing
-    if 'sample_rate' not in combined_df.columns:
-        combined_df['sample_rate'] = 1
-    if 'tracker' not in combined_df.columns:
-        combined_df['tracker'] = 'unknown'
-    if 'canvas_scale' not in combined_df.columns:
-        combined_df['canvas_scale'] = 1.0
+    tradeoff_df = load_all_datasets_tradeoff_data(datasets, system_name='Polytris')
+    polytris_df, naive_df = split_tradeoff_variants(tradeoff_df)
+    polytris_df = polytris_df[polytris_df['videoset'] == 'test'].copy()
+    naive_df = naive_df[naive_df['videoset'] == 'test'].copy()
+    naive_df['system'] = 'Naive'
+
+    # Handle backward compatibility: add sample_rate, threshold, tracker, and canvas_scale if missing
+    if 'sample_rate' not in polytris_df.columns:
+        polytris_df['sample_rate'] = 1
+    if 'tracking_accuracy_threshold' not in polytris_df.columns:
+        polytris_df['tracking_accuracy_threshold'] = pd.NA
+    if 'tracker' not in polytris_df.columns:
+        polytris_df['tracker'] = 'unknown'
+    if 'canvas_scale' not in polytris_df.columns:
+        polytris_df['canvas_scale'] = 1.0
     if 'sample_rate' not in naive_df.columns:
         naive_df['sample_rate'] = 1
+    if 'tracking_accuracy_threshold' not in naive_df.columns:
+        naive_df['tracking_accuracy_threshold'] = pd.NA
     if 'tracker' not in naive_df.columns:
         naive_df['tracker'] = 'unknown'
     if 'canvas_scale' not in naive_df.columns:
         naive_df['canvas_scale'] = 1.0
-    
-    combined_df['time_mspf'] = combined_df['time'] * 1000 / combined_df['frame_count']
+
+    polytris_df['time_mspf'] = polytris_df['time'] * 1000 / polytris_df['frame_count']
     naive_df['time_mspf'] = naive_df['time'] * 1000 / naive_df['frame_count']
-    
-    # Ensure naive_combined has 'video' column set to 'dataset_level' (matching p091)
-    # Each dataset's combined data has video='dataset_level', so we merge on dataset only
-    if 'video' not in naive_df.columns:
-        naive_df['video'] = 'dataset_level'
-    
-    # Merge naive data into combined data
-    # Since combined data has video='dataset_level' for each dataset, merge on 'dataset'
-    combined_with_naive = combined_df.merge(naive_df, on='dataset', how='left', suffixes=('', '_naive'))
+
+    # Keep the tooltip schema aligned with the legacy plotting helpers.
+    polytris_df['video'] = 'test'
+    naive_df['video'] = 'test'
+
+    # Merge the split-specific naive baseline onto each Polytris row.
+    combined_with_naive = polytris_df.merge(
+        naive_df[['dataset', 'videoset', 'time', 'throughput_fps', 'time_mspf']].rename(
+            columns={
+                'time': 'time_naive',
+                'throughput_fps': 'throughput_fps_naive',
+                'time_mspf': 'time_mspf_naive',
+            }
+        ),
+        on=['dataset', 'videoset'],
+        how='left',
+    )
+
+    # Append the explicit naive test rows so the comparison chart shows the baseline system.
+    naive_plot_df = naive_df.copy()
+    naive_plot_df['time_naive'] = naive_plot_df['time']
+    naive_plot_df['throughput_fps_naive'] = naive_plot_df['throughput_fps']
+    naive_plot_df['time_mspf_naive'] = naive_plot_df['time_mspf']
+    combined_with_naive = pd.concat([combined_with_naive, naive_plot_df], ignore_index=True, sort=False)
 
     # Visualize HOTA_HOTA vs runtime (SOTA has runtime data)
     visualize = partial(visualize_all_datasets_tradeoff, combined_with_naive, df_sota_dict, metrics_list, output_dir=output_dir)
     visualize(x_column='time', x_title='Query Execution Runtime (seconds)', plot_suffix='runtime')
 
 
-def main():
-    """
-    Main function that orchestrates the comparison between our tradeoff results and SOTA (OTIF/LEAP) results.
-    
-    This function serves as the entry point for the script. It loads pre-computed 
-    tradeoff data from CSV files created by p090_tradeoff_compute.py for our system
-    and SOTA tradeoff results from tradeoff.csv files created by p142_otif_tradeoff.py,
-    then creates comparison visualizations showing all systems' performance.
-    
-    Note:
-        - The script expects tradeoff data from p130_tradeoff_compute.py in:
-          {CACHE_DIR}/{dataset}/evaluation/090_tradeoff/tradeoff_combined.csv
-        - The script expects OTIF tradeoff results from p142_otif_tradeoff.py in:
-          {CACHE_DIR}/SOTA/otif/{dataset}/tradeoff.csv
-        - The script expects LEAP tradeoff results from p142_otif_tradeoff.py in:
-          {CACHE_DIR}/SOTA/leap/{dataset}/tradeoff.csv
-        - Results are saved to: {CACHE_DIR}/SUMMARY/100_compare_compute/
-        - Please run p130_tradeoff_compute.py and p142_otif_tradeoff.py first to generate the required CSV files
-        - Supports sample_rate and tracker dimensions with backward compatibility
-    """
+def main(args):
     print(f"Processing datasets: {DATASETS}")
-    
-    # Create comparison visualizations
+
+    # Resolve the single videoset from the mutually exclusive CLI flags.
+    videoset = 'test' if args.test else 'valid'
+
+    # This script compares test-split results; skip when test was not requested.
+    if videoset != 'test':
+        print("Skipping: comparison visualization requires --test.")
+        return
+
+    # Create comparison visualizations for the test split.
     visualize_all_datasets_tradeoffs(DATASETS)
 
 
 if __name__ == '__main__':
-    main()
+    main(parse_args())

@@ -13,6 +13,7 @@ import shutil
 import cv2
 from tqdm import tqdm
 
+from polyis.io import store
 from polyis.train.data import (
     adjust_val_frames_for_prefix,
     collect_valid_frames,
@@ -375,10 +376,10 @@ def main():
     args = parse_args()
 
     # Setup paths
-    base_root = Path("/otif-dataset/dataset")
+    base_root = Path(store.OTIF_DATASET)
     dataset = args.dataset
-    
-    output_dir = Path(args.output_dir or f"/polyis-data/training/torchvision/{dataset}/training-data")
+
+    output_dir = Path(args.output_dir) if args.output_dir else store.training('torchvision', dataset, 'training-data')
     train_image_dir, val_image_dir, anno_output_dir = setup_output_directories(output_dir)
     
     print("=" * 80)

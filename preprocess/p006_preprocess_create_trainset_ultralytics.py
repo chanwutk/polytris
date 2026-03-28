@@ -16,6 +16,7 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
+from polyis.io import store
 from polyis.train.data import (
     collect_valid_frames,
     discover_videos_in_subsets,
@@ -361,10 +362,10 @@ def main():
             polygon_xml = f.read().strip()
 
     # Setup paths for CalDOT dataset structure
-    base_root = Path("/otif-dataset/dataset")
+    base_root = Path(store.OTIF_DATASET)
     dataset = args.dataset
 
-    output_dir = Path(args.output_dir or f"/polyis-data/training/ultralytics/{dataset}/training-data")
+    output_dir = Path(args.output_dir) if args.output_dir else store.training('ultralytics', dataset, 'training-data')
 
     # Create output directory structure
     train_image_dir, val_image_dir, train_label_dir, val_label_dir = setup_output_directories(output_dir)
