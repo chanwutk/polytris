@@ -734,6 +734,7 @@ def main(args):
         DATASETS, videosets,
         ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
          'tracker', 'tracking_accuracy_threshold'],
+        collapse_tracker_when_no_threshold=True,
     )
 
     # Create tasks list with all video/classifier/tilesize/sample_rate combinations
@@ -744,6 +745,8 @@ def main(args):
 
         # Get all video files from the dataset directory
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video in videos:
+            shutil.rmtree(cache.exec(dataset, 'comp-frames', video), ignore_errors=True)
         for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
             CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
             for tracker in [None] if threshold is None else TRACKERS:

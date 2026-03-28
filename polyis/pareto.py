@@ -372,6 +372,7 @@ def build_pareto_combo_filter(
     datasets: list[str],
     selected_videosets: list[str],
     columns: list[str],
+    collapse_tracker_when_no_threshold: bool = False,
 ) -> dict[str, set[tuple]] | None:
     """
     Build per-dataset sets of allowed parameter combos for the test pass, or return None.
@@ -385,6 +386,8 @@ def build_pareto_combo_filter(
         datasets: Dataset names to load Pareto params for
         selected_videosets: Videosets being processed in this run
         columns: Pareto DataFrame columns to project to (defines the combo shape)
+        collapse_tracker_when_no_threshold: Passed through to extract_stage_params.
+            When True, tracker is set to None for rows where threshold is NaN/None.
 
     Returns:
         Dict mapping dataset name to its set of allowed parameter tuples,
@@ -393,19 +396,23 @@ def build_pareto_combo_filter(
     # Only filter when explicitly running the test pass.
     if 'test' not in selected_videosets:
         return None
-    # Skip filtering if Pareto params haven't been extracted for every dataset yet.
-    if not all(pareto_params_exist(ds) for ds in datasets):
-        return None
+    for ds in datasets:
+        if not pareto_params_exist(ds):
+            raise Exception(f'Pareto params have not been extracted for {ds}')
     # Build per-dataset allowed-combo sets so each dataset is filtered independently.
     result: dict[str, set[tuple]] = {}
     for ds in datasets:
-        result[ds] = extract_stage_params(load_pareto_params(ds), columns)
+        result[ds] = extract_stage_params(
+            load_pareto_params(ds), columns,
+            collapse_tracker_when_no_threshold=collapse_tracker_when_no_threshold,
+        )
     total = sum(len(v) for v in result.values())
     print(f"Pareto filter enabled: {total} total allowed combos for test pass")
     return result
 
 
-def extract_stage_params(pareto_df: pd.DataFrame, columns: list[str]) -> set[tuple]:
+def extract_stage_params(pareto_df: pd.DataFrame, columns: list[str],
+                         collapse_tracker_when_no_threshold: bool = False) -> set[tuple]:
     """
     Project Pareto DataFrame to stage-relevant columns and return as a set of tuples.
 
@@ -415,12 +422,25 @@ def extract_stage_params(pareto_df: pd.DataFrame, columns: list[str]) -> set[tup
     Args:
         pareto_df: Pareto parameter DataFrame (output of load_pareto_params)
         columns: Column names to project to (must exist in pareto_df)
+        collapse_tracker_when_no_threshold: When True and both 'tracker' and
+            'tracking_accuracy_threshold' are in columns, set tracker to None
+            for rows where threshold is NaN/None.  This matches the execution
+            convention in p030-p050 where tracker is irrelevant when no
+            pruning threshold is active.
 
     Returns:
         Set of tuples representing allowed parameter combinations
     """
     # Project the Pareto DataFrame to the requested stage-relevant columns.
     subset = pareto_df[columns].copy()
+    # When upstream stages don't use the tracker dimension for configurations
+    # without pruning, normalize tracker to None so the combo filter matches
+    # the execution loop's convention (tracker=None when threshold=None).
+    if (collapse_tracker_when_no_threshold
+            and 'tracker' in columns
+            and 'tracking_accuracy_threshold' in columns):
+        no_threshold = subset['tracking_accuracy_threshold'].isna()
+        subset.loc[no_threshold, 'tracker'] = None
     # Collect normalized tuples, converting NaN to None for hashable comparison.
     result: set[tuple] = set()
     for row in subset.itertuples(index=False):

@@ -573,16 +573,16 @@ def filter_by_config(df: pd.DataFrame,
 
 
 def save_chart(chart: alt.Chart, output_dir: str, base_name: str):
-    """Save chart in multiple formats (PNG, SVG, HTML)."""
+    """Save chart in multiple formats (PNG, PDF, HTML)."""
     # Save PNG format
     png_path = os.path.join(output_dir, f'{base_name}.png')
     chart.save(png_path, scale_factor=4)
     print(f"  Saved PNG: {png_path}")
 
-    # Save SVG format
-    svg_path = os.path.join(output_dir, f'{base_name}.svg')
-    chart.save(svg_path)
-    print(f"  Saved SVG: {svg_path}")
+    # Save PDF format
+    pdf_path = os.path.join(output_dir, f'{base_name}.pdf')
+    chart.save(pdf_path)
+    print(f"  Saved PDF: {pdf_path}")
 
     # Save HTML format (interactive)
     html_path = os.path.join(output_dir, f'{base_name}.html')

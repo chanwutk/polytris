@@ -361,6 +361,7 @@ def main():
         DATASETS, selected_videosets,
         ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
          'tracker', 'tracking_accuracy_threshold'],
+        collapse_tracker_when_no_threshold=True,
     )
 
     # mp.set_start_method('spawn', force=True)
@@ -374,6 +375,11 @@ def main():
         # Get all video files from the dataset directory
         videos = [f for f in os.listdir(videosets_dir) if f.endswith('.mp4')]
         print(f"Found {len(videos)} video files in dataset {dataset}/{videoset}")
+
+        # Remove all existing ucomp-dets output for every video in this split
+        # so stale results from previous runs do not persist.
+        for video in videos:
+            shutil.rmtree(cache.exec(dataset, 'ucomp-dets', video), ignore_errors=True)
 
         for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
             CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):

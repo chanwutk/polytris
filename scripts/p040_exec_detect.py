@@ -381,6 +381,7 @@ def main(args):
         DATASETS, selected_videosets,
         ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
          'tracker', 'tracking_accuracy_threshold'],
+        collapse_tracker_when_no_threshold=True,
     )
 
     # Create tasks list with all video/classifier/tilesize combinations
@@ -405,6 +406,8 @@ def main(args):
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video in videos:
+            shutil.rmtree(cache.exec(dataset, 'comp-dets', video), ignore_errors=True)
         for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
             CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
             for tracker in [None] if threshold is None else TRACKERS:

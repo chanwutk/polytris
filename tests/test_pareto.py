@@ -8,6 +8,7 @@ from polyis.pareto import (
     _prune_pareto_points,
     compute_pareto_front,
     compute_pareto_fronts_by_group,
+    extract_stage_params,
 )
 
 
@@ -187,3 +188,91 @@ class TestComputeParetoFrontsByGroupNumPointsNone:
         # With default minimize_x=False and both x,y increasing, all 20 are Pareto-optimal.
         result = compute_pareto_fronts_by_group(df, ['dataset'], 'time', 'acc', num_points=None)
         assert len(result) == 20
+
+
+# ---------------------------------------------------------------------------
+# extract_stage_params unit tests
+# ---------------------------------------------------------------------------
+
+
+def _make_pareto_df() -> pd.DataFrame:
+    """Build a small synthetic Pareto DataFrame for extract_stage_params tests."""
+    return pd.DataFrame({
+        'classifier': ['SimpleCNN', 'SimpleCNN', 'SimpleCNN', 'SimpleCNN'],
+        'tilesize': [60, 60, 60, 60],
+        'sample_rate': [1, 1, 1, 1],
+        'tilepadding': ['nopad', 'nopad', 'nopad', 'nopad'],
+        'canvas_scale': [1.0, 1.0, 1.0, 1.0],
+        'tracker': ['ocsortcython', 'bytetrackcython', 'ocsortcython', 'bytetrackcython'],
+        # First two rows: threshold=NaN (no pruning); last two: threshold=0.4.
+        'tracking_accuracy_threshold': [float('nan'), float('nan'), 0.4, 0.4],
+    })
+
+
+class TestExtractStageParamsDefault:
+    """Default behavior (collapse_tracker_when_no_threshold=False) preserves tracker."""
+
+    def test_no_collapse(self):
+        # With default flag, tracker values are preserved even for NaN threshold rows.
+        df = _make_pareto_df()
+        columns = ['classifier', 'tilesize', 'sample_rate', 'tilepadding',
+                    'canvas_scale', 'tracker', 'tracking_accuracy_threshold']
+        result = extract_stage_params(df, columns)
+        # All 4 rows are unique (different tracker x threshold combos).
+        assert len(result) == 4
+        # NaN threshold rows keep their real tracker values.
+        assert ('SimpleCNN', 60, 1, 'nopad', 1.0, 'ocsortcython', None) in result
+        assert ('SimpleCNN', 60, 1, 'nopad', 1.0, 'bytetrackcython', None) in result
+
+    def test_nan_normalized_to_none(self):
+        # Verify NaN threshold is converted to None for tuple equality.
+        df = _make_pareto_df()
+        columns = ['tracking_accuracy_threshold']
+        result = extract_stage_params(df, columns)
+        assert (None,) in result
+        assert (0.4,) in result
+
+
+class TestExtractStageParamsCollapseTracker:
+    """collapse_tracker_when_no_threshold=True normalizes tracker for NaN threshold rows."""
+
+    def test_tracker_set_to_none_when_threshold_nan(self):
+        # With collapse flag, NaN-threshold rows get tracker=None.
+        df = _make_pareto_df()
+        columns = ['classifier', 'tilesize', 'sample_rate', 'tilepadding',
+                    'canvas_scale', 'tracker', 'tracking_accuracy_threshold']
+        result = extract_stage_params(df, columns, collapse_tracker_when_no_threshold=True)
+        # The two NaN-threshold rows (ocsort, bytetrack) collapse to one (tracker=None).
+        assert ('SimpleCNN', 60, 1, 'nopad', 1.0, None, None) in result
+        # Real-threshold rows keep their tracker values.
+        assert ('SimpleCNN', 60, 1, 'nopad', 1.0, 'ocsortcython', 0.4) in result
+        assert ('SimpleCNN', 60, 1, 'nopad', 1.0, 'bytetrackcython', 0.4) in result
+        # Total: 1 collapsed + 2 real-threshold = 3.
+        assert len(result) == 3
+
+    def test_deduplication_after_collapse(self):
+        # Multiple tracker values with NaN threshold should deduplicate to one tuple.
+        df = pd.DataFrame({
+            'tracker': ['a', 'b', 'c'],
+            'tracking_accuracy_threshold': [float('nan'), float('nan'), float('nan')],
+        })
+        columns = ['tracker', 'tracking_accuracy_threshold']
+        result = extract_stage_params(df, columns, collapse_tracker_when_no_threshold=True)
+        # All three rows collapse to a single (None, None) tuple.
+        assert result == {(None, None)}
+
+    def test_no_effect_without_tracker_column(self):
+        # When tracker is not in columns, the flag has no effect.
+        df = _make_pareto_df()
+        columns = ['classifier', 'tilesize', 'sample_rate']
+        result_default = extract_stage_params(df, columns)
+        result_collapse = extract_stage_params(df, columns, collapse_tracker_when_no_threshold=True)
+        assert result_default == result_collapse
+
+    def test_no_effect_without_threshold_column(self):
+        # When tracking_accuracy_threshold is not in columns, the flag has no effect.
+        df = _make_pareto_df()
+        columns = ['classifier', 'tilesize', 'tracker']
+        result_default = extract_stage_params(df, columns)
+        result_collapse = extract_stage_params(df, columns, collapse_tracker_when_no_threshold=True)
+        assert result_default == result_collapse

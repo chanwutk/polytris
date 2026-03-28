@@ -4,6 +4,7 @@ import argparse
 import itertools
 import json
 import os
+import shutil
 import time
 from typing import Callable
 import numpy as np
@@ -333,6 +334,8 @@ def main():
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video in videos:
+            shutil.rmtree(cache.exec(dataset, 'pruned-polyominoes', video), ignore_errors=True)
         for classifier, tile_size, sample_rate in itertools.product(CLASSIFIERS, TILE_SIZES, SAMPLE_RATES):
             # Iterate over all tracker × threshold combinations for each sample_rate.
             for tracker, threshold in itertools.product(TRACKERS, TRACKING_ACCURACY_THRESHOLDS):
