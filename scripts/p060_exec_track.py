@@ -92,8 +92,7 @@ def load_detection_results(dataset: str, video_file: str, tilesize: int,
 
 def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int,
           tilepadding: str, canvas_scale: float, tracker_name: str,
-          tracking_accuracy_threshold: float | None,
-          no_interpolate: bool):
+          tracking_accuracy_threshold: float | None, no_interpolate: bool):
     """
     Process tracking for a single video/classifier/tilesize/tracker combination.
     This function is designed to be called in parallel.
@@ -112,9 +111,13 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
     """
     # Input from p050: tracker only in param_str when pruning is active
     input_tracker = tracker_name if tracking_accuracy_threshold is not None else None
-    input_param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=input_tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    input_param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
+                                      tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=input_tracker,
+                                      tracking_accuracy_threshold=tracking_accuracy_threshold)
     # Output always includes tracker (p060 produces different results per tracker)
-    output_param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    output_param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
+                                       tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name,
+                                       tracking_accuracy_threshold=tracking_accuracy_threshold)
 
     # Check if uncompressed detections exist
     detection_path = cache.exec(dataset, 'ucomp-dets', video,
@@ -191,23 +194,6 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
     os.makedirs(output_dir, exist_ok=True)
     
     save_tracking_results(frame_tracks, output_path)
-    # with open(output_path, 'w') as f:
-    #     frame_ids = frame_tracks.keys()
-    #     if len(frame_ids) == 0:
-    #         return
-        
-    #     first_idx = min(frame_ids)
-    #     last_idx = max(frame_ids)
-
-    #     for frame_idx in range(first_idx, last_idx + 1):
-    #         if frame_idx not in frame_tracks:
-    #             frame_tracks[frame_idx] = []
-                
-    #         frame_data = {
-    #             "frame_idx": frame_idx,
-    #             "tracks": frame_tracks[frame_idx]
-    #         }
-    #         f.write(json.dumps(frame_data) + '\n')
 
 
 def track_all(dataset: str, videos: list[str], classifier: str, tilesize: int, sample_rate: int,

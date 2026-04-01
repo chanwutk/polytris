@@ -62,7 +62,9 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
 
     if os.path.exists(model_path):
         # print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
-        model = torch.load(model_path, map_location=device, weights_only=False)
+        # Load to CPU first to avoid CUDA init errors in spawned subprocesses;
+        # caller moves the model to the target GPU device afterward.
+        model = torch.load(model_path, map_location='cpu', weights_only=False)
         model.eval()
         model.half()
         return model

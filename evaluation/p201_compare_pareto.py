@@ -30,8 +30,20 @@ SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TRACKERS = config['EXEC']['TRACKERS']
 TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
-# Define the chart size multiplier for all rendered comparison charts.
-CHART_SIZE_SCALE = 1.5
+# Keep facet layout dimensions explicit so all comparison charts stay aligned.
+FACET_COLUMNS = 4
+FACET_SUBPLOT_WIDTH = 225
+FACET_SUBPLOT_HEIGHT = 170
+
+# Approximate spacing used by Altair between facet cells and for header labels.
+_FACET_COL_SPACING = 60
+_FACET_ROW_SPACING = 40
+_FACET_HEADER_HEIGHT = 40
+
+# Legend placement: position in the empty bottom-right cell of a 4-column grid
+# (assumes the last row has fewer subplots than FACET_COLUMNS).
+LEGEND_X = (FACET_COLUMNS - 1) * (FACET_SUBPLOT_WIDTH + _FACET_COL_SPACING)
+LEGEND_Y = FACET_SUBPLOT_HEIGHT + _FACET_HEADER_HEIGHT + _FACET_ROW_SPACING
 
 # Define fixed system-to-color categories for deterministic chart encoding.
 SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
@@ -332,20 +344,24 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str) -> al
 
     # Combine layers
     chart = (line + points + rule).properties(
-        width=200 * CHART_SIZE_SCALE,
-        height=150 * CHART_SIZE_SCALE
+        width=FACET_SUBPLOT_WIDTH,
+        height=FACET_SUBPLOT_HEIGHT
     )
 
     # Facet by dataset
     faceted_chart = chart.facet(
         facet=alt.Facet('dataset:N', title=None,
                         header=alt.Header(labelExpr="'Dataset: ' + datum.value")),
-        columns=3
+        columns=FACET_COLUMNS
     ).resolve_scale(
         x='independent',
         y='independent'
     ).properties(
         title=f'Speedup Ratio at {accuracy_col_name} Levels (>1 = Polytris faster)'
+    ).configure_legend(
+        orient='none',
+        legendX=LEGEND_X,
+        legendY=LEGEND_Y,
     )
 
     return faceted_chart
@@ -404,20 +420,24 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
 
     # Combine layers
     chart = (line + points + rule).properties(
-        width=200 * CHART_SIZE_SCALE,
-        height=150 * CHART_SIZE_SCALE
+        width=FACET_SUBPLOT_WIDTH,
+        height=FACET_SUBPLOT_HEIGHT
     )
 
     # Facet by dataset
     faceted_chart = chart.facet(
         facet=alt.Facet('dataset:N', title=None,
                         header=alt.Header(labelExpr="'Dataset: ' + datum.value")),
-        columns=3
+        columns=FACET_COLUMNS
     ).resolve_scale(
         x='independent',
         y='independent'
     ).properties(
         title=f'{accuracy_col_name} Gain at Runtime Levels (>0 = Polytris more accurate)'
+    ).configure_legend(
+        orient='none',
+        legendX=LEGEND_X,
+        legendY=LEGEND_Y,
     )
 
     return faceted_chart
@@ -425,7 +445,8 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
 
 def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
                                    accuracy_col_name: str, time_col: str = 'time',
-                                   log_scale: bool = False) -> alt.Chart:
+                                   log_scale: bool = False,
+                                   x_title: str = 'Runtime (seconds)') -> alt.Chart:
     """
     Create faceted line chart showing Pareto fronts for all systems.
 
@@ -434,6 +455,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         accuracy_col: Column name for accuracy metric
         accuracy_col_name: Display name for the accuracy metric
         time_col: Column name for runtime
+        x_title: Display label for the x-axis
 
     Returns:
         Altair Chart object
@@ -453,9 +475,9 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     # Base chart for Pareto fronts (with lines)
     base_pareto = alt.Chart(df_clean)
 
-    # X-axis uses log scale for runtime (seconds) if enabled
+    # X-axis uses log scale if enabled.
     x_scale = alt.Scale(type='log') if log_scale else alt.Undefined
-    x_enc = alt.X(f'{time_col}:Q', title='Runtime (seconds)', scale=x_scale)
+    x_enc = alt.X(f'{time_col}:Q', title=x_title, scale=x_scale)
     # Opacity scale: full opacity for Polytris, reduced for other systems.
     opacity_scale = alt.Scale(
         domain=SYSTEM_COLOR_DOMAIN,
@@ -498,20 +520,24 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
 
     # Combine layers
     chart = (line + points_pareto).properties(
-        width=200 * CHART_SIZE_SCALE,
-        height=150 * CHART_SIZE_SCALE
+        width=FACET_SUBPLOT_WIDTH,
+        height=FACET_SUBPLOT_HEIGHT
     )
 
     # Facet by dataset
     faceted_chart = chart.facet(
         facet=alt.Facet('dataset:N', title=None,
                         header=alt.Header(labelExpr="'Dataset: ' + datum.value")),
-        columns=3
+        columns=FACET_COLUMNS
     ).resolve_scale(
         x='independent',
         y='independent'
     ).properties(
         title=f'{accuracy_col_name} vs Runtime Pareto Fronts'
+    ).configure_legend(
+        orient='none',
+        legendX=LEGEND_X,
+        legendY=LEGEND_Y,
     )
 
     return faceted_chart
@@ -591,17 +617,20 @@ def save_chart(chart: alt.Chart, output_dir: str, base_name: str):
 
 
 def _filter_pareto_per_dataset(df: pd.DataFrame, time_col: str,
-                               accuracy_col: str) -> pd.DataFrame:
+                               accuracy_col: str,
+                               minimize_x: bool = False) -> pd.DataFrame:
     """
     Filter DataFrame to only Pareto-optimal points per dataset.
 
-    Keeps only points on the Pareto front (minimize time, maximize accuracy)
-    computed independently for each dataset.
+    Keeps only points on the Pareto front computed independently for each
+    dataset.  The default (minimize_x=False) minimizes time and maximizes
+    accuracy; pass minimize_x=True for throughput where higher x is better.
 
     Args:
         df: DataFrame with 'dataset' column and the specified metric columns
-        time_col: Column name for runtime (minimized)
+        time_col: Column name for x-axis metric (e.g. 'time' or 'throughput_fps')
         accuracy_col: Column name for accuracy (maximized)
+        minimize_x: Passed through to compute_pareto_front
 
     Returns:
         DataFrame containing only Pareto-optimal points across all datasets
@@ -609,8 +638,9 @@ def _filter_pareto_per_dataset(df: pd.DataFrame, time_col: str,
     pareto_groups = []
     for dataset in df['dataset'].unique():
         dataset_df = df[df['dataset'] == dataset]
-        # Compute Pareto front: minimize time (x), maximize accuracy (y).
-        pareto_df = compute_pareto_front(dataset_df, time_col, accuracy_col)
+        # Compute Pareto front per dataset.
+        pareto_df = compute_pareto_front(dataset_df, time_col, accuracy_col,
+                                         minimize_x=minimize_x)
         pareto_groups.append(pareto_df)
 
     if not pareto_groups:
@@ -691,6 +721,29 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
 
     if not df_sota_dict:
         print("  Warning: No SOTA tradeoff data found")
+
+    # Derive throughput_fps for SOTA systems from Polytris frame counts.
+    # Frame count is a property of the dataset/split, not the system.
+    if 'frame_count' in tradeoff_df.columns:
+        frame_count_lookup = (
+            tradeoff_df
+            .dropna(subset=['frame_count'])
+            .groupby(['dataset', 'videoset'])['frame_count']
+            .first()
+        )
+        for system_name, df_sota in df_sota_dict.items():
+            # Merge frame_count from the lookup into SOTA rows.
+            merged_fc = df_sota.set_index(['dataset', 'videoset']).index.map(
+                lambda idx: frame_count_lookup.get(idx, float('nan'))
+            )
+            df_sota = df_sota.copy()
+            df_sota['frame_count'] = merged_fc.values
+            df_sota['throughput_fps'] = df_sota['frame_count'] / df_sota['time']
+            df_sota_dict[system_name] = df_sota
+            n_valid = df_sota['throughput_fps'].notna().sum()
+            print(f"  Computed throughput_fps for {system_name.upper()}: {n_valid}/{len(df_sota)} rows")
+    else:
+        print("  Warning: frame_count not available in tradeoff data; SOTA throughput_fps will be NaN")
 
     # Define metrics to visualize
     metrics_map = {
@@ -797,6 +850,71 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         )
         save_chart(pareto_chart, output_dir,
                    f'{accuracy_col.lower()}_runtime_pareto_comparison')
+
+        # 3b. Create throughput Pareto comparison chart (accuracy vs frames/sec).
+        print(f"\n3b. Creating throughput comparison chart for {accuracy_name}...")
+
+        # Re-filter Pareto fronts for throughput (maximize both axes).
+        throughput_polytris_df = _filter_pareto_per_dataset(
+            polytris_df.dropna(subset=['throughput_fps', accuracy_col]),
+            'throughput_fps', accuracy_col, minimize_x=True
+        ) if 'throughput_fps' in polytris_df.columns else pd.DataFrame()
+
+        throughput_naive_df = _filter_pareto_per_dataset(
+            naive_df.dropna(subset=['throughput_fps', accuracy_col]),
+            'throughput_fps', accuracy_col, minimize_x=True
+        ) if ('throughput_fps' in naive_df.columns
+              and not naive_df['throughput_fps'].isna().all()) else pd.DataFrame()
+
+        throughput_sota_dict: dict[str, pd.DataFrame] = {}
+        for system_name, df_sota in df_sota_dict.items():
+            if accuracy_col not in df_sota.columns or 'throughput_fps' not in df_sota.columns:
+                continue
+            filtered = _filter_pareto_per_dataset(
+                df_sota.dropna(subset=['throughput_fps', accuracy_col]),
+                'throughput_fps', accuracy_col, minimize_x=True
+            )
+            if not filtered.empty:
+                throughput_sota_dict[system_name] = filtered
+
+        # Collect throughput Pareto-optimal rows from all systems.
+        throughput_tooltip_cols = ['system', 'dataset', 'videoset', 'classifier',
+                                  'sample_rate', 'tracking_accuracy_threshold',
+                                  'tilepadding', 'canvas_scale', 'tracker',
+                                  'throughput_fps', 'time', accuracy_col]
+        tp_data_list: list[pd.DataFrame] = []
+
+        if not throughput_polytris_df.empty:
+            tp_polytris = throughput_polytris_df.copy()
+            tp_polytris['system'] = 'Polytris'
+            tp_cols = [c for c in throughput_tooltip_cols if c in tp_polytris.columns]
+            tp_data_list.append(tp_polytris[tp_cols])
+
+        if not throughput_naive_df.empty:
+            tp_naive = throughput_naive_df.copy()
+            tp_naive['system'] = 'Naive'
+            tp_cols = [c for c in throughput_tooltip_cols if c in tp_naive.columns]
+            tp_data_list.append(tp_naive[tp_cols])
+
+        for system_name, df_tp_sota in throughput_sota_dict.items():
+            tp_sota = df_tp_sota.copy()
+            tp_sota['system'] = system_name.upper()
+            tp_cols = [c for c in throughput_tooltip_cols if c in tp_sota.columns]
+            tp_data_list.append(tp_sota[tp_cols])
+
+        if tp_data_list:
+            df_tp_combined = pd.concat(tp_data_list, ignore_index=True)
+            print(f"  Combined throughput Pareto-optimal data: {len(df_tp_combined)} points")
+            throughput_chart = create_pareto_comparison_chart(
+                df_tp_combined, accuracy_col, accuracy_name,
+                time_col='throughput_fps',
+                log_scale=True,
+                x_title='Throughput (frames/sec)'
+            )
+            save_chart(throughput_chart, output_dir,
+                       f'{accuracy_col.lower()}_throughput_pareto_comparison')
+        else:
+            print("  No throughput data available")
 
         # 4. Compute and visualize speedup at accuracy levels
         print(f"\n4. Computing speedup at accuracy levels for {accuracy_name}...")

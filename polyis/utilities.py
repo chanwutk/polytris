@@ -14,6 +14,7 @@ import inspect
 import logging
 import yaml
 from xml.etree import ElementTree
+import pathlib
 
 import cv2
 from matplotlib.path import Path
@@ -218,7 +219,7 @@ def get_video_resolution(dataset: str, video: str) -> tuple[int, int]:
     return resolution
 
 
-def get_num_frames(video_file_path: str) -> int:
+def get_num_frames(video_file_path: str | pathlib.Path) -> int:
     """
     Get the number of frames from a video file.
 
@@ -428,7 +429,7 @@ def register_tracked_detections(
             trajectories[track_id].append((e_frame_idx, e_box))
 
 
-def save_tracking_results(frame_tracks: dict[int, list[list[float]]], output_path: str):
+def save_tracking_results(frame_tracks: dict[int, list[list[float]]], output_path: str | pathlib.Path):
     """
     Save tracking results to a JSONL file.
 
@@ -1279,6 +1280,7 @@ class ProgressBar:
             num_tasks (int): Total number of tasks to process
             refresh_per_second (float): Refresh rate for progress bars
         """
+        off = True
         if off:
             num_workers = 1
         self.num_workers = min(num_workers, num_tasks)
@@ -1293,13 +1295,13 @@ class ProgressBar:
         self.command_queue: "mp.Queue[tuple[str, dict] | None]" = mp.Queue()
         self.worker_id_queue: "mp.Queue[int]" = mp.Queue(maxsize=num_workers)
         self.progress_process: mp.Process | None = None
-        if not off:
-            self.progress_process = mp.Process(
-                target=progress_bars,
-                args=(self.command_queue, self.num_workers,
-                    self.num_tasks, self.refresh_per_second, self.script_name),
-                daemon=True
-            )
+        # if not off:
+        self.progress_process = mp.Process(
+            target=progress_bars,
+            args=(self.command_queue, self.num_workers,
+                self.num_tasks, self.refresh_per_second, self.script_name),
+            daemon=True
+        )
 
     def __enter__(self):
         """Enter the context manager - set up queues and start progress process."""

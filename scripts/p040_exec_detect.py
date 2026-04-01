@@ -45,7 +45,7 @@ def parse_args():
 
 
 def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: queue.Queue,
-                         len_images: int, batch_size: int, gpu_id: int, stream: torch.cuda.Stream):
+                         first_video_num_images: int, batch_size: int, gpu_id: int, stream: torch.cuda.Stream):
     """
     Worker thread for detecting objects in compressed images using auto-selected detector with CUDA streams.
 
@@ -56,9 +56,9 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
 
     Args:
         dataset (str): Name of the dataset (used to auto-select detector)
-        batch_queue (queue.Queue): Queue containing batches of images to process (batch_start, batch_images)
-        result_queue (queue.Queue): Queue to send results back (batch_start, batch_end, detections)
-        len_images (int): Total number of images to detect
+        batch_queue (queue.Queue): Queue containing batches of (video, batch_start, batch_images) to process
+        result_queue (queue.Queue): Queue to send results back (video, batch_start, batch_output)
+        first_video_num_images (int): Number of images in the first video (used as hint for get_detector)
         batch_size (int): Batch size for detection processing
         gpu_id (int): GPU ID to use for processing
         stream (torch.cuda.Stream): CUDA stream for this thread's operations
@@ -67,17 +67,17 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
     torch.cuda.set_device(gpu_id)
 
     # Get detector instance for this thread
-    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len_images)
+    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, first_video_num_images)
 
     with torch.no_grad(), torch.inference_mode():
-        # Process images in batches
+        # Process batches from the queue until a None sentinel is received
         while True:
             batch_data = batch_queue.get(block=True)
             if batch_data is None:
                 break
 
-            batch_start, batch_images = batch_data
-            batch_end = min(batch_start + len(batch_images), len_images)
+            # Unpack video identifier along with batch data
+            video, batch_start, batch_images = batch_data
 
             # Run detection within the stream context for true parallelism
             # All PyTorch operations (including data transfers and model inference) will
@@ -88,23 +88,24 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
                 # in a stream context, PyTorch operations will use this stream
                 batch_output = polyis.models.detector.detect_batch(batch_images, detector)
 
-            # Send results back to main thread
-            result_queue.put((batch_start, batch_end, batch_output))
+            # Send results back to main thread with video identifier
+            result_queue.put((video, batch_start, batch_output))
 
 
-def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
+def detect_parallel(dataset: str, videos: list[str], classifier: str, tilesize: int,
                     sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
                     tracker: str | None, tracking_accuracy_threshold: float | None,
-                    batch_size: int, gpu_id: int):
+                    batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
 
     Uses threading with CUDA streams to enable parallel execution of multiple detection operations
-    on the same GPU without blocking each other.
+    on the same GPU without blocking each other. Processes multiple videos sequentially through
+    the parallel pipeline, keeping worker threads alive across all videos.
 
     Args:
-        dataset_name (str): Name of the dataset (used to auto-select detector)
-        video (str): Name of the video file
+        dataset (str): Name of the dataset (used to auto-select detector)
+        videos (list[str]): List of video filenames to process
         classifier (str): Classifier name used for compression
         tilesize (int): Tile size used for compression
         tilepadding (TilePadding): Whether padding was applied to classification results
@@ -112,110 +113,148 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         canvas_scale (float): Canvas scale used for compression outputs
         tracker (str): Tracker name for upstream pruning
         tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
+        batch_size (int): Batch size for detection processing
         gpu_id (int): GPU ID to use for processing
+        command_queue (mp.Queue): Queue for reporting progress to the main process
     """
+    device = f'cuda:{gpu_id}'
+
     # Enable cuDNN benchmarking for optimal performance
     torch.backends.cudnn.benchmark = True
 
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    description = f"{dataset} {param_str}"
 
-    compressed_frames_dir = cache.exec(dataset, 'comp-frames', video, param_str, 'images')
-    assert os.path.exists(compressed_frames_dir), \
-        f"Compressed frames directory {compressed_frames_dir} does not exist"
-
-    # Create output directory for detections
-    print(f"Creating output directory for detections")
-    detections_output_dir = cache.exec(dataset, 'comp-dets', video, param_str)
-    if os.path.exists(detections_output_dir):
-        # Remove the entire directory
-        shutil.rmtree(detections_output_dir)
-    os.makedirs(detections_output_dir, exist_ok=True)
-
-    # Get all compressed image files
-    image_files = [f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg')]
-    image_files.sort()  # Ensure consistent ordering
-    print(f"Found {len(image_files)} image files")
-
-    # Read all images in the main thread to avoid I/O overhead in worker threads
-    print(f"Reading {len(image_files)} frames")
-    frames: list[np.ndarray] = []
-    for image_file in image_files:
-        image_path = os.path.join(compressed_frames_dir, image_file)
-        frame = cv2.imread(image_path)
-        assert frame is not None
-        assert polyis.dtypes.is_np_image(frame)
-        frames.append(frame)
-    print(f"Read {len(frames)} frames")
+    # Look up first video's image count as a representative hint for get_detector
+    first_compressed_frames_dir = cache.exec(dataset, 'comp-frames', videos[0], param_str, 'images')
+    first_image_files = sorted(f for f in os.listdir(first_compressed_frames_dir) if f.endswith('.jpg'))
+    first_video_num_images = len(first_image_files)
 
     num_threads = 2
-    with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
-          open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
-        # Use thread-safe queues for inter-thread communication
-        batch_queue = queue.Queue()
-        result_queue = queue.Queue()
 
-        # Set device for main thread
-        torch.cuda.set_device(gpu_id)
+    # Use thread-safe queues for inter-thread communication
+    batch_queue = queue.Queue()
+    result_queue = queue.Queue()
 
-        # Create unique CUDA streams for each worker thread
-        # Each stream allows independent parallel execution on the GPU
-        streams = [torch.cuda.Stream(device=gpu_id) for _ in range(num_threads)]
+    # Set device for main thread
+    torch.cuda.set_device(gpu_id)
 
-        # Start worker threads
-        # Each thread uses its own CUDA stream to enable true parallelism
-        threads = []
-        print(f"Starting {num_threads} threads with CUDA streams for parallel GPU execution")
-        for i in range(num_threads):
-            thread = threading.Thread(target=detect_worker_thread,
-                                       args=(dataset, batch_queue, result_queue,
-                                             len(image_files), batch_size, gpu_id, streams[i]))
-            threads.append(thread)
-            thread.start()
+    # Create unique CUDA streams for each worker thread
+    # Each stream allows independent parallel execution on the GPU
+    streams = [torch.cuda.Stream(device=gpu_id) for _ in range(num_threads)]
 
-        # Queue all batches with images for processing
+    # Start worker threads (once for all videos)
+    # Each thread uses its own CUDA stream to enable true parallelism
+    threads = []
+    for i in range(num_threads):
+        thread = threading.Thread(target=detect_worker_thread,
+                                   args=(dataset, batch_queue, result_queue,
+                                         first_video_num_images, batch_size, gpu_id, streams[i]))
+        threads.append(thread)
+        thread.start()
+
+    # Warmup phase: queue first few frames of first video through workers
+    warmup_frames: list[np.ndarray] = []
+    for image_file in first_image_files[:min(4, first_video_num_images)]:
+        frame = cv2.imread(os.path.join(first_compressed_frames_dir, image_file))
+        assert frame is not None
+        assert polyis.dtypes.is_np_image(frame)
+        warmup_frames.append(frame)
+    # Queue warmup batches with a special video identifier
+    warmup_num_batches = (len(warmup_frames) + batch_size - 1) // batch_size
+    command_queue.put((device, {'completed': 0, 'total': warmup_num_batches, 'description': 'Warm up'}))
+    for i in range(warmup_num_batches):
+        batch_start = i * batch_size
+        batch_images = warmup_frames[batch_start:batch_start + batch_size]
+        batch_queue.put(('__warmup__', batch_start, batch_images))
+    # Collect warmup results (discard them)
+    for i in range(warmup_num_batches):
+        result_queue.get(block=True)
+        command_queue.put((device, {'completed': i + 1, 'total': warmup_num_batches, 'description': 'Warm up'}))
+    # Synchronize all streams after warmup
+    for stream in streams:
+        stream.synchronize()
+    torch.cuda.synchronize()
+
+    # Report initial progress: 0 of N videos done
+    command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
+
+    # Process each video sequentially through the parallel pipeline
+    for video_idx, video in enumerate(videos):
+        # Resolve compressed frames directory for this video
+        compressed_frames_dir = cache.exec(dataset, 'comp-frames', video, param_str, 'images')
+        assert os.path.exists(compressed_frames_dir), \
+            f"Compressed frames directory {compressed_frames_dir} does not exist"
+
+        # Create output directory for detections (clean slate)
+        detections_output_dir = cache.exec(dataset, 'comp-dets', video, param_str)
+        if os.path.exists(detections_output_dir):
+            shutil.rmtree(detections_output_dir)
+        os.makedirs(detections_output_dir, exist_ok=True)
+
+        # Get all compressed image files for this video
+        image_files = sorted(f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg'))
+
+        # Read all frames for this video in the main thread
+        frames: list[np.ndarray] = []
+        for image_file in image_files:
+            image_path = os.path.join(compressed_frames_dir, image_file)
+            frame = cv2.imread(image_path)
+            assert frame is not None
+            assert polyis.dtypes.is_np_image(frame)
+            frames.append(frame)
+
+        # Queue all batches for this video
         num_batches = (len(image_files) + batch_size - 1) // batch_size
-        print(f"Queuing {num_batches} batches for processing")
         start_time = (time.time_ns() / 1e6)
-
         for i in range(num_batches):
             batch_start = i * batch_size
-            batch_end = min(batch_start + batch_size, len(image_files))
-            batch_images = frames[batch_start:batch_end]
-            # Pass batch of numpy arrays through queue
-            batch_queue.put((batch_start, batch_images))
+            batch_images = frames[batch_start:batch_start + batch_size]
+            batch_queue.put((video, batch_start, batch_images))
 
-        # Signal threads to stop by sending None for each thread
-        for i in range(num_threads):
-            batch_queue.put(None)
-
-        # Collect results from all threads
+        # Collect all results for this video
         # Results may arrive out of order, so we collect them all first
         results_dict: dict[int, polyis.dtypes.DetArray] = {}
         completed_batches = 0
         while completed_batches < num_batches:
-            result_data = result_queue.get(block=True)
-            batch_start, batch_end, batch_output = result_data
-            # Store results by batch start index
+            result_video, batch_start, batch_output = result_queue.get(block=True)
+            assert result_video == video, \
+                f"Expected results for {video} but got {result_video}"
+            # Store results by frame index within this video
             for i, detection in enumerate(batch_output):
                 results_dict[batch_start + i] = detection
             completed_batches += 1
 
-        # Wait for all threads to finish
-        for thread in threads:
-            thread.join()
-
-        # Synchronize all streams to ensure all GPU work is complete
+        # Synchronize all streams to ensure all GPU work is complete for this video
         for stream in streams:
             stream.synchronize()
         torch.cuda.synchronize()
         end_time = (time.time_ns() / 1e6)
 
-        # Write results in order
-        for i in range(len(image_files)):
-            output_detection = results_dict[i]
-            assert output_detection is not None
-            f.write(json.dumps({ 'image_file': image_files[i], 'bboxes': output_detection.tolist() }) + '\n')
-            fr.write(json.dumps(format_time(detect=(end_time - start_time) / len(image_files))) + '\n')
+        # Write results in order for this video
+        with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
+              open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr):
+            for i in range(len(image_files)):
+                output_detection = results_dict[i]
+                assert output_detection is not None
+                f.write(json.dumps({ 'image_file': image_files[i], 'bboxes': output_detection.tolist() }) + '\n')
+                fr.write(json.dumps(format_time(detect=(end_time - start_time) / len(image_files))) + '\n')
+
+        # Advance the progress bar after each video completes
+        command_queue.put((device, {'completed': video_idx + 1, 'total': len(videos), 'description': description}))
+
+    # Signal worker threads to stop
+    for i in range(num_threads):
+        batch_queue.put(None)
+
+    # Wait for all threads to finish
+    for thread in threads:
+        thread.join()
+
+    # Final synchronization
+    for stream in streams:
+        stream.synchronize()
+    torch.cuda.synchronize()
 
 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,

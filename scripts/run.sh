@@ -4,14 +4,14 @@
 echo -e "\n\n\n=============================================================="
 echo          "Phase 0: Test pass (learning on test data)"
 echo -e       "==============================================================\n"
-echo -e "\n\n\n########################################"
-echo ">>> scripts/p015_tune_optimize_classifier.py"
-echo -e "########################################\n"
-python scripts/p015_tune_optimize_classifier.py
-echo -e "\n\n\n########################################"
-echo ">>> scripts/p016_tune_track_rate.py"
-echo -e "########################################\n"
-python scripts/p016_tune_track_rate.py
+# echo -e "\n\n\n########################################"
+# echo ">>> scripts/p015_tune_optimize_classifier.py"
+# echo -e "########################################\n"
+# python scripts/p015_tune_optimize_classifier.py
+# echo -e "\n\n\n########################################"
+# echo ">>> scripts/p016_tune_track_rate.py"
+# echo -e "########################################\n"
+# python scripts/p016_tune_track_rate.py
 
 echo -e "\n\n\n=============================================================="
 echo          "Phase 1: Valid pass (full parameter grid, valid videoset only)"

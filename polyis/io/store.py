@@ -10,7 +10,7 @@ OTIF_DATASET = CONFIG['DATA']['OTIF_DATASET']
 TRAINING_DIR = str(Path(DATASETS_DIR).parent / 'training')
 
 
-def dataset(dataset_name, *args):
+def dataset(dataset_name: str, *args: str):
     # Path to a processed dataset
     path = Path(DATASETS_DIR) / dataset_name
     for arg in args:
