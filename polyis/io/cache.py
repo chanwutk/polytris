@@ -32,6 +32,7 @@ EVAL_STAGE_MAP = {
     'tradeoff-vis': '091_tradeoff',
     'prune-breakdown': '026_prune_breakdown',
     'pareto-params': '095_pareto_params',
+    'track-rate-vis': '016_track_rate_visualize',
 }
 
 

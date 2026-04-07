@@ -148,6 +148,7 @@ STAGE_TO_SCRIPT_PATH = {
 # Keep global runtime exclusions here so the policy stays centralized and easy to extend.
 EXCLUDED_RUNTIME_OPS_BY_SCRIPT = {
     # 'scripts/p022_exec_prune_polyominoes.py': {'solve_ilp'},
+    'scripts/p020_exec_classify.py': {'read', 'retrieve'},
     'scripts/p030_exec_compress.py': {'save_collage', 'pack_all_total'},
 }
 

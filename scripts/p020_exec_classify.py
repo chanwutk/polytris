@@ -261,6 +261,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str,
     # print(f"Video info: {width}x{height}, {fps} FPS, {frame_count} frames")
     with open(output_path, 'w') as f, open(runtime_path, 'w') as fr, torch.no_grad():
         # Read all frames from video
+        read_start = time.time_ns() / 1e6
         frames: list[np.ndarray] = []
         while cap.isOpened():
             ret, frame = cap.read()
@@ -268,6 +269,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str,
                 break
             frames.append(np.ascontiguousarray(frame[:, :, ::-1]))  # BGR to RGB
         cap.release()
+        read_runtime = time.time_ns() / 1e6 - read_start
         assert len(frames) == frame_count, f"Expected {frame_count} frames, got {len(frames)}"
 
         # Filter to sampled frames only (frame_idx % sample_rate == 0)
@@ -320,7 +322,7 @@ def classify(dataset: str, videoset: str, video: str, classifier: str,
                 }
                 entries.append(frame_entry)
         retrieve_runtime = time.time_ns() / 1e6 - retrieve_start
-        fr.write(json.dumps(format_time(retrieve=retrieve_runtime)) + '\n')
+        fr.write(json.dumps(format_time(read=read_runtime, retrieve=retrieve_runtime)) + '\n')
 
         for frame_entry in entries:
             f.write(json.dumps(frame_entry) + '\n')

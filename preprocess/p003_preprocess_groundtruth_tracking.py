@@ -74,7 +74,7 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     # Use 29.97 FPS only for JNC datasets; use 30 FPS for other long clips.
     else:
         frame_rate = 29.97 if dataset.startswith('jnc') else 30
-    tracker = create_tracker('bytetrackcython', img_size=(height, width), frame_rate=frame_rate, track_buffer=40 if frame_rate == 15 else 20)
+    tracker = create_tracker('ocsortcython', img_size=(height, width), frame_rate=frame_rate, track_buffer=40 if frame_rate == 15 else 20)
 
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
