@@ -81,7 +81,6 @@ def main():
         selected_videosets,
         ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
          'tracker', 'tracking_accuracy_threshold'],
-        collapse_tracker_when_no_threshold=True,
     )
 
     # Build one pipeline task per (dataset, videoset, parameter combo).
@@ -101,9 +100,10 @@ def main():
                 CLASSIFIERS, TILE_SIZES, SAMPLE_RATES, TILEPADDING_MODES,
                 CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
 
-            # Expand tracker dimension: None when no pruning, else iterate.
-            trackers: list[str | None] = [None] if threshold is None else TRACKERS
-            for tracker in trackers:
+            # Always iterate over all trackers.  Even when pruning is disabled
+            # (threshold=None), each tracker produces separate tracking results
+            # matching phase-4 (p060) behavior.
+            for tracker in TRACKERS:
                 combo = (classifier, tile_size, sample_rate, tilepadding,
                          canvas_scale, tracker, threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:

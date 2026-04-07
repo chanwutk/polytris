@@ -157,11 +157,6 @@ def run_pipeline(
     # Compress reads from prune_queue when pruning, else from classify_queue.
     compress_in_queue = prune_queue if use_prune else classify_queue
 
-    # --- shared timing value -------------------------------------------------
-    # Timer start is recorded by the Classify stage on the first batch it
-    # receives; it writes the nanosecond timestamp into this shared value.
-    timer_start_ns = mp.Value('l', 0)   # signed long
-
     # --- import stage entry-points (deferred to avoid top-level side effects) -
     from execution.stage_decode import decoder_process
     from execution.stage_classify import classify_process
@@ -196,7 +191,6 @@ def run_pipeline(
         kwargs=dict(
             in_queue=decode_queue,
             out_queue=classify_queue,
-            timer_start_ns=timer_start_ns,
             **common_kwargs,
         ),
         daemon=True,
@@ -269,6 +263,18 @@ def run_pipeline(
         # videos are loaded.
         pass
 
+    # --- warmup: feed one video through the full pipeline first ---------------
+    # This warms up all CUDA kernels (classifier, detector, etc.) before
+    # timing starts, so runtime measurements exclude JIT/warmup overhead.
+    WARMUP_MAX_FRAMES = 64
+    warmup_video = videos[0]
+    video_queue.put((warmup_video, WARMUP_MAX_FRAMES))
+    # Wait for the warmup result (discard it).
+    _warmup_result: TrackingResult = result_queue.get()
+
+    # --- start timer after warmup -------------------------------------------
+    timer_start_ns = time.time_ns()
+
     # --- feed videos to the Decoder ------------------------------------------
     description = build_param_str(
         classifier=config.classifier,
@@ -313,8 +319,7 @@ def run_pipeline(
             p.join(timeout=5)
 
     # --- compute elapsed time ------------------------------------------------
-    start_ns = timer_start_ns.value
-    elapsed_ms = (timer_end_ns - start_ns) / 1e6 if start_ns > 0 else 0.0
+    elapsed_ms = (timer_end_ns - timer_start_ns) / 1e6
 
     # --- save results to disk (after timing) ---------------------------------
     _save_results(results, config, elapsed_ms)

@@ -55,14 +55,21 @@ def decoder_process(
         return
 
     # Normal (streaming) mode.
+    # Items on video_queue are either a video name (str) or a
+    # (video_name, max_frames) tuple for warmup decoding with limited frames.
     while True:
-        video = video_queue.get()
-        if video is None:
+        item = video_queue.get()
+        if item is None:
             # No more videos; propagate shutdown downstream.
             out_queue.put(None)
             return
 
-        _decode_one_video(video, out_queue, device, config)
+        if isinstance(item, tuple):
+            video, max_frames = item
+            _decode_one_video(video, out_queue, device, config,
+                              max_frames=max_frames)
+        else:
+            _decode_one_video(item, out_queue, device, config)
 
 
 def _decode_one_video(
@@ -70,13 +77,21 @@ def _decode_one_video(
     out_queue: mp.Queue,
     device: str,
     config: PipelineConfig,
+    max_frames: int | None = None,
 ):
-    """Decode a single video and stream frame batches to *out_queue*."""
+    """Decode a single video and stream frame batches to *out_queue*.
+
+    When *max_frames* is set, only the first *max_frames* frames are
+    considered (used for pipeline warmup).
+    """
     video_path = store.dataset(config.dataset, config.videoset, video)
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f"Could not open video {video_path}"
 
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    # Limit frame count for warmup decoding.
+    if max_frames is not None:
+        frame_count = min(frame_count, max_frames)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 

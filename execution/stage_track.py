@@ -39,15 +39,10 @@ def track_process(
 
     ``None`` on *in_queue* propagates and the process exits.
     """
-    # Determine which tracker to use.  When pruning is active, the tracker
-    # is specified in the config.  When not pruning, use the first available
-    # tracker from the EXEC config (matching p060 conventions).
+    # The tracker is always specified in the config (main.py iterates over
+    # all trackers even when pruning is disabled).
     tracker_name = config.tracker
-    if tracker_name is None:
-        # Fall back to the first tracker in the config.
-        from polyis.utilities import get_config
-        _cfg = get_config()
-        tracker_name = _cfg['EXEC']['TRACKERS'][0]
+    assert tracker_name is not None, "tracker must be set in PipelineConfig"
 
     no_interpolate = config.no_interpolate
 

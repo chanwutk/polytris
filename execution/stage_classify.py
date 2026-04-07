@@ -10,7 +10,6 @@ accumulated results are sent downstream as a VideoClassifications message.
 from __future__ import annotations
 
 import os
-import time
 from typing import cast
 
 import cv2
@@ -38,7 +37,6 @@ def classify_process(
     *,
     in_queue: mp.Queue,
     out_queue: mp.Queue,
-    timer_start_ns: mp.Value,
     gpu_id: int,
     config: PipelineConfig,
 ):
@@ -102,10 +100,6 @@ def classify_process(
         torch.from_numpy(always_relevant_bitmap.flatten()).to(device).to(torch.uint8)
     )
 
-    # ---- Warmup (16 dummy batches) ----
-    # Warmup is done on the first video's first batch once received below.
-    warmed_up = False
-
     # ---- Per-video state ----
     current_video: str | None = None
     current_buffer: torch.Tensor | None = None
@@ -118,8 +112,6 @@ def classify_process(
     grid_width = 0
     grid_height = 0
     positions: torch.Tensor | None = None
-    timer_started = False
-
     with torch.no_grad():
         while True:
             msg = in_queue.get()
@@ -169,25 +161,8 @@ def classify_process(
             # --- FrameBatch: classify a batch of frames ---
             assert isinstance(msg, FrameBatch)
 
-            # Record timer start on the very first batch across all videos.
-            if not timer_started:
-                timer_start_ns.value = time.time_ns()
-                timer_started = True
-
             assert current_buffer is not None
             assert positions is not None
-
-            # Warmup on first real batch (16 repeats).
-            if not warmed_up:
-                for _ in range(16):
-                    _classify_batch_gpu(
-                        grid_width, grid_height, positions,
-                        current_buffer, msg.batch_positions, msg.prev_positions,
-                        model, tile_size, device,
-                        normalize_mean, normalize_std, always_relevant_mask,
-                    )
-                torch.cuda.synchronize()
-                warmed_up = True
 
             # Run classification on this batch.
             probs, _runtime = _classify_batch_gpu(

@@ -118,6 +118,22 @@ def _compress_video(
 
     total_collages = len(collages)
 
+    # --- Handle the zero-collage case (all tiles pruned/classified away) ---
+    # Send a sentinel so detect_uncompress doesn't deadlock waiting for collages.
+    if total_collages == 0:
+        out_queue.put(CollageReady(
+            video=msg.video,
+            collage_idx=0,
+            total_collages=0,
+            canvas=torch.empty(0, 0, 3, device=device, dtype=torch.uint8),
+            index_map=np.empty((0, 0), dtype=np.uint16),
+            offset_lookup=[],
+            num_frames=msg.frame_count,
+            tile_size=tile_size,
+        ))
+        del frame_buffer
+        return
+
     # --- Build the frame lookup from the shared GPU buffer ---
     # sampled_indices maps buffer position -> absolute frame index.
     # We also need frames for non-sampled indices referenced by collages;
