@@ -5,9 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import altair as alt
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from polyis.pareto import compute_pareto_front
@@ -102,99 +99,119 @@ def save_results(results_df: pd.DataFrame, dataset: str, tracker_name: str) -> P
     return output_path
 
 
-def _plot_pair(results_df: pd.DataFrame, pair: PairDefinition, output_path: Path, title: str) -> None:
-    exhaustive_df = results_df[
-        (results_df['method'] == 'exhaustive')
-        & results_df[pair.x_col].notna()
-        & results_df[pair.y_col].notna()
-    ].copy()
-    heuristic_df = results_df[
-        (results_df['method'] == 'heuristic')
-        & results_df[pair.x_col].notna()
-        & results_df[pair.y_col].notna()
-    ].copy()
-    frontier_df = exhaustive_df[exhaustive_df[f'is_pareto_{pair.slug}']].copy()
+def _build_chart_layers(
+    base: alt.Chart,
+    pair: PairDefinition,
+) -> list[alt.Chart]:
+    """Return ordered Altair layers for one metric pair (back to front):
+      1. Exhaustive background scatter — light gray, semi-transparent.
+      2. Pareto frontier connecting line — black; order encoding sorts left-to-right.
+      3. Pareto frontier point markers — black.
+      4. Heuristic diamond markers — steelblue.
+      5. Whole-frame baseline diamonds — firebrick.
+      6. Whole-frame rate labels — derived via Vega expression, no Python iteration.
+    """
+    pareto_flag_col = f'is_pareto_{pair.slug}'
+    x_enc = alt.X(f'{pair.x_col}:Q', title=pair.x_label)
+    y_enc = alt.Y(f'{pair.y_col}:Q', title=pair.y_label)
 
-    figure, axis = plt.subplots(figsize=(8, 6))
+    exhaustive_tooltip = [
+        alt.Tooltip('dataset:N', title='Dataset'),
+        alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
+        alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
+        alt.Tooltip('grid_key:N', title='Grid'),
+    ]
+    heuristic_tooltip = [
+        alt.Tooltip('dataset:N', title='Dataset'),
+        alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
+        alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
+        alt.Tooltip('heuristic_threshold:Q', title='Threshold'),
+        alt.Tooltip('grid_key:N', title='Grid'),
+    ]
+    whole_frame_tooltip = [
+        alt.Tooltip('dataset:N', title='Dataset'),
+        alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
+        alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
+        alt.Tooltip('grid_key:N', title='Frame rate'),
+    ]
 
-    if not exhaustive_df.empty:
-        axis.scatter(
-            exhaustive_df[pair.x_col],
-            exhaustive_df[pair.y_col],
-            s=14,
-            alpha=0.45,
-            color='lightgray',
-            label='Exhaustive points',
-        )
+    # Layer 1: exhaustive background scatter.
+    bg_layer = (
+        base
+        .transform_filter("datum.method === 'exhaustive'")
+        .mark_point(size=14, opacity=0.35, filled=True, color='lightgray')
+        .encode(x=x_enc, y=y_enc, tooltip=exhaustive_tooltip)
+    )
 
-    if not frontier_df.empty:
-        frontier_df = frontier_df.sort_values(pair.x_col)
-        axis.plot(
-            frontier_df[pair.x_col],
-            frontier_df[pair.y_col],
-            linewidth=2.0,
-            color='black',
-            label='Exhaustive Pareto frontier',
-        )
-        axis.scatter(
-            frontier_df[pair.x_col],
-            frontier_df[pair.y_col],
-            s=24,
-            color='black',
-        )
+    pareto_filter = f"datum.method === 'exhaustive' && datum.{pareto_flag_col}"
 
-    if not heuristic_df.empty:
-        axis.scatter(
-            heuristic_df[pair.x_col],
-            heuristic_df[pair.y_col],
-            s=40,
-            color='tab:blue',
-            edgecolors='white',
-            linewidths=0.4,
-            label='Heuristic points',
+    # Layer 2: Pareto frontier line; order encoding ensures left-to-right rendering.
+    frontier_line = (
+        base
+        .transform_filter(pareto_filter)
+        .mark_line(strokeWidth=2.0, color='black')
+        .encode(
+            x=x_enc,
+            y=y_enc,
+            order=alt.Order(f'{pair.x_col}:Q', sort='ascending'),
+            tooltip=exhaustive_tooltip,
         )
+    )
 
-    # Overlay whole-frame sampling baselines (entire frames kept or dropped at rate 1/2/4).
-    whole_frame_df = results_df[
-        (results_df['method'] == 'whole_frame')
-        & results_df[pair.x_col].notna()
-        & results_df[pair.y_col].notna()
-    ].copy()
-    if not whole_frame_df.empty:
-        # Extract numeric rate from grid_key 'whole_frame_{rate}'.
-        whole_frame_df['_rate'] = (
-            whole_frame_df['grid_key'].str.removeprefix('whole_frame_').astype(int)
-        )
-        axis.scatter(
-            whole_frame_df[pair.x_col],
-            whole_frame_df[pair.y_col],
-            s=80,
-            color='tab:red',
-            marker='D',
-            edgecolors='white',
-            linewidths=0.5,
-            zorder=5,
-            label='Whole-frame baseline',
-        )
-        for _, row in whole_frame_df.iterrows():
-            label = 'no skip' if row['_rate'] == 1 else f'1/{row["_rate"]} frames'
-            axis.annotate(
-                label,
-                xy=(row[pair.x_col], row[pair.y_col]),
-                xytext=(4, 4),
-                textcoords='offset points',
-                fontsize=7,
-                color='tab:red',
-            )
+    # Layer 3: Pareto frontier point markers.
+    frontier_pts = (
+        base
+        .transform_filter(pareto_filter)
+        .mark_point(size=32, filled=True, color='black')
+        .encode(x=x_enc, y=y_enc, tooltip=exhaustive_tooltip)
+    )
 
-    axis.set_xlabel(pair.x_label)
-    axis.set_ylabel(pair.y_label)
-    axis.set_title(title)
-    axis.grid(alpha=0.25)
-    axis.legend(loc='best')
-    figure.tight_layout()
-    figure.savefig(output_path, dpi=150)
-    plt.close(figure)
+    # Layer 4: heuristic diamond markers.
+    heuristic_layer = (
+        base
+        .transform_filter("datum.method === 'heuristic'")
+        .mark_point(size=80, shape='diamond', filled=True, color='steelblue', stroke='white', strokeWidth=0.5)
+        .encode(x=x_enc, y=y_enc, tooltip=heuristic_tooltip)
+    )
+
+    # Layer 5: whole-frame baseline diamonds.
+    whole_frame_layer = (
+        base
+        .transform_filter("datum.method === 'whole_frame'")
+        .mark_point(size=80, shape='diamond', filled=True, color='firebrick', stroke='white', strokeWidth=0.5)
+        .encode(x=x_enc, y=y_enc, tooltip=whole_frame_tooltip)
+    )
+
+    # Layer 6: whole-frame rate labels via Vega expression.
+    # split(grid_key, '_')[2] extracts the numeric rate from 'whole_frame_{rate}'.
+    whole_frame_text = (
+        base
+        .transform_filter("datum.method === 'whole_frame'")
+        .transform_calculate(
+            label="datum.grid_key === 'whole_frame_1' ? 'no skip' : '1/' + split(datum.grid_key, '_')[2] + ' frames'",
+        )
+        .mark_text(dx=6, dy=-8, fontSize=9, color='firebrick')
+        .encode(x=x_enc, y=y_enc, text='label:N')
+    )
+
+    return [bg_layer, frontier_line, frontier_pts, heuristic_layer, whole_frame_layer, whole_frame_text]
+
+
+def _make_single_chart(
+    results_df: pd.DataFrame,
+    pair: PairDefinition,
+    title: str,
+) -> alt.LayerChart:
+    """Build a single-dataset Altair chart for one metric pair."""
+    pareto_flag_col = f'is_pareto_{pair.slug}'
+    plot_df = results_df.dropna(subset=[pair.x_col, pair.y_col]).copy()
+    plot_df[pareto_flag_col] = (
+        plot_df[pareto_flag_col].fillna(False).astype(bool)
+        if pareto_flag_col in plot_df.columns
+        else False
+    )
+    layers = _build_chart_layers(alt.Chart(plot_df), pair)
+    return alt.layer(*layers).properties(title=title, width=600, height=450)
 
 
 def plot_results(dataset: str, tracker_name: str) -> list[Path]:
@@ -207,10 +224,12 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
     written_paths: list[Path] = []
 
     for pair in PAIR_DEFINITIONS:
-        output_path = output_dir / f'{pair.slug}.png'
         title = f'{dataset} {tracker_name}: {pair.x_label} vs {pair.y_label}'
-        _plot_pair(results_df, pair, output_path, title)
-        written_paths.append(output_path)
+        chart = _make_single_chart(results_df, pair, title)
+        for suffix in ('.png', '.html'):
+            out_path = output_dir / f'{pair.slug}{suffix}'
+            chart.save(str(out_path))
+            written_paths.append(out_path)
 
     return written_paths
 
@@ -241,23 +260,14 @@ def _make_altair_chart(
     pair: PairDefinition,
     tracker_name: str,
 ) -> alt.FacetChart:
-    """Build a faceted Altair scatter chart for one metric pair.
+    """Build a faceted Altair chart for one metric pair; one subplot per dataset.
 
-    One subplot per dataset. Layers within each facet (back to front):
-      1. All exhaustive points — small, semi-transparent, light gray.
-      2. Pareto frontier connecting line — black.
-      3. Pareto frontier points — black, slightly larger.
-      4. Heuristic points — blue diamond markers.
-
-    All layers share a single DataFrame so that Altair's facet requirement
-    (uniform data source across layers) is satisfied. Row filtering is done
-    via Vega-Lite transform_filter expressions.
+    All layers share a single DataFrame so Altair's facet requirement (uniform
+    data source across layers) is satisfied. Row filtering is done via
+    Vega-Lite transform_filter expressions inside _build_chart_layers.
     """
     pareto_flag_col = f'is_pareto_{pair.slug}'
-
-    # Build a single plot DataFrame: drop rows with missing metrics, sort by
-    # (dataset, x) so the Pareto frontier line is drawn left-to-right, and
-    # normalise the Pareto flag column to a bool (False when absent).
+    # Sort by (dataset, x) so the Pareto frontier line renders left-to-right.
     plot_df = (
         combined_df
         .dropna(subset=[pair.x_col, pair.y_col])
@@ -269,74 +279,9 @@ def _make_altair_chart(
         if pareto_flag_col in plot_df.columns
         else False
     )
-
-    # All layers reference the same base chart so faceting is valid.
-    base = alt.Chart(plot_df)
-
-    x_enc = alt.X(f'{pair.x_col}:Q', title=pair.x_label)
-    y_enc = alt.Y(f'{pair.y_col}:Q', title=pair.y_label)
-
-    exhaustive_tooltip = [
-        alt.Tooltip('dataset:N', title='Dataset'),
-        alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
-        alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
-        alt.Tooltip('grid_key:N', title='Grid'),
-    ]
-    heuristic_tooltip = [
-        alt.Tooltip('dataset:N', title='Dataset'),
-        alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
-        alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
-        alt.Tooltip('heuristic_threshold:Q', title='Threshold'),
-        alt.Tooltip('grid_key:N', title='Grid'),
-    ]
-
-    # Layer 1: exhaustive background scatter (light gray, semi-transparent).
-    bg_layer = base.transform_filter(
-        "datum.method === 'exhaustive'",
-    ).mark_point(
-        size=14, opacity=0.35, filled=True, color='lightgray',
-    ).encode(x=x_enc, y=y_enc, tooltip=exhaustive_tooltip)
-
-    # Layers 2 & 3 share the Pareto frontier filter expression.
-    pareto_filter = f"datum.method === 'exhaustive' && datum.{pareto_flag_col}"
-
-    # Layer 2: Pareto frontier connecting line.
-    frontier_line = base.transform_filter(pareto_filter).mark_line(
-        strokeWidth=2.0, color='black',
-    ).encode(x=x_enc, y=y_enc, tooltip=exhaustive_tooltip)
-
-    # Layer 3: Pareto frontier point markers.
-    frontier_pts = base.transform_filter(pareto_filter).mark_point(
-        size=32, filled=True, color='black',
-    ).encode(x=x_enc, y=y_enc, tooltip=exhaustive_tooltip)
-
-    # Layer 4: heuristic points as blue diamond markers.
-    heuristic_layer = base.transform_filter(
-        "datum.method === 'heuristic'",
-    ).mark_point(
-        size=80, shape='diamond', filled=True, color='steelblue',
-        stroke='white', strokeWidth=0.5,
-    ).encode(x=x_enc, y=y_enc, tooltip=heuristic_tooltip)
-
-    # Layer 5: whole-frame baseline points as firebrick diamonds.
-    whole_frame_tooltip = [
-        alt.Tooltip('dataset:N', title='Dataset'),
-        alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
-        alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
-        alt.Tooltip('grid_key:N', title='Frame rate'),
-    ]
-    whole_frame_layer = base.transform_filter(
-        "datum.method === 'whole_frame'",
-    ).mark_point(
-        size=80, shape='diamond', filled=True, color='firebrick',
-        stroke='white', strokeWidth=0.5,
-    ).encode(x=x_enc, y=y_enc, tooltip=whole_frame_tooltip)
-
-    # Facet by dataset — one subplot per dataset, up to 3 columns per row.
-    # Independent x-axes let each panel use its own domain rather than the
-    # global range, which avoids compressing sparse datasets.
-    chart = (
-        alt.layer(bg_layer, frontier_line, frontier_pts, heuristic_layer, whole_frame_layer)
+    layers = _build_chart_layers(alt.Chart(plot_df), pair)
+    return (
+        alt.layer(*layers)
         .properties(width=300, height=250)
         .facet(
             facet=alt.Facet('dataset:N', title='Dataset'),
@@ -345,8 +290,6 @@ def _make_altair_chart(
         .resolve_scale(x='independent')
         .properties(title=f'{tracker_name}: {pair.x_label} vs {pair.y_label}')
     )
-
-    return chart
 
 
 def combine_visualize(
