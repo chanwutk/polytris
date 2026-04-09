@@ -178,79 +178,79 @@ def benchmark_model_optimization(model: "torch.nn.Module", device: str, tile_siz
             'error': str(e)
         })
     
-    # 5. CUDA Graph (only if input size is fixed - may not work for variable batch sizes)
-    print(f"Running CUDA Graph for {iterations} iterations...")
-    try:
-        # CUDA Graph requires fixed input/output sizes
-        static_image = dummy_image.clone()
-        static_pos = dummy_pos.clone()
-        static_output = torch.empty_like(model(static_image, static_pos))
+    # # 5. CUDA Graph (only if input size is fixed - may not work for variable batch sizes)
+    # print(f"Running CUDA Graph for {iterations} iterations...")
+    # try:
+    #     # CUDA Graph requires fixed input/output sizes
+    #     static_image = dummy_image.clone()
+    #     static_pos = dummy_pos.clone()
+    #     static_output = torch.empty_like(model(static_image, static_pos))
         
-        graph = torch.cuda.CUDAGraph()
-        with torch.cuda.graph(graph):
-            static_output.copy_(model(static_image, static_pos))
+    #     graph = torch.cuda.CUDAGraph()
+    #     with torch.cuda.graph(graph):
+    #         static_output.copy_(model(static_image, static_pos))
         
-        # Warmup
-        for _ in range(5):
-            static_image.copy_(dummy_image)
-            static_pos.copy_(dummy_pos)
-            graph.replay()
-            static_output.clone()
-        torch.cuda.synchronize()
+    #     # Warmup
+    #     for _ in range(5):
+    #         static_image.copy_(dummy_image)
+    #         static_pos.copy_(dummy_pos)
+    #         graph.replay()
+    #         static_output.clone()
+    #     torch.cuda.synchronize()
         
-        start = time.time_ns() / 1e6
-        for _ in range(iterations):
-            static_image.copy_(dummy_image)
-            static_pos.copy_(dummy_pos)
-            graph.replay()
-            static_output.clone()
-        torch.cuda.synchronize()
-        cuda_graph_time = ((time.time_ns() / 1e6) - start) / iterations
-        results.append({
-            'method': 'cuda_graph',
-            'runtime_ms': cuda_graph_time
-        })
-    except Exception as e:
-        results.append({
-            'method': 'cuda_graph',
-            'runtime_ms': None,
-            'error': str(e)
-        })
+    #     start = time.time_ns() / 1e6
+    #     for _ in range(iterations):
+    #         static_image.copy_(dummy_image)
+    #         static_pos.copy_(dummy_pos)
+    #         graph.replay()
+    #         static_output.clone()
+    #     torch.cuda.synchronize()
+    #     cuda_graph_time = ((time.time_ns() / 1e6) - start) / iterations
+    #     results.append({
+    #         'method': 'cuda_graph',
+    #         'runtime_ms': cuda_graph_time
+    #     })
+    # except Exception as e:
+    #     results.append({
+    #         'method': 'cuda_graph',
+    #         'runtime_ms': None,
+    #         'error': str(e)
+    #     })
     
-    # 5b. channels-last + CUDA Graph
-    print(f"Running channels-last + CUDA Graph for {iterations} iterations...")
-    try:
-        model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
-        static_input_cl = dummy_image.to(memory_format=torch.channels_last).clone()  # type: ignore
-        static_pos = dummy_pos.clone()
-        static_output_cl = torch.empty_like(model_cl(static_input_cl, static_pos))
+    # # 5b. channels-last + CUDA Graph
+    # print(f"Running channels-last + CUDA Graph for {iterations} iterations...")
+    # try:
+    #     model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
+    #     static_input_cl = dummy_image.to(memory_format=torch.channels_last).clone()  # type: ignore
+    #     static_pos = dummy_pos.clone()
+    #     static_output_cl = torch.empty_like(model_cl(static_input_cl, static_pos))
         
-        graph_cl = torch.cuda.CUDAGraph()
-        with torch.cuda.graph(graph_cl):
-            static_output_cl.copy_(model_cl(static_input_cl, static_pos))
+    #     graph_cl = torch.cuda.CUDAGraph()
+    #     with torch.cuda.graph(graph_cl):
+    #         static_output_cl.copy_(model_cl(static_input_cl, static_pos))
         
-        # Warmup
-        for _ in range(5):
-            static_input_cl.copy_(dummy_image.to(memory_format=torch.channels_last))  # type: ignore
-            static_pos.copy_(dummy_pos)
-            graph_cl.replay()
-            static_output_cl.clone()
-        torch.cuda.synchronize()
+    #     # Warmup
+    #     for _ in range(5):
+    #         static_input_cl.copy_(dummy_image.to(memory_format=torch.channels_last))  # type: ignore
+    #         static_pos.copy_(dummy_pos)
+    #         graph_cl.replay()
+    #         static_output_cl.clone()
+    #     torch.cuda.synchronize()
         
-        start = time.time_ns() / 1e6
-        for _ in range(iterations):
-            # Include input conversion in timing
-            static_input_cl.copy_(dummy_image.to(memory_format=torch.channels_last))  # type: ignore
-            static_pos.copy_(dummy_pos)
-            graph_cl.replay()
-            static_output_cl.clone()
-        torch.cuda.synchronize()
+    #     start = time.time_ns() / 1e6
+    #     for _ in range(iterations):
+    #         # Include input conversion in timing
+    #         static_input_cl.copy_(dummy_image.to(memory_format=torch.channels_last))  # type: ignore
+    #         static_pos.copy_(dummy_pos)
+    #         graph_cl.replay()
+    #         static_output_cl.clone()
+    #     torch.cuda.synchronize()
         
-        cuda_graph_cl_time = ((time.time_ns() / 1e6) - start) / iterations
-        results.append({
-            'method': 'channels_last_cuda_graph',
-            'runtime_ms': cuda_graph_cl_time
-        })
+    #     cuda_graph_cl_time = ((time.time_ns() / 1e6) - start) / iterations
+    #     results.append({
+    #         'method': 'channels_last_cuda_graph',
+    #         'runtime_ms': cuda_graph_cl_time
+    #     })
     except Exception as e:
         results.append({
             'method': 'channels_last_cuda_graph',

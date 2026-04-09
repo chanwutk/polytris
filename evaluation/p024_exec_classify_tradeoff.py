@@ -10,12 +10,11 @@ from rich.progress import track
 from typing import Any, Dict, List
 import multiprocessing as mp
 
+from polyis.io import cache, store
 from polyis.utilities import get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, mark_detections, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 DATASETS = config['EXEC']['DATASETS']
 
@@ -97,13 +96,12 @@ def evaluate_classification_accuracy(classifications: np.ndarray,
     }
 
 
-def load_throughput_data(cache_dir: str, dataset: str, video_file: str, 
+def load_throughput_data(dataset: str, video_file: str,
                         classifier: str, tile_size: int) -> tuple[float, float, int]:
     """
     Load throughput data from score.jsonl file.
-    
+
     Args:
-        cache_dir (str): Cache directory path
         dataset (str): Dataset name
         video_file (str): Video file name
         classifier (str): Classifier name
@@ -112,8 +110,8 @@ def load_throughput_data(cache_dir: str, dataset: str, video_file: str,
         tuple[float, float, int]: Average throughput in frames per second,
                                   total runtime in milliseconds, number of frames
     """
-    runtime_file = os.path.join(cache_dir, dataset, 'execution', video_file, '020_relevancy', 
-                                f'{classifier}_{tile_size}', 'score', 'runtime.jsonl')
+    runtime_file = cache.exec(dataset, 'relevancy', video_file,
+                              f'{classifier}_{tile_size}', 'score', 'runtime.jsonl')
     
     if not os.path.exists(runtime_file):
         raise FileNotFoundError(f"Score file not found: {runtime_file}")
@@ -172,14 +170,14 @@ def evaluate_classifier_tile(args) -> dict:
 
     for video_file in video_files:
         # Load classification results
-        results = load_classification_results(CACHE_DIR, dataset_name, video_file,
+        results = load_classification_results(dataset_name, video_file,
                                               tile_size, classifier_name)
-        
+
         # Load groundtruth detections for comparison
-        groundtruth_detections = load_detection_results(CACHE_DIR, dataset_name, video_file, tracking=True)
-        
+        groundtruth_detections = load_detection_results(dataset_name, video_file, tracking=True)
+
         # Load throughput data
-        _, runtime_ms, frame_count = load_throughput_data(CACHE_DIR, dataset_name, video_file,
+        _, runtime_ms, frame_count = load_throughput_data(dataset_name, video_file,
                                                           classifier_name, tile_size)
         total_runtime_ms += runtime_ms
         total_frame_count += frame_count
@@ -320,8 +318,8 @@ def process_dataset(args):
     classifier_tilesizes: set[tuple[str, int]] | None = None
     for video_file in video_files:
         # Get all classifier-tile combinations for this video
-        relevancy_dir = os.path.join(CACHE_DIR, dataset_name, 'execution', video_file, '020_relevancy')
-        if not os.path.exists(relevancy_dir):
+        relevancy_dir = cache.exec(dataset_name, 'relevancy', video_file)
+        if not relevancy_dir.exists():
             return f"Skipping {video_file}: No relevancy directory found"
         
         _classifier_tilesizes: set[tuple[str, int]] = set()
@@ -354,7 +352,7 @@ def process_dataset(args):
         ))
     
     # Create output directory for this video
-    output_dir = os.path.join(CACHE_DIR, 'SUMMARY', '024_exec_classify_tradeoff', dataset_name)
+    output_dir = cache.summary('024_exec_classify_tradeoff', dataset_name)
     os.makedirs(output_dir, exist_ok=True)
     
     # Create visualizations
@@ -385,11 +383,9 @@ def main(args):
 
     # Process each dataset
     for dataset_name in DATASETS:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset_name)
-        
         for videoset in ['test']:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            if not os.path.exists(videoset_dir):
+            videoset_dir = store.dataset(dataset_name, videoset)
+            if not videoset_dir.exists():
                 print(f"Videoset directory {videoset_dir} does not exist, skipping...")
                 continue
 

@@ -75,6 +75,13 @@ COPY ./requirements.txt /polyis/requirements.txt
 RUN pip install --no-build-isolation --no-cache-dir -r /polyis/requirements.txt && \
     pip cache purge
 
+# Download and install the Gurobi C library + headers.
+# The tarball extracts to gurobi1301/linux64/ so we place it under /opt/.
+RUN curl -fsSL https://packages.gurobi.com/13.0/gurobi13.0.1_linux64.tar.gz \
+    | tar xz -C /opt
+
+ENV GUROBI_HOME=/opt/gurobi1301/linux64
+
 # RUN git clone https://github.com/chanwutk/lazyvim.git ~/.config/nvim
 
 # RUN echo "127.0.0.1 host.docker.internal" | tee -a /etc/hosts

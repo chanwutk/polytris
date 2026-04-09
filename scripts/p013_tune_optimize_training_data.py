@@ -7,10 +7,10 @@ import subprocess
 import numpy as np
 from functools import partial
 
+from polyis.io import cache
 from polyis.utilities import ProgressBar, get_config
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
 DATASETS_TO_TEST = config['EXEC']['DATASETS']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 
@@ -30,9 +30,8 @@ def optimize_training_data(dataset_name: str, tile_size: int, gpu_id: int, comma
         command_queue: Queue for progress updates
     """
     # Construct paths
-    cache_dir = os.path.join(CACHE_DIR, dataset_name)
-    always_relevant_dir = os.path.join(cache_dir, 'indexing', 'always_relevant')
-    training_base_dir = os.path.join(cache_dir, 'indexing', 'training')
+    always_relevant_dir = cache.index(dataset_name, 'never-relevant')
+    training_base_dir = cache.index(dataset_name, 'training')
     training_data_path = os.path.join(training_base_dir, 'data', f'tilesize_{tile_size}')
     device = f'cuda:{gpu_id}'
     
@@ -158,8 +157,7 @@ def main():
     funcs = []
     
     for dataset_name in DATASETS_TO_TEST:
-        cache_dir = os.path.join(CACHE_DIR, dataset_name)
-        always_relevant_dir = os.path.join(cache_dir, 'indexing', 'always_relevant')
+        always_relevant_dir = cache.index(dataset_name, 'never-relevant')
         
         # Check if always_relevant directory exists
         if not os.path.exists(always_relevant_dir):

@@ -20,7 +20,8 @@ from pathlib import Path
 import pandas as pd
 import altair as alt
 
-from polyis.utilities import CACHE_DIR, DATASETS_TO_TEST
+from polyis.io import cache
+from polyis.utilities import DATASETS_TO_TEST
 from evaluation.utilities import ColorScheme
 
 
@@ -95,7 +96,7 @@ def load_compression_data(dataset: str, verbose: bool = False) -> dict[str, pd.D
         with data from all compression methods (uses 'stage' column to differentiate methods)
     """
     # Get evaluation directory path
-    eval_dir = Path(CACHE_DIR) / dataset / 'evaluation' / COMPRESSION_EVAL_DIR
+    eval_dir = cache.eval(dataset, 'compress')
 
     result = {}
 
@@ -471,7 +472,7 @@ def main(args):
     """
     if args.verbose:
         print("Starting compression comparison visualization...")
-        print(f"Cache directory: {CACHE_DIR}")
+        print(f"Cache directory: {cache.root('')}")
         print(f"Output directory: {args.output_dir}")
         print(f"Datasets to analyze: {args.datasets}")
         print(f"Evaluation directory: {COMPRESSION_EVAL_DIR}")

@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
+from polyis.io import store
 from polyis.utilities import (
     ProgressBar,
     build_b3d_mask_and_crop,
@@ -23,9 +24,6 @@ from polyis.utilities import (
 
 CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
-SOURCE_DIR = CONFIG['DATA']['SOURCE_DIR']
-OTIF_DATASET = CONFIG['DATA']['OTIF_DATASET']
 
 
 def parse_args():
@@ -170,9 +168,9 @@ def process_b3d_segment(file: str, videodir: str, outputfile: str, batch_size: i
 def process_b3d(args: argparse.Namespace, dataset: str):
     funcs = []
 
-    videodir = os.path.join(SOURCE_DIR, dataset)
-    outputdir = os.path.join(DATASETS_DIR, dataset)
-    mask = os.path.join(SOURCE_DIR, 'b3d', 'annotations.xml')
+    videodir = store.source(dataset)
+    outputdir = store.dataset(dataset)
+    mask = store.source('b3d', 'annotations.xml')
     batch_size = args.batch_size
     assert batch_size is not None and batch_size > 0
     num_segments = args.num_segments
@@ -239,8 +237,8 @@ def process_caldot(dataset: str):
     # Map dataset key to the corresponding OTIF dataset directory name.
     otif_dataset = resolve_otif_dataset_name(dataset)
     # Build source and output dataset paths.
-    video_dataset_dir = os.path.join(OTIF_DATASET, otif_dataset)
-    output_dataset_dir = os.path.join(DATASETS_DIR, dataset)
+    video_dataset_dir = store.otif(otif_dataset)
+    output_dataset_dir = store.dataset(dataset)
 
     if os.path.exists(output_dataset_dir):
         shutil.rmtree(output_dataset_dir)
@@ -249,13 +247,13 @@ def process_caldot(dataset: str):
     funcs: list[partial] = []
     videosets = ['train', 'test', 'valid']
     for videoset in videosets:
-        videoset_dir = os.path.join(video_dataset_dir, videoset, 'video')
+        videoset_dir = store.otif(otif_dataset, videoset, 'video')
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         video_files = os.listdir(videoset_dir)
         assert len(video_files) > 0
 
-        output_dir = os.path.join(output_dataset_dir, videoset)
+        output_dir = store.dataset(dataset, videoset)
 
         for video_file in video_files:
             funcs.append(partial(process_caldot_video, video_file, videoset_dir, output_dir, dataset))

@@ -11,6 +11,8 @@ import shutil
 import subprocess
 import sys
 
+from polyis.io import store
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -86,8 +88,8 @@ def main(args):
         args: Parsed command line arguments
     """
     # Derive paths from dataset name
-    dataset_dir = f"/polyis-data/training/torchvision/{args.dataset}/training-data"
-    output_dir = f"/polyis-data/training/torchvision/{args.dataset}/weights/{args.model}"
+    dataset_dir = str(store.training('torchvision', args.dataset, 'training-data'))
+    output_dir = str(store.training('torchvision', args.dataset, 'weights', args.model))
     
     # Track best loss by default, unless --no-track-best-loss is set
     track_best_loss = not args.no_track_best_loss
