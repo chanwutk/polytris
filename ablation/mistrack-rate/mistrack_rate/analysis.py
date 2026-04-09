@@ -83,8 +83,12 @@ def annotate_pareto_flags(results_df: pd.DataFrame) -> pd.DataFrame:
             maximize_y=True,
             num_points=None,
         )
+        # Only flag exhaustive rows as Pareto; heuristic points are plotted separately.
         frontier_grid_keys = set(frontier_df['grid_key'])
-        flagged_df[flag_col] = flagged_df['grid_key'].isin(frontier_grid_keys)
+        flagged_df[flag_col] = (
+            (flagged_df['method'] == 'exhaustive')
+            & flagged_df['grid_key'].isin(frontier_grid_keys)
+        )
 
     return flagged_df
 

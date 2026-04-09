@@ -235,26 +235,28 @@ def test_throughput_chart_uses_custom_x_title():
 
 
 def test_filter_pareto_per_dataset_minimize_x_for_throughput():
-    # With minimize_x=True (maximize throughput), only upper-right Pareto points remain.
+    # minimize_x=True: lower throughput is "better" on x-axis.
+    # Tradeoff: (50, 0.90) has best x, (100, 0.95) has best y.
     df = pd.DataFrame([
-        {'dataset': 'd1', 'throughput_fps': 100.0, 'acc': 0.80},
         {'dataset': 'd1', 'throughput_fps': 50.0, 'acc': 0.90},
-        {'dataset': 'd1', 'throughput_fps': 60.0, 'acc': 0.70},  # dominated
+        {'dataset': 'd1', 'throughput_fps': 100.0, 'acc': 0.95},
+        {'dataset': 'd1', 'throughput_fps': 60.0, 'acc': 0.70},  # dominated by (50, 0.90)
     ])
     result = _filter_pareto_per_dataset(df, 'throughput_fps', 'acc', minimize_x=True)
-    # Point (60, 0.70) is dominated by (100, 0.80) in maximize-both sense.
+    # Point (60, 0.70) is dominated: (50, 0.90) has lower throughput AND higher accuracy.
     assert len(result) == 2
-    assert set(result['throughput_fps']) == {100.0, 50.0}
+    assert set(result['throughput_fps']) == {50.0, 100.0}
 
 
 def test_filter_pareto_per_dataset_default_minimizes_time():
-    # Default (minimize_x=False) keeps the minimize-time maximize-accuracy front.
+    # Default (minimize_x=False) means higher time is "better" on x-axis.
+    # Tradeoff: (10, 0.90) has best y, (20, 0.80) has best x.
     df = pd.DataFrame([
-        {'dataset': 'd1', 'time': 10.0, 'acc': 0.80},
-        {'dataset': 'd1', 'time': 20.0, 'acc': 0.90},
-        {'dataset': 'd1', 'time': 15.0, 'acc': 0.70},  # dominated by (10, 0.80)
+        {'dataset': 'd1', 'time': 10.0, 'acc': 0.90},
+        {'dataset': 'd1', 'time': 20.0, 'acc': 0.80},
+        {'dataset': 'd1', 'time': 15.0, 'acc': 0.70},  # dominated by (20, 0.80)
     ])
     result = _filter_pareto_per_dataset(df, 'time', 'acc')
-    # Point (15, 0.70) is dominated: (10, 0.80) has lower time AND higher accuracy.
+    # Point (15, 0.70) is dominated: (20, 0.80) has higher time AND higher accuracy.
     assert len(result) == 2
     assert set(result['time']) == {10.0, 20.0}

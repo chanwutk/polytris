@@ -5,7 +5,9 @@ import multiprocessing as mp
 import shutil
 import sys
 import tempfile
+import uuid
 from bisect import bisect_left
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -111,10 +113,17 @@ def _prune_video_bitmaps(video_data: PreparedVideoData, rate_grid: np.ndarray, t
         time_limit_seconds=time_limit_seconds,
     )
 
+    # Pre-group selected polyomino IDs by frame to avoid O(F * |selected|) scan.
+    selected_by_frame: dict[int, set[int]] = defaultdict(set)
+    for selected_frame, poly_id in ilp_result.selected:
+        selected_by_frame[selected_frame].add(poly_id)
+
     pruned_bitmaps = np.zeros_like(video_data.relevance_bitmaps, dtype=np.uint8)
 
     for frame_idx in range(len(video_data.polyomino_lengths)):
-        selected_ids = {poly_id for selected_frame, poly_id in ilp_result.selected if selected_frame == frame_idx}
+        selected_ids = selected_by_frame.get(frame_idx, set())
+        if not selected_ids:
+            continue
         tile_ids = video_data.tile_to_polyomino_id[frame_idx]
         mask = np.isin(tile_ids, list(selected_ids)) & (tile_ids >= 0)
         pruned_bitmaps[frame_idx] = mask.astype(np.uint8)
@@ -330,7 +339,7 @@ def _compute_hota(
 
         if keep_temp_tracks:
             preserved_dir = ensure_dir(evaluation_dir(dataset, tracker_name) / 'preserved_tracks')
-            target_dir = preserved_dir / next(tempfile._get_candidate_names())
+            target_dir = preserved_dir / uuid.uuid4().hex
             shutil.copytree(temp_dir, target_dir)
 
         return hota_value
@@ -520,15 +529,8 @@ def _evaluate_candidate_tasks(
                 total=len(candidate_tasks),
             )
 
-            if worker_count == 1:
-                rows: list[dict[str, object]] = []
-                for task in candidate_tasks:
-                    rows.append(_evaluate_task_worker(task))
-                    progress.advance(progress_task_id)
-                return rows
-
             fork_context = mp.get_context('fork')
-            rows = []
+            rows: list[dict[str, object]] = []
             with fork_context.Pool(processes=worker_count) as pool:
                 for row in pool.imap_unordered(_evaluate_task_worker, candidate_tasks):
                     rows.append(row)
@@ -544,12 +546,20 @@ def _build_prepared_videos(
     dataset: str,
     tracker_name: str,
     video_fraction_divisor: int,
+    num_workers: int = 1,
 ) -> list[PreparedVideoData]:
     test_videos = subsample_videos(
         list_split_videos(dataset, 'test'),
         divisor=video_fraction_divisor,
     )
-    return [_prepare_video_data(dataset, video, tracker_name) for video in test_videos]
+
+    fork_context = mp.get_context('fork')
+    worker_count = min(max(1, num_workers), len(test_videos)) if test_videos else 1
+    with fork_context.Pool(processes=worker_count) as pool:
+        return pool.starmap(
+            _prepare_video_data,
+            [(dataset, video, tracker_name) for video in test_videos],
+        )
 
 
 def run_evaluation_stage(
@@ -564,12 +574,14 @@ def run_evaluation_stage(
     video_fraction_divisor: int = 1,
     force: bool = False,
 ) -> pd.DataFrame:
+    # Ensure heuristic grids are available before evaluation.
     run_heuristic_stage(
         dataset,
         tracker_name,
         iou_threshold=iou_threshold,
         video_fraction_divisor=video_fraction_divisor,
-        force=False,
+        num_workers=num_workers,
+        force=force,
     )
 
     output_dir = ensure_dir(evaluation_dir(dataset, tracker_name))
@@ -587,6 +599,7 @@ def run_evaluation_stage(
         dataset,
         tracker_name,
         video_fraction_divisor=video_fraction_divisor,
+        num_workers=num_workers,
     )
     heuristic_grids = load_heuristic_rate_grids(dataset, tracker_name)
     with open(heuristic_metadata_path(dataset, tracker_name), 'r', encoding='utf-8') as file:
@@ -594,13 +607,14 @@ def run_evaluation_stage(
     heuristic_thresholds = [int(value) for value in heuristic_metadata['thresholds']]
 
     candidate_tasks: list[EvaluationTask] = []
-    evaluated_count = 0
 
+    # Exhaustive configs are subject to limit_configs budget.
+    exhaustive_count = 0
     for rate_grid in iter_rate_grids():
         variant_id = make_variant_id('exhaustive', rate_grid)
         if variant_id in seen_variants:
             continue
-        if limit_configs is not None and evaluated_count >= limit_configs:
+        if limit_configs is not None and exhaustive_count >= limit_configs:
             break
 
         candidate_tasks.append(EvaluationTask(
@@ -609,15 +623,14 @@ def run_evaluation_stage(
             encoded_grid=encode_rate_grid(rate_grid),
             heuristic_threshold=None,
         ))
-        evaluated_count += 1
+        exhaustive_count += 1
 
+    # Heuristic configs are always included regardless of limit_configs.
     for threshold in heuristic_thresholds:
         rate_grid = heuristic_grids[threshold]
         variant_id = make_variant_id('heuristic', rate_grid, threshold)
         if variant_id in seen_variants:
             continue
-        if limit_configs is not None and evaluated_count >= limit_configs:
-            break
 
         candidate_tasks.append(EvaluationTask(
             variant_id=variant_id,
@@ -625,7 +638,6 @@ def run_evaluation_stage(
             encoded_grid=encode_rate_grid(rate_grid),
             heuristic_threshold=threshold,
         ))
-        evaluated_count += 1
 
     candidate_rows = _evaluate_candidate_tasks(
         candidate_tasks=candidate_tasks,

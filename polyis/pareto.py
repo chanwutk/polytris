@@ -128,7 +128,8 @@ def compute_pareto_front(df: pd.DataFrame, x_col: str, y_col: str,
         return df_clean
 
     # Sort by x_col (ascending if minimizing x, descending if maximizing)
-    df_sorted = df_clean.sort_values(x_col, ascending=minimize_x).reset_index(drop=True)
+    # Sort so that the "best" x values come last (reversed iteration sweeps best→worst).
+    df_sorted = df_clean.sort_values(x_col, ascending=not minimize_x).reset_index(drop=True)
 
     # Build Pareto front using cumulative max/min approach
     # Track the best y value seen so far from the "expensive" end (high x if minimizing x)

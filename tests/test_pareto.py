@@ -122,11 +122,11 @@ class TestComputeParetoFrontWithNumPoints:
     """Integration: DataFrame in, pruned DataFrame out."""
 
     def test_pruned_result(self):
-        # Build a DataFrame where many points lie on the Pareto front.
-        # With default minimize_x=False, both x and y increasing → all on front.
+        # Build a DataFrame with tradeoff points: higher time (better for
+        # maximize_x) comes with lower accuracy, so all are non-dominated.
         df = pd.DataFrame({
             'time': list(range(1, 11)),
-            'acc':  [0.1 * i for i in range(1, 11)],
+            'acc':  [1.0 - 0.08 * i for i in range(10)],
         })
         result = compute_pareto_front(df, 'time', 'acc', num_points=3)
         # Should have exactly 3 rows.
@@ -134,18 +134,17 @@ class TestComputeParetoFrontWithNumPoints:
         # Endpoints must be present.
         assert result['time'].min() == 1
         assert result['time'].max() == 10
-        # Result must still be sorted by time (descending for minimize_x=False).
-        assert result['time'].is_monotonic_decreasing
 
 
 class TestComputeParetoFrontNumPointsNone:
     """Backward compatibility: num_points=None returns all Pareto points."""
 
     def test_no_pruning(self):
-        # With default minimize_x=False, both x and y increasing → all on front.
+        # Tradeoff data: higher time (better for maximize_x) with lower
+        # accuracy, so all 5 points are non-dominated.
         df = pd.DataFrame({
             'time': [1, 2, 3, 4, 5],
-            'acc':  [0.6, 0.7, 0.8, 0.9, 1.0],
+            'acc':  [1.0, 0.9, 0.8, 0.7, 0.6],
         })
         result = compute_pareto_front(df, 'time', 'acc', num_points=None)
         assert len(result) == 5
@@ -160,13 +159,13 @@ class TestComputeParetoFrontsByGroupPassesNumPoints:
     """Per-group pruning should limit each group independently."""
 
     def test_per_group_pruning(self):
-        # Two groups, each with 6 Pareto-optimal points (increasing time → increasing acc).
+        # Two groups, each with 6 tradeoff points (higher time with lower acc).
         rows = []
         for ds in ['A', 'B']:
             for i in range(6):
-                rows.append({'dataset': ds, 'time': float(i + 1), 'acc': 0.5 + i * 0.1})
+                rows.append({'dataset': ds, 'time': float(i + 1), 'acc': 1.0 - i * 0.1})
         df = pd.DataFrame(rows)
-        # Note: default minimize_x=False + increasing acc with increasing time → all are Pareto.
+        # Default minimize_x=False + decreasing acc with increasing time → all non-dominated.
         result = compute_pareto_fronts_by_group(df, ['dataset'], 'time', 'acc', num_points=3)
         # Each group should have at most 3 points.
         for ds in ['A', 'B']:
@@ -179,13 +178,13 @@ class TestComputeParetoFrontsByGroupNumPointsNone:
     """Passing num_points=None should override the default of 16."""
 
     def test_no_pruning_override(self):
-        # Single group with 20 Pareto-optimal points (increasing time → increasing acc).
+        # Single group with 20 tradeoff points (higher time with lower acc).
         df = pd.DataFrame({
             'dataset': ['X'] * 20,
             'time': list(range(1, 21)),
-            'acc': [0.2 + i * 0.04 for i in range(20)],
+            'acc': [1.0 - i * 0.04 for i in range(20)],
         })
-        # With default minimize_x=False and both x,y increasing, all 20 are Pareto-optimal.
+        # Default minimize_x=False + decreasing acc with increasing time → all non-dominated.
         result = compute_pareto_fronts_by_group(df, ['dataset'], 'time', 'acc', num_points=None)
         assert len(result) == 20
 

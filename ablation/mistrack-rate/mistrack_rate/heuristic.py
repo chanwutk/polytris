@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import multiprocessing as mp
 from pathlib import Path
 
 import numpy as np
@@ -174,11 +175,52 @@ def load_heuristic_rate_grids(dataset: str, tracker_name: str) -> dict[int, np.n
     }
 
 
+def _process_single_video(
+    dataset: str,
+    video: str,
+    tracker_name: str,
+    iou_threshold: float,
+) -> np.ndarray:
+    # Load source data and run ground-truth tracker.
+    width, height, total_frames = frame_metadata(dataset, video)
+    source_tracks = load_naive_tracking_source(dataset, video)
+    source_detections = tracks_to_detection_arrays(source_tracks)
+    gt_tracks = run_tracker_on_detections(
+        source_detections,
+        total_frames,
+        tracker_name,
+        (height, width),
+        sample_rate=1,
+    )
+
+    # Run tracker at each sample rate and count mistrack events per cell.
+    video_counts = np.zeros((len(RATE_CHOICES), GRID_ROWS, GRID_COLS, 2), dtype=np.int64)
+    for rate_idx, rate in enumerate(RATE_CHOICES):
+        sampled_tracks = run_tracker_on_detections(
+            source_detections,
+            total_frames,
+            tracker_name,
+            (height, width),
+            sample_rate=rate,
+        )
+        video_counts[rate_idx] = calculate_rectangular_misstrack_counts(
+            gt_tracks=gt_tracks,
+            sampled_tracks=sampled_tracks,
+            sample_rate=rate,
+            width=width,
+            height=height,
+            iou_threshold=iou_threshold,
+        )
+
+    return video_counts
+
+
 def run_heuristic_stage(
     dataset: str,
     tracker_name: str,
     iou_threshold: float = 0.3,
     video_fraction_divisor: int = 1,
+    num_workers: int = 1,
     force: bool = False,
 ) -> dict[int, np.ndarray]:
     output_dir = ensure_dir(heuristic_dir(dataset, tracker_name))
@@ -204,36 +246,17 @@ def run_heuristic_stage(
 
     total_counts = np.zeros((len(RATE_CHOICES), GRID_ROWS, GRID_COLS, 2), dtype=np.int64)
 
-    for video in train_videos:
-        width, height, total_frames = frame_metadata(dataset, video)
-        source_tracks = load_naive_tracking_source(dataset, video)
-        source_detections = tracks_to_detection_arrays(source_tracks)
-        gt_tracks = run_tracker_on_detections(
-            source_detections,
-            total_frames,
-            tracker_name,
-            (height, width),
-            sample_rate=1,
+    # Parallelize per-video heuristic computation.
+    fork_context = mp.get_context('fork')
+    worker_count = min(max(1, num_workers), len(train_videos)) if train_videos else 1
+    with fork_context.Pool(processes=worker_count) as pool:
+        video_results = pool.starmap(
+            _process_single_video,
+            [(dataset, video, tracker_name, iou_threshold) for video in train_videos],
         )
 
-        video_counts = np.zeros((len(RATE_CHOICES), GRID_ROWS, GRID_COLS, 2), dtype=np.int64)
-        for rate_idx, rate in enumerate(RATE_CHOICES):
-            sampled_tracks = run_tracker_on_detections(
-                source_detections,
-                total_frames,
-                tracker_name,
-                (height, width),
-                sample_rate=rate,
-            )
-            video_counts[rate_idx] = calculate_rectangular_misstrack_counts(
-                gt_tracks=gt_tracks,
-                sampled_tracks=sampled_tracks,
-                sample_rate=rate,
-                width=width,
-                height=height,
-                iou_threshold=iou_threshold,
-            )
-
+    # Aggregate per-video counts and save partial results.
+    for video, video_counts in zip(train_videos, video_results):
         np.save(partial_dir / f'{Path(video).stem}.npy', video_counts)
         total_counts += video_counts
 

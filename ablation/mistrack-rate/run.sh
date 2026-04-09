@@ -22,7 +22,7 @@ Examples:
   bash ablation/mistrack-rate/run.sh --video-fraction-divisor 3
 
 All remaining arguments are forwarded to:
-  python ablation/mistrack-rate/run.py all ...
+  python ablation/mistrack-rate/run.py ...
 EOF
 }
 
@@ -141,7 +141,14 @@ for tracker in "${TRACKERS_TO_RUN[@]}"; do
     printf '>>> %s | %s\n' "${tracker}" "${dataset}"
     printf '########################################\n\n'
 
+    # Build per-dataset arguments.
+    # Non-jnc datasets (e.g. caldot, ams) use a 1/3 video subsample by default.
+    DATASET_ARGS=()
+    if [[ "${dataset}" != jnc* ]]; then
+      DATASET_ARGS+=(--video-fraction-divisor 3)
+    fi
+
     # Execute the full ablation pipeline for one dataset/tracker pair.
-    python "${RUN_PY}" all --dataset "${dataset}" --tracker "${tracker}" "${FORWARD_ARGS[@]}"
+    python "${RUN_PY}" --dataset "${dataset}" --tracker "${tracker}" "${DATASET_ARGS[@]}" "${FORWARD_ARGS[@]}"
   done
 done
