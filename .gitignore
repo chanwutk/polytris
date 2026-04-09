@@ -43,3 +43,6 @@ det_otif
 .claude/.nfs*
 
 *.mp4
+
+./paper/*
+./paper

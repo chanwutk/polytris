@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import argparse
+import itertools
 import json
 import os
 from typing import Callable
@@ -13,14 +14,20 @@ from functools import partial
 import torch
 
 from polyis.utilities import format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar, get_config
+from polyis.io import cache, store
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
-TILE_SIZES = config['EXEC']['TILE_SIZES']
-DATASETS = config['EXEC']['DATASETS']
-SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
+TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
+DATASETS: list[str] = config['EXEC']['DATASETS']
+SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Execute tile classification using groundtruth detections')
+    parser.add_argument('--test', action='store_true', help='Process test videoset')
+    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    return parser.parse_args()
 
 
 def process_frame_tiles(width: int, height: int, detections: list[list[float]], tile_size: int) -> tuple[np.ndarray, list[dict]]:
@@ -102,10 +109,10 @@ def process_video(dataset: str, videoset: str, video: str, tile_size: int, sampl
         - idx (int): Zero-based frame index
     """
     # Load the groundtruth tracking results for this video
-    frame_detections = load_tracking_results(CACHE_DIR, dataset, video)
+    frame_detections = load_tracking_results(dataset, video)
     
     # Create output directory structure
-    output_dir = os.path.join(CACHE_DIR, dataset, 'execution', video, '020_relevancy')
+    output_dir = cache.exec(dataset, 'relevancy', video)
     os.makedirs(output_dir, exist_ok=True)
 
     classifier_dir = os.path.join(output_dir, f'Perfect_{tile_size}_{sample_rate}')
@@ -119,7 +126,7 @@ def process_video(dataset: str, videoset: str, video: str, tile_size: int, sampl
     
     # Process the video
     device = f'cuda:{gpu_id}'
-    video_path = os.path.join(DATASETS_DIR, dataset, videoset, video)
+    video_path = store.dataset(dataset, videoset, video)
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f"Error: Could not open video {video_path}"
     
@@ -136,7 +143,7 @@ def process_video(dataset: str, videoset: str, video: str, tile_size: int, sampl
 
     # print(f"Video info: {width}x{height}, {frame_count} frames")
     with open(output_path, 'w') as f, open(runtime_path, 'w') as fr:
-        description = f"{video_path.split('/')[-1]} {tile_size:>3} sr{sample_rate}"
+        description = f"{os.path.basename(os.fspath(video_path))} {tile_size:>3} sr{sample_rate}"
         command_queue.put((device, {'description': description,
                                     'completed': 0, 'total': len(sampled_indices)}))
 
@@ -160,14 +167,6 @@ def process_video(dataset: str, videoset: str, video: str, tile_size: int, sampl
             fr.write(json.dumps(runtime) + '\n')
             if i % mod == 0:
                 command_queue.put((device, {'completed': i}))
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Execute tile classification using groundtruth detections')
-    parser.add_argument('--test', action='store_true', help='Process test videoset')
-    parser.add_argument('--train', action='store_true', help='Process train videoset')
-    parser.add_argument('--valid', action='store_true', help='Process valid videoset')
-    return parser.parse_args()
 
 
 def main():
@@ -197,34 +196,25 @@ def main():
     selected_videosets = []
     if args.test:
         selected_videosets.append('test')
-    if args.train:
-        selected_videosets.append('train')
     if args.valid:
         selected_videosets.append('valid')
     
-    # If no videosets are specified, default to all three
+    # If no videosets are specified, default to valid and test
     if not selected_videosets:
-        selected_videosets = ['test']
+        selected_videosets = ['valid', 'test']
     
     mp.set_start_method('spawn', force=True)
     
     # Create functions list with all video/tile_size combinations
     funcs: list[Callable[[int, mp.Queue], None]] = []
     
-    for dataset in DATASETS:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
-        for videoset in selected_videosets:
-            videoset_dir = os.path.join(dataset_dir, videoset)
-            if not os.path.exists(videoset_dir):
-                print(f"Videoset directory {videoset_dir} does not exist, skipping...")
-                continue
-            
-            # Get all video files from the dataset directory
-            videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
-            for video in sorted(videos):
-                for tile_size in TILE_SIZES:
-                    for sample_rate in SAMPLE_RATES:
-                        funcs.append(partial(process_video, dataset, videoset, video, tile_size, sample_rate))
+    for dataset, videoset in itertools.product(DATASETS, selected_videosets):
+        videoset_dir = store.dataset(dataset, videoset)
+        assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
+
+        videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        for video, tile_size, sample_rate in itertools.product(sorted(videos), TILE_SIZES, SAMPLE_RATES):
+            funcs.append(partial(process_video, dataset, videoset, video, tile_size, sample_rate))
     
     print(f"Created {len(funcs)} tasks to process")
     num_processes = min(torch.cuda.device_count(), len(funcs))

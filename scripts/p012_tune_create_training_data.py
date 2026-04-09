@@ -13,11 +13,10 @@ import numpy as np
 
 import polyis.images
 
+from polyis.io import cache, store
 from polyis.utilities import ProgressBar, mark_detections, get_config
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
 DATASETS_TO_TEST = config['EXEC']['DATASETS']
 TILE_SIZES = config['EXEC']['TILE_SIZES']
 
@@ -41,10 +40,10 @@ def get_patched(frame: np.ndarray, tile_size: int) -> np.ndarray:
 
 def create_training_data(dataset_name: str, video_file: str, target_fps: int, gpu_id: int, command_queue: mp.Queue):
     device = f'cuda:{gpu_id}'
-    dataset_dir = os.path.join(DATASETS_DIR, dataset_name, 'train')
-    segments_dir = os.path.join(CACHE_DIR, dataset_name, 'indexing', 'segment', 'detection')
-    training_base_dir = os.path.join(CACHE_DIR, dataset_name, 'indexing', 'training')
-    always_relevant_tiles_path = os.path.join(CACHE_DIR, dataset_name, 'indexing', 'always_relevant')
+    dataset_dir = store.dataset(dataset_name, 'train')
+    segments_dir = cache.index(dataset_name, 'det')
+    training_base_dir = cache.index(dataset_name, 'training')
+    always_relevant_tiles_path = cache.index(dataset_name, 'never-relevant')
     if os.path.exists(always_relevant_tiles_path):
         shutil.rmtree(always_relevant_tiles_path)
     os.makedirs(always_relevant_tiles_path, exist_ok=True)
@@ -192,13 +191,12 @@ def main(args):
     target_fps = args.target_fps
     funcs = []
     for dataset_name in DATASETS_TO_TEST:
-        cache_dir = os.path.join(CACHE_DIR, dataset_name)
-        dataset_dir = os.path.join(DATASETS_DIR, dataset_name, 'train')
+        dataset_dir = store.dataset(dataset_name, 'train')
 
         assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
 
         # Get list of videos to process from segments files
-        segments_dir = os.path.join(cache_dir, 'indexing', 'segment', 'detection')
+        segments_dir = cache.index(dataset_name, 'det')
         assert os.path.exists(segments_dir), f"Segments directory {segments_dir} does not exist"
 
         videos = [
@@ -211,7 +209,7 @@ def main(args):
 
         # Create training directories
         print(f'Creating training directories for {dataset_name}')
-        training_base_dir = os.path.join(cache_dir, 'indexing', 'training')
+        training_base_dir = cache.index(dataset_name, 'training')
         if os.path.exists(training_base_dir):
             shutil.rmtree(training_base_dir)
 

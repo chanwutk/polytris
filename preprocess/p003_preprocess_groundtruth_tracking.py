@@ -8,14 +8,13 @@ from functools import partial
 import queue
 import multiprocessing as mp
 
+from polyis.io import cache, store
 from polyis.utilities import create_tracker, dedupe_datasets_by_root, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
 
 CONFIG = get_config()
 EXEC_DATASETS = CONFIG['EXEC']['DATASETS']
 VIDEO_SETS = CONFIG['EXEC']['VIDEO_SETS']
-DATASETS_DIR = CONFIG['DATA']['DATASETS_DIR']
-CACHE_DIR = CONFIG['DATA']['CACHE_DIR']
 
 
 def parse_args():
@@ -56,10 +55,10 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
         command_queue (Queue): Queue for progress updates
     """
     # Load detection results
-    detection_results = load_detection_results(CACHE_DIR, dataset, video_file, filename='detection.jsonl', groundtruth=True)
+    detection_results = load_detection_results(dataset, video_file, filename='detection.jsonl', groundtruth=True)
 
     # Create output path for tracking results
-    output_path = os.path.join(CACHE_DIR, dataset, 'execution', video_file, '003_groundtruth', 'tracking.jsonl')
+    output_path = cache.exec(dataset, 'groundtruth', video_file, 'tracking.jsonl')
 
     # print(f"Processing video: {video_file}")
     # Create tracker
@@ -75,7 +74,7 @@ def track(dataset: str, video_file: str, gpu_id: int, command_queue: "queue.Queu
     # Use 29.97 FPS only for JNC datasets; use 30 FPS for other long clips.
     else:
         frame_rate = 29.97 if dataset.startswith('jnc') else 30
-    tracker = create_tracker('bytetrackcython', img_size=(height, width), frame_rate=frame_rate, track_buffer=40 if frame_rate == 15 else 20)
+    tracker = create_tracker('ocsortcython', img_size=(height, width), frame_rate=frame_rate, track_buffer=40 if frame_rate == 15 else 20)
 
     # Initialize tracking data structures
     trajectories: dict[int, list[tuple[int, np.ndarray]]] = {}
@@ -193,13 +192,13 @@ def main():
 
     funcs = []
     for dataset in datasets_to_process:
-        dataset_dir = os.path.join(DATASETS_DIR, dataset)
+        dataset_dir = store.dataset(dataset)
         assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
-        
+
         # Get all video files from the dataset directory
         video_files: list[str] = []
         for videoset in splits:
-            videoset_dir = os.path.join(dataset_dir, videoset)
+            videoset_dir = store.dataset(dataset, videoset)
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])
         assert len(video_files) > 0, f"No video files found in {dataset_dir}"

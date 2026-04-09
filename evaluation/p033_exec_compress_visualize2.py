@@ -16,7 +16,8 @@ from typing import Dict, List
 import matplotlib.pyplot as plt
 import numpy as np
 
-from polyis.utilities import CACHE_DIR, OPTIMAL_PARAMS, build_param_str
+from polyis.io import cache
+from polyis.utilities import OPTIMAL_PARAMS, build_param_str
 
 
 def parse_args():
@@ -52,7 +53,7 @@ def count_compressed_images_and_frames(dataset: str, classifier: str, tilesize: 
     total_original_frames = 0
     
     # Get the execution directory for this dataset
-    execution_dir = os.path.join(CACHE_DIR, dataset, 'execution')
+    execution_dir = cache.execution(dataset)
     
     if not os.path.exists(execution_dir):
         if verbose:
@@ -235,7 +236,7 @@ def main(args):
     """
     if args.verbose:
         print("Starting compression rate analysis...")
-        print(f"Cache directory: {CACHE_DIR}")
+        print(f"Cache directory: {cache.root('')}")
         print(f"Datasets to analyze: {args.datasets}")
         print()
     

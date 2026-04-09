@@ -3,21 +3,18 @@
 import argparse
 from functools import partial
 import json
-import os
 import time
 from multiprocessing import Queue
-from pathlib import Path
 
 import cv2
 import torch
 
 import polyis.models.detector
+from polyis.io import cache, store
 from polyis.utilities import format_time, ProgressBar, get_config
 
 
 config = get_config()
-CACHE_DIR = config['DATA']['CACHE_DIR']
-DATASETS_DIR = config['DATA']['DATASETS_DIR']
 DATASETS = config['EXEC']['DATASETS']
 
 
@@ -30,11 +27,11 @@ def parse_args():
 
 def detect_objects(video: str, split: str, dataset: str, batch_size: int, gpu_id: int, command_queue: Queue):
     # New output path structure
-    output_path = Path(CACHE_DIR) / dataset / 'indexing' / 'segment' / 'detection' / f'{video}.detections.jsonl'
+    output_path = cache.index(dataset, 'det', f'{video}.detections.jsonl')
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Construct the path to the video file in the dataset directory
-    dataset_video_path = os.path.join(DATASETS_DIR, dataset, split, video)
+    dataset_video_path = store.dataset(dataset, split, video)
     cap = cv2.VideoCapture(dataset_video_path)
 
     # Get total frame count from video
@@ -106,7 +103,7 @@ def main(args):
     # Create task functions
     funcs = []
     for dataset in DATASETS:
-        dataset_dir = Path(DATASETS_DIR) / dataset
+        dataset_dir = store.dataset(dataset)
         assert dataset_dir.exists(), f"Dataset directory {dataset_dir} does not exist"
 
         for split in ['train']:

@@ -6,11 +6,10 @@ import os
 import cv2
 import numpy as np
 
+from polyis.io import cache, store
 from polyis.utilities import get_config
 
 config = get_config()
-CACHE_DIR = config["DATA"]["CACHE_DIR"]
-DATASETS_DIR = config["DATA"]["DATASETS_DIR"]
 DATASETS_TO_TEST = config["EXEC"]["DATASETS"]
 TILE_SIZES = config["EXEC"]["TILE_SIZES"]
 
@@ -19,7 +18,7 @@ RED_TINT_ADD = 0xAA
 
 
 def load_combined_always_relevant(
-    cache_dir: str, always_relevant_dir: str, tile_size: int
+    always_relevant_dir: str, tile_size: int
 ) -> np.ndarray | None:
     """
     Load the combined always-relevant tiles bitmap for a dataset and tile size.
@@ -55,8 +54,8 @@ def get_first_video_path(dataset_name: str, always_relevant_dir: str, tile_size:
     Resolve the path to the first video used for this dataset/tile_size.
     Video names are inferred from always_relevant filenames: {tile_size}_{video_file}.npy.
     """
-    base_dir = os.path.join(DATASETS_DIR, dataset_name, 'test')
-    return os.path.join(base_dir, os.listdir(base_dir)[0])
+    base_dir = store.dataset(dataset_name, 'test')
+    return base_dir / os.listdir(base_dir)[0]
     # prefix = f"{tile_size}_"
     # for f in sorted(os.listdir(always_relevant_dir)):
     #     if not f.endswith(".npy") or not f.startswith(prefix) or f == f"{tile_size}_all.npy":
@@ -126,12 +125,11 @@ def render_and_save_first_frame(
     For one dataset and tile_size: load combined always-relevant bitmap, get first frame
     of a video, draw grid and never-relevant overlay, and save the image.
     """
-    cache_dir = os.path.join(CACHE_DIR, dataset_name)
-    always_relevant_dir = os.path.join(cache_dir, "indexing", "always_relevant")
-    if not os.path.isdir(always_relevant_dir):
+    always_relevant_dir = cache.index(dataset_name, 'never-relevant')
+    if not always_relevant_dir.is_dir():
         print(f"Always relevant directory {always_relevant_dir} does not exist")
         return
-    combined = load_combined_always_relevant(cache_dir, always_relevant_dir, tile_size)
+    combined = load_combined_always_relevant(always_relevant_dir, tile_size)
     if combined is None:
         print(f"Combined always-relevant bitmap is None for {dataset_name} with tile size {tile_size}")
         return
@@ -180,13 +178,7 @@ def main() -> None:
             if args.output_dir is not None:
                 output_dir = os.path.join(args.output_dir, dataset_name)
             else:
-                output_dir = os.path.join(
-                    CACHE_DIR,
-                    dataset_name,
-                    "indexing",
-                    "always_relevant",
-                    "visualization",
-                )
+                output_dir = cache.index(dataset_name, 'never-relevant', 'visualization')
             render_and_save_first_frame(dataset_name, tile_size, output_dir)
 
 

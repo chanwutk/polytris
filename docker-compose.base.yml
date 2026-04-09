@@ -7,8 +7,10 @@ services:
       - TERM=xterm-256color
       - POLYIS_DATA=/polyis-data
       - POLYIS_CACHE=/polyis-cache
+      - PYTHONWARNINGS=ignore::UserWarning:numpy._core.getlimits
     volumes:
       - .:/polyis
+      - ${HOME}/.gurobi/gurobi.lic:/opt/gurobi/gurobi.lic:ro
       # Change /data/chawutk/polyis-dataset to your local path
       - ${DATA}/polyis-data:/polyis-data
       - ${DATA}/polyis-cache:/polyis-cache
@@ -18,7 +20,7 @@ services:
       - ${HOME}/.ssh:/root/.ssh
       - ${HOME}/.config:/root/.config
       - ${HOME}/.claude:/root/.claude
-      - /data/alenachao/outputs/hota_outputs:/sota-results
+      - /work/alenachao/tunnel/hota_outputs:/sota-results
     tmpfs:
       - /tmp
     network_mode: "host"

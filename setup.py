@@ -8,6 +8,39 @@ import os
 import glob
 import multiprocessing as mp
 
+# Resolve the Gurobi C library and header directory.
+#
+# Priority:
+#   1. $GUROBI_HOME  — standalone Gurobi installation (e.g. /opt/gurobi1100/linux64).
+#      Provides the official gurobi_c.h and libgurobi*.so.
+#   2. gurobipy wheel — libgurobi*.so bundled under <gurobipy>/.libs; use the
+#      hand-written header at polyis/sample/ilp/c/gurobi_c.h as a fallback.
+_GUROBI_HOME = os.environ.get("GUROBI_HOME", "")
+if _GUROBI_HOME:
+    # Official standalone install: header and library live under $GUROBI_HOME.
+    _GUROBI_INCLUDE_DIR = os.path.join(_GUROBI_HOME, "include")
+    _GUROBI_LIB_DIR     = os.path.join(_GUROBI_HOME, "lib")
+    _gurobi_libs = glob.glob(os.path.join(_GUROBI_LIB_DIR, "libgurobi[0-9]*.so"))
+    if not _gurobi_libs:
+        raise RuntimeError(
+            f"No libgurobi[0-9]*.so found in {_GUROBI_LIB_DIR}. "
+            "Check that GUROBI_HOME points to a valid Gurobi installation."
+        )
+# else:
+#     # Fallback: resolve library from the installed gurobipy wheel.
+#     import gurobipy as _gurobipy_mod
+#     _GUROBI_INCLUDE_DIR = "polyis/sample/ilp/c"  # hand-written gurobi_c.h
+#     _gurobipy_file: str = _gurobipy_mod.__file__ or ""
+#     _GUROBI_LIB_DIR     = os.path.join(os.path.dirname(_gurobipy_file), ".libs")
+#     _gurobi_libs = glob.glob(os.path.join(_GUROBI_LIB_DIR, "libgurobi*.so"))
+#     if not _gurobi_libs:
+#         raise RuntimeError(
+#             f"No libgurobi*.so found in {_GUROBI_LIB_DIR}. "
+#             "Ensure gurobipy is installed before building, or set GUROBI_HOME."
+#         )
+# Strip "lib" prefix and ".so" suffix to get the linker name (e.g. "gurobi130").
+_GUROBI_LIB_NAME = os.path.basename(_gurobi_libs[0])[len("lib"):-len(".so")]
+
 # from mypyc.build import mypycify
 
 
@@ -156,6 +189,21 @@ extensions = [
         define_macros=MACROS,
         extra_compile_args=ARGS + ["-std=c++11"],
         language="c++",
+    ),
+    # ILP solver: Cython wrapper around the Gurobi C API.
+    # _GUROBI_INCLUDE_DIR points to the official $GUROBI_HOME/include (with the
+    # real gurobi_c.h) or to polyis/sample/ilp/c (hand-written header fallback).
+    # The RPATH bakes _GUROBI_LIB_DIR into the .so so the extension resolves
+    # libgurobi*.so at import time without requiring LD_LIBRARY_PATH.
+    Extension(
+        "polyis.sample.ilp.c.gurobi",
+        ["polyis/sample/ilp/c/gurobi.pyx"],
+        include_dirs=[_GUROBI_INCLUDE_DIR, numpy.get_include()],
+        library_dirs=[_GUROBI_LIB_DIR],
+        libraries=[_GUROBI_LIB_NAME],
+        extra_link_args=[f"-Wl,-rpath,{_GUROBI_LIB_DIR}"],
+        define_macros=MACROS,
+        extra_compile_args=ARGS + ["-std=c11"],
     ),
 ]
 
