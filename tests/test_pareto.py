@@ -122,13 +122,13 @@ class TestComputeParetoFrontWithNumPoints:
     """Integration: DataFrame in, pruned DataFrame out."""
 
     def test_pruned_result(self):
-        # Build a DataFrame with tradeoff points: higher time (better for
-        # maximize_x) comes with lower accuracy, so all are non-dominated.
+        # Tradeoff: increasing time yields increasing accuracy, so all points
+        # are non-dominated under minx=True, miny=False (minimize time, maximize acc).
         df = pd.DataFrame({
             'time': list(range(1, 11)),
-            'acc':  [1.0 - 0.08 * i for i in range(10)],
+            'acc':  [0.2 + 0.08 * i for i in range(10)],
         })
-        result = compute_pareto_front(df, 'time', 'acc', num_points=3)
+        result = compute_pareto_front(df, 'time', 'acc', minx=True, miny=False, num_points=3)
         # Should have exactly 3 rows.
         assert len(result) == 3
         # Endpoints must be present.
@@ -140,13 +140,13 @@ class TestComputeParetoFrontNumPointsNone:
     """Backward compatibility: num_points=None returns all Pareto points."""
 
     def test_no_pruning(self):
-        # Tradeoff data: higher time (better for maximize_x) with lower
-        # accuracy, so all 5 points are non-dominated.
+        # Tradeoff data: increasing time yields increasing accuracy, so all 5
+        # points are non-dominated under minx=True, miny=False.
         df = pd.DataFrame({
             'time': [1, 2, 3, 4, 5],
-            'acc':  [1.0, 0.9, 0.8, 0.7, 0.6],
+            'acc':  [0.6, 0.7, 0.8, 0.9, 1.0],
         })
-        result = compute_pareto_front(df, 'time', 'acc', num_points=None)
+        result = compute_pareto_front(df, 'time', 'acc', minx=True, miny=False, num_points=None)
         assert len(result) == 5
 
 
@@ -159,14 +159,15 @@ class TestComputeParetoFrontsByGroupPassesNumPoints:
     """Per-group pruning should limit each group independently."""
 
     def test_per_group_pruning(self):
-        # Two groups, each with 6 tradeoff points (higher time with lower acc).
+        # Two groups, each with 6 tradeoff points (increasing time → increasing acc).
         rows = []
         for ds in ['A', 'B']:
             for i in range(6):
-                rows.append({'dataset': ds, 'time': float(i + 1), 'acc': 1.0 - i * 0.1})
+                rows.append({'dataset': ds, 'time': float(i + 1), 'acc': 0.5 + i * 0.1})
         df = pd.DataFrame(rows)
-        # Default minimize_x=False + decreasing acc with increasing time → all non-dominated.
-        result = compute_pareto_fronts_by_group(df, ['dataset'], 'time', 'acc', num_points=3)
+        # Increasing acc with increasing time → all non-dominated under minx=True, miny=False.
+        result = compute_pareto_fronts_by_group(df, ['dataset'], 'time', 'acc',
+                                                minx=True, miny=False, num_points=3)
         # Each group should have at most 3 points.
         for ds in ['A', 'B']:
             group = result[result['dataset'] == ds]
@@ -178,14 +179,15 @@ class TestComputeParetoFrontsByGroupNumPointsNone:
     """Passing num_points=None should override the default of 16."""
 
     def test_no_pruning_override(self):
-        # Single group with 20 tradeoff points (higher time with lower acc).
+        # Single group with 20 tradeoff points (increasing time → increasing acc).
         df = pd.DataFrame({
             'dataset': ['X'] * 20,
             'time': list(range(1, 21)),
-            'acc': [1.0 - i * 0.04 for i in range(20)],
+            'acc': [0.2 + i * 0.04 for i in range(20)],
         })
-        # Default minimize_x=False + decreasing acc with increasing time → all non-dominated.
-        result = compute_pareto_fronts_by_group(df, ['dataset'], 'time', 'acc', num_points=None)
+        # Increasing acc with increasing time → all non-dominated under minx=True, miny=False.
+        result = compute_pareto_fronts_by_group(df, ['dataset'], 'time', 'acc',
+                                                minx=True, miny=False, num_points=None)
         assert len(result) == 20
 
 

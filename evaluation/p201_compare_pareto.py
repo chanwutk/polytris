@@ -617,20 +617,20 @@ def save_chart(chart: alt.Chart, output_dir: str, base_name: str):
 
 
 def _filter_pareto_per_dataset(df: pd.DataFrame, time_col: str,
-                               accuracy_col: str,
-                               minimize_x: bool = False) -> pd.DataFrame:
+                               accuracy_col: str, *,
+                               minx: bool, miny: bool) -> pd.DataFrame:
     """
     Filter DataFrame to only Pareto-optimal points per dataset.
 
     Keeps only points on the Pareto front computed independently for each
-    dataset.  The default (minimize_x=False) minimizes time and maximizes
-    accuracy; pass minimize_x=True for throughput where higher x is better.
+    dataset.
 
     Args:
         df: DataFrame with 'dataset' column and the specified metric columns
         time_col: Column name for x-axis metric (e.g. 'time' or 'throughput_fps')
-        accuracy_col: Column name for accuracy (maximized)
-        minimize_x: Passed through to compute_pareto_front
+        accuracy_col: Column name for y-axis metric (e.g. 'HOTA_HOTA')
+        minx: If True, lower x is better; if False, higher x is better
+        miny: If True, lower y is better; if False, higher y is better
 
     Returns:
         DataFrame containing only Pareto-optimal points across all datasets
@@ -640,7 +640,7 @@ def _filter_pareto_per_dataset(df: pd.DataFrame, time_col: str,
         dataset_df = df[df['dataset'] == dataset]
         # Compute Pareto front per dataset.
         pareto_df = compute_pareto_front(dataset_df, time_col, accuracy_col,
-                                         minimize_x=minimize_x)
+                                         minx=minx, miny=miny)
         pareto_groups.append(pareto_df)
 
     if not pareto_groups:
@@ -777,13 +777,15 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
 
         # Filter each system's data to Pareto-optimal points per dataset
         # (minimize time, maximize accuracy).
-        polytris_df = _filter_pareto_per_dataset(polytris_df, 'time', accuracy_col)
+        polytris_df = _filter_pareto_per_dataset(polytris_df, 'time', accuracy_col,
+                                                 minx=True, miny=False)
         print(f"  Polytris Pareto-optimal points: {len(polytris_df)}")
 
         # Filter Naive baseline to Pareto-optimal points per dataset.
         if accuracy_col in naive_df.columns:
             pareto_naive_df = _filter_pareto_per_dataset(
-                naive_df.dropna(subset=['time', accuracy_col]), 'time', accuracy_col
+                naive_df.dropna(subset=['time', accuracy_col]), 'time', accuracy_col,
+                minx=True, miny=False,
             )
         else:
             pareto_naive_df = pd.DataFrame()
@@ -794,7 +796,8 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             if accuracy_col not in df_sota.columns:
                 continue
             filtered_sota = _filter_pareto_per_dataset(
-                df_sota.dropna(subset=['time', accuracy_col]), 'time', accuracy_col
+                df_sota.dropna(subset=['time', accuracy_col]), 'time', accuracy_col,
+                minx=True, miny=False,
             )
             if not filtered_sota.empty:
                 pareto_sota_dict[system_name] = filtered_sota
@@ -857,12 +860,12 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         # Re-filter Pareto fronts for throughput (maximize both axes).
         throughput_polytris_df = _filter_pareto_per_dataset(
             polytris_df.dropna(subset=['throughput_fps', accuracy_col]),
-            'throughput_fps', accuracy_col, minimize_x=True
+            'throughput_fps', accuracy_col, minx=False, miny=False,
         ) if 'throughput_fps' in polytris_df.columns else pd.DataFrame()
 
         throughput_naive_df = _filter_pareto_per_dataset(
             naive_df.dropna(subset=['throughput_fps', accuracy_col]),
-            'throughput_fps', accuracy_col, minimize_x=True
+            'throughput_fps', accuracy_col, minx=False, miny=False,
         ) if ('throughput_fps' in naive_df.columns
               and not naive_df['throughput_fps'].isna().all()) else pd.DataFrame()
 
@@ -872,7 +875,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
                 continue
             filtered = _filter_pareto_per_dataset(
                 df_sota.dropna(subset=['throughput_fps', accuracy_col]),
-                'throughput_fps', accuracy_col, minimize_x=True
+                'throughput_fps', accuracy_col, minx=False, miny=False,
             )
             if not filtered.empty:
                 throughput_sota_dict[system_name] = filtered

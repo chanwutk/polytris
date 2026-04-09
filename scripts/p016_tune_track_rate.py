@@ -37,7 +37,8 @@ def run_tracker_on_detections(
     total_frames: int,
     tracker_name: str,
     img_size: tuple[int, int],
-    sample_rate: int
+    sample_rate: int,
+    interpolate: bool = False,
 ) -> dict[int, list[list[float]]]:
     """
     Run tracker over all frames, providing detections only at sampled frames.
@@ -61,7 +62,7 @@ def run_tracker_on_detections(
 
         # Register tracks only at sampled frames
         if frame_idx % sample_rate == 0:
-            register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories, interpolate=False)
+            register_tracked_detections(tracked_dets, frame_idx, frame_tracks, trajectories, interpolate=interpolate)
 
     return frame_tracks
 

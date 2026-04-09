@@ -11,7 +11,12 @@ ABLATION_DIR = Path(__file__).resolve().parents[1] / 'ablation' / 'mistrack-rate
 if str(ABLATION_DIR) not in sys.path:
     sys.path.insert(0, str(ABLATION_DIR))
 
-from mistrack_rate.analysis import _uniform_rate, annotate_pareto_flags
+from mistrack_rate.analysis import (
+    PAIR_DEFINITIONS,
+    annotate_pareto_flags,
+    combine_visualize,
+)
+from mistrack_rate.evaluate import _apply_frame_mask
 from mistrack_rate.common import (
     GRID_COLS,
     GRID_ROWS,
@@ -344,30 +349,30 @@ def test_retention_rate_full_retention():
 
 
 # ---------------------------------------------------------------------------
-# Uniform-rate detection tests
+# Frame mask tests
 # ---------------------------------------------------------------------------
 
-def test_uniform_rate_returns_rate_when_all_cells_match():
-    for rate in (1, 2, 4):
-        key = '-'.join([str(rate)] * (GRID_ROWS * GRID_COLS))
-        assert _uniform_rate(key) == rate
+def test_apply_frame_mask_zeros_non_multiple_frames():
+    # 5 frames of all-ones; rate=2 should zero frames 1 and 3.
+    bitmaps = np.ones((5, GRID_ROWS, GRID_COLS), dtype=np.uint8)
+    masked = _apply_frame_mask(bitmaps, rate=2)
+
+    assert np.all(masked[0] == 1)   # frame 0: kept
+    assert np.all(masked[1] == 0)   # frame 1: zeroed
+    assert np.all(masked[2] == 1)   # frame 2: kept
+    assert np.all(masked[3] == 0)   # frame 3: zeroed
+    assert np.all(masked[4] == 1)   # frame 4: kept
 
 
-def test_uniform_rate_returns_none_for_mixed_grid():
-    # Mix of two different rates → not uniform.
-    key = encode_rate_grid(np.asarray([
-        [1, 2, 4],
-        [4, 2, 1],
-        [2, 1, 4],
-    ], dtype=np.int32))
-    assert _uniform_rate(key) is None
+def test_apply_frame_mask_rate1_keeps_all_frames():
+    bitmaps = np.ones((4, GRID_ROWS, GRID_COLS), dtype=np.uint8)
+    assert np.array_equal(_apply_frame_mask(bitmaps, rate=1), bitmaps)
 
 
-def test_uniform_rate_returns_none_when_single_cell_differs():
-    # All cells are rate=4 except the last one.
-    values = [4] * (GRID_ROWS * GRID_COLS - 1) + [2]
-    key = '-'.join(str(v) for v in values)
-    assert _uniform_rate(key) is None
+def test_apply_frame_mask_does_not_mutate_input():
+    bitmaps = np.ones((4, GRID_ROWS, GRID_COLS), dtype=np.uint8)
+    _ = _apply_frame_mask(bitmaps, rate=2)
+    assert np.all(bitmaps == 1)
 
 
 # ---------------------------------------------------------------------------
@@ -513,3 +518,131 @@ def test_evaluate_candidate_tasks_returns_results_in_submission_order(monkeypatc
 
     # Results should be sorted in submission order regardless of pool scheduling.
     assert [row['variant_id'] for row in rows] == [task.variant_id for task in candidate_tasks]
+
+
+# ---------------------------------------------------------------------------
+# combine_visualize tests
+# ---------------------------------------------------------------------------
+
+def _make_fake_results_df(dataset: str) -> pd.DataFrame:
+    """Return a minimal results DataFrame that satisfies combine_visualize."""
+    return pd.DataFrame([
+        {
+            'dataset': dataset,
+            'split': 'test',
+            'tracker': 'ocsort',
+            'method': 'exhaustive',
+            'heuristic_threshold': float('nan'),
+            'variant_id': 'exhaustive_1-1-1-1-1-1-1-1-1',
+            'grid_key': '1-1-1-1-1-1-1-1-1',
+            'grid_rates_json': '[[1,1,1],[1,1,1],[1,1,1]]',
+            'mistrack_rate': 0.10,
+            'HOTA_HOTA': 0.80,
+            'retention_rate': 0.60,
+            'anchor_correct': 90,
+            'anchor_incorrect': 10,
+            'anchor_total': 100,
+            'is_pareto_mistrack_vs_hota': True,
+            'is_pareto_mistrack_vs_retention': True,
+            'is_pareto_retention_vs_hota': True,
+        },
+        {
+            'dataset': dataset,
+            'split': 'test',
+            'tracker': 'ocsort',
+            'method': 'heuristic',
+            'heuristic_threshold': 30.0,
+            'variant_id': 'heuristic_t030_1-1-1-1-1-1-1-1-1',
+            'grid_key': '1-1-1-1-1-1-1-1-1',
+            'grid_rates_json': '[[1,1,1],[1,1,1],[1,1,1]]',
+            'mistrack_rate': 0.12,
+            'HOTA_HOTA': 0.78,
+            'retention_rate': 0.62,
+            'anchor_correct': 88,
+            'anchor_incorrect': 12,
+            'anchor_total': 100,
+            'is_pareto_mistrack_vs_hota': False,
+            'is_pareto_mistrack_vs_retention': False,
+            'is_pareto_retention_vs_hota': False,
+        },
+        {
+            'dataset': dataset,
+            'split': 'test',
+            'tracker': 'ocsort',
+            'method': 'whole_frame',
+            'heuristic_threshold': None,
+            'variant_id': 'whole_frame_r2',
+            'grid_key': 'whole_frame_2',
+            'grid_rates_json': None,
+            'mistrack_rate': 0.18,
+            'HOTA_HOTA': 0.74,
+            'retention_rate': 0.50,
+            'anchor_correct': 82,
+            'anchor_incorrect': 18,
+            'anchor_total': 100,
+            'is_pareto_mistrack_vs_hota': False,
+            'is_pareto_mistrack_vs_retention': False,
+            'is_pareto_retention_vs_hota': False,
+        },
+    ])
+
+
+def test_combine_visualize_returns_empty_list_when_no_cached_results(tmp_path):
+    # No CSVs exist under tmp_path, so the function should return an empty list.
+    paths = combine_visualize('ocsort', cache_dir=tmp_path)
+
+    assert paths == []
+
+
+def test_combine_visualize_creates_png_and_html_for_each_pair(tmp_path):
+    # Write a fake results.csv under the expected cache path structure.
+    results_dir = (
+        tmp_path / 'jnc0' / 'ablation' / 'mistrack-rate'
+        / f'{GRID_ROWS}x{GRID_COLS}' / 'ocsort' / 'test'
+    )
+    results_dir.mkdir(parents=True)
+    _make_fake_results_df('jnc0').to_csv(results_dir / 'results.csv', index=False)
+
+    written = combine_visualize('ocsort', cache_dir=tmp_path)
+
+    # Expect one PNG and one HTML file per pair definition.
+    expected_names = {
+        f'{pair.slug}{suffix}'
+        for pair in PAIR_DEFINITIONS
+        for suffix in ('.png', '.html')
+    }
+    assert len(written) == len(expected_names)
+    assert {p.name for p in written} == expected_names
+    assert all(p.exists() for p in written)
+
+
+def test_combine_visualize_merges_multiple_datasets(tmp_path):
+    # Two datasets contribute CSVs; the combined chart should reflect both.
+    for dataset in ('jnc0', 'jnc2'):
+        results_dir = (
+            tmp_path / dataset / 'ablation' / 'mistrack-rate'
+            / f'{GRID_ROWS}x{GRID_COLS}' / 'ocsort' / 'test'
+        )
+        results_dir.mkdir(parents=True)
+        _make_fake_results_df(dataset).to_csv(results_dir / 'results.csv', index=False)
+
+    written = combine_visualize('ocsort', cache_dir=tmp_path)
+
+    # Output files must exist regardless of how many source datasets there are.
+    assert len(written) == len(PAIR_DEFINITIONS) * 2
+    assert all(p.exists() for p in written)
+
+
+def test_combine_visualize_output_lands_in_summary_dir(tmp_path):
+    # Verify that the output directory follows the SUMMARY layout.
+    results_dir = (
+        tmp_path / 'jnc0' / 'ablation' / 'mistrack-rate'
+        / f'{GRID_ROWS}x{GRID_COLS}' / 'ocsort' / 'test'
+    )
+    results_dir.mkdir(parents=True)
+    _make_fake_results_df('jnc0').to_csv(results_dir / 'results.csv', index=False)
+
+    written = combine_visualize('ocsort', cache_dir=tmp_path)
+
+    expected_parent = tmp_path / 'SUMMARY' / 'ablation' / 'mistrack-rate' / 'ocsort'
+    assert all(p.parent == expected_parent for p in written)

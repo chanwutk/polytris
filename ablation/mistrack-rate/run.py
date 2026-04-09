@@ -11,7 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from mistrack_rate.analysis import plot_results
+from mistrack_rate.analysis import combine_visualize, plot_results
 from mistrack_rate.evaluate import run_evaluation_stage
 from mistrack_rate.heuristic import run_heuristic_stage
 from polyis.utilities import get_config
@@ -35,11 +35,18 @@ def parse_args():
     parser.add_argument('--no-hota', action='store_true')
     parser.add_argument('--keep-temp-tracks', action='store_true')
     parser.add_argument('--force', action='store_true')
+    parser.add_argument('--combine-visualize', action='store_true')
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
+
+    # When --combine-visualize is set, skip all pipeline stages and read
+    # existing cached results directly to produce the cross-dataset summary.
+    if args.combine_visualize:
+        combine_visualize(tracker_name=args.tracker)
+        return
 
     # Stage 1: build train-side heuristic tables.
     run_heuristic_stage(

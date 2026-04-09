@@ -100,21 +100,20 @@ def _prune_pareto_points(
     return mask
 
 
-def compute_pareto_front(df: pd.DataFrame, x_col: str, y_col: str,
-                         minimize_x: bool = False, maximize_y: bool = True,
+def compute_pareto_front(df: pd.DataFrame, x_col: str, y_col: str, *,
+                         minx: bool, miny: bool,
                          num_points: int | None = None) -> pd.DataFrame:
     """
     Compute Pareto-optimal points from DataFrame.
 
-    For minimize_x=True and maximize_y=True (the default):
-    A point is Pareto-optimal if no other point has both lower x AND higher y.
+    A point is Pareto-optimal if no other point is strictly better on both axes.
 
     Args:
         df: DataFrame with data points
         x_col: Column name for x-axis (e.g., 'time')
         y_col: Column name for y-axis (e.g., 'HOTA_HOTA')
-        minimize_x: If True, lower x is better; if False, higher x is better
-        maximize_y: If True, higher y is better; if False, lower y is better
+        minx: If True, lower x is better; if False, higher x is better
+        miny: If True, lower y is better; if False, higher y is better
         num_points: If not None, prune the Pareto front to at most this many
             points by iteratively removing the most collinear interior point.
 
@@ -127,16 +126,14 @@ def compute_pareto_front(df: pd.DataFrame, x_col: str, y_col: str,
     if df_clean.empty:
         return df_clean
 
-    # Sort by x_col (ascending if minimizing x, descending if maximizing)
     # Sort so that the "best" x values come last (reversed iteration sweeps best→worst).
-    df_sorted = df_clean.sort_values(x_col, ascending=not minimize_x).reset_index(drop=True)
+    df_sorted = df_clean.sort_values(x_col, ascending=not minx).reset_index(drop=True)
 
-    # Build Pareto front using cumulative max/min approach
-    # Track the best y value seen so far from the "expensive" end (high x if minimizing x)
+    # Build Pareto front by sweeping from the best x end and tracking the best y seen.
     pareto_indices = []
 
-    better_y = val_gte if maximize_y else val_lte
-    best_y = float('-inf') if maximize_y else float('inf')
+    better_y = val_lte if miny else val_gte
+    best_y = float('inf') if miny else float('-inf')
     for idx in reversed(df_sorted.index):
         y_val = df_sorted.loc[idx, y_col]
         if better_y(y_val, best_y):
@@ -206,7 +203,8 @@ def interpolate_pareto_line(pareto_df: pd.DataFrame, x_col: str, y_col: str,
 
 
 def compute_pareto_fronts_by_group(df: pd.DataFrame, group_cols: list[str],
-                                   x_col: str, y_col: str,
+                                   x_col: str, y_col: str, *,
+                                   minx: bool, miny: bool,
                                    num_points: int = 10) -> pd.DataFrame:
     """
     Compute Pareto fronts for each group in the DataFrame.
@@ -216,6 +214,8 @@ def compute_pareto_fronts_by_group(df: pd.DataFrame, group_cols: list[str],
         group_cols: Columns to group by (e.g., ['dataset', 'system'])
         x_col: Column name for x-axis
         y_col: Column name for y-axis
+        minx: If True, lower x is better; if False, higher x is better
+        miny: If True, lower y is better; if False, higher y is better
         num_points: Maximum number of Pareto points per group. Pass None to
             disable pruning and keep all Pareto-optimal points.
 
@@ -225,7 +225,9 @@ def compute_pareto_fronts_by_group(df: pd.DataFrame, group_cols: list[str],
     # Apply Pareto front computation (with optional pruning) to each group.
     pareto_groups = (
         df.groupby(group_cols, group_keys=True, dropna=False)
-        .apply(lambda g: compute_pareto_front(g, x_col, y_col, num_points=num_points),
+        .apply(lambda g: compute_pareto_front(g, x_col, y_col,
+                                              minx=minx, miny=miny,
+                                              num_points=num_points),
                include_groups=False)
     )
 
@@ -277,11 +279,13 @@ def select_test_points_from_valid_pareto(
 
     # Compute valid Pareto points per dataset using DataFrame groupby+apply.
     # No pruning here: keep all Pareto points for complete parameter matching.
+    # Hardcoded: minimize time, maximize accuracy (inherent in this function's semantics).
     valid_pareto_df = compute_pareto_fronts_by_group(
         valid_metric_df,
         ['dataset'],
         time_col,
         accuracy_col,
+        minx=True, miny=False,
         num_points=None,
     )
     if valid_pareto_df.empty:

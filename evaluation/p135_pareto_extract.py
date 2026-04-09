@@ -67,6 +67,7 @@ def main(args):
             group_cols=['dataset'],
             x_col='time',
             y_col='HOTA_HOTA',
+            minx=True, miny=False,
         )
 
         if pareto_df.empty:

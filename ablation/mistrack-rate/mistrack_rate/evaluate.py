@@ -10,6 +10,7 @@ from bisect import bisect_left
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -85,6 +86,7 @@ def _prepare_video_data(
         tracker_name,
         (height, width),
         sample_rate=1,
+        interpolate=True,
     )
     relevance_bitmaps = build_relevance_bitmaps(source_tracks, total_frames, width, height)
     tile_to_polyomino_id, polyomino_lengths = group_tiles_all(relevance_bitmaps.astype(np.uint8), 0)
@@ -129,6 +131,66 @@ def _prune_video_bitmaps(video_data: PreparedVideoData, rate_grid: np.ndarray, t
         pruned_bitmaps[frame_idx] = mask.astype(np.uint8)
 
     return pruned_bitmaps
+
+
+def _apply_frame_mask(relevance_bitmaps: np.ndarray, rate: int) -> np.ndarray:
+    """Zero out frames skipped under whole-frame rate sampling (keep frame iff index % rate == 0)."""
+    masked = relevance_bitmaps.copy()
+    for frame_idx in range(len(masked)):
+        if frame_idx % rate != 0:
+            masked[frame_idx] = 0
+    return masked
+
+
+def _eval_video_loop(
+    prepared_videos: list[PreparedVideoData],
+    get_pruned_bitmaps: Callable[[PreparedVideoData], np.ndarray],
+    tracker_name: str,
+    iou_threshold: float,
+) -> tuple[int, int, int, int, dict[str, dict[int, list[list[float]]]]]:
+    """Filter → track → measure for each video; return aggregated totals and prediction tracks."""
+    total_correct = 0
+    total_incorrect = 0
+    retention_numerator = 0
+    retention_denominator = 0
+    prediction_tracks: dict[str, dict[int, list[list[float]]]] = {}
+
+    for video_data in prepared_videos:
+        # Apply the caller-supplied bitmap strategy (ILP or frame mask).
+        pruned_bitmaps = get_pruned_bitmaps(video_data)
+        filtered_detections = filter_tracks_to_detection_arrays(
+            frame_tracks=video_data.source_tracks,
+            active_bitmaps=pruned_bitmaps,
+            width=video_data.width,
+            height=video_data.height,
+        )
+        predicted_tracks_vid = run_tracker_on_detections(
+            filtered_detections,
+            video_data.total_frames,
+            tracker_name,
+            (video_data.height, video_data.width),
+            sample_rate=1,
+            interpolate=True,
+        )
+        correct, incorrect = calculate_schedule_aware_mistrack_totals(
+            gt_tracks=video_data.gt_tracks,
+            predicted_tracks=predicted_tracks_vid,
+            retained_bitmaps=pruned_bitmaps,
+            width=video_data.width,
+            height=video_data.height,
+            iou_threshold=iou_threshold,
+        )
+        total_correct += correct
+        total_incorrect += incorrect
+        retention_numerator += count_active_cells(pruned_bitmaps)
+        retention_denominator += count_active_cells(video_data.relevance_bitmaps)
+        prediction_tracks[video_data.video] = predicted_tracks_vid
+
+    return (
+        total_correct, total_incorrect,
+        retention_numerator, retention_denominator,
+        prediction_tracks,
+    )
 
 
 def _build_anchor_frames_by_track(
@@ -357,40 +419,14 @@ def _evaluate_rate_grid(
     method: str,
     heuristic_threshold: float | None,
 ) -> dict[str, object]:
-    total_correct = 0
-    total_incorrect = 0
-    retention_numerator = 0
-    retention_denominator = 0
-    prediction_tracks: dict[str, dict[int, list[list[float]]]] = {}
-
-    for video_data in prepared_videos:
-        pruned_bitmaps = _prune_video_bitmaps(video_data, rate_grid, time_limit_seconds)
-        filtered_detections = filter_tracks_to_detection_arrays(
-            frame_tracks=video_data.source_tracks,
-            active_bitmaps=pruned_bitmaps,
-            width=video_data.width,
-            height=video_data.height,
-        )
-        predicted_tracks = run_tracker_on_detections(
-            filtered_detections,
-            video_data.total_frames,
-            tracker_name,
-            (video_data.height, video_data.width),
-            sample_rate=1,
-        )
-        correct, incorrect = calculate_schedule_aware_mistrack_totals(
-            gt_tracks=video_data.gt_tracks,
-            predicted_tracks=predicted_tracks,
-            retained_bitmaps=pruned_bitmaps,
-            width=video_data.width,
-            height=video_data.height,
+    total_correct, total_incorrect, retention_numerator, retention_denominator, prediction_tracks = (
+        _eval_video_loop(
+            prepared_videos,
+            get_pruned_bitmaps=lambda vd: _prune_video_bitmaps(vd, rate_grid, time_limit_seconds),
+            tracker_name=tracker_name,
             iou_threshold=iou_threshold,
         )
-        total_correct += correct
-        total_incorrect += incorrect
-        retention_numerator += count_active_cells(pruned_bitmaps)
-        retention_denominator += count_active_cells(video_data.relevance_bitmaps)
-        prediction_tracks[video_data.video] = predicted_tracks
+    )
 
     hota_value = float('nan')
     if compute_hota:
@@ -435,6 +471,89 @@ def _evaluate_rate_grid(
         'anchor_incorrect': total_incorrect,
         'anchor_total': total_anchors,
     }
+
+
+def _evaluate_whole_frame_rate(
+    dataset: str,
+    tracker_name: str,
+    prepared_videos: list[PreparedVideoData],
+    rate: int,
+    iou_threshold: float,
+    compute_hota: bool,
+    keep_temp_tracks: bool,
+) -> dict[str, object]:
+    """Evaluate the whole-frame skip-at-rate baseline for a single rate value."""
+    total_correct, total_incorrect, retention_numerator, retention_denominator, prediction_tracks = (
+        _eval_video_loop(
+            prepared_videos,
+            get_pruned_bitmaps=lambda vd: _apply_frame_mask(vd.relevance_bitmaps, rate),
+            tracker_name=tracker_name,
+            iou_threshold=iou_threshold,
+        )
+    )
+
+    hota_value = float('nan')
+    if compute_hota:
+        hota_value = _compute_hota(
+            dataset=dataset,
+            videos=[vd.video for vd in prepared_videos],
+            prediction_tracks=prediction_tracks,
+            total_frames_by_video={vd.video: vd.total_frames for vd in prepared_videos},
+            tracker_name=tracker_name,
+            keep_temp_tracks=keep_temp_tracks,
+        )
+
+    total_anchors = total_correct + total_incorrect
+    mistrack_rate_val = float(total_incorrect) / float(total_anchors) if total_anchors > 0 else 0.0
+    retention_val = (
+        float(retention_numerator) / float(retention_denominator)
+        if retention_denominator > 0
+        else 0.0
+    )
+
+    return {
+        'dataset': dataset,
+        'split': 'test',
+        'tracker': tracker_name,
+        'method': 'whole_frame',
+        'heuristic_threshold': None,
+        'variant_id': f'whole_frame_r{rate}',
+        'grid_key': f'whole_frame_{rate}',
+        'grid_rates_json': None,
+        'mistrack_rate': mistrack_rate_val,
+        'HOTA_HOTA': hota_value,
+        'retention_rate': retention_val,
+        'anchor_correct': total_correct,
+        'anchor_incorrect': total_incorrect,
+        'anchor_total': total_anchors,
+    }
+
+
+def run_whole_frame_stage(
+    dataset: str,
+    tracker_name: str,
+    prepared_videos: list[PreparedVideoData],
+    iou_threshold: float,
+    compute_hota: bool,
+    keep_temp_tracks: bool,
+    skip_variant_ids: set[str],
+) -> list[dict[str, object]]:
+    """Evaluate whole-frame baselines at rates 1, 2, and 4."""
+    rows = []
+    for rate in (1, 2, 4):
+        variant_id = f'whole_frame_r{rate}'
+        if variant_id in skip_variant_ids:
+            continue
+        rows.append(_evaluate_whole_frame_rate(
+            dataset=dataset,
+            tracker_name=tracker_name,
+            prepared_videos=prepared_videos,
+            rate=rate,
+            iou_threshold=iou_threshold,
+            compute_hota=compute_hota,
+            keep_temp_tracks=keep_temp_tracks,
+        ))
+    return rows
 
 
 def _set_worker_evaluation_state(
@@ -650,6 +769,18 @@ def run_evaluation_stage(
         keep_temp_tracks=keep_temp_tracks,
         num_workers=num_workers,
     )
+
+    # Evaluate whole-frame baselines at rates 1, 2, and 4.
+    whole_frame_rows = run_whole_frame_stage(
+        dataset=dataset,
+        tracker_name=tracker_name,
+        prepared_videos=prepared_videos,
+        iou_threshold=iou_threshold,
+        compute_hota=compute_hota,
+        keep_temp_tracks=keep_temp_tracks,
+        skip_variant_ids=seen_variants,
+    )
+    candidate_rows = candidate_rows + whole_frame_rows
 
     new_df = pd.DataFrame.from_records(candidate_rows)
     if existing_df.empty:
