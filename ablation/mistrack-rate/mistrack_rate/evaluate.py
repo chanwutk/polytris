@@ -65,7 +65,7 @@ class EvaluationTask:
     variant_id: str
     method: str
     encoded_grid: str
-    heuristic_threshold: int | None
+    heuristic_threshold: float | None
 
 
 _WORKER_EVALUATION_STATE: dict[str, object] | None = None
@@ -355,7 +355,7 @@ def _evaluate_rate_grid(
     compute_hota: bool,
     keep_temp_tracks: bool,
     method: str,
-    heuristic_threshold: int | None,
+    heuristic_threshold: float | None,
 ) -> dict[str, object]:
     total_correct = 0
     total_incorrect = 0
@@ -604,7 +604,7 @@ def run_evaluation_stage(
     heuristic_grids = load_heuristic_rate_grids(dataset, tracker_name)
     with open(heuristic_metadata_path(dataset, tracker_name), 'r', encoding='utf-8') as file:
         heuristic_metadata = json.load(file)
-    heuristic_thresholds = [int(value) for value in heuristic_metadata['thresholds']]
+    heuristic_thresholds = [float(value) for value in heuristic_metadata['thresholds']]
 
     candidate_tasks: list[EvaluationTask] = []
 

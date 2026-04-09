@@ -138,7 +138,7 @@ def calculate_rectangular_misstrack_counts(
 
 def build_rate_tables_from_counts(
     counts: np.ndarray,
-    thresholds: tuple[int, ...] = HEURISTIC_THRESHOLDS,
+    thresholds: tuple[float, ...] = HEURISTIC_THRESHOLDS,
     rate_choices: tuple[int, ...] = RATE_CHOICES,
 ) -> tuple[np.ndarray, np.ndarray]:
     correct = counts[..., 0].astype(np.float32)
@@ -162,7 +162,7 @@ def build_rate_tables_from_counts(
     return accuracy, rate_table
 
 
-def load_heuristic_rate_grids(dataset: str, tracker_name: str) -> dict[int, np.ndarray]:
+def load_heuristic_rate_grids(dataset: str, tracker_name: str) -> dict[float, np.ndarray]:
     rate_table = np.load(heuristic_rate_table_path(dataset, tracker_name))
     metadata_path = heuristic_metadata_path(dataset, tracker_name)
     with open(metadata_path, 'r', encoding='utf-8') as file:
@@ -170,7 +170,7 @@ def load_heuristic_rate_grids(dataset: str, tracker_name: str) -> dict[int, np.n
 
     thresholds = metadata['thresholds']
     return {
-        int(threshold): rate_table[:, :, idx].astype(np.int32)
+        float(threshold): rate_table[:, :, idx].astype(np.int32)
         for idx, threshold in enumerate(thresholds)
     }
 
@@ -222,7 +222,7 @@ def run_heuristic_stage(
     video_fraction_divisor: int = 1,
     num_workers: int = 1,
     force: bool = False,
-) -> dict[int, np.ndarray]:
+) -> dict[float, np.ndarray]:
     output_dir = ensure_dir(heuristic_dir(dataset, tracker_name))
     counts_path = heuristic_counts_path(dataset, tracker_name)
     accuracy_path = heuristic_accuracy_path(dataset, tracker_name)
@@ -280,6 +280,6 @@ def run_heuristic_stage(
         json.dump(metadata, file, indent=2)
 
     return {
-        int(threshold): rate_table[:, :, idx].astype(np.int32)
+        float(threshold): rate_table[:, :, idx].astype(np.int32)
         for idx, threshold in enumerate(HEURISTIC_THRESHOLDS)
     }

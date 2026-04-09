@@ -8,7 +8,7 @@ Isolated from the main pipeline in `scripts/`.
 
 - `3x3` rectangular grid over `1080x720` frames, per-cell rates `{1, 2, 4}`.
 - Exhaustive search: `3^9 = 19,683` global grids.
-- Heuristic: one grid per threshold `{30, 40, ..., 95, 100}%`, learned on train.
+- Heuristic: one grid per threshold from `30%` to `100%` in `2.5%` increments, learned on train.
 - Both evaluated on test. Reports mistrack rate, HOTA, and retention rate.
 
 ## Pipeline

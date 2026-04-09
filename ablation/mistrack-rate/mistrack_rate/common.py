@@ -19,7 +19,7 @@ from polyis.utilities import (
 GRID_ROWS = 3
 GRID_COLS = 3
 RATE_CHOICES = (1, 2, 4)
-HEURISTIC_THRESHOLDS = (30, 40, 50, 60, 70, 80, 90, 95, 100)
+HEURISTIC_THRESHOLDS = tuple(value / 10.0 for value in range(300, 1001, 25))
 
 
 @dataclass
@@ -127,11 +127,19 @@ def iter_rate_grids() -> Iterator[np.ndarray]:
         yield np.asarray(flat_values, dtype=np.int32).reshape((GRID_ROWS, GRID_COLS))
 
 
-def make_variant_id(method: str, rate_grid: np.ndarray, heuristic_threshold: int | None = None) -> str:
+def format_threshold_slug(threshold_pct: float) -> str:
+    threshold_tenths = int(round(threshold_pct * 10.0))
+    whole_pct, decimal_tenths = divmod(threshold_tenths, 10)
+    if decimal_tenths == 0:
+        return f'{whole_pct:03d}'
+    return f'{whole_pct:03d}p{decimal_tenths}'
+
+
+def make_variant_id(method: str, rate_grid: np.ndarray, heuristic_threshold: float | None = None) -> str:
     encoded_grid = encode_rate_grid(rate_grid)
     if heuristic_threshold is None:
         return f'{method}_{encoded_grid}'
-    return f'{method}_t{heuristic_threshold:03d}_{encoded_grid}'
+    return f'{method}_t{format_threshold_slug(heuristic_threshold)}_{encoded_grid}'
 
 
 def load_tracking_file(path: Path) -> dict[int, list[list[float]]]:

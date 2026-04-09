@@ -11,14 +11,16 @@ ABLATION_DIR = Path(__file__).resolve().parents[1] / 'ablation' / 'mistrack-rate
 if str(ABLATION_DIR) not in sys.path:
     sys.path.insert(0, str(ABLATION_DIR))
 
-from mistrack_rate.analysis import annotate_pareto_flags
+from mistrack_rate.analysis import _uniform_rate, annotate_pareto_flags
 from mistrack_rate.common import (
     GRID_COLS,
     GRID_ROWS,
+    HEURISTIC_THRESHOLDS,
     PreparedVideoData,
     center_cell_for_box,
     decode_rate_grid,
     encode_rate_grid,
+    format_threshold_slug,
     get_overlapping_rect_cells,
     iter_rate_grids,
     retention_rate,
@@ -43,7 +45,7 @@ def _fake_evaluate_rate_grid(
     compute_hota: bool,
     keep_temp_tracks: bool,
     method: str,
-    heuristic_threshold: int | None,
+    heuristic_threshold: float | None,
 ) -> dict[str, object]:
     _ = prepared_videos
     _ = iou_threshold
@@ -59,7 +61,7 @@ def _fake_evaluate_rate_grid(
         'variant_id': (
             f'{method}_{encode_rate_grid(rate_grid)}'
             if heuristic_threshold is None
-            else f'{method}_t{heuristic_threshold:03d}_{encode_rate_grid(rate_grid)}'
+            else f'{method}_t{format_threshold_slug(heuristic_threshold)}_{encode_rate_grid(rate_grid)}'
         ),
         'grid_key': encode_rate_grid(rate_grid),
         'grid_rates_json': rate_grid.astype(int).tolist(),
@@ -266,6 +268,22 @@ def test_build_rate_tables_invariant_highest_rate_meets_threshold():
                     )
 
 
+def test_heuristic_thresholds_cover_expected_range_in_2p5_percent_steps():
+    assert HEURISTIC_THRESHOLDS[0] == 30.0
+    assert HEURISTIC_THRESHOLDS[-1] == 100.0
+    assert len(HEURISTIC_THRESHOLDS) == 29
+    assert all(
+        current - previous == 2.5
+        for previous, current in zip(HEURISTIC_THRESHOLDS, HEURISTIC_THRESHOLDS[1:])
+    )
+
+
+def test_format_threshold_slug_supports_fractional_thresholds():
+    assert format_threshold_slug(30.0) == '030'
+    assert format_threshold_slug(32.5) == '032p5'
+    assert format_threshold_slug(100.0) == '100'
+
+
 # ---------------------------------------------------------------------------
 # Mistrack counting tests
 # ---------------------------------------------------------------------------
@@ -323,6 +341,33 @@ def test_retention_rate_full_retention():
     pruned = np.ones((3, GRID_ROWS, GRID_COLS), dtype=np.uint8)
 
     assert retention_rate(original, pruned) == 1.0
+
+
+# ---------------------------------------------------------------------------
+# Uniform-rate detection tests
+# ---------------------------------------------------------------------------
+
+def test_uniform_rate_returns_rate_when_all_cells_match():
+    for rate in (1, 2, 4):
+        key = '-'.join([str(rate)] * (GRID_ROWS * GRID_COLS))
+        assert _uniform_rate(key) == rate
+
+
+def test_uniform_rate_returns_none_for_mixed_grid():
+    # Mix of two different rates → not uniform.
+    key = encode_rate_grid(np.asarray([
+        [1, 2, 4],
+        [4, 2, 1],
+        [2, 1, 4],
+    ], dtype=np.int32))
+    assert _uniform_rate(key) is None
+
+
+def test_uniform_rate_returns_none_when_single_cell_differs():
+    # All cells are rate=4 except the last one.
+    values = [4] * (GRID_ROWS * GRID_COLS - 1) + [2]
+    key = '-'.join(str(v) for v in values)
+    assert _uniform_rate(key) is None
 
 
 # ---------------------------------------------------------------------------
@@ -447,10 +492,10 @@ def test_evaluate_candidate_tasks_returns_results_in_submission_order(monkeypatc
             heuristic_threshold=None,
         ),
         EvaluationTask(
-            variant_id='heuristic_t090_4-4-4-4-4-4-4-4-4',
+            variant_id='heuristic_t032p5_4-4-4-4-4-4-4-4-4',
             method='heuristic',
             encoded_grid='4-4-4-4-4-4-4-4-4',
-            heuristic_threshold=90,
+            heuristic_threshold=32.5,
         ),
     ]
 
