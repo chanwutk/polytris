@@ -35,3 +35,5 @@ Further paragraphs come after blank lines.
 
 - Bullet points are okay, too
 - Use a hanging indent
+
+NEVER COMMIT YOURSELF. WRITE ME A COMMAND TO COMMIT.
