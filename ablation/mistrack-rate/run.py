@@ -95,7 +95,12 @@ def main() -> None:
     # existing cached results directly to produce the cross-dataset summary.
     if args.combine_visualize:
         for tracker in trackers:
-            combine_visualize(tracker_name=tracker)
+            written = combine_visualize(tracker_name=tracker)
+            if not written:
+                print(f'No cached results found for tracker: {tracker}', file=sys.stderr)
+            else:
+                for p in written:
+                    print(f'  wrote: {p}')
         return
 
     # Resolve the dataset list for this invocation.

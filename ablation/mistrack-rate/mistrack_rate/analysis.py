@@ -21,6 +21,11 @@ class PairDefinition:
     y_label: str
     x_minimize: bool
     y_maximize: bool
+    # When False, the y-axis does not start at zero (useful for metrics like HOTA
+    # that are clustered far from 0).
+    zero_y_axis: bool = True
+    # When True, each facet subplot gets its own independent y-axis scale.
+    resolve_y_independent: bool = False
 
 
 PAIR_DEFINITIONS = (
@@ -32,30 +37,51 @@ PAIR_DEFINITIONS = (
         y_label='HOTA',
         x_minimize=True,
         y_maximize=True,
+        zero_y_axis=False,
+        resolve_y_independent=True,
     ),
     PairDefinition(
-        slug='mistrack_vs_retention',
+        slug='mistrack_vs_pruning',
         x_col='mistrack_rate',
-        y_col='retention_rate',
+        y_col='pruning_ratio',
         x_label='Mistrack Rate',
-        y_label='Retention Rate',
+        y_label='Pruning Ratio (%)',
         x_minimize=True,
-        y_maximize=False,
+        # Higher pruning ratio = more aggressive pruning; equivalent to the old
+        # y_maximize=False on retention_rate (minimize retention ↔ maximize pruning).
+        y_maximize=True,
     ),
     PairDefinition(
-        slug='retention_vs_hota',
-        x_col='retention_rate',
+        slug='pruning_vs_hota',
+        x_col='pruning_ratio',
         y_col='HOTA_HOTA',
-        x_label='Retention Rate',
+        x_label='Pruning Ratio (%)',
         y_label='HOTA',
-        x_minimize=True,
+        # Prefer high pruning (right side) with high HOTA; equivalent to the old
+        # x_minimize=True on retention_rate (minimize retention ↔ maximize pruning).
+        x_minimize=False,
         y_maximize=True,
+        zero_y_axis=False,
+        resolve_y_independent=True,
     ),
 )
 
 
+def _prepare_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Add derived display columns to a results DataFrame.
+
+    Computes pruning_ratio = (1 - retention_rate) * 100 so that downstream
+    chart code can reference it directly without touching the raw CSV columns.
+    Safe to call on DataFrames that already contain the column (overwrites).
+    """
+    df = df.copy()
+    df['pruning_ratio'] = (1 - df['retention_rate']) * 100
+    return df
+
+
 def annotate_pareto_flags(results_df: pd.DataFrame) -> pd.DataFrame:
-    flagged_df = results_df.copy()
+    # Add derived columns so PairDefinitions referencing pruning_ratio work.
+    flagged_df = _prepare_df(results_df)
     exhaustive_df = flagged_df[flagged_df['method'] == 'exhaustive'].copy()
 
     for pair in PAIR_DEFINITIONS:
@@ -113,7 +139,11 @@ def _build_chart_layers(
     """
     pareto_flag_col = f'is_pareto_{pair.slug}'
     x_enc = alt.X(f'{pair.x_col}:Q', title=pair.x_label)
-    y_enc = alt.Y(f'{pair.y_col}:Q', title=pair.y_label)
+    y_enc = alt.Y(
+        f'{pair.y_col}:Q',
+        title=pair.y_label,
+        scale=alt.Scale(zero=pair.zero_y_axis),
+    )
 
     exhaustive_tooltip = [
         alt.Tooltip('dataset:N', title='Dataset'),
@@ -211,7 +241,7 @@ def _make_single_chart(
         else False
     )
     layers = _build_chart_layers(alt.Chart(plot_df), pair)
-    return alt.layer(*layers).properties(title=title, width=600, height=450)
+    return alt.layer(*layers).properties(title=title, width=100, height=200)
 
 
 def plot_results(dataset: str, tracker_name: str) -> list[Path]:
@@ -219,7 +249,7 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
     if not results_path.exists():
         raise FileNotFoundError(f'Results CSV not found: {results_path}')
 
-    results_df = pd.read_csv(results_path)
+    results_df = _prepare_df(pd.read_csv(results_path))
     output_dir = ensure_dir(plots_dir(dataset, tracker_name))
     written_paths: list[Path] = []
 
@@ -250,9 +280,9 @@ def _collect_results(tracker_name: str, cache_dir: Path | None = None) -> pd.Dat
     if not csv_paths:
         return pd.DataFrame()
 
-    # Load each CSV and concatenate into a single flat DataFrame.
+    # Load each CSV, concatenate, then add derived display columns.
     frames = [pd.read_csv(p) for p in csv_paths]
-    return pd.concat(frames, ignore_index=True)
+    return _prepare_df(pd.concat(frames, ignore_index=True))
 
 
 def _make_altair_chart(
@@ -282,12 +312,15 @@ def _make_altair_chart(
     layers = _build_chart_layers(alt.Chart(plot_df), pair)
     return (
         alt.layer(*layers)
-        .properties(width=300, height=250)
+        .properties(width=100, height=200)
         .facet(
             facet=alt.Facet('dataset:N', title='Dataset'),
-            columns=3,
+            # columns=3,
         )
-        .resolve_scale(x='independent')
+        .resolve_scale(
+            x='independent',
+            y='independent' if pair.resolve_y_independent else 'shared',
+        )
         .properties(title=f'{tracker_name}: {pair.x_label} vs {pair.y_label}')
     )
 
