@@ -167,7 +167,14 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
                  single_row: bool = False,
                  apply_padding: bool = True,
                  apply_legend_config: bool = True,
-                 subplot_height: int | None = None) -> alt.Chart:
+                 subplot_height: int | None = None,
+                 title_orient: str = 'top',
+                 title_text: str | list[str] | None = None,
+                 title_angle: float | None = None,
+                 title_align: str = 'center',
+                 title_anchor: str = 'middle',
+                 title_dx: float | None = None,
+                 title_offset: float | None = None) -> alt.Chart:
     """
     Apply the shared dataset facet layout used by all comparison charts.
 
@@ -188,6 +195,15 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
     # Share the y-axis only in the compact one-row export so the left-most axis
     # carries the labels and title once for the whole row.
     y_scale_resolution = 'shared' if single_row else 'independent'
+    title_spec = alt.TitleParams(
+        text=title if title_text is None else title_text,
+        orient=title_orient,
+        anchor=title_anchor,
+        align=title_align,
+        angle=title_angle if title_angle is not None else alt.Undefined,
+        dx=title_dx if title_dx is not None else alt.Undefined,
+        offset=title_offset if title_offset is not None else alt.Undefined,
+    )
 
     faceted_chart = chart.properties(
         width=subplot_width,
@@ -205,7 +221,7 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
         x='independent',
         y=y_scale_resolution
     ).properties(
-        title=title,
+        title=title_spec,
     )
 
     # Keep zero outer padding for standalone charts, but omit it when this
@@ -479,7 +495,14 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
                          show_legend: bool = True,
                          apply_padding: bool = True,
                          apply_legend_config: bool = True,
-                         subplot_height: int | None = None) -> alt.Chart:
+                         subplot_height: int | None = None,
+                         title_orient: str = 'top',
+                         title_text: str | list[str] | None = None,
+                         title_angle: float | None = None,
+                         title_align: str = 'center',
+                         title_anchor: str = 'middle',
+                         title_dx: float | None = None,
+                         title_offset: float | None = None) -> alt.Chart:
     """
     Create faceted line chart showing speedup ratio vs accuracy level.
 
@@ -540,6 +563,13 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
         apply_padding=apply_padding,
         apply_legend_config=apply_legend_config,
         subplot_height=subplot_height,
+        title_orient=title_orient,
+        title_text=title_text,
+        title_angle=title_angle,
+        title_align=title_align,
+        title_anchor=title_anchor,
+        title_dx=title_dx,
+        title_offset=title_offset,
     )
 
 
@@ -551,7 +581,14 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
                                show_legend: bool = True,
                                apply_padding: bool = True,
                                apply_legend_config: bool = True,
-                               subplot_height: int | None = None) -> alt.Chart:
+                               subplot_height: int | None = None,
+                               title_orient: str = 'top',
+                               title_text: str | list[str] | None = None,
+                               title_angle: float | None = None,
+                               title_align: str = 'center',
+                               title_anchor: str = 'middle',
+                               title_dx: float | None = None,
+                               title_offset: float | None = None) -> alt.Chart:
     """
     Create faceted line chart showing accuracy gain vs runtime level.
 
@@ -615,6 +652,13 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
         apply_padding=apply_padding,
         apply_legend_config=apply_legend_config,
         subplot_height=subplot_height,
+        title_orient=title_orient,
+        title_text=title_text,
+        title_angle=title_angle,
+        title_align=title_align,
+        title_anchor=title_anchor,
+        title_dx=title_dx,
+        title_offset=title_offset,
     )
 
 
@@ -628,7 +672,14 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
                                    show_legend: bool = True,
                                    apply_padding: bool = True,
                                    apply_legend_config: bool = True,
-                                   subplot_height: int | None = None) -> alt.Chart:
+                                   subplot_height: int | None = None,
+                                   title_orient: str = 'top',
+                                   title_text: str | list[str] | None = None,
+                                   title_angle: float | None = None,
+                                   title_align: str = 'center',
+                                   title_anchor: str = 'middle',
+                                   title_dx: float | None = None,
+                                   title_offset: float | None = None) -> alt.Chart:
     """
     Create faceted line chart showing Pareto fronts for all systems.
 
@@ -717,6 +768,13 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         apply_padding=apply_padding,
         apply_legend_config=apply_legend_config,
         subplot_height=subplot_height,
+        title_orient=title_orient,
+        title_text=title_text,
+        title_angle=title_angle,
+        title_align=title_align,
+        title_anchor=title_anchor,
+        title_dx=title_dx,
+        title_offset=title_offset,
     )
 
 
@@ -839,13 +897,20 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         'HOTA',
         time_col='throughput_fps',
         log_scale=True,
-        x_title='Throughput (frames/sec)',
+        x_title='Throughput (FPS)',
         single_row=True,
         legend_title='System',
         show_legend=True,
         apply_padding=False,
         apply_legend_config=False,
         subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
+        title_orient='right',
+        title_text=['HOTA vs', 'Throughput', 'Pareto', 'Fronts'],
+        title_angle=0,
+        title_align='left',
+        title_anchor='start',
+        title_dx=-70,
+        title_offset=0,
     )
     speedup_chart = create_speedup_chart(
         df_speedup,
@@ -856,6 +921,13 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         apply_padding=False,
         apply_legend_config=False,
         subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
+        title_orient='right',
+        title_text=['HOTA', 'Speedup at', 'Accuracy'],
+        title_angle=0,
+        title_align='left',
+        title_anchor='start',
+        title_dx=-70,
+        title_offset=0,
     )
     accuracy_gain_chart = create_accuracy_gain_chart(
         df_accuracy_gain,
@@ -867,6 +939,13 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         apply_padding=False,
         apply_legend_config=False,
         subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
+        title_orient='right',
+        title_text=['HOTA', 'Accuracy', 'Gain at', 'Runtime'],
+        title_angle=0,
+        title_align='left',
+        title_anchor='start',
+        title_dx=-55,
+        title_offset=0,
     )
 
     return alt.vconcat(
