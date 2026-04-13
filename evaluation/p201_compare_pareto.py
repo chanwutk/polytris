@@ -11,6 +11,7 @@ This script extends p200_compare_compute.py by:
 
 import argparse
 import os
+import shutil
 from collections.abc import Callable
 import numpy as np
 import pandas as pd
@@ -24,6 +25,8 @@ from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
 
 config = get_config()
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+PAPER_FIGURES_GENERATED_DIR = os.path.join(REPO_ROOT, 'paper', 'figures', 'generated')
 DATASETS = config['EXEC']['DATASETS']
 CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
@@ -33,9 +36,9 @@ TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 # Keep facet layout dimensions explicit so all comparison charts stay aligned.
 FACET_COLUMNS = 4
-FACET_SUBPLOT_WIDTH = 225
-FACET_SUBPLOT_HEIGHT = 170
-ONE_ROW_FACET_SUBPLOT_WIDTH = FACET_SUBPLOT_WIDTH // 2
+FACET_SUBPLOT_WIDTH = 250
+FACET_SUBPLOT_HEIGHT = 175
+ONE_ROW_FACET_SUBPLOT_WIDTH = int(round(FACET_SUBPLOT_WIDTH * 0.6))
 COMBINED_ONE_ROW_SUBPLOT_HEIGHT = max(1, int(round(FACET_SUBPLOT_HEIGHT * 0.7)))
 
 # Approximate spacing used by Altair between facet cells and for header labels.
@@ -54,6 +57,9 @@ SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
 # Define the color for each system category.
 SYSTEM_COLOR_RANGE = ColorScheme.CarbonDark[:len(SYSTEM_COLOR_DOMAIN)]
 SYSTEM_COLOR_LOOKUP = dict(zip(SYSTEM_COLOR_DOMAIN, SYSTEM_COLOR_RANGE))
+SYSTEM_MARK_OPACITY = 0.6
+STANDARD_POINT_SIZE = 30
+PARETO_POINT_SIZE = 35
 
 # Map internal dataset identifiers to the display names used in charts.
 DATASET_NAME_MAP = {
@@ -173,6 +179,7 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
                  title_angle: float | None = None,
                  title_align: str = 'center',
                  title_anchor: str = 'middle',
+                 title_dy: float | None = None,
                  title_dx: float | None = None,
                  title_offset: float | None = None) -> alt.Chart:
     """
@@ -201,6 +208,7 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
         anchor=title_anchor,
         align=title_align,
         angle=title_angle if title_angle is not None else alt.Undefined,
+        dy=title_dy if title_dy is not None else alt.Undefined,
         dx=title_dx if title_dx is not None else alt.Undefined,
         offset=title_offset if title_offset is not None else alt.Undefined,
     )
@@ -213,7 +221,10 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
             'dataset_display:N',
             title=None,
             sort=_get_dataset_display_sort(df),
-            header=alt.Header(labelExpr="'Dataset: ' + datum.value")
+            header=alt.Header(
+                labelExpr="'Dataset: ' + datum.value",
+                labelPadding=-12,
+            )
         ),
         columns=facet_columns,
         spacing=0,
@@ -501,6 +512,7 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
                          title_angle: float | None = None,
                          title_align: str = 'center',
                          title_anchor: str = 'middle',
+                         title_dy: float | None = None,
                          title_dx: float | None = None,
                          title_offset: float | None = None) -> alt.Chart:
     """
@@ -527,14 +539,21 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
     base = alt.Chart(df_clean)
 
     # Line chart showing speedup ratio (no tooltip - lines are not easily hoverable)
-    line = base.mark_line(strokeWidth=2).encode(
+    line = base.mark_line(
+        strokeWidth=2,
+        opacity=SYSTEM_MARK_OPACITY,
+    ).encode(
         x=alt.X('accuracy_level:Q', title=f'{accuracy_col_name} Level'),
         y=alt.Y('speedup_ratio:Q', title='Speedup Ratio (Other/Polytris)'),
         color=alt.Color('system:N', scale=color_scale, legend=legend),
     )
 
     # Add points for better visibility (with tooltip for interactivity)
-    points = base.mark_point(size=30, filled=True).encode(
+    points = base.mark_point(
+        size=STANDARD_POINT_SIZE,
+        filled=True,
+        opacity=SYSTEM_MARK_OPACITY,
+    ).encode(
         x=alt.X('accuracy_level:Q'),
         y=alt.Y('speedup_ratio:Q'),
         color=alt.Color('system:N', scale=color_scale, legend=legend),
@@ -568,6 +587,7 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
         title_angle=title_angle,
         title_align=title_align,
         title_anchor=title_anchor,
+        title_dy=title_dy,
         title_dx=title_dx,
         title_offset=title_offset,
     )
@@ -587,6 +607,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
                                title_angle: float | None = None,
                                title_align: str = 'center',
                                title_anchor: str = 'middle',
+                               title_dy: float | None = None,
                                title_dx: float | None = None,
                                title_offset: float | None = None) -> alt.Chart:
     """
@@ -616,14 +637,21 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
     x_scale = alt.Scale(type='log') if log_scale else alt.Undefined
     x_enc = alt.X('runtime_level:Q', title='Runtime (seconds)', scale=x_scale)
     # Line chart showing accuracy gain (no tooltip - lines are not easily hoverable)
-    line = base.mark_line(strokeWidth=2).encode(
+    line = base.mark_line(
+        strokeWidth=2,
+        opacity=SYSTEM_MARK_OPACITY,
+    ).encode(
         x=x_enc,
         y=alt.Y('accuracy_gain:Q', title=f'{accuracy_col_name} Gain (Polytris - Other)'),
         color=alt.Color('system:N', scale=color_scale, legend=legend),
     )
 
     # Add points for better visibility (with tooltip for interactivity)
-    points = base.mark_point(size=30, filled=True).encode(
+    points = base.mark_point(
+        size=STANDARD_POINT_SIZE,
+        filled=True,
+        opacity=SYSTEM_MARK_OPACITY,
+    ).encode(
         x=x_enc,
         y=alt.Y('accuracy_gain:Q'),
         color=alt.Color('system:N', scale=color_scale, legend=legend),
@@ -657,6 +685,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
         title_angle=title_angle,
         title_align=title_align,
         title_anchor=title_anchor,
+        title_dy=title_dy,
         title_dx=title_dx,
         title_offset=title_offset,
     )
@@ -678,6 +707,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
                                    title_angle: float | None = None,
                                    title_align: str = 'center',
                                    title_anchor: str = 'middle',
+                                   title_dy: float | None = None,
                                    title_dx: float | None = None,
                                    title_offset: float | None = None) -> alt.Chart:
     """
@@ -709,19 +739,16 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     # X-axis uses log scale if enabled.
     x_scale = alt.Scale(type='log') if log_scale else alt.Undefined
     x_enc = alt.X(f'{time_col}:Q', title=x_title, scale=x_scale)
-    # Opacity scale: full opacity for Polytris, reduced for other systems.
-    opacity_scale = alt.Scale(
-        domain=SYSTEM_COLOR_DOMAIN,
-        range=[1.0, 0.2, 0.2, 0.2]
-    )
 
     # Line chart showing Pareto fronts (no tooltip - lines are not easily hoverable)
-    line = base_pareto.mark_line(strokeWidth=2).encode(
+    line = base_pareto.mark_line(
+        strokeWidth=2,
+        opacity=SYSTEM_MARK_OPACITY,
+    ).encode(
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q', title=f'{accuracy_col_name} Score',
                 scale=alt.Scale(domain=[0, 1])),
         color=alt.Color('system:N', scale=color_scale, legend=legend),
-        opacity=alt.Opacity('system:N', scale=opacity_scale, legend=legend),
         # Group lines by the columns that define a single Pareto front.
         # Polytris fronts are computed per (dataset, classifier, canvas_scale);
         # SOTA fronts are computed per (dataset).  The chart is already faceted
@@ -738,11 +765,14 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     )
 
     # Add points for Pareto fronts (with tooltip for interactivity)
-    points_pareto = base_pareto.mark_point(size=50, filled=True).encode(
+    points_pareto = base_pareto.mark_point(
+        size=PARETO_POINT_SIZE,
+        filled=True,
+        opacity=SYSTEM_MARK_OPACITY,
+    ).encode(
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q'),
         color=alt.Color('system:N', scale=color_scale, legend=legend),
-        opacity=alt.Opacity('system:N', scale=opacity_scale, legend=legend),
         shape=alt.Shape('system:N', scale=shape_scale, legend=legend),
         tooltip=[
             'system',
@@ -773,6 +803,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         title_angle=title_angle,
         title_align=title_align,
         title_anchor=title_anchor,
+        title_dy=title_dy,
         title_dx=title_dx,
         title_offset=title_offset,
     )
@@ -851,6 +882,19 @@ def save_chart(chart: alt.Chart, output_dir: str, base_name: str):
     print(f"  Saved HTML: {html_path}")
 
 
+def copy_chart_outputs(source_dir: str, base_name: str, destination_dir: str):
+    """Copy the paper-targeted chart format into another directory."""
+    os.makedirs(destination_dir, exist_ok=True)
+
+    # The paper directory only needs the publication-ready PDF.
+    source_path = os.path.join(source_dir, f'{base_name}.pdf')
+    destination_path = os.path.join(destination_dir, f'{base_name}.pdf')
+    if not os.path.exists(source_path):
+        return
+    shutil.copy2(source_path, destination_path)
+    print(f"  Copied PDF to: {destination_path}")
+
+
 def save_chart_variants(chart_factory: Callable[..., alt.Chart], output_dir: str,
                         base_name: str, *args, **kwargs):
     """
@@ -909,7 +953,8 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         title_angle=0,
         title_align='left',
         title_anchor='start',
-        title_dx=-70,
+        title_dy=5,
+        title_dx=-66,
         title_offset=0,
     )
     speedup_chart = create_speedup_chart(
@@ -926,7 +971,8 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         title_angle=0,
         title_align='left',
         title_anchor='start',
-        title_dx=-70,
+        title_dy=18,
+        title_dx=-65,
         title_offset=0,
     )
     accuracy_gain_chart = create_accuracy_gain_chart(
@@ -944,7 +990,8 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         title_angle=0,
         title_align='left',
         title_anchor='start',
-        title_dx=-55,
+        title_dy=12,
+        title_dx=-54,
         title_offset=0,
     )
 
@@ -952,13 +999,13 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         throughput_chart,
         speedup_chart,
         accuracy_gain_chart,
-        spacing=0,
+        spacing=1,
     ).resolve_scale(
         color='shared'
     ).properties(
         padding=0,
     ).configure_legend(
-        orient='top',
+        orient='left',
     )
 
 
@@ -1315,6 +1362,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
                 and not df_speedup.empty
                 and not df_accuracy_gain.empty):
             print(f"\n6. Creating combined one-row summary chart for {accuracy_name}...")
+            combined_chart_base_name = f'{accuracy_col.lower()}_summary_one_row'
             save_chart(
                 create_hota_summary_one_row_chart(
                     df_tp_combined,
@@ -1323,8 +1371,9 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
                     log_scale=log_scale,
                 ),
                 output_dir,
-                f'{accuracy_col.lower()}_summary_one_row',
+                combined_chart_base_name,
             )
+            copy_chart_outputs(output_dir, combined_chart_base_name, PAPER_FIGURES_GENERATED_DIR)
         elif accuracy_col == 'HOTA_HOTA':
             print("  Skipping combined one-row summary chart due to missing source data")
 
