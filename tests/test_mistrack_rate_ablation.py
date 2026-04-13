@@ -636,6 +636,63 @@ def test_combine_visualize_merges_multiple_datasets(tmp_path):
     assert all(p.exists() for p in written)
 
 
+def test_pareto_only_variant_drops_non_pareto_exhaustive_rows():
+    # Regression guard: the pareto-only chart must not embed the full
+    # exhaustive cloud in its Vega-Lite spec (that payload froze the browser).
+    import altair as alt
+    alt.data_transformers.disable_max_rows()
+
+    from mistrack_rate.analysis import _make_altair_chart
+
+    rows = []
+    # 100 non-pareto exhaustive rows dominated by a single pareto row.
+    for i in range(100):
+        rows.append({
+            'dataset': 'jnc0',
+            'method': 'exhaustive',
+            'grid_key': f'dominated_{i}',
+            'heuristic_threshold': float('nan'),
+            'mistrack_rate': 0.5 + 0.001 * i,
+            'HOTA_HOTA': 0.5 - 0.001 * i,
+            'retention_rate': 0.9,
+        })
+    # One pareto-optimal exhaustive row.
+    rows.append({
+        'dataset': 'jnc0', 'method': 'exhaustive', 'grid_key': 'pareto',
+        'heuristic_threshold': float('nan'),
+        'mistrack_rate': 0.05, 'HOTA_HOTA': 0.9, 'retention_rate': 0.6,
+    })
+    rows.append({
+        'dataset': 'jnc0', 'method': 'heuristic', 'grid_key': 'h',
+        'heuristic_threshold': 50.0,
+        'mistrack_rate': 0.1, 'HOTA_HOTA': 0.85, 'retention_rate': 0.62,
+    })
+    rows.append({
+        'dataset': 'jnc0', 'method': 'whole_frame', 'grid_key': 'whole_frame_2',
+        'heuristic_threshold': None,
+        'mistrack_rate': 0.2, 'HOTA_HOTA': 0.7, 'retention_rate': 0.5,
+    })
+    df = annotate_pareto_flags(pd.DataFrame(rows))
+
+    pair = next(p for p in PAIR_DEFINITIONS if p.slug == 'mistrack_vs_hota')
+
+    def _embedded_row_count(chart) -> int:
+        datasets = chart.to_dict().get('datasets', {})
+        return sum(len(v) for v in datasets.values() if isinstance(v, list))
+
+    full_rows = _embedded_row_count(_make_altair_chart(df, pair, 'ocsort', include_background=True))
+    pareto_only_rows = _embedded_row_count(
+        _make_altair_chart(df, pair, 'ocsort', include_background=False)
+    )
+
+    # Full chart embeds the whole dataframe (103 rows).
+    assert full_rows == len(df)
+    # Pareto-only chart drops the 100 dominated exhaustive rows and keeps
+    # only the pareto exhaustive + heuristic + whole-frame rows.
+    assert pareto_only_rows == 3
+    assert pareto_only_rows < full_rows
+
+
 def test_combine_visualize_emits_pareto_only_variant(tmp_path):
     # The pareto-only variant must be produced alongside the full chart and
     # must render to distinct, non-empty files (different layer set → different

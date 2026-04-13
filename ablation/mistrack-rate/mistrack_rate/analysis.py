@@ -241,6 +241,19 @@ def _build_chart_layers(
     return [bg_layer, *foreground_layers]
 
 
+def _prune_for_pareto_only(plot_df: pd.DataFrame, pareto_flag_col: str) -> pd.DataFrame:
+    """Drop exhaustive rows that are not on the Pareto frontier.
+
+    The pareto-only chart variant references exhaustive rows only through
+    the is_pareto filter, so non-pareto exhaustive points just inflate the
+    Vega-Lite payload and freeze the browser. Heuristic and whole-frame
+    rows are kept in full.
+    """
+    keep_pareto_exhaustive = (plot_df['method'] == 'exhaustive') & plot_df[pareto_flag_col]
+    keep_non_exhaustive = plot_df['method'] != 'exhaustive'
+    return plot_df[keep_pareto_exhaustive | keep_non_exhaustive].copy()
+
+
 def _make_single_chart(
     results_df: pd.DataFrame,
     pair: PairDefinition,
@@ -259,8 +272,14 @@ def _make_single_chart(
         if pareto_flag_col in plot_df.columns
         else False
     )
+    # Drop non-pareto exhaustive rows for the pareto-only variant — they are
+    # filtered away by transform_filter anyway but still slow Vega-Lite down.
+    if not include_background:
+        plot_df = _prune_for_pareto_only(plot_df, pareto_flag_col)
     layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
-    return alt.layer(*layers).properties(title=title, width=100, height=200)
+    # Pareto-only variant gets 3× width and 2× height for readability.
+    width, height = (300, 400) if not include_background else (100, 200)
+    return alt.layer(*layers).properties(title=title, width=width, height=height)
 
 
 def plot_results(dataset: str, tracker_name: str) -> list[Path]:
@@ -268,7 +287,11 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
     if not results_path.exists():
         raise FileNotFoundError(f'Results CSV not found: {results_path}')
 
-    results_df = _prepare_df(pd.read_csv(results_path))
+    # Re-annotate pareto flags against the current PAIR_DEFINITIONS so stale
+    # cached CSVs (from earlier runs that used different slug names) still
+    # produce correct Pareto layers. annotate_pareto_flags is idempotent and
+    # internally calls _prepare_df, so we don't need to prepare first.
+    results_df = annotate_pareto_flags(pd.read_csv(results_path))
     output_dir = ensure_dir(plots_dir(dataset, tracker_name))
     written_paths: list[Path] = []
 
@@ -312,8 +335,11 @@ def _collect_results(tracker_name: str, cache_dir: Path | None = None) -> pd.Dat
     if not csv_paths:
         return pd.DataFrame()
 
-    # Load each CSV, concatenate, then add derived display columns.
-    frames = [pd.read_csv(p) for p in csv_paths]
+    # Re-annotate each CSV against the current PAIR_DEFINITIONS so stale cached
+    # flag columns (e.g. `is_pareto_retention_vs_hota` from older runs) don't
+    # cause missing-flag → empty-Pareto-layer rendering. Annotation runs
+    # per-dataset, preserving each dataset's independent Pareto frontier.
+    frames = [annotate_pareto_flags(pd.read_csv(p)) for p in csv_paths]
     return _prepare_df(pd.concat(frames, ignore_index=True))
 
 
@@ -345,10 +371,16 @@ def _make_altair_chart(
         if pareto_flag_col in plot_df.columns
         else False
     )
+    # Drop non-pareto exhaustive rows for the pareto-only variant — they are
+    # filtered away by transform_filter anyway but still slow Vega-Lite down.
+    if not include_background:
+        plot_df = _prune_for_pareto_only(plot_df, pareto_flag_col)
     layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
+    # Pareto-only variant gets 3× width and 2× height for readability.
+    width, height = (300, 400) if not include_background else (100, 200)
     return (
         alt.layer(*layers)
-        .properties(width=100, height=200)
+        .properties(width=width, height=height)
         .facet(
             facet=alt.Facet('dataset:N', title='Dataset'),
             # columns=3,

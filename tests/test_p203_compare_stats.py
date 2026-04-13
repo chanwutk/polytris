@@ -196,11 +196,20 @@ def test_save_tex_macros_writes_abstract_ready_values(tmp_path: Path):
     # Read the generated macro file back for exact assertions.
     contents = output_path.read_text()
 
-    # Persist the 5% prior-failure count plus the rounded 5%/10% throughput ranges.
+    # Persist the full 5% threshold macro block with counts and rounded ranges.
+    assert '\\newcommand{\\comparePolytrisMeetFivePct}{\\autogen{7}}' in contents
+    assert '\\newcommand{\\comparePriorMeetFivePct}{\\autogen{4}}' in contents
     assert '\\newcommand{\\comparePriorFailDatasetsFivePct}{\\autogen{3}}' in contents
-    assert '\\newcommand{\\compareSpeedupMinFivePct}{\\autogen{1.30}}' in contents
-    assert '\\newcommand{\\compareSpeedupMaxFivePct}{\\autogen{55.80}}' in contents
-    assert '\\newcommand{\\compareSpeedupMinTenPct}{\\autogen{1.32}}' in contents
-    assert '\\newcommand{\\compareSpeedupMaxTenPct}{\\autogen{15.84}}' in contents
-    assert '\\newcommand{\\compareNaiveSpeedupMinTenPct}{\\autogen{3.00}}' in contents
-    assert '\\newcommand{\\compareNaiveSpeedupMaxTenPct}{\\autogen{82.72}}' in contents
+    assert '\\newcommand{\\compareSpeedupMinFivePct}{\\autogen{1.3}}' in contents
+    assert '\\newcommand{\\compareSpeedupMaxFivePct}{\\autogen{55.8}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMinFivePct}{\\autogen{4.6}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMaxFivePct}{\\autogen{55.8}}' in contents
+
+    # Persist the full 10% threshold macro block with counts and rounded ranges.
+    assert '\\newcommand{\\comparePolytrisMeetTenPct}{\\autogen{7}}' in contents
+    assert '\\newcommand{\\comparePriorMeetTenPct}{\\autogen{7}}' in contents
+    assert '\\newcommand{\\comparePriorFailDatasetsTenPct}{\\autogen{0}}' in contents
+    assert '\\newcommand{\\compareSpeedupMinTenPct}{\\autogen{1.3}}' in contents
+    assert '\\newcommand{\\compareSpeedupMaxTenPct}{\\autogen{15.8}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMinTenPct}{\\autogen{3.0}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMaxTenPct}{\\autogen{82.7}}' in contents
