@@ -36,6 +36,7 @@ FACET_COLUMNS = 4
 FACET_SUBPLOT_WIDTH = 225
 FACET_SUBPLOT_HEIGHT = 170
 ONE_ROW_FACET_SUBPLOT_WIDTH = FACET_SUBPLOT_WIDTH // 2
+COMBINED_ONE_ROW_SUBPLOT_HEIGHT = max(1, int(round(FACET_SUBPLOT_HEIGHT * 0.7)))
 
 # Approximate spacing used by Altair between facet cells and for header labels.
 _FACET_COL_SPACING = 60
@@ -165,7 +166,8 @@ def _get_system_color_scale(systems: list[str]) -> alt.Scale:
 def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
                  single_row: bool = False,
                  apply_padding: bool = True,
-                 apply_legend_config: bool = True) -> alt.Chart:
+                 apply_legend_config: bool = True,
+                 subplot_height: int | None = None) -> alt.Chart:
     """
     Apply the shared dataset facet layout used by all comparison charts.
 
@@ -180,6 +182,7 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
     """
     # Compact exports halve each subplot width and force all facets into one row.
     subplot_width = ONE_ROW_FACET_SUBPLOT_WIDTH if single_row else FACET_SUBPLOT_WIDTH
+    subplot_height = FACET_SUBPLOT_HEIGHT if subplot_height is None else subplot_height
     facet_columns = max(1, df['dataset_display'].nunique()) if single_row else FACET_COLUMNS
 
     # Share the y-axis only in the compact one-row export so the left-most axis
@@ -188,7 +191,7 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
 
     faceted_chart = chart.properties(
         width=subplot_width,
-        height=FACET_SUBPLOT_HEIGHT,
+        height=subplot_height,
     ).facet(
         facet=alt.Facet(
             'dataset_display:N',
@@ -475,7 +478,8 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
                          legend_title: str = 'Compared To',
                          show_legend: bool = True,
                          apply_padding: bool = True,
-                         apply_legend_config: bool = True) -> alt.Chart:
+                         apply_legend_config: bool = True,
+                         subplot_height: int | None = None) -> alt.Chart:
     """
     Create faceted line chart showing speedup ratio vs accuracy level.
 
@@ -535,6 +539,7 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
         single_row=single_row,
         apply_padding=apply_padding,
         apply_legend_config=apply_legend_config,
+        subplot_height=subplot_height,
     )
 
 
@@ -545,7 +550,8 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
                                legend_title: str = 'Compared To',
                                show_legend: bool = True,
                                apply_padding: bool = True,
-                               apply_legend_config: bool = True) -> alt.Chart:
+                               apply_legend_config: bool = True,
+                               subplot_height: int | None = None) -> alt.Chart:
     """
     Create faceted line chart showing accuracy gain vs runtime level.
 
@@ -608,6 +614,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
         single_row=single_row,
         apply_padding=apply_padding,
         apply_legend_config=apply_legend_config,
+        subplot_height=subplot_height,
     )
 
 
@@ -620,7 +627,8 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
                                    legend_title: str = 'System',
                                    show_legend: bool = True,
                                    apply_padding: bool = True,
-                                   apply_legend_config: bool = True) -> alt.Chart:
+                                   apply_legend_config: bool = True,
+                                   subplot_height: int | None = None) -> alt.Chart:
     """
     Create faceted line chart showing Pareto fronts for all systems.
 
@@ -708,6 +716,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         single_row=single_row,
         apply_padding=apply_padding,
         apply_legend_config=apply_legend_config,
+        subplot_height=subplot_height,
     )
 
 
@@ -836,6 +845,7 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         show_legend=True,
         apply_padding=False,
         apply_legend_config=False,
+        subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
     )
     speedup_chart = create_speedup_chart(
         df_speedup,
@@ -845,6 +855,7 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         show_legend=False,
         apply_padding=False,
         apply_legend_config=False,
+        subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
     )
     accuracy_gain_chart = create_accuracy_gain_chart(
         df_accuracy_gain,
@@ -855,6 +866,7 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         show_legend=False,
         apply_padding=False,
         apply_legend_config=False,
+        subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
     )
 
     return alt.vconcat(
