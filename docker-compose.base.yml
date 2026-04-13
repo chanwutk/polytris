@@ -16,7 +16,7 @@ services:
       - ${DATA}/polyis-cache:/polyis-cache
       # - ${DATA}/otif-dataset:/otif-dataset
       - ${WORK}/../data/otif-dataset:/otif-dataset
-      - ${WORK}/polytris-paper:/polyis/paper
+      - ${WORK}/polytris-paper:/polytris-paper
       # - ${WORK}/../data/polytris-data:/polytris-data
       - ${HOME}/.ssh:/root/.ssh
       - ${HOME}/.config:/root/.config

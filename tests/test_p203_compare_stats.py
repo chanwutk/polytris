@@ -144,12 +144,14 @@ def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
     assert one_pct_detail.loc[0, 'polytris_variant_id'] == 'poly_strict'
     assert one_pct_detail.loc[0, 'prior_system'] == 'LEAP'
     assert one_pct_detail.loc[0, 'speedup_x'] == 120.0 / 70.0
+    assert one_pct_detail.loc[0, 'naive_speedup_x'] == 120.0 / 20.0
 
     # At 5%, Polytris should pick the faster row and OTIF should be the best feasible prior.
     five_pct_detail = detail_tables[0.05]
     assert five_pct_detail.loc[0, 'polytris_variant_id'] == 'poly_fast'
     assert five_pct_detail.loc[0, 'prior_system'] == 'OTIF'
     assert five_pct_detail.loc[0, 'speedup_x'] == 3.0
+    assert five_pct_detail.loc[0, 'naive_speedup_x'] == 15.0
 
     # Keep the threshold-level counts and speedup range consistent with the detail rows.
     five_pct_summary = summary_df.loc[summary_df['threshold'] == 0.05].iloc[0]
@@ -158,6 +160,8 @@ def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
     assert five_pct_summary['prior_fail_count'] == 0
     assert five_pct_summary['speedup_min_x'] == 3.0
     assert five_pct_summary['speedup_max_x'] == 3.0
+    assert five_pct_summary['naive_speedup_min_x'] == 15.0
+    assert five_pct_summary['naive_speedup_max_x'] == 15.0
 
 
 def test_save_tex_macros_writes_abstract_ready_values(tmp_path: Path):
@@ -170,6 +174,8 @@ def test_save_tex_macros_writes_abstract_ready_values(tmp_path: Path):
             'prior_fail_count': 3,
             'speedup_min_x': 1.3,
             'speedup_max_x': 55.8,
+            'naive_speedup_min_x': 4.6,
+            'naive_speedup_max_x': 55.8,
         },
         {
             'threshold': 0.10,
@@ -178,6 +184,8 @@ def test_save_tex_macros_writes_abstract_ready_values(tmp_path: Path):
             'prior_fail_count': 0,
             'speedup_min_x': 1.3248,
             'speedup_max_x': 15.8395,
+            'naive_speedup_min_x': 3.004,
+            'naive_speedup_max_x': 82.7194,
         },
     ])
 
@@ -188,7 +196,11 @@ def test_save_tex_macros_writes_abstract_ready_values(tmp_path: Path):
     # Read the generated macro file back for exact assertions.
     contents = output_path.read_text()
 
-    # Persist the 5% prior-failure count and the rounded 10% speedup bounds.
+    # Persist the 5% prior-failure count plus the rounded 5%/10% throughput ranges.
     assert '\\newcommand{\\comparePriorFailDatasetsFivePct}{\\autogen{3}}' in contents
-    assert '\\newcommand{\\compareSpeedupMinTenPct}{\\autogen{1.3}}' in contents
-    assert '\\newcommand{\\compareSpeedupMaxTenPct}{\\autogen{15.8}}' in contents
+    assert '\\newcommand{\\compareSpeedupMinFivePct}{\\autogen{1.30}}' in contents
+    assert '\\newcommand{\\compareSpeedupMaxFivePct}{\\autogen{55.80}}' in contents
+    assert '\\newcommand{\\compareSpeedupMinTenPct}{\\autogen{1.32}}' in contents
+    assert '\\newcommand{\\compareSpeedupMaxTenPct}{\\autogen{15.84}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMinTenPct}{\\autogen{3.00}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMaxTenPct}{\\autogen{82.72}}' in contents

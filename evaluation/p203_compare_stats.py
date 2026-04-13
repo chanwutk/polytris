@@ -315,11 +315,18 @@ def build_threshold_detail_table(
         else:
             speedup_x = pd.NA
 
+        # Compute the Polytris-over-naive speedup when a feasible Polytris point exists.
+        if polytris_row is not None and float(oracle_row[THROUGHPUT_COL]) > 0:
+            naive_speedup_x = float(polytris_row[THROUGHPUT_COL]) / float(oracle_row[THROUGHPUT_COL])
+        else:
+            naive_speedup_x = pd.NA
+
         # Materialize the dataset-local detail row with explicit missing markers.
         rows.append({
             'threshold': threshold,
             'dataset': dataset,
             'oracle_hota': oracle_hota,
+            'naive_throughput_fps': oracle_row[THROUGHPUT_COL],
             'polytris_variant_id': polytris_row['variant_id'] if polytris_row is not None else pd.NA,
             'polytris_hota': polytris_row[ACCURACY_COL] if polytris_row is not None else pd.NA,
             'polytris_loss_pct': polytris_row['loss_pct'] if polytris_row is not None else pd.NA,
@@ -329,6 +336,7 @@ def build_threshold_detail_table(
             'prior_loss_pct': prior_row['loss_pct'] if prior_row is not None else pd.NA,
             'prior_throughput_fps': prior_row[THROUGHPUT_COL] if prior_row is not None else pd.NA,
             'speedup_x': speedup_x,
+            'naive_speedup_x': naive_speedup_x,
         })
 
     # Return the detail table in one shared DataFrame.
@@ -358,6 +366,8 @@ def build_threshold_summary_table(
 
         # Keep only datasets where both Polytris and a prior system are comparable.
         speedup_values = threshold_df['speedup_x'].dropna()
+        # Keep only datasets where Polytris can be compared to the naive pipeline.
+        naive_speedup_values = threshold_df['naive_speedup_x'].dropna()
 
         # Record the threshold-level summary metrics.
         rows.append({
@@ -367,6 +377,12 @@ def build_threshold_summary_table(
             'prior_fail_count': prior_fail_count,
             'speedup_min_x': speedup_values.min() if not speedup_values.empty else pd.NA,
             'speedup_max_x': speedup_values.max() if not speedup_values.empty else pd.NA,
+            'naive_speedup_min_x': (
+                naive_speedup_values.min() if not naive_speedup_values.empty else pd.NA
+            ),
+            'naive_speedup_max_x': (
+                naive_speedup_values.max() if not naive_speedup_values.empty else pd.NA
+            ),
         })
 
     # Return the threshold summary table in one shared DataFrame.
@@ -417,6 +433,8 @@ def format_summary_for_cli(summary_df: pd.DataFrame) -> pd.DataFrame:
     # Render the speedup columns with a consistent fixed precision.
     formatted_df['speedup_min_x'] = formatted_df['speedup_min_x'].map(_format_optional_float)
     formatted_df['speedup_max_x'] = formatted_df['speedup_max_x'].map(_format_optional_float)
+    formatted_df['naive_speedup_min_x'] = formatted_df['naive_speedup_min_x'].map(_format_optional_float)
+    formatted_df['naive_speedup_max_x'] = formatted_df['naive_speedup_max_x'].map(_format_optional_float)
 
     return formatted_df
 
@@ -436,9 +454,11 @@ def format_detail_for_cli(detail_df: pd.DataFrame) -> pd.DataFrame:
     formatted_df['polytris_loss_pct'] = formatted_df['polytris_loss_pct'].map(_format_optional_percent)
     formatted_df['prior_loss_pct'] = formatted_df['prior_loss_pct'].map(_format_optional_percent)
     # Render throughput and speedup columns with a consistent fixed precision.
+    formatted_df['naive_throughput_fps'] = formatted_df['naive_throughput_fps'].map(_format_optional_float)
     formatted_df['polytris_throughput_fps'] = formatted_df['polytris_throughput_fps'].map(_format_optional_float)
     formatted_df['prior_throughput_fps'] = formatted_df['prior_throughput_fps'].map(_format_optional_float)
     formatted_df['speedup_x'] = formatted_df['speedup_x'].map(_format_optional_float)
+    formatted_df['naive_speedup_x'] = formatted_df['naive_speedup_x'].map(_format_optional_float)
 
     return formatted_df
 
@@ -462,6 +482,16 @@ def save_tex_macros(summary_df: pd.DataFrame, output_path: str) -> None:
             f'\\newcommand{{\\comparePriorFailDatasetsFivePct}}{{'
             f'\\autogen{{{int(five_pct_row["prior_fail_count"])}}}}}\n'
         )
+        # Write the 5% minimum speedup-vs-prior placeholder.
+        f.write(
+            f'\\newcommand{{\\compareSpeedupMinFivePct}}{{'
+            f'\\autogen{{{float(five_pct_row["speedup_min_x"]):.2f}}}}}\n'
+        )
+        # Write the 5% maximum speedup-vs-prior placeholder.
+        f.write(
+            f'\\newcommand{{\\compareSpeedupMaxFivePct}}{{'
+            f'\\autogen{{{float(five_pct_row["speedup_max_x"]):.2f}}}}}\n'
+        )
         # Write the 10% minimum speedup placeholder.
         f.write(
             f'\\newcommand{{\\compareSpeedupMinTenPct}}{{'
@@ -471,6 +501,16 @@ def save_tex_macros(summary_df: pd.DataFrame, output_path: str) -> None:
         f.write(
             f'\\newcommand{{\\compareSpeedupMaxTenPct}}{{'
             f'\\autogen{{{float(ten_pct_row["speedup_max_x"]):.2f}}}}}\n'
+        )
+        # Write the 10% minimum speedup-vs-naive placeholder.
+        f.write(
+            f'\\newcommand{{\\compareNaiveSpeedupMinTenPct}}{{'
+            f'\\autogen{{{float(ten_pct_row["naive_speedup_min_x"]):.2f}}}}}\n'
+        )
+        # Write the 10% maximum speedup-vs-naive placeholder.
+        f.write(
+            f'\\newcommand{{\\compareNaiveSpeedupMaxTenPct}}{{'
+            f'\\autogen{{{float(ten_pct_row["naive_speedup_max_x"]):.2f}}}}}\n'
         )
 
 
