@@ -128,9 +128,12 @@ def save_results(results_df: pd.DataFrame, dataset: str, tracker_name: str) -> P
 def _build_chart_layers(
     base: alt.Chart,
     pair: PairDefinition,
+    include_background: bool = True,
 ) -> list[alt.Chart]:
     """Return ordered Altair layers for one metric pair (back to front):
-      1. Exhaustive background scatter — light gray, semi-transparent.
+      1. Exhaustive background scatter — light gray, semi-transparent. Omitted
+         when include_background=False to produce a "Pareto + ours +
+         whole-frame only" view without the exhaustive cloud.
       2. Pareto frontier connecting line — black; order encoding sorts left-to-right.
       3. Pareto frontier point markers — black.
       4. Heuristic diamond markers — steelblue.
@@ -224,15 +227,31 @@ def _build_chart_layers(
         .encode(x=x_enc, y=y_enc, text='label:N')
     )
 
-    return [bg_layer, frontier_line, frontier_pts, heuristic_layer, whole_frame_layer, whole_frame_text]
+    foreground_layers = [
+        frontier_line,
+        frontier_pts,
+        heuristic_layer,
+        whole_frame_layer,
+        whole_frame_text,
+    ]
+    # Pareto-only variant drops the exhaustive background scatter; the remaining
+    # foreground layers (Pareto line/points, heuristic, whole-frame) are unchanged.
+    if not include_background:
+        return foreground_layers
+    return [bg_layer, *foreground_layers]
 
 
 def _make_single_chart(
     results_df: pd.DataFrame,
     pair: PairDefinition,
     title: str,
+    include_background: bool = True,
 ) -> alt.LayerChart:
-    """Build a single-dataset Altair chart for one metric pair."""
+    """Build a single-dataset Altair chart for one metric pair.
+
+    Passing include_background=False produces the "Pareto + heuristic +
+    whole-frame" variant (no gray exhaustive scatter).
+    """
     pareto_flag_col = f'is_pareto_{pair.slug}'
     plot_df = results_df.dropna(subset=[pair.x_col, pair.y_col]).copy()
     plot_df[pareto_flag_col] = (
@@ -240,7 +259,7 @@ def _make_single_chart(
         if pareto_flag_col in plot_df.columns
         else False
     )
-    layers = _build_chart_layers(alt.Chart(plot_df), pair)
+    layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
     return alt.layer(*layers).properties(title=title, width=100, height=200)
 
 
@@ -253,13 +272,26 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
     output_dir = ensure_dir(plots_dir(dataset, tracker_name))
     written_paths: list[Path] = []
 
+    # Two chart variants per pair: full (with exhaustive background) and
+    # pareto-only (frontier + heuristic + whole-frame markers only).
+    variants = (
+        ('', True),
+        ('_pareto_only', False),
+    )
+
     for pair in PAIR_DEFINITIONS:
         title = f'{dataset} {tracker_name}: {pair.x_label} vs {pair.y_label}'
-        chart = _make_single_chart(results_df, pair, title)
-        for suffix in ('.png', '.html'):
-            out_path = output_dir / f'{pair.slug}{suffix}'
-            chart.save(str(out_path))
-            written_paths.append(out_path)
+        for slug_suffix, include_background in variants:
+            chart = _make_single_chart(
+                results_df,
+                pair,
+                title,
+                include_background=include_background,
+            )
+            for suffix in ('.png', '.html'):
+                out_path = output_dir / f'{pair.slug}{slug_suffix}{suffix}'
+                chart.save(str(out_path))
+                written_paths.append(out_path)
 
     return written_paths
 
@@ -289,12 +321,16 @@ def _make_altair_chart(
     combined_df: pd.DataFrame,
     pair: PairDefinition,
     tracker_name: str,
+    include_background: bool = True,
 ) -> alt.FacetChart:
     """Build a faceted Altair chart for one metric pair; one subplot per dataset.
 
     All layers share a single DataFrame so Altair's facet requirement (uniform
     data source across layers) is satisfied. Row filtering is done via
     Vega-Lite transform_filter expressions inside _build_chart_layers.
+
+    Passing include_background=False omits the gray exhaustive scatter to
+    produce the "Pareto + heuristic + whole-frame" variant.
     """
     pareto_flag_col = f'is_pareto_{pair.slug}'
     # Sort by (dataset, x) so the Pareto frontier line renders left-to-right.
@@ -309,7 +345,7 @@ def _make_altair_chart(
         if pareto_flag_col in plot_df.columns
         else False
     )
-    layers = _build_chart_layers(alt.Chart(plot_df), pair)
+    layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
     return (
         alt.layer(*layers)
         .properties(width=100, height=200)
@@ -351,14 +387,27 @@ def combine_visualize(
 
     written_paths: list[Path] = []
 
-    for pair in PAIR_DEFINITIONS:
-        chart = _make_altair_chart(combined_df, pair, tracker_name)
+    # Two chart variants per pair: full (with exhaustive background) and
+    # pareto-only (frontier + heuristic + whole-frame markers only).
+    variants = (
+        ('', True),
+        ('_pareto_only', False),
+    )
 
-        # Write PNG (requires vl-convert-python) and self-contained HTML.
-        for suffix in ('.png', '.html'):
-            out_path = output_dir / f'{pair.slug}{suffix}'
-            chart.save(str(out_path))
-            written_paths.append(out_path)
+    for pair in PAIR_DEFINITIONS:
+        for slug_suffix, include_background in variants:
+            chart = _make_altair_chart(
+                combined_df,
+                pair,
+                tracker_name,
+                include_background=include_background,
+            )
+
+            # Write PNG (requires vl-convert-python) and self-contained HTML.
+            for suffix in ('.png', '.html'):
+                out_path = output_dir / f'{pair.slug}{slug_suffix}{suffix}'
+                chart.save(str(out_path))
+                written_paths.append(out_path)
 
     return written_paths
 
