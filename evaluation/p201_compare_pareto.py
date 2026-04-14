@@ -387,51 +387,18 @@ def compute_speedup_at_accuracy_levels(df_polytris: pd.DataFrame,
     return pd.concat(results, ignore_index=True)
 
 
-def _build_accuracy_curve_by_naive_speedup(system_df: pd.DataFrame,
-                                           naive_time: float,
-                                           *,
-                                           time_col: str,
-                                           accuracy_col: str) -> pd.DataFrame:
-    """
-    Normalize one system's Pareto front onto a speedup-over-naive axis.
-
-    Args:
-        system_df: Pareto-optimal rows for one system and dataset
-        naive_time: Dedicated naive runtime for the same dataset
-        time_col: Column name for runtime
-        accuracy_col: Column name for accuracy metric
-
-    Returns:
-        DataFrame with strictly positive naive_speedup values and the
-        corresponding accuracy values sorted by naive_speedup
-    """
-    if pd.isna(naive_time) or naive_time <= 0:
-        return pd.DataFrame()
-
-    # Drop unusable rows first so the derived speedup axis stays finite.
-    curve_df = system_df.dropna(subset=[time_col, accuracy_col]).copy()
-    curve_df = curve_df[curve_df[time_col] > 0]
-    if curve_df.empty:
-        return pd.DataFrame()
-
-    # Map each runtime onto the dataset-local "times faster than naive" scale.
-    curve_df['naive_speedup'] = naive_time / curve_df[time_col]
-
-    # Keep the highest accuracy when multiple rows collapse onto one speedup.
-    curve_df = curve_df.sort_values(['naive_speedup', accuracy_col])
-    curve_df = curve_df.drop_duplicates(subset=['naive_speedup'], keep='last')
-
-    return curve_df[['naive_speedup', accuracy_col]].sort_values('naive_speedup')
-
-
 def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
                                                   df_sota_dict: dict[str, pd.DataFrame],
                                                   df_naive: pd.DataFrame,
                                                   accuracy_col: str,
                                                   time_col: str = 'time',
-                                                  increment: float = 0.5) -> pd.DataFrame:
+                                                  increment: float = 5.0) -> pd.DataFrame:
     """
-    Compute accuracy gain (acc_polytris - acc_other) at speedup-over-naive levels.
+    Compute accuracy gain (acc_polytris - acc_other) at runtime increments,
+    then express the x-axis as speedup over naive.
+
+    Interpolation is performed in runtime space to preserve accuracy values;
+    only the x-axis is converted to naive_time / runtime after interpolation.
 
     Args:
         df_polytris: DataFrame with Polytris Pareto front data
@@ -439,101 +406,100 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
         df_naive: DataFrame with one naive baseline row per dataset
         accuracy_col: Column name for accuracy metric (e.g., 'HOTA_HOTA')
         time_col: Column name for runtime
-        increment: Speedup increment step size
+        increment: Runtime increment step size in seconds
 
     Returns:
         DataFrame with columns: dataset, naive_speedup_level, comparison_system, accuracy_gain
     """
     results = []
 
-    # Get all datasets from Polytris data
+    # Get all datasets from Polytris data.
     datasets = df_polytris['dataset'].unique()
 
     for dataset in datasets:
-        # Get Polytris data for this dataset
+        # Get Polytris data for this dataset.
         polytris_data = df_polytris[df_polytris['dataset'] == dataset]
 
         if polytris_data.empty:
             continue
 
-        # Resolve the dataset-local naive runtime used to normalize all systems.
+        # Resolve the dataset-local naive runtime used to normalize the x-axis.
         naive_dataset_df = df_naive[df_naive['dataset'] == dataset].dropna(subset=[time_col])
         if naive_dataset_df.empty:
             continue
 
         naive_time = float(naive_dataset_df[time_col].iloc[0])
-        polytris_curve = _build_accuracy_curve_by_naive_speedup(
-            polytris_data,
-            naive_time,
-            time_col=time_col,
-            accuracy_col=accuracy_col,
-        )
-        if polytris_curve.empty:
+        if naive_time <= 0:
             continue
 
-        # Determine the full dataset-local speedup range covered by all systems.
-        min_speedup = float(polytris_curve['naive_speedup'].min())
-        max_speedup = float(polytris_curve['naive_speedup'].max())
-        sota_curves: dict[str, pd.DataFrame] = {}
+        # Sort Polytris data by time for interpolation in runtime space.
+        polytris_by_time = polytris_data.dropna(subset=[time_col, accuracy_col]).sort_values(time_col)
 
-        for system_name, df_sota in df_sota_dict.items():
+        if polytris_by_time.empty:
+            continue
+
+        # Determine runtime range based on all systems.
+        max_time = polytris_by_time[time_col].max()
+
+        # Check SOTA systems for max time.
+        for df_sota in df_sota_dict.values():
             sota_data = df_sota[df_sota['dataset'] == dataset]
+            if not sota_data.empty:
+                max_time = max(max_time, sota_data[time_col].max())
+
+        # Define runtime query points (start from increment to avoid division by zero).
+        runtime_levels = np.arange(increment, max_time + increment, increment)
+
+        # Interpolate Polytris accuracy at each runtime level.
+        polytris_accuracies = np.interp(
+            runtime_levels,
+            polytris_by_time[time_col].values,
+            polytris_by_time[accuracy_col].values
+        )
+
+        # Mask values outside Polytris range.
+        valid_polytris = (
+            (runtime_levels >= polytris_by_time[time_col].min()) &
+            (runtime_levels <= polytris_by_time[time_col].max())
+        )
+
+        # Convert runtime levels to speedup-over-naive for the x-axis.
+        naive_speedup_levels = naive_time / runtime_levels
+
+        # Compare with each SOTA system.
+        for system_name, df_sota in df_sota_dict.items():
+            # Get SOTA data for this dataset.
+            sota_data = df_sota[df_sota['dataset'] == dataset]
+
             if sota_data.empty:
                 continue
 
-            sota_curve = _build_accuracy_curve_by_naive_speedup(
-                sota_data,
-                naive_time,
-                time_col=time_col,
-                accuracy_col=accuracy_col,
-            )
-            if sota_curve.empty:
+            # Sort SOTA data by time for interpolation in runtime space.
+            sota_by_time = sota_data.dropna(subset=[time_col, accuracy_col]).sort_values(time_col)
+
+            if sota_by_time.empty:
                 continue
 
-            sota_curves[system_name] = sota_curve
-            min_speedup = min(min_speedup, float(sota_curve['naive_speedup'].min()))
-            max_speedup = max(max_speedup, float(sota_curve['naive_speedup'].max()))
-
-        if not sota_curves:
-            continue
-
-        # Query the shared speedup axis so each comparison uses the same normalization.
-        naive_speedup_levels = np.arange(min_speedup, max_speedup + increment, increment)
-
-        # Interpolate Polytris accuracy at each speedup level.
-        polytris_accuracies = np.interp(
-            naive_speedup_levels,
-            polytris_curve['naive_speedup'].values,
-            polytris_curve[accuracy_col].values
-        )
-
-        # Mask values outside the Polytris support region.
-        valid_polytris = (
-            (naive_speedup_levels >= polytris_curve['naive_speedup'].min()) &
-            (naive_speedup_levels <= polytris_curve['naive_speedup'].max())
-        )
-
-        # Compare Polytris against each prior system on the shared speedup axis.
-        for system_name, sota_curve in sota_curves.items():
+            # Interpolate SOTA accuracy at each runtime level.
             sota_accuracies = np.interp(
-                naive_speedup_levels,
-                sota_curve['naive_speedup'].values,
-                sota_curve[accuracy_col].values
+                runtime_levels,
+                sota_by_time[time_col].values,
+                sota_by_time[accuracy_col].values
             )
 
-            # Compute accuracy gain (Polytris - SOTA)
-            # > 0 means Polytris is more accurate
+            # Compute accuracy gain (Polytris - SOTA).
+            # > 0 means Polytris is more accurate.
             accuracy_gains = polytris_accuracies - sota_accuracies
 
-            # Only keep overlap where both systems have real support.
+            # Mask values where interpolation is outside valid range.
             valid_sota = (
-                (naive_speedup_levels >= sota_curve['naive_speedup'].min()) &
-                (naive_speedup_levels <= sota_curve['naive_speedup'].max())
+                (runtime_levels >= sota_by_time[time_col].min()) &
+                (runtime_levels <= sota_by_time[time_col].max())
             )
             valid_mask = valid_polytris & valid_sota
             accuracy_gains[~valid_mask] = np.nan
 
-            # Create result DataFrame for this comparison
+            # Create result DataFrame for this comparison.
             comparison_df = pd.DataFrame({
                 'dataset': dataset,
                 'naive_speedup_level': naive_speedup_levels,
@@ -664,7 +630,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
                                title_dx: float | None = None,
                                title_offset: float | None = None) -> alt.Chart:
     """
-    Create faceted line chart showing accuracy gain vs runtime level.
+    Create faceted line chart showing accuracy gain vs naive speedup level.
 
     Args:
         df_accuracy_gain: DataFrame with accuracy gain data
@@ -983,7 +949,7 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
     Args:
         df_throughput: Throughput Pareto data
         df_speedup: Speedup-at-accuracy data
-        df_accuracy_gain: Accuracy-gain-at-runtime data
+        df_accuracy_gain: Accuracy-gain-at-naive-speedup data
         log_scale: Whether runtime-based charts should use a log x-axis
 
     Returns:
@@ -1395,7 +1361,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         # 5. Compute and visualize accuracy gain at speedup-over-naive levels
         print(f"\n5. Computing accuracy gain at naive speedup levels for {accuracy_name}...")
         df_accuracy_gain = compute_accuracy_gain_at_naive_speedup_levels(
-            polytris_df, pareto_sota_dict, pareto_naive_df, accuracy_col, 'time', increment=0.5
+            polytris_df, pareto_sota_dict, pareto_naive_df, accuracy_col, 'time', increment=5.0
         )
 
         if not df_accuracy_gain.empty:

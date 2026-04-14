@@ -3,7 +3,48 @@
     "allow": [
       "Bash(python -m py_compile:*)",
       "Bash(python setup.py:*)",
-      "Bash(python -m pytest:*)"
+      "Bash(python -m pytest:*)",
+      "Bash(xargs:*)",
+      "Bash(docker exec:*)",
+      "Bash(ls:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(grep:*)",
+      "Bash(git -C /work/cwkt/projects/polyis log --oneline --all -30)",
+      "Bash(git -C /work/cwkt/projects/polyis show d9f2f0e --stat)",
+      "WebFetch(domain:pypi.org)",
+      "Bash(python:*)",
+      "Bash(git -C /work/cwkt/projects/polyis log --all --oneline --grep=\"sam\\\\|segment\")",
+      "Bash(git -C /work/cwkt/projects/polyis branch:*)",
+      "WebFetch(domain:ayosec.github.io)",
+      "Bash(find /work/cwkt/projects/polyis -type f -name *.jsonl)",
+      "Bash(python3 -c \"import sys; sys.path.insert\\(0, ''/work/cwkt/projects/polyis''\\); from polyis import io; print\\(io.__file__\\)\")",
+      "Bash(find /work/cwkt/projects/polyis -name *.yml -o -name *.yaml -o -name .gurobi*)",
+      "Bash(find /work/cwkt/projects/polyis -type f -name \"*.py\" -exec grep -l \"\\\\.time\\\\|\\\\.HOTA_HOTA\\\\|''''time''''\\\\|''''HOTA_HOTA''''\" {})",
+      "Bash(find /work/cwkt/projects/polyis -name config* -type f)",
+      "Bash(find . -name \"*.py\" -type f -exec grep -l \"throughput\\\\|fps\\\\|frames\" {})",
+      "Bash(python3 -m pytest tests/test_p201_compare_pareto.py -v)",
+      "Bash(python3 -c \"from polyis.utilities import load_classification_results; import inspect; print\\(inspect.signature\\(load_classification_results\\)\\)\")",
+      "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(list\\(d.keys\\(\\)\\)\\); print\\('tracks sample:', d['tracks'][:2] if d['tracks'] else 'empty'\\)\")",
+      "Read(//work/cwkt/projects/polytris-paper/figures/**)",
+      "Read(//work/cwkt/projects/polytris-paper/figures/generated/**)"
     ]
-  }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "(Edit|Write)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import sys, json; data=json.load(sys.stdin); fp=data['tool_input']['file_path']; print(fp)\" | xargs -I {} bash -c 'case \"{}\" in *.py|*.pyi) REL=$(realpath --relative-to=. \"{}\"); docker exec polyis bash -c \"isort \\\"$REL\\\" && yapf -i \\\"$REL\\\"\" >/dev/null 2>&1 || true ;; esac'",
+            "timeout": 10000,
+            "statusMessage": "Formatting with isort & yapf..."
+          }
+        ]
+      }
+    ]
+  },
+  "disableAllHooks": true,
+  "outputStyle": "default"
 }
