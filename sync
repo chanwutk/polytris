@@ -17,7 +17,7 @@ import argparse
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import yaml
 
@@ -55,64 +55,93 @@ def load_config(config_path: Path) -> dict:
     return config
 
 
+def _resolve_include_patterns(includes: dict | list) -> list[str]:
+    """
+    Resolve include patterns from config into a flat list of rsync patterns.
+
+    Supports two formats:
+    - Structured (dict): cross-product of directories × extensions, plus root_files
+    - Flat (list): legacy format, list of rsync glob patterns
+    """
+    # Legacy flat list format
+    if isinstance(includes, list):
+        return includes
+
+    # Structured format: generate cross-product of directories × extensions
+    patterns: list[str] = []
+
+    # Add root-level files directly
+    for root_file in includes.get('root_files', []):
+        patterns.append(root_file)
+
+    # Generate directory × extension cross-product patterns
+    directories = includes.get('directories', [])
+    extensions = includes.get('extensions', [])
+    for directory in directories:
+        for ext in extensions:
+            patterns.append(f"{directory}/**/{ext}")
+
+    return patterns
+
+
 def build_rsync_command(
     config: dict,
     dry_run: bool = False
 ) -> list[str]:
     """
     Build rsync command from configuration.
-    
+
     Args:
         config: Configuration dictionary
         dry_run: If True, add --dry-run flag
-    
+
     Returns:
         List of command arguments for subprocess
     """
     # Base rsync command
     cmd = ['rsync']
-    
+
     # Add rsync options from config
     rsync_opts = config.get('rsync_options', [])
     cmd.extend(rsync_opts)
-    
+
     # Add itemize-changes to show detailed file transfer information
     # This shows which files are being sent with change indicators
     if '--itemize-changes' not in cmd and '-i' not in cmd:
         cmd.append('--itemize-changes')
-    
+
     # Add dry-run if requested (override config)
     if dry_run and '--dry-run' not in cmd:
         cmd.append('--dry-run')
     elif not dry_run and '--dry-run' in cmd:
         # Remove dry-run from config if not requested
         cmd = [arg for arg in cmd if arg != '--dry-run']
-    
-    # Get include and exclude patterns
-    includes = config.get('includes', [])
+
+    # Resolve include patterns (handles both structured and flat formats)
+    include_patterns = _resolve_include_patterns(config.get('includes', []))
     excludes = config.get('excludes', [])
-    
+
     # If includes are specified, we need to handle directory traversal
     # Rsync requires directories to be included for traversal
-    if includes:
+    if include_patterns:
         # CRITICAL: Add exclude patterns FIRST so they take precedence
         # Excludes must come before includes to prevent excluded directories
         # from being matched by the '*/' pattern below
         for pattern in excludes:
             cmd.extend(['--exclude', pattern])
-        
+
         # Then include all directories (needed for traversal)
         # This allows rsync to descend into directories
         # Note: Excludes above will prevent excluded dirs from being matched here
         cmd.extend(['--include', '*/'])
-        
+
         # Then add all include patterns
-        for pattern in includes:
+        for pattern in include_patterns:
             cmd.extend(['--include', pattern])
-        
-        # # Finally, exclude everything else
-        # # This must come last to ensure only explicitly included files are synced
-        # cmd.extend(['--exclude', '*'])
+
+        # Finally, exclude everything else
+        # This must come last to ensure only explicitly included files are synced
+        cmd.extend(['--exclude', '*'])
     else:
         # No includes specified, just use excludes
         # This means sync everything except what's excluded

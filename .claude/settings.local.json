@@ -27,7 +27,18 @@
       "Bash(python3 -c \"from polyis.utilities import load_classification_results; import inspect; print\\(inspect.signature\\(load_classification_results\\)\\)\")",
       "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(list\\(d.keys\\(\\)\\)\\); print\\('tracks sample:', d['tracks'][:2] if d['tracks'] else 'empty'\\)\")",
       "Read(//work/cwkt/projects/polytris-paper/figures/**)",
-      "Read(//work/cwkt/projects/polytris-paper/figures/generated/**)"
+      "Read(//work/cwkt/projects/polytris-paper/figures/generated/**)",
+      "Bash(git -C /Users/chanwutk/Documents/polyis/paper remote -v)",
+      "Bash(git -C /Users/chanwutk/Documents/polyis show HEAD:paper)",
+      "Bash(git:*)",
+      "Bash(pip3 list:*)",
+      "Bash(./venv/bin/python -c \"import yaml; print\\('yaml ok'\\)\")",
+      "Bash(brew list:*)",
+      "Bash(conda info:*)",
+      "Bash(/usr/local/bin/python3.13 -c \"import yaml; print\\('yaml ok'\\)\")",
+      "Bash(/usr/local/bin/python3.13 -m venv /Users/chanwutk/Documents/polyis/venv)",
+      "Bash(/Users/chanwutk/Documents/polyis/venv/bin/pip install:*)",
+      "Bash(./sync --dry-run)"
     ]
   },
   "hooks": {
