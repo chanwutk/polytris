@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import os
 import shlex
+import shutil
 import sys
 from pathlib import Path
 
@@ -34,6 +35,32 @@ DEFAULT_TRACKER: str = CONFIGURED_TRACKERS[0]
 
 # Default video-fraction-divisor applied to non-jnc datasets.
 _NON_JNC_VIDEO_FRACTION_DIVISOR = 3
+
+# Target directory for paper-facing figures. Resolved relative to the project
+# root (container path /polyis); see CLAUDE.md for the in-container layout.
+_PAPER_FIGURES_DIR = Path('/polyis/paper/figures/generated')
+
+
+def _copy_to_paper_figures(written: list[Path], tracker: str) -> list[Path]:
+    """Copy the .png combined-visualization files into paper/figures/generated.
+
+    Files are renamed to 'mistrack_rate_{tracker}_{original_stem}.png' so they
+    (1) are namespaced against other figures in that directory and (2) do not
+    collide when combine_visualize is invoked for multiple trackers.
+
+    HTML outputs are skipped — only PNGs are copied since the paper consumes
+    PNG/PDF; the HTMLs remain in the cache dir for interactive inspection.
+    """
+    _PAPER_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    copied: list[Path] = []
+    for src in written:
+        # Only copy PNGs; HTML files are interactive debugging artifacts.
+        if src.suffix.lower() != '.png':
+            continue
+        dst = _PAPER_FIGURES_DIR / f'mistrack_rate_{tracker}_{src.name}'
+        shutil.copy2(src, dst)
+        copied.append(dst)
+    return copied
 
 
 def parse_args():
@@ -101,6 +128,11 @@ def main() -> None:
             else:
                 for p in written:
                     print(f'  wrote: {p}')
+                # Mirror the generated PNGs into paper/figures/generated so the
+                # paper build picks up fresh charts without a manual copy step.
+                copied = _copy_to_paper_figures(written, tracker)
+                for p in copied:
+                    print(f'  copied to paper: {p}')
         return
 
     # Resolve the dataset list for this invocation.

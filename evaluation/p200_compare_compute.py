@@ -84,6 +84,7 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
         # Create base DataFrame with required columns
         clean_df = pd.DataFrame({
             'system': system.upper(),  # Display name for SOTA system
+            'param_id': df['param_id'],  # Preserve per-row config id for downstream labeling
             'dataset': dataset_name,
             'videoset': df['videoset'] if 'videoset' in df.columns else 'test',
             'video': 'test',  # Keep the tooltip schema aligned with the legacy plotting helpers.

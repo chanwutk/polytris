@@ -423,6 +423,188 @@ def build_threshold_reports(
     return summary_df, detail_tables
 
 
+def _format_prior_label(row: pd.Series) -> str:
+    """Format a prior-system row as a short human-readable label."""
+    # Resolve each component defensively so missing fields do not crash the renderer.
+    system = str(row.get('system', 'PRIOR'))
+    param_id = row.get('param_id', pd.NA)
+    sample_rate = row.get('sample_rate', pd.NA)
+
+    # Render param_id with a '?' fallback when absent (older caches).
+    if pd.isna(param_id):
+        param_segment = '#?'
+    else:
+        param_segment = f'#{int(param_id)}'
+
+    # Render sample_rate with an empty suffix when absent.
+    if pd.isna(sample_rate):
+        sr_segment = ''
+    else:
+        sr_segment = f' (sr={int(sample_rate)})'
+
+    return f'{system}{param_segment}{sr_segment}'
+
+
+def build_combined_prior_pareto(
+    prior_dfs_by_system: Mapping[str, pd.DataFrame],
+) -> pd.DataFrame:
+    """Combine all prior-system rows into one per-dataset Pareto front with labels."""
+    # Skip the combine step when no prior systems are available.
+    if not prior_dfs_by_system:
+        return pd.DataFrame()
+
+    # Concatenate all prior rows; each row already carries its 'system' name.
+    combined_df = pd.concat(list(prior_dfs_by_system.values()), ignore_index=True)
+
+    # Pareto-filter the combined frame per dataset on throughput vs HOTA.
+    pareto_df = filter_pareto_by_dataset(combined_df)
+
+    # Short-circuit when the combined front has no rows so downstream code gets a stable schema.
+    if pareto_df.empty:
+        return pareto_df
+
+    # Build a readable per-row label combining system, param_id, and sample rate.
+    pareto_df = pareto_df.copy()
+    pareto_df['prior_label'] = pareto_df.apply(_format_prior_label, axis=1)
+
+    return pareto_df
+
+
+def select_best_polytris_for_prior_point(
+    polytris_pareto_df: pd.DataFrame,
+    prior_row: pd.Series,
+    throughput_col: str = THROUGHPUT_COL,
+    accuracy_col: str = ACCURACY_COL,
+) -> pd.Series | None:
+    """Return the highest-HOTA Polytris Pareto point that is at least as fast as a prior row."""
+    # Restrict the candidate pool to the prior row's dataset.
+    dataset = prior_row['dataset']
+    dataset_df = polytris_pareto_df[polytris_pareto_df['dataset'] == dataset]
+
+    # Keep only Polytris points that match or beat the prior row's throughput.
+    feasible_df = dataset_df[dataset_df[throughput_col] >= float(prior_row[throughput_col])]
+
+    # Return no selection when no Polytris point is at least as fast.
+    if feasible_df.empty:
+        return None
+
+    # Resolve the row with the highest HOTA among the at-least-as-fast points.
+    best_idx = feasible_df[accuracy_col].idxmax()
+
+    # Return a detached copy so later edits do not alias the shared frame.
+    return feasible_df.loc[best_idx].copy()
+
+
+def build_dominance_detail_table(
+    datasets: list[str],
+    polytris_pareto_df: pd.DataFrame,
+    combined_prior_pareto_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Build one per-(dataset, prior Pareto point) dominance table against Polytris."""
+    # Collect one row per (dataset, prior point).
+    rows: list[dict[str, object]] = []
+
+    # Process datasets in the configured order so CLI tables stay stable.
+    for dataset in datasets:
+        # Keep only the combined-front rows for the current dataset.
+        dataset_prior_df = combined_prior_pareto_df[
+            combined_prior_pareto_df['dataset'] == dataset
+        ].copy()
+
+        # Skip datasets that have no prior-system Pareto points.
+        if dataset_prior_df.empty:
+            continue
+
+        # Sort by prior throughput to traverse the combined front slowest → fastest.
+        dataset_prior_df = dataset_prior_df.sort_values(THROUGHPUT_COL).reset_index(drop=True)
+
+        # Emit one detail row per prior Pareto point.
+        for _, prior_row in dataset_prior_df.iterrows():
+            # Pick the fastest-feasible-and-most-accurate Polytris point for this prior row.
+            polytris_row = select_best_polytris_for_prior_point(polytris_pareto_df, prior_row)
+
+            # Extract the Polytris-side fields, using NA when no point is at least as fast.
+            if polytris_row is not None:
+                polytris_variant_id = polytris_row['variant_id']
+                polytris_hota: object = float(polytris_row[ACCURACY_COL])
+                polytris_throughput: object = float(polytris_row[THROUGHPUT_COL])
+                hota_delta: object = float(polytris_row[ACCURACY_COL]) - float(prior_row[ACCURACY_COL])
+            else:
+                polytris_variant_id = pd.NA
+                polytris_hota = pd.NA
+                polytris_throughput = pd.NA
+                hota_delta = pd.NA
+
+            # Materialize the per-prior-point detail row.
+            rows.append({
+                'dataset': dataset,
+                'prior_label': prior_row['prior_label'],
+                'prior_system': prior_row['system'],
+                'prior_hota': float(prior_row[ACCURACY_COL]),
+                'prior_throughput_fps': float(prior_row[THROUGHPUT_COL]),
+                'polytris_variant_id': polytris_variant_id,
+                'polytris_hota': polytris_hota,
+                'polytris_throughput_fps': polytris_throughput,
+                'hota_delta': hota_delta,
+            })
+
+    return pd.DataFrame.from_records(rows)
+
+
+def _compute_dominance_summary_row(
+    detail_df: pd.DataFrame,
+    dataset: str | None = None,
+) -> dict[str, object]:
+    """Compute a dominance summary row over a slice of the detail table."""
+    # Count all prior Pareto points in the slice (reachable or not).
+    num_prior_points = int(len(detail_df))
+
+    # Drop NA deltas so the summary stats reflect only reachable prior points.
+    deltas = detail_df['hota_delta'].dropna() if 'hota_delta' in detail_df.columns else pd.Series(dtype=float)
+    num_reachable = int(len(deltas))
+
+    # Assemble the output dict, tagging with the dataset key when present.
+    row: dict[str, object] = {}
+    if dataset is not None:
+        row['dataset'] = dataset
+    row['num_prior_points'] = num_prior_points
+    row['num_reachable'] = num_reachable
+    row['hota_delta_min'] = float(deltas.min()) if not deltas.empty else pd.NA
+    row['hota_delta_median'] = float(deltas.median()) if not deltas.empty else pd.NA
+    row['hota_delta_max'] = float(deltas.max()) if not deltas.empty else pd.NA
+    return row
+
+
+def build_dominance_dataset_summary(detail_df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate the dominance detail table into one summary row per dataset."""
+    # Return an empty frame with the expected columns when there is nothing to aggregate.
+    if detail_df.empty:
+        return pd.DataFrame(columns=[
+            'dataset', 'num_prior_points', 'num_reachable',
+            'hota_delta_min', 'hota_delta_median', 'hota_delta_max',
+        ])
+
+    # Preserve the dataset order already present in the detail table.
+    rows = [
+        _compute_dominance_summary_row(detail_df[detail_df['dataset'] == dataset], dataset=dataset)
+        for dataset in detail_df['dataset'].drop_duplicates().tolist()
+    ]
+
+    return pd.DataFrame.from_records(rows)
+
+
+def build_dominance_global_summary(detail_df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate the dominance detail table into one global summary row."""
+    # Return an empty frame with the expected columns when there is nothing to aggregate.
+    if detail_df.empty:
+        return pd.DataFrame(columns=[
+            'num_prior_points', 'num_reachable',
+            'hota_delta_min', 'hota_delta_median', 'hota_delta_max',
+        ])
+
+    return pd.DataFrame.from_records([_compute_dominance_summary_row(detail_df)])
+
+
 def format_summary_for_cli(summary_df: pd.DataFrame) -> pd.DataFrame:
     """Format the threshold summary table for human-readable CLI output."""
     # Work on a copy so callers can still access the numeric summary frame.
@@ -463,8 +645,40 @@ def format_detail_for_cli(detail_df: pd.DataFrame) -> pd.DataFrame:
     return formatted_df
 
 
-def save_tex_macros(summary_df: pd.DataFrame, output_path: str) -> None:
-    """Save the abstract-ready 5% and 10% summary values as TeX macros."""
+def format_dominance_detail_for_cli(detail_df: pd.DataFrame) -> pd.DataFrame:
+    """Format the dominance detail table for human-readable CLI output."""
+    # Work on a copy so callers can still access the numeric detail frame.
+    formatted_df = detail_df.copy()
+
+    # Render HOTA, throughput, and delta columns with a consistent fixed precision.
+    formatted_df['prior_hota'] = formatted_df['prior_hota'].map(_format_optional_float)
+    formatted_df['prior_throughput_fps'] = formatted_df['prior_throughput_fps'].map(_format_optional_float)
+    formatted_df['polytris_hota'] = formatted_df['polytris_hota'].map(_format_optional_float)
+    formatted_df['polytris_throughput_fps'] = formatted_df['polytris_throughput_fps'].map(_format_optional_float)
+    formatted_df['hota_delta'] = formatted_df['hota_delta'].map(_format_optional_float)
+
+    return formatted_df
+
+
+def format_dominance_summary_for_cli(summary_df: pd.DataFrame) -> pd.DataFrame:
+    """Format a dominance summary table for human-readable CLI output."""
+    # Work on a copy so callers can still access the numeric summary frame.
+    formatted_df = summary_df.copy()
+
+    # Render the aggregate delta columns with a consistent fixed precision.
+    for column in ('hota_delta_min', 'hota_delta_median', 'hota_delta_max'):
+        if column in formatted_df.columns:
+            formatted_df[column] = formatted_df[column].map(_format_optional_float)
+
+    return formatted_df
+
+
+def save_tex_macros(
+    summary_df: pd.DataFrame,
+    dominance_detail_df: pd.DataFrame,
+    output_path: str,
+) -> None:
+    """Save the abstract-ready 5% and 10% summary values plus the max-HOTA-delta dominance macros as TeX macros."""
     # Map each abstract-ready threshold to the suffix used in macro names.
     threshold_suffixes = [(0.05, 'FivePct'), (0.10, 'TenPct')]
 
@@ -510,9 +724,35 @@ def save_tex_macros(summary_df: pd.DataFrame, output_path: str) -> None:
                     f'\\autogen{{{float(row[column]):.1f}}}}}\n'
                 )
 
+        # Resolve the row with the highest HOTA delta in the dominance detail table.
+        reachable_df = dominance_detail_df.dropna(subset=['hota_delta'])
+        assert not reachable_df.empty, (
+            'Dominance detail has no reachable rows; cannot emit max-HOTA-delta macros.'
+        )
+        best_row = reachable_df.loc[reachable_df['hota_delta'].idxmax()]
 
-def print_reports(summary_df: pd.DataFrame, detail_tables: Mapping[float, pd.DataFrame]) -> None:
-    """Print the threshold summary and the selected detail tables to the CLI."""
+        # Emit the max-HOTA-delta macro rounded to 2 decimal digits for paper prose.
+        f.write(
+            f'\\newcommand{{\\compareMaxHotaImprovement}}{{'
+            f'\\autogen{{{float(best_row["hota_delta"]):.2f}}}}}\n'
+        )
+
+        # Floor the matched prior-system throughput to the nearest 100 fps for the paper prose.
+        prior_fps_floor = int(float(best_row['prior_throughput_fps']) // 100) * 100
+        f.write(
+            f'\\newcommand{{\\compareMaxHotaImprovementFps}}{{'
+            f'\\autogen{{{prior_fps_floor}}}}}\n'
+        )
+
+
+def print_reports(
+    summary_df: pd.DataFrame,
+    detail_tables: Mapping[float, pd.DataFrame],
+    dominance_global_summary_df: pd.DataFrame,
+    dominance_dataset_summary_df: pd.DataFrame,
+    dominance_detail_df: pd.DataFrame,
+) -> None:
+    """Print the threshold summary, the selected detail tables, and the dominance tables."""
     # Print the threshold-level summary first so the headline numbers are easy to scan.
     print('\n=== Threshold Summary ===')
     print(format_summary_for_cli(summary_df).to_string(index=False))
@@ -521,6 +761,18 @@ def print_reports(summary_df: pd.DataFrame, detail_tables: Mapping[float, pd.Dat
     for threshold in DETAIL_THRESHOLDS:
         print(f'\n=== {_threshold_label(threshold)} Detail ===')
         print(format_detail_for_cli(detail_tables[threshold]).to_string(index=False))
+
+    # Print the dominance global summary so the headline dominance numbers come first.
+    print('\n=== Dominance Global Summary ===')
+    print(format_dominance_summary_for_cli(dominance_global_summary_df).to_string(index=False))
+
+    # Print the dominance per-dataset summary for asymmetry across datasets.
+    print('\n=== Dominance Per-Dataset Summary ===')
+    print(format_dominance_summary_for_cli(dominance_dataset_summary_df).to_string(index=False))
+
+    # Print the full per-point dominance table last for detailed inspection.
+    print('\n=== Dominance Detail (per prior Pareto point) ===')
+    print(format_dominance_detail_for_cli(dominance_detail_df).to_string(index=False))
 
 
 def main() -> None:
@@ -566,11 +818,31 @@ def main() -> None:
         DEFAULT_THRESHOLDS,
     )
 
+    # Build the combined OTIF ∪ LEAP Pareto front per dataset for the dominance analysis.
+    combined_prior_pareto_df = build_combined_prior_pareto(prior_raw_dfs)
+
+    # Build the per-(dataset, prior Pareto point) dominance detail table against Polytris.
+    dominance_detail_df = build_dominance_detail_table(
+        DATASETS,
+        polytris_pareto_df,
+        combined_prior_pareto_df,
+    )
+
+    # Aggregate the dominance detail into per-dataset and global summaries.
+    dominance_dataset_summary_df = build_dominance_dataset_summary(dominance_detail_df)
+    dominance_global_summary_df = build_dominance_global_summary(dominance_detail_df)
+
     # Print the computed tables so the results are visible directly in the CLI.
-    print_reports(summary_df, detail_tables)
+    print_reports(
+        summary_df,
+        detail_tables,
+        dominance_global_summary_df,
+        dominance_dataset_summary_df,
+        dominance_detail_df,
+    )
 
     # Save the abstract-ready macros for the paper draft.
-    save_tex_macros(summary_df, OUTPUT_TEX_PATH)
+    save_tex_macros(summary_df, dominance_detail_df, OUTPUT_TEX_PATH)
     print(f'\nSaved {OUTPUT_TEX_PATH}')
 
 

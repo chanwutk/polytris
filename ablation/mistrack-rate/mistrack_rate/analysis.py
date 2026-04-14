@@ -38,7 +38,9 @@ PAIR_DEFINITIONS = (
         x_minimize=True,
         y_maximize=True,
         zero_y_axis=False,
-        resolve_y_independent=True,
+        # HOTA y-axis is synced (shared) across facets so datasets are directly
+        # comparable on the same HOTA scale.
+        resolve_y_independent=False,
     ),
     PairDefinition(
         slug='mistrack_vs_pruning',
@@ -62,7 +64,9 @@ PAIR_DEFINITIONS = (
         x_minimize=False,
         y_maximize=True,
         zero_y_axis=False,
-        resolve_y_independent=True,
+        # HOTA y-axis is synced (shared) across facets so datasets are directly
+        # comparable on the same HOTA scale.
+        resolve_y_independent=False,
     ),
 )
 
@@ -172,7 +176,7 @@ def _build_chart_layers(
     bg_layer = (
         base
         .transform_filter("datum.method === 'exhaustive'")
-        .mark_point(size=14, opacity=0.35, filled=True, color='lightgray')
+        .mark_point(size=14, opacity=0.6, filled=True, color='gray')
         .encode(x=x_enc, y=y_enc, tooltip=exhaustive_tooltip)
     )
 
@@ -182,7 +186,7 @@ def _build_chart_layers(
     frontier_line = (
         base
         .transform_filter(pareto_filter)
-        .mark_line(strokeWidth=2.0, color='black')
+        .mark_line(strokeWidth=1.0, color='black')
         .encode(
             x=x_enc,
             y=y_enc,
@@ -221,7 +225,7 @@ def _build_chart_layers(
         base
         .transform_filter("datum.method === 'whole_frame'")
         .transform_calculate(
-            label="datum.grid_key === 'whole_frame_1' ? 'no skip' : '1/' + split(datum.grid_key, '_')[2] + ' frames'",
+            label="datum.grid_key === 'whole_frame_1' ? 'no skip' : '1/' + split(datum.grid_key, '_')[2]",
         )
         .mark_text(dx=6, dy=-8, fontSize=9, color='firebrick')
         .encode(x=x_enc, y=y_enc, text='label:N')
@@ -278,7 +282,7 @@ def _make_single_chart(
         plot_df = _prune_for_pareto_only(plot_df, pareto_flag_col)
     layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
     # Pareto-only variant gets 3× width and 2× height for readability.
-    width, height = (300, 400) if not include_background else (100, 200)
+    width, height = (300, 220) if not include_background else (100, 110)
     return alt.layer(*layers).properties(title=title, width=width, height=height)
 
 
@@ -313,7 +317,10 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
             )
             for suffix in ('.png', '.html'):
                 out_path = output_dir / f'{pair.slug}{slug_suffix}{suffix}'
-                chart.save(str(out_path))
+                # Render PNGs at 4× resolution for print-quality output; HTML
+                # is vector-based and does not need a scale factor.
+                save_kwargs = {'scale_factor': 4.0} if suffix == '.png' else {}
+                chart.save(str(out_path), **save_kwargs)
                 written_paths.append(out_path)
 
     return written_paths
@@ -377,12 +384,23 @@ def _make_altair_chart(
         plot_df = _prune_for_pareto_only(plot_df, pareto_flag_col)
     layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
     # Pareto-only variant gets 3× width and 2× height for readability.
-    width, height = (300, 400) if not include_background else (100, 200)
+    width, height = (300, 220) if not include_background else (100, 110)
     return (
         alt.layer(*layers)
         .properties(width=width, height=height)
         .facet(
-            facet=alt.Facet('dataset:N', title='Dataset'),
+            # Drop the shared 'Dataset' facet title and instead prefix each
+            # per-facet header label with 'Dataset: ' via a Vega labelExpr.
+            # labelPadding is negative so the 'Dataset: ...' label sits closer
+            # to (just above) the subplot rather than floating well above it.
+            facet=alt.Facet(
+                'dataset:N',
+                title=None,
+                header=alt.Header(
+                    labelExpr="'Dataset: ' + datum.value",
+                    labelPadding=2,
+                ),
+            ),
             # columns=3,
         )
         .resolve_scale(
@@ -390,6 +408,9 @@ def _make_altair_chart(
             y='independent' if pair.resolve_y_independent else 'shared',
         )
         .properties(title=f'{tracker_name}: {pair.x_label} vs {pair.y_label}')
+        # Collapse inter-facet spacing so subplots sit flush against each
+        # other rather than being separated by Altair's default gap.
+        .configure_facet(spacing=0)
     )
 
 
@@ -438,7 +459,10 @@ def combine_visualize(
             # Write PNG (requires vl-convert-python) and self-contained HTML.
             for suffix in ('.png', '.html'):
                 out_path = output_dir / f'{pair.slug}{slug_suffix}{suffix}'
-                chart.save(str(out_path))
+                # Render PNGs at 4× resolution for print-quality output; HTML
+                # is vector-based and does not need a scale factor.
+                save_kwargs = {'scale_factor': 4.0} if suffix == '.png' else {}
+                chart.save(str(out_path), **save_kwargs)
                 written_paths.append(out_path)
 
     return written_paths
