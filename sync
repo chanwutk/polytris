@@ -74,11 +74,14 @@ def _resolve_include_patterns(includes: dict | list) -> list[str]:
     for root_file in includes.get('root_files', []):
         patterns.append(root_file)
 
-    # Generate directory × extension cross-product patterns
+    # Generate directory × extension cross-product patterns.
+    # Both direct-child and recursive patterns are needed because rsync's
+    # **/ requires at least one path component (so dir/**/*.py misses dir/*.py).
     directories = includes.get('directories', [])
     extensions = includes.get('extensions', [])
     for directory in directories:
         for ext in extensions:
+            patterns.append(f"{directory}/{ext}")
             patterns.append(f"{directory}/**/{ext}")
 
     return patterns
@@ -98,8 +101,8 @@ def build_rsync_command(
     Returns:
         List of command arguments for subprocess
     """
-    # Base rsync command
-    cmd = ['rsync']
+    # Use Homebrew GNU rsync for ** glob support (macOS openrsync lacks it).
+    cmd = ['/usr/local/bin/rsync']
 
     # Add rsync options from config
     rsync_opts = config.get('rsync_options', [])

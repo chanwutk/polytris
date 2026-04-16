@@ -17,10 +17,11 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
+from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
 from polyis.io import cache
 from polyis.pareto import compute_pareto_front
 from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
-from evaluation.utilities import ColorScheme
+from evaluation.utilities import ColorScheme, SYSTEM_COLOR_DOMAIN
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
 
@@ -51,10 +52,7 @@ _FACET_HEADER_HEIGHT = 40
 LEGEND_X = (FACET_COLUMNS - 1) * (FACET_SUBPLOT_WIDTH + _FACET_COL_SPACING)
 LEGEND_Y = FACET_SUBPLOT_HEIGHT + _FACET_HEADER_HEIGHT + _FACET_ROW_SPACING
 
-# Define fixed system-to-color categories for deterministic chart encoding.
-SYSTEM_COLOR_DOMAIN = ['Polytris', 'Naive', 'OTIF', 'LEAP']
-
-# Define the color for each system category.
+# Define the color for each system category (one per SYSTEM_COLOR_DOMAIN entry).
 SYSTEM_COLOR_RANGE = ColorScheme.CarbonDark[:len(SYSTEM_COLOR_DOMAIN)]
 SYSTEM_COLOR_LOOKUP = dict(zip(SYSTEM_COLOR_DOMAIN, SYSTEM_COLOR_RANGE))
 SYSTEM_MARK_OPACITY = 0.6
@@ -778,11 +776,12 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         detail=['system:N', 'classifier:N', 'canvas_scale:N']
     )
 
-    # Shape scale: square for Polytris, trangle for Naive, circle for others.
-    shape_scale = alt.Scale(
-        domain=SYSTEM_COLOR_DOMAIN,
-        range=['square', 'triangle', 'circle', 'circle']
-    )
+    # Shape scale: square for all Polytris variants, triangle for Naive, circle for SOTA.
+    shape_range = [
+        'square' if s.startswith('Polytris') else ('triangle' if s == 'Naive' else 'circle')
+        for s in SYSTEM_COLOR_DOMAIN
+    ]
+    shape_scale = alt.Scale(domain=SYSTEM_COLOR_DOMAIN, range=shape_range)
 
     # Add points for Pareto fronts (with tooltip for interactivity)
     points_pareto = base_pareto.mark_point(
@@ -1110,18 +1109,18 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     naive_df['system'] = 'Naive'
     print(f"\nExtracted {len(naive_df)} naive baseline rows from test split")
 
-    # Filter test Polytris rows by configured parameter dimensions.
+    # Filter test Polytris rows by non-ablation parameter dimensions.
+    # Sample_rate and tracking_accuracy_threshold are filtered per ablation
+    # condition inside the metric loop below.
     print("\nFiltering Polytris data by configuration settings...")
     print(f"  Test rows before filtering: {len(test_all_df)}")
-    filtered_test_non_naive_df = filter_by_config(
+    base_filtered_test_df = filter_by_config(
         test_all_df,
         classifiers=CLASSIFIERS,
         tilepadding_modes=TILEPADDING_MODES,
-        sample_rates=SAMPLE_RATES,
-        tracking_accuracy_thresholds=TRACKING_ACCURACY_THRESHOLDS,
         trackers=TRACKERS
     )
-    print(f"  Test rows after filtering: {len(filtered_test_non_naive_df)}")
+    print(f"  Test rows after base filtering: {len(base_filtered_test_df)}")
 
     # Load SOTA tradeoff data
     print("\nLoading SOTA tradeoff data...")
@@ -1181,18 +1180,49 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             print(f"  Warning: {accuracy_col} has no valid data, skipping")
             continue
 
-        # Filter test rows to valid metric data.
-        polytris_df = filtered_test_non_naive_df.dropna(subset=['time', accuracy_col]).copy()
-        if polytris_df.empty:
-            print(f"  Warning: No Polytris test rows found for {accuracy_name}, skipping")
-            continue
-        print(f"  Polytris test rows: {len(polytris_df)}")
+        # Compute Pareto fronts for each ablation condition.
+        # Each condition restricts sample_rate and/or tracking_accuracy_threshold
+        # before computing its own Pareto front.
+        print(f"\n1b. Computing ablation Pareto fronts for {accuracy_name}...")
 
-        # Filter each system's data to Pareto-optimal points per dataset
-        # (minimize time, maximize accuracy).
-        polytris_df = _filter_pareto_per_dataset(polytris_df, 'time', accuracy_col,
-                                                 minx=True, miny=False)
-        print(f"  Polytris Pareto-optimal points: {len(polytris_df)}")
+        # Columns to keep for tooltip display.
+        tooltip_cols = ['system', 'dataset', 'videoset', 'classifier', 'sample_rate',
+                        'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale',
+                        'tracker', 'time', accuracy_col]
+
+        # Collect Pareto-optimal rows from all systems.
+        pareto_data_list: list[pd.DataFrame] = []
+
+        # Track the full-system Pareto front for speedup/gain charts below.
+        polytris_full_pareto_df = pd.DataFrame()
+
+        for condition in ABLATION_CONDITIONS:
+            # Apply condition-specific parameter restrictions.
+            condition_df = filter_by_ablation_condition(base_filtered_test_df, condition)
+            condition_df = condition_df.dropna(subset=['time', accuracy_col]).copy()
+
+            if condition_df.empty:
+                print(f"  [{condition.label}] No test rows after filtering; skipping")
+                continue
+
+            # Compute Pareto front per dataset (minimize time, maximize accuracy).
+            pareto_df = _filter_pareto_per_dataset(
+                condition_df, 'time', accuracy_col, minx=True, miny=False,
+            )
+            print(f"  [{condition.label}] {len(pareto_df)} Pareto-optimal points")
+
+            if pareto_df.empty:
+                continue
+
+            # Tag with the condition's display label as the system name.
+            pareto_df = pareto_df.copy()
+            pareto_df['system'] = condition.label
+            pareto_cols = [c for c in tooltip_cols if c in pareto_df.columns]
+            pareto_data_list.append(pareto_df[pareto_cols])
+
+            # Keep the full-system front for speedup/accuracy-gain comparisons.
+            if condition.name == 'full':
+                polytris_full_pareto_df = pareto_df.copy()
 
         # Filter Naive baseline to Pareto-optimal points per dataset.
         if accuracy_col in naive_df.columns:
@@ -1219,21 +1249,6 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         # 2. Collect Pareto-optimal data for visualization
         print(f"\n2. Collecting data for {accuracy_name}...")
 
-        # Columns to keep for tooltip display.
-        tooltip_cols = ['system', 'dataset', 'videoset', 'classifier', 'sample_rate',
-                        'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale',
-                        'tracker', 'time', accuracy_col]
-
-        # Collect Pareto-optimal rows from Polytris, Naive, and SOTA systems.
-        pareto_data_list = []
-
-        # Append Polytris Pareto-optimal points.
-        polytris_metric_df = polytris_df.copy()
-        if not polytris_metric_df.empty:
-            polytris_metric_df['system'] = 'Polytris'
-            polytris_cols = [c for c in tooltip_cols if c in polytris_metric_df.columns]
-            pareto_data_list.append(polytris_metric_df[polytris_cols])
-
         # Append Naive Pareto-optimal points.
         if not pareto_naive_df.empty:
             naive_point_df = pareto_naive_df.copy()
@@ -1242,15 +1257,11 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             pareto_data_list.append(naive_point_df[naive_cols])
 
         # Append SOTA Pareto-optimal points.
-        sota_pareto_list = []
         for system_name, df_sota in pareto_sota_dict.items():
             sota_metric_df = df_sota.copy()
             sota_metric_df['system'] = system_name.upper()
             sota_cols = [c for c in tooltip_cols if c in sota_metric_df.columns]
-            sota_pareto_list.append(sota_metric_df[sota_cols])
-
-        if sota_pareto_list:
-            pareto_data_list.extend(sota_pareto_list)
+            pareto_data_list.append(sota_metric_df[sota_cols])
 
         if not pareto_data_list:
             print(f"  No data available for {accuracy_name}")
@@ -1274,19 +1285,41 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         # 3b. Create throughput Pareto comparison chart (accuracy vs frames/sec).
         print(f"\n3b. Creating throughput comparison chart for {accuracy_name}...")
 
-        # Re-filter Pareto fronts for throughput (maximize both axes).
-        throughput_polytris_df = _filter_pareto_per_dataset(
-            polytris_df.dropna(subset=['throughput_fps', accuracy_col]),
-            'throughput_fps', accuracy_col, minx=False, miny=False,
-        ) if 'throughput_fps' in polytris_df.columns else pd.DataFrame()
+        # Compute throughput Pareto fronts for each ablation condition (maximize both axes).
+        throughput_tooltip_cols = ['system', 'dataset', 'videoset', 'classifier',
+                                  'sample_rate', 'tracking_accuracy_threshold',
+                                  'tilepadding', 'canvas_scale', 'tracker',
+                                  'throughput_fps', 'time', accuracy_col]
+        tp_data_list: list[pd.DataFrame] = []
 
+        for condition in ABLATION_CONDITIONS:
+            condition_df = filter_by_ablation_condition(base_filtered_test_df, condition)
+            condition_df = condition_df.dropna(subset=['throughput_fps', accuracy_col])
+            if condition_df.empty or 'throughput_fps' not in condition_df.columns:
+                continue
+            tp_pareto = _filter_pareto_per_dataset(
+                condition_df, 'throughput_fps', accuracy_col, minx=False, miny=False,
+            )
+            if not tp_pareto.empty:
+                tp_pareto = tp_pareto.copy()
+                tp_pareto['system'] = condition.label
+                tp_cols = [c for c in throughput_tooltip_cols if c in tp_pareto.columns]
+                tp_data_list.append(tp_pareto[tp_cols])
+
+        # Append Naive throughput Pareto.
         throughput_naive_df = _filter_pareto_per_dataset(
             naive_df.dropna(subset=['throughput_fps', accuracy_col]),
             'throughput_fps', accuracy_col, minx=False, miny=False,
         ) if ('throughput_fps' in naive_df.columns
               and not naive_df['throughput_fps'].isna().all()) else pd.DataFrame()
 
-        throughput_sota_dict: dict[str, pd.DataFrame] = {}
+        if not throughput_naive_df.empty:
+            tp_naive = throughput_naive_df.copy()
+            tp_naive['system'] = 'Naive'
+            tp_cols = [c for c in throughput_tooltip_cols if c in tp_naive.columns]
+            tp_data_list.append(tp_naive[tp_cols])
+
+        # Append SOTA throughput Pareto.
         for system_name, df_sota in df_sota_dict.items():
             if accuracy_col not in df_sota.columns or 'throughput_fps' not in df_sota.columns:
                 continue
@@ -1295,32 +1328,10 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
                 'throughput_fps', accuracy_col, minx=False, miny=False,
             )
             if not filtered.empty:
-                throughput_sota_dict[system_name] = filtered
-
-        # Collect throughput Pareto-optimal rows from all systems.
-        throughput_tooltip_cols = ['system', 'dataset', 'videoset', 'classifier',
-                                  'sample_rate', 'tracking_accuracy_threshold',
-                                  'tilepadding', 'canvas_scale', 'tracker',
-                                  'throughput_fps', 'time', accuracy_col]
-        tp_data_list: list[pd.DataFrame] = []
-
-        if not throughput_polytris_df.empty:
-            tp_polytris = throughput_polytris_df.copy()
-            tp_polytris['system'] = 'Polytris'
-            tp_cols = [c for c in throughput_tooltip_cols if c in tp_polytris.columns]
-            tp_data_list.append(tp_polytris[tp_cols])
-
-        if not throughput_naive_df.empty:
-            tp_naive = throughput_naive_df.copy()
-            tp_naive['system'] = 'Naive'
-            tp_cols = [c for c in throughput_tooltip_cols if c in tp_naive.columns]
-            tp_data_list.append(tp_naive[tp_cols])
-
-        for system_name, df_tp_sota in throughput_sota_dict.items():
-            tp_sota = df_tp_sota.copy()
-            tp_sota['system'] = system_name.upper()
-            tp_cols = [c for c in throughput_tooltip_cols if c in tp_sota.columns]
-            tp_data_list.append(tp_sota[tp_cols])
+                tp_sota = filtered.copy()
+                tp_sota['system'] = system_name.upper()
+                tp_cols = [c for c in throughput_tooltip_cols if c in tp_sota.columns]
+                tp_data_list.append(tp_sota[tp_cols])
 
         df_tp_combined = pd.DataFrame()
         if tp_data_list:
@@ -1341,9 +1352,10 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             print("  No throughput data available")
 
         # 4. Compute and visualize speedup at accuracy levels
+        # Uses only the full-system Polytris Pareto front for comparison.
         print(f"\n4. Computing speedup at accuracy levels for {accuracy_name}...")
         df_speedup = compute_speedup_at_accuracy_levels(
-            polytris_df, pareto_sota_dict, accuracy_col, 'time', increment=0.005
+            polytris_full_pareto_df, pareto_sota_dict, accuracy_col, 'time', increment=0.005
         )
 
         if not df_speedup.empty:
@@ -1359,9 +1371,10 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             print("  No speedup data available")
 
         # 5. Compute and visualize accuracy gain at speedup-over-naive levels
+        # Uses only the full-system Polytris Pareto front for comparison.
         print(f"\n5. Computing accuracy gain at naive speedup levels for {accuracy_name}...")
         df_accuracy_gain = compute_accuracy_gain_at_naive_speedup_levels(
-            polytris_df, pareto_sota_dict, pareto_naive_df, accuracy_col, 'time', increment=5.0
+            polytris_full_pareto_df, pareto_sota_dict, pareto_naive_df, accuracy_col, 'time', increment=5.0
         )
 
         if not df_accuracy_gain.empty:
