@@ -21,6 +21,11 @@ class PairDefinition:
     y_label: str
     x_minimize: bool
     y_maximize: bool
+    # When False, the y-axis does not start at zero (useful for metrics like HOTA
+    # that are clustered far from 0).
+    zero_y_axis: bool = True
+    # When True, each facet subplot gets its own independent y-axis scale.
+    resolve_y_independent: bool = False
 
 
 PAIR_DEFINITIONS = (
@@ -32,30 +37,55 @@ PAIR_DEFINITIONS = (
         y_label='HOTA',
         x_minimize=True,
         y_maximize=True,
+        zero_y_axis=False,
+        # HOTA y-axis is synced (shared) across facets so datasets are directly
+        # comparable on the same HOTA scale.
+        resolve_y_independent=False,
     ),
     PairDefinition(
-        slug='mistrack_vs_retention',
+        slug='mistrack_vs_pruning',
         x_col='mistrack_rate',
-        y_col='retention_rate',
+        y_col='pruning_ratio',
         x_label='Mistrack Rate',
-        y_label='Retention Rate',
+        y_label='Pruning Ratio (%)',
         x_minimize=True,
-        y_maximize=False,
+        # Higher pruning ratio = more aggressive pruning; equivalent to the old
+        # y_maximize=False on retention_rate (minimize retention ↔ maximize pruning).
+        y_maximize=True,
     ),
     PairDefinition(
-        slug='retention_vs_hota',
-        x_col='retention_rate',
+        slug='pruning_vs_hota',
+        x_col='pruning_ratio',
         y_col='HOTA_HOTA',
-        x_label='Retention Rate',
+        x_label='Pruning Ratio (%)',
         y_label='HOTA',
-        x_minimize=True,
+        # Prefer high pruning (right side) with high HOTA; equivalent to the old
+        # x_minimize=True on retention_rate (minimize retention ↔ maximize pruning).
+        x_minimize=False,
         y_maximize=True,
+        zero_y_axis=False,
+        # HOTA y-axis is synced (shared) across facets so datasets are directly
+        # comparable on the same HOTA scale.
+        resolve_y_independent=False,
     ),
 )
 
 
+def _prepare_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Add derived display columns to a results DataFrame.
+
+    Computes pruning_ratio = (1 - retention_rate) * 100 so that downstream
+    chart code can reference it directly without touching the raw CSV columns.
+    Safe to call on DataFrames that already contain the column (overwrites).
+    """
+    df = df.copy()
+    df['pruning_ratio'] = (1 - df['retention_rate']) * 100
+    return df
+
+
 def annotate_pareto_flags(results_df: pd.DataFrame) -> pd.DataFrame:
-    flagged_df = results_df.copy()
+    # Add derived columns so PairDefinitions referencing pruning_ratio work.
+    flagged_df = _prepare_df(results_df)
     exhaustive_df = flagged_df[flagged_df['method'] == 'exhaustive'].copy()
 
     for pair in PAIR_DEFINITIONS:
@@ -102,9 +132,12 @@ def save_results(results_df: pd.DataFrame, dataset: str, tracker_name: str) -> P
 def _build_chart_layers(
     base: alt.Chart,
     pair: PairDefinition,
+    include_background: bool = True,
 ) -> list[alt.Chart]:
     """Return ordered Altair layers for one metric pair (back to front):
-      1. Exhaustive background scatter — light gray, semi-transparent.
+      1. Exhaustive background scatter — light gray, semi-transparent. Omitted
+         when include_background=False to produce a "Pareto + ours +
+         whole-frame only" view without the exhaustive cloud.
       2. Pareto frontier connecting line — black; order encoding sorts left-to-right.
       3. Pareto frontier point markers — black.
       4. Heuristic diamond markers — steelblue.
@@ -113,7 +146,11 @@ def _build_chart_layers(
     """
     pareto_flag_col = f'is_pareto_{pair.slug}'
     x_enc = alt.X(f'{pair.x_col}:Q', title=pair.x_label)
-    y_enc = alt.Y(f'{pair.y_col}:Q', title=pair.y_label)
+    y_enc = alt.Y(
+        f'{pair.y_col}:Q',
+        title=pair.y_label,
+        scale=alt.Scale(zero=pair.zero_y_axis),
+    )
 
     exhaustive_tooltip = [
         alt.Tooltip('dataset:N', title='Dataset'),
@@ -139,7 +176,7 @@ def _build_chart_layers(
     bg_layer = (
         base
         .transform_filter("datum.method === 'exhaustive'")
-        .mark_point(size=14, opacity=0.35, filled=True, color='lightgray')
+        .mark_point(size=14, opacity=0.6, filled=True, color='gray')
         .encode(x=x_enc, y=y_enc, tooltip=exhaustive_tooltip)
     )
 
@@ -149,7 +186,7 @@ def _build_chart_layers(
     frontier_line = (
         base
         .transform_filter(pareto_filter)
-        .mark_line(strokeWidth=2.0, color='black')
+        .mark_line(strokeWidth=1.0, color='black')
         .encode(
             x=x_enc,
             y=y_enc,
@@ -188,21 +225,50 @@ def _build_chart_layers(
         base
         .transform_filter("datum.method === 'whole_frame'")
         .transform_calculate(
-            label="datum.grid_key === 'whole_frame_1' ? 'no skip' : '1/' + split(datum.grid_key, '_')[2] + ' frames'",
+            label="datum.grid_key === 'whole_frame_1' ? 'no skip' : '1/' + split(datum.grid_key, '_')[2]",
         )
         .mark_text(dx=6, dy=-8, fontSize=9, color='firebrick')
         .encode(x=x_enc, y=y_enc, text='label:N')
     )
 
-    return [bg_layer, frontier_line, frontier_pts, heuristic_layer, whole_frame_layer, whole_frame_text]
+    foreground_layers = [
+        frontier_line,
+        frontier_pts,
+        heuristic_layer,
+        whole_frame_layer,
+        whole_frame_text,
+    ]
+    # Pareto-only variant drops the exhaustive background scatter; the remaining
+    # foreground layers (Pareto line/points, heuristic, whole-frame) are unchanged.
+    if not include_background:
+        return foreground_layers
+    return [bg_layer, *foreground_layers]
+
+
+def _prune_for_pareto_only(plot_df: pd.DataFrame, pareto_flag_col: str) -> pd.DataFrame:
+    """Drop exhaustive rows that are not on the Pareto frontier.
+
+    The pareto-only chart variant references exhaustive rows only through
+    the is_pareto filter, so non-pareto exhaustive points just inflate the
+    Vega-Lite payload and freeze the browser. Heuristic and whole-frame
+    rows are kept in full.
+    """
+    keep_pareto_exhaustive = (plot_df['method'] == 'exhaustive') & plot_df[pareto_flag_col]
+    keep_non_exhaustive = plot_df['method'] != 'exhaustive'
+    return plot_df[keep_pareto_exhaustive | keep_non_exhaustive].copy()
 
 
 def _make_single_chart(
     results_df: pd.DataFrame,
     pair: PairDefinition,
     title: str,
+    include_background: bool = True,
 ) -> alt.LayerChart:
-    """Build a single-dataset Altair chart for one metric pair."""
+    """Build a single-dataset Altair chart for one metric pair.
+
+    Passing include_background=False produces the "Pareto + heuristic +
+    whole-frame" variant (no gray exhaustive scatter).
+    """
     pareto_flag_col = f'is_pareto_{pair.slug}'
     plot_df = results_df.dropna(subset=[pair.x_col, pair.y_col]).copy()
     plot_df[pareto_flag_col] = (
@@ -210,8 +276,14 @@ def _make_single_chart(
         if pareto_flag_col in plot_df.columns
         else False
     )
-    layers = _build_chart_layers(alt.Chart(plot_df), pair)
-    return alt.layer(*layers).properties(title=title, width=600, height=450)
+    # Drop non-pareto exhaustive rows for the pareto-only variant — they are
+    # filtered away by transform_filter anyway but still slow Vega-Lite down.
+    if not include_background:
+        plot_df = _prune_for_pareto_only(plot_df, pareto_flag_col)
+    layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
+    # Pareto-only variant gets 3× width and 2× height for readability.
+    width, height = (300, 220) if not include_background else (100, 110)
+    return alt.layer(*layers).properties(title=title, width=width, height=height)
 
 
 def plot_results(dataset: str, tracker_name: str) -> list[Path]:
@@ -219,17 +291,37 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
     if not results_path.exists():
         raise FileNotFoundError(f'Results CSV not found: {results_path}')
 
-    results_df = pd.read_csv(results_path)
+    # Re-annotate pareto flags against the current PAIR_DEFINITIONS so stale
+    # cached CSVs (from earlier runs that used different slug names) still
+    # produce correct Pareto layers. annotate_pareto_flags is idempotent and
+    # internally calls _prepare_df, so we don't need to prepare first.
+    results_df = annotate_pareto_flags(pd.read_csv(results_path))
     output_dir = ensure_dir(plots_dir(dataset, tracker_name))
     written_paths: list[Path] = []
 
+    # Two chart variants per pair: full (with exhaustive background) and
+    # pareto-only (frontier + heuristic + whole-frame markers only).
+    variants = (
+        ('', True),
+        ('_pareto_only', False),
+    )
+
     for pair in PAIR_DEFINITIONS:
         title = f'{dataset} {tracker_name}: {pair.x_label} vs {pair.y_label}'
-        chart = _make_single_chart(results_df, pair, title)
-        for suffix in ('.png', '.html'):
-            out_path = output_dir / f'{pair.slug}{suffix}'
-            chart.save(str(out_path))
-            written_paths.append(out_path)
+        for slug_suffix, include_background in variants:
+            chart = _make_single_chart(
+                results_df,
+                pair,
+                title,
+                include_background=include_background,
+            )
+            for suffix in ('.png', '.html'):
+                out_path = output_dir / f'{pair.slug}{slug_suffix}{suffix}'
+                # Render PNGs at 4× resolution for print-quality output; HTML
+                # is vector-based and does not need a scale factor.
+                save_kwargs = {'scale_factor': 4.0} if suffix == '.png' else {}
+                chart.save(str(out_path), **save_kwargs)
+                written_paths.append(out_path)
 
     return written_paths
 
@@ -250,21 +342,28 @@ def _collect_results(tracker_name: str, cache_dir: Path | None = None) -> pd.Dat
     if not csv_paths:
         return pd.DataFrame()
 
-    # Load each CSV and concatenate into a single flat DataFrame.
-    frames = [pd.read_csv(p) for p in csv_paths]
-    return pd.concat(frames, ignore_index=True)
+    # Re-annotate each CSV against the current PAIR_DEFINITIONS so stale cached
+    # flag columns (e.g. `is_pareto_retention_vs_hota` from older runs) don't
+    # cause missing-flag → empty-Pareto-layer rendering. Annotation runs
+    # per-dataset, preserving each dataset's independent Pareto frontier.
+    frames = [annotate_pareto_flags(pd.read_csv(p)) for p in csv_paths]
+    return _prepare_df(pd.concat(frames, ignore_index=True))
 
 
 def _make_altair_chart(
     combined_df: pd.DataFrame,
     pair: PairDefinition,
     tracker_name: str,
+    include_background: bool = True,
 ) -> alt.FacetChart:
     """Build a faceted Altair chart for one metric pair; one subplot per dataset.
 
     All layers share a single DataFrame so Altair's facet requirement (uniform
     data source across layers) is satisfied. Row filtering is done via
     Vega-Lite transform_filter expressions inside _build_chart_layers.
+
+    Passing include_background=False omits the gray exhaustive scatter to
+    produce the "Pareto + heuristic + whole-frame" variant.
     """
     pareto_flag_col = f'is_pareto_{pair.slug}'
     # Sort by (dataset, x) so the Pareto frontier line renders left-to-right.
@@ -279,16 +378,39 @@ def _make_altair_chart(
         if pareto_flag_col in plot_df.columns
         else False
     )
-    layers = _build_chart_layers(alt.Chart(plot_df), pair)
+    # Drop non-pareto exhaustive rows for the pareto-only variant — they are
+    # filtered away by transform_filter anyway but still slow Vega-Lite down.
+    if not include_background:
+        plot_df = _prune_for_pareto_only(plot_df, pareto_flag_col)
+    layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
+    # Pareto-only variant gets 3× width and 2× height for readability.
+    width, height = (300, 220) if not include_background else (100, 110)
     return (
         alt.layer(*layers)
-        .properties(width=300, height=250)
+        .properties(width=width, height=height)
         .facet(
-            facet=alt.Facet('dataset:N', title='Dataset'),
-            columns=3,
+            # Drop the shared 'Dataset' facet title and instead prefix each
+            # per-facet header label with 'Dataset: ' via a Vega labelExpr.
+            # labelPadding is negative so the 'Dataset: ...' label sits closer
+            # to (just above) the subplot rather than floating well above it.
+            facet=alt.Facet(
+                'dataset:N',
+                title=None,
+                header=alt.Header(
+                    labelExpr="'Dataset: ' + datum.value",
+                    labelPadding=2,
+                ),
+            ),
+            # columns=3,
         )
-        .resolve_scale(x='independent')
+        .resolve_scale(
+            x='independent',
+            y='independent' if pair.resolve_y_independent else 'shared',
+        )
         .properties(title=f'{tracker_name}: {pair.x_label} vs {pair.y_label}')
+        # Collapse inter-facet spacing so subplots sit flush against each
+        # other rather than being separated by Altair's default gap.
+        .configure_facet(spacing=0)
     )
 
 
@@ -318,14 +440,30 @@ def combine_visualize(
 
     written_paths: list[Path] = []
 
-    for pair in PAIR_DEFINITIONS:
-        chart = _make_altair_chart(combined_df, pair, tracker_name)
+    # Two chart variants per pair: full (with exhaustive background) and
+    # pareto-only (frontier + heuristic + whole-frame markers only).
+    variants = (
+        ('', True),
+        ('_pareto_only', False),
+    )
 
-        # Write PNG (requires vl-convert-python) and self-contained HTML.
-        for suffix in ('.png', '.html'):
-            out_path = output_dir / f'{pair.slug}{suffix}'
-            chart.save(str(out_path))
-            written_paths.append(out_path)
+    for pair in PAIR_DEFINITIONS:
+        for slug_suffix, include_background in variants:
+            chart = _make_altair_chart(
+                combined_df,
+                pair,
+                tracker_name,
+                include_background=include_background,
+            )
+
+            # Write PNG (requires vl-convert-python) and self-contained HTML.
+            for suffix in ('.png', '.html'):
+                out_path = output_dir / f'{pair.slug}{slug_suffix}{suffix}'
+                # Render PNGs at 4× resolution for print-quality output; HTML
+                # is vector-based and does not need a scale factor.
+                save_kwargs = {'scale_factor': 4.0} if suffix == '.png' else {}
+                chart.save(str(out_path), **save_kwargs)
+                written_paths.append(out_path)
 
     return written_paths
 

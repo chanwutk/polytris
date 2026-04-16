@@ -4,13 +4,19 @@
 Extract Pareto-optimal parameter sets from valid-split tradeoff data.
 
 For each configured dataset, loads the tradeoff CSV produced by the valid pass,
-computes the Pareto front on time vs HOTA_HOTA, and saves the resulting parameter
-sets to the evaluation cache for use by the test-pass pipeline scripts.
+computes Pareto fronts for each ablation condition (full system, no frame
+sampling, no polyomino pruning, neither), and saves the union of all
+Pareto-optimal parameter sets to the evaluation cache.  The union drives
+test-pass filtering so that every parameter combo needed by any ablation
+curve is executed on the test split.
 """
 
 import argparse
 
-from polyis.pareto import compute_pareto_fronts_by_group, save_pareto_params
+import pandas as pd
+
+from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
+from polyis.pareto import PARETO_PARAM_COLS, compute_pareto_fronts_by_group, save_pareto_params
 from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 
 
@@ -61,24 +67,47 @@ def main(args):
             print(f"  Warning: No valid Polytris rows found for {dataset}; skipping")
             continue
 
-        # Compute the Pareto front per dataset group (minimize time, maximize HOTA).
-        pareto_df = compute_pareto_fronts_by_group(
-            polytris_df,
-            group_cols=['dataset'],
-            x_col='time',
-            y_col='HOTA_HOTA',
-            minx=True, miny=False,
-        )
+        # Compute a Pareto front for each ablation condition and collect the union.
+        pareto_parts: list[pd.DataFrame] = []
 
-        if pareto_df.empty:
-            print(f"  Warning: Pareto front is empty for {dataset}; skipping")
+        for condition in ABLATION_CONDITIONS:
+            # Filter to the parameter subset defined by this ablation condition.
+            condition_df = filter_by_ablation_condition(polytris_df, condition)
+
+            if condition_df.empty:
+                print(f"  [{condition.label}] No rows after filtering; skipping")
+                continue
+
+            # Compute the Pareto front per dataset group (minimize time, maximize HOTA).
+            pareto_df = compute_pareto_fronts_by_group(
+                condition_df,
+                group_cols=['dataset'],
+                x_col='time',
+                y_col='HOTA_HOTA',
+                minx=True, miny=False,
+            )
+
+            if pareto_df.empty:
+                print(f"  [{condition.label}] Pareto front is empty; skipping")
+                continue
+
+            print(f"  [{condition.label}] {len(pareto_df)} Pareto-optimal rows")
+            pareto_parts.append(pareto_df)
+
+        if not pareto_parts:
+            print(f"  Warning: All ablation Pareto fronts empty for {dataset}; skipping")
             continue
 
-        # Log the number of Pareto-optimal points found.
-        print(f"  Found {len(pareto_df)} Pareto-optimal rows for {dataset}")
+        # Merge all ablation fronts into one DataFrame, deduplicating by parameter columns.
+        union_df = pd.concat(pareto_parts, ignore_index=True)
+        available_param_cols = [c for c in PARETO_PARAM_COLS if c in union_df.columns]
+        union_df = union_df.drop_duplicates(subset=available_param_cols)
 
-        # Save the Pareto parameter sets to the evaluation cache.
-        save_pareto_params(dataset, pareto_df)
+        # Log the final union size.
+        print(f"  Union of all ablation fronts: {len(union_df)} unique param combos")
+
+        # Save the union Pareto parameter sets to the evaluation cache.
+        save_pareto_params(dataset, union_df)
 
     print("\nPareto extraction complete.")
 

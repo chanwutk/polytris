@@ -115,24 +115,53 @@ def build_expected_test_video_manifest(dataset: str) -> pd.DataFrame:
     return video_df[['dataset', 'videoset', 'video', 'video_id']].drop_duplicates().reset_index(drop=True)
 
 
-def build_available_tracking_manifest(tracks_dir: str) -> pd.DataFrame:
+def build_available_tracking_manifest(system: str, tracks_dir: str) -> pd.DataFrame:
     # Fail fast when the raw SOTA tracking directory is missing.
     assert os.path.isdir(tracks_dir), f"Tracking directory not found: {tracks_dir}"
 
-    # Collect all raw tracking JSON files under param-id directories.
-    tracking_paths = sorted(Path(tracks_dir).glob('*/*.json'))
-    # Fail fast when the tracking directory tree is unexpectedly empty.
-    assert tracking_paths, f"No tracking JSON files found in {tracks_dir}"
+    # Resolve the raw tracking files using the on-disk layout for the requested SOTA system.
+    if system == 'otif':
+        # Keep only numeric top-level directories because sibling folders like `leap/` are not OTIF params.
+        tracking_paths = sorted(
+            path
+            for path in Path(tracks_dir).glob('*/*.json')
+            if path.parent.name.isdigit()
+        )
+        # Fail fast when the OTIF tracking directory tree is unexpectedly empty.
+        assert tracking_paths, f"No OTIF tracking JSON files found in numeric param directories under {tracks_dir}"
 
-    # Materialize the discovered tracking files as a DataFrame for vectorized validation.
-    tracking_df = pd.DataFrame.from_records([
-        {
-            'param_id': int(path.parent.name),
-            'video_id': int(path.stem),
-            'input_json_path': str(path),
-        }
-        for path in tracking_paths
-    ])
+        # Materialize the discovered OTIF tracking files as a DataFrame for vectorized validation.
+        tracking_df = pd.DataFrame.from_records([
+            {
+                'param_id': int(path.parent.name),
+                'video_id': int(path.stem),
+                'input_json_path': str(path),
+            }
+            for path in tracking_paths
+        ])
+    elif system == 'leap':
+        # Resolve the dedicated LEAP tracking directory, which stores one flat file per video.
+        leap_tracks_dir = Path(tracks_dir) / 'leap'
+        # Fail fast when the LEAP export is missing its expected tracking directory.
+        assert leap_tracks_dir.is_dir(), f"LEAP tracking directory not found: {leap_tracks_dir}"
+
+        # Collect all raw LEAP tracking JSON files beneath the dedicated LEAP directory.
+        tracking_paths = sorted(leap_tracks_dir.glob('*.json'))
+        # Fail fast when the LEAP tracking directory tree is unexpectedly empty.
+        assert tracking_paths, f"No LEAP tracking JSON files found in {leap_tracks_dir}"
+
+        # Materialize the discovered LEAP tracking files as a DataFrame for vectorized validation.
+        tracking_df = pd.DataFrame.from_records([
+            {
+                'param_id': 0,
+                'video_id': int(path.stem),
+                'input_json_path': str(path),
+            }
+            for path in tracking_paths
+        ])
+    else:
+        # Fail fast when a caller requests an unsupported SOTA system.
+        raise ValueError(f"Unsupported SOTA tracking system: {system}")
 
     # Fail fast when duplicate param/video pairs would make the transform ambiguous.
     duplicate_df = tracking_df[tracking_df.duplicated(subset=['param_id', 'video_id'], keep=False)]
@@ -202,7 +231,7 @@ def build_tracking_transform_manifest(system: str,
     expected_df = expected_video_df.merge(expected_param_df, how='cross')
 
     # Materialize the raw tracking files discovered on disk.
-    available_df = build_available_tracking_manifest(tracks_dir)
+    available_df = build_available_tracking_manifest(system, tracks_dir)
     # Join the expected param/video grid to the discovered tracking paths.
     transform_df = expected_df.merge(available_df, on=['param_id', 'video_id'], how='left')
 

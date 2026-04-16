@@ -42,10 +42,10 @@
 # echo -e "########################################\n"
 # python scripts/p060_exec_track.py --valid
 
-echo -e "\n\n\n########################################"
-echo ">>> preprocess/p002_preprocess_naive_tracking.py --valid"
-echo -e "########################################\n"
-python preprocess/p002_preprocess_naive_tracking.py --valid
+# echo -e "\n\n\n########################################"
+# echo ">>> preprocess/p002_preprocess_naive_tracking.py --valid"
+# echo -e "########################################\n"
+# python preprocess/p002_preprocess_naive_tracking.py --valid
 
 echo -e "\n\n\n==================================================================="
 echo          "Phase 2+3: Evaluation on valid data and Pareto parameter extraction"
@@ -104,3 +104,7 @@ echo -e "\n\n\n########################################"
 echo ">>> evaluation/p101_evaluation_test.py"
 echo -e "########################################\n"
 python evaluation/p101_evaluation_test.py
+echo -e "\n\n\n########################################"
+echo ">>> evaluation/p203_compare_stats.py --test"
+echo -e "########################################\n"
+python evaluation/p203_compare_stats.py --test

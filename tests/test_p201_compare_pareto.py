@@ -6,6 +6,7 @@ from evaluation.p201_compare_pareto import (
     FACET_SUBPLOT_HEIGHT,
     FACET_SUBPLOT_WIDTH,
     _filter_pareto_per_dataset,
+    compute_accuracy_gain_at_naive_speedup_levels,
     create_accuracy_gain_chart,
     create_pareto_comparison_chart,
     create_speedup_chart,
@@ -21,6 +22,7 @@ from evaluation.p201_compare_pareto import (
                     {
                         'dataset': 'demo',
                         'accuracy_level': 0.70,
+                        'system': 'OTIF',
                         'comparison_system': 'OTIF',
                         'speedup_ratio': 1.2,
                         'polytris_time': 10.0,
@@ -29,6 +31,7 @@ from evaluation.p201_compare_pareto import (
                     {
                         'dataset': 'demo',
                         'accuracy_level': 0.80,
+                        'system': 'OTIF',
                         'comparison_system': 'OTIF',
                         'speedup_ratio': 1.1,
                         'polytris_time': 11.0,
@@ -44,7 +47,9 @@ from evaluation.p201_compare_pareto import (
                 pd.DataFrame([
                     {
                         'dataset': 'demo',
-                        'runtime_level': 10.0,
+                        'naive_speedup_level': 2.0,
+                        'naive_time': 100.0,
+                        'system': 'OTIF',
                         'comparison_system': 'OTIF',
                         'accuracy_gain': 0.05,
                         'polytris_accuracy': 0.80,
@@ -52,7 +57,9 @@ from evaluation.p201_compare_pareto import (
                     },
                     {
                         'dataset': 'demo',
-                        'runtime_level': 20.0,
+                        'naive_speedup_level': 4.0,
+                        'naive_time': 100.0,
+                        'system': 'OTIF',
                         'comparison_system': 'OTIF',
                         'accuracy_gain': 0.04,
                         'polytris_accuracy': 0.82,
@@ -61,7 +68,7 @@ from evaluation.p201_compare_pareto import (
                 ]),
                 'HOTA',
             ),
-            'HOTA Gain at Runtime Levels (>0 = Polytris more accurate)',
+            'HOTA Gain at Naive Speedup Levels (>0 = Polytris more accurate)',
         ),
         (
             create_pareto_comparison_chart(
@@ -140,7 +147,7 @@ def test_facet_charts_use_shared_four_column_layout(chart, expected_title):
     assert chart_spec['columns'] == FACET_COLUMNS
     assert chart_spec['spec']['width'] == FACET_SUBPLOT_WIDTH
     assert chart_spec['spec']['height'] == FACET_SUBPLOT_HEIGHT
-    assert chart_spec['title'] == expected_title
+    assert chart_spec['title']['text'] == expected_title
 
 
 @pytest.mark.parametrize(
@@ -150,6 +157,7 @@ def test_facet_charts_use_shared_four_column_layout(chart, expected_title):
             pd.DataFrame(columns=[
                 'dataset',
                 'accuracy_level',
+                'system',
                 'comparison_system',
                 'speedup_ratio',
                 'polytris_time',
@@ -160,7 +168,9 @@ def test_facet_charts_use_shared_four_column_layout(chart, expected_title):
         lambda: create_accuracy_gain_chart(
             pd.DataFrame(columns=[
                 'dataset',
-                'runtime_level',
+                'naive_speedup_level',
+                'naive_time',
+                'system',
                 'comparison_system',
                 'accuracy_gain',
                 'polytris_accuracy',
@@ -232,6 +242,67 @@ def test_throughput_chart_uses_custom_x_title():
     layer_x = spec['spec']['layer'][0]['encoding']['x']
     assert layer_x['title'] == 'Throughput (frames/sec)'
     assert layer_x['field'] == 'throughput_fps'
+
+
+def test_accuracy_gain_chart_uses_naive_speedup_x_title():
+    # Verify that the normalized naive-speedup axis is wired through the chart encoding.
+    df = pd.DataFrame([
+        {
+            'dataset': 'demo',
+            'naive_speedup_level': 2.0,
+            'naive_time': 100.0,
+            'system': 'OTIF',
+            'comparison_system': 'OTIF',
+            'accuracy_gain': 0.05,
+            'polytris_accuracy': 0.80,
+            'other_accuracy': 0.75,
+        },
+        {
+            'dataset': 'demo',
+            'naive_speedup_level': 4.0,
+            'naive_time': 100.0,
+            'system': 'OTIF',
+            'comparison_system': 'OTIF',
+            'accuracy_gain': 0.03,
+            'polytris_accuracy': 0.76,
+            'other_accuracy': 0.73,
+        },
+    ])
+    chart = create_accuracy_gain_chart(df, 'HOTA')
+    spec = chart.to_dict()
+
+    layer_x = spec['spec']['layer'][0]['encoding']['x']
+    assert layer_x['title'] == 'Speedup Over Naive (x)'
+    assert layer_x['field'] == 'naive_speedup_level'
+
+
+def test_compute_accuracy_gain_at_naive_speedup_levels_masks_non_overlapping_ranges():
+    # Use one naive runtime per dataset so the x-axis normalization is deterministic.
+    naive_df = pd.DataFrame([
+        {'dataset': 'demo', 'time': 100.0, 'HOTA_HOTA': 0.60},
+    ])
+    polytris_df = pd.DataFrame([
+        {'dataset': 'demo', 'time': 50.0, 'HOTA_HOTA': 0.80},
+        {'dataset': 'demo', 'time': 25.0, 'HOTA_HOTA': 0.70},
+    ])
+    sota_df = pd.DataFrame([
+        {'dataset': 'demo', 'time': 100.0, 'HOTA_HOTA': 0.75},
+        {'dataset': 'demo', 'time': 50.0, 'HOTA_HOTA': 0.65},
+    ])
+
+    result = compute_accuracy_gain_at_naive_speedup_levels(
+        polytris_df,
+        {'otif': sota_df},
+        naive_df,
+        'HOTA_HOTA',
+        increment=1.0,
+    )
+
+    non_null = result.dropna(subset=['accuracy_gain']).reset_index(drop=True)
+    assert non_null['naive_speedup_level'].tolist() == [2.0]
+    assert non_null.loc[0, 'system'] == 'OTIF'
+    assert non_null.loc[0, 'accuracy_gain'] == pytest.approx(0.15)
+    assert non_null.loc[0, 'naive_time'] == 100.0
 
 
 def test_filter_pareto_per_dataset_maximize_throughput():
