@@ -48,7 +48,7 @@ from evaluation.p201_compare_pareto import (
                 pd.DataFrame([
                     {
                         'dataset': 'demo',
-                        'naive_speedup_level': 2.0,
+                        'throughput_fps': 2.0,
                         'naive_time': 100.0,
                         'system': 'OTIF',
                         'comparison_system': 'OTIF',
@@ -58,7 +58,7 @@ from evaluation.p201_compare_pareto import (
                     },
                     {
                         'dataset': 'demo',
-                        'naive_speedup_level': 4.0,
+                        'throughput_fps': 4.0,
                         'naive_time': 100.0,
                         'system': 'OTIF',
                         'comparison_system': 'OTIF',
@@ -69,7 +69,7 @@ from evaluation.p201_compare_pareto import (
                 ]),
                 'HOTA',
             ),
-            'HOTA Gain at Naive Speedup Levels (>0 = Polytris more accurate)',
+            'HOTA Gain at Throughput (>0 = Polytris more accurate)',
         ),
         (
             create_pareto_comparison_chart(
@@ -169,7 +169,7 @@ def test_facet_charts_use_shared_four_column_layout(chart, expected_title):
         lambda: create_accuracy_gain_chart(
             pd.DataFrame(columns=[
                 'dataset',
-                'naive_speedup_level',
+                'throughput_fps',
                 'naive_time',
                 'system',
                 'comparison_system',
@@ -245,12 +245,12 @@ def test_throughput_chart_uses_custom_x_title():
     assert layer_x['field'] == 'throughput_fps'
 
 
-def test_accuracy_gain_chart_uses_naive_speedup_x_title():
-    # Verify that the normalized naive-speedup axis is wired through the chart encoding.
+def test_accuracy_gain_chart_uses_throughput_x_title():
+    # Verify that the throughput x-axis is wired through the chart encoding.
     df = pd.DataFrame([
         {
             'dataset': 'demo',
-            'naive_speedup_level': 2.0,
+            'throughput_fps': 2.0,
             'naive_time': 100.0,
             'system': 'OTIF',
             'comparison_system': 'OTIF',
@@ -260,7 +260,7 @@ def test_accuracy_gain_chart_uses_naive_speedup_x_title():
         },
         {
             'dataset': 'demo',
-            'naive_speedup_level': 4.0,
+            'throughput_fps': 4.0,
             'naive_time': 100.0,
             'system': 'OTIF',
             'comparison_system': 'OTIF',
@@ -273,19 +273,19 @@ def test_accuracy_gain_chart_uses_naive_speedup_x_title():
     spec = chart.to_dict()
 
     layer_x = spec['spec']['layer'][0]['encoding']['x']
-    assert layer_x['title'] == 'Speedup Over Naive (x)'
-    assert layer_x['field'] == 'naive_speedup_level'
+    assert layer_x['title'] == 'Throughput (FPS)'
+    assert layer_x['field'] == 'throughput_fps'
 
 
 def test_compute_accuracy_gain_at_naive_speedup_levels_discrete_anchors():
     # One result row per SOTA Pareto point; Polytris chosen by strict faster runtime
     # then max accuracy gain (tie-break: higher acc, then lower time).
     naive_df = pd.DataFrame([
-        {'dataset': 'demo', 'time': 100.0, 'HOTA_HOTA': 0.60},
+        {'dataset': 'demo', 'time': 100.0, 'HOTA_HOTA': 0.60, 'frame_count': 100.0},
     ])
     polytris_df = pd.DataFrame([
-        {'dataset': 'demo', 'time': 50.0, 'HOTA_HOTA': 0.80},
-        {'dataset': 'demo', 'time': 25.0, 'HOTA_HOTA': 0.70},
+        {'dataset': 'demo', 'time': 50.0, 'HOTA_HOTA': 0.80, 'frame_count': 100.0},
+        {'dataset': 'demo', 'time': 25.0, 'HOTA_HOTA': 0.70, 'frame_count': 100.0},
     ])
     sota_df = pd.DataFrame([
         {'dataset': 'demo', 'time': 100.0, 'HOTA_HOTA': 0.75},
@@ -300,15 +300,15 @@ def test_compute_accuracy_gain_at_naive_speedup_levels_discrete_anchors():
     )
 
     non_null = result.dropna(subset=['accuracy_gain']).sort_values(
-        'naive_speedup_level',
+        'throughput_fps',
     ).reset_index(drop=True)
     assert len(non_null) == 2
     assert non_null['system'].tolist() == ['OTIF', 'OTIF']
-    # Anchor (100, 0.75): naive speedup 1.0; Polytris faster than 100 -> (50, 0.80); gain 0.05
-    assert non_null.loc[0, 'naive_speedup_level'] == pytest.approx(1.0)
+    # Anchor (100, 0.75): 100 frames / 100 s = 1 FPS; Polytris faster than 100 -> (50, 0.80); gain 0.05
+    assert non_null.loc[0, 'throughput_fps'] == pytest.approx(1.0)
     assert non_null.loc[0, 'accuracy_gain'] == pytest.approx(0.05)
-    # Anchor (50, 0.65): naive speedup 2.0; Polytris faster than 50 -> (25, 0.70); gain 0.05
-    assert non_null.loc[1, 'naive_speedup_level'] == pytest.approx(2.0)
+    # Anchor (50, 0.65): 100 frames / 50 s = 2 FPS; Polytris faster than 50 -> (25, 0.70); gain 0.05
+    assert non_null.loc[1, 'throughput_fps'] == pytest.approx(2.0)
     assert non_null.loc[1, 'accuracy_gain'] == pytest.approx(0.05)
     assert (non_null['naive_time'] == 100.0).all()
 

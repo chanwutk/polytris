@@ -9,8 +9,8 @@ This script extends p200_compare_compute.py by:
    Pareto point (x = that system's accuracy; y = Polytris speedup under a
    higher-accuracy pairing rule)
 3. Adding visualizations showing accuracy gains at each comparison-system
-   Pareto point (x = naive speedup at that point; y = Polytris HOTA gain under
-   a higher-naive-speedup pairing rule)
+   Pareto point (x = anchor throughput in FPS when frame counts exist; y = Polytris HOTA gain
+   under a higher-throughput pairing rule)
 """
 
 import argparse
@@ -41,8 +41,8 @@ TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 # Keep facet layout dimensions explicit so all comparison charts stay aligned.
 FACET_COLUMNS = 4
-FACET_SUBPLOT_WIDTH = 250
-FACET_SUBPLOT_HEIGHT = 175
+FACET_SUBPLOT_WIDTH = 300
+FACET_SUBPLOT_HEIGHT = 225
 ONE_ROW_FACET_SUBPLOT_WIDTH = int(round(FACET_SUBPLOT_WIDTH * 0.6))
 COMBINED_ONE_ROW_SUBPLOT_HEIGHT = max(1, int(round(FACET_SUBPLOT_HEIGHT * 0.7)))
 
@@ -356,6 +356,61 @@ def compute_speedup_at_accuracy_levels(df_polytris: pd.DataFrame,
     return pd.DataFrame(rows)
 
 
+def _throughput_fps_from_row(row: pd.Series, time_col: str) -> float:
+    """Frames per second implied by ``time_col``, or NaN if unavailable."""
+    t = float(row[time_col])
+    if not np.isfinite(t) or t <= 0:
+        return float('nan')
+    if 'throughput_fps' in row.index and pd.notna(row['throughput_fps']):
+        return float(row['throughput_fps'])
+    if 'frame_count' in row.index and pd.notna(row['frame_count']):
+        fc = float(row['frame_count'])
+        if fc > 0:
+            return fc / t
+    return float('nan')
+
+
+def _frame_count_for_dataset(poly_df: pd.DataFrame, naive_row: pd.Series,
+                             sota_row: pd.Series) -> float | None:
+    """Single workload size (frames) for the dataset, from any available row."""
+    if 'frame_count' in poly_df.columns:
+        fc_ser = poly_df['frame_count'].dropna()
+        if not fc_ser.empty:
+            v = float(fc_ser.iloc[0])
+            if np.isfinite(v) and v > 0:
+                return v
+    for row in (naive_row, sota_row):
+        if 'frame_count' in row.index and pd.notna(row['frame_count']):
+            v = float(row['frame_count'])
+            if v > 0:
+                return v
+    return None
+
+
+def _anchor_throughput_fps(poly_df: pd.DataFrame, naive_row: pd.Series, sota_row: pd.Series,
+                           time_col: str, naive_time: float, t_other: float) -> float:
+    """
+    Throughput (FPS) of the comparison-system anchor at ``t_other``.
+
+    Uses ``frame_count / t_other`` when a frame count is available for the dataset;
+    otherwise derives FPS from explicit ``throughput_fps`` / ``frame_count`` on the
+    naive or anchor rows, or falls back to ``naive_time / t_other`` (dimensionless
+    speed vs naive) when no frame data exists.
+    """
+    if not np.isfinite(t_other) or t_other <= 0 or not np.isfinite(naive_time) or naive_time <= 0:
+        return float('nan')
+    fc = _frame_count_for_dataset(poly_df, naive_row, sota_row)
+    if fc is not None:
+        return fc / t_other
+    other_tp = _throughput_fps_from_row(sota_row, time_col)
+    if np.isfinite(other_tp):
+        return other_tp
+    naive_tp = _throughput_fps_from_row(naive_row, time_col)
+    if np.isfinite(naive_tp):
+        return naive_tp * (naive_time / t_other)
+    return naive_time / t_other
+
+
 def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
                                                   df_sota_dict: dict[str, pd.DataFrame],
                                                   df_naive: pd.DataFrame,
@@ -364,7 +419,9 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
     """
     One row per comparison-system Pareto point (anchor).
 
-    x-axis ``naive_speedup_level`` is naive_time / time_other at that anchor.
+    x-axis ``throughput_fps`` is the anchor system's throughput (frames per second)
+    when ``frame_count`` (or explicit ``throughput_fps``) is available; otherwise it
+    falls back to the naive-time ratio ``naive_time / time_other`` at that anchor.
     Among Polytris points strictly faster than the anchor (lower runtime),
     pick the one that maximizes HOTA gain (Polytris accuracy - anchor accuracy).
     Tie-break: highest Polytris accuracy, then lowest Polytris time.
@@ -377,7 +434,7 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
         time_col: Column name for runtime
 
     Returns:
-        DataFrame with columns: dataset, naive_speedup_level, system, comparison_system,
+        DataFrame with columns: dataset, throughput_fps, system, comparison_system,
         accuracy_gain, naive_time, polytris_accuracy, other_accuracy
     """
     rows: list[dict] = []
@@ -398,6 +455,8 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
         if naive_time <= 0:
             continue
 
+        naive_row = naive_dataset_df.iloc[0]
+
         for system_name, df_sota in df_sota_dict.items():
             sota_data = df_sota[df_sota['dataset'] == dataset]
             sota = sota_data.dropna(subset=[time_col, accuracy_col])
@@ -411,12 +470,14 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
                 if t_other <= 0:
                     continue
 
-                naive_sp = naive_time / t_other
+                tp_anchor = _anchor_throughput_fps(
+                    poly, naive_row, sota_row, time_col, naive_time, t_other,
+                )
                 feasible = poly[poly[time_col] < t_other]
                 if feasible.empty:
                     rows.append({
                         'dataset': dataset,
-                        'naive_speedup_level': naive_sp,
+                        'throughput_fps': tp_anchor,
                         'system': label,
                         'comparison_system': label,
                         'accuracy_gain': np.nan,
@@ -432,7 +493,7 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
                 acc_poly = float(best[accuracy_col])
                 rows.append({
                     'dataset': dataset,
-                    'naive_speedup_level': naive_sp,
+                    'throughput_fps': tp_anchor,
                     'system': label,
                     'comparison_system': label,
                     'accuracy_gain': acc_poly - acc_other,
@@ -489,12 +550,22 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
 
     base = alt.Chart(df_plot)
 
-    x_enc = alt.X('accuracy_level:Q', title=f'{accuracy_col_name} Level (other system)')
-    y_enc = alt.Y('speedup_ratio:Q', title='Speedup Ratio (Other/Polytris)')
+    x_enc = alt.X('accuracy_level:Q', title=f'{accuracy_col_name} Level')
+    hota_speedup_y = accuracy_col_name == 'HOTA'
+    y_enc = alt.Y(
+        'speedup_ratio:Q',
+        title='Speedup Ratio (Other/Ours)',
+        scale=alt.Scale(domain=[0, 20]) if hota_speedup_y else alt.Undefined,
+    )
+
+    line_kw: dict = {'strokeWidth': 2, 'opacity': SYSTEM_MARK_OPACITY}
+    point_kw: dict = {'size': STANDARD_POINT_SIZE, 'filled': True, 'opacity': SYSTEM_MARK_OPACITY}
+    if hota_speedup_y:
+        line_kw['clip'] = True
+        point_kw['clip'] = True
 
     line = base.mark_line(
-        strokeWidth=2,
-        opacity=SYSTEM_MARK_OPACITY,
+        **line_kw,
     ).encode(
         x=x_enc,
         y=y_enc,
@@ -502,9 +573,7 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
     )
 
     points = base.mark_point(
-        size=STANDARD_POINT_SIZE,
-        filled=True,
-        opacity=SYSTEM_MARK_OPACITY,
+        **point_kw,
     ).encode(
         x=x_enc,
         y=y_enc,
@@ -563,7 +632,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
                                title_dx: float | None = None,
                                title_offset: float | None = None) -> alt.Chart:
     """
-    Create faceted chart of accuracy gain vs naive speedup at discrete comparison anchors.
+    Create faceted chart of accuracy gain vs throughput at discrete comparison anchors.
 
     Args:
         df_accuracy_gain: DataFrame with accuracy gain data
@@ -578,9 +647,9 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
     if df_clean.empty:
         return alt.Chart().mark_text().encode(text=alt.value('No data available'))
 
-    # Sort so each (facet, comparison system) line follows increasing x (naive speedup).
+    # Sort so each (facet, comparison system) line follows increasing x (throughput).
     df_plot = df_clean.sort_values(
-        ['dataset_display', 'system', 'naive_speedup_level'],
+        ['dataset_display', 'system', 'throughput_fps'],
         kind='mergesort',
     ).reset_index(drop=True)
 
@@ -589,14 +658,24 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
 
     base = alt.Chart(df_plot)
 
-    # X-axis uses log scale for the normalized speedup metric if enabled.
+    # X-axis uses log scale for the throughput metric if enabled.
     x_scale = alt.Scale(type='log') if log_scale else alt.Undefined
-    x_enc = alt.X('naive_speedup_level:Q', title='Speedup Over Naive (x)', scale=x_scale)
-    y_enc = alt.Y('accuracy_gain:Q', title=f'{accuracy_col_name} Gain (Polytris - Other)')
+    x_enc = alt.X('throughput_fps:Q', title='Throughput (FPS)', scale=x_scale)
+    hota_gain_y = accuracy_col_name == 'HOTA'
+    y_enc = alt.Y(
+        'accuracy_gain:Q',
+        title=f'{accuracy_col_name} Gain (Ours - Other)',
+        scale=alt.Scale(domain=[0, 0.6]) if hota_gain_y else alt.Undefined,
+    )
+
+    line_kw: dict = {'strokeWidth': 2, 'opacity': SYSTEM_MARK_OPACITY}
+    point_kw: dict = {'size': STANDARD_POINT_SIZE, 'filled': True, 'opacity': SYSTEM_MARK_OPACITY}
+    if hota_gain_y:
+        line_kw['clip'] = True
+        point_kw['clip'] = True
 
     line = base.mark_line(
-        strokeWidth=2,
-        opacity=SYSTEM_MARK_OPACITY,
+        **line_kw,
     ).encode(
         x=x_enc,
         y=y_enc,
@@ -604,16 +683,14 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
     )
 
     points = base.mark_point(
-        size=STANDARD_POINT_SIZE,
-        filled=True,
-        opacity=SYSTEM_MARK_OPACITY,
+        **point_kw,
     ).encode(
         x=x_enc,
         y=y_enc,
         color=alt.Color('system:N', scale=color_scale, legend=legend),
         tooltip=[
             alt.Tooltip('dataset_display:N', title='Dataset'),
-            'naive_speedup_level',
+            alt.Tooltip('throughput_fps:Q', title='Throughput (FPS)'),
             'naive_time',
             'system',
             'accuracy_gain',
@@ -631,7 +708,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
     return _facet_chart(
         chart,
         df_plot,
-        f'{accuracy_col_name} Gain at Naive Speedup Levels (>0 = Polytris more accurate)',
+        f'{accuracy_col_name} Gain at Throughput (>0 = Polytris more accurate)',
         single_row=single_row,
         apply_padding=apply_padding,
         apply_legend_config=apply_legend_config,
@@ -717,7 +794,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
 
     # Shape scale domain must match color domain for legend merge (same ordering).
     shape_range = [
-        'square' if s.startswith('Polytris') else ('triangle' if s == 'Naive' else 'circle')
+        'diamond' if s.startswith('Polytris') else ('triangle' if s == 'Naive' else 'circle')
         for s in ordered_systems
     ]
     shape_scale = alt.Scale(domain=ordered_systems, range=shape_range)
@@ -887,7 +964,7 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
     Args:
         df_throughput: Throughput Pareto data
         df_speedup: Speedup-at-accuracy data
-        df_accuracy_gain: Accuracy-gain-at-naive-speedup data
+        df_accuracy_gain: Accuracy-gain-at-throughput data
         log_scale: Whether runtime-based charts should use a log x-axis
 
     Returns:
@@ -925,12 +1002,12 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         apply_legend_config=False,
         subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
         title_orient='right',
-        title_text=['HOTA', 'Speedup at', 'Accuracy'],
+        title_text=['Comparison', 'to other', 'systems:', 'Speedup at', 'HOTA Level'],
         title_angle=0,
         title_align='left',
         title_anchor='start',
-        title_dy=18,
-        title_dx=-65,
+        title_dy=5,
+        title_dx=-70,
         title_offset=0,
     )
     accuracy_gain_chart = create_accuracy_gain_chart(
@@ -944,12 +1021,12 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         apply_legend_config=False,
         subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
         title_orient='right',
-        title_text=['HOTA', 'Accuracy', 'Gain at', 'Naive Speedup'],
+        title_text=['Comparison', 'to other', 'systems:', 'Accuracy Gain', 'at Throughput'],
         title_angle=0,
         title_align='left',
         title_anchor='start',
-        title_dy=12,
-        title_dx=-54,
+        title_dy=5,
+        title_dx=-85,
         title_offset=0,
     )
 
@@ -1309,9 +1386,9 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         else:
             print("  No speedup data available")
 
-        # 5. Compute and visualize accuracy gain at speedup-over-naive levels
+        # 5. Compute and visualize accuracy gain at throughput levels
         # Uses only the full-system Polytris Pareto front for comparison.
-        print(f"\n5. Computing accuracy gain at naive speedup levels for {accuracy_name}...")
+        print(f"\n5. Computing accuracy gain at throughput for {accuracy_name}...")
         df_accuracy_gain = compute_accuracy_gain_at_naive_speedup_levels(
             polytris_full_pareto_df, pareto_sota_dict, pareto_naive_df, accuracy_col, 'time',
         )
@@ -1321,7 +1398,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             save_chart_variants(
                 create_accuracy_gain_chart,
                 output_dir,
-                f'{accuracy_col.lower()}_accuracy_gain_at_naive_speedup',
+                f'{accuracy_col.lower()}_accuracy_gain_at_throughput',
                 df_accuracy_gain,
                 accuracy_name,
                 log_scale=log_scale,
