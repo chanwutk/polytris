@@ -59,6 +59,10 @@ SYSTEM_MARK_OPACITY = 0.6
 STANDARD_POINT_SIZE = 30
 PARETO_POINT_SIZE = 35
 
+# Vega expression that splits legend labels on spaces so each token renders on
+# its own line -- keeps long ablation labels readable in narrow legends.
+LEGEND_LABEL_BREAK_ON_SPACE = "split(datum.label, ' ')"
+
 # Map internal dataset identifiers to the display names used in charts.
 DATASET_NAME_MAP = {
     'caldot1-y05': 'CalDoT 1',
@@ -550,7 +554,7 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
 
     # Use the canonical system colors so combined charts stay visually aligned.
     color_scale = _get_system_color_scale(df_clean['system'].dropna().unique().tolist())
-    legend = alt.Legend(title=legend_title) if show_legend else None
+    legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
     # Base chart
     base = alt.Chart(df_clean)
@@ -645,7 +649,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
 
     # Use the canonical system colors so combined charts stay visually aligned.
     color_scale = _get_system_color_scale(df_clean['system'].dropna().unique().tolist())
-    legend = alt.Legend(title=legend_title) if show_legend else None
+    legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
     # Base chart
     base = alt.Chart(df_clean)
@@ -749,7 +753,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
 
     # Define a consistent color scale for the systems present in this chart.
     color_scale = _get_system_color_scale(df_clean['system'].dropna().unique().tolist())
-    legend = alt.Legend(title=legend_title) if show_legend else None
+    legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
     # Base chart for Pareto fronts (with lines)
     base_pareto = alt.Chart(df_clean)

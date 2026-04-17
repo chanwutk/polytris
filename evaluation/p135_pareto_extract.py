@@ -5,7 +5,7 @@ Extract Pareto-optimal parameter sets from valid-split tradeoff data.
 
 For each configured dataset, loads the tradeoff CSV produced by the valid pass,
 computes Pareto fronts for each ablation condition (full system, no frame
-sampling, no polyomino pruning, neither), and saves the union of all
+sampling, neither sampling nor pruning), and saves the union of all
 Pareto-optimal parameter sets to the evaluation cache.  The union drives
 test-pass filtering so that every parameter combo needed by any ablation
 curve is executed on the test split.

@@ -183,13 +183,21 @@ class HeuristicHotaLossSummary:
 
 def compute_heuristic_hota_loss_summary(combined_df: pd.DataFrame, tracker_name: str) -> HeuristicHotaLossSummary | None:
     """Compare each heuristic row to the pruning-vs-HOTA Pareto anchor at matched pruning."""
-    df = annotate_pareto_flags(_prepare_df(combined_df.copy()))
+    # _prepare_df only adds pruning_ratio; Pareto flags are (re-)computed per
+    # dataset below so that a cross-dataset combined_df cannot contaminate a
+    # dataset's frontier with grid_keys flagged by another dataset's points.
+    df = _prepare_df(combined_df.copy())
     flag = _PRUNING_HOTA_FLAG_COL
-    if flag not in df.columns:
-        return None
 
     rows: list[dict[str, Any]] = []
     for dataset, g in df.groupby('dataset', sort=False):
+        # Per-dataset annotation: annotate_pareto_flags has no groupby, so
+        # running it over the whole combined_df would compute one global
+        # Pareto over all datasets and flag by grid_key (shared across
+        # datasets), producing a wrong per-dataset frontier.
+        g = annotate_pareto_flags(g.copy())
+        if flag not in g.columns:
+            continue
         pareto = g[(g['method'] == 'exhaustive') & (g[flag])].dropna(
             subset=['pruning_ratio', 'HOTA_HOTA'],
         )
@@ -256,8 +264,8 @@ def write_heuristic_hota_loss_macros(
             f'% Tracker key: {summary.tracker_name} ({label}).',
             '% Pareto anchor (pruning vs HOTA): exhaustive point with highest pruning',
             '% among those with pruning <= the heuristic point.',
-            r'\providecommand{\MistrackHeuristicMaxHotaLossPercent}{%s}' % mx_s,
-            r'\providecommand{\MistrackHeuristicAvgHotaLossPercent}{%s}' % mn_s,
+            r'\newcommand{\MistrackHeuristicMaxHotaLossPercent}{\autogen{%s}}' % mx_s,
+            r'\newcommand{\MistrackHeuristicAvgHotaLossPercent}{\autogen{%s}}' % mn_s,
         ],
     )
     path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
@@ -346,7 +354,7 @@ def _save_chart_export(chart: alt.Chart, output_dir: Path, file_stem: str) -> li
     written: list[Path] = []
     for ext, kwargs in (
         ('.png', {'scale_factor': 4.0}),
-        ('.pdf', {}),
+        # ('.pdf', {}),
         ('.html', {}),
     ):
         out_path = output_dir / f'{file_stem}{ext}'

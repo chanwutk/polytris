@@ -28,10 +28,9 @@ class AblationCondition:
 
 # Ordered list: full system -> incrementally disable optimizations.
 ABLATION_CONDITIONS: list[AblationCondition] = [
-    AblationCondition('full',        'Polytris',              None, None),
-    AblationCondition('no_sampling', 'Polytris (-Sampling)',  [1],  None),
-    AblationCondition('no_pruning',  'Polytris (-Pruning)',   None, [None]),
-    AblationCondition('no_both',     'Polytris (-Both)',      [1],  [None]),
+    AblationCondition('full',        'Polytris',                        None, None),
+    AblationCondition('no_sampling', 'Polytris (-Sampling)',            [1],  None),
+    AblationCondition('no_both',     'Polytris (-Sampling, -Pruning)',  [1],  [None]),
 ]
 
 

@@ -25,7 +25,7 @@ EXEC:
     - 60
   TILEPADDING_MODES:
     - none
-    - plus
+    # - plus
     # - tl
     - tr
     - bl

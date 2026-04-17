@@ -68,31 +68,12 @@ class TestNoSamplingCondition:
         assert result['tracking_accuracy_threshold'].isna().sum() == 1
 
 
-class TestNoPruningCondition:
-    """The 'no_pruning' condition should restrict to threshold=null only."""
-
-    def test_only_null_threshold(self):
-        df = _make_tradeoff_df()
-        no_pruning = ABLATION_CONDITIONS[2]
-        assert no_pruning.name == 'no_pruning'
-        result = filter_by_ablation_condition(df, no_pruning)
-        # Only threshold=NaN rows survive; all 4 sample rates remain.
-        assert result['tracking_accuracy_threshold'].isna().all()
-        assert len(result) == 4
-
-    def test_all_sample_rates_preserved(self):
-        df = _make_tradeoff_df()
-        no_pruning = ABLATION_CONDITIONS[2]
-        result = filter_by_ablation_condition(df, no_pruning)
-        assert sorted(result['sample_rate'].tolist()) == [1, 2, 4, 8]
-
-
 class TestNoBothCondition:
     """The 'no_both' condition should restrict to sample_rate=1 AND threshold=null."""
 
     def test_single_row_survives(self):
         df = _make_tradeoff_df()
-        no_both = ABLATION_CONDITIONS[3]
+        no_both = ABLATION_CONDITIONS[2]
         assert no_both.name == 'no_both'
         result = filter_by_ablation_condition(df, no_both)
         assert len(result) == 1
@@ -122,9 +103,10 @@ class TestMissingColumns:
 
     def test_no_threshold_column(self):
         df = pd.DataFrame({'sample_rate': [1, 2, 4]})
-        no_pruning = ABLATION_CONDITIONS[2]
-        # threshold column missing: the threshold filter is not applied.
-        result = filter_by_ablation_condition(df, no_pruning)
+        # Use a custom condition that restricts thresholds, so we can verify
+        # the filter is skipped when the threshold column is absent.
+        threshold_only = AblationCondition('threshold_only', 'Threshold Only', None, [None])
+        result = filter_by_ablation_condition(df, threshold_only)
         assert len(result) == 3
 
 
@@ -149,13 +131,13 @@ class TestCustomCondition:
 class TestAblationConditionsOrdering:
     """Verify the canonical ordering and labels of ABLATION_CONDITIONS."""
 
-    def test_four_conditions_defined(self):
-        assert len(ABLATION_CONDITIONS) == 4
+    def test_three_conditions_defined(self):
+        assert len(ABLATION_CONDITIONS) == 3
 
     def test_condition_names(self):
         names = [c.name for c in ABLATION_CONDITIONS]
-        assert names == ['full', 'no_sampling', 'no_pruning', 'no_both']
+        assert names == ['full', 'no_sampling', 'no_both']
 
     def test_condition_labels(self):
         labels = [c.label for c in ABLATION_CONDITIONS]
-        assert labels == ['Polytris', 'Polytris (-Sampling)', 'Polytris (-Pruning)', 'Polytris (-Both)']
+        assert labels == ['Polytris', 'Polytris (-Sampling)', 'Polytris (-Sampling, -Pruning)']
