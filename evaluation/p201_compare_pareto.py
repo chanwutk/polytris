@@ -5,8 +5,12 @@ Compare system performance using Pareto fronts and relative comparisons.
 
 This script extends p200_compare_compute.py by:
 1. Computing and displaying Pareto front lines instead of all data points for Polytris
-2. Adding visualizations showing speedup ratios at accuracy increments
-3. Adding visualizations showing accuracy gains at speedup-over-naive increments
+2. Adding visualizations showing speedup ratios at each comparison-system
+   Pareto point (x = that system's accuracy; y = Polytris speedup under a
+   higher-accuracy pairing rule)
+3. Adding visualizations showing accuracy gains at each comparison-system
+   Pareto point (x = naive speedup at that point; y = Polytris HOTA gain under
+   a higher-naive-speedup pairing rule)
 """
 
 import argparse
@@ -21,7 +25,7 @@ from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_conditio
 from polyis.io import cache
 from polyis.pareto import compute_pareto_front
 from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
-from evaluation.utilities import ColorScheme, SYSTEM_COLOR_DOMAIN
+from evaluation.utilities import SYSTEM_COLOR_DOMAIN
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
 
@@ -52,9 +56,6 @@ _FACET_HEADER_HEIGHT = 40
 LEGEND_X = (FACET_COLUMNS - 1) * (FACET_SUBPLOT_WIDTH + _FACET_COL_SPACING)
 LEGEND_Y = FACET_SUBPLOT_HEIGHT + _FACET_HEADER_HEIGHT + _FACET_ROW_SPACING
 
-# Define the color for each system category (one per SYSTEM_COLOR_DOMAIN entry).
-SYSTEM_COLOR_RANGE = ColorScheme.CarbonDark[:len(SYSTEM_COLOR_DOMAIN)]
-SYSTEM_COLOR_LOOKUP = dict(zip(SYSTEM_COLOR_DOMAIN, SYSTEM_COLOR_RANGE))
 SYSTEM_MARK_OPACITY = 0.6
 STANDARD_POINT_SIZE = 30
 PARETO_POINT_SIZE = 35
@@ -127,48 +128,31 @@ def _get_dataset_display_sort(df: pd.DataFrame) -> list[str] | None:
     return [DATASET_NAME_MAP.get(dataset, dataset) for dataset in ordered_dataset_ids + extra_dataset_ids]
 
 
-def _get_system_color_scale(systems: list[str]) -> alt.Scale:
-    """
-    Build a deterministic system color scale without showing absent systems.
-
-    Args:
-        systems: System labels present in the chart data
-
-    Returns:
-        Altair scale that preserves the canonical system-to-color mapping
-    """
-    ordered_systems = []
-    seen_systems = set()
-
-    # Keep the canonical order for known systems so colors stay stable.
+def _ordered_systems_for_chart(systems: list[str]) -> list[str]:
+    """Canonical order first, then extras; used so shape scale domain matches ``system``."""
+    ordered: list[str] = []
+    seen: set[str] = set()
+    present = {s for s in systems if not pd.isna(s)}
     for system in SYSTEM_COLOR_DOMAIN:
-        if system in systems and system not in seen_systems:
-            ordered_systems.append(system)
-            seen_systems.add(system)
-
-    # Append any unexpected systems after the known set.
+        if system in present and system not in seen:
+            ordered.append(system)
+            seen.add(system)
     for system in systems:
-        if pd.isna(system) or system in seen_systems:
+        if pd.isna(system) or system in seen:
             continue
-        ordered_systems.append(system)
-        seen_systems.add(system)
+        ordered.append(system)
+        seen.add(system)
+    return ordered
 
-    # Fall back to unused palette entries if an unexpected system appears.
-    color_range = []
-    used_colors = set()
-    palette_index = 0
-    for system in ordered_systems:
-        if system in SYSTEM_COLOR_LOOKUP:
-            color = SYSTEM_COLOR_LOOKUP[system]
-        else:
-            while ColorScheme.CarbonDark[palette_index % len(ColorScheme.CarbonDark)] in used_colors:
-                palette_index += 1
-            color = ColorScheme.CarbonDark[palette_index % len(ColorScheme.CarbonDark)]
-            palette_index += 1
-        color_range.append(color)
-        used_colors.add(color)
 
-    return alt.Scale(domain=ordered_systems, range=color_range)
+def _default_system_color_scale(systems: list[str]) -> alt.Scale:
+    """
+    Nominal colors in canonical ``SYSTEM_COLOR_DOMAIN`` order (then extras).
+
+    No ``range``: Vega-Lite uses the default categorical palette, assigning
+    colors by domain index so the mapping stays stable across charts.
+    """
+    return alt.Scale(domain=_ordered_systems_for_chart(systems))
 
 
 def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
@@ -288,119 +272,102 @@ def load_polytris_tradeoff_split_data(datasets: list[str]) -> pd.DataFrame:
 def compute_speedup_at_accuracy_levels(df_polytris: pd.DataFrame,
                                        df_sota_dict: dict[str, pd.DataFrame],
                                        accuracy_col: str,
-                                       time_col: str = 'time',
-                                       increment: float = 0.02) -> pd.DataFrame:
+                                       time_col: str = 'time') -> pd.DataFrame:
     """
-    Compute speedup ratio (time_other/time_polytris) at accuracy increments.
+    One row per comparison-system Pareto point (anchor).
+
+    For each anchor (other_time, other accuracy on the x-axis as
+    ``accuracy_level``), pick the Polytris point with strictly higher accuracy
+    that minimizes Polytris runtime (maximizes speedup_ratio =
+    other_time / polytris_time). Tie-break: lowest time, then highest accuracy.
 
     Args:
         df_polytris: DataFrame with Polytris Pareto front data
         df_sota_dict: Dictionary mapping system names to their Pareto front DataFrames
         accuracy_col: Column name for accuracy metric (e.g., 'HOTA_HOTA')
         time_col: Column name for runtime
-        increment: Accuracy increment step size
 
     Returns:
-        DataFrame with columns: dataset, accuracy_level, comparison_system, speedup_ratio
+        DataFrame with columns: dataset, accuracy_level, system, comparison_system,
+        speedup_ratio, polytris_time, other_time
     """
-    results = []
+    rows: list[dict] = []
 
-    # Get all datasets from Polytris data
     datasets = df_polytris['dataset'].unique()
 
     for dataset in datasets:
-        # Get Polytris data for this dataset
         polytris_data = df_polytris[df_polytris['dataset'] == dataset]
-
-        if polytris_data.empty:
+        poly = polytris_data.dropna(subset=[time_col, accuracy_col])
+        if poly.empty:
             continue
 
-        # Use data directly (already Pareto-optimal from p022).
-        polytris_by_acc = polytris_data.dropna(subset=[time_col, accuracy_col]).sort_values(accuracy_col)
-
-        if polytris_by_acc.empty:
-            continue
-
-        # Define accuracy query points based on data range
-        min_acc = 0.0
-        max_acc = min(1.0, polytris_by_acc[accuracy_col].max())
-        accuracy_levels = np.arange(min_acc, max_acc + increment, increment)
-
-        # For speedup comparison, interpolate time at given accuracy levels
-        # by inverting the sorted data: given accuracy, find time
-
-        # Interpolate Polytris time at each accuracy level
-        polytris_times = np.interp(
-            accuracy_levels,
-            polytris_by_acc[accuracy_col].values,
-            polytris_by_acc[time_col].values
-        )
-
-        # Compare with each SOTA system
         for system_name, df_sota in df_sota_dict.items():
-            # Get SOTA data for this dataset
             sota_data = df_sota[df_sota['dataset'] == dataset]
-
-            if sota_data.empty:
+            sota = sota_data.dropna(subset=[time_col, accuracy_col])
+            if sota.empty:
                 continue
 
-            # Use data directly.
-            sota_by_acc = sota_data.dropna(subset=[time_col, accuracy_col]).sort_values(accuracy_col)
+            label = system_name.upper()
+            for _, sota_row in sota.iterrows():
+                t_other = float(sota_row[time_col])
+                acc_other = float(sota_row[accuracy_col])
+                feasible = poly[poly[accuracy_col] > acc_other]
+                if feasible.empty or t_other <= 0:
+                    rows.append({
+                        'dataset': dataset,
+                        'accuracy_level': acc_other,
+                        'system': label,
+                        'comparison_system': label,
+                        'speedup_ratio': np.nan,
+                        'polytris_time': np.nan,
+                        'other_time': t_other,
+                    })
+                    continue
 
-            if sota_by_acc.empty:
-                continue
+                best = feasible.sort_values(
+                    [time_col, accuracy_col], ascending=[True, False],
+                ).iloc[0]
+                t_poly = float(best[time_col])
+                if t_poly <= 0:
+                    rows.append({
+                        'dataset': dataset,
+                        'accuracy_level': acc_other,
+                        'system': label,
+                        'comparison_system': label,
+                        'speedup_ratio': np.nan,
+                        'polytris_time': t_poly,
+                        'other_time': t_other,
+                    })
+                    continue
 
-            # Interpolate SOTA time at each accuracy level
-            sota_times = np.interp(
-                accuracy_levels,
-                sota_by_acc[accuracy_col].values,
-                sota_by_acc[time_col].values
-            )
+                rows.append({
+                    'dataset': dataset,
+                    'accuracy_level': acc_other,
+                    'system': label,
+                    'comparison_system': label,
+                    'speedup_ratio': t_other / t_poly,
+                    'polytris_time': t_poly,
+                    'other_time': t_other,
+                })
 
-            # Compute speedup ratio (SOTA time / Polytris time)
-            # > 1 means Polytris is faster
-            speedup_ratios = sota_times / polytris_times
-
-            # Mask values where interpolation is outside valid range
-            valid_mask = (
-                (accuracy_levels >= polytris_by_acc[accuracy_col].min()) &
-                (accuracy_levels <= polytris_by_acc[accuracy_col].max()) &
-                (accuracy_levels >= sota_by_acc[accuracy_col].min()) &
-                (accuracy_levels <= sota_by_acc[accuracy_col].max())
-            )
-            speedup_ratios[~valid_mask] = np.nan
-
-            # Create result DataFrame for this comparison
-            comparison_df = pd.DataFrame({
-                'dataset': dataset,
-                'accuracy_level': accuracy_levels,
-                'system': system_name.upper(),
-                'comparison_system': system_name.upper(),
-                'speedup_ratio': speedup_ratios,
-                'polytris_time': polytris_times,
-                'other_time': sota_times
-            })
-
-            results.append(comparison_df)
-
-    if not results:
+    if not rows:
         return pd.DataFrame()
 
-    return pd.concat(results, ignore_index=True)
+    return pd.DataFrame(rows)
 
 
 def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
                                                   df_sota_dict: dict[str, pd.DataFrame],
                                                   df_naive: pd.DataFrame,
                                                   accuracy_col: str,
-                                                  time_col: str = 'time',
-                                                  increment: float = 5.0) -> pd.DataFrame:
+                                                  time_col: str = 'time') -> pd.DataFrame:
     """
-    Compute accuracy gain (acc_polytris - acc_other) at runtime increments,
-    then express the x-axis as speedup over naive.
+    One row per comparison-system Pareto point (anchor).
 
-    Interpolation is performed in runtime space to preserve accuracy values;
-    only the x-axis is converted to naive_time / runtime after interpolation.
+    x-axis ``naive_speedup_level`` is naive_time / time_other at that anchor.
+    Among Polytris points strictly faster than the anchor (lower runtime),
+    pick the one that maximizes HOTA gain (Polytris accuracy - anchor accuracy).
+    Tie-break: highest Polytris accuracy, then lowest Polytris time.
 
     Args:
         df_polytris: DataFrame with Polytris Pareto front data
@@ -408,24 +375,21 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
         df_naive: DataFrame with one naive baseline row per dataset
         accuracy_col: Column name for accuracy metric (e.g., 'HOTA_HOTA')
         time_col: Column name for runtime
-        increment: Runtime increment step size in seconds
 
     Returns:
-        DataFrame with columns: dataset, naive_speedup_level, comparison_system, accuracy_gain
+        DataFrame with columns: dataset, naive_speedup_level, system, comparison_system,
+        accuracy_gain, naive_time, polytris_accuracy, other_accuracy
     """
-    results = []
+    rows: list[dict] = []
 
-    # Get all datasets from Polytris data.
     datasets = df_polytris['dataset'].unique()
 
     for dataset in datasets:
-        # Get Polytris data for this dataset.
         polytris_data = df_polytris[df_polytris['dataset'] == dataset]
-
-        if polytris_data.empty:
+        poly = polytris_data.dropna(subset=[time_col, accuracy_col])
+        if poly.empty:
             continue
 
-        # Resolve the dataset-local naive runtime used to normalize the x-axis.
         naive_dataset_df = df_naive[df_naive['dataset'] == dataset].dropna(subset=[time_col])
         if naive_dataset_df.empty:
             continue
@@ -434,91 +398,53 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
         if naive_time <= 0:
             continue
 
-        # Sort Polytris data by time for interpolation in runtime space.
-        polytris_by_time = polytris_data.dropna(subset=[time_col, accuracy_col]).sort_values(time_col)
-
-        if polytris_by_time.empty:
-            continue
-
-        # Determine runtime range based on all systems.
-        max_time = polytris_by_time[time_col].max()
-
-        # Check SOTA systems for max time.
-        for df_sota in df_sota_dict.values():
-            sota_data = df_sota[df_sota['dataset'] == dataset]
-            if not sota_data.empty:
-                max_time = max(max_time, sota_data[time_col].max())
-
-        # Define runtime query points (start from increment to avoid division by zero).
-        runtime_levels = np.arange(increment, max_time + increment, increment)
-
-        # Interpolate Polytris accuracy at each runtime level.
-        polytris_accuracies = np.interp(
-            runtime_levels,
-            polytris_by_time[time_col].values,
-            polytris_by_time[accuracy_col].values
-        )
-
-        # Mask values outside Polytris range.
-        valid_polytris = (
-            (runtime_levels >= polytris_by_time[time_col].min()) &
-            (runtime_levels <= polytris_by_time[time_col].max())
-        )
-
-        # Convert runtime levels to speedup-over-naive for the x-axis.
-        naive_speedup_levels = naive_time / runtime_levels
-
-        # Compare with each SOTA system.
         for system_name, df_sota in df_sota_dict.items():
-            # Get SOTA data for this dataset.
             sota_data = df_sota[df_sota['dataset'] == dataset]
-
-            if sota_data.empty:
+            sota = sota_data.dropna(subset=[time_col, accuracy_col])
+            if sota.empty:
                 continue
 
-            # Sort SOTA data by time for interpolation in runtime space.
-            sota_by_time = sota_data.dropna(subset=[time_col, accuracy_col]).sort_values(time_col)
+            label = system_name.upper()
+            for _, sota_row in sota.iterrows():
+                t_other = float(sota_row[time_col])
+                acc_other = float(sota_row[accuracy_col])
+                if t_other <= 0:
+                    continue
 
-            if sota_by_time.empty:
-                continue
+                naive_sp = naive_time / t_other
+                feasible = poly[poly[time_col] < t_other]
+                if feasible.empty:
+                    rows.append({
+                        'dataset': dataset,
+                        'naive_speedup_level': naive_sp,
+                        'system': label,
+                        'comparison_system': label,
+                        'accuracy_gain': np.nan,
+                        'naive_time': naive_time,
+                        'polytris_accuracy': np.nan,
+                        'other_accuracy': acc_other,
+                    })
+                    continue
 
-            # Interpolate SOTA accuracy at each runtime level.
-            sota_accuracies = np.interp(
-                runtime_levels,
-                sota_by_time[time_col].values,
-                sota_by_time[accuracy_col].values
-            )
+                best = feasible.sort_values(
+                    [accuracy_col, time_col], ascending=[False, True],
+                ).iloc[0]
+                acc_poly = float(best[accuracy_col])
+                rows.append({
+                    'dataset': dataset,
+                    'naive_speedup_level': naive_sp,
+                    'system': label,
+                    'comparison_system': label,
+                    'accuracy_gain': acc_poly - acc_other,
+                    'naive_time': naive_time,
+                    'polytris_accuracy': acc_poly,
+                    'other_accuracy': acc_other,
+                })
 
-            # Compute accuracy gain (Polytris - SOTA).
-            # > 0 means Polytris is more accurate.
-            accuracy_gains = polytris_accuracies - sota_accuracies
-
-            # Mask values where interpolation is outside valid range.
-            valid_sota = (
-                (runtime_levels >= sota_by_time[time_col].min()) &
-                (runtime_levels <= sota_by_time[time_col].max())
-            )
-            valid_mask = valid_polytris & valid_sota
-            accuracy_gains[~valid_mask] = np.nan
-
-            # Create result DataFrame for this comparison.
-            comparison_df = pd.DataFrame({
-                'dataset': dataset,
-                'naive_speedup_level': naive_speedup_levels,
-                'system': system_name.upper(),
-                'comparison_system': system_name.upper(),
-                'accuracy_gain': accuracy_gains,
-                'naive_time': naive_time,
-                'polytris_accuracy': polytris_accuracies,
-                'other_accuracy': sota_accuracies
-            })
-
-            results.append(comparison_df)
-
-    if not results:
+    if not rows:
         return pd.DataFrame()
 
-    return pd.concat(results, ignore_index=True)
+    return pd.DataFrame(rows)
 
 
 def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
@@ -537,7 +463,7 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
                          title_dx: float | None = None,
                          title_offset: float | None = None) -> alt.Chart:
     """
-    Create faceted line chart showing speedup ratio vs accuracy level.
+    Create faceted chart of speedup ratio vs comparison-system accuracy (discrete anchors).
 
     Args:
         df_speedup: DataFrame with speedup data
@@ -552,31 +478,36 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
     if df_clean.empty:
         return alt.Chart().mark_text().encode(text=alt.value('No data available'))
 
-    # Use the canonical system colors so combined charts stay visually aligned.
-    color_scale = _get_system_color_scale(df_clean['system'].dropna().unique().tolist())
+    # Sort so each (facet, comparison system) line follows increasing anchor HOTA on x.
+    df_plot = df_clean.sort_values(
+        ['dataset_display', 'system', 'accuracy_level'],
+        kind='mergesort',
+    ).reset_index(drop=True)
+
+    color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
-    # Base chart
-    base = alt.Chart(df_clean)
+    base = alt.Chart(df_plot)
 
-    # Line chart showing speedup ratio (no tooltip - lines are not easily hoverable)
+    x_enc = alt.X('accuracy_level:Q', title=f'{accuracy_col_name} Level (other system)')
+    y_enc = alt.Y('speedup_ratio:Q', title='Speedup Ratio (Other/Polytris)')
+
     line = base.mark_line(
         strokeWidth=2,
         opacity=SYSTEM_MARK_OPACITY,
     ).encode(
-        x=alt.X('accuracy_level:Q', title=f'{accuracy_col_name} Level'),
-        y=alt.Y('speedup_ratio:Q', title='Speedup Ratio (Other/Polytris)'),
-        color=alt.Color('system:N', scale=color_scale, legend=legend),
+        x=x_enc,
+        y=y_enc,
+        color=alt.Color('system:N', scale=color_scale, legend=None),
     )
 
-    # Add points for better visibility (with tooltip for interactivity)
     points = base.mark_point(
         size=STANDARD_POINT_SIZE,
         filled=True,
         opacity=SYSTEM_MARK_OPACITY,
     ).encode(
-        x=alt.X('accuracy_level:Q'),
-        y=alt.Y('speedup_ratio:Q'),
+        x=x_enc,
+        y=y_enc,
         color=alt.Color('system:N', scale=color_scale, legend=legend),
         tooltip=[
             alt.Tooltip('dataset_display:N', title='Dataset'),
@@ -588,16 +519,16 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
         ]
     )
 
-    # Horizontal rule at y=1 (parity line)
-    rule = alt.Chart(pd.DataFrame({'y': [1]})).mark_rule(
-        strokeDash=[4, 4], color='gray', strokeWidth=1
-    ).encode(y='y:Q')
+    # Horizontal rule at y=1 (parity line). Use the same data as ``points`` so
+    # layered + facet specs satisfy Altair v6 (one top-level dataset per layer).
+    rule = base.mark_rule(
+        strokeDash=[4, 4], color='gray', strokeWidth=1,
+    ).encode(y=alt.datum(1))
 
-    # Apply the shared facet configuration so both export variants stay aligned.
     chart = line + points + rule
     return _facet_chart(
         chart,
-        df_clean,
+        df_plot,
         f'Speedup Ratio at {accuracy_col_name} Levels (>1 = Polytris faster)',
         single_row=single_row,
         apply_padding=apply_padding,
@@ -632,7 +563,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
                                title_dx: float | None = None,
                                title_offset: float | None = None) -> alt.Chart:
     """
-    Create faceted line chart showing accuracy gain vs naive speedup level.
+    Create faceted chart of accuracy gain vs naive speedup at discrete comparison anchors.
 
     Args:
         df_accuracy_gain: DataFrame with accuracy gain data
@@ -647,34 +578,38 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
     if df_clean.empty:
         return alt.Chart().mark_text().encode(text=alt.value('No data available'))
 
-    # Use the canonical system colors so combined charts stay visually aligned.
-    color_scale = _get_system_color_scale(df_clean['system'].dropna().unique().tolist())
+    # Sort so each (facet, comparison system) line follows increasing x (naive speedup).
+    df_plot = df_clean.sort_values(
+        ['dataset_display', 'system', 'naive_speedup_level'],
+        kind='mergesort',
+    ).reset_index(drop=True)
+
+    color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
-    # Base chart
-    base = alt.Chart(df_clean)
+    base = alt.Chart(df_plot)
 
     # X-axis uses log scale for the normalized speedup metric if enabled.
     x_scale = alt.Scale(type='log') if log_scale else alt.Undefined
     x_enc = alt.X('naive_speedup_level:Q', title='Speedup Over Naive (x)', scale=x_scale)
-    # Line chart showing accuracy gain (no tooltip - lines are not easily hoverable)
+    y_enc = alt.Y('accuracy_gain:Q', title=f'{accuracy_col_name} Gain (Polytris - Other)')
+
     line = base.mark_line(
         strokeWidth=2,
         opacity=SYSTEM_MARK_OPACITY,
     ).encode(
         x=x_enc,
-        y=alt.Y('accuracy_gain:Q', title=f'{accuracy_col_name} Gain (Polytris - Other)'),
-        color=alt.Color('system:N', scale=color_scale, legend=legend),
+        y=y_enc,
+        color=alt.Color('system:N', scale=color_scale, legend=None),
     )
 
-    # Add points for better visibility (with tooltip for interactivity)
     points = base.mark_point(
         size=STANDARD_POINT_SIZE,
         filled=True,
         opacity=SYSTEM_MARK_OPACITY,
     ).encode(
         x=x_enc,
-        y=alt.Y('accuracy_gain:Q'),
+        y=y_enc,
         color=alt.Color('system:N', scale=color_scale, legend=legend),
         tooltip=[
             alt.Tooltip('dataset_display:N', title='Dataset'),
@@ -687,16 +622,15 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
         ]
     )
 
-    # Horizontal rule at y=0 (parity line)
-    rule = alt.Chart(pd.DataFrame({'y': [0]})).mark_rule(
-        strokeDash=[4, 4], color='gray', strokeWidth=1
-    ).encode(y='y:Q')
+    # Horizontal rule at y=0 (parity line). Same data as ``points`` for Altair v6.
+    rule = base.mark_rule(
+        strokeDash=[4, 4], color='gray', strokeWidth=1,
+    ).encode(y=alt.datum(0))
 
-    # Apply the shared facet configuration so both export variants stay aligned.
     chart = line + points + rule
     return _facet_chart(
         chart,
-        df_clean,
+        df_plot,
         f'{accuracy_col_name} Gain at Naive Speedup Levels (>0 = Polytris more accurate)',
         single_row=single_row,
         apply_padding=apply_padding,
@@ -751,8 +685,9 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     if df_clean.empty:
         return alt.Chart().mark_text().encode(text=alt.value('No data available'))
 
-    # Define a consistent color scale for the systems present in this chart.
-    color_scale = _get_system_color_scale(df_clean['system'].dropna().unique().tolist())
+    systems_list = df_clean['system'].dropna().unique().tolist()
+    ordered_systems = _ordered_systems_for_chart(systems_list)
+    color_scale = alt.Scale(domain=ordered_systems)
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
     # Base chart for Pareto fronts (with lines)
@@ -780,12 +715,12 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         detail=['system:N', 'classifier:N', 'canvas_scale:N']
     )
 
-    # Shape scale: square for all Polytris variants, triangle for Naive, circle for SOTA.
+    # Shape scale domain must match color domain for legend merge (same ordering).
     shape_range = [
         'square' if s.startswith('Polytris') else ('triangle' if s == 'Naive' else 'circle')
-        for s in SYSTEM_COLOR_DOMAIN
+        for s in ordered_systems
     ]
-    shape_scale = alt.Scale(domain=SYSTEM_COLOR_DOMAIN, range=shape_range)
+    shape_scale = alt.Scale(domain=ordered_systems, range=shape_range)
 
     # Add points for Pareto fronts (with tooltip for interactivity)
     points_pareto = base_pareto.mark_point(
@@ -1359,7 +1294,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         # Uses only the full-system Polytris Pareto front for comparison.
         print(f"\n4. Computing speedup at accuracy levels for {accuracy_name}...")
         df_speedup = compute_speedup_at_accuracy_levels(
-            polytris_full_pareto_df, pareto_sota_dict, accuracy_col, 'time', increment=0.005
+            polytris_full_pareto_df, pareto_sota_dict, accuracy_col, 'time',
         )
 
         if not df_speedup.empty:
@@ -1378,7 +1313,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         # Uses only the full-system Polytris Pareto front for comparison.
         print(f"\n5. Computing accuracy gain at naive speedup levels for {accuracy_name}...")
         df_accuracy_gain = compute_accuracy_gain_at_naive_speedup_levels(
-            polytris_full_pareto_df, pareto_sota_dict, pareto_naive_df, accuracy_col, 'time', increment=5.0
+            polytris_full_pareto_df, pareto_sota_dict, pareto_naive_df, accuracy_col, 'time',
         )
 
         if not df_accuracy_gain.empty:

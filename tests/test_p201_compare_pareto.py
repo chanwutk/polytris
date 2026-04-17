@@ -7,6 +7,7 @@ from evaluation.p201_compare_pareto import (
     FACET_SUBPLOT_WIDTH,
     _filter_pareto_per_dataset,
     compute_accuracy_gain_at_naive_speedup_levels,
+    compute_speedup_at_accuracy_levels,
     create_accuracy_gain_chart,
     create_pareto_comparison_chart,
     create_speedup_chart,
@@ -276,8 +277,9 @@ def test_accuracy_gain_chart_uses_naive_speedup_x_title():
     assert layer_x['field'] == 'naive_speedup_level'
 
 
-def test_compute_accuracy_gain_at_naive_speedup_levels_masks_non_overlapping_ranges():
-    # Use one naive runtime per dataset so the x-axis normalization is deterministic.
+def test_compute_accuracy_gain_at_naive_speedup_levels_discrete_anchors():
+    # One result row per SOTA Pareto point; Polytris chosen by strict faster runtime
+    # then max accuracy gain (tie-break: higher acc, then lower time).
     naive_df = pd.DataFrame([
         {'dataset': 'demo', 'time': 100.0, 'HOTA_HOTA': 0.60},
     ])
@@ -295,14 +297,50 @@ def test_compute_accuracy_gain_at_naive_speedup_levels_masks_non_overlapping_ran
         {'otif': sota_df},
         naive_df,
         'HOTA_HOTA',
-        increment=1.0,
     )
 
-    non_null = result.dropna(subset=['accuracy_gain']).reset_index(drop=True)
-    assert non_null['naive_speedup_level'].tolist() == [2.0]
-    assert non_null.loc[0, 'system'] == 'OTIF'
-    assert non_null.loc[0, 'accuracy_gain'] == pytest.approx(0.15)
-    assert non_null.loc[0, 'naive_time'] == 100.0
+    non_null = result.dropna(subset=['accuracy_gain']).sort_values(
+        'naive_speedup_level',
+    ).reset_index(drop=True)
+    assert len(non_null) == 2
+    assert non_null['system'].tolist() == ['OTIF', 'OTIF']
+    # Anchor (100, 0.75): naive speedup 1.0; Polytris faster than 100 -> (50, 0.80); gain 0.05
+    assert non_null.loc[0, 'naive_speedup_level'] == pytest.approx(1.0)
+    assert non_null.loc[0, 'accuracy_gain'] == pytest.approx(0.05)
+    # Anchor (50, 0.65): naive speedup 2.0; Polytris faster than 50 -> (25, 0.70); gain 0.05
+    assert non_null.loc[1, 'naive_speedup_level'] == pytest.approx(2.0)
+    assert non_null.loc[1, 'accuracy_gain'] == pytest.approx(0.05)
+    assert (non_null['naive_time'] == 100.0).all()
+
+
+def test_compute_speedup_at_accuracy_levels_discrete_anchors():
+    polytris_df = pd.DataFrame([
+        {'dataset': 'demo', 'time': 5.0, 'HOTA_HOTA': 0.82},
+        {'dataset': 'demo', 'time': 10.0, 'HOTA_HOTA': 0.90},
+        {'dataset': 'demo', 'time': 20.0, 'HOTA_HOTA': 0.85},
+    ])
+    sota_df = pd.DataFrame([
+        {'dataset': 'demo', 'time': 15.0, 'HOTA_HOTA': 0.80},
+        {'dataset': 'demo', 'time': 30.0, 'HOTA_HOTA': 0.70},
+        {'dataset': 'demo', 'time': 40.0, 'HOTA_HOTA': 0.95},
+    ])
+
+    result = compute_speedup_at_accuracy_levels(
+        polytris_df,
+        {'otif': sota_df},
+        'HOTA_HOTA',
+        'time',
+    )
+
+    by_acc = result.set_index('accuracy_level').sort_index()
+    # acc 0.80: feasible Polytris acc > 0.8 -> (10,0.9) and (20,0.85); min time 10 -> 15/10
+    assert by_acc.loc[0.80, 'speedup_ratio'] == pytest.approx(1.5)
+    assert by_acc.loc[0.80, 'polytris_time'] == pytest.approx(10.0)
+    # acc 0.70: all three Polytris rows qualify; min time 5 -> 30/5
+    assert by_acc.loc[0.70, 'speedup_ratio'] == pytest.approx(6.0)
+    assert by_acc.loc[0.70, 'polytris_time'] == pytest.approx(5.0)
+    # acc 0.95: no Polytris strictly above 0.95
+    assert pd.isna(by_acc.loc[0.95, 'speedup_ratio'])
 
 
 def test_filter_pareto_per_dataset_maximize_throughput():
