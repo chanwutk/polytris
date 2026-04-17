@@ -34,7 +34,7 @@ CONFIGURED_TRACKERS: list[str] = CONFIG['EXEC']['TRACKERS']
 DEFAULT_TRACKER: str = CONFIGURED_TRACKERS[0]
 
 # Default video-fraction-divisor applied to non-jnc datasets.
-_NON_JNC_VIDEO_FRACTION_DIVISOR = 3
+_NON_JNC_VIDEO_FRACTION_DIVISOR = 1
 
 # Target directory for paper-facing figures. Resolved relative to the project
 # root (container path /polyis); see CLAUDE.md for the in-container layout.

@@ -38,13 +38,16 @@
       "Bash(/usr/local/bin/python3.13 -c \"import yaml; print\\('yaml ok'\\)\")",
       "Bash(/usr/local/bin/python3.13 -m venv /Users/chanwutk/Documents/polyis/venv)",
       "Bash(/Users/chanwutk/Documents/polyis/venv/bin/pip install:*)",
-      "Bash(./sync --dry-run)"
+      "Bash(./sync --dry-run)",
+      "Skill(update-config)",
+      "Bash(touch /tmp/.claude-sync-needed-polyis)",
+      "Read(//tmp/**)"
     ]
   },
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "(Edit|Write)",
+        "matcher": "DISABLED_Edit_Write",
         "hooks": [
           {
             "type": "command",
@@ -53,9 +56,29 @@
             "statusMessage": "Formatting with isort & yapf..."
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "touch /tmp/.claude-sync-needed-polyis"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f /tmp/.claude-sync-needed-polyis ]; then rm -f /tmp/.claude-sync-needed-polyis && cd /Users/chanwutk/Documents/polyis && ./sync; fi",
+            "timeout": 30,
+            "statusMessage": "Syncing to remote..."
+          }
+        ]
       }
     ]
   },
-  "disableAllHooks": true,
   "outputStyle": "default"
 }

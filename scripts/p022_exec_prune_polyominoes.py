@@ -350,7 +350,7 @@ def main():
     print(f"Created {len(funcs)} tasks to process")
     
     num_workers = mp.cpu_count()
-    num_workers = mp.cpu_count() // 2
+    num_workers = mp.cpu_count() // 4
     # num_workers = 2
     if len(funcs) > 0:
         ProgressBar(num_workers=num_workers, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)

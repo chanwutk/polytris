@@ -760,7 +760,7 @@ def main(args):
     print(f"Created {len(funcs)} tasks to process")
     
     device_count = torch.cuda.device_count()
-    device_count = 40
+    device_count = 20
     ProgressBar(num_workers=device_count, num_tasks=len(funcs)).run_all(funcs)
     print("All tasks completed!")
 

@@ -11,6 +11,63 @@ from polyis.pareto import compute_pareto_front
 
 from .common import GRID_COLS, GRID_ROWS, ensure_dir, plots_dir, results_csv_path
 
+# Raw cache / folder names -> human-readable labels (tooltips, single-dataset titles).
+_DATASET_SEQUENCE_LABELS: dict[str, str] = {
+    'ams-y05': 'Amsterdam',
+    'ams-y-05': 'Amsterdam',
+    'caldot1-y05': 'CalDoT 1',
+    'caldot2-y05': 'CalDoT 2',
+    'jnc0': 'B3D1',
+    'jnc2': 'B3D2',
+    'jnc6': 'B3D3',
+    'jnc7': 'B3D4',
+}
+
+# Raw dataset folder names included in cross-dataset summary charts only.
+_SUMMARY_DATASET_RAW: frozenset[str] = frozenset({
+    'ams-y05',
+    'ams-y-05',
+    'caldot1-y05',
+    'caldot2-y05',
+    'jnc0',
+})
+
+# Default facet column order for combined charts (unknown names append after).
+_FACET_COLUMN_ORDER: tuple[str, ...] = (
+    'Amsterdam',
+    'CalDoT 1',
+    'CalDoT 2',
+    'B3D1',
+)
+
+
+def _sequence_label(raw: str) -> str:
+    return _DATASET_SEQUENCE_LABELS.get(raw, raw)
+
+
+def _facet_sort_order(values: pd.Series) -> list[str]:
+    present = [str(v) for v in pd.unique(values.dropna())]
+    ordered = [x for x in _FACET_COLUMN_ORDER if x in present]
+    tail = sorted(x for x in present if x not in ordered)
+    return ordered + tail
+
+
+def _ensure_sequence_label(df: pd.DataFrame) -> pd.DataFrame:
+    """Add sequence_label for chart tooltips (human-readable dataset name)."""
+    out = df.copy()
+    if 'sequence_label' not in out.columns:
+        out['sequence_label'] = out['dataset'].map(_sequence_label)
+    return out
+
+
+def _prepare_combined_chart_df(combined_df: pd.DataFrame) -> pd.DataFrame:
+    """Add sequence_label and facet_dataset (display names) for summary charts."""
+    df = _ensure_sequence_label(combined_df.copy())
+    df['facet_dataset'] = df['sequence_label']
+    order = _facet_sort_order(df['facet_dataset'])
+    df['facet_dataset'] = pd.Categorical(df['facet_dataset'], categories=order, ordered=True)
+    return df
+
 
 @dataclass(frozen=True)
 class PairDefinition:
@@ -141,8 +198,8 @@ def _build_chart_layers(
       2. Pareto frontier connecting line — black; order encoding sorts left-to-right.
       3. Pareto frontier point markers — black.
       4. Heuristic diamond markers — steelblue.
-      5. Whole-frame baseline diamonds — firebrick.
-      6. Whole-frame rate labels — derived via Vega expression, no Python iteration.
+      5–6. Whole-frame baseline (firebrick diamonds + rate labels): currently
+         commented out in code; search for whole_frame_layer to restore.
     """
     pareto_flag_col = f'is_pareto_{pair.slug}'
     x_enc = alt.X(f'{pair.x_col}:Q', title=pair.x_label)
@@ -153,24 +210,24 @@ def _build_chart_layers(
     )
 
     exhaustive_tooltip = [
-        alt.Tooltip('dataset:N', title='Dataset'),
+        alt.Tooltip('sequence_label:N', title='Dataset'),
         alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
         alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
         alt.Tooltip('grid_key:N', title='Grid'),
     ]
     heuristic_tooltip = [
-        alt.Tooltip('dataset:N', title='Dataset'),
+        alt.Tooltip('sequence_label:N', title='Dataset'),
         alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
         alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
         alt.Tooltip('heuristic_threshold:Q', title='Threshold'),
         alt.Tooltip('grid_key:N', title='Grid'),
     ]
-    whole_frame_tooltip = [
-        alt.Tooltip('dataset:N', title='Dataset'),
-        alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
-        alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
-        alt.Tooltip('grid_key:N', title='Frame rate'),
-    ]
+    # whole_frame_tooltip = [
+    #     alt.Tooltip('dataset:N', title='Dataset'),
+    #     alt.Tooltip(f'{pair.x_col}:Q', title=pair.x_label, format='.4f'),
+    #     alt.Tooltip(f'{pair.y_col}:Q', title=pair.y_label, format='.4f'),
+    #     alt.Tooltip('grid_key:N', title='Frame rate'),
+    # ]
 
     # Layer 1: exhaustive background scatter.
     bg_layer = (
@@ -211,32 +268,32 @@ def _build_chart_layers(
         .encode(x=x_enc, y=y_enc, tooltip=heuristic_tooltip)
     )
 
-    # Layer 5: whole-frame baseline diamonds.
-    whole_frame_layer = (
-        base
-        .transform_filter("datum.method === 'whole_frame'")
-        .mark_point(size=80, shape='diamond', filled=True, color='firebrick', stroke='white', strokeWidth=0.5)
-        .encode(x=x_enc, y=y_enc, tooltip=whole_frame_tooltip)
-    )
+    # Layer 5: whole-frame baseline diamonds (firebrick).
+    # whole_frame_layer = (
+    #     base
+    #     .transform_filter("datum.method === 'whole_frame'")
+    #     .mark_point(size=80, shape='diamond', filled=True, color='firebrick', stroke='white', strokeWidth=0.5)
+    #     .encode(x=x_enc, y=y_enc, tooltip=whole_frame_tooltip)
+    # )
 
     # Layer 6: whole-frame rate labels via Vega expression.
     # split(grid_key, '_')[2] extracts the numeric rate from 'whole_frame_{rate}'.
-    whole_frame_text = (
-        base
-        .transform_filter("datum.method === 'whole_frame'")
-        .transform_calculate(
-            label="datum.grid_key === 'whole_frame_1' ? 'no skip' : '1/' + split(datum.grid_key, '_')[2]",
-        )
-        .mark_text(dx=6, dy=-8, fontSize=9, color='firebrick')
-        .encode(x=x_enc, y=y_enc, text='label:N')
-    )
+    # whole_frame_text = (
+    #     base
+    #     .transform_filter("datum.method === 'whole_frame'")
+    #     .transform_calculate(
+    #         label="datum.grid_key === 'whole_frame_1' ? 'no skip' : '1/' + split(datum.grid_key, '_')[2]",
+    #     )
+    #     .mark_text(dx=6, dy=-8, fontSize=9, color='firebrick')
+    #     .encode(x=x_enc, y=y_enc, text='label:N')
+    # )
 
     foreground_layers = [
         frontier_line,
         frontier_pts,
         heuristic_layer,
-        whole_frame_layer,
-        whole_frame_text,
+        # whole_frame_layer,
+        # whole_frame_text,
     ]
     # Pareto-only variant drops the exhaustive background scatter; the remaining
     # foreground layers (Pareto line/points, heuristic, whole-frame) are unchanged.
@@ -270,7 +327,7 @@ def _make_single_chart(
     whole-frame" variant (no gray exhaustive scatter).
     """
     pareto_flag_col = f'is_pareto_{pair.slug}'
-    plot_df = results_df.dropna(subset=[pair.x_col, pair.y_col]).copy()
+    plot_df = _ensure_sequence_label(results_df.dropna(subset=[pair.x_col, pair.y_col]).copy())
     plot_df[pareto_flag_col] = (
         plot_df[pareto_flag_col].fillna(False).astype(bool)
         if pareto_flag_col in plot_df.columns
@@ -307,7 +364,7 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
     )
 
     for pair in PAIR_DEFINITIONS:
-        title = f'{dataset} {tracker_name}: {pair.x_label} vs {pair.y_label}'
+        title = f'{_sequence_label(dataset)} {tracker_name}: {pair.x_label} vs {pair.y_label}'
         for slug_suffix, include_background in variants:
             chart = _make_single_chart(
                 results_df,
@@ -358,19 +415,20 @@ def _make_altair_chart(
 ) -> alt.FacetChart:
     """Build a faceted Altair chart for one metric pair; one subplot per dataset.
 
-    All layers share a single DataFrame so Altair's facet requirement (uniform
-    data source across layers) is satisfied. Row filtering is done via
-    Vega-Lite transform_filter expressions inside _build_chart_layers.
+    Facet column ``facet_dataset`` mirrors human-readable ``sequence_label``
+    (Amsterdam, CalDoT 1/2, B3D1). Row filtering uses Vega-Lite transform_filter
+    inside _build_chart_layers.
 
     Passing include_background=False omits the gray exhaustive scatter to
     produce the "Pareto + heuristic + whole-frame" variant.
     """
     pareto_flag_col = f'is_pareto_{pair.slug}'
-    # Sort by (dataset, x) so the Pareto frontier line renders left-to-right.
+    prepared = _prepare_combined_chart_df(combined_df)
+    # Sort by (facet, x) so the Pareto frontier line renders left-to-right.
     plot_df = (
-        combined_df
+        prepared
         .dropna(subset=[pair.x_col, pair.y_col])
-        .sort_values(['dataset', pair.x_col])
+        .sort_values(['facet_dataset', pair.x_col])
         .copy()
     )
     plot_df[pareto_flag_col] = (
@@ -394,8 +452,9 @@ def _make_altair_chart(
             # labelPadding is negative so the 'Dataset: ...' label sits closer
             # to (just above) the subplot rather than floating well above it.
             facet=alt.Facet(
-                'dataset:N',
+                'facet_dataset:N',
                 title=None,
+                sort=list(prepared['facet_dataset'].cat.categories),
                 header=alt.Header(
                     labelExpr="'Dataset: ' + datum.value",
                     labelPadding=2,
@@ -420,6 +479,9 @@ def combine_visualize(
 ) -> list[Path]:
     """Combine per-dataset results and write Altair summary charts to SUMMARY.
 
+    Charts include only ``ams-y05``/``ams-y-05``, ``caldot1-y05``,
+    ``caldot2-y05``, and ``jnc0``; other cached datasets are ignored here.
+
     For each of the three metric pairs (mistrack/HOTA, mistrack/retention,
     retention/HOTA) the function writes both a .png and an .html file under
     {cache_dir}/SUMMARY/ablation/mistrack-rate/{tracker_name}/.
@@ -429,8 +491,12 @@ def combine_visualize(
     """
     from polyis.io import cache as _polyis_cache
 
-    # Load all available per-dataset results for this tracker.
+    # Load all available per-dataset results for this tracker; summary charts
+    # only include ams-y05, caldot1-y05, caldot2-y05, and jnc0.
     combined_df = _collect_results(tracker_name, cache_dir=cache_dir)
+    if combined_df.empty:
+        return []
+    combined_df = combined_df[combined_df['dataset'].isin(_SUMMARY_DATASET_RAW)].copy()
     if combined_df.empty:
         return []
 
