@@ -42,24 +42,31 @@ _PAPER_FIGURES_DIR = Path('/polyis/paper/figures/generated')
 
 
 def _copy_to_paper_figures(written: list[Path], tracker: str) -> list[Path]:
-    """Copy the .png combined-visualization files into paper/figures/generated.
+    """Copy combined-visualization .png and .pdf files into paper/figures/generated.
 
-    Files are renamed to 'mistrack_rate_{tracker}_{original_stem}.png' so they
+    Files are renamed to ``mistrack_rate_{tracker}_{original_stem}`` so they
     (1) are namespaced against other figures in that directory and (2) do not
     collide when combine_visualize is invoked for multiple trackers.
 
-    HTML outputs are skipped — only PNGs are copied since the paper consumes
-    PNG/PDF; the HTMLs remain in the cache dir for interactive inspection.
+    The full ``pruning_vs_hota.png`` chart is also copied to
+    ``paper/figures/generated/pruning_vs_hota.png`` for a stable includegraphics
+    path (last tracker wins if ``--all-trackers``).
+
+    HTML outputs are skipped — they stay in the cache dir for interactive use.
     """
     _PAPER_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     copied: list[Path] = []
     for src in written:
-        # Only copy PNGs; HTML files are interactive debugging artifacts.
-        if src.suffix.lower() != '.png':
+        suf = src.suffix.lower()
+        if suf not in ('.png', '.pdf'):
             continue
         dst = _PAPER_FIGURES_DIR / f'mistrack_rate_{tracker}_{src.name}'
         shutil.copy2(src, dst)
         copied.append(dst)
+        if src.name == 'pruning_vs_hota.png':
+            alias = _PAPER_FIGURES_DIR / 'pruning_vs_hota.png'
+            shutil.copy2(src, alias)
+            copied.append(alias)
     return copied
 
 

@@ -1280,7 +1280,7 @@ class ProgressBar:
             num_tasks (int): Total number of tasks to process
             refresh_per_second (float): Refresh rate for progress bars
         """
-        off = True
+        # off = True
         if off:
             num_workers = 1
         self.num_workers = min(num_workers, num_tasks)

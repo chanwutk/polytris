@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import glob as _glob
+import math
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import altair as alt
 import pandas as pd
@@ -39,6 +41,17 @@ _FACET_COLUMN_ORDER: tuple[str, ...] = (
     'CalDoT 2',
     'B3D1',
 )
+
+# Internal tracker keys -> chart title labels (paths still use the raw key).
+_TRACKER_DISPLAY_LABELS: dict[str, str] = {
+    'bytetrackcython': 'BYTETrack',
+    'sortcython': 'SORT',
+    'ocsortcython': 'OCSORT',
+}
+
+
+def _tracker_display_label(raw: str) -> str:
+    return _TRACKER_DISPLAY_LABELS.get(raw, raw)
 
 
 def _sequence_label(raw: str) -> str:
@@ -127,6 +140,148 @@ PAIR_DEFINITIONS = (
     ),
 )
 
+_PRUNING_HOTA_FLAG_COL: str = 'is_pareto_pruning_vs_hota'
+
+
+def _paper_figures_generated_dir() -> Path:
+    """Repo-relative ``paper/figures/generated`` (same layout as ``run.py`` in Docker)."""
+    return Path(__file__).resolve().parents[3] / 'paper' / 'figures' / 'generated'
+
+
+def _reference_hota_at_matched_pruning(
+    pareto_df: pd.DataFrame,
+    p_heuristic: float,
+) -> float | None:
+    """Pareto exhaustive anchor: max pruning among points with pruning <= heuristic."""
+    if pareto_df.empty:
+        return None
+    tol = 1e-9
+    eligible = pareto_df[pareto_df['pruning_ratio'] <= p_heuristic + tol]
+    if eligible.empty:
+        eligible = pareto_df.sort_values('pruning_ratio').head(1)
+    p_cap = float(eligible['pruning_ratio'].max())
+    at_cap = eligible[eligible['pruning_ratio'] >= p_cap - tol]
+    best = at_cap.loc[at_cap['HOTA_HOTA'].idxmax()]
+    return float(best['HOTA_HOTA'])
+
+
+def _hota_loss_percent(ref_hota: float, heu_hota: float) -> float | None:
+    if ref_hota is None or (isinstance(ref_hota, float) and (math.isnan(ref_hota) or ref_hota <= 0)):
+        return None
+    return 100.0 * (ref_hota - heu_hota) / ref_hota
+
+
+@dataclass(frozen=True)
+class HeuristicHotaLossSummary:
+    """Aggregate HOTA loss (%%) of heuristic vs matched-pruning Pareto anchor."""
+
+    tracker_name: str
+    max_loss_percent: float
+    mean_loss_percent: float
+    detail_rows: pd.DataFrame
+
+
+def compute_heuristic_hota_loss_summary(combined_df: pd.DataFrame, tracker_name: str) -> HeuristicHotaLossSummary | None:
+    """Compare each heuristic row to the pruning-vs-HOTA Pareto anchor at matched pruning."""
+    df = annotate_pareto_flags(_prepare_df(combined_df.copy()))
+    flag = _PRUNING_HOTA_FLAG_COL
+    if flag not in df.columns:
+        return None
+
+    rows: list[dict[str, Any]] = []
+    for dataset, g in df.groupby('dataset', sort=False):
+        pareto = g[(g['method'] == 'exhaustive') & (g[flag])].dropna(
+            subset=['pruning_ratio', 'HOTA_HOTA'],
+        )
+        heur = g[g['method'] == 'heuristic'].dropna(subset=['pruning_ratio', 'HOTA_HOTA'])
+        for _, r in heur.iterrows():
+            p_h = float(r['pruning_ratio'])
+            h_h = float(r['HOTA_HOTA'])
+            ref = _reference_hota_at_matched_pruning(pareto, p_h)
+            loss = _hota_loss_percent(ref, h_h) if ref is not None else None
+            rows.append(
+                {
+                    'dataset': dataset,
+                    'pruning_ratio': p_h,
+                    'heuristic_hota': h_h,
+                    'ref_hota': ref,
+                    'hota_loss_percent': loss,
+                },
+            )
+
+    if not rows:
+        return None
+
+    detail = pd.DataFrame(rows)
+    losses = detail['hota_loss_percent'].dropna()
+    if losses.empty:
+        return HeuristicHotaLossSummary(
+            tracker_name=tracker_name,
+            max_loss_percent=float('nan'),
+            mean_loss_percent=float('nan'),
+            detail_rows=detail,
+        )
+    return HeuristicHotaLossSummary(
+        tracker_name=tracker_name,
+        max_loss_percent=float(losses.max()),
+        mean_loss_percent=float(losses.mean()),
+        detail_rows=detail,
+    )
+
+
+def write_heuristic_hota_loss_macros(
+    summary: HeuristicHotaLossSummary,
+    dest_dir: Path | None = None,
+) -> Path:
+    """Write LaTeX ``\\providecommand`` macros for max / mean HOTA loss (percent)."""
+    out_dir = dest_dir if dest_dir is not None else _paper_figures_generated_dir()
+    ensure_dir(out_dir)
+    safe = summary.tracker_name.replace('/', '_')
+    path = out_dir / f'mistrack_rate_heuristic_hota_loss_macros_{safe}.tex'
+    losses = summary.detail_rows['hota_loss_percent'].dropna()
+    if losses.empty:
+        mx_s, mn_s = '0.00', '0.00'
+        warn = '% WARNING: no valid HOTA-loss samples (check heuristic and Pareto rows).\n'
+    else:
+        mx_s = f'{float(losses.max()):.2f}'
+        mn_s = f'{float(losses.mean()):.2f}'
+        warn = ''
+    label = _tracker_display_label(summary.tracker_name)
+    lines: list[str] = []
+    if warn:
+        lines.append(warn.rstrip('\n'))
+    lines.extend(
+        [
+            '% Auto-generated by mistrack_rate.analysis.combine_visualize.',
+            f'% Tracker key: {summary.tracker_name} ({label}).',
+            '% Pareto anchor (pruning vs HOTA): exhaustive point with highest pruning',
+            '% among those with pruning <= the heuristic point.',
+            r'\providecommand{\MistrackHeuristicMaxHotaLossPercent}{%s}' % mx_s,
+            r'\providecommand{\MistrackHeuristicAvgHotaLossPercent}{%s}' % mn_s,
+        ],
+    )
+    path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    return path
+
+
+def _print_heuristic_hota_loss_summary(summary: HeuristicHotaLossSummary, macro_path: Path) -> None:
+    print('\n--- Heuristic vs Pareto (matched pruning), HOTA loss % ---')
+    print(f'tracker: {summary.tracker_name} ({_tracker_display_label(summary.tracker_name)})')
+    for _, r in summary.detail_rows.iterrows():
+        loss = r['hota_loss_percent']
+        loss_s = f'{loss:.4f}' if loss == loss else 'nan'
+        ref_s = f"{r['ref_hota']:.6f}" if r['ref_hota'] == r['ref_hota'] else 'nan'
+        print(
+            f"  {r['dataset']}: pruning={r['pruning_ratio']:.4f}  heuristic_HOTA={r['heuristic_hota']:.6f}  "
+            f'ref_HOTA={ref_s}  loss%={loss_s}',
+        )
+    mx = summary.max_loss_percent
+    mn = summary.mean_loss_percent
+    print(f"  MAX loss %: {mx:.4f}" if mx == mx else '  MAX loss %: nan')
+    print(f"  MEAN loss %: {mn:.4f}" if mn == mn else '  MEAN loss %: nan')
+    print(f'  macros: {macro_path}')
+    print('---\n')
+
 
 def _prepare_df(df: pd.DataFrame) -> pd.DataFrame:
     """Add derived display columns to a results DataFrame.
@@ -184,6 +339,20 @@ def save_results(results_df: pd.DataFrame, dataset: str, tracker_name: str) -> P
     ensure_dir(output_path.parent)
     results_df.to_csv(output_path, index=False)
     return output_path
+
+
+def _save_chart_export(chart: alt.Chart, output_dir: Path, file_stem: str) -> list[Path]:
+    """Write PNG (scaled for print), vector PDF, and self-contained HTML."""
+    written: list[Path] = []
+    for ext, kwargs in (
+        ('.png', {'scale_factor': 4.0}),
+        ('.pdf', {}),
+        ('.html', {}),
+    ):
+        out_path = output_dir / f'{file_stem}{ext}'
+        chart.save(str(out_path), **kwargs)
+        written.append(out_path)
+    return written
 
 
 def _build_chart_layers(
@@ -364,7 +533,10 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
     )
 
     for pair in PAIR_DEFINITIONS:
-        title = f'{_sequence_label(dataset)} {tracker_name}: {pair.x_label} vs {pair.y_label}'
+        title = (
+            f'{_sequence_label(dataset)} {_tracker_display_label(tracker_name)}: '
+            f'{pair.x_label} vs {pair.y_label}'
+        )
         for slug_suffix, include_background in variants:
             chart = _make_single_chart(
                 results_df,
@@ -372,13 +544,8 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
                 title,
                 include_background=include_background,
             )
-            for suffix in ('.png', '.html'):
-                out_path = output_dir / f'{pair.slug}{slug_suffix}{suffix}'
-                # Render PNGs at 4× resolution for print-quality output; HTML
-                # is vector-based and does not need a scale factor.
-                save_kwargs = {'scale_factor': 4.0} if suffix == '.png' else {}
-                chart.save(str(out_path), **save_kwargs)
-                written_paths.append(out_path)
+            stem = f'{pair.slug}{slug_suffix}'
+            written_paths.extend(_save_chart_export(chart, output_dir, stem))
 
     return written_paths
 
@@ -466,7 +633,10 @@ def _make_altair_chart(
             x='independent',
             y='independent' if pair.resolve_y_independent else 'shared',
         )
-        .properties(title=f'{tracker_name}: {pair.x_label} vs {pair.y_label}')
+        .properties(
+            title=f'{_tracker_display_label(tracker_name)}: '
+            f'{pair.x_label} vs {pair.y_label}',
+        )
         # Collapse inter-facet spacing so subplots sit flush against each
         # other rather than being separated by Altair's default gap.
         .configure_facet(spacing=0)
@@ -483,7 +653,7 @@ def combine_visualize(
     ``caldot2-y05``, and ``jnc0``; other cached datasets are ignored here.
 
     For each of the three metric pairs (mistrack/HOTA, mistrack/retention,
-    retention/HOTA) the function writes both a .png and an .html file under
+    retention/HOTA) the function writes .png, .pdf, and .html under
     {cache_dir}/SUMMARY/ablation/mistrack-rate/{tracker_name}/.
 
     Returns the list of written paths, or an empty list when no cached
@@ -521,15 +691,19 @@ def combine_visualize(
                 tracker_name,
                 include_background=include_background,
             )
+            stem = f'{pair.slug}{slug_suffix}'
+            written_paths.extend(_save_chart_export(chart, output_dir, stem))
 
-            # Write PNG (requires vl-convert-python) and self-contained HTML.
-            for suffix in ('.png', '.html'):
-                out_path = output_dir / f'{pair.slug}{slug_suffix}{suffix}'
-                # Render PNGs at 4× resolution for print-quality output; HTML
-                # is vector-based and does not need a scale factor.
-                save_kwargs = {'scale_factor': 4.0} if suffix == '.png' else {}
-                chart.save(str(out_path), **save_kwargs)
-                written_paths.append(out_path)
+    loss_summary = compute_heuristic_hota_loss_summary(combined_df, tracker_name)
+    if loss_summary is not None:
+        macro_path = write_heuristic_hota_loss_macros(loss_summary)
+        _print_heuristic_hota_loss_summary(loss_summary, macro_path)
+    else:
+        print(
+            'mistrack-rate combine_visualize: skipped heuristic HOTA-loss stats '
+            '(no heuristic rows in combined results).',
+            flush=True,
+        )
 
     return written_paths
 
