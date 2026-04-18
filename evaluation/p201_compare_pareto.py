@@ -41,8 +41,8 @@ TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
 
 # Keep facet layout dimensions explicit so all comparison charts stay aligned.
 FACET_COLUMNS = 4
-FACET_SUBPLOT_WIDTH = 300
-FACET_SUBPLOT_HEIGHT = 225
+FACET_SUBPLOT_WIDTH = 250
+FACET_SUBPLOT_HEIGHT = 175
 ONE_ROW_FACET_SUBPLOT_WIDTH = int(round(FACET_SUBPLOT_WIDTH * 0.6))
 COMBINED_ONE_ROW_SUBPLOT_HEIGHT = max(1, int(round(FACET_SUBPLOT_HEIGHT * 0.7)))
 
@@ -554,7 +554,7 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
     hota_speedup_y = accuracy_col_name == 'HOTA'
     y_enc = alt.Y(
         'speedup_ratio:Q',
-        title='Speedup Ratio (Other/Ours)',
+        title='Speedup (Other/Ours)',
         scale=alt.Scale(domain=[0, 20]) if hota_speedup_y else alt.Undefined,
     )
 
@@ -794,7 +794,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
 
     # Shape scale domain must match color domain for legend merge (same ordering).
     shape_range = [
-        'diamond' if s.startswith('Polytris') else ('triangle' if s == 'Naive' else 'circle')
+        'diamond' if s.startswith('Polytris') else ('triangle' if s == 'Oracle' else 'circle')
         for s in ordered_systems
     ]
     shape_scale = alt.Scale(domain=ordered_systems, range=shape_range)
@@ -1122,7 +1122,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
 
     # Extract test naive baseline rows before config filtering.
     naive_df = naive_tradeoff_df[naive_tradeoff_df['videoset'] == 'test'].copy()
-    naive_df['system'] = 'Naive'
+    naive_df['system'] = 'Oracle'
     print(f"\nExtracted {len(naive_df)} naive baseline rows from test split")
 
     # Filter test Polytris rows by non-ablation parameter dimensions.
@@ -1240,7 +1240,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             if condition.name == 'full':
                 polytris_full_pareto_df = pareto_df.copy()
 
-        # Filter Naive baseline to Pareto-optimal points per dataset.
+        # Filter Oracle (naive) baseline to Pareto-optimal points per dataset.
         if accuracy_col in naive_df.columns:
             pareto_naive_df = _filter_pareto_per_dataset(
                 naive_df.dropna(subset=['time', accuracy_col]), 'time', accuracy_col,
@@ -1265,10 +1265,10 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         # 2. Collect Pareto-optimal data for visualization
         print(f"\n2. Collecting data for {accuracy_name}...")
 
-        # Append Naive Pareto-optimal points.
+        # Append Oracle (naive) Pareto-optimal points.
         if not pareto_naive_df.empty:
             naive_point_df = pareto_naive_df.copy()
-            naive_point_df['system'] = 'Naive'
+            naive_point_df['system'] = 'Oracle'
             naive_cols = [c for c in tooltip_cols if c in naive_point_df.columns]
             pareto_data_list.append(naive_point_df[naive_cols])
 
@@ -1322,7 +1322,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
                 tp_cols = [c for c in throughput_tooltip_cols if c in tp_pareto.columns]
                 tp_data_list.append(tp_pareto[tp_cols])
 
-        # Append Naive throughput Pareto.
+        # Append Oracle (naive) throughput Pareto.
         throughput_naive_df = _filter_pareto_per_dataset(
             naive_df.dropna(subset=['throughput_fps', accuracy_col]),
             'throughput_fps', accuracy_col, minx=False, miny=False,
@@ -1331,7 +1331,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
 
         if not throughput_naive_df.empty:
             tp_naive = throughput_naive_df.copy()
-            tp_naive['system'] = 'Naive'
+            tp_naive['system'] = 'Oracle'
             tp_cols = [c for c in throughput_tooltip_cols if c in tp_naive.columns]
             tp_data_list.append(tp_naive[tp_cols])
 
