@@ -1,0 +1,201 @@
+#!/usr/local/bin/python
+
+import argparse
+import os
+
+import pandas as pd
+
+from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
+from polyis.pareto import compute_pareto_front
+from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
+
+
+CONFIG = get_config()
+DATASETS = CONFIG['EXEC']['DATASETS']
+ACCURACY_COL = 'HOTA_HOTA'
+THROUGHPUT_COL = 'throughput_fps'
+OUTPUT_DIR = os.path.join('paper', 'figures', 'generated')
+OUTPUT_TEX_PATH = os.path.join(OUTPUT_DIR, 'p204_ablation_stats.tex')
+DATASET_DISPLAY_NAMES = {
+    'caldot1-y05': 'CalDoT 1',
+    'caldot2-y05': 'CalDoT 2',
+    'ams-y05': 'Amsterdam',
+    'jnc0': 'B3D1',
+    'jnc2': 'B3D2',
+    'jnc6': 'B3D3',
+    'jnc7': 'B3D4',
+}
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Generate LaTeX macros for ablation throughput speedups at 5% HOTA loss.')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
+    return parser.parse_args()
+
+
+def load_polytris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load canonical test-split Polytris and naive tradeoff rows for all datasets."""
+    polytris_frames: list[pd.DataFrame] = []
+    naive_frames: list[pd.DataFrame] = []
+
+    for dataset in datasets:
+        tradeoff_df = load_tradeoff_data(dataset)
+
+        if 'dataset' not in tradeoff_df.columns:
+            tradeoff_df = tradeoff_df.copy()
+            tradeoff_df['dataset'] = dataset
+
+        tradeoff_df = tradeoff_df[tradeoff_df['videoset'] == 'test'].copy()
+        polytris_df, naive_df = split_tradeoff_variants(tradeoff_df)
+
+        if 'classifier' in polytris_df.columns:
+            polytris_df = polytris_df[polytris_df['classifier'] != 'Perfect'].copy()
+
+        polytris_frames.append(polytris_df)
+        naive_frames.append(naive_df)
+
+    polytris_all_df = pd.concat(polytris_frames, ignore_index=True) if polytris_frames else pd.DataFrame()
+    naive_all_df = pd.concat(naive_frames, ignore_index=True) if naive_frames else pd.DataFrame()
+
+    return polytris_all_df, naive_all_df
+
+
+def add_loss_pct(df: pd.DataFrame, oracle_hota: float, accuracy_col: str = ACCURACY_COL) -> pd.DataFrame:
+    """Attach a clamped relative HOTA-loss column to a system DataFrame."""
+    result = df.copy()
+    loss_pct = (oracle_hota - result[accuracy_col]).clip(lower=0) / oracle_hota
+    result['loss_pct'] = loss_pct.round(12)
+    return result
+
+
+def select_best_feasible_row(df: pd.DataFrame, threshold: float, throughput_col: str = THROUGHPUT_COL) -> pd.Series | None:
+    """Return the fastest row whose loss stays within the requested threshold."""
+    feasible_df = df[df['loss_pct'] <= threshold].copy()
+    if feasible_df.empty:
+        return None
+    best_idx = feasible_df[throughput_col].idxmax()
+    return feasible_df.loc[best_idx].copy()
+
+
+def compute_ablation_stats(
+    datasets: list[str],
+    polytris_df: pd.DataFrame,
+    naive_df: pd.DataFrame,
+    threshold: float = 0.05
+) -> pd.DataFrame:
+    """Compute per-dataset max throughput speedup over naive for each ablation condition."""
+    rows: list[dict[str, object]] = []
+
+    for dataset in datasets:
+        oracle_df = naive_df[naive_df['dataset'] == dataset].copy()
+        if oracle_df.empty:
+            continue
+        oracle_row = oracle_df.iloc[0]
+        oracle_hota = float(oracle_row[ACCURACY_COL])
+        naive_throughput = float(oracle_row[THROUGHPUT_COL])
+
+        dataset_polytris_df = polytris_df[polytris_df['dataset'] == dataset].copy()
+        dataset_polytris_df = add_loss_pct(dataset_polytris_df, oracle_hota)
+
+        row = {'dataset': dataset, 'naive_throughput': naive_throughput}
+
+        for condition in ABLATION_CONDITIONS:
+            # Filter rows for the ablation condition
+            filtered_df = filter_by_ablation_condition(dataset_polytris_df, condition)
+            
+            # Recompute Pareto front on this restricted search space
+            pareto_df = compute_pareto_front(
+                filtered_df, THROUGHPUT_COL, ACCURACY_COL, minx=False, miny=False
+            )
+            
+            best_row = select_best_feasible_row(pareto_df, threshold)
+            if best_row is not None:
+                pt_throughput = float(best_row[THROUGHPUT_COL])
+                row[f'{condition.name}_throughput'] = pt_throughput
+                row[f'{condition.name}_speedup'] = pt_throughput / naive_throughput
+            else:
+                row[f'{condition.name}_throughput'] = pd.NA
+                row[f'{condition.name}_speedup'] = pd.NA
+        
+        rows.append(row)
+
+    return pd.DataFrame.from_records(rows)
+
+
+def save_tex_macros(stats_df: pd.DataFrame, output_path: str):
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    with open(output_path, 'w') as f:
+        f.write('% Auto-generated by evaluation/p204_ablation_stats.py\n')
+        
+        # Ablation 1: no_both (Classification & Packing)
+        abl1_speedup_max = stats_df['no_both_speedup'].max()
+        abl1_speedup_mean = stats_df['no_both_speedup'].mean()
+        abl1_speedup_max_dataset = stats_df.loc[
+            stats_df['no_both_speedup'].idxmax(), 'dataset'
+        ]
+        
+        # Ablation 2: no_sampling (Polyomino pruning)
+        abl2_speedup_max = stats_df['no_sampling_speedup'].max()
+        abl2_speedup_mean = stats_df['no_sampling_speedup'].mean()
+        abl2_speedup_max_dataset = stats_df.loc[
+            stats_df['no_sampling_speedup'].idxmax(), 'dataset'
+        ]
+        
+        # Ablation 3: full (Whole-frame sampling)
+        abl3_speedup_max = stats_df['full_speedup'].max()
+        abl3_speedup_mean = stats_df['full_speedup'].mean()
+        abl3_speedup_max_dataset = stats_df.loc[
+            stats_df['full_speedup'].idxmax(), 'dataset'
+        ]
+        
+        f.write(f'\\newcommand{{\\ablationOneSpeedupMax}}{{\\autogen{{{float(abl1_speedup_max):.1f}}}}}\n')
+        f.write(
+            '\\newcommand{\\ablationOneSpeedupMaxDataset}'
+            f'{{\\autogen{{{DATASET_DISPLAY_NAMES.get(abl1_speedup_max_dataset, abl1_speedup_max_dataset)}}}}}\n'
+        )
+        f.write(f'\\newcommand{{\\ablationOneSpeedupAvg}}{{\\autogen{{{float(abl1_speedup_mean):.1f}}}}}\n')
+        
+        f.write(f'\\newcommand{{\\ablationTwoSpeedupMax}}{{\\autogen{{{float(abl2_speedup_max):.1f}}}}}\n')
+        f.write(
+            '\\newcommand{\\ablationTwoSpeedupMaxDataset}'
+            f'{{\\autogen{{{DATASET_DISPLAY_NAMES.get(abl2_speedup_max_dataset, abl2_speedup_max_dataset)}}}}}\n'
+        )
+        f.write(f'\\newcommand{{\\ablationTwoSpeedupAvg}}{{\\autogen{{{float(abl2_speedup_mean):.1f}}}}}\n')
+        
+        f.write(f'\\newcommand{{\\ablationThreeSpeedupMax}}{{\\autogen{{{float(abl3_speedup_max):.1f}}}}}\n')
+        f.write(
+            '\\newcommand{\\ablationThreeSpeedupMaxDataset}'
+            f'{{\\autogen{{{DATASET_DISPLAY_NAMES.get(abl3_speedup_max_dataset, abl3_speedup_max_dataset)}}}}}\n'
+        )
+        f.write(f'\\newcommand{{\\ablationThreeSpeedupAvg}}{{\\autogen{{{float(abl3_speedup_mean):.1f}}}}}\n')
+
+        print("Generated LaTeX macros in", output_path)
+
+
+def main():
+    args = parse_args()
+
+    if args.valid:
+        print('Skipping: abstract comparison stats only support the test split.')
+        return
+
+    print(f'Processing datasets: {DATASETS}')
+
+    polytris_df, naive_df = load_polytris_and_naive_test_data(DATASETS)
+
+    assert not polytris_df.empty, 'No Polytris tradeoff rows found for the test split.'
+    assert not naive_df.empty, 'No naive oracle rows found for the test split.'
+
+    stats_df = compute_ablation_stats(DATASETS, polytris_df, naive_df, threshold=0.05)
+    
+    print("\nAblation speedups per dataset (at <= 5% HOTA loss):")
+    print(stats_df)
+    
+    save_tex_macros(stats_df, OUTPUT_TEX_PATH)
+
+
+if __name__ == '__main__':
+    main()
