@@ -41,7 +41,8 @@
       "Bash(./sync --dry-run)",
       "Skill(update-config)",
       "Bash(touch /tmp/.claude-sync-needed-polyis)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(find:*)"
     ]
   },
   "hooks": {

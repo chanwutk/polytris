@@ -61,7 +61,7 @@ def prune_process(
 
         assert isinstance(msg, VideoClassifications)
         pruned = _prune_video(msg, tile_size, sample_rate, tracker, accuracy_idx,
-                              config.dataset)
+                              config.dataset, config.relevance_threshold)
         out_queue.put(pruned)
 
 
@@ -72,6 +72,7 @@ def _prune_video(
     tracker: str | None,
     accuracy_idx: int,
     dataset: str,
+    relevance_threshold: float,
 ) -> VideoClassifications:
     """Apply polyomino grouping + ILP pruning to one video's classifications."""
     classifications = msg.classifications
@@ -82,6 +83,8 @@ def _prune_video(
     grid_height: int | None = None
     grid_width: int | None = None
 
+    # Binarize at T_r (same convention as p022 / stage_compress).
+    cutoff = int(relevance_threshold * 255)
     for frame_data in classifications:
         frame_indices.append(frame_data['idx'])
         if grid_height is None or grid_width is None:
@@ -89,8 +92,7 @@ def _prune_video(
         hex_data = frame_data['classification_hex']
         flat = np.frombuffer(bytes.fromhex(hex_data), dtype=np.uint8)
         grid = flat.reshape((grid_height, grid_width))
-        # Threshold at 128 (same as p022).
-        binary = (grid >= 128).astype(np.uint8) * 255
+        binary = (grid >= cutoff).astype(np.uint8) * 255
         bitmaps_list.append(binary)
 
     num_frames = len(bitmaps_list)

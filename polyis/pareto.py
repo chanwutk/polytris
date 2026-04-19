@@ -15,6 +15,7 @@ PARETO_PARAM_COLS = [
     'tilesize',
     'sample_rate',
     'tracking_accuracy_threshold',
+    'relevance_threshold',
     'tilepadding',
     'canvas_scale',
     'tracker',

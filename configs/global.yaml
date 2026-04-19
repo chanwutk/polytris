@@ -51,6 +51,10 @@ EXEC:
     - 0.6
     # - 0.7
     - 0.8
+  RELEVANCE_THRESHOLDS:
+    - 0.25
+    - 0.5
+    - 0.75
 
 DATA:
   SOURCE_DIR: /polyis-data/sources

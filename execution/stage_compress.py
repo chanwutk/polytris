@@ -53,7 +53,7 @@ def compress_process(
     tile_size = config.tile_size
     tilepadding = config.tilepadding
     canvas_scale = config.canvas_scale
-    threshold = config.compress_threshold
+    threshold = config.relevance_threshold
 
     while True:
         msg = in_queue.get()
