@@ -38,6 +38,7 @@ TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
 SAMPLE_RATES = config['EXEC']['SAMPLE_RATES']
 TRACKERS = config['EXEC']['TRACKERS']
 TRACKING_ACCURACY_THRESHOLDS = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+RELEVANCE_THRESHOLDS = config['EXEC']['RELEVANCE_THRESHOLDS']
 
 # Keep facet layout dimensions explicit so all comparison charts stay aligned.
 FACET_COLUMNS = 4
@@ -815,6 +816,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
             'classifier',
             'sample_rate',
             'tracking_accuracy_threshold',
+            'relevance_threshold',
             'tilepadding',
             'canvas_scale',
             'tracker',
@@ -849,6 +851,7 @@ def filter_by_config(df: pd.DataFrame,
                      tilepadding_modes: list[str] | None = None,
                      sample_rates: list[int] | None = None,
                      tracking_accuracy_thresholds: list[float | None] | None = None,
+                     relevance_thresholds: list[float] | None = None,
                      trackers: list[str] | None = None) -> pd.DataFrame:
     """
     Filter DataFrame to only include rows matching configuration.
@@ -859,6 +862,7 @@ def filter_by_config(df: pd.DataFrame,
         tilepadding_modes: List of allowed tilepadding modes (if column exists)
         sample_rates: List of allowed sample rates (if column exists)
         tracking_accuracy_thresholds: List of allowed thresholds (None means no pruning)
+        relevance_thresholds: List of allowed T_r values (if column exists)
         trackers: List of allowed tracker names (if column exists)
 
     Returns:
@@ -890,6 +894,11 @@ def filter_by_config(df: pd.DataFrame,
             threshold_mask = threshold_mask | filtered_df['tracking_accuracy_threshold'].isna()
         filtered_df = filtered_df[threshold_mask]
         print(f"  Filtered by tracking_accuracy_thresholds: {len(filtered_df)} rows remain")
+
+    # Filter by relevance threshold T_r (if column exists and filter is specified).
+    if relevance_thresholds is not None and 'relevance_threshold' in filtered_df.columns:
+        filtered_df = filtered_df[filtered_df['relevance_threshold'].isin(relevance_thresholds)]
+        print(f"  Filtered by relevance_thresholds: {len(filtered_df)} rows remain")
 
     # Filter by tracker (if column exists and filter is specified)
     if trackers is not None and 'tracker' in filtered_df.columns:
@@ -1134,7 +1143,8 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         test_all_df,
         classifiers=CLASSIFIERS,
         tilepadding_modes=TILEPADDING_MODES,
-        trackers=TRACKERS
+        relevance_thresholds=RELEVANCE_THRESHOLDS,
+        trackers=TRACKERS,
     )
     print(f"  Test rows after base filtering: {len(base_filtered_test_df)}")
 
@@ -1203,7 +1213,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
 
         # Columns to keep for tooltip display.
         tooltip_cols = ['system', 'dataset', 'videoset', 'classifier', 'sample_rate',
-                        'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale',
+                        'tracking_accuracy_threshold', 'relevance_threshold', 'tilepadding', 'canvas_scale',
                         'tracker', 'time', accuracy_col]
 
         # Collect Pareto-optimal rows from all systems.
@@ -1304,6 +1314,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         # Compute throughput Pareto fronts for each ablation condition (maximize both axes).
         throughput_tooltip_cols = ['system', 'dataset', 'videoset', 'classifier',
                                   'sample_rate', 'tracking_accuracy_threshold',
+                                  'relevance_threshold',
                                   'tilepadding', 'canvas_scale', 'tracker',
                                   'throughput_fps', 'time', accuracy_col]
         tp_data_list: list[pd.DataFrame] = []

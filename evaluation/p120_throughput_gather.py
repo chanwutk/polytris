@@ -28,6 +28,7 @@ QUERY_COLUMNS = [
     'tilesize',
     'sample_rate',
     'tracking_accuracy_threshold',
+    'relevance_threshold',
     'tilepadding',
     'canvas_scale',
     'tracker',
@@ -44,6 +45,7 @@ INDEX_COLUMNS = [
     'tilesize',
     'sample_rate',
     'tracking_accuracy_threshold',
+    'relevance_threshold',
     'tilepadding',
     'canvas_scale',
     'tracker',
@@ -104,7 +106,7 @@ def add_default_param_columns(df: pd.DataFrame) -> pd.DataFrame:
     # Work on a copy so the caller keeps its original frame unchanged.
     result_df = df.copy()
     # Add the shared query/index columns that are absent for the current frame.
-    for column in ['classifier', 'tilesize', 'sample_rate', 'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale', 'tracker']:
+    for column in ['classifier', 'tilesize', 'sample_rate', 'tracking_accuracy_threshold', 'relevance_threshold', 'tilepadding', 'canvas_scale', 'tracker']:
         if column not in result_df.columns:
             result_df[column] = pd.NA
     return result_df
@@ -252,6 +254,7 @@ def build_stage022_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
                 sample_rate=int(row.sample_rate),
                 tracker=row.tracker,
                 tracking_accuracy_threshold=float(row.tracking_accuracy_threshold),
+                relevance_threshold=float(row.relevance_threshold),
             ),
             'score',
             'runtime.jsonl',
@@ -275,6 +278,7 @@ def build_shared_execution_param(row: pd.Series) -> str:
         tilesize=int(row['tilesize']),
         sample_rate=int(row['sample_rate']),
         tracking_accuracy_threshold=None if pd.isna(row['tracking_accuracy_threshold']) else float(row['tracking_accuracy_threshold']),
+        relevance_threshold=float(row['relevance_threshold']),
         tilepadding=row['tilepadding'],
         canvas_scale=float(row['canvas_scale']),
         tracker=resolve_upstream_tracker(row),
@@ -412,7 +416,7 @@ def save_manifest_tables(index_df: pd.DataFrame, query_df: pd.DataFrame):
                 dataset_query_df,
                 'QUERY EXECUTION MANIFEST',
                 ['dataset', 'videoset', 'variant', 'classifier', 'tilesize',
-                 'sample_rate', 'tracking_accuracy_threshold', 'tilepadding',
+                 'sample_rate', 'tracking_accuracy_threshold', 'relevance_threshold', 'tilepadding',
                  'canvas_scale', 'tracker', 'stage'],
                 write_line=lambda text='': f.write(text + '\n'),
             )

@@ -99,7 +99,7 @@ def _compress_video(
         hex_data: str = frame_result['classification_hex']
         cls_size: tuple[int, int] = frame_result['classification_size']
         bitmap = np.frombuffer(bytes.fromhex(hex_data), dtype=np.uint8).reshape(cls_size)
-        bitmap = (bitmap > int(threshold * 255)).astype(np.uint8)
+        bitmap = (bitmap > (threshold * 255)).astype(np.uint8)
         assert dtypes.is_bitmap(bitmap), bitmap.shape
         polyominoes_stacks[array_idx] = group_tiles(bitmap, TILEPADDING_MAPS[tilepadding])
 

@@ -37,6 +37,7 @@ def parse_result(result: dict) -> dict:
         'tilesize': result['tilesize'],
         'sample_rate': result['sample_rate'],
         'tracking_accuracy_threshold': result['tracking_accuracy_threshold'],
+        'relevance_threshold': result.get('relevance_threshold'),
         'tilepadding': result['tilepadding'],
         'canvas_scale': result['canvas_scale'],
         'tracker': result['tracker'],
