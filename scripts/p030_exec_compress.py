@@ -32,6 +32,7 @@ TILEPADDING_MODES: list[TilePadding] = config['EXEC']['TILEPADDING_MODES']
 CANVAS_SCALES: list[float] = config['EXEC']['CANVAS_SCALE']
 TRACKERS: list[str] = config['EXEC']['TRACKERS']
 TRACKING_ACCURACY_THRESHOLDS: list[float] = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+RELEVANCE_THRESHOLDS: list[float] = config['EXEC']['RELEVANCE_THRESHOLDS']
 
 
 class PackMode(IntEnum):
@@ -262,8 +263,6 @@ def _update_polyomino_metadata(
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute compression of video tiles into images based on classification results')
-    parser.add_argument('--threshold', type=float, default=0.5,
-                        help='Threshold for classification probability (0.0 to 1.0)')
     parser.add_argument('--mode', type=lambda x: PackMode[x], 
                         default=PackMode.Best_Fit,
                         help='Packing mode for the pack_all function. Options: Easiest_Fit, First_Fit, Best_Fit (default: Best_Fit)')
@@ -316,7 +315,7 @@ Collage = list[PolyominoPosition]
 def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
              sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
              tracker: str | None, tracking_accuracy_threshold: float | None,
-             threshold: float, mode: PackMode):
+             relevance_threshold: float, mode: PackMode):
     """
     Compress a single video by batch processing all sampled frames at once using pack_all.
 
@@ -331,7 +330,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         canvas_scale: Canvas grid scale factor relative to the source classification grid
         tracker: Tracker name for upstream pruning
         tracking_accuracy_threshold: Accuracy threshold for pruning (None = no pruning)
-        threshold: Threshold for classification probability
+        relevance_threshold: Relevance classifier binarization threshold T_r (0–1)
         mode: Packing mode
     """
     video_path = store.dataset(dataset, videoset, video)
@@ -340,10 +339,11 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
     try:
         # Branch to pruned inputs when an accuracy threshold is configured.
         if tracking_accuracy_threshold is not None:
+            assert tracker is not None
             # Read pruned score.jsonl for this (tracker, threshold) tuple.
             results = load_pruned_classification_results(
                 dataset, video, tilesize, classifier, tracker,
-                tracking_accuracy_threshold, sample_rate)
+                tracking_accuracy_threshold, relevance_threshold, sample_rate)
         else:
             # Read unpruned score.jsonl for this (classifier, tile size, sample rate) tuple.
             results = load_classification_results(
@@ -354,7 +354,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
 
     # Create output directory for compression results
     output_dir_name = OUTPUT_DIR_MAP[mode]
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold, relevance_threshold=relevance_threshold)
     # Only '033_compressed_frames' (Best_Fit) is mapped in cache.exec; other modes use manual paths
     if mode == PackMode.Best_Fit:
         output_dir = cache.exec(dataset, 'comp-frames', video, param_str)
@@ -413,7 +413,7 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         # Create bitmap from classifications
         step_start = (time.time_ns() / 1e6)
         bitmap_frame = np.frombuffer(bytes.fromhex(classifications), dtype=np.uint8).reshape(classification_size)
-        bitmap_frame = bitmap_frame > (threshold * 255)
+        bitmap_frame = bitmap_frame > (relevance_threshold * 255)
         bitmap_frame = bitmap_frame.astype(np.uint8)
         assert dtypes.is_bitmap(bitmap_frame), bitmap_frame.shape
         step_times['create_bitmap'] = (time.time_ns() / 1e6) - step_start
@@ -669,12 +669,13 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
 def compress_all(dataset: str, videoset: str, videos: list[str], classifier: str, tilesize: int,
                  sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
                  tracker: str | None, tracking_accuracy_threshold: float | None,
-                 threshold: float, mode: PackMode, gpu_id: int, command_queue: mp.Queue):
+                 relevance_threshold: float, mode: PackMode, gpu_id: int, command_queue: mp.Queue):
     device = f'cuda:{gpu_id}'
     # Build a human-readable description for the progress bar.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                 tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
-                                tracking_accuracy_threshold=tracking_accuracy_threshold)
+                                tracking_accuracy_threshold=tracking_accuracy_threshold,
+                                relevance_threshold=relevance_threshold)
     description = f"{dataset} {param_str}"
     # Report initial progress: 0 of N videos done.
     command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
@@ -682,7 +683,7 @@ def compress_all(dataset: str, videoset: str, videos: list[str], classifier: str
     for i, video in enumerate(videos):
         compress(dataset, videoset, video, classifier, tilesize, sample_rate,
                  tilepadding, canvas_scale, tracker, tracking_accuracy_threshold,
-                 threshold, mode)
+                 relevance_threshold, mode)
         # Advance the progress bar by one unit after each video completes.
         command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 
@@ -699,7 +700,6 @@ def main(args):
     
     Args:
         args (argparse.Namespace): Parsed command line arguments containing:
-            - threshold (float): Threshold for classification probability (0.0 to 1.0)
             - mode (PackMode): Packing mode for the pack_all function. Options: Easiest_Fit, First_Fit, Best_Fit (default: Best_Fit)
             
     Note:
@@ -713,7 +713,6 @@ def main(args):
         - If no classification results are found for a video, that video is skipped with a warning
     """
     mp.set_start_method('spawn', force=True)
-    prediction_threshold = args.threshold
     mode = args.mode
     
     # Determine which videosets to process based on arguments
@@ -733,7 +732,7 @@ def main(args):
     allowed_combos = build_pareto_combo_filter(
         DATASETS, videosets,
         ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
-         'tracker', 'tracking_accuracy_threshold'],
+         'tracker', 'tracking_accuracy_threshold', 'relevance_threshold'],
         collapse_tracker_when_no_threshold=True,
     )
 
@@ -747,15 +746,15 @@ def main(args):
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
         for video in videos:
             shutil.rmtree(cache.exec(dataset, 'comp-frames', video), ignore_errors=True)
-        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
-            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
-            for tracker in [None] if threshold is None else TRACKERS:
+        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, acc_threshold, relevance_threshold in itertools.product(
+            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS, RELEVANCE_THRESHOLDS):
+            for tracker in [None] if acc_threshold is None else TRACKERS:
                 # Skip parameter combos not on the Pareto front during the test pass.
-                combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
+                combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
                 funcs.append(partial(compress_all, dataset, videoset, sorted(videos), classifier, tilesize, sample_rate,
-                                     tilepadding, canvas_scale, tracker, threshold, prediction_threshold, mode))
+                                     tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold, mode))
 
     print(f"Created {len(funcs)} tasks to process")
     
