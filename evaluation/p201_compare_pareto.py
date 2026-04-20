@@ -210,7 +210,9 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
             sort=_get_dataset_display_sort(df),
             header=alt.Header(
                 labelExpr="'Dataset: ' + datum.value",
-                labelPadding=-12,
+                labelPadding=-17,
+                labelBaseline='top',
+                labelFontSize=13,
             )
         ),
         columns=facet_columns,
@@ -513,6 +515,7 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
                          single_row: bool = False,
                          legend_title: str = 'Compared To',
                          show_legend: bool = True,
+                         color_domain: list[str] | None = None,
                          apply_padding: bool = True,
                          apply_legend_config: bool = True,
                          subplot_height: int | None = None,
@@ -546,7 +549,10 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
         kind='mergesort',
     ).reset_index(drop=True)
 
-    color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
+    if color_domain is not None:
+        color_scale = alt.Scale(domain=color_domain)
+    else:
+        color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
     base = alt.Chart(df_plot)
@@ -555,8 +561,8 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
     hota_speedup_y = accuracy_col_name == 'HOTA'
     y_enc = alt.Y(
         'speedup_ratio:Q',
-        title='Speedup (Other/Ours)',
-        scale=alt.Scale(domain=[0, 20]) if hota_speedup_y else alt.Undefined,
+        title=['Speedup', '(Other / Ours)'],
+        scale=alt.Scale(domain=[0, 25]) if hota_speedup_y else alt.Undefined,
     )
 
     line_kw: dict = {'strokeWidth': 2, 'opacity': SYSTEM_MARK_OPACITY}
@@ -621,6 +627,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
                                single_row: bool = False,
                                legend_title: str = 'Compared To',
                                show_legend: bool = True,
+                               color_domain: list[str] | None = None,
                                apply_padding: bool = True,
                                apply_legend_config: bool = True,
                                subplot_height: int | None = None,
@@ -654,7 +661,10 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
         kind='mergesort',
     ).reset_index(drop=True)
 
-    color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
+    if color_domain is not None:
+        color_scale = alt.Scale(domain=color_domain)
+    else:
+        color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
     base = alt.Chart(df_plot)
@@ -665,7 +675,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
     hota_gain_y = accuracy_col_name == 'HOTA'
     y_enc = alt.Y(
         'accuracy_gain:Q',
-        title=f'{accuracy_col_name} Gain (Ours - Other)',
+        title=[f'{accuracy_col_name} Gain', '(Ours - Other)'],
         scale=alt.Scale(domain=[0, 0.6]) if hota_gain_y else alt.Undefined,
     )
 
@@ -979,6 +989,21 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
     Returns:
         Vertically concatenated Altair chart
     """
+    # Build a single shared color domain across all three sub-charts. We pass
+    # this domain explicitly to every chart factory rather than relying on
+    # ``resolve_scale(color='shared')`` at the vconcat level. Sharing via
+    # ``resolve_scale`` hoists the color scale above the throughput chart,
+    # which detaches it from that chart's shape scale and breaks Vega-Lite's
+    # automatic merge of color+shape into a single legend (producing two
+    # legends with identical labels). Threading the same domain into each
+    # chart keeps colors consistent while leaving the throughput chart's
+    # combined color+shape legend intact as the only legend.
+    all_systems: list[str] = []
+    for df in (df_throughput, df_speedup, df_accuracy_gain):
+        if 'system' in df.columns:
+            all_systems.extend(df['system'].dropna().unique().tolist())
+    shared_color_domain = _ordered_systems_for_chart(all_systems)
+
     throughput_chart = create_pareto_comparison_chart(
         df_throughput,
         'HOTA_HOTA',
@@ -1007,6 +1032,7 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         single_row=True,
         legend_title='System',
         show_legend=False,
+        color_domain=shared_color_domain,
         apply_padding=False,
         apply_legend_config=False,
         subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
@@ -1015,7 +1041,7 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         title_angle=0,
         title_align='left',
         title_anchor='start',
-        title_dy=5,
+        title_dy=0,
         title_dx=-70,
         title_offset=0,
     )
@@ -1026,6 +1052,7 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         single_row=True,
         legend_title='System',
         show_legend=False,
+        color_domain=shared_color_domain,
         apply_padding=False,
         apply_legend_config=False,
         subplot_height=COMBINED_ONE_ROW_SUBPLOT_HEIGHT,
@@ -1044,12 +1071,11 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         speedup_chart,
         accuracy_gain_chart,
         spacing=1,
-    ).resolve_scale(
-        color='shared'
     ).properties(
         padding=0,
     ).configure_legend(
         orient='left',
+        offset=-1,
     )
 
 

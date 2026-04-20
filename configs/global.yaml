@@ -1,17 +1,17 @@
 EXEC:
   DATASETS:
-    # - caldot1-y11
-    # - caldot2-y11
     - caldot1-y05
     - caldot2-y05
     - jnc0
     - jnc2
     - jnc6
     - jnc7
+    - ams-y05
     # - caldot1
     # - caldot2
+    # - caldot1-y11
+    # - caldot2-y11
     # - ams
-    - ams-y05
     # - ams-y11
   VIDEO_SETS:
     - valid
@@ -49,7 +49,6 @@ EXEC:
     - null    # No pruning, skip p022
     - 0.4
     - 0.6
-    # - 0.7
     - 0.8
   RELEVANCE_THRESHOLDS:
     - 0.25
