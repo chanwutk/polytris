@@ -52,6 +52,10 @@ _FACET_COL_SPACING = 60
 _FACET_ROW_SPACING = 40
 _FACET_HEADER_HEIGHT = 40
 
+# Distance from x-axis ticks/labels to the axis title (Vega-Lite ``titlePadding``;
+# default is larger; smaller values tighten the bottom margin under facets).
+X_AXIS_TITLE_PADDING = -1
+
 # Legend placement: position in the empty bottom-right cell of a 4-column grid
 # (assumes the last row has fewer subplots than FACET_COLUMNS).
 LEGEND_X = (FACET_COLUMNS - 1) * (FACET_SUBPLOT_WIDTH + _FACET_COL_SPACING)
@@ -60,6 +64,9 @@ LEGEND_Y = FACET_SUBPLOT_HEIGHT + _FACET_HEADER_HEIGHT + _FACET_ROW_SPACING
 SYSTEM_MARK_OPACITY = 0.6
 STANDARD_POINT_SIZE = 30
 PARETO_POINT_SIZE = 35
+
+# Categorical palette for ``system`` encoding (Vega named scheme).
+SYSTEM_COLOR_SCHEME = 'observable10'
 
 # Vega expression that splits legend labels on spaces so each token renders on
 # its own line -- keeps long ablation labels readable in narrow legends.
@@ -150,10 +157,13 @@ def _default_system_color_scale(systems: list[str]) -> alt.Scale:
     """
     Nominal colors in canonical ``SYSTEM_COLOR_DOMAIN`` order (then extras).
 
-    No ``range``: Vega-Lite uses the default categorical palette, assigning
-    colors by domain index so the mapping stays stable across charts.
+    Uses ``SYSTEM_COLOR_SCHEME`` (Vega categorical scheme); domain order maps
+    systems to palette entries so the mapping stays stable across charts.
     """
-    return alt.Scale(domain=_ordered_systems_for_chart(systems))
+    return alt.Scale(
+        domain=_ordered_systems_for_chart(systems),
+        scheme=SYSTEM_COLOR_SCHEME,
+    )
 
 
 def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
@@ -231,17 +241,21 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
 
     # The default layout keeps the legend in the empty grid cell; the one-row
     # export has no spare cell, so move the legend above the chart.
+    # Sub-charts used inside ``alt.vconcat`` must not set ``config`` (Altair v6);
+    # the parent concat applies ``configure_axisX`` for those exports.
     if not apply_legend_config:
         return faceted_chart
 
     if single_row:
-        return faceted_chart.configure_legend(orient='top')
+        return faceted_chart.configure_legend(orient='top').configure_axisX(
+            titlePadding=X_AXIS_TITLE_PADDING,
+        )
 
     return faceted_chart.configure_legend(
         orient='none',
         legendX=LEGEND_X,
         legendY=LEGEND_Y,
-    )
+    ).configure_axisX(titlePadding=X_AXIS_TITLE_PADDING)
 
 
 
@@ -550,7 +564,7 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
     ).reset_index(drop=True)
 
     if color_domain is not None:
-        color_scale = alt.Scale(domain=color_domain)
+        color_scale = alt.Scale(domain=color_domain, scheme=SYSTEM_COLOR_SCHEME)
     else:
         color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
@@ -662,7 +676,7 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
     ).reset_index(drop=True)
 
     if color_domain is not None:
-        color_scale = alt.Scale(domain=color_domain)
+        color_scale = alt.Scale(domain=color_domain, scheme=SYSTEM_COLOR_SCHEME)
     else:
         color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
@@ -775,7 +789,7 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
 
     systems_list = df_clean['system'].dropna().unique().tolist()
     ordered_systems = _ordered_systems_for_chart(systems_list)
-    color_scale = alt.Scale(domain=ordered_systems)
+    color_scale = alt.Scale(domain=ordered_systems, scheme=SYSTEM_COLOR_SCHEME)
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
     # Base chart for Pareto fronts (with lines)
@@ -1076,7 +1090,7 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
     ).configure_legend(
         orient='left',
         offset=-1,
-    )
+    ).configure_axisX(titlePadding=X_AXIS_TITLE_PADDING)
 
 
 def _filter_pareto_per_dataset(df: pd.DataFrame, time_col: str,
@@ -1212,8 +1226,8 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     # Define metrics to visualize
     metrics_map = {
         'HOTA_HOTA': 'HOTA',
-        'HOTA_AssA': 'AssA',
-        'HOTA_DetA': 'DetA',
+        # 'HOTA_AssA': 'AssA',
+        # 'HOTA_DetA': 'DetA',
     }
 
     # Process each metric
