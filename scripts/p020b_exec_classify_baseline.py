@@ -16,6 +16,7 @@ from functools import partial
 from polyis.images import ImgNHWC, splitNHWC
 
 from polyis.io import cache, store
+from polyis.train.select_model_optimization import select_baseline_model_optimization
 from polyis.utilities import format_time, ProgressBar, get_config
 
 
@@ -23,7 +24,8 @@ config = get_config()
 TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
 CLASSIFIERS: list[str] = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
 DATASETS: list[str] = config['EXEC']['DATASETS']
-SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
+# Baseline comparison is only run at sample_rate=1 (see evaluation/p205).
+SAMPLE_RATES: list[int] = [1]
 BATCH_SIZE: int = 16
 
 # Source classifier names that have a trained baseline in p017 (must match p017 BASELINE_MODEL_ZOO).
@@ -63,6 +65,7 @@ def classify_batch(
     normalize_mean: torch.Tensor,
     normalize_std: torch.Tensor,
     always_relevant_mask: torch.Tensor,
+    method_name: str = 'baseline',
 ) -> tuple[torch.Tensor, list[dict]]:
     batch_size = len(batch_frames)
     num_tiles = grid_height * grid_width
@@ -104,6 +107,8 @@ def classify_batch(
 
     inference_start = time.time_ns() / 1e6
     all_tiles = tiles_nchw_valid.half()
+    if method_name in ('channels_last', 'torch_compile_channels_last'):
+        all_tiles = all_tiles.to(memory_format=torch.channels_last)  # type: ignore
     raw = model(all_tiles)
     if raw.dim() == 2 and raw.shape[1] == 1:
         predictions = torch.sigmoid(raw)
@@ -142,6 +147,7 @@ def classify(
     normalize_mean: torch.Tensor,
     normalize_std: torch.Tensor,
     always_relevant_mask: torch.Tensor,
+    method_name: str = 'baseline',
 ):
     video_path = store.dataset(dataset, videoset, video)
     output_dir = cache.exec(dataset, 'relevancy', video)
@@ -203,6 +209,7 @@ def classify(
                 normalize_mean,
                 normalize_std,
                 always_relevant_mask,
+                method_name,
             )
             runtimes.append(runtime)
             all_probs.append((probs, batch_indices))
@@ -249,6 +256,22 @@ def classify_all(
     width = int(first_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(first_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+    compilation_path = cache.index(
+        dataset, 'training', 'results', f'{classifier}_{tile_size}', 'model_compilation.jsonl',
+    )
+    if os.path.exists(compilation_path):
+        with open(compilation_path, 'r') as f:
+            benchmark_results = [json.loads(line) for line in f]
+        model, method_name = select_baseline_model_optimization(
+            model,
+            benchmark_results,
+            device,
+            tile_size,
+            (width // tile_size) * (height // tile_size),
+        )
+    else:
+        method_name = 'baseline'
+
     normalize_mean = torch.tensor([0.485, 0.456, 0.406], device=device, dtype=torch.float16).view(1, 3, 1, 1)
     normalize_std = torch.tensor([0.229, 0.224, 0.225], device=device, dtype=torch.float16).view(1, 3, 1, 1)
 
@@ -287,11 +310,12 @@ def classify_all(
                 normalize_mean,
                 normalize_std,
                 always_relevant_mask,
+                method_name,
             )
             command_queue.put((device, {'completed': warmup_i + 1, 'total': 16, 'description': 'Warm up (baseline)'}))
     torch.cuda.synchronize()
 
-    description = f"{dataset} {classifier}Baseline_{tile_size} sr{sample_rate} [eager]"
+    description = f"{dataset} {classifier}Baseline_{tile_size} sr{sample_rate} [{method_name}]"
     command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
     for i, video in enumerate(videos):
         classify(
@@ -306,6 +330,7 @@ def classify_all(
             normalize_mean,
             normalize_std,
             always_relevant_mask,
+            method_name,
         )
         command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 

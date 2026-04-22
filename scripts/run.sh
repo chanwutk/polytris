@@ -12,10 +12,10 @@
 # echo ">>> scripts/p016_tune_track_rate.py"
 # echo -e "########################################\n"
 # python scripts/p016_tune_track_rate.py
-echo -e "\n\n\n########################################"
-echo ">>> scripts/p017_tune_train_classifier_baseline.py"
-echo -e "########################################\n"
-python scripts/p017_tune_train_classifier_baseline.py
+# echo -e "\n\n\n########################################"
+# echo ">>> scripts/p017_tune_train_classifier_baseline.py"
+# echo -e "########################################\n"
+# python scripts/p017_tune_train_classifier_baseline.py
 
 # echo -e "\n\n\n=============================================================="
 # echo          "Phase 1: Valid pass (full parameter grid, valid videoset only)"
@@ -104,10 +104,10 @@ echo -e "\n\n\n======================================================="
 echo          "Phase 5: Final evaluation (test data for Pareto combos)"
 echo -e       "=======================================================\n"
 
-echo -e "\n\n\n########################################"
-echo ">>> scripts/p020b_exec_classify_baseline.py --test"
-echo -e "########################################\n"
-python scripts/p020b_exec_classify_baseline.py --test
+# echo -e "\n\n\n########################################"
+# echo ">>> scripts/p020b_exec_classify_baseline.py --test"
+# echo -e "########################################\n"
+# python scripts/p020b_exec_classify_baseline.py --test
 echo -e "\n\n\n########################################"
 echo ">>> evaluation/p205_compare_classifiers.py --test"
 echo -e "########################################\n"
