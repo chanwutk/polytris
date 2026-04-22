@@ -179,3 +179,131 @@ def select_model_optimization(model: "torch.nn.Module", benchmark_results: list[
         # Unknown method, return baseline
         return model, method
 
+
+class BaselineCUDAGraphWrapper:
+    """CUDA Graph for single-tensor forward (e.g. ShuffleNet05Baseline)."""
+
+    def __init__(self, model: "torch.nn.Module", expected_batch_size: int, device: str, tile_size: int, dtype: torch.dtype):
+        self.base_model = model
+        self.model = model
+        self.expected_batch_size = expected_batch_size
+        self.device = device
+        self.tile_size = tile_size
+
+        dummy_image = torch.randn(expected_batch_size, 3, tile_size, tile_size, device=device, dtype=dtype)
+        self._ensure_graph_captured(dummy_image)
+
+    def _ensure_graph_captured(self, input_tensor: torch.Tensor):
+        self.static_input = input_tensor.clone()
+        with torch.no_grad():
+            self.static_output = torch.empty_like(self.model(self.static_input))
+
+        for _ in range(5):
+            _ = self.model(self.static_input)
+        torch.cuda.synchronize()
+
+        self.graph = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(self.graph):
+            self.static_output.copy_(self.model(self.static_input))
+
+    def __call__(self, input_tensor: torch.Tensor) -> torch.Tensor:
+        self.static_input.copy_(input_tensor)
+        self.graph.replay()
+        return self.static_output.clone()
+
+    def eval(self):
+        self.base_model.eval()
+        if hasattr(self.model, 'eval'):
+            self.model.eval()
+        return self
+
+    def train(self, mode: bool = True):
+        self.base_model.train(mode)
+        if hasattr(self.model, 'train'):
+            self.model.train(mode)
+        return self
+
+
+class BaselineChannelsLastCUDAGraphWrapper(BaselineCUDAGraphWrapper):
+    """channels-last + CUDA Graph for single-tensor baseline forward."""
+
+    def __init__(self, model: "torch.nn.Module", expected_batch_size: int, device: str, tile_size: int, dtype: torch.dtype):
+        self.base_model = model
+        self.model = model
+        self.expected_batch_size = expected_batch_size
+        self.device = device
+        self.tile_size = tile_size
+
+        dummy_image = torch.randn(expected_batch_size, 3, tile_size, tile_size, device=device, dtype=dtype)
+        dummy_image = dummy_image.to(memory_format=torch.channels_last)  # type: ignore
+        self._ensure_graph_captured(dummy_image)
+
+    def __call__(self, input_tensor: torch.Tensor) -> torch.Tensor:
+        input_cl = input_tensor.to(memory_format=torch.channels_last)  # type: ignore
+        self.static_input.copy_(input_cl)
+        self.graph.replay()
+        return self.static_output.clone()
+
+
+def select_baseline_model_optimization(
+    model: "torch.nn.Module",
+    benchmark_results: list[dict[str, Any]],
+    device: str,
+    tile_size: int,
+    batch_size: int,
+) -> tuple[Any, str]:
+    """
+    Same method selection as ``select_model_optimization``, but for models with a
+    single 3-channel image input (no position). ``benchmark_results`` should come
+    from the paired experimental classifier's ``model_compilation.jsonl`` (same
+    tile grid / batch size family as used in ``p015`` / ``p020``).
+    """
+    model.eval()
+
+    valid_results = [r for r in benchmark_results if r['runtime_ms'] is not None]
+
+    if not valid_results:
+        return model, 'baseline'
+
+    valid_results = [*filter(lambda x: 'cuda_graph' not in x['method'], valid_results)]
+    valid_results.sort(key=lambda x: x['runtime_ms'])
+    best_result = valid_results[0]
+    method = best_result['method']
+
+    dtype = next(iter(model.parameters())).dtype
+
+    if method == 'baseline':
+        return model, method
+
+    if method == 'torch_compile':
+        return torch.compile(model, mode='reduce-overhead'), method
+
+    if method == 'channels_last':
+        model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
+        return model_cl, method
+
+    if method == 'torch_compile_channels_last':
+        model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
+        return torch.compile(model_cl, mode='reduce-overhead'), method
+
+    if method == 'torchscript_trace':
+        dummy_image = torch.randn(batch_size, 3, tile_size, tile_size, device=device, dtype=dtype)
+        traced_model = torch.jit.trace(model, (dummy_image,))
+        return traced_model, method
+
+    if method == 'torchscript_optimize':
+        dummy_image = torch.randn(batch_size, 3, tile_size, tile_size, device=device, dtype=dtype)
+        traced_model = torch.jit.trace(model, (dummy_image,))
+        optimized_model = torch.jit.freeze(traced_model)
+        optimized_model = torch.jit.optimize_for_inference(optimized_model)
+        return optimized_model, method
+
+    if method == 'cuda_graph':
+        return BaselineCUDAGraphWrapper(model, batch_size, device, tile_size, dtype), method
+
+    if method == 'channels_last_cuda_graph':
+        model_cl = model.to(memory_format=torch.channels_last)  # type: ignore
+        return BaselineChannelsLastCUDAGraphWrapper(model_cl, batch_size, device, tile_size, dtype), method
+
+    return model, method
+

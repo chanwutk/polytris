@@ -24,6 +24,7 @@ TRACKERS: list[str] = config['EXEC']['TRACKERS']
 TRACKING_ACCURACY_THRESHOLDS: list[float] = [
     t for t in config['EXEC']['TRACKING_ACCURACY_THRESHOLDS'] if t is not None
 ]
+RELEVANCE_THRESHOLDS: list[float] = config['EXEC']['RELEVANCE_THRESHOLDS']
 
 # Operations tracked by p022_exec_prune_polyominoes.py
 OPERATIONS = ['prepare_bitmaps', 'group_tiles', 'build_ilp', 'solve_ilp', 'extract_grids']
@@ -60,12 +61,13 @@ def count_active_tiles(score_path: str, threshold: int) -> int:
 
 def collect_row(args: tuple) -> dict | None:
     # Collect runtime and retention data for one parameter combination; returns None if files missing
-    dataset, videoset, video, classifier, tile_size, sample_rate, tracker, threshold = args
+    dataset, videoset, video, classifier, tile_size, sample_rate, tracker, threshold, relevance_threshold = args
 
     param_str = build_param_str(
         classifier=classifier, tilesize=tile_size,
         sample_rate=sample_rate, tracker=tracker,
         tracking_accuracy_threshold=threshold,
+        relevance_threshold=relevance_threshold,
     )
 
     runtime_path = cache.exec(dataset, 'pruned-polyominoes', video, param_str, 'score', 'runtime.jsonl')
@@ -83,8 +85,9 @@ def collect_row(args: tuple) -> dict | None:
 
     # Pruned output has binary values (0 or 255); count tiles == 255
     pruned_tiles = count_active_tiles(str(pruned_score_path), threshold=255)
-    # Original relevancy output may have 0-255 values; apply same threshold as p022 (>=128)
-    orig_tiles = count_active_tiles(str(orig_score_path), threshold=128)
+    # Original relevancy scores are 0–255; binarize at T_r to match p022.
+    orig_cutoff = int(relevance_threshold * 255)
+    orig_tiles = count_active_tiles(str(orig_score_path), threshold=orig_cutoff)
     retention_rate = pruned_tiles / orig_tiles if orig_tiles > 0 else 0.0
 
     row: dict = {
@@ -96,6 +99,7 @@ def collect_row(args: tuple) -> dict | None:
         'sample_rate': sample_rate,
         'tracker': tracker,
         'threshold': threshold,
+        'relevance_threshold': relevance_threshold,
         'retention_rate': retention_rate,
     }
     for op in OPERATIONS:
@@ -108,7 +112,8 @@ def collect_data(videosets: list[str]) -> pd.DataFrame:
     # For the test videoset, restrict to Pareto-optimal parameter combinations only.
     pareto_filter = build_pareto_combo_filter(
         DATASETS, videosets,
-        ['classifier', 'tilesize', 'sample_rate', 'tracker', 'tracking_accuracy_threshold'],
+        ['classifier', 'tilesize', 'sample_rate', 'tracker', 'tracking_accuracy_threshold',
+         'relevance_threshold'],
     )
     tasks: list[tuple] = []
     for dataset in DATASETS:
@@ -121,14 +126,15 @@ def collect_data(videosets: list[str]) -> pd.DataFrame:
                 if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))
             )
             for combo in itertools.product(
-                videos, CLASSIFIERS, TILE_SIZES, SAMPLE_RATES, TRACKERS, TRACKING_ACCURACY_THRESHOLDS
+                videos, CLASSIFIERS, TILE_SIZES, SAMPLE_RATES, TRACKERS, TRACKING_ACCURACY_THRESHOLDS,
+                RELEVANCE_THRESHOLDS,
             ):
-                video, classifier, tile_size, sample_rate, tracker, threshold = combo
+                video, classifier, tile_size, sample_rate, tracker, threshold, relevance_threshold = combo
                 # Skip non-Pareto combinations when processing the test split.
                 if videoset == 'test' and pareto_filter is not None:
-                    if (classifier, tile_size, sample_rate, tracker, threshold) not in pareto_filter[dataset]:
+                    if (classifier, tile_size, sample_rate, tracker, threshold, relevance_threshold) not in pareto_filter[dataset]:
                         continue
-                tasks.append((dataset, videoset, video, classifier, tile_size, sample_rate, tracker, threshold))
+                tasks.append((dataset, videoset, video, classifier, tile_size, sample_rate, tracker, threshold, relevance_threshold))
 
     print(f"Scanning {len(tasks)} parameter combinations...")
     with mp.Pool(mp.cpu_count()) as pool:
@@ -143,7 +149,8 @@ def make_config_label(row: pd.Series) -> str:
     # Abbreviated parameter set label used on chart axes
     return (
         f"{row['classifier'][:5]} {row['tile_size']} "
-        f"SR{row['sample_rate']} {row['tracker'][:5]} {row['threshold']:.0%}"
+        f"SR{row['sample_rate']} {row['tracker'][:5]} {row['threshold']:.0%} "
+        f"Tr{row['relevance_threshold']:.0%}"
     )
 
 

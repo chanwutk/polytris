@@ -25,6 +25,7 @@ DATASETS: list[str] = config['EXEC']['DATASETS']
 SAMPLE_RATES: list[int] = config['EXEC']['SAMPLE_RATES']
 TRACKERS: list[str] = config['EXEC']['TRACKERS']
 TRACKING_ACCURACY_THRESHOLDS: list[float] = [t for t in config['EXEC']['TRACKING_ACCURACY_THRESHOLDS'] if t is not None]
+RELEVANCE_THRESHOLDS: list[float] = config['EXEC']['RELEVANCE_THRESHOLDS']
 
 TILEPADDING_MODE = 0  # 0: No padding, 1: Connected padding, 2: Disconnected padding
 
@@ -93,6 +94,7 @@ def process_video(
     sample_rate: int,
     tracker: str,
     tracking_accuracy_threshold: float,
+    relevance_threshold: float,
     time_limit: float | None,
 ):
     """
@@ -107,6 +109,7 @@ def process_video(
         sample_rate: Frame sampling stride used by upstream classification
         tracker: Tracker name
         tracking_accuracy_threshold: Accuracy threshold (float, e.g. 0.90)
+        relevance_threshold: Relevance classifier binarization threshold T_r (0–1)
         time_limit: ILP solver wall-clock time limit in seconds (None for default 0.5s)
     """
     # Assert that classification results exist before attempting to load.
@@ -137,8 +140,8 @@ def process_video(
         hex_data = frame_data['classification_hex']
         flat_data = np.frombuffer(bytes.fromhex(hex_data), dtype=np.uint8)
         classification_grid = flat_data.reshape((grid_height, grid_width))
-        # TODO: for now, classification threshold is 128
-        binary_grid = (classification_grid >= 128).astype(np.uint8) * 255
+        cutoff = int(relevance_threshold * 255)
+        binary_grid = (classification_grid >= cutoff).astype(np.uint8) * 255
         
         classifications.append(binary_grid)
     
@@ -215,7 +218,8 @@ def process_video(
     # When a time limit is specified (i.e. the experiment mode), results go into a
     # separate cache stage so they never overwrite the standard pipeline output.
     param_str = build_param_str(classifier=classifier, tilesize=tile_size, sample_rate=sample_rate,
-                                tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+                                tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold,
+                                relevance_threshold=relevance_threshold)
     output_dir = cache.exec(
         dataset, 'pruned-polyominoes', video,
         param_str
@@ -264,19 +268,23 @@ def process_all(
     sample_rate: int,
     tracker: str,
     tracking_accuracy_threshold: float,
+    relevance_threshold: float,
     time_limit: float | None,
     gpu_id: int,
     command_queue: mp.Queue,
 ):
     device = f'cuda:{gpu_id}'
     # Build a human-readable description for the progress bar.
-    description = f"{dataset} {classifier}_{tile_size} sr{sample_rate} {tracker} {tracking_accuracy_threshold}"
+    description = (
+        f"{dataset} {classifier}_{tile_size} sr{sample_rate} {tracker} "
+        f"{tracking_accuracy_threshold} Tr{relevance_threshold}"
+    )
     # Report initial progress: 0 of N videos done.
     command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
     # Iterate over all videos in the split for this parameter combination.
     for i, video in enumerate(videos):
         process_video(dataset, videoset, video, classifier, tile_size, sample_rate,
-                      tracker, tracking_accuracy_threshold, time_limit)
+                      tracker, tracking_accuracy_threshold, relevance_threshold, time_limit)
         # Advance the progress bar by one unit after each video completes.
         command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 
@@ -287,7 +295,7 @@ def main():
     
     This function:
     1. Reads classification results from 020_relevancy
-    2. Converts hex-encoded classifications to binary numpy arrays (threshold=128)
+    2. Converts hex-encoded classifications to binary numpy arrays at T_r (relevance threshold)
     3. Groups connected tiles into polyominoes using group_tiles_all
     4. Solves ILP to select minimum set of polyominoes satisfying temporal constraints
     5. Outputs pruned tiles in same format as p021 (hex-encoded binary grids)
@@ -319,7 +327,8 @@ def main():
     # Build allowed-combo set for the test pass (None means no filtering applies).
     allowed_combos = build_pareto_combo_filter(
         DATASETS, selected_videosets,
-        ['classifier', 'tilesize', 'sample_rate', 'tracker', 'tracking_accuracy_threshold'],
+        ['classifier', 'tilesize', 'sample_rate', 'tracker', 'tracking_accuracy_threshold',
+         'relevance_threshold'],
     )
 
     funcs: list[Callable[[int, mp.Queue], None]] = []
@@ -328,6 +337,7 @@ def main():
     print(f"sample_rates: {SAMPLE_RATES}")
     print(f"trackers: {TRACKERS}")
     print(f"tracking_accuracy_thresholds: {TRACKING_ACCURACY_THRESHOLDS}")
+    print(f"relevance_thresholds: {RELEVANCE_THRESHOLDS}")
     print(f"time_limit: {time_limit}s")
     for dataset, videoset in itertools.product(DATASETS, selected_videosets):
         videoset_dir = store.dataset(dataset, videoset)
@@ -338,19 +348,20 @@ def main():
             shutil.rmtree(cache.exec(dataset, 'pruned-polyominoes', video), ignore_errors=True)
         for classifier, tile_size, sample_rate in itertools.product(CLASSIFIERS, TILE_SIZES, SAMPLE_RATES):
             # Iterate over all tracker × threshold combinations for each sample_rate.
-            for tracker, threshold in itertools.product(TRACKERS, TRACKING_ACCURACY_THRESHOLDS):
+            for tracker, threshold, relevance_threshold in itertools.product(
+                    TRACKERS, TRACKING_ACCURACY_THRESHOLDS, RELEVANCE_THRESHOLDS):
                 # Skip parameter combos not on the Pareto front during the test pass.
-                combo = (classifier, tile_size, sample_rate, tracker, threshold)
+                combo = (classifier, tile_size, sample_rate, tracker, threshold, relevance_threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
                 func = partial(process_all, dataset, videoset, sorted(videos), classifier,
-                               tile_size, sample_rate, tracker, threshold, time_limit)
+                               tile_size, sample_rate, tracker, threshold, relevance_threshold, time_limit)
                 funcs.append(func)
     
     print(f"Created {len(funcs)} tasks to process")
     
     num_workers = mp.cpu_count()
-    num_workers = mp.cpu_count() // 2
+    num_workers = mp.cpu_count() // 4
     # num_workers = 2
     if len(funcs) > 0:
         ProgressBar(num_workers=num_workers, num_tasks=len(funcs), refresh_per_second=5).run_all(funcs)

@@ -27,6 +27,7 @@ SAMPLE_RATES: list[int] = CONFIG['EXEC']['SAMPLE_RATES']
 TRACKERS: list[str] = CONFIG['EXEC']['TRACKERS']
 CANVAS_SCALES: list[float] = CONFIG['EXEC']['CANVAS_SCALE']
 TRACKING_ACCURACY_THRESHOLDS: list[float] = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+RELEVANCE_THRESHOLDS: list[float] = CONFIG['EXEC']['RELEVANCE_THRESHOLDS']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Execute object tracking on detection results')
@@ -47,7 +48,7 @@ def load_detection_results(dataset: str, video_file: str, tilesize: int,
                            classifier: str, sample_rate: int = 1, tilepadding: str | None = None,
                            canvas_scale: float = 1.0, tracker: str | None = None,
                            tracking_accuracy_threshold: float | None = None,
-                           verbose: bool = False):
+                           *, relevance_threshold: float, verbose: bool = False):
     """
     Load detection results from the uncompressed detections JSONL file.
 
@@ -61,6 +62,7 @@ def load_detection_results(dataset: str, video_file: str, tilesize: int,
         canvas_scale (float): Canvas scale used for compression outputs
         tracker (str | None): Tracker name for upstream pruning
         tracking_accuracy_threshold (float | None): Accuracy threshold for pruning
+        relevance_threshold (float): Relevance binarization threshold T_r for cache paths
         verbose (bool): Whether to print verbose output
     Returns:
         list[dict]: list of frame detection results
@@ -69,7 +71,7 @@ def load_detection_results(dataset: str, video_file: str, tilesize: int,
         FileNotFoundError: If no detection results file is found
     """
     # Build the shared key used by 050 and 060 stage folders.
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold, relevance_threshold=relevance_threshold)
     detection_path = cache.exec(dataset, 'ucomp-dets', video_file,
                                 param_str, 'detections.jsonl')
     
@@ -92,7 +94,8 @@ def load_detection_results(dataset: str, video_file: str, tilesize: int,
 
 def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate: int,
           tilepadding: str, canvas_scale: float, tracker_name: str,
-          tracking_accuracy_threshold: float | None, no_interpolate: bool):
+          tracking_accuracy_threshold: float | None, relevance_threshold: float,
+          no_interpolate: bool):
     """
     Process tracking for a single video/classifier/tilesize/tracker combination.
     This function is designed to be called in parallel.
@@ -107,17 +110,20 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
         canvas_scale (float): Canvas scale used for compression outputs
         tracker_name (str): Name of the tracker to use
         tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
+        relevance_threshold (float): Relevance classifier binarization threshold T_r (0–1)
         no_interpolate (bool): Whether to not perform trajectory interpolation
     """
     # Input from p050: tracker only in param_str when pruning is active
     input_tracker = tracker_name if tracking_accuracy_threshold is not None else None
     input_param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                       tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=input_tracker,
-                                      tracking_accuracy_threshold=tracking_accuracy_threshold)
+                                      tracking_accuracy_threshold=tracking_accuracy_threshold,
+                                      relevance_threshold=relevance_threshold)
     # Output always includes tracker (p060 produces different results per tracker)
     output_param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                        tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name,
-                                       tracking_accuracy_threshold=tracking_accuracy_threshold)
+                                       tracking_accuracy_threshold=tracking_accuracy_threshold,
+                                       relevance_threshold=relevance_threshold)
 
     # Check if uncompressed detections exist
     detection_path = cache.exec(dataset, 'ucomp-dets', video,
@@ -127,7 +133,8 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
     # Load detection results using input params (tracker=None when no pruning)
     detection_results = load_detection_results(dataset, video, tilesize, classifier,
                                                sample_rate, tilepadding, canvas_scale,
-                                               input_tracker, tracking_accuracy_threshold)
+                                               input_tracker, tracking_accuracy_threshold,
+                                               relevance_threshold=relevance_threshold)
 
     # Create output path for tracking results
     output_path = cache.exec(dataset, 'ucomp-tracks', video, output_param_str, 'tracking.jsonl')
@@ -198,13 +205,14 @@ def track(dataset: str, video: str, classifier: str, tilesize: int, sample_rate:
 
 def track_all(dataset: str, videos: list[str], classifier: str, tilesize: int, sample_rate: int,
               tilepadding: str, canvas_scale: float, tracker_name: str,
-              tracking_accuracy_threshold: float | None,
+              tracking_accuracy_threshold: float | None, relevance_threshold: float,
               no_interpolate: bool, gpu_id: int, command_queue: mp.Queue):
     device = f'cuda:{gpu_id}'
     # Build a human-readable description for the progress bar.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                 tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker_name,
-                                tracking_accuracy_threshold=tracking_accuracy_threshold)
+                                tracking_accuracy_threshold=tracking_accuracy_threshold,
+                                relevance_threshold=relevance_threshold)
     description = f"{dataset} {param_str}"
     # Report initial progress: 0 of N videos done.
     command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
@@ -212,6 +220,7 @@ def track_all(dataset: str, videos: list[str], classifier: str, tilesize: int, s
     for i, video in enumerate(videos):
         track(dataset, video, classifier, tilesize, sample_rate,
               tilepadding, canvas_scale, tracker_name, tracking_accuracy_threshold,
+              relevance_threshold,
               no_interpolate)
         # Advance the progress bar by one unit after each video completes.
         command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
@@ -255,7 +264,7 @@ def main(args: argparse.Namespace):
     allowed_combos = build_pareto_combo_filter(
         DATASETS, selected_videosets,
         ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
-         'tracker', 'tracking_accuracy_threshold'],
+         'tracker', 'tracking_accuracy_threshold', 'relevance_threshold'],
     )
 
     funcs: list[Callable[[int, mp.Queue], None]] = []
@@ -269,14 +278,14 @@ def main(args: argparse.Namespace):
         for video in videos:
             shutil.rmtree(cache.exec(dataset, 'ucomp-tracks', video), ignore_errors=True)
 
-        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold, tracker in itertools.product(
-            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS, TRACKERS):
+        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, acc_threshold, relevance_threshold, tracker in itertools.product(
+            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS, RELEVANCE_THRESHOLDS, TRACKERS):
             # Skip parameter combos not on the Pareto front during the test pass.
-            combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
+            combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold)
             if allowed_combos is not None and combo not in allowed_combos[dataset]:
                 continue
             funcs.append(partial(track_all, dataset, sorted(videos), classifier, tilesize, sample_rate,
-                                 tilepadding, canvas_scale, tracker, threshold, args.no_interpolate))
+                                 tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold, args.no_interpolate))
 
     print(f"Created {len(funcs)} tasks to process")
 

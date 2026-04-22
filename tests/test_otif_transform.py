@@ -64,6 +64,9 @@ def test_build_tracking_transform_manifest_matches_configured_test_split(monkeyp
     extra_track_path = tracks_dir / '9' / '99.json'
     extra_track_path.parent.mkdir(parents=True, exist_ok=True)
     extra_track_path.write_text('[]')
+    leap_track_path = tracks_dir / 'leap' / '1.json'
+    leap_track_path.parent.mkdir(parents=True, exist_ok=True)
+    leap_track_path.write_text('[]')
 
     # Build the transform manifest from the configured stat rows and raw tracking tree.
     manifest_df = p140_otif_transform.build_tracking_transform_manifest(
@@ -87,4 +90,53 @@ def test_build_tracking_transform_manifest_matches_configured_test_split(monkeyp
         str(tmp_path / 'out' / 'otif' / 'demo' / 'te01.mp4' / 'tracking_results' / '003' / 'tracking.jsonl'),
         str(tmp_path / 'out' / 'otif' / 'demo' / 'te02.mp4' / 'tracking_results' / '000' / 'tracking.jsonl'),
         str(tmp_path / 'out' / 'otif' / 'demo' / 'te02.mp4' / 'tracking_results' / '003' / 'tracking.jsonl'),
+    ]
+
+
+def test_build_tracking_transform_manifest_reads_flat_leap_directory(monkeypatch, tmp_path):
+    # Create a minimal configured test split with two videos.
+    monkeypatch.setattr(
+        p140_otif_transform,
+        'build_split_video_manifest',
+        lambda datasets, videosets: pd.DataFrame([
+            {'dataset': 'demo', 'videoset': 'test', 'video': 'te01.mp4'},
+            {'dataset': 'demo', 'videoset': 'test', 'video': 'te02.mp4'},
+        ]),
+    )
+
+    # Redirect transformed SOTA outputs to the temporary directory.
+    monkeypatch.setattr(
+        p140_otif_transform.cache,
+        'sota',
+        lambda system, dataset, *args: str(tmp_path / 'out' / system / dataset / '/'.join(args)),
+    )
+
+    # Create the raw LEAP tracking tree with one flat file per video and unrelated OTIF folders beside it.
+    tracks_dir = tmp_path / 'tracks'
+    for video_id in [1, 2]:
+        track_path = tracks_dir / 'leap' / f'{video_id}.json'
+        track_path.parent.mkdir(parents=True, exist_ok=True)
+        track_path.write_text('[]')
+    otif_track_path = tracks_dir / '7' / '1.json'
+    otif_track_path.parent.mkdir(parents=True, exist_ok=True)
+    otif_track_path.write_text('[]')
+
+    # Build the transform manifest from the fixed LEAP param id and the raw LEAP tracking tree.
+    manifest_df = p140_otif_transform.build_tracking_transform_manifest(
+        'leap',
+        'demo',
+        pd.DataFrame({'param_id': [0]}),
+        str(tracks_dir),
+    )
+
+    # Keep only the configured test videos paired with the fixed LEAP param id.
+    assert manifest_df[['dataset', 'videoset', 'video', 'video_id', 'param_id']].to_dict('records') == [
+        {'dataset': 'demo', 'videoset': 'test', 'video': 'te01.mp4', 'video_id': 1, 'param_id': 0},
+        {'dataset': 'demo', 'videoset': 'test', 'video': 'te02.mp4', 'video_id': 2, 'param_id': 0},
+    ]
+
+    # Resolve output paths under the transformed SOTA cache layout.
+    assert manifest_df['output_jsonl_path'].tolist() == [
+        str(tmp_path / 'out' / 'leap' / 'demo' / 'te01.mp4' / 'tracking_results' / '000' / 'tracking.jsonl'),
+        str(tmp_path / 'out' / 'leap' / 'demo' / 'te02.mp4' / 'tracking_results' / '000' / 'tracking.jsonl'),
     ]

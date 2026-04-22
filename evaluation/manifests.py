@@ -19,6 +19,7 @@ SAMPLE_RATES = CONFIG['EXEC']['SAMPLE_RATES']
 TRACKERS = CONFIG['EXEC']['TRACKERS']
 CANVAS_SCALES = CONFIG['EXEC']['CANVAS_SCALE']
 TRACKING_ACCURACY_THRESHOLDS = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+RELEVANCE_THRESHOLDS = CONFIG['EXEC']['RELEVANCE_THRESHOLDS']
 
 # Keep the supported video extensions in one place so all manifest builders agree.
 VIDEO_EXTENSIONS = ('.mp4', '.avi', '.mov', '.mkv')
@@ -84,11 +85,12 @@ def build_polytris_variant_manifest() -> pd.DataFrame:
     rows: list[dict] = []
 
     # Expand the exact stage-060 parameter grid used by the execution pipeline.
-    for classifier, tilesize, sample_rate, threshold, tilepadding, canvas_scale, tracker in itertools.product(
+    for classifier, tilesize, sample_rate, threshold, relevance_threshold, tilepadding, canvas_scale, tracker in itertools.product(
         CLASSIFIERS,
         TILE_SIZES,
         SAMPLE_RATES,
         TRACKING_ACCURACY_THRESHOLDS,
+        RELEVANCE_THRESHOLDS,
         TILEPADDING_MODES,
         CANVAS_SCALES,
         TRACKERS,
@@ -99,6 +101,7 @@ def build_polytris_variant_manifest() -> pd.DataFrame:
             tilesize=tilesize,
             sample_rate=sample_rate,
             tracking_accuracy_threshold=threshold,
+            relevance_threshold=relevance_threshold,
             tilepadding=tilepadding,
             canvas_scale=canvas_scale,
             tracker=tracker,
@@ -112,6 +115,7 @@ def build_polytris_variant_manifest() -> pd.DataFrame:
             'tilesize': tilesize,
             'sample_rate': sample_rate,
             'tracking_accuracy_threshold': threshold,
+            'relevance_threshold': relevance_threshold,
             'tilepadding': tilepadding,
             'canvas_scale': canvas_scale,
             'tracker': tracker,
@@ -130,6 +134,7 @@ def build_naive_variant_manifest() -> pd.DataFrame:
         'tilesize': pd.NA,
         'sample_rate': pd.NA,
         'tracking_accuracy_threshold': pd.NA,
+        'relevance_threshold': pd.NA,
         'tilepadding': pd.NA,
         'canvas_scale': pd.NA,
         'tracker': pd.NA,
