@@ -140,8 +140,8 @@ def process_video(
         hex_data = frame_data['classification_hex']
         flat_data = np.frombuffer(bytes.fromhex(hex_data), dtype=np.uint8)
         classification_grid = flat_data.reshape((grid_height, grid_width))
-        cutoff = int(relevance_threshold * 255)
-        binary_grid = (classification_grid >= cutoff).astype(np.uint8) * 255
+        cutoff = relevance_threshold * 255
+        binary_grid = (classification_grid > cutoff).astype(np.uint8) * 255
         
         classifications.append(binary_grid)
     

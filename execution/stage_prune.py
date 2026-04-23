@@ -83,8 +83,12 @@ def _prune_video(
     grid_height: int | None = None
     grid_width: int | None = None
 
-    # Binarize at T_r (same convention as p022 / stage_compress).
-    cutoff = int(relevance_threshold * 255)
+    # Binarize at T_r using the exact same comparison as stage_compress
+    # (strict ``>`` against ``T_r * 255``). Using ``>=`` would include the
+    # boundary tile (e.g., score == 127 when T_r == 0.5) that compress would
+    # then re-binarize away from the *original* score, causing pruned-but-
+    # unpacked tiles -- and corrupting any downstream relevancy comparison.
+    cutoff = relevance_threshold * 255
     for frame_data in classifications:
         frame_indices.append(frame_data['idx'])
         if grid_height is None or grid_width is None:
@@ -92,7 +96,7 @@ def _prune_video(
         hex_data = frame_data['classification_hex']
         flat = np.frombuffer(bytes.fromhex(hex_data), dtype=np.uint8)
         grid = flat.reshape((grid_height, grid_width))
-        binary = (grid >= cutoff).astype(np.uint8) * 255
+        binary = (grid > cutoff).astype(np.uint8) * 255
         bitmaps_list.append(binary)
 
     num_frames = len(bitmaps_list)

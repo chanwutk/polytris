@@ -108,10 +108,14 @@ echo -e       "=======================================================\n"
 # echo ">>> scripts/p020b_exec_classify_baseline.py --test"
 # echo -e "########################################\n"
 # python scripts/p020b_exec_classify_baseline.py --test
+# echo -e "\n\n\n########################################"
+# echo ">>> evaluation/p205_compare_classifiers.py --test"
+# echo -e "########################################\n"
+# python evaluation/p205_compare_classifiers.py --test
 echo -e "\n\n\n########################################"
-echo ">>> evaluation/p205_compare_classifiers.py --test"
+echo ">>> evaluation/p038_packing_efficacy.py"
 echo -e "########################################\n"
-python evaluation/p205_compare_classifiers.py --test
+python evaluation/p038_packing_efficacy.py
 
 # echo -e "\n\n\n########################################"
 # echo ">>> evaluation/p101_evaluation_test.py"
