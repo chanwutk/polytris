@@ -84,6 +84,7 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
         # Create base DataFrame with required columns
         clean_df = pd.DataFrame({
             'system': system.upper(),  # Display name for SOTA system
+            'param_id': df['param_id'],  # Preserve per-row config id for downstream labeling
             'dataset': dataset_name,
             'videoset': df['videoset'] if 'videoset' in df.columns else 'test',
             'video': 'test',  # Keep the tooltip schema aligned with the legacy plotting helpers.
@@ -92,6 +93,7 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
             'tilepadding': STR_NA,  # SOTA doesn't have explicit tile padding
             'sample_rate': df['sample_rate'],
             'tracking_accuracy_threshold': pd.NA,  # SOTA doesn't use Polytris pruning threshold
+            'relevance_threshold': pd.NA,  # SOTA doesn't use Polytris relevance threshold
             'tracker': STR_NA,  # SOTA doesn't use our tracker system
             'time': df[runtime_column],  # Runtime in seconds
             'throughput_fps': float('nan'),  # Not available in tradeoff.csv
@@ -255,7 +257,7 @@ def visualize_all_datasets_tradeoff(df_combined: pd.DataFrame, df_sota_dict: dic
                     alt.value(50)   # Normal size for others
                 ),
                 tooltip=['system', 'dataset', 'videoset', 'classifier', 'sample_rate',
-                         'tracking_accuracy_threshold', 'tilepadding', 'canvas_scale',
+                         'tracking_accuracy_threshold', 'relevance_threshold', 'tilepadding', 'canvas_scale',
                          'tracker', x_column, accuracy_col]
             )
 
@@ -344,6 +346,8 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
         polytris_df['sample_rate'] = 1
     if 'tracking_accuracy_threshold' not in polytris_df.columns:
         polytris_df['tracking_accuracy_threshold'] = pd.NA
+    if 'relevance_threshold' not in polytris_df.columns:
+        polytris_df['relevance_threshold'] = pd.NA
     if 'tracker' not in polytris_df.columns:
         polytris_df['tracker'] = 'unknown'
     if 'canvas_scale' not in polytris_df.columns:
@@ -352,6 +356,8 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
         naive_df['sample_rate'] = 1
     if 'tracking_accuracy_threshold' not in naive_df.columns:
         naive_df['tracking_accuracy_threshold'] = pd.NA
+    if 'relevance_threshold' not in naive_df.columns:
+        naive_df['relevance_threshold'] = pd.NA
     if 'tracker' not in naive_df.columns:
         naive_df['tracker'] = 'unknown'
     if 'canvas_scale' not in naive_df.columns:

@@ -118,7 +118,7 @@ class PipelineConfig(NamedTuple):
     tracking_accuracy_threshold: float | None
     preload: bool
     # Extra config options from the original scripts that we thread through.
-    compress_threshold: float     # classification probability threshold (default 0.5)
+    relevance_threshold: float    # T_r: binarize classifier scores (0–1) before prune/compress
     no_interpolate: bool          # disable trajectory interpolation in tracker
 
 
@@ -284,6 +284,7 @@ def run_pipeline(
         canvas_scale=config.canvas_scale,
         tracker=config.tracker,
         tracking_accuracy_threshold=config.tracking_accuracy_threshold,
+        relevance_threshold=config.relevance_threshold,
     )
     command_queue.put((device, {
         'completed': 0,
@@ -347,6 +348,7 @@ def _save_results(
             canvas_scale=config.canvas_scale,
             tracker=config.tracker,
             tracking_accuracy_threshold=config.tracking_accuracy_threshold,
+            relevance_threshold=config.relevance_threshold,
         )
         output_path = cache.exec(
             config.dataset, 'ucomp-tracks', result.video,

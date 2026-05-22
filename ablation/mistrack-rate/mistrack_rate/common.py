@@ -19,7 +19,10 @@ from polyis.utilities import (
 GRID_ROWS = 3
 GRID_COLS = 3
 RATE_CHOICES = (1, 2, 4)
-HEURISTIC_THRESHOLDS = tuple(value / 10.0 for value in range(300, 1001, 25))
+HEURISTIC_THRESHOLDS = tuple(sorted(
+    set(value / 10.0 for value in range(300, 1001, 25))
+    | set(value / 10.0 for value in range(900, 1001, 10))
+))
 
 
 @dataclass

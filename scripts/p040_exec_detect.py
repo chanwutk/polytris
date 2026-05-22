@@ -31,6 +31,7 @@ TILEPADDING_MODES: list[TilePadding] = config['EXEC']['TILEPADDING_MODES']
 CANVAS_SCALES: list[float] = config['EXEC']['CANVAS_SCALE']
 TRACKERS: list[str] = config['EXEC']['TRACKERS']
 TRACKING_ACCURACY_THRESHOLDS: list[float] = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+RELEVANCE_THRESHOLDS: list[float] = config['EXEC']['RELEVANCE_THRESHOLDS']
 
 
 def parse_args():
@@ -95,6 +96,7 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
 def detect_parallel(dataset: str, videos: list[str], classifier: str, tilesize: int,
                     sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
                     tracker: str | None, tracking_accuracy_threshold: float | None,
+                    relevance_threshold: float,
                     batch_size: int, gpu_id: int, command_queue: mp.Queue):
     """
     Detect objects in compressed images using auto-selected detector with CUDA streams for true parallelism.
@@ -122,7 +124,7 @@ def detect_parallel(dataset: str, videos: list[str], classifier: str, tilesize: 
     # Enable cuDNN benchmarking for optimal performance
     torch.backends.cudnn.benchmark = True
 
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold, relevance_threshold=relevance_threshold)
     description = f"{dataset} {param_str}"
 
     # Look up first video's image count as a representative hint for get_detector
@@ -260,6 +262,7 @@ def detect_parallel(dataset: str, videos: list[str], classifier: str, tilesize: 
 def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
                    sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
                    tracker: str | None, tracking_accuracy_threshold: float | None,
+                   relevance_threshold: float,
                    batch_size: int, detector):
     """
     Detect objects in compressed images using a pre-initialized detector.
@@ -276,7 +279,7 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
         tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
         detector: Pre-initialized detector instance shared across all videos in this parameter combo
     """
-    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold)
+    param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate, tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold, relevance_threshold=relevance_threshold)
 
     compressed_frames_dir = cache.exec(dataset, 'comp-frames', video, param_str, 'images')
     assert os.path.exists(compressed_frames_dir), \
@@ -337,12 +340,14 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
 def detect_all(dataset: str, videos: list[str], classifier: str, tilesize: int,
                sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
                tracker: str | None, tracking_accuracy_threshold: float | None,
+               relevance_threshold: float,
                batch_size: int, gpu_id: int, command_queue: mp.Queue):
     device = f'cuda:{gpu_id}'
     # Build a human-readable description for the progress bar.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                 tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
-                                tracking_accuracy_threshold=tracking_accuracy_threshold)
+                                tracking_accuracy_threshold=tracking_accuracy_threshold,
+                                relevance_threshold=relevance_threshold)
     description = f"{dataset} {param_str}"
 
     # Initialize the detector once for all videos in this parameter combination.
@@ -373,6 +378,7 @@ def detect_all(dataset: str, videos: list[str], classifier: str, tilesize: int,
     for i, video in enumerate(videos):
         detect_objects(dataset, video, classifier, tilesize, sample_rate,
                        tilepadding, canvas_scale, tracker, tracking_accuracy_threshold,
+                       relevance_threshold,
                        batch_size, detector)
         # Advance the progress bar by one unit after each video completes.
         command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
@@ -419,7 +425,7 @@ def main(args):
     allowed_combos = build_pareto_combo_filter(
         DATASETS, selected_videosets,
         ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
-         'tracker', 'tracking_accuracy_threshold'],
+         'tracker', 'tracking_accuracy_threshold', 'relevance_threshold'],
         collapse_tracker_when_no_threshold=True,
     )
 
@@ -447,15 +453,15 @@ def main(args):
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
         for video in videos:
             shutil.rmtree(cache.exec(dataset, 'comp-dets', video), ignore_errors=True)
-        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
-            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
-            for tracker in [None] if threshold is None else TRACKERS:
+        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, acc_threshold, relevance_threshold in itertools.product(
+            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS, RELEVANCE_THRESHOLDS):
+            for tracker in [None] if acc_threshold is None else TRACKERS:
                 # Skip parameter combos not on the Pareto front during the test pass.
-                combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
+                combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
                 funcs.append(partial(detect_all, dataset, sorted(videos), classifier, tilesize, sample_rate,
-                                     tilepadding, canvas_scale, tracker, threshold, args.batch_size))
+                                     tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold, args.batch_size))
 
     print(f"Created {len(funcs)} tasks to process")
 

@@ -36,6 +36,7 @@ TILEPADDING_MODES: list[TilePadding] = config['EXEC']['TILEPADDING_MODES']
 CANVAS_SCALES: list[float] = config['EXEC']['CANVAS_SCALE']
 TRACKERS: list[str] = config['EXEC']['TRACKERS']
 TRACKING_ACCURACY_THRESHOLDS: list[float] = config['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+RELEVANCE_THRESHOLDS: list[float] = config['EXEC']['RELEVANCE_THRESHOLDS']
 
 
 def parse_args():
@@ -47,8 +48,6 @@ def parse_args():
                         help='Preload all video frames to GPU before starting the timer')
     parser.add_argument('--no-interpolate', action='store_true', dest='no_interpolate',
                         help='Disable trajectory interpolation in the tracker')
-    parser.add_argument('--threshold', type=float, default=0.5,
-                        help='Classification probability threshold (default: 0.5)')
     return parser.parse_args()
 
 
@@ -80,7 +79,7 @@ def main():
         DATASETS,
         selected_videosets,
         ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
-         'tracker', 'tracking_accuracy_threshold'],
+         'tracker', 'tracking_accuracy_threshold', 'relevance_threshold'],
     )
 
     # Build one pipeline task per (dataset, videoset, parameter combo).
@@ -96,16 +95,16 @@ def main():
         assert len(videos) > 0, f"No videos found in {videoset_dir}"
 
         for (classifier, tile_size, sample_rate, tilepadding,
-             canvas_scale, threshold) in itertools.product(
+             canvas_scale, threshold, relevance_threshold) in itertools.product(
                 CLASSIFIERS, TILE_SIZES, SAMPLE_RATES, TILEPADDING_MODES,
-                CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
+                CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS, RELEVANCE_THRESHOLDS):
 
             # Always iterate over all trackers.  Even when pruning is disabled
             # (threshold=None), each tracker produces separate tracking results
             # matching phase-4 (p060) behavior.
             for tracker in TRACKERS:
                 combo = (classifier, tile_size, sample_rate, tilepadding,
-                         canvas_scale, tracker, threshold)
+                         canvas_scale, tracker, threshold, relevance_threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
 
@@ -120,7 +119,7 @@ def main():
                     tracker=tracker,
                     tracking_accuracy_threshold=threshold,
                     preload=args.preload,
-                    compress_threshold=args.threshold,
+                    relevance_threshold=relevance_threshold,
                     no_interpolate=args.no_interpolate,
                 )
                 func = partial(_pipeline_task, videos, pipeline_config)

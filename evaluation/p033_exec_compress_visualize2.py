@@ -33,6 +33,7 @@ def parse_args():
 
 def count_compressed_images_and_frames(dataset: str, classifier: str, tilesize: int, tilepadding: str,
                                        sample_rate: int = 1, canvas_scale: float = 1.0,
+                                       relevance_threshold: float = 0.5,
                                        verbose: bool = False) -> tuple[int, int]:
     """
     Count the number of compressed images and total original frames for a specific dataset and parameters.
@@ -73,7 +74,8 @@ def count_compressed_images_and_frames(dataset: str, classifier: str, tilesize: 
         # Construct path to compressed images directory for this video
         param_str = build_param_str(classifier=classifier, tilesize=tilesize,
                                      sample_rate=sample_rate, tilepadding=tilepadding,
-                                     canvas_scale=canvas_scale)
+                                     canvas_scale=canvas_scale,
+                                     relevance_threshold=relevance_threshold)
         images_dir = os.path.join(video_path, '033_compressed_frames', 
                                  param_str, 'images')
         
@@ -138,7 +140,8 @@ def get_compression_rates(datasets: List[str], verbose: bool = False) -> Dict[st
         # Extract optional parameters with defaults for backward compatibility
         sample_rate = params.get('sample_rate', 1)
         canvas_scale = params.get('canvas_scale', 1.0)
-        
+        relevance_threshold = params.get('relevance_threshold', 0.5)
+
         if verbose:
             print(f"Analyzing dataset '{dataset}' with optimal parameters:")
             print(f"  Classifier: {classifier}")
@@ -150,7 +153,8 @@ def get_compression_rates(datasets: List[str], verbose: bool = False) -> Dict[st
         # Count compressed images and original frames across all videos in the dataset
         num_compressed, num_original = count_compressed_images_and_frames(
             dataset, classifier, tilesize, tilepadding,
-            sample_rate=sample_rate, canvas_scale=canvas_scale, verbose=verbose)
+            sample_rate=sample_rate, canvas_scale=canvas_scale,
+            relevance_threshold=relevance_threshold, verbose=verbose)
         
         # Calculate compression rate as percentage
         if num_original > 0:

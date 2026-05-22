@@ -54,10 +54,10 @@ FOR EACH STAGE OF REVIEW: output the explanation and pros and cons of each stage
 # Repository Guidelines
 
 ## Executing commands
-- Execute commands inside the container:
-  - This project is developed inside a docker container.
-  - Any scripts in the repository should be executed using `docker exec polyis` if this environment is not already inside a container.
-    - Note: read and write command may be executed directly without `docker exec polyis`.
+- This environment is a local MacBook used for editing only. Code runs on a remote SSH server (`ace`).
+- To test any code changes: first sync with `./sync`, then run on the remote via `ssh ace`.
+- On the remote, execute commands inside the Docker container using `docker exec polyis`.
+- Read and write tool calls may be executed directly on this local machine without syncing.
 
 ## Execution Pipeline (scripts/)
 - Primary entrypoint: scripts in `scripts/` run the full pipeline; numeric prefixes define order.

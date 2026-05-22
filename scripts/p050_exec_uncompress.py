@@ -25,6 +25,7 @@ TILEPADDING_MODES: list[TilePadding] = CONFIG['EXEC']['TILEPADDING_MODES']
 CANVAS_SCALES: list[float] = CONFIG['EXEC']['CANVAS_SCALE']
 TRACKERS: list[str] = CONFIG['EXEC']['TRACKERS']
 TRACKING_ACCURACY_THRESHOLDS: list[float] = CONFIG['EXEC']['TRACKING_ACCURACY_THRESHOLDS']
+RELEVANCE_THRESHOLDS: list[float] = CONFIG['EXEC']['RELEVANCE_THRESHOLDS']
 
 
 def parse_args():
@@ -162,7 +163,7 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
 def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
            sample_rate: int, tilepadding: str, canvas_scale: float, tracker: str | None,
-           tracking_accuracy_threshold: float | None):
+           tracking_accuracy_threshold: float | None, relevance_threshold: float):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
@@ -181,7 +182,8 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
     # Build the shared key used by all 03x/04x/05x stage folders.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                 tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
-                                tracking_accuracy_threshold=tracking_accuracy_threshold)
+                                tracking_accuracy_threshold=tracking_accuracy_threshold,
+                                relevance_threshold=relevance_threshold)
 
     # Check if compressed detections exist
     detections_file = cache.exec(dataset, 'comp-dets', video,
@@ -305,19 +307,21 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
 
 def uncompress_all(dataset: str, videoset: str, videos: list[str], classifier: str, tilesize: int,
                    sample_rate: int, tilepadding: str, canvas_scale: float, tracker: str | None,
-                   tracking_accuracy_threshold: float | None, gpu_id: int, command_queue: mp.Queue):
+                   tracking_accuracy_threshold: float | None, relevance_threshold: float,
+                   gpu_id: int, command_queue: mp.Queue):
     device = f'cuda:{gpu_id}'
     # Build a human-readable description for the progress bar.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                 tilepadding=tilepadding, canvas_scale=canvas_scale, tracker=tracker,
-                                tracking_accuracy_threshold=tracking_accuracy_threshold)
+                                tracking_accuracy_threshold=tracking_accuracy_threshold,
+                                relevance_threshold=relevance_threshold)
     description = f"{dataset} {param_str}"
     # Report initial progress: 0 of N videos done.
     command_queue.put((device, {'completed': 0, 'total': len(videos), 'description': description}))
     # Iterate over all videos in the split for this parameter combination.
     for i, video in enumerate(videos):
         unpack(dataset, videoset, video, classifier, tilesize, sample_rate,
-               tilepadding, canvas_scale, tracker, tracking_accuracy_threshold)
+               tilepadding, canvas_scale, tracker, tracking_accuracy_threshold, relevance_threshold)
         # Advance the progress bar by one unit after each video completes.
         command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 
@@ -360,7 +364,7 @@ def main():
     allowed_combos = build_pareto_combo_filter(
         DATASETS, selected_videosets,
         ['classifier', 'tilesize', 'sample_rate', 'tilepadding', 'canvas_scale',
-         'tracker', 'tracking_accuracy_threshold'],
+         'tracker', 'tracking_accuracy_threshold', 'relevance_threshold'],
         collapse_tracker_when_no_threshold=True,
     )
 
@@ -381,15 +385,15 @@ def main():
         for video in videos:
             shutil.rmtree(cache.exec(dataset, 'ucomp-dets', video), ignore_errors=True)
 
-        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, threshold in itertools.product(
-            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS):
-            for tracker in [None] if threshold is None else TRACKERS:
+        for classifier, tilesize, tilepadding, sample_rate, canvas_scale, acc_threshold, relevance_threshold in itertools.product(
+            CLASSIFIERS, TILE_SIZES, TILEPADDING_MODES, SAMPLE_RATES, CANVAS_SCALES, TRACKING_ACCURACY_THRESHOLDS, RELEVANCE_THRESHOLDS):
+            for tracker in [None] if acc_threshold is None else TRACKERS:
                 # Skip parameter combos not on the Pareto front during the test pass.
-                combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold)
+                combo = (classifier, tilesize, sample_rate, tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold)
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
                 funcs.append(partial(uncompress_all, dataset, videoset, sorted(videos), classifier,
-                                     tilesize, sample_rate, tilepadding, canvas_scale, tracker, threshold))
+                                     tilesize, sample_rate, tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold))
 
     print(f"Created {len(funcs)} tasks to process")
     ProgressBar(num_workers=int(mp.cpu_count() // 2), num_tasks=len(funcs)).run_all(funcs)

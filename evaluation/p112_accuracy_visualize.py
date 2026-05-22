@@ -36,10 +36,17 @@ def build_config_labels(results: pd.DataFrame) -> pd.DataFrame:
     # Work on a copy so the caller keeps the original DataFrame unchanged.
     df = results.copy()
 
+    # Backward compatibility for accuracy tables emitted before T_r was a column.
+    if 'relevance_threshold' not in df.columns:
+        df['relevance_threshold'] = pd.NA
+
     # Normalize missing sample rates to an explicit NA-friendly string representation.
     df['sample_rate_label'] = df['sample_rate'].apply(lambda value: 'SR-' if pd.isna(value) else f"SR{int(value)}")
     # Normalize missing thresholds into a consistent label.
     df['threshold_label'] = df['tracking_accuracy_threshold'].apply(build_threshold_label)
+    df['relevance_label'] = df['relevance_threshold'].apply(
+        lambda value: 'Tr---' if pd.isna(value) else f"Tr{int(round(float(value) * 100)):03d}"
+    )
     # Normalize missing tile padding for the naive baseline.
     df['tilepadding_label'] = df['tilepadding'].fillna('naive')
     # Normalize missing trackers for the naive baseline.
@@ -56,6 +63,8 @@ def build_config_labels(results: pd.DataFrame) -> pd.DataFrame:
         + df.loc[~naive_mask, 'sample_rate_label']
         + ' '
         + df.loc[~naive_mask, 'threshold_label']
+        + ' '
+        + df.loc[~naive_mask, 'relevance_label']
         + ' '
         + df.loc[~naive_mask, 'tilepadding_label'].astype(str).str.slice(0, 6)
         + ' '
@@ -89,6 +98,7 @@ def visualize_metric(results: pd.DataFrame, metric_name: str, metric_label: str,
             'classifier',
             'sample_rate',
             'tracking_accuracy_threshold',
+            'relevance_threshold',
             'tilepadding',
             'canvas_scale',
             'tracker',

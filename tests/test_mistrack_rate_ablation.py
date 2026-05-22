@@ -605,10 +605,12 @@ def test_combine_visualize_creates_png_and_html_for_each_pair(tmp_path):
 
     written = combine_visualize('ocsort', cache_dir=tmp_path)
 
-    # Expect one PNG and one HTML file per pair definition.
+    # Expect PNG + HTML for the full chart *and* the pareto-only variant
+    # for each pair definition.
     expected_names = {
-        f'{pair.slug}{suffix}'
+        f'{pair.slug}{slug_suffix}{suffix}'
         for pair in PAIR_DEFINITIONS
+        for slug_suffix in ('', '_pareto_only')
         for suffix in ('.png', '.html')
     }
     assert len(written) == len(expected_names)
@@ -629,8 +631,99 @@ def test_combine_visualize_merges_multiple_datasets(tmp_path):
     written = combine_visualize('ocsort', cache_dir=tmp_path)
 
     # Output files must exist regardless of how many source datasets there are.
-    assert len(written) == len(PAIR_DEFINITIONS) * 2
+    # Per pair: 2 suffixes (png, html) × 2 variants (full, pareto-only) = 4 files.
+    assert len(written) == len(PAIR_DEFINITIONS) * 4
     assert all(p.exists() for p in written)
+
+
+def test_pareto_only_variant_drops_non_pareto_exhaustive_rows():
+    # Regression guard: the pareto-only chart must not embed the full
+    # exhaustive cloud in its Vega-Lite spec (that payload froze the browser).
+    import altair as alt
+    alt.data_transformers.disable_max_rows()
+
+    from mistrack_rate.analysis import _make_altair_chart
+
+    rows = []
+    # 100 non-pareto exhaustive rows dominated by a single pareto row.
+    for i in range(100):
+        rows.append({
+            'dataset': 'jnc0',
+            'method': 'exhaustive',
+            'grid_key': f'dominated_{i}',
+            'heuristic_threshold': float('nan'),
+            'mistrack_rate': 0.5 + 0.001 * i,
+            'HOTA_HOTA': 0.5 - 0.001 * i,
+            'retention_rate': 0.9,
+        })
+    # One pareto-optimal exhaustive row.
+    rows.append({
+        'dataset': 'jnc0', 'method': 'exhaustive', 'grid_key': 'pareto',
+        'heuristic_threshold': float('nan'),
+        'mistrack_rate': 0.05, 'HOTA_HOTA': 0.9, 'retention_rate': 0.6,
+    })
+    rows.append({
+        'dataset': 'jnc0', 'method': 'heuristic', 'grid_key': 'h',
+        'heuristic_threshold': 50.0,
+        'mistrack_rate': 0.1, 'HOTA_HOTA': 0.85, 'retention_rate': 0.62,
+    })
+    rows.append({
+        'dataset': 'jnc0', 'method': 'whole_frame', 'grid_key': 'whole_frame_2',
+        'heuristic_threshold': None,
+        'mistrack_rate': 0.2, 'HOTA_HOTA': 0.7, 'retention_rate': 0.5,
+    })
+    df = annotate_pareto_flags(pd.DataFrame(rows))
+
+    pair = next(p for p in PAIR_DEFINITIONS if p.slug == 'mistrack_vs_hota')
+
+    def _embedded_row_count(chart) -> int:
+        datasets = chart.to_dict().get('datasets', {})
+        return sum(len(v) for v in datasets.values() if isinstance(v, list))
+
+    full_rows = _embedded_row_count(_make_altair_chart(df, pair, 'ocsort', include_background=True))
+    pareto_only_rows = _embedded_row_count(
+        _make_altair_chart(df, pair, 'ocsort', include_background=False)
+    )
+
+    # Full chart embeds the whole dataframe (103 rows).
+    assert full_rows == len(df)
+    # Pareto-only chart drops the 100 dominated exhaustive rows and keeps
+    # only the pareto exhaustive + heuristic + whole-frame rows.
+    assert pareto_only_rows == 3
+    assert pareto_only_rows < full_rows
+
+
+def test_combine_visualize_emits_pareto_only_variant(tmp_path):
+    # The pareto-only variant must be produced alongside the full chart and
+    # must render to distinct, non-empty files (different layer set → different
+    # rendered output).
+    results_dir = (
+        tmp_path / 'jnc0' / 'ablation' / 'mistrack-rate'
+        / f'{GRID_ROWS}x{GRID_COLS}' / 'ocsort' / 'test'
+    )
+    results_dir.mkdir(parents=True)
+    _make_fake_results_df('jnc0').to_csv(results_dir / 'results.csv', index=False)
+
+    written = combine_visualize('ocsort', cache_dir=tmp_path)
+    names = {p.name for p in written}
+
+    # For every pair there should be both a full and a pareto-only file.
+    for pair in PAIR_DEFINITIONS:
+        for suffix in ('.png', '.html'):
+            assert f'{pair.slug}{suffix}' in names
+            assert f'{pair.slug}_pareto_only{suffix}' in names
+
+    # HTML is deterministic enough to compare directly: the pareto-only HTML
+    # must differ from the full HTML (no exhaustive background layer).
+    by_name = {p.name: p for p in written}
+    for pair in PAIR_DEFINITIONS:
+        full_html = by_name[f'{pair.slug}.html'].read_text()
+        pareto_only_html = by_name[f'{pair.slug}_pareto_only.html'].read_text()
+        assert full_html != pareto_only_html
+        # Full chart references the lightgray background scatter color; the
+        # pareto-only variant omits that layer and should not.
+        assert 'lightgray' in full_html
+        assert 'lightgray' not in pareto_only_html
 
 
 def test_combine_visualize_output_lands_in_summary_dir(tmp_path):

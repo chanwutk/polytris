@@ -29,6 +29,7 @@ PARAM_COLUMNS = [
     'tilesize',
     'sample_rate',
     'tracking_accuracy_threshold',
+    'relevance_threshold',
     'tilepadding',
     'canvas_scale',
     'tracker',
