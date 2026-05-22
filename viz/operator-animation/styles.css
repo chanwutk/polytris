@@ -21,8 +21,35 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-h1 { margin: 0 0 0.25rem; font-size: 1.4rem; }
+h1 { margin: 0 0 0.5rem; font-size: 1.4rem; }
 .subtitle { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+.stages-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
+  font-size: 0.92rem;
+  align-items: baseline;
+}
+.stages-nav li {
+  color: #b6bdc4;
+  display: inline-flex;
+  align-items: baseline;
+}
+.stages-nav li.current { color: var(--fg); }
+/* Arrow separator between consecutive stage names. The arrow inherits the
+   color of the previous stage (i.e. always gray once we're past the current
+   one), since it's nested inside the next li but we set its color via a
+   neighbor-aware style. Keeping it dimmed keeps the active stage prominent. */
+.stages-nav li + li::before {
+  content: '→';
+  margin-right: 0.6rem;
+  color: #b6bdc4;
+  font-weight: 400;
+}
 
 .controls {
   display: flex;

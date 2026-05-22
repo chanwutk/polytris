@@ -46,9 +46,7 @@ const state = {
 };
 
 const svg = d3.select('#stage');
-const stageNumEl = document.getElementById('stage-number');
-const stageTotalEl = document.getElementById('stage-total');
-const stageNameEl = document.getElementById('stage-name');
+const stagesNavEl = document.getElementById('stages-nav');
 const mSliderEl = document.getElementById('m-slider');
 const mReadoutEl = document.getElementById('m-readout');
 const canvasCountEl = document.getElementById('canvas-count');
@@ -102,6 +100,7 @@ async function init() {
 
   setupSvg();
   renderInitial();
+  buildStagesNav();
   updateControls();
   attachHandlers();
   updateMetaLine();
@@ -299,11 +298,23 @@ function goToStage(stage) {
   applyStage(stage, true);
 }
 
+function buildStagesNav() {
+  // One <li> per stage; updateControls toggles `.current` on the active one.
+  stagesNavEl.replaceChildren();
+  for (const s of STAGES) {
+    const li = document.createElement('li');
+    li.dataset.stage = String(s.id);
+    li.textContent = s.name;
+    stagesNavEl.appendChild(li);
+  }
+}
+
 function updateControls() {
-  const info = STAGES[state.stage - 1];
-  stageNumEl.textContent = String(info.id);
-  if (stageTotalEl) stageTotalEl.textContent = String(STAGES.length);
-  stageNameEl.textContent = info.name;
+  // Highlight the active stage in the breadcrumb; others stay gray.
+  const items = stagesNavEl.querySelectorAll('li');
+  items.forEach(li => {
+    li.classList.toggle('current', Number(li.dataset.stage) === state.stage);
+  });
   prevBtn.disabled = state.stage === 1;
   nextBtn.disabled = state.stage === STAGES.length;
 
