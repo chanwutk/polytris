@@ -1,8 +1,8 @@
 #!/usr/local/bin/python
 """
-Generate data files for the D3 operator-animation visualization.
+Generate data files for the D3 demo visualization.
 
-Pipeline (all run on remote inside Docker via ./run viz/operator-animation/generate_data.py):
+Pipeline (all run on remote inside Docker via ./run viz/demo/generate_data.py):
   1. Extract `num_frames` consecutive (or sample_rate-spaced) frames from the chosen video; save as PNG.
   2. Compute per-frame relevance bitmaps from groundtruth tracks (same as p021).
   3. Group connected relevant tiles into polyominoes per frame.
@@ -82,7 +82,7 @@ def parse_args():
                         help='ILP solver wall-clock time limit in seconds per M value.')
     parser.add_argument('--m-values', default='0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0',
                         help='Comma-separated mistrack-rate tolerance values in [0, 1].')
-    parser.add_argument('--output-dir', default=str(REPO_ROOT / 'viz' / 'operator-animation' / 'data'))
+    parser.add_argument('--output-dir', default=str(REPO_ROOT / 'viz' / 'demo' / 'data'))
     parser.add_argument('--overwrite', action='store_true',
                         help='Allow clobbering an existing non-empty output directory.')
     parser.add_argument('--image-scale', type=float, default=0.25,
