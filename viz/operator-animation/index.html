@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PolyIS Execution Engine — Operator Animation</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>PolyIS Execution Engine</h1>
+    <p class="subtitle">Stage <span id="stage-number">1</span> / 4 — <span id="stage-name">Initial frames</span></p>
+  </header>
+
+  <section class="controls">
+    <button id="prev-btn" type="button">&#9664; Previous</button>
+    <button id="next-btn" type="button">Next &#9654;</button>
+    <label class="slider-wrap" for="m-slider">
+      <span class="slider-label">M (mistrack rate tolerance):</span>
+      <input id="m-slider" type="range" min="0" max="1" step="0.1" value="0" disabled />
+      <span class="slider-value" id="m-readout">0.0</span>
+    </label>
+    <span class="canvas-count" id="canvas-count"></span>
+  </section>
+
+  <section class="legend">
+    <span class="swatch swatch-relevant"></span> Relevant polyomino
+    <span class="swatch swatch-discarded"></span> Discarded (M-dependent)
+    <span class="swatch swatch-frame"></span> Dimmed source frame
+  </section>
+
+  <main>
+    <svg id="stage" preserveAspectRatio="xMidYMid meet"></svg>
+  </main>
+
+  <footer>
+    <p class="hint">Use the slider in stages 3 and 4 to adjust the mistrack rate tolerance M. Higher M
+      allows more aggressive pruning.</p>
+    <p class="meta" id="meta-line"></p>
+  </footer>
+
+  <script src="animation.js"></script>
+</body>
+</html>

@@ -47,6 +47,7 @@ includes:
     - "preprocess"
     - "scripts"
     - "tests"
+    - "viz"
 
   # File extensions to include within each directory
   extensions:
@@ -64,6 +65,9 @@ includes:
     - "*.sh"
     - "*.md"
     - "*.txt"
+    - "*.html"
+    - "*.css"
+    - "*.js"
 
 # Exclusion patterns (applied before includes, takes precedence)
 # These patterns exclude files/directories that shouldn't be synced
