@@ -162,11 +162,12 @@ Contents:
 
 ```
 data/
-├── frames/{frame_idx}.png          # 64 source-frame PNGs (tile-aligned)
+├── frames/{frame_idx}.png          # 64 source-frame PNGs (tile-aligned, scaled per --image-scale)
 ├── polyominoes/{frame_idx}_{i}.png # RGBA cutouts with alpha mask
 ├── polyominoes.json                # offsets, sizes, outlines, image paths
 ├── pruning.json                    # M -> list of [f, i] discarded
 ├── packing.json                    # M -> list of {canvas_idx, polyominoes: [...]}
+├── detections.json                 # naive detections + per-M canvas bbox positions (null when polyomino was pruned)
 ├── max_rate_table_viz.npy          # derived; not used by the viz directly
 ├── meta.json                       # all parameters and dimensions
 └── raw_indexing/                   # only present if accuracy.npy was missing
@@ -194,8 +195,10 @@ Then open <http://localhost:8765/index.html> in your browser.
 
 1. **Initial frames** — 64 frames laid out in an 8×8 grid.
 2. **Relevance classification** — frames dim; relevant polyominoes pop with green outlines.
-3. **Polyomino pruning** — polyominoes the ILP would discard at the current M turn red.
+3. **Polyomino pruning** — polyominoes the ILP would discard at the current M get a red border (and the image dims into the background).
 4. **Polyomino packing** — frames + discarded polyominoes vanish; surviving polyominoes translate into a horizontal row of canvases. The viewBox zooms in so canvases fill the display.
+5. **Detect (on canvases)** — blue detection bounding boxes appear on the packed canvases, showing what the detector would see.
+6. **Unpack (detections on source)** — canvases fade out; source frames return at full opacity; detection bboxes translate back to their original frame positions, demonstrating the round-trip of the pipeline.
 
 When you're done:
 
@@ -212,6 +215,7 @@ lsof -ti:8765 | xargs kill
 | `Videoset directory ... does not exist` | The remote doesn't have that dataset under `/polyis-data/datasets/`. Check `configs/global.yaml` for valid names. |
 | `Detection directory ... does not exist` (during accuracy build) | `p011_tune_detect.py` hasn't been run on that dataset. Run it first, or pick a dataset where `accuracy.npy` already exists. |
 | `Tracking results not found: ... 002_naive/tracking.jsonl` | Run `p002_preprocess_groundtruth_tracking.py` for that dataset first. |
+| `Naive detection file not found: ... 002_naive/detection.jsonl` | The naive-detection preprocessing stage hasn't been run for this video. Run it before generating the viz. |
 | Animation looks empty (no polyominoes) | The 64-frame window has too few detections. See §2c to pick a busier range. |
 | Animation looks cluttered | Window is too busy. Try a shorter `--frame-start` offset or a different video. |
 | ILP times out before finding optimum | Bump `--time-limit`. The default 10 s is enough for typical 64-frame windows; very dense scenes may need 30–60 s. |

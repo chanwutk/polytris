@@ -4,6 +4,8 @@
   --muted: #5b6770;
   --accent: #2c7a3e;
   --discarded: #c4302b;
+  --packed: #ffffff;
+  --detection: #ff1493;
   --canvas-bg: #e8eef3;
   --canvas-border: #b6c3cd;
   --frame-border: #cdd5dd;
@@ -86,7 +88,12 @@ h1 { margin: 0 0 0.25rem; font-size: 1.4rem; }
 }
 .swatch-relevant { background: transparent; border: 2px solid var(--accent); }
 .swatch-discarded { background: transparent; border: 2px solid var(--discarded); }
+.swatch-detection { background: transparent; border: 2px solid var(--detection); }
 .swatch-frame { background: rgba(0,0,0,0.35); }
+/* From stage 4 onward (packing/detect/unpack), the polyomino outline is white;
+   keep the legend swatch in sync so the color guide always reflects what the
+   user is looking at. */
+body.stage-packed .swatch-relevant { border-color: var(--packed); background: rgba(0,0,0,0.15); }
 
 main {
   background: white;
@@ -109,6 +116,16 @@ main {
 
 .polyomino-edge { stroke: var(--accent); stroke-width: 2px; fill: none; pointer-events: none; }
 .polyomino-edge.discarded { stroke: var(--discarded); stroke-width: 2.5px; }
+/* Packed polyominoes use a white border so detection bboxes stand out clearly against them. */
+.polyomino-edge.packed { stroke: var(--packed); stroke-width: 2px; }
+
+.detection {
+  fill: none;
+  stroke: var(--detection);
+  stroke-width: 2.5px;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.7));
+  pointer-events: none;
+}
 
 footer {
   margin-top: 0.75rem;

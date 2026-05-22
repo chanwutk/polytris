@@ -42,6 +42,7 @@ from polyis.pack.pack import pack
 from polyis.sample.ilp.c.gurobi import solve_ilp
 from polyis.utilities import (
     TILEPADDING_MAPS,
+    get_overlapping_tiles,
     load_tracking_results,
     mark_detections,
 )
@@ -174,6 +175,48 @@ def _resize_detections(detections: list[list[float]], scale_x: float, scale_y: f
         det[-1] *= scale_y
         out.append(det)
     return out
+
+
+def _load_naive_detections(dataset: str, video: str) -> dict[int, list[list[float]]]:
+    """
+    Load detector outputs from `cache.exec(dataset, 'naive', video, 'detection.jsonl')`.
+
+    Each line is `{"frame_idx": int, "detections": [[x1, y1, x2, y2, score], ...]}`.
+    """
+    det_path = cache.exec(dataset, 'naive', video, 'detection.jsonl')
+    assert det_path.exists(), (
+        f"Naive detection file not found: {det_path}. "
+        "Run p002_preprocess.../the naive-detection stage for this video first.")
+    out: dict[int, list[list[float]]] = {}
+    with open(det_path, 'r') as f:
+        for line in f:
+            entry = json.loads(line)
+            out[entry['frame_idx']] = entry.get('detections', []) or []
+    return out
+
+
+def _find_polyomino_for_detection(
+    bbox: tuple[float, float, float, float],
+    tile_to_polyomino_id_frame: np.ndarray,
+    tile_size: int,
+) -> int | None:
+    """
+    Return the polyomino_id that covers a detection's tiles, or None if the detection
+    lands on background tiles (no surrounding relevance).
+    """
+    x1, y1, x2, y2 = bbox
+    grid_h, grid_w = tile_to_polyomino_id_frame.shape
+    row_start, row_end, col_start, col_end = get_overlapping_tiles(
+        x1, y1, x2, y2, tile_size, grid_h, grid_w)
+    if row_end < row_start or col_end < col_start:
+        return None
+    tile_ids = tile_to_polyomino_id_frame[row_start:row_end + 1, col_start:col_end + 1]
+    valid = tile_ids[tile_ids >= 0]
+    if valid.size == 0:
+        return None
+    # A detection's tile rectangle is connected, so all overlapped tiles should belong to
+    # the same polyomino. Use the most frequent id as a robustness measure for edge ties.
+    return int(np.bincount(valid).argmax())
 
 
 def _compute_polyomino_outline(mask: np.ndarray, tile_size: int) -> list[list[int]]:
@@ -549,6 +592,44 @@ def main():
     with open(output_dir / 'polyominoes.json', 'w') as f:
         json.dump({'polyominoes': polyominoes_json}, f)
 
+    # Build (frame_idx, polyomino_i) -> source pixel origin of the polyomino's bounding
+    # box. Used both for detection-on-canvas math below and shared by the unpack step.
+    poly_source_origin: dict[tuple[int, int], tuple[int, int]] = {}
+    for rec in polyomino_records:
+        poly_source_origin[(rec['f'], rec['i'])] = (rec['y'], rec['x'])
+
+    # Load detector outputs and pair each detection with its containing polyomino.
+    # Detections whose tiles land on background (no polyomino covers them) are skipped:
+    # they would never reach the canvas detector in the real pipeline, so the viz omits them.
+    naive_detections = _load_naive_detections(args.dataset, video)
+    print(f"[detections] Loaded naive detections for {len(naive_detections)} frames", flush=True)
+    detections_json: list[dict] = []
+    for array_idx, frame_idx in enumerate(sampled_indices):
+        raw_dets = naive_detections.get(frame_idx, [])
+        if not raw_dets:
+            continue
+        # Naive detection format from 002_naive/detection.jsonl: [x1, y1, x2, y2, score].
+        # (Unlike tracking results, which are [track_id, x1, y1, x2, y2] — bbox at end.)
+        for det_i, det in enumerate(raw_dets):
+            x1 = float(det[0]) * scale_x
+            y1 = float(det[1]) * scale_y
+            x2 = float(det[2]) * scale_x
+            y2 = float(det[3]) * scale_y
+            poly_i = _find_polyomino_for_detection(
+                (x1, y1, x2, y2), tile_to_polyomino_id[array_idx], tile_size)
+            if poly_i is None:
+                continue  # detection isn't covered by any polyomino — pipeline would drop it
+            entry: dict = {
+                'f': frame_idx,
+                'id': det_i,
+                'bbox': [x1, y1, x2, y2],
+                'polyomino': {'f': frame_idx, 'i': poly_i},
+            }
+            if len(det) >= 5:
+                entry['score'] = float(det[4])
+            detections_json.append(entry)
+    print(f"[detections] {len(detections_json)} detections inside polyominoes", flush=True)
+
     # Build max_rate_table for our 11 M values.
     scratch_dir = output_dir / 'raw_indexing'
     scratch_dir.mkdir(exist_ok=True)
@@ -562,6 +643,10 @@ def main():
     pruning_out: dict[str, list[list[int]]] = {}
     packing_out: dict[str, list[dict]] = {}
     canvas_counts: dict[str, int] = {}
+    # detection_canvas_bboxes[M] is parallel-indexed to detections_json; each entry is either
+    # {'canvas_idx': int, 'bbox': [x1, y1, x2, y2]} (canvas-local pixel coords) or None when
+    # the covering polyomino was pruned at this M.
+    detection_canvas_bboxes: dict[str, list[dict | None]] = {}
     packing_mode_int = PACK_MODE_LOOKUP[args.packing_mode]
     dst_grid_h = max(1, int(round(grid_h * args.canvas_scale)))
     dst_grid_w = max(1, int(round(grid_w * args.canvas_scale)))
@@ -606,10 +691,43 @@ def main():
         canvas_counts[m_key] = len(canvases)
         print(f"[M={m_key}] canvases={len(canvases)}", flush=True)
 
+        # Build a (f, i) -> (canvas_idx, poly_canvas_y, poly_canvas_x) lookup for this M.
+        poly_canvas_lookup: dict[tuple[int, int], tuple[int, int, int]] = {}
+        for canvas in canvases:
+            canvas_idx = canvas['canvas_idx']
+            for p in canvas['polyominoes']:
+                poly_canvas_lookup[(p['f'], p['i'])] = (canvas_idx, p['y'], p['x'])
+
+        # Map each detection to its canvas position (or None when its polyomino was pruned).
+        per_m: list[dict | None] = []
+        for det in detections_json:
+            poly_key = (det['polyomino']['f'], det['polyomino']['i'])
+            cinfo = poly_canvas_lookup.get(poly_key)
+            if cinfo is None:
+                per_m.append(None)
+                continue
+            canvas_idx, poly_canvas_y, poly_canvas_x = cinfo
+            poly_src_y, poly_src_x = poly_source_origin[poly_key]
+            shift_x = poly_canvas_x - poly_src_x
+            shift_y = poly_canvas_y - poly_src_y
+            x1, y1, x2, y2 = det['bbox']
+            per_m.append({
+                'canvas_idx': canvas_idx,
+                'bbox': [x1 + shift_x, y1 + shift_y, x2 + shift_x, y2 + shift_y],
+            })
+        detection_canvas_bboxes[m_key] = per_m
+        kept = sum(1 for v in per_m if v is not None)
+        print(f"[M={m_key}] detections kept={kept} / {len(detections_json)}", flush=True)
+
     with open(output_dir / 'pruning.json', 'w') as f:
         json.dump(pruning_out, f)
     with open(output_dir / 'packing.json', 'w') as f:
         json.dump(packing_out, f)
+    with open(output_dir / 'detections.json', 'w') as f:
+        json.dump({
+            'detections': detections_json,
+            'canvas_bboxes': detection_canvas_bboxes,
+        }, f)
 
     meta = {
         'dataset': args.dataset,
@@ -634,6 +752,9 @@ def main():
         'm_values': m_values,
         'canvas_counts': canvas_counts,
         'total_polyominoes': total_polyominoes,
+        'total_detections': len(detections_json),
+        'detections_per_m_kept': {k: sum(1 for v in vs if v is not None)
+                                  for k, vs in detection_canvas_bboxes.items()},
         'generated_at': datetime.datetime.utcnow().isoformat() + 'Z',
         'index_sample_rates': INDEX_SAMPLE_RATES,
     }

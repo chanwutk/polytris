@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>PolyIS Execution Engine — Operator Animation</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>Tetris Execution Engine — Operator Animation</title>
+  <link rel="stylesheet" href="styles.css?v=10" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
   <header>
-    <h1>PolyIS Execution Engine</h1>
-    <p class="subtitle">Stage <span id="stage-number">1</span> / 4 — <span id="stage-name">Initial frames</span></p>
+    <h1>Tetris Execution Engine</h1>
+    <p class="subtitle">Stage <span id="stage-number">1</span> / <span id="stage-total">6</span> — <span id="stage-name">Initial frames</span></p>
   </header>
 
   <section class="controls">
@@ -26,6 +26,7 @@
   <section class="legend">
     <span class="swatch swatch-relevant"></span> Relevant polyomino
     <span class="swatch swatch-discarded"></span> Discarded (M-dependent)
+    <span class="swatch swatch-detection"></span> Detection bbox
     <span class="swatch swatch-frame"></span> Dimmed source frame
   </section>
 
@@ -39,6 +40,6 @@
     <p class="meta" id="meta-line"></p>
   </footer>
 
-  <script src="animation.js"></script>
+  <script src="animation.js?v=10"></script>
 </body>
 </html>
