@@ -113,9 +113,17 @@ echo -e       "=======================================================\n"
 # echo -e "########################################\n"
 # python evaluation/p205_compare_classifiers.py --test
 echo -e "\n\n\n########################################"
-echo ">>> evaluation/p038_packing_efficacy.py"
+echo ">>> evaluation/p038_packing_efficacy.py (default: valid -> paper figures)"
 echo -e "########################################\n"
 python evaluation/p038_packing_efficacy.py
+# echo -e "\n\n\n########################################"
+# echo ">>> evaluation/p038_packing_efficacy.py --test (optional side cache)"
+# echo -e "########################################\n"
+# python evaluation/p038_packing_efficacy.py --test
+echo -e "\n\n\n########################################"
+echo ">>> evaluation/p206_classifier_and_packing.py"
+echo -e "########################################\n"
+python evaluation/p206_classifier_and_packing.py
 
 # echo -e "\n\n\n########################################"
 # echo ">>> evaluation/p101_evaluation_test.py"

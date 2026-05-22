@@ -41,7 +41,7 @@ from evaluation.p201_compare_pareto import (
                 ]),
                 'HOTA',
             ),
-            'Speedup Ratio at HOTA Levels (>1 = Polytris faster)',
+            'Speedup Ratio at HOTA Scores (>1 = Polytris faster)',
         ),
         (
             create_accuracy_gain_chart(

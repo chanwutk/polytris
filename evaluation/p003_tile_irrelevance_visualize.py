@@ -18,7 +18,7 @@ TILE_SIZES = CONFIG['EXEC']['TILE_SIZES']
 # Per-dataset tile-coordinate crop bounds as ((y1, x1), (y2, x2)), or None for no crop.
 # Coordinates are exclusive on the upper bound: crop covers tiles [y1, y2) x [x1, x2).
 DATASET_CROP: dict[str, tuple[tuple[int, int], tuple[int, int]] | None] = {
-    'caldot1-y05': None,
+    'caldot1-y05': ((0, 0), (8, 9)),
     'caldot2-y05': None,
     'jnc0': None,
     'jnc2': None,
@@ -213,9 +213,9 @@ def render_relevance_overlay(
 
     # Compute adaptive font scale so text fits smaller tiles.
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = max(0.3, tile_size / 90.0)
-    thickness_outline = max(3, int(font_scale * 5))
-    thickness_fill = max(1, int(font_scale * 2))
+    font_scale = max(0.5, tile_size / 50.0)
+    thickness_outline = max(4, int(font_scale * 6))
+    thickness_fill = max(2, int(font_scale * 3))
 
     # Draw the relevance percentage centered in each tile.
     for r in range(grid_h):
@@ -288,11 +288,18 @@ def main(args: argparse.Namespace) -> None:
             result = render_relevance_overlay(
                 frame, relevance_freq, tile_size, args.alpha)
 
-            # Crop and save the visualization as PNG.
-            result = crop_to_tiles(result, tile_size, crop)
+            # Save the full visualization as PNG.
             out_path = os.path.join(out_dir, f'{dataset}_tile_irrelevance.png')
             cv2.imwrite(out_path, result)
             print(f"  Saved {out_path}")
+
+            # If a crop is configured, also save the cropped variant.
+            if crop is not None:
+                cropped = crop_to_tiles(result, tile_size, crop)
+                crop_path = os.path.join(
+                    out_dir, f'{dataset}_tile_irrelevance_crop.png')
+                cv2.imwrite(crop_path, cropped)
+                print(f"  Saved {crop_path}")
 
     # Compute aggregate statistics for the paper.
     # Mean percentage of irrelevant tiles per frame across all datasets.

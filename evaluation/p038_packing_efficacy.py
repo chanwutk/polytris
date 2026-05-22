@@ -27,6 +27,7 @@ summarizing the best/average/worst values so the paper prose can cite them.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from typing import Any, cast
 import multiprocessing
 import os
@@ -66,9 +67,17 @@ RELEVANCE_THRESHOLD: float = 0.5
 # pack modes live under different stage directories.
 COMPRESSION_STAGE: str = '033_compressed_frames'
 
-# Restrict the sweep to the test split -- ``te*`` videos -- matching the
-# convention used by p036 and other evaluation scripts.
-TEST_VIDEO_PREFIX: str = 'te'
+# Canonical slice used when emitting per-dataset polyomino-size statistics
+# (paper prose in ``Packing Efficacy``). Polyomino shapes are a property of
+# the dataset, but the on-disk polyominoes we can inspect depend on the
+# pruning config that wrote them; we pin to zero-padding + the lowest pruning
+# threshold so the distribution reflects the full foreground as closely as
+# possible.
+POLY_STATS_TILEPADDING: str = 'none'
+
+# Map from ``--valid`` / ``--test`` flags to (videoset, video filename prefix)
+# matching ``polyis.utilities`` conventions: ``te*`` -> test, ``va*`` -> valid.
+_VIDEOSET_TO_PREFIX: dict[str, str] = {'test': 'te', 'valid': 'va'}
 
 # Chart geometry -- kept small so the figure fits in a single paper column.
 CHART_WIDTH: int = 360
@@ -91,11 +100,24 @@ def parse_args():
         description='Summarize packing efficacy at sample_rate=1 across datasets and tile-padding modes'
     )
     parser.add_argument('--verbose', action='store_true', help='Print verbose progress output')
+    # Mutually exclusive split selector matching the rest of the pipeline
+    # (``--valid`` / ``--test``). Default is the validation split: paper
+    # figures and ``\\packingEfficacy*`` macros are generated from ``va*``.
+    split_group = parser.add_mutually_exclusive_group()
+    split_group.add_argument('--valid', action='store_true', help='Aggregate over the valid split (va*) [default]')
+    split_group.add_argument('--test', action='store_true', help='Aggregate over the test split (te*)')
     return parser.parse_args()
 
 
-def _iter_config_dirs(dataset: str) -> list[tuple[Path, str, Path]]:
-    """Yield ``(video_dir, video_name, config_dir)`` triples for the test split.
+def _resolve_videoset(args: argparse.Namespace) -> str:
+    """Pick the split the run aggregates over -- defaults to ``valid``."""
+    if args.test:
+        return 'test'
+    return 'valid'
+
+
+def _iter_config_dirs(dataset: str, video_prefix: str) -> list[tuple[Path, str, Path]]:
+    """Yield ``(video_dir, video_name, config_dir)`` triples for the chosen split.
 
     Scanning is split out so ``collect_rows`` can fan out over the work with
     a multiprocessing pool without reconstructing the iteration logic.
@@ -106,10 +128,9 @@ def _iter_config_dirs(dataset: str) -> list[tuple[Path, str, Path]]:
         return []
 
     triples: list[tuple[Path, str, Path]] = []
-    # Only consider test videos -- valid-split outputs are not part of the
-    # packing efficacy story we report in the paper.
+    # ``video_prefix`` selects the split (``te`` for test, ``va`` for valid).
     for video_dir in sorted(dataset_exec_dir.iterdir()):
-        if not video_dir.is_dir() or not video_dir.name.startswith(TEST_VIDEO_PREFIX):
+        if not video_dir.is_dir() or not video_dir.name.startswith(video_prefix):
             continue
         stage_dir = video_dir / COMPRESSION_STAGE
         if not stage_dir.exists():
@@ -192,6 +213,79 @@ def _filter_config(parsed: dict[str, object]) -> bool:
     return True
 
 
+def _canonical_poly_tracking_threshold() -> float | None:
+    """Pick the pruning threshold used for per-dataset polyomino statistics.
+
+    Pinned to ``None`` (no pruning) so the polyomino-shape macros agree
+    with the figure's canonical slice (``tilepadding=none``,
+    ``tracking_accuracy_threshold=None``). The un-pruned slice also
+    reflects the dataset's raw foreground rather than any post-pruning
+    subset, so the prose statements about polyomino-shape distributions
+    remain meaningful.
+    """
+    return None
+
+
+def _is_canonical_poly_slice(tilepadding: str, tracking_th: float | None) -> bool:
+    """True when this (tilepadding, tracking_th) pair is the canonical poly-stats slice."""
+    if tilepadding != POLY_STATS_TILEPADDING:
+        return False
+    target = _canonical_poly_tracking_threshold()
+    if target is None:
+        return tracking_th is None
+    if tracking_th is None:
+        return False
+    return bool(np.isclose(float(tracking_th), target))
+
+
+def _collect_poly_sizes(
+    config_dir: Path,
+) -> tuple[int, dict[int, int], dict[int, int], dict[int, int]] | None:
+    """Return per-config polyomino-shape histograms.
+
+    The result is ``(num_canvases, size_hist, bbox_h_hist, bbox_w_hist)`` where
+    each histogram maps a value to the count of polyominoes with that value
+    summed across every canvas in this config. Each ``index_maps/*.npy`` file
+    is one canvas with integer polyomino IDs (``0`` = empty tile, positive =
+    polyomino ID).
+    """
+    index_maps_dir = config_dir / 'index_maps'
+    if not index_maps_dir.exists():
+        return None
+    size_hist: Counter = Counter()
+    bbox_h_hist: Counter = Counter()
+    bbox_w_hist: Counter = Counter()
+    n_canvases = 0
+    for npy in index_maps_dir.glob('*.npy'):
+        try:
+            m = np.load(str(npy))
+        except Exception:
+            # Stale / corrupt file; skip rather than poison the pool.
+            continue
+        n_canvases += 1
+        # ``np.unique`` + ``return_counts`` gives us tile counts per polyomino
+        # ID in a single pass; we drop the 0 (empty) bin.
+        ids, counts = np.unique(m, return_counts=True)
+        for uid, cnt in zip(ids.tolist(), counts.tolist()):
+            if uid == 0:
+                continue
+            size_hist[int(cnt)] += 1
+        # Bounding-box extents per polyomino require per-id masking; iterate
+        # over non-zero ids only so trivially-empty canvases stay free.
+        nz_ids = [int(uid) for uid in ids.tolist() if uid != 0]
+        if nz_ids:
+            for uid in nz_ids:
+                ys, xs = np.where(m == uid)
+                if ys.size == 0:
+                    continue
+                bbox_h_hist[int(ys.max() - ys.min() + 1)] += 1
+                bbox_w_hist[int(xs.max() - xs.min() + 1)] += 1
+    if n_canvases == 0:
+        return None
+    # Return plain dicts so the result pickles cleanly back to the parent.
+    return n_canvases, dict(size_hist), dict(bbox_h_hist), dict(bbox_w_hist)
+
+
 def _count_one_config(
     task: tuple[str, str, str, str, str, int, float | None],
 ) -> dict[str, object] | None:
@@ -218,7 +312,7 @@ def _count_one_config(
     if occupied <= 0:
         return None
 
-    return {
+    record: dict[str, object] = {
         'dataset': dataset,
         'video': video,
         'classifier': classifier,
@@ -230,17 +324,35 @@ def _count_one_config(
         'padding_tiles': int(padding),
     }
 
+    # Only compute polyomino-size statistics on the canonical slice; these
+    # rows feed the per-dataset ``\packingEfficacy<Key>Poly*`` macros but are
+    # stripped from the aggregated DataFrame before JSONL/chart writers run.
+    if _is_canonical_poly_slice(str(tilepadding), tracking_th):
+        poly = _collect_poly_sizes(config_dir)
+        if poly is not None:
+            n_canv, size_hist, bbox_h_hist, bbox_w_hist = poly
+            record['_poly_n_canvases'] = int(n_canv)
+            record['_poly_size_hist'] = size_hist
+            record['_poly_bbox_h_hist'] = bbox_h_hist
+            record['_poly_bbox_w_hist'] = bbox_w_hist
 
-def collect_rows(verbose: bool) -> pd.DataFrame:
+    return record
+
+
+def collect_rows(verbose: bool, videoset: str) -> pd.DataFrame:
     """Walk every dataset, count tiles per config, and return aggregated rows."""
     # Build a single flat task list so the pool can load-balance across datasets.
     tasks: list[tuple[str, str, str, str, str, int, float | None]] = []
     dataset_task_counts: dict[str, int] = {}
 
+    video_prefix = _VIDEOSET_TO_PREFIX[videoset]
     for dataset in DATASETS:
-        triples = _iter_config_dirs(dataset)
+        triples = _iter_config_dirs(dataset, video_prefix)
         if not triples:
-            print(f"  Skip {dataset}: no {COMPRESSION_STAGE} outputs found")
+            print(
+                f"  Skip {dataset}: no {COMPRESSION_STAGE} outputs found for "
+                f"videoset={videoset} ({video_prefix}*)"
+            )
             continue
 
         added = 0
@@ -299,13 +411,23 @@ def collect_rows(verbose: bool) -> pd.DataFrame:
 
     raw_df = pd.DataFrame(records)
 
+    # Aggregate per-dataset polyomino-size statistics from the canonical
+    # slice before groupby drops the list/dict-valued helper columns.
+    poly_stats = _aggregate_poly_stats(raw_df)
+
     # Sum over videos + (classifier, tilesize) within each
     # (dataset, tilepadding, pruning threshold) so the efficacy ratio is
     # tile-volume-weighted, not mean-of-means.
+    # ``dropna=False`` is critical: the unpruned slice has
+    # ``tracking_accuracy_threshold=None`` which becomes ``NaN`` after
+    # DataFrame construction, and pandas' default ``dropna=True`` would
+    # silently drop every unpruned row (the "no pruning" facet).
     grouped = (
-        raw_df.groupby(['dataset', 'tilepadding', 'tracking_accuracy_threshold'], as_index=False)[
-            ['empty_tiles', 'occupied_tiles', 'padding_tiles']
-        ].sum()
+        raw_df.groupby(
+            ['dataset', 'tilepadding', 'tracking_accuracy_threshold'],
+            as_index=False,
+            dropna=False,
+        )[['empty_tiles', 'occupied_tiles', 'padding_tiles']].sum()
     )
 
     # Total canvas tiles = empty + occupied. Each .npy index map covers one
@@ -325,7 +447,113 @@ def collect_rows(verbose: bool) -> pd.DataFrame:
     grouped['pruning_accuracy_label'] = grouped['tracking_accuracy_threshold'].map(
         _pruning_accuracy_label
     )
+    # Carry poly stats through ``df.attrs`` so downstream writers (macros)
+    # can consume them without leaking list/dict cells into JSONL/markdown.
+    grouped.attrs['poly_stats'] = poly_stats
     return grouped
+
+
+def _median_from_hist(hist: dict[int, int]) -> float | None:
+    """Compute the (lower) median of a histogram ``{value: count}``.
+
+    Using a histogram avoids materializing a potentially large list of
+    integer tile counts per polyomino, which can easily run into the
+    hundreds of thousands across all canvases in a dataset.
+    """
+    total = sum(hist.values())
+    if total <= 0:
+        return None
+    target = (total - 1) // 2  # zero-indexed lower-median position
+    cumulative = 0
+    for value in sorted(hist.keys()):
+        cumulative += hist[value]
+        if cumulative > target:
+            return float(value)
+    return None
+
+
+def _aggregate_poly_stats(raw_df: pd.DataFrame) -> dict[str, dict[str, float]]:
+    """Aggregate canonical-slice polyomino stats into per-dataset summaries.
+
+    Returns a mapping ``dataset -> {polys_per_canvas, median_tiles,
+    mean_tiles, mean_bbox_h, mean_bbox_w, total_polys, n_canvases}``.
+    Datasets with no canonical-slice rows are omitted so the caller can
+    detect missingness cleanly.
+    """
+    if '_poly_size_hist' not in raw_df.columns:
+        return {}
+    summary: dict[str, dict[str, float]] = {}
+    # ``_poly_size_hist`` is object-dtype; ``notna`` treats the missing
+    # entries (other slices) as NaN and filters them out in one step.
+    canonical = raw_df[raw_df['_poly_size_hist'].notna()]
+    if canonical.empty:
+        return {}
+    for dataset, group in canonical.groupby('dataset'):
+        size_combined: Counter = Counter()
+        bbox_h_combined: Counter = Counter()
+        bbox_w_combined: Counter = Counter()
+        n_canvases = 0
+        for _, row in group.iterrows():
+            sz = row.get('_poly_size_hist')
+            if isinstance(sz, dict):
+                for k, v in sz.items():
+                    size_combined[int(k)] += int(v)
+            bh = row.get('_poly_bbox_h_hist')
+            if isinstance(bh, dict):
+                for k, v in bh.items():
+                    bbox_h_combined[int(k)] += int(v)
+            bw = row.get('_poly_bbox_w_hist')
+            if isinstance(bw, dict):
+                for k, v in bw.items():
+                    bbox_w_combined[int(k)] += int(v)
+            n_canvases += int(row.get('_poly_n_canvases', 0) or 0)
+        total_polys = sum(size_combined.values())
+        if total_polys == 0 or n_canvases == 0:
+            continue
+        mean_tiles = sum(k * v for k, v in size_combined.items()) / total_polys
+        median_tiles = _median_from_hist(size_combined) or 0.0
+        bh_total = sum(bbox_h_combined.values())
+        bw_total = sum(bbox_w_combined.values())
+        mean_bbox_h = (
+            sum(k * v for k, v in bbox_h_combined.items()) / bh_total
+            if bh_total > 0 else 0.0
+        )
+        mean_bbox_w = (
+            sum(k * v for k, v in bbox_w_combined.items()) / bw_total
+            if bw_total > 0 else 0.0
+        )
+        summary[str(dataset)] = {
+            'polys_per_canvas': total_polys / n_canvases,
+            'median_tiles': float(median_tiles),
+            'mean_tiles': float(mean_tiles),
+            'mean_bbox_h': float(mean_bbox_h),
+            'mean_bbox_w': float(mean_bbox_w),
+            'total_polys': float(total_polys),
+            'n_canvases': float(n_canvases),
+        }
+    return summary
+
+
+def _dataset_macro_key(display: str) -> str:
+    """Map a human-readable dataset display name to a TeX-safe camelCase key.
+
+    Digits are spelled out (``"B3D 2"`` -> ``"BThreeDTwo"``) and whitespace
+    is stripped so the result is a legal ``\\newcommand`` suffix.
+    """
+    digit_words = {
+        '0': 'Zero', '1': 'One', '2': 'Two', '3': 'Three', '4': 'Four',
+        '5': 'Five', '6': 'Six', '7': 'Seven', '8': 'Eight', '9': 'Nine',
+    }
+    out: list[str] = []
+    for ch in str(display):
+        if ch.isspace():
+            continue
+        if ch.isdigit():
+            out.append(digit_words[ch])
+        elif ch.isalpha():
+            out.append(ch)
+        # Drop any other punctuation so the resulting macro name stays safe.
+    return ''.join(out)
 
 
 def _facet_row_sort_labels(plot_df: pd.DataFrame) -> list[str]:
@@ -435,79 +663,127 @@ def _fmt(value: float | None, spec: str) -> str:
     return format(value, spec)
 
 
-def write_tex_stat_macros(df: pd.DataFrame, path: str) -> None:
-    """Summarize best/average/worst packing efficacy into ``\\newcommand`` macros."""
+def write_tex_stat_macros(
+    df: pd.DataFrame,
+    path: str,
+    macro_prefix: str = 'packingEfficacy',
+    videoset: str = 'valid',
+) -> None:
+    """Summarize best/average/worst packing efficacy into ``\\newcommand`` macros.
+
+    ``macro_prefix`` lets the caller emit a parallel macro family (e.g.,
+    ``packingEfficacyTest``) when running on a non-default split, so both
+    splits' macros can coexist if the paper ever needs them.
+    """
     lines = [
         f'% Auto-generated by evaluation/{SCRIPT_ARTIFACT_BASENAME}.py',
+        f'% videoset={videoset} (va*=validation, te*=test).',
         r'% Packing efficacy = occupied_tiles / (occupied_tiles + empty_tiles),',
         r'% i.e. fraction of total canvas tile-cells that the packer uses',
         r'% (independent of tile-padding / relevance),',
         f'% measured at sample_rate={SAMPLE_RATE}, canvas_scale={CANVAS_SCALE:g}.',
+        r'% Aggregate macros below are restricted to the figure''s canonical slice:',
+        f'% tilepadding={POLY_STATS_TILEPADDING}, tracking_accuracy_threshold=None (no pruning),',
+        r'% so every cited number agrees with the rendered figure.',
         '',
     ]
 
     # Helper so every macro is wrapped in \autogen and follows a consistent shape.
     def emit(name: str, replacement: str) -> None:
-        lines.append(r'\newcommand{\%s}{%s}' % (name, _autogen(replacement)))
+        lines.append(r'\newcommand{\%s}{%s}' % (macro_prefix + name, _autogen(replacement)))
 
-    emit('packingEfficacySampleRate', str(int(SAMPLE_RATE)))
-    emit('packingEfficacyCanvasScale', f'{CANVAS_SCALE:g}')
+    emit('SampleRate', str(int(SAMPLE_RATE)))
+    emit('CanvasScale', f'{CANVAS_SCALE:g}')
+    split_word = 'validation' if videoset == 'valid' else 'test'
+    emit('EvalSplit', split_word)
 
-    # Without any rows we still emit placeholder macros to avoid compile breaks.
+    # Restrict the aggregate macros to the figure's canonical slice so every
+    # cited number matches what the reader sees in the rendered figure.
+    # ``tracking_accuracy_threshold`` is the per-row pruning threshold; ``None``
+    # is the un-pruned slice (the figure's "no pruning" facet that we now show
+    # exclusively).
     if df.empty:
+        slice_df = df
+    else:
+        labeled_full = _add_dataset_display_names(df.copy())
+        slice_df = labeled_full[
+            (labeled_full['tilepadding'] == POLY_STATS_TILEPADDING)
+            & (labeled_full['tracking_accuracy_threshold'].isna())
+        ]
+
+    # Without any rows in the slice we still emit placeholder macros so the
+    # paper compiles even when the underlying sweep is incomplete.
+    if slice_df.empty:
         for macro in (
-            'packingEfficacyBestValue', 'packingEfficacyBestDatasetDisplay',
-            'packingEfficacyBestTilePadding', 'packingEfficacyWorstValue',
-            'packingEfficacyWorstDatasetDisplay', 'packingEfficacyWorstTilePadding',
-            'packingEfficacyMeanValue', 'packingEfficacyMinValue', 'packingEfficacyMaxValue',
-            'packingEfficacyBestPerDatasetMean',
-            'packingEfficacyDatasetCount', 'packingEfficacyTilePaddingCount',
-            'packingEfficacyRowCount',
+            'BestValue', 'BestDatasetDisplay',
+            'WorstValue', 'WorstDatasetDisplay',
+            'MeanAcrossDatasets',
+            'DatasetCount',
         ):
             emit(macro, r'\mbox{n/a}')
         with open(path, 'w') as f:
             f.write('\n'.join(lines) + '\n')
         return
 
-    # Reuse the shared display-name mapping so macros read like the paper prose.
-    labeled = _add_dataset_display_names(df.copy())
+    labeled = slice_df
     values = labeled['packing_efficacy_pct'].astype(float)
 
-    # Rank-one extremes drive the "best"/"worst" prose in the paper.
+    # Rank-one extremes within the slice drive the "best"/"worst" prose.
     best_idx = int(values.idxmax())
     worst_idx = int(values.idxmin())
     best_row = labeled.loc[best_idx]
     worst_row = labeled.loc[worst_idx]
 
-    emit('packingEfficacyBestValue', _fmt(float(best_row['packing_efficacy_pct']), '.2f'))
-    emit('packingEfficacyBestDatasetDisplay', _tex_escape(str(best_row['dataset_display'])))
-    emit('packingEfficacyBestTilePadding', _tex_escape(str(best_row['tilepadding'])))
+    emit('BestValue', _fmt(float(best_row['packing_efficacy_pct']), '.2f'))
+    emit('BestDatasetDisplay', _tex_escape(str(best_row['dataset_display'])))
 
-    emit('packingEfficacyWorstValue', _fmt(float(worst_row['packing_efficacy_pct']), '.2f'))
-    emit('packingEfficacyWorstDatasetDisplay', _tex_escape(str(worst_row['dataset_display'])))
-    emit('packingEfficacyWorstTilePadding', _tex_escape(str(worst_row['tilepadding'])))
+    emit('WorstValue', _fmt(float(worst_row['packing_efficacy_pct']), '.2f'))
+    emit('WorstDatasetDisplay', _tex_escape(str(worst_row['dataset_display'])))
 
-    # Aggregate statistics: macro-average across (dataset, padding) cells so
-    # every cell weighs equally, matching how the bar chart reads visually.
-    emit('packingEfficacyMeanValue', _fmt(float(values.mean()), '.2f'))
-    emit('packingEfficacyMinValue', _fmt(float(values.min()), '.2f'))
-    emit('packingEfficacyMaxValue', _fmt(float(values.max()), '.2f'))
+    # Single headline number: mean efficacy across datasets at this slice.
+    # With one row per dataset in the slice, this reduces to a plain mean.
+    emit('MeanAcrossDatasets', _fmt(float(values.mean()), '.2f'))
 
-    # Best-per-dataset average shows how well the best configuration packs
-    # tiles on average -- useful when the paper wants a single headline number.
-    best_per_dataset = (
-        labeled.groupby('dataset_display', as_index=False)['packing_efficacy_pct']
-        .max()
-    )
-    emit(
-        'packingEfficacyBestPerDatasetMean',
-        _fmt(float(best_per_dataset['packing_efficacy_pct'].mean()), '.2f'),
-    )
+    # Dataset count helps the paper describe how the numbers were computed.
+    emit('DatasetCount', str(int(labeled['dataset'].nunique())))
 
-    # Grain counts help the paper describe how the numbers were computed.
-    emit('packingEfficacyDatasetCount', str(int(labeled['dataset'].nunique())))
-    emit('packingEfficacyTilePaddingCount', str(int(labeled['tilepadding'].nunique())))
-    emit('packingEfficacyRowCount', str(int(len(labeled))))
+    # Per-dataset polyomino-size statistics (paper prose in ``Packing Efficacy``).
+    # Keyed by dataset display name so callers cite e.g. ``\packingEfficacyBThreeDTwoPolyPerCanvas``.
+    poly_stats = df.attrs.get('poly_stats', {}) if hasattr(df, 'attrs') else {}
+    if poly_stats:
+        # Look up the display name for each dataset from the already-labelled
+        # frame so we don't duplicate the mapping logic.
+        display_map = (
+            labeled[['dataset', 'dataset_display']].drop_duplicates().set_index('dataset')['dataset_display']
+        )
+        canonical_th = _canonical_poly_tracking_threshold()
+        th_str = (
+            _pruning_accuracy_label(canonical_th)
+            if canonical_th is not None
+            else 'No pruning'
+        )
+        lines.append('')
+        lines.append(
+            '% Per-dataset polyomino-size statistics, canonical slice: '
+            f"tilepadding={POLY_STATS_TILEPADDING}, pruning accuracy={th_str}."
+        )
+        for dataset_name in sorted(poly_stats.keys()):
+            stats = poly_stats[dataset_name]
+            display = str(display_map.get(dataset_name, dataset_name))
+            key = _dataset_macro_key(display)
+            if not key:
+                continue
+            emit(f'{key}PolyPerCanvas', _fmt(stats['polys_per_canvas'], '.1f'))
+            # Median is already integer-valued for a histogram over integer
+            # tile counts, so format with no decimal places.
+            emit(f'{key}PolyMedianTiles', _fmt(stats['median_tiles'], '.0f'))
+            emit(f'{key}PolyMeanTiles', _fmt(stats['mean_tiles'], '.2f'))
+            # Mean bbox extents (in tile units) describe polyomino aspect; the
+            # paper cites them to contrast tall+square vs wide+thin shapes.
+            if 'mean_bbox_h' in stats:
+                emit(f'{key}PolyMeanBboxH', _fmt(stats['mean_bbox_h'], '.2f'))
+            if 'mean_bbox_w' in stats:
+                emit(f'{key}PolyMeanBboxW', _fmt(stats['mean_bbox_w'], '.2f'))
 
     with open(path, 'w') as f:
         f.write('\n'.join(lines) + '\n')
@@ -532,10 +808,10 @@ def _copy_paper_figure_artifacts(source_dir: str | Path, base_name: str, destina
         print(f"  Copied to paper figures: {tex_dst}")
 
 
-def write_markdown(df: pd.DataFrame, path: str) -> None:
+def write_markdown(df: pd.DataFrame, path: str, videoset: str) -> None:
     """Emit a short Markdown table alongside the chart for quick inspection."""
     lines = [
-        f'# Packing efficacy (sample_rate={SAMPLE_RATE}, canvas_scale={CANVAS_SCALE:g})',
+        f'# Packing efficacy (videoset={videoset}, sample_rate={SAMPLE_RATE}, canvas_scale={CANVAS_SCALE:g})',
         '',
         '| dataset | pruning | tile-padding | efficacy (%) | occupied | canvas tiles |',
         '|---------|---------|--------------|--------------|----------|--------------|',
@@ -564,38 +840,58 @@ def write_markdown(df: pd.DataFrame, path: str) -> None:
 
 def main() -> None:
     args = parse_args()
+    videoset = _resolve_videoset(args)
+
+    # Unsuffixed outputs and ``\\packingEfficacy*`` macros: validation (paper).
+    # Test runs are suffixed so they do not clobber the canonical artifacts.
+    base_name = (
+        SCRIPT_ARTIFACT_BASENAME
+        if videoset == 'valid'
+        else f'{SCRIPT_ARTIFACT_BASENAME}_{videoset}'
+    )
+    macro_prefix = (
+        'packingEfficacy' if videoset == 'valid' else f'packingEfficacy{videoset.capitalize()}'
+    )
 
     # Destination for the chart PDF, macros .tex, and intermediate JSONL/MD.
     summary_dir = cache.summary('038_packing_efficacy')
     os.makedirs(summary_dir, exist_ok=True)
 
+    print(f"  Aggregating videoset={videoset} ({_VIDEOSET_TO_PREFIX[videoset]}*)")
+
     # Single aggregated frame drives every downstream writer.
-    df = collect_rows(verbose=args.verbose)
+    df = collect_rows(verbose=args.verbose, videoset=videoset)
 
     # Persist the raw rows so downstream re-analysis never has to recompute.
-    jsonl_path = os.path.join(summary_dir, f'{SCRIPT_ARTIFACT_BASENAME}.jsonl')
+    jsonl_path = os.path.join(summary_dir, f'{base_name}.jsonl')
     # ``to_json`` maps NaN to JSON null (``json.dumps`` chokes on float NaN).
     df.to_json(jsonl_path, orient='records', lines=True, double_precision=15)
 
     # Human-friendly Markdown companion; keeps parity with p205's md dump.
-    md_path = os.path.join(summary_dir, f'{SCRIPT_ARTIFACT_BASENAME}.md')
-    write_markdown(df, md_path)
+    md_path = os.path.join(summary_dir, f'{base_name}.md')
+    write_markdown(df, md_path, videoset=videoset)
 
     # Main deliverable for the paper: a grouped bar chart (PDF + PNG).
-    chart_pdf = os.path.join(summary_dir, f'{SCRIPT_ARTIFACT_BASENAME}.pdf')
-    chart_png = os.path.join(summary_dir, f'{SCRIPT_ARTIFACT_BASENAME}.png')
+    chart_pdf = os.path.join(summary_dir, f'{base_name}.pdf')
+    chart_png = os.path.join(summary_dir, f'{base_name}.png')
     try:
         write_chart(df, chart_pdf)
     except Exception as e:
         print(f"Chart skipped: {e}")
 
     # TeX macros summarizing best/average/worst for the paper prose.
-    tex_macros_path = os.path.join(summary_dir, f'{SCRIPT_ARTIFACT_BASENAME}_macros.tex')
-    write_tex_stat_macros(df, tex_macros_path)
+    tex_macros_path = os.path.join(summary_dir, f'{base_name}_macros.tex')
+    write_tex_stat_macros(
+        df, tex_macros_path, macro_prefix=macro_prefix, videoset=videoset
+    )
     print(f"  Wrote TeX macros: {tex_macros_path}")
 
-    # Copy PDF + macros into paper/figures/generated so latex picks them up.
-    _copy_paper_figure_artifacts(summary_dir, SCRIPT_ARTIFACT_BASENAME, PAPER_FIGURES_GENERATED_DIR)
+    # Canonical validation split updates ``paper/figures/generated``; test runs
+    # stay a side-by-side cache-only artifact.
+    if videoset == 'valid':
+        _copy_paper_figure_artifacts(summary_dir, base_name, PAPER_FIGURES_GENERATED_DIR)
+    else:
+        print(f"  Skipping paper-figures copy for videoset={videoset}")
 
     print(f"Wrote {jsonl_path} ({len(df)} rows), {md_path}, {chart_pdf}, {chart_png}")
 

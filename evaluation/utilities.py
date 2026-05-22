@@ -47,7 +47,7 @@ SYSTEM_COLOR_DOMAIN = [
     'Polytris',
     'Polytris (-Sampling)',
     'Polytris (-Sampling, -Pruning)',
-    'Oracle',
+    'Reference',
     'OTIF',
     'LEAP',
 ]
