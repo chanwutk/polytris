@@ -47,7 +47,7 @@ includes:
     - "preprocess"
     - "scripts"
     - "tests"
-    - "viz"
+    - "demo"
 
   # File extensions to include within each directory
   extensions:

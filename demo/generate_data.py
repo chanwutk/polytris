@@ -2,7 +2,7 @@
 """
 Generate data files for the D3 demo visualization.
 
-Pipeline (all run on remote inside Docker via ./run viz/demo/generate_data.py):
+Pipeline (all run on remote inside Docker via ./run demo/generate_data.py):
   1. Extract `num_frames` consecutive (or sample_rate-spaced) frames from the chosen video; save as PNG.
   2. Compute per-frame relevance bitmaps from groundtruth tracks (same as p021).
   3. Group connected relevant tiles into polyominoes per frame.
@@ -30,8 +30,9 @@ import cv2
 import numpy as np
 from PIL import Image
 
-# Make sibling repo imports work whether we run from the repo root or anywhere else
-REPO_ROOT = Path(__file__).resolve().parents[2]
+# Make sibling repo imports work whether we run from the repo root or anywhere else.
+# This file lives at <repo>/demo/generate_data.py, so the repo root is one parent up.
+REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 

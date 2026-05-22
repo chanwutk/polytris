@@ -7,8 +7,8 @@ Self-contained D3 visualization of the 3 execution-engine operators
 
 ```bash
 ./sync
-ssh ace 'cd <repo_path> && docker exec polyis ./run viz/demo/generate_data.py'
-rsync -av --delete ace:<repo_path>/viz/demo/data/ viz/demo/data/
+ssh ace 'cd <repo_path> && docker exec polyis ./run demo/generate_data.py'
+rsync -av --delete ace:<repo_path>/demo/data/ demo/data/
 ```
 
 CLI overrides for `generate_data.py`:
@@ -31,7 +31,7 @@ CLI overrides for `generate_data.py`:
 The bundled demo data was generated with:
 
 ```bash
-./run viz/demo/generate_data.py --dataset jnc0 --video te01.mp4 --frame-start 704 --overwrite
+./run demo/generate_data.py --dataset jnc0 --video te01.mp4 --frame-start 704 --overwrite
 ```
 
 `jnc0/te01.mp4` frames 704–767 is a busy 4-way intersection with ~6 vehicles
@@ -49,10 +49,10 @@ shared cache path, then writes a viz-only `data/max_rate_table_viz.npy`.
 
 ## View the animation
 
-Serve the `viz/demo/` directory and open `index.html`:
+Serve the `demo/` directory and open `index.html`:
 
 ```bash
-cd viz/demo && python -m http.server 8000
+cd demo && python -m http.server 8000
 # then visit http://localhost:8000/index.html
 ```
 

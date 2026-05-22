@@ -48,7 +48,7 @@ demonstration: 0 → 292 polyominoes discarded as M goes from 0 to 1, and the
 canvas count drops from 16 → 6.
 
 ```bash
-ssh ace 'docker exec polyis bash -c "cd /polyis && python viz/demo/generate_data.py --dataset jnc0 --video te01.mp4 --frame-start 704 --overwrite"'
+ssh ace 'docker exec polyis bash -c "cd /polyis && python demo/generate_data.py --dataset jnc0 --video te01.mp4 --frame-start 704 --overwrite"'
 ```
 
 Expected output (key lines):
@@ -63,7 +63,7 @@ Expected output (key lines):
 [M=0.10] discarded=150 / 404 canvases=11
 [M=0.50] discarded=237 / 404 canvases=8
 [M=1.00] discarded=292 / 404 canvases=6
-[done] Wrote data to /polyis/viz/demo/data
+[done] Wrote data to /polyis/demo/data
 ```
 
 If you re-run, pass `--overwrite` (otherwise the script refuses to clobber an
@@ -106,20 +106,20 @@ All defaults are overridable. Full CLI:
 | `--packing-mode` | `first_fit` | `first_fit/best_fit/easiest_fit` |
 | `--time-limit` | `10.0` | ILP seconds per M value |
 | `--m-values` | `0.0,0.1,...,1.0` | Comma-separated, in `[0,1]` |
-| `--output-dir` | `viz/demo/data` | Where to write outputs |
+| `--output-dir` | `demo/data` | Where to write outputs |
 | `--overwrite` | off | Pass to clobber an existing data dir |
 | `--image-scale` | `0.25` | Frame/polyomino PNGs are saved at this fraction of original pixel size (~16x smaller files at 0.25). JSON coords stay in original space; the browser stretches the smaller PNGs back up. Set to `1.0` for full-resolution. |
 
 Example — try `te01.mp4` (lots of activity from frame 0):
 
 ```bash
-ssh ace 'docker exec polyis bash -c "cd /polyis && python viz/demo/generate_data.py --video te01.mp4 --frame-start 0 --overwrite"'
+ssh ace 'docker exec polyis bash -c "cd /polyis && python demo/generate_data.py --video te01.mp4 --frame-start 0 --overwrite"'
 ```
 
 Example — finer M slider (21 values, slower):
 
 ```bash
-ssh ace 'docker exec polyis bash -c "cd /polyis && python viz/demo/generate_data.py --frame-start 192 --m-values 0.0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0 --overwrite"'
+ssh ace 'docker exec polyis bash -c "cd /polyis && python demo/generate_data.py --frame-start 192 --m-values 0.0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0 --overwrite"'
 ```
 
 ### 2c. Picking a frame range with enough activity — `scan_activity.py`
@@ -127,7 +127,7 @@ ssh ace 'docker exec polyis bash -c "cd /polyis && python viz/demo/generate_data
 To search across all configured datasets and surface the best windows, run:
 
 ```bash
-ssh ace 'docker exec polyis bash -c "cd /polyis && python viz/demo/scan_activity.py"'
+ssh ace 'docker exec polyis bash -c "cd /polyis && python demo/scan_activity.py"'
 ```
 
 This slides a 64-frame window in steps of 32 over every test video, builds the
@@ -154,7 +154,7 @@ its `dataset`, `video`, and `start` to `generate_data.py`.
 ## 3. Pull the generated data back to local
 
 ```bash
-rsync -av --delete ace:/work/cwkt/projects/polyis/viz/demo/data/ viz/demo/data/
+rsync -av --delete ace:/work/cwkt/projects/polyis/demo/data/ demo/data/
 ```
 
 Expected size: ~30–80 MB depending on video resolution and polyomino count.
@@ -180,7 +180,7 @@ data/
 From the project root:
 
 ```bash
-cd viz/demo
+cd demo
 python3 -m http.server 8765
 ```
 
@@ -221,7 +221,7 @@ lsof -ti:8765 | xargs kill
 | ILP times out before finding optimum | Bump `--time-limit`. The default 10 s is enough for typical 64-frame windows; very dense scenes may need 30–60 s. |
 | Slider jumps too coarsely | Re-run with a finer `--m-values` list (e.g. 21 values at step 0.05). |
 | Browser shows a blank page | Check the JS console for fetch errors. If `data/meta.json` returns 404, the data step didn't complete or wasn't pulled back. |
-| `data/` exists, script refuses to run | Pass `--overwrite`, or `rm -rf viz/demo/data` first. |
+| `data/` exists, script refuses to run | Pass `--overwrite`, or `rm -rf demo/data` first. |
 
 ---
 
@@ -231,9 +231,9 @@ For everyday regeneration once you've already configured everything:
 
 ```bash
 ./sync && \
-  ssh ace 'docker exec polyis bash -c "cd /polyis && python viz/demo/generate_data.py --dataset jnc0 --video te01.mp4 --frame-start 704 --overwrite"' && \
-  rsync -av --delete ace:/work/cwkt/projects/polyis/viz/demo/data/ viz/demo/data/ && \
-  (cd viz/demo && python3 -m http.server 8765)
+  ssh ace 'docker exec polyis bash -c "cd /polyis && python demo/generate_data.py --dataset jnc0 --video te01.mp4 --frame-start 704 --overwrite"' && \
+  rsync -av --delete ace:/work/cwkt/projects/polyis/demo/data/ demo/data/ && \
+  (cd demo && python3 -m http.server 8765)
 ```
 
 Then open <http://localhost:8765/index.html>.
