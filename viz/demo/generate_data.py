@@ -85,11 +85,11 @@ def parse_args():
     parser.add_argument('--output-dir', default=str(REPO_ROOT / 'viz' / 'demo' / 'data'))
     parser.add_argument('--overwrite', action='store_true',
                         help='Allow clobbering an existing non-empty output directory.')
-    parser.add_argument('--image-scale', type=float, default=0.25,
+    parser.add_argument('--image-scale', type=float, default=1.0 / 6.0,
                         help='Scale factor for saved frame and polyomino PNGs. Coordinates in the '
                              'JSON files remain in original (tile-aligned) pixel space; the SVG '
                              '<image> element scales the lower-res PNGs back up at render time. '
-                             'Default 0.25 reduces file size ~16x with negligible visual loss.')
+                             'Default 1/6 reduces file size ~36x with negligible visual loss.')
     return parser.parse_args()
 
 
