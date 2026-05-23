@@ -17,17 +17,17 @@
     <button id="next-btn" type="button">Next &#9654;</button>
     <label class="slider-wrap" for="m-slider">
       <span class="slider-label">M (mistrack rate tolerance):</span>
-      <input id="m-slider" type="range" min="0" max="1" step="0.1" value="0" disabled />
-      <span class="slider-value" id="m-readout">0.0</span>
+      <input id="m-slider" type="range" min="0" max="1" step="0.1" value="0.5" disabled />
+      <span class="slider-value" id="m-readout">0.5</span>
     </label>
     <span class="canvas-count" id="canvas-count"></span>
   </section>
 
   <section class="legend">
     <span class="swatch swatch-relevant"></span> Relevant polyomino
-    <span class="swatch swatch-discarded"></span> Discarded (M-dependent)
+    <span class="swatch swatch-discarded"></span> Discarded polyomino
     <span class="swatch swatch-detection"></span> Detection bbox
-    <span class="swatch swatch-frame"></span> Dimmed source frame
+    <span class="swatch swatch-frame"></span> Discarded tile
   </section>
 
   <main>

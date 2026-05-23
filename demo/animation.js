@@ -29,7 +29,7 @@ const DATA_DIR = 'data';
 
 const state = {
   stage: 1,
-  mValue: 0.0,
+  mValue: 0.5,
   meta: null,
   polyominoes: [],
   pruning: {},       // M-key -> array of [f, i]
@@ -94,7 +94,10 @@ async function init() {
     // Heuristic: assume an evenly-spaced grid; pick step from the first gap.
     const sorted = [...mValues].sort((a, b) => a - b);
     if (sorted.length >= 2) mSliderEl.step = String(+(sorted[1] - sorted[0]).toFixed(4));
-    state.mValue = sorted[0];
+    // Default to the available M value closest to 0.5.
+    const target = 0.5;
+    state.mValue = sorted.reduce((best, v) =>
+      Math.abs(v - target) < Math.abs(best - target) ? v : best, sorted[0]);
     mSliderEl.value = String(state.mValue);
   }
 
