@@ -16,10 +16,22 @@ DATASETS = CONFIG['EXEC']['DATASETS']
 ACCURACY_COL = 'HOTA_HOTA'
 THROUGHPUT_COL = 'throughput_fps'
 DEFAULT_THRESHOLDS = [threshold / 100.0 for threshold in range(1, 11)]
-DETAIL_THRESHOLDS = [0.05, 0.10]
+DETAIL_THRESHOLDS = DEFAULT_THRESHOLDS
 PRIOR_SYSTEMS = ['otif', 'leap']
 OUTPUT_DIR = os.path.join('paper', 'figures', 'generated')
 OUTPUT_TEX_PATH = os.path.join(OUTPUT_DIR, 'p203_compare_stats.tex')
+THRESHOLD_SUFFIX_BY_PERCENT = {
+    1: 'OnePct',
+    2: 'TwoPct',
+    3: 'ThreePct',
+    4: 'FourPct',
+    5: 'FivePct',
+    6: 'SixPct',
+    7: 'SevenPct',
+    8: 'EightPct',
+    9: 'NinePct',
+    10: 'TenPct',
+}
 
 
 def parse_args():
@@ -40,6 +52,20 @@ def _threshold_label(threshold: float) -> str:
     """Format a threshold ratio like 0.05 as a human-readable percent label."""
     # Convert the fractional threshold into an integer percent string.
     return f'{int(round(threshold * 100))}%'
+
+
+def _threshold_macro_suffix(threshold: float) -> str:
+    """Return the stable TeX macro suffix for an integer percentage threshold."""
+    # Convert the fractional threshold into the integer percent used by the suffix lookup.
+    threshold_percent = int(round(threshold * 100))
+
+    # Reject unsupported thresholds so macro names do not silently become inconsistent.
+    assert threshold_percent in THRESHOLD_SUFFIX_BY_PERCENT, (
+        f'Unsupported threshold for TeX macro suffix: {threshold}'
+    )
+
+    # Return the human-readable suffix used by the paper macros.
+    return THRESHOLD_SUFFIX_BY_PERCENT[threshold_percent]
 
 
 def _format_optional_float(value: object, digits: int = 3) -> str:
@@ -175,6 +201,90 @@ def select_best_prior_row(
     return best_row
 
 
+def select_most_accurate_not_more_accurate_prior_row(
+    prior_dfs_by_system: Mapping[str, pd.DataFrame],
+    polytris_hota: float,
+) -> pd.Series | None:
+    """Return the most accurate prior-system row whose HOTA is not above Polytris."""
+    # Track the current best prior row across all systems.
+    best_row: pd.Series | None = None
+
+    # Evaluate each prior system independently before comparing their candidates.
+    for system_name, prior_df in prior_dfs_by_system.items():
+        # Keep only prior rows that are no more accurate than the selected Polytris row.
+        comparable_df = prior_df[prior_df[ACCURACY_COL] <= polytris_hota].copy()
+
+        # Skip systems that never drop to the selected Polytris accuracy.
+        if comparable_df.empty:
+            continue
+
+        # Find the closest lower-accuracy HOTA level for the current system.
+        best_hota = comparable_df[ACCURACY_COL].max()
+        best_accuracy_df = comparable_df[comparable_df[ACCURACY_COL] == best_hota]
+
+        # Use throughput only to break ties at the same HOTA level.
+        best_idx = best_accuracy_df[THROUGHPUT_COL].idxmax()
+        system_row = best_accuracy_df.loc[best_idx].copy()
+
+        # Annotate the selected row with the display name of the prior system.
+        system_row['system'] = system_name
+
+        # Keep the most accurate comparable row, breaking equal-HOTA ties by throughput.
+        if best_row is None:
+            best_row = system_row
+            continue
+
+        # Compare HOTA first so the match is accuracy-aligned before speed-aligned.
+        if float(system_row[ACCURACY_COL]) > float(best_row[ACCURACY_COL]):
+            best_row = system_row
+            continue
+
+        # Break exact HOTA ties by choosing the faster prior row.
+        if (
+            float(system_row[ACCURACY_COL]) == float(best_row[ACCURACY_COL])
+            and float(system_row[THROUGHPUT_COL]) > float(best_row[THROUGHPUT_COL])
+        ):
+            best_row = system_row
+
+    return best_row
+
+
+def select_accuracy_matched_prior_row(
+    prior_dfs_by_system: Mapping[str, pd.DataFrame],
+    threshold: float,
+    polytris_row: pd.Series | None,
+) -> pd.Series | None:
+    """Return a prior-system row for an accuracy-matched speedup comparison."""
+    # Without a feasible Polytris row, there is no accuracy anchor for matching.
+    if polytris_row is None:
+        return None
+
+    # Resolve the fastest prior row that satisfies the same threshold bound.
+    threshold_row = select_best_prior_row(prior_dfs_by_system, threshold)
+    polytris_hota = float(polytris_row[ACCURACY_COL])
+
+    # Reuse the threshold-feasible prior row when it is already no more accurate than Polytris.
+    if threshold_row is not None and float(threshold_row[ACCURACY_COL]) <= polytris_hota:
+        threshold_row = threshold_row.copy()
+        threshold_row['accuracy_match_rule'] = 'threshold_feasible_not_more_accurate'
+        return threshold_row
+
+    # Otherwise, fall back to the closest lower-accuracy prior point even if it misses the threshold.
+    matched_row = select_most_accurate_not_more_accurate_prior_row(
+        prior_dfs_by_system,
+        polytris_hota,
+    )
+
+    # Return no match when every prior-system row is more accurate than Polytris.
+    if matched_row is None:
+        return None
+
+    # Annotate the fallback row so the CLI table exposes which rule was used.
+    matched_row = matched_row.copy()
+    matched_row['accuracy_match_rule'] = 'nearest_not_more_accurate'
+    return matched_row
+
+
 def load_polytris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Load canonical test-split Polytris and naive tradeoff rows for all datasets."""
     # Collect one Polytris tradeoff DataFrame per dataset.
@@ -305,6 +415,13 @@ def build_threshold_detail_table(
         # Select the fastest feasible prior-system point under the current threshold.
         prior_row = select_best_prior_row(dataset_prior_dfs, threshold)
 
+        # Select the accuracy-matched prior-system point for the same Polytris row.
+        accuracy_matched_prior_row = select_accuracy_matched_prior_row(
+            dataset_prior_dfs,
+            threshold,
+            polytris_row,
+        )
+
         # Compute the Polytris-over-prior speedup when both sides are available.
         if (
             polytris_row is not None
@@ -314,6 +431,19 @@ def build_threshold_detail_table(
             speedup_x = float(polytris_row[THROUGHPUT_COL]) / float(prior_row[THROUGHPUT_COL])
         else:
             speedup_x = pd.NA
+
+        # Compute the accuracy-matched Polytris-over-prior speedup when both sides are available.
+        if (
+            polytris_row is not None
+            and accuracy_matched_prior_row is not None
+            and float(accuracy_matched_prior_row[THROUGHPUT_COL]) > 0
+        ):
+            accuracy_matched_speedup_x = (
+                float(polytris_row[THROUGHPUT_COL])
+                / float(accuracy_matched_prior_row[THROUGHPUT_COL])
+            )
+        else:
+            accuracy_matched_speedup_x = pd.NA
 
         # Compute the Polytris-over-naive speedup when a feasible Polytris point exists.
         if polytris_row is not None and float(oracle_row[THROUGHPUT_COL]) > 0:
@@ -336,6 +466,27 @@ def build_threshold_detail_table(
             'prior_loss_pct': prior_row['loss_pct'] if prior_row is not None else pd.NA,
             'prior_throughput_fps': prior_row[THROUGHPUT_COL] if prior_row is not None else pd.NA,
             'speedup_x': speedup_x,
+            'accuracy_matched_prior_system': (
+                accuracy_matched_prior_row['system']
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_prior_hota': (
+                accuracy_matched_prior_row[ACCURACY_COL]
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_prior_loss_pct': (
+                accuracy_matched_prior_row['loss_pct']
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_prior_throughput_fps': (
+                accuracy_matched_prior_row[THROUGHPUT_COL]
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_prior_rule': (
+                accuracy_matched_prior_row['accuracy_match_rule']
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_speedup_x': accuracy_matched_speedup_x,
             'naive_speedup_x': naive_speedup_x,
         })
 
@@ -366,6 +517,12 @@ def build_threshold_summary_table(
 
         # Keep only datasets where both Polytris and a prior system are comparable.
         speedup_values = threshold_df['speedup_x'].dropna()
+        # Count datasets where an accuracy-matched prior-system row is available.
+        accuracy_matched_prior_count = int(
+            threshold_df['accuracy_matched_prior_system'].notna().sum()
+        )
+        # Keep only datasets where the accuracy-matched comparison is available.
+        accuracy_matched_speedup_values = threshold_df['accuracy_matched_speedup_x'].dropna()
         # Keep only datasets where Polytris can be compared to the naive pipeline.
         naive_speedup_values = threshold_df['naive_speedup_x'].dropna()
 
@@ -377,6 +534,15 @@ def build_threshold_summary_table(
             'prior_fail_count': prior_fail_count,
             'speedup_min_x': speedup_values.min() if not speedup_values.empty else pd.NA,
             'speedup_max_x': speedup_values.max() if not speedup_values.empty else pd.NA,
+            'accuracy_matched_prior_count': accuracy_matched_prior_count,
+            'accuracy_matched_speedup_min_x': (
+                accuracy_matched_speedup_values.min()
+                if not accuracy_matched_speedup_values.empty else pd.NA
+            ),
+            'accuracy_matched_speedup_max_x': (
+                accuracy_matched_speedup_values.max()
+                if not accuracy_matched_speedup_values.empty else pd.NA
+            ),
             'naive_speedup_min_x': (
                 naive_speedup_values.min() if not naive_speedup_values.empty else pd.NA
             ),
@@ -397,6 +563,12 @@ def build_threshold_reports(
     thresholds: list[float] = DEFAULT_THRESHOLDS,
 ) -> tuple[pd.DataFrame, dict[float, pd.DataFrame]]:
     """Build the full threshold summary table plus per-threshold detail tables."""
+    # Restrict prior-system comparisons to each system's Pareto front.
+    prior_pareto_dfs_by_system = {
+        system_name: filter_pareto_by_dataset(prior_df)
+        for system_name, prior_df in prior_dfs_by_system.items()
+    }
+
     # Collect the detail table for each requested threshold.
     detail_tables: dict[float, pd.DataFrame] = {}
 
@@ -406,7 +578,7 @@ def build_threshold_reports(
             datasets,
             polytris_df,
             naive_df,
-            prior_dfs_by_system,
+            prior_pareto_dfs_by_system,
             threshold,
         )
 
@@ -615,6 +787,12 @@ def format_summary_for_cli(summary_df: pd.DataFrame) -> pd.DataFrame:
     # Render the speedup columns with a consistent fixed precision.
     formatted_df['speedup_min_x'] = formatted_df['speedup_min_x'].map(_format_optional_float)
     formatted_df['speedup_max_x'] = formatted_df['speedup_max_x'].map(_format_optional_float)
+    formatted_df['accuracy_matched_speedup_min_x'] = (
+        formatted_df['accuracy_matched_speedup_min_x'].map(_format_optional_float)
+    )
+    formatted_df['accuracy_matched_speedup_max_x'] = (
+        formatted_df['accuracy_matched_speedup_max_x'].map(_format_optional_float)
+    )
     formatted_df['naive_speedup_min_x'] = formatted_df['naive_speedup_min_x'].map(_format_optional_float)
     formatted_df['naive_speedup_max_x'] = formatted_df['naive_speedup_max_x'].map(_format_optional_float)
 
@@ -632,14 +810,26 @@ def format_detail_for_cli(detail_df: pd.DataFrame) -> pd.DataFrame:
     formatted_df['oracle_hota'] = formatted_df['oracle_hota'].map(_format_optional_float)
     formatted_df['polytris_hota'] = formatted_df['polytris_hota'].map(_format_optional_float)
     formatted_df['prior_hota'] = formatted_df['prior_hota'].map(_format_optional_float)
+    formatted_df['accuracy_matched_prior_hota'] = (
+        formatted_df['accuracy_matched_prior_hota'].map(_format_optional_float)
+    )
     # Render loss columns as human-readable percentages.
     formatted_df['polytris_loss_pct'] = formatted_df['polytris_loss_pct'].map(_format_optional_percent)
     formatted_df['prior_loss_pct'] = formatted_df['prior_loss_pct'].map(_format_optional_percent)
+    formatted_df['accuracy_matched_prior_loss_pct'] = (
+        formatted_df['accuracy_matched_prior_loss_pct'].map(_format_optional_percent)
+    )
     # Render throughput and speedup columns with a consistent fixed precision.
     formatted_df['naive_throughput_fps'] = formatted_df['naive_throughput_fps'].map(_format_optional_float)
     formatted_df['polytris_throughput_fps'] = formatted_df['polytris_throughput_fps'].map(_format_optional_float)
     formatted_df['prior_throughput_fps'] = formatted_df['prior_throughput_fps'].map(_format_optional_float)
     formatted_df['speedup_x'] = formatted_df['speedup_x'].map(_format_optional_float)
+    formatted_df['accuracy_matched_prior_throughput_fps'] = (
+        formatted_df['accuracy_matched_prior_throughput_fps'].map(_format_optional_float)
+    )
+    formatted_df['accuracy_matched_speedup_x'] = (
+        formatted_df['accuracy_matched_speedup_x'].map(_format_optional_float)
+    )
     formatted_df['naive_speedup_x'] = formatted_df['naive_speedup_x'].map(_format_optional_float)
 
     return formatted_df
@@ -678,21 +868,27 @@ def save_tex_macros(
     dominance_detail_df: pd.DataFrame,
     output_path: str,
 ) -> None:
-    """Save the abstract-ready 5% and 10% summary values plus the max-HOTA-delta dominance macros as TeX macros."""
-    # Map each abstract-ready threshold to the suffix used in macro names.
-    threshold_suffixes = [(0.05, 'FivePct'), (0.10, 'TenPct')]
+    """Save threshold summary values plus the max-HOTA-delta dominance macros as TeX macros."""
+    # Map each reported threshold to the suffix used in macro names.
+    threshold_suffixes = [
+        (threshold, _threshold_macro_suffix(threshold))
+        for threshold in DEFAULT_THRESHOLDS
+    ]
 
     # Map each integer-valued summary column to its macro-name prefix.
     int_fields = [
         ('polytris_meet_count', 'comparePolytrisMeet'),
         ('prior_meet_count', 'comparePriorMeet'),
         ('prior_fail_count', 'comparePriorFailDatasets'),
+        ('accuracy_matched_prior_count', 'compareAccuracyMatchedPriorCount'),
     ]
 
     # Map each float-valued summary column to its macro-name prefix.
     float_fields = [
         ('speedup_min_x', 'compareSpeedupMin'),
         ('speedup_max_x', 'compareSpeedupMax'),
+        ('accuracy_matched_speedup_min_x', 'compareAccuracyMatchedSpeedupMin'),
+        ('accuracy_matched_speedup_max_x', 'compareAccuracyMatchedSpeedupMax'),
         ('naive_speedup_min_x', 'compareNaiveSpeedupMin'),
         ('naive_speedup_max_x', 'compareNaiveSpeedupMax'),
     ]
@@ -705,7 +901,7 @@ def save_tex_macros(
         # Identify the generating script for future debugging.
         f.write('% Auto-generated by evaluation/p203_compare_stats.py\n')
 
-        # Emit one macro block per abstract-ready threshold.
+        # Emit one macro block per reported threshold.
         for threshold, suffix in threshold_suffixes:
             # Resolve the summary row for the current threshold.
             row = summary_df.loc[summary_df['threshold'] == threshold].iloc[0]
@@ -803,18 +999,12 @@ def main() -> None:
     # Pareto-filter the Polytris tradeoff rows by dataset.
     polytris_pareto_df = filter_pareto_by_dataset(polytris_df)
 
-    # Pareto-filter each prior system by dataset.
-    prior_pareto_dfs = {
-        system_name: filter_pareto_by_dataset(prior_df)
-        for system_name, prior_df in prior_raw_dfs.items()
-    }
-
     # Build the threshold summary plus the per-threshold detail tables.
     summary_df, detail_tables = build_threshold_reports(
         DATASETS,
         polytris_pareto_df,
         naive_df,
-        prior_pareto_dfs,
+        prior_raw_dfs,
         DEFAULT_THRESHOLDS,
     )
 

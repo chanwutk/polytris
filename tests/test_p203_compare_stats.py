@@ -4,10 +4,12 @@ import pandas as pd
 
 from evaluation.p203_compare_stats import (
     DEFAULT_THRESHOLDS,
+    DETAIL_THRESHOLDS,
     add_loss_pct,
     build_threshold_reports,
     filter_pareto_by_dataset,
     save_tex_macros,
+    select_accuracy_matched_prior_row,
     select_best_prior_row,
 )
 
@@ -88,6 +90,58 @@ def test_select_best_prior_row_handles_presence_cases():
         assert selected_row['system'] == expected_system
 
 
+def test_select_accuracy_matched_prior_row_handles_matching_rules():
+    # Build a selected Polytris row that anchors the accuracy-matched comparison.
+    polytris_row = pd.Series({'HOTA_HOTA': 0.80, 'throughput_fps': 300.0})
+
+    # Reuse the threshold-feasible prior row when it is already no more accurate than Polytris.
+    threshold_feasible_prior_dfs = {
+        'OTIF': pd.DataFrame([
+            {'HOTA_HOTA': 0.79, 'loss_pct': 0.04, 'throughput_fps': 50.0},
+        ]),
+        'LEAP': pd.DataFrame([
+            {'HOTA_HOTA': 0.75, 'loss_pct': 0.03, 'throughput_fps': 60.0},
+        ]),
+    }
+    threshold_feasible_row = select_accuracy_matched_prior_row(
+        threshold_feasible_prior_dfs,
+        0.05,
+        polytris_row,
+    )
+    assert threshold_feasible_row is not None
+    assert threshold_feasible_row['system'] == 'LEAP'
+    assert threshold_feasible_row['accuracy_match_rule'] == 'threshold_feasible_not_more_accurate'
+
+    # Fall back to the closest lower-accuracy prior row when threshold-feasible rows are too accurate.
+    fallback_prior_dfs = {
+        'OTIF': pd.DataFrame([
+            {'HOTA_HOTA': 0.90, 'loss_pct': 0.01, 'throughput_fps': 100.0},
+            {'HOTA_HOTA': 0.78, 'loss_pct': 0.10, 'throughput_fps': 80.0},
+            {'HOTA_HOTA': 0.70, 'loss_pct': 0.20, 'throughput_fps': 200.0},
+        ]),
+        'LEAP': pd.DataFrame([
+            {'HOTA_HOTA': 0.77, 'loss_pct': 0.09, 'throughput_fps': 1000.0},
+        ]),
+    }
+    fallback_row = select_accuracy_matched_prior_row(
+        fallback_prior_dfs,
+        0.05,
+        polytris_row,
+    )
+    assert fallback_row is not None
+    assert fallback_row['system'] == 'OTIF'
+    assert fallback_row['HOTA_HOTA'] == 0.78
+    assert fallback_row['accuracy_match_rule'] == 'nearest_not_more_accurate'
+
+    # Return no match when every prior row is more accurate than Polytris.
+    no_match_prior_dfs = {
+        'OTIF': pd.DataFrame([
+            {'HOTA_HOTA': 0.90, 'loss_pct': 0.01, 'throughput_fps': 100.0},
+        ]),
+    }
+    assert select_accuracy_matched_prior_row(no_match_prior_dfs, 0.05, polytris_row) is None
+
+
 def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
     # Build one Pareto-filtered Polytris table for a single synthetic dataset.
     polytris_df = pd.DataFrame([
@@ -122,6 +176,7 @@ def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
     prior_dfs = {
         'OTIF': pd.DataFrame([
             {'dataset': 'demo', 'videoset': 'test', 'HOTA_HOTA': 0.98, 'throughput_fps': 100.0},
+            {'dataset': 'demo', 'videoset': 'test', 'HOTA_HOTA': 0.97, 'throughput_fps': 90.0},
         ]),
         'LEAP': pd.DataFrame([
             {'dataset': 'demo', 'videoset': 'test', 'HOTA_HOTA': 0.995, 'throughput_fps': 70.0},
@@ -138,12 +193,19 @@ def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
 
     # Emit one summary row per default threshold from 1% through 10%.
     assert summary_df['threshold'].tolist() == DEFAULT_THRESHOLDS
+    # Print detail tables for the same thresholds covered by the summary output.
+    assert DETAIL_THRESHOLDS == DEFAULT_THRESHOLDS
 
     # At 1%, Polytris should pick the strict row and LEAP should be the only feasible prior.
     one_pct_detail = detail_tables[0.01]
     assert one_pct_detail.loc[0, 'polytris_variant_id'] == 'poly_strict'
     assert one_pct_detail.loc[0, 'prior_system'] == 'LEAP'
     assert one_pct_detail.loc[0, 'speedup_x'] == 120.0 / 70.0
+    assert one_pct_detail.loc[0, 'accuracy_matched_prior_system'] == 'OTIF'
+    assert one_pct_detail.loc[0, 'accuracy_matched_prior_rule'] == 'nearest_not_more_accurate'
+    assert one_pct_detail.loc[0, 'accuracy_matched_speedup_x'] == 120.0 / 100.0
+    # Ignore the faster-looking but Pareto-dominated OTIF row during accuracy matching.
+    assert one_pct_detail.loc[0, 'accuracy_matched_prior_hota'] == 0.98
     assert one_pct_detail.loc[0, 'naive_speedup_x'] == 120.0 / 20.0
 
     # At 5%, Polytris should pick the faster row and OTIF should be the best feasible prior.
@@ -151,7 +213,15 @@ def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
     assert five_pct_detail.loc[0, 'polytris_variant_id'] == 'poly_fast'
     assert five_pct_detail.loc[0, 'prior_system'] == 'OTIF'
     assert five_pct_detail.loc[0, 'speedup_x'] == 3.0
+    assert pd.isna(five_pct_detail.loc[0, 'accuracy_matched_prior_system'])
+    assert pd.isna(five_pct_detail.loc[0, 'accuracy_matched_speedup_x'])
     assert five_pct_detail.loc[0, 'naive_speedup_x'] == 15.0
+
+    # Keep the accuracy-matched threshold summary consistent with the detail rows.
+    one_pct_summary = summary_df.loc[summary_df['threshold'] == 0.01].iloc[0]
+    assert one_pct_summary['accuracy_matched_prior_count'] == 1
+    assert one_pct_summary['accuracy_matched_speedup_min_x'] == 120.0 / 100.0
+    assert one_pct_summary['accuracy_matched_speedup_max_x'] == 120.0 / 100.0
 
     # Keep the threshold-level counts and speedup range consistent with the detail rows.
     five_pct_summary = summary_df.loc[summary_df['threshold'] == 0.05].iloc[0]
@@ -160,56 +230,90 @@ def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
     assert five_pct_summary['prior_fail_count'] == 0
     assert five_pct_summary['speedup_min_x'] == 3.0
     assert five_pct_summary['speedup_max_x'] == 3.0
+    assert five_pct_summary['accuracy_matched_prior_count'] == 0
+    assert pd.isna(five_pct_summary['accuracy_matched_speedup_min_x'])
+    assert pd.isna(five_pct_summary['accuracy_matched_speedup_max_x'])
     assert five_pct_summary['naive_speedup_min_x'] == 15.0
     assert five_pct_summary['naive_speedup_max_x'] == 15.0
 
 
 def test_save_tex_macros_writes_abstract_ready_values(tmp_path: Path):
-    # Build a tiny threshold summary table with the required 5% and 10% rows.
-    summary_df = pd.DataFrame([
-        {
-            'threshold': 0.05,
-            'polytris_meet_count': 7,
-            'prior_meet_count': 4,
-            'prior_fail_count': 3,
-            'speedup_min_x': 1.3,
-            'speedup_max_x': 55.8,
-            'naive_speedup_min_x': 4.6,
-            'naive_speedup_max_x': 55.8,
-        },
-        {
-            'threshold': 0.10,
-            'polytris_meet_count': 7,
-            'prior_meet_count': 7,
-            'prior_fail_count': 0,
-            'speedup_min_x': 1.3248,
-            'speedup_max_x': 15.8395,
-            'naive_speedup_min_x': 3.004,
-            'naive_speedup_max_x': 82.7194,
-        },
+    # Build a tiny threshold summary table with one row for every reported threshold.
+    rows: list[dict[str, float | int]] = []
+    for threshold in DEFAULT_THRESHOLDS:
+        # Convert each threshold into an integer percent for deterministic test values.
+        threshold_percent = int(round(threshold * 100))
+
+        # Add one synthetic summary row for the current threshold.
+        rows.append({
+            'threshold': threshold,
+            'polytris_meet_count': threshold_percent,
+            'prior_meet_count': threshold_percent - 1,
+            'prior_fail_count': 11 - threshold_percent,
+            'speedup_min_x': threshold_percent + 0.31,
+            'speedup_max_x': threshold_percent + 0.82,
+            'accuracy_matched_prior_count': threshold_percent + 2,
+            'accuracy_matched_speedup_min_x': threshold_percent + 3.06,
+            'accuracy_matched_speedup_max_x': threshold_percent + 4.07,
+            'naive_speedup_min_x': threshold_percent + 1.04,
+            'naive_speedup_max_x': threshold_percent + 2.05,
+        })
+
+    # Materialize the synthetic summary table.
+    summary_df = pd.DataFrame(rows)
+
+    # Build a tiny dominance table so the dominance macros can be emitted.
+    dominance_detail_df = pd.DataFrame([
+        {'hota_delta': 0.42, 'prior_throughput_fps': 1234.5},
     ])
 
     # Save the macro file into a temporary output path.
     output_path = tmp_path / 'p203_compare_stats.tex'
-    save_tex_macros(summary_df, str(output_path))
+    save_tex_macros(summary_df, dominance_detail_df, str(output_path))
 
     # Read the generated macro file back for exact assertions.
     contents = output_path.read_text()
 
-    # Persist the full 5% threshold macro block with counts and rounded ranges.
-    assert '\\newcommand{\\comparePolytrisMeetFivePct}{\\autogen{7}}' in contents
-    assert '\\newcommand{\\comparePriorMeetFivePct}{\\autogen{4}}' in contents
-    assert '\\newcommand{\\comparePriorFailDatasetsFivePct}{\\autogen{3}}' in contents
-    assert '\\newcommand{\\compareSpeedupMinFivePct}{\\autogen{1.3}}' in contents
-    assert '\\newcommand{\\compareSpeedupMaxFivePct}{\\autogen{55.8}}' in contents
-    assert '\\newcommand{\\compareNaiveSpeedupMinFivePct}{\\autogen{4.6}}' in contents
-    assert '\\newcommand{\\compareNaiveSpeedupMaxFivePct}{\\autogen{55.8}}' in contents
+    # Persist one macro block for every reported threshold.
+    for suffix in [
+        'OnePct', 'TwoPct', 'ThreePct', 'FourPct', 'FivePct',
+        'SixPct', 'SevenPct', 'EightPct', 'NinePct', 'TenPct',
+    ]:
+        assert f'\\newcommand{{\\comparePolytrisMeet{suffix}}}' in contents
+        assert f'\\newcommand{{\\comparePriorMeet{suffix}}}' in contents
+        assert f'\\newcommand{{\\comparePriorFailDatasets{suffix}}}' in contents
+        assert f'\\newcommand{{\\compareSpeedupMin{suffix}}}' in contents
+        assert f'\\newcommand{{\\compareSpeedupMax{suffix}}}' in contents
+        assert f'\\newcommand{{\\compareAccuracyMatchedPriorCount{suffix}}}' in contents
+        assert f'\\newcommand{{\\compareAccuracyMatchedSpeedupMin{suffix}}}' in contents
+        assert f'\\newcommand{{\\compareAccuracyMatchedSpeedupMax{suffix}}}' in contents
+        assert f'\\newcommand{{\\compareNaiveSpeedupMin{suffix}}}' in contents
+        assert f'\\newcommand{{\\compareNaiveSpeedupMax{suffix}}}' in contents
 
-    # Persist the full 10% threshold macro block with counts and rounded ranges.
-    assert '\\newcommand{\\comparePolytrisMeetTenPct}{\\autogen{7}}' in contents
-    assert '\\newcommand{\\comparePriorMeetTenPct}{\\autogen{7}}' in contents
-    assert '\\newcommand{\\comparePriorFailDatasetsTenPct}{\\autogen{0}}' in contents
-    assert '\\newcommand{\\compareSpeedupMinTenPct}{\\autogen{1.3}}' in contents
-    assert '\\newcommand{\\compareSpeedupMaxTenPct}{\\autogen{15.8}}' in contents
-    assert '\\newcommand{\\compareNaiveSpeedupMinTenPct}{\\autogen{3.0}}' in contents
-    assert '\\newcommand{\\compareNaiveSpeedupMaxTenPct}{\\autogen{82.7}}' in contents
+    # Preserve the full 5% threshold macro block with the existing macro names.
+    assert '\\newcommand{\\comparePolytrisMeetFivePct}{\\autogen{5}}' in contents
+    assert '\\newcommand{\\comparePriorMeetFivePct}{\\autogen{4}}' in contents
+    assert '\\newcommand{\\comparePriorFailDatasetsFivePct}{\\autogen{6}}' in contents
+    assert '\\newcommand{\\compareSpeedupMinFivePct}{\\autogen{5.3}}' in contents
+    assert '\\newcommand{\\compareSpeedupMaxFivePct}{\\autogen{5.8}}' in contents
+    assert '\\newcommand{\\compareAccuracyMatchedPriorCountFivePct}{\\autogen{7}}' in contents
+    assert '\\newcommand{\\compareAccuracyMatchedSpeedupMinFivePct}{\\autogen{8.1}}' in contents
+    assert '\\newcommand{\\compareAccuracyMatchedSpeedupMaxFivePct}{\\autogen{9.1}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMinFivePct}{\\autogen{6.0}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMaxFivePct}{\\autogen{7.0}}' in contents
+
+    # Preserve the full 10% threshold macro block with the existing macro names.
+    assert '\\newcommand{\\comparePolytrisMeetTenPct}{\\autogen{10}}' in contents
+    assert '\\newcommand{\\comparePriorMeetTenPct}{\\autogen{9}}' in contents
+    assert '\\newcommand{\\comparePriorFailDatasetsTenPct}{\\autogen{1}}' in contents
+    assert '\\newcommand{\\compareSpeedupMinTenPct}{\\autogen{10.3}}' in contents
+    assert '\\newcommand{\\compareSpeedupMaxTenPct}{\\autogen{10.8}}' in contents
+    assert '\\newcommand{\\compareAccuracyMatchedPriorCountTenPct}{\\autogen{12}}' in contents
+    assert '\\newcommand{\\compareAccuracyMatchedSpeedupMinTenPct}{\\autogen{13.1}}' in contents
+    assert '\\newcommand{\\compareAccuracyMatchedSpeedupMaxTenPct}{\\autogen{14.1}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMinTenPct}{\\autogen{11.0}}' in contents
+    assert '\\newcommand{\\compareNaiveSpeedupMaxTenPct}{\\autogen{12.1}}' in contents
+
+    # Continue emitting the dominance macros after the threshold blocks.
+    assert '\\newcommand{\\compareMaxHotaImprovement}{\\autogen{0.42}}' in contents
+    assert '\\newcommand{\\compareMaxHotaImprovementFps}{\\autogen{1200}}' in contents

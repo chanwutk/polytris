@@ -1,0 +1,38 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "DISABLED_Edit_Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import sys, json; data=json.load(sys.stdin); fp=data['tool_input']['file_path']; print(fp)\" | xargs -I {} bash -c 'case \"{}\" in *.py|*.pyi) REL=$(realpath --relative-to=. \"{}\"); docker exec polyis bash -c \"isort \\\"$REL\\\" && yapf -i \\\"$REL\\\"\" >/dev/null 2>&1 || true ;; esac'",
+            "timeout": 10000,
+            "statusMessage": "Formatting with isort & yapf..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "touch /tmp/.claude-sync-needed-polyis"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f /tmp/.claude-sync-needed-polyis ]; then rm -f /tmp/.claude-sync-needed-polyis && cd /Users/chanwutk/Documents/polyis && ./sync; fi",
+            "timeout": 30,
+            "statusMessage": "Syncing to remote..."
+          }
+        ]
+      }
+    ]
+  }
+}
