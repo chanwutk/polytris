@@ -7,7 +7,7 @@
 //   4. Packing: frames + discarded polyominoes hidden; surviving polyominoes
 //      translate from their frame positions into a horizontal row of canvases.
 //
-// All stage transitions are D3 transitions with ~600 ms ease-in-out.
+// Opacity fades use FADE_TRANSITION_MS; position/viewBox moves use MOVE_TRANSITION_MS.
 // The M slider is disabled outside stages 3-4 and snaps in 0.1 increments.
 
 const STAGES = [
@@ -19,7 +19,8 @@ const STAGES = [
   { id: 6, name: 'Unpack (detections on source)' },
 ];
 
-const TRANSITION_MS = 600;
+const FADE_TRANSITION_MS = 400;
+const MOVE_TRANSITION_MS = 900;
 // Number of columns for both the frame grid (stages 1-3, 6) and the canvas grid (stages 4-5).
 const COLUMNS = 5;
 const FRAME_GAP = 12;
@@ -346,8 +347,11 @@ function updateControls() {
 }
 
 function applyStage(stage, withTransition) {
-  const t = withTransition
-    ? d3.transition().duration(TRANSITION_MS).ease(d3.easeCubicInOut)
+  const tFade = withTransition
+    ? d3.transition().duration(FADE_TRANSITION_MS).ease(d3.easeCubicInOut)
+    : null;
+  const tMove = withTransition
+    ? d3.transition().duration(MOVE_TRANSITION_MS).ease(d3.easeCubicInOut)
     : null;
   const mKey = formatMKey(state.mValue);
   const discarded = state.discardedSets.get(mKey) || new Set();
@@ -360,8 +364,8 @@ function applyStage(stage, withTransition) {
   const targetViewBox = useCanvasViewBox
     ? (canvasInfo.viewBox || state.viewBoxCanvases)
     : state.viewBoxFrames;
-  if (t) {
-    svg.transition(t).attr('viewBox', targetViewBox);
+  if (tMove) {
+    svg.transition(tMove).attr('viewBox', targetViewBox);
   } else {
     svg.attr('viewBox', targetViewBox);
   }
@@ -374,7 +378,7 @@ function applyStage(stage, withTransition) {
                      : stage === 6 ? 1
                      : 0;
   const framesSel = svg.selectAll('g.frame');
-  (t ? framesSel.transition(t) : framesSel)
+  (tFade ? framesSel.transition(tFade) : framesSel)
     .attr('opacity', frameOpacity);
 
   // Canvas backgrounds: visible in stages 4 and 5 (packing & detect).
@@ -383,8 +387,7 @@ function applyStage(stage, withTransition) {
   const canvasBgs = canvasesLayer.selectAll('g.canvas')
     .data(showCanvases ? canvasInfo.canvases : [], d => d.canvas_idx);
 
-  // Exit uses the shared `t` so every animated element finishes on the same frame.
-  if (t) canvasBgs.exit().transition(t).attr('opacity', 0).remove();
+  if (tFade) canvasBgs.exit().transition(tFade).attr('opacity', 0).remove();
   else canvasBgs.exit().attr('opacity', 0).remove();
 
   const canvasEnter = canvasBgs.enter()
@@ -405,7 +408,7 @@ function applyStage(stage, withTransition) {
   canvasEnter.merge(canvasBgs).each(function (d) {
     const g = d3.select(this);
     const targetOpacity = showCanvases ? 1 : 0;
-    transitionElement(g, t, targetOpacity, s => s.attr('transform', `translate(${d.x}, ${d.y})`));
+    transitionElement(g, tFade, tMove, targetOpacity, s => s.attr('transform', `translate(${d.x}, ${d.y})`));
   });
 
   // Polyominoes: position, opacity, color depending on stage + M.
@@ -449,12 +452,12 @@ function applyStage(stage, withTransition) {
 
     const g = d3.select(this);
     const targetTransform = `translate(${translateX}, ${translateY})`;
-    transitionElement(g, t, opacity, s => s.attr('transform', targetTransform));
+    transitionElement(g, tFade, tMove, opacity, s => s.attr('transform', targetTransform));
 
     // Image opacity tweens smoothly regardless of group state (it only matters when
     // the group is visible, which the user can see).
     const imgSel = g.select('image');
-    const imgTarget = t ? imgSel.transition(t) : imgSel;
+    const imgTarget = tFade ? imgSel.transition(tFade) : imgSel;
     imgTarget.attr('opacity', imageOpacity);
 
     // Outline color based on discarded state — no fill overlay (just the red border).
@@ -499,7 +502,7 @@ function applyStage(stage, withTransition) {
     }
 
     const sel = d3.select(this);
-    transitionElement(sel, t, opacity, s => s.attr('x', x).attr('y', y));
+    transitionElement(sel, tFade, tMove, opacity, s => s.attr('x', x).attr('y', y));
   });
 }
 
@@ -523,7 +526,7 @@ function formatMKey(m) {
 // "visible-→-visible" (opacity 0.5 → 1) and cause the element to move while
 // re-entering. The class is set/cleared at the start of every transition so any
 // rapid follow-up call sees the correct logical state.
-function transitionElement(sel, t, opacity, applyPosition) {
+function transitionElement(sel, tFade, tMove, opacity, applyPosition) {
   const renderedOpacity = +sel.attr('opacity') || 0;
   const logicallyHidden = sel.classed('is-hidden');
 
@@ -546,8 +549,8 @@ function transitionElement(sel, t, opacity, applyPosition) {
       sel.attr('opacity', 0);
     } else {
       // Was visible; fade out, then snap position when fully transparent.
-      if (t) {
-        sel.transition(t)
+      if (tFade) {
+        sel.transition(tFade)
            .attr('opacity', 0)
            .on('end', function () { applyPosition(d3.select(this)); });
       } else {
@@ -564,11 +567,13 @@ function transitionElement(sel, t, opacity, applyPosition) {
       sel.classed('is-hidden', false);
       sel.interrupt();
       applyPosition(sel);
-      const target = t ? sel.transition(t) : sel;
+      const target = tFade ? sel.transition(tFade) : sel;
       target.attr('opacity', opacity);
     } else {
-      // Visible → visible: tween position + opacity together.
-      const target = t ? sel.transition(t) : sel;
+      // Visible → visible: position uses the slower move transition. When both
+      // position and opacity change, share that transition so parallel tweens
+      // do not interrupt each other.
+      const target = tMove ? sel.transition(tMove) : (tFade ? sel.transition(tFade) : sel);
       applyPosition(target);
       target.attr('opacity', opacity);
     }
