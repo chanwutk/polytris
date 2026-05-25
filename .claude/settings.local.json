@@ -43,7 +43,9 @@
       "Bash(touch /tmp/.claude-sync-needed-polyis)",
       "Read(//tmp/**)",
       "Bash(find:*)",
-      "Skill(grill-me)"
+      "Skill(grill-me)",
+      "WebFetch(domain:tetris-db.github.io)",
+      "Bash(curl -fsSL https://tetris-db.github.io/tetris-logo.svg -o /Users/chanwutk/Documents/polyis/assets/tetris-logo.svg)"
     ]
   },
   "hooks": {

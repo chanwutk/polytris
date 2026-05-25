@@ -1,4 +1,8 @@
-# Tetris: Tile-level Sampling for Efficient and High-Fidelity Video Object Tracking
+<p align="center">
+  <img src="assets/tetris-logo.svg" alt="Tetris" width="360">
+</p>
+
+<h1 align="center">Tile-level Sampling for Efficient and High-Fidelity Video Object Tracking</h1>
 
 > The codebase still uses the legacy identifier `polyis` for directory names,
 > container names, and environment variables (`POLYIS_DATA`, `POLYIS_CACHE`).
