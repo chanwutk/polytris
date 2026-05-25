@@ -672,7 +672,7 @@ def write_tex_stat_macros(
         ratio = best['ms_ratio']
         emit('PtwozerofiveCompareClassifiersBestDatasetDisplay', _tex_escape(best['dataset_display']))
         emit('PtwozerofiveCompareClassifiersBestTileSize', str(best['tile_size']))
-        emit('PtwozerofiveCompareClassifiersBestFOneDelta', f'{best["f1_delta"]:.4f}')
+        emit('PtwozerofiveCompareClassifiersBestFOneDeltaPp', f'{best["f1_delta"] * 100:.2f}')
         emit('PtwozerofiveCompareClassifiersBestFOneModified', f'{best["f1_mod"]:.4f}')
         emit('PtwozerofiveCompareClassifiersBestFOneBaseline', f'{best["f1_base"]:.4f}')
         emit(
@@ -733,11 +733,11 @@ def write_tex_stat_macros(
         dataset_count = int(len(per_dataset))
         emit('PtwozerofiveCompareClassifiersImprovedFOneDatasetCount', str(improved_count))
         emit('PtwozerofiveCompareClassifiersDatasetCount', str(dataset_count))
-        emit('PtwozerofiveCompareClassifiersMinFOneDelta', _fmt(float(f1_deltas.min()), '.4f'))
-        emit('PtwozerofiveCompareClassifiersMaxFOneDelta', _fmt(float(f1_deltas.max()), '.4f'))
+        emit('PtwozerofiveCompareClassifiersMinFOneDeltaPp', _fmt(float(f1_deltas.min()) * 100, '.2f'))
+        emit('PtwozerofiveCompareClassifiersMaxFOneDeltaPp', _fmt(float(f1_deltas.max()) * 100, '.2f'))
         emit(
-            'PtwozerofiveCompareClassifiersMacroAvgFOneDelta',
-            _fmt(float(f1_deltas.mean()), '.4f'),
+            'PtwozerofiveCompareClassifiersMacroAvgFOneDeltaPp',
+            _fmt(float(f1_deltas.mean()) * 100, '.2f'),
         )
 
     with open(path, 'w') as f:
