@@ -42,7 +42,8 @@
       "Skill(update-config)",
       "Bash(touch /tmp/.claude-sync-needed-polyis)",
       "Read(//tmp/**)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Skill(grill-me)"
     ]
   },
   "hooks": {
