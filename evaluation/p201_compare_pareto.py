@@ -32,6 +32,7 @@ from evaluation.p200_compare_compute import load_sota_tradeoff_data
 config = get_config()
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 PAPER_FIGURES_GENERATED_DIR = os.path.join(REPO_ROOT, 'paper', 'figures', 'generated')
+PRESENTATION_ASSETS_DIR = os.path.join(REPO_ROOT, 'paper', 'slides', 'assets')
 DATASETS = config['EXEC']['DATASETS']
 CLASSIFIERS = config['EXEC']['CLASSIFIERS']
 TILEPADDING_MODES = config['EXEC']['TILEPADDING_MODES']
@@ -56,14 +57,32 @@ _FACET_HEADER_HEIGHT = 40
 # default is larger; smaller values tighten the bottom margin under facets).
 X_AXIS_TITLE_PADDING = -1
 
-# Legend placement: position in the empty bottom-right cell of a 4-column grid
-# (assumes the last row has fewer subplots than FACET_COLUMNS).
-LEGEND_X = (FACET_COLUMNS - 1) * (FACET_SUBPLOT_WIDTH + _FACET_COL_SPACING)
-LEGEND_Y = FACET_SUBPLOT_HEIGHT + _FACET_HEADER_HEIGHT + _FACET_ROW_SPACING
-
 SYSTEM_MARK_OPACITY = 0.6
 STANDARD_POINT_SIZE = 30
 PARETO_POINT_SIZE = 35
+PRESENTATION_PARETO_POINT_SIZE = 110
+
+
+def _legend_grid_position(facet_columns: int, n_datasets: int,
+                          subplot_width: int = FACET_SUBPLOT_WIDTH,
+                          subplot_height: int = FACET_SUBPLOT_HEIGHT,
+                          extra_col_spacing: int = 0,
+                          extra_row_spacing: int = 0) -> tuple[int, int]:
+    """
+    Legend coordinates for the rightmost empty cell of the facet grid.
+
+    Falls back to the row just below the grid when every cell is filled.
+    """
+    safe_cols = max(1, facet_columns)
+    safe_n = max(1, n_datasets)
+    n_rows = (safe_n + safe_cols - 1) // safe_cols
+    used_in_last_row = safe_n - (n_rows - 1) * safe_cols
+    legend_row = n_rows - 1 if used_in_last_row < safe_cols else n_rows
+    col_stride = subplot_width + _FACET_COL_SPACING + extra_col_spacing
+    row_stride = subplot_height + _FACET_HEADER_HEIGHT + _FACET_ROW_SPACING + extra_row_spacing
+    legend_x = (safe_cols - 1) * col_stride
+    legend_y = legend_row * row_stride
+    return legend_x, legend_y
 
 # Categorical palette for ``system`` encoding (Vega named scheme).
 SYSTEM_COLOR_SCHEME = 'observable10'
@@ -71,6 +90,36 @@ SYSTEM_COLOR_SCHEME = 'observable10'
 # Vega expression that splits legend labels on spaces so each token renders on
 # its own line -- keeps long ablation labels readable in narrow legends.
 LEGEND_LABEL_BREAK_ON_SPACE = "split(datum.label, ' ')"
+
+# Ablation labels shown in the throughput Pareto row.  The compact paper summary
+# also has a no-ablation export that removes these rows.
+ABLATION_SYSTEM_LABELS = [
+    condition.label for condition in ABLATION_CONDITIONS
+    if condition.name != 'full'
+]
+
+PRESENTATION_SYSTEM_LABEL_MAP = {
+    'Polytris': 'Tetris',
+}
+PRESENTATION_SYSTEM_ORDER = [
+    'Tetris',
+    'Reference',
+    'OTIF',
+    'LEAP',
+]
+PRESENTATION_SYSTEM_COLORS = {
+    'Tetris': '#4269d0',
+    'Reference': '#6cc5b0',
+    'OTIF': '#3ca951',
+    'LEAP': '#ff8ab7',
+}
+PRESENTATION_MUTED_COLOR = '#b8b8b8'
+PRESENTATION_FOCUSED_OPACITY = 0.9
+PRESENTATION_MUTED_OPACITY = 0.22
+PRESENTATION_ROW_SPACING = 32
+PRESENTATION_REFERENCE_DROP_FRACTION = 0.05
+PRESENTATION_DROP_BAND_COLOR = '#d62728'
+PRESENTATION_DROP_BAND_OPACITY = 0.3
 
 # Map internal dataset identifiers to the display names used in charts.
 DATASET_NAME_MAP = {
@@ -166,8 +215,45 @@ def _default_system_color_scale(systems: list[str]) -> alt.Scale:
     )
 
 
+def _system_color_scale(systems: list[str],
+                        color_domain: list[str] | None = None,
+                        color_range: list[str] | None = None) -> alt.Scale:
+    """Build a categorical color scale, optionally with explicit colors."""
+    domain = color_domain if color_domain is not None else _ordered_systems_for_chart(systems)
+    if color_range is not None:
+        return alt.Scale(domain=domain, range=color_range)
+    if color_domain is not None:
+        return alt.Scale(domain=domain, scheme=SYSTEM_COLOR_SCHEME)
+    return _default_system_color_scale(systems)
+
+
+def _available_tooltips(df: pd.DataFrame, tooltips: list[str | alt.Tooltip]) -> list[str | alt.Tooltip]:
+    """Keep tooltip fields that exist in the chart data."""
+    available: list[str | alt.Tooltip] = []
+    for tooltip in tooltips:
+        if isinstance(tooltip, str):
+            if tooltip in df.columns:
+                available.append(tooltip)
+            continue
+        shorthand = tooltip._get('shorthand')
+        field = tooltip._get('field')
+        tooltip_field = field if field is not alt.Undefined else shorthand
+        if not isinstance(tooltip_field, str):
+            available.append(tooltip)
+            continue
+        column = tooltip_field.split(':', 1)[0]
+        if column in df.columns:
+            available.append(tooltip)
+    return available
+
+
 def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
                  single_row: bool = False,
+                 facet_columns: int | None = None,
+                 subplot_width: int | None = None,
+                 subplot_spacing: int | None = None,
+                 share_x: bool | None = None,
+                 share_y: bool | None = None,
                  apply_padding: bool = True,
                  apply_legend_config: bool = True,
                  subplot_height: int | None = None,
@@ -178,7 +264,11 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
                  title_anchor: str = 'middle',
                  title_dy: float | None = None,
                  title_dx: float | None = None,
-                 title_offset: float | None = None) -> alt.Chart:
+                 title_offset: float | None = None,
+                 title_font_size: float | None = None,
+                 legend_dx: float = 0,
+                 legend_dy: float = 0,
+                 chart_padding: int | dict | None = None) -> alt.Chart:
     """
     Apply the shared dataset facet layout used by all comparison charts.
 
@@ -187,18 +277,31 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
         df: Data backing the chart, including dataset_display
         title: Figure title
         single_row: Whether to emit the compact one-row layout
+        facet_columns: Override the number of facet columns (multi-row only)
+        subplot_width: Override the per-facet width
+        share_x: Force shared/independent x-axis (defaults to independent)
+        share_y: Force shared/independent y-axis (defaults to shared in
+            single-row mode, independent otherwise)
 
     Returns:
         Faceted chart with consistent ordering and legend placement
     """
     # Compact exports halve each subplot width and force all facets into one row.
-    subplot_width = ONE_ROW_FACET_SUBPLOT_WIDTH if single_row else FACET_SUBPLOT_WIDTH
+    if subplot_width is None:
+        subplot_width = ONE_ROW_FACET_SUBPLOT_WIDTH if single_row else FACET_SUBPLOT_WIDTH
     subplot_height = FACET_SUBPLOT_HEIGHT if subplot_height is None else subplot_height
-    facet_columns = max(1, df['dataset_display'].nunique()) if single_row else FACET_COLUMNS
+    if single_row:
+        facet_columns = max(1, df['dataset_display'].nunique())
+    elif facet_columns is None:
+        facet_columns = FACET_COLUMNS
 
     # Share the y-axis only in the compact one-row export so the left-most axis
     # carries the labels and title once for the whole row.
-    y_scale_resolution = 'shared' if single_row else 'independent'
+    if share_y is None:
+        y_scale_resolution = 'shared' if single_row else 'independent'
+    else:
+        y_scale_resolution = 'shared' if share_y else 'independent'
+    x_scale_resolution = 'shared' if share_x else 'independent'
     title_spec = alt.TitleParams(
         text=title if title_text is None else title_text,
         orient=title_orient,
@@ -208,8 +311,10 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
         dy=title_dy if title_dy is not None else alt.Undefined,
         dx=title_dx if title_dx is not None else alt.Undefined,
         offset=title_offset if title_offset is not None else alt.Undefined,
+        fontSize=title_font_size if title_font_size is not None else alt.Undefined,
     )
 
+    facet_spacing = 0 if subplot_spacing is None else subplot_spacing
     faceted_chart = chart.properties(
         width=subplot_width,
         height=subplot_height,
@@ -226,9 +331,9 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
             )
         ),
         columns=facet_columns,
-        spacing=0,
+        spacing=facet_spacing,
     ).resolve_scale(
-        x='independent',
+        x=x_scale_resolution,
         y=y_scale_resolution
     ).properties(
         title=title_spec,
@@ -237,7 +342,8 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
     # Keep zero outer padding for standalone charts, but omit it when this
     # faceted chart will be nested inside a larger concat composition.
     if apply_padding:
-        faceted_chart = faceted_chart.properties(padding=0)
+        outer_padding = 0 if chart_padding is None else chart_padding
+        faceted_chart = faceted_chart.properties(padding=outer_padding)
 
     # The default layout keeps the legend in the empty grid cell; the one-row
     # export has no spare cell, so move the legend above the chart.
@@ -251,10 +357,18 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
             titlePadding=X_AXIS_TITLE_PADDING,
         )
 
+    legend_x, legend_y = _legend_grid_position(
+        facet_columns,
+        df['dataset_display'].nunique(),
+        subplot_width=subplot_width,
+        subplot_height=subplot_height,
+        extra_col_spacing=facet_spacing,
+        extra_row_spacing=facet_spacing,
+    )
     return faceted_chart.configure_legend(
         orient='none',
-        legendX=LEGEND_X,
-        legendY=LEGEND_Y,
+        legendX=legend_x + legend_dx,
+        legendY=legend_y + legend_dy,
     ).configure_axisX(titlePadding=X_AXIS_TITLE_PADDING)
 
 
@@ -530,6 +644,9 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
                          legend_title: str = 'Compared To',
                          show_legend: bool = True,
                          color_domain: list[str] | None = None,
+                         color_range: list[str] | None = None,
+                         system_col: str = 'system',
+                         opacity_col: str | None = None,
                          apply_padding: bool = True,
                          apply_legend_config: bool = True,
                          subplot_height: int | None = None,
@@ -563,10 +680,11 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
         kind='mergesort',
     ).reset_index(drop=True)
 
-    if color_domain is not None:
-        color_scale = alt.Scale(domain=color_domain, scheme=SYSTEM_COLOR_SCHEME)
-    else:
-        color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
+    color_scale = _system_color_scale(
+        df_plot[system_col].dropna().unique().tolist(),
+        color_domain,
+        color_range,
+    )
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
     base = alt.Chart(df_plot)
@@ -579,8 +697,11 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
         scale=alt.Scale(domain=[0, 25]) if hota_speedup_y else alt.Undefined,
     )
 
-    line_kw: dict = {'strokeWidth': 2, 'opacity': SYSTEM_MARK_OPACITY}
-    point_kw: dict = {'size': STANDARD_POINT_SIZE, 'filled': True, 'opacity': SYSTEM_MARK_OPACITY}
+    line_kw: dict = {'strokeWidth': 2}
+    point_kw: dict = {'size': STANDARD_POINT_SIZE, 'filled': True}
+    if opacity_col is None:
+        line_kw['opacity'] = SYSTEM_MARK_OPACITY
+        point_kw['opacity'] = SYSTEM_MARK_OPACITY
     if hota_speedup_y:
         line_kw['clip'] = True
         point_kw['clip'] = True
@@ -590,24 +711,28 @@ def create_speedup_chart(df_speedup: pd.DataFrame, accuracy_col_name: str, *,
     ).encode(
         x=x_enc,
         y=y_enc,
-        color=alt.Color('system:N', scale=color_scale, legend=None),
+        color=alt.Color(f'{system_col}:N', scale=color_scale, legend=None),
     )
+    if opacity_col is not None:
+        line = line.encode(opacity=alt.Opacity(f'{opacity_col}:Q', scale=None, legend=None))
 
     points = base.mark_point(
         **point_kw,
     ).encode(
         x=x_enc,
         y=y_enc,
-        color=alt.Color('system:N', scale=color_scale, legend=legend),
+        color=alt.Color(f'{system_col}:N', scale=color_scale, legend=legend),
         tooltip=[
             alt.Tooltip('dataset_display:N', title='Dataset'),
             'accuracy_level',
-            'system',
+            alt.Tooltip(f'{system_col}:N', title='System'),
             'speedup_ratio',
             'polytris_time',
             'other_time',
         ]
     )
+    if opacity_col is not None:
+        points = points.encode(opacity=alt.Opacity(f'{opacity_col}:Q', scale=None, legend=None))
 
     # Horizontal rule at y=1 (parity line). Use the same data as ``points`` so
     # layered + facet specs satisfy Altair v6 (one top-level dataset per layer).
@@ -642,6 +767,9 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
                                legend_title: str = 'Compared To',
                                show_legend: bool = True,
                                color_domain: list[str] | None = None,
+                               color_range: list[str] | None = None,
+                               system_col: str = 'system',
+                               opacity_col: str | None = None,
                                apply_padding: bool = True,
                                apply_legend_config: bool = True,
                                subplot_height: int | None = None,
@@ -675,10 +803,11 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
         kind='mergesort',
     ).reset_index(drop=True)
 
-    if color_domain is not None:
-        color_scale = alt.Scale(domain=color_domain, scheme=SYSTEM_COLOR_SCHEME)
-    else:
-        color_scale = _default_system_color_scale(df_plot['system'].dropna().unique().tolist())
+    color_scale = _system_color_scale(
+        df_plot[system_col].dropna().unique().tolist(),
+        color_domain,
+        color_range,
+    )
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
     base = alt.Chart(df_plot)
@@ -693,8 +822,11 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
         scale=alt.Scale(domain=[0, 0.6]) if hota_gain_y else alt.Undefined,
     )
 
-    line_kw: dict = {'strokeWidth': 2, 'opacity': SYSTEM_MARK_OPACITY}
-    point_kw: dict = {'size': STANDARD_POINT_SIZE, 'filled': True, 'opacity': SYSTEM_MARK_OPACITY}
+    line_kw: dict = {'strokeWidth': 2}
+    point_kw: dict = {'size': STANDARD_POINT_SIZE, 'filled': True}
+    if opacity_col is None:
+        line_kw['opacity'] = SYSTEM_MARK_OPACITY
+        point_kw['opacity'] = SYSTEM_MARK_OPACITY
     if hota_gain_y:
         line_kw['clip'] = True
         point_kw['clip'] = True
@@ -704,25 +836,29 @@ def create_accuracy_gain_chart(df_accuracy_gain: pd.DataFrame, accuracy_col_name
     ).encode(
         x=x_enc,
         y=y_enc,
-        color=alt.Color('system:N', scale=color_scale, legend=None),
+        color=alt.Color(f'{system_col}:N', scale=color_scale, legend=None),
     )
+    if opacity_col is not None:
+        line = line.encode(opacity=alt.Opacity(f'{opacity_col}:Q', scale=None, legend=None))
 
     points = base.mark_point(
         **point_kw,
     ).encode(
         x=x_enc,
         y=y_enc,
-        color=alt.Color('system:N', scale=color_scale, legend=legend),
+        color=alt.Color(f'{system_col}:N', scale=color_scale, legend=legend),
         tooltip=[
             alt.Tooltip('dataset_display:N', title='Dataset'),
             alt.Tooltip('throughput_fps:Q', title='Throughput (FPS)'),
             'naive_time',
-            'system',
+            alt.Tooltip(f'{system_col}:N', title='System'),
             'accuracy_gain',
             'polytris_accuracy',
             'other_accuracy',
         ]
     )
+    if opacity_col is not None:
+        points = points.encode(opacity=alt.Opacity(f'{opacity_col}:Q', scale=None, legend=None))
 
     # Horizontal rule at y=0 (parity line). Same data as ``points`` for Altair v6.
     rule = base.mark_rule(
@@ -755,8 +891,20 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
                                    x_title: str = 'Runtime (seconds)',
                                    *,
                                    single_row: bool = False,
+                                   facet_columns: int | None = None,
+                                   subplot_width: int | None = None,
+                                   subplot_spacing: int | None = None,
+                                   share_x: bool | None = None,
+                                   share_y: bool | None = None,
+                                   point_size: int | None = None,
                                    legend_title: str = 'System',
                                    show_legend: bool = True,
+                                   color_domain: list[str] | None = None,
+                                   color_range: list[str] | None = None,
+                                   system_col: str = 'system',
+                                   opacity_col: str | None = None,
+                                   reference_drop_fraction: float | None = None,
+                                   reference_drop_label: str = 'Reference',
                                    apply_padding: bool = True,
                                    apply_legend_config: bool = True,
                                    subplot_height: int | None = None,
@@ -767,7 +915,11 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
                                    title_anchor: str = 'middle',
                                    title_dy: float | None = None,
                                    title_dx: float | None = None,
-                                   title_offset: float | None = None) -> alt.Chart:
+                                   title_offset: float | None = None,
+                                   title_font_size: float | None = None,
+                                   legend_dx: float = 0,
+                                   legend_dy: float = 0,
+                                   chart_padding: int | dict | None = None) -> alt.Chart:
     """
     Create faceted line chart showing Pareto fronts for all systems.
 
@@ -787,55 +939,62 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
     if df_clean.empty:
         return alt.Chart().mark_text().encode(text=alt.value('No data available'))
 
-    systems_list = df_clean['system'].dropna().unique().tolist()
-    ordered_systems = _ordered_systems_for_chart(systems_list)
-    color_scale = alt.Scale(domain=ordered_systems, scheme=SYSTEM_COLOR_SCHEME)
+    systems_list = df_clean[system_col].dropna().unique().tolist()
+    ordered_systems = color_domain if color_domain is not None else _ordered_systems_for_chart(systems_list)
+    color_scale = _system_color_scale(systems_list, ordered_systems, color_range)
     legend = alt.Legend(title=legend_title, labelExpr=LEGEND_LABEL_BREAK_ON_SPACE) if show_legend else None
 
-    # Base chart for Pareto fronts (with lines)
-    base_pareto = alt.Chart(df_clean)
+    # Base chart for Pareto fronts.  The layer carries ``df_clean`` as its
+    # top-level data so facet filtering applies to every overlay layer.
+    base_pareto = alt.Chart()
 
     # X-axis uses log scale if enabled.
     x_scale = alt.Scale(type='log') if log_scale else alt.Undefined
     x_enc = alt.X(f'{time_col}:Q', title=x_title, scale=x_scale)
 
     # Line chart showing Pareto fronts (no tooltip - lines are not easily hoverable)
+    line_kw: dict = {'strokeWidth': 2}
+    if opacity_col is None:
+        line_kw['opacity'] = SYSTEM_MARK_OPACITY
     line = base_pareto.mark_line(
-        strokeWidth=2,
-        opacity=SYSTEM_MARK_OPACITY,
+        **line_kw,
     ).encode(
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q', title=f'{accuracy_col_name} Score',
                 scale=alt.Scale(domain=[0, 1])),
-        color=alt.Color('system:N', scale=color_scale, legend=legend),
+        color=alt.Color(f'{system_col}:N', scale=color_scale, legend=legend),
         # Group lines by the columns that define a single Pareto front.
         # Polytris fronts are computed per (dataset, classifier, canvas_scale);
         # SOTA fronts are computed per (dataset).  The chart is already faceted
         # by dataset, so only system/classifier/canvas_scale are needed here.
         # Including varying parameters (sample_rate, tilepadding, etc.) would
         # split each front into isolated single-point "lines".
-        detail=['system:N', 'classifier:N', 'canvas_scale:N']
+        detail=[f'{system_col}:N', 'classifier:N', 'canvas_scale:N']
     )
+    if opacity_col is not None:
+        line = line.encode(opacity=alt.Opacity(f'{opacity_col}:Q', scale=None, legend=None))
 
     # Shape scale domain must match color domain for legend merge (same ordering).
     shape_range = [
-        'diamond' if s.startswith('Polytris') else ('triangle' if s == 'Reference' else 'circle')
+        'diamond' if s.startswith('Polytris') or s == 'Tetris' else ('triangle' if s == 'Reference' else 'circle')
         for s in ordered_systems
     ]
     shape_scale = alt.Scale(domain=ordered_systems, range=shape_range)
 
     # Add points for Pareto fronts (with tooltip for interactivity)
+    resolved_point_size = PARETO_POINT_SIZE if point_size is None else point_size
+    point_kw: dict = {'size': resolved_point_size, 'filled': True}
+    if opacity_col is None:
+        point_kw['opacity'] = SYSTEM_MARK_OPACITY
     points_pareto = base_pareto.mark_point(
-        size=PARETO_POINT_SIZE,
-        filled=True,
-        opacity=SYSTEM_MARK_OPACITY,
+        **point_kw,
     ).encode(
         x=x_enc,
         y=alt.Y(f'{accuracy_col}:Q'),
-        color=alt.Color('system:N', scale=color_scale, legend=legend),
-        shape=alt.Shape('system:N', scale=shape_scale, legend=legend),
-        tooltip=[
-            'system',
+        color=alt.Color(f'{system_col}:N', scale=color_scale, legend=legend),
+        shape=alt.Shape(f'{system_col}:N', scale=shape_scale, legend=legend),
+        tooltip=_available_tooltips(df_clean, [
+            alt.Tooltip(f'{system_col}:N', title='System'),
             alt.Tooltip('dataset_display:N', title='Dataset'),
             'classifier',
             'sample_rate',
@@ -846,16 +1005,54 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
             'tracker',
             time_col,
             accuracy_col,
-        ]
+        ])
     )
+    if opacity_col is not None:
+        points_pareto = points_pareto.encode(
+            opacity=alt.Opacity(f'{opacity_col}:Q', scale=None, legend=None),
+        )
 
     # Apply the shared facet configuration so both export variants stay aligned.
-    chart = line + points_pareto
+    chart_layers: list[alt.Chart] = []
+    if reference_drop_fraction is not None:
+        band_base = alt.Chart().transform_filter(
+            alt.datum[system_col] == reference_drop_label,
+        ).transform_aggregate(
+            reference_hota=f'max({accuracy_col})',
+            groupby=['dataset', 'dataset_display'],
+        ).transform_calculate(
+            drop_hota=f'datum.reference_hota * {1.0 - reference_drop_fraction}',
+        )
+        chart_layers.append(
+            band_base.mark_rect(
+                color=PRESENTATION_DROP_BAND_COLOR,
+                opacity=PRESENTATION_DROP_BAND_OPACITY,
+            ).encode(
+                y=alt.Y('drop_hota:Q'),
+                y2=alt.Y2('reference_hota:Q'),
+            )
+        )
+        chart_layers.append(
+            band_base.mark_rule(
+                color=PRESENTATION_DROP_BAND_COLOR,
+                strokeWidth=2,
+            ).encode(
+                y=alt.Y('drop_hota:Q'),
+            )
+        )
+
+    chart_layers.extend([line, points_pareto])
+    chart = alt.layer(*chart_layers, data=df_clean)
     return _facet_chart(
         chart,
         df_clean,
         f'{accuracy_col_name} vs Runtime Pareto Fronts',
         single_row=single_row,
+        facet_columns=facet_columns,
+        subplot_width=subplot_width,
+        subplot_spacing=subplot_spacing,
+        share_x=share_x,
+        share_y=share_y,
         apply_padding=apply_padding,
         apply_legend_config=apply_legend_config,
         subplot_height=subplot_height,
@@ -867,6 +1064,10 @@ def create_pareto_comparison_chart(df_combined: pd.DataFrame, accuracy_col: str,
         title_dy=title_dy,
         title_dx=title_dx,
         title_offset=title_offset,
+        title_font_size=title_font_size,
+        legend_dx=legend_dx,
+        legend_dy=legend_dy,
+        chart_padding=chart_padding,
     )
 
 
@@ -961,6 +1162,26 @@ def copy_chart_outputs(source_dir: str, base_name: str, destination_dir: str):
         return
     shutil.copy2(source_path, destination_path)
     print(f"  Copied PDF to: {destination_path}")
+
+
+def copy_chart_output(source_dir: str, base_name: str, destination_dir: str,
+                      extension: str, destination_name: str | None = None):
+    """Copy one saved chart artifact into another directory."""
+    os.makedirs(destination_dir, exist_ok=True)
+    source_path = os.path.join(source_dir, f'{base_name}.{extension}')
+    if not os.path.exists(source_path):
+        return
+    output_base = destination_name if destination_name is not None else base_name
+    destination_path = os.path.join(destination_dir, f'{output_base}.{extension}')
+    shutil.copy2(source_path, destination_path)
+    print(f"  Copied {extension.upper()} to: {destination_path}")
+
+
+def _drop_ablation_systems(df: pd.DataFrame) -> pd.DataFrame:
+    """Return rows excluding ablation systems, preserving non-chart tables."""
+    if df.empty or 'system' not in df.columns:
+        return df.copy()
+    return df[~df['system'].isin(ABLATION_SYSTEM_LABELS)].copy()
 
 
 def save_chart_variants(chart_factory: Callable[..., alt.Chart], output_dir: str,
@@ -1091,6 +1312,143 @@ def create_hota_summary_one_row_chart(df_throughput: pd.DataFrame,
         orient='left',
         offset=-1,
     ).configure_axisX(titlePadding=X_AXIS_TITLE_PADDING)
+
+
+def _presentation_system_label(system: str) -> str:
+    """Return the display label used in presentation charts."""
+    return PRESENTATION_SYSTEM_LABEL_MAP.get(system, system)
+
+
+def _add_presentation_style(df: pd.DataFrame,
+                            focus_systems: set[str] | None) -> pd.DataFrame:
+    """Attach display labels and per-row opacity for presentation focus variants."""
+    styled = df.copy()
+    if styled.empty:
+        styled['presentation_system'] = pd.Series(dtype='object')
+        styled['presentation_opacity'] = pd.Series(dtype='float64')
+        return styled
+
+    styled['presentation_system'] = styled['system'].map(_presentation_system_label)
+    if focus_systems is None:
+        styled['presentation_opacity'] = PRESENTATION_FOCUSED_OPACITY
+    else:
+        styled['presentation_opacity'] = np.where(
+            styled['presentation_system'].isin(focus_systems),
+            PRESENTATION_FOCUSED_OPACITY,
+            PRESENTATION_MUTED_OPACITY,
+        )
+    return styled
+
+
+def _presentation_system_domain(*dfs: pd.DataFrame) -> list[str]:
+    """Return stable presentation legend order for the systems present in data."""
+    present: list[str] = []
+    seen: set[str] = set()
+    for df in dfs:
+        if 'presentation_system' not in df.columns:
+            continue
+        for system in df['presentation_system'].dropna().tolist():
+            if system not in seen:
+                present.append(system)
+                seen.add(system)
+
+    ordered = [system for system in PRESENTATION_SYSTEM_ORDER if system in seen]
+    ordered.extend(system for system in present if system not in ordered)
+    return ordered
+
+
+def _presentation_color_range(domain: list[str],
+                              focus_systems: set[str] | None) -> list[str]:
+    """Return explicit colors for full-color and focus presentation variants."""
+    focused = set(domain) if focus_systems is None else focus_systems
+    return [
+        PRESENTATION_SYSTEM_COLORS.get(system, '#9498a0')
+        if system in focused else PRESENTATION_MUTED_COLOR
+        for system in domain
+    ]
+
+
+def create_hota_presentation_summary_chart(df_throughput: pd.DataFrame,
+                                           *,
+                                           focus_systems: set[str] | None = None,
+                                           show_reference_drop_band: bool = False) -> alt.Chart:
+    """
+    Create a slide-ready HOTA vs Throughput Pareto chart with focus styling.
+
+    Faceted by dataset with up to ``FACET_COLUMNS`` columns. Excludes ablation
+    curves so the chart has one Tetris curve, the reference pipeline, and
+    prior systems.
+    """
+    df_throughput = _add_presentation_style(
+        _drop_ablation_systems(df_throughput),
+        focus_systems,
+    )
+
+    shared_domain = _presentation_system_domain(df_throughput)
+    color_range = _presentation_color_range(shared_domain, focus_systems)
+
+    return create_pareto_comparison_chart(
+        df_throughput,
+        'HOTA_HOTA',
+        'HOTA',
+        time_col='throughput_fps',
+        log_scale=True,
+        x_title='Throughput (FPS)',
+        facet_columns=3,
+        subplot_width=380,
+        subplot_spacing=30,
+        share_y=True,
+        point_size=PRESENTATION_PARETO_POINT_SIZE,
+        legend_title='System',
+        show_legend=True,
+        color_domain=shared_domain,
+        color_range=color_range,
+        system_col='presentation_system',
+        opacity_col='presentation_opacity',
+        reference_drop_fraction=(
+            PRESENTATION_REFERENCE_DROP_FRACTION
+            if show_reference_drop_band else None
+        ),
+        title_text='HOTA vs Throughput',
+        title_orient='bottom',
+        title_anchor='middle',
+        title_offset=-200,
+        title_font_size=28,
+        legend_dx=-490,
+        legend_dy=-60,
+        chart_padding=10,
+    )
+
+
+def save_hota_presentation_summary_charts(output_dir: str,
+                                          df_throughput: pd.DataFrame):
+    """Save full-color and focus variants for presentation animation."""
+    variants = [
+        ('full_color', None, 'e2e_results_full_color', False),
+        ('full_color_5pct_drop', None, 'e2e_results_full_color_5pct_drop', True),
+        ('focus_tetris', {'Tetris'}, 'e2e_results_focus_tetris', False),
+        ('focus_reference', {'Reference'}, 'e2e_results_focus_reference', False),
+        ('focus_prior_systems', {'OTIF', 'LEAP'}, 'e2e_results_focus_prior_systems', False),
+    ]
+    for suffix, focus_systems, slide_asset_name, show_reference_drop_band in variants:
+        base_name = f'hota_hota_presentation_{suffix}'
+        print(f"  Creating presentation chart: {base_name}")
+        save_chart(
+            create_hota_presentation_summary_chart(
+                df_throughput,
+                focus_systems=focus_systems,
+                show_reference_drop_band=show_reference_drop_band,
+            ),
+            output_dir,
+            base_name,
+        )
+        copy_chart_output(
+            output_dir,
+            base_name,
+            PRESENTATION_ASSETS_DIR,
+            'png',
+            destination_name=slide_asset_name,
+        )
 
 
 def _filter_pareto_per_dataset(df: pd.DataFrame, time_col: str,
@@ -1474,6 +1832,30 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
                 combined_chart_base_name,
             )
             copy_chart_outputs(output_dir, combined_chart_base_name, PAPER_FIGURES_GENERATED_DIR)
+
+            no_ablation_chart_base_name = f'{combined_chart_base_name}_no_ablation'
+            df_tp_no_ablation = _drop_ablation_systems(df_tp_combined)
+            if not df_tp_no_ablation.empty:
+                print(f"  Creating no-ablation summary chart: {no_ablation_chart_base_name}")
+                save_chart(
+                    create_hota_summary_one_row_chart(
+                        df_tp_no_ablation,
+                        df_speedup,
+                        df_accuracy_gain,
+                        log_scale=log_scale,
+                    ),
+                    output_dir,
+                    no_ablation_chart_base_name,
+                )
+                copy_chart_outputs(output_dir, no_ablation_chart_base_name, PAPER_FIGURES_GENERATED_DIR)
+            else:
+                print("  Skipping no-ablation summary chart because no non-ablation data remains")
+
+            print(f"  Creating presentation summary charts for {accuracy_name}...")
+            save_hota_presentation_summary_charts(
+                output_dir,
+                df_tp_combined,
+            )
         elif accuracy_col == 'HOTA_HOTA':
             print("  Skipping combined one-row summary chart due to missing source data")
 

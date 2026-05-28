@@ -9,8 +9,12 @@ from evaluation.p201_compare_pareto import (
     compute_accuracy_gain_at_naive_speedup_levels,
     compute_speedup_at_accuracy_levels,
     create_accuracy_gain_chart,
+    create_hota_presentation_summary_chart,
     create_pareto_comparison_chart,
     create_speedup_chart,
+    PRESENTATION_DROP_BAND_COLOR,
+    PRESENTATION_MUTED_COLOR,
+    PRESENTATION_ROW_SPACING,
 )
 
 
@@ -333,9 +337,9 @@ def test_compute_speedup_at_accuracy_levels_discrete_anchors():
     )
 
     by_acc = result.set_index('accuracy_level').sort_index()
-    # acc 0.80: feasible Polytris acc > 0.8 -> (10,0.9) and (20,0.85); min time 10 -> 15/10
-    assert by_acc.loc[0.80, 'speedup_ratio'] == pytest.approx(1.5)
-    assert by_acc.loc[0.80, 'polytris_time'] == pytest.approx(10.0)
+    # acc 0.80: feasible Polytris acc > 0.8 includes (5,0.82); min time 5 -> 15/5
+    assert by_acc.loc[0.80, 'speedup_ratio'] == pytest.approx(3.0)
+    assert by_acc.loc[0.80, 'polytris_time'] == pytest.approx(5.0)
     # acc 0.70: all three Polytris rows qualify; min time 5 -> 30/5
     assert by_acc.loc[0.70, 'speedup_ratio'] == pytest.approx(6.0)
     assert by_acc.loc[0.70, 'polytris_time'] == pytest.approx(5.0)
@@ -369,3 +373,86 @@ def test_filter_pareto_per_dataset_minimize_time():
     # Point (15, 0.60) is dominated: (10, 0.70) has lower time AND higher accuracy.
     assert len(result) == 2
     assert set(result['time']) == {10.0, 20.0}
+
+
+def test_presentation_summary_uses_top_legend_and_single_line_titles():
+    df_throughput = pd.DataFrame([
+        {'system': 'Polytris', 'dataset': 'demo', 'classifier': 'ShuffleNet05',
+         'sample_rate': 1, 'tracking_accuracy_threshold': pd.NA,
+         'relevance_threshold': 0.5, 'tilepadding': 'none',
+         'canvas_scale': 1.0, 'tracker': 'bytetrackcython',
+         'throughput_fps': 100.0, 'time': 1.0, 'HOTA_HOTA': 0.80},
+        {'system': 'Polytris (-Sampling)', 'dataset': 'demo', 'classifier': 'ShuffleNet05',
+         'sample_rate': 1, 'tracking_accuracy_threshold': pd.NA,
+         'relevance_threshold': 0.5, 'tilepadding': 'none',
+         'canvas_scale': 1.0, 'tracker': 'bytetrackcython',
+         'throughput_fps': 80.0, 'time': 1.2, 'HOTA_HOTA': 0.78},
+        {'system': 'Reference', 'dataset': 'demo', 'classifier': pd.NA,
+         'sample_rate': pd.NA, 'tracking_accuracy_threshold': pd.NA,
+         'relevance_threshold': pd.NA, 'tilepadding': pd.NA,
+         'canvas_scale': pd.NA, 'tracker': 'bytetrackcython',
+         'throughput_fps': 20.0, 'time': 5.0, 'HOTA_HOTA': 0.82},
+        {'system': 'OTIF', 'dataset': 'demo', 'classifier': pd.NA,
+         'sample_rate': pd.NA, 'tracking_accuracy_threshold': pd.NA,
+         'relevance_threshold': pd.NA, 'tilepadding': pd.NA,
+         'canvas_scale': pd.NA, 'tracker': pd.NA,
+         'throughput_fps': 60.0, 'time': 1.7, 'HOTA_HOTA': 0.70},
+        {'system': 'LEAP', 'dataset': 'demo', 'classifier': pd.NA,
+         'sample_rate': pd.NA, 'tracking_accuracy_threshold': pd.NA,
+         'relevance_threshold': pd.NA, 'tilepadding': pd.NA,
+         'canvas_scale': pd.NA, 'tracker': pd.NA,
+         'throughput_fps': 40.0, 'time': 2.5, 'HOTA_HOTA': 0.68},
+    ])
+    df_speedup = pd.DataFrame([
+        {'dataset': 'demo', 'accuracy_level': 0.70, 'system': 'OTIF',
+         'comparison_system': 'OTIF', 'speedup_ratio': 2.0,
+         'polytris_time': 1.0, 'other_time': 2.0},
+        {'dataset': 'demo', 'accuracy_level': 0.68, 'system': 'LEAP',
+         'comparison_system': 'LEAP', 'speedup_ratio': 1.5,
+         'polytris_time': 1.0, 'other_time': 1.5},
+    ])
+    df_accuracy_gain = pd.DataFrame([
+        {'dataset': 'demo', 'throughput_fps': 60.0, 'naive_time': 5.0,
+         'system': 'OTIF', 'comparison_system': 'OTIF',
+         'accuracy_gain': 0.10, 'polytris_accuracy': 0.80,
+         'other_accuracy': 0.70},
+        {'dataset': 'demo', 'throughput_fps': 40.0, 'naive_time': 5.0,
+         'system': 'LEAP', 'comparison_system': 'LEAP',
+         'accuracy_gain': 0.12, 'polytris_accuracy': 0.80,
+         'other_accuracy': 0.68},
+    ])
+
+    chart = create_hota_presentation_summary_chart(
+        df_throughput,
+        df_speedup,
+        df_accuracy_gain,
+        focus_systems={'Tetris'},
+    )
+    spec = chart.to_dict()
+
+    assert spec['config']['legend']['orient'] == 'top'
+    assert spec['spacing'] == PRESENTATION_ROW_SPACING
+    assert [row['title']['text'] for row in spec['vconcat']] == [
+        'HOTA vs Throughput',
+        'Speedup at Matched HOTA',
+        'HOTA Gain at Matched Throughput',
+    ]
+
+    color_scale = spec['vconcat'][0]['spec']['layer'][0]['encoding']['color']['scale']
+    assert color_scale['domain'] == ['Tetris', 'Reference', 'OTIF', 'LEAP']
+    assert color_scale['range'][0] != PRESENTATION_MUTED_COLOR
+    assert color_scale['range'][1:] == [PRESENTATION_MUTED_COLOR] * 3
+
+    band_chart = create_hota_presentation_summary_chart(
+        df_throughput,
+        df_speedup,
+        df_accuracy_gain,
+        show_reference_drop_band=True,
+    )
+    band_layers = band_chart.to_dict()['vconcat'][0]['spec']['layer']
+    assert band_layers[0]['mark']['type'] == 'rect'
+    assert band_layers[0]['mark']['color'] == PRESENTATION_DROP_BAND_COLOR
+    assert band_layers[0]['mark']['opacity'] == 0.3
+    assert band_layers[1]['mark']['type'] == 'rule'
+    assert band_layers[1]['mark']['color'] == PRESENTATION_DROP_BAND_COLOR
+    assert band_layers[1]['encoding']['y']['field'] == 'drop_hota'
