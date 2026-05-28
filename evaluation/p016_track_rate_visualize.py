@@ -45,6 +45,14 @@ VIRIDIS_BGR_LUT = np.array([
     for c in (_viridis(i) for i in range(256))
 ], dtype=np.uint8)
 
+# Mistrack visualizations use the non-reversed viridis so that low mistrack
+# maps to dark purple and high mistrack maps to yellow (warmer = worse).
+_viridis_mistrack = matplotlib.colormaps.get_cmap('viridis').resampled(256)
+MISTRACK_BGR_LUT = np.array([
+    [int(c[2] * 255), int(c[1] * 255), int(c[0] * 255)]
+    for c in (_viridis_mistrack(i) for i in range(256))
+], dtype=np.uint8)
+
 
 def crop_to_tiles(
     image: np.ndarray,
@@ -176,14 +184,15 @@ def _render_mistrack_base(
     zero_count_mask: np.ndarray,
     tile_size: int,
     alpha: float,
-    tile_texts: np.ndarray,
+    tile_texts: np.ndarray | None,
     font_scale_factor: float = 1.0,
 ) -> np.ndarray:
     """Shared overlay logic for mistrack visualizations.
 
-    Applies viridis color overlay based on mistrack_pct, draws grid lines,
-    and renders tile_texts centered in each tile ('x' for zero-count tiles).
-    Each entry in tile_texts is a tuple of strings (one per line).
+    Applies viridis color overlay based on mistrack_pct and, when tile_texts
+    is provided, renders the text centered in each tile. Each entry in
+    tile_texts is a tuple of strings (one per line); pass an empty tuple to
+    skip that tile, or tile_texts=None to skip text rendering entirely.
     """
     # Copy the frame to avoid mutating the original.
     result = frame.copy()
@@ -215,7 +224,7 @@ def _render_mistrack_base(
                 # Clamp pct into [rate_low, rate_high] and map to 0–255 LUT index.
                 clamped = max(rate_low, min(pct, rate_high))
                 lut_idx = int(255 * (clamped - rate_low) / (rate_high - rate_low))
-            color = VIRIDIS_BGR_LUT[lut_idx].astype(np.float32)
+            color = MISTRACK_BGR_LUT[lut_idx].astype(np.float32)
             # Inset the overlay by 2px on each side so adjacent borders don't overlap.
             y1 = r * tile_size + 1
             x1 = c * tile_size + 1
@@ -228,7 +237,7 @@ def _render_mistrack_base(
 
             # Draw a border in the same color at moderately higher opacity.
             border_alpha = 0.6
-            border_color = VIRIDIS_BGR_LUT[lut_idx].astype(np.float32)
+            border_color = MISTRACK_BGR_LUT[lut_idx].astype(np.float32)
             # Draw on a temporary mask to extract border pixels only.
             border_mask = np.zeros(result.shape[:2], dtype=np.uint8)
             cv2.rectangle(border_mask, (x1, y1), (x2 - 1, y2 - 1), 255, 2)
@@ -236,6 +245,10 @@ def _render_mistrack_base(
             result[bm] = np.clip(
                 result[bm].astype(np.float32) * (1.0 - border_alpha)
                 + border_color * border_alpha, 0, 255).astype(np.uint8)
+
+    # Skip all text rendering when no text was requested.
+    if tile_texts is None:
+        return result
 
     # Compute adaptive font scale so text fits smaller tiles.
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -247,6 +260,9 @@ def _render_mistrack_base(
     for r in range(grid_h):
         for c in range(grid_w):
             lines = tile_texts[r, c]
+            # Empty tuple means skip text for this tile.
+            if not lines:
+                continue
             num_lines = len(lines)
 
             # Measure each line to compute total text block height.
@@ -290,13 +306,14 @@ def render_mistrack_overlay(
     alpha: float,
 ) -> np.ndarray:
     """Overlay colored tiles and mistrack percentages on a video frame for one sample rate."""
-    # Build text labels: ('x',) for zero-count tiles, (percentage,) otherwise.
+    # Build text labels: empty for tiles with mistrack rate 0 (including zero-count
+    # tiles, which have mistrack_pct=0 by construction); percentage string otherwise.
     grid_h, grid_w = mistrack_pct.shape
     tile_texts = np.empty((grid_h, grid_w), dtype=object)
     for r in range(grid_h):
         for c in range(grid_w):
-            if zero_count_mask[r, c]:
-                tile_texts[r, c] = ('x',)
+            if zero_count_mask[r, c] or mistrack_pct[r, c] == 0:
+                tile_texts[r, c] = ()
             else:
                 tile_texts[r, c] = (str(int(mistrack_pct[r, c])),)
 
@@ -328,6 +345,88 @@ def render_mistrack_count_overlay(
     return _render_mistrack_base(
         frame, mistrack_pct, zero_count_mask, tile_size, alpha, tile_texts,
         font_scale_factor=0.6)
+
+
+def _mistrack_color_range(
+    mistrack_pct: np.ndarray,
+    zero_count_mask: np.ndarray,
+) -> tuple[int, int]:
+    """Return (rate_low, rate_high) matching _render_mistrack_base's color scaling."""
+    valid_values = mistrack_pct[~zero_count_mask & (mistrack_pct > 0)]
+    if valid_values.size == 0:
+        return 0, 0
+    return int(valid_values.min()), int(valid_values.max())
+
+
+def _draw_color_legend(
+    image: np.ndarray,
+    rate_low: int,
+    rate_high: int,
+    lut: np.ndarray,
+    *,
+    bar_width: int = 24,
+    bar_height_frac: float = 0.7,
+    margin: int = 16,
+    label_pad: int = 8,
+) -> np.ndarray:
+    """Append a vertical colorbar legend to the right side of the image.
+
+    The bar runs from rate_high at the top (LUT idx 255) to rate_low at the
+    bottom (LUT idx 0), matching how _render_mistrack_base maps values into
+    the LUT.
+    """
+    h, w = image.shape[:2]
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.6
+    thickness = 1
+
+    # Reserve enough width for the bar plus the widest numeric label.
+    label_text = f'{max(rate_high, rate_low)}%'
+    (label_w, label_h), _ = cv2.getTextSize(label_text, font, font_scale, thickness)
+    legend_w = margin + bar_width + label_pad + label_w + margin
+
+    canvas = np.full((h, w + legend_w, 3), 255, dtype=np.uint8)
+    canvas[:, :w] = image
+
+    bar_height = max(1, int(h * bar_height_frac))
+    bar_x1 = w + margin
+    bar_x2 = bar_x1 + bar_width
+    bar_y1 = (h - bar_height) // 2
+    bar_y2 = bar_y1 + bar_height
+
+    # Paint the gradient: top row uses LUT idx 255, bottom uses LUT idx 0.
+    denom = max(1, bar_height - 1)
+    for i in range(bar_height):
+        lut_idx = int(round(255 * (1 - i / denom)))
+        canvas[bar_y1 + i, bar_x1:bar_x2] = lut[lut_idx]
+
+    # Outline the bar so it reads cleanly against the white background.
+    cv2.rectangle(canvas, (bar_x1, bar_y1), (bar_x2 - 1, bar_y2 - 1), (0, 0, 0), 1)
+
+    # Numeric labels at the top, midpoint, and bottom of the bar.
+    midpoint = (rate_low + rate_high) // 2
+    label_x = bar_x2 + label_pad
+    for value, y_anchor in (
+        (rate_high, bar_y1 + label_h),
+        (midpoint, (bar_y1 + bar_y2) // 2 + label_h // 2),
+        (rate_low, bar_y2 - 2),
+    ):
+        cv2.putText(canvas, f'{value}%', (label_x, y_anchor), font, font_scale,
+                    (0, 0, 0), thickness, cv2.LINE_AA)
+
+    return canvas
+
+
+def render_mistrack_heatmap(
+    frame: np.ndarray,
+    mistrack_pct: np.ndarray,
+    zero_count_mask: np.ndarray,
+    tile_size: int,
+    alpha: float,
+) -> np.ndarray:
+    """Render the mistrack heatmap with no tile labels (color overlay only)."""
+    return _render_mistrack_base(
+        frame, mistrack_pct, zero_count_mask, tile_size, alpha, tile_texts=None)
 
 
 def main(args: argparse.Namespace) -> None:
@@ -442,6 +541,21 @@ def main(args: argparse.Namespace) -> None:
                     mistrack_pct[valid] = np.round(
                         100.0 * incorrect[valid] / total[valid]).astype(np.int32)
 
+                    # Summary stats over tiles that actually had detections
+                    # (zero-count tiles are excluded since they carry no data).
+                    valid_pcts = mistrack_pct[valid]
+                    if valid_pcts.size > 0:
+                        mean_pct = float(valid_pcts.mean())
+                        var_pct = float(valid_pcts.var())
+                        std_pct = float(valid_pcts.std())
+                        print(f"    rate={rate:3d}: n={valid_pcts.size:3d} "
+                              f"mean={mean_pct:5.2f}% var={var_pct:7.2f} "
+                              f"std={std_pct:5.2f}% "
+                              f"min={int(valid_pcts.min())}% "
+                              f"max={int(valid_pcts.max())}%")
+                    else:
+                        print(f"    rate={rate:3d}: no tiles with detections")
+
                     # Render the mistrack percentage overlay on the frame.
                     result = render_mistrack_overlay(
                         frame, mistrack_pct, zero_count_mask, tile_size, args.alpha)
@@ -461,8 +575,21 @@ def main(args: argparse.Namespace) -> None:
                     out_path = str(vis_dir / f'{dataset}_mistrack_count_{rate:03d}.png')
                     cv2.imwrite(out_path, result)
 
-                print(f"  Saved {len(sample_rates)} mistrack-rate and "
-                      f"{len(sample_rates)} mistrack-count images to {vis_dir}")
+                    # Render the label-free heatmap and append a color legend.
+                    heatmap = render_mistrack_heatmap(
+                        frame, mistrack_pct, zero_count_mask, tile_size, args.alpha)
+                    heatmap = crop_to_tiles(heatmap, tile_size, crop)
+                    rate_low, rate_high = _mistrack_color_range(
+                        mistrack_pct, zero_count_mask)
+                    if rate_high > 0:
+                        heatmap = _draw_color_legend(
+                            heatmap, rate_low, rate_high, MISTRACK_BGR_LUT)
+                    out_path = str(vis_dir / f'{dataset}_mistrack_heatmap_{rate:03d}.png')
+                    cv2.imwrite(out_path, heatmap)
+
+                print(f"  Saved {len(sample_rates)} mistrack-rate, "
+                      f"{len(sample_rates)} mistrack-count, and "
+                      f"{len(sample_rates)} mistrack-heatmap images to {vis_dir}")
 
     print("All track rate visualizations completed!")
 
