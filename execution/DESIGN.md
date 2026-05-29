@@ -124,14 +124,14 @@ flowchart TB
 
     FrameBuf[("Frame buffer<br/>CPU shared memory<br/>(per video)")]
 
-    subgraph PrunePool["Prune pool — optional<br/>N x mp.Process"]
+    subgraph PrunePool["Prune pool — optional"]
         direction LR
-        Pworker["Prune worker<br/>group_tiles_all<br/>+ solve_ilp"]
+        Pworker["N x mp.Process<br/>Prune worker<br/>group_tiles_all<br/>+ solve_ilp"]
     end
 
-    subgraph CompPool["Compress pool<br/>M x mp.Process"]
+    subgraph CompPool["Compress pool"]
         direction LR
-        Cworker["Compress worker<br/>group_tiles + pack<br/>+ CPU render"]
+        Cworker["M x mp.Process<br/>Compress worker<br/>group_tiles + pack<br/>+ CPU render"]
     end
 
     CanvasShm[("Canvas<br/>CPU shared memory<br/>(per collage, handoff)")]
