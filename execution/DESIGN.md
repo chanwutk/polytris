@@ -50,63 +50,135 @@ Non-goals:
 
 ## 2. Architecture at a glance
 
-```
-                    ┌──────────────────────────────────────────────────┐
-                    │                  Main process                    │
-                    │                                                  │
-   videos[] ────────┼─> Feeder thread ─> video_q ─> Decode thread      │
-                    │                                  │               │
-                    │                                  v               │
-                    │                  CPU shared-memory frame buffer  │
-                    │                       (decoded RGB frames)       │
-                    │                                  │               │
-                    │              ┌───────────────────┘               │
-                    │              v                                   │
-                    │      Classify thread (GPU_CLASSIFY)              │
-                    │              │ VideoClassifications              │
-                    └──────────────┼───────────────────────────────────┘
-                                   v
-   ┌───────────────────────────────────────────────────────────────┐
-   │  Prune process pool  (N workers, conditional)                 │
-   │    - one whole video per task                                 │
-   │    - group_tiles_all + solve_ilp (Gurobi)                     │
-   │    - bypassed when --tracking-accuracy-threshold is null      │
-   └───────────────────────────┬───────────────────────────────────┘
-                               v pruned VideoClassifications
-   ┌───────────────────────────────────────────────────────────────┐
-   │  Compress process pool  (M workers)                           │
-   │    - attaches to shared frame buffer (read-only numpy view)   │
-   │    - group_tiles + pack + CPU render                          │
-   │    - allocates canvas in *handoff* shared memory              │
-   │    - signals VideoCompressDone on the last collage            │
-   └───────────────────────────┬───────────────────────────────────┘
-                               v CollageReady (canvas in shm)
-                    ┌──────────────────────────────────────────────┐
-                    │                Main process                  │
-                    │                                              │
-                    │     Detect thread (GPU_DETECT)               │
-                    │       - batches collages across videos       │
-                    │       - copies canvas shm → GPU              │
-                    │       - unpack_detections (p050 logic)       │
-                    │       - unlinks canvas shm after consumption │
-                    │       - emits VideoDetections when complete  │
-                    │              │                               │
-                    │              v VideoDetections               │
-                    │     Track thread                             │
-                    │       - sequential tracker per video         │
-                    │       - emits TrackingResult                 │
-                    │              │                               │
-                    │              v                               │
-                    │     Main collector                           │
-                    │       - writes tracking.jsonl to cache.exec  │
-                    │       - aggregates pipeline runtime          │
-                    └──────────────────────────────────────────────┘
+The architecture is captured in two diagrams.  Diagram 2.1 is the stage
+waterfall — the narrative-friendly version that mirrors how the pipeline
+"reads": videos go in at the top, tracking results come out at the bottom,
+and each pool's responsibilities are listed inside its box.  Diagram 2.2
+adds the operational layer (helper threads, the semaphore, shared memory
+blocks as first-class nodes, the prune-bypass branch) for when you're
+reasoning about lifecycle, backpressure, or shutdown.
+
+### 2.1 Stage waterfall (simple view)
+
+```mermaid
+flowchart TB
+    Videos[/"videos[]"/]
+
+    subgraph MainTop["Main process"]
+        direction TB
+        Feeder["Feeder thread"]
+        Decode["Decoder thread"]
+        FrameBuf[("CPU shared-memory frame buffer<br/>(decoded RGB frames)")]
+        Classify["Classify thread<br/>(GPU_CLASSIFY)"]
+    end
+
+    PrunePool["Prune process pool (N workers, conditional)<br/>• one whole video per task<br/>• group_tiles_all + solve_ilp (Gurobi)<br/>• bypassed when --tracking-accuracy-threshold is null"]
+
+    CompressPool["Compress process pool (M workers)<br/>• attaches to shared frame buffer (read-only numpy view)<br/>• group_tiles + pack + CPU render<br/>• allocates canvas in <em>handoff</em> shared memory<br/>• signals VideoCompressDone on the last collage"]
+
+    subgraph MainBottom["Main process"]
+        direction TB
+        Detect["Detect thread (GPU_DETECT)<br/>• batches collages across videos<br/>• copies canvas shm → GPU<br/>• unpack_detections (p050 logic)<br/>• unlinks canvas shm after consumption<br/>• emits VideoDetections when complete"]
+        Track["Track thread<br/>• sequential tracker per video<br/>• emits TrackingResult"]
+        Collector["Main collector<br/>• writes tracking.jsonl to cache.exec<br/>• aggregates pipeline runtime"]
+    end
+
+    Videos --> Feeder
+    Feeder -- "video_q" --> Decode
+    Decode --> FrameBuf
+    FrameBuf --> Classify
+    Classify -- "VideoClassifications" --> PrunePool
+    PrunePool -- "pruned VideoClassifications" --> CompressPool
+    CompressPool -- "CollageReady (canvas in shm)" --> Detect
+    Detect -- "VideoDetections" --> Track
+    Track --> Collector
 ```
 
+### 2.2 Full architecture (operational view)
+
+Adds the helper threads, the videos-in-flight semaphore, the canvas
+shared memory block as a standalone node, the prune-bypass branch, and
+the explicit fact that both Classify *and* Compress read from the same
+frame buffer.
+
+```mermaid
+flowchart TB
+    Videos[/"videos to process"/]
+
+    subgraph Main["Main process — pipeline threads"]
+        direction TB
+        Feeder["Feeder thread"]
+        Decode["Decoder thread<br/>(CPU read)"]
+        Classify["Classify thread<br/>(GPU_CLASSIFY)"]
+        Detect["Detect thread<br/>(GPU_DETECT)"]
+        Track["Track thread"]
+        Collector["Collector"]
+    end
+
+    subgraph Helpers["Main process — helper threads"]
+        SemRel["Semaphore releaser"]
+        ErrMon["Error monitor"]
+        TimCol["Timings collector"]
+        Sem(["Semaphore<br/>max_videos_in_flight"])
+    end
+
+    FrameBuf[("Frame buffer<br/>CPU shared memory<br/>(per video)")]
+
+    subgraph PrunePool["Prune pool — optional<br/>N x mp.Process"]
+        direction LR
+        Pworker["Prune worker<br/>group_tiles_all<br/>+ solve_ilp"]
+    end
+
+    subgraph CompPool["Compress pool<br/>M x mp.Process"]
+        direction LR
+        Cworker["Compress worker<br/>group_tiles + pack<br/>+ CPU render"]
+    end
+
+    CanvasShm[("Canvas<br/>CPU shared memory<br/>(per collage, handoff)")]
+
+    Output[/"tracking.jsonl per video<br/>+ pipeline runtime.jsonl"/]
+
+    Videos --> Feeder
+    Feeder -. "acquire" .-> Sem
+    Feeder -- "video_q" --> Decode
+    Decode -- "alloc + write" --> FrameBuf
+    Decode -- "decode_q<br/>VideoStart / FrameBatch / VideoEnd" --> Classify
+    FrameBuf -. "read frames" .-> Classify
+    Classify -- "classify_out_q<br/>VideoClassifications" --> PrunePool
+    Classify -. "bypass<br/>(threshold = null)" .-> CompPool
+    PrunePool -- "prune_to_compress_q<br/>pruned VideoClassifications" --> CompPool
+    FrameBuf -. "read frames" .-> CompPool
+    CompPool -- "alloc + write" --> CanvasShm
+    CompPool -- "compress_to_detect_q<br/>CollageReady" --> Detect
+    CompPool -. "compress_done_q<br/>VideoCompressDone" .-> SemRel
+    SemRel -. "unlink" .-> FrameBuf
+    SemRel -. "release" .-> Sem
+    CanvasShm -. "read + unlink" .-> Detect
+    Detect -- "detect_q<br/>VideoDetections" --> Track
+    Track -- "result_q<br/>TrackingResult" --> Collector
+    Collector --> Output
+
+    classDef thread fill:#e6f3ff,stroke:#1f77b4,color:#000
+    classDef worker fill:#fef0e6,stroke:#d62728,color:#000
+    classDef shm fill:#fff4e6,stroke:#ff7f0e,color:#000
+    classDef sem fill:#e6ffe6,stroke:#2ca02c,color:#000
+
+    class Feeder,Decode,Classify,Detect,Track,Collector,SemRel,ErrMon,TimCol thread
+    class Pworker,Cworker worker
+    class FrameBuf,CanvasShm shm
+    class Sem sem
+```
+
+**Legend (diagram 2.2).**  Blue = thread in main process.  Orange-red =
+worker in `mp.Process` pool.  Tan cylinders = CPU shared memory.  Green =
+semaphore.  Solid arrows = queue-delivered messages.  Dashed arrows =
+direct memory / state access (shm reads, semaphore ops, unlink signals).
+
 **Process count:** 1 main process + `prune_workers` + `compress_workers`.
-**Thread count inside main:** Decoder, Classify, Detect, Track, ErrorMonitor,
-SemaphoreReleaser, TimingsCollector, Feeder, two relay threads per pool
-(fan-out + fan-in). All daemon threads.
+
+**Thread count inside main:** Feeder, Decoder, Classify, Detect, Track,
+Collector, SemaphoreReleaser, ErrorMonitor, TimingsCollector, plus two
+relay threads per pool (fan-out + fan-in).  All daemon threads.
 
 ---
 
