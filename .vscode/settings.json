@@ -10,5 +10,7 @@
         "utilities.h": "c",
         "stdint.h": "c",
         "stdint-gcc.h": "c"
-    }
+    },
+    "claudeCode.usePythonEnvironment": true,
+    "python.terminal.activateEnvironment": false
 }

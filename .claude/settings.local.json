@@ -52,7 +52,8 @@
       "Bash(rm -rf /Users/chanwutk/Documents/polyis/execution/__pycache__)",
       "Bash(python3 -c 'import ast; ast.parse\\(open\\('\\\\''__TRACKED_VAR__'\\\\''\\).read\\(\\)\\)')",
       "Bash(./sync)",
-      "Bash(ssh ace *)"
+      "Bash(ssh ace *)",
+      "Bash(python3 -m json.tool)"
     ]
   },
   "hooks": {

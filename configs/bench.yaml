@@ -1,0 +1,42 @@
+EXEC:
+  DATASETS:
+    - caldot2-y05
+  VIDEO_SETS:
+    - valid
+  CLASSIFIERS:
+    - ShuffleNet05
+  TILE_SIZES:
+    - 60
+  TILEPADDING_MODES:
+    - bl
+  CANVAS_SCALE:
+    - 1
+  TRACKERS:
+    - sortcython
+  SAMPLE_RATES:
+    - 16
+  TRACKING_ACCURACY_THRESHOLDS:
+    - 0.4
+  RELEVANCE_THRESHOLDS:
+    - 0.5
+
+DATA:
+  SOURCE_DIR: /polyis-data/sources
+  DATASETS_DIR: /polyis-data/datasets
+  CACHE_DIR: /polyis-cache/
+  EXCLUDE_AREA:
+    ams: /polyis/data/exclude/ams.xml
+  OTIF_DATASET: /otif-dataset/dataset
+
+OPS:
+  preprocess_dataset:
+    batch_size: 128
+    segment_size: 60
+    num_segments: 18
+
+  classify:
+    normalize_mean: [0.485, 0.456, 0.406]
+    normalize_std: [0.229, 0.224, 0.225]
+
+SETTINGS:
+  GPU_WARMUP: true
