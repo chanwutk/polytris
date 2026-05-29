@@ -45,7 +45,14 @@
       "Bash(find:*)",
       "Skill(grill-me)",
       "WebFetch(domain:tetris-db.github.io)",
-      "Bash(curl -fsSL https://tetris-db.github.io/tetris-logo.svg -o /Users/chanwutk/Documents/polyis/assets/tetris-logo.svg)"
+      "Bash(curl -fsSL https://tetris-db.github.io/tetris-logo.svg -o /Users/chanwutk/Documents/polyis/assets/tetris-logo.svg)",
+      "Bash(gh api *)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(rm /Users/chanwutk/Documents/polyis/execution/PLAN.md /Users/chanwutk/Documents/polyis/execution/FIX.md /Users/chanwutk/Documents/polyis/execution/pipeline.py /Users/chanwutk/Documents/polyis/execution/main.py /Users/chanwutk/Documents/polyis/execution/__init__.py /Users/chanwutk/Documents/polyis/execution/stage_*.py)",
+      "Bash(rm -rf /Users/chanwutk/Documents/polyis/execution/__pycache__)",
+      "Bash(python3 -c 'import ast; ast.parse\\(open\\('\\\\''__TRACKED_VAR__'\\\\''\\).read\\(\\)\\)')",
+      "Bash(./sync)",
+      "Bash(ssh ace *)"
     ]
   },
   "hooks": {
