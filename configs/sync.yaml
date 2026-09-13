@@ -4,7 +4,7 @@
 # Remote host configuration
 remote:
   host: ace                               # SSH alias (defined in ~/.ssh/config)
-  path: /work/cwkt/projects/polyis        # Destination path on remote machine
+  path: /work/cwkt/projects/tetris        # Destination path on remote machine
 
 # Local source directory (defaults to current directory if not specified)
 local_path: .

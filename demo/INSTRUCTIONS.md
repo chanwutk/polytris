@@ -29,7 +29,7 @@ From your local repo root:
 ./sync
 ```
 
-This rsyncs everything under `viz/` (configured in `configs/sync.yaml`) and all the usual source directories to `ace:/work/cwkt/projects/polyis/`.
+This rsyncs everything under `viz/` (configured in `configs/sync.yaml`) and all the usual source directories to `ace:/work/cwkt/projects/tetris/`.
 
 ---
 
@@ -154,7 +154,7 @@ its `dataset`, `video`, and `start` to `generate_data.py`.
 ## 3. Pull the generated data back to local
 
 ```bash
-rsync -av --delete ace:/work/cwkt/projects/polyis/demo/data/ demo/data/
+rsync -av --delete ace:/work/cwkt/projects/tetris/demo/data/ demo/data/
 ```
 
 Expected size: ~30–80 MB depending on video resolution and polyomino count.
@@ -232,7 +232,7 @@ For everyday regeneration once you've already configured everything:
 ```bash
 ./sync && \
   ssh ace 'docker exec polyis bash -c "cd /polyis && python demo/generate_data.py --dataset jnc0 --video te01.mp4 --frame-start 704 --overwrite"' && \
-  rsync -av --delete ace:/work/cwkt/projects/polyis/demo/data/ demo/data/ && \
+  rsync -av --delete ace:/work/cwkt/projects/tetris/demo/data/ demo/data/ && \
   (cd demo && python3 -m http.server 8765)
 ```
 
