@@ -30,11 +30,11 @@
       "files": {
         "Amsterdam": {
           "leap": {
-            "bytes": 309,
+            "bytes": 287,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-10-26T17:31:10+00:00",
             "path": "/polyis-cache/SOTA/leap/ams-y05/tradeoff.csv",
-            "sha256": "e1ba40bd566923dc3b7d8b4a258b69a3d34ae99e8cb10646c1111a3b713b7bd3"
+            "sha256": "f8c8419f4ef7bcdfe41002a6c5c618bd40441ce664e303a9c7e94d6a4d79fdaf"
           },
           "leap_stat": {
             "bytes": 3312,
@@ -60,11 +60,11 @@
         },
         "B3D1": {
           "leap": {
-            "bytes": 285,
+            "bytes": 284,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-10-26T17:31:10+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc0/tradeoff.csv",
-            "sha256": "88e659d7c6a9025eb150cc566b99fa74e2d7a76edd81cbcd45cdb887d9571f20"
+            "sha256": "aeeb97f45aeabd9459624588914c4273414ef831534d00a792c0d613c22be719"
           },
           "leap_stat": {
             "bytes": 426,
@@ -90,11 +90,11 @@
         },
         "B3D2": {
           "leap": {
-            "bytes": 284,
+            "bytes": 286,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-10-26T17:31:10+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc2/tradeoff.csv",
-            "sha256": "e3f235539534f95712c4eb9a6e1baa5f7c4069c58e7bba45f148f088d7762041"
+            "sha256": "1e55c78f93e3015230ac6c8e1fa56e6a4367b760e32dd14de23457252e0e1b59"
           },
           "leap_stat": {
             "bytes": 400,
@@ -122,9 +122,9 @@
           "leap": {
             "bytes": 287,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-10-26T17:31:10+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc6/tradeoff.csv",
-            "sha256": "5394818f2806161b66342f02f1ca052000f2b38ab2a8c01199291926fc6f9a0c"
+            "sha256": "7c010070c440a6ac74b30945c4b424fbdc770a2166e5d6d98751bd068ac86d53"
           },
           "leap_stat": {
             "bytes": 445,
@@ -150,11 +150,11 @@
         },
         "B3D4": {
           "leap": {
-            "bytes": 285,
+            "bytes": 283,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-10-26T17:31:10+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc7/tradeoff.csv",
-            "sha256": "3ad7a56ca552e910913d336fa9fdcc146e667902ee32018b6957ffa00dddb037"
+            "sha256": "00ad55366a23b891c2e4360c5808f293850c9751615b75f3100d1df014292ef2"
           },
           "leap_stat": {
             "bytes": 426,
@@ -180,11 +180,11 @@
         },
         "CalDoT1": {
           "leap": {
-            "bytes": 294,
+            "bytes": 291,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-10-26T17:31:10+00:00",
             "path": "/polyis-cache/SOTA/leap/caldot1-y05/tradeoff.csv",
-            "sha256": "88eb3fd337a3d6d83e95ca7360e320bd7d5fb0f3a4012a836c082b5130d3af9b"
+            "sha256": "84b8e6fa3ce874ae0b3c3f6d83517841b135379a9962b1bb23b43c5f4c6b988e"
           },
           "leap_stat": {
             "bytes": 6540,
@@ -210,11 +210,11 @@
         },
         "CalDoT2": {
           "leap": {
-            "bytes": 293,
+            "bytes": 291,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-10-26T17:31:10+00:00",
             "path": "/polyis-cache/SOTA/leap/caldot2-y05/tradeoff.csv",
-            "sha256": "e1ec3740e7da3e66e2a94fa45add277e04a2c50a1c8cea4d27ccd0016c9cedfa"
+            "sha256": "7dd5541f90f2d2c2c9b711f562dd4b56b81cbf1feea7842f685d2b0d45df524e"
           },
           "leap_stat": {
             "bytes": 6633,
@@ -239,7 +239,7 @@
           }
         }
       },
-      "run_at": "2026-10-26T10:36:29+00:00",
+      "run_at": "2026-10-26T17:32:24+00:00",
       "test_rows": {
         "Amsterdam": {
           "leap": 1,

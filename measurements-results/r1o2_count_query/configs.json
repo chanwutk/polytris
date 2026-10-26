@@ -2,23 +2,23 @@
   "Amsterdam": {
     "records": [
       {
-        "accuracy": -1.9883,
+        "accuracy": 0.8604,
         "config": "003_groundtruth",
         "fps": null,
         "hota": null,
         "predicted_per_segment": [
-          843
+          267
         ],
         "system": "ground truth",
         "videos": 60
       },
       {
-        "accuracy": -0.4261,
+        "accuracy": -0.6888,
         "config": "param 0",
-        "fps": 555.6384271228002,
-        "hota": 0.0493302955091323,
+        "fps": 555.638427122801,
+        "hota": 0.0560928901670109,
         "predicted_per_segment": [
-          651
+          739
         ],
         "system": "leap",
         "videos": 60
@@ -1058,25 +1058,25 @@
   "CalDoT1": {
     "records": [
       {
-        "accuracy": 0.9564,
+        "accuracy": 0.9711,
         "config": "003_groundtruth",
         "fps": null,
         "hota": null,
         "predicted_per_segment": [
-          299,
-          258
+          303,
+          263
         ],
         "system": "ground truth",
         "videos": 60
       },
       {
-        "accuracy": 0.5212,
+        "accuracy": 0.5157,
         "config": "param 0",
-        "fps": 373.50959297137945,
-        "hota": 0.0702639004808596,
+        "fps": 747.0191859427589,
+        "hota": 0.076668338929593,
         "predicted_per_segment": [
-          190,
-          319
+          196,
+          358
         ],
         "system": "leap",
         "videos": 60
@@ -1970,25 +1970,25 @@
   "CalDoT2": {
     "records": [
       {
-        "accuracy": 0.9371,
+        "accuracy": 0.9372,
         "config": "003_groundtruth",
         "fps": null,
         "hota": null,
         "predicted_per_segment": [
-          263,
-          314
+          268,
+          320
         ],
         "system": "ground truth",
         "videos": 30
       },
       {
-        "accuracy": 0.5023,
+        "accuracy": 0.5128,
         "config": "param 0",
-        "fps": 506.3870409929687,
-        "hota": 0.0932620426967167,
+        "fps": 1012.7740819859374,
+        "hota": 0.1066040084605179,
         "predicted_per_segment": [
-          168,
-          244
+          173,
+          247
         ],
         "system": "leap",
         "videos": 30
