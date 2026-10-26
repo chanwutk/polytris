@@ -1,0 +1,622 @@
+{
+  "datasets": {
+    "Amsterdam": {
+      "all_pruning_configs": {
+        "configs": 45,
+        "dataset": "ams-y05",
+        "max_ilp_percent": 4.993,
+        "max_pruning_stage_percent": 6.151,
+        "median_ilp_percent": 3.259,
+        "median_pruning_stage_percent": 4.117,
+        "min_ilp_percent": 1.199
+      },
+      "dataset": "ams-y05",
+      "fastest_pruning_point": {
+        "clip_timings": {
+          "build_ms": {
+            "max": 29.44,
+            "mean": 7.54,
+            "median": 5.15,
+            "p95": 17.09
+          },
+          "build_plus_solve_ms": {
+            "max": 48.93,
+            "mean": 19.03,
+            "median": 14.91,
+            "p95": 35.21
+          },
+          "dataset": "ams-y05",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 70.63,
+            "median_per_run_percent": 72.23
+          },
+          "point": "fastest_pruning_point",
+          "runs": 60,
+          "solve_ms": {
+            "max": 29.95,
+            "mean": 11.48,
+            "median": 9.79,
+            "p95": 19.55
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 0.0,
+            "median_solve_over_budget": 0.098,
+            "percent": 0.0,
+            "runs": 0,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 0,
+            "runs_1_05_to_1_10x": 0,
+            "runs_from_1_10x": 0
+          }
+        },
+        "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+        "extraction_s": 51.462,
+        "fps": 1049.5,
+        "hota": 0.6965726417050139,
+        "ilp_percent": 2.218,
+        "ilp_percent_excluding_launch_clips": 2.218,
+        "ilp_s": 1.142,
+        "launch_clips": 0,
+        "prunes": true,
+        "pruning_stage_percent": 3.141,
+        "videos": 60
+      },
+      "hota_bound": 0.6949,
+      "operating_point": {
+        "clip_timings": {
+          "build_ms": {
+            "max": 29.44,
+            "mean": 7.54,
+            "median": 5.15,
+            "p95": 17.09
+          },
+          "build_plus_solve_ms": {
+            "max": 48.93,
+            "mean": 19.03,
+            "median": 14.91,
+            "p95": 35.21
+          },
+          "dataset": "ams-y05",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 70.63,
+            "median_per_run_percent": 72.23
+          },
+          "point": "operating_point",
+          "runs": 60,
+          "solve_ms": {
+            "max": 29.95,
+            "mean": 11.48,
+            "median": 9.79,
+            "p95": 19.55
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 0.0,
+            "median_solve_over_budget": 0.098,
+            "percent": 0.0,
+            "runs": 0,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 0,
+            "runs_1_05_to_1_10x": 0,
+            "runs_from_1_10x": 0
+          }
+        },
+        "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+        "extraction_s": 51.462,
+        "fps": 1049.5,
+        "hota": 0.6965726417050139,
+        "ilp_percent": 2.218,
+        "ilp_percent_excluding_launch_clips": 2.218,
+        "ilp_s": 1.142,
+        "launch_clips": 0,
+        "prunes": true,
+        "pruning_stage_percent": 3.141,
+        "videos": 60
+      },
+      "reference_hota": 0.7315250495020468
+    },
+    "B3D1": {
+      "all_pruning_configs": {
+        "configs": 46,
+        "dataset": "jnc0",
+        "max_ilp_percent": 2.085,
+        "max_pruning_stage_percent": 5.59,
+        "median_ilp_percent": 0.948,
+        "median_pruning_stage_percent": 2.545,
+        "min_ilp_percent": 0.368
+      },
+      "dataset": "jnc0",
+      "fastest_pruning_point": {
+        "clip_timings": {
+          "build_ms": {
+            "max": 27.03,
+            "mean": 13.86,
+            "median": 12.18,
+            "p95": 24.12
+          },
+          "build_plus_solve_ms": {
+            "max": 74.43,
+            "mean": 45.57,
+            "median": 36.94,
+            "p95": 70.69
+          },
+          "dataset": "jnc0",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 40.51,
+            "median_per_run_percent": 42.85
+          },
+          "point": "fastest_pruning_point",
+          "runs": 5,
+          "solve_ms": {
+            "max": 47.4,
+            "mean": 31.71,
+            "median": 27.29,
+            "p95": 46.56
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 0.0,
+            "median_solve_over_budget": 0.273,
+            "percent": 0.0,
+            "runs": 0,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 0,
+            "runs_1_05_to_1_10x": 0,
+            "runs_from_1_10x": 0
+          }
+        },
+        "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+        "extraction_s": 22.086,
+        "fps": 243.4,
+        "hota": 0.7761650127756611,
+        "ilp_percent": 1.032,
+        "ilp_percent_excluding_launch_clips": 1.032,
+        "ilp_s": 0.228,
+        "launch_clips": 0,
+        "prunes": true,
+        "pruning_stage_percent": 2.547,
+        "videos": 5
+      },
+      "hota_bound": 0.7653,
+      "operating_point": {
+        "clip_timings": null,
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "extraction_s": 21.109,
+        "fps": 254.6,
+        "hota": 0.7790148226312216,
+        "ilp_percent": 0.0,
+        "ilp_percent_excluding_launch_clips": 0.0,
+        "ilp_s": 0.0,
+        "launch_clips": 0,
+        "prunes": false,
+        "pruning_stage_percent": 0.0,
+        "videos": 5
+      },
+      "reference_hota": 0.8056165050815967
+    },
+    "B3D2": {
+      "all_pruning_configs": {
+        "configs": 44,
+        "dataset": "jnc2",
+        "max_ilp_percent": 2.306,
+        "max_pruning_stage_percent": 3.85,
+        "median_ilp_percent": 0.941,
+        "median_pruning_stage_percent": 1.964,
+        "min_ilp_percent": 0.324
+      },
+      "dataset": "jnc2",
+      "fastest_pruning_point": {
+        "clip_timings": {
+          "build_ms": {
+            "max": 9.07,
+            "mean": 7.35,
+            "median": 6.9,
+            "p95": 8.75
+          },
+          "build_plus_solve_ms": {
+            "max": 26.49,
+            "mean": 19.43,
+            "median": 15.24,
+            "p95": 26.24
+          },
+          "dataset": "jnc2",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 63.97,
+            "median_per_run_percent": 58.82
+          },
+          "point": "fastest_pruning_point",
+          "runs": 5,
+          "solve_ms": {
+            "max": 17.74,
+            "mean": 12.08,
+            "median": 8.6,
+            "p95": 17.68
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 0.0,
+            "median_solve_over_budget": 0.086,
+            "percent": 0.0,
+            "runs": 0,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 0,
+            "runs_1_05_to_1_10x": 0,
+            "runs_from_1_10x": 0
+          }
+        },
+        "config": "ShuffleNet05_60_8_060_r075_tr_s100_sortcython",
+        "extraction_s": 21.182,
+        "fps": 221.5,
+        "hota": 0.7746873709786147,
+        "ilp_percent": 0.459,
+        "ilp_percent_excluding_launch_clips": 0.459,
+        "ilp_s": 0.097,
+        "launch_clips": 0,
+        "prunes": true,
+        "pruning_stage_percent": 0.717,
+        "videos": 5
+      },
+      "hota_bound": 0.7744,
+      "operating_point": {
+        "clip_timings": null,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "extraction_s": 13.538,
+        "fps": 346.5,
+        "hota": 0.784069611396217,
+        "ilp_percent": 0.0,
+        "ilp_percent_excluding_launch_clips": 0.0,
+        "ilp_s": 0.0,
+        "launch_clips": 0,
+        "prunes": false,
+        "pruning_stage_percent": 0.0,
+        "videos": 5
+      },
+      "reference_hota": 0.8151072920226305
+    },
+    "B3D3": {
+      "all_pruning_configs": {
+        "configs": 54,
+        "dataset": "jnc6",
+        "max_ilp_percent": 3.757,
+        "max_pruning_stage_percent": 5.438,
+        "median_ilp_percent": 1.151,
+        "median_pruning_stage_percent": 2.804,
+        "min_ilp_percent": 0.373
+      },
+      "dataset": "jnc6",
+      "fastest_pruning_point": {
+        "clip_timings": {
+          "build_ms": {
+            "max": 26.52,
+            "mean": 16.6,
+            "median": 14.29,
+            "p95": 26.0
+          },
+          "build_plus_solve_ms": {
+            "max": 63.87,
+            "mean": 39.3,
+            "median": 37.18,
+            "p95": 60.14
+          },
+          "dataset": "jnc6",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 32.74,
+            "median_per_run_percent": 34.22
+          },
+          "point": "fastest_pruning_point",
+          "runs": 5,
+          "solve_ms": {
+            "max": 37.36,
+            "mean": 22.7,
+            "median": 21.28,
+            "p95": 34.46
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 0.0,
+            "median_solve_over_budget": 0.213,
+            "percent": 0.0,
+            "runs": 0,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 0,
+            "runs_1_05_to_1_10x": 0,
+            "runs_from_1_10x": 0
+          }
+        },
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "extraction_s": 18.18,
+        "fps": 285.6,
+        "hota": 0.8013411152828708,
+        "ilp_percent": 1.081,
+        "ilp_percent_excluding_launch_clips": 1.081,
+        "ilp_s": 0.197,
+        "launch_clips": 0,
+        "prunes": true,
+        "pruning_stage_percent": 3.302,
+        "videos": 5
+      },
+      "hota_bound": 0.7937,
+      "operating_point": {
+        "clip_timings": {
+          "build_ms": {
+            "max": 26.52,
+            "mean": 16.6,
+            "median": 14.29,
+            "p95": 26.0
+          },
+          "build_plus_solve_ms": {
+            "max": 63.87,
+            "mean": 39.3,
+            "median": 37.18,
+            "p95": 60.14
+          },
+          "dataset": "jnc6",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 32.74,
+            "median_per_run_percent": 34.22
+          },
+          "point": "operating_point",
+          "runs": 5,
+          "solve_ms": {
+            "max": 37.36,
+            "mean": 22.7,
+            "median": 21.28,
+            "p95": 34.46
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 0.0,
+            "median_solve_over_budget": 0.213,
+            "percent": 0.0,
+            "runs": 0,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 0,
+            "runs_1_05_to_1_10x": 0,
+            "runs_from_1_10x": 0
+          }
+        },
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "extraction_s": 18.18,
+        "fps": 285.6,
+        "hota": 0.8013411152828708,
+        "ilp_percent": 1.081,
+        "ilp_percent_excluding_launch_clips": 1.081,
+        "ilp_s": 0.197,
+        "launch_clips": 0,
+        "prunes": true,
+        "pruning_stage_percent": 3.302,
+        "videos": 5
+      },
+      "reference_hota": 0.8354907246247636
+    },
+    "B3D4": {
+      "all_pruning_configs": {
+        "configs": 39,
+        "dataset": "jnc7",
+        "max_ilp_percent": 3.494,
+        "max_pruning_stage_percent": 6.292,
+        "median_ilp_percent": 1.633,
+        "median_pruning_stage_percent": 3.045,
+        "min_ilp_percent": 0.406
+      },
+      "dataset": "jnc7",
+      "fastest_pruning_point": {
+        "clip_timings": {
+          "build_ms": {
+            "max": 20.94,
+            "mean": 17.55,
+            "median": 19.98,
+            "p95": 20.88
+          },
+          "build_plus_solve_ms": {
+            "max": 107.31,
+            "mean": 52.21,
+            "median": 41.44,
+            "p95": 96.57
+          },
+          "dataset": "jnc7",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 60.35,
+            "median_per_run_percent": 59.39
+          },
+          "point": "fastest_pruning_point",
+          "runs": 5,
+          "solve_ms": {
+            "max": 86.36,
+            "mean": 34.67,
+            "median": 21.45,
+            "p95": 75.7
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 0.0,
+            "median_solve_over_budget": 0.215,
+            "percent": 0.0,
+            "runs": 0,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 0,
+            "runs_1_05_to_1_10x": 0,
+            "runs_from_1_10x": 0
+          }
+        },
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "extraction_s": 12.356,
+        "fps": 422.9,
+        "hota": 0.8050953871471719,
+        "ilp_percent": 2.113,
+        "ilp_percent_excluding_launch_clips": 2.113,
+        "ilp_s": 0.261,
+        "launch_clips": 0,
+        "prunes": true,
+        "pruning_stage_percent": 3.501,
+        "videos": 5
+      },
+      "hota_bound": 0.803,
+      "operating_point": {
+        "clip_timings": {
+          "build_ms": {
+            "max": 20.94,
+            "mean": 17.55,
+            "median": 19.98,
+            "p95": 20.88
+          },
+          "build_plus_solve_ms": {
+            "max": 107.31,
+            "mean": 52.21,
+            "median": 41.44,
+            "p95": 96.57
+          },
+          "dataset": "jnc7",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 60.35,
+            "median_per_run_percent": 59.39
+          },
+          "point": "operating_point",
+          "runs": 5,
+          "solve_ms": {
+            "max": 86.36,
+            "mean": 34.67,
+            "median": 21.45,
+            "p95": 75.7
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 0.0,
+            "median_solve_over_budget": 0.215,
+            "percent": 0.0,
+            "runs": 0,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 0,
+            "runs_1_05_to_1_10x": 0,
+            "runs_from_1_10x": 0
+          }
+        },
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "extraction_s": 12.356,
+        "fps": 422.9,
+        "hota": 0.8050953871471719,
+        "ilp_percent": 2.113,
+        "ilp_percent_excluding_launch_clips": 2.113,
+        "ilp_s": 0.261,
+        "launch_clips": 0,
+        "prunes": true,
+        "pruning_stage_percent": 3.501,
+        "videos": 5
+      },
+      "reference_hota": 0.8452904103758538
+    },
+    "CalDoT1": {
+      "all_pruning_configs": {
+        "configs": 18,
+        "dataset": "caldot1-y05",
+        "max_ilp_percent": 8.896,
+        "max_pruning_stage_percent": 10.773,
+        "median_ilp_percent": 5.394,
+        "median_pruning_stage_percent": 7.896,
+        "min_ilp_percent": 2.74
+      },
+      "dataset": "caldot1-y05",
+      "fastest_pruning_point": {
+        "clip_timings": {
+          "build_ms": {
+            "max": 821.79,
+            "mean": 22.84,
+            "median": 8.27,
+            "p95": 17.29
+          },
+          "build_plus_solve_ms": {
+            "max": 842.55,
+            "mean": 76.44,
+            "median": 45.12,
+            "p95": 127.35
+          },
+          "dataset": "caldot1-y05",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 63.96,
+            "median_per_run_percent": 52.15
+          },
+          "point": "fastest_pruning_point",
+          "runs": 60,
+          "solve_ms": {
+            "max": 133.27,
+            "mean": 53.59,
+            "median": 35.42,
+            "p95": 110.36
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 10.0,
+            "median_solve_over_budget": 0.354,
+            "percent": 33.33,
+            "runs": 20,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 2,
+            "runs_1_05_to_1_10x": 12,
+            "runs_from_1_10x": 6
+          }
+        },
+        "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+        "extraction_s": 132.156,
+        "fps": 408.6,
+        "hota": 0.778921188031902,
+        "ilp_percent": 3.47,
+        "ilp_percent_excluding_launch_clips": 2.877,
+        "ilp_s": 4.586,
+        "launch_clips": 1,
+        "prunes": true,
+        "pruning_stage_percent": 5.425,
+        "videos": 60
+      },
+      "hota_bound": 0.7772,
+      "operating_point": {
+        "clip_timings": null,
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "extraction_s": 74.041,
+        "fps": 729.3,
+        "hota": 0.778685892269133,
+        "ilp_percent": 0.0,
+        "ilp_percent_excluding_launch_clips": 0.0,
+        "ilp_s": 0.0,
+        "launch_clips": 0,
+        "prunes": false,
+        "pruning_stage_percent": 0.0,
+        "videos": 60
+      },
+      "reference_hota": 0.8180912461425098
+    },
+    "CalDoT2": {
+      "all_pruning_configs": {
+        "configs": 27,
+        "dataset": "caldot2-y05",
+        "max_ilp_percent": 8.991,
+        "max_pruning_stage_percent": 11.095,
+        "median_ilp_percent": 2.128,
+        "median_pruning_stage_percent": 6.194,
+        "min_ilp_percent": 1.013
+      },
+      "dataset": "caldot2-y05",
+      "fastest_pruning_point": {
+        "best_hota": 0.6664529720656004,
+        "meets_bound": false
+      },
+      "hota_bound": 0.6798,
+      "operating_point": {
+        "clip_timings": null,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "extraction_s": 373.159,
+        "fps": 144.7,
+        "hota": 0.6921171850406366,
+        "ilp_percent": 0.0,
+        "ilp_percent_excluding_launch_clips": 0.0,
+        "ilp_s": 0.0,
+        "launch_clips": 0,
+        "prunes": false,
+        "pruning_stage_percent": 0.0,
+        "videos": 60
+      },
+      "reference_hota": 0.7155520702265457
+    }
+  },
+  "launch_clips": "ilp_percent_excluding_launch_clips drops the (configuration, video) pairs whose pruning run is a launch first clip (see ilp_timings.json timing_boundaries.clip_position) from both sides",
+  "selection": "fastest validated Tetris configuration within 5% of the reference test HOTA; fastest_pruning_point restricts to configurations with a tracking-accuracy threshold",
+  "source": "<cache>/<dataset>/evaluation/080_throughput/measurements/query_execution_per_op.csv (test split), the per-operation runtimes behind the tradeoff table throughput",
+  "throughput_matches_p022_logs": {
+    "matched_runs": 6315,
+    "max_abs_diff_ms": 5.684341886080802e-14,
+    "test_runs_saved": 4660,
+    "test_runs_used": 4660,
+    "throughput_rows": 6315
+  }
+}
