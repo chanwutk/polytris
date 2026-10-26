@@ -1,0 +1,2804 @@
+{
+  "Amsterdam": {
+    "records": [
+      {
+        "accuracy": -1.9883,
+        "config": "003_groundtruth",
+        "fps": null,
+        "hota": null,
+        "predicted_per_segment": [
+          843
+        ],
+        "system": "ground truth",
+        "videos": 60
+      },
+      {
+        "accuracy": -0.4261,
+        "config": "param 0",
+        "fps": 555.6384271228002,
+        "hota": 0.0493302955091323,
+        "predicted_per_segment": [
+          651
+        ],
+        "system": "leap",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8667,
+        "config": "param 0",
+        "fps": 28.894630973015772,
+        "hota": 0.6593776172831385,
+        "predicted_per_segment": [
+          308
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8492,
+        "config": "param 1",
+        "fps": 57.781843079358964,
+        "hota": 0.6556258364755521,
+        "predicted_per_segment": [
+          290
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8291,
+        "config": "param 2",
+        "fps": 60.277442971295926,
+        "hota": 0.6805375028285238,
+        "predicted_per_segment": [
+          293
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8349,
+        "config": "param 3",
+        "fps": 121.95953574493068,
+        "hota": 0.6736858684729414,
+        "predicted_per_segment": [
+          272
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8167,
+        "config": "param 4",
+        "fps": 241.14206625591572,
+        "hota": 0.6670862689327743,
+        "predicted_per_segment": [
+          254
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7331,
+        "config": "param 5",
+        "fps": 491.63480793737483,
+        "hota": 0.6300412453871768,
+        "predicted_per_segment": [
+          240
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4692,
+        "config": "param 6",
+        "fps": 963.7937187723054,
+        "hota": 0.4355833845299078,
+        "predicted_per_segment": [
+          154
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4524,
+        "config": "param 7",
+        "fps": 1034.6934865900382,
+        "hota": 0.4327577762299421,
+        "predicted_per_segment": [
+          147
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4182,
+        "config": "param 8",
+        "fps": 846.0369674185463,
+        "hota": 0.4300102445081419,
+        "predicted_per_segment": [
+          144
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.41,
+        "config": "param 9",
+        "fps": 908.3585603767239,
+        "hota": 0.4173506611572972,
+        "predicted_per_segment": [
+          144
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8997,
+        "config": "naive",
+        "fps": 15.261813771643736,
+        "hota": 0.7315250495020468,
+        "predicted_per_segment": [
+          260
+        ],
+        "system": "reference",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.1266,
+        "config": "ShuffleNet05_60_16_040_r025_none_s100_bytetrackcython",
+        "fps": 2344.549510437016,
+        "hota": 0.5796369818932005,
+        "predicted_per_segment": [
+          42
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4179,
+        "config": "ShuffleNet05_60_16_040_r025_square_s100_sortcython",
+        "fps": 1091.420937063626,
+        "hota": 0.6665493127956251,
+        "predicted_per_segment": [
+          123
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4197,
+        "config": "ShuffleNet05_60_16_040_r025_tr_s100_sortcython",
+        "fps": 1543.9720205142764,
+        "hota": 0.6535864182213192,
+        "predicted_per_segment": [
+          124
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.1054,
+        "config": "ShuffleNet05_60_16_040_r075_none_s100_bytetrackcython",
+        "fps": 2618.166298880072,
+        "hota": 0.5691951917775658,
+        "predicted_per_segment": [
+          31
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.3896,
+        "config": "ShuffleNet05_60_16_040_r075_tr_s100_sortcython",
+        "fps": 1775.3411149991855,
+        "hota": 0.6351645264199345,
+        "predicted_per_segment": [
+          116
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.1266,
+        "config": "ShuffleNet05_60_16_060_r025_none_s100_bytetrackcython",
+        "fps": 2384.762158661419,
+        "hota": 0.5796369818932005,
+        "predicted_per_segment": [
+          42
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4179,
+        "config": "ShuffleNet05_60_16_060_r025_square_s100_sortcython",
+        "fps": 1097.870394877445,
+        "hota": 0.6665493127956251,
+        "predicted_per_segment": [
+          123
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4197,
+        "config": "ShuffleNet05_60_16_060_r025_tr_s100_sortcython",
+        "fps": 1511.5979993335957,
+        "hota": 0.6535864182213192,
+        "predicted_per_segment": [
+          124
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4085,
+        "config": "ShuffleNet05_60_16_060_r050_square_s100_sortcython",
+        "fps": 1214.5731999501304,
+        "hota": 0.6594937773261815,
+        "predicted_per_segment": [
+          122
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.144,
+        "config": "ShuffleNet05_60_16_060_r075_bl_s100_bytetrackcython",
+        "fps": 1946.0513246459432,
+        "hota": 0.5931907451395609,
+        "predicted_per_segment": [
+          46
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.1054,
+        "config": "ShuffleNet05_60_16_060_r075_none_s100_bytetrackcython",
+        "fps": 2683.2538017686798,
+        "hota": 0.5691951917775657,
+        "predicted_per_segment": [
+          31
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.1266,
+        "config": "ShuffleNet05_60_16_080_r025_none_s100_bytetrackcython",
+        "fps": 2416.995154473622,
+        "hota": 0.5796369818932005,
+        "predicted_per_segment": [
+          42
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4179,
+        "config": "ShuffleNet05_60_16_080_r025_square_s100_sortcython",
+        "fps": 1116.0728538438796,
+        "hota": 0.6665493127956251,
+        "predicted_per_segment": [
+          123
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4197,
+        "config": "ShuffleNet05_60_16_080_r025_tr_s100_sortcython",
+        "fps": 1527.6538810589568,
+        "hota": 0.6535864182213192,
+        "predicted_per_segment": [
+          124
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4085,
+        "config": "ShuffleNet05_60_16_080_r050_square_s100_sortcython",
+        "fps": 1255.0745659905458,
+        "hota": 0.6594937773261815,
+        "predicted_per_segment": [
+          122
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.1054,
+        "config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
+        "fps": 2522.706590543679,
+        "hota": 0.5691951917775658,
+        "predicted_per_segment": [
+          31
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.3896,
+        "config": "ShuffleNet05_60_16_080_r075_tr_s100_sortcython",
+        "fps": 1851.740827551756,
+        "hota": 0.6351645264199345,
+        "predicted_per_segment": [
+          116
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.41,
+        "config": "ShuffleNet05_60_16_r025_square_s100_sortcython",
+        "fps": 1105.497568974338,
+        "hota": 0.6676803877038592,
+        "predicted_per_segment": [
+          121
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.3965,
+        "config": "ShuffleNet05_60_16_r025_tr_s100_sortcython",
+        "fps": 1561.8299252084091,
+        "hota": 0.6546604185076937,
+        "predicted_per_segment": [
+          117
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.3297,
+        "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
+        "fps": 1796.545965461734,
+        "hota": 0.6278199526299132,
+        "predicted_per_segment": [
+          110
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.1314,
+        "config": "ShuffleNet05_60_16_r050_none_s100_bytetrackcython",
+        "fps": 2689.0815856831687,
+        "hota": 0.5785355435468335,
+        "predicted_per_segment": [
+          39
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4016,
+        "config": "ShuffleNet05_60_16_r050_tr_s100_sortcython",
+        "fps": 1704.4948645160416,
+        "hota": 0.6432107531627235,
+        "predicted_per_segment": [
+          119
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.3243,
+        "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
+        "fps": 1964.1424698768576,
+        "hota": 0.6153853683311472,
+        "predicted_per_segment": [
+          106
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.1093,
+        "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
+        "fps": 2840.253768763739,
+        "hota": 0.5675040470902472,
+        "predicted_per_segment": [
+          33
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.2797,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "fps": 2841.011122780016,
+        "hota": 0.4993108930060543,
+        "predicted_per_segment": [
+          91
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.3971,
+        "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
+        "fps": 1391.9090347607282,
+        "hota": 0.6592685681109561,
+        "predicted_per_segment": [
+          117
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.3936,
+        "config": "ShuffleNet05_60_16_r075_tr_s100_sortcython",
+        "fps": 1861.254984902216,
+        "hota": 0.6362317383348752,
+        "predicted_per_segment": [
+          118
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8223,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython",
+        "fps": 305.0009740403884,
+        "hota": 0.6283207613544112,
+        "predicted_per_segment": [
+          248
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8123,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+        "fps": 311.96775192841096,
+        "hota": 0.6277911889511713,
+        "predicted_per_segment": [
+          254
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8653,
+        "config": "ShuffleNet05_60_1_040_r025_square_s100_sortcython",
+        "fps": 214.16592081272637,
+        "hota": 0.7061095864741752,
+        "predicted_per_segment": [
+          258
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8388,
+        "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+        "fps": 256.188121949012,
+        "hota": 0.7002310890941218,
+        "predicted_per_segment": [
+          263
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7767,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython",
+        "fps": 318.1387553085702,
+        "hota": 0.6303783256729417,
+        "predicted_per_segment": [
+          253
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8067,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "fps": 322.7349583327264,
+        "hota": 0.6062470912659317,
+        "predicted_per_segment": [
+          263
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.854,
+        "config": "ShuffleNet05_60_1_040_r050_square_s100_sortcython",
+        "fps": 230.1915274580789,
+        "hota": 0.7077254573542289,
+        "predicted_per_segment": [
+          255
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8267,
+        "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+        "fps": 273.2718999874168,
+        "hota": 0.6998111716914824,
+        "predicted_per_segment": [
+          254
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7784,
+        "config": "ShuffleNet05_60_1_040_r075_bl_s100_sortcython",
+        "fps": 289.9084750661932,
+        "hota": 0.6577685205012765,
+        "predicted_per_segment": [
+          283
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8012,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_bytetrackcython",
+        "fps": 329.7803721042757,
+        "hota": 0.6023998603739521,
+        "predicted_per_segment": [
+          248
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7744,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "fps": 331.8680938691716,
+        "hota": 0.5903773787942157,
+        "predicted_per_segment": [
+          268
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8418,
+        "config": "ShuffleNet05_60_1_040_r075_square_s100_sortcython",
+        "fps": 248.9547847922066,
+        "hota": 0.702620110986341,
+        "predicted_per_segment": [
+          253
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8102,
+        "config": "ShuffleNet05_60_1_040_r075_tr_s100_sortcython",
+        "fps": 286.9151493407409,
+        "hota": 0.679645439705261,
+        "predicted_per_segment": [
+          258
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8059,
+        "config": "ShuffleNet05_60_1_060_r025_none_s100_bytetrackcython",
+        "fps": 298.0098089866493,
+        "hota": 0.6400115761926091,
+        "predicted_per_segment": [
+          243
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.853,
+        "config": "ShuffleNet05_60_1_060_r025_square_s100_sortcython",
+        "fps": 198.8189434300392,
+        "hota": 0.7032688577251367,
+        "predicted_per_segment": [
+          258
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7849,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
+        "fps": 311.02873164729067,
+        "hota": 0.6359566932048427,
+        "predicted_per_segment": [
+          246
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8366,
+        "config": "ShuffleNet05_60_1_060_r050_square_s100_sortcython",
+        "fps": 223.07041353398057,
+        "hota": 0.7118754285164414,
+        "predicted_per_segment": [
+          257
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7947,
+        "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
+        "fps": 323.06836738699445,
+        "hota": 0.6103051739762777,
+        "predicted_per_segment": [
+          243
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.82,
+        "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+        "fps": 290.22957784180727,
+        "hota": 0.6336542710025154,
+        "predicted_per_segment": [
+          259
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8777,
+        "config": "ShuffleNet05_60_1_080_r025_square_s100_sortcython",
+        "fps": 184.6156709046884,
+        "hota": 0.7132342024928144,
+        "predicted_per_segment": [
+          254
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8445,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "fps": 189.4895712038445,
+        "hota": 0.6766986055228176,
+        "predicted_per_segment": [
+          254
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7902,
+        "config": "ShuffleNet05_60_1_r025_none_s100_sortcython",
+        "fps": 190.12574421047344,
+        "hota": 0.6788466365314744,
+        "predicted_per_segment": [
+          286
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8756,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "fps": 75.00284080870877,
+        "hota": 0.716316445025367,
+        "predicted_per_segment": [
+          257
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8687,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "fps": 109.22911397909924,
+        "hota": 0.7169768803528577,
+        "predicted_per_segment": [
+          251
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8112,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "fps": 207.96018176562623,
+        "hota": 0.6624902763104101,
+        "predicted_per_segment": [
+          268
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.739,
+        "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+        "fps": 208.1979573032756,
+        "hota": 0.6576456432390057,
+        "predicted_per_segment": [
+          308
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8622,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "fps": 84.35455327776666,
+        "hota": 0.7194065001407918,
+        "predicted_per_segment": [
+          253
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8561,
+        "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+        "fps": 125.11102378304658,
+        "hota": 0.7146592404887382,
+        "predicted_per_segment": [
+          249
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.846,
+        "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+        "fps": 142.35804213348084,
+        "hota": 0.6923529636071593,
+        "predicted_per_segment": [
+          266
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7809,
+        "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+        "fps": 221.6331970425448,
+        "hota": 0.6369679740224187,
+        "predicted_per_segment": [
+          277
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7537,
+        "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+        "fps": 222.4071484445681,
+        "hota": 0.6317786428997704,
+        "predicted_per_segment": [
+          308
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8584,
+        "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+        "fps": 95.11428847186929,
+        "hota": 0.7180781468073366,
+        "predicted_per_segment": [
+          252
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8492,
+        "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+        "fps": 132.68977329109066,
+        "hota": 0.7047874808274578,
+        "predicted_per_segment": [
+          251
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8485,
+        "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+        "fps": 169.7200057363351,
+        "hota": 0.7008752536061043,
+        "predicted_per_segment": [
+          247
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8532,
+        "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+        "fps": 297.52115019545005,
+        "hota": 0.7164966365557044,
+        "predicted_per_segment": [
+          248
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8569,
+        "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+        "fps": 335.51417262849145,
+        "hota": 0.7169121078712191,
+        "predicted_per_segment": [
+          247
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.831,
+        "config": "ShuffleNet05_60_8_040_r025_square_s100_sortcython",
+        "fps": 734.1416867528491,
+        "hota": 0.6974216570573504,
+        "predicted_per_segment": [
+          251
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7927,
+        "config": "ShuffleNet05_60_8_040_r025_tr_s100_sortcython",
+        "fps": 1002.0714329776516,
+        "hota": 0.6938627124288902,
+        "predicted_per_segment": [
+          253
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8277,
+        "config": "ShuffleNet05_60_8_060_r025_tr_s100_sortcython",
+        "fps": 940.8615726832816,
+        "hota": 0.7008016002897827,
+        "predicted_per_segment": [
+          244
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8189,
+        "config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
+        "fps": 1055.5380694575747,
+        "hota": 0.6886726298481158,
+        "predicted_per_segment": [
+          247
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8418,
+        "config": "ShuffleNet05_60_8_060_r075_square_s100_sortcython",
+        "fps": 888.6762789873558,
+        "hota": 0.6899299168470576,
+        "predicted_per_segment": [
+          251
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8283,
+        "config": "ShuffleNet05_60_8_080_r025_square_s100_sortcython",
+        "fps": 647.3816682781883,
+        "hota": 0.7099909280888423,
+        "predicted_per_segment": [
+          245
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.845,
+        "config": "ShuffleNet05_60_8_080_r050_square_s100_sortcython",
+        "fps": 749.2238980251789,
+        "hota": 0.7070903016243099,
+        "predicted_per_segment": [
+          244
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8143,
+        "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+        "fps": 1049.5275719502338,
+        "hota": 0.6965726417050139,
+        "predicted_per_segment": [
+          243
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8454,
+        "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+        "fps": 580.867283269078,
+        "hota": 0.7120399220884964,
+        "predicted_per_segment": [
+          248
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8403,
+        "config": "ShuffleNet05_60_8_r025_tr_s100_sortcython",
+        "fps": 824.3164332491374,
+        "hota": 0.7111749349252963,
+        "predicted_per_segment": [
+          245
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8483,
+        "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
+        "fps": 649.251985035592,
+        "hota": 0.7130444187748256,
+        "predicted_per_segment": [
+          244
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8323,
+        "config": "ShuffleNet05_60_8_r050_tr_s100_sortcython",
+        "fps": 893.1932313081572,
+        "hota": 0.7073028940466433,
+        "predicted_per_segment": [
+          243
+        ],
+        "system": "tetris",
+        "videos": 60
+      }
+    ],
+    "rule": {
+      "frame_rates": [
+        {
+          "clip_fps": 15.0,
+          "min_duration_clip_frames": 5,
+          "otif_fps": 30.0,
+          "videos": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59
+          ]
+        }
+      ],
+      "kind": "travel",
+      "min_distance_pixels": 50,
+      "min_duration_otif_frames": 10,
+      "resolutions": [
+        [
+          1280,
+          720
+        ]
+      ]
+    },
+    "truth_per_segment": [
+      282
+    ],
+    "videos": 60
+  },
+  "CalDoT1": {
+    "records": [
+      {
+        "accuracy": 0.9564,
+        "config": "003_groundtruth",
+        "fps": null,
+        "hota": null,
+        "predicted_per_segment": [
+          299,
+          258
+        ],
+        "system": "ground truth",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5212,
+        "config": "param 0",
+        "fps": 373.50959297137945,
+        "hota": 0.0702639004808596,
+        "predicted_per_segment": [
+          190,
+          319
+        ],
+        "system": "leap",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9441,
+        "config": "param 0",
+        "fps": 30.020013342228154,
+        "hota": 0.7536179174429152,
+        "predicted_per_segment": [
+          311,
+          265
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.945,
+        "config": "param 1",
+        "fps": 29.8943732146416,
+        "hota": 0.7536349062191977,
+        "predicted_per_segment": [
+          309,
+          266
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9456,
+        "config": "param 2",
+        "fps": 58.727569331158236,
+        "hota": 0.7705010545172961,
+        "predicted_per_segment": [
+          319,
+          268
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9471,
+        "config": "param 3",
+        "fps": 115.07479861910242,
+        "hota": 0.7702676679939657,
+        "predicted_per_segment": [
+          312,
+          259
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9579,
+        "config": "param 4",
+        "fps": 235.10971786833855,
+        "hota": 0.7331128671749492,
+        "predicted_per_segment": [
+          302,
+          253
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9264,
+        "config": "param 5",
+        "fps": 421.7432052483599,
+        "hota": 0.7304781874798446,
+        "predicted_per_segment": [
+          302,
+          244
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9358,
+        "config": "param 6",
+        "fps": 600.8010680907878,
+        "hota": 0.7251885008476432,
+        "predicted_per_segment": [
+          300,
+          243
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8396,
+        "config": "param 7",
+        "fps": 1204.8192771084337,
+        "hota": 0.5695003084426312,
+        "predicted_per_segment": [
+          293,
+          489
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8373,
+        "config": "param 8",
+        "fps": 1492.5373134328358,
+        "hota": 0.4890615591837749,
+        "predicted_per_segment": [
+          278,
+          356
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8106,
+        "config": "param 9",
+        "fps": 2017.9372197309415,
+        "hota": 0.4653857565862139,
+        "predicted_per_segment": [
+          278,
+          414
+        ],
+        "system": "otif",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9568,
+        "config": "naive",
+        "fps": 30.93095505912012,
+        "hota": 0.8180912461425098,
+        "predicted_per_segment": [
+          298,
+          258
+        ],
+        "system": "reference",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4096,
+        "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+        "fps": 4409.935817633333,
+        "hota": 0.6816074530050972,
+        "predicted_per_segment": [
+          21,
+          20
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4136,
+        "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
+        "fps": 2811.917294614788,
+        "hota": 0.6906707573153483,
+        "predicted_per_segment": [
+          24,
+          23
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4173,
+        "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+        "fps": 4830.280449510638,
+        "hota": 0.6753249946189871,
+        "predicted_per_segment": [
+          19,
+          20
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4144,
+        "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
+        "fps": 2964.854919905327,
+        "hota": 0.6880840831347375,
+        "predicted_per_segment": [
+          24,
+          23
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4067,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "fps": 4968.380886558944,
+        "hota": 0.670145143051155,
+        "predicted_per_segment": [
+          20,
+          21
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.771,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+        "fps": 700.4950864972536,
+        "hota": 0.7400161467099747,
+        "predicted_per_segment": [
+          270,
+          152
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7551,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "fps": 760.8103462523839,
+        "hota": 0.7309506030738862,
+        "predicted_per_segment": [
+          262,
+          134
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7293,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "fps": 781.6514629474196,
+        "hota": 0.7188052855814934,
+        "predicted_per_segment": [
+          232,
+          135
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7698,
+        "config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
+        "fps": 698.8475123332847,
+        "hota": 0.7403481283695584,
+        "predicted_per_segment": [
+          268,
+          152
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8143,
+        "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+        "fps": 408.609470805599,
+        "hota": 0.778921188031902,
+        "predicted_per_segment": [
+          301,
+          187
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8088,
+        "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+        "fps": 587.8010269979641,
+        "hota": 0.7648159793975331,
+        "predicted_per_segment": [
+          284,
+          186
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8074,
+        "config": "ShuffleNet05_60_1_080_r050_bl_s100_sortcython",
+        "fps": 458.31105053591017,
+        "hota": 0.7765189472885292,
+        "predicted_per_segment": [
+          295,
+          177
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8018,
+        "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+        "fps": 632.3515730112217,
+        "hota": 0.7566399465996405,
+        "predicted_per_segment": [
+          277,
+          178
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8073,
+        "config": "ShuffleNet05_60_1_080_r075_bl_s100_sortcython",
+        "fps": 481.8811881489132,
+        "hota": 0.7713383753665574,
+        "predicted_per_segment": [
+          296,
+          174
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7675,
+        "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
+        "fps": 667.0120774918919,
+        "hota": 0.7472030737974058,
+        "predicted_per_segment": [
+          258,
+          166
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9417,
+        "config": "ShuffleNet05_60_1_r025_bl_s100_bytetrackcython",
+        "fps": 193.00109652011412,
+        "hota": 0.8082024814684554,
+        "predicted_per_segment": [
+          292,
+          257
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9313,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "fps": 357.73870013842185,
+        "hota": 0.7883353638176435,
+        "predicted_per_segment": [
+          271,
+          251
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9465,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "fps": 120.74743026186265,
+        "hota": 0.817440530920063,
+        "predicted_per_segment": [
+          297,
+          256
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9458,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "fps": 187.4916797197625,
+        "hota": 0.8072672363916341,
+        "predicted_per_segment": [
+          291,
+          258
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9379,
+        "config": "ShuffleNet05_60_1_r050_bl_s100_bytetrackcython",
+        "fps": 208.242539757664,
+        "hota": 0.8044879405576922,
+        "predicted_per_segment": [
+          289,
+          256
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9295,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "fps": 378.1421060988955,
+        "hota": 0.7798909041052803,
+        "predicted_per_segment": [
+          262,
+          253
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9529,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "fps": 130.73322570479846,
+        "hota": 0.816130871471669,
+        "predicted_per_segment": [
+          297,
+          257
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9352,
+        "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+        "fps": 222.66575778640663,
+        "hota": 0.7988196569259407,
+        "predicted_per_segment": [
+          285,
+          249
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8932,
+        "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+        "fps": 402.26678599722896,
+        "hota": 0.7685520478477372,
+        "predicted_per_segment": [
+          240,
+          247
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9171,
+        "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+        "fps": 405.4801363451157,
+        "hota": 0.7664021054547243,
+        "predicted_per_segment": [
+          268,
+          255
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9423,
+        "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+        "fps": 142.32943970665764,
+        "hota": 0.8148580237810585,
+        "predicted_per_segment": [
+          293,
+          256
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.884,
+        "config": "ShuffleNet05_60_2_r025_bl_s100_bytetrackcython",
+        "fps": 367.022596867966,
+        "hota": 0.7703606793358778,
+        "predicted_per_segment": [
+          282,
+          224
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8995,
+        "config": "ShuffleNet05_60_2_r025_square_s100_bytetrackcython",
+        "fps": 233.7588744489904,
+        "hota": 0.778160974860809,
+        "predicted_per_segment": [
+          288,
+          234
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8799,
+        "config": "ShuffleNet05_60_2_r050_bl_s100_bytetrackcython",
+        "fps": 388.058268911264,
+        "hota": 0.7684690052746859,
+        "predicted_per_segment": [
+          278,
+          226
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.9034,
+        "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+        "fps": 256.738836426707,
+        "hota": 0.7778139041505298,
+        "predicted_per_segment": [
+          284,
+          233
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.887,
+        "config": "ShuffleNet05_60_2_r075_square_s100_bytetrackcython",
+        "fps": 273.7046123084312,
+        "hota": 0.7736602080657916,
+        "predicted_per_segment": [
+          279,
+          231
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7836,
+        "config": "ShuffleNet05_60_4_080_r050_bl_s100_sortcython",
+        "fps": 840.4866615044168,
+        "hota": 0.7670031636167909,
+        "predicted_per_segment": [
+          278,
+          175
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7488,
+        "config": "ShuffleNet05_60_4_080_r075_bl_s100_sortcython",
+        "fps": 873.0450976499521,
+        "hota": 0.759965939696273,
+        "predicted_per_segment": [
+          270,
+          165
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8661,
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "fps": 729.3215749046271,
+        "hota": 0.778685892269133,
+        "predicted_per_segment": [
+          298,
+          215
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8045,
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "fps": 1254.7841752667723,
+        "hota": 0.7618795995530581,
+        "predicted_per_segment": [
+          268,
+          197
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8634,
+        "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+        "fps": 464.6230627873568,
+        "hota": 0.7852125471617102,
+        "predicted_per_segment": [
+          298,
+          213
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8567,
+        "config": "ShuffleNet05_60_4_r050_bl_s100_sortcython",
+        "fps": 765.5571072706992,
+        "hota": 0.77524655595687,
+        "predicted_per_segment": [
+          297,
+          214
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.7803,
+        "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+        "fps": 1349.0438947816513,
+        "hota": 0.7503464076791927,
+        "predicted_per_segment": [
+          258,
+          191
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8505,
+        "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+        "fps": 507.4960873511855,
+        "hota": 0.7843794852066882,
+        "predicted_per_segment": [
+          296,
+          210
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8404,
+        "config": "ShuffleNet05_60_4_r075_bl_s100_sortcython",
+        "fps": 820.5119560726959,
+        "hota": 0.768891567111561,
+        "predicted_per_segment": [
+          291,
+          211
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.8431,
+        "config": "ShuffleNet05_60_4_r075_square_s100_sortcython",
+        "fps": 546.6278128528401,
+        "hota": 0.7821646579684924,
+        "predicted_per_segment": [
+          291,
+          209
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5037,
+        "config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
+        "fps": 2647.4630426043127,
+        "hota": 0.7019233244888482,
+        "predicted_per_segment": [
+          132,
+          64
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.4931,
+        "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
+        "fps": 2761.297040147503,
+        "hota": 0.6954998242869187,
+        "predicted_per_segment": [
+          104,
+          64
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5037,
+        "config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
+        "fps": 2547.1615253557115,
+        "hota": 0.7019230072429711,
+        "predicted_per_segment": [
+          132,
+          64
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5883,
+        "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+        "fps": 2224.11461803424,
+        "hota": 0.7339763232929007,
+        "predicted_per_segment": [
+          190,
+          90
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5992,
+        "config": "ShuffleNet05_60_8_080_r050_bl_s100_sortcython",
+        "fps": 1412.4379545948425,
+        "hota": 0.7469901406976608,
+        "predicted_per_segment": [
+          215,
+          92
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5692,
+        "config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
+        "fps": 2263.655616628157,
+        "hota": 0.724225963258592,
+        "predicted_per_segment": [
+          178,
+          89
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.6127,
+        "config": "ShuffleNet05_60_8_r025_bl_s100_sortcython",
+        "fps": 1395.8472169541974,
+        "hota": 0.7503080198552364,
+        "predicted_per_segment": [
+          227,
+          94
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5887,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "fps": 2355.524096124178,
+        "hota": 0.7323999573476522,
+        "predicted_per_segment": [
+          190,
+          90
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.6152,
+        "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+        "fps": 912.6371728528468,
+        "hota": 0.7583023587275252,
+        "predicted_per_segment": [
+          231,
+          95
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5992,
+        "config": "ShuffleNet05_60_8_r050_bl_s100_sortcython",
+        "fps": 1479.227584304065,
+        "hota": 0.7465908382323033,
+        "predicted_per_segment": [
+          216,
+          91
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5697,
+        "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+        "fps": 2486.877791179756,
+        "hota": 0.7248928309495719,
+        "predicted_per_segment": [
+          178,
+          90
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.6126,
+        "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
+        "fps": 986.459273903732,
+        "hota": 0.7567226377047447,
+        "predicted_per_segment": [
+          228,
+          94
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.596,
+        "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
+        "fps": 1560.0932018570545,
+        "hota": 0.7414093835351455,
+        "predicted_per_segment": [
+          208,
+          93
+        ],
+        "system": "tetris",
+        "videos": 60
+      },
+      {
+        "accuracy": 0.5472,
+        "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+        "fps": 2614.4968878380555,
+        "hota": 0.7155377878426945,
+        "predicted_per_segment": [
+          148,
+          87
+        ],
+        "system": "tetris",
+        "videos": 60
+      }
+    ],
+    "rule": {
+      "frame_rates": [
+        {
+          "clip_fps": 15.0,
+          "min_duration_clip_frames": 10,
+          "otif_fps": 15.0,
+          "videos": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            9,
+            10,
+            13,
+            14,
+            15,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            35,
+            36,
+            40,
+            43,
+            44,
+            45,
+            48,
+            50,
+            52,
+            53,
+            54,
+            56,
+            57
+          ]
+        },
+        {
+          "clip_fps": 15.0,
+          "min_duration_clip_frames": 5,
+          "otif_fps": 30.0,
+          "videos": [
+            8,
+            11,
+            12,
+            16,
+            26,
+            33,
+            34,
+            37,
+            38,
+            39,
+            41,
+            42,
+            46,
+            47,
+            49,
+            51,
+            55,
+            58,
+            59
+          ]
+        }
+      ],
+      "kind": "polygon",
+      "min_distance_pixels": 50,
+      "min_duration_otif_frames": 10,
+      "resolutions": [
+        [
+          720,
+          480
+        ]
+      ]
+    },
+    "truth_per_segment": [
+      310,
+      264
+    ],
+    "videos": 60
+  },
+  "CalDoT2": {
+    "records": [
+      {
+        "accuracy": 0.9371,
+        "config": "003_groundtruth",
+        "fps": null,
+        "hota": null,
+        "predicted_per_segment": [
+          263,
+          314
+        ],
+        "system": "ground truth",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5023,
+        "config": "param 0",
+        "fps": 506.3870409929687,
+        "hota": 0.0932620426967167,
+        "predicted_per_segment": [
+          168,
+          244
+        ],
+        "system": "leap",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9378,
+        "config": "param 0",
+        "fps": 28.873917228103945,
+        "hota": 0.6675198281034291,
+        "predicted_per_segment": [
+          278,
+          331
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.92,
+        "config": "param 1",
+        "fps": 56.95121179522876,
+        "hota": 0.6549931653339102,
+        "predicted_per_segment": [
+          278,
+          341
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9468,
+        "config": "param 2",
+        "fps": 104.69986040018614,
+        "hota": 0.5525727321124699,
+        "predicted_per_segment": [
+          268,
+          323
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9312,
+        "config": "param 3",
+        "fps": 215.31100478468898,
+        "hota": 0.5455016964737058,
+        "predicted_per_segment": [
+          265,
+          322
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9464,
+        "config": "param 4",
+        "fps": 398.58281665190435,
+        "hota": 0.5099614163964417,
+        "predicted_per_segment": [
+          269,
+          309
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9546,
+        "config": "param 5",
+        "fps": 478.4688995215311,
+        "hota": 0.5251937982308114,
+        "predicted_per_segment": [
+          274,
+          307
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9511,
+        "config": "param 6",
+        "fps": 566.7506297229219,
+        "hota": 0.5255491505930546,
+        "predicted_per_segment": [
+          271,
+          307
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9485,
+        "config": "param 7",
+        "fps": 789.4736842105264,
+        "hota": 0.4783654494257485,
+        "predicted_per_segment": [
+          269,
+          311
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9216,
+        "config": "param 8",
+        "fps": 1282.0512820512822,
+        "hota": 0.4007324368384903,
+        "predicted_per_segment": [
+          254,
+          306
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8883,
+        "config": "param 9",
+        "fps": 1449.2753623188407,
+        "hota": 0.3254203315404112,
+        "predicted_per_segment": [
+          239,
+          292
+        ],
+        "system": "otif",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9333,
+        "config": "naive",
+        "fps": 30.8622484710686,
+        "hota": 0.7155520702265457,
+        "predicted_per_segment": [
+          262,
+          315
+        ],
+        "system": "reference",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.0797,
+        "config": "ShuffleNet05_60_16_040_r025_none_s100_sortcython",
+        "fps": 4544.909875724819,
+        "hota": 0.2004638700612434,
+        "predicted_per_segment": [
+          26,
+          4
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.0797,
+        "config": "ShuffleNet05_60_16_060_r025_none_s100_sortcython",
+        "fps": 4577.897586613812,
+        "hota": 0.2004638700612434,
+        "predicted_per_segment": [
+          26,
+          4
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.0797,
+        "config": "ShuffleNet05_60_16_080_r025_none_s100_sortcython",
+        "fps": 4586.49780553538,
+        "hota": 0.2004638700612434,
+        "predicted_per_segment": [
+          26,
+          4
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.0803,
+        "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+        "fps": 5169.854873172091,
+        "hota": 0.2031193703395333,
+        "predicted_per_segment": [
+          26,
+          5
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.0743,
+        "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+        "fps": 5629.783403104092,
+        "hota": 0.1971245939705367,
+        "predicted_per_segment": [
+          23,
+          4
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.0695,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "fps": 6054.361644147441,
+        "hota": 0.1820385447423985,
+        "predicted_per_segment": [
+          20,
+          3
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.6717,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+        "fps": 563.5021713369891,
+        "hota": 0.5631420282024511,
+        "predicted_per_segment": [
+          236,
+          168
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.6375,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "fps": 603.0577521707244,
+        "hota": 0.5505464963782931,
+        "predicted_per_segment": [
+          225,
+          165
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5876,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "fps": 640.2012352597408,
+        "hota": 0.53207346333324,
+        "predicted_per_segment": [
+          211,
+          165
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8939,
+        "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
+        "fps": 258.246897373859,
+        "hota": 0.6598752279382549,
+        "predicted_per_segment": [
+          239,
+          318
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8558,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
+        "fps": 492.8248012754396,
+        "hota": 0.596666606363646,
+        "predicted_per_segment": [
+          218,
+          305
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.7685,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+        "fps": 566.4777827104875,
+        "hota": 0.5707153971537956,
+        "predicted_per_segment": [
+          238,
+          237
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8664,
+        "config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
+        "fps": 292.19043330133803,
+        "hota": 0.655765730987467,
+        "predicted_per_segment": [
+          227,
+          314
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8215,
+        "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
+        "fps": 525.8205919565085,
+        "hota": 0.5733309112588723,
+        "predicted_per_segment": [
+          216,
+          292
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.7829,
+        "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
+        "fps": 607.1013620253159,
+        "hota": 0.5559646636552775,
+        "predicted_per_segment": [
+          235,
+          244
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8621,
+        "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+        "fps": 321.5401284465076,
+        "hota": 0.6453736903656221,
+        "predicted_per_segment": [
+          230,
+          311
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9294,
+        "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+        "fps": 245.6219830035432,
+        "hota": 0.6664529720656004,
+        "predicted_per_segment": [
+          256,
+          316
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8953,
+        "config": "ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
+        "fps": 475.280927377154,
+        "hota": 0.6034439438618533,
+        "predicted_per_segment": [
+          241,
+          302
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9031,
+        "config": "ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
+        "fps": 272.53812834587507,
+        "hota": 0.6604034899436684,
+        "predicted_per_segment": [
+          248,
+          312
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8662,
+        "config": "ShuffleNet05_60_1_080_r075_none_s100_bytetrackcython",
+        "fps": 512.9800530483944,
+        "hota": 0.5825010532728471,
+        "predicted_per_segment": [
+          230,
+          294
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8829,
+        "config": "ShuffleNet05_60_1_080_r075_tr_s100_bytetrackcython",
+        "fps": 299.16088509166764,
+        "hota": 0.6521753413824308,
+        "predicted_per_segment": [
+          240,
+          311
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9273,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "fps": 398.442058836427,
+        "hota": 0.6265074816101236,
+        "predicted_per_segment": [
+          251,
+          305
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9417,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "fps": 123.0971595288142,
+        "hota": 0.6962965979007619,
+        "predicted_per_segment": [
+          263,
+          317
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9299,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "fps": 203.9892240523238,
+        "hota": 0.6797627704596401,
+        "predicted_per_segment": [
+          257,
+          313
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.896,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "fps": 455.3616387168862,
+        "hota": 0.6215288288510724,
+        "predicted_per_segment": [
+          245,
+          302
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.9154,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "fps": 144.71047122670748,
+        "hota": 0.6921171850406366,
+        "predicted_per_segment": [
+          256,
+          315
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8945,
+        "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+        "fps": 238.84861207196047,
+        "hota": 0.6772377013216041,
+        "predicted_per_segment": [
+          248,
+          312
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.894,
+        "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+        "fps": 278.84233166928016,
+        "hota": 0.6440755162447334,
+        "predicted_per_segment": [
+          241,
+          311
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8597,
+        "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+        "fps": 501.2879340426702,
+        "hota": 0.609233102392869,
+        "predicted_per_segment": [
+          227,
+          294
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.884,
+        "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+        "fps": 503.1564282748116,
+        "hota": 0.5815255562790581,
+        "predicted_per_segment": [
+          244,
+          306
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8771,
+        "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+        "fps": 264.22263500717474,
+        "hota": 0.6691315597019596,
+        "predicted_per_segment": [
+          240,
+          309
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.6461,
+        "config": "ShuffleNet05_60_2_040_r025_none_s100_sortcython",
+        "fps": 907.8841133030548,
+        "hota": 0.5493080509891303,
+        "predicted_per_segment": [
+          214,
+          167
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.8564,
+        "config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
+        "fps": 799.4853730845593,
+        "hota": 0.5740824332481858,
+        "predicted_per_segment": [
+          256,
+          258
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.4317,
+        "config": "ShuffleNet05_60_4_040_r050_tr_s100_sortcython",
+        "fps": 1011.6836176023688,
+        "hota": 0.5452174756482141,
+        "predicted_per_segment": [
+          168,
+          104
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5608,
+        "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
+        "fps": 1521.9557079024405,
+        "hota": 0.5241774178029237,
+        "predicted_per_segment": [
+          218,
+          115
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5316,
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "fps": 1702.1601262140446,
+        "hota": 0.5169404791397355,
+        "predicted_per_segment": [
+          201,
+          115
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5002,
+        "config": "ShuffleNet05_60_4_060_r075_tr_s100_sortcython",
+        "fps": 1039.2527614379158,
+        "hota": 0.5517571357845209,
+        "predicted_per_segment": [
+          196,
+          106
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5415,
+        "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+        "fps": 793.1326914793398,
+        "hota": 0.5622258405408753,
+        "predicted_per_segment": [
+          213,
+          106
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.501,
+        "config": "ShuffleNet05_60_4_080_r075_tr_s100_sortcython",
+        "fps": 1022.8341857442044,
+        "hota": 0.5509876340259151,
+        "predicted_per_segment": [
+          195,
+          108
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5726,
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "fps": 840.8689691020345,
+        "hota": 0.5443036317491378,
+        "predicted_per_segment": [
+          223,
+          119
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5554,
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "fps": 1571.8839045367638,
+        "hota": 0.522328126595969,
+        "predicted_per_segment": [
+          216,
+          114
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5444,
+        "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+        "fps": 824.2929980885491,
+        "hota": 0.5623625495444785,
+        "predicted_per_segment": [
+          214,
+          105
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5277,
+        "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+        "fps": 1801.3843891177278,
+        "hota": 0.5171107528700438,
+        "predicted_per_segment": [
+          203,
+          113
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5109,
+        "config": "ShuffleNet05_60_4_r050_tr_s100_sortcython",
+        "fps": 936.7241847604092,
+        "hota": 0.5582177578042572,
+        "predicted_per_segment": [
+          214,
+          99
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.4841,
+        "config": "ShuffleNet05_60_4_r075_none_s100_sortcython",
+        "fps": 2009.2582087836968,
+        "hota": 0.50099236464983,
+        "predicted_per_segment": [
+          184,
+          106
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.5002,
+        "config": "ShuffleNet05_60_4_r075_tr_s100_sortcython",
+        "fps": 1058.2629483340477,
+        "hota": 0.5509185900608676,
+        "predicted_per_segment": [
+          199,
+          105
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.2357,
+        "config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
+        "fps": 2749.9474959772897,
+        "hota": 0.3681388580904752,
+        "predicted_per_segment": [
+          100,
+          17
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.2236,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "fps": 2877.669312674649,
+        "hota": 0.3693209212040199,
+        "predicted_per_segment": [
+          103,
+          16
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.2114,
+        "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+        "fps": 3183.6011378886888,
+        "hota": 0.3557893683567884,
+        "predicted_per_segment": [
+          94,
+          12
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.1804,
+        "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+        "fps": 3431.967060787498,
+        "hota": 0.3355491186501663,
+        "predicted_per_segment": [
+          79,
+          10
+        ],
+        "system": "tetris",
+        "videos": 30
+      },
+      {
+        "accuracy": 0.1963,
+        "config": "ShuffleNet05_60_8_r075_tr_s100_sortcython",
+        "fps": 1971.57373325113,
+        "hota": 0.4038227356490509,
+        "predicted_per_segment": [
+          86,
+          12
+        ],
+        "system": "tetris",
+        "videos": 30
+      }
+    ],
+    "rule": {
+      "frame_rates": [
+        {
+          "clip_fps": 15.0,
+          "min_duration_clip_frames": 10,
+          "otif_fps": 15.0,
+          "videos": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            28,
+            29
+          ]
+        },
+        {
+          "clip_fps": 15.0,
+          "min_duration_clip_frames": 5,
+          "otif_fps": 30.0,
+          "videos": [
+            20,
+            27
+          ]
+        }
+      ],
+      "kind": "polygon",
+      "min_distance_pixels": 50,
+      "min_duration_otif_frames": 10,
+      "resolutions": [
+        [
+          720,
+          480
+        ]
+      ]
+    },
+    "truth_per_segment": [
+      281,
+      309
+    ],
+    "videos": 30
+  }
+}

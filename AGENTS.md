@@ -97,6 +97,9 @@ FOR EACH STAGE OF REVIEW: output the explanation and pros and cons of each stage
 - Always add comments to every operations of the code.
 - If a Python file requires argument parsing, define the `parse_args` function near the top of the file, below imports, global variable definitions, and type definitions.
 - Do not add any comment or any doc-string to the parse_args function and its contents.
+- Data analytics code (evaluation, `measurements/`, and other scripts that read, join, group, or aggregate result files and tables) uses DuckDB; pandas is too slow for this.
+  Do not analyze data with Python for-loops there unless absolutely necessary; express the analysis as DuckDB queries (or vectorized NumPy) instead.
+  This rule does not apply to the Tetris system's execution pipeline (`scripts/`, `polyis/`, `lib/`); do not change how the system runs to follow it.
 
 ## Testing Guidelines
 - Framework: `pytest`. Place new tests alongside targets or under `lib/tests/` as `test_*.py`.

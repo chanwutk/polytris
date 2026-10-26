@@ -26,6 +26,7 @@ includes:
     - "dock"
     - "build.sh"
     - "AGENTS.md"
+    - "REVISION.md"
     - ".gitignore"
     - ".gitmodules"
 
@@ -48,6 +49,8 @@ includes:
     - "scripts"
     - "tests"
     - "demo"
+    - "measurements"
+    - "measurements-gpu"
 
   # File extensions to include within each directory
   extensions:

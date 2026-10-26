@@ -1,0 +1,186 @@
+{
+  "0.05": {
+    "Amsterdam": {
+      "bound": 0.8547,
+      "reference": {
+        "accuracy": 0.8997,
+        "fps": 15.3
+      },
+      "systems": {
+        "leap": {
+          "best_accuracy": -0.4261,
+          "meets_bound": false
+        },
+        "otif": {
+          "accuracy": 0.8667,
+          "config": "param 0",
+          "fps": 28.9,
+          "hota": 0.6593776172831385,
+          "meets_bound": true,
+          "speedup_vs_reference": 1.9
+        },
+        "tetris": {
+          "accuracy": 0.8569,
+          "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+          "fps": 335.5,
+          "hota": 0.7169121078712191,
+          "meets_bound": true,
+          "speedup_vs_reference": 22.0
+        }
+      },
+      "tetris_speedup_vs_otif": 11.6
+    },
+    "CalDoT1": {
+      "bound": 0.909,
+      "reference": {
+        "accuracy": 0.9568,
+        "fps": 30.9
+      },
+      "systems": {
+        "leap": {
+          "best_accuracy": 0.5212,
+          "meets_bound": false
+        },
+        "otif": {
+          "accuracy": 0.9358,
+          "config": "param 6",
+          "fps": 600.8,
+          "hota": 0.7251885008476432,
+          "meets_bound": true,
+          "speedup_vs_reference": 19.4
+        },
+        "tetris": {
+          "accuracy": 0.9171,
+          "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+          "fps": 405.5,
+          "hota": 0.7664021054547243,
+          "meets_bound": true,
+          "speedup_vs_reference": 13.1
+        }
+      },
+      "tetris_speedup_vs_otif": 0.7
+    },
+    "CalDoT2": {
+      "bound": 0.8866,
+      "reference": {
+        "accuracy": 0.9333,
+        "fps": 30.9
+      },
+      "systems": {
+        "leap": {
+          "best_accuracy": 0.5023,
+          "meets_bound": false
+        },
+        "otif": {
+          "accuracy": 0.8883,
+          "config": "param 9",
+          "fps": 1449.3,
+          "hota": 0.3254203315404112,
+          "meets_bound": true,
+          "speedup_vs_reference": 47.0
+        },
+        "tetris": {
+          "accuracy": 0.8953,
+          "config": "ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
+          "fps": 475.3,
+          "hota": 0.6034439438618533,
+          "meets_bound": true,
+          "speedup_vs_reference": 15.4
+        }
+      },
+      "tetris_speedup_vs_otif": 0.3
+    }
+  },
+  "0.10": {
+    "Amsterdam": {
+      "bound": 0.8097,
+      "reference": {
+        "accuracy": 0.8997,
+        "fps": 15.3
+      },
+      "systems": {
+        "leap": {
+          "best_accuracy": -0.4261,
+          "meets_bound": false
+        },
+        "otif": {
+          "accuracy": 0.8167,
+          "config": "param 4",
+          "fps": 241.1,
+          "hota": 0.6670862689327743,
+          "meets_bound": true,
+          "speedup_vs_reference": 15.8
+        },
+        "tetris": {
+          "accuracy": 0.8189,
+          "config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
+          "fps": 1055.5,
+          "hota": 0.6886726298481158,
+          "meets_bound": true,
+          "speedup_vs_reference": 69.2
+        }
+      },
+      "tetris_speedup_vs_otif": 4.4
+    },
+    "CalDoT1": {
+      "bound": 0.8611,
+      "reference": {
+        "accuracy": 0.9568,
+        "fps": 30.9
+      },
+      "systems": {
+        "leap": {
+          "best_accuracy": 0.5212,
+          "meets_bound": false
+        },
+        "otif": {
+          "accuracy": 0.9358,
+          "config": "param 6",
+          "fps": 600.8,
+          "hota": 0.7251885008476432,
+          "meets_bound": true,
+          "speedup_vs_reference": 19.4
+        },
+        "tetris": {
+          "accuracy": 0.8661,
+          "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+          "fps": 729.3,
+          "hota": 0.778685892269133,
+          "meets_bound": true,
+          "speedup_vs_reference": 23.6
+        }
+      },
+      "tetris_speedup_vs_otif": 1.2
+    },
+    "CalDoT2": {
+      "bound": 0.84,
+      "reference": {
+        "accuracy": 0.9333,
+        "fps": 30.9
+      },
+      "systems": {
+        "leap": {
+          "best_accuracy": 0.5023,
+          "meets_bound": false
+        },
+        "otif": {
+          "accuracy": 0.8883,
+          "config": "param 9",
+          "fps": 1449.3,
+          "hota": 0.3254203315404112,
+          "meets_bound": true,
+          "speedup_vs_reference": 47.0
+        },
+        "tetris": {
+          "accuracy": 0.8564,
+          "config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
+          "fps": 799.5,
+          "hota": 0.5740824332481858,
+          "meets_bound": true,
+          "speedup_vs_reference": 25.9
+        }
+      },
+      "tetris_speedup_vs_otif": 0.6
+    }
+  }
+}
