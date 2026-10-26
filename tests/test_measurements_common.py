@@ -154,3 +154,38 @@ def test_operating_points_report(con):
     # At LEAP's bound, LEAP qualifies and Tetris's ratio over it appears (200 / 300).
     out = common.operating_points(con, 'hpts', ['tetris', 'otif', 'leap'], bounds={'d': 0.5})['d']
     assert out['tetris_speedup_vs_leap'] == round(200 / 300, 1)
+
+
+def test_output_path_maps_each_system_to_its_stage():
+    # Ground truth, reference, and Tetris tracks and detections come from the execution cache stages.
+    assert common.output_path('d', 'ground truth', '003_groundtruth', 'te01.mp4').parts[-3:] == ('te01.mp4', '003_groundtruth', 'tracking.jsonl')
+    assert common.output_path('d', 'reference', 'naive', 'te01.mp4', 'detection').parts[-2:] == ('002_naive', 'detection.jsonl')
+    assert common.output_path('d', 'tetris', 'cfg', 'te01.mp4').parts[-3:] == ('060_uncompressed_tracks', 'cfg', 'tracking.jsonl')
+    assert common.output_path('d', 'tetris', 'cfg', 'te01.mp4', 'detection').parts[-3:] == ('050_uncompressed_detections', 'cfg', 'detection.jsonl')
+    # Prior systems use zero-padded parameter directories under the SOTA cache.
+    path = common.output_path('d', 'otif', 'param 7', 'te01.mp4')
+    assert path.parts[-7:] == ('SOTA', 'otif', 'd', 'te01.mp4', 'tracking_results', '007', 'tracking.jsonl')
+
+
+def test_output_path_rejects_unknown_outputs():
+    # Prior systems have no detection output, and unknown systems have no path.
+    with pytest.raises(AssertionError):
+        common.output_path('d', 'otif', 'param 1', 'te01.mp4', 'detection')
+    with pytest.raises(AssertionError):
+        common.output_path('d', 'mystery', 'x', 'te01.mp4')
+
+
+def test_system_configs_derives_prior_throughput_from_runtime(monkeypatch):
+    import pandas as pd
+    # One Tetris configuration and a reference row over 1,000 test frames.
+    tetris = pd.DataFrame({'variant_id': ['cfg'], 'throughput_fps': [50.0], 'HOTA_HOTA': [0.7]})
+    naive = pd.Series({'frame_count': 1000, 'throughput_fps': 10.0, 'HOTA_HOTA': 0.8})
+    monkeypatch.setattr(common, 'load_test_tradeoff', lambda dataset: (tetris, naive))
+    # Each prior system has one configuration that took 4 s, so 250 fps.
+    prior = pd.DataFrame({'param_id': [3], 'time': [4.0], 'HOTA_HOTA': [0.5]})
+    monkeypatch.setattr(common, 'prior_system_test_rows', lambda dataset, system: prior)
+    rows = common.system_configs('d')
+    assert rows[0] == dict(system='reference', config='naive', fps=10.0, hota=0.8)
+    assert rows[1] == dict(system='tetris', config='cfg', fps=50.0, hota=0.7)
+    assert dict(system='otif', config='param 3', fps=250.0, hota=0.5) in rows
+    assert dict(system='leap', config='param 3', fps=250.0, hota=0.5) in rows

@@ -7,9 +7,15 @@ import duckdb
 import pandas as pd
 
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
+from polyis.io import cache
 from polyis.utilities import load_tradeoff_data, split_tradeoff_variants
 
 
+# Prior systems compared with Tetris, as named in the SOTA cache.
+PRIOR_SYSTEMS = ('otif', 'leap')
+# Every dataset in the paper's evaluation, with the labels used in the manuscript.
+DATASET_LABELS = {'caldot1-y05': 'CalDoT1', 'caldot2-y05': 'CalDoT2', 'ams-y05': 'Amsterdam',
+                  'jnc0': 'B3D1', 'jnc2': 'B3D2', 'jnc6': 'B3D3', 'jnc7': 'B3D4'}
 # Root of the per-script result directories, next to this package.
 RESULTS_ROOT = Path(__file__).resolve().parent.parent / 'measurements-results'
 
@@ -203,3 +209,46 @@ def print_operating_points(points: dict, metric: str, primary: str = 'tetris'):
                                if k.startswith(primary + '_speedup_vs_'))
             print(f"  {dataset:10s} ref {p['reference']['accuracy']:.3f} bound {p['bound']} (loss {p['loss']:.1%}) | "
                   + ' | '.join(cells) + f' | {primary} {ratios}')
+
+
+def system_configs(dataset: str) -> list[dict]:
+    """Every test-split configuration of the reference pipeline, Tetris, OTIF, and LEAP on a dataset.
+
+    Each row has system, config, fps (throughput over the test split), and hota. Tetris rows are
+    its validated configurations from the tradeoff table; prior systems' throughput is the test
+    split's frame count over their runtime, as in evaluation/p200_compare_compute.py.
+    """
+    # Tetris configurations and the reference pipeline from the tradeoff table.
+    tetris, naive = load_test_tradeoff(dataset)
+    # Test-split frame count, used to turn prior systems' runtimes into throughput.
+    frames = float(naive['frame_count'])
+    rows = [dict(system='reference', config='naive', fps=float(naive['throughput_fps']), hota=float(naive['HOTA_HOTA']))]
+    rows += [dict(system='tetris', config=str(c), fps=float(f), hota=float(h))
+             for c, f, h in zip(tetris['variant_id'], tetris['throughput_fps'], tetris['HOTA_HOTA'])]
+    for system in PRIOR_SYSTEMS:
+        prior = prior_system_test_rows(dataset, system)
+        rows += [dict(system=system, config=f'param {int(p)}', fps=frames / float(t), hota=float(h))
+                 for p, t, h in zip(prior['param_id'], prior['time'], prior['HOTA_HOTA'])]
+    return rows
+
+
+def output_path(dataset: str, system: str, config: str, video: str, kind: str = 'tracking') -> Path:
+    """A configuration's tracking.jsonl (kind 'tracking') or detection.jsonl (kind 'detection') for one test video.
+
+    system is 'ground truth' (003_groundtruth), 'reference' (002_naive), 'tetris' (060/050 stages),
+    or a prior system ('otif', 'leap'; config 'param N'). Prior systems only have tracking output.
+    """
+    # The file name inside the stage directory.
+    name = f'{kind}.jsonl'
+    if system == 'ground truth':
+        return Path(cache.exec(dataset, 'groundtruth', video, name))
+    if system == 'reference':
+        return Path(cache.exec(dataset, 'naive', video, name))
+    if system == 'tetris':
+        # Tracks are unpacked in 060; detections mapped back from canvases are in 050.
+        stage = 'ucomp-tracks' if kind == 'tracking' else 'ucomp-dets'
+        return Path(cache.exec(dataset, stage, video, config, name))
+    # Prior systems store one directory per parameter id.
+    assert system in PRIOR_SYSTEMS and kind == 'tracking', f'no {kind} output for system {system!r}'
+    param = int(config.removeprefix('param '))
+    return Path(cache.sota(system, dataset, video, 'tracking_results', f'{param:03d}', name))

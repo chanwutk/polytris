@@ -46,10 +46,9 @@ from pathlib import Path
 import cv2
 import duckdb
 
-from measurements.common import (best_accuracy_bounds, load_test_tradeoff, operating_points,
-                                 print_operating_points, prior_system_test_rows, query_dicts, results_dir,
-                                 write_json)
-from polyis.io import cache, store
+from measurements.common import (PRIOR_SYSTEMS, best_accuracy_bounds, operating_points, output_path,
+                                 print_operating_points, query_dicts, results_dir, system_configs, write_json)
+from polyis.io import store
 
 
 # Polygons copied verbatim from OTIF's pipeline2/lib/eval.go, in OTIF video pixels.
@@ -60,8 +59,6 @@ CALDOT2_BOTTOM = ((322, 363), (0, 288), (0, 480), (322, 480))
 # Amsterdam's travel rule from eval.go: minimum duration in OTIF video frames, minimum distance in pixels.
 OTIF_MIN_DURATION = 10
 OTIF_MIN_DISTANCE = 50
-# Prior systems scored alongside Tetris and the reference pipeline.
-PRIOR_SYSTEMS = ('otif', 'leap')
 # Schema of a tracking.jsonl line: a frame index and boxes [track_id, x1, y1, x2, y2].
 TRACK_COLUMNS = "{'frame_idx': 'BIGINT', 'tracks': 'DOUBLE[][]'}"
 
@@ -300,28 +297,11 @@ def check_videos(dataset: CountDataset, videos: list[int]) -> tuple[dict, list[t
 
 def config_files(dataset: CountDataset, videos: list[int]) -> tuple[list[tuple], list[tuple]]:
     """Rows for tables files(system, config, video, filename) and configs(system, config, fps, hota)."""
-    # Tetris configurations and the reference pipeline from the tradeoff table.
-    tetris, naive = load_test_tradeoff(dataset.key)
-    # Test-split frame count, used to turn prior systems' runtimes into throughput.
-    frames = float(naive['frame_count'])
-    # (system, config, fps, hota, path of video v) for every configuration of every system.
-    sources = [
-        ('ground truth', '003_groundtruth', None, None,
-         lambda v: cache.exec(dataset.key, 'groundtruth', v, 'tracking.jsonl')),
-        ('reference', 'naive', float(naive['throughput_fps']), float(naive['HOTA_HOTA']),
-         lambda v: cache.exec(dataset.key, 'naive', v, 'tracking.jsonl')),
-    ]
-    sources += [('tetris', c, float(fps), float(hota),
-                 lambda v, c=c: cache.exec(dataset.key, 'ucomp-tracks', v, c, 'tracking.jsonl'))
-                for c, fps, hota in zip(tetris['variant_id'], tetris['throughput_fps'], tetris['HOTA_HOTA'])]
-    for system in PRIOR_SYSTEMS:
-        rows = prior_system_test_rows(dataset.key, system)
-        sources += [(system, f'param {int(p)}', frames / float(t), float(hota),
-                     lambda v, p=int(p), s=system: cache.sota(s, dataset.key, v, 'tracking_results', f'{p:03d}', 'tracking.jsonl'))
-                    for p, t, hota in zip(rows['param_id'], rows['time'], rows['HOTA_HOTA'])]
+    # Our automatic ground truth (scored for reference, no throughput) and every system's configurations.
+    configs = [('ground truth', '003_groundtruth', None, None)]
+    configs += [(r['system'], r['config'], r['fps'], r['hota']) for r in system_configs(dataset.key)]
     # One file per configuration and ground-truth video.
-    files = [(s, c, idx, str(path_of(f'te{idx:02d}.mp4'))) for s, c, _, _, path_of in sources for idx in videos]
-    configs = [(s, c, fps, hota) for s, c, fps, hota, _ in sources]
+    files = [(s, c, idx, str(output_path(dataset.key, s, c, f'te{idx:02d}.mp4'))) for s, c, _, _ in configs for idx in videos]
     return files, configs
 
 
