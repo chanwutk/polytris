@@ -1,0 +1,1421 @@
+{
+  "datasets": {
+    "Amsterdam": {
+      "classifier": {
+        "batch_size": 16,
+        "batches": 3420,
+        "excluded_ops": [
+          "read",
+          "retrieve"
+        ],
+        "fps": 416.8,
+        "fps_at_median": 432.9,
+        "grid": [
+          12,
+          21
+        ],
+        "host_interval_ms_per_frame_by_op": {
+          "collect": 0.0081,
+          "diff": 0.0085,
+          "inference": 0.2314,
+          "mask": 0.3817,
+          "reshape": 0.0046,
+          "resize": 0.0132,
+          "send": 1.7519
+        },
+        "log": "020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl",
+        "logs_written": [
+          "2026-04-19 23:11:13+00",
+          "2026-04-19 23:19:43+00"
+        ],
+        "mean_ms_per_frame": 2.4,
+        "median_ms_per_frame": 2.31,
+        "ops": [
+          "collect",
+          "diff",
+          "inference",
+          "mask",
+          "reshape",
+          "resize",
+          "send"
+        ],
+        "retrieve_ms_per_frame": 0.0037,
+        "sample_rate": 1,
+        "tiles": 252,
+        "tiles_inferred_at_most": 126
+      },
+      "classifier_runs": {
+        "1": {
+          "batches": 3420,
+          "classified_frames": 54011,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 473.37,
+            "excess_share_pct": 0.37,
+            "last_batch_of_video": 2,
+            "mean_ms_per_classified_frame_without_excess": 2.3907
+          },
+          "logs_written": [
+            "2026-04-19 23:11:13+00",
+            "2026-04-19 23:19:43+00"
+          ],
+          "mean_ms_per_classified_frame": 2.3995,
+          "median_ms_per_classified_frame": 2.3098,
+          "ratio_of_means": 26.8,
+          "videos": 60
+        },
+        "16": {
+          "batches": 240,
+          "classified_frames": 3480,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 101.11,
+            "excess_share_pct": 1.17,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.4508
+          },
+          "logs_written": [
+            "2026-04-19 23:11:45+00",
+            "2026-04-19 23:18:34+00"
+          ],
+          "mean_ms_per_classified_frame": 2.4799,
+          "median_ms_per_classified_frame": 2.42,
+          "ratio_of_means": 25.9,
+          "videos": 60
+        },
+        "2": {
+          "batches": 1740,
+          "classified_frames": 27064,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 473.76,
+            "excess_share_pct": 0.72,
+            "last_batch_of_video": 2,
+            "mean_ms_per_classified_frame_without_excess": 2.4197
+          },
+          "logs_written": [
+            "2026-04-19 23:11:18+00",
+            "2026-04-19 23:18:42+00"
+          ],
+          "mean_ms_per_classified_frame": 2.4372,
+          "median_ms_per_classified_frame": 2.3173,
+          "ratio_of_means": 26.4,
+          "videos": 60
+        },
+        "4": {
+          "batches": 900,
+          "classified_frames": 13563,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 446.88,
+            "excess_share_pct": 1.48,
+            "last_batch_of_video": 2,
+            "mean_ms_per_classified_frame_without_excess": 2.2003
+          },
+          "logs_written": [
+            "2026-04-19 23:11:21+00",
+            "2026-04-19 23:18:22+00"
+          ],
+          "mean_ms_per_classified_frame": 2.2333,
+          "median_ms_per_classified_frame": 1.9268,
+          "ratio_of_means": 28.8,
+          "videos": 60
+        },
+        "8": {
+          "batches": 480,
+          "classified_frames": 6840,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 93.07,
+            "excess_share_pct": 0.55,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.4685
+          },
+          "logs_written": [
+            "2026-04-19 23:11:26+00",
+            "2026-04-19 23:18:24+00"
+          ],
+          "mean_ms_per_classified_frame": 2.4822,
+          "median_ms_per_classified_frame": 2.4196,
+          "ratio_of_means": 25.9,
+          "videos": 60
+        }
+      },
+      "cost_across_runs": {
+        "mean_ms_per_classified_frame": {
+          "max": 2.4822,
+          "min": 2.2333,
+          "operating_point": 2.4822
+        },
+        "operating_point_sample_rate": 8,
+        "ratio_of_means": {
+          "max": 28.8,
+          "min": 25.9,
+          "operating_point": 25.9
+        },
+        "sample_rates": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "spread_pct": 11.1
+      },
+      "dataset": "ams-y05",
+      "detector": {
+        "batch_size": 1,
+        "excluded_ops": [
+          "read"
+        ],
+        "fps": 15.6,
+        "fps_at_median": 15.6,
+        "log": "002_naive/detection_runtime.jsonl",
+        "logs_written": [
+          "2026-03-05 19:31:18+00",
+          "2026-03-05 19:48:52+00"
+        ],
+        "mean_ms_per_frame": 64.227,
+        "median_ms_per_frame": 64.221,
+        "model": {
+          "detector": "ultralytics",
+          "model_path": "/polyis-data/training/ultralytics/amsterdam/weights/yolov5x6/weights/best.pt",
+          "source": "configs/detectors.yaml when this script ran; not recorded in the logs",
+          "weights_found": true,
+          "weights_modified": "2026-02-10T00:53:06+00:00",
+          "weights_predate_first_log": true
+        },
+        "ops": [
+          "detect"
+        ]
+      },
+      "frames": 54011,
+      "ratio_of_means": 26.8,
+      "ratio_of_medians": 27.8,
+      "videos": 60
+    },
+    "B3D1": {
+      "classifier": {
+        "batch_size": 16,
+        "batches": 340,
+        "excluded_ops": [
+          "read",
+          "retrieve"
+        ],
+        "fps": 418.9,
+        "fps_at_median": 456.9,
+        "grid": [
+          12,
+          18
+        ],
+        "host_interval_ms_per_frame_by_op": {
+          "collect": 0.0089,
+          "diff": 0.0108,
+          "inference": 0.2646,
+          "mask": 0.2191,
+          "reshape": 0.0064,
+          "resize": 0.0007,
+          "send": 1.8769
+        },
+        "log": "020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl",
+        "logs_written": [
+          "2026-04-19 23:08:29+00",
+          "2026-04-19 23:09:09+00"
+        ],
+        "mean_ms_per_frame": 2.387,
+        "median_ms_per_frame": 2.189,
+        "ops": [
+          "collect",
+          "diff",
+          "inference",
+          "mask",
+          "reshape",
+          "resize",
+          "send"
+        ],
+        "retrieve_ms_per_frame": 0.004,
+        "sample_rate": 1,
+        "tiles": 216,
+        "tiles_inferred_at_most": 156
+      },
+      "classifier_runs": {
+        "1": {
+          "batches": 340,
+          "classified_frames": 5375,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 143.36,
+            "excess_share_pct": 1.12,
+            "last_batch_of_video": 2,
+            "mean_ms_per_classified_frame_without_excess": 2.3607
+          },
+          "logs_written": [
+            "2026-04-19 23:08:29+00",
+            "2026-04-19 23:09:09+00"
+          ],
+          "mean_ms_per_classified_frame": 2.3874,
+          "median_ms_per_classified_frame": 2.1887,
+          "ratio_of_means": 27.9,
+          "videos": 5
+        },
+        "16": {
+          "batches": 25,
+          "classified_frames": 345,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 136.96,
+            "excess_share_pct": 13.24,
+            "last_batch_of_video": 2,
+            "mean_ms_per_classified_frame_without_excess": 2.6022
+          },
+          "logs_written": [
+            "2026-04-19 23:08:52+00",
+            "2026-04-19 23:09:22+00"
+          ],
+          "mean_ms_per_classified_frame": 2.9992,
+          "median_ms_per_classified_frame": 2.289,
+          "ratio_of_means": 22.2,
+          "videos": 5
+        },
+        "2": {
+          "batches": 170,
+          "classified_frames": 2690,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 97.5,
+            "excess_share_pct": 1.26,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.8481
+          },
+          "logs_written": [
+            "2026-04-19 23:08:30+00",
+            "2026-04-19 23:09:05+00"
+          ],
+          "mean_ms_per_classified_frame": 2.8843,
+          "median_ms_per_classified_frame": 3.1298,
+          "ratio_of_means": 23.1,
+          "videos": 5
+        },
+        "4": {
+          "batches": 85,
+          "classified_frames": 1350,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 95.97,
+            "excess_share_pct": 3.1,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.2209
+          },
+          "logs_written": [
+            "2026-04-19 23:08:30+00",
+            "2026-04-19 23:09:01+00"
+          ],
+          "mean_ms_per_classified_frame": 2.292,
+          "median_ms_per_classified_frame": 2.2001,
+          "ratio_of_means": 29.0,
+          "videos": 5
+        },
+        "8": {
+          "batches": 45,
+          "classified_frames": 680,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 95.66,
+            "excess_share_pct": 4.88,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.7414
+          },
+          "logs_written": [
+            "2026-04-19 23:08:41+00",
+            "2026-04-19 23:09:12+00"
+          ],
+          "mean_ms_per_classified_frame": 2.8821,
+          "median_ms_per_classified_frame": 2.2874,
+          "ratio_of_means": 23.1,
+          "videos": 5
+        }
+      },
+      "cost_across_runs": {
+        "mean_ms_per_classified_frame": {
+          "max": 2.9992,
+          "min": 2.292,
+          "operating_point": 2.292
+        },
+        "operating_point_sample_rate": 4,
+        "ratio_of_means": {
+          "max": 29.0,
+          "min": 22.2,
+          "operating_point": 29.0
+        },
+        "sample_rates": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "spread_pct": 30.9
+      },
+      "dataset": "jnc0",
+      "detector": {
+        "batch_size": 1,
+        "excluded_ops": [
+          "read"
+        ],
+        "fps": 15.0,
+        "fps_at_median": 15.0,
+        "log": "002_naive/detection_runtime.jsonl",
+        "logs_written": [
+          "2026-03-05 19:28:50+00",
+          "2026-03-05 19:28:52+00"
+        ],
+        "mean_ms_per_frame": 66.505,
+        "median_ms_per_frame": 66.529,
+        "model": {
+          "detector": "retina",
+          "model_path": "weights/retinanet_b3d.pth",
+          "source": "configs/detectors.yaml and configs/retinanet.json when this script ran; not recorded in the logs",
+          "weights_found": true,
+          "weights_modified": "2025-02-03T03:28:18+00:00",
+          "weights_predate_first_log": true
+        },
+        "ops": [
+          "detect"
+        ]
+      },
+      "frames": 5375,
+      "ratio_of_means": 27.9,
+      "ratio_of_medians": 30.4,
+      "videos": 5
+    },
+    "B3D2": {
+      "classifier": {
+        "batch_size": 16,
+        "batches": 295,
+        "excluded_ops": [
+          "read",
+          "retrieve"
+        ],
+        "fps": 465.2,
+        "fps_at_median": 482.1,
+        "grid": [
+          12,
+          18
+        ],
+        "host_interval_ms_per_frame_by_op": {
+          "collect": 0.0089,
+          "diff": 0.0108,
+          "inference": 0.2711,
+          "mask": 0.2189,
+          "reshape": 0.0063,
+          "resize": 0.0007,
+          "send": 1.6328
+        },
+        "log": "020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl",
+        "logs_written": [
+          "2026-04-19 23:09:06+00",
+          "2026-04-19 23:09:37+00"
+        ],
+        "mean_ms_per_frame": 2.149,
+        "median_ms_per_frame": 2.074,
+        "ops": [
+          "collect",
+          "diff",
+          "inference",
+          "mask",
+          "reshape",
+          "resize",
+          "send"
+        ],
+        "retrieve_ms_per_frame": 0.0041,
+        "sample_rate": 1,
+        "tiles": 216,
+        "tiles_inferred_at_most": 130
+      },
+      "classifier_runs": {
+        "1": {
+          "batches": 295,
+          "classified_frames": 4691,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 101.34,
+            "excess_share_pct": 1.01,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.1279
+          },
+          "logs_written": [
+            "2026-04-19 23:09:06+00",
+            "2026-04-19 23:09:37+00"
+          ],
+          "mean_ms_per_classified_frame": 2.1495,
+          "median_ms_per_classified_frame": 2.0744,
+          "ratio_of_means": 31.6,
+          "videos": 5
+        },
+        "16": {
+          "batches": 20,
+          "classified_frames": 300,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 95.18,
+            "excess_share_pct": 12.7,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.1801
+          },
+          "logs_written": [
+            "2026-04-19 23:09:33+00",
+            "2026-04-19 23:09:58+00"
+          ],
+          "mean_ms_per_classified_frame": 2.4974,
+          "median_ms_per_classified_frame": 1.8397,
+          "ratio_of_means": 27.2,
+          "videos": 5
+        },
+        "2": {
+          "batches": 150,
+          "classified_frames": 2350,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 95.8,
+            "excess_share_pct": 1.71,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.3473
+          },
+          "logs_written": [
+            "2026-04-19 23:09:24+00",
+            "2026-04-19 23:09:51+00"
+          ],
+          "mean_ms_per_classified_frame": 2.3881,
+          "median_ms_per_classified_frame": 2.1069,
+          "ratio_of_means": 28.5,
+          "videos": 5
+        },
+        "4": {
+          "batches": 75,
+          "classified_frames": 1180,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 100.05,
+            "excess_share_pct": 2.86,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.8796
+          },
+          "logs_written": [
+            "2026-04-19 23:09:27+00",
+            "2026-04-19 23:09:54+00"
+          ],
+          "mean_ms_per_classified_frame": 2.9644,
+          "median_ms_per_classified_frame": 3.0797,
+          "ratio_of_means": 22.9,
+          "videos": 5
+        },
+        "8": {
+          "batches": 40,
+          "classified_frames": 595,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 155.7,
+            "excess_share_pct": 9.52,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.4868
+          },
+          "logs_written": [
+            "2026-04-19 23:09:31+00",
+            "2026-04-19 23:09:57+00"
+          ],
+          "mean_ms_per_classified_frame": 2.7484,
+          "median_ms_per_classified_frame": 1.9525,
+          "ratio_of_means": 24.8,
+          "videos": 5
+        }
+      },
+      "cost_across_runs": {
+        "mean_ms_per_classified_frame": {
+          "max": 2.9644,
+          "min": 2.1495,
+          "operating_point": 2.7484
+        },
+        "operating_point_sample_rate": 8,
+        "ratio_of_means": {
+          "max": 31.6,
+          "min": 22.9,
+          "operating_point": 24.8
+        },
+        "sample_rates": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "spread_pct": 37.9
+      },
+      "dataset": "jnc2",
+      "detector": {
+        "batch_size": 1,
+        "excluded_ops": [
+          "read"
+        ],
+        "fps": 14.7,
+        "fps_at_median": 14.7,
+        "log": "002_naive/detection_runtime.jsonl",
+        "logs_written": [
+          "2026-03-05 19:30:06+00",
+          "2026-03-05 19:31:24+00"
+        ],
+        "mean_ms_per_frame": 68.025,
+        "median_ms_per_frame": 67.944,
+        "model": {
+          "detector": "retina",
+          "model_path": "weights/retinanet_b3d.pth",
+          "source": "configs/detectors.yaml and configs/retinanet.json when this script ran; not recorded in the logs",
+          "weights_found": true,
+          "weights_modified": "2025-02-03T03:28:18+00:00",
+          "weights_predate_first_log": true
+        },
+        "ops": [
+          "detect"
+        ]
+      },
+      "frames": 4691,
+      "ratio_of_means": 31.6,
+      "ratio_of_medians": 32.8,
+      "videos": 5
+    },
+    "B3D3": {
+      "classifier": {
+        "batch_size": 16,
+        "batches": 325,
+        "excluded_ops": [
+          "read",
+          "retrieve"
+        ],
+        "fps": 389.8,
+        "fps_at_median": 444.5,
+        "grid": [
+          12,
+          18
+        ],
+        "host_interval_ms_per_frame_by_op": {
+          "collect": 0.0088,
+          "diff": 0.0105,
+          "inference": 0.3457,
+          "mask": 0.237,
+          "reshape": 0.0065,
+          "resize": 0.0008,
+          "send": 1.9561
+        },
+        "log": "020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl",
+        "logs_written": [
+          "2026-04-19 23:09:48+00",
+          "2026-04-19 23:10:26+00"
+        ],
+        "mean_ms_per_frame": 2.565,
+        "median_ms_per_frame": 2.25,
+        "ops": [
+          "collect",
+          "diff",
+          "inference",
+          "mask",
+          "reshape",
+          "resize",
+          "send"
+        ],
+        "retrieve_ms_per_frame": 0.0068,
+        "sample_rate": 1,
+        "tiles": 216,
+        "tiles_inferred_at_most": 162
+      },
+      "classifier_runs": {
+        "1": {
+          "batches": 325,
+          "classified_frames": 5192,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 511.45,
+            "excess_share_pct": 3.84,
+            "last_batch_of_video": 0,
+            "mean_ms_per_classified_frame_without_excess": 2.4668
+          },
+          "logs_written": [
+            "2026-04-19 23:09:48+00",
+            "2026-04-19 23:10:26+00"
+          ],
+          "mean_ms_per_classified_frame": 2.5653,
+          "median_ms_per_classified_frame": 2.2496,
+          "ratio_of_means": 26.3,
+          "videos": 5
+        },
+        "16": {
+          "batches": 25,
+          "classified_frames": 330,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 123.0,
+            "excess_share_pct": 11.88,
+            "last_batch_of_video": 0,
+            "mean_ms_per_classified_frame_without_excess": 2.7652
+          },
+          "logs_written": [
+            "2026-04-19 23:10:18+00",
+            "2026-04-19 23:10:47+00"
+          ],
+          "mean_ms_per_classified_frame": 3.1379,
+          "median_ms_per_classified_frame": 2.3252,
+          "ratio_of_means": 21.5,
+          "videos": 5
+        },
+        "2": {
+          "batches": 165,
+          "classified_frames": 2600,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 491.84,
+            "excess_share_pct": 7.27,
+            "last_batch_of_video": 0,
+            "mean_ms_per_classified_frame_without_excess": 2.4139
+          },
+          "logs_written": [
+            "2026-04-19 23:10:02+00",
+            "2026-04-19 23:10:33+00"
+          ],
+          "mean_ms_per_classified_frame": 2.6031,
+          "median_ms_per_classified_frame": 2.2116,
+          "ratio_of_means": 25.9,
+          "videos": 5
+        },
+        "4": {
+          "batches": 85,
+          "classified_frames": 1305,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 466.76,
+            "excess_share_pct": 11.57,
+            "last_batch_of_video": 0,
+            "mean_ms_per_classified_frame_without_excess": 2.7325
+          },
+          "logs_written": [
+            "2026-04-19 23:10:14+00",
+            "2026-04-19 23:10:44+00"
+          ],
+          "mean_ms_per_classified_frame": 3.0902,
+          "median_ms_per_classified_frame": 2.7693,
+          "ratio_of_means": 21.8,
+          "videos": 5
+        },
+        "8": {
+          "batches": 45,
+          "classified_frames": 655,
+          "inference_spikes": {
+            "batches": 3,
+            "excess_ms": 506.19,
+            "excess_share_pct": 22.21,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.706
+          },
+          "logs_written": [
+            "2026-04-19 23:10:17+00",
+            "2026-04-19 23:10:46+00"
+          ],
+          "mean_ms_per_classified_frame": 3.4788,
+          "median_ms_per_classified_frame": 2.1141,
+          "ratio_of_means": 19.4,
+          "videos": 5
+        }
+      },
+      "cost_across_runs": {
+        "mean_ms_per_classified_frame": {
+          "max": 3.4788,
+          "min": 2.5653,
+          "operating_point": 3.0902
+        },
+        "operating_point_sample_rate": 4,
+        "ratio_of_means": {
+          "max": 26.3,
+          "min": 19.4,
+          "operating_point": 21.8
+        },
+        "sample_rates": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "spread_pct": 35.6
+      },
+      "dataset": "jnc6",
+      "detector": {
+        "batch_size": 1,
+        "excluded_ops": [
+          "read"
+        ],
+        "fps": 14.8,
+        "fps_at_median": 14.8,
+        "log": "002_naive/detection_runtime.jsonl",
+        "logs_written": [
+          "2026-03-05 19:30:09+00",
+          "2026-03-05 19:30:13+00"
+        ],
+        "mean_ms_per_frame": 67.381,
+        "median_ms_per_frame": 67.452,
+        "model": {
+          "detector": "retina",
+          "model_path": "weights/retinanet_b3d.pth",
+          "source": "configs/detectors.yaml and configs/retinanet.json when this script ran; not recorded in the logs",
+          "weights_found": true,
+          "weights_modified": "2025-02-03T03:28:18+00:00",
+          "weights_predate_first_log": true
+        },
+        "ops": [
+          "detect"
+        ]
+      },
+      "frames": 5192,
+      "ratio_of_means": 26.3,
+      "ratio_of_medians": 30.0,
+      "videos": 5
+    },
+    "B3D4": {
+      "classifier": {
+        "batch_size": 16,
+        "batches": 330,
+        "excluded_ops": [
+          "read",
+          "retrieve"
+        ],
+        "fps": 444.1,
+        "fps_at_median": 479.4,
+        "grid": [
+          12,
+          18
+        ],
+        "host_interval_ms_per_frame_by_op": {
+          "collect": 0.009,
+          "diff": 0.0108,
+          "inference": 0.264,
+          "mask": 0.2191,
+          "reshape": 0.0064,
+          "resize": 0.0008,
+          "send": 1.7416
+        },
+        "log": "020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl",
+        "logs_written": [
+          "2026-04-19 23:10:23+00",
+          "2026-04-19 23:11:02+00"
+        ],
+        "mean_ms_per_frame": 2.252,
+        "median_ms_per_frame": 2.086,
+        "ops": [
+          "collect",
+          "diff",
+          "inference",
+          "mask",
+          "reshape",
+          "resize",
+          "send"
+        ],
+        "retrieve_ms_per_frame": 0.004,
+        "sample_rate": 1,
+        "tiles": 216,
+        "tiles_inferred_at_most": 125
+      },
+      "classifier_runs": {
+        "1": {
+          "batches": 330,
+          "classified_frames": 5225,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 107.99,
+            "excess_share_pct": 0.92,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.2309
+          },
+          "logs_written": [
+            "2026-04-19 23:10:23+00",
+            "2026-04-19 23:11:02+00"
+          ],
+          "mean_ms_per_classified_frame": 2.2516,
+          "median_ms_per_classified_frame": 2.0858,
+          "ratio_of_means": 30.0,
+          "videos": 5
+        },
+        "16": {
+          "batches": 25,
+          "classified_frames": 335,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 105.25,
+            "excess_share_pct": 11.84,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.3386
+          },
+          "logs_written": [
+            "2026-04-19 23:11:08+00",
+            "2026-04-19 23:11:37+00"
+          ],
+          "mean_ms_per_classified_frame": 2.6527,
+          "median_ms_per_classified_frame": 2.0274,
+          "ratio_of_means": 25.5,
+          "videos": 5
+        },
+        "2": {
+          "batches": 165,
+          "classified_frames": 2615,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 134.16,
+            "excess_share_pct": 2.09,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.4026
+          },
+          "logs_written": [
+            "2026-04-19 23:10:49+00",
+            "2026-04-19 23:11:23+00"
+          ],
+          "mean_ms_per_classified_frame": 2.4539,
+          "median_ms_per_classified_frame": 2.0766,
+          "ratio_of_means": 27.6,
+          "videos": 5
+        },
+        "4": {
+          "batches": 85,
+          "classified_frames": 1310,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 140.58,
+            "excess_share_pct": 4.38,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.3412
+          },
+          "logs_written": [
+            "2026-04-19 23:10:56+00",
+            "2026-04-19 23:11:26+00"
+          ],
+          "mean_ms_per_classified_frame": 2.4485,
+          "median_ms_per_classified_frame": 2.1477,
+          "ratio_of_means": 27.6,
+          "videos": 5
+        },
+        "8": {
+          "batches": 45,
+          "classified_frames": 660,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 105.25,
+            "excess_share_pct": 5.98,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 2.5083
+          },
+          "logs_written": [
+            "2026-04-19 23:11:07+00",
+            "2026-04-19 23:11:37+00"
+          ],
+          "mean_ms_per_classified_frame": 2.6678,
+          "median_ms_per_classified_frame": 2.2035,
+          "ratio_of_means": 25.4,
+          "videos": 5
+        }
+      },
+      "cost_across_runs": {
+        "mean_ms_per_classified_frame": {
+          "max": 2.6678,
+          "min": 2.2516,
+          "operating_point": 2.4485
+        },
+        "operating_point_sample_rate": 4,
+        "ratio_of_means": {
+          "max": 30.0,
+          "min": 25.4,
+          "operating_point": 27.6
+        },
+        "sample_rates": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "spread_pct": 18.5
+      },
+      "dataset": "jnc7",
+      "detector": {
+        "batch_size": 1,
+        "excluded_ops": [
+          "read"
+        ],
+        "fps": 14.8,
+        "fps_at_median": 14.8,
+        "log": "002_naive/detection_runtime.jsonl",
+        "logs_written": [
+          "2026-03-05 19:28:49+00",
+          "2026-03-05 19:30:10+00"
+        ],
+        "mean_ms_per_frame": 67.632,
+        "median_ms_per_frame": 67.536,
+        "model": {
+          "detector": "retina",
+          "model_path": "weights/retinanet_b3d.pth",
+          "source": "configs/detectors.yaml and configs/retinanet.json when this script ran; not recorded in the logs",
+          "weights_found": true,
+          "weights_modified": "2025-02-03T03:28:18+00:00",
+          "weights_predate_first_log": true
+        },
+        "ops": [
+          "detect"
+        ]
+      },
+      "frames": 5225,
+      "ratio_of_means": 30.0,
+      "ratio_of_medians": 32.4,
+      "videos": 5
+    },
+    "CalDoT1": {
+      "classifier": {
+        "batch_size": 16,
+        "batches": 3420,
+        "excluded_ops": [
+          "read",
+          "retrieve"
+        ],
+        "fps": 1399.8,
+        "fps_at_median": 1463.4,
+        "grid": [
+          8,
+          12
+        ],
+        "host_interval_ms_per_frame_by_op": {
+          "collect": 0.0085,
+          "diff": 0.0092,
+          "inference": 0.2313,
+          "mask": 0.1034,
+          "reshape": 0.0051,
+          "resize": 0.0007,
+          "send": 0.3562
+        },
+        "log": "020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl",
+        "logs_written": [
+          "2026-04-19 23:05:07+00",
+          "2026-04-19 23:08:29+00"
+        ],
+        "mean_ms_per_frame": 0.714,
+        "median_ms_per_frame": 0.683,
+        "ops": [
+          "collect",
+          "diff",
+          "inference",
+          "mask",
+          "reshape",
+          "resize",
+          "send"
+        ],
+        "retrieve_ms_per_frame": 0.0037,
+        "sample_rate": 1,
+        "tiles": 96,
+        "tiles_inferred_at_most": 32
+      },
+      "classifier_runs": {
+        "1": {
+          "batches": 3420,
+          "classified_frames": 54000,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 133.59,
+            "excess_share_pct": 0.35,
+            "last_batch_of_video": 2,
+            "mean_ms_per_classified_frame_without_excess": 0.7119
+          },
+          "logs_written": [
+            "2026-04-19 23:05:07+00",
+            "2026-04-19 23:08:29+00"
+          ],
+          "mean_ms_per_classified_frame": 0.7144,
+          "median_ms_per_classified_frame": 0.6833,
+          "ratio_of_means": 44.1,
+          "videos": 60
+        },
+        "16": {
+          "batches": 240,
+          "classified_frames": 3480,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 96.0,
+            "excess_share_pct": 3.33,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 0.8005
+          },
+          "logs_written": [
+            "2026-04-19 23:05:08+00",
+            "2026-04-19 23:07:54+00"
+          ],
+          "mean_ms_per_classified_frame": 0.8281,
+          "median_ms_per_classified_frame": 0.7448,
+          "ratio_of_means": 38.1,
+          "videos": 60
+        },
+        "2": {
+          "batches": 1740,
+          "classified_frames": 27060,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 132.53,
+            "excess_share_pct": 0.51,
+            "last_batch_of_video": 2,
+            "mean_ms_per_classified_frame_without_excess": 0.96
+          },
+          "logs_written": [
+            "2026-04-19 23:05:08+00",
+            "2026-04-19 23:08:18+00"
+          ],
+          "mean_ms_per_classified_frame": 0.9649,
+          "median_ms_per_classified_frame": 0.9161,
+          "ratio_of_means": 32.7,
+          "videos": 60
+        },
+        "4": {
+          "batches": 900,
+          "classified_frames": 13560,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 95.02,
+            "excess_share_pct": 0.73,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 0.9538
+          },
+          "logs_written": [
+            "2026-04-19 23:05:08+00",
+            "2026-04-19 23:08:05+00"
+          ],
+          "mean_ms_per_classified_frame": 0.9608,
+          "median_ms_per_classified_frame": 0.9107,
+          "ratio_of_means": 32.8,
+          "videos": 60
+        },
+        "8": {
+          "batches": 480,
+          "classified_frames": 6840,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 95.7,
+            "excess_share_pct": 1.4,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 0.9873
+          },
+          "logs_written": [
+            "2026-04-19 23:05:08+00",
+            "2026-04-19 23:08:00+00"
+          ],
+          "mean_ms_per_classified_frame": 1.0012,
+          "median_ms_per_classified_frame": 0.9161,
+          "ratio_of_means": 31.5,
+          "videos": 60
+        }
+      },
+      "cost_across_runs": {
+        "mean_ms_per_classified_frame": {
+          "max": 1.0012,
+          "min": 0.7144,
+          "operating_point": 0.9608
+        },
+        "operating_point_sample_rate": 4,
+        "ratio_of_means": {
+          "max": 44.1,
+          "min": 31.5,
+          "operating_point": 32.8
+        },
+        "sample_rates": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "spread_pct": 40.2
+      },
+      "dataset": "caldot1-y05",
+      "detector": {
+        "batch_size": 1,
+        "excluded_ops": [
+          "read"
+        ],
+        "fps": 31.7,
+        "fps_at_median": 31.7,
+        "log": "002_naive/detection_runtime.jsonl",
+        "logs_written": [
+          "2026-03-05 19:31:55+00",
+          "2026-03-05 19:36:23+00"
+        ],
+        "mean_ms_per_frame": 31.52,
+        "median_ms_per_frame": 31.5,
+        "model": {
+          "detector": "ultralytics",
+          "model_path": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "source": "configs/detectors.yaml when this script ran; not recorded in the logs",
+          "weights_found": true,
+          "weights_modified": "2026-02-10T00:52:43+00:00",
+          "weights_predate_first_log": true
+        },
+        "ops": [
+          "detect"
+        ]
+      },
+      "frames": 54000,
+      "ratio_of_means": 44.1,
+      "ratio_of_medians": 46.1,
+      "videos": 60
+    },
+    "CalDoT2": {
+      "classifier": {
+        "batch_size": 16,
+        "batches": 3420,
+        "excluded_ops": [
+          "read",
+          "retrieve"
+        ],
+        "fps": 1048.0,
+        "fps_at_median": 1101.1,
+        "grid": [
+          8,
+          12
+        ],
+        "host_interval_ms_per_frame_by_op": {
+          "collect": 0.0091,
+          "diff": 0.0102,
+          "inference": 0.2416,
+          "mask": 0.1014,
+          "reshape": 0.0058,
+          "resize": 0.0007,
+          "send": 0.5854
+        },
+        "log": "020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl",
+        "logs_written": [
+          "2026-04-19 23:05:09+00",
+          "2026-04-19 23:08:43+00"
+        ],
+        "mean_ms_per_frame": 0.954,
+        "median_ms_per_frame": 0.908,
+        "ops": [
+          "collect",
+          "diff",
+          "inference",
+          "mask",
+          "reshape",
+          "resize",
+          "send"
+        ],
+        "retrieve_ms_per_frame": 0.0036,
+        "sample_rate": 1,
+        "tiles": 96,
+        "tiles_inferred_at_most": 29
+      },
+      "classifier_runs": {
+        "1": {
+          "batches": 3420,
+          "classified_frames": 54000,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 140.68,
+            "excess_share_pct": 0.27,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 0.9516
+          },
+          "logs_written": [
+            "2026-04-19 23:05:09+00",
+            "2026-04-19 23:08:43+00"
+          ],
+          "mean_ms_per_classified_frame": 0.9542,
+          "median_ms_per_classified_frame": 0.9082,
+          "ratio_of_means": 33.1,
+          "videos": 60
+        },
+        "16": {
+          "batches": 240,
+          "classified_frames": 3480,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 123.62,
+            "excess_share_pct": 3.53,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 0.9717
+          },
+          "logs_written": [
+            "2026-04-19 23:08:14+00",
+            "2026-04-19 23:10:58+00"
+          ],
+          "mean_ms_per_classified_frame": 1.0072,
+          "median_ms_per_classified_frame": 0.953,
+          "ratio_of_means": 31.4,
+          "videos": 60
+        },
+        "2": {
+          "batches": 1740,
+          "classified_frames": 27060,
+          "inference_spikes": {
+            "batches": 2,
+            "excess_ms": 135.59,
+            "excess_share_pct": 0.52,
+            "last_batch_of_video": 2,
+            "mean_ms_per_classified_frame_without_excess": 0.9629
+          },
+          "logs_written": [
+            "2026-04-19 23:05:08+00",
+            "2026-04-19 23:08:07+00"
+          ],
+          "mean_ms_per_classified_frame": 0.9679,
+          "median_ms_per_classified_frame": 0.904,
+          "ratio_of_means": 32.7,
+          "videos": 60
+        },
+        "4": {
+          "batches": 900,
+          "classified_frames": 13560,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 98.64,
+            "excess_share_pct": 0.88,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 0.8163
+          },
+          "logs_written": [
+            "2026-04-19 23:05:08+00",
+            "2026-04-19 23:08:03+00"
+          ],
+          "mean_ms_per_classified_frame": 0.8235,
+          "median_ms_per_classified_frame": 0.8024,
+          "ratio_of_means": 38.4,
+          "videos": 60
+        },
+        "8": {
+          "batches": 480,
+          "classified_frames": 6840,
+          "inference_spikes": {
+            "batches": 1,
+            "excess_ms": 94.29,
+            "excess_share_pct": 1.44,
+            "last_batch_of_video": 1,
+            "mean_ms_per_classified_frame_without_excess": 0.9461
+          },
+          "logs_written": [
+            "2026-04-19 23:08:08+00",
+            "2026-04-19 23:10:53+00"
+          ],
+          "mean_ms_per_classified_frame": 0.9599,
+          "median_ms_per_classified_frame": 0.9013,
+          "ratio_of_means": 32.9,
+          "videos": 60
+        }
+      },
+      "cost_across_runs": {
+        "mean_ms_per_classified_frame": {
+          "max": 1.0072,
+          "min": 0.8235,
+          "operating_point": 0.9542
+        },
+        "operating_point_sample_rate": 1,
+        "ratio_of_means": {
+          "max": 38.4,
+          "min": 31.4,
+          "operating_point": 33.1
+        },
+        "sample_rates": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "spread_pct": 22.3
+      },
+      "dataset": "caldot2-y05",
+      "detector": {
+        "batch_size": 1,
+        "excluded_ops": [
+          "read"
+        ],
+        "fps": 31.6,
+        "fps_at_median": 31.6,
+        "log": "002_naive/detection_runtime.jsonl",
+        "logs_written": [
+          "2026-03-05 19:36:24+00",
+          "2026-03-05 19:41:10+00"
+        ],
+        "mean_ms_per_frame": 31.627,
+        "median_ms_per_frame": 31.615,
+        "model": {
+          "detector": "ultralytics",
+          "model_path": "/polyis-data/training/ultralytics/caldot2/weights/yolov5x6/weights/best.pt",
+          "source": "configs/detectors.yaml when this script ran; not recorded in the logs",
+          "weights_found": true,
+          "weights_modified": "2026-02-10T00:52:55+00:00",
+          "weights_predate_first_log": true
+        },
+        "ops": [
+          "detect"
+        ]
+      },
+      "frames": 54000,
+      "ratio_of_means": 33.1,
+      "ratio_of_medians": 34.8,
+      "videos": 60
+    }
+  },
+  "method": {
+    "classifier_boundary": "Ops send, resize, diff, reshape, mask, inference, collect per 16-frame batch, split evenly over the batch; read (video decoding) and retrieve (copy to CPU, hex encoding) excluded, as in p121.",
+    "classifier_runs": "The comparison uses the sample-rate-1 run, which classifies every frame. p020 also ran the same classifier and tile size at every other sample rate on the same test videos; their mean cost per classified frame (classifier_runs, cost_across_runs) is the run-to-run spread under concurrent multi-GPU load, which is wider than the precision of any single ratio. Quote a rounded range (summary.ratio_of_means.all_runs), not one run's ratio. The operating point's run is the one p121 counts (checked: equal seconds and batch counts).",
+    "detector_boundary": "Op detect per frame (batch size 1); read (video decoding) excluded.",
+    "gpu_synchronization": "p020 times ops on the host (time.time_ns) without torch.cuda.synchronize. Its frames are pageable numpy arrays, and a host-to-device copy from pageable memory first synchronizes the stream, so send also waits for the previous batch's queued GPU work; the only other synchronization per batch is nonzero() in mask. inference and collect mostly launch kernels. host_interval_ms_per_frame_by_op is therefore host-side attribution under asynchronous execution and does not show where GPU time goes (for example, send against inference). Batch totals are unaffected except for the last batch of a video, whose GPU tail lands in retrieve (retrieve_ms_per_frame bounds it).",
+    "hardware": {
+      "host_that_read_the_cache": {
+        "cpus": 80,
+        "gpus": {
+          "Quadro RTX 6000": 8
+        },
+        "hostname": "ace"
+      },
+      "logs_written": {
+        "classifier": {
+          "first": "2026-04-19 23:05:07+00",
+          "last": "2026-04-19 23:19:43+00",
+          "log_sets": 35,
+          "sets_overlapping_another_set": 35
+        },
+        "detector": {
+          "first": "2026-03-05 19:28:49+00",
+          "last": "2026-03-05 19:48:52+00",
+          "log_sets": 7,
+          "sets_overlapping_another_set": 7
+        }
+      },
+      "note": "The classifier logs were written 2026-04-19 23:05:07+00 to 2026-04-19 23:19:43+00 and the detector logs 2026-03-05 19:28:49+00 to 2026-03-05 19:48:52+00; the windows do not overlap, so the two sides come from different runs. 35 of 35 classifier log sets (dataset x sample rate) and 7 of 7 detector log sets were written while another set of the same side was being written, so other GPUs were likely busy at the same time, sharing CPUs and PCIe. Describe these as timings from the pipeline's existing logs on the evaluation server; \"same hardware\" needs a matched, synchronized re-timing of both models on one idle GPU.",
+      "paper": "Section 7 (Hardware): dual Intel Xeon Gold 6248, 504 GB RAM, and one NVIDIA Quadro RTX 6000 (24 GB).",
+      "recorded_in_logs": "Not recorded. No runtime log (p002 detection_runtime.jsonl, p020 runtime.jsonl, the p121 tables) and no worker log under /polyis-cache/LOGS names a host or GPU (checked 2026-10-26)."
+    },
+    "inference_spikes": "A batch whose inference interval exceeds 10x its run's median is a spike. Spikes are counted, as in p121; inference_spikes and classify_inference_spikes give their excess over the median as a sensitivity check. last_batch_of_video counts spikes in a video's last batch, which is often partial, a shape the 16-batch warm-up (the first video's last full batch) does not cover; that cause is not verified.",
+    "operating_point": "Fastest Tetris test configuration with HOTA >= reference HOTA x (1 - 0.05) (common.fastest_within).",
+    "ratio": "Headline ratio_of_means = detector mean / classifier mean = classifier fps / detector fps, consistent with throughput (frames over total time). ratio_of_medians is a robustness check.",
+    "ratio_vs_share": "The per-frame ratio compares the mean cost of classifying one frame with the mean cost of detecting one full frame, both run on every frame (the sample-rate-1 classifier run). The share is measured at the operating point, where three things differ. Whole-frame sampling (sample_rate s) runs the classifier on 1/sampling_factor of the frames. The operating point's own p020 run costs per_classified_frame_cost_vs_every_frame times the every-frame run per classified frame (run-to-run variation, see classifier_vs_detector.json classifier_runs). Sampling and packing shrink detection per original frame by detection_reduction. Classification per original frame shrinks by classification_reduction = sampling_factor / per_classified_frame_cost_vs_every_frame. The share also counts packing, unpacking, pruning, and tracking, which the ratio leaves out. 1/(1 + ratio) is the share classification would have if both ran on every frame and nothing else ran.",
+    "share_boundary": "p121 accounting (query_execution_per_op.csv). It excludes classify read/retrieve and pack save_canvas/save_mapping_files/save_collage, but counts detect read (cv2.imread of the JPEG canvases, detect_canvas_read_share_pct), although Section 7 says disk I/O is excluded. Video decoding is counted asymmetrically: the reference pipeline's runtime includes it (detect read, reference.detect_frame_read_share_pct), while Tetris's does not (p121 drops classify read, and p030 decodes the video again without timing it), so reported speedups over the reference include the reference's decoding time.",
+    "timing_source": "Existing pipeline logs only, nothing rerun. Every test video and frame of each dataset; no sampling. Each value comes from a single run: one p002 run for the detector, one p020 run per sample rate."
+  },
+  "summary": {
+    "ratio_of_means": {
+      "all_runs": {
+        "max": 44.1,
+        "min": 19.4,
+        "runs": 35
+      },
+      "every_frame_run": {
+        "datasets": 7,
+        "max": 44.1,
+        "median": 30.0,
+        "min": 26.3
+      },
+      "operating_point_run": {
+        "datasets": 7,
+        "max": 33.1,
+        "median": 27.6,
+        "min": 21.8
+      }
+    }
+  }
+}
