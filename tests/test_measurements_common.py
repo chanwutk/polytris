@@ -159,9 +159,15 @@ def test_operating_points_report(con):
 def test_output_path_maps_each_system_to_its_stage():
     # Ground truth, reference, and Tetris tracks and detections come from the execution cache stages.
     assert common.output_path('d', 'ground truth', '003_groundtruth', 'te01.mp4').parts[-3:] == ('te01.mp4', '003_groundtruth', 'tracking.jsonl')
+    # Detector variants share their root dataset's ground truth, as in p110 and p141.
+    assert common.output_path('caldot1-y05', 'ground truth', '003_groundtruth', 'te01.mp4').parts[-5:-3] == ('caldot1', 'execution')
+    assert common.output_path('ams-y05', 'ground truth', '003_groundtruth', 'te01.mp4').parts[-5:-3] == ('ams', 'execution')
+    assert common.output_path('jnc0', 'ground truth', '003_groundtruth', 'te01.mp4').parts[-5:-3] == ('jnc0', 'execution')
     assert common.output_path('d', 'reference', 'naive', 'te01.mp4', 'detection').parts[-2:] == ('002_naive', 'detection.jsonl')
     assert common.output_path('d', 'tetris', 'cfg', 'te01.mp4').parts[-3:] == ('060_uncompressed_tracks', 'cfg', 'tracking.jsonl')
-    assert common.output_path('d', 'tetris', 'cfg', 'te01.mp4', 'detection').parts[-3:] == ('050_uncompressed_detections', 'cfg', 'detection.jsonl')
+    # Tetris detections live under detection-configuration names, which output_path does not build.
+    with pytest.raises(AssertionError):
+        common.output_path('d', 'tetris', 'cfg', 'te01.mp4', 'detection')
     # Prior systems use zero-padded parameter directories under the SOTA cache.
     path = common.output_path('d', 'otif', 'param 7', 'te01.mp4')
     assert path.parts[-7:] == ('SOTA', 'otif', 'd', 'te01.mp4', 'tracking_results', '007', 'tracking.jsonl')
@@ -189,3 +195,24 @@ def test_system_configs_derives_prior_throughput_from_runtime(monkeypatch):
     assert rows[1] == dict(system='tetris', config='cfg', fps=50.0, hota=0.7)
     assert dict(system='otif', config='param 3', fps=250.0, hota=0.5) in rows
     assert dict(system='leap', config='param 3', fps=250.0, hota=0.5) in rows
+
+
+def test_operating_points_ratios_use_unrounded_throughput(con):
+    # 663.94 / 25.66 = 25.87x; dividing the rounded 663.9 / 25.7 would give 25.8x.
+    make_hota_points(con, [
+        ('d', 'reference', 'naive', 10.0, 0.8, 0.8),
+        ('d', 'tetris', 'a', 663.94, 0.8, 0.8),
+        ('d', 'otif', 'p', 25.66, 0.8, 0.8),
+    ])
+    out = common.operating_points(con, 'hpts', ['tetris', 'otif'], loss=0.05)['d']
+    assert out['tetris_speedup_vs_otif'] == 25.9
+    assert out['systems']['otif']['fps'] == 25.7
+
+
+def test_prior_system_test_rows_rejects_tables_without_test_rows(monkeypatch):
+    import pandas as pd
+    # A table with only validation rows would silently drop the system from a test comparison.
+    monkeypatch.setattr(common, 'load_sota_tradeoff_data',
+                        lambda datasets, system: pd.DataFrame({'videoset': ['valid'], 'time': [1.0]}))
+    with pytest.raises(AssertionError):
+        common.prior_system_test_rows('d', 'otif')

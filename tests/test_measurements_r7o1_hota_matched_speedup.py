@@ -347,41 +347,6 @@ def test_choose_with_no_rows_leaves_an_empty_table(con):
     assert ms.speedup_stats(con, 'chosen') == []
 
 
-def test_fix_ratios_uses_unrounded_throughput(con):
-    # B3D4-like throughputs where rounding to 0.1 fps before dividing moves the ratio by 0.1.
-    make_points(con, [('A', 'reference', 'naive', 14.5, 0.8), ('A', 'tetris', 't', 663.94, 0.8),
-                      ('A', 'otif', 'param 0', 25.66, 0.8), ('A', 'leap', 'param 0', 1.0, 0.0)])
-    specs = ms.bound_specs(con, 'hota_points', [0.05], None)
-    points = {n: common.operating_points(con, 'hota_points', ms.SYSTEMS, **s) for n, s in specs.items()}
-    ms.choose(con, 'hota_points', specs, ms.SYSTEMS, 'chosen')
-    # The shared helper divides 663.9 by 25.7 (25.83 -> 25.8); the true ratio is 25.87 -> 25.9.
-    assert points['0.05']['A']['tetris_speedup_vs_otif'] == 25.8
-    fixed = ms.fix_ratios(points, con, 'chosen')
-    assert fixed['0.05']['A']['tetris_speedup_vs_otif'] == round(663.94 / 25.66, 1) == 25.9
-    # A prior system that misses the bound still gets no ratio.
-    assert 'tetris_speedup_vs_leap' not in fixed['0.05']['A']
-
-
-def test_fix_ratios_corrects_both_priors_and_checks_agreement(con):
-    # At LEAP's bound both priors qualify; both ratios are recomputed from unrounded throughputs.
-    make_points(con, [('A', 'reference', 'naive', 14.5, 0.8), ('A', 'tetris', 't', 663.94, 0.8),
-                      ('A', 'otif', 'param 0', 25.66, 0.8), ('A', 'leap', 'param 0', 16.44, 0.05)])
-    specs = ms.bound_specs(con, 'hota_points', [], 'leap')
-    points = {n: common.operating_points(con, 'hota_points', ms.SYSTEMS, **s) for n, s in specs.items()}
-    ms.choose(con, 'hota_points', specs, ms.SYSTEMS, 'chosen')
-    fixed = ms.fix_ratios(points, con, 'chosen')['leap_fit']['A']
-    assert (fixed['tetris_speedup_vs_otif'], fixed['tetris_speedup_vs_leap']) == (25.9, round(663.94 / 16.44, 1))
-    # A report whose configuration differs from the chosen table is an error.
-    points['leap_fit']['A']['systems']['otif']['config'] = 'param 9'
-    with pytest.raises(AssertionError, match='configurations'):
-        ms.fix_ratios(points, con, 'chosen')
-    # So is a ratio the chosen table does not have.
-    points['leap_fit']['A']['systems']['otif']['config'] = 'param 0'
-    points['leap_fit']['A']['tetris_speedup_vs_other'] = 1.0
-    with pytest.raises(AssertionError, match='ratio pairs'):
-        ms.fix_ratios(points, con, 'chosen')
-
-
 def matched_rows(con, losses, fit=None):
     # The accuracy-matched table per bound and dataset, as dicts.
     run_bounds(con, losses, fit=fit)

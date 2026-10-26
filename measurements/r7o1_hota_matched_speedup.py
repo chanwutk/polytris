@@ -451,34 +451,6 @@ def speedup_stats(con: duckdb.DuckDBPyConnection, chosen: str) -> list[dict]:
     """)
 
 
-def fix_ratios(points: dict, con: duckdb.DuckDBPyConnection, chosen: str) -> dict:
-    """Replace operating_points' tetris_speedup_vs_<system> with ratios of unrounded throughputs.
-
-    common.operating_points divides throughputs it has already rounded to 0.1 fps, which moves a
-    ratio by 0.1 when the prior system is slow (B3D4 at 10%: 25.8x instead of p203's 25.9x).
-    Fails unless both selections name the same pairs and configurations.
-    """
-    # Tetris over each prior system per bound and dataset, from the unrounded chosen throughputs.
-    rows = query_dicts(con, f"""
-        SELECT t.bound, t.dataset, p.system, t.config AS tetris_config, p.config AS prior_config, t.fps / p.fps AS ratio
-        FROM {chosen} t JOIN {chosen} p USING (bound, dataset)
-        WHERE t.system = 'tetris' AND p.system <> 'tetris' AND t.meets_bound AND p.meets_bound
-    """)
-    # The pairs operating_points reported, and the pairs the query found; they must be the same.
-    reported = {(b, d, k.removeprefix('tetris_speedup_vs_'))
-                for b, by_dataset in points.items() for d, entry in by_dataset.items()
-                for k in entry if k.startswith('tetris_speedup_vs_')}
-    found = {(r['bound'], r['dataset'], r['system']) for r in rows}
-    assert reported == found, f'operating_points and chosen disagree on ratio pairs: {sorted(reported ^ found)}'
-    # Overwrite each ratio after checking both selections picked the same configurations.
-    for r in rows:
-        entry = points[r['bound']][r['dataset']]
-        assert (entry['systems']['tetris']['config'], entry['systems'][r['system']]['config']) == \
-            (r['tetris_config'], r['prior_config']), f'operating_points and chosen disagree on configurations: {r}'
-        entry[f"tetris_speedup_vs_{r['system']}"] = r1(r['ratio'])
-    return points
-
-
 def ratio_stats(con: duckdb.DuckDBPyConnection, chosen: str) -> list[dict]:
     """Per bound, Tetris over each prior system and over the fastest qualifying prior, where both qualify.
 
@@ -895,7 +867,6 @@ def main():
     # Primary results on the corrected table: the JSON's chosen points, then the same choices as a table.
     points = {name: operating_points(con, 'hota_points', SYSTEMS, **spec) for name, spec in specs.items()}
     choose(con, 'hota_points', specs, SYSTEMS, 'chosen')
-    points = fix_ratios(points, con, 'chosen')
     # Shared-bound ranges, the accuracy-matched rule, and their p203 macro values.
     speedups, ratios = speedup_stats(con, 'chosen'), ratio_stats(con, 'chosen')
     accuracy_matched(con, 'hota_points', 'chosen', 'matched')
@@ -956,8 +927,7 @@ def main():
                  'repeated runs of a video are averaged (leap_checks.runtime). p140 uses the total row instead.',
             prior_fps='Prior systems\' throughput is the test split\'s frame count (our clips) over their runtime, as '
                       'in evaluation/p200_compare_compute.py and p203, not the frames the system decoded.'),
-        ratios='Speedups and ratios divide unrounded throughputs, then round to 0.1 (common.operating_points '
-               'divides throughputs already rounded to 0.1 fps; corrected here by fix_ratios).',
+        ratios='Speedups and ratios divide unrounded throughputs, then round to 0.1 (common.operating_points).',
         accuracy_matched='p203\'s rule: the fastest prior point meeting the bound if its HOTA is not above Tetris\'s, '
                          'else the most accurate Pareto-optimal prior point with HOTA not above Tetris\'s, which may '
                          'miss the bound (per_dataset.*.prior.meets_bound).',

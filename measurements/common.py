@@ -8,7 +8,7 @@ import pandas as pd
 
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 from polyis.io import cache
-from polyis.utilities import load_tradeoff_data, split_tradeoff_variants
+from polyis.utilities import dataset_root_name, load_tradeoff_data, split_tradeoff_variants
 
 
 # Prior systems compared with Tetris, as named in the SOTA cache.
@@ -73,10 +73,10 @@ def prior_system_test_rows(dataset: str, system: str) -> pd.DataFrame:
     """A prior system's (OTIF or LEAP) test-split configurations with param_id, time, and HOTA_HOTA."""
     # Load the transformed SOTA tradeoff table written by p142.
     rows = load_sota_tradeoff_data([dataset], system)
-    # A missing table is an error: the comparison would silently drop a system.
-    assert not rows.empty, f'{dataset}: no {system} tradeoff table'
     # Keep only the test split.
     rows = rows[rows['videoset'] == 'test']
+    # A missing table or one without test rows is an error: the comparison would silently drop a system.
+    assert not rows.empty, f'{dataset}: no {system} test-split tradeoff rows'
     # Every configuration needs a positive runtime to derive throughput.
     assert (rows['time'] > 0).all(), f'{dataset}: non-positive {system} runtime'
     return rows
@@ -188,12 +188,13 @@ def operating_points(con: duckdb.DuckDBPyConnection, table: str, systems: list[s
                  hota=hota[(r['dataset'], r['system'], r['config'])],
                  speedup_vs_reference=round(r['fps'] / r['reference_fps'], 1))
             if r['meets_bound'] else dict(meets_bound=False, best_accuracy=r['best_accuracy']))
+    # Unrounded throughput of every chosen configuration, so ratios are rounded only once.
+    fps = {(r['dataset'], r['system']): r['fps'] for r in chosen if r['meets_bound']}
     # The primary system against each other system that also meets the bound.
-    for entry in out.values():
-        lead = entry['systems'].get(primary)
-        entry.update({f'{primary}_speedup_vs_{s}': round(lead['fps'] / v['fps'], 1)
-                      for s, v in entry['systems'].items()
-                      if s != primary and lead and lead['meets_bound'] and v['meets_bound']})
+    for dataset, entry in out.items():
+        entry.update({f'{primary}_speedup_vs_{s}': round(fps[(dataset, primary)] / fps[(dataset, s)], 1)
+                      for s in entry['systems']
+                      if s != primary and (dataset, primary) in fps and (dataset, s) in fps})
     return out
 
 
@@ -235,19 +236,24 @@ def system_configs(dataset: str) -> list[dict]:
 def output_path(dataset: str, system: str, config: str, video: str, kind: str = 'tracking') -> Path:
     """A configuration's tracking.jsonl (kind 'tracking') or detection.jsonl (kind 'detection') for one test video.
 
-    system is 'ground truth' (003_groundtruth), 'reference' (002_naive), 'tetris' (060/050 stages),
+    system is 'ground truth' (003_groundtruth), 'reference' (002_naive), 'tetris' (060 tracks only),
     or a prior system ('otif', 'leap'; config 'param N'). Prior systems only have tracking output.
+    Ground truth is read from the dataset's root (caldot1-y05 -> caldot1, ams-y05 -> ams), the
+    tracks p110 and p141 score every system against; the detector variants' own 003_groundtruth
+    copies are stale.
     """
     # The file name inside the stage directory.
     name = f'{kind}.jsonl'
     if system == 'ground truth':
-        return Path(cache.exec(dataset, 'groundtruth', video, name))
+        return Path(cache.exec(dataset_root_name(dataset), 'groundtruth', video, name))
     if system == 'reference':
         return Path(cache.exec(dataset, 'naive', video, name))
     if system == 'tetris':
-        # Tracks are unpacked in 060; detections mapped back from canvases are in 050.
-        stage = 'ucomp-tracks' if kind == 'tracking' else 'ucomp-dets'
-        return Path(cache.exec(dataset, stage, video, config, name))
+        # 050 directories drop the tracker for unpruned configurations and hold detections.jsonl,
+        # so they are not addressable by the variant id; use detection_config in
+        # measurements/r1o4_packing_detection_accuracy.py for unpacked detections.
+        assert kind == 'tracking', 'Tetris detections are named by detection configuration, not variant id'
+        return Path(cache.exec(dataset, 'ucomp-tracks', video, config, name))
     # Prior systems store one directory per parameter id.
     assert system in PRIOR_SYSTEMS and kind == 'tracking', f'no {kind} output for system {system!r}'
     param = int(config.removeprefix('param '))
