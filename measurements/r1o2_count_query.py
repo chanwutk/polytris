@@ -28,11 +28,15 @@ Ground truth is the per-video count table shipped with the OTIF benchmark
 Each system is scored over all its test-split configurations: Tetris's
 validated configurations, the reference pipeline, OTIF, and LEAP. Operating
 points then hold every system to one bound, its fastest configuration whose
-counting accuracy is within --losses of the reference pipeline's.
+counting accuracy is within --losses of the reference pipeline's. A further
+"leap_fit" bound is lowered, per dataset, to the best counting accuracy LEAP
+reaches, so all three systems qualify and can be compared at LEAP's accuracy.
 
 Writes measurements-results/r1o2_count_query/:
   configs.json           per dataset, the rule applied and every configuration's accuracy, fps, and HOTA
-  operating_points.json  per bound and dataset, each system's fastest configuration within the bound
+  operating_points.json  per bound ("0.05", "0.10", "leap_fit") and dataset, each system's fastest
+                         configuration within the bound, its speedup over the reference, and
+                         Tetris's speedup over OTIF and LEAP
 """
 import argparse
 import os
@@ -42,8 +46,9 @@ from pathlib import Path
 import cv2
 import duckdb
 
-from measurements.common import (fastest_within, load_test_tradeoff, prior_system_test_rows,
-                                 query_dicts, results_dir, write_json)
+from measurements.common import (best_accuracy_bounds, load_test_tradeoff, operating_points,
+                                 print_operating_points, prior_system_test_rows, query_dicts, results_dir,
+                                 write_json)
 from polyis.io import cache, store
 
 
@@ -354,33 +359,13 @@ def score_dataset(con: duckdb.DuckDBPyConnection, dataset: CountDataset) -> dict
     return dict(rule=rule, videos=len(videos), truth_per_segment=truth_totals, records=records)
 
 
-def operating_points(con: duckdb.DuckDBPyConnection, scored: dict, loss: float) -> dict:
-    """Per dataset, each system's fastest configuration within `loss` of the reference's counting accuracy."""
-    # Load every dataset's scored configurations into one table for the bound query.
+def load_points(con: duckdb.DuckDBPyConnection, scored: dict):
+    """Table count_points(dataset, system, config, fps, hota, accuracy) from every dataset's scored configurations."""
     con.execute('CREATE OR REPLACE TABLE count_points (dataset VARCHAR, system VARCHAR, config VARCHAR, fps DOUBLE, hota DOUBLE, accuracy DOUBLE)')
+    # Our automatic ground truth has no throughput, so it is not a candidate.
     con.executemany('INSERT INTO count_points VALUES (?, ?, ?, ?, ?, ?)',
                     [(label, r['system'], r['config'], r['fps'], r['hota'], r['accuracy'])
                      for label, s in scored.items() for r in s['records'] if r['system'] != 'ground truth'])
-    chosen = fastest_within(con, 'count_points', loss, ['tetris', *PRIOR_SYSTEMS])
-    # HOTA of each configuration, to show what the count-selected points cost in tracking fidelity.
-    hota = {(r['dataset'], r['system'], r['config']): r['hota']
-            for r in query_dicts(con, 'SELECT dataset, system, config, hota FROM count_points')}
-    out = {}
-    # Arrange the selected rows as {dataset: {bound, reference, systems, ratios}} for the JSON report.
-    for r in chosen:
-        entry = out.setdefault(r['dataset'], dict(bound=round(r['bound'], 4), systems={},
-                                                  reference=dict(accuracy=r['reference_accuracy'], fps=round(r['reference_fps'], 1))))
-        entry['systems'][r['system']] = (
-            dict(meets_bound=True, config=r['config'], accuracy=r['accuracy'], fps=round(r['fps'], 1),
-                 hota=hota[(r['dataset'], r['system'], r['config'])],
-                 speedup_vs_reference=round(r['fps'] / r['reference_fps'], 1))
-            if r['meets_bound'] else dict(meets_bound=False, best_accuracy=r['best_accuracy']))
-    # Tetris against each prior system that also meets the bound.
-    for entry in out.values():
-        tetris = entry['systems']['tetris']
-        entry.update({f'tetris_speedup_vs_{s}': round(tetris['fps'] / entry['systems'][s]['fps'], 1)
-                      for s in PRIOR_SYSTEMS if tetris['meets_bound'] and entry['systems'][s]['meets_bound']})
-    return out
 
 
 def main():
@@ -398,19 +383,14 @@ def main():
         print(f"{label}: {len(s['records'])} configurations scored, rule {s['rule']}")
     write_json(out_dir, 'configs.json', scored)
 
-    # Operating points at each requested bound.
-    points = {f'{loss:.2f}': operating_points(con, scored, loss) for loss in args.losses}
+    # Operating points at each requested relative bound, and at the bound LEAP just meets on each dataset.
+    load_points(con, scored)
+    systems = ['tetris', *PRIOR_SYSTEMS]
+    points = {f'{loss:.2f}': operating_points(con, 'count_points', systems, loss=loss) for loss in args.losses}
+    points['leap_fit'] = operating_points(con, 'count_points', systems,
+                                          bounds=best_accuracy_bounds(con, 'count_points', 'leap'))
     write_json(out_dir, 'operating_points.json', points)
-
-    # Print a compact summary of the operating points.
-    for loss, by_dataset in points.items():
-        print(f'\ncounting accuracy within {float(loss):.0%} of the reference')
-        for label, p in by_dataset.items():
-            cells = [f"{s} {v['speedup_vs_reference']}x" if v['meets_bound'] else f"{s} misses (best {v['best_accuracy']})"
-                     for s, v in p['systems'].items()]
-            ratios = ', '.join(f"vs {s} {p[f'tetris_speedup_vs_{s}']}x" for s in PRIOR_SYSTEMS if f'tetris_speedup_vs_{s}' in p)
-            print(f"  {label:10s} ref {p['reference']['accuracy']:.3f} | " + ' | '.join(cells) + f' | tetris {ratios}')
-
+    print_operating_points(points, 'counting accuracy')
 
 if __name__ == '__main__':
     main()

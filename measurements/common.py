@@ -76,14 +76,22 @@ def prior_system_test_rows(dataset: str, system: str) -> pd.DataFrame:
     return rows
 
 
-def fastest_within(con: duckdb.DuckDBPyConnection, table: str, loss: float, systems: list[str]) -> list[dict]:
-    """Per dataset and system, the fastest configuration within `loss` of the reference pipeline's accuracy.
+def fastest_within(con: duckdb.DuckDBPyConnection, table: str, loss: float | None, systems: list[str],
+                   bounds: dict[str, float] | None = None) -> list[dict]:
+    """Per dataset and system, the fastest configuration whose accuracy meets that dataset's bound.
+
+    The bound is `loss` relative to the reference pipeline's accuracy (reference x (1 - loss)),
+    or, when `bounds` is given instead, an explicit accuracy per dataset (for example the
+    accuracy of the weakest system, so that it qualifies). Exactly one of the two must be set.
 
     `table` needs columns dataset, system, config, fps, accuracy, with exactly one row per
     dataset whose system is 'reference'. The bound is inclusive; throughput ties go to the
     more accurate configuration, then to the smaller config name. Systems that miss the bound
-    are returned with meets_bound false and their best accuracy.
+    are returned with meets_bound false and their best accuracy. Each row also reports the
+    bound as a relative loss from the reference (1 - bound / reference accuracy).
     """
+    # Exactly one way of setting the bound.
+    assert (loss is None) != (bounds is None), 'set exactly one of loss and bounds'
     # Every dataset needs exactly one positive reference accuracy to define a relative bound.
     bad = query_dicts(con, f"""
         SELECT dataset, count(*) AS n, min(accuracy) AS accuracy
@@ -96,16 +104,29 @@ def fastest_within(con: duckdb.DuckDBPyConnection, table: str, loss: float, syst
         WHERE dataset NOT IN (SELECT dataset FROM {table} WHERE system = 'reference')
     """)
     assert not missing, f'datasets without a reference row: {missing}'
+    if bounds is None:
+        # Relative bound: the same loss for every dataset.
+        bound_sql = 'SELECT dataset, reference_accuracy * (1 - $loss) AS bound FROM reference'
+        params = {'loss': loss, 'systems': systems}
+    else:
+        # Explicit bounds: every dataset in the table needs one.
+        datasets = {r['dataset'] for r in query_dicts(con, f'SELECT DISTINCT dataset FROM {table}')}
+        assert datasets <= set(bounds), f'no bound for datasets {sorted(datasets - set(bounds))}'
+        con.execute('CREATE OR REPLACE TEMP TABLE explicit_bounds (dataset VARCHAR, bound DOUBLE)')
+        con.executemany('INSERT INTO explicit_bounds VALUES (?, ?)', list(bounds.items()))
+        bound_sql = 'SELECT dataset, bound FROM explicit_bounds'
+        params = {'systems': systems}
     # Select, per dataset and system, the fastest configuration inside the bound.
     return query_dicts(con, f"""
         WITH reference AS (
             SELECT dataset, accuracy AS reference_accuracy, fps AS reference_fps
             FROM {table} WHERE system = 'reference'
         ),
+        bounds AS ({bound_sql}),
         candidates AS (
             SELECT t.dataset, t.system, t.config, t.fps, t.accuracy,
-                   r.reference_accuracy, r.reference_fps, r.reference_accuracy * (1 - $loss) AS bound
-            FROM {table} t JOIN reference r USING (dataset)
+                   r.reference_accuracy, r.reference_fps, b.bound
+            FROM {table} t JOIN reference r USING (dataset) JOIN bounds b USING (dataset)
             WHERE list_contains($systems, t.system)
         ),
         best AS (
@@ -118,8 +139,67 @@ def fastest_within(con: duckdb.DuckDBPyConnection, table: str, loss: float, syst
             WHERE accuracy >= bound
             QUALIFY row_number() OVER (PARTITION BY dataset, system ORDER BY fps DESC, accuracy DESC, config) = 1
         )
-        SELECT b.dataset, b.system, b.bound, b.reference_accuracy, b.reference_fps, b.best_accuracy,
+        SELECT b.dataset, b.system, b.bound, 1 - b.bound / b.reference_accuracy AS loss,
+               b.reference_accuracy, b.reference_fps, b.best_accuracy,
                c.config IS NOT NULL AS meets_bound, c.config, c.fps, c.accuracy
         FROM best b LEFT JOIN chosen c USING (dataset, system)
         ORDER BY b.dataset, b.system
-    """, {'loss': loss, 'systems': systems})
+    """, params)
+
+
+def best_accuracy_bounds(con: duckdb.DuckDBPyConnection, table: str, system: str) -> dict[str, float]:
+    """Per dataset, the best accuracy any configuration of `system` reaches: the bound at which it just qualifies."""
+    rows = query_dicts(con, f"""
+        SELECT dataset, max(accuracy) AS bound FROM {table} WHERE system = $system GROUP BY dataset
+    """, {'system': system})
+    # Every dataset in the table must have at least one configuration of the system.
+    datasets = {r['dataset'] for r in query_dicts(con, f'SELECT DISTINCT dataset FROM {table}')}
+    found = {r['dataset']: r['bound'] for r in rows}
+    assert set(found) == datasets, f'{system} has no configuration on {sorted(datasets - set(found))}'
+    return found
+
+
+def operating_points(con: duckdb.DuckDBPyConnection, table: str, systems: list[str], loss: float | None = None,
+                     bounds: dict[str, float] | None = None, primary: str = 'tetris') -> dict:
+    """Each system's fastest configuration within the bound, per dataset, arranged for a JSON report.
+
+    `table` needs columns dataset, system, config, fps, hota, accuracy (see fastest_within for the
+    bound). Every system that meets the bound gets its speedup over the reference pipeline, and
+    `primary` gets its speedup over every other system that also meets the bound.
+    """
+    chosen = fastest_within(con, table, loss, systems, bounds)
+    # HOTA of each configuration, to show what accuracy-selected points cost in tracking fidelity.
+    hota = {(r['dataset'], r['system'], r['config']): r['hota']
+            for r in query_dicts(con, f'SELECT dataset, system, config, hota FROM {table}')}
+    out: dict = {}
+    # Arrange the selected rows as {dataset: {bound, loss, reference, systems, ratios}}.
+    for r in chosen:
+        entry = out.setdefault(r['dataset'], dict(
+            bound=round(r['bound'], 4), loss=round(r['loss'], 4), systems={},
+            reference=dict(accuracy=r['reference_accuracy'], fps=round(r['reference_fps'], 1))))
+        entry['systems'][r['system']] = (
+            dict(meets_bound=True, config=r['config'], accuracy=r['accuracy'], fps=round(r['fps'], 1),
+                 hota=hota[(r['dataset'], r['system'], r['config'])],
+                 speedup_vs_reference=round(r['fps'] / r['reference_fps'], 1))
+            if r['meets_bound'] else dict(meets_bound=False, best_accuracy=r['best_accuracy']))
+    # The primary system against each other system that also meets the bound.
+    for entry in out.values():
+        lead = entry['systems'].get(primary)
+        entry.update({f'{primary}_speedup_vs_{s}': round(lead['fps'] / v['fps'], 1)
+                      for s, v in entry['systems'].items()
+                      if s != primary and lead and lead['meets_bound'] and v['meets_bound']})
+    return out
+
+
+def print_operating_points(points: dict, metric: str, primary: str = 'tetris'):
+    """Print {bound name: {dataset: operating points}} as one line per dataset."""
+    for name, by_dataset in points.items():
+        print(f'\n{metric}: bound {name}')
+        for dataset, p in by_dataset.items():
+            # One cell per system: speedup over the reference, or the best accuracy it reached.
+            cells = [f"{s} {v['speedup_vs_reference']}x" if v['meets_bound'] else f"{s} misses (best {v['best_accuracy']})"
+                     for s, v in p['systems'].items()]
+            ratios = ', '.join(f"vs {k.removeprefix(primary + '_speedup_vs_')} {v}x" for k, v in p.items()
+                               if k.startswith(primary + '_speedup_vs_'))
+            print(f"  {dataset:10s} ref {p['reference']['accuracy']:.3f} bound {p['bound']} (loss {p['loss']:.1%}) | "
+                  + ' | '.join(cells) + f' | {primary} {ratios}')
