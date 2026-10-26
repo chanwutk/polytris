@@ -1,0 +1,801 @@
+{
+  "about": {
+    "checks": "port_check against p204.compute_ablation_stats at every bound (must match); manuscript_check against the submitted 5% macros.",
+    "conditions": {
+      "full": {
+        "label": "Tetris",
+        "sample_rates": null,
+        "tracking_accuracy_thresholds": null
+      },
+      "no_both": {
+        "label": "Tetris (-Sampling, -Pruning)",
+        "sample_rates": [
+          1
+        ],
+        "tracking_accuracy_thresholds": [
+          null
+        ]
+      },
+      "no_sampling": {
+        "label": "Tetris (-Sampling)",
+        "sample_rates": [
+          1
+        ],
+        "tracking_accuracy_thresholds": null
+      }
+    },
+    "estimates": "None; every number is measured.",
+    "ground_truth": "B3D1-B3D4 HOTA is scored against automatic ground truth (tiled RetinaNet detections tracked by OC-SORT, Section 7.1). Rerun this script after R1.O1 replaces it with human-verified labels. CalDoT1, CalDoT2, and Amsterdam use OTIF's detection labels (tracks linked by OC-SORT) and are outside R1.O1.",
+    "inputs": {
+      "files": {
+        "Amsterdam": {
+          "leap": {
+            "bytes": 309,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/ams-y05/tradeoff.csv",
+            "sha256": "e1ba40bd566923dc3b7d8b4a258b69a3d34ae99e8cb10646c1111a3b713b7bd3"
+          },
+          "leap_stat": {
+            "bytes": 3312,
+            "exists": true,
+            "mtime": "2026-04-11T04:47:44+00:00",
+            "path": "/sota-results/amsterdam-y5/leap_amsterdam-y5.csv",
+            "sha256": "3453e951493dabd6fbba246b5cc7d451f2a6539c777f0bfcd90f856058cf1938"
+          },
+          "otif": {
+            "bytes": 3101,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/ams-y05/tradeoff.csv",
+            "sha256": "9390ee7418333e26c70c145e37e25de3f10519dbb06f0743eb4c0432d2424bc3"
+          },
+          "tradeoff": {
+            "bytes": 19796,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:32+00:00",
+            "path": "/polyis-cache/ams-y05/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "52ced6559546465e4a1b3a41c0c04c4b220fabff922c93705d69f51329d10829"
+          }
+        },
+        "B3D1": {
+          "leap": {
+            "bytes": 285,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/jnc0/tradeoff.csv",
+            "sha256": "88e659d7c6a9025eb150cc566b99fa74e2d7a76edd81cbcd45cdb887d9571f20"
+          },
+          "leap_stat": {
+            "bytes": 426,
+            "exists": true,
+            "mtime": "2026-04-11T04:39:04+00:00",
+            "path": "/sota-results/jnc0/leap_jnc0.csv",
+            "sha256": "d7890b5c3e4acb96704e9049337fee80d337baa53b0944925f84cbd6c5ffe66f"
+          },
+          "otif": {
+            "bytes": 2288,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/jnc0/tradeoff.csv",
+            "sha256": "aae46c9152c86dfaa11dc38ea3f3effe018eba3a8e81e92ee85783572589f804"
+          },
+          "tradeoff": {
+            "bytes": 18362,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:31+00:00",
+            "path": "/polyis-cache/jnc0/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "8a43c3c60d8c4ade15bfe6b2f6391744b2276a03d336fdc67f8c27f24089b2fb"
+          }
+        },
+        "B3D2": {
+          "leap": {
+            "bytes": 284,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/jnc2/tradeoff.csv",
+            "sha256": "e3f235539534f95712c4eb9a6e1baa5f7c4069c58e7bba45f148f088d7762041"
+          },
+          "leap_stat": {
+            "bytes": 400,
+            "exists": true,
+            "mtime": "2026-04-11T04:39:46+00:00",
+            "path": "/sota-results/jnc2/leap_jnc2.csv",
+            "sha256": "2aaf345ae057ebfbf6282bc832110e055ec7fe9c3cb5d008a67e60bdbf76b338"
+          },
+          "otif": {
+            "bytes": 2117,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/jnc2/tradeoff.csv",
+            "sha256": "7669ff9ef60dff374bcca22c18648f8100d932c02a29b58e067a2355ddf8f9e4"
+          },
+          "tradeoff": {
+            "bytes": 18118,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:31+00:00",
+            "path": "/polyis-cache/jnc2/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "a1c8a3a1f82e59aa4fb04a4f298918053eedd275886b8bb7bc2143c9c1e7be41"
+          }
+        },
+        "B3D3": {
+          "leap": {
+            "bytes": 287,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/jnc6/tradeoff.csv",
+            "sha256": "5394818f2806161b66342f02f1ca052000f2b38ab2a8c01199291926fc6f9a0c"
+          },
+          "leap_stat": {
+            "bytes": 445,
+            "exists": true,
+            "mtime": "2026-04-11T04:40:06+00:00",
+            "path": "/sota-results/jnc6/leap_jnc6.csv",
+            "sha256": "47c75c48a6a8259a51c91a835f442347c6c8789afe98816305cc3e02e1a919ef"
+          },
+          "otif": {
+            "bytes": 2341,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/jnc6/tradeoff.csv",
+            "sha256": "e49979145592de8b113c7c81dbd4dc74d8d7eead2bb28c337d7c1bb6944df98c"
+          },
+          "tradeoff": {
+            "bytes": 19118,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:31+00:00",
+            "path": "/polyis-cache/jnc6/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "13928e7bb0e6e4e5a908ea307a780bc1eea768863fd0d0397bbadf21d8a7df7c"
+          }
+        },
+        "B3D4": {
+          "leap": {
+            "bytes": 285,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/jnc7/tradeoff.csv",
+            "sha256": "3ad7a56ca552e910913d336fa9fdcc146e667902ee32018b6957ffa00dddb037"
+          },
+          "leap_stat": {
+            "bytes": 426,
+            "exists": true,
+            "mtime": "2026-04-11T04:40:24+00:00",
+            "path": "/sota-results/jnc7/leap_jnc7.csv",
+            "sha256": "4d4f3e2efc158bda891ae0be88849c33ab130afac07495013cacd5f472c515c6"
+          },
+          "otif": {
+            "bytes": 2625,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/jnc7/tradeoff.csv",
+            "sha256": "b5e9cd95725bae002e72044eb11cc4eafc1d4f4eacb965c35c74df04ff35afa0"
+          },
+          "tradeoff": {
+            "bytes": 16478,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:31+00:00",
+            "path": "/polyis-cache/jnc7/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "2161e3111faca044a0057defeac95ca6e6b874c09d248b60c87fba69a9553996"
+          }
+        },
+        "CalDoT1": {
+          "leap": {
+            "bytes": 294,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/caldot1-y05/tradeoff.csv",
+            "sha256": "88eb3fd337a3d6d83e95ca7360e320bd7d5fb0f3a4012a836c082b5130d3af9b"
+          },
+          "leap_stat": {
+            "bytes": 6540,
+            "exists": true,
+            "mtime": "2026-04-11T04:24:54+00:00",
+            "path": "/sota-results/caldot1-y5/leap_caldot1-y5.csv",
+            "sha256": "c33ba055ebbff7f2d461a90b555aef3a477635c9718a8b5e25a42a94f5549701"
+          },
+          "otif": {
+            "bytes": 3030,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/caldot1-y05/tradeoff.csv",
+            "sha256": "0c49fa3856359b0bfffa0e8185f5fea30e6fde225829c1bd289163ca7fe0a9fa"
+          },
+          "tradeoff": {
+            "bytes": 14577,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:32+00:00",
+            "path": "/polyis-cache/caldot1-y05/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "e2168e92bae013c01cf2e6858cd9b2fe69e006a3b33c3dad5a77fb8541ac76d2"
+          }
+        },
+        "CalDoT2": {
+          "leap": {
+            "bytes": 293,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/caldot2-y05/tradeoff.csv",
+            "sha256": "e1ec3740e7da3e66e2a94fa45add277e04a2c50a1c8cea4d27ccd0016c9cedfa"
+          },
+          "leap_stat": {
+            "bytes": 6633,
+            "exists": true,
+            "mtime": "2026-04-11T04:25:45+00:00",
+            "path": "/sota-results/caldot2-y5/leap_caldot2-y5.csv",
+            "sha256": "0e0e5f860dc65ef384e59e25277d729c7abe69db6cf2f0d7e48349bb45dc2169"
+          },
+          "otif": {
+            "bytes": 3112,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/caldot2-y05/tradeoff.csv",
+            "sha256": "dbe995f226be6aabc38cbb2fa7ef52e5695cd3bb04072c6abe263eb4c86e8b47"
+          },
+          "tradeoff": {
+            "bytes": 13677,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:32+00:00",
+            "path": "/polyis-cache/caldot2-y05/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "2f052122c3d79aeb9e4d9dc95fe24f6250884c37f134a0dca786b9e637fe58fc"
+          }
+        }
+      },
+      "run_at": "2026-10-26T10:36:29+00:00",
+      "test_rows": {
+        "Amsterdam": {
+          "leap": 1,
+          "otif": 10,
+          "reference": 1,
+          "tetris": 75
+        },
+        "B3D1": {
+          "leap": 1,
+          "otif": 8,
+          "reference": 1,
+          "tetris": 71
+        },
+        "B3D2": {
+          "leap": 1,
+          "otif": 7,
+          "reference": 1,
+          "tetris": 70
+        },
+        "B3D3": {
+          "leap": 1,
+          "otif": 8,
+          "reference": 1,
+          "tetris": 74
+        },
+        "B3D4": {
+          "leap": 1,
+          "otif": 9,
+          "reference": 1,
+          "tetris": 64
+        },
+        "CalDoT1": {
+          "leap": 1,
+          "otif": 10,
+          "reference": 1,
+          "tetris": 55
+        },
+        "CalDoT2": {
+          "leap": 1,
+          "otif": 10,
+          "reference": 1,
+          "tetris": 51
+        }
+      }
+    },
+    "measured": "Per ablation condition, each dataset's fastest Tetris test configuration within the bound over the reference throughput; mean and maximum over the datasets where the condition meets the bound.",
+    "selection": "Chosen by test-split HOTA among the test runs of the union of per-condition validation Pareto fronts (p135); candidates gives each pool's size. Part of the rise from no_both to no_sampling reflects a larger pool.",
+    "source": "R7.O1 response sentence \"6.7x to 11.1x\" = ablationOneSpeedupAvg (no_both) and ablationTwoSpeedupAvg (no_sampling) from evaluation/p204_ablation_stats.py, 5% bound, Section 7.2 l.375-386."
+  },
+  "bounds": {
+    "0.05": {
+      "full": {
+        "candidates": {
+          "Amsterdam": 75,
+          "B3D1": 71,
+          "B3D2": 70,
+          "B3D3": 74,
+          "B3D4": 64,
+          "CalDoT1": 55,
+          "CalDoT2": 51
+        },
+        "datasets": 7,
+        "max_dataset": "Amsterdam",
+        "max_speedup": 68.8,
+        "mean_speedup": 26.7,
+        "meets_bound": 7,
+        "per_dataset": {
+          "Amsterdam": {
+            "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+            "fps": 1049.5,
+            "hota": 0.6966,
+            "speedup_vs_reference": 68.8
+          },
+          "B3D1": {
+            "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+            "fps": 254.6,
+            "hota": 0.779,
+            "speedup_vs_reference": 17.3
+          },
+          "B3D2": {
+            "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+            "fps": 346.5,
+            "hota": 0.7841,
+            "speedup_vs_reference": 24.0
+          },
+          "B3D3": {
+            "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+            "fps": 285.6,
+            "hota": 0.8013,
+            "speedup_vs_reference": 19.6
+          },
+          "B3D4": {
+            "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+            "fps": 422.9,
+            "hota": 0.8051,
+            "speedup_vs_reference": 29.1
+          },
+          "CalDoT1": {
+            "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+            "fps": 729.3,
+            "hota": 0.7787,
+            "speedup_vs_reference": 23.6
+          },
+          "CalDoT2": {
+            "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+            "fps": 144.7,
+            "hota": 0.6921,
+            "speedup_vs_reference": 4.7
+          }
+        }
+      },
+      "no_both": {
+        "candidates": {
+          "Amsterdam": 13,
+          "B3D1": 10,
+          "B3D2": 12,
+          "B3D3": 10,
+          "B3D4": 12,
+          "CalDoT1": 11,
+          "CalDoT2": 10
+        },
+        "datasets": 7,
+        "max_dataset": "CalDoT1",
+        "max_speedup": 12.2,
+        "mean_speedup": 6.7,
+        "meets_bound": 7,
+        "per_dataset": {
+          "Amsterdam": {
+            "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+            "fps": 132.7,
+            "hota": 0.7048,
+            "speedup_vs_reference": 8.7
+          },
+          "B3D1": {
+            "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+            "fps": 68.8,
+            "hota": 0.7802,
+            "speedup_vs_reference": 4.7
+          },
+          "B3D2": {
+            "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+            "fps": 57.6,
+            "hota": 0.8054,
+            "speedup_vs_reference": 4.0
+          },
+          "B3D3": {
+            "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+            "fps": 76.9,
+            "hota": 0.802,
+            "speedup_vs_reference": 5.3
+          },
+          "B3D4": {
+            "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+            "fps": 110.4,
+            "hota": 0.8116,
+            "speedup_vs_reference": 7.6
+          },
+          "CalDoT1": {
+            "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+            "fps": 378.1,
+            "hota": 0.7799,
+            "speedup_vs_reference": 12.2
+          },
+          "CalDoT2": {
+            "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+            "fps": 144.7,
+            "hota": 0.6921,
+            "speedup_vs_reference": 4.7
+          }
+        }
+      },
+      "no_sampling": {
+        "candidates": {
+          "Amsterdam": 33,
+          "B3D1": 33,
+          "B3D2": 30,
+          "B3D3": 35,
+          "B3D4": 26,
+          "CalDoT1": 21,
+          "CalDoT2": 25
+        },
+        "datasets": 7,
+        "max_dataset": "Amsterdam",
+        "max_speedup": 17.9,
+        "mean_speedup": 11.1,
+        "meets_bound": 7,
+        "per_dataset": {
+          "Amsterdam": {
+            "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+            "fps": 273.3,
+            "hota": 0.6998,
+            "speedup_vs_reference": 17.9
+          },
+          "B3D1": {
+            "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+            "fps": 134.2,
+            "hota": 0.7677,
+            "speedup_vs_reference": 9.1
+          },
+          "B3D2": {
+            "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
+            "fps": 125.2,
+            "hota": 0.7931,
+            "speedup_vs_reference": 8.7
+          },
+          "B3D3": {
+            "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+            "fps": 139.4,
+            "hota": 0.7976,
+            "speedup_vs_reference": 9.6
+          },
+          "B3D4": {
+            "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+            "fps": 208.5,
+            "hota": 0.8066,
+            "speedup_vs_reference": 14.4
+          },
+          "CalDoT1": {
+            "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+            "fps": 408.6,
+            "hota": 0.7789,
+            "speedup_vs_reference": 13.2
+          },
+          "CalDoT2": {
+            "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+            "fps": 144.7,
+            "hota": 0.6921,
+            "speedup_vs_reference": 4.7
+          }
+        }
+      }
+    },
+    "0.10": {
+      "full": {
+        "candidates": {
+          "Amsterdam": 75,
+          "B3D1": 71,
+          "B3D2": 70,
+          "B3D3": 74,
+          "B3D4": 64,
+          "CalDoT1": 55,
+          "CalDoT2": 51
+        },
+        "datasets": 7,
+        "max_dataset": "Amsterdam",
+        "max_speedup": 91.2,
+        "mean_speedup": 38.4,
+        "meets_bound": 7,
+        "per_dataset": {
+          "Amsterdam": {
+            "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
+            "fps": 1391.9,
+            "hota": 0.6593,
+            "speedup_vs_reference": 91.2
+          },
+          "B3D1": {
+            "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+            "fps": 307.7,
+            "hota": 0.7401,
+            "speedup_vs_reference": 20.9
+          },
+          "B3D2": {
+            "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+            "fps": 390.6,
+            "hota": 0.768,
+            "speedup_vs_reference": 27.1
+          },
+          "B3D3": {
+            "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+            "fps": 330.8,
+            "hota": 0.7525,
+            "speedup_vs_reference": 22.8
+          },
+          "B3D4": {
+            "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+            "fps": 663.9,
+            "hota": 0.7609,
+            "speedup_vs_reference": 45.7
+          },
+          "CalDoT1": {
+            "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
+            "fps": 1560.1,
+            "hota": 0.7414,
+            "speedup_vs_reference": 50.4
+          },
+          "CalDoT2": {
+            "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+            "fps": 321.5,
+            "hota": 0.6454,
+            "speedup_vs_reference": 10.4
+          }
+        }
+      },
+      "no_both": {
+        "candidates": {
+          "Amsterdam": 13,
+          "B3D1": 10,
+          "B3D2": 12,
+          "B3D3": 10,
+          "B3D4": 12,
+          "CalDoT1": 11,
+          "CalDoT2": 10
+        },
+        "datasets": 7,
+        "max_dataset": "Amsterdam",
+        "max_speedup": 13.6,
+        "mean_speedup": 8.3,
+        "meets_bound": 7,
+        "per_dataset": {
+          "Amsterdam": {
+            "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+            "fps": 208.0,
+            "hota": 0.6625,
+            "speedup_vs_reference": 13.6
+          },
+          "B3D1": {
+            "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+            "fps": 76.8,
+            "hota": 0.7374,
+            "speedup_vs_reference": 5.2
+          },
+          "B3D2": {
+            "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+            "fps": 57.6,
+            "hota": 0.8054,
+            "speedup_vs_reference": 4.0
+          },
+          "B3D3": {
+            "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+            "fps": 76.9,
+            "hota": 0.802,
+            "speedup_vs_reference": 5.3
+          },
+          "B3D4": {
+            "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+            "fps": 110.4,
+            "hota": 0.8116,
+            "speedup_vs_reference": 7.6
+          },
+          "CalDoT1": {
+            "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+            "fps": 405.5,
+            "hota": 0.7664,
+            "speedup_vs_reference": 13.1
+          },
+          "CalDoT2": {
+            "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+            "fps": 278.8,
+            "hota": 0.6441,
+            "speedup_vs_reference": 9.0
+          }
+        }
+      },
+      "no_sampling": {
+        "candidates": {
+          "Amsterdam": 33,
+          "B3D1": 33,
+          "B3D2": 30,
+          "B3D3": 35,
+          "B3D4": 26,
+          "CalDoT1": 21,
+          "CalDoT2": 25
+        },
+        "datasets": 7,
+        "max_dataset": "CalDoT1",
+        "max_speedup": 22.6,
+        "mean_speedup": 13.7,
+        "meets_bound": 7,
+        "per_dataset": {
+          "Amsterdam": {
+            "config": "ShuffleNet05_60_1_040_r075_tr_s100_sortcython",
+            "fps": 286.9,
+            "hota": 0.6796,
+            "speedup_vs_reference": 18.8
+          },
+          "B3D1": {
+            "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+            "fps": 152.3,
+            "hota": 0.7404,
+            "speedup_vs_reference": 10.3
+          },
+          "B3D2": {
+            "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+            "fps": 131.0,
+            "hota": 0.772,
+            "speedup_vs_reference": 9.1
+          },
+          "B3D3": {
+            "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+            "fps": 150.0,
+            "hota": 0.7906,
+            "speedup_vs_reference": 10.3
+          },
+          "B3D4": {
+            "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+            "fps": 208.5,
+            "hota": 0.8066,
+            "speedup_vs_reference": 14.4
+          },
+          "CalDoT1": {
+            "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+            "fps": 700.5,
+            "hota": 0.74,
+            "speedup_vs_reference": 22.6
+          },
+          "CalDoT2": {
+            "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+            "fps": 321.5,
+            "hota": 0.6454,
+            "speedup_vs_reference": 10.4
+          }
+        }
+      }
+    }
+  },
+  "manuscript_check": {
+    "ablationOneSpeedupAvg": {
+      "manuscript": 6.7,
+      "match": true,
+      "measured": 6.7
+    },
+    "ablationOneSpeedupMax": {
+      "manuscript": 12.2,
+      "match": true,
+      "measured": 12.2
+    },
+    "ablationOneSpeedupMaxDataset": {
+      "manuscript": "CalDoT1",
+      "match": true,
+      "measured": "CalDoT1"
+    },
+    "ablationThreeSpeedupAvg": {
+      "manuscript": 26.7,
+      "match": true,
+      "measured": 26.7
+    },
+    "ablationThreeSpeedupMax": {
+      "manuscript": 68.8,
+      "match": true,
+      "measured": 68.8
+    },
+    "ablationThreeSpeedupMaxDataset": {
+      "manuscript": "Amsterdam",
+      "match": true,
+      "measured": "Amsterdam"
+    },
+    "ablationTwoSpeedupAvg": {
+      "manuscript": 11.1,
+      "match": true,
+      "measured": 11.1
+    },
+    "ablationTwoSpeedupMax": {
+      "manuscript": 17.9,
+      "match": true,
+      "measured": 17.9
+    },
+    "ablationTwoSpeedupMaxDataset": {
+      "manuscript": "Amsterdam",
+      "match": true,
+      "measured": "Amsterdam"
+    }
+  },
+  "port_check": {
+    "0.05": {
+      "ablationOneSpeedupAvg": {
+        "match": true,
+        "measured": 6.738396604348113,
+        "p204": 6.738396604348114
+      },
+      "ablationOneSpeedupMax": {
+        "match": true,
+        "measured": 12.225361466405763,
+        "p204": 12.225361466405763
+      },
+      "ablationOneSpeedupMaxDataset": {
+        "match": true,
+        "measured": "CalDoT1",
+        "p204": "CalDoT1"
+      },
+      "ablationThreeSpeedupAvg": {
+        "match": true,
+        "measured": 26.73074627859246,
+        "p204": 26.730746278592456
+      },
+      "ablationThreeSpeedupMax": {
+        "match": true,
+        "measured": 68.76820721664441,
+        "p204": 68.76820721664441
+      },
+      "ablationThreeSpeedupMaxDataset": {
+        "match": true,
+        "measured": "Amsterdam",
+        "p204": "Amsterdam"
+      },
+      "ablationTwoSpeedupAvg": {
+        "match": true,
+        "measured": 11.078225523069928,
+        "p204": 11.078225523069927
+      },
+      "ablationTwoSpeedupMax": {
+        "match": true,
+        "measured": 17.905597858568598,
+        "p204": 17.905597858568598
+      },
+      "ablationTwoSpeedupMaxDataset": {
+        "match": true,
+        "measured": "Amsterdam",
+        "p204": "Amsterdam"
+      }
+    },
+    "0.10": {
+      "ablationOneSpeedupAvg": {
+        "match": true,
+        "measured": 8.267128283743682,
+        "p204": 8.267128283743682
+      },
+      "ablationOneSpeedupMax": {
+        "match": true,
+        "measured": 13.626177391314636,
+        "p204": 13.626177391314636
+      },
+      "ablationOneSpeedupMaxDataset": {
+        "match": true,
+        "measured": "Amsterdam",
+        "p204": "Amsterdam"
+      },
+      "ablationThreeSpeedupAvg": {
+        "match": true,
+        "measured": 38.3587989975302,
+        "p204": 38.3587989975302
+      },
+      "ablationThreeSpeedupMax": {
+        "match": true,
+        "measured": 91.2020717581339,
+        "p204": 91.2020717581339
+      },
+      "ablationThreeSpeedupMaxDataset": {
+        "match": true,
+        "measured": "Amsterdam",
+        "p204": "Amsterdam"
+      },
+      "ablationTwoSpeedupAvg": {
+        "match": true,
+        "measured": 13.709469804501937,
+        "p204": 13.709469804501937
+      },
+      "ablationTwoSpeedupMax": {
+        "match": true,
+        "measured": 22.64705648947331,
+        "p204": 22.64705648947331
+      },
+      "ablationTwoSpeedupMaxDataset": {
+        "match": true,
+        "measured": "CalDoT1",
+        "p204": "CalDoT1"
+      }
+    }
+  }
+}

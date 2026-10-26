@@ -1,0 +1,3347 @@
+{
+  "about": {
+    "accuracy_matched": "p203's rule: the fastest prior point meeting the bound if its HOTA is not above Tetris's, else the most accurate Pareto-optimal prior point with HOTA not above Tetris's, which may miss the bound (per_dataset.*.prior.meets_bound).",
+    "bounds": {
+      "0.05": "HOTA >= reference HOTA x (1 - loss)",
+      "0.10": "HOTA >= reference HOTA x (1 - loss)",
+      "leap_fit": "HOTA >= LEAP's best HOTA on the dataset"
+    },
+    "checks": "port_check: this script's values on p203's inputs against p203's own functions (must match, or the run stops). manuscript_check: the same values rounded to 0.1 against the submitted macros. leap_runtime_effect: p203 macros that change when LEAP's runtime is deduplicated.",
+    "configurations": {
+      "Amsterdam": {
+        "leap": 1,
+        "otif": 10,
+        "reference": 1,
+        "tetris": 75
+      },
+      "B3D1": {
+        "leap": 1,
+        "otif": 8,
+        "reference": 1,
+        "tetris": 71
+      },
+      "B3D2": {
+        "leap": 1,
+        "otif": 7,
+        "reference": 1,
+        "tetris": 70
+      },
+      "B3D3": {
+        "leap": 1,
+        "otif": 8,
+        "reference": 1,
+        "tetris": 74
+      },
+      "B3D4": {
+        "leap": 1,
+        "otif": 9,
+        "reference": 1,
+        "tetris": 64
+      },
+      "CalDoT1": {
+        "leap": 1,
+        "otif": 10,
+        "reference": 1,
+        "tetris": 55
+      },
+      "CalDoT2": {
+        "leap": 1,
+        "otif": 10,
+        "reference": 1,
+        "tetris": 51
+      }
+    },
+    "dominance": "Secondary rule from the feedback script: per prior system meeting the bound, the fastest Tetris configuration with HOTA at least that prior point's HOTA.",
+    "estimates": "LEAP's CalDoT1 and CalDoT2 runtimes are the mean of two recorded runs per video (an estimate of one run). Every other number is measured.",
+    "ground_truth": "B3D1-B3D4 HOTA is scored against automatic ground truth (tiled RetinaNet detections tracked by OC-SORT, Section 7.1). Rerun this script after R1.O1 replaces it with human-verified labels. CalDoT1, CalDoT2, and Amsterdam use OTIF's detection labels (tracks linked by OC-SORT) and are outside R1.O1.",
+    "inputs": {
+      "files": {
+        "Amsterdam": {
+          "leap": {
+            "bytes": 309,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/ams-y05/tradeoff.csv",
+            "sha256": "e1ba40bd566923dc3b7d8b4a258b69a3d34ae99e8cb10646c1111a3b713b7bd3"
+          },
+          "leap_stat": {
+            "bytes": 3312,
+            "exists": true,
+            "mtime": "2026-04-11T04:47:44+00:00",
+            "path": "/sota-results/amsterdam-y5/leap_amsterdam-y5.csv",
+            "sha256": "3453e951493dabd6fbba246b5cc7d451f2a6539c777f0bfcd90f856058cf1938"
+          },
+          "otif": {
+            "bytes": 3101,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/ams-y05/tradeoff.csv",
+            "sha256": "9390ee7418333e26c70c145e37e25de3f10519dbb06f0743eb4c0432d2424bc3"
+          },
+          "tradeoff": {
+            "bytes": 19796,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:32+00:00",
+            "path": "/polyis-cache/ams-y05/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "52ced6559546465e4a1b3a41c0c04c4b220fabff922c93705d69f51329d10829"
+          }
+        },
+        "B3D1": {
+          "leap": {
+            "bytes": 285,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/jnc0/tradeoff.csv",
+            "sha256": "88e659d7c6a9025eb150cc566b99fa74e2d7a76edd81cbcd45cdb887d9571f20"
+          },
+          "leap_stat": {
+            "bytes": 426,
+            "exists": true,
+            "mtime": "2026-04-11T04:39:04+00:00",
+            "path": "/sota-results/jnc0/leap_jnc0.csv",
+            "sha256": "d7890b5c3e4acb96704e9049337fee80d337baa53b0944925f84cbd6c5ffe66f"
+          },
+          "otif": {
+            "bytes": 2288,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/jnc0/tradeoff.csv",
+            "sha256": "aae46c9152c86dfaa11dc38ea3f3effe018eba3a8e81e92ee85783572589f804"
+          },
+          "tradeoff": {
+            "bytes": 18362,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:31+00:00",
+            "path": "/polyis-cache/jnc0/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "8a43c3c60d8c4ade15bfe6b2f6391744b2276a03d336fdc67f8c27f24089b2fb"
+          }
+        },
+        "B3D2": {
+          "leap": {
+            "bytes": 284,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/jnc2/tradeoff.csv",
+            "sha256": "e3f235539534f95712c4eb9a6e1baa5f7c4069c58e7bba45f148f088d7762041"
+          },
+          "leap_stat": {
+            "bytes": 400,
+            "exists": true,
+            "mtime": "2026-04-11T04:39:46+00:00",
+            "path": "/sota-results/jnc2/leap_jnc2.csv",
+            "sha256": "2aaf345ae057ebfbf6282bc832110e055ec7fe9c3cb5d008a67e60bdbf76b338"
+          },
+          "otif": {
+            "bytes": 2117,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/jnc2/tradeoff.csv",
+            "sha256": "7669ff9ef60dff374bcca22c18648f8100d932c02a29b58e067a2355ddf8f9e4"
+          },
+          "tradeoff": {
+            "bytes": 18118,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:31+00:00",
+            "path": "/polyis-cache/jnc2/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "a1c8a3a1f82e59aa4fb04a4f298918053eedd275886b8bb7bc2143c9c1e7be41"
+          }
+        },
+        "B3D3": {
+          "leap": {
+            "bytes": 287,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/jnc6/tradeoff.csv",
+            "sha256": "5394818f2806161b66342f02f1ca052000f2b38ab2a8c01199291926fc6f9a0c"
+          },
+          "leap_stat": {
+            "bytes": 445,
+            "exists": true,
+            "mtime": "2026-04-11T04:40:06+00:00",
+            "path": "/sota-results/jnc6/leap_jnc6.csv",
+            "sha256": "47c75c48a6a8259a51c91a835f442347c6c8789afe98816305cc3e02e1a919ef"
+          },
+          "otif": {
+            "bytes": 2341,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/jnc6/tradeoff.csv",
+            "sha256": "e49979145592de8b113c7c81dbd4dc74d8d7eead2bb28c337d7c1bb6944df98c"
+          },
+          "tradeoff": {
+            "bytes": 19118,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:31+00:00",
+            "path": "/polyis-cache/jnc6/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "13928e7bb0e6e4e5a908ea307a780bc1eea768863fd0d0397bbadf21d8a7df7c"
+          }
+        },
+        "B3D4": {
+          "leap": {
+            "bytes": 285,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/jnc7/tradeoff.csv",
+            "sha256": "3ad7a56ca552e910913d336fa9fdcc146e667902ee32018b6957ffa00dddb037"
+          },
+          "leap_stat": {
+            "bytes": 426,
+            "exists": true,
+            "mtime": "2026-04-11T04:40:24+00:00",
+            "path": "/sota-results/jnc7/leap_jnc7.csv",
+            "sha256": "4d4f3e2efc158bda891ae0be88849c33ab130afac07495013cacd5f472c515c6"
+          },
+          "otif": {
+            "bytes": 2625,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/jnc7/tradeoff.csv",
+            "sha256": "b5e9cd95725bae002e72044eb11cc4eafc1d4f4eacb965c35c74df04ff35afa0"
+          },
+          "tradeoff": {
+            "bytes": 16478,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:31+00:00",
+            "path": "/polyis-cache/jnc7/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "2161e3111faca044a0057defeac95ca6e6b874c09d248b60c87fba69a9553996"
+          }
+        },
+        "CalDoT1": {
+          "leap": {
+            "bytes": 294,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/caldot1-y05/tradeoff.csv",
+            "sha256": "88eb3fd337a3d6d83e95ca7360e320bd7d5fb0f3a4012a836c082b5130d3af9b"
+          },
+          "leap_stat": {
+            "bytes": 6540,
+            "exists": true,
+            "mtime": "2026-04-11T04:24:54+00:00",
+            "path": "/sota-results/caldot1-y5/leap_caldot1-y5.csv",
+            "sha256": "c33ba055ebbff7f2d461a90b555aef3a477635c9718a8b5e25a42a94f5549701"
+          },
+          "otif": {
+            "bytes": 3030,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/caldot1-y05/tradeoff.csv",
+            "sha256": "0c49fa3856359b0bfffa0e8185f5fea30e6fde225829c1bd289163ca7fe0a9fa"
+          },
+          "tradeoff": {
+            "bytes": 14577,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:32+00:00",
+            "path": "/polyis-cache/caldot1-y05/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "e2168e92bae013c01cf2e6858cd9b2fe69e006a3b33c3dad5a77fb8541ac76d2"
+          }
+        },
+        "CalDoT2": {
+          "leap": {
+            "bytes": 293,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/leap/caldot2-y05/tradeoff.csv",
+            "sha256": "e1ec3740e7da3e66e2a94fa45add277e04a2c50a1c8cea4d27ccd0016c9cedfa"
+          },
+          "leap_stat": {
+            "bytes": 6633,
+            "exists": true,
+            "mtime": "2026-04-11T04:25:45+00:00",
+            "path": "/sota-results/caldot2-y5/leap_caldot2-y5.csv",
+            "sha256": "0e0e5f860dc65ef384e59e25277d729c7abe69db6cf2f0d7e48349bb45dc2169"
+          },
+          "otif": {
+            "bytes": 3112,
+            "exists": true,
+            "mtime": "2026-04-20T00:58:14+00:00",
+            "path": "/polyis-cache/SOTA/otif/caldot2-y05/tradeoff.csv",
+            "sha256": "dbe995f226be6aabc38cbb2fa7ef52e5695cd3bb04072c6abe263eb4c86e8b47"
+          },
+          "tradeoff": {
+            "bytes": 13677,
+            "exists": true,
+            "mtime": "2026-04-20T00:56:32+00:00",
+            "path": "/polyis-cache/caldot2-y05/evaluation/090_tradeoff/tradeoff.csv",
+            "sha256": "2f052122c3d79aeb9e4d9dc95fe24f6250884c37f134a0dca786b9e637fe58fc"
+          }
+        }
+      },
+      "run_at": "2026-10-26T10:36:29+00:00",
+      "test_rows": {
+        "Amsterdam": {
+          "leap": 1,
+          "otif": 10,
+          "reference": 1,
+          "tetris": 75
+        },
+        "B3D1": {
+          "leap": 1,
+          "otif": 8,
+          "reference": 1,
+          "tetris": 71
+        },
+        "B3D2": {
+          "leap": 1,
+          "otif": 7,
+          "reference": 1,
+          "tetris": 70
+        },
+        "B3D3": {
+          "leap": 1,
+          "otif": 8,
+          "reference": 1,
+          "tetris": 74
+        },
+        "B3D4": {
+          "leap": 1,
+          "otif": 9,
+          "reference": 1,
+          "tetris": 64
+        },
+        "CalDoT1": {
+          "leap": 1,
+          "otif": 10,
+          "reference": 1,
+          "tetris": 55
+        },
+        "CalDoT2": {
+          "leap": 1,
+          "otif": 10,
+          "reference": 1,
+          "tetris": 51
+        }
+      }
+    },
+    "leap_fit": "Provisional with LEAP (see leap_status). LEAP's best HOTA is far below the other systems', so this bound admits nearly every Tetris and OTIF configuration; Tetris over OTIF there compares points of very different HOTA.",
+    "leap_status": "Provisional. LEAP's HOTA comes from p140_otif_transform.transform_tracking_json, which sets frame = list index; LEAP's outputs are longer than the clips and hold many same-frame identical boxes (leap_checks.output_alignment), so the conversion is unverified (R1.O2, \"document the HOTA conversion\"). Do not quote any LEAP or leap_fit number, or \"LEAP misses the 5%/10% bound\", until the conversion is fixed and rescored. LEAP's runtime is deduplicated here (leap_checks.runtime).",
+    "manuscript_rules": {
+      "compareAccuracyMatchedSpeedup{Min,Max}{FivePct,TenPct}": "accuracy_matched (abstract l.25, introduction l.106-110 and l.138, Section 7 l.208-211, conclusion l.25). Its matched prior point may miss the bound (accuracy_matched.<bound>.per_dataset.*.prior_meets_bound).",
+      "compareNaiveSpeedup{Min,Max}{FivePct,TenPct}": "ranges.<bound>.systems.tetris (same sentences).",
+      "comparePriorFailDatasetsFivePct, comparePriorMeetFivePct": "ranges.<bound>.prior_fail and prior_meets (abstract l.21, introduction l.104 and l.137, Section 7 l.202, conclusion l.24).",
+      "compareSpeedup{Min,Max}{FivePct,TenPct}": "ranges.<bound>.tetris_vs[\"fastest prior\"], the shared-bound rule; no live sentence quotes it."
+    },
+    "measured": "Each system's fastest test-split configuration whose HOTA meets a per-dataset bound, its speedup over the reference pipeline, Tetris's speedup over each prior system meeting the same bound, and p203's accuracy-matched speedup.",
+    "ratios": "Speedups and ratios divide unrounded throughputs, then round to 0.1 (common.operating_points divides throughputs already rounded to 0.1 fps; corrected here by fix_ratios).",
+    "selection": "Operating points are chosen by test-split HOTA among the test runs of each system's validated Pareto configurations (p135), the manuscript's method. Candidate pools differ by system (configurations): Tetris has tens of configurations per dataset, OTIF about ten, LEAP one.",
+    "throughput": {
+      "leap": "inference_total - decode per test video from LEAP's raw stat CSV, so decoding is excluded; repeated runs of a video are averaged (leap_checks.runtime). p140 uses the total row instead.",
+      "otif": "runtime_total from OTIF's stat CSV (p140 normalize_otif_stat_csv). OTIF's per-stage columns (seg, detect, track, decode) sum to more than runtime_total, so stages overlap and its decoding time cannot be separated out.",
+      "prior_fps": "Prior systems' throughput is the test split's frame count (our clips) over their runtime, as in evaluation/p200_compare_compute.py and p203, not the frames the system decoded.",
+      "tetris_and_reference": "throughput_fps from p130's tradeoff table: test frames over the stage runtimes p121 sums, without the ops total_frame_time, read_frame, save_canvas, and save_mapping_files, and without read and retrieve in p020 classification."
+    },
+    "ties": "Bounds are inclusive (HOTA >= bound; p203/p204 test round(loss, 12) <= loss bound, which differs only within 1e-12 of the bound and is checked by port_check). Throughput ties go to the more accurate configuration, then the smaller config name. Maxima over datasets break ties by p204's dataset order (CONFIG EXEC.DATASETS), as pandas idxmax does."
+  },
+  "accuracy_matched": {
+    "0.05": {
+      "matched": 7,
+      "matched_outside_bound": 6,
+      "max": 17.4,
+      "min": 1.5,
+      "per_dataset": {
+        "Amsterdam": {
+          "bound": 0.6949,
+          "prior": {
+            "config": "param 2",
+            "fps": 60.3,
+            "hota": 0.6805,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+            "fps": 1049.5,
+            "hota": 0.6966
+          },
+          "tetris_speedup_vs_prior": 17.4
+        },
+        "B3D1": {
+          "bound": 0.7653,
+          "prior": {
+            "config": "param 2",
+            "fps": 101.6,
+            "hota": 0.7156,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+            "fps": 254.6,
+            "hota": 0.779
+          },
+          "tetris_speedup_vs_prior": 2.5
+        },
+        "B3D2": {
+          "bound": 0.7744,
+          "prior": {
+            "config": "param 3",
+            "fps": 229.5,
+            "hota": 0.7308,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+            "fps": 346.5,
+            "hota": 0.7841
+          },
+          "tetris_speedup_vs_prior": 1.5
+        },
+        "B3D3": {
+          "bound": 0.7937,
+          "prior": {
+            "config": "param 2",
+            "fps": 98.7,
+            "hota": 0.7978,
+            "meets_bound": true,
+            "rule": "threshold_feasible_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+            "fps": 285.6,
+            "hota": 0.8013
+          },
+          "tetris_speedup_vs_prior": 2.9
+        },
+        "B3D4": {
+          "bound": 0.803,
+          "prior": {
+            "config": "param 1",
+            "fps": 26.9,
+            "hota": 0.7375,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+            "fps": 422.9,
+            "hota": 0.8051
+          },
+          "tetris_speedup_vs_prior": 15.7
+        },
+        "CalDoT1": {
+          "bound": 0.7772,
+          "prior": {
+            "config": "param 2",
+            "fps": 58.7,
+            "hota": 0.7705,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+            "fps": 729.3,
+            "hota": 0.7787
+          },
+          "tetris_speedup_vs_prior": 12.4
+        },
+        "CalDoT2": {
+          "bound": 0.6798,
+          "prior": {
+            "config": "param 0",
+            "fps": 28.9,
+            "hota": 0.6675,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+            "fps": 144.7,
+            "hota": 0.6921
+          },
+          "tetris_speedup_vs_prior": 5.0
+        }
+      },
+      "prior_systems": [
+        "otif"
+      ]
+    },
+    "0.10": {
+      "matched": 7,
+      "matched_outside_bound": 7,
+      "max": 24.7,
+      "min": 1.6,
+      "per_dataset": {
+        "Amsterdam": {
+          "bound": 0.6584,
+          "prior": {
+            "config": "param 5",
+            "fps": 491.6,
+            "hota": 0.63,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
+            "fps": 1391.9,
+            "hota": 0.6593
+          },
+          "tetris_speedup_vs_prior": 2.8
+        },
+        "B3D1": {
+          "bound": 0.7251,
+          "prior": {
+            "config": "param 2",
+            "fps": 101.6,
+            "hota": 0.7156,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+            "fps": 307.7,
+            "hota": 0.7401
+          },
+          "tetris_speedup_vs_prior": 3.0
+        },
+        "B3D2": {
+          "bound": 0.7336,
+          "prior": {
+            "config": "param 3",
+            "fps": 229.5,
+            "hota": 0.7308,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+            "fps": 390.6,
+            "hota": 0.768
+          },
+          "tetris_speedup_vs_prior": 1.7
+        },
+        "B3D3": {
+          "bound": 0.7519,
+          "prior": {
+            "config": "param 3",
+            "fps": 203.4,
+            "hota": 0.6176,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+            "fps": 330.8,
+            "hota": 0.7525
+          },
+          "tetris_speedup_vs_prior": 1.6
+        },
+        "B3D4": {
+          "bound": 0.7608,
+          "prior": {
+            "config": "param 1",
+            "fps": 26.9,
+            "hota": 0.7375,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+            "fps": 663.9,
+            "hota": 0.7609
+          },
+          "tetris_speedup_vs_prior": 24.7
+        },
+        "CalDoT1": {
+          "bound": 0.7363,
+          "prior": {
+            "config": "param 4",
+            "fps": 235.1,
+            "hota": 0.7331,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
+            "fps": 1560.1,
+            "hota": 0.7414
+          },
+          "tetris_speedup_vs_prior": 6.6
+        },
+        "CalDoT2": {
+          "bound": 0.644,
+          "prior": {
+            "config": "param 2",
+            "fps": 104.7,
+            "hota": 0.5526,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+            "fps": 321.5,
+            "hota": 0.6454
+          },
+          "tetris_speedup_vs_prior": 3.1
+        }
+      },
+      "prior_systems": [
+        "otif"
+      ]
+    },
+    "leap_fit": {
+      "matched": 7,
+      "matched_outside_bound": 0,
+      "max": 6.0,
+      "min": 0.8,
+      "per_dataset": {
+        "Amsterdam": {
+          "bound": 0.0493,
+          "prior": {
+            "config": "param 7",
+            "fps": 1034.7,
+            "hota": 0.4328,
+            "meets_bound": true,
+            "rule": "threshold_feasible_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 2841.0,
+            "hota": 0.4993
+          },
+          "tetris_speedup_vs_prior": 2.7
+        },
+        "B3D1": {
+          "bound": 0.0359,
+          "prior": {
+            "config": "param 5",
+            "fps": 1115.1,
+            "hota": 0.1761,
+            "meets_bound": true,
+            "rule": "threshold_feasible_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 1135.4,
+            "hota": 0.2986
+          },
+          "tetris_speedup_vs_prior": 1.0
+        },
+        "B3D2": {
+          "bound": 0.024,
+          "prior": {
+            "config": "param 5",
+            "fps": 1084.6,
+            "hota": 0.3359,
+            "meets_bound": true,
+            "rule": "threshold_feasible_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 818.4,
+            "hota": 0.5509
+          },
+          "tetris_speedup_vs_prior": 0.8
+        },
+        "B3D3": {
+          "bound": 0.0116,
+          "prior": {
+            "config": "param 5",
+            "fps": 1065.0,
+            "hota": 0.0564,
+            "meets_bound": true,
+            "rule": "threshold_feasible_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
+            "fps": 1214.5,
+            "hota": 0.1205
+          },
+          "tetris_speedup_vs_prior": 1.1
+        },
+        "B3D4": {
+          "bound": 0.0347,
+          "prior": {
+            "config": "param 6",
+            "fps": 1023.5,
+            "hota": 0.1259,
+            "meets_bound": true,
+            "rule": "threshold_feasible_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
+            "fps": 1411.0,
+            "hota": 0.5128
+          },
+          "tetris_speedup_vs_prior": 1.4
+        },
+        "CalDoT1": {
+          "bound": 0.0703,
+          "prior": {
+            "config": "param 9",
+            "fps": 2017.9,
+            "hota": 0.4654,
+            "meets_bound": true,
+            "rule": "threshold_feasible_not_more_accurate",
+            "system": "otif"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 4968.4,
+            "hota": 0.6701
+          },
+          "tetris_speedup_vs_prior": 2.5
+        },
+        "CalDoT2": {
+          "bound": 0.0933,
+          "prior": {
+            "config": "param 0",
+            "fps": 1012.8,
+            "hota": 0.0933,
+            "meets_bound": true,
+            "rule": "nearest_not_more_accurate",
+            "system": "leap"
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 6054.4,
+            "hota": 0.182
+          },
+          "tetris_speedup_vs_prior": 6.0
+        }
+      },
+      "prior_systems": [
+        "leap",
+        "otif"
+      ]
+    }
+  },
+  "dominance": {
+    "0.05": {
+      "B3D1": {
+        "otif": {
+          "prior": {
+            "config": "param 1",
+            "fps": 47.9,
+            "hota": 0.7988,
+            "speedup_vs_reference": 3.2
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_1_060_r025_bl_s100_sortcython",
+            "fps": 59.9,
+            "hota": 0.8006,
+            "speedup_vs_prior": 1.2,
+            "speedup_vs_reference": 4.1
+          }
+        }
+      },
+      "B3D2": {
+        "otif": {
+          "prior": {
+            "config": "param 2",
+            "fps": 108.8,
+            "hota": 0.8047,
+            "speedup_vs_reference": 7.5
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+            "fps": 121.1,
+            "hota": 0.8069,
+            "speedup_vs_prior": 1.1,
+            "speedup_vs_reference": 8.4
+          }
+        }
+      },
+      "B3D3": {
+        "otif": {
+          "prior": {
+            "config": "param 2",
+            "fps": 98.7,
+            "hota": 0.7978,
+            "speedup_vs_reference": 6.8
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+            "fps": 285.6,
+            "hota": 0.8013,
+            "speedup_vs_prior": 2.9,
+            "speedup_vs_reference": 19.6
+          }
+        }
+      },
+      "B3D4": {
+        "otif": {
+          "prior": {
+            "config": "param 0",
+            "fps": 25.7,
+            "hota": 0.842,
+            "speedup_vs_reference": 1.8
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+            "fps": 92.4,
+            "hota": 0.8468,
+            "speedup_vs_prior": 3.6,
+            "speedup_vs_reference": 6.4
+          }
+        }
+      }
+    },
+    "0.10": {
+      "Amsterdam": {
+        "otif": {
+          "prior": {
+            "config": "param 4",
+            "fps": 241.1,
+            "hota": 0.6671,
+            "speedup_vs_reference": 15.8
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r025_square_s100_sortcython",
+            "fps": 1105.5,
+            "hota": 0.6677,
+            "speedup_vs_prior": 4.6,
+            "speedup_vs_reference": 72.4
+          }
+        }
+      },
+      "B3D1": {
+        "otif": {
+          "prior": {
+            "config": "param 1",
+            "fps": 47.9,
+            "hota": 0.7988,
+            "speedup_vs_reference": 3.2
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_1_060_r025_bl_s100_sortcython",
+            "fps": 59.9,
+            "hota": 0.8006,
+            "speedup_vs_prior": 1.2,
+            "speedup_vs_reference": 4.1
+          }
+        }
+      },
+      "B3D2": {
+        "otif": {
+          "prior": {
+            "config": "param 2",
+            "fps": 108.8,
+            "hota": 0.8047,
+            "speedup_vs_reference": 7.5
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+            "fps": 121.1,
+            "hota": 0.8069,
+            "speedup_vs_prior": 1.1,
+            "speedup_vs_reference": 8.4
+          }
+        }
+      },
+      "B3D3": {
+        "otif": {
+          "prior": {
+            "config": "param 2",
+            "fps": 98.7,
+            "hota": 0.7978,
+            "speedup_vs_reference": 6.8
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+            "fps": 285.6,
+            "hota": 0.8013,
+            "speedup_vs_prior": 2.9,
+            "speedup_vs_reference": 19.6
+          }
+        }
+      },
+      "B3D4": {
+        "otif": {
+          "prior": {
+            "config": "param 0",
+            "fps": 25.7,
+            "hota": 0.842,
+            "speedup_vs_reference": 1.8
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+            "fps": 92.4,
+            "hota": 0.8468,
+            "speedup_vs_prior": 3.6,
+            "speedup_vs_reference": 6.4
+          }
+        }
+      },
+      "CalDoT1": {
+        "otif": {
+          "prior": {
+            "config": "param 3",
+            "fps": 115.1,
+            "hota": 0.7703,
+            "speedup_vs_reference": 3.7
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_4_r050_bl_s100_sortcython",
+            "fps": 765.6,
+            "hota": 0.7752,
+            "speedup_vs_prior": 6.7,
+            "speedup_vs_reference": 24.8
+          }
+        }
+      },
+      "CalDoT2": {
+        "otif": {
+          "prior": {
+            "config": "param 1",
+            "fps": 57.0,
+            "hota": 0.655,
+            "speedup_vs_reference": 1.8
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
+            "fps": 292.2,
+            "hota": 0.6558,
+            "speedup_vs_prior": 5.1,
+            "speedup_vs_reference": 9.5
+          }
+        }
+      }
+    },
+    "leap_fit": {
+      "Amsterdam": {
+        "leap": {
+          "prior": {
+            "config": "param 0",
+            "fps": 555.6,
+            "hota": 0.0493,
+            "speedup_vs_reference": 36.4
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 2841.0,
+            "hota": 0.4993,
+            "speedup_vs_prior": 5.1,
+            "speedup_vs_reference": 186.2
+          }
+        },
+        "otif": {
+          "prior": {
+            "config": "param 7",
+            "fps": 1034.7,
+            "hota": 0.4328,
+            "speedup_vs_reference": 67.8
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 2841.0,
+            "hota": 0.4993,
+            "speedup_vs_prior": 2.7,
+            "speedup_vs_reference": 186.2
+          }
+        }
+      },
+      "B3D1": {
+        "leap": {
+          "prior": {
+            "config": "param 0",
+            "fps": 265.3,
+            "hota": 0.0359,
+            "speedup_vs_reference": 18.0
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 1135.4,
+            "hota": 0.2986,
+            "speedup_vs_prior": 4.3,
+            "speedup_vs_reference": 77.0
+          }
+        },
+        "otif": {
+          "prior": {
+            "config": "param 5",
+            "fps": 1115.1,
+            "hota": 0.1761,
+            "speedup_vs_reference": 75.6
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 1135.4,
+            "hota": 0.2986,
+            "speedup_vs_prior": 1.0,
+            "speedup_vs_reference": 77.0
+          }
+        }
+      },
+      "B3D2": {
+        "leap": {
+          "prior": {
+            "config": "param 0",
+            "fps": 181.7,
+            "hota": 0.024,
+            "speedup_vs_reference": 12.6
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 818.4,
+            "hota": 0.5509,
+            "speedup_vs_prior": 4.5,
+            "speedup_vs_reference": 56.8
+          }
+        },
+        "otif": {
+          "prior": {
+            "config": "param 5",
+            "fps": 1084.6,
+            "hota": 0.3359,
+            "speedup_vs_reference": 75.3
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 818.4,
+            "hota": 0.5509,
+            "speedup_vs_prior": 0.8,
+            "speedup_vs_reference": 56.8
+          }
+        }
+      },
+      "B3D3": {
+        "leap": {
+          "prior": {
+            "config": "param 0",
+            "fps": 30.0,
+            "hota": 0.0116,
+            "speedup_vs_reference": 2.1
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
+            "fps": 1214.5,
+            "hota": 0.1205,
+            "speedup_vs_prior": 40.4,
+            "speedup_vs_reference": 83.5
+          }
+        },
+        "otif": {
+          "prior": {
+            "config": "param 5",
+            "fps": 1065.0,
+            "hota": 0.0564,
+            "speedup_vs_reference": 73.3
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
+            "fps": 1214.5,
+            "hota": 0.1205,
+            "speedup_vs_prior": 1.1,
+            "speedup_vs_reference": 83.5
+          }
+        }
+      },
+      "B3D4": {
+        "leap": {
+          "prior": {
+            "config": "param 0",
+            "fps": 268.2,
+            "hota": 0.0347,
+            "speedup_vs_reference": 18.5
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
+            "fps": 1411.0,
+            "hota": 0.5128,
+            "speedup_vs_prior": 5.3,
+            "speedup_vs_reference": 97.2
+          }
+        },
+        "otif": {
+          "prior": {
+            "config": "param 6",
+            "fps": 1023.5,
+            "hota": 0.1259,
+            "speedup_vs_reference": 70.5
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
+            "fps": 1411.0,
+            "hota": 0.5128,
+            "speedup_vs_prior": 1.4,
+            "speedup_vs_reference": 97.2
+          }
+        }
+      },
+      "CalDoT1": {
+        "leap": {
+          "prior": {
+            "config": "param 0",
+            "fps": 747.0,
+            "hota": 0.0703,
+            "speedup_vs_reference": 24.2
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 4968.4,
+            "hota": 0.6701,
+            "speedup_vs_prior": 6.7,
+            "speedup_vs_reference": 160.6
+          }
+        },
+        "otif": {
+          "prior": {
+            "config": "param 9",
+            "fps": 2017.9,
+            "hota": 0.4654,
+            "speedup_vs_reference": 65.2
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 4968.4,
+            "hota": 0.6701,
+            "speedup_vs_prior": 2.5,
+            "speedup_vs_reference": 160.6
+          }
+        }
+      },
+      "CalDoT2": {
+        "leap": {
+          "prior": {
+            "config": "param 0",
+            "fps": 1012.8,
+            "hota": 0.0933,
+            "speedup_vs_reference": 32.8
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 6054.4,
+            "hota": 0.182,
+            "speedup_vs_prior": 6.0,
+            "speedup_vs_reference": 196.2
+          }
+        },
+        "otif": {
+          "prior": {
+            "config": "param 9",
+            "fps": 1449.3,
+            "hota": 0.3254,
+            "speedup_vs_reference": 47.0
+          },
+          "tetris": {
+            "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+            "fps": 3432.0,
+            "hota": 0.3355,
+            "speedup_vs_prior": 2.4,
+            "speedup_vs_reference": 111.2
+          }
+        }
+      }
+    }
+  },
+  "leap_checks": {
+    "output_alignment": {
+      "Amsterdam": {
+        "leap": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "Amsterdam",
+            "detections": 181780,
+            "duplicate_boxes": 46394,
+            "duplicate_share": 0.2552,
+            "entries": 54871,
+            "max_extra_entries": 59.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 0,
+            "system": "leap",
+            "videos": 60,
+            "videos_longer_than_clip": 51,
+            "videos_shorter_than_clip": 9
+          }
+        },
+        "otif": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "Amsterdam",
+            "detections": 69690,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 51994,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": -589.0,
+            "null_entries": 27625,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 57
+          },
+          "param 1": {
+            "config": "param 1",
+            "dataset": "Amsterdam",
+            "detections": 35014,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 51888,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": -591.0,
+            "null_entries": 39544,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 58
+          },
+          "param 2": {
+            "config": "param 2",
+            "dataset": "Amsterdam",
+            "detections": 34683,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 52040,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": -591.0,
+            "null_entries": 39688,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 58
+          },
+          "param 3": {
+            "config": "param 3",
+            "dataset": "Amsterdam",
+            "detections": 17594,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 51732,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -595.0,
+            "null_entries": 45358,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 4": {
+            "config": "param 4",
+            "dataset": "Amsterdam",
+            "detections": 9066,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 51708,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -595.0,
+            "null_entries": 48302,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 5": {
+            "config": "param 5",
+            "dataset": "Amsterdam",
+            "detections": 4773,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 51420,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -835.0,
+            "null_entries": 49524,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 6": {
+            "config": "param 6",
+            "dataset": "Amsterdam",
+            "detections": 2464,
+            "duplicate_boxes": 1,
+            "duplicate_share": 0.0004,
+            "entries": 51260,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -835.0,
+            "null_entries": 50294,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 7": {
+            "config": "param 7",
+            "dataset": "Amsterdam",
+            "detections": 2415,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 51195,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 50237,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 8": {
+            "config": "param 8",
+            "dataset": "Amsterdam",
+            "detections": 2334,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 51131,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 50202,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 9": {
+            "config": "param 9",
+            "dataset": "Amsterdam",
+            "detections": 2340,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 51067,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 50142,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          }
+        }
+      },
+      "B3D1": {
+        "leap": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "B3D1",
+            "detections": 120779,
+            "duplicate_boxes": 3171,
+            "duplicate_share": 0.0263,
+            "entries": 7846,
+            "max_extra_entries": 531.0,
+            "min_extra_entries": 452.0,
+            "null_entries": 0,
+            "system": "leap",
+            "videos": 5,
+            "videos_longer_than_clip": 5,
+            "videos_shorter_than_clip": 0
+          }
+        },
+        "otif": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "B3D1",
+            "detections": 33443,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5375,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": 0.0,
+            "null_entries": 2494,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 0
+          },
+          "param 1": {
+            "config": "param 1",
+            "dataset": "B3D1",
+            "detections": 16880,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5365,
+            "max_extra_entries": -2.0,
+            "min_extra_entries": -2.0,
+            "null_entries": 3780,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 2": {
+            "config": "param 2",
+            "dataset": "B3D1",
+            "detections": 8678,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5365,
+            "max_extra_entries": -2.0,
+            "min_extra_entries": -2.0,
+            "null_entries": 4389,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 3": {
+            "config": "param 3",
+            "dataset": "B3D1",
+            "detections": 4549,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5365,
+            "max_extra_entries": -2.0,
+            "min_extra_entries": -2.0,
+            "null_entries": 4747,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 4": {
+            "config": "param 4",
+            "dataset": "B3D1",
+            "detections": 2344,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5285,
+            "max_extra_entries": -18.0,
+            "min_extra_entries": -18.0,
+            "null_entries": 4953,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 5": {
+            "config": "param 5",
+            "dataset": "B3D1",
+            "detections": 1196,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5125,
+            "max_extra_entries": -50.0,
+            "min_extra_entries": -50.0,
+            "null_entries": 4947,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 6": {
+            "config": "param 6",
+            "dataset": "B3D1",
+            "detections": 0,
+            "duplicate_boxes": 0,
+            "duplicate_share": null,
+            "entries": 0,
+            "max_extra_entries": -1075.0,
+            "min_extra_entries": -1075.0,
+            "null_entries": 0,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 7": {
+            "config": "param 7",
+            "dataset": "B3D1",
+            "detections": 0,
+            "duplicate_boxes": 0,
+            "duplicate_share": null,
+            "entries": 0,
+            "max_extra_entries": -1075.0,
+            "min_extra_entries": -1075.0,
+            "null_entries": 0,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          }
+        }
+      },
+      "B3D2": {
+        "leap": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "B3D2",
+            "detections": 117717,
+            "duplicate_boxes": 35877,
+            "duplicate_share": 0.3048,
+            "entries": 6559,
+            "max_extra_entries": 393.0,
+            "min_extra_entries": 358.0,
+            "null_entries": 0,
+            "system": "leap",
+            "videos": 5,
+            "videos_longer_than_clip": 5,
+            "videos_shorter_than_clip": 0
+          }
+        },
+        "otif": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "B3D2",
+            "detections": 41927,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 4687,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": -1.0,
+            "null_entries": 2248,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 4
+          },
+          "param 1": {
+            "config": "param 1",
+            "dataset": "B3D2",
+            "detections": 21094,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 4685,
+            "max_extra_entries": -1.0,
+            "min_extra_entries": -2.0,
+            "null_entries": 3394,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 2": {
+            "config": "param 2",
+            "dataset": "B3D2",
+            "detections": 10684,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 4685,
+            "max_extra_entries": -1.0,
+            "min_extra_entries": -2.0,
+            "null_entries": 3958,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 3": {
+            "config": "param 3",
+            "dataset": "B3D2",
+            "detections": 5466,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 4645,
+            "max_extra_entries": -9.0,
+            "min_extra_entries": -10.0,
+            "null_entries": 4173,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 4": {
+            "config": "param 4",
+            "dataset": "B3D2",
+            "detections": 2806,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 4645,
+            "max_extra_entries": -9.0,
+            "min_extra_entries": -10.0,
+            "null_entries": 4392,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 5": {
+            "config": "param 5",
+            "dataset": "B3D2",
+            "detections": 1370,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 4485,
+            "max_extra_entries": -41.0,
+            "min_extra_entries": -42.0,
+            "null_entries": 4378,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 6": {
+            "config": "param 6",
+            "dataset": "B3D2",
+            "detections": 0,
+            "duplicate_boxes": 0,
+            "duplicate_share": null,
+            "entries": 0,
+            "max_extra_entries": -938.0,
+            "min_extra_entries": -939.0,
+            "null_entries": 0,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          }
+        }
+      },
+      "B3D3": {
+        "leap": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "B3D3",
+            "detections": 144202,
+            "duplicate_boxes": 129596,
+            "duplicate_share": 0.8987,
+            "entries": 5286,
+            "max_extra_entries": 36.0,
+            "min_extra_entries": 1.0,
+            "null_entries": 0,
+            "system": "leap",
+            "videos": 5,
+            "videos_longer_than_clip": 5,
+            "videos_shorter_than_clip": 0
+          }
+        },
+        "otif": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "B3D3",
+            "detections": 34142,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5189,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": -1.0,
+            "null_entries": 2426,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 3
+          },
+          "param 1": {
+            "config": "param 1",
+            "dataset": "B3D3",
+            "detections": 17221,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5185,
+            "max_extra_entries": -1.0,
+            "min_extra_entries": -2.0,
+            "null_entries": 3693,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 2": {
+            "config": "param 2",
+            "dataset": "B3D3",
+            "detections": 8869,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5165,
+            "max_extra_entries": -5.0,
+            "min_extra_entries": -6.0,
+            "null_entries": 4206,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 3": {
+            "config": "param 3",
+            "dataset": "B3D3",
+            "detections": 4642,
+            "duplicate_boxes": 4,
+            "duplicate_share": 0.0009,
+            "entries": 5125,
+            "max_extra_entries": -13.0,
+            "min_extra_entries": -14.0,
+            "null_entries": 4505,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 4": {
+            "config": "param 4",
+            "dataset": "B3D3",
+            "detections": 2358,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5125,
+            "max_extra_entries": -13.0,
+            "min_extra_entries": -14.0,
+            "null_entries": 4813,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 5": {
+            "config": "param 5",
+            "dataset": "B3D3",
+            "detections": 1158,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5125,
+            "max_extra_entries": -13.0,
+            "min_extra_entries": -14.0,
+            "null_entries": 5001,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 6": {
+            "config": "param 6",
+            "dataset": "B3D3",
+            "detections": 0,
+            "duplicate_boxes": 0,
+            "duplicate_share": null,
+            "entries": 0,
+            "max_extra_entries": -1038.0,
+            "min_extra_entries": -1039.0,
+            "null_entries": 0,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 7": {
+            "config": "param 7",
+            "dataset": "B3D3",
+            "detections": 0,
+            "duplicate_boxes": 0,
+            "duplicate_share": null,
+            "entries": 0,
+            "max_extra_entries": -1038.0,
+            "min_extra_entries": -1039.0,
+            "null_entries": 0,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          }
+        }
+      },
+      "B3D4": {
+        "leap": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "B3D4",
+            "detections": 140400,
+            "duplicate_boxes": 9867,
+            "duplicate_share": 0.0703,
+            "entries": 7593,
+            "max_extra_entries": 527.0,
+            "min_extra_entries": 357.0,
+            "null_entries": 0,
+            "system": "leap",
+            "videos": 5,
+            "videos_longer_than_clip": 5,
+            "videos_shorter_than_clip": 0
+          }
+        },
+        "otif": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "B3D4",
+            "detections": 25779,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5225,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": 0.0,
+            "null_entries": 2479,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 0
+          },
+          "param 1": {
+            "config": "param 1",
+            "dataset": "B3D4",
+            "detections": 22147,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5225,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": 0.0,
+            "null_entries": 2413,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 0
+          },
+          "param 2": {
+            "config": "param 2",
+            "dataset": "B3D4",
+            "detections": 11235,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5225,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": 0.0,
+            "null_entries": 3695,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 0
+          },
+          "param 3": {
+            "config": "param 3",
+            "dataset": "B3D4",
+            "detections": 5814,
+            "duplicate_boxes": 1,
+            "duplicate_share": 0.0002,
+            "entries": 5205,
+            "max_extra_entries": -4.0,
+            "min_extra_entries": -4.0,
+            "null_entries": 4283,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 4": {
+            "config": "param 4",
+            "dataset": "B3D4",
+            "detections": 3051,
+            "duplicate_boxes": 1,
+            "duplicate_share": 0.0003,
+            "entries": 5205,
+            "max_extra_entries": -4.0,
+            "min_extra_entries": -4.0,
+            "null_entries": 4670,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 5": {
+            "config": "param 5",
+            "dataset": "B3D4",
+            "detections": 1550,
+            "duplicate_boxes": 1,
+            "duplicate_share": 0.0006,
+            "entries": 5125,
+            "max_extra_entries": -20.0,
+            "min_extra_entries": -20.0,
+            "null_entries": 4841,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 6": {
+            "config": "param 6",
+            "dataset": "B3D4",
+            "detections": 779,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 5125,
+            "max_extra_entries": -20.0,
+            "min_extra_entries": -20.0,
+            "null_entries": 4993,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 7": {
+            "config": "param 7",
+            "dataset": "B3D4",
+            "detections": 0,
+            "duplicate_boxes": 0,
+            "duplicate_share": null,
+            "entries": 0,
+            "max_extra_entries": -1045.0,
+            "min_extra_entries": -1045.0,
+            "null_entries": 0,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          },
+          "param 8": {
+            "config": "param 8",
+            "dataset": "B3D4",
+            "detections": 0,
+            "duplicate_boxes": 0,
+            "duplicate_share": null,
+            "entries": 0,
+            "max_extra_entries": -1045.0,
+            "min_extra_entries": -1045.0,
+            "null_entries": 0,
+            "system": "otif",
+            "videos": 5,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 5
+          }
+        }
+      },
+      "CalDoT1": {
+        "leap": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "CalDoT1",
+            "detections": 73225,
+            "duplicate_boxes": 1733,
+            "duplicate_share": 0.0237,
+            "entries": 36624,
+            "max_extra_entries": 65.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 0,
+            "system": "leap",
+            "videos": 60,
+            "videos_longer_than_clip": 20,
+            "videos_shorter_than_clip": 39
+          }
+        },
+        "otif": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "CalDoT1",
+            "detections": 200542,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 48048,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 11711,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 21
+          },
+          "param 1": {
+            "config": "param 1",
+            "dataset": "CalDoT1",
+            "detections": 200540,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 48048,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 11709,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 21
+          },
+          "param 2": {
+            "config": "param 2",
+            "dataset": "CalDoT1",
+            "detections": 100526,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 48000,
+            "max_extra_entries": -1.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 29437,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 3": {
+            "config": "param 3",
+            "dataset": "CalDoT1",
+            "detections": 50526,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 47894,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 38351,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 4": {
+            "config": "param 4",
+            "dataset": "CalDoT1",
+            "detections": 25632,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 47866,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 42814,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 5": {
+            "config": "param 5",
+            "dataset": "CalDoT1",
+            "detections": 25435,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 47818,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 42823,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 6": {
+            "config": "param 6",
+            "dataset": "CalDoT1",
+            "detections": 25244,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 47810,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 42847,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 7": {
+            "config": "param 7",
+            "dataset": "CalDoT1",
+            "detections": 13173,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 47738,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 44818,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 8": {
+            "config": "param 8",
+            "dataset": "CalDoT1",
+            "detections": 12359,
+            "duplicate_boxes": 1,
+            "duplicate_share": 0.0001,
+            "entries": 47738,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 44915,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 9": {
+            "config": "param 9",
+            "dataset": "CalDoT1",
+            "detections": 11971,
+            "duplicate_boxes": 0,
+            "duplicate_share": 0.0,
+            "entries": 47658,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 44809,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          }
+        }
+      },
+      "CalDoT2": {
+        "leap": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "CalDoT2",
+            "detections": 60729,
+            "duplicate_boxes": 3677,
+            "duplicate_share": 0.0605,
+            "entries": 46150,
+            "max_extra_entries": 219.0,
+            "min_extra_entries": -900.0,
+            "null_entries": 0,
+            "system": "leap",
+            "videos": 60,
+            "videos_longer_than_clip": 22,
+            "videos_shorter_than_clip": 38
+          }
+        },
+        "otif": {
+          "param 0": {
+            "config": "param 0",
+            "dataset": "CalDoT2",
+            "detections": 151334,
+            "duplicate_boxes": 3,
+            "duplicate_share": 0.0,
+            "entries": 53854,
+            "max_extra_entries": 0.0,
+            "min_extra_entries": -101.0,
+            "null_entries": 7002,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 3
+          },
+          "param 1": {
+            "config": "param 1",
+            "dataset": "CalDoT2",
+            "detections": 76459,
+            "duplicate_boxes": 9,
+            "duplicate_share": 0.0001,
+            "entries": 53796,
+            "max_extra_entries": -1.0,
+            "min_extra_entries": -101.0,
+            "null_entries": 29034,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 2": {
+            "config": "param 2",
+            "dataset": "CalDoT2",
+            "detections": 68841,
+            "duplicate_boxes": 10,
+            "duplicate_share": 0.0001,
+            "entries": 53340,
+            "max_extra_entries": -1.0,
+            "min_extra_entries": -331.0,
+            "null_entries": 29124,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 3": {
+            "config": "param 3",
+            "dataset": "CalDoT2",
+            "detections": 35414,
+            "duplicate_boxes": 8,
+            "duplicate_share": 0.0002,
+            "entries": 53224,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -331.0,
+            "null_entries": 40175,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 4": {
+            "config": "param 4",
+            "dataset": "CalDoT2",
+            "detections": 18629,
+            "duplicate_boxes": 6,
+            "duplicate_share": 0.0003,
+            "entries": 53204,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -331.0,
+            "null_entries": 45896,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 5": {
+            "config": "param 5",
+            "dataset": "CalDoT2",
+            "detections": 18209,
+            "duplicate_boxes": 16,
+            "duplicate_share": 0.0009,
+            "entries": 53124,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -331.0,
+            "null_entries": 45866,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 6": {
+            "config": "param 6",
+            "dataset": "CalDoT2",
+            "detections": 18139,
+            "duplicate_boxes": 15,
+            "duplicate_share": 0.0008,
+            "entries": 53124,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -331.0,
+            "null_entries": 45928,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 7": {
+            "config": "param 7",
+            "dataset": "CalDoT2",
+            "detections": 17149,
+            "duplicate_boxes": 20,
+            "duplicate_share": 0.0012,
+            "entries": 53012,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -331.0,
+            "null_entries": 45931,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 8": {
+            "config": "param 8",
+            "dataset": "CalDoT2",
+            "detections": 14415,
+            "duplicate_boxes": 32,
+            "duplicate_share": 0.0022,
+            "entries": 52596,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -331.0,
+            "null_entries": 46364,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          },
+          "param 9": {
+            "config": "param 9",
+            "dataset": "CalDoT2",
+            "detections": 12121,
+            "duplicate_boxes": 16,
+            "duplicate_share": 0.0013,
+            "entries": 51820,
+            "max_extra_entries": -3.0,
+            "min_extra_entries": -467.0,
+            "null_entries": 46076,
+            "system": "otif",
+            "videos": 60,
+            "videos_longer_than_clip": 0,
+            "videos_shorter_than_clip": 60
+          }
+        }
+      }
+    },
+    "runtime": {
+      "Amsterdam": {
+        "deduplicated_fps": 555.6,
+        "deduplicated_runtime_s": 97.2053,
+        "deduplicated_speedup_vs_reference": 36.4,
+        "max_run_spread": 0.0,
+        "max_runs_per_video": 1,
+        "p142_fps": 555.6,
+        "p142_runtime_s": 97.2053,
+        "p142_speedup_vs_reference": 36.4,
+        "same_frames_across_runs": true,
+        "stat_rows": 60,
+        "total_row_runtime_s": 97.2053,
+        "videos": 60
+      },
+      "B3D1": {
+        "deduplicated_fps": 265.3,
+        "deduplicated_runtime_s": 20.2567,
+        "deduplicated_speedup_vs_reference": 18.0,
+        "max_run_spread": 0.0,
+        "max_runs_per_video": 1,
+        "p142_fps": 265.3,
+        "p142_runtime_s": 20.2567,
+        "p142_speedup_vs_reference": 18.0,
+        "same_frames_across_runs": true,
+        "stat_rows": 5,
+        "total_row_runtime_s": 20.2567,
+        "videos": 5
+      },
+      "B3D2": {
+        "deduplicated_fps": 181.7,
+        "deduplicated_runtime_s": 25.8219,
+        "deduplicated_speedup_vs_reference": 12.6,
+        "max_run_spread": 0.0,
+        "max_runs_per_video": 1,
+        "p142_fps": 181.7,
+        "p142_runtime_s": 25.8219,
+        "p142_speedup_vs_reference": 12.6,
+        "same_frames_across_runs": true,
+        "stat_rows": 5,
+        "total_row_runtime_s": 25.8219,
+        "videos": 5
+      },
+      "B3D3": {
+        "deduplicated_fps": 30.0,
+        "deduplicated_runtime_s": 172.8528,
+        "deduplicated_speedup_vs_reference": 2.1,
+        "max_run_spread": 0.0,
+        "max_runs_per_video": 1,
+        "p142_fps": 30.0,
+        "p142_runtime_s": 172.8528,
+        "p142_speedup_vs_reference": 2.1,
+        "same_frames_across_runs": true,
+        "stat_rows": 5,
+        "total_row_runtime_s": 172.8528,
+        "videos": 5
+      },
+      "B3D4": {
+        "deduplicated_fps": 268.2,
+        "deduplicated_runtime_s": 19.4815,
+        "deduplicated_speedup_vs_reference": 18.5,
+        "max_run_spread": 0.0,
+        "max_runs_per_video": 1,
+        "p142_fps": 268.2,
+        "p142_runtime_s": 19.4815,
+        "p142_speedup_vs_reference": 18.5,
+        "same_frames_across_runs": true,
+        "stat_rows": 5,
+        "total_row_runtime_s": 19.4815,
+        "videos": 5
+      },
+      "CalDoT1": {
+        "deduplicated_fps": 747.0,
+        "deduplicated_runtime_s": 72.2873,
+        "deduplicated_speedup_vs_reference": 24.2,
+        "max_run_spread": 0.1603,
+        "max_runs_per_video": 2,
+        "p142_fps": 373.5,
+        "p142_runtime_s": 144.5746,
+        "p142_speedup_vs_reference": 12.1,
+        "same_frames_across_runs": true,
+        "stat_rows": 120,
+        "total_row_runtime_s": 144.5746,
+        "videos": 60
+      },
+      "CalDoT2": {
+        "deduplicated_fps": 1012.8,
+        "deduplicated_runtime_s": 53.3189,
+        "deduplicated_speedup_vs_reference": 32.8,
+        "max_run_spread": 0.1537,
+        "max_runs_per_video": 2,
+        "p142_fps": 506.4,
+        "p142_runtime_s": 106.6378,
+        "p142_speedup_vs_reference": 16.4,
+        "same_frames_across_runs": true,
+        "stat_rows": 120,
+        "total_row_runtime_s": 106.6378,
+        "videos": 60
+      }
+    }
+  },
+  "leap_runtime_effect": {
+    "0.05": {},
+    "0.10": {}
+  },
+  "manuscript_check": {
+    "0.05": {
+      "compareAccuracyMatchedPriorCountFivePct": {
+        "manuscript": 7,
+        "match": true,
+        "measured": 7
+      },
+      "compareAccuracyMatchedSpeedupMaxFivePct": {
+        "manuscript": 17.4,
+        "match": true,
+        "measured": 17.4
+      },
+      "compareAccuracyMatchedSpeedupMinFivePct": {
+        "manuscript": 1.5,
+        "match": true,
+        "measured": 1.5
+      },
+      "compareNaiveSpeedupMaxFivePct": {
+        "manuscript": 68.8,
+        "match": true,
+        "measured": 68.8
+      },
+      "compareNaiveSpeedupMinFivePct": {
+        "manuscript": 4.7,
+        "match": true,
+        "measured": 4.7
+      },
+      "comparePolytrisMeetFivePct": {
+        "manuscript": 7,
+        "match": true,
+        "measured": 7
+      },
+      "comparePriorFailDatasetsFivePct": {
+        "manuscript": 3,
+        "match": true,
+        "measured": 3
+      },
+      "comparePriorMeetFivePct": {
+        "manuscript": 4,
+        "match": true,
+        "measured": 4
+      },
+      "compareSpeedupMaxFivePct": {
+        "manuscript": 16.5,
+        "match": true,
+        "measured": 16.5
+      },
+      "compareSpeedupMinFivePct": {
+        "manuscript": 2.9,
+        "match": true,
+        "measured": 2.9
+      }
+    },
+    "0.10": {
+      "compareAccuracyMatchedPriorCountTenPct": {
+        "manuscript": 7,
+        "match": true,
+        "measured": 7
+      },
+      "compareAccuracyMatchedSpeedupMaxTenPct": {
+        "manuscript": 24.7,
+        "match": true,
+        "measured": 24.7
+      },
+      "compareAccuracyMatchedSpeedupMinTenPct": {
+        "manuscript": 1.6,
+        "match": true,
+        "measured": 1.6
+      },
+      "compareNaiveSpeedupMaxTenPct": {
+        "manuscript": 91.2,
+        "match": true,
+        "measured": 91.2
+      },
+      "compareNaiveSpeedupMinTenPct": {
+        "manuscript": 10.4,
+        "match": true,
+        "measured": 10.4
+      },
+      "comparePolytrisMeetTenPct": {
+        "manuscript": 7,
+        "match": true,
+        "measured": 7
+      },
+      "comparePriorFailDatasetsTenPct": {
+        "manuscript": 0,
+        "match": true,
+        "measured": 0
+      },
+      "comparePriorMeetTenPct": {
+        "manuscript": 7,
+        "match": true,
+        "measured": 7
+      },
+      "compareSpeedupMaxTenPct": {
+        "manuscript": 25.9,
+        "match": true,
+        "measured": 25.9
+      },
+      "compareSpeedupMinTenPct": {
+        "manuscript": 3.4,
+        "match": true,
+        "measured": 3.4
+      }
+    }
+  },
+  "operating_points": {
+    "0.05": {
+      "Amsterdam": {
+        "bound": 0.6949,
+        "loss": 0.05,
+        "reference": {
+          "accuracy": 0.7315250495020468,
+          "fps": 15.3
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0493302955091323,
+            "meets_bound": false
+          },
+          "otif": {
+            "best_accuracy": 0.6805375028285238,
+            "meets_bound": false
+          },
+          "tetris": {
+            "accuracy": 0.6965726417050139,
+            "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+            "fps": 1049.5,
+            "hota": 0.6965726417050139,
+            "meets_bound": true,
+            "speedup_vs_reference": 68.8
+          }
+        }
+      },
+      "B3D1": {
+        "bound": 0.7653,
+        "loss": 0.05,
+        "reference": {
+          "accuracy": 0.8056165050815967,
+          "fps": 14.8
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0358988123064113,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.7987515328275355,
+            "config": "param 1",
+            "fps": 47.9,
+            "hota": 0.7987515328275355,
+            "meets_bound": true,
+            "speedup_vs_reference": 3.2
+          },
+          "tetris": {
+            "accuracy": 0.7790148226312216,
+            "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+            "fps": 254.6,
+            "hota": 0.7790148226312216,
+            "meets_bound": true,
+            "speedup_vs_reference": 17.3
+          }
+        },
+        "tetris_speedup_vs_otif": 5.3
+      },
+      "B3D2": {
+        "bound": 0.7744,
+        "loss": 0.05,
+        "reference": {
+          "accuracy": 0.8151072920226305,
+          "fps": 14.4
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.023990799333843,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.8047141055777882,
+            "config": "param 2",
+            "fps": 108.8,
+            "hota": 0.8047141055777882,
+            "meets_bound": true,
+            "speedup_vs_reference": 7.5
+          },
+          "tetris": {
+            "accuracy": 0.784069611396217,
+            "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+            "fps": 346.5,
+            "hota": 0.784069611396217,
+            "meets_bound": true,
+            "speedup_vs_reference": 24.0
+          }
+        },
+        "tetris_speedup_vs_otif": 3.2
+      },
+      "B3D3": {
+        "bound": 0.7937,
+        "loss": 0.05,
+        "reference": {
+          "accuracy": 0.8354907246247636,
+          "fps": 14.5
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0116461889409574,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.797767395426269,
+            "config": "param 2",
+            "fps": 98.7,
+            "hota": 0.797767395426269,
+            "meets_bound": true,
+            "speedup_vs_reference": 6.8
+          },
+          "tetris": {
+            "accuracy": 0.8013411152828708,
+            "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+            "fps": 285.6,
+            "hota": 0.8013411152828708,
+            "meets_bound": true,
+            "speedup_vs_reference": 19.6
+          }
+        },
+        "tetris_speedup_vs_otif": 2.9
+      },
+      "B3D4": {
+        "bound": 0.803,
+        "loss": 0.05,
+        "reference": {
+          "accuracy": 0.8452904103758538,
+          "fps": 14.5
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0346912788650918,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.8420034471988211,
+            "config": "param 0",
+            "fps": 25.7,
+            "hota": 0.8420034471988211,
+            "meets_bound": true,
+            "speedup_vs_reference": 1.8
+          },
+          "tetris": {
+            "accuracy": 0.8050953871471719,
+            "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+            "fps": 422.9,
+            "hota": 0.8050953871471719,
+            "meets_bound": true,
+            "speedup_vs_reference": 29.1
+          }
+        },
+        "tetris_speedup_vs_otif": 16.5
+      },
+      "CalDoT1": {
+        "bound": 0.7772,
+        "loss": 0.05,
+        "reference": {
+          "accuracy": 0.8180912461425098,
+          "fps": 30.9
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0702639004808596,
+            "meets_bound": false
+          },
+          "otif": {
+            "best_accuracy": 0.7705010545172961,
+            "meets_bound": false
+          },
+          "tetris": {
+            "accuracy": 0.778685892269133,
+            "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+            "fps": 729.3,
+            "hota": 0.778685892269133,
+            "meets_bound": true,
+            "speedup_vs_reference": 23.6
+          }
+        }
+      },
+      "CalDoT2": {
+        "bound": 0.6798,
+        "loss": 0.05,
+        "reference": {
+          "accuracy": 0.7155520702265457,
+          "fps": 30.9
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0932620426967167,
+            "meets_bound": false
+          },
+          "otif": {
+            "best_accuracy": 0.6675198281034291,
+            "meets_bound": false
+          },
+          "tetris": {
+            "accuracy": 0.6921171850406366,
+            "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+            "fps": 144.7,
+            "hota": 0.6921171850406366,
+            "meets_bound": true,
+            "speedup_vs_reference": 4.7
+          }
+        }
+      }
+    },
+    "0.10": {
+      "Amsterdam": {
+        "bound": 0.6584,
+        "loss": 0.1,
+        "reference": {
+          "accuracy": 0.7315250495020468,
+          "fps": 15.3
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0493302955091323,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.6670862689327743,
+            "config": "param 4",
+            "fps": 241.1,
+            "hota": 0.6670862689327743,
+            "meets_bound": true,
+            "speedup_vs_reference": 15.8
+          },
+          "tetris": {
+            "accuracy": 0.6592685681109561,
+            "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
+            "fps": 1391.9,
+            "hota": 0.6592685681109561,
+            "meets_bound": true,
+            "speedup_vs_reference": 91.2
+          }
+        },
+        "tetris_speedup_vs_otif": 5.8
+      },
+      "B3D1": {
+        "bound": 0.7251,
+        "loss": 0.1,
+        "reference": {
+          "accuracy": 0.8056165050815967,
+          "fps": 14.8
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0358988123064113,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.7987515328275355,
+            "config": "param 1",
+            "fps": 47.9,
+            "hota": 0.7987515328275355,
+            "meets_bound": true,
+            "speedup_vs_reference": 3.2
+          },
+          "tetris": {
+            "accuracy": 0.7401470909846285,
+            "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+            "fps": 307.7,
+            "hota": 0.7401470909846285,
+            "meets_bound": true,
+            "speedup_vs_reference": 20.9
+          }
+        },
+        "tetris_speedup_vs_otif": 6.4
+      },
+      "B3D2": {
+        "bound": 0.7336,
+        "loss": 0.1,
+        "reference": {
+          "accuracy": 0.8151072920226305,
+          "fps": 14.4
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.023990799333843,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.8047141055777882,
+            "config": "param 2",
+            "fps": 108.8,
+            "hota": 0.8047141055777882,
+            "meets_bound": true,
+            "speedup_vs_reference": 7.5
+          },
+          "tetris": {
+            "accuracy": 0.7679925930677876,
+            "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+            "fps": 390.6,
+            "hota": 0.7679925930677876,
+            "meets_bound": true,
+            "speedup_vs_reference": 27.1
+          }
+        },
+        "tetris_speedup_vs_otif": 3.6
+      },
+      "B3D3": {
+        "bound": 0.7519,
+        "loss": 0.1,
+        "reference": {
+          "accuracy": 0.8354907246247636,
+          "fps": 14.5
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0116461889409574,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.797767395426269,
+            "config": "param 2",
+            "fps": 98.7,
+            "hota": 0.797767395426269,
+            "meets_bound": true,
+            "speedup_vs_reference": 6.8
+          },
+          "tetris": {
+            "accuracy": 0.7524508903735506,
+            "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+            "fps": 330.8,
+            "hota": 0.7524508903735506,
+            "meets_bound": true,
+            "speedup_vs_reference": 22.8
+          }
+        },
+        "tetris_speedup_vs_otif": 3.4
+      },
+      "B3D4": {
+        "bound": 0.7608,
+        "loss": 0.1,
+        "reference": {
+          "accuracy": 0.8452904103758538,
+          "fps": 14.5
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0346912788650918,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.8420034471988211,
+            "config": "param 0",
+            "fps": 25.7,
+            "hota": 0.8420034471988211,
+            "meets_bound": true,
+            "speedup_vs_reference": 1.8
+          },
+          "tetris": {
+            "accuracy": 0.7609466450374026,
+            "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+            "fps": 663.9,
+            "hota": 0.7609466450374026,
+            "meets_bound": true,
+            "speedup_vs_reference": 45.7
+          }
+        },
+        "tetris_speedup_vs_otif": 25.9
+      },
+      "CalDoT1": {
+        "bound": 0.7363,
+        "loss": 0.1,
+        "reference": {
+          "accuracy": 0.8180912461425098,
+          "fps": 30.9
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0702639004808596,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.7702676679939657,
+            "config": "param 3",
+            "fps": 115.1,
+            "hota": 0.7702676679939657,
+            "meets_bound": true,
+            "speedup_vs_reference": 3.7
+          },
+          "tetris": {
+            "accuracy": 0.7414093835351455,
+            "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
+            "fps": 1560.1,
+            "hota": 0.7414093835351455,
+            "meets_bound": true,
+            "speedup_vs_reference": 50.4
+          }
+        },
+        "tetris_speedup_vs_otif": 13.6
+      },
+      "CalDoT2": {
+        "bound": 0.644,
+        "loss": 0.1,
+        "reference": {
+          "accuracy": 0.7155520702265457,
+          "fps": 30.9
+        },
+        "systems": {
+          "leap": {
+            "best_accuracy": 0.0932620426967167,
+            "meets_bound": false
+          },
+          "otif": {
+            "accuracy": 0.6549931653339102,
+            "config": "param 1",
+            "fps": 57.0,
+            "hota": 0.6549931653339102,
+            "meets_bound": true,
+            "speedup_vs_reference": 1.8
+          },
+          "tetris": {
+            "accuracy": 0.6453736903656221,
+            "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+            "fps": 321.5,
+            "hota": 0.6453736903656221,
+            "meets_bound": true,
+            "speedup_vs_reference": 10.4
+          }
+        },
+        "tetris_speedup_vs_otif": 5.6
+      }
+    },
+    "leap_fit": {
+      "Amsterdam": {
+        "bound": 0.0493,
+        "loss": 0.9326,
+        "reference": {
+          "accuracy": 0.7315250495020468,
+          "fps": 15.3
+        },
+        "systems": {
+          "leap": {
+            "accuracy": 0.0493302955091323,
+            "config": "param 0",
+            "fps": 555.6,
+            "hota": 0.0493302955091323,
+            "meets_bound": true,
+            "speedup_vs_reference": 36.4
+          },
+          "otif": {
+            "accuracy": 0.4327577762299421,
+            "config": "param 7",
+            "fps": 1034.7,
+            "hota": 0.4327577762299421,
+            "meets_bound": true,
+            "speedup_vs_reference": 67.8
+          },
+          "tetris": {
+            "accuracy": 0.4993108930060543,
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 2841.0,
+            "hota": 0.4993108930060543,
+            "meets_bound": true,
+            "speedup_vs_reference": 186.2
+          }
+        },
+        "tetris_speedup_vs_leap": 5.1,
+        "tetris_speedup_vs_otif": 2.7
+      },
+      "B3D1": {
+        "bound": 0.0359,
+        "loss": 0.9554,
+        "reference": {
+          "accuracy": 0.8056165050815967,
+          "fps": 14.8
+        },
+        "systems": {
+          "leap": {
+            "accuracy": 0.0358988123064113,
+            "config": "param 0",
+            "fps": 265.3,
+            "hota": 0.0358988123064113,
+            "meets_bound": true,
+            "speedup_vs_reference": 18.0
+          },
+          "otif": {
+            "accuracy": 0.1761110395895483,
+            "config": "param 5",
+            "fps": 1115.1,
+            "hota": 0.1761110395895483,
+            "meets_bound": true,
+            "speedup_vs_reference": 75.6
+          },
+          "tetris": {
+            "accuracy": 0.2986145375910283,
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 1135.4,
+            "hota": 0.2986145375910283,
+            "meets_bound": true,
+            "speedup_vs_reference": 77.0
+          }
+        },
+        "tetris_speedup_vs_leap": 4.3,
+        "tetris_speedup_vs_otif": 1.0
+      },
+      "B3D2": {
+        "bound": 0.024,
+        "loss": 0.9706,
+        "reference": {
+          "accuracy": 0.8151072920226305,
+          "fps": 14.4
+        },
+        "systems": {
+          "leap": {
+            "accuracy": 0.023990799333843,
+            "config": "param 0",
+            "fps": 181.7,
+            "hota": 0.023990799333843,
+            "meets_bound": true,
+            "speedup_vs_reference": 12.6
+          },
+          "otif": {
+            "accuracy": 0.3358552591261612,
+            "config": "param 5",
+            "fps": 1084.6,
+            "hota": 0.3358552591261612,
+            "meets_bound": true,
+            "speedup_vs_reference": 75.3
+          },
+          "tetris": {
+            "accuracy": 0.5509140170648535,
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 818.4,
+            "hota": 0.5509140170648535,
+            "meets_bound": true,
+            "speedup_vs_reference": 56.8
+          }
+        },
+        "tetris_speedup_vs_leap": 4.5,
+        "tetris_speedup_vs_otif": 0.8
+      },
+      "B3D3": {
+        "bound": 0.0116,
+        "loss": 0.9861,
+        "reference": {
+          "accuracy": 0.8354907246247636,
+          "fps": 14.5
+        },
+        "systems": {
+          "leap": {
+            "accuracy": 0.0116461889409574,
+            "config": "param 0",
+            "fps": 30.0,
+            "hota": 0.0116461889409574,
+            "meets_bound": true,
+            "speedup_vs_reference": 2.1
+          },
+          "otif": {
+            "accuracy": 0.0564313418061366,
+            "config": "param 5",
+            "fps": 1065.0,
+            "hota": 0.0564313418061366,
+            "meets_bound": true,
+            "speedup_vs_reference": 73.3
+          },
+          "tetris": {
+            "accuracy": 0.1204747050897355,
+            "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
+            "fps": 1214.5,
+            "hota": 0.1204747050897355,
+            "meets_bound": true,
+            "speedup_vs_reference": 83.5
+          }
+        },
+        "tetris_speedup_vs_leap": 40.4,
+        "tetris_speedup_vs_otif": 1.1
+      },
+      "B3D4": {
+        "bound": 0.0347,
+        "loss": 0.959,
+        "reference": {
+          "accuracy": 0.8452904103758538,
+          "fps": 14.5
+        },
+        "systems": {
+          "leap": {
+            "accuracy": 0.0346912788650918,
+            "config": "param 0",
+            "fps": 268.2,
+            "hota": 0.0346912788650918,
+            "meets_bound": true,
+            "speedup_vs_reference": 18.5
+          },
+          "otif": {
+            "accuracy": 0.1259443548621016,
+            "config": "param 6",
+            "fps": 1023.5,
+            "hota": 0.1259443548621016,
+            "meets_bound": true,
+            "speedup_vs_reference": 70.5
+          },
+          "tetris": {
+            "accuracy": 0.5127725630658814,
+            "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
+            "fps": 1411.0,
+            "hota": 0.5127725630658814,
+            "meets_bound": true,
+            "speedup_vs_reference": 97.2
+          }
+        },
+        "tetris_speedup_vs_leap": 5.3,
+        "tetris_speedup_vs_otif": 1.4
+      },
+      "CalDoT1": {
+        "bound": 0.0703,
+        "loss": 0.9141,
+        "reference": {
+          "accuracy": 0.8180912461425098,
+          "fps": 30.9
+        },
+        "systems": {
+          "leap": {
+            "accuracy": 0.0702639004808596,
+            "config": "param 0",
+            "fps": 747.0,
+            "hota": 0.0702639004808596,
+            "meets_bound": true,
+            "speedup_vs_reference": 24.2
+          },
+          "otif": {
+            "accuracy": 0.4653857565862139,
+            "config": "param 9",
+            "fps": 2017.9,
+            "hota": 0.4653857565862139,
+            "meets_bound": true,
+            "speedup_vs_reference": 65.2
+          },
+          "tetris": {
+            "accuracy": 0.670145143051155,
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 4968.4,
+            "hota": 0.670145143051155,
+            "meets_bound": true,
+            "speedup_vs_reference": 160.6
+          }
+        },
+        "tetris_speedup_vs_leap": 6.7,
+        "tetris_speedup_vs_otif": 2.5
+      },
+      "CalDoT2": {
+        "bound": 0.0933,
+        "loss": 0.8697,
+        "reference": {
+          "accuracy": 0.7155520702265457,
+          "fps": 30.9
+        },
+        "systems": {
+          "leap": {
+            "accuracy": 0.0932620426967167,
+            "config": "param 0",
+            "fps": 1012.8,
+            "hota": 0.0932620426967167,
+            "meets_bound": true,
+            "speedup_vs_reference": 32.8
+          },
+          "otif": {
+            "accuracy": 0.3254203315404112,
+            "config": "param 9",
+            "fps": 1449.3,
+            "hota": 0.3254203315404112,
+            "meets_bound": true,
+            "speedup_vs_reference": 47.0
+          },
+          "tetris": {
+            "accuracy": 0.1820385447423985,
+            "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+            "fps": 6054.4,
+            "hota": 0.1820385447423985,
+            "meets_bound": true,
+            "speedup_vs_reference": 196.2
+          }
+        },
+        "tetris_speedup_vs_leap": 6.0,
+        "tetris_speedup_vs_otif": 4.2
+      }
+    }
+  },
+  "port_check": {
+    "0.05": {
+      "compareAccuracyMatchedPriorCountFivePct": {
+        "match": true,
+        "measured": 7,
+        "p203": 7.0
+      },
+      "compareAccuracyMatchedSpeedupMaxFivePct": {
+        "match": true,
+        "measured": 17.4116140336281,
+        "p203": 17.4116140336281
+      },
+      "compareAccuracyMatchedSpeedupMinFivePct": {
+        "match": true,
+        "measured": 1.5097888577461693,
+        "p203": 1.5097888577461693
+      },
+      "compareNaiveSpeedupMaxFivePct": {
+        "match": true,
+        "measured": 68.76820721664441,
+        "p203": 68.76820721664441
+      },
+      "compareNaiveSpeedupMinFivePct": {
+        "match": true,
+        "measured": 4.6889153705817765,
+        "p203": 4.6889153705817765
+      },
+      "comparePolytrisMeetFivePct": {
+        "match": true,
+        "measured": 7,
+        "p203": 7.0
+      },
+      "comparePriorFailDatasetsFivePct": {
+        "match": true,
+        "measured": 3,
+        "p203": 3.0
+      },
+      "comparePriorMeetFivePct": {
+        "match": true,
+        "measured": 4,
+        "p203": 4.0
+      },
+      "compareSpeedupMaxFivePct": {
+        "match": true,
+        "measured": 16.47951497378841,
+        "p203": 16.47951497378841
+      },
+      "compareSpeedupMinFivePct": {
+        "match": true,
+        "measured": 2.8927871106309953,
+        "p203": 2.8927871106309953
+      }
+    },
+    "0.10": {
+      "compareAccuracyMatchedPriorCountTenPct": {
+        "match": true,
+        "measured": 7,
+        "p203": 7.0
+      },
+      "compareAccuracyMatchedSpeedupMaxTenPct": {
+        "match": true,
+        "measured": 24.671047817685608,
+        "p203": 24.671047817685608
+      },
+      "compareAccuracyMatchedSpeedupMinTenPct": {
+        "match": true,
+        "measured": 1.6265913663890104,
+        "p203": 1.6265913663890104
+      },
+      "compareNaiveSpeedupMaxTenPct": {
+        "match": true,
+        "measured": 91.2020717581339,
+        "p203": 91.2020717581339
+      },
+      "compareNaiveSpeedupMinTenPct": {
+        "match": true,
+        "measured": 10.418558088790292,
+        "p203": 10.418558088790292
+      },
+      "comparePolytrisMeetTenPct": {
+        "match": true,
+        "measured": 7,
+        "p203": 7.0
+      },
+      "comparePriorFailDatasetsTenPct": {
+        "match": true,
+        "measured": 0,
+        "p203": 0.0
+      },
+      "comparePriorMeetTenPct": {
+        "match": true,
+        "measured": 7,
+        "p203": 7.0
+      },
+      "compareSpeedupMaxTenPct": {
+        "match": true,
+        "measured": 25.872421685871004,
+        "p203": 25.872421685871004
+      },
+      "compareSpeedupMinTenPct": {
+        "match": true,
+        "measured": 3.350663531468784,
+        "p203": 3.350663531468784
+      }
+    }
+  },
+  "provisional": {
+    "bounds": [
+      "leap_fit"
+    ],
+    "reason": "Provisional. LEAP's HOTA comes from p140_otif_transform.transform_tracking_json, which sets frame = list index; LEAP's outputs are longer than the clips and hold many same-frame identical boxes (leap_checks.output_alignment), so the conversion is unverified (R1.O2, \"document the HOTA conversion\"). Do not quote any LEAP or leap_fit number, or \"LEAP misses the 5%/10% bound\", until the conversion is fixed and rescored. LEAP's runtime is deduplicated here (leap_checks.runtime).",
+    "systems": [
+      "leap"
+    ]
+  },
+  "ranges": {
+    "0.05": {
+      "prior_fail": 3,
+      "prior_meets": 4,
+      "systems": {
+        "leap": {
+          "datasets": 7,
+          "meets_bound": 0,
+          "speedup_vs_reference_max": null,
+          "speedup_vs_reference_min": null
+        },
+        "otif": {
+          "datasets": 7,
+          "meets_bound": 4,
+          "speedup_vs_reference_max": 7.5,
+          "speedup_vs_reference_min": 1.8
+        },
+        "tetris": {
+          "datasets": 7,
+          "meets_bound": 7,
+          "speedup_vs_reference_max": 68.8,
+          "speedup_vs_reference_min": 4.7
+        }
+      },
+      "tetris_vs": {
+        "fastest prior": {
+          "datasets": 4,
+          "max": 16.5,
+          "min": 2.9
+        },
+        "otif": {
+          "datasets": 4,
+          "max": 16.5,
+          "min": 2.9
+        }
+      }
+    },
+    "0.10": {
+      "prior_fail": 0,
+      "prior_meets": 7,
+      "systems": {
+        "leap": {
+          "datasets": 7,
+          "meets_bound": 0,
+          "speedup_vs_reference_max": null,
+          "speedup_vs_reference_min": null
+        },
+        "otif": {
+          "datasets": 7,
+          "meets_bound": 7,
+          "speedup_vs_reference_max": 15.8,
+          "speedup_vs_reference_min": 1.8
+        },
+        "tetris": {
+          "datasets": 7,
+          "meets_bound": 7,
+          "speedup_vs_reference_max": 91.2,
+          "speedup_vs_reference_min": 10.4
+        }
+      },
+      "tetris_vs": {
+        "fastest prior": {
+          "datasets": 7,
+          "max": 25.9,
+          "min": 3.4
+        },
+        "otif": {
+          "datasets": 7,
+          "max": 25.9,
+          "min": 3.4
+        }
+      }
+    },
+    "leap_fit": {
+      "prior_fail": 0,
+      "prior_meets": 7,
+      "systems": {
+        "leap": {
+          "datasets": 7,
+          "meets_bound": 7,
+          "speedup_vs_reference_max": 36.4,
+          "speedup_vs_reference_min": 2.1
+        },
+        "otif": {
+          "datasets": 7,
+          "meets_bound": 7,
+          "speedup_vs_reference_max": 75.6,
+          "speedup_vs_reference_min": 47.0
+        },
+        "tetris": {
+          "datasets": 7,
+          "meets_bound": 7,
+          "speedup_vs_reference_max": 196.2,
+          "speedup_vs_reference_min": 56.8
+        }
+      },
+      "tetris_vs": {
+        "fastest prior": {
+          "datasets": 7,
+          "max": 4.2,
+          "min": 0.8
+        },
+        "leap": {
+          "datasets": 7,
+          "max": 40.4,
+          "min": 4.3
+        },
+        "otif": {
+          "datasets": 7,
+          "max": 4.2,
+          "min": 0.8
+        }
+      }
+    }
+  }
+}
