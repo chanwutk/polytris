@@ -11,7 +11,7 @@ import pandas as pd
 
 from evaluation.manifests import build_split_video_manifest
 from polyis.io import cache
-from polyis.utilities import get_config, register_tracked_detections, save_tracking_results
+from polyis.utilities import get_config, get_video_frame_count, register_tracked_detections, save_tracking_results
 
 
 CONFIG = get_config()
@@ -33,10 +33,68 @@ def parse_args():
                         help='Directory containing SOTA output data (OTIF and LEAP)')
     parser.add_argument('--test', action='store_true', default=False,
                         help='Process test videoset')
+    parser.add_argument('--systems', nargs='+', choices=['otif', 'leap'], default=['otif', 'leap'],
+                        help='SOTA systems to transform')
     return parser.parse_args()
 
 
-def transform_tracking_json(input_json_path: str, output_jsonl_path: str, dataset: str, video: str):
+def unwrap_leap_frames(frames: list[list[dict] | None], clip_frames: int) -> tuple[list[list[dict]], dict]:
+    """Undo the LEAP exporter's negative-index wrap and clip the export to the clip length.
+
+    export-leap-outputs.py writes an object's box for interval frame start + idx into
+    frame_detections[start + idx]. LEAP predicts intervals that can start before the clip
+    (start < 0), and Python's negative indexing then puts those boxes at the END of the list.
+    Every object occupies one contiguous interval, so an object whose frames form exactly two
+    runs, one starting at frame 0 and one ending at the last frame of the export, wrapped:
+    the tail run holds frames before the clip start and is dropped. An object present on every
+    frame of the export is ambiguous (its wrapped part overlaps its real part), so it is kept
+    whole as the upper bound and reported. Frames at or after the clip length are dropped,
+    because predicted intervals can also end after the clip.
+
+    Returns the corrected frames and statistics about what was removed.
+    """
+    # Number of frames in the raw export (the largest predicted interval end).
+    length = len(frames)
+    # Frame indices of every object in the raw export.
+    frames_of: dict[int, list[int]] = {}
+    for frame_idx, detections in enumerate(frames):
+        for detection in detections or []:
+            frames_of.setdefault(int(detection['track_id']), []).append(frame_idx)
+
+    # Classify every object as contiguous, wrapped, or ambiguous full-span.
+    dropped: dict[int, set[int]] = {}
+    wrapped, ambiguous = [], []
+    for track_id, indices in frames_of.items():
+        # Sorted unique frames and the positions where the run breaks.
+        indices_np = np.unique(indices)
+        breaks = np.flatnonzero(np.diff(indices_np) > 1)
+        if len(breaks) == 0:
+            # One run covering the whole export cannot be told apart from an overlapping wrap.
+            if indices_np[0] == 0 and indices_np[-1] == length - 1:
+                ambiguous.append(track_id)
+            continue
+        # Anything other than one head run plus one tail run is not the exporter's wrap.
+        assert len(breaks) == 1 and indices_np[0] == 0 and indices_np[-1] == length - 1, \
+            f"LEAP track {track_id} occupies frames that are neither one interval nor one wrapped interval"
+        wrapped.append(track_id)
+        # The tail run is the part of the interval before the clip start.
+        dropped[track_id] = set(indices_np[breaks[0] + 1:].tolist())
+
+    # Keep only clip frames, without the wrapped tails.
+    unwrapped = [[d for d in (detections or []) if frame_idx not in dropped.get(int(d['track_id']), ())]
+                 for frame_idx, detections in enumerate(frames[:clip_frames])]
+    # Count the boxes removed by each correction, for the record.
+    wrapped_boxes = sum(len(v) for v in dropped.values())
+    past_clip_boxes = sum(1 for frame_idx in range(clip_frames, length) for d in frames[frame_idx] or []
+                          if frame_idx not in dropped.get(int(d['track_id']), ()))
+    stats = dict(export_frames=length, clip_frames=clip_frames, objects=len(frames_of),
+                 wrapped_objects=sorted(wrapped), ambiguous_full_span_objects=sorted(ambiguous),
+                 wrapped_boxes_dropped=wrapped_boxes, boxes_past_clip_dropped=past_clip_boxes)
+    return unwrapped, stats
+
+
+def transform_tracking_json(input_json_path: str, output_jsonl_path: str, dataset: str, video: str,
+                            unwrap_leap: bool = False):
     # Fail fast when the input tracking JSON is missing.
     assert os.path.exists(input_json_path), f"Input JSON file {input_json_path} does not exist"
 
@@ -47,6 +105,14 @@ def transform_tracking_json(input_json_path: str, output_jsonl_path: str, datase
     # Normalize null payloads to an empty list so downstream logic stays uniform.
     if otif_data is None:
         otif_data = []
+
+    # LEAP exports need their wrapped interval starts removed and their ends clipped to the clip.
+    if unwrap_leap:
+        otif_data, unwrap_stats = unwrap_leap_frames(otif_data, get_video_frame_count(dataset, video))
+        # Record what the correction removed next to the transformed tracks.
+        os.makedirs(os.path.dirname(output_jsonl_path), exist_ok=True)
+        with open(os.path.join(os.path.dirname(output_jsonl_path), 'unwrap.json'), 'w') as f:
+            json.dump(unwrap_stats, f, indent=2)
 
     # Create the parent directory before writing transformed tracking results.
     os.makedirs(os.path.dirname(output_jsonl_path), exist_ok=True)
@@ -199,7 +265,7 @@ def normalize_leap_stat_csv(stat_csv_input: str) -> pd.DataFrame:
     # Load the raw LEAP stat CSV emitted by the SOTA system.
     input_df = pd.read_csv(stat_csv_input).copy()
 
-    # Keep only the total row because LEAP exposes one effective parameter set.
+    # Keep the total row as a consistency check; LEAP exposes one effective parameter set.
     total_df = input_df.query("video_name == 'total'").copy()
     assert len(total_df) == 1, f"Expected exactly one LEAP total row in {stat_csv_input}, found {len(total_df)}"
 
@@ -207,16 +273,32 @@ def normalize_leap_stat_csv(stat_csv_input: str) -> pd.DataFrame:
     for column in ['inference_total', 'decode']:
         assert column in total_df.columns, f"Column {column} not found in {stat_csv_input}"
 
-    # Preserve the historical LEAP runtime derivation while normalizing the stat schema.
-    stat_df = total_df.assign(
-        param_id=0,
-        detector_cfg=pd.NA,
-        segmentation_cfg=pd.NA,
-        tracker_cfg=pd.NA,
-        runtime=total_df['inference_total'] - total_df['decode'],
-    )[['param_id', 'detector_cfg', 'segmentation_cfg', 'tracker_cfg', 'runtime']].copy()
+    # Per-video runtime, excluding decoding as before.
+    video_df = input_df.query("video_name != 'total'").copy()
+    video_df['runtime'] = video_df['inference_total'] - video_df['decode']
+    # Some exports append a second run of every video (CalDoT1/2 hold two rows per video), and the
+    # total row sums both; count each video once, as the mean of its runs.
+    per_video = video_df.groupby('video_name')['runtime'].mean()
+    runs = video_df.groupby('video_name').size()
+    if (runs > 1).any():
+        print(f"  Warning: {stat_csv_input} repeats {int((runs > 1).sum())} videos "
+              f"(up to {int(runs.max())} runs each); counting each video once")
+    else:
+        # Without repeats the per-video sum must reproduce the total row.
+        total_runtime = float((total_df['inference_total'] - total_df['decode']).iloc[0])
+        assert abs(per_video.sum() - total_runtime) <= 1e-6 * max(1.0, total_runtime), \
+            f"Per-video LEAP runtimes do not add up to the total row in {stat_csv_input}"
 
-    return stat_df.reset_index(drop=True)
+    # One stat row with the per-video runtime sum.
+    stat_df = pd.DataFrame([{
+        'param_id': 0,
+        'detector_cfg': pd.NA,
+        'segmentation_cfg': pd.NA,
+        'tracker_cfg': pd.NA,
+        'runtime': float(per_video.sum()),
+    }])
+
+    return stat_df
 
 
 def build_tracking_transform_manifest(system: str,
@@ -265,12 +347,13 @@ def build_tracking_transform_manifest(system: str,
     return transform_df[['dataset', 'videoset', 'video', 'video_id', 'param_id', 'input_json_path', 'output_jsonl_path']]
 
 
-def transform_tracking_manifest(transform_df: pd.DataFrame):
+def transform_tracking_manifest(transform_df: pd.DataFrame, unwrap_leap: bool = False):
     # Keep the manifest local so the caller receives the derived sample-rate summary.
     transform_df = transform_df.copy()
     # Convert each validated raw tracking file to the shared JSONL format.
     for row in transform_df.itertuples(index=False):
-        transform_tracking_json(str(row.input_json_path), str(row.output_jsonl_path), str(row.dataset), str(row.video))
+        transform_tracking_json(str(row.input_json_path), str(row.output_jsonl_path), str(row.dataset), str(row.video),
+                                unwrap_leap=unwrap_leap)
 
 
 def setup_dataset_paths(sota_dir: str, dataset: str, system: str) -> tuple[str, str, str]:
@@ -317,15 +400,15 @@ def process_leap_dataset(sota_dir: str, dataset: str):
     stat_df = normalize_leap_stat_csv(stat_csv_input)
     # Build the validated transform manifest for the fixed LEAP param id.
     transform_df = build_tracking_transform_manifest('leap', dataset, stat_df, tracks_dir)
-    # Run the actual file-by-file tracking conversion step.
-    transform_tracking_manifest(transform_df)
+    # Run the actual file-by-file tracking conversion step, undoing the exporter's interval wrap.
+    transform_tracking_manifest(transform_df, unwrap_leap=True)
 
     # Persist the normalized LEAP stat CSV used by downstream evaluation scripts.
     stat_csv_output = os.path.join(output_dataset_dir, 'stat.csv')
     stat_df.to_csv(stat_csv_output, index=False)
 
 
-def process_dataset(sota_dir: str, dataset: str):
+def process_dataset(sota_dir: str, dataset: str, systems: tuple[str, ...] = ('otif', 'leap')):
     # Resolve the raw SOTA dataset directory so system detection stays explicit.
     dataset_in = dataset_name_in_sota(dataset)
     sota_dataset_dir = os.path.join(sota_dir, dataset_in)
@@ -336,12 +419,12 @@ def process_dataset(sota_dir: str, dataset: str):
     otif_csv = os.path.join(sota_dataset_dir, f'otif_{dataset_in}.csv')
     leap_csv = os.path.join(sota_dataset_dir, f'leap_{dataset_in}.csv')
 
-    # Transform OTIF outputs when the raw OTIF export exists for the dataset.
-    if os.path.exists(otif_csv):
+    # Transform OTIF outputs when requested and the raw OTIF export exists for the dataset.
+    if 'otif' in systems and os.path.exists(otif_csv):
         process_otif_dataset(sota_dir, dataset)
 
-    # Transform LEAP outputs when the raw LEAP export exists for the dataset.
-    if os.path.exists(leap_csv):
+    # Transform LEAP outputs when requested and the raw LEAP export exists for the dataset.
+    if 'leap' in systems and os.path.exists(leap_csv):
         process_leap_dataset(sota_dir, dataset)
 
 
@@ -358,7 +441,7 @@ def main(args):
 
     # Transform every configured dataset using the deterministic config-driven workflow.
     for dataset in DATASETS:
-        process_dataset(sota_dir, dataset)
+        process_dataset(sota_dir, dataset, tuple(args.systems))
 
     # Log the destination root that now contains the transformed SOTA outputs.
     print(f"\nTransformation complete. Output saved to: {cache.root('SOTA')}")

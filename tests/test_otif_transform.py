@@ -1,3 +1,4 @@
+import pytest
 import pandas as pd
 
 from evaluation import p140_otif_transform
@@ -140,3 +141,92 @@ def test_build_tracking_transform_manifest_reads_flat_leap_directory(monkeypatch
         str(tmp_path / 'out' / 'leap' / 'demo' / 'te01.mp4' / 'tracking_results' / '000' / 'tracking.jsonl'),
         str(tmp_path / 'out' / 'leap' / 'demo' / 'te02.mp4' / 'tracking_results' / '000' / 'tracking.jsonl'),
     ]
+
+
+def _box(track_id):
+    # A minimal LEAP export box for one object.
+    return {'left': 0.0, 'top': 0.0, 'right': 1.0, 'bottom': 1.0, 'class': 'car', 'score': 1.0, 'track_id': track_id}
+
+
+def _frames_of(frames, track_id):
+    # Frame indices where an object appears.
+    return [f for f, dets in enumerate(frames) if any(d['track_id'] == track_id for d in dets)]
+
+
+def test_unwrap_leap_frames_drops_wrapped_tail_and_frames_past_clip():
+    # Export of 10 frames: object 1 is contiguous on 2..5; object 2 started at -2, so the exporter
+    # wrote frames -2, -1 to 8, 9 and its real frames to 0..3; object 3 runs past the 8-frame clip.
+    frames = [[] for _ in range(10)]
+    for f in range(2, 6):
+        frames[f].append(_box(1))
+    for f in [0, 1, 2, 3, 8, 9]:
+        frames[f].append(_box(2))
+    for f in range(6, 10):
+        frames[f].append(_box(3))
+    unwrapped, stats = p140_otif_transform.unwrap_leap_frames(frames, clip_frames=8)
+    # The clip keeps 8 frames; the wrapped tail and frames 8, 9 are gone.
+    assert len(unwrapped) == 8
+    assert _frames_of(unwrapped, 1) == [2, 3, 4, 5]
+    assert _frames_of(unwrapped, 2) == [0, 1, 2, 3]
+    assert _frames_of(unwrapped, 3) == [6, 7]
+    assert stats['wrapped_objects'] == [2] and stats['wrapped_boxes_dropped'] == 2
+    # Frames 8 and 9 also held object 2's wrapped tail, which is counted only as wrapped.
+    assert stats['boxes_past_clip_dropped'] == 2
+    assert stats['ambiguous_full_span_objects'] == []
+
+
+def test_unwrap_leap_frames_keeps_ambiguous_full_span_objects():
+    # An object on every export frame cannot be unwrapped, so it is kept and reported.
+    frames = [[_box(5)] for _ in range(6)]
+    unwrapped, stats = p140_otif_transform.unwrap_leap_frames(frames, clip_frames=6)
+    assert _frames_of(unwrapped, 5) == list(range(6))
+    assert stats['ambiguous_full_span_objects'] == [5]
+
+
+def test_unwrap_leap_frames_rejects_other_gaps():
+    # Two runs that do not touch both ends are not the exporter's wrap.
+    frames = [[] for _ in range(10)]
+    for f in [1, 2, 6, 7]:
+        frames[f].append(_box(4))
+    with pytest.raises(AssertionError):
+        p140_otif_transform.unwrap_leap_frames(frames, clip_frames=10)
+
+
+def test_unwrap_leap_frames_handles_empty_and_short_exports():
+    # An empty export stays empty; a clip longer than the export keeps every exported frame.
+    assert p140_otif_transform.unwrap_leap_frames([], clip_frames=900)[0] == []
+    unwrapped, _ = p140_otif_transform.unwrap_leap_frames([[_box(1)], [], None], clip_frames=900)
+    assert unwrapped == [[_box(1)], [], []]
+
+
+def test_normalize_leap_stat_csv_counts_repeated_videos_once(tmp_path):
+    # Two runs of video 0 and of video 1, and a total row summing all four, as in the CalDoT exports.
+    stat_path = tmp_path / 'leap_demo.csv'
+    pd.DataFrame({
+        'video_name': ['0', '0', '1', '1', 'total'],
+        'inference_total': [3.0, 5.0, 2.0, 2.0, 12.0],
+        'decode': [1.0, 1.0, 0.5, 0.5, 3.0],
+    }).to_csv(stat_path, index=False)
+    stat_df = p140_otif_transform.normalize_leap_stat_csv(str(stat_path))
+    # Mean runtime per video (3.0 and 1.5), summed: 4.5 instead of the doubled 9.0.
+    assert stat_df['runtime'].tolist() == [4.5]
+    assert stat_df['param_id'].tolist() == [0]
+
+
+def test_normalize_leap_stat_csv_matches_total_without_repeats(tmp_path):
+    # One run per video: the per-video sum equals the total row.
+    stat_path = tmp_path / 'leap_demo.csv'
+    pd.DataFrame({
+        'video_name': ['0', '1', 'total'],
+        'inference_total': [3.0, 2.0, 5.0],
+        'decode': [1.0, 0.5, 1.5],
+    }).to_csv(stat_path, index=False)
+    assert p140_otif_transform.normalize_leap_stat_csv(str(stat_path))['runtime'].tolist() == [3.5]
+    # A total row that disagrees with the per-video rows is an error.
+    pd.DataFrame({
+        'video_name': ['0', '1', 'total'],
+        'inference_total': [3.0, 2.0, 9.0],
+        'decode': [1.0, 0.5, 1.5],
+    }).to_csv(stat_path, index=False)
+    with pytest.raises(AssertionError):
+        p140_otif_transform.normalize_leap_stat_csv(str(stat_path))

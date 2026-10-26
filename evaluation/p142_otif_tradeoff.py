@@ -19,6 +19,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', default=False,
                         help='Process test videoset')
+    parser.add_argument('--systems', nargs='+', choices=['otif', 'leap'], default=['otif', 'leap'],
+                        help='SOTA systems to join')
     return parser.parse_args()
 
 def extract_accuracy_metrics(result: dict) -> dict:
@@ -142,7 +144,7 @@ def main(args):
     # Join the transformed stat.csv and accuracy rows for each configured dataset/system pair.
     for dataset in DATASETS:
         print(f"\nProcessing dataset: {dataset}")
-        for system in ['otif', 'leap']:
+        for system in args.systems:
             join_accuracy_to_stat(dataset, system)
 
 

@@ -45,6 +45,8 @@ def parse_args():
                         help='Whether to disable parallel processing')
     parser.add_argument('--test', action='store_true', default=False,
                         help='Process test videoset')
+    parser.add_argument('--systems', nargs='+', choices=['otif', 'leap'], default=['otif', 'leap'],
+                        help='SOTA systems to evaluate')
     return parser.parse_args()
 
 
@@ -211,7 +213,7 @@ def main(args):
 
     # Expand and schedule all configured dataset/system/task combinations.
     for dataset in DATASETS:
-        for system in ['otif', 'leap']:
+        for system in args.systems:
             task_rows = build_sota_tasks(dataset, system)
             if not task_rows:
                 continue
