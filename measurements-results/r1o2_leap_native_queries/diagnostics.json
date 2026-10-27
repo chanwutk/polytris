@@ -1,0 +1,5324 @@
+{
+  "Amsterdam": {
+    "frames_dropped_past_clip": [],
+    "lag_correlations": [
+      {
+        "best_lag": 10,
+        "best_r": 0.5476,
+        "clips_with_r": 59,
+        "config": "param 0",
+        "lag0_r": 0.5295,
+        "system": "leap",
+        "warn": false
+      },
+      {
+        "best_lag": 10,
+        "best_r": 0.5476,
+        "clips_with_r": 58,
+        "config": "param 0",
+        "lag0_r": 0.5304,
+        "system": "leap_ambiguous_dropped",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.7346,
+        "clips_with_r": 60,
+        "config": "param 0",
+        "lag0_r": 0.728,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.7038,
+        "clips_with_r": 60,
+        "config": "param 1",
+        "lag0_r": 0.6962,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.7144,
+        "clips_with_r": 60,
+        "config": "param 2",
+        "lag0_r": 0.7109,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.6844,
+        "clips_with_r": 60,
+        "config": "param 3",
+        "lag0_r": 0.677,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.6448,
+        "clips_with_r": 60,
+        "config": "param 4",
+        "lag0_r": 0.6313,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 4,
+        "best_r": 0.5125,
+        "clips_with_r": 60,
+        "config": "param 5",
+        "lag0_r": 0.4729,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.2836,
+        "clips_with_r": 60,
+        "config": "param 6",
+        "lag0_r": 0.2751,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.2909,
+        "clips_with_r": 59,
+        "config": "param 7",
+        "lag0_r": 0.2775,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 12,
+        "best_r": 0.2886,
+        "clips_with_r": 59,
+        "config": "param 8",
+        "lag0_r": 0.2757,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.277,
+        "clips_with_r": 59,
+        "config": "param 9",
+        "lag0_r": 0.2728,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.7895,
+        "clips_with_r": 60,
+        "config": "naive",
+        "lag0_r": 0.7895,
+        "system": "reference",
+        "warn": false
+      },
+      {
+        "best_lag": 12,
+        "best_r": 0.1382,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_16_040_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.1305,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.4109,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_040_r025_square_s100_sortcython",
+        "lag0_r": 0.3822,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.3498,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_040_r025_tr_s100_sortcython",
+        "lag0_r": 0.3432,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.23,
+        "clips_with_r": 54,
+        "config": "ShuffleNet05_60_16_040_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.189,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.3367,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_16_040_r075_tr_s100_sortcython",
+        "lag0_r": 0.3353,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 12,
+        "best_r": 0.1382,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_16_060_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.1305,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.4109,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_060_r025_square_s100_sortcython",
+        "lag0_r": 0.3822,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.3498,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_060_r025_tr_s100_sortcython",
+        "lag0_r": 0.3432,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 5,
+        "best_r": 0.3501,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_060_r050_square_s100_sortcython",
+        "lag0_r": 0.343,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.1676,
+        "clips_with_r": 55,
+        "config": "ShuffleNet05_60_16_060_r075_bl_s100_bytetrackcython",
+        "lag0_r": 0.1565,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.23,
+        "clips_with_r": 54,
+        "config": "ShuffleNet05_60_16_060_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.189,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 12,
+        "best_r": 0.1382,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_16_080_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.1305,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.4109,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_080_r025_square_s100_sortcython",
+        "lag0_r": 0.3822,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.3498,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_080_r025_tr_s100_sortcython",
+        "lag0_r": 0.3432,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 5,
+        "best_r": 0.3501,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_080_r050_square_s100_sortcython",
+        "lag0_r": 0.343,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.23,
+        "clips_with_r": 54,
+        "config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.189,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.3367,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_16_080_r075_tr_s100_sortcython",
+        "lag0_r": 0.3353,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.3889,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_16_r025_square_s100_sortcython",
+        "lag0_r": 0.3724,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.3592,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_r025_tr_s100_sortcython",
+        "lag0_r": 0.3494,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.3298,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
+        "lag0_r": 0.3227,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.1855,
+        "clips_with_r": 50,
+        "config": "ShuffleNet05_60_16_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.1755,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -14,
+        "best_r": 0.3538,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_16_r050_tr_s100_sortcython",
+        "lag0_r": 0.3471,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.2922,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
+        "lag0_r": 0.2826,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 5,
+        "best_r": 0.2636,
+        "clips_with_r": 54,
+        "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.2325,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.1731,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "lag0_r": 0.1648,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.3488,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
+        "lag0_r": 0.3407,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -8,
+        "best_r": 0.3561,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_16_r075_tr_s100_sortcython",
+        "lag0_r": 0.3422,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 7,
+        "best_r": 0.5522,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.545,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.6095,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+        "lag0_r": 0.6068,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 4,
+        "best_r": 0.6575,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r025_square_s100_sortcython",
+        "lag0_r": 0.6562,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.6591,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+        "lag0_r": 0.6545,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 6,
+        "best_r": 0.5626,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.56,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 4,
+        "best_r": 0.5698,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "lag0_r": 0.5528,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.6864,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r050_square_s100_sortcython",
+        "lag0_r": 0.6744,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.6643,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+        "lag0_r": 0.6547,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.612,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r075_bl_s100_sortcython",
+        "lag0_r": 0.6116,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 13,
+        "best_r": 0.4631,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.4251,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.5807,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "lag0_r": 0.5807,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.6865,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r075_square_s100_sortcython",
+        "lag0_r": 0.6865,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 4,
+        "best_r": 0.6661,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_040_r075_tr_s100_sortcython",
+        "lag0_r": 0.6532,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.5997,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_060_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.5997,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -8,
+        "best_r": 0.6772,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_060_r025_square_s100_sortcython",
+        "lag0_r": 0.6704,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 7,
+        "best_r": 0.591,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.5563,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.6795,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_060_r050_square_s100_sortcython",
+        "lag0_r": 0.6681,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.5137,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.504,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.6164,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+        "lag0_r": 0.6133,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.6973,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_080_r025_square_s100_sortcython",
+        "lag0_r": 0.695,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.7007,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.6891,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.7029,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r025_none_s100_sortcython",
+        "lag0_r": 0.7029,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.6899,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.6845,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.7446,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.7401,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.6871,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.685,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 4,
+        "best_r": 0.6388,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+        "lag0_r": 0.6305,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.7166,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.7129,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.7674,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.7674,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.6885,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+        "lag0_r": 0.6885,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.6661,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.6643,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.6308,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+        "lag0_r": 0.6308,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.7387,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+        "lag0_r": 0.7333,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.7207,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+        "lag0_r": 0.7169,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.708,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.7057,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.7162,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+        "lag0_r": 0.7079,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.6623,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+        "lag0_r": 0.6599,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -11,
+        "best_r": 0.5909,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_040_r025_square_s100_sortcython",
+        "lag0_r": 0.5617,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 6,
+        "best_r": 0.5817,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_040_r025_tr_s100_sortcython",
+        "lag0_r": 0.5452,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.605,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_060_r025_tr_s100_sortcython",
+        "lag0_r": 0.5854,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -11,
+        "best_r": 0.5867,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
+        "lag0_r": 0.5728,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.5606,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_060_r075_square_s100_sortcython",
+        "lag0_r": 0.5498,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.613,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_080_r025_square_s100_sortcython",
+        "lag0_r": 0.613,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.555,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_080_r050_square_s100_sortcython",
+        "lag0_r": 0.5495,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.6135,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+        "lag0_r": 0.5863,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.6175,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+        "lag0_r": 0.6064,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.6597,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_8_r025_tr_s100_sortcython",
+        "lag0_r": 0.6178,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -8,
+        "best_r": 0.5881,
+        "clips_with_r": 59,
+        "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
+        "lag0_r": 0.5683,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.6429,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_8_r050_tr_s100_sortcython",
+        "lag0_r": 0.6061,
+        "system": "tetris",
+        "warn": false
+      }
+    ],
+    "lag_warnings": [],
+    "leap_cache_cross_check": {
+      "ambiguous": 1,
+      "cached_box_frames": 6268,
+      "equal": true,
+      "export": "/sota-results/amsterdam-y5/leap/25.json",
+      "export_frames": 959,
+      "frames_differing": 0,
+      "n": 900,
+      "objects": 35,
+      "recovered_box_frames": 6268,
+      "video": "te25.mp4",
+      "wrapped": 7
+    },
+    "leap_excluding_empty_exports": {
+      "all": {
+        "acc_leap": 0.4156,
+        "clips": 59,
+        "f1": 0.979,
+        "frames": 53111
+      },
+      "moving": {
+        "acc_leap": -0.6369,
+        "clips": 59,
+        "f1": 0.6562,
+        "frames": 53111
+      }
+    },
+    "leap_unwrap": {
+      "ambiguous_full_span_objects": 62,
+      "boxes_past_clip_dropped": 7027,
+      "clips": 60,
+      "clips_with_ambiguous": 46,
+      "empty_export_videos": [
+        "te33.mp4"
+      ],
+      "empty_exports": 1,
+      "objects": 800,
+      "wrapped_boxes_dropped": 4200,
+      "wrapped_objects": 88
+    }
+  },
+  "B3D1": {
+    "frames_dropped_past_clip": [],
+    "lag_correlations": [
+      {
+        "best_lag": -14,
+        "best_r": 0.0528,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.0174,
+        "system": "leap",
+        "warn": false
+      },
+      {
+        "best_lag": -14,
+        "best_r": 0.0528,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.0174,
+        "system": "leap_ambiguous_dropped",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8685,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.868,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.8477,
+        "clips_with_r": 5,
+        "config": "param 1",
+        "lag0_r": 0.8391,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.7383,
+        "clips_with_r": 5,
+        "config": "param 2",
+        "lag0_r": 0.732,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.6598,
+        "clips_with_r": 5,
+        "config": "param 3",
+        "lag0_r": 0.656,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 5,
+        "best_r": 0.4765,
+        "clips_with_r": 5,
+        "config": "param 4",
+        "lag0_r": 0.4668,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.5155,
+        "clips_with_r": 5,
+        "config": "param 5",
+        "lag0_r": 0.5137,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": null,
+        "clips_with_r": 0,
+        "config": "param 6",
+        "lag0_r": null,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": null,
+        "clips_with_r": 0,
+        "config": "param 7",
+        "lag0_r": null,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8589,
+        "clips_with_r": 5,
+        "config": "naive",
+        "lag0_r": 0.8578,
+        "system": "reference",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.4525,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_040_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.417,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.4525,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.417,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.3017,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+        "lag0_r": 0.2714,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.2229,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+        "lag0_r": 0.1948,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 15,
+        "best_r": 0.2748,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "lag0_r": 0.2453,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.85,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_bl_s100_sortcython",
+        "lag0_r": 0.8473,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.8451,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+        "lag0_r": 0.8415,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8267,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r050_bl_s100_sortcython",
+        "lag0_r": 0.8267,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.7917,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "lag0_r": 0.7915,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8646,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r050_square_s100_sortcython",
+        "lag0_r": 0.8646,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.842,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+        "lag0_r": 0.8406,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8087,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "lag0_r": 0.8087,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8587,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_bl_s100_sortcython",
+        "lag0_r": 0.8585,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8282,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
+        "lag0_r": 0.8279,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.8085,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.8033,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.8512,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_tr_s100_sortcython",
+        "lag0_r": 0.8482,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.8398,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_bl_s100_sortcython",
+        "lag0_r": 0.8364,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.7996,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+        "lag0_r": 0.7993,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.8337,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.8284,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8558,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+        "lag0_r": 0.8553,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8046,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.8034,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8538,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+        "lag0_r": 0.8514,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.845,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.8411,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.8215,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.8143,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.861,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+        "lag0_r": 0.8601,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.8188,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+        "lag0_r": 0.8093,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8288,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.827,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8322,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r075_square_s100_bytetrackcython",
+        "lag0_r": 0.8306,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8261,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.8258,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.852,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.852,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8757,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.8755,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8089,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.8058,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.82,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+        "lag0_r": 0.82,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.868,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.8669,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8583,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.8576,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.8171,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+        "lag0_r": 0.8073,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8624,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+        "lag0_r": 0.8624,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8594,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+        "lag0_r": 0.8594,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8515,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.851,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8694,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r025_square_s100_sortcython",
+        "lag0_r": 0.8693,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8733,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r050_square_s100_sortcython",
+        "lag0_r": 0.8733,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8268,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r025_bl_s100_sortcython",
+        "lag0_r": 0.826,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.7574,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "lag0_r": 0.7515,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.7957,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r050_bl_s100_sortcython",
+        "lag0_r": 0.7858,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.7898,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+        "lag0_r": 0.7898,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8291,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r050_square_s100_sortcython",
+        "lag0_r": 0.8291,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -8,
+        "best_r": 0.7444,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r075_none_s100_sortcython",
+        "lag0_r": 0.7385,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.8181,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r025_bl_s100_sortcython",
+        "lag0_r": 0.8154,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.7733,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "lag0_r": 0.7677,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.8287,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r050_square_s100_sortcython",
+        "lag0_r": 0.8241,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.853,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_bl_s100_sortcython",
+        "lag0_r": 0.853,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8077,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+        "lag0_r": 0.8068,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.8252,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r050_bl_s100_sortcython",
+        "lag0_r": 0.8094,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8297,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r050_square_s100_sortcython",
+        "lag0_r": 0.8297,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.8161,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r050_tr_s100_sortcython",
+        "lag0_r": 0.8065,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.7869,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r075_none_s100_sortcython",
+        "lag0_r": 0.7855,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.8531,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "lag0_r": 0.8523,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8365,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "lag0_r": 0.8365,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8343,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+        "lag0_r": 0.8343,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.843,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+        "lag0_r": 0.843,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.807,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+        "lag0_r": 0.8066,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8502,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+        "lag0_r": 0.8502,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.7174,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
+        "lag0_r": 0.7029,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 6,
+        "best_r": 0.6141,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
+        "lag0_r": 0.5794,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 4,
+        "best_r": 0.751,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
+        "lag0_r": 0.7308,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -14,
+        "best_r": 0.5882,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r075_none_s100_sortcython",
+        "lag0_r": 0.5617,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.7433,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+        "lag0_r": 0.7237,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -13,
+        "best_r": 0.6139,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r075_none_s100_sortcython",
+        "lag0_r": 0.5936,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.7602,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "lag0_r": 0.7517,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 4,
+        "best_r": 0.7584,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+        "lag0_r": 0.7427,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 5,
+        "best_r": 0.6659,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+        "lag0_r": 0.6224,
+        "system": "tetris",
+        "warn": false
+      }
+    ],
+    "lag_warnings": [],
+    "leap_cache_cross_check": {
+      "ambiguous": 0,
+      "cached_box_frames": 20197,
+      "equal": true,
+      "export": "/sota-results/jnc0/leap/12.json",
+      "export_frames": 1586,
+      "frames_differing": 0,
+      "n": 1075,
+      "objects": 57,
+      "recovered_box_frames": 20197,
+      "video": "te12.mp4",
+      "wrapped": 12
+    },
+    "leap_excluding_empty_exports": {
+      "all": {
+        "acc_leap": 0.5562,
+        "clips": 5,
+        "f1": 1.0,
+        "frames": 5375
+      },
+      "moving": {
+        "acc_leap": 0.4818,
+        "clips": 5,
+        "f1": 0.9995,
+        "frames": 5375
+      }
+    },
+    "leap_unwrap": {
+      "ambiguous_full_span_objects": 0,
+      "boxes_past_clip_dropped": 20425,
+      "clips": 5,
+      "clips_with_ambiguous": 0,
+      "empty_export_videos": [],
+      "empty_exports": 0,
+      "objects": 283,
+      "wrapped_boxes_dropped": 5771,
+      "wrapped_objects": 44
+    }
+  },
+  "B3D2": {
+    "frames_dropped_past_clip": [],
+    "lag_correlations": [
+      {
+        "best_lag": -15,
+        "best_r": 0.526,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.4577,
+        "system": "leap",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.526,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.4577,
+        "system": "leap_ambiguous_dropped",
+        "warn": true
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9131,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.8916,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.9113,
+        "clips_with_r": 5,
+        "config": "param 1",
+        "lag0_r": 0.8774,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.9081,
+        "clips_with_r": 5,
+        "config": "param 2",
+        "lag0_r": 0.8723,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 10,
+        "best_r": 0.8327,
+        "clips_with_r": 5,
+        "config": "param 3",
+        "lag0_r": 0.6861,
+        "system": "otif",
+        "warn": true
+      },
+      {
+        "best_lag": 9,
+        "best_r": 0.7505,
+        "clips_with_r": 5,
+        "config": "param 4",
+        "lag0_r": 0.6444,
+        "system": "otif",
+        "warn": true
+      },
+      {
+        "best_lag": 5,
+        "best_r": 0.5016,
+        "clips_with_r": 5,
+        "config": "param 5",
+        "lag0_r": 0.4792,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": null,
+        "clips_with_r": 0,
+        "config": "param 6",
+        "lag0_r": null,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9005,
+        "clips_with_r": 5,
+        "config": "naive",
+        "lag0_r": 0.8984,
+        "system": "reference",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.682,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_040_r050_none_s100_sortcython",
+        "lag0_r": 0.6767,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.682,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_060_r050_none_s100_sortcython",
+        "lag0_r": 0.6767,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.682,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_080_r050_none_s100_sortcython",
+        "lag0_r": 0.6767,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.5539,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.5142,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 5,
+        "best_r": 0.715,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+        "lag0_r": 0.7119,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 5,
+        "best_r": 0.6749,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "lag0_r": 0.6669,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.8845,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.8663,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.8795,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "lag0_r": 0.8749,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8644,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.844,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9049,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+        "lag0_r": 0.9023,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.8805,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "lag0_r": 0.8616,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9056,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r075_tr_s100_sortcython",
+        "lag0_r": 0.8997,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -14,
+        "best_r": 0.8757,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.8496,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.8843,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+        "lag0_r": 0.8793,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8627,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.8351,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.9036,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_tr_s100_sortcython",
+        "lag0_r": 0.9002,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.8901,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
+        "lag0_r": 0.8777,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.8887,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.8703,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -13,
+        "best_r": 0.8776,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.8589,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.8964,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+        "lag0_r": 0.8892,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -12,
+        "best_r": 0.8883,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.8659,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9001,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
+        "lag0_r": 0.8977,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9035,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r075_tr_s100_bytetrackcython",
+        "lag0_r": 0.8946,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9086,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r075_tr_s100_sortcython",
+        "lag0_r": 0.9086,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9053,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_bl_s100_bytetrackcython",
+        "lag0_r": 0.9018,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.9048,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.8981,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.903,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.8987,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9017,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.8943,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9068,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+        "lag0_r": 0.9034,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9016,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.8955,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9054,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.8984,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9124,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+        "lag0_r": 0.9111,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.8948,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.8887,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9058,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+        "lag0_r": 0.9033,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9033,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+        "lag0_r": 0.8981,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8996,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+        "lag0_r": 0.8996,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.8897,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_080_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.8741,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.8984,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r025_bl_s100_bytetrackcython",
+        "lag0_r": 0.8924,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.8955,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.8884,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.8995,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.8924,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.8984,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r075_square_s100_bytetrackcython",
+        "lag0_r": 0.8917,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.8927,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_square_s100_sortcython",
+        "lag0_r": 0.8902,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -8,
+        "best_r": 0.904,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r050_square_s100_sortcython",
+        "lag0_r": 0.9,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9089,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+        "lag0_r": 0.9088,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9159,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+        "lag0_r": 0.9136,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9187,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r075_square_s100_sortcython",
+        "lag0_r": 0.9183,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8595,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
+        "lag0_r": 0.844,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8909,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r025_tr_s100_sortcython",
+        "lag0_r": 0.8703,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.8774,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r050_bl_s100_sortcython",
+        "lag0_r": 0.8651,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.8902,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r050_square_s100_sortcython",
+        "lag0_r": 0.8762,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -11,
+        "best_r": 0.8846,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r050_tr_s100_sortcython",
+        "lag0_r": 0.8632,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7633,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
+        "lag0_r": 0.7397,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -11,
+        "best_r": 0.892,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r025_square_s100_sortcython",
+        "lag0_r": 0.874,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -8,
+        "best_r": 0.8939,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r050_square_s100_sortcython",
+        "lag0_r": 0.8795,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -14,
+        "best_r": 0.8831,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
+        "lag0_r": 0.8587,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7979,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r075_none_s100_sortcython",
+        "lag0_r": 0.7561,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.8879,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r075_square_s100_sortcython",
+        "lag0_r": 0.8704,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -11,
+        "best_r": 0.873,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r075_tr_s100_sortcython",
+        "lag0_r": 0.8397,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.8969,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r025_tr_s100_sortcython",
+        "lag0_r": 0.8779,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8171,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
+        "lag0_r": 0.7956,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -11,
+        "best_r": 0.8933,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r050_square_s100_sortcython",
+        "lag0_r": 0.8764,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.8872,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+        "lag0_r": 0.8641,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7848,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r075_none_s100_sortcython",
+        "lag0_r": 0.7595,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.8957,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r075_square_s100_sortcython",
+        "lag0_r": 0.8843,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.8803,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r075_tr_s100_sortcython",
+        "lag0_r": 0.8612,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8716,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "lag0_r": 0.8484,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.8983,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+        "lag0_r": 0.8795,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8037,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+        "lag0_r": 0.778,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -13,
+        "best_r": 0.7913,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+        "lag0_r": 0.7706,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -8,
+        "best_r": 0.8967,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r075_square_s100_sortcython",
+        "lag0_r": 0.8819,
+        "system": "tetris",
+        "warn": false
+      }
+    ],
+    "lag_warnings": [
+      {
+        "best_lag": -15,
+        "best_r": 0.526,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.4577,
+        "system": "leap",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.526,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.4577,
+        "system": "leap_ambiguous_dropped",
+        "warn": true
+      },
+      {
+        "best_lag": 10,
+        "best_r": 0.8327,
+        "clips_with_r": 5,
+        "config": "param 3",
+        "lag0_r": 0.6861,
+        "system": "otif",
+        "warn": true
+      },
+      {
+        "best_lag": 9,
+        "best_r": 0.7505,
+        "clips_with_r": 5,
+        "config": "param 4",
+        "lag0_r": 0.6444,
+        "system": "otif",
+        "warn": true
+      }
+    ],
+    "leap_cache_cross_check": {
+      "ambiguous": 0,
+      "cached_box_frames": 20121,
+      "equal": true,
+      "export": "/sota-results/jnc2/leap/4.json",
+      "export_frames": 1331,
+      "frames_differing": 0,
+      "n": 938,
+      "objects": 92,
+      "recovered_box_frames": 20121,
+      "video": "te04.mp4",
+      "wrapped": 15
+    },
+    "leap_excluding_empty_exports": {
+      "all": {
+        "acc_leap": 0.7511,
+        "clips": 5,
+        "f1": 1.0,
+        "frames": 4691
+      },
+      "moving": {
+        "acc_leap": 0.7294,
+        "clips": 5,
+        "f1": 0.9995,
+        "frames": 4691
+      }
+    },
+    "leap_unwrap": {
+      "ambiguous_full_span_objects": 0,
+      "boxes_past_clip_dropped": 32145,
+      "clips": 5,
+      "clips_with_ambiguous": 0,
+      "empty_export_videos": [],
+      "empty_exports": 0,
+      "objects": 377,
+      "wrapped_boxes_dropped": 3937,
+      "wrapped_objects": 46
+    }
+  },
+  "B3D3": {
+    "frames_dropped_past_clip": [
+      {
+        "clips": 3,
+        "frames": 3,
+        "system": "ground truth"
+      }
+    ],
+    "lag_correlations": [
+      {
+        "best_lag": 15,
+        "best_r": 0.796,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.779,
+        "system": "leap",
+        "warn": false
+      },
+      {
+        "best_lag": 15,
+        "best_r": 0.796,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.779,
+        "system": "leap_ambiguous_dropped",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9846,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.9843,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.9832,
+        "clips_with_r": 5,
+        "config": "param 1",
+        "lag0_r": 0.9791,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 6,
+        "best_r": 0.9698,
+        "clips_with_r": 5,
+        "config": "param 2",
+        "lag0_r": 0.9419,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 13,
+        "best_r": 0.9205,
+        "clips_with_r": 5,
+        "config": "param 3",
+        "lag0_r": 0.8954,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 14,
+        "best_r": 0.8716,
+        "clips_with_r": 5,
+        "config": "param 4",
+        "lag0_r": 0.8272,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 15,
+        "best_r": 0.2774,
+        "clips_with_r": 5,
+        "config": "param 5",
+        "lag0_r": 0.2384,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": null,
+        "clips_with_r": 0,
+        "config": "param 6",
+        "lag0_r": null,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": null,
+        "clips_with_r": 0,
+        "config": "param 7",
+        "lag0_r": null,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9851,
+        "clips_with_r": 5,
+        "config": "naive",
+        "lag0_r": 0.9846,
+        "system": "reference",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7829,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_040_r050_none_s100_sortcython",
+        "lag0_r": 0.7293,
+        "system": "tetris",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7864,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_040_r075_none_s100_sortcython",
+        "lag0_r": 0.764,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7829,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_060_r050_none_s100_sortcython",
+        "lag0_r": 0.7293,
+        "system": "tetris",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7864,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_060_r075_none_s100_sortcython",
+        "lag0_r": 0.764,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7829,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_080_r050_none_s100_sortcython",
+        "lag0_r": 0.7293,
+        "system": "tetris",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7864,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
+        "lag0_r": 0.764,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8222,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+        "lag0_r": 0.7752,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.751,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+        "lag0_r": 0.6962,
+        "system": "tetris",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.3286,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.3056,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.7052,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "lag0_r": 0.6956,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9745,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+        "lag0_r": 0.9744,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.9748,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.9741,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.969,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.968,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9786,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+        "lag0_r": 0.9781,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9649,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "lag0_r": 0.9642,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.946,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "lag0_r": 0.9426,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9816,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_bl_s100_sortcython",
+        "lag0_r": 0.9816,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9709,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.9703,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.977,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
+        "lag0_r": 0.977,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9768,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.9768,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9747,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.9729,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9825,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_tr_s100_sortcython",
+        "lag0_r": 0.9819,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9777,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_bl_s100_sortcython",
+        "lag0_r": 0.9777,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9675,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+        "lag0_r": 0.9674,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9772,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_tr_s100_sortcython",
+        "lag0_r": 0.9772,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9559,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
+        "lag0_r": 0.955,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.974,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_bl_s100_bytetrackcython",
+        "lag0_r": 0.974,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9746,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.9737,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9787,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+        "lag0_r": 0.9784,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9782,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.9779,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9759,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.9755,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9818,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+        "lag0_r": 0.9815,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9741,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+        "lag0_r": 0.9741,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9784,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.9784,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9601,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
+        "lag0_r": 0.9585,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.98,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.9798,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9856,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.9851,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9819,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.9815,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9739,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.9718,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9745,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+        "lag0_r": 0.9745,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9835,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.9825,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9769,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.976,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9582,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.9572,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9788,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+        "lag0_r": 0.9785,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9673,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+        "lag0_r": 0.9666,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9697,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_040_r025_none_s100_sortcython",
+        "lag0_r": 0.9697,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.9741,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_060_r025_none_s100_sortcython",
+        "lag0_r": 0.973,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9792,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
+        "lag0_r": 0.979,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.9699,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "lag0_r": 0.9678,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9732,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r025_tr_s100_sortcython",
+        "lag0_r": 0.9696,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9497,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+        "lag0_r": 0.9493,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9697,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
+        "lag0_r": 0.9693,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.979,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r025_square_s100_sortcython",
+        "lag0_r": 0.9789,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9764,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r025_tr_s100_sortcython",
+        "lag0_r": 0.9739,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.9551,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "lag0_r": 0.9499,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9705,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r050_tr_s100_sortcython",
+        "lag0_r": 0.9684,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9717,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+        "lag0_r": 0.9716,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9796,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_square_s100_sortcython",
+        "lag0_r": 0.9789,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.9774,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+        "lag0_r": 0.975,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.9704,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r050_tr_s100_sortcython",
+        "lag0_r": 0.9682,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9272,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r075_none_s100_sortcython",
+        "lag0_r": 0.9266,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -4,
+        "best_r": 0.9741,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "lag0_r": 0.9732,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9793,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+        "lag0_r": 0.979,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.9792,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+        "lag0_r": 0.9772,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.9301,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
+        "lag0_r": 0.9156,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.9047,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
+        "lag0_r": 0.8898,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8721,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
+        "lag0_r": 0.8556,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.905,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
+        "lag0_r": 0.8871,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8755,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_060_r075_none_s100_sortcython",
+        "lag0_r": 0.8582,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.9042,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
+        "lag0_r": 0.8862,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8873,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r075_none_s100_sortcython",
+        "lag0_r": 0.8703,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.9232,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "lag0_r": 0.9178,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.9088,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+        "lag0_r": 0.8919,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.8564,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+        "lag0_r": 0.8333,
+        "system": "tetris",
+        "warn": false
+      }
+    ],
+    "lag_warnings": [
+      {
+        "best_lag": -15,
+        "best_r": 0.7829,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_040_r050_none_s100_sortcython",
+        "lag0_r": 0.7293,
+        "system": "tetris",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7829,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_060_r050_none_s100_sortcython",
+        "lag0_r": 0.7293,
+        "system": "tetris",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.7829,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_080_r050_none_s100_sortcython",
+        "lag0_r": 0.7293,
+        "system": "tetris",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.751,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+        "lag0_r": 0.6962,
+        "system": "tetris",
+        "warn": true
+      }
+    ],
+    "leap_cache_cross_check": {
+      "ambiguous": 0,
+      "cached_box_frames": 31767,
+      "equal": true,
+      "export": "/sota-results/jnc6/leap/4.json",
+      "export_frames": 1039,
+      "frames_differing": 0,
+      "n": 1038,
+      "objects": 304,
+      "recovered_box_frames": 31767,
+      "video": "te04.mp4",
+      "wrapped": 29
+    },
+    "leap_excluding_empty_exports": {
+      "all": {
+        "acc_leap": -0.0251,
+        "clips": 5,
+        "f1": 1.0,
+        "frames": 5192
+      },
+      "moving": {
+        "acc_leap": -0.0584,
+        "clips": 5,
+        "f1": 0.9995,
+        "frames": 5192
+      }
+    },
+    "leap_unwrap": {
+      "ambiguous_full_span_objects": 0,
+      "boxes_past_clip_dropped": 1329,
+      "clips": 5,
+      "clips_with_ambiguous": 0,
+      "empty_export_videos": [],
+      "empty_exports": 0,
+      "objects": 1330,
+      "wrapped_boxes_dropped": 4315,
+      "wrapped_objects": 115
+    }
+  },
+  "B3D4": {
+    "frames_dropped_past_clip": [],
+    "lag_correlations": [
+      {
+        "best_lag": -15,
+        "best_r": -0.0283,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": -0.0915,
+        "system": "leap",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": -0.0283,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": -0.0915,
+        "system": "leap_ambiguous_dropped",
+        "warn": true
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9667,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": 0.9667,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9051,
+        "clips_with_r": 5,
+        "config": "param 1",
+        "lag0_r": 0.9023,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8817,
+        "clips_with_r": 5,
+        "config": "param 2",
+        "lag0_r": 0.8793,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 4,
+        "best_r": 0.8514,
+        "clips_with_r": 5,
+        "config": "param 3",
+        "lag0_r": 0.8476,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 13,
+        "best_r": 0.7793,
+        "clips_with_r": 5,
+        "config": "param 4",
+        "lag0_r": 0.764,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 15,
+        "best_r": 0.7788,
+        "clips_with_r": 5,
+        "config": "param 5",
+        "lag0_r": 0.7233,
+        "system": "otif",
+        "warn": true
+      },
+      {
+        "best_lag": 14,
+        "best_r": 0.668,
+        "clips_with_r": 5,
+        "config": "param 6",
+        "lag0_r": 0.6375,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": null,
+        "clips_with_r": 0,
+        "config": "param 7",
+        "lag0_r": null,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": null,
+        "clips_with_r": 0,
+        "config": "param 8",
+        "lag0_r": null,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9648,
+        "clips_with_r": 5,
+        "config": "naive",
+        "lag0_r": 0.9646,
+        "system": "reference",
+        "warn": false
+      },
+      {
+        "best_lag": 9,
+        "best_r": 0.6971,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_040_r025_none_s100_sortcython",
+        "lag0_r": 0.6742,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 9,
+        "best_r": 0.6971,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_060_r025_none_s100_sortcython",
+        "lag0_r": 0.6742,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 9,
+        "best_r": 0.6971,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_080_r025_none_s100_sortcython",
+        "lag0_r": 0.6742,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 6,
+        "best_r": 0.6781,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
+        "lag0_r": 0.6704,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 6,
+        "best_r": 0.7033,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+        "lag0_r": 0.6881,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 6,
+        "best_r": 0.6464,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "lag0_r": 0.6362,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9525,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_bl_s100_sortcython",
+        "lag0_r": 0.9525,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9467,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+        "lag0_r": 0.9467,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.94,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+        "lag0_r": 0.94,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9392,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "lag0_r": 0.9392,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9312,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "lag0_r": 0.9304,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9578,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r025_bl_s100_sortcython",
+        "lag0_r": 0.957,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9489,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+        "lag0_r": 0.9487,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9542,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_060_r050_tr_s100_sortcython",
+        "lag0_r": 0.9542,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9591,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+        "lag0_r": 0.9591,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.957,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+        "lag0_r": 0.957,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9561,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.9561,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9611,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_square_s100_sortcython",
+        "lag0_r": 0.9608,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9544,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+        "lag0_r": 0.9544,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9432,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_080_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.9429,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9569,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.9569,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9527,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_none_s100_sortcython",
+        "lag0_r": 0.9527,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9627,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.9627,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9615,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.9615,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9533,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.9533,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9559,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+        "lag0_r": 0.9559,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9621,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.9621,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.956,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.956,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9459,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+        "lag0_r": 0.9459,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9494,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+        "lag0_r": 0.9493,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9593,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+        "lag0_r": 0.9593,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9525,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+        "lag0_r": 0.9525,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.952,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_060_r025_none_s100_sortcython",
+        "lag0_r": 0.9511,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9517,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_060_r025_tr_s100_sortcython",
+        "lag0_r": 0.9506,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9608,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_080_r025_square_s100_sortcython",
+        "lag0_r": 0.9606,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9601,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_080_r025_tr_s100_sortcython",
+        "lag0_r": 0.9601,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9565,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r025_bl_s100_sortcython",
+        "lag0_r": 0.9562,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9618,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r025_square_s100_sortcython",
+        "lag0_r": 0.9616,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9572,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.9566,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9629,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_2_r050_square_s100_sortcython",
+        "lag0_r": 0.9622,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9336,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r025_bl_s100_sortcython",
+        "lag0_r": 0.9336,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9371,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "lag0_r": 0.9364,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9269,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r025_tr_s100_sortcython",
+        "lag0_r": 0.9269,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9311,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+        "lag0_r": 0.93,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9249,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_040_r075_none_s100_sortcython",
+        "lag0_r": 0.9231,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9444,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r025_bl_s100_sortcython",
+        "lag0_r": 0.9444,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9323,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
+        "lag0_r": 0.9321,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.948,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r025_square_s100_sortcython",
+        "lag0_r": 0.948,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9403,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r025_tr_s100_sortcython",
+        "lag0_r": 0.9391,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9262,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "lag0_r": 0.9255,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9329,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_060_r075_none_s100_sortcython",
+        "lag0_r": 0.9318,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9478,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_bl_s100_sortcython",
+        "lag0_r": 0.9478,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9427,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+        "lag0_r": 0.9426,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9479,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_square_s100_sortcython",
+        "lag0_r": 0.9473,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.947,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+        "lag0_r": 0.9464,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9496,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "lag0_r": 0.9495,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9492,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+        "lag0_r": 0.9489,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9474,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+        "lag0_r": 0.9474,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9391,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+        "lag0_r": 0.9387,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.884,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+        "lag0_r": 0.8813,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 9,
+        "best_r": 0.8643,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_080_r075_none_s100_sortcython",
+        "lag0_r": 0.8597,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.8873,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "lag0_r": 0.8859,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 5,
+        "best_r": 0.874,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+        "lag0_r": 0.8697,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.8664,
+        "clips_with_r": 5,
+        "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+        "lag0_r": 0.8645,
+        "system": "tetris",
+        "warn": false
+      }
+    ],
+    "lag_warnings": [
+      {
+        "best_lag": -15,
+        "best_r": -0.0283,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": -0.0915,
+        "system": "leap",
+        "warn": true
+      },
+      {
+        "best_lag": -15,
+        "best_r": -0.0283,
+        "clips_with_r": 5,
+        "config": "param 0",
+        "lag0_r": -0.0915,
+        "system": "leap_ambiguous_dropped",
+        "warn": true
+      },
+      {
+        "best_lag": 15,
+        "best_r": 0.7788,
+        "clips_with_r": 5,
+        "config": "param 5",
+        "lag0_r": 0.7233,
+        "system": "otif",
+        "warn": true
+      }
+    ],
+    "leap_cache_cross_check": {
+      "ambiguous": 0,
+      "cached_box_frames": 22112,
+      "equal": true,
+      "export": "/sota-results/jnc7/leap/8.json",
+      "export_frames": 1561,
+      "frames_differing": 0,
+      "n": 1045,
+      "objects": 71,
+      "recovered_box_frames": 22112,
+      "video": "te08.mp4",
+      "wrapped": 20
+    },
+    "leap_excluding_empty_exports": {
+      "all": {
+        "acc_leap": -0.384,
+        "clips": 5,
+        "f1": 1.0,
+        "frames": 5225
+      },
+      "moving": {
+        "acc_leap": -0.4983,
+        "clips": 5,
+        "f1": 0.9995,
+        "frames": 5225
+      }
+    },
+    "leap_unwrap": {
+      "ambiguous_full_span_objects": 0,
+      "boxes_past_clip_dropped": 19590,
+      "clips": 5,
+      "clips_with_ambiguous": 0,
+      "empty_export_videos": [],
+      "empty_exports": 0,
+      "objects": 318,
+      "wrapped_boxes_dropped": 10467,
+      "wrapped_objects": 65
+    }
+  },
+  "CalDoT1": {
+    "frames_dropped_past_clip": [],
+    "lag_correlations": [
+      {
+        "best_lag": 0,
+        "best_r": 0.4635,
+        "clips_with_r": 49,
+        "config": "param 0",
+        "lag0_r": 0.4635,
+        "system": "leap",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.4635,
+        "clips_with_r": 49,
+        "config": "param 0",
+        "lag0_r": 0.4635,
+        "system": "leap_ambiguous_dropped",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9507,
+        "clips_with_r": 58,
+        "config": "param 0",
+        "lag0_r": 0.9484,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9507,
+        "clips_with_r": 58,
+        "config": "param 1",
+        "lag0_r": 0.9489,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9502,
+        "clips_with_r": 58,
+        "config": "param 2",
+        "lag0_r": 0.9395,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.9361,
+        "clips_with_r": 58,
+        "config": "param 3",
+        "lag0_r": 0.9293,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9092,
+        "clips_with_r": 58,
+        "config": "param 4",
+        "lag0_r": 0.9088,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.8832,
+        "clips_with_r": 58,
+        "config": "param 5",
+        "lag0_r": 0.8737,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.8623,
+        "clips_with_r": 58,
+        "config": "param 6",
+        "lag0_r": 0.8498,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.8377,
+        "clips_with_r": 58,
+        "config": "param 7",
+        "lag0_r": 0.8317,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.8272,
+        "clips_with_r": 58,
+        "config": "param 8",
+        "lag0_r": 0.8118,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.7897,
+        "clips_with_r": 58,
+        "config": "param 9",
+        "lag0_r": 0.7704,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9612,
+        "clips_with_r": 57,
+        "config": "naive",
+        "lag0_r": 0.9612,
+        "system": "reference",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.3932,
+        "clips_with_r": 52,
+        "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+        "lag0_r": 0.3724,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.4609,
+        "clips_with_r": 53,
+        "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
+        "lag0_r": 0.4364,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.3771,
+        "clips_with_r": 52,
+        "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+        "lag0_r": 0.3741,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -10,
+        "best_r": 0.4291,
+        "clips_with_r": 52,
+        "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
+        "lag0_r": 0.3935,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 4,
+        "best_r": 0.3617,
+        "clips_with_r": 52,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "lag0_r": 0.348,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.7444,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+        "lag0_r": 0.7426,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.7322,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "lag0_r": 0.7322,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.6879,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "lag0_r": 0.6853,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.76,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
+        "lag0_r": 0.76,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.883,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+        "lag0_r": 0.883,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8521,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+        "lag0_r": 0.8521,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.877,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_080_r050_bl_s100_sortcython",
+        "lag0_r": 0.877,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8438,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+        "lag0_r": 0.8428,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.873,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_080_r075_bl_s100_sortcython",
+        "lag0_r": 0.873,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.823,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
+        "lag0_r": 0.8189,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9345,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_r025_bl_s100_bytetrackcython",
+        "lag0_r": 0.9329,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9084,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.9084,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9514,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.9514,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9419,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.9419,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9306,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_r050_bl_s100_bytetrackcython",
+        "lag0_r": 0.9306,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.877,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.877,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9459,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.9459,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9088,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+        "lag0_r": 0.9088,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.855,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.8515,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8813,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+        "lag0_r": 0.8813,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9414,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+        "lag0_r": 0.9399,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9009,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_2_r025_bl_s100_bytetrackcython",
+        "lag0_r": 0.8983,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9217,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_2_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.9217,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8978,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_2_r050_bl_s100_bytetrackcython",
+        "lag0_r": 0.8972,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9155,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.9129,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9065,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_2_r075_square_s100_bytetrackcython",
+        "lag0_r": 0.9049,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8153,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_080_r050_bl_s100_sortcython",
+        "lag0_r": 0.8142,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8142,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_080_r075_bl_s100_sortcython",
+        "lag0_r": 0.8142,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8874,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "lag0_r": 0.8767,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8448,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "lag0_r": 0.8448,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8921,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+        "lag0_r": 0.8921,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8576,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_r050_bl_s100_sortcython",
+        "lag0_r": 0.8576,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.8228,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+        "lag0_r": 0.8162,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8872,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+        "lag0_r": 0.8823,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.8515,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_r075_bl_s100_sortcython",
+        "lag0_r": 0.8477,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8703,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_4_r075_square_s100_sortcython",
+        "lag0_r": 0.8701,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.5562,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
+        "lag0_r": 0.5419,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.479,
+        "clips_with_r": 53,
+        "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
+        "lag0_r": 0.4619,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.5562,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
+        "lag0_r": 0.5419,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -11,
+        "best_r": 0.7379,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+        "lag0_r": 0.6995,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.7572,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_8_080_r050_bl_s100_sortcython",
+        "lag0_r": 0.7417,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.7153,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
+        "lag0_r": 0.6935,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -6,
+        "best_r": 0.7697,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_8_r025_bl_s100_sortcython",
+        "lag0_r": 0.7534,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.7325,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "lag0_r": 0.7031,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.7949,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+        "lag0_r": 0.7707,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.7582,
+        "clips_with_r": 57,
+        "config": "ShuffleNet05_60_8_r050_bl_s100_sortcython",
+        "lag0_r": 0.7345,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -8,
+        "best_r": 0.718,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+        "lag0_r": 0.698,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -5,
+        "best_r": 0.7884,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
+        "lag0_r": 0.7617,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -3,
+        "best_r": 0.7433,
+        "clips_with_r": 56,
+        "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
+        "lag0_r": 0.7262,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -8,
+        "best_r": 0.6981,
+        "clips_with_r": 55,
+        "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+        "lag0_r": 0.6705,
+        "system": "tetris",
+        "warn": false
+      }
+    ],
+    "lag_warnings": [],
+    "leap_cache_cross_check": {
+      "ambiguous": 1,
+      "cached_box_frames": 4975,
+      "equal": true,
+      "export": "/sota-results/caldot1-y5/leap/1.json",
+      "export_frames": 912,
+      "frames_differing": 0,
+      "n": 900,
+      "objects": 25,
+      "recovered_box_frames": 4975,
+      "video": "te01.mp4",
+      "wrapped": 6
+    },
+    "leap_excluding_empty_exports": {
+      "all": {
+        "acc_leap": 0.4416,
+        "clips": 49,
+        "f1": 0.7332,
+        "frames": 44100
+      },
+      "moving": {
+        "acc_leap": 0.258,
+        "clips": 49,
+        "f1": 0.6692,
+        "frames": 44100
+      }
+    },
+    "leap_unwrap": {
+      "ambiguous_full_span_objects": 15,
+      "boxes_past_clip_dropped": 1526,
+      "clips": 60,
+      "clips_with_ambiguous": 6,
+      "empty_export_videos": [
+        "te11.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te35.mp4",
+        "te38.mp4",
+        "te41.mp4",
+        "te46.mp4",
+        "te49.mp4",
+        "te51.mp4"
+      ],
+      "empty_exports": 11,
+      "objects": 584,
+      "wrapped_boxes_dropped": 1654,
+      "wrapped_objects": 60
+    }
+  },
+  "CalDoT2": {
+    "frames_dropped_past_clip": [],
+    "lag_correlations": [
+      {
+        "best_lag": -2,
+        "best_r": 0.6841,
+        "clips_with_r": 56,
+        "config": "param 0",
+        "lag0_r": 0.6762,
+        "system": "leap",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.6841,
+        "clips_with_r": 56,
+        "config": "param 0",
+        "lag0_r": 0.6762,
+        "system": "leap_ambiguous_dropped",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9629,
+        "clips_with_r": 60,
+        "config": "param 0",
+        "lag0_r": 0.9617,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9632,
+        "clips_with_r": 60,
+        "config": "param 1",
+        "lag0_r": 0.9596,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9386,
+        "clips_with_r": 60,
+        "config": "param 2",
+        "lag0_r": 0.9347,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.9334,
+        "clips_with_r": 60,
+        "config": "param 3",
+        "lag0_r": 0.923,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 3,
+        "best_r": 0.9107,
+        "clips_with_r": 60,
+        "config": "param 4",
+        "lag0_r": 0.9029,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.916,
+        "clips_with_r": 60,
+        "config": "param 5",
+        "lag0_r": 0.9107,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.9146,
+        "clips_with_r": 60,
+        "config": "param 6",
+        "lag0_r": 0.9101,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.8906,
+        "clips_with_r": 60,
+        "config": "param 7",
+        "lag0_r": 0.8885,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.7965,
+        "clips_with_r": 60,
+        "config": "param 8",
+        "lag0_r": 0.7932,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.7173,
+        "clips_with_r": 60,
+        "config": "param 9",
+        "lag0_r": 0.7136,
+        "system": "otif",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9644,
+        "clips_with_r": 60,
+        "config": "naive",
+        "lag0_r": 0.9644,
+        "system": "reference",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.3813,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_16_040_r025_none_s100_sortcython",
+        "lag0_r": 0.3658,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.3813,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_16_060_r025_none_s100_sortcython",
+        "lag0_r": 0.3658,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.3813,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_16_080_r025_none_s100_sortcython",
+        "lag0_r": 0.3658,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.3757,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+        "lag0_r": 0.3658,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -14,
+        "best_r": 0.4303,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+        "lag0_r": 0.4228,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.3915,
+        "clips_with_r": 58,
+        "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+        "lag0_r": 0.3734,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9105,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+        "lag0_r": 0.9105,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8983,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+        "lag0_r": 0.8979,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8818,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+        "lag0_r": 0.8818,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9388,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.9388,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8949,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.8942,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9088,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+        "lag0_r": 0.9088,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9362,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.9362,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8844,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.8844,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
+        "lag0_r": 0.9,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.936,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+        "lag0_r": 0.9336,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9401,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.9401,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9045,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.9045,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9434,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.9434,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8851,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_080_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.8851,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9339,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_080_r075_tr_s100_bytetrackcython",
+        "lag0_r": 0.9339,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9241,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+        "lag0_r": 0.923,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9606,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+        "lag0_r": 0.9606,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9462,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "lag0_r": 0.9462,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9176,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+        "lag0_r": 0.9176,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9578,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "lag0_r": 0.9578,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9462,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+        "lag0_r": 0.9462,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9203,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+        "lag0_r": 0.9203,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9058,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+        "lag0_r": 0.9058,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9303,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+        "lag0_r": 0.9297,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.938,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+        "lag0_r": 0.9376,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.901,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_2_040_r025_none_s100_sortcython",
+        "lag0_r": 0.901,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -2,
+        "best_r": 0.9252,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
+        "lag0_r": 0.924,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 2,
+        "best_r": 0.8876,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_040_r050_tr_s100_sortcython",
+        "lag0_r": 0.886,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8746,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
+        "lag0_r": 0.8739,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8635,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "lag0_r": 0.8635,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.9005,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_060_r075_tr_s100_sortcython",
+        "lag0_r": 0.9005,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9026,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+        "lag0_r": 0.9019,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 0,
+        "best_r": 0.8998,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_080_r075_tr_s100_sortcython",
+        "lag0_r": 0.8998,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.8763,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "lag0_r": 0.8759,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8808,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "lag0_r": 0.8807,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 1,
+        "best_r": 0.9039,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+        "lag0_r": 0.9036,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8544,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+        "lag0_r": 0.8544,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.9041,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_r050_tr_s100_sortcython",
+        "lag0_r": 0.9022,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": 7,
+        "best_r": 0.8375,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_r075_none_s100_sortcython",
+        "lag0_r": 0.8274,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -1,
+        "best_r": 0.8962,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_4_r075_tr_s100_sortcython",
+        "lag0_r": 0.8947,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -11,
+        "best_r": 0.6569,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
+        "lag0_r": 0.6254,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -13,
+        "best_r": 0.6635,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "lag0_r": 0.6267,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -15,
+        "best_r": 0.6594,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+        "lag0_r": 0.636,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -9,
+        "best_r": 0.6322,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+        "lag0_r": 0.6149,
+        "system": "tetris",
+        "warn": false
+      },
+      {
+        "best_lag": -7,
+        "best_r": 0.7025,
+        "clips_with_r": 60,
+        "config": "ShuffleNet05_60_8_r075_tr_s100_sortcython",
+        "lag0_r": 0.6878,
+        "system": "tetris",
+        "warn": false
+      }
+    ],
+    "lag_warnings": [],
+    "leap_cache_cross_check": {
+      "ambiguous": 0,
+      "cached_box_frames": 465,
+      "equal": true,
+      "export": "/sota-results/caldot2-y5/leap/37.json",
+      "export_frames": 643,
+      "frames_differing": 0,
+      "n": 900,
+      "objects": 11,
+      "recovered_box_frames": 465,
+      "video": "te37.mp4",
+      "wrapped": 7
+    },
+    "leap_excluding_empty_exports": {
+      "all": {
+        "acc_leap": 0.4058,
+        "clips": 56,
+        "f1": 0.7102,
+        "frames": 50400
+      },
+      "moving": {
+        "acc_leap": 0.4286,
+        "clips": 56,
+        "f1": 0.717,
+        "frames": 50400
+      }
+    },
+    "leap_unwrap": {
+      "ambiguous_full_span_objects": 0,
+      "boxes_past_clip_dropped": 2713,
+      "clips": 60,
+      "clips_with_ambiguous": 0,
+      "empty_export_videos": [
+        "te15.mp4",
+        "te23.mp4",
+        "te28.mp4",
+        "te31.mp4"
+      ],
+      "empty_exports": 4,
+      "objects": 805,
+      "wrapped_boxes_dropped": 1570,
+      "wrapped_objects": 62
+    }
+  }
+}
