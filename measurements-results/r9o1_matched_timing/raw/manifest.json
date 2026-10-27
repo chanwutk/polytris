@@ -1,0 +1,1924 @@
+{
+  "datasets": {
+    "ams-y05": {
+      "classifier": {
+        "batch_size": 16,
+        "compilation_benchmark": {
+          "bytes": 6270,
+          "exists": true,
+          "mtime": "2026-04-07T08:44:44+00:00",
+          "path": "/polyis-cache/ams-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+          "sha256": "fabdb485c1ff53a29417116aee093d1649597edbd7ee996d86a175edb7bd2678"
+        },
+        "grid": [
+          12,
+          21
+        ],
+        "mask": {
+          "bytes": 380,
+          "exists": true,
+          "mtime": "2026-02-17T01:49:04+00:00",
+          "path": "/polyis-cache/ams-y05/indexing/always_relevant/60_all.npy",
+          "sha256": "05a8fdbeb381ab85a9db1ac34e8ed19dd7da9b518f10cd77155cf9b33be5e7ad"
+        },
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles": 252,
+        "tiles_inferred_at_most": 126,
+        "tilesize": 60,
+        "weights": {
+          "bytes": 5907314,
+          "exists": true,
+          "mtime": "2026-02-17T04:43:01+00:00",
+          "path": "/polyis-cache/ams-y05/indexing/training/results/ShuffleNet05_60/model_best.pth",
+          "sha256": "557fabb17c115706ad4f4b5cb6e7aebd4825931ce603308b47fc0ddc12464997"
+        }
+      },
+      "detector": {
+        "batch_size": 1,
+        "description": "Using ultralytics detector for dataset 'ams-y05'",
+        "detector": "ultralytics",
+        "height": 720,
+        "model_path": "/polyis-data/training/ultralytics/amsterdam/weights/yolov5x6/weights/best.pt",
+        "weights": {
+          "bytes": 311702530,
+          "exists": true,
+          "mtime": "2026-02-10T00:53:06+00:00",
+          "path": "/polyis-data/training/ultralytics/amsterdam/weights/yolov5x6/weights/best.pt",
+          "sha256": "be2b26074f713f27b3ebe36c7a3a6e2c38076874ed64c296fae069ead1337ab6"
+        },
+        "width": 1280
+      },
+      "environment": {
+        "argv": [
+          "measurements-gpu/r9o1_matched_timing.py",
+          "--gpu",
+          "6"
+        ],
+        "container_image": "polyis-polyis@sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+        "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+        "cpus": 80,
+        "cuda": "12.4",
+        "cuda_device_order": "PCI_BUS_ID",
+        "cuda_visible_devices": "6",
+        "cudnn": 90100,
+        "detectron2": "0.6",
+        "gpu": {
+          "driver_version": "610.57.04",
+          "name": "Quadro RTX 6000",
+          "pci.bus_id": "00000000:B2:00.0",
+          "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+          "vbios_version": "90.02.15.00.04"
+        },
+        "gpu_index": 6,
+        "gpus": {
+          "Quadro RTX 6000": 7
+        },
+        "hostname": "bombe",
+        "launcher": {
+          "bytes": 3277,
+          "exists": true,
+          "mtime": "2026-10-27T06:39:14+00:00",
+          "path": "/polyis/measurements-gpu/r9o1_matched_timing.sh",
+          "sha256": "57fcc1ec79bfe067ce71dd4137fd8c281ea636ad72a8cb7971e0171564303d60"
+        },
+        "opencv": "4.13.0",
+        "placement": {
+          "cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_local_cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_numa_node": 1,
+          "numactl": {
+            "cpubind": "1",
+            "membind": "1",
+            "nodebind": "1",
+            "physcpubind": "20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79",
+            "policy": "bind",
+            "preferred node": "1"
+          }
+        },
+        "python": "3.13.12",
+        "torch": "2.6.0+cu124",
+        "torch_device": "Quadro RTX 6000",
+        "torch_device_uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "ultralytics": "8.4.22"
+      },
+      "finished": "2026-10-27T07:04:19+00:00",
+      "finished_ns": 1793084659345574656,
+      "frames": 2704,
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "label": "Amsterdam",
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+        "hota": 0.6965726417050139,
+        "loss": 0.05,
+        "reference_hota": 0.7315250495020468,
+        "sample_rate": 8,
+        "tilesize": 60
+      },
+      "runs": {
+        "classifier": 16,
+        "classifier_1": 1,
+        "classifier_stream": null,
+        "decode": null,
+        "detector": 1,
+        "detector_16": 16,
+        "rgb_copy": null
+      },
+      "samples": 3150,
+      "seconds": 366.0,
+      "started": "2026-10-27T06:58:13+00:00",
+      "started_ns": 1793084293356838912,
+      "videos": {
+        "te00.mp4": {
+          "anon_pages_by_node": {
+            "N0": 45,
+            "N1": 1830444
+          },
+          "file": {
+            "bytes": 8397314,
+            "exists": true,
+            "mtime": "2026-02-16T21:37:51+00:00",
+            "path": "/polyis-data/datasets/ams-y05/test/te00.mp4",
+            "sha256": "0d6d4b4fbfc0d143bf6dfca0cef3f6b43edd25d2bb14f7dae5e75f08c4e2e25b"
+          },
+          "frames": 900
+        },
+        "te29.mp4": {
+          "anon_pages_by_node": {
+            "N0": 45,
+            "N1": 1830641
+          },
+          "file": {
+            "bytes": 14221993,
+            "exists": true,
+            "mtime": "2026-02-16T21:37:54+00:00",
+            "path": "/polyis-data/datasets/ams-y05/test/te29.mp4",
+            "sha256": "a94b2186ceb1c80b881c10b376fc8cb27a4b9f5a7df9c6d1e948758db7e6137b"
+          },
+          "frames": 901
+        },
+        "te59.mp4": {
+          "anon_pages_by_node": {
+            "N0": 45,
+            "N1": 1831236
+          },
+          "file": {
+            "bytes": 10138482,
+            "exists": true,
+            "mtime": "2026-02-16T21:37:26+00:00",
+            "path": "/polyis-data/datasets/ams-y05/test/te59.mp4",
+            "sha256": "77961afd44eac117144592859d5b87980af59525834cd64eda044f9ba055bc37"
+          },
+          "frames": 903
+        }
+      },
+      "warmup": {
+        "detector_frames": 32,
+        "runs": "every run over every frame",
+        "video": "te00.mp4"
+      }
+    },
+    "caldot1-y05": {
+      "classifier": {
+        "batch_size": 16,
+        "compilation_benchmark": {
+          "bytes": 6272,
+          "exists": true,
+          "mtime": "2026-04-07T08:43:48+00:00",
+          "path": "/polyis-cache/caldot1-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+          "sha256": "302e6cd381f5a4c7150d86fc5c8032f3ecfb613c6d16d2db7fc14d58148bd364"
+        },
+        "grid": [
+          8,
+          12
+        ],
+        "mask": {
+          "bytes": 224,
+          "exists": true,
+          "mtime": "2026-03-02T05:20:29+00:00",
+          "path": "/polyis-cache/caldot1-y05/indexing/always_relevant/60_all.npy",
+          "sha256": "51942f4f45ae0fa9bc903b2b47ad6e050a839e0f4b6077d32deef0c07a63f017"
+        },
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles": 96,
+        "tiles_inferred_at_most": 32,
+        "tilesize": 60,
+        "weights": {
+          "bytes": 5907314,
+          "exists": true,
+          "mtime": "2026-03-02T06:08:58+00:00",
+          "path": "/polyis-cache/caldot1-y05/indexing/training/results/ShuffleNet05_60/model_best.pth",
+          "sha256": "2f010852bbd9b2713af0abe170f39176eeedb6cfcc440b2ad01115a3bda28606"
+        }
+      },
+      "detector": {
+        "batch_size": 1,
+        "description": "Using ultralytics detector for dataset 'caldot1-y05'",
+        "detector": "ultralytics",
+        "height": 480,
+        "model_path": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+        "weights": {
+          "bytes": 311633666,
+          "exists": true,
+          "mtime": "2026-02-10T00:52:43+00:00",
+          "path": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135"
+        },
+        "width": 704
+      },
+      "environment": {
+        "argv": [
+          "measurements-gpu/r9o1_matched_timing.py",
+          "--gpu",
+          "6"
+        ],
+        "container_image": "polyis-polyis@sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+        "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+        "cpus": 80,
+        "cuda": "12.4",
+        "cuda_device_order": "PCI_BUS_ID",
+        "cuda_visible_devices": "6",
+        "cudnn": 90100,
+        "detectron2": "0.6",
+        "gpu": {
+          "driver_version": "610.57.04",
+          "name": "Quadro RTX 6000",
+          "pci.bus_id": "00000000:B2:00.0",
+          "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+          "vbios_version": "90.02.15.00.04"
+        },
+        "gpu_index": 6,
+        "gpus": {
+          "Quadro RTX 6000": 7
+        },
+        "hostname": "bombe",
+        "launcher": {
+          "bytes": 3277,
+          "exists": true,
+          "mtime": "2026-10-27T06:39:14+00:00",
+          "path": "/polyis/measurements-gpu/r9o1_matched_timing.sh",
+          "sha256": "57fcc1ec79bfe067ce71dd4137fd8c281ea636ad72a8cb7971e0171564303d60"
+        },
+        "opencv": "4.13.0",
+        "placement": {
+          "cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_local_cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_numa_node": 1,
+          "numactl": {
+            "cpubind": "1",
+            "membind": "1",
+            "nodebind": "1",
+            "physcpubind": "20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79",
+            "policy": "bind",
+            "preferred node": "1"
+          }
+        },
+        "python": "3.13.12",
+        "torch": "2.6.0+cu124",
+        "torch_device": "Quadro RTX 6000",
+        "torch_device_uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "ultralytics": "8.4.22"
+      },
+      "finished": "2026-10-27T06:55:19+00:00",
+      "finished_ns": 1793084119034712064,
+      "frames": 2700,
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "label": "CalDoT1",
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "hota": 0.778685892269133,
+        "loss": 0.05,
+        "reference_hota": 0.8180912461425098,
+        "sample_rate": 4,
+        "tilesize": 60
+      },
+      "runs": {
+        "classifier": 16,
+        "classifier_1": 1,
+        "classifier_stream": null,
+        "decode": null,
+        "detector": 1,
+        "detector_16": 16,
+        "rgb_copy": null
+      },
+      "samples": 1484,
+      "seconds": 172.2,
+      "started": "2026-10-27T06:52:26+00:00",
+      "started_ns": 1793083946883304960,
+      "videos": {
+        "te00.mp4": {
+          "anon_pages_by_node": {
+            "N0": 45,
+            "N1": 957679
+          },
+          "file": {
+            "bytes": 3731165,
+            "exists": true,
+            "mtime": "2026-03-02T04:33:37+00:00",
+            "path": "/polyis-data/datasets/caldot1-y05/test/te00.mp4",
+            "sha256": "4f22c4e862fc40290d39633fc474b0b1e0400dd24b1115f99809ded5209d8135"
+          },
+          "frames": 900
+        },
+        "te29.mp4": {
+          "anon_pages_by_node": {
+            "N0": 45,
+            "N1": 958631
+          },
+          "file": {
+            "bytes": 3382773,
+            "exists": true,
+            "mtime": "2026-03-02T04:33:35+00:00",
+            "path": "/polyis-data/datasets/caldot1-y05/test/te29.mp4",
+            "sha256": "ae1a5a9496446ef3d2addcf8659ab553dc8175f52d26b65daf648bf15526b0a3"
+          },
+          "frames": 900
+        },
+        "te59.mp4": {
+          "anon_pages_by_node": {
+            "N0": 45,
+            "N1": 959347
+          },
+          "file": {
+            "bytes": 3494921,
+            "exists": true,
+            "mtime": "2026-03-02T04:33:47+00:00",
+            "path": "/polyis-data/datasets/caldot1-y05/test/te59.mp4",
+            "sha256": "5c4050411dc526a88d091e62d65a5eab1cee81b010c11f74008c7242f93e5af8"
+          },
+          "frames": 900
+        }
+      },
+      "warmup": {
+        "detector_frames": 32,
+        "runs": "every run over every frame",
+        "video": "te00.mp4"
+      }
+    },
+    "caldot2-y05": {
+      "classifier": {
+        "batch_size": 16,
+        "compilation_benchmark": {
+          "bytes": 6272,
+          "exists": true,
+          "mtime": "2026-04-07T08:43:48+00:00",
+          "path": "/polyis-cache/caldot2-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+          "sha256": "302e6cd381f5a4c7150d86fc5c8032f3ecfb613c6d16d2db7fc14d58148bd364"
+        },
+        "grid": [
+          8,
+          12
+        ],
+        "mask": {
+          "bytes": 224,
+          "exists": true,
+          "mtime": "2026-03-02T05:20:33+00:00",
+          "path": "/polyis-cache/caldot2-y05/indexing/always_relevant/60_all.npy",
+          "sha256": "93ec5be71a19cffc9bde769ed1394548b45370a3fb5509b14f9296ff1a73ab05"
+        },
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles": 96,
+        "tiles_inferred_at_most": 29,
+        "tilesize": 60,
+        "weights": {
+          "bytes": 5907314,
+          "exists": true,
+          "mtime": "2026-03-02T05:59:19+00:00",
+          "path": "/polyis-cache/caldot2-y05/indexing/training/results/ShuffleNet05_60/model_best.pth",
+          "sha256": "4f8568f52fb81f7e4e22562f703038d4d6cb163a2ab6d560de4979be8de5faae"
+        }
+      },
+      "detector": {
+        "batch_size": 1,
+        "description": "Using ultralytics detector for dataset 'caldot2-y05'",
+        "detector": "ultralytics",
+        "height": 480,
+        "model_path": "/polyis-data/training/ultralytics/caldot2/weights/yolov5x6/weights/best.pt",
+        "weights": {
+          "bytes": 311633666,
+          "exists": true,
+          "mtime": "2026-02-10T00:52:55+00:00",
+          "path": "/polyis-data/training/ultralytics/caldot2/weights/yolov5x6/weights/best.pt",
+          "sha256": "ef2b32e315aca947405be755ac32ef497ed4216de56dbc0fea9ac14ca3987c7c"
+        },
+        "width": 704
+      },
+      "environment": {
+        "argv": [
+          "measurements-gpu/r9o1_matched_timing.py",
+          "--gpu",
+          "6"
+        ],
+        "container_image": "polyis-polyis@sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+        "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+        "cpus": 80,
+        "cuda": "12.4",
+        "cuda_device_order": "PCI_BUS_ID",
+        "cuda_visible_devices": "6",
+        "cudnn": 90100,
+        "detectron2": "0.6",
+        "gpu": {
+          "driver_version": "610.57.04",
+          "name": "Quadro RTX 6000",
+          "pci.bus_id": "00000000:B2:00.0",
+          "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+          "vbios_version": "90.02.15.00.04"
+        },
+        "gpu_index": 6,
+        "gpus": {
+          "Quadro RTX 6000": 7
+        },
+        "hostname": "bombe",
+        "launcher": {
+          "bytes": 3277,
+          "exists": true,
+          "mtime": "2026-10-27T06:39:14+00:00",
+          "path": "/polyis/measurements-gpu/r9o1_matched_timing.sh",
+          "sha256": "57fcc1ec79bfe067ce71dd4137fd8c281ea636ad72a8cb7971e0171564303d60"
+        },
+        "opencv": "4.13.0",
+        "placement": {
+          "cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_local_cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_numa_node": 1,
+          "numactl": {
+            "cpubind": "1",
+            "membind": "1",
+            "nodebind": "1",
+            "physcpubind": "20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79",
+            "policy": "bind",
+            "preferred node": "1"
+          }
+        },
+        "python": "3.13.12",
+        "torch": "2.6.0+cu124",
+        "torch_device": "Quadro RTX 6000",
+        "torch_device_uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "ultralytics": "8.4.22"
+      },
+      "finished": "2026-10-27T06:58:12+00:00",
+      "finished_ns": 1793084292172316672,
+      "frames": 2700,
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "label": "CalDoT2",
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "hota": 0.6921171850406366,
+        "loss": 0.05,
+        "reference_hota": 0.7155520702265457,
+        "sample_rate": 1,
+        "tilesize": 60
+      },
+      "runs": {
+        "classifier": 16,
+        "classifier_1": 1,
+        "classifier_stream": null,
+        "decode": null,
+        "detector": 1,
+        "detector_16": 16,
+        "rgb_copy": null
+      },
+      "samples": 1491,
+      "seconds": 172.1,
+      "started": "2026-10-27T06:55:20+00:00",
+      "started_ns": 1793084120084128000,
+      "videos": {
+        "te00.mp4": {
+          "anon_pages_by_node": {
+            "N0": 45,
+            "N1": 1160162
+          },
+          "file": {
+            "bytes": 1721421,
+            "exists": true,
+            "mtime": "2026-03-02T04:32:42+00:00",
+            "path": "/polyis-data/datasets/caldot2-y05/test/te00.mp4",
+            "sha256": "093822313652d7bf8392be5eca4730243d00b15aa7834ae2cd8539520cb02608"
+          },
+          "frames": 900
+        },
+        "te29.mp4": {
+          "anon_pages_by_node": {
+            "N0": 45,
+            "N1": 1160368
+          },
+          "file": {
+            "bytes": 2055613,
+            "exists": true,
+            "mtime": "2026-03-02T04:32:21+00:00",
+            "path": "/polyis-data/datasets/caldot2-y05/test/te29.mp4",
+            "sha256": "110ba459498dc5990bb1ca6db8c014e5d51095f8492a8f529d81d84f043e89b5"
+          },
+          "frames": 900
+        },
+        "te59.mp4": {
+          "anon_pages_by_node": {
+            "N0": 45,
+            "N1": 1161001
+          },
+          "file": {
+            "bytes": 2020209,
+            "exists": true,
+            "mtime": "2026-03-02T04:32:35+00:00",
+            "path": "/polyis-data/datasets/caldot2-y05/test/te59.mp4",
+            "sha256": "16265b5907a8a7f9ba41afd6129cea28ea4020fb7142c6d829c9a58341a8957a"
+          },
+          "frames": 900
+        }
+      },
+      "warmup": {
+        "detector_frames": 32,
+        "runs": "every run over every frame",
+        "video": "te00.mp4"
+      }
+    },
+    "jnc0": {
+      "classifier": {
+        "batch_size": 16,
+        "compilation_benchmark": {
+          "bytes": 6270,
+          "exists": true,
+          "mtime": "2026-04-07T08:44:17+00:00",
+          "path": "/polyis-cache/jnc0/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+          "sha256": "0e55a7f5ed8a7ff6c3414d24b108f530266f6622d59828e72e6a433fadeda97a"
+        },
+        "grid": [
+          12,
+          18
+        ],
+        "mask": {
+          "bytes": 344,
+          "exists": true,
+          "mtime": "2026-02-17T01:44:29+00:00",
+          "path": "/polyis-cache/jnc0/indexing/always_relevant/60_all.npy",
+          "sha256": "4483626eefb6e1e594755ac7560e5a9a7fe43b0071822b80fc5b7b99e8f8023f"
+        },
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles": 216,
+        "tiles_inferred_at_most": 156,
+        "tilesize": 60,
+        "weights": {
+          "bytes": 5907314,
+          "exists": true,
+          "mtime": "2026-02-17T02:24:07+00:00",
+          "path": "/polyis-cache/jnc0/indexing/training/results/ShuffleNet05_60/model_best.pth",
+          "sha256": "aead5293a6fcd4336d2f4ea2f46e6dfa261663e0a519a56f192b26fdb1f9d31c"
+        }
+      },
+      "detector": {
+        "batch_size": 1,
+        "description": "Using retina detector for dataset 'jnc0'",
+        "detector": "retina",
+        "weights": {
+          "bytes": 235435561,
+          "exists": true,
+          "mtime": "2025-02-03T03:28:18+00:00",
+          "path": "weights/retinanet_b3d.pth",
+          "sha256": "cd48354aed70787596c4783fe2d1df1d90bfd790e41ae82627580dacd8a1a0c3"
+        }
+      },
+      "environment": {
+        "argv": [
+          "measurements-gpu/r9o1_matched_timing.py",
+          "--gpu",
+          "6"
+        ],
+        "container_image": "polyis-polyis@sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+        "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+        "cpus": 80,
+        "cuda": "12.4",
+        "cuda_device_order": "PCI_BUS_ID",
+        "cuda_visible_devices": "6",
+        "cudnn": 90100,
+        "detectron2": "0.6",
+        "gpu": {
+          "driver_version": "610.57.04",
+          "name": "Quadro RTX 6000",
+          "pci.bus_id": "00000000:B2:00.0",
+          "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+          "vbios_version": "90.02.15.00.04"
+        },
+        "gpu_index": 6,
+        "gpus": {
+          "Quadro RTX 6000": 7
+        },
+        "hostname": "bombe",
+        "launcher": {
+          "bytes": 3277,
+          "exists": true,
+          "mtime": "2026-10-27T06:39:14+00:00",
+          "path": "/polyis/measurements-gpu/r9o1_matched_timing.sh",
+          "sha256": "57fcc1ec79bfe067ce71dd4137fd8c281ea636ad72a8cb7971e0171564303d60"
+        },
+        "opencv": "4.13.0",
+        "placement": {
+          "cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_local_cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_numa_node": 1,
+          "numactl": {
+            "cpubind": "1",
+            "membind": "1",
+            "nodebind": "1",
+            "physcpubind": "20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79",
+            "policy": "bind",
+            "preferred node": "1"
+          }
+        },
+        "python": "3.13.12",
+        "torch": "2.6.0+cu124",
+        "torch_device": "Quadro RTX 6000",
+        "torch_device_uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "ultralytics": "8.4.22"
+      },
+      "finished": "2026-10-27T07:11:54+00:00",
+      "finished_ns": 1793085114916929280,
+      "frames": 3225,
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "label": "B3D1",
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "hota": 0.7790148226312216,
+        "loss": 0.05,
+        "reference_hota": 0.8056165050815967,
+        "sample_rate": 4,
+        "tilesize": 60
+      },
+      "runs": {
+        "classifier": 16,
+        "classifier_1": 1,
+        "classifier_stream": null,
+        "decode": null,
+        "detector": 1,
+        "detector_16": 16,
+        "rgb_copy": null
+      },
+      "samples": 3913,
+      "seconds": 454.5,
+      "started": "2026-10-27T07:04:20+00:00",
+      "started_ns": 1793084660420075776,
+      "videos": {
+        "te01.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1837449
+          },
+          "file": {
+            "bytes": 15007464,
+            "exists": true,
+            "mtime": "2026-02-16T21:40:21+00:00",
+            "path": "/polyis-data/datasets/jnc0/test/te01.mp4",
+            "sha256": "b4a6892888e3ce4849455c94cb144a45ef9c4305db8da4e015b81a371adc8134"
+          },
+          "frames": 1075
+        },
+        "te08.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1837452
+          },
+          "file": {
+            "bytes": 13550394,
+            "exists": true,
+            "mtime": "2026-02-16T21:36:01+00:00",
+            "path": "/polyis-data/datasets/jnc0/test/te08.mp4",
+            "sha256": "97da8f53f604ed7bf81e35fb8be5c665c5f446f09791b74ef4c73c1b9eae0d52"
+          },
+          "frames": 1075
+        },
+        "te13.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1838265
+          },
+          "file": {
+            "bytes": 13063302,
+            "exists": true,
+            "mtime": "2026-02-16T21:33:04+00:00",
+            "path": "/polyis-data/datasets/jnc0/test/te13.mp4",
+            "sha256": "58d8a3aa2809ae9190b4b3be676bf2c345944d5340df8b5794201cc25488af5e"
+          },
+          "frames": 1075
+        }
+      },
+      "warmup": {
+        "detector_frames": 32,
+        "runs": "every run over every frame",
+        "video": "te01.mp4"
+      }
+    },
+    "jnc2": {
+      "classifier": {
+        "batch_size": 16,
+        "compilation_benchmark": {
+          "bytes": 6270,
+          "exists": true,
+          "mtime": "2026-04-07T08:44:17+00:00",
+          "path": "/polyis-cache/jnc2/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+          "sha256": "0e55a7f5ed8a7ff6c3414d24b108f530266f6622d59828e72e6a433fadeda97a"
+        },
+        "grid": [
+          12,
+          18
+        ],
+        "mask": {
+          "bytes": 344,
+          "exists": true,
+          "mtime": "2026-02-17T01:44:28+00:00",
+          "path": "/polyis-cache/jnc2/indexing/always_relevant/60_all.npy",
+          "sha256": "3c9dfee45bfb2c04a6fce955a397f0bc500cdb536644c8e38357dd4f73076221"
+        },
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles": 216,
+        "tiles_inferred_at_most": 130,
+        "tilesize": 60,
+        "weights": {
+          "bytes": 5907314,
+          "exists": true,
+          "mtime": "2026-02-17T02:15:10+00:00",
+          "path": "/polyis-cache/jnc2/indexing/training/results/ShuffleNet05_60/model_best.pth",
+          "sha256": "be196c597e3f30e417682df4661b1635808462b4e6b92368c55578d4bdacabb4"
+        }
+      },
+      "detector": {
+        "batch_size": 1,
+        "description": "Using retina detector for dataset 'jnc2'",
+        "detector": "retina",
+        "weights": {
+          "bytes": 235435561,
+          "exists": true,
+          "mtime": "2025-02-03T03:28:18+00:00",
+          "path": "weights/retinanet_b3d.pth",
+          "sha256": "cd48354aed70787596c4783fe2d1df1d90bfd790e41ae82627580dacd8a1a0c3"
+        }
+      },
+      "environment": {
+        "argv": [
+          "measurements-gpu/r9o1_matched_timing.py",
+          "--gpu",
+          "6"
+        ],
+        "container_image": "polyis-polyis@sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+        "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+        "cpus": 80,
+        "cuda": "12.4",
+        "cuda_device_order": "PCI_BUS_ID",
+        "cuda_visible_devices": "6",
+        "cudnn": 90100,
+        "detectron2": "0.6",
+        "gpu": {
+          "driver_version": "610.57.04",
+          "name": "Quadro RTX 6000",
+          "pci.bus_id": "00000000:B2:00.0",
+          "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+          "vbios_version": "90.02.15.00.04"
+        },
+        "gpu_index": 6,
+        "gpus": {
+          "Quadro RTX 6000": 7
+        },
+        "hostname": "bombe",
+        "launcher": {
+          "bytes": 3277,
+          "exists": true,
+          "mtime": "2026-10-27T06:39:14+00:00",
+          "path": "/polyis/measurements-gpu/r9o1_matched_timing.sh",
+          "sha256": "57fcc1ec79bfe067ce71dd4137fd8c281ea636ad72a8cb7971e0171564303d60"
+        },
+        "opencv": "4.13.0",
+        "placement": {
+          "cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_local_cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_numa_node": 1,
+          "numactl": {
+            "cpubind": "1",
+            "membind": "1",
+            "nodebind": "1",
+            "physcpubind": "20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79",
+            "policy": "bind",
+            "preferred node": "1"
+          }
+        },
+        "python": "3.13.12",
+        "torch": "2.6.0+cu124",
+        "torch_device": "Quadro RTX 6000",
+        "torch_device_uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "ultralytics": "8.4.22"
+      },
+      "finished": "2026-10-27T07:18:33+00:00",
+      "finished_ns": 1793085513424844544,
+      "frames": 2815,
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "label": "B3D2",
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "hota": 0.784069611396217,
+        "loss": 0.05,
+        "reference_hota": 0.8151072920226305,
+        "sample_rate": 8,
+        "tilesize": 60
+      },
+      "runs": {
+        "classifier": 16,
+        "classifier_1": 1,
+        "classifier_stream": null,
+        "decode": null,
+        "detector": 1,
+        "detector_16": 16,
+        "rgb_copy": null
+      },
+      "samples": 3423,
+      "seconds": 397.8,
+      "started": "2026-10-27T07:11:55+00:00",
+      "started_ns": 1793085115670733312,
+      "videos": {
+        "te01.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1701340
+          },
+          "file": {
+            "bytes": 8957719,
+            "exists": true,
+            "mtime": "2026-02-16T21:41:55+00:00",
+            "path": "/polyis-data/datasets/jnc2/test/te01.mp4",
+            "sha256": "f43e4bbfe3d38af7f0238071f500d19decffd939ad247241a7d51134d8b69c79"
+          },
+          "frames": 938
+        },
+        "te08.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1702504
+          },
+          "file": {
+            "bytes": 7995217,
+            "exists": true,
+            "mtime": "2026-02-16T21:37:16+00:00",
+            "path": "/polyis-data/datasets/jnc2/test/te08.mp4",
+            "sha256": "82fd556012536fa646ff968bd8d3cda406ca3bfcf138a44cb499c45485ddddab"
+          },
+          "frames": 939
+        },
+        "te13.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1703038
+          },
+          "file": {
+            "bytes": 7431314,
+            "exists": true,
+            "mtime": "2026-02-16T21:33:35+00:00",
+            "path": "/polyis-data/datasets/jnc2/test/te13.mp4",
+            "sha256": "2e317b2d3e46333045b4c6c9d6247baf554915486a884318d936702fc026f07f"
+          },
+          "frames": 938
+        }
+      },
+      "warmup": {
+        "detector_frames": 32,
+        "runs": "every run over every frame",
+        "video": "te01.mp4"
+      }
+    },
+    "jnc6": {
+      "classifier": {
+        "batch_size": 16,
+        "compilation_benchmark": {
+          "bytes": 6270,
+          "exists": true,
+          "mtime": "2026-04-07T08:44:17+00:00",
+          "path": "/polyis-cache/jnc6/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+          "sha256": "0e55a7f5ed8a7ff6c3414d24b108f530266f6622d59828e72e6a433fadeda97a"
+        },
+        "grid": [
+          12,
+          18
+        ],
+        "mask": {
+          "bytes": 344,
+          "exists": true,
+          "mtime": "2026-02-17T01:44:28+00:00",
+          "path": "/polyis-cache/jnc6/indexing/always_relevant/60_all.npy",
+          "sha256": "d0156f8cd8dfee049198d9dd442851052b68755eece602ce0547dc08f8aa116d"
+        },
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles": 216,
+        "tiles_inferred_at_most": 162,
+        "tilesize": 60,
+        "weights": {
+          "bytes": 5907314,
+          "exists": true,
+          "mtime": "2026-02-17T02:23:15+00:00",
+          "path": "/polyis-cache/jnc6/indexing/training/results/ShuffleNet05_60/model_best.pth",
+          "sha256": "fa94e1041fa2912e2859e32f2b7f0d84906f7809555bf32d4b367d73e2d057ff"
+        }
+      },
+      "detector": {
+        "batch_size": 1,
+        "description": "Using retina detector for dataset 'jnc6'",
+        "detector": "retina",
+        "weights": {
+          "bytes": 235435561,
+          "exists": true,
+          "mtime": "2025-02-03T03:28:18+00:00",
+          "path": "weights/retinanet_b3d.pth",
+          "sha256": "cd48354aed70787596c4783fe2d1df1d90bfd790e41ae82627580dacd8a1a0c3"
+        }
+      },
+      "environment": {
+        "argv": [
+          "measurements-gpu/r9o1_matched_timing.py",
+          "--gpu",
+          "6"
+        ],
+        "container_image": "polyis-polyis@sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+        "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+        "cpus": 80,
+        "cuda": "12.4",
+        "cuda_device_order": "PCI_BUS_ID",
+        "cuda_visible_devices": "6",
+        "cudnn": 90100,
+        "detectron2": "0.6",
+        "gpu": {
+          "driver_version": "610.57.04",
+          "name": "Quadro RTX 6000",
+          "pci.bus_id": "00000000:B2:00.0",
+          "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+          "vbios_version": "90.02.15.00.04"
+        },
+        "gpu_index": 6,
+        "gpus": {
+          "Quadro RTX 6000": 7
+        },
+        "hostname": "bombe",
+        "launcher": {
+          "bytes": 3277,
+          "exists": true,
+          "mtime": "2026-10-27T06:39:14+00:00",
+          "path": "/polyis/measurements-gpu/r9o1_matched_timing.sh",
+          "sha256": "57fcc1ec79bfe067ce71dd4137fd8c281ea636ad72a8cb7971e0171564303d60"
+        },
+        "opencv": "4.13.0",
+        "placement": {
+          "cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_local_cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_numa_node": 1,
+          "numactl": {
+            "cpubind": "1",
+            "membind": "1",
+            "nodebind": "1",
+            "physcpubind": "20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79",
+            "policy": "bind",
+            "preferred node": "1"
+          }
+        },
+        "python": "3.13.12",
+        "torch": "2.6.0+cu124",
+        "torch_device": "Quadro RTX 6000",
+        "torch_device_uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "ultralytics": "8.4.22"
+      },
+      "finished": "2026-10-27T07:25:50+00:00",
+      "finished_ns": 1793085950980241408,
+      "frames": 3116,
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "label": "B3D3",
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "hota": 0.8013411152828708,
+        "loss": 0.05,
+        "reference_hota": 0.8354907246247636,
+        "sample_rate": 4,
+        "tilesize": 60
+      },
+      "runs": {
+        "classifier": 16,
+        "classifier_1": 1,
+        "classifier_stream": null,
+        "decode": null,
+        "detector": 1,
+        "detector_16": 16,
+        "rgb_copy": null
+      },
+      "samples": 3759,
+      "seconds": 436.8,
+      "started": "2026-10-27T07:18:34+00:00",
+      "started_ns": 1793085514155719424,
+      "videos": {
+        "te01.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1828272
+          },
+          "file": {
+            "bytes": 14455591,
+            "exists": true,
+            "mtime": "2026-02-16T21:41:32+00:00",
+            "path": "/polyis-data/datasets/jnc6/test/te01.mp4",
+            "sha256": "18a20a88c5aab6703f86f4751d1a7be29bd6e8ca5c3e42b55e42311c7f322d53"
+          },
+          "frames": 1038
+        },
+        "te08.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1829411
+          },
+          "file": {
+            "bytes": 16160458,
+            "exists": true,
+            "mtime": "2026-02-16T21:37:04+00:00",
+            "path": "/polyis-data/datasets/jnc6/test/te08.mp4",
+            "sha256": "df6b4224af2ecefb8b3cf5be3cd0e29327dfcc75927e8afc204de80d8d001b34"
+          },
+          "frames": 1039
+        },
+        "te13.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1829593
+          },
+          "file": {
+            "bytes": 15818288,
+            "exists": true,
+            "mtime": "2026-02-16T21:33:30+00:00",
+            "path": "/polyis-data/datasets/jnc6/test/te13.mp4",
+            "sha256": "1fb6cfcfc56dde9272fba45fe5254958aa0de16c076f21c945c7afde7ba79214"
+          },
+          "frames": 1039
+        }
+      },
+      "warmup": {
+        "detector_frames": 32,
+        "runs": "every run over every frame",
+        "video": "te01.mp4"
+      }
+    },
+    "jnc7": {
+      "classifier": {
+        "batch_size": 16,
+        "compilation_benchmark": {
+          "bytes": 6270,
+          "exists": true,
+          "mtime": "2026-04-07T08:44:17+00:00",
+          "path": "/polyis-cache/jnc7/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+          "sha256": "0e55a7f5ed8a7ff6c3414d24b108f530266f6622d59828e72e6a433fadeda97a"
+        },
+        "grid": [
+          12,
+          18
+        ],
+        "mask": {
+          "bytes": 344,
+          "exists": true,
+          "mtime": "2026-02-17T01:44:32+00:00",
+          "path": "/polyis-cache/jnc7/indexing/always_relevant/60_all.npy",
+          "sha256": "212a1032e65934962e86b139533e698be7717e717a0e409f360d25f73614f571"
+        },
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles": 216,
+        "tiles_inferred_at_most": 125,
+        "tilesize": 60,
+        "weights": {
+          "bytes": 5907314,
+          "exists": true,
+          "mtime": "2026-02-17T02:17:40+00:00",
+          "path": "/polyis-cache/jnc7/indexing/training/results/ShuffleNet05_60/model_best.pth",
+          "sha256": "e18570ad7e6fa3a1f6ab7fedb7e31a30b92d3851bef0475b1320290f10faa75a"
+        }
+      },
+      "detector": {
+        "batch_size": 1,
+        "description": "Using retina detector for dataset 'jnc7'",
+        "detector": "retina",
+        "weights": {
+          "bytes": 235435561,
+          "exists": true,
+          "mtime": "2025-02-03T03:28:18+00:00",
+          "path": "weights/retinanet_b3d.pth",
+          "sha256": "cd48354aed70787596c4783fe2d1df1d90bfd790e41ae82627580dacd8a1a0c3"
+        }
+      },
+      "environment": {
+        "argv": [
+          "measurements-gpu/r9o1_matched_timing.py",
+          "--gpu",
+          "6"
+        ],
+        "container_image": "polyis-polyis@sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+        "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+        "cpus": 80,
+        "cuda": "12.4",
+        "cuda_device_order": "PCI_BUS_ID",
+        "cuda_visible_devices": "6",
+        "cudnn": 90100,
+        "detectron2": "0.6",
+        "gpu": {
+          "driver_version": "610.57.04",
+          "name": "Quadro RTX 6000",
+          "pci.bus_id": "00000000:B2:00.0",
+          "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+          "vbios_version": "90.02.15.00.04"
+        },
+        "gpu_index": 6,
+        "gpus": {
+          "Quadro RTX 6000": 7
+        },
+        "hostname": "bombe",
+        "launcher": {
+          "bytes": 3277,
+          "exists": true,
+          "mtime": "2026-10-27T06:39:14+00:00",
+          "path": "/polyis/measurements-gpu/r9o1_matched_timing.sh",
+          "sha256": "57fcc1ec79bfe067ce71dd4137fd8c281ea636ad72a8cb7971e0171564303d60"
+        },
+        "opencv": "4.13.0",
+        "placement": {
+          "cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_local_cpus": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79
+          ],
+          "gpu_numa_node": 1,
+          "numactl": {
+            "cpubind": "1",
+            "membind": "1",
+            "nodebind": "1",
+            "physcpubind": "20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79",
+            "policy": "bind",
+            "preferred node": "1"
+          }
+        },
+        "python": "3.13.12",
+        "torch": "2.6.0+cu124",
+        "torch_device": "Quadro RTX 6000",
+        "torch_device_uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "ultralytics": "8.4.22"
+      },
+      "finished": "2026-10-27T07:33:11+00:00",
+      "finished_ns": 1793086391603115008,
+      "frames": 3135,
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "label": "B3D4",
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "hota": 0.8050953871471719,
+        "loss": 0.05,
+        "reference_hota": 0.8452904103758538,
+        "sample_rate": 4,
+        "tilesize": 60
+      },
+      "runs": {
+        "classifier": 16,
+        "classifier_1": 1,
+        "classifier_stream": null,
+        "decode": null,
+        "detector": 1,
+        "detector_16": 16,
+        "rgb_copy": null
+      },
+      "samples": 3710,
+      "seconds": 439.9,
+      "started": "2026-10-27T07:25:51+00:00",
+      "started_ns": 1793085951727740672,
+      "videos": {
+        "te01.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1846019
+          },
+          "file": {
+            "bytes": 12675146,
+            "exists": true,
+            "mtime": "2026-02-16T21:43:12+00:00",
+            "path": "/polyis-data/datasets/jnc7/test/te01.mp4",
+            "sha256": "391ce63cc462a8999fc7f0003ec76b6a519fd1fb1c9f8ca3b12abdf1a933b9d5"
+          },
+          "frames": 1045
+        },
+        "te08.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1846019
+          },
+          "file": {
+            "bytes": 13857088,
+            "exists": true,
+            "mtime": "2026-02-16T21:38:34+00:00",
+            "path": "/polyis-data/datasets/jnc7/test/te08.mp4",
+            "sha256": "d21e2947558b9703e2e06e6ccd6ff881815979352644139b170f1befb3d4df3b"
+          },
+          "frames": 1045
+        },
+        "te13.mp4": {
+          "anon_pages_by_node": {
+            "N0": 46,
+            "N1": 1846649
+          },
+          "file": {
+            "bytes": 13987369,
+            "exists": true,
+            "mtime": "2026-02-16T21:34:09+00:00",
+            "path": "/polyis-data/datasets/jnc7/test/te13.mp4",
+            "sha256": "dac4f9105019c889922afc131aafc606c617261e660757bf19341bfa06b2f3f4"
+          },
+          "frames": 1045
+        }
+      },
+      "warmup": {
+        "detector_frames": 32,
+        "runs": "every run over every frame",
+        "video": "te01.mp4"
+      }
+    }
+  },
+  "method": {
+    "classifier": "scripts/p020_exec_classify.py load_model, select_model_optimization, and classify_batch, prepared as classify_all; every frame paired with its previous frame (sample rate 1)",
+    "estimates": "none",
+    "gpu_samples": "nvidia-smi on every GPU every 500 ms, labeled with the phase on arrival and 1000 ms earlier",
+    "operating_point": "fastest Tetris test configuration with HOTA >= reference HOTA x (1 - 0.05) (common.fastest_tetris)",
+    "order": "per video: decode, rgb_copy, classifier, classifier_1, classifier_stream, detector, detector_16, on the same decoded frames",
+    "placement": "CPU affinity and memory bound to the GPU's NUMA node (numactl --cpunodebind --membind), checked at start; anonymous pages per node recorded per video",
+    "runs": {
+      "classifier": "p020's classify_batch, 16 consecutive frames per call (p020's batching)",
+      "classifier_1": "classify_batch, one frame per call",
+      "classifier_stream": "classify_batch over the video in 16-frame calls, synchronized only before the first and after the last call (one interval), as p020 runs",
+      "decode": "cv2 decoding of the whole video to BGR frames (one interval)",
+      "detector": "polyis.models.detector.detect, one BGR frame per call (p002, batch size 1)",
+      "detector_16": "polyis.models.detector.detect_batch, 16 consecutive BGR frames per call",
+      "rgb_copy": "p020's BGR-to-RGB contiguous copy of every frame (one interval; Tetris only, untimed in p121)"
+    },
+    "sampling": "none",
+    "timing": "torch.cuda.synchronize() before and after every timed call; time.perf_counter_ns; a call's time split evenly over its frames. Per-call synchronization removes p020's overlap of host work with the previous batch's GPU tail, so the per-call classifier runs are an upper bound on its steady-state cost; classifier_stream synchronizes once per video",
+    "videos": "3 test videos per dataset, evenly spaced in name order, every frame",
+    "warmup": "untimed: every run over the first video, the detector runs on its first 32 frames only"
+  }
+}
