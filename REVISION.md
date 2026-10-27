@@ -35,7 +35,7 @@ Run long `measurements-gpu/` jobs in tmux on ace, since a dropped SSH session ki
 | Item | `measurements/` | `measurements-gpu/` | Status |
 | --- | --- | --- | --- |
 | R1.O2 counting query | `r1o2_count_query.py` | none | Done: bounds 5%, 10%, and LEAP's own accuracy per dataset (`leap_fit`) |
-| R1.O2 LEAP native queries | `r1o2_leap_native_queries.py` | none | In progress (selection F1, aggregation MAPE, top-10 precision; merged vehicle class only) |
+| R1.O2 LEAP native queries | `r1o2_leap_native_queries.py` | none | Done for a merged vehicle class (selection F1, aggregation 1 - MAPE, top-10 precision); per-class blocked |
 | R1.O4 packing precision/recall | `r1o4_packing_detection_accuracy.py` | `r1o4_packing_detection_accuracy.py` (JPEG control, ran on bombe GPU 4) | Done for CalDoT/Amsterdam; B3D provisional until R1.O1 |
 | R1.O5 tolerance-to-gap | `r1o5_gap_tolerance.py` | none | Done; see the tolerance-label finding below |
 | R7.O1 matched HOTA speedup | `r7o1_hota_matched_speedup.py` | none | Done; reproduces all p203/p204 macros; rerun after R1.O1 |
@@ -45,6 +45,7 @@ Run long `measurements-gpu/` jobs in tmux on ace, since a dropped SSH session ki
 
 Key numbers (B3D uses automatic ground truth until R1.O1):
 - R1.O2 counting, at LEAP's own accuracy: Tetris is 3.5x (CalDoT1), 1.8x (CalDoT2), and 5.1x (Amsterdam) faster than LEAP, and 1.2-2.7x faster than OTIF. At 5%, OTIF is faster than Tetris on CalDoT1/2 (0.7x, 0.3x) and slower on Amsterdam (11.6x); LEAP never meets 5% or 10%.
+- R1.O2 native queries (ground truth with parked vehicles; cells a constant answer also passes are flagged trivial): LEAP misses every non-trivial 5% and 10% cell except B3D2 aggregation at 10%. At LEAP's own accuracy, Tetris is 1.6-40x faster than LEAP on selection, 2.2-40x on aggregation, and 3.5-36x on top-10 (B3D3's 36-40x reflects LEAP's re-identification taking 159 of its 174 s). Against OTIF at 5%, Tetris ranges from 0.6x (CalDoT2 aggregation, Amsterdam and CalDoT2 top-10) to 14x (B3D4).
 - R7.O1 HOTA: Tetris 4.7-68.8x over the reference at 5% and 10.4-91.2x at 10%; over OTIF 2.9-16.5x on the four datasets where OTIF meets 5%, and 3.4-25.9x at 10%. Ablation means 6.7x, 11.1x, 26.7x (5%).
 - R9.O1: classification is 20-45x cheaper than detection per frame and 12-33% (median 17.6%) of extraction at the operating points; detection 55-78%, packing 5.5-9.4%.
 - R9.O2: break-even video duration against the reference at p121's timing boundary is 19 h (Amsterdam), 25 h (CalDoT1), 37 h (CalDoT2), and 5-8 h (B3D); at a process (wall-clock) boundary 56 h, 58 h, 85 h, and 8-11 h.
@@ -71,7 +72,17 @@ Found while measuring; not changed, because each touches the manuscript or the p
 
 1. **Tolerance labels (Table 2, Fig. 7, R1.O5).** The values listed as the mistrack-rate tolerance M (none, 0.4, 0.6, 0.8) are the code's accuracy threshold t; p016 keeps a gap when accuracy >= t, i.e. MissRate <= 1 - t. The validated tolerances are M = 0.2, 0.4, 0.6, and Fig. 7's "M = 0.8" panel is the strictest setting (MissRate <= 0.2). See `measurements-results/r1o5_gap_tolerance/`.
 2. **"Up to 17.4x higher throughput than prior systems" (abstract, introduction, Section 7, conclusion).** p203's accuracy-matched rule compares Tetris with OTIF points that miss the 5% bound on 6 of 7 datasets (all 7 at 10%). Under one shared bound, Tetris is 2.9-16.5x faster than OTIF on the 4 datasets where OTIF qualifies. See `r7o1_hota_matched_speedup`.
-3. **Timing boundary (R1.O3).** p121's throughput counts canvas reads (disk I/O) for Tetris and video decoding for the reference, but not p030's per-configuration video decode; the response says extraction excludes disk I/O. At a wall-clock process boundary the speedups are much smaller (for example Amsterdam 5.9x instead of 68.8x). Being verified independently; see `r9o2_preparation_cost`, `r9o1_classifier_cost`.
+3. **Timing boundary (R1.O3), verified independently by two read-only passes.** p121's throughput counts the reference's per-frame video decode (1.4-2.2% of its time) but not Tetris's decoding (p020's recorded whole-video read is dropped; p030's per-configuration decode is untimed), and it counts Tetris's canvas reads (p040 `read`, 4-6% of Tetris's time), so "excluding disk I/O" (07_eval.tex lines 157-158, wip/r1o3.tex) is inaccurate on both sides. Tetris's speedup over the reference by boundary:
+
+   | Boundary | Amsterdam | CalDoT1 | CalDoT2 | B3D |
+   | --- | --- | --- | --- | --- |
+   | Paper (p121) | 68.8x | 23.6x | 4.7x | 17.3-29.1x |
+   | Decode excluded on both sides | 67.5x | 23.1x | 4.6x | 17.0-28.7x |
+   | One decode per side at the reference's measured cost | 30.1x | 15.6x | 4.3x | 13.8-20.4x |
+   | Same, without Tetris's canvas reads | 30.9x | 16.2x | 4.5x | 14.4-21.0x |
+   | Wall clock of the staged prototype | 5.9x | 5.5x | 2.7x | 5.5-6.4x |
+
+   The wall-clock row charges Tetris two decodes, an avoidable channel-flip copy in p020 (7.4 vs about 1.5 ms per frame), inter-stage file I/O, and worker contention, so it is an upper bound on Tetris's cost, not a like-for-like comparison. Either charge Tetris one decode or drop decoding from the reference, and drop or disclose canvas reads. Unverified confounds: the reference detects at batch 1 and p040 at batch 4, and the two ran six weeks apart under different GPU load.
 4. **R9.O1 "same videos and hardware".** The classifier and detector timings come from logs six weeks apart under concurrent multi-GPU load; no matched re-timing exists, so quote the per-frame ratio as a range (about 20-45x).
 5. **CalDoT2 validation cache.** A 2026-05-29 single-configuration rerun deleted the 022-060 outputs of 89 of 90 configurations for va00-va09 (890 missing pruning runs), so CalDoT2's Pareto selection cannot be re-derived from the cache.
 6. **p022 binarization.** The April 2026 cache was produced by an uncommitted p022 that keeps tiles with score >= floor(r x 255); the current code keeps score > r x 255 (median -0.1% variables, up to -5.4%). p022's `--time-limit` help says 0.5 s; the effective budget is 0.1 s.
