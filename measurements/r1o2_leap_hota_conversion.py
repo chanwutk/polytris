@@ -74,33 +74,22 @@ Writes measurements-results/r1o2_leap_hota_conversion/results.json, or results-p
 selects only some datasets, so a partial run never replaces the full results.
 """
 import argparse
-import contextlib
 import hashlib
-import io
 import json
 import math
 import multiprocessing as mp
-import os
-import sys
 import tempfile
-import warnings
 from pathlib import Path
 
 import duckdb
-import numpy as np
 
-# TrackEval is vendored as a submodule, imported the way evaluation/p141_otif_accuracy.py imports it.
-sys.path.append('/polyis/modules/TrackEval')
-import trackeval  # noqa: E402
-from trackeval.metrics import CLEAR, HOTA, Identity  # noqa: E402
-
-from evaluation.manifests import list_split_videos  # noqa: E402
-from evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id  # noqa: E402
-from measurements.common import (DATASET_LABELS, RESULTS_ROOT, assert_files_exist, file_record,  # noqa: E402
-                                 output_path, plain, query_dicts, results_dir, rounded, write_json)
-from polyis.io import cache  # noqa: E402
-from polyis.trackeval.dataset import Dataset  # noqa: E402
-from polyis.utilities import dataset_root_name  # noqa: E402
+from evaluation.manifests import list_split_videos
+from evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id
+from measurements.common import (DATASET_LABELS, RESULTS_ROOT, assert_files_exist, file_record, leap_intervals,
+                                 load_leap_exports, load_unwrap, metric_summary, output_path, query_dicts, results_dir,
+                                 rounded, trackeval_rerun, unscored_boxes, unwrap_totals, write_json)
+from polyis.io import cache
+from polyis.utilities import dataset_root_name
 
 
 # The LEAP cache p140 rewrote on 2026-10-26 and the copy of the cache it replaced, as directories under SOTA/.
@@ -125,10 +114,6 @@ VARIANTS = {
 }
 # Box sources in table boxes: the ground truth, both caches, and the fixed cache without ambiguous objects.
 BOX_SOURCES = ('gt', 'before', 'after', 'after_ambiguous_dropped')
-# HOTA arrays whose per-alpha counts are not averaged (their loosest-alpha value is kept).
-COUNT_ARRAYS = ('HOTA_TP', 'HOTA_FN', 'HOTA_FP')
-# Index of the loosest localization threshold (alpha 0.05) in TrackEval's HOTA arrays.
-LOOSEST_ALPHA = 0
 # Largest difference allowed between a TrackEval rerun and the cached DATASET.json, and between equal readings.
 REPRODUCTION_TOLERANCE = 1e-9
 # The native-queries outputs round to 4 decimals, so their means can differ from exact ones by half a unit.
@@ -142,16 +127,9 @@ NATIVE_BOX_SOURCE = {'leap': 'after', 'leap_ambiguous_dropped': 'after_ambiguous
 TIME_SCALES = tuple(round(0.40 + 0.05 * i, 2) for i in range(23))
 TIME_SCALE_WARN_GAIN = 0.05
 TIME_SCALE_TIE_DECIMALS = 9
-# Schema of p140's unwrap.json (the same literal as r1o2_leap_native_queries.py; measurement scripts import only from
-# common.py, which this task may not edit, so a shared copy waits for a move to common.py).
-UNWRAP_COLUMNS =("{'export_frames': 'BIGINT', 'clip_frames': 'BIGINT', 'objects': 'BIGINT', "
-                  "'wrapped_objects': 'BIGINT[]', 'ambiguous_full_span_objects': 'BIGINT[]', "
-                  "'wrapped_boxes_dropped': 'BIGINT', 'boxes_past_clip_dropped': 'BIGINT'}")
 # Schema of a tracking.jsonl line with each box kept as JSON text, so rewritten files keep every digit
 # (DuckDB's DOUBLE-to-JSON writer shortens 0.30000000000000004 to 0.3).
 LINE_COLUMNS = "{'frame_idx': 'BIGINT', 'tracks': 'JSON[]'}"
-# TrackEval metric configurations that do not print their settings.
-QUIET = {'PRINT_CONFIG': False}
 # What the cached outputs cannot show, recorded in results.json.
 BLOCKERS = {
     'raw_and_linear_interpolation_variants': (
@@ -255,13 +233,18 @@ def input_digests(con: duckdb.DuckDBPyConnection) -> dict:
     # A handful of sources, each a loop over files (hashing is file I/O, not data analysis).
     for source in INPUT_SOURCES:
         # The registered files of the source, in clip order.
-        rows = con.execute('SELECT video, path FROM files WHERE source = ? ORDER BY video', [source]).fetchall()
-        records = [(video, file_record(path)) for video, path in rows]
+        records = [(video, file_record(path)) for video, path in source_files(con, source)]
         # One digest over every file's own digest, tied to its clip.
         combined = hashlib.sha256(''.join(f"{video}\t{r['sha256']}\n" for video, r in records).encode()).hexdigest()
         out[source] = dict(files=len(records), bytes=sum(r['bytes'] for _, r in records), sha256=combined,
                            latest_mtime=max((r['mtime'] for _, r in records), default=None))
     return out
+
+
+def source_files(con: duckdb.DuckDBPyConnection, source: str) -> list[tuple[str, str]]:
+    """(video, path) of the registered files of one source, in clip order."""
+    # The pairs common.load_unwrap and common.load_leap_exports take.
+    return con.execute('SELECT video, path FROM files WHERE source = ? ORDER BY video', [source]).fetchall()
 
 
 def source_paths(con: duckdb.DuckDBPyConnection, sources: list[str]) -> list[str]:
@@ -271,25 +254,16 @@ def source_paths(con: duckdb.DuckDBPyConnection, sources: list[str]) -> list[str
                                       [sources]).fetchall()]
 
 
-def load_unwrap(con: duckdb.DuckDBPyConnection):
-    """Table unwrap(video, export_frames, n, objects, wrapped_objects, ambiguous_full_span_objects, wrapped_boxes_dropped,
-    boxes_past_clip_dropped) from the registered unwrap.json files; n is the clip length p140 clipped to."""
-    # Read every statistics file and attach its clip.
-    con.execute(f"""
-        CREATE OR REPLACE TABLE unwrap AS
-        SELECT f.video, u.export_frames, u.clip_frames AS n, u.objects, u.wrapped_objects,
-               u.ambiguous_full_span_objects, u.wrapped_boxes_dropped, u.boxes_past_clip_dropped
-        FROM read_json(?, filename = true, format = 'auto', columns = {UNWRAP_COLUMNS}) u
-        JOIN files f ON f.source = 'unwrap' AND f.path = u.filename
-    """, [source_paths(con, ['unwrap'])])
-    # Exactly one record per clip, with a positive length and no missing field.
-    bad = query_dicts(con, """
-        SELECT f.video, count(u.video) AS records FROM files f LEFT JOIN unwrap u USING (video)
-        WHERE f.source = 'unwrap' GROUP BY f.video
-        HAVING records <> 1 OR bool_or(u.n IS NULL OR u.n <= 0 OR u.export_frames IS NULL OR u.objects IS NULL
-                                       OR u.wrapped_objects IS NULL OR u.ambiguous_full_span_objects IS NULL)
-    """)
-    assert not bad, f'unwrap.json records missing, repeated, or incomplete: {bad[:5]}'
+def load_inputs(con: duckdb.DuckDBPyConnection):
+    """Load the inputs registered in table files: unwrap.json (table unwrap), the tracks (tables lines and boxes), and
+    the raw exports, whose recovered intervals become table objects."""
+    # p140's statistics first, since the boxes without ambiguous objects read them.
+    load_unwrap(con, source_files(con, 'unwrap'))
+    # The ground truth's and both caches' tracks.
+    load_lines(con)
+    # The raw exports, and every exported object's interval and what p140 did with it.
+    load_leap_exports(con, source_files(con, 'export'))
+    classify_objects(con)
 
 
 def load_lines(con: duckdb.DuckDBPyConnection):
@@ -330,38 +304,6 @@ def load_lines(con: duckdb.DuckDBPyConnection):
     assert not bad, f'boxes with a missing or repeated track id in one frame: {bad}'
 
 
-def load_exports(con: duckdb.DuckDBPyConnection):
-    """Tables export_len(video, L) and export_obs(video, frame, track_id) from the registered raw LEAP exports.
-
-    L is the export's frame-list length (0 for a null file or an empty list); a null frame holds no box.
-    """
-    # Parse each export into its frame list, keeping only the track ids.
-    con.execute("""
-        CREATE OR REPLACE TABLE export_docs AS
-        SELECT f.video, from_json(t.content, '[[{"track_id": "BIGINT"}]]') AS frames
-        FROM read_text(?) t JOIN files f ON f.source = 'export' AND f.path = t.filename
-    """, [source_paths(con, ['export'])])
-    # Every clip needs exactly one export.
-    bad = query_dicts(con, """
-        SELECT f.video, count(d.video) AS docs FROM files f LEFT JOIN export_docs d USING (video)
-        WHERE f.source = 'export' GROUP BY f.video HAVING docs <> 1
-    """)
-    assert not bad, f'raw exports missing or repeated: {bad[:5]}'
-    # The export's length, and one row per box with its list index as the frame.
-    con.execute('CREATE OR REPLACE TABLE export_len AS SELECT video, coalesce(len(frames), 0) AS L FROM export_docs')
-    con.execute("""
-        CREATE OR REPLACE TABLE export_obs AS
-        SELECT video, frame, box.track_id AS track_id
-        FROM (SELECT video, frame, unnest(boxes) AS box
-              FROM (SELECT video, generate_subscripts(frames, 1) - 1 AS frame, unnest(frames) AS boxes FROM export_docs))
-    """)
-    # The exporter writes one box per object and frame, always with an id.
-    bad = query_dicts(con, """
-        SELECT video, frame, track_id, count(*) AS n FROM export_obs GROUP BY ALL HAVING n > 1 OR track_id IS NULL LIMIT 5
-    """)
-    assert not bad, f'raw export boxes with a missing or repeated id in one frame: {bad}'
-
-
 def classify_objects(con: duckdb.DuckDBPyConnection):
     """Table objects: every exported object's recovered interval [interval_start, interval_end) and how p140 changed it.
 
@@ -370,37 +312,17 @@ def classify_objects(con: duckdb.DuckDBPyConnection):
     true ends are unknown), wrapped (start before the clip), end_clipped (a known end past the clip; never ambiguous),
     ambiguous_past_clip (ambiguous in an export longer than the clip: clipped at one end for certain, which one is
     unknown), entirely_past_clip (start at or past the clip end, removed whole), boxes, wrapped_boxes (the dropped
-    tail), past_clip_boxes (boxes at or past the clip end outside the tail). Raises on any other shape, which is not
-    the exporter's wrap.
+    tail), past_clip_boxes (boxes at or past the clip end outside the tail). The intervals come from
+    common.leap_intervals, which raises on any other shape than the exporter's wrap.
     """
-    # Recover each object's runs and interval, then count its boxes by what p140 does with them.
+    # Every exported object's interval, recovered from the raw export.
+    leap_intervals(con)
+    # Attach each clip's length, then count each object's boxes by what p140 does with them.
     con.execute("""
         CREATE OR REPLACE TABLE objects AS
-        WITH runs AS (
-            -- Runs of consecutive frames per object (gaps and islands).
-            SELECT video, track_id, min(frame) AS a, max(frame) AS b
-            FROM (SELECT video, track_id, frame,
-                         frame - row_number() OVER (PARTITION BY video, track_id ORDER BY frame) AS run FROM export_obs)
-            GROUP BY video, track_id, run
-        ),
-        shape AS (
-            -- The head (first) and tail (last) run of each object.
-            SELECT video, track_id, count(*) AS runs, min(a) AS head_start, min(b) AS head_end,
-                   max(a) AS tail_start, max(b) AS tail_end
-            FROM runs GROUP BY video, track_id
-        ),
-        kinds AS (
-            -- One run over the whole export is ambiguous; a head run from 0 plus a tail run to the end is wrapped.
-            SELECT sh.*, x.L, u.n,
-                   sh.runs = 1 AND sh.head_start = 0 AND sh.head_end = x.L - 1 AS ambiguous,
-                   sh.runs = 2 AND sh.head_start = 0 AND sh.tail_end = x.L - 1 AS wrapped
-            FROM shape sh JOIN export_len x USING (video) JOIN unwrap u USING (video)
-        ),
-        intervals AS (
-            -- The tail of a wrapped interval holds frames tail_start - L .. -1; the head always ends the interval.
-            SELECT *, CASE WHEN wrapped THEN tail_start - L WHEN runs = 1 THEN head_start END AS interval_start,
-                   head_end + 1 AS interval_end
-            FROM kinds
+        WITH intervals AS (
+            -- Each recovered interval with its clip's length n.
+            SELECT i.*, u.n FROM leap_intervals i JOIN unwrap u USING (video)
         ),
         counts AS (
             -- Boxes per object, those in the wrapped tail, and those at or past the clip end outside the tail.
@@ -416,9 +338,6 @@ def classify_objects(con: duckdb.DuckDBPyConnection):
                c.boxes, c.wrapped_boxes, c.past_clip_boxes
         FROM intervals i JOIN counts c USING (video, track_id)
     """)
-    # Anything but one interval or one wrapped interval contradicts the exporter.
-    bad = query_dicts(con, 'SELECT video, track_id, runs FROM objects WHERE interval_start IS NULL LIMIT 5')
-    assert not bad, f'exported objects that are neither one interval nor one wrapped interval: {bad}'
 
 
 def unwrap_mismatches(con: duckdb.DuckDBPyConnection) -> list[dict]:
@@ -445,17 +364,12 @@ def unwrap_mismatches(con: duckdb.DuckDBPyConnection) -> list[dict]:
     """)
 
 
-def unwrap_totals(con: duckdb.DuckDBPyConnection) -> dict:
-    """unwrap.json totals over the clips, under the names r1o2_leap_native_queries' diagnostics use, plus clip lengths."""
-    # One row of totals over the dataset's clips.
+def unwrap_lengths(con: duckdb.DuckDBPyConnection) -> dict:
+    """Clip frames over the clips of table unwrap, and how the exports' lengths compare with their clips' (the rest of
+    a section's unwrap totals is common.unwrap_totals, which r1o2_leap_native_queries' diagnostics also report)."""
+    # One row over the dataset's clips.
     return query_dicts(con, """
-        SELECT count(*) AS clips, sum(n) AS clip_frames,
-               count(*) FILTER (export_frames = 0) AS empty_exports,
-               coalesce(list(video ORDER BY video) FILTER (export_frames = 0), []) AS empty_export_videos,
-               sum(objects) AS objects, sum(len(wrapped_objects)) AS wrapped_objects,
-               sum(len(ambiguous_full_span_objects)) AS ambiguous_full_span_objects,
-               count(*) FILTER (len(ambiguous_full_span_objects) > 0) AS clips_with_ambiguous,
-               sum(wrapped_boxes_dropped) AS wrapped_boxes_dropped, sum(boxes_past_clip_dropped) AS boxes_past_clip_dropped,
+        SELECT sum(n) AS clip_frames,
                -- Exported frames at or past the clip end, which p140 drops.
                sum(greatest(export_frames - n, 0)) AS export_frames_past_clip,
                count(*) FILTER (export_frames > n) AS clips_exported_past_clip,
@@ -675,23 +589,6 @@ def time_base(con: duckdb.DuckDBPyConnection) -> dict:
                 best_r=best_r, flagged=flagged)
 
 
-def metric_summary(metrics: dict) -> dict:
-    """TrackEval metric families as scalars: HOTA arrays averaged over alphas (as p142 does), their loosest-alpha
-    values under 'alpha_0.05', and every scalar as a Python number. Works on DATASET.json and on a rerun's output."""
-    out: dict = {}
-    # A handful of fields per family; not data rows.
-    for family, fields in metrics.items():
-        # Arrays over HOTA's alphas, except the summed counts, are averaged; scalars pass through.
-        out[family] = {k: (float(np.mean(v)) if np.ndim(v) else plain(v)) for k, v in fields.items()
-                       if k not in COUNT_ARRAYS}
-        # Every array at the loosest alpha, where localization barely matters.
-        loosest = {k: float(np.asarray(v)[LOOSEST_ALPHA]) for k, v in fields.items() if np.ndim(v)}
-        # Families without arrays (Count, CLEAR, Identity) get no loosest-alpha entry.
-        if loosest:
-            out[family]['alpha_0.05'] = loosest
-    return out
-
-
 def cached_accuracy(con: duckdb.DuckDBPyConnection, dataset: str) -> tuple[dict, list[dict]]:
     """LEAP's p141 accuracy in each cache (metric_summary of DATASET.json) and file records of the files read.
 
@@ -721,10 +618,9 @@ def cached_accuracy(con: duckdb.DuckDBPyConnection, dataset: str) -> tuple[dict,
 def check_scored_window(window: dict, accuracy: dict, source: str):
     """The scored_window counts must explain DATASET.json's Count and loosest-alpha HOTA totals to the box."""
     # Count counts every box; HOTA's TP + FN and TP + FP count only the scored ones.
-    hota, count = accuracy['HOTA']['alpha_0.05'], accuracy['Count']
-    expected = dict(gt_boxes=count['GT_Dets'], tracker_boxes=count['Dets'],
-                    gt_boxes_not_scored=count['GT_Dets'] - (hota['HOTA_TP'] + hota['HOTA_FN']),
-                    tracker_boxes_not_scored=count['Dets'] - (hota['HOTA_TP'] + hota['HOTA_FP']))
+    count, unscored = accuracy['Count'], unscored_boxes(accuracy)
+    expected = dict(gt_boxes=count['GT_Dets'], tracker_boxes=count['Dets'], gt_boxes_not_scored=unscored['gt'],
+                    tracker_boxes_not_scored=unscored['tracker'])
     wrong = {k: (window[k], v) for k, v in expected.items() if window[k] != v}
     assert not wrong, f'{source}: scored window (this script, DATASET.json) disagrees: {wrong}'
 
@@ -793,29 +689,9 @@ def variant_tasks(con: duckdb.DuckDBPyConnection, dataset: str, videos: list[str
 def trackeval_combined(task: dict) -> dict:
     """TrackEval's combined HOTA, CLEAR, Identity, and Count results over a task's clips, configured as p141
     configures it (raw arrays and scalars). TrackEval writes nothing but an error log into output_dir."""
-    # The dataset and evaluator settings of evaluate_sota_tracking_accuracy in p141.
-    dataset_config = {
-        'output_fol': task['output_dir'], 'output_sub_fol': task['variant'], 'input_gt': task['gt_file'],
-        'input_track': task['track_file'], 'skip': 1, 'tracker': f"leap_{task['variant']}", 'seq_list': task['videos'],
-        'input_dir': task['track_dir'], 'input_gt_dir': task['gt_dir'], 'input_track_dir': task['track_dir'],
-    }
-    eval_config = {
-        'USE_PARALLEL': False, 'NUM_PARALLEL_CORES': 1, 'BREAK_ON_ERROR': True,
-        'LOG_ON_ERROR': os.path.join(task['output_dir'], 'LOG.txt'), 'PRINT_RESULTS': False, 'PRINT_CONFIG': False,
-        'TIME_PROGRESS': False, 'OUTPUT_SUMMARY': False, 'OUTPUT_DETAILED': False, 'PLOT_CURVES': False,
-        'OUTPUT_EMPTY_CLASSES': False,
-    }
-    # TrackEval's error log needs its directory.
-    os.makedirs(task['output_dir'], exist_ok=True)
-    # TrackEval's warnings and progress lines would interleave across workers; it adds Count to every run itself.
-    with warnings.catch_warnings(), contextlib.redirect_stdout(io.StringIO()):
-        warnings.filterwarnings('ignore')
-        results, messages = trackeval.Evaluator(eval_config).evaluate(
-            [Dataset(dataset_config)], [HOTA(), CLEAR(QUIET), Identity(QUIET)])
-    # The dataset class reports one tracker, 'sort', whatever the configured name.
-    assert messages['Dataset']['sort'] == 'Success', f"TrackEval failed on {task['dataset']} {task['variant']}: {messages}"
-    # The vehicle class combined over every clip.
-    return results['Dataset']['sort']['COMBINED_SEQ']['vehicle']
+    # The shared rerun with the three families this script reports.
+    return trackeval_rerun(task['gt_dir'], task['gt_file'], task['track_dir'], task['track_file'], task['videos'],
+                           task['output_dir'], ('HOTA', 'CLEAR', 'Identity'))
 
 
 def run_trackeval(task: dict) -> dict:
@@ -1010,10 +886,7 @@ def analyze_dataset(con: duckdb.DuckDBPyConnection, dataset: str, sota_dir: Path
     assert videos, f'{dataset}: no test videos'
     register_files(con, input_files(dataset, videos, sota_dir))
     # Load the statistics, tracks, and raw exports, and recover every exported interval.
-    load_unwrap(con)
-    load_lines(con)
-    load_exports(con)
-    classify_objects(con)
+    load_inputs(con)
     # The recovery and p140 must agree on every clip before either is reported.
     mismatches = unwrap_mismatches(con)
     assert not mismatches, f'{dataset}: raw-export recovery disagrees with unwrap.json on {len(mismatches)} clips: {mismatches[:3]}'
@@ -1025,8 +898,9 @@ def analyze_dataset(con: duckdb.DuckDBPyConnection, dataset: str, sota_dir: Path
     # The interval and box summaries, and everything else the section reports.
     intervals = interval_summary(con)
     frames = box_frames(con)
-    section = dict(dataset=dataset, clips=len(videos), accuracy=accuracy, unwrap=unwrap_totals(con), intervals=intervals,
-                   box_frames=frames, box_changes=box_changes(frames, intervals), scored_window=window,
+    section = dict(dataset=dataset, clips=len(videos), accuracy=accuracy,
+                   unwrap=dict(unwrap_totals(con), **unwrap_lengths(con)), intervals=intervals, box_frames=frames,
+                   box_changes=box_changes(frames, intervals), scored_window=window,
                    count_ceiling={s: count_ceiling(con, s) for s in ('after', 'after_ambiguous_dropped')},
                    time_base=time_base(con), input_digests=input_digests(con))
     # The rerun tasks write their files under work_dir.

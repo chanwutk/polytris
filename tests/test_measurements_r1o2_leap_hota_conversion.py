@@ -109,10 +109,7 @@ def dataset(tmp_path, monkeypatch):
 def load_all(con, sota_dir):
     # Register and load every input of the synthetic dataset, as analyze_dataset does.
     hc.register_files(con, hc.input_files(DATASET, sorted(CLIPS), sota_dir))
-    hc.load_unwrap(con)
-    hc.load_lines(con)
-    hc.load_exports(con)
-    hc.classify_objects(con)
+    hc.load_inputs(con)
 
 
 def cached_task(tmp_path, source):
@@ -240,27 +237,19 @@ def test_object_with_a_hole_raises(con, dataset):
         load_all(con, dataset)
 
 
-def test_load_exports_handles_null_files_frames_and_empty_lists(con, tmp_path):
-    # A null file, an empty list, and an export with a null frame.
-    paths = {'te00.mp4': tmp_path / 'a.json', 'te01.mp4': tmp_path / 'b.json', 'te02.mp4': tmp_path / 'c.json'}
-    paths['te00.mp4'].write_text('null')
-    paths['te01.mp4'].write_text('[]')
-    paths['te02.mp4'].write_text(json.dumps([None, [{'track_id': 4}], []]))
-    hc.register_files(con, [('export', v, str(p)) for v, p in paths.items()])
-    hc.load_exports(con)
-    # Lengths 0, 0, 3, and one box on frame 1.
-    assert con.execute('SELECT video, L FROM export_len ORDER BY video').fetchall() == \
-        [('te00.mp4', 0), ('te01.mp4', 0), ('te02.mp4', 3)]
-    assert con.execute('SELECT video, frame, track_id FROM export_obs').fetchall() == [('te02.mp4', 1, 4)]
+def test_source_files_pairs_videos_with_paths_in_clip_order(con):
+    # Registered out of order and mixed with another source.
+    hc.register_files(con, [('unwrap', 'te01.mp4', '/b'), ('export', 'te00.mp4', '/x'), ('unwrap', 'te00.mp4', '/a')])
+    assert hc.source_files(con, 'unwrap') == [('te00.mp4', '/a'), ('te01.mp4', '/b')]
+    assert hc.source_files(con, 'gt') == []
 
 
-def test_load_exports_rejects_repeated_ids_in_a_frame(con, tmp_path):
-    # Two boxes of one object on one frame.
-    path = tmp_path / 'a.json'
-    path.write_text(json.dumps([[{'track_id': 4}, {'track_id': 4}]]))
-    hc.register_files(con, [('export', 'te00.mp4', str(path))])
-    with pytest.raises(AssertionError, match='repeated id'):
-        hc.load_exports(con)
+def test_unwrap_lengths_compare_exports_with_their_clips(con):
+    # Exports longer than (te00), as long as (te01), shorter than (te02) their clip, and empty (te03, not short).
+    con.execute("""CREATE TABLE unwrap AS SELECT * FROM (VALUES ('te00.mp4', 10, 13), ('te01.mp4', 8, 8),
+                   ('te02.mp4', 6, 4), ('te03.mp4', 5, 0)) t(video, n, export_frames)""")
+    assert hc.unwrap_lengths(con) == dict(clip_frames=29, export_frames_past_clip=3, clips_exported_past_clip=1,
+                                          clips_exported_short_of_clip_end=1)
 
 
 # ---------------------------------------------------------------- tracks and boxes
@@ -413,17 +402,6 @@ def test_variant_lines_do_not_pad_an_existing_last_frame(con, tmp_path):
 
 
 # ---------------------------------------------------------------- summaries and checks
-
-
-def test_metric_summary_means_loosest_alpha_and_scalars():
-    # Two alphas only, for readability; counts are not averaged.
-    metrics = {'HOTA': {'HOTA': [0.2, 0.4], 'HOTA_TP': np.array([3, 1]), 'HOTA(0)': np.float64(0.5)},
-               'Count': {'Dets': np.int64(7)}}
-    out = hc.metric_summary(metrics)
-    assert out['HOTA']['HOTA'] == pytest.approx(0.3) and 'HOTA_TP' not in out['HOTA']
-    assert out['HOTA']['HOTA(0)'] == 0.5 and type(out['HOTA']['HOTA(0)']) is float
-    assert out['HOTA']['alpha_0.05'] == {'HOTA': 0.2, 'HOTA_TP': 3.0}
-    assert out['Count'] == {'Dets': 7} and type(out['Count']['Dets']) is int
 
 
 def test_same_metrics_tolerance_and_missing_fields():

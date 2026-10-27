@@ -39,10 +39,11 @@ missing from the file count 0, and frames at or past the clip length are dropped
 Systems: the reference pipeline (002_naive), every validated Tetris configuration, every OTIF
 configuration, and LEAP, all read through common.output_path. LEAP's tracks are the corrected
 cache (wrapped interval starts removed, ends clipped; see evaluation/p140_otif_transform.py).
-Objects LEAP holds on every exported frame are ambiguous (their true end is unknown) and kept
-whole as an upper bound; system `leap_ambiguous_dropped` removes them (the lower bound), with
-LEAP's throughput and no HOTA of its own. The cache is cross-checked on one clip per dataset
-against an interval recovery from LEAP's raw export in --sota-dir (diagnostics.json).
+Objects LEAP holds on every exported frame are ambiguous (their wrapped part may overlap their
+real part, so both their true start and their true end are unknown) and kept whole as an upper
+bound; system `leap_ambiguous_dropped` removes them (the lower bound), with LEAP's throughput
+and no HOTA of its own. The cache is cross-checked on one clip per dataset against an interval
+recovery from LEAP's raw export in --sota-dir (diagnostics.json).
 
 Constant answers (system `baseline`: 0 and 1 on every frame, and the ground truth's median count)
 are scored like systems. An operating point whose bound a constant answer already meets is marked
@@ -88,8 +89,9 @@ import numpy as np
 from evaluation.manifests import list_split_videos
 from evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id
 from measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, best_accuracy_bounds,
-                                 operating_points, output_path, print_operating_points, query_dicts, results_dir,
-                                 rounded, system_configs, write_json)
+                                 leap_intervals, load_leap_exports, load_unwrap, operating_points, output_path,
+                                 print_operating_points, query_dicts, results_dir, rounded, system_configs,
+                                 unwrap_totals, write_json)
 from polyis.io import cache
 from polyis.utilities import dataset_root_name, get_video_frame_count
 
@@ -116,10 +118,6 @@ GT_VARIANTS = ('all', 'moving')
 QUERY_ACCURACY = {'selection': 'f1', 'aggregation': 'acc_leap', 'topk': 'topk_paper'}
 # Systems held to each bound; Tetris is compared against the others.
 POINT_SYSTEMS = ['tetris', 'otif', 'leap', 'leap_ambiguous_dropped']
-# Schema of LEAP's unwrap.json, written next to each corrected LEAP tracking file by p140.
-UNWRAP_COLUMNS = ("{'export_frames': 'BIGINT', 'clip_frames': 'BIGINT', 'objects': 'BIGINT', "
-                  "'wrapped_objects': 'BIGINT[]', 'ambiguous_full_span_objects': 'BIGINT[]', "
-                  "'wrapped_boxes_dropped': 'BIGINT', 'boxes_past_clip_dropped': 'BIGINT'}")
 # One row (filename, frame_idx, box) per box of the tracking.jsonl files bound to the query's parameter.
 TRACK_BOXES = ("(SELECT filename, frame_idx, unnest(tracks) AS box FROM read_json(?, filename = true, "
                f"format = 'newline_delimited', columns = {TRACK_COLUMNS}))")
@@ -142,8 +140,8 @@ BLOCKERS = {
         'so its results are provisional until the human-verified tracks of R1.O1 are passed with --gt-root.'),
     'leap_run_caveats': [
         "LEAP's native results and pseudo-labels for these runs are not on ace (possibly on another host's local "
-        "/data), so LEAP's own ground-truth variants, class ids, and the true ends of its ambiguous objects cannot "
-        "be recovered.",
+        "/data), so LEAP's own ground-truth variants, class ids, and both true ends (start and end) of each of its "
+        "ambiguous objects cannot be recovered.",
         'The detector, DETECT_CLASSES, and flags of the LEAP runs are unknown.',
         "B3D motion-pattern libraries may have been built from the 29-fps copies in LEAP/data/videos/jnc*, which "
         "would explain LEAP's long B3D intervals (about 3.5x the reference track length); unverified, and the "
@@ -565,34 +563,19 @@ def lag_correlations(con: duckdb.DuckDBPyConnection) -> list[dict]:
     """, {'max_lag': MAX_LAG, 'gain': LAG_WARN_GAIN, 'decimals': LAG_TIE_DECIMALS})
 
 
-def load_unwrap(con: duckdb.DuckDBPyConnection, unwrap_files: list[tuple]) -> dict:
-    """Table unwrap(video, ...) from p140's unwrap.json files ((video, filename) pairs); returns per-dataset totals."""
-    # Missing statistics mean the LEAP cache predates the corrected p140.
-    assert_files_exist([f for _, f in unwrap_files], 'LEAP unwrap.json files (rerun the fixed p140)')
-    # Register which file belongs to which clip, then read them all.
-    con.execute('CREATE OR REPLACE TABLE unwrap_files (video VARCHAR, filename VARCHAR)')
-    con.executemany('INSERT INTO unwrap_files VALUES (?, ?)', unwrap_files)
-    con.execute(f"""
-        CREATE OR REPLACE TABLE unwrap AS
-        SELECT f.video, u.* EXCLUDE (filename)
-        FROM read_json(?, filename = true, format = 'auto', columns = {UNWRAP_COLUMNS}) u JOIN unwrap_files f USING (filename)
-    """, [[f for _, f in unwrap_files]])
-    # Every clip needs one record, and p140 must have clipped to the same length as here.
+def leap_unwrap(con: duckdb.DuckDBPyConnection, unwrap_files: list[tuple[str, str]]) -> dict:
+    """Table unwrap (common.load_unwrap) from p140's unwrap.json files ((video, filename) pairs), checked against table
+    clips; returns its totals (common.unwrap_totals)."""
+    # Read and check the statistics files.
+    load_unwrap(con, unwrap_files)
+    # Every clip needs one record and no other clip may have one, and p140 must have clipped to the same length as here.
     bad = query_dicts(con, """
-        SELECT c.video, c.n, u.clip_frames FROM clips c LEFT JOIN unwrap u USING (video)
-        WHERE u.clip_frames IS NULL OR u.clip_frames <> c.n
+        SELECT video, c.n, u.n AS clip_frames FROM clips c FULL JOIN unwrap u USING (video)
+        WHERE c.n IS NULL OR u.n IS NULL OR u.n <> c.n ORDER BY video
     """)
     assert not bad, f'LEAP unwrap.json clip lengths differ from the clips: {bad}'
     # Totals over the dataset's clips.
-    return query_dicts(con, """
-        SELECT count(*) AS clips, count(*) FILTER (WHERE export_frames = 0) AS empty_exports,
-               sum(objects) AS objects, sum(len(wrapped_objects)) AS wrapped_objects,
-               sum(len(ambiguous_full_span_objects)) AS ambiguous_full_span_objects,
-               count(*) FILTER (WHERE len(ambiguous_full_span_objects) > 0) AS clips_with_ambiguous,
-               sum(wrapped_boxes_dropped) AS wrapped_boxes_dropped, sum(boxes_past_clip_dropped) AS boxes_past_clip_dropped,
-               coalesce(list(video ORDER BY video) FILTER (WHERE export_frames = 0), []) AS empty_export_videos
-        FROM unwrap
-    """)[0]
+    return unwrap_totals(con)
 
 
 def leap_excluding_empty_exports(con: duckdb.DuckDBPyConnection) -> dict:
@@ -609,48 +592,19 @@ def leap_excluding_empty_exports(con: duckdb.DuckDBPyConnection) -> dict:
             for r in score_frames(con, 'pred_leap_nonempty')}
 
 
-def export_counts(con: duckdb.DuckDBPyConnection, path: str, n: int) -> np.ndarray:
-    """Per-frame object counts of a raw LEAP export, recovering each object's interval [s, e) from its frames.
-
-    The export lists boxes per frame; L is its length. One contiguous run [a, b] is [a, b + 1); two
-    runs [0, a] and [b, L - 1] are a wrapped interval [b - L, a + 1); anything else raises. Each
-    object counts on [max(s, 0), min(e, n)), as LEAP's preprocess does with start 0 and end n.
-    """
-    # Parse the export into (frame, track_id) pairs; a null file or frame holds no boxes.
-    con.execute("""
-        CREATE OR REPLACE TABLE export_obs AS
-        WITH doc AS (SELECT from_json(content, '[[{"track_id": "BIGINT"}]]') AS frames FROM read_text(?)),
-        per_frame AS (SELECT generate_subscripts(frames, 1) - 1 AS frame, unnest(frames) AS boxes FROM doc)
-        SELECT DISTINCT frame, box.track_id AS track_id
-        FROM (SELECT frame, unnest(boxes) AS box FROM per_frame)
-    """, [path])
-    # The export's length L (0 for a null file).
-    length = con.execute("SELECT coalesce(len(from_json(content, '[\"JSON\"]')), 0) FROM read_text(?)", [path]).fetchone()[0]
-    # Runs of consecutive frames per object, and each object's interval.
-    rows = query_dicts(con, """
-        WITH runs AS (
-            SELECT track_id, min(frame) AS a, max(frame) AS b
-            FROM (SELECT track_id, frame, frame - row_number() OVER (PARTITION BY track_id ORDER BY frame) AS run FROM export_obs)
-            GROUP BY track_id, run
-        ),
-        shape AS (
-            SELECT track_id, count(*) AS runs, min(a) AS head_start, min(b) AS head_end, max(a) AS tail_start, max(b) AS tail_end
-            FROM runs GROUP BY track_id
-        )
-        SELECT track_id,
-               CASE WHEN runs = 1 THEN head_start
-                    WHEN runs = 2 AND head_start = 0 AND tail_end = $length - 1 THEN tail_start - $length END AS s,
-               CASE WHEN runs = 1 THEN head_end + 1
-                    WHEN runs = 2 AND head_start = 0 AND tail_end = $length - 1 THEN head_end + 1 END AS e
-        FROM shape
-    """, {'length': length})
-    # Any other shape is not the exporter's wrap.
-    invalid = [r['track_id'] for r in rows if r['s'] is None]
-    assert not invalid, f'{path}: objects {invalid[:5]} are neither one interval nor one wrapped interval'
+def export_counts(con: duckdb.DuckDBPyConnection, video: str, path: str, n: int) -> np.ndarray:
+    """Per-frame object counts of one clip's raw LEAP export, from each object's interval [s, e) as common.leap_intervals
+    recovers it (raising on any shape other than the exporter's wrap). Each object counts on [max(s, 0), min(e, n)),
+    as LEAP's preprocess does with start 0 and end n."""
+    # Parse the export and recover every object's interval.
+    load_leap_exports(con, [(video, path)])
+    leap_intervals(con)
+    # Every interval's bounds as arrays.
+    intervals = con.execute('SELECT interval_start, interval_end FROM leap_intervals').fetchnumpy()
     # Count every interval on the clip's frames with a difference array.
     delta = np.zeros(n + 1, dtype=np.int64)
-    starts = np.clip(np.array([r['s'] for r in rows], dtype=np.int64), 0, n)
-    ends = np.clip(np.array([r['e'] for r in rows], dtype=np.int64), 0, n)
+    starts = np.clip(np.asarray(intervals['interval_start'], dtype=np.int64), 0, n)
+    ends = np.clip(np.asarray(intervals['interval_end'], dtype=np.int64), 0, n)
     np.add.at(delta, starts, 1)
     np.add.at(delta, ends, -1)
     return np.cumsum(delta)[:n]
@@ -666,10 +620,9 @@ def cross_check_leap(con: duckdb.DuckDBPyConnection, dataset: str, sota_dir: Pat
         ORDER BY len(u.wrapped_objects) + len(u.ambiguous_full_span_objects) DESC, u.objects DESC, u.video
         LIMIT 1
     """)[0]
-    # LEAP's raw export for that clip, named by the numeric video id.
+    # LEAP's raw export for that clip, named by the numeric video id (export_counts fails when it is missing).
     path = sota_dir / dataset_name_in_sota(dataset) / 'leap' / f"{extract_video_id(clip['video'])}.json"
-    assert_files_exist([str(path)], 'raw LEAP exports')
-    recovered = export_counts(con, str(path), clip['n'])
+    recovered = export_counts(con, clip['video'], str(path), clip['n'])
     # The cache's counts for the same clip, from the pooled table (score_dataset checks there is one LEAP configuration).
     cached = con.execute("SELECT p FROM pred JOIN clips USING (clip) WHERE system = 'leap' AND video = ? ORDER BY frame",
                          [clip['video']]).fetchnumpy()['p']
@@ -733,7 +686,7 @@ def score_dataset(con: duckdb.DuckDBPyConnection, dataset: str, gt_root: Path | 
     con.executemany('INSERT INTO configs VALUES (?, ?, ?, ?)', configs)
 
     # LEAP's unwrap statistics and its ambiguous objects, excluded for the lower-bound variant.
-    unwrap_summary = load_unwrap(con, [(v, str(output_path(dataset, 'leap', leap[0], v).parent / 'unwrap.json'))
+    unwrap_summary = leap_unwrap(con, [(v, str(output_path(dataset, 'leap', leap[0], v).parent / 'unwrap.json'))
                                        for v in videos])
     excluded = con.execute("""
         SELECT 'leap_ambiguous_dropped', video, unnest(ambiguous_full_span_objects) FROM unwrap

@@ -65,10 +65,10 @@ from evaluation import p203_compare_stats as p203
 from evaluation import p204_ablation_stats as p204
 from evaluation.ablation import ABLATION_CONDITIONS
 from evaluation.p140_otif_transform import build_expected_test_video_manifest, dataset_name_in_sota
-from measurements.common import (DATASET_LABELS, PRIOR_SYSTEMS, assert_files_exist, best_accuracy_bounds,
-                                 fastest_within, file_record, load_test_tradeoff, operating_points, plain,
-                                 print_operating_points, query_dicts, results_dir, rounded, system_configs,
-                                 write_json)
+from measurements.common import (DATASET_LABELS, PRIOR_SYSTEMS, accuracy_matched, arrange_matched,
+                                 assert_files_exist, bound_specs, choose, file_record, load_test_tradeoff,
+                                 matched_stats, operating_points, plain, print_operating_points, query_dicts,
+                                 results_dir, rounded, system_configs, write_json)
 from polyis.io import cache
 from polyis.utilities import get_video_frame_count
 
@@ -377,22 +377,6 @@ def output_alignment(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:
     return out
 
 
-def bound_specs(con: duckdb.DuckDBPyConnection, table: str, losses: list[float], fit_system: str | None) -> dict[str, dict]:
-    """Keyword arguments of fastest_within per bound name: one per relative loss, plus '<system>_fit' when asked."""
-    # A loss outside [0, 1) gives a bound above the reference or at or below zero.
-    bad = [loss for loss in losses if not 0 <= loss < 1]
-    assert not bad, f'losses must be in [0, 1): {bad}'
-    # Relative bounds are named by their loss, as in r1o2_count_query; two losses must not share a name.
-    names = [f'{loss:.2f}' for loss in losses]
-    assert len(set(names)) == len(names), f'losses {losses} collide as bound names {names}'
-    # One spec per relative loss.
-    specs = {name: dict(loss=loss, bounds=None) for name, loss in zip(names, losses)}
-    # The fit bound is the system's best accuracy per dataset, so that system just qualifies.
-    if fit_system is not None:
-        specs[f'{fit_system}_fit'] = dict(loss=None, bounds=best_accuracy_bounds(con, table, fit_system))
-    return specs
-
-
 def macro_suffix(loss: float | None) -> str | None:
     """p203's macro suffix for a relative loss (FivePct for 0.05), or None when p203 names no macro for it."""
     # Fit bounds have no p203 macro.
@@ -401,20 +385,6 @@ def macro_suffix(loss: float | None) -> str | None:
     # p203 names whole percentages from 1 to 10.
     percent = round(loss * 100)
     return p203.THRESHOLD_SUFFIX_BY_PERCENT.get(percent) if math.isclose(loss * 100, percent) else None
-
-
-def choose(con: duckdb.DuckDBPyConnection, table: str, specs: dict[str, dict], systems: list[str], out: str):
-    """Table <out>(bound, dataset, system, config, fps, accuracy, reference_fps, bound_accuracy, meets_bound): fastest_within per bound."""
-    # Replace any table from a previous call.
-    con.execute(f'CREATE OR REPLACE TABLE {out} (bound VARCHAR, dataset VARCHAR, system VARCHAR, config VARCHAR, '
-                'fps DOUBLE, accuracy DOUBLE, reference_fps DOUBLE, bound_accuracy DOUBLE, meets_bound BOOLEAN)')
-    # One fastest_within call per bound; each returns one row per dataset and system with candidates.
-    rows = [(name, r['dataset'], r['system'], r['config'], r['fps'], r['accuracy'], r['reference_fps'], r['bound'],
-             r['meets_bound'])
-            for name, spec in specs.items() for r in fastest_within(con, table, spec['loss'], systems, spec['bounds'])]
-    # An empty insert is a DuckDB error, and an empty table is a valid (all-missing) result.
-    if rows:
-        con.executemany(f'INSERT INTO {out} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', rows)
 
 
 def speedup_stats(con: duckdb.DuckDBPyConnection, chosen: str) -> list[dict]:
@@ -466,75 +436,6 @@ def ratio_stats(con: duckdb.DuckDBPyConnection, chosen: str) -> list[dict]:
     """)
 
 
-def accuracy_matched(con: duckdb.DuckDBPyConnection, points: str, chosen: str, out: str):
-    """Table <out>: per bound and dataset where Tetris meets the bound, p203's accuracy-matched prior point.
-
-    p203 (select_accuracy_matched_prior_row) uses the fastest prior point meeting the bound when it is not
-    more accurate than Tetris's point, and otherwise the most accurate point of the prior systems' Pareto
-    fronts whose HOTA is not above Tetris's, even when that point misses the bound. prior is NULL when every
-    prior point is more accurate than Tetris's.
-    """
-    # The prior systems in p203's order, which breaks cross-system ties.
-    params = {'priors': list(PRIOR_SYSTEMS)}
-    # Pareto fronts, the two candidate points, and the rule's choice.
-    con.execute(f"""
-        CREATE OR REPLACE TABLE {out} AS
-        WITH pareto AS (
-            -- p203's filter_pareto_by_dataset per prior system: a point stays when no point at least as fast is
-            -- more accurate (among equal-throughput points the most accurate stays).
-            SELECT dataset, system, config, fps, accuracy FROM {points}
-            WHERE list_contains($priors, system)
-            QUALIFY accuracy >= max(accuracy) OVER (PARTITION BY dataset, system ORDER BY fps DESC
-                                                     RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-        ),
-        tetris AS (
-            SELECT bound, dataset, config, fps, accuracy, reference_fps, bound_accuracy FROM {chosen}
-            WHERE system = 'tetris' AND meets_bound
-        ),
-        fastest AS (
-            -- The fastest prior point meeting the bound; p203 keeps the earlier system on a throughput tie.
-            SELECT bound, dataset, system, config, fps, accuracy FROM {chosen}
-            WHERE system <> 'tetris' AND meets_bound
-            QUALIFY row_number() OVER (PARTITION BY bound, dataset ORDER BY fps DESC, list_position($priors, system)) = 1
-        ),
-        nearest AS (
-            -- The most accurate Pareto prior point not above Tetris's HOTA; ties go to the faster, then the earlier system.
-            SELECT t.bound, t.dataset, p.system, p.config, p.fps, p.accuracy
-            FROM tetris t JOIN pareto p ON p.dataset = t.dataset AND p.accuracy <= t.accuracy
-            QUALIFY row_number() OVER (PARTITION BY t.bound, t.dataset
-                                       ORDER BY p.accuracy DESC, p.fps DESC, list_position($priors, p.system), p.config) = 1
-        ),
-        pick AS (
-            SELECT t.*, CASE WHEN f.accuracy <= t.accuracy THEN 'fastest' WHEN n.system IS NOT NULL THEN 'nearest' END AS source,
-                   f.system AS f_system, f.config AS f_config, f.fps AS f_fps, f.accuracy AS f_accuracy,
-                   n.system AS n_system, n.config AS n_config, n.fps AS n_fps, n.accuracy AS n_accuracy
-            FROM tetris t LEFT JOIN fastest f USING (bound, dataset) LEFT JOIN nearest n USING (bound, dataset)
-        )
-        SELECT bound, dataset, config AS tetris_config, fps AS tetris_fps, accuracy AS tetris_hota, reference_fps,
-               bound_accuracy,
-               CASE source WHEN 'fastest' THEN 'threshold_feasible_not_more_accurate'
-                           WHEN 'nearest' THEN 'nearest_not_more_accurate' END AS rule,
-               CASE source WHEN 'fastest' THEN f_system ELSE n_system END AS prior,
-               CASE source WHEN 'fastest' THEN f_config ELSE n_config END AS prior_config,
-               CASE source WHEN 'fastest' THEN f_fps ELSE n_fps END AS prior_fps,
-               CASE source WHEN 'fastest' THEN f_accuracy ELSE n_accuracy END AS prior_hota
-        FROM pick
-    """, params)
-
-
-def matched_stats(con: duckdb.DuckDBPyConnection, chosen: str, matched: str) -> list[dict]:
-    """Per bound, the count, min, and max of Tetris over its accuracy-matched prior point, and how many matches miss the bound."""
-    # Every bound of the chosen table appears, with zero matches when Tetris never qualifies.
-    return query_dicts(con, f"""
-        SELECT b.bound, count(m.prior) AS matched, min(m.tetris_fps / m.prior_fps) AS min,
-               max(m.tetris_fps / m.prior_fps) AS max,
-               count(*) FILTER (WHERE m.prior IS NOT NULL AND m.prior_hota < m.bound_accuracy) AS matched_outside_bound,
-               coalesce(list_sort(list(DISTINCT m.prior) FILTER (WHERE m.prior IS NOT NULL)), []) AS prior_systems
-        FROM (SELECT DISTINCT bound FROM {chosen}) b LEFT JOIN {matched} m USING (bound)
-        GROUP BY b.bound ORDER BY b.bound
-    """)
-
-
 def dominance(con: duckdb.DuckDBPyConnection, points: str, chosen: str) -> list[dict]:
     """Per bound, dataset, and qualifying prior point, the fastest Tetris configuration at least as accurate as it.
 
@@ -576,24 +477,6 @@ def arrange_ranges(speedups: list[dict], ratios: list[dict]) -> dict:
         # A bound without any ratio has one row with a NULL system.
         if r['system'] is not None:
             entry['tetris_vs'][r['system']] = dict(datasets=r['datasets'], min=rounded(r['min'], 1), max=rounded(r['max'], 1))
-    return out
-
-
-def arrange_matched(rows: list[dict], stats: list[dict]) -> dict:
-    """{bound: {summary, per_dataset}} from the accuracy-matched table and matched_stats rows."""
-    # One summary per bound, ratios rounded as the macros are.
-    out = {s['bound']: dict(matched=s['matched'], min=rounded(s['min'], 1), max=rounded(s['max'], 1),
-                            matched_outside_bound=s['matched_outside_bound'], prior_systems=s['prior_systems'],
-                            per_dataset={}) for s in stats}
-    # Each dataset's Tetris point, the matched prior point, and whether that point meets the bound.
-    for r in rows:
-        prior = None if r['prior'] is None else dict(
-            system=r['prior'], config=r['prior_config'], hota=round(r['prior_hota'], 4), fps=round(r['prior_fps'], 1),
-            meets_bound=r['prior_hota'] >= r['bound_accuracy'], rule=r['rule'])
-        out[r['bound']]['per_dataset'][r['dataset']] = dict(
-            bound=round(r['bound_accuracy'], 4), tetris=dict(config=r['tetris_config'], hota=round(r['tetris_hota'], 4),
-                                                             fps=round(r['tetris_fps'], 1)),
-            prior=prior, tetris_speedup_vs_prior=None if prior is None else rounded(r['tetris_fps'] / r['prior_fps'], 1))
     return out
 
 

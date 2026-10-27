@@ -682,24 +682,32 @@ def write_export(path, frames):
 def test_export_counts_contiguous_wrapped_full_span_and_past_clip(con, tmp_path):
     # L = 8, clip n = 6: id 1 on [1, 3]; id 2 wrapped (head [0, 1], tail [6, 7]); id 3 on every frame; id 4 on [4, 7].
     frames = [[2, 3], [1, 2, 3], [1, 3], [1, 3], [3, 4], [3, 4], [2, 3, 4], [2, 3, 4]]
-    counts = lq.export_counts(con, write_export(tmp_path / 'x.json', frames), 6)
+    counts = lq.export_counts(con, 'te00.mp4', write_export(tmp_path / 'x.json', frames), 6)
     # Wrapped id 2 counts only on [0, 2); id 4 is clipped at the clip end; id 3 is kept whole.
     assert counts.tolist() == [2, 3, 2, 2, 2, 2]
 
 
 def test_export_counts_rejects_other_shapes(con, tmp_path):
     # Two runs that do not touch both ends are not the exporter's wrap.
-    with pytest.raises(AssertionError):
-        lq.export_counts(con, write_export(tmp_path / 'x.json', [[1], [], [1], []]), 4)
+    with pytest.raises(AssertionError, match='neither one interval nor one wrapped interval'):
+        lq.export_counts(con, 'te00.mp4', write_export(tmp_path / 'x.json', [[1], [], [1], []]), 4)
 
 
 def test_export_counts_empty_and_null(con, tmp_path):
     # An empty export and a null file are all zeros; a null frame holds no boxes.
-    assert lq.export_counts(con, write_export(tmp_path / 'e.json', []), 3).tolist() == [0, 0, 0]
+    assert lq.export_counts(con, 'te00.mp4', write_export(tmp_path / 'e.json', []), 3).tolist() == [0, 0, 0]
     (tmp_path / 'n.json').write_text('null')
-    assert lq.export_counts(con, str(tmp_path / 'n.json'), 2).tolist() == [0, 0]
+    assert lq.export_counts(con, 'te00.mp4', str(tmp_path / 'n.json'), 2).tolist() == [0, 0]
     (tmp_path / 'f.json').write_text(json.dumps([None, [{'track_id': 5}]]))
-    assert lq.export_counts(con, str(tmp_path / 'f.json'), 3).tolist() == [0, 1, 0]
+    assert lq.export_counts(con, 'te00.mp4', str(tmp_path / 'f.json'), 3).tolist() == [0, 1, 0]
+
+
+def test_export_counts_rejects_repeated_ids_and_a_missing_export(con, tmp_path):
+    # The exporter never writes one object twice on a frame, and the cross-check needs the export.
+    with pytest.raises(AssertionError, match='repeated id'):
+        lq.export_counts(con, 'te00.mp4', write_export(tmp_path / 'x.json', [[1, 1]]), 1)
+    with pytest.raises(AssertionError, match='raw LEAP exports missing'):
+        lq.export_counts(con, 'te00.mp4', str(tmp_path / 'missing.json'), 1)
 
 
 def test_export_recovery_equals_p140_unwrap(con, tmp_path):
@@ -708,14 +716,15 @@ def test_export_recovery_equals_p140_unwrap(con, tmp_path):
     length, n = 60, 50
     frames = [[] for _ in range(length)]
     for track_id in range(1, 30):
-        # Random intervals, some starting before the clip (wrapped by the exporter), some ending past it.
+        # Random intervals, some starting before the clip (wrapped by the exporter), some ending past it; an interval
+        # that wraps onto itself writes each frame once, as the exporter does (common.load_leap_exports rejects repeats).
         s, e = sorted(rng.integers(-20, length + 1, 2).tolist())
         for f in range(s, max(e, s + 1)):
-            if f < length:
+            if f < length and track_id not in frames[f]:
                 frames[f].append(track_id)
     unwrapped, _ = unwrap_leap_frames([[{'track_id': t} for t in f] for f in frames], n)
     cache_counts = [len({d['track_id'] for d in f}) for f in unwrapped] + [0] * (n - len(unwrapped))
-    assert lq.export_counts(con, write_export(tmp_path / 'x.json', frames), n).tolist() == cache_counts
+    assert lq.export_counts(con, 'te00.mp4', write_export(tmp_path / 'x.json', frames), n).tolist() == cache_counts
 
 
 def write_unwrap(path, clip_frames, export_frames, objects=0, wrapped=(), ambiguous=(), wrapped_boxes=0, past=0):
@@ -727,36 +736,43 @@ def write_unwrap(path, clip_frames, export_frames, objects=0, wrapped=(), ambigu
     return str(path)
 
 
-def test_load_unwrap_totals_and_empty_exports(con, tmp_path):
-    # te00's export is empty; te01 has one wrapped and two ambiguous objects.
+def test_leap_unwrap_returns_the_totals(con, tmp_path):
+    # te00's export is empty; te01 has one wrapped and two ambiguous objects (common.unwrap_totals' fields).
     set_clips(con, [5, 7])
     files = [('te00.mp4', write_unwrap(tmp_path / 'a.json', 5, 0)),
              ('te01.mp4', write_unwrap(tmp_path / 'b.json', 7, 9, objects=4, wrapped=[3], ambiguous=[4, 5], wrapped_boxes=2, past=6))]
-    totals = lq.load_unwrap(con, files)
+    totals = lq.leap_unwrap(con, files)
     assert totals == dict(clips=2, empty_exports=1, objects=4, wrapped_objects=1, ambiguous_full_span_objects=2,
                           clips_with_ambiguous=1, wrapped_boxes_dropped=2, boxes_past_clip_dropped=6,
                           empty_export_videos=['te00.mp4'])
+    # The table keeps the clip length under the name n, as table clips.
+    assert con.execute('SELECT video, n FROM unwrap ORDER BY video').fetchall() == [('te00.mp4', 5), ('te01.mp4', 7)]
 
 
-def test_load_unwrap_without_empty_exports_lists_none(con, tmp_path):
-    # Regression: no empty export gives an empty list, not null.
-    set_clips(con, [5])
-    assert lq.load_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'a.json', 5, 5, objects=1))])['empty_export_videos'] == []
-
-
-def test_load_unwrap_rejects_missing_files_and_other_clip_lengths(con, tmp_path):
+def test_leap_unwrap_rejects_missing_files_and_other_clip_lengths(con, tmp_path):
     # A missing unwrap.json means an old cache; a different clip length means p140 clipped elsewhere.
     set_clips(con, [5])
     with pytest.raises(AssertionError, match='unwrap.json files'):
-        lq.load_unwrap(con, [('te00.mp4', str(tmp_path / 'missing.json'))])
+        lq.leap_unwrap(con, [('te00.mp4', str(tmp_path / 'missing.json'))])
     with pytest.raises(AssertionError, match='clip lengths differ'):
-        lq.load_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'a.json', 6, 6))])
+        lq.leap_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'a.json', 6, 6))])
+
+
+def test_leap_unwrap_rejects_missing_and_extra_clips(con, tmp_path):
+    # Two clips, but statistics for only one of them, or for one that is not a clip.
+    set_clips(con, [5, 6])
+    with pytest.raises(AssertionError, match='clip lengths differ'):
+        lq.leap_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'a.json', 5, 5))])
+    with pytest.raises(AssertionError, match='clip lengths differ'):
+        lq.leap_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'a.json', 5, 5)),
+                             ('te01.mp4', write_unwrap(tmp_path / 'b.json', 6, 6)),
+                             ('te02.mp4', write_unwrap(tmp_path / 'c.json', 4, 4))])
 
 
 def cross_check_setup(con, tmp_path, cached_clip1):
     # Two 6-frame clips; te01 has a wrapped object, so the cross-check picks it; LEAP's cached counts on te01 as given.
     set_clips(con, [6, 6])
-    lq.load_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'u0.json', 6, 6, objects=1)),
+    lq.leap_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'u0.json', 6, 6, objects=1)),
                          ('te01.mp4', write_unwrap(tmp_path / 'u1.json', 6, 8, objects=2, wrapped=[2]))])
     # Raw export of te01 (video id 1): id 2 wrapped (head [0, 1], tail [6, 7]) counts on [0, 2); id 1 on [2, 4).
     write_export(tmp_path / 'sota' / 'jnc0' / 'leap' / '1.json', [[2], [2], [1], [1], [], [], [2], [2]])
@@ -781,7 +797,7 @@ def test_cross_check_reports_differing_frames(con, tmp_path):
 def test_cross_check_requires_the_raw_export(con, tmp_path):
     # Without the raw export there is nothing to compare against.
     set_clips(con, [6])
-    lq.load_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'u0.json', 6, 6))])
+    lq.leap_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'u0.json', 6, 6))])
     with pytest.raises(AssertionError, match='raw LEAP exports missing'):
         lq.cross_check_leap(con, 'jnc0', tmp_path / 'sota')
 

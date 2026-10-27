@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from evaluation.p140_otif_transform import unwrap_leap_frames
 from measurements import common
 
 
@@ -566,3 +567,267 @@ def test_runtime_items_unnumbered_reader_matches_the_numbered_one(con, tmp_path)
     with pytest.raises(duckdb.InvalidInputException, match='Malformed JSON'):
         query(con, f'SELECT * FROM ({common.runtime_items_sql("$", numbered=False)})',
               {'paths': [write_text(tmp_path / 'bad.jsonl', 'not json\n')]})
+
+
+# ---------------------------------------------------------------- p140's unwrap.json and LEAP's raw exports
+
+
+def write_unwrap(path, clip_frames, export_frames, objects=0, wrapped=(), ambiguous=(), wrapped_boxes=0, past=0, drop=()):
+    # One p140 unwrap.json, without the fields named in drop.
+    record = dict(export_frames=export_frames, clip_frames=clip_frames, objects=objects, wrapped_objects=list(wrapped),
+                  ambiguous_full_span_objects=list(ambiguous), wrapped_boxes_dropped=wrapped_boxes,
+                  boxes_past_clip_dropped=past)
+    return write_text(path, json.dumps({k: v for k, v in record.items() if k not in drop}))
+
+
+def test_load_unwrap_reads_every_field_and_names_the_clip_length_n(con, tmp_path):
+    # Two clips, one of them with every correction.
+    common.load_unwrap(con, [('te01.mp4', write_unwrap(tmp_path / 'b.json', 7, 9, objects=4, wrapped=[3],
+                                                       ambiguous=[5, 4], wrapped_boxes=2, past=6)),
+                             ('te00.mp4', write_unwrap(tmp_path / 'a.json', 5, 0))])
+    rows = query(con, 'SELECT * FROM unwrap ORDER BY video')
+    # unwrap.json's fields, its clip_frames under the name n, and lists as written.
+    assert rows == [dict(video='te00.mp4', export_frames=0, n=5, objects=0, wrapped_objects=[],
+                         ambiguous_full_span_objects=[], wrapped_boxes_dropped=0, boxes_past_clip_dropped=0),
+                    dict(video='te01.mp4', export_frames=9, n=7, objects=4, wrapped_objects=[3],
+                         ambiguous_full_span_objects=[5, 4], wrapped_boxes_dropped=2, boxes_past_clip_dropped=6)]
+
+
+@pytest.mark.parametrize('text', [
+    # An empty file has no record; a list or two lines hold two.
+    '',
+    json.dumps([dict(export_frames=5, clip_frames=5, objects=0, wrapped_objects=[], ambiguous_full_span_objects=[],
+                     wrapped_boxes_dropped=0, boxes_past_clip_dropped=0)] * 2),
+    '\n'.join([json.dumps(dict(export_frames=5, clip_frames=5, objects=0, wrapped_objects=[],
+                                ambiguous_full_span_objects=[], wrapped_boxes_dropped=0, boxes_past_clip_dropped=0))] * 2),
+])
+def test_load_unwrap_rejects_files_without_exactly_one_record(con, tmp_path, text):
+    with pytest.raises(AssertionError, match='records missing, repeated, or incomplete'):
+        common.load_unwrap(con, [('te00.mp4', write_text(tmp_path / 'u.json', text))])
+
+
+@pytest.mark.parametrize('field', ['export_frames', 'clip_frames', 'objects', 'wrapped_objects',
+                                   'ambiguous_full_span_objects', 'wrapped_boxes_dropped', 'boxes_past_clip_dropped'])
+def test_load_unwrap_rejects_a_missing_field(con, tmp_path, field):
+    # Every field is needed by one of the scripts.
+    with pytest.raises(AssertionError, match='incomplete'):
+        common.load_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'u.json', 5, 5, drop=[field]))])
+
+
+@pytest.mark.parametrize('clip_frames, export_frames', [(0, 0), (-3, 0), (5, -1)])
+def test_load_unwrap_rejects_impossible_lengths(con, tmp_path, clip_frames, export_frames):
+    # A clip has frames, and an export cannot be shorter than empty.
+    with pytest.raises(AssertionError, match='incomplete'):
+        common.load_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'u.json', clip_frames, export_frames))])
+
+
+def test_load_unwrap_rejects_missing_files_repeated_videos_and_no_files(con, tmp_path):
+    # A missing file means a LEAP cache older than the fixed p140.
+    with pytest.raises(AssertionError, match='unwrap.json files .rerun the fixed p140. missing'):
+        common.load_unwrap(con, [('te00.mp4', str(tmp_path / 'missing.json'))])
+    # One clip with two files, and no file at all.
+    path = write_unwrap(tmp_path / 'u.json', 5, 5)
+    with pytest.raises(AssertionError, match='more than once'):
+        common.load_unwrap(con, [('te00.mp4', path), ('te00.mp4', write_unwrap(tmp_path / 'v.json', 5, 5))])
+    with pytest.raises(AssertionError, match='no LEAP unwrap.json files'):
+        common.load_unwrap(con, [])
+
+
+def test_load_unwrap_rejects_malformed_json(con, tmp_path):
+    # DuckDB's JSON reader fails on a file that is not JSON.
+    with pytest.raises(duckdb.Error):
+        common.load_unwrap(con, [('te00.mp4', write_text(tmp_path / 'u.json', 'not json'))])
+
+
+def test_unwrap_totals_and_empty_exports(con, tmp_path):
+    # te00's export is empty; te01 has one wrapped and two ambiguous objects; te02 one ambiguous object.
+    common.load_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'a.json', 5, 0)),
+                             ('te01.mp4', write_unwrap(tmp_path / 'b.json', 7, 9, objects=4, wrapped=[3],
+                                                       ambiguous=[4, 5], wrapped_boxes=2, past=6)),
+                             ('te02.mp4', write_unwrap(tmp_path / 'c.json', 6, 6, objects=1, ambiguous=[1]))])
+    assert common.unwrap_totals(con) == dict(clips=3, empty_exports=1, objects=5, wrapped_objects=1,
+                                             ambiguous_full_span_objects=3, clips_with_ambiguous=2,
+                                             wrapped_boxes_dropped=2, boxes_past_clip_dropped=6,
+                                             empty_export_videos=['te00.mp4'])
+
+
+def test_unwrap_totals_without_empty_exports_lists_none(con, tmp_path):
+    # Regression: no empty export gives an empty list, not null.
+    common.load_unwrap(con, [('te00.mp4', write_unwrap(tmp_path / 'a.json', 5, 5, objects=1))])
+    assert common.unwrap_totals(con)['empty_export_videos'] == []
+    assert common.unwrap_totals(con)['empty_exports'] == 0
+
+
+def leap_export(intervals, length=None):
+    # What export-leap-outputs.py writes: each object's box at list index start + idx (a negative index wraps), a
+    # list as long as the largest end, and one box per object and frame.
+    length = max(e for _, e in intervals.values()) if length is None else length
+    frames = [[] for _ in range(length)]
+    for track_id, (s, e) in intervals.items():
+        for f in range(s, e):
+            if all(d['track_id'] != track_id for d in frames[f]):
+                frames[f].append(dict(track_id=track_id, left=0.0, top=0.0, right=1.0, bottom=1.0, score=1.0))
+    return frames
+
+
+def test_load_leap_exports_handles_null_files_frames_and_empty_lists(con, tmp_path):
+    # A null file, an empty list, and an export with a null frame.
+    files = [('te00.mp4', write_text(tmp_path / 'a.json', 'null')), ('te01.mp4', write_text(tmp_path / 'b.json', '[]')),
+             ('te02.mp4', write_text(tmp_path / 'c.json', json.dumps([None, [{'track_id': 4}], []])))]
+    common.load_leap_exports(con, files)
+    # Lengths 0, 0, 3, and one box on frame 1.
+    assert con.execute('SELECT video, L FROM export_len ORDER BY video').fetchall() == \
+        [('te00.mp4', 0), ('te01.mp4', 0), ('te02.mp4', 3)]
+    assert con.execute('SELECT video, frame, track_id FROM export_obs').fetchall() == [('te02.mp4', 1, 4)]
+
+
+def test_load_leap_exports_keeps_clips_apart(con, tmp_path):
+    # The same track id in two clips' exports stays with its clip.
+    common.load_leap_exports(con, [('te00.mp4', write_text(tmp_path / 'a.json', json.dumps(leap_export({1: (0, 2)})))),
+                                   ('te01.mp4', write_text(tmp_path / 'b.json', json.dumps(leap_export({1: (1, 3)}))))])
+    assert con.execute('SELECT video, frame, track_id FROM export_obs ORDER BY ALL').fetchall() == \
+        [('te00.mp4', 0, 1), ('te00.mp4', 1, 1), ('te01.mp4', 1, 1), ('te01.mp4', 2, 1)]
+    assert con.execute('SELECT video, L FROM export_len ORDER BY video').fetchall() == [('te00.mp4', 2), ('te01.mp4', 3)]
+
+
+@pytest.mark.parametrize('frames', [[[{'track_id': 4}, {'track_id': 4}]], [[{'left': 0.0}]], [[{'track_id': None}]]])
+def test_load_leap_exports_rejects_repeated_and_missing_ids(con, tmp_path, frames):
+    # Two boxes of one object on one frame, and boxes without an id.
+    with pytest.raises(AssertionError, match='missing or repeated id'):
+        common.load_leap_exports(con, [('te00.mp4', write_text(tmp_path / 'a.json', json.dumps(frames)))])
+
+
+def test_load_leap_exports_rejects_missing_files_repeated_videos_and_no_files(con, tmp_path):
+    # The message names the exports, so a missing one is not a bare I/O error.
+    with pytest.raises(AssertionError, match='raw LEAP exports missing'):
+        common.load_leap_exports(con, [('te00.mp4', str(tmp_path / 'missing.json'))])
+    path = write_text(tmp_path / 'a.json', '[]')
+    with pytest.raises(AssertionError, match='more than once'):
+        common.load_leap_exports(con, [('te00.mp4', path), ('te00.mp4', write_text(tmp_path / 'b.json', '[]'))])
+    with pytest.raises(AssertionError, match='no raw LEAP exports'):
+        common.load_leap_exports(con, [])
+
+
+def recover(con, tmp_path, exports):
+    # Every object's recovered interval, by (video, track_id), from {video: export frames}.
+    common.load_leap_exports(con, [(v, write_text(tmp_path / f'{v}.json', json.dumps(f))) for v, f in exports.items()])
+    common.leap_intervals(con)
+    return {(r.pop('video'), r.pop('track_id')): r for r in query(con, 'SELECT * FROM leap_intervals')}
+
+
+def test_leap_intervals_recover_every_kind(con, tmp_path):
+    rows = recover(con, tmp_path, {
+        # L = 12: contiguous, wrapped (start -3), ending on the last frame without starting at 0, longer than the
+        # export (wraps onto itself), starting at 0, exactly the whole export, and a single frame.
+        'a': leap_export({1: (2, 5), 2: (-3, 4), 3: (7, 12), 4: (-12, 12), 5: (0, 3), 6: (0, 12), 7: (5, 6)}),
+        # L = 4: the same id 1 wraps in this clip (start -1), and id 2 ends on the last frame.
+        'b': leap_export({1: (-1, 2), 2: (1, 4)}),
+    })
+    keys = ('runs', 'L', 'ambiguous', 'wrapped', 'interval_start', 'interval_end')
+    assert {k: tuple(r[c] for c in keys) for k, r in rows.items()} == {
+        ('a', 1): (1, 12, False, False, 2, 5),
+        ('a', 2): (2, 12, False, True, -3, 4),
+        ('a', 3): (1, 12, False, False, 7, 12),
+        # Both ambiguous objects are kept as [0, L), whatever their true ends.
+        ('a', 4): (1, 12, True, False, 0, 12),
+        ('a', 5): (1, 12, False, False, 0, 3),
+        ('a', 6): (1, 12, True, False, 0, 12),
+        ('a', 7): (1, 12, False, False, 5, 6),
+        ('b', 1): (2, 4, False, True, -1, 2),
+        ('b', 2): (1, 4, False, False, 1, 4),
+    }
+    # The wrapped object's head run [0, 3] and tail run [9, 11].
+    assert tuple(rows[('a', 2)][c] for c in ('head_start', 'head_end', 'tail_start', 'tail_end')) == (0, 3, 9, 11)
+
+
+def test_leap_intervals_of_empty_exports(con, tmp_path):
+    # No object, no interval, and no error.
+    assert recover(con, tmp_path, {'a': [], 'b': [[], []]}) == {}
+
+
+@pytest.mark.parametrize('ids', [
+    # A hole that touches only the start, only the end, or neither; and three runs touching both ends.
+    [[1], [], [1], []], [[], [1], [], [1]], [[], [1], [], [1], []], [[1], [], [1], [], [1]],
+])
+def test_leap_intervals_reject_other_shapes(con, tmp_path, ids):
+    # None of these is one interval or one wrapped interval.
+    frames = [[dict(track_id=t) for t in f] for f in ids]
+    with pytest.raises(AssertionError, match='neither one interval nor one wrapped interval'):
+        recover(con, tmp_path, {'a': frames})
+
+
+def test_leap_intervals_match_p140_and_the_true_intervals_on_random_exports(con, tmp_path):
+    # Twenty random 40-frame exports of 25 objects each, every one ending inside the export and some starting long
+    # before it; the first object sets the export's length.
+    rng = np.random.default_rng(0)
+    length, clip_frames = 40, 30
+    truth = {}
+    for trial in range(20):
+        ends = rng.integers(1, length + 1, 25)
+        ends[0] = length
+        truth[f'v{trial:02d}'] = {t + 1: (int(rng.integers(-length, e)), int(e)) for t, e in enumerate(ends)}
+    exports = {v: leap_export(intervals) for v, intervals in truth.items()}
+    rows = recover(con, tmp_path, exports)
+    for video, intervals in truth.items():
+        # The same wrapped and ambiguous objects as p140's unwrap.
+        _, stats = unwrap_leap_frames(exports[video], clip_frames)
+        mine = {t: r for (v, t), r in rows.items() if v == video}
+        assert sorted(t for t, r in mine.items() if r['wrapped']) == stats['wrapped_objects']
+        assert sorted(t for t, r in mine.items() if r['ambiguous']) == stats['ambiguous_full_span_objects']
+        # Every true interval, except where it covers the whole export and is kept as [0, L).
+        expected = {t: (0, length) if e - s >= length else (s, e) for t, (s, e) in intervals.items()}
+        assert {t: (r['interval_start'], r['interval_end']) for t, r in mine.items()} == expected
+    # The trials cover every kind.
+    assert {(r['wrapped'], r['ambiguous']) for r in rows.values()} == {(False, False), (True, False), (False, True)}
+
+
+# ---------------------------------------------------------------- TrackEval reruns
+
+
+def test_metric_summary_means_loosest_alpha_and_scalars():
+    # Two alphas only, for readability; counts are not averaged.
+    metrics = {'HOTA': {'HOTA': [0.2, 0.4], 'HOTA_TP': np.array([3, 1]), 'HOTA(0)': np.float64(0.5)},
+               'Count': {'Dets': np.int64(7)}}
+    out = common.metric_summary(metrics)
+    assert out['HOTA']['HOTA'] == pytest.approx(0.3) and 'HOTA_TP' not in out['HOTA']
+    assert out['HOTA']['HOTA(0)'] == 0.5 and type(out['HOTA']['HOTA(0)']) is float
+    assert out['HOTA']['alpha_0.05'] == {'HOTA': 0.2, 'HOTA_TP': 3.0}
+    assert out['Count'] == {'Dets': 7} and type(out['Count']['Dets']) is int
+
+
+def write_track_lines(path: Path, rows):
+    # A tracking.jsonl with one line per (frame_idx, tracks) pair.
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(''.join(json.dumps({'frame_idx': f, 'tracks': t}) + '\n' for f, t in rows))
+
+
+def test_trackeval_rerun_and_unscored_boxes(tmp_path):
+    # Ground truth on frames 0-3, tracks on frames 0-1 that also hold a second object the ground truth lacks.
+    gt = [(f, [[1, 0.0, 0.0, 8.0, 8.0]]) for f in range(4)]
+    tracks = [(f, [[1, 0.0, 0.0, 8.0, 8.0], [2, 50.0, 50.0, 58.0, 58.0]]) for f in range(2)]
+    write_track_lines(tmp_path / 'gt' / 'v' / 'gt.jsonl', gt)
+    write_track_lines(tmp_path / 'tr' / 'v' / 'tr.jsonl', tracks)
+    combined = common.trackeval_rerun(str(tmp_path / 'gt'), 'gt.jsonl', str(tmp_path / 'tr'), 'tr.jsonl', ['v'],
+                                      str(tmp_path / 'out'), ('HOTA', 'CLEAR', 'Identity'))
+    summary = common.metric_summary(combined)
+    # Every requested family and TrackEval's own Count.
+    assert set(summary) == {'HOTA', 'CLEAR', 'Identity', 'Count'}
+    # Two hits and two false positives on the frames both files reach; the ground truth's frames 2-3 are counted only.
+    assert (summary['Count']['GT_Dets'], summary['Count']['Dets']) == (4, 4)
+    loosest = summary['HOTA']['alpha_0.05']
+    assert (loosest['HOTA_TP'], loosest['HOTA_FN'], loosest['HOTA_FP']) == (2.0, 0.0, 2.0)
+    assert common.unscored_boxes(summary) == dict(gt=2, tracker=0)
+    # The HOTA metric alone is the default, as p110 and p141 run it.
+    assert set(common.metric_summary(common.trackeval_rerun(
+        str(tmp_path / 'gt'), 'gt.jsonl', str(tmp_path / 'tr'), 'tr.jsonl', ['v'], str(tmp_path / 'out2')))) == {'HOTA', 'Count'}
+    # An unknown family is rejected before TrackEval runs.
+    with pytest.raises(AssertionError, match='unknown TrackEval metrics'):
+        common.trackeval_rerun(str(tmp_path / 'gt'), 'gt.jsonl', str(tmp_path / 'tr'), 'tr.jsonl', ['v'], str(tmp_path / 'o'),
+                               ('MOTA',))
+
+
+def test_unscored_boxes_on_both_sides():
+    # Counts from a summary: GT_Dets - (TP + FN) and Dets - (TP + FP) at the loosest alpha, as integers.
+    summary = {'HOTA': {'alpha_0.05': {'HOTA_TP': 5.0, 'HOTA_FN': 2.0, 'HOTA_FP': 1.0}}, 'Count': {'GT_Dets': 10, 'Dets': 9}}
+    assert common.unscored_boxes(summary) == dict(gt=3, tracker=3)
+    assert all(type(v) is int for v in common.unscored_boxes(summary).values())

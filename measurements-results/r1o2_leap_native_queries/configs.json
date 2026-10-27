@@ -2,7 +2,7 @@
   "blockers": {
     "b3d_human_ground_truth": "B3D (jnc*) is scored on automatic ground truth from the same detector family as Tetris and the reference, so its results are provisional until the human-verified tracks of R1.O1 are passed with --gt-root. Provisional here: B3D1, B3D2, B3D3, B3D4.",
     "leap_run_caveats": [
-      "LEAP's native results and pseudo-labels for these runs are not on ace (possibly on another host's local /data), so LEAP's own ground-truth variants, class ids, and the true ends of its ambiguous objects cannot be recovered.",
+      "LEAP's native results and pseudo-labels for these runs are not on ace (possibly on another host's local /data), so LEAP's own ground-truth variants, class ids, and both true ends (start and end) of each of its ambiguous objects cannot be recovered.",
       "The detector, DETECT_CLASSES, and flags of the LEAP runs are unknown.",
       "B3D motion-pattern libraries may have been built from the 29-fps copies in LEAP/data/videos/jnc*, which would explain LEAP's long B3D intervals (about 3.5x the reference track length); unverified, and the libraries are not on ace.",
       "Whether LEAP's empty exports (diagnostics leap_unwrap.empty_export_videos) are genuine empty outputs or failed runs is unknown; diagnostics leap_excluding_empty_exports rescores LEAP without those clips.",

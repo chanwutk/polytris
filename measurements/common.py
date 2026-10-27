@@ -2,12 +2,16 @@
 
 Measurement scripts import shared code from here only, never from each other.
 """
+import contextlib
 import hashlib
+import io
 import json
 import os
 import re
 import socket
 import subprocess
+import sys
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -16,9 +20,15 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from evaluation.p200_compare_compute import load_sota_tradeoff_data
-from polyis.io import cache
-from polyis.utilities import dataset_root_name, load_tradeoff_data, split_tradeoff_variants
+# TrackEval is vendored as a submodule, imported the way evaluation/p110_accuracy_compute.py imports it.
+sys.path.append('/polyis/modules/TrackEval')
+import trackeval  # noqa: E402
+from trackeval.metrics import CLEAR, HOTA, Identity  # noqa: E402
+
+from evaluation.p200_compare_compute import load_sota_tradeoff_data  # noqa: E402
+from polyis.io import cache  # noqa: E402
+from polyis.trackeval.dataset import Dataset  # noqa: E402
+from polyis.utilities import dataset_root_name, load_tradeoff_data, split_tradeoff_variants  # noqa: E402
 
 
 # Prior systems compared with Tetris, as named in the SOTA cache.
@@ -31,6 +41,11 @@ RESULTS_ROOT = Path(__file__).resolve().parent.parent / 'measurements-results'
 # Schema of a tracking.jsonl line (ground truth, reference, Tetris, and converted SOTA tracks): a frame index and
 # boxes [track_id, x1, y1, x2, y2].
 TRACK_COLUMNS = "{'frame_idx': 'BIGINT', 'tracks': 'DOUBLE[][]'}"
+# Schema of the unwrap.json that evaluation/p140_otif_transform.py writes next to each corrected LEAP tracking.jsonl
+# (unwrap_leap_frames' statistics of what it removed from the raw export).
+UNWRAP_COLUMNS = ("{'export_frames': 'BIGINT', 'clip_frames': 'BIGINT', 'objects': 'BIGINT', "
+                  "'wrapped_objects': 'BIGINT[]', 'ambiguous_full_span_objects': 'BIGINT[]', "
+                  "'wrapped_boxes_dropped': 'BIGINT', 'boxes_past_clip_dropped': 'BIGINT'}")
 # Where each stage's runtime-log lines keep their op list, as JSON paths mirroring
 # evaluation/p121_throughput_compute.py's INDEX/QUERY_DATA_ACCESSORS.
 OP_LIST_PATHS = {
@@ -67,6 +82,11 @@ SPLIT_PREFIXES = {'va': 'valid', 'te': 'test'}
 # in the cache match: they keep tiles scoring exactly 63, 127, or 191 at r = 0.25, 0.5, 0.75, which 'current' drops.
 RELEVANCE_RULES = {'current': lambda scores, r: scores > r * 255,
                    'floor': lambda scores, r: scores >= np.floor(r * 255)}
+# TrackEval metric families a rerun can ask for by name. HOTA ignores its config; CLEAR and Identity only print theirs.
+TRACKEVAL_METRICS = {'HOTA': HOTA, 'CLEAR': CLEAR, 'Identity': Identity}
+# Index of HOTA's loosest alpha (0.05) in its per-alpha arrays, and the arrays that are summed counts, not means.
+LOOSEST_ALPHA = 0
+COUNT_ARRAYS = ('HOTA_TP', 'HOTA_FN', 'HOTA_FP')
 
 
 def results_dir(script_path: str) -> Path:
@@ -560,6 +580,123 @@ def print_operating_points(points: dict, metric: str, primary: str = 'tetris'):
                   + ' | '.join(cells) + f' | {primary} {ratios}')
 
 
+def bound_specs(con: duckdb.DuckDBPyConnection, table: str, losses: list[float], fit_system: str | None) -> dict[str, dict]:
+    """Keyword arguments of fastest_within per bound name: one per relative loss, plus '<system>_fit' when asked."""
+    # A loss outside [0, 1) gives a bound above the reference or at or below zero.
+    bad = [loss for loss in losses if not 0 <= loss < 1]
+    assert not bad, f'losses must be in [0, 1): {bad}'
+    # Relative bounds are named by their loss, as in r1o2_count_query; two losses must not share a name.
+    names = [f'{loss:.2f}' for loss in losses]
+    assert len(set(names)) == len(names), f'losses {losses} collide as bound names {names}'
+    # One spec per relative loss.
+    specs = {name: dict(loss=loss, bounds=None) for name, loss in zip(names, losses)}
+    # The fit bound is the system's best accuracy per dataset, so that system just qualifies.
+    if fit_system is not None:
+        specs[f'{fit_system}_fit'] = dict(loss=None, bounds=best_accuracy_bounds(con, table, fit_system))
+    return specs
+
+
+def choose(con: duckdb.DuckDBPyConnection, table: str, specs: dict[str, dict], systems: list[str], out: str):
+    """Table <out>(bound, dataset, system, config, fps, accuracy, reference_fps, bound_accuracy, meets_bound): fastest_within per bound."""
+    # Replace any table from a previous call.
+    con.execute(f'CREATE OR REPLACE TABLE {out} (bound VARCHAR, dataset VARCHAR, system VARCHAR, config VARCHAR, '
+                'fps DOUBLE, accuracy DOUBLE, reference_fps DOUBLE, bound_accuracy DOUBLE, meets_bound BOOLEAN)')
+    # One fastest_within call per bound; each returns one row per dataset and system with candidates.
+    rows = [(name, r['dataset'], r['system'], r['config'], r['fps'], r['accuracy'], r['reference_fps'], r['bound'],
+             r['meets_bound'])
+            for name, spec in specs.items() for r in fastest_within(con, table, spec['loss'], systems, spec['bounds'])]
+    # An empty insert is a DuckDB error, and an empty table is a valid (all-missing) result.
+    if rows:
+        con.executemany(f'INSERT INTO {out} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', rows)
+
+
+def accuracy_matched(con: duckdb.DuckDBPyConnection, points: str, chosen: str, out: str):
+    """Table <out>: per bound and dataset where Tetris meets the bound, p203's accuracy-matched prior point.
+
+    p203 (select_accuracy_matched_prior_row) uses the fastest prior point meeting the bound when it is not
+    more accurate than Tetris's point, and otherwise the most accurate point of the prior systems' Pareto
+    fronts whose HOTA is not above Tetris's, even when that point misses the bound. prior is NULL when every
+    prior point is more accurate than Tetris's. `points` is fastest_within's input and `chosen` choose's output.
+    """
+    # The prior systems in p203's order, which breaks cross-system ties.
+    params = {'priors': list(PRIOR_SYSTEMS)}
+    # Pareto fronts, the two candidate points, and the rule's choice.
+    con.execute(f"""
+        CREATE OR REPLACE TABLE {out} AS
+        WITH pareto AS (
+            -- p203's filter_pareto_by_dataset per prior system: a point stays when no point at least as fast is
+            -- more accurate (among equal-throughput points the most accurate stays).
+            SELECT dataset, system, config, fps, accuracy FROM {points}
+            WHERE list_contains($priors, system)
+            QUALIFY accuracy >= max(accuracy) OVER (PARTITION BY dataset, system ORDER BY fps DESC
+                                                     RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+        ),
+        tetris AS (
+            SELECT bound, dataset, config, fps, accuracy, reference_fps, bound_accuracy FROM {chosen}
+            WHERE system = 'tetris' AND meets_bound
+        ),
+        fastest AS (
+            -- The fastest prior point meeting the bound; p203 keeps the earlier system on a throughput tie.
+            SELECT bound, dataset, system, config, fps, accuracy FROM {chosen}
+            WHERE system <> 'tetris' AND meets_bound
+            QUALIFY row_number() OVER (PARTITION BY bound, dataset ORDER BY fps DESC, list_position($priors, system)) = 1
+        ),
+        nearest AS (
+            -- The most accurate Pareto prior point not above Tetris's HOTA; ties go to the faster, then the earlier system.
+            SELECT t.bound, t.dataset, p.system, p.config, p.fps, p.accuracy
+            FROM tetris t JOIN pareto p ON p.dataset = t.dataset AND p.accuracy <= t.accuracy
+            QUALIFY row_number() OVER (PARTITION BY t.bound, t.dataset
+                                       ORDER BY p.accuracy DESC, p.fps DESC, list_position($priors, p.system), p.config) = 1
+        ),
+        pick AS (
+            SELECT t.*, CASE WHEN f.accuracy <= t.accuracy THEN 'fastest' WHEN n.system IS NOT NULL THEN 'nearest' END AS source,
+                   f.system AS f_system, f.config AS f_config, f.fps AS f_fps, f.accuracy AS f_accuracy,
+                   n.system AS n_system, n.config AS n_config, n.fps AS n_fps, n.accuracy AS n_accuracy
+            FROM tetris t LEFT JOIN fastest f USING (bound, dataset) LEFT JOIN nearest n USING (bound, dataset)
+        )
+        SELECT bound, dataset, config AS tetris_config, fps AS tetris_fps, accuracy AS tetris_hota, reference_fps,
+               bound_accuracy,
+               CASE source WHEN 'fastest' THEN 'threshold_feasible_not_more_accurate'
+                           WHEN 'nearest' THEN 'nearest_not_more_accurate' END AS rule,
+               CASE source WHEN 'fastest' THEN f_system ELSE n_system END AS prior,
+               CASE source WHEN 'fastest' THEN f_config ELSE n_config END AS prior_config,
+               CASE source WHEN 'fastest' THEN f_fps ELSE n_fps END AS prior_fps,
+               CASE source WHEN 'fastest' THEN f_accuracy ELSE n_accuracy END AS prior_hota
+        FROM pick
+    """, params)
+
+
+def matched_stats(con: duckdb.DuckDBPyConnection, chosen: str, matched: str) -> list[dict]:
+    """Per bound, the count, min, and max of Tetris over its accuracy-matched prior point, and how many matches miss the bound."""
+    # Every bound of the chosen table appears, with zero matches when Tetris never qualifies.
+    return query_dicts(con, f"""
+        SELECT b.bound, count(m.prior) AS matched, min(m.tetris_fps / m.prior_fps) AS min,
+               max(m.tetris_fps / m.prior_fps) AS max,
+               count(*) FILTER (WHERE m.prior IS NOT NULL AND m.prior_hota < m.bound_accuracy) AS matched_outside_bound,
+               coalesce(list_sort(list(DISTINCT m.prior) FILTER (WHERE m.prior IS NOT NULL)), []) AS prior_systems
+        FROM (SELECT DISTINCT bound FROM {chosen}) b LEFT JOIN {matched} m USING (bound)
+        GROUP BY b.bound ORDER BY b.bound
+    """)
+
+
+def arrange_matched(rows: list[dict], stats: list[dict]) -> dict:
+    """{bound: {summary, per_dataset}} from the accuracy-matched table and matched_stats rows."""
+    # One summary per bound, ratios rounded as the macros are.
+    out = {s['bound']: dict(matched=s['matched'], min=rounded(s['min'], 1), max=rounded(s['max'], 1),
+                            matched_outside_bound=s['matched_outside_bound'], prior_systems=s['prior_systems'],
+                            per_dataset={}) for s in stats}
+    # Each dataset's Tetris point, the matched prior point, and whether that point meets the bound.
+    for r in rows:
+        prior = None if r['prior'] is None else dict(
+            system=r['prior'], config=r['prior_config'], hota=round(r['prior_hota'], 4), fps=round(r['prior_fps'], 1),
+            meets_bound=r['prior_hota'] >= r['bound_accuracy'], rule=r['rule'])
+        out[r['bound']]['per_dataset'][r['dataset']] = dict(
+            bound=round(r['bound_accuracy'], 4), tetris=dict(config=r['tetris_config'], hota=round(r['tetris_hota'], 4),
+                                                             fps=round(r['tetris_fps'], 1)),
+            prior=prior, tetris_speedup_vs_prior=None if prior is None else rounded(r['tetris_fps'] / r['prior_fps'], 1))
+    return out
+
+
 def system_configs(dataset: str) -> list[dict]:
     """Every test-split configuration of the reference pipeline, Tetris, OTIF, and LEAP on a dataset.
 
@@ -606,3 +743,218 @@ def output_path(dataset: str, system: str, config: str, video: str, kind: str = 
     assert system in PRIOR_SYSTEMS and kind == 'tracking', f'no {kind} output for system {system!r}'
     param = int(config.removeprefix('param '))
     return Path(cache.sota(system, dataset, video, 'tracking_results', f'{param:03d}', name))
+
+
+def trackeval_rerun(gt_dir: str, gt_file: str, track_dir: str, track_file: str, videos: list[str], output_dir: str,
+                    metrics: tuple[str, ...] = ('HOTA',)) -> dict:
+    """TrackEval's combined results over `videos`, configured as p110 (evaluate_tracking_accuracy) and p141 (its SOTA
+    task) configure it, with the TRACKEVAL_METRICS families named in `metrics` (TrackEval adds Count itself).
+
+    Each clip's files are <gt_dir>/<video>/<gt_file> and <track_dir>/<video>/<track_file>. Returns the vehicle class
+    combined over the clips (raw arrays and scalars); TrackEval writes nothing but an error log into output_dir.
+    """
+    # Unknown families would fail inside TrackEval with a less clear message.
+    unknown = sorted(set(metrics) - set(TRACKEVAL_METRICS))
+    assert not unknown, f'unknown TrackEval metrics {unknown}'
+    # The dataset settings p110 and p141 use (the tracker name and output subfolder do not change any result).
+    dataset_config = {
+        'output_fol': output_dir, 'output_sub_fol': 'rerun', 'input_gt': gt_file, 'input_track': track_file, 'skip': 1,
+        'tracker': 'rerun', 'seq_list': sorted(videos), 'input_dir': track_dir, 'input_gt_dir': gt_dir,
+        'input_track_dir': track_dir,
+    }
+    # The evaluator settings both use, on one core per run.
+    eval_config = {
+        'USE_PARALLEL': False, 'NUM_PARALLEL_CORES': 1, 'BREAK_ON_ERROR': True,
+        'LOG_ON_ERROR': os.path.join(output_dir, 'LOG.txt'), 'PRINT_RESULTS': False, 'PRINT_CONFIG': False,
+        'TIME_PROGRESS': False, 'OUTPUT_SUMMARY': False, 'OUTPUT_DETAILED': False, 'PLOT_CURVES': False,
+        'OUTPUT_EMPTY_CLASSES': False,
+    }
+    # TrackEval's error log needs its directory.
+    os.makedirs(output_dir, exist_ok=True)
+    # TrackEval's warnings and progress lines would interleave across worker processes.
+    with warnings.catch_warnings(), contextlib.redirect_stdout(io.StringIO()):
+        warnings.filterwarnings('ignore')
+        families = [TRACKEVAL_METRICS[name]({'PRINT_CONFIG': False}) for name in metrics]
+        results, messages = trackeval.Evaluator(eval_config).evaluate([Dataset(dataset_config)], families)
+    # The dataset class reports one tracker, 'sort', whatever the configured name.
+    assert messages['Dataset']['sort'] == 'Success', f'TrackEval failed on {track_dir}: {messages}'
+    # The vehicle class combined over every clip.
+    return results['Dataset']['sort']['COMBINED_SEQ']['vehicle']
+
+
+def metric_summary(metrics: dict) -> dict:
+    """TrackEval metric families as scalars: HOTA arrays averaged over alphas (as p130 and p142 compute HOTA_HOTA),
+    their loosest-alpha values under 'alpha_0.05', and every scalar as a Python number. Works on DATASET.json and on
+    a rerun's output."""
+    out: dict = {}
+    # A handful of fields per family; not data rows.
+    for family, fields in metrics.items():
+        # Arrays over HOTA's alphas, except the summed counts, are averaged; scalars pass through.
+        out[family] = {k: (float(np.mean(v)) if np.ndim(v) else plain(v)) for k, v in fields.items()
+                       if k not in COUNT_ARRAYS}
+        # Every array at the loosest alpha, where localization barely matters.
+        loosest = {k: float(np.asarray(v)[LOOSEST_ALPHA]) for k, v in fields.items() if np.ndim(v)}
+        # Families without arrays (Count, CLEAR, Identity) get no loosest-alpha entry.
+        if loosest:
+            out[family]['alpha_0.05'] = loosest
+    return out
+
+
+def unscored_boxes(summary: dict) -> dict[str, int]:
+    """Boxes a TrackEval run counted (Count) but did not score, from its metric_summary: ground truth GT_Dets - (TP + FN)
+    and tracker Dets - (TP + FP) at the loosest alpha, where every scored box is a hit, a miss, or a false positive."""
+    # The loosest alpha's counts are integers stored as floats; Count's are integers.
+    hota, count = summary['HOTA']['alpha_0.05'], summary['Count']
+    return dict(gt=count['GT_Dets'] - round(hota['HOTA_TP'] + hota['HOTA_FN']),
+                tracker=count['Dets'] - round(hota['HOTA_TP'] + hota['HOTA_FP']))
+
+
+def distinct_videos(files: list[tuple[str, str]], what: str):
+    """Fail when `files` ((video, path) pairs) is empty or names a video twice, since each clip has exactly one file."""
+    # Reading zero files would fail inside DuckDB with a less clear message.
+    assert files, f'no {what} to read'
+    # Videos listed more than once, in input order.
+    videos = [v for v, _ in files]
+    repeated = sorted({v for v in videos if videos.count(v) > 1})
+    assert not repeated, f'{what} list videos more than once: {repeated[:5]}'
+
+
+def load_unwrap(con: duckdb.DuckDBPyConnection, unwrap_files: list[tuple[str, str]]):
+    """Table unwrap(video, export_frames, n, objects, wrapped_objects, ambiguous_full_span_objects,
+    wrapped_boxes_dropped, boxes_past_clip_dropped) from p140's unwrap.json files, given as (video, path) pairs.
+
+    n is unwrap.json's clip_frames, the clip length p140 clipped the export to. Strict: each video is listed once,
+    every file exists (a missing one means a LEAP cache older than the fixed p140) and holds exactly one record with
+    every field set, a positive n, and a non-negative export length.
+    """
+    # One file per clip, every one of them present.
+    distinct_videos(unwrap_files, 'LEAP unwrap.json files')
+    assert_files_exist([p for _, p in unwrap_files], 'LEAP unwrap.json files (rerun the fixed p140)')
+    # Register which file belongs to which clip.
+    con.execute('CREATE OR REPLACE TABLE unwrap_files (video VARCHAR, filename VARCHAR)')
+    con.executemany('INSERT INTO unwrap_files VALUES (?, ?)', unwrap_files)
+    # Read every statistics file and attach its clip; the clip length takes the name n the scripts use for it.
+    con.execute(f"""
+        CREATE OR REPLACE TABLE unwrap AS
+        SELECT f.video, u.export_frames, u.clip_frames AS n, u.objects, u.wrapped_objects,
+               u.ambiguous_full_span_objects, u.wrapped_boxes_dropped, u.boxes_past_clip_dropped
+        FROM read_json(?, filename = true, format = 'auto', columns = {UNWRAP_COLUMNS}) u
+        JOIN unwrap_files f USING (filename)
+    """, [[p for _, p in unwrap_files]])
+    # Exactly one record per clip (an empty file has none, a JSON array may have several), complete, with sane lengths.
+    bad = query_dicts(con, """
+        SELECT f.video, count(u.video) AS records FROM unwrap_files f LEFT JOIN unwrap u USING (video)
+        GROUP BY f.video
+        HAVING records <> 1 OR bool_or(u.n IS NULL OR u.n <= 0 OR u.export_frames IS NULL OR u.export_frames < 0
+                                       OR u.objects IS NULL OR u.wrapped_objects IS NULL
+                                       OR u.ambiguous_full_span_objects IS NULL OR u.wrapped_boxes_dropped IS NULL
+                                       OR u.boxes_past_clip_dropped IS NULL)
+        ORDER BY f.video
+    """)
+    assert not bad, f'unwrap.json records missing, repeated, or incomplete: {bad[:5]}'
+
+
+def unwrap_totals(con: duckdb.DuckDBPyConnection) -> dict:
+    """Totals over the clips of table unwrap (load_unwrap): clips, empty exports and their videos, objects, wrapped
+    and ambiguous objects, clips with an ambiguous object, and the boxes p140 dropped (wrapped tails, past the clip)."""
+    # One row of totals; no empty export gives an empty video list, not null.
+    return query_dicts(con, """
+        SELECT count(*) AS clips, count(*) FILTER (export_frames = 0) AS empty_exports,
+               coalesce(list(video ORDER BY video) FILTER (export_frames = 0), []) AS empty_export_videos,
+               sum(objects) AS objects, sum(len(wrapped_objects)) AS wrapped_objects,
+               sum(len(ambiguous_full_span_objects)) AS ambiguous_full_span_objects,
+               count(*) FILTER (len(ambiguous_full_span_objects) > 0) AS clips_with_ambiguous,
+               sum(wrapped_boxes_dropped) AS wrapped_boxes_dropped, sum(boxes_past_clip_dropped) AS boxes_past_clip_dropped
+        FROM unwrap
+    """)[0]
+
+
+def load_leap_exports(con: duckdb.DuckDBPyConnection, export_files: list[tuple[str, str]]):
+    """Tables export_len(video, L) and export_obs(video, frame, track_id) from raw LEAP exports, given as (video, path)
+    pairs (export-leap-outputs.py's <video id>.json: one list of boxes per frame).
+
+    L is the export's frame-list length (0 for a null file or an empty list); a null frame holds no box. Strict: each
+    video is listed once, every file exists and parses, and every box carries a track id that appears at most once per
+    frame, as the exporter writes them.
+    """
+    # One export per clip, every one of them present.
+    distinct_videos(export_files, 'raw LEAP exports')
+    assert_files_exist([p for _, p in export_files], 'raw LEAP exports')
+    # Register which file belongs to which clip.
+    con.execute('CREATE OR REPLACE TABLE export_files (video VARCHAR, filename VARCHAR)')
+    con.executemany('INSERT INTO export_files VALUES (?, ?)', export_files)
+    # Parse each export into its frame list, keeping only the track ids.
+    con.execute("""
+        CREATE OR REPLACE TABLE export_docs AS
+        SELECT f.video, from_json(t.content, '[[{"track_id": "BIGINT"}]]') AS frames
+        FROM read_text(?) t JOIN export_files f USING (filename)
+    """, [[p for _, p in export_files]])
+    # Every clip needs exactly one parsed export.
+    bad = query_dicts(con, """
+        SELECT f.video, count(d.video) AS docs FROM export_files f LEFT JOIN export_docs d USING (video)
+        GROUP BY f.video HAVING docs <> 1 ORDER BY f.video
+    """)
+    assert not bad, f'raw exports missing or repeated: {bad[:5]}'
+    # The export's length, and one row per box with its list index as the frame.
+    con.execute('CREATE OR REPLACE TABLE export_len AS SELECT video, coalesce(len(frames), 0) AS L FROM export_docs')
+    con.execute("""
+        CREATE OR REPLACE TABLE export_obs AS
+        SELECT video, frame, box.track_id AS track_id
+        FROM (SELECT video, frame, unnest(boxes) AS box
+              FROM (SELECT video, generate_subscripts(frames, 1) - 1 AS frame, unnest(frames) AS boxes FROM export_docs))
+    """)
+    # The exporter writes one box per object and frame, always with an id.
+    bad = query_dicts(con, """
+        SELECT video, frame, track_id, count(*) AS n FROM export_obs GROUP BY ALL HAVING n > 1 OR track_id IS NULL
+        ORDER BY ALL LIMIT 5
+    """)
+    assert not bad, f'raw export boxes with a missing or repeated id in one frame: {bad}'
+
+
+def leap_intervals(con: duckdb.DuckDBPyConnection):
+    """Table leap_intervals: every exported object's interval [interval_start, interval_end), recovered from tables
+    export_obs and export_len (load_leap_exports).
+
+    export-leap-outputs.py puts box idx of an object with interval [start, end) at list index start + idx, so a
+    negative start wraps to the end of the list. One run [a, b] of consecutive frames is the interval [a, b + 1); a head
+    run from frame 0 plus a tail run ending on the export's last frame L - 1 is the wrapped interval
+    [tail_start - L, head_end + 1), as p140 reads it. One run over the whole export is ambiguous: its wrapped part may
+    overlap its real part, so both its true start and its true end are unknown, and it is kept as [0, L), as p140
+    keeps it. Columns: video, track_id, runs, L, head_start and head_end (first and last frame of the first run),
+    tail_start and tail_end (of the last run), ambiguous, wrapped, interval_start, interval_end. Any other shape (a hole
+    that does not wrap, three runs) is not the exporter's wrap and raises.
+    """
+    # Recover each object's runs, their shape, and its interval.
+    con.execute("""
+        CREATE OR REPLACE TABLE leap_intervals AS
+        WITH runs AS (
+            -- Runs of consecutive frames per object (gaps and islands).
+            SELECT video, track_id, min(frame) AS a, max(frame) AS b
+            FROM (SELECT video, track_id, frame,
+                         frame - row_number() OVER (PARTITION BY video, track_id ORDER BY frame) AS run FROM export_obs)
+            GROUP BY video, track_id, run
+        ),
+        shape AS (
+            -- The head (first) and tail (last) run of each object.
+            SELECT video, track_id, count(*) AS runs, min(a) AS head_start, min(b) AS head_end,
+                   max(a) AS tail_start, max(b) AS tail_end
+            FROM runs GROUP BY video, track_id
+        ),
+        kinds AS (
+            -- One run over the whole export is ambiguous; a head run from 0 plus a tail run to the end is wrapped.
+            SELECT sh.*, x.L,
+                   sh.runs = 1 AND sh.head_start = 0 AND sh.head_end = x.L - 1 AS ambiguous,
+                   sh.runs = 2 AND sh.head_start = 0 AND sh.tail_end = x.L - 1 AS wrapped
+            FROM shape sh JOIN export_len x USING (video)
+        )
+        -- The tail of a wrapped interval holds frames tail_start - L .. -1; the head always ends the interval.
+        SELECT video, track_id, runs, L, head_start, head_end, tail_start, tail_end, ambiguous, wrapped,
+               CASE WHEN wrapped THEN tail_start - L WHEN runs = 1 THEN head_start END AS interval_start,
+               head_end + 1 AS interval_end
+        FROM kinds
+    """)
+    # Anything but one interval or one wrapped interval contradicts the exporter.
+    bad = query_dicts(con, """
+        SELECT video, track_id, runs FROM leap_intervals WHERE interval_start IS NULL ORDER BY video, track_id LIMIT 5
+    """)
+    assert not bad, f'exported objects that are neither one interval nor one wrapped interval: {bad}'
