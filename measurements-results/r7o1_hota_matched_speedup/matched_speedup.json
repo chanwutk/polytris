@@ -6,7 +6,7 @@
       "0.10": "HOTA >= reference HOTA x (1 - loss)",
       "leap_fit": "HOTA >= LEAP's best HOTA on the dataset"
     },
-    "checks": "port_check: this script's values on p203's inputs against p203's own functions (must match, or the run stops). manuscript_check: the same values rounded to 0.1 against the submitted macros. leap_runtime_effect: p203 macros that change when LEAP's runtime is deduplicated.",
+    "checks": "port_check: this script's values on p203's inputs against p203's own functions (must match, or the run stops). manuscript_check: the same values rounded to 0.1 against the submitted macros. leap_checks.runtime: the cached LEAP runtime must equal the raw stat CSV's per-video means, summed (or the run stops).",
     "configurations": {
       "Amsterdam": {
         "leap": 1,
@@ -267,7 +267,7 @@
           }
         }
       },
-      "run_at": "2026-10-26T17:32:24+00:00",
+      "run_at": "2026-10-27T01:44:03+00:00",
       "test_rows": {
         "Amsterdam": {
           "leap": 1,
@@ -314,7 +314,7 @@
       }
     },
     "leap_fit": "Provisional with LEAP (see leap_status). LEAP's best HOTA is far below the other systems', so this bound admits nearly every Tetris and OTIF configuration; Tetris over OTIF there compares points of very different HOTA.",
-    "leap_status": "Provisional. LEAP's HOTA comes from p140_otif_transform.transform_tracking_json, which sets frame = list index; LEAP's outputs are longer than the clips and hold many same-frame identical boxes (leap_checks.output_alignment), so the conversion is unverified (R1.O2, \"document the HOTA conversion\"). Do not quote any LEAP or leap_fit number, or \"LEAP misses the 5%/10% bound\", until the conversion is fixed and rescored. LEAP's runtime is deduplicated here (leap_checks.runtime).",
+    "leap_status": "Provisional. LEAP's HOTA comes from p140_otif_transform.transform_tracking_json, which sets frame = list index; LEAP's outputs are longer than the clips and hold many same-frame identical boxes (leap_checks.output_alignment), so the conversion is unverified (R1.O2, \"document the HOTA conversion\"). Do not quote any LEAP or leap_fit number, or \"LEAP misses the 5%/10% bound\", until the conversion is fixed and rescored. LEAP's runtime is p140's per-video mean, checked against the raw stat CSV (leap_checks.runtime).",
     "manuscript_rules": {
       "compareAccuracyMatchedSpeedup{Min,Max}{FivePct,TenPct}": "accuracy_matched (abstract l.25, introduction l.106-110 and l.138, Section 7 l.208-211, conclusion l.25). Its matched prior point may miss the bound (accuracy_matched.<bound>.per_dataset.*.prior_meets_bound).",
       "compareNaiveSpeedup{Min,Max}{FivePct,TenPct}": "ranges.<bound>.systems.tetris (same sentences).",
@@ -325,7 +325,7 @@
     "ratios": "Speedups and ratios divide unrounded throughputs, then round to 0.1 (common.operating_points).",
     "selection": "Operating points are chosen by test-split HOTA among the test runs of each system's validated Pareto configurations (p135), the manuscript's method. Candidate pools differ by system (configurations): Tetris has tens of configurations per dataset, OTIF about ten, LEAP one.",
     "throughput": {
-      "leap": "inference_total - decode per test video from LEAP's raw stat CSV, so decoding is excluded; repeated runs of a video are averaged (leap_checks.runtime). p140 uses the total row instead.",
+      "leap": "runtime from p140 (p142's table): inference_total - decode per test video from LEAP's raw stat CSV, so decoding is excluded, with repeated runs of a video averaged; checked against the raw CSV (leap_checks.runtime).",
       "otif": "runtime_total from OTIF's stat CSV (p140 normalize_otif_stat_csv). OTIF's per-stage columns (seg, detect, track, decode) sum to more than runtime_total, so stages overlap and its decoding time cannot be separated out.",
       "prior_fps": "Prior systems' throughput is the test split's frame count (our clips) over their runtime, as in evaluation/p200_compare_compute.py and p203, not the frames the system decoded.",
       "tetris_and_reference": "throughput_fps from p130's tradeoff table: test frames over the stage runtimes p121 sums, without the ops total_frame_time, read_frame, save_canvas, and save_mapping_files, and without read and retrieve in p020 classification."
@@ -2226,108 +2226,76 @@
     },
     "runtime": {
       "Amsterdam": {
-        "deduplicated_fps": 555.6,
-        "deduplicated_runtime_s": 97.2053,
-        "deduplicated_speedup_vs_reference": 36.4,
+        "fps": 555.6,
         "max_run_spread": 0.0,
         "max_runs_per_video": 1,
-        "p142_fps": 555.6,
-        "p142_runtime_s": 97.2053,
-        "p142_speedup_vs_reference": 36.4,
+        "runtime_s": 97.2053,
         "same_frames_across_runs": true,
         "stat_rows": 60,
         "total_row_runtime_s": 97.2053,
         "videos": 60
       },
       "B3D1": {
-        "deduplicated_fps": 265.3,
-        "deduplicated_runtime_s": 20.2567,
-        "deduplicated_speedup_vs_reference": 18.0,
+        "fps": 265.3,
         "max_run_spread": 0.0,
         "max_runs_per_video": 1,
-        "p142_fps": 265.3,
-        "p142_runtime_s": 20.2567,
-        "p142_speedup_vs_reference": 18.0,
+        "runtime_s": 20.2567,
         "same_frames_across_runs": true,
         "stat_rows": 5,
         "total_row_runtime_s": 20.2567,
         "videos": 5
       },
       "B3D2": {
-        "deduplicated_fps": 181.7,
-        "deduplicated_runtime_s": 25.8219,
-        "deduplicated_speedup_vs_reference": 12.6,
+        "fps": 181.7,
         "max_run_spread": 0.0,
         "max_runs_per_video": 1,
-        "p142_fps": 181.7,
-        "p142_runtime_s": 25.8219,
-        "p142_speedup_vs_reference": 12.6,
+        "runtime_s": 25.8219,
         "same_frames_across_runs": true,
         "stat_rows": 5,
         "total_row_runtime_s": 25.8219,
         "videos": 5
       },
       "B3D3": {
-        "deduplicated_fps": 30.0,
-        "deduplicated_runtime_s": 172.8528,
-        "deduplicated_speedup_vs_reference": 2.1,
+        "fps": 30.0,
         "max_run_spread": 0.0,
         "max_runs_per_video": 1,
-        "p142_fps": 30.0,
-        "p142_runtime_s": 172.8528,
-        "p142_speedup_vs_reference": 2.1,
+        "runtime_s": 172.8528,
         "same_frames_across_runs": true,
         "stat_rows": 5,
         "total_row_runtime_s": 172.8528,
         "videos": 5
       },
       "B3D4": {
-        "deduplicated_fps": 268.2,
-        "deduplicated_runtime_s": 19.4815,
-        "deduplicated_speedup_vs_reference": 18.5,
+        "fps": 268.2,
         "max_run_spread": 0.0,
         "max_runs_per_video": 1,
-        "p142_fps": 268.2,
-        "p142_runtime_s": 19.4815,
-        "p142_speedup_vs_reference": 18.5,
+        "runtime_s": 19.4815,
         "same_frames_across_runs": true,
         "stat_rows": 5,
         "total_row_runtime_s": 19.4815,
         "videos": 5
       },
       "CalDoT1": {
-        "deduplicated_fps": 747.0,
-        "deduplicated_runtime_s": 72.2873,
-        "deduplicated_speedup_vs_reference": 24.2,
+        "fps": 747.0,
         "max_run_spread": 0.1603,
         "max_runs_per_video": 2,
-        "p142_fps": 747.0,
-        "p142_runtime_s": 72.2873,
-        "p142_speedup_vs_reference": 24.2,
+        "runtime_s": 72.2873,
         "same_frames_across_runs": true,
         "stat_rows": 120,
         "total_row_runtime_s": 144.5746,
         "videos": 60
       },
       "CalDoT2": {
-        "deduplicated_fps": 1012.8,
-        "deduplicated_runtime_s": 53.3189,
-        "deduplicated_speedup_vs_reference": 32.8,
+        "fps": 1012.8,
         "max_run_spread": 0.1537,
         "max_runs_per_video": 2,
-        "p142_fps": 1012.8,
-        "p142_runtime_s": 53.3189,
-        "p142_speedup_vs_reference": 32.8,
+        "runtime_s": 53.3189,
         "same_frames_across_runs": true,
         "stat_rows": 120,
         "total_row_runtime_s": 106.6378,
         "videos": 60
       }
     }
-  },
-  "leap_runtime_effect": {
-    "0.05": {},
-    "0.10": {}
   },
   "manuscript_check": {
     "0.05": {
@@ -3224,7 +3192,7 @@
     "bounds": [
       "leap_fit"
     ],
-    "reason": "Provisional. LEAP's HOTA comes from p140_otif_transform.transform_tracking_json, which sets frame = list index; LEAP's outputs are longer than the clips and hold many same-frame identical boxes (leap_checks.output_alignment), so the conversion is unverified (R1.O2, \"document the HOTA conversion\"). Do not quote any LEAP or leap_fit number, or \"LEAP misses the 5%/10% bound\", until the conversion is fixed and rescored. LEAP's runtime is deduplicated here (leap_checks.runtime).",
+    "reason": "Provisional. LEAP's HOTA comes from p140_otif_transform.transform_tracking_json, which sets frame = list index; LEAP's outputs are longer than the clips and hold many same-frame identical boxes (leap_checks.output_alignment), so the conversion is unverified (R1.O2, \"document the HOTA conversion\"). Do not quote any LEAP or leap_fit number, or \"LEAP misses the 5%/10% bound\", until the conversion is fixed and rescored. LEAP's runtime is p140's per-video mean, checked against the raw stat CSV (leap_checks.runtime).",
     "systems": [
       "leap"
     ]

@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from measurements import r9o3_ilp_instance_sizes as ilp
+from polyis.io import store
 
 
 # p022 parameter strings used as configurations in the synthetic tables (they must parse like real ones).
@@ -99,28 +100,6 @@ def random_instance(rng, frames, rows, cols, density, max_rate):
     tile_ids, lengths = ilp.group(bitmaps)
     max_dist = rng.integers(1, max_rate + 1, size=(rows, cols)).astype(np.float64)
     return tile_ids, lengths, max_dist
-
-
-def test_decode_grids_roundtrip():
-    # Two 2x3 frames with their frame indices.
-    grids = np.arange(12, dtype=np.uint8).reshape(2, 2, 3)
-    decoded, idx = ilp.decode_grids(entries(grids, [0, 4]))
-    # Values, shape, and indices survive the hex round trip.
-    assert decoded.shape == (2, 2, 3) and (decoded == grids).all() and idx == [0, 4]
-
-
-def test_decode_grids_rejects_bad_files():
-    # A file without frames cannot be an instance.
-    with pytest.raises(AssertionError):
-        ilp.decode_grids([])
-    # Frames with different grids.
-    with pytest.raises(AssertionError):
-        ilp.decode_grids(entries(np.zeros((1, 2, 2))) + entries(np.zeros((1, 3, 2))))
-    # A hex string shorter than its declared grid.
-    short = entries(np.zeros((1, 2, 2)))
-    short[0]['classification_hex'] = '0000'
-    with pytest.raises(AssertionError):
-        ilp.decode_grids(short)
 
 
 def test_binarize_current_rule_uses_strict_cutoff():
@@ -418,7 +397,7 @@ def make_cache(tmp_path, monkeypatch, layout, split='test'):
                 (score / 'runtime.jsonl').write_text('')
     # A non-video file in the videoset directory is ignored, as p022 ignores it.
     (store_dir / split / 'notes.txt').write_text('')
-    monkeypatch.setattr(ilp.store, 'dataset', lambda dataset, *args: store_dir.joinpath(*args))
+    monkeypatch.setattr(store, 'dataset', lambda dataset, *args: store_dir.joinpath(*args))
     monkeypatch.setattr(ilp.cache, 'exec', lambda dataset, stage, video, *args:
                         cache_dir.joinpath(video, '022_pruned_polyominoes', *args))
 
@@ -461,7 +440,7 @@ def test_video_tasks_empty_and_missing_videoset(tmp_path, monkeypatch):
     tasks, coverage = ilp.video_tasks('d', 'valid', set())
     assert tasks == [] and coverage['configs'] == 0 and coverage['missing_instances'] == 0
     # A missing videoset directory is an error.
-    monkeypatch.setattr(ilp.store, 'dataset', lambda dataset, *args: tmp_path / 'nowhere')
+    monkeypatch.setattr(store, 'dataset', lambda dataset, *args: tmp_path / 'nowhere')
     with pytest.raises(AssertionError):
         ilp.video_tasks('d', 'valid', set())
 

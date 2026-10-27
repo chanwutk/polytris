@@ -66,9 +66,9 @@ def test_load_points_uses_manuscript_labels(con, monkeypatch):
     # Every dataset gets the same configurations; HOTA is copied into accuracy.
     monkeypatch.setattr(ms, 'system_configs', lambda d: VALID_CONFIGS)
     ms.load_points(con, ['jnc0', 'caldot1-y05'])
-    rows = con.execute('SELECT DISTINCT dataset FROM p142_points ORDER BY dataset').fetchall()
+    rows = con.execute('SELECT DISTINCT dataset FROM hota_points ORDER BY dataset').fetchall()
     assert rows == [('B3D1',), ('CalDoT1',)]
-    assert con.execute('SELECT count(*) FROM p142_points WHERE hota <> accuracy').fetchone()[0] == 0
+    assert con.execute('SELECT count(*) FROM hota_points WHERE hota <> accuracy').fetchone()[0] == 0
     # The tie order follows p204's dataset order, CalDoT1 before B3D1.
     assert con.execute('SELECT dataset FROM dataset_order ORDER BY ord').fetchall() == [('CalDoT1',), ('B3D1',)]
 
@@ -116,7 +116,7 @@ def fake_tradeoff(rows, ref_fps=10.0, ref_hota=0.8, classifier='ShuffleNet05', f
 
 def test_load_tetris_knobs_rejects_perfect_classifier(con, monkeypatch):
     # The oracle classifier is dropped by p203 and p204 but not by system_configs, so it is an error.
-    make_points(con, [('B3D1', 'tetris', 'c', 20.0, 0.8)], table='p142_points')
+    make_points(con, [('B3D1', 'tetris', 'c', 20.0, 0.8)])
     monkeypatch.setattr(ms, 'load_test_tradeoff', lambda d: fake_tradeoff([('c', 1, None, 20.0, 0.8)], classifier='Perfect'))
     with pytest.raises(AssertionError, match='Perfect'):
         ms.load_tetris_knobs(con, ['jnc0'])
@@ -124,7 +124,7 @@ def test_load_tetris_knobs_rejects_perfect_classifier(con, monkeypatch):
 
 def test_load_tetris_knobs_rejects_disagreement(con, monkeypatch):
     # The knob rows and system_configs' rows come from one file; a difference means the loaders drifted.
-    make_points(con, [('B3D1', 'tetris', 'c', 20.0, 0.8)], table='p142_points')
+    make_points(con, [('B3D1', 'tetris', 'c', 20.0, 0.8)])
     monkeypatch.setattr(ms, 'load_test_tradeoff', lambda d: fake_tradeoff([('c', 1, None, 21.0, 0.8)]))
     with pytest.raises(AssertionError, match='differ'):
         ms.load_tetris_knobs(con, ['jnc0'])
@@ -132,7 +132,7 @@ def test_load_tetris_knobs_rejects_disagreement(con, monkeypatch):
 
 def test_load_tetris_knobs_keeps_null_threshold_and_frames(con, monkeypatch):
     # A NaN threshold (no pruning) arrives as NULL, and the frame count is recorded.
-    make_points(con, [('B3D1', 'tetris', 'c', 20.0, 0.8)], table='p142_points')
+    make_points(con, [('B3D1', 'tetris', 'c', 20.0, 0.8)])
     monkeypatch.setattr(ms, 'load_test_tradeoff', lambda d: fake_tradeoff([('c', 1, None, 20.0, 0.8)], frames=250))
     ms.load_tetris_knobs(con, ['jnc0'])
     assert con.execute('SELECT threshold IS NULL FROM tetris_knobs').fetchone()[0]
@@ -152,10 +152,9 @@ def test_load_clips_must_add_up_to_frame_count(con, monkeypatch):
     assert con.execute('SELECT DISTINCT raw FROM clips').fetchall() == [('jnc0',)]
 
 
-def setup_leap(con, tmp_path, lines, leap_rows=(('B3D1', 'leap', 'param 0', 1.0, 0.05),)):
-    # One B3D1 dataset with two clips (60 and 40 frames) and the given LEAP stat CSV lines.
-    make_points(con, [('B3D1', 'reference', 'naive', 10.0, 0.8), ('B3D1', 'tetris', 't', 50.0, 0.8), *leap_rows],
-                table='p142_points')
+def setup_leap(con, tmp_path, lines, leap_rows=(('B3D1', 'leap', 'param 0', 100 / 3.5, 0.05),)):
+    # One B3D1 dataset with two clips (60 and 40 frames), the cached LEAP rows, and the given LEAP stat CSV lines.
+    make_points(con, [('B3D1', 'reference', 'naive', 10.0, 0.8), ('B3D1', 'tetris', 't', 50.0, 0.8), *leap_rows])
     con.execute("CREATE OR REPLACE TABLE frame_counts AS SELECT 'B3D1' AS dataset, 100.0::DOUBLE AS frames")
     con.execute("""CREATE OR REPLACE TABLE clips AS SELECT * FROM (VALUES ('B3D1', 'jnc0', 1, 'te01.mp4', 60.0::DOUBLE),
                    ('B3D1', 'jnc0', 4, 'te04.mp4', 40.0::DOUBLE)) t(dataset, raw, video_id, video, frames)""")
@@ -163,26 +162,34 @@ def setup_leap(con, tmp_path, lines, leap_rows=(('B3D1', 'leap', 'param 0', 1.0,
     (tmp_path / 'jnc0' / 'leap_jnc0.csv').write_text('\n'.join([LEAP_HEADER, *lines]) + '\n')
 
 
-def test_leap_runtime_averages_repeated_runs(con, tmp_path):
-    # Video 1 ran twice (runtimes 2 and 3 after decode), video 4 twice (1 and 1); the total row sums all four.
-    setup_leap(con, tmp_path, ['1,3.0,0,0,0,0,1.0,9,7', '4,2.0,0,0,0,0,1.0,9,7', '1,4.0,0,0,0,0,1.0,9,7',
-                               '4,2.0,0,0,0,0,1.0,9,7', 'total,11.0,0,0,0,0,4.0,36,28'])
-    out = ms.correct_leap_runtime(con, str(tmp_path))['B3D1']
-    # One run per video: 2.5 + 1.0 = 3.5 s, so 100 / 3.5 fps instead of the total row's 7 s.
+# Video 1 ran twice (runtimes 2 and 3 after decode), video 4 twice (1 and 1); the total row sums all four.
+REPEATED_RUNS = ['1,3.0,0,0,0,0,1.0,9,7', '4,2.0,0,0,0,0,1.0,9,7', '1,4.0,0,0,0,0,1.0,9,7', '4,2.0,0,0,0,0,1.0,9,7',
+                 'total,11.0,0,0,0,0,4.0,36,28']
+
+
+def test_leap_runtime_check_averages_repeated_runs(con, tmp_path):
+    # One run per video: 2.5 + 1.0 = 3.5 s, which the cached 100 / 3.5 fps matches; the total row's 7 s does not.
+    setup_leap(con, tmp_path, REPEATED_RUNS)
+    out = ms.check_leap_runtime(con, str(tmp_path))['B3D1']
     assert (out['videos'], out['stat_rows'], out['max_runs_per_video']) == (2, 4, 2)
-    assert (out['deduplicated_runtime_s'], out['total_row_runtime_s'], out['max_run_spread']) == (3.5, 7.0, 0.5)
-    assert out['same_frames_across_runs'] and out['deduplicated_fps'] == round(100 / 3.5, 1)
-    # p142's runtime is the frame count over its throughput (1 fps here).
-    assert out['p142_runtime_s'] == 100.0
-    # hota_points carries the corrected LEAP throughput and leaves every other row alone.
+    assert (out['runtime_s'], out['total_row_runtime_s'], out['max_run_spread']) == (3.5, 7.0, 0.5)
+    assert out['same_frames_across_runs'] and out['fps'] == round(100 / 3.5, 1)
+    # The check leaves the points table alone.
     assert con.execute("SELECT fps FROM hota_points WHERE system = 'leap'").fetchone()[0] == pytest.approx(100 / 3.5)
-    assert con.execute("SELECT fps FROM hota_points WHERE system = 'tetris'").fetchone()[0] == 50.0
+
+
+def test_leap_runtime_check_rejects_a_cached_runtime_that_sums_repeated_runs(con, tmp_path):
+    # A cache built from the total row (7 s, both runs summed) is the bug p140 fixed; the run stops.
+    setup_leap(con, tmp_path, REPEATED_RUNS, leap_rows=(('B3D1', 'leap', 'param 0', 100 / 7.0, 0.05),))
+    with pytest.raises(AssertionError, match='cached LEAP runtime differs'):
+        ms.check_leap_runtime(con, str(tmp_path))
 
 
 def test_leap_runtime_flags_runs_with_different_frames(con, tmp_path):
     # Two runs that sampled different frames are not repeats of one run; the JSON says so.
-    setup_leap(con, tmp_path, ['1,3.0,0,0,0,0,1.0,9,7', '1,3.0,0,0,0,0,1.0,8,7', '4,2.0,0,0,0,0,1.0,9,7'])
-    assert ms.correct_leap_runtime(con, str(tmp_path))['B3D1']['same_frames_across_runs'] is False
+    setup_leap(con, tmp_path, ['1,3.0,0,0,0,0,1.0,9,7', '1,3.0,0,0,0,0,1.0,8,7', '4,2.0,0,0,0,0,1.0,9,7'],
+               leap_rows=(('B3D1', 'leap', 'param 0', 100 / 3.0, 0.05),))
+    assert ms.check_leap_runtime(con, str(tmp_path))['B3D1']['same_frames_across_runs'] is False
 
 
 @pytest.mark.parametrize('lines, message', [
@@ -195,25 +202,25 @@ def test_leap_runtime_rejects_bad_stat_rows(con, tmp_path, lines, message):
     # A missing test video, an extra video, a non-numeric name, and a zero runtime are all errors.
     setup_leap(con, tmp_path, lines)
     with pytest.raises(AssertionError, match=message):
-        ms.correct_leap_runtime(con, str(tmp_path))
+        ms.check_leap_runtime(con, str(tmp_path))
 
 
 def test_leap_runtime_rejects_missing_csv_and_several_configs(con, tmp_path):
     # No raw stat CSV for the dataset.
     setup_leap(con, tmp_path, ['1,3.0,0,0,0,0,1.0,9,7', '4,2.0,0,0,0,0,1.0,9,7'])
-    with pytest.raises(AssertionError, match='missing raw LEAP stat CSV'):
-        ms.correct_leap_runtime(con, str(tmp_path / 'elsewhere'))
+    with pytest.raises(AssertionError, match='raw LEAP stat CSVs missing'):
+        ms.check_leap_runtime(con, str(tmp_path / 'elsewhere'))
     # The stat CSV describes one configuration, so two LEAP configurations are an error.
     setup_leap(con, tmp_path, ['1,3.0,0,0,0,0,1.0,9,7', '4,2.0,0,0,0,0,1.0,9,7'],
                leap_rows=(('B3D1', 'leap', 'param 0', 1.0, 0.05), ('B3D1', 'leap', 'param 1', 2.0, 0.04)))
     with pytest.raises(AssertionError, match='more than one configuration'):
-        ms.correct_leap_runtime(con, str(tmp_path))
+        ms.check_leap_runtime(con, str(tmp_path))
 
 
 def setup_outputs(con, tmp_path, leap, otif):
     # One B3D1 clip of 3 frames, with LEAP's and OTIF param 0's raw outputs given as JSON-ready values.
     make_points(con, [('B3D1', 'reference', 'naive', 10.0, 0.8), ('B3D1', 'otif', 'param 0', 1.0, 0.5),
-                      ('B3D1', 'leap', 'param 0', 1.0, 0.05)], table='p142_points')
+                      ('B3D1', 'leap', 'param 0', 1.0, 0.05)])
     con.execute("CREATE OR REPLACE TABLE clips AS SELECT 'B3D1' AS dataset, 'jnc0' AS raw, 1 AS video_id, 'te01.mp4' AS video, 3.0::DOUBLE AS frames")
     for sub, data in (('leap', leap), ('0', otif)):
         (tmp_path / 'jnc0' / sub).mkdir(parents=True, exist_ok=True)
@@ -241,7 +248,7 @@ def test_output_alignment_null_file_and_missing_file(con, tmp_path):
     assert out['leap']['param 0']['duplicate_share'] is None and out['otif']['param 0']['detections'] == 0
     # A missing output file is an error naming it.
     (tmp_path / 'jnc0' / '0' / '1.json').unlink()
-    with pytest.raises(AssertionError, match='missing raw SOTA outputs'):
+    with pytest.raises(AssertionError, match='raw SOTA outputs missing'):
         ms.output_alignment(con, str(tmp_path))
 
 
@@ -437,14 +444,6 @@ def test_check_same_mismatches_and_rounded():
     assert out['a'] == {'p203': 1.0, 'measured': 1.0 + 1e-12, 'match': True}
     assert (out['b']['match'], out['c']['match'], out['d']['match'], out['e']['match']) == (True, True, False, False)
     assert ms.mismatches({'0.05': out}) == ['0.05/d', '0.05/e']
-    # Rounding for the manuscript touches floats only.
-    assert ms.rounded({'x': 4.66, 'n': 7, 's': 'A', 'z': None}) == {'x': 4.7, 'n': 7, 's': 'A', 'z': None}
-
-
-def test_r1_rounds_and_keeps_missing():
-    # One decimal, as the macros print, and None stays None.
-    assert ms.r1(4.66) == 4.7
-    assert ms.r1(None) is None
 
 
 def make_knobs(con, rows, ref=(('B3D1', 10.0, 0.8),)):
@@ -514,7 +513,7 @@ def test_ablation_report_condition_without_candidates(con):
 
 
 # Synthetic raw inputs for main(). Per dataset: reference (fps, HOTA); Tetris (config, sample rate, threshold, fps, HOTA);
-# OTIF (param, fps, HOTA); LEAP (deduplicated fps, HOTA); clips (video id, frames); LEAP's runs per video in its stat CSV.
+# OTIF (param, fps, HOTA); LEAP (fps, HOTA); clips (video id, frames); LEAP's runs per video in its stat CSV.
 DIFFERENTIAL = {
     # Tetris's 5% point sits exactly on the bound (0.8 x 0.95); OTIF param 2 is dominated (off its Pareto front).
     'jnc0': dict(ref=(10.0, 0.8), clips=((1, 60), (4, 40)), leap=(150.0, 0.05),
@@ -553,12 +552,13 @@ def install_world(tmp_path, monkeypatch, world, args=()):
         return pd.DataFrame(rows)
 
     def sota(datasets, system):
-        # load_sota_tradeoff_data's shape; LEAP's p142 runtime counts every repeated run, as p140 does.
+        # load_sota_tradeoff_data's shape; LEAP's p142 runtime counts each video's mean run once, as p140 does since
+        # 2026-10-26 (p142_leap_scale 2 reproduces the earlier cache, which summed both runs of a doubled export).
         rows = []
         for d in datasets:
             w = world[d]
             params = ([(p, frames[d] / f, h) for p, f, h in w['otif']] if system == 'otif'
-                      else [(0, w.get('leap_runs', 1) * frames[d] / w['leap'][0], w['leap'][1])])
+                      else [(0, w.get('p142_leap_scale', 1) * frames[d] / w['leap'][0], w['leap'][1])])
             rows += [dict(system=system.upper(), param_id=p, dataset=d, videoset='test', time=t, HOTA_HOTA=h,
                           throughput_fps=math.nan, sample_rate=1) for p, t, h in params]
             rows.append(dict(system=system.upper(), param_id=99, dataset=d, videoset='valid', time=1e-6, HOTA_HOTA=0.99,
@@ -623,8 +623,9 @@ def test_main_agrees_with_p203_and_p204(tmp_path, monkeypatch):
     assert (abl['ablationOneSpeedupAvg'], abl['ablationOneSpeedupMaxDataset']) == (7.5, 'B3D2')
     # The validation-split rows never win.
     assert report['operating_points']['0.05']['B3D1']['systems']['tetris']['config'] == 'boundary'
-    # LEAP's doubled stat rows on B3D2 are deduplicated: 20 fps instead of p142's 10 fps.
-    assert (report['leap_checks']['runtime']['B3D2']['p142_fps'], report['leap_checks']['runtime']['B3D2']['deduplicated_fps']) == (10.0, 20.0)
+    # LEAP's doubled stat rows on B3D2 count once: the cached 20 fps matches the raw CSV's per-video means.
+    runtime = report['leap_checks']['runtime']['B3D2']
+    assert (runtime['stat_rows'], runtime['max_runs_per_video'], runtime['fps'], runtime['runtime_s']) == (4, 2, 20.0, 5.0)
     assert report['operating_points']['leap_fit']['B3D2']['systems']['leap']['fps'] == 20.0
     # LEAP's outputs are 3 entries longer than every clip and half their boxes are duplicates; OTIF's end early.
     alignment = report['leap_checks']['output_alignment']['B3D1']
@@ -655,18 +656,26 @@ def test_main_seven_datasets_writes_checks_and_caveats(tmp_path, monkeypatch):
     # Matching OTIF's 0.78 HOTA instead, the fastest Tetris configuration is 'pruned' (50 / 40 = 1.25 -> 1.2).
     assert report['dominance']['0.05']['B3D1']['otif']['tetris']['config'] == 'pruned'
     assert report['dominance']['0.05']['B3D1']['otif']['tetris']['speedup_vs_prior'] == 1.2
-    # LEAP is marked provisional, and CalDoT's doubled LEAP runtime is halved.
+    # LEAP is marked provisional, and CalDoT's doubled LEAP export counts each video once (60 fps, not 30).
     assert report['provisional']['systems'] == ['leap'] and 'leap_fit' in report['provisional']['bounds']
     assert 'matched comparison' not in json.dumps(report['about'])
     assert report['leap_checks']['runtime']['CalDoT1']['max_runs_per_video'] == 2
-    # The matched maximum is CalDoT's LEAP point: 200 / 30 = 6.7x with p142's doubled runtime, 200 / 60 = 3.3x deduplicated.
-    effect = report['leap_runtime_effect']
-    assert sorted(effect) == ['0.05', '0.10'] and list(effect['0.05']) == ['compareAccuracyMatchedSpeedupMaxFivePct']
-    assert effect['0.05']['compareAccuracyMatchedSpeedupMaxFivePct'] == pytest.approx(dict(p142=200 / 30, deduplicated=200 / 60))
+    assert report['leap_checks']['runtime']['CalDoT1']['fps'] == 60.0
+    # The matched maximum is CalDoT's LEAP point at 200 / 60 = 3.3x; nothing is re-derived, so no effect section.
+    assert report['accuracy_matched']['0.05']['per_dataset']['CalDoT1']['tetris_speedup_vs_prior'] == 3.3
+    assert 'leap_runtime_effect' not in report
     # The B3D caveat and the input provenance are in both reports.
     assert 'R1.O1' in report['about']['ground_truth'] and 'R1.O1' in ablation['about']['ground_truth']
     assert report['about']['inputs']['run_at'] and report['about']['inputs']['files']['B3D1']['leap_stat']['exists']
     assert ablation['bounds']['0.05']['no_both']['mean_speedup'] == 3.0
+
+
+def test_main_writes_nothing_when_the_cached_leap_runtime_sums_repeated_runs(tmp_path, monkeypatch):
+    # A p142 table built before the p140 fix (both runs of a doubled export summed) stops the run unwritten.
+    out = install_world(tmp_path, monkeypatch, {'jnc2': dict(SIMPLE, leap_runs=2, p142_leap_scale=2)}, ['--datasets', 'jnc2'])
+    with pytest.raises(AssertionError, match='cached LEAP runtime differs'):
+        ms.main()
+    assert not list(out.glob('*.json'))
 
 
 def test_main_writes_nothing_on_perfect_classifier(tmp_path, monkeypatch):

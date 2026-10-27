@@ -121,7 +121,7 @@ def test_load_profile_reads_thresholds_from_file_names(tmp_path):
     assert profile['gaps'] == GAPS and np.array_equal(profile['counts'], counts)
     # Input records name the files read and their versions; no partial/ directory means no check.
     inputs = profile['inputs']
-    assert inputs['max_rate_table']['path'].endswith('max_rate_table.npy') and len(inputs['counts']['md5']) == 32
+    assert inputs['max_rate_table']['path'].endswith('max_rate_table.npy') and len(inputs['counts']['sha256']) == 64
     assert inputs['partial_files'] == 0 and inputs['counts_equal_partial_sum'] is None
 
 
@@ -144,10 +144,10 @@ def test_load_profile_rejects_table_not_in_ascending_threshold_order(tmp_path):
 
 @pytest.mark.parametrize('name', ['counts.npy', 'accuracy.npy', 'max_rate_table.npy', 'sample_rates.json'])
 def test_load_profile_missing_file(tmp_path, name):
-    # A profile without one of its files fails with the p016 hint.
+    # A profile without one of its files fails with the p016 hint, naming the file.
     directory = write_profile(tmp_path / 'p', tile_counts(EASY))
     (directory / name).unlink()
-    with pytest.raises(AssertionError, match=f'missing {name}'):
+    with pytest.raises(AssertionError, match=f'p016_tune_track_rate.py.*missing.*{name}'):
         gt.load_profile(directory)
 
 
@@ -533,7 +533,7 @@ def test_validated_configs_empty_table(con):
 
 def test_list_test_videos(tmp_cache):
     # Missing videoset, an empty one, and a listing that keeps only video files in sorted order.
-    with pytest.raises(AssertionError, match='missing test videoset'):
+    with pytest.raises(AssertionError, match='does not exist'):
         gt.list_test_videos('d')
     directory = store.dataset('d', 'test')
     directory.mkdir(parents=True)

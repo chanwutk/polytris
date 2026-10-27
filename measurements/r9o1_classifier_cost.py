@@ -37,14 +37,13 @@ import argparse
 import json
 import os
 import re
-import socket
-import subprocess
-from datetime import datetime, timezone
 
 import duckdb
 import numpy as np
 
-from measurements.common import DATASET_LABELS, fastest_within, load_test_tradeoff, query_dicts, results_dir, write_json
+from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, PRUNE_STAGE, assert_files_exist, fastest_tetris,
+                                 host_info, iso_utc, load_test_tradeoff, load_tradeoff_points, query_dicts,
+                                 results_dir, runtime_items_sql, write_json)
 from polyis.io import cache
 from polyis.utilities import CONFIG_DIR, get_config
 
@@ -54,8 +53,6 @@ STAGE_OPERATORS = {'020_exec_classify': 'classify', '022_exec_prune_polyominoes'
                    '040_exec_detect': 'detect', '050_exec_uncompress': 'unpack', '060_exec_track': 'track'}
 # The classification stage, whose time must equal the operating point's p020 run.
 CLASSIFY_STAGE = '020_exec_classify'
-# The pruning stage, which runs only for configurations with a tracking-accuracy threshold.
-PRUNE_STAGE = '022_exec_prune_polyominoes'
 # The reference pipeline's stages in the same manifest: detection on every frame, then tracking.
 REFERENCE_STAGES = {'001_preprocess_groundtruth_detection': 'detect', '002_preprocess_groundtruth_tracking': 'track'}
 # The manifest stage whose runtime file is the reference detector's per-frame log.
@@ -106,52 +103,27 @@ def parse_args():
 
 def load_configs(con: duckdb.DuckDBPyConnection, datasets: list[str]):
     """Table configs(dataset, system, config, fps, accuracy, ...) of the reference and every Tetris test configuration."""
-    # One row per configuration, with the parameters the breakdown needs.
-    con.execute('CREATE OR REPLACE TABLE configs (dataset VARCHAR, system VARCHAR, config VARCHAR, fps DOUBLE, '
-                'accuracy DOUBLE, classifier VARCHAR, tilesize INTEGER, sample_rate INTEGER, '
-                'tracking_accuracy_threshold DOUBLE, frame_count BIGINT, seconds DOUBLE)')
-    for dataset in datasets:
-        # Validated test-split configurations and the reference row, from the pipeline's tradeoff table.
-        tetris, naive = load_test_tradeoff(dataset)
-        # The reference row: its HOTA bounds every configuration.
-        con.execute("INSERT INTO configs VALUES (?, 'reference', 'naive', ?, ?, NULL, NULL, NULL, NULL, ?, ?)",
-                    [dataset, float(naive['throughput_fps']), float(naive['HOTA_HOTA']),
-                     int(naive['frame_count']), float(naive['time'])])
-        # Every Tetris configuration, read straight from the pandas frame (NaN thresholds become NULL).
-        con.register('tetris_frame', tetris)
-        con.execute("""
-            INSERT INTO configs SELECT $dataset, 'tetris', variant_id, throughput_fps, HOTA_HOTA, classifier, tilesize,
-                   sample_rate, tracking_accuracy_threshold, frame_count, time
-            FROM tetris_frame
-        """, {'dataset': dataset})
-        # Release the view so the next dataset can register its own frame.
-        con.unregister('tetris_frame')
+    # One row per configuration from the pipeline's tradeoff table, with the parameters the breakdown needs.
+    load_tradeoff_points(con, 'configs', {d: load_test_tradeoff(d) for d in datasets},
+                         {'classifier': 'VARCHAR', 'tilesize': 'INTEGER', 'sample_rate': 'INTEGER',
+                          'tracking_accuracy_threshold': 'DOUBLE', 'frame_count': 'BIGINT', 'time': 'DOUBLE'})
 
 
 def choose_operating_points(con: duckdb.DuckDBPyConnection, loss: float):
     """Table chosen: per dataset, the fastest Tetris configuration within `loss` of the reference HOTA."""
-    # Per dataset, the fastest Tetris configuration whose HOTA is within the bound.
-    rows = fastest_within(con, 'configs', loss, ['tetris'])
-    # A dataset without a qualifying configuration has no operating point to break down.
-    missed = [r['dataset'] for r in rows if not r['meets_bound']]
-    assert not missed, f'no Tetris configuration within {loss:.0%} HOTA loss on {missed}'
+    # Per dataset, the fastest Tetris configuration whose HOTA is within the bound; every dataset needs one.
+    rows = fastest_tetris(con, 'configs', loss)
     # Keep the chosen names in a table so the parameters can be joined in SQL.
     con.execute('CREATE OR REPLACE TABLE chosen_names (dataset VARCHAR, config VARCHAR)')
-    con.executemany('INSERT INTO chosen_names VALUES (?, ?)', [(r['dataset'], r['config']) for r in rows])
-    # Attach the configuration's parameters and the reference row it is bounded by.
+    con.executemany('INSERT INTO chosen_names VALUES (?, ?)', [(r['dataset'], r['config']) for r in rows.values()])
+    # Attach the configuration's parameters and the reference row it is bounded by (the tradeoff's time is seconds).
     con.execute("""
         CREATE OR REPLACE TABLE chosen AS
-        SELECT t.*, r.accuracy AS reference_accuracy, r.fps AS reference_fps, r.seconds AS reference_seconds
+        SELECT t.* EXCLUDE ("time"), t."time" AS seconds, r.accuracy AS reference_accuracy, r.fps AS reference_fps,
+               r."time" AS reference_seconds
         FROM chosen_names n JOIN configs t ON t.dataset = n.dataset AND t.config = n.config AND t.system = 'tetris'
         JOIN configs r ON r.dataset = n.dataset AND r.system = 'reference'
     """)
-
-
-def assert_files_exist(paths: list[str], what: str):
-    """Fail with the missing paths, instead of a bare DuckDB IOException later."""
-    # Every input table must exist before DuckDB reads it.
-    missing = [p for p in paths if not os.path.exists(p)]
-    assert not missing, f'missing {what}: {missing}'
 
 
 def classifier_rates(dataset: str, video: str, classifier: str, tilesize: int) -> list[int]:
@@ -172,7 +144,7 @@ def runtime_files(con: duckdb.DuckDBPyConnection, manifests: dict[str, str]) -> 
     `manifests` maps each dataset to its throughput manifest (query_execution.csv); needs table chosen.
     """
     # A missing manifest would otherwise surface as a bare DuckDB error.
-    assert_files_exist(list(manifests.values()), 'throughput manifests (run evaluation/p120 --test)')
+    assert_files_exist(manifests.values(), 'throughput manifests (run evaluation/p120 --test)')
     # The manifest lists the reference detector's log of every test video; the classifier logs sit beside it.
     rows = query_dicts(con, """
         SELECT m.dataset, m.video, m.runtime_file, c.classifier, c.tilesize
@@ -208,8 +180,7 @@ def runtime_files(con: duckdb.DuckDBPyConnection, manifests: dict[str, str]) -> 
     # Then the detector logs the manifest lists.
     files += [(r['dataset'], r['video'], 'detector', None, r['runtime_file']) for r in rows]
     # A missing log would silently drop a video from one side of the comparison.
-    absent = [f[4] for f in files if not os.path.exists(f[4])]
-    assert not absent, f'{len(absent)} runtime logs missing, e.g. {absent[:3]}'
+    assert_files_exist([f[4] for f in files], 'runtime logs')
     return files
 
 
@@ -219,34 +190,27 @@ def load_runtime_lines(con: duckdb.DuckDBPyConnection, files: list[tuple]):
     con.execute('CREATE OR REPLACE TABLE runtime_files (dataset VARCHAR, video VARCHAR, kind VARCHAR, sample_rate INTEGER, '
                 'filename VARCHAR)')
     con.executemany('INSERT INTO runtime_files VALUES (?, ?, ?, ?, ?)', files)
-    # Read each log whole and split it into lines, keeping their order.
-    con.execute("""
-        CREATE OR REPLACE TABLE runtime_text AS
-        SELECT filename, last_modified, string_split(trim(content, chr(10)), chr(10)) AS lines
-        FROM read_text($paths)
-    """, {'paths': [f[4] for f in files]})
-    # Number the lines from 1 and parse each non-blank line as a [{op, time}] list.
-    con.execute("""
-        CREATE OR REPLACE TABLE runtime_parsed AS
-        WITH numbered AS (
-            SELECT filename, unnest(lines) AS text, generate_subscripts(lines, 1) AS line FROM runtime_text
-        )
-        SELECT filename, line, json_transform(text, '[{"op": "VARCHAR", "time": "DOUBLE"}]') AS entries
-        FROM numbered WHERE trim(text) <> ''
-    """)
+    # p002 and p020 both log one [{op, time}] list per line, so one JSON path reads both sides.
+    assert OP_LIST_PATHS[CLASSIFY_STAGE] == OP_LIST_PATHS[DETECTOR_STAGE], 'p002 and p020 logs differ in layout'
+    # Every op of every non-blank log line, in line order.
+    con.execute(f'CREATE OR REPLACE TABLE runtime_items AS {runtime_items_sql(OP_LIST_PATHS[CLASSIFY_STAGE])}',
+                {'paths': [f[4] for f in files]})
     # A line that is not a non-empty list (an object, null, or []) would vanish when unnested.
-    bad = query_dicts(con, 'SELECT filename, line FROM runtime_parsed WHERE entries IS NULL OR len(entries) = 0 LIMIT 5')
+    bad = query_dicts(con, """
+        SELECT DISTINCT filename, line FROM runtime_items WHERE list_type IS DISTINCT FROM 'ARRAY' OR items = 0 LIMIT 5
+    """)
     assert not bad, f'runtime log lines that are not a non-empty [{{op, time}}] list: {bad}'
     # One row per op, labeled with its log's dataset, video, side, and run.
     con.execute("""
         CREATE OR REPLACE TABLE runtime_ops AS
-        WITH ops AS (SELECT filename, line, unnest(entries, recursive := true) FROM runtime_parsed)
-        SELECT f.dataset, f.video, f.kind, f.sample_rate, o.line, o.op, o.time FROM ops o JOIN runtime_files f USING (filename)
+        SELECT f.dataset, f.video, f.kind, f.sample_rate, o.line, o.op, o.time
+        FROM runtime_items o JOIN runtime_files f USING (filename)
     """)
     # When each log was written, to show which runs the timings come from.
     con.execute("""
         CREATE OR REPLACE TABLE runtime_logs AS
-        SELECT f.dataset, f.video, f.kind, f.sample_rate, t.last_modified FROM runtime_text t JOIN runtime_files f USING (filename)
+        SELECT f.dataset, f.video, f.kind, f.sample_rate, t.last_modified
+        FROM (SELECT DISTINCT filename, last_modified FROM runtime_items) t JOIN runtime_files f USING (filename)
     """)
 
 
@@ -434,7 +398,7 @@ def detector_model(dataset: str, first_log_epoch: float) -> dict:
     if out['weights_found']:
         # The weights' modification time, in UTC.
         modified = os.path.getmtime(path)
-        out['weights_modified'] = datetime.fromtimestamp(modified, timezone.utc).isoformat(timespec='seconds')
+        out['weights_modified'] = iso_utc(modified)
         out['weights_predate_first_log'] = modified < first_log_epoch
     return out
 
@@ -762,20 +726,6 @@ def share_report(con: duckdb.DuckDBPyConnection, loss: float) -> dict:
     """)[0]['m']
     # Per-dataset entries and the cross-dataset share summary.
     return dict(loss=loss, datasets=datasets, summary=summary)
-
-
-def host_info() -> dict:
-    """The host whose cache was read; the runs presumably executed on it, since the cache is local, but no log says so."""
-    # GPU names from nvidia-smi, which only queries the driver and runs nothing on the GPUs.
-    try:
-        gpus = subprocess.run(['nvidia-smi', '--query-gpu=name', '--format=csv,noheader'],
-                              capture_output=True, text=True, check=True).stdout.split('\n')
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        gpus = []
-    # One entry per distinct GPU model, with how many the host has.
-    names = [g.strip() for g in gpus if g.strip()]
-    # Host name, CPU count, and GPU models with counts.
-    return dict(hostname=socket.gethostname(), cpus=os.cpu_count(), gpus={g: names.count(g) for g in sorted(set(names))})
 
 
 def hardware_notes(con: duckdb.DuckDBPyConnection) -> dict:

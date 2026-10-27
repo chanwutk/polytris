@@ -62,38 +62,21 @@ Writes measurements-results/r9o3_ilp_timings/:
 """
 import argparse
 import glob
-import os
-import re
 from pathlib import Path
 
 import duckdb
-import pandas as pd
 
-from measurements.common import DATASET_LABELS, fastest_within, load_test_tradeoff, query_dicts, results_dir, write_json
-from polyis.io import cache, store
+from evaluation.manifests import list_split_videos
+from measurements.common import (DATASET_LABELS, PRUNE_DIR, PRUNE_STAGE, SPLIT_PREFIXES, VARIANT_PATTERN,
+                                 assert_files_exist, default_time_limit, load_prune_runs, load_pruning_points,
+                                 load_test_tradeoff, pruning_operating_points, query_dicts, results_dir, write_json)
+from polyis.io import cache
 
 
-# Pruning stage directory written by p022, and its stage name in the throughput tables.
-PRUNE_DIR = cache.EXEC_STAGE_MAP['pruned-polyominoes']
-PRUNE_STAGE = '022_exec_prune_polyominoes'
-# The pruning script, whose call to solve_ilp sets the default solve budget.
-P022_SOURCE = Path(__file__).resolve().parent.parent / 'scripts' / 'p022_exec_prune_polyominoes.py'
 # p022 runs mp.cpu_count() // 4 processes at once; the logs were written on ace, which has 80 CPUs.
 PRUNE_WORKERS = 20
 # Writes further apart than this belong to different p022 invocations (observed: under 1 minute within, 9 hours between).
 INVOCATION_GAP_S = 600
-# Video file extensions p022 lists in a split directory.
-VIDEO_EXTENSIONS = ('.mp4', '.avi', '.mov', '.mkv')
-# Schema of one runtime.jsonl record (a single JSON object per file).
-RUNTIME_SCHEMA = '{"runtime": [{"op": "VARCHAR", "time": "DOUBLE"}], "time_limit": "DOUBLE"}'
-# Dataset, video, and pruning parameter string from a runtime.jsonl path.
-PATH_PATTERN = rf'([^/]+)/execution/([^/]+)/{PRUNE_DIR}/([^/]+)/score/runtime\.jsonl$'
-# p022's parameter string: classifier, tile size, sampling rate, accuracy threshold, relevance threshold, tracker.
-PARAM_PATTERN = r'^(.+)_([0-9]+)_([0-9]+)_([0-9]{3})_r([0-9]{3})_([^_]+)$'
-# A throughput variant id adds tile padding and canvas scale before the tracker; dropping them gives p022's string.
-VARIANT_PATTERN = r'^(.+_[0-9]{3}_r[0-9]{3})_[^_]+_s[0-9]+_([^_]+)$'
-# Video-name prefix of each split.
-SPLITS = {'va': 'valid', 'te': 'test'}
 # The three per-run quantities summarized.
 TIMINGS = ('build_ms', 'solve_ms', 'build_plus_solve_ms')
 # Largest allowed difference between the throughput table's ILP time and the p022 log it was parsed from.
@@ -105,15 +88,6 @@ def parse_args():
     parser.add_argument('--datasets', nargs='+', default=list(DATASET_LABELS))
     parser.add_argument('--loss', type=float, default=0.05)
     return parser.parse_args()
-
-
-def default_time_limit(source: Path = P022_SOURCE) -> float:
-    """The solve budget in seconds that p022 applies when --time-limit is not given, read from its source."""
-    # p022 passes `time_limit_seconds=time_limit or <default>` to solve_ilp.
-    matches = re.findall(r'time_limit_seconds\s*=\s*time_limit\s+or\s+([0-9]*\.?[0-9]+)', source.read_text())
-    # Exactly one call site, or the default is ambiguous.
-    assert len(matches) == 1, f'{source}: expected one `time_limit or <default>` call, found {len(matches)}'
-    return float(matches[0])
 
 
 def runtime_files(cache_root: Path, datasets: list[str]) -> list[str]:
@@ -130,11 +104,10 @@ def runtime_files(cache_root: Path, datasets: list[str]) -> list[str]:
 
 def split_videos(datasets: list[str]) -> list[tuple[str, str, str]]:
     """(dataset, split, video) for every video p022 lists in each dataset's validation and test directories."""
-    # p022 lists each split directory and prunes the video files in it in sorted order.
-    rows = [(d, split, f) for d in datasets for split in SPLITS.values()
-            for f in sorted(os.listdir(store.dataset(d, split))) if f.endswith(VIDEO_EXTENSIONS)]
+    # p022 lists each split directory and prunes the video files in it in sorted order, as list_split_videos does.
+    rows = [(d, split, f) for d in datasets for split in SPLIT_PREFIXES.values() for f in list_split_videos(d, split)]
     # A split without videos would leave its runs without a first clip.
-    empty = sorted({(d, s) for d in datasets for s in SPLITS.values()} - {(d, s) for d, s, _ in rows})
+    empty = sorted({(d, s) for d in datasets for s in SPLIT_PREFIXES.values()} - {(d, s) for d, s, _ in rows})
     assert not empty, f'no videos listed for (dataset, split) {empty}'
     # Listing rows in dataset, split, and sorted video order.
     return rows
@@ -144,58 +117,11 @@ def load_runs(con: duckdb.DuckDBPyConnection, files: list[str], default_limit: f
               videos: list[tuple[str, str, str]], workers: int = PRUNE_WORKERS, gap_s: float = INVOCATION_GAP_S):
     """Table runs: one row per pruning run with its parameters, budget, build/solve/stage times in ms, and clip position.
 
-    `videos` lists (dataset, split, video) as p022 saw each split directory (see split_videos); it
-    is kept as table split_videos for the coverage report.
+    The runs are read strictly by common.load_prune_runs. `videos` lists (dataset, split, video) as p022 saw each
+    split directory (see split_videos); it is kept as table split_videos for the coverage report.
     """
-    # Reading zero files would fail inside DuckDB with a less clear message.
-    assert files, 'no runtime files to read'
-    # Read every file whole: a strict JSON parse rejects extra lines, missing keys, and non-numeric times.
-    con.execute(f"""
-        CREATE OR REPLACE TABLE raw_runs AS
-        SELECT filename, last_modified,
-               json_transform_strict(content, '{RUNTIME_SCHEMA}') AS rec,
-               regexp_extract(filename, '{PATH_PATTERN}', ['dataset', 'video', 'param']) AS loc
-        FROM read_text(?)
-    """, [files])
-    # Every path must name a dataset, video, and parameter string.
-    bad = query_dicts(con, "SELECT filename FROM raw_runs WHERE loc.param = '' LIMIT 5")
-    assert not bad, f'unrecognized runtime paths: {bad}'
-    # One row per logged operation, so missing and repeated operations can be counted.
-    con.execute("""
-        CREATE OR REPLACE TABLE run_ops AS
-        SELECT filename, unnest(rec.runtime, recursive := true) FROM raw_runs
-    """)
-    # Each run must log build_ilp and solve_ilp exactly once, and no negative or missing time.
-    bad = query_dicts(con, """
-        SELECT r.filename, count(*) FILTER (o.op = 'build_ilp') AS builds, count(*) FILTER (o.op = 'solve_ilp') AS solves,
-               count(*) FILTER (o.time < 0 OR (o.op IS NOT NULL AND o.time IS NULL)) AS invalid
-        FROM raw_runs r LEFT JOIN run_ops o USING (filename)
-        GROUP BY r.filename HAVING builds <> 1 OR solves <> 1 OR invalid > 0 LIMIT 5
-    """)
-    assert not bad, f'runs without exactly one valid build_ilp and solve_ilp: {bad}'
-    # Parse the parameter string and split, apply p022's `time_limit or default`, and sum the stage.
-    con.execute(f"""
-        CREATE OR REPLACE TABLE runs AS
-        WITH params AS (
-            SELECT filename, last_modified, loc.dataset, loc.video, loc.param, rec.time_limit,
-                   regexp_extract(loc.param, '{PARAM_PATTERN}',
-                                  ['classifier', 'tilesize', 'sample_rate', 'threshold', 'relevance', 'tracker']) AS p
-            FROM raw_runs
-        ),
-        times AS (
-            SELECT filename, sum(time) FILTER (op = 'build_ilp') AS build_ms, sum(time) FILTER (op = 'solve_ilp') AS solve_ms,
-                   sum(time) AS stage_ms
-            FROM run_ops GROUP BY filename
-        )
-        SELECT dataset, video, param, CASE {' '.join(f"WHEN video LIKE '{k}%' THEN '{v}'" for k, v in SPLITS.items())} END AS split,
-               TRY_CAST(p.sample_rate AS INTEGER) AS sample_rate, TRY_CAST(p.tilesize AS INTEGER) AS tilesize,
-               time_limit, coalesce(nullif(time_limit, 0), $default_limit) AS budget_s,
-               build_ms, solve_ms, build_ms + solve_ms AS build_plus_solve_ms, stage_ms, last_modified, filename
-        FROM params JOIN times USING (filename)
-    """, {'default_limit': default_limit})
-    # Every run must belong to a known split and carry a parseable sampling rate.
-    bad = query_dicts(con, 'SELECT filename FROM runs WHERE split IS NULL OR sample_rate IS NULL LIMIT 5')
-    assert not bad, f'runs with an unknown split or unparseable parameter string: {bad}'
+    # Every saved run, parsed and validated, with p022's `time_limit or default` budget.
+    load_prune_runs(con, files, default_limit)
     # The split directory listings p022 iterated, one row per video.
     con.execute('CREATE OR REPLACE TABLE split_videos (dataset VARCHAR, split VARCHAR, video VARCHAR)')
     # Insert the listing only when there is one (executemany needs at least one row).
@@ -359,8 +285,7 @@ def timing_report(con: duckdb.DuckDBPyConnection, default_limit: float, workers:
 def load_throughput_ops(con: duckdb.DuckDBPyConnection, paths: dict[str, Path]):
     """Table ops(dataset, variant_id, video, stage, op, seconds) from p121's per-operation tables, test split only."""
     # A missing table would silently drop a dataset.
-    missing = [str(p) for p in paths.values() if not Path(p).exists()]
-    assert not missing, f'missing throughput tables (run p120/p121 --test): {missing}'
+    assert_files_exist(paths.values(), 'throughput tables (run p120/p121 --test)')
     # Read every dataset's table at once with the columns this measurement needs typed explicitly.
     con.execute("""
         CREATE OR REPLACE TABLE ops AS
@@ -410,41 +335,6 @@ def variant_videos(con: duckdb.DuckDBPyConnection) -> dict:
     assert (check['max_abs_diff_ms'] or 0) <= MATCH_TOLERANCE_MS, f'throughput ILP times differ from the p022 logs: {check}'
     # The check itself goes into the report.
     return check
-
-
-def load_points(con: duckdb.DuckDBPyConnection, tradeoffs: dict) -> None:
-    """Table points(dataset, system, config, fps, accuracy, time_s, prunes) from {dataset: (tetris rows, reference row)}.
-
-    System 'tetris' holds every validated configuration and 'tetris_pruned' only those that prune
-    (a tracking-accuracy threshold is set); accuracy is test HOTA.
-    """
-    # An empty mapping has no dataset to report.
-    assert tradeoffs, 'no tradeoff tables'
-    # Every dataset's Tetris configurations in one frame, with whether each prunes.
-    tetris_df = pd.concat([t[['variant_id', 'throughput_fps', 'HOTA_HOTA', 'time']].assign(
-                               dataset=d, prunes=t['tracking_accuracy_threshold'].notna())
-                           for d, (t, _) in tradeoffs.items()], ignore_index=True)
-    # Every dataset's reference row in one frame.
-    naive_df = pd.DataFrame([dict(dataset=d, fps=n['throughput_fps'], accuracy=n['HOTA_HOTA'], time_s=n['time'])
-                             for d, (_, n) in tradeoffs.items()])
-    # Expose both frames to DuckDB.
-    con.register('tetris_df', tetris_df)
-    con.register('naive_df', naive_df)
-    # The reference row, every configuration as 'tetris', and the pruning ones again as 'tetris_pruned'.
-    con.execute("""
-        CREATE OR REPLACE TABLE points AS
-        SELECT dataset::VARCHAR AS dataset, 'reference' AS system, 'naive' AS config, fps::DOUBLE AS fps,
-               accuracy::DOUBLE AS accuracy, time_s::DOUBLE AS time_s, false AS prunes FROM naive_df
-        UNION ALL
-        SELECT dataset, 'tetris', variant_id::VARCHAR, throughput_fps::DOUBLE, HOTA_HOTA::DOUBLE, "time"::DOUBLE, prunes
-        FROM tetris_df
-        UNION ALL
-        SELECT dataset, 'tetris_pruned', variant_id::VARCHAR, throughput_fps::DOUBLE, HOTA_HOTA::DOUBLE, "time"::DOUBLE, prunes
-        FROM tetris_df WHERE prunes
-    """)
-    # The frames are no longer needed once copied.
-    con.unregister('tetris_df')
-    con.unregister('naive_df')
 
 
 def variant_runtimes(con: duckdb.DuckDBPyConnection):
@@ -497,21 +387,14 @@ def point_entry(row: dict, runtime: dict, clips: dict | None) -> dict:
 
 def extraction_report(con: duckdb.DuckDBPyConnection, loss: float) -> dict:
     """Per dataset: the ILP's share of extraction at the operating point, at the fastest pruning point, and over all pruning points."""
-    # Fastest configuration within the bound, among all and among pruning configurations.
-    chosen = fastest_within(con, 'points', loss, ['tetris', 'tetris_pruned'])
+    # Fastest configuration within the bound, among all and among pruning configurations (table chosen_points).
+    chosen = pruning_operating_points(con, loss)
     # Every dataset in points needs an operating-point row, or it would silently drop out of the report.
     missing = ({r['dataset'] for r in query_dicts(con, 'SELECT DISTINCT dataset FROM points')}
                - {r['dataset'] for r in chosen if r['system'] == 'tetris'})
     assert not missing, f'no Tetris configuration for datasets {sorted(missing)}'
     # Each configuration's runtime row, keyed by (dataset, config).
     runtime = {(r['dataset'], r['config']): r for r in query_dicts(con, 'SELECT * FROM variant_runtime')}
-    # The selected configurations that meet the bound, named by their role.
-    con.execute('CREATE OR REPLACE TABLE chosen_points (dataset VARCHAR, point VARCHAR, config VARCHAR)')
-    selected = [(r['dataset'], 'operating_point' if r['system'] == 'tetris' else 'fastest_pruning_point', r['config'])
-                for r in chosen if r['meets_bound']]
-    # Insert them only when there are any (executemany needs at least one row).
-    if selected:
-        con.executemany('INSERT INTO chosen_points VALUES (?, ?, ?)', selected)
     # The saved p022 runs behind each selected pruning configuration's test videos.
     con.execute("""
         CREATE OR REPLACE TABLE point_runs AS
@@ -539,11 +422,9 @@ def extraction_report(con: duckdb.DuckDBPyConnection, loss: float) -> dict:
             all_pruning_configs=spread.get(r['dataset']),
             # Replaced below unless the dataset has no validated pruning configuration at all.
             fastest_pruning_point=dict(meets_bound=False, best_hota=None)))
-        # The role of this selection.
-        name = 'operating_point' if r['system'] == 'tetris' else 'fastest_pruning_point'
         # The configuration's shares and clip timings, or the best accuracy it reached when none meets the bound.
-        entry[name] = (point_entry(r, runtime[(r['dataset'], r['config'])], clips.get((r['dataset'], name)))
-                       if r['meets_bound'] else dict(meets_bound=False, best_hota=r['best_accuracy']))
+        entry[r['point']] = (point_entry(r, runtime[(r['dataset'], r['config'])], clips.get((r['dataset'], r['point'])))
+                             if r['meets_bound'] else dict(meets_bound=False, best_hota=r['best_accuracy']))
     # Keyed by the manuscript's dataset label.
     return out
 
@@ -567,7 +448,7 @@ def main():
     # Extraction runtime per configuration from the throughput tables, checked against the p022 logs and the tradeoff tables.
     load_throughput_ops(con, {d: cache.eval(d, 'tp', 'measurements', 'query_execution_per_op.csv') for d in args.datasets})
     matches = variant_videos(con)
-    load_points(con, {d: load_test_tradeoff(d) for d in args.datasets})
+    load_pruning_points(con, {d: load_test_tradeoff(d) for d in args.datasets})
     variant_runtimes(con)
     extraction = dict(
         source='<cache>/<dataset>/evaluation/080_throughput/measurements/query_execution_per_op.csv (test split), '

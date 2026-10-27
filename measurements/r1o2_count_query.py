@@ -39,15 +39,14 @@ Writes measurements-results/r1o2_count_query/:
                          Tetris's speedup over OTIF and LEAP
 """
 import argparse
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
 import cv2
 import duckdb
 
-from measurements.common import (PRIOR_SYSTEMS, best_accuracy_bounds, operating_points, output_path,
-                                 print_operating_points, query_dicts, results_dir, system_configs, write_json)
+from measurements.common import (PRIOR_SYSTEMS, TRACK_COLUMNS, assert_files_exist, best_accuracy_bounds, operating_points,
+                                 output_path, print_operating_points, query_dicts, results_dir, system_configs, write_json)
 from polyis.io import store
 
 
@@ -59,8 +58,6 @@ CALDOT2_BOTTOM = ((322, 363), (0, 288), (0, 480), (322, 480))
 # Amsterdam's travel rule from eval.go: minimum duration in OTIF video frames, minimum distance in pixels.
 OTIF_MIN_DURATION = 10
 OTIF_MIN_DISTANCE = 50
-# Schema of a tracking.jsonl line: a frame index and boxes [track_id, x1, y1, x2, y2].
-TRACK_COLUMNS = "{'frame_idx': 'BIGINT', 'tracks': 'DOUBLE[][]'}"
 
 
 @dataclass(frozen=True)
@@ -313,8 +310,7 @@ def score_dataset(con: duckdb.DuckDBPyConnection, dataset: CountDataset) -> dict
     rule, video_rules = check_videos(dataset, videos)
     files, configs = config_files(dataset, videos)
     # Every ground-truth video must have tracks, or the mean would cover fewer videos for some systems.
-    missing = [f for *_, f in files if not os.path.exists(f)]
-    assert not missing, f'{dataset.label}: {len(missing)} tracking files missing, e.g. {missing[:3]}'
+    assert_files_exist([f for *_, f in files], f'{dataset.label} tracking files')
 
     # Load inputs into DuckDB tables.
     con.execute('CREATE OR REPLACE TABLE files (system VARCHAR, config VARCHAR, video INTEGER, filename VARCHAR)')

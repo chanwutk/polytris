@@ -99,9 +99,7 @@ Writes measurements-results/r9o2_preparation_cost/preparation_cost.json.
 import argparse
 import glob
 import os
-import socket
 import subprocess
-from datetime import datetime, timezone
 from pathlib import Path
 
 import cv2
@@ -113,7 +111,8 @@ from evaluation.p120_throughput_gather import (build_index_construction_manifest
                                                build_stage020_manifest, build_stage022_manifest, build_stage030_manifest,
                                                build_stage040_manifest, build_stage050_manifest, build_stage060_manifest)
 from evaluation.p121_throughput_compute import excluded_runtime_ops
-from measurements.common import DATASET_LABELS, fastest_within, load_test_tradeoff, query_dicts, results_dir, write_json
+from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, fastest_tetris, host_info, iso_utc, load_test_tradeoff,
+                                 load_tradeoff_points, query_dicts, results_dir, rounded, runtime_items_sql, write_json)
 from polyis.io import cache, store
 from polyis.utilities import get_config, parse_execution_param_str
 
@@ -124,24 +123,8 @@ TRACKERS = CONFIG['EXEC']['TRACKERS']
 # Ops p121 drops from every runtime file (a local list inside p121's parse_runtime_file, copied here; a test
 # checks the copy against p121's parser).
 IGNORED_OPS = ('total_frame_time', 'read_frame', 'save_canvas', 'save_mapping_files')
-# Where each stage's lines keep their op list, as JSON paths mirroring p121's INDEX/QUERY_DATA_ACCESSORS.
-OP_LIST_PATHS = {
-    '011_tune_detect': '$[#-1]',
-    '012_tune_create_training_data': '$',
-    '013_tune_train_classifier': '$',
-    '001_preprocess_groundtruth_detection': '$',
-    '002_preprocess_groundtruth_tracking': '$.runtime',
-    '020_exec_classify': '$',
-    '022_exec_prune_polyominoes': '$.runtime',
-    '030_exec_compress': '$.runtime',
-    '040_exec_detect': '$',
-    '050_exec_uncompress': '$',
-    '060_exec_track': '$.runtime',
-}
 # Per-frame video decoding ops that p121 counts and the instrumented boundary drops (p121 already drops p020's 'read').
 VIDEO_DECODE_OPS = {'001_preprocess_groundtruth_detection': ['read'], '011_tune_detect': ['read']}
-# JSON types DuckDB reports for numeric op times; anything else (e.g. p040's image_file name) is not a time.
-NUMERIC_JSON_TYPES = ['DOUBLE', 'BIGINT', 'UBIGINT']
 # Which timestamps bound one work unit, per stage: how many path levels above the runtime file the creation time is
 # read (0 = the runtime file itself), the runtime file's sibling files whose latest write ends the unit (the runtime
 # file always counts), and whether one task processes the split's videos in order (so units can be chained). Read
@@ -227,23 +210,14 @@ def parse_args():
     return parser.parse_args()
 
 
-def iso(seconds: float | None) -> str | None:
-    """An epoch time as an ISO-8601 UTC string, for provenance in the report."""
-    # Unknown times stay unknown.
-    if seconds is None:
-        return None
-    # Second precision is enough for provenance.
-    return datetime.fromtimestamp(seconds, timezone.utc).isoformat(timespec='seconds')
-
-
 def load_runtime_ops(con: duckdb.DuckDBPyConnection, files: list[tuple[str, str]]):
     """Table runtime_ops(stage, runtime_file, op, seconds, records, ..., counted, ignored, decode): op times per file.
 
-    `files` are (stage, path) pairs; each stage's op list is found with OP_LIST_PATHS. An op is
-    counted when p121 would keep it for that stage, and decode marks VIDEO_DECODE_OPS. As in p121,
-    items without a numeric time are skipped and blank lines ignored; lines without an op list,
-    timed items without an op, negative times of ops p121 does not ignore, and boolean times
-    (which p121 would count as 0 or 1 ms) raise.
+    `files` are (stage, path) pairs; each stage's op list is found with common.OP_LIST_PATHS and parsed by
+    common.runtime_items_sql. An op is counted when p121 would keep it for that stage, and decode marks
+    VIDEO_DECODE_OPS. As in p121, items without a numeric time are skipped and blank lines ignored; lines
+    without an op list, timed items without an op, negative times of ops p121 does not ignore, and boolean
+    times (which p121 would count as 0 or 1 ms) raise.
     """
     # One row per (file, op): seconds, record counts for the checks below, and whether p121 counts the op.
     con.execute('CREATE OR REPLACE TABLE runtime_ops (stage VARCHAR, runtime_file VARCHAR, op VARCHAR, seconds DOUBLE, '
@@ -260,30 +234,16 @@ def load_runtime_ops(con: duckdb.DuckDBPyConnection, files: list[tuple[str, str]
     for stage, paths in sorted(by_stage.items()):
         # Ops outside p121's boundary for this stage.
         dropped = sorted({*IGNORED_OPS, *excluded_runtime_ops(stage)})
-        # One pass over every line: unnest its op list (an object counts as a one-item list), then sum per file and op.
-        con.execute("""
+        # One parallel pass over every line's op items (an object counts as a one-item list), summed per file and op.
+        con.execute(f"""
             INSERT INTO runtime_ops
-            WITH lines AS (
-                SELECT filename, json_extract(json, $path) AS x
-                FROM read_json_objects($paths, format = 'newline_delimited', filename = true)
-            ),
-            items AS (
-                SELECT filename, coalesce(json_type(x) NOT IN ('ARRAY', 'OBJECT'), true) AS bad_line,
-                       unnest(CASE WHEN json_type(x) = 'ARRAY' THEN from_json(x, '["json"]')
-                                   WHEN json_type(x) = 'OBJECT' THEN [x] ELSE [NULL::JSON] END) AS e
-                FROM lines
-            ),
-            timed AS (
-                SELECT filename, bad_line, e->>'op' AS op, json_type(e->'time') AS time_type,
-                       CASE WHEN list_contains($numeric, json_type(e->'time')) THEN CAST(e->>'time' AS DOUBLE) END AS ms
-                FROM items
-            )
-            SELECT $stage, filename, op, coalesce(sum(ms), 0) / 1000, count(ms), count(*) FILTER (WHERE ms < 0),
-                   count(*) FILTER (WHERE time_type = 'BOOLEAN'), count(*) FILTER (WHERE bad_line),
+            SELECT $stage, filename, op, coalesce(sum(time), 0) / 1000, count(time), count(*) FILTER (WHERE time < 0),
+                   count(*) FILTER (WHERE time_type = 'BOOLEAN'),
+                   count(*) FILTER (WHERE coalesce(list_type NOT IN ('ARRAY', 'OBJECT'), true)),
                    NOT list_contains($dropped, op), list_contains($ignored, op), list_contains($decode, op)
-            FROM timed GROUP BY filename, op
-        """, dict(path=OP_LIST_PATHS[stage], paths=sorted(set(paths)), numeric=NUMERIC_JSON_TYPES, stage=stage,
-                  dropped=dropped, ignored=list(IGNORED_OPS), decode=VIDEO_DECODE_OPS.get(stage, [])))
+            FROM ({runtime_items_sql(OP_LIST_PATHS[stage], numbered=False)}) GROUP BY filename, op
+        """, dict(paths=sorted(set(paths)), stage=stage, dropped=dropped, ignored=list(IGNORED_OPS),
+                  decode=VIDEO_DECODE_OPS.get(stage, [])))
     # A line without an op list means the layout assumption is wrong (p121's accessor would raise).
     bad = query_dicts(con, 'SELECT stage, runtime_file FROM runtime_ops WHERE bad_lines > 0 LIMIT 5')
     assert not bad, f'runtime lines without an op list: {bad}'
@@ -680,23 +640,13 @@ def video_split(dataset: str, split: str) -> dict:
 
 def operating_point(con: duckdb.DuckDBPyConnection, dataset: str, loss: float) -> dict:
     """The fastest Tetris test configuration within `loss` of the reference pipeline's HOTA, with its parameters."""
-    # The test split's Tetris configurations and the reference row.
+    # The test split's Tetris configurations and the reference row, with HOTA as the accuracy.
     tetris, naive = load_test_tradeoff(dataset)
-    # Both as one table for fastest_within.
-    con.execute('CREATE OR REPLACE TABLE points (dataset VARCHAR, system VARCHAR, config VARCHAR, fps DOUBLE, '
-                'accuracy DOUBLE, time_s DOUBLE, frames BIGINT)')
-    # The reference row and every validated Tetris configuration, with HOTA as the accuracy.
-    rows = [(dataset, 'reference', 'naive', float(naive['throughput_fps']), float(naive['HOTA_HOTA']),
-             float(naive['time']), int(naive['frame_count']))]
-    rows += [(dataset, 'tetris', str(c), float(f), float(h), float(t), int(n)) for c, f, h, t, n in
-             zip(tetris['variant_id'], tetris['throughput_fps'], tetris['HOTA_HOTA'], tetris['time'], tetris['frame_count'])]
-    con.executemany('INSERT INTO points VALUES (?, ?, ?, ?, ?, ?, ?)', rows)
-    # The fastest Tetris configuration whose HOTA is within the bound.
-    (chosen,) = fastest_within(con, 'points', loss, ['tetris'])
-    # Without a qualifying configuration there is no operating point to break even at.
-    assert chosen['meets_bound'], f'{dataset}: no Tetris configuration within {loss:.0%} HOTA loss'
+    load_tradeoff_points(con, 'points', {dataset: (tetris, naive)}, {'time': 'DOUBLE', 'frame_count': 'BIGINT'})
+    # The fastest Tetris configuration whose HOTA is within the bound; without one there is nothing to break even at.
+    chosen = fastest_tetris(con, 'points', loss)[dataset]
     # The chosen row's paper-boundary time and frame count, for the cross-checks.
-    time_s, frames = con.execute("SELECT time_s, frames FROM points WHERE system = 'tetris' AND config = ?",
+    time_s, frames = con.execute("SELECT \"time\", frame_count FROM points WHERE system = 'tetris' AND config = ?",
                                  [chosen['config']]).fetchall()[0]
     # Decode the configuration's parameters from its name.
     params = parse_execution_param_str(chosen['config'])
@@ -728,7 +678,7 @@ def break_even(preparation_s: float, reference_fps: float, tetris_fps: float, fr
                 reference_extraction_s_per_video_minute=round(reference, 3),
                 tetris_extraction_s_per_video_minute=round(tetris, 3),
                 saving_s_per_video_minute=round(saving, 3),
-                break_even_video_minutes=None if minutes is None else round(minutes, 1),
+                break_even_video_minutes=rounded(minutes, 1),
                 break_even_video_hours=None if minutes is None else round(minutes / 60, 2))
 
 
@@ -797,8 +747,7 @@ def component(basis: str, recorded_s: float, instrumented_s: float, process_s: f
 def stage_detail(rows: list[dict]) -> dict:
     """{stage: figures} from stage_summary rows, rounded for the report."""
     # Round floats to 0.1 s, keyed by stage.
-    return {r['stage']: {k: (round(v, 1) if isinstance(v, float) else v) for k, v in r.items() if k != 'stage'}
-            for r in rows}
+    return {r['stage']: rounded({k: v for k, v in r.items() if k != 'stage'}, 1) for r in rows}
 
 
 def total(rows: list[dict], key: str) -> float:
@@ -877,10 +826,9 @@ def classifier_components(con: duckdb.DuckDBPyConnection, dataset: str, model: s
         run['finetune_recorded_s'], run['seconds'], run['seconds'], unit='process seconds of one training process',
         model=model, timestamps_consistent=run['timestamps_consistent'], finetune_epochs=run['finetune_epochs'],
         finetune_recorded_s=round(run['finetune_recorded_s'], 1),
-        wall_s=None if run['wall_s'] is None else round(run['wall_s'], 1),
-        frozen_wall_s=None if run['frozen_wall_s'] is None else round(run['frozen_wall_s'], 1),
-        finetune_wall_s=None if run['finetune_wall_s'] is None else round(run['finetune_wall_s'], 1),
-        started=iso(run['start_s']), frozen_stage_ended=iso(run['frozen_end_s']), ended=iso(run['end_s']))
+        wall_s=rounded(run['wall_s'], 1), frozen_wall_s=rounded(run['frozen_wall_s'], 1),
+        finetune_wall_s=rounded(run['finetune_wall_s'], 1),
+        started=iso_utc(run['start_s']), frozen_stage_ended=iso_utc(run['frozen_end_s']), ended=iso_utc(run['end_s']))
     # p015's benchmark of this model (shared by the datasets of one resolution group; each camera alone would pay it).
     mine = [c for c in compilations if c['dataset'] == dataset and c['model'] == model]
     estimate = mine[0]['seconds'] if mine else None
@@ -889,10 +837,10 @@ def classifier_components(con: duckdb.DuckDBPyConnection, dataset: str, model: s
         'estimate: gap since the previous resolution group finished in the same p015 run' if estimate is not None else
         'missing: first resolution group of its p015 run, or no model_compilation.jsonl', 0.0, estimate or 0.0,
         estimate or 0.0, unit='process seconds of one benchmark process', estimated=estimate is not None,
-        finished=iso(mine[0]['finish_s']) if mine else None)
+        finished=iso_utc(mine[0]['finish_s']) if mine else None)
     # Runs the reported configuration does not need (for example p017's baseline classifier).
     unneeded = {r['model']: dict(seconds=round(r['seconds'], 1), timestamps_consistent=r['timestamps_consistent'],
-                                 started=iso(r['start_s']), ended=iso(r['end_s'])) for r in runs if r['model'] != model}
+                                 started=iso_utc(r['start_s']), ended=iso_utc(r['end_s'])) for r in runs if r['model'] != model}
     return training, optimization, unneeded
 
 
@@ -922,7 +870,7 @@ def profiling_component(con: duckdb.DuckDBPyConnection, dataset: str, tilesize: 
         'seconds', 0.0, seconds, seconds, unit=f'process seconds, upper bound (elapsed x min({P016_WORKERS} workers, videos))',
         elapsed_s=round(sum(r['seconds'] for r in used), 1), first_profile_of_run=any(r['lower_bound'] for r in used),
         profiles={r['profile']: dict(elapsed_s=round(r['seconds'], 1), videos=r['videos'], lower_bound=r['lower_bound'],
-                                     first_partial=iso(r['first_partial_s']), last_output=iso(r['last_output_s']))
+                                     first_partial=iso_utc(r['first_partial_s']), last_output=iso_utc(r['last_output_s']))
                   for r in used})
     # Profiles the reported configuration does not read.
     unneeded = {r['profile']: dict(elapsed_s=round(r['seconds'], 1), lower_bound=r['lower_bound']) for r in rows if not r['needed']}
@@ -946,7 +894,7 @@ def extraction(con: duckdb.DuckDBPyConnection, point: dict, test: dict) -> dict:
     # Seconds and throughput per system and boundary, with the per-stage detail and cross-checks.
     return dict(
         frames=frames,
-        seconds={s: {b: round(v, 3) for b, v in d.items()} for s, d in seconds.items()},
+        seconds=rounded(seconds, 3),
         fps={s: {b: frames / v for b, v in d.items()} for s, d in seconds.items()},
         tetris_stages=stage_detail(tetris), reference_stages=stage_detail(reference),
         # This recomputation must reproduce the tradeoff table's (paper) times; the ratios show it does.
@@ -1043,7 +991,7 @@ def measure_dataset(con: duckdb.DuckDBPyConnection, dataset: str, loss: float, c
         'estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos'
         if scoring['estimate_s'] is not None else 'missing: no usable test-split scoring outputs', 0.0, scoring_s, scoring_s,
         unit='process seconds (one TrackEval process per configuration)', estimated=scoring['estimate_s'] is not None,
-        **{k: (round(v, 3) if isinstance(v, float) else v) for k, v in scoring.items() if k != 'estimate_s'})
+        **rounded({k: v for k, v in scoring.items() if k != 'estimate_s'}, 3))
 
     # Components in report order.
     components = dict(reference_detection_train=detection_train, training_data_creation=training_data,
@@ -1064,7 +1012,7 @@ def measure_dataset(con: duckdb.DuckDBPyConnection, dataset: str, loss: float, c
     return dict(
         label=DATASET_LABELS[dataset],
         video={s: {k: v for k, v in d.items() if k != 'names'} for s, d in (('train', train), ('valid', valid), ('test', test))},
-        operating_point={k: (round(v, 4) if isinstance(v, float) else v) for k, v in point.items()},
+        operating_point=rounded(point),
         components=components,
         not_recorded=dict(
             training_data_pruning='p013 (deletes never-relevant tiles\' training images) writes no timings',
@@ -1087,19 +1035,6 @@ def measure_dataset(con: duckdb.DuckDBPyConnection, dataset: str, loss: float, c
                         **{b: break_even(totals[b], extract['fps']['reference'][b], extract['fps']['tetris'][b],
                                          frames_per_minute) for b in ('instrumented', 'process')}),
     )
-
-
-def host_info() -> dict:
-    """The host whose cache was read; every run is assumed to have executed on it, since the cache is local."""
-    # GPU names from nvidia-smi, which only queries the driver and runs nothing on the GPUs.
-    try:
-        gpus = subprocess.run(['nvidia-smi', '--query-gpu=name', '--format=csv,noheader'],
-                              capture_output=True, text=True, check=True).stdout.split('\n')
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        gpus = []
-    # Host, CPUs, and today's GPUs.
-    return dict(hostname=socket.gethostname(), cpus=os.cpu_count(), gpus_now=sorted({g.strip() for g in gpus if g.strip()}),
-                note='cache host, assumed for all runs; GPUs are those present when this script ran')
 
 
 def main():
@@ -1157,7 +1092,8 @@ def main():
             chain_gap_s=CHAIN_GAP_S, stale_span_s=STALE_SPAN_S, timestamp_tolerance_s=TIMESTAMP_TOLERANCE_S,
             finetune_wall_max_ratio=FINETUNE_WALL_MAX_RATIO, finetune_wall_slack_s=FINETUNE_WALL_SLACK_S,
             p014_epochs_per_stage=P014_EPOCHS_PER_STAGE, p016_workers=P016_WORKERS, p015_group_gap_s=P015_GROUP_GAP_S,
-            incomplete_profiles=incomplete_profiles, host=host_info()),
+            incomplete_profiles=incomplete_profiles,
+            host=dict(host_info(), note='cache host, assumed for all runs; GPUs are those present when this script ran')),
         baselines=dict(BASELINE_PREPARATION, plan='measurements-gpu/r9o2_preparation_cost.py (dry run by default)'),
     ))
 

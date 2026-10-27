@@ -31,7 +31,7 @@ one ILP instance and are counted once. Nothing is sampled.
 The binarization differs between code versions. p022 as committed since 2026-05-22 keeps
 score > r * 255, but the April 2026 outputs that make up most of the cache keep score >= floor(r * 255)
 (tiles scoring exactly 63, 127, or 191 at r = 0.25, 0.5, 0.75), and that p022 version was never
-committed. Every instance is therefore rebuilt under both rules (RULES), and the one its saved
+committed. Every instance is therefore rebuilt under both rules (common.RELEVANCE_RULES), and the one its saved
 selection is consistent with is reported; rule_effect in checks.json says how much the rules differ.
 
 Validation, per instance: the saved pruned grid must have the same frames, contain no tile outside the
@@ -41,7 +41,7 @@ components, counted independently, must equal the kept polyominoes. The 020 scor
 tables must predate the 022 output. p022's worker log, for the runs whose logged timings still match
 the cached runtime.jsonl, gives p022's own polyomino and selection counts to compare.
 
-Timings are p022's runtime.jsonl, read by r9o3_ilp_timings.load_runs (strict: one build_ilp and one
+Timings are p022's runtime.jsonl, read by common.load_prune_runs (strict: one record, one build_ilp and one
 solve_ilp per file, no negative time) with p022's default budget read from its source. build_ilp starts
 before the Gurobi environment is created and started, and solve_ilp ends after the solution is read and
 the model and environment are freed (gurobi.pyx), so both include fixed Gurobi overheads. A solve at or
@@ -69,10 +69,11 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from measurements.common import (DATASET_LABELS, fastest_within, load_test_tradeoff, query_dicts, results_dir,
-                                 write_json)
-from measurements.r9o3_ilp_timings import VARIANT_PATTERN, VIDEO_EXTENSIONS, default_time_limit, load_points, load_runs
-from polyis.io import cache, store
+from evaluation.manifests import list_split_videos
+from measurements.common import (DATASET_LABELS, RELEVANCE_RULES, VARIANT_PATTERN, decode_grids, default_time_limit,
+                                 load_prune_runs, load_pruning_points, load_test_tradeoff, pruning_operating_points,
+                                 query_dicts, results_dir, rounded, write_json)
+from polyis.io import cache
 from polyis.pack.adapters import group_tiles_all
 from polyis.utilities import (build_param_str, load_classification_results, load_pruned_classification_results,
                               parse_execution_param_str)
@@ -81,12 +82,6 @@ from scripts.p022_exec_prune_polyominoes import _ACCURACY_THRESHOLD_TO_IDX, TILE
 
 # Splits p022 runs on, as store videoset names.
 SPLITS = ('test', 'valid')
-# Relevance binarization rules. 'current' is p022 as committed since 2026-05-22 (score > r * 255).
-# 'floor' (score >= floor(r * 255)) is what the April 2026 outputs in the cache match: they keep tiles
-# scoring exactly 63, 127, or 191 at r = 0.25, 0.5, 0.75, which 'current' drops. The rule of each saved
-# output is decided by which rebuilt instance its selection is consistent with.
-RULES = {'current': lambda scores, r: scores > r * 255,
-         'floor': lambda scores, r: scores >= np.floor(r * 255)}
 # Where p022's ProgressBar workers write their stdout.
 P022_LOG_DIR = Path(cache.CACHE_DIR) / 'LOGS' / 'p022_exec_prune_polyominoes'
 # p022 prints build_ilp and solve_ilp with one decimal, so a current run is within half a unit (plus float slack).
@@ -125,25 +120,13 @@ def parse_args():
     return parser.parse_args()
 
 
-def decode_grids(entries: list[dict]) -> tuple[np.ndarray, list[int]]:
-    """Frames of a 020 or 022 score.jsonl as uint8 [frames, rows, cols] and their frame indices."""
-    # p022 cannot build an instance from a file without frames.
-    assert entries, 'score file has no frames'
-    # Every frame must share one tile grid.
-    sizes = {tuple(e['classification_size']) for e in entries}
-    assert len(sizes) == 1, f'inconsistent grid sizes {sorted(sizes)}'
-    (rows, cols), = sizes
-    # Decode all frames' hex at once; each frame is rows * cols bytes in row-major order.
-    grids = np.frombuffer(bytes.fromhex(''.join(e['classification_hex'] for e in entries)), dtype=np.uint8)
-    # A truncated or padded hex string does not fill the declared grids exactly.
-    assert grids.size == len(entries) * rows * cols, 'hex length does not match the grid size'
-    return grids.reshape(len(entries), rows, cols), [e['idx'] for e in entries]
-
-
 def binarize(scores: np.ndarray, relevance_threshold: float, rule: str) -> np.ndarray:
-    """p022's bitmaps under a binarization rule (see RULES): 1 for a relevant tile, else 0."""
+    """p022's bitmaps under a binarization rule (common.RELEVANCE_RULES): 1 for a relevant tile, else 0.
+
+    The rule of each saved output is decided by which rebuilt instance its selection is consistent with.
+    """
     # Apply the rule's comparison, as 0/1 instead of p022's 0/255 // 255.
-    return RULES[rule](scores, relevance_threshold).astype(np.uint8)
+    return RELEVANCE_RULES[rule](scores, relevance_threshold).astype(np.uint8)
 
 
 def max_distance(dataset: str, tracker: str, tilesize: int, tracking_accuracy_threshold: float,
@@ -349,7 +332,7 @@ def measure_video(task: tuple[str, str, str, list[str]]) -> tuple[list[dict], li
         # Modification times for the input freshness check.
         times = dict(scores_mtime=mtime(scores_path), table_mtime=mtime(table_path),
                      output_mtime=mtime(output_dir / 'score.jsonl'))
-        for rule in RULES:
+        for rule in RELEVANCE_RULES:
             # Polyominoes at the relevance threshold, shared by every tracker and accuracy threshold.
             gid = (f"{dataset}/{split}/{video}/{p['classifier']}_{p['tilesize']}_{p['sample_rate']}"
                    f"/r{p['relevance_threshold']}/{rule}")
@@ -392,10 +375,8 @@ def video_tasks(dataset: str, split: str, validated: set[str]) -> tuple[list[tup
     excluded and reported) and every configuration found on any video on validation (missing pairs
     are reported, not filled in).
     """
-    # Videos as p022 lists them.
-    videoset_dir = store.dataset(dataset, split)
-    assert os.path.isdir(videoset_dir), f'missing videoset {videoset_dir}'
-    videos = sorted(f for f in os.listdir(videoset_dir) if f.endswith(VIDEO_EXTENSIONS))
+    # Videos as p022 lists them (a missing videoset directory fails here).
+    videos = list_split_videos(dataset, split)
     # Complete outputs per video, and the incomplete ones.
     complete: dict[str, list[str]] = {}
     incomplete: list[str] = []
@@ -467,7 +448,7 @@ def p022_log_runs(log_dir: Path) -> list[dict]:
 def load_tables(con: duckdb.DuckDBPyConnection, rows: list[dict], groupings: list[tuple[str, np.ndarray]],
                 validated: dict[str, set[str]], default_limit: float):
     """Tables instances_all (every rule), instances (the rule each saved output was solved with),
-    frames(gid, polyominoes), runs (r9o3_ilp_timings.load_runs over the instances' runtime.jsonl),
+    frames(gid, polyominoes), runs (common.load_prune_runs over the instances' runtime.jsonl),
     and the joined view ilp.
 
     rule_match says how the rule was decided: 'identical' (no boundary tile, so both rules give the
@@ -535,10 +516,7 @@ def load_tables(con: duckdb.DuckDBPyConnection, rows: list[dict], groupings: lis
         polyominoes=np.concatenate([c for _, c in groupings]))))
     con.execute('CREATE OR REPLACE TABLE frames AS SELECT * FROM frame_rows')
     # p022's recorded times per output, parsed and validated as in r9o3_ilp_timings (one parser for both).
-    # Its video listing is only used for clip positions, which this script does not report.
-    paths = sorted({r['runtime_path'] for r in rows})
-    listing = sorted({(r['dataset'], r['split'], r['video']) for r in rows})
-    load_runs(con, paths, default_limit, listing)
+    load_prune_runs(con, sorted({r['runtime_path'] for r in rows}), default_limit)
     # Instances with their output's timings.
     con.execute("""
         CREATE OR REPLACE VIEW ilp AS
@@ -730,22 +708,15 @@ def operating_point_sizes(con: duckdb.DuckDBPyConnection, tradeoffs: dict, loss:
     prune has no instance; a pruning point must have one on every test video.
     """
     # Every validated configuration with its throughput, HOTA, and whether it prunes.
-    load_points(con, tradeoffs)
-    # Fastest within the bound, among all configurations and among pruning ones.
-    chosen = fastest_within(con, 'points', loss, ['tetris', 'tetris_pruned'])
-    # The selections that meet the bound, named by their role.
-    con.execute('CREATE OR REPLACE TABLE chosen_points (dataset VARCHAR, point VARCHAR, variant VARCHAR)')
-    selected = [(r['dataset'], 'operating_point' if r['system'] == 'tetris' else 'fastest_pruning_point', r['config'])
-                for r in chosen if r['meets_bound']]
-    # Insert them only when there are any (executemany needs at least one row).
-    if selected:
-        con.executemany('INSERT INTO chosen_points VALUES (?, ?, ?)', selected)
+    load_pruning_points(con, tradeoffs)
+    # Fastest within the bound, among all configurations and among pruning ones (table chosen_points).
+    chosen = pruning_operating_points(con, loss)
     # Each selection's p022 parameter string (packing settings dropped) and its test instances, if it prunes.
     rows = query_dicts(con, f"""
         WITH c AS (
-            SELECT c.dataset AS point_dataset, c.point, c.variant, p.prunes, p.fps, p.accuracy AS hota,
-                   regexp_replace(c.variant, '{VARIANT_PATTERN}', '\\1_\\2') AS ilp_config
-            FROM chosen_points c JOIN points p ON p.dataset = c.dataset AND p.system = 'tetris' AND p.config = c.variant
+            SELECT c.dataset AS point_dataset, c.point, c.config AS variant, p.prunes, p.fps, p.accuracy AS hota,
+                   regexp_replace(c.config, '{VARIANT_PATTERN}', '\\1_\\2') AS ilp_config
+            FROM chosen_points c JOIN points p ON p.dataset = c.dataset AND p.system = 'tetris' AND p.config = c.config
         ),
         sizes AS (
             SELECT point_dataset, point, {SIZE_AGGREGATES}
@@ -767,8 +738,7 @@ def operating_point_sizes(con: duckdb.DuckDBPyConnection, tradeoffs: dict, loss:
     for r in chosen:
         entry = out.setdefault(DATASET_LABELS[r['dataset']], dict(dataset=r['dataset'], hota_bound=r['bound']))
         # Placeholders, replaced below by the met selections.
-        entry.setdefault('operating_point' if r['system'] == 'tetris' else 'fastest_pruning_point',
-                         dict(meets_bound=False, best_hota=r['best_accuracy']))
+        entry.setdefault(r['point'], dict(meets_bound=False, best_hota=r['best_accuracy']))
     # The met selections with their sizes.
     for r in rows:
         out[DATASET_LABELS[r['dataset']]][r['point']] = dict(meets_bound=True, **rounded([r])[0])
@@ -905,12 +875,6 @@ def feedback_sample(con: duckdb.DuckDBPyConnection) -> list[dict]:
     """)
 
 
-def rounded(rows: list[dict], digits: int = 4) -> list[dict]:
-    """Rows with floats rounded for a readable report."""
-    # Round every float value; other values pass through.
-    return [{k: round(v, digits) if isinstance(v, float) else v for k, v in r.items()} for r in rows]
-
-
 def main():
     args = parse_args()
     # Unknown datasets are an error rather than an empty report.
@@ -970,7 +934,7 @@ def main():
             nonzeros='1 per equality, window size + 1 per window constraint (distinct_nonzeros over distinct rows)',
             forced_variables='distinct variables fixed to 1 by equality constraints',
             polyominoes_per_frame='pooled over the sampled frames of every instance; bound ceil(rows * cols / 2)',
-            timings='p022 runtime.jsonl via r9o3_ilp_timings.load_runs: build_ilp (includes Gurobi env start) and '
+            timings='p022 runtime.jsonl via common.load_prune_runs: build_ilp (includes Gurobi env start) and '
                     'solve_ilp (includes solution read and env release)',
             solve_at_budget=f'estimate: {AT_BUDGET}, budget = time_limit or {default_limit} s; Gurobi termination '
                             'status is not logged, so a slow optimal solve also counts (budget_sensitivity)',

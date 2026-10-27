@@ -628,6 +628,7 @@ def test_sweep_summary_per_padding_and_overall(con):
 
 
 def test_operating_config_picks_fastest_within_bound():
+    # The GPU job's entry point to the shared selection rule (common.fastest_tetris).
     naive = pd.Series(dict(throughput_fps=10.0, HOTA_HOTA=0.8))
     tetris = pd.DataFrame(dict(variant_id=['a', 'b', 'c'], throughput_fps=[500.0, 300.0, 100.0], HOTA_HOTA=[0.70, 0.77, 0.79]))
     assert pa.operating_config(tetris, naive, 0.05)['config'] == 'b'
@@ -635,7 +636,7 @@ def test_operating_config_picks_fastest_within_bound():
     tetris.loc[0, 'HOTA_HOTA'] = 0.76
     assert pa.operating_config(tetris, naive, 0.05)['config'] == 'a'
     # No configuration within 1% of the reference.
-    with pytest.raises(AssertionError):
+    with pytest.raises(AssertionError, match='no Tetris configuration'):
         pa.operating_config(tetris, naive, 0.01)
 
 

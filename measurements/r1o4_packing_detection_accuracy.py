@@ -73,7 +73,7 @@ Configurations are every validated Tetris test configuration in the tradeoff tab
 Configurations that differ only in the tracker share one detection directory (detection config),
 so scores are stored once per detection config; sweep aggregates count each one once. The
 operating point is the fastest configuration within --loss of the reference pipeline's HOTA
-(common.fastest_within). For context, the reference detections are also scored on every test
+(common.fastest_tetris). For context, the reference detections are also scored on every test
 frame without a region filter.
 
 B3D (jnc*) still uses the automatic ground truth, produced with the same RetinaNet as the
@@ -90,7 +90,6 @@ Writes measurements-results/r1o4_packing_detection_accuracy/:
 """
 import argparse
 import json
-import os
 from pathlib import Path
 
 import cv2
@@ -98,8 +97,10 @@ import duckdb
 import numpy as np
 import pandas as pd
 
+from evaluation.manifests import list_split_videos
 from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
-from measurements.common import DATASET_LABELS, fastest_within, load_test_tradeoff, query_dicts, results_dir, write_json
+from measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, fastest_tetris, load_test_tradeoff,
+                                 load_tradeoff_points, query_dicts, results_dir, write_json)
 from polyis.io import cache, store
 from polyis.utilities import build_param_str
 
@@ -126,8 +127,8 @@ CONTROL_PAIRS = [(s, 'reference') for s in CONTROL_SIDES[1:]] + [('jpeg', 'rerun
 CONTROL_DIR = 'jpeg_control'
 # Metrics compared between the sides.
 METRICS = ('precision', 'recall', 'ap50')
-# Schemas of the box files: frame index plus a list of boxes per frame (two lists in the JPEG control's files).
-GT_COLUMNS = "{'frame_idx': 'BIGINT', 'tracks': 'DOUBLE[][]'}"
+# Schemas of the box files: frame index plus a list of boxes per frame (two lists in the JPEG control's files); the
+# ground truth is a tracking.jsonl (common.TRACK_COLUMNS).
 REFERENCE_COLUMNS = "{'frame_idx': 'BIGINT', 'detections': 'DOUBLE[][]'}"
 PACKED_COLUMNS = "{'frame_idx': 'BIGINT', 'bboxes': 'DOUBLE[][]'}"
 CONTROL_COLUMNS = "{'frame_idx': 'BIGINT', 'plain': 'DOUBLE[][]', 'jpeg': 'DOUBLE[][]'}"
@@ -247,8 +248,7 @@ def register_files(con: duckdb.DuckDBPyConnection, files: list[tuple[str, str, s
     # Reading zero files would fail inside DuckDB with a less clear message.
     assert files, 'no files to read'
     # Every file must exist, or a video would silently drop out.
-    missing = [p for _, _, p in files if not os.path.exists(p)]
-    assert not missing, f'{len(missing)} files missing, e.g. {missing[:3]}'
+    assert_files_exist([p for _, _, p in files], 'files')
     # Map file names back to their source and video.
     sources, videos, paths = (list(column) for column in zip(*files))
     metadata_table(con, 'box_files', source=('VARCHAR', sources), video=('VARCHAR', videos), filename=('VARCHAR', paths))
@@ -268,7 +268,7 @@ def read_boxes(con: duckdb.DuckDBPyConnection, table: str, files: list[tuple[str
     # Register the files, checking that each exists.
     paths = register_files(con, files)
     # Each kind's column holding the boxes and its schema.
-    key, columns = {'gt': ('tracks', GT_COLUMNS), 'reference': ('detections', REFERENCE_COLUMNS),
+    key, columns = {'gt': ('tracks', TRACK_COLUMNS), 'reference': ('detections', REFERENCE_COLUMNS),
                     'packed': ('bboxes', PACKED_COLUMNS), 'rerun': ('plain', CONTROL_COLUMNS),
                     'jpeg': ('jpeg', CONTROL_COLUMNS)}[kind]
     # Every line once, with its frame and box list.
@@ -639,23 +639,16 @@ def sweep_summary(con: duckdb.DuckDBPyConnection) -> list[dict]:
 
 
 def operating_config(tetris: pd.DataFrame, naive: pd.Series, loss: float) -> dict:
-    """The fastest Tetris configuration within `loss` of the reference pipeline's HOTA (inclusive)."""
+    """The fastest Tetris configuration within `loss` of the reference pipeline's HOTA (common.fastest_tetris).
+
+    measurements-gpu/r1o4_packing_detection_accuracy.py calls it to run the JPEG control on the same point.
+    """
     # A private connection, so the caller's tables are untouched.
-    con = duckdb.connect()
-    # Points table in the shape common.fastest_within expects: the reference row and every Tetris configuration.
-    con.register('tetris_frame', tetris[['variant_id', 'throughput_fps', 'HOTA_HOTA']])
-    con.execute("""
-        CREATE TABLE pts AS
-        SELECT 'd' AS dataset, 'reference' AS system, 'naive' AS config, CAST(? AS DOUBLE) AS fps, CAST(? AS DOUBLE) AS accuracy
-        UNION ALL
-        SELECT 'd', 'tetris', CAST(variant_id AS VARCHAR), CAST(throughput_fps AS DOUBLE), CAST(HOTA_HOTA AS DOUBLE) FROM tetris_frame
-    """, [float(naive['throughput_fps']), float(naive['HOTA_HOTA'])])
-    # The shared selection rule (inclusive bound, ties to the more accurate configuration).
-    chosen = fastest_within(con, 'pts', loss, ['tetris'])[0]
-    con.close()
-    # Some configuration always meets a bound below the reference unless every one misses it.
-    assert chosen['meets_bound'], f'no Tetris configuration within {loss:.0%} HOTA loss'
-    return chosen
+    with duckdb.connect() as con:
+        # The reference row and every Tetris configuration, in the shape the shared selection rule reads.
+        load_tradeoff_points(con, 'points', {'d': (tetris, naive)})
+        # The shared rule (inclusive bound, ties to the more accurate configuration); fails when none qualifies.
+        return fastest_tetris(con, 'points', loss)['d']
 
 
 def video_grid(dataset: str, video: str, tile_size: int) -> tuple[int, int]:
@@ -828,7 +821,7 @@ def score_dataset(dataset: str, loss: float, control_dir: Path | None = None, co
     metadata_table(con, 'configs', cfg=('VARCHAR', [p[0] for p in params]), sample_rate=('BIGINT', [p[1] for p in params]),
                    tilepadding=('VARCHAR', [p[2] for p in params]))
     # The test clips, as the pipeline stages list them.
-    videos = sorted(f for f in os.listdir(store.dataset(dataset, 'test')) if f.endswith('.mp4'))
+    videos = list_split_videos(dataset, 'test')
     # Ground truth from the detector-independent dataset, exactly as p110 resolves it.
     gt_dataset = resolve_groundtruth_tracking_dataset(dataset)
     gt_files = [('gt', v, str(cache.exec(gt_dataset, 'groundtruth', v, 'tracking.jsonl'))) for v in videos]

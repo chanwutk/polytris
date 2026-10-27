@@ -1,9 +1,19 @@
-"""Helpers shared by the revision measurement scripts (see REVISION.md)."""
+"""Helpers shared by the revision measurement scripts (see REVISION.md).
+
+Measurement scripts import shared code from here only, never from each other.
+"""
+import hashlib
 import json
+import os
+import re
+import socket
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import duckdb
+import numpy as np
 import pandas as pd
 
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
@@ -18,6 +28,45 @@ DATASET_LABELS = {'caldot1-y05': 'CalDoT1', 'caldot2-y05': 'CalDoT2', 'ams-y05':
                   'jnc0': 'B3D1', 'jnc2': 'B3D2', 'jnc6': 'B3D3', 'jnc7': 'B3D4'}
 # Root of the per-script result directories, next to this package.
 RESULTS_ROOT = Path(__file__).resolve().parent.parent / 'measurements-results'
+# Schema of a tracking.jsonl line (ground truth, reference, Tetris, and converted SOTA tracks): a frame index and
+# boxes [track_id, x1, y1, x2, y2].
+TRACK_COLUMNS = "{'frame_idx': 'BIGINT', 'tracks': 'DOUBLE[][]'}"
+# Where each stage's runtime-log lines keep their op list, as JSON paths mirroring
+# evaluation/p121_throughput_compute.py's INDEX/QUERY_DATA_ACCESSORS.
+OP_LIST_PATHS = {
+    '011_tune_detect': '$[#-1]',
+    '012_tune_create_training_data': '$',
+    '013_tune_train_classifier': '$',
+    '001_preprocess_groundtruth_detection': '$',
+    '002_preprocess_groundtruth_tracking': '$.runtime',
+    '020_exec_classify': '$',
+    '022_exec_prune_polyominoes': '$.runtime',
+    '030_exec_compress': '$.runtime',
+    '040_exec_detect': '$',
+    '050_exec_uncompress': '$',
+    '060_exec_track': '$.runtime',
+}
+# JSON types DuckDB reports for numeric op times; anything else (a string such as p040's image_file name, a
+# boolean, null) is not a duration.
+NUMERIC_JSON_TYPES = ('DOUBLE', 'BIGINT', 'UBIGINT')
+# The pruning stage (scripts/p022_exec_prune_polyominoes.py): its directory, its name in the throughput tables, and
+# its source, whose call to solve_ilp sets the default solve budget.
+PRUNE_DIR = cache.EXEC_STAGE_MAP['pruned-polyominoes']
+PRUNE_STAGE = '022_exec_prune_polyominoes'
+P022_SOURCE = Path(__file__).resolve().parent.parent / 'scripts' / 'p022_exec_prune_polyominoes.py'
+# Dataset, video, and pruning parameter string from a p022 runtime.jsonl path.
+PRUNE_PATH_PATTERN = rf'([^/]+)/execution/([^/]+)/{PRUNE_DIR}/([^/]+)/score/runtime\.jsonl$'
+# p022's parameter string: classifier, tile size, sampling rate, accuracy threshold, relevance threshold, tracker.
+PRUNE_PARAM_PATTERN = r'^(.+)_([0-9]+)_([0-9]+)_([0-9]{3})_r([0-9]{3})_([^_]+)$'
+# A throughput variant id adds tile padding and canvas scale before the tracker; dropping them gives p022's string.
+VARIANT_PATTERN = r'^(.+_[0-9]{3}_r[0-9]{3})_[^_]+_s[0-9]+_([^_]+)$'
+# Video-name prefix of each split p022 runs on.
+SPLIT_PREFIXES = {'va': 'valid', 'te': 'test'}
+# Relevance binarization rules for p022's input (020 scores, 0-255, at relevance threshold r). 'current' is p022
+# as committed since 2026-05-22 (score > r * 255). 'floor' (score >= floor(r * 255)) is what the April 2026 outputs
+# in the cache match: they keep tiles scoring exactly 63, 127, or 191 at r = 0.25, 0.5, 0.75, which 'current' drops.
+RELEVANCE_RULES = {'current': lambda scores, r: scores > r * 255,
+                   'floor': lambda scores, r: scores >= np.floor(r * 255)}
 
 
 def results_dir(script_path: str) -> Path:
@@ -49,6 +98,305 @@ def query_dicts(con: duckdb.DuckDBPyConnection, sql: str, params: list | dict | 
     names = [d[0] for d in cursor.description]
     # Pair each row with the column names.
     return [dict(zip(names, row)) for row in cursor.fetchall()]
+
+
+def rounded(value, digits: int = 4):
+    """`value` with every float rounded to `digits` decimals, through nested dicts and lists (for JSON output).
+
+    Integers, booleans, strings, and None pass through; tuples become lists, as JSON writes them anyway.
+    """
+    # Floats (NumPy float64 included, a float subclass) are rounded; containers are rebuilt; anything else is kept.
+    if isinstance(value, float):
+        return round(value, digits)
+    if isinstance(value, dict):
+        return {k: rounded(v, digits) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [rounded(v, digits) for v in value]
+    return value
+
+
+def plain(value) -> object:
+    """A pandas or NumPy scalar as a Python value, with NA as None."""
+    # Missing values of any kind become None.
+    if value is None or pd.isna(value):
+        return None
+    # NumPy scalars become Python ints and floats.
+    return value.item() if hasattr(value, 'item') else value
+
+
+def assert_files_exist(paths, what: str):
+    """Fail when any of `paths` is missing, saying how many and naming a few, instead of a bare I/O error later."""
+    # Every missing path, in input order.
+    missing = [str(p) for p in paths if not os.path.exists(p)]
+    assert not missing, f'{len(missing)} {what} missing, e.g. {missing[:3]}'
+
+
+def iso_utc(seconds: float | None) -> str | None:
+    """An epoch time as an ISO-8601 UTC string to the second, for provenance; None stays None."""
+    # Unknown times stay unknown.
+    if seconds is None:
+        return None
+    # Second precision is enough for provenance and keeps the strings comparable.
+    return datetime.fromtimestamp(seconds, timezone.utc).isoformat(timespec='seconds')
+
+
+def file_record(path: str | Path) -> dict:
+    """Path, size, modification time, and SHA-256 of one input file, so a result says which version it read.
+
+    A missing file is recorded with exists False rather than failing; callers check required inputs themselves.
+    """
+    # Missing files are recorded, not fatal.
+    p = Path(path)
+    if not p.exists():
+        return dict(path=str(p), exists=False)
+    # Size, modification time, and content hash identify the version read (inputs are small tables and arrays).
+    stat = p.stat()
+    return dict(path=str(p), exists=True, bytes=stat.st_size, mtime=iso_utc(stat.st_mtime),
+                sha256=hashlib.sha256(p.read_bytes()).hexdigest())
+
+
+def host_info() -> dict:
+    """The host running the measurement: name, CPU count, and GPU models with their counts (nvidia-smi, if present)."""
+    # GPU names from nvidia-smi, which only queries the driver and runs nothing on the GPUs.
+    try:
+        gpus = subprocess.run(['nvidia-smi', '--query-gpu=name', '--format=csv,noheader'],
+                              capture_output=True, text=True, check=True).stdout.split('\n')
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        gpus = []
+    # One entry per distinct GPU model, with how many the host has.
+    names = [g.strip() for g in gpus if g.strip()]
+    # Host name, CPU count, and GPU models with counts.
+    return dict(hostname=socket.gethostname(), cpus=os.cpu_count(), gpus={g: names.count(g) for g in sorted(set(names))})
+
+
+def decode_grids(entries: list[dict]) -> tuple[np.ndarray, list[int]]:
+    """Frames of a 020 or 022 score.jsonl as uint8 [frames, rows, cols] and their frame indices."""
+    # p022 cannot build an instance from a file without frames.
+    assert entries, 'score file has no frames'
+    # Every frame must share one tile grid.
+    sizes = {tuple(e['classification_size']) for e in entries}
+    assert len(sizes) == 1, f'inconsistent grid sizes {sorted(sizes)}'
+    (rows, cols), = sizes
+    # Decode all frames' hex at once; each frame is rows * cols bytes in row-major order.
+    grids = np.frombuffer(bytes.fromhex(''.join(e['classification_hex'] for e in entries)), dtype=np.uint8)
+    # A truncated or padded hex string does not fill the declared grids exactly.
+    assert grids.size == len(entries) * rows * cols, 'hex length does not match the grid size'
+    return grids.reshape(len(entries), rows, cols), [e['idx'] for e in entries]
+
+
+def runtime_items_sql(op_path: str, numbered: bool = True) -> str:
+    """SQL for one row per op item of the runtime logs bound to parameter $paths (a list of JSONL files).
+
+    Each non-blank line is parsed and its op list found at JSON path `op_path` (OP_LIST_PATHS has each stage's).
+    Columns: filename, last_modified, line (1-based, in file order), text (the line), list_type (JSON type of the
+    op list: ARRAY, OBJECT, NULL for a JSON null, SQL NULL when the path is absent), items (ops in the list; an
+    object counts as one, anything else as none), item (the op as JSON), op, time_type (JSON type of its time),
+    and time (milliseconds; NULL unless the JSON type is numeric). A line whose op list is empty, null, absent, or
+    not a list or object yields one row with item, op, and time NULL, so it does not vanish from checks.
+    Malformed JSON raises duckdb.InvalidInputException. Every caller applies its own checks of lines, ops, and times.
+
+    numbered=False reads the lines with DuckDB's parallel read_json_objects instead of read_text, for sums over
+    gigabytes of logs where line order does not matter; line and last_modified are then NULL.
+    """
+    # The path is embedded as a SQL literal, so it must not close the literal.
+    assert "'" not in op_path, f'bad JSON path {op_path!r}'
+    # Non-blank lines in file order with each file's modification time, or, unnumbered, from the parallel JSON reader.
+    lines = ("""
+        SELECT filename, last_modified, line, text FROM (
+            SELECT filename, last_modified, unnest(lines) AS text, generate_subscripts(lines, 1) AS line
+            FROM (SELECT filename, last_modified, string_split(trim(content, chr(10)), chr(10)) AS lines
+                  FROM read_text($paths))
+        ) WHERE trim(text) <> ''""" if numbered else """
+        SELECT filename, NULL::TIMESTAMPTZ AS last_modified, NULL::BIGINT AS line, json AS text
+        FROM read_json_objects($paths, format = 'newline_delimited', filename = true)""")
+    return f"""
+        WITH runtime_lists AS (
+            SELECT filename, last_modified, line, text, json_extract(text, '{op_path}') AS ops FROM ({lines})
+        ),
+        runtime_items AS (
+            SELECT filename, last_modified, line, text, json_type(ops) AS list_type,
+                   CASE json_type(ops) WHEN 'ARRAY' THEN json_array_length(ops) WHEN 'OBJECT' THEN 1 ELSE 0 END AS items,
+                   unnest(CASE WHEN json_type(ops) = 'ARRAY' AND json_array_length(ops) > 0 THEN from_json(ops, '["json"]')
+                               WHEN json_type(ops) = 'OBJECT' THEN [ops] ELSE [NULL::JSON] END) AS item
+            FROM runtime_lists
+        )
+        SELECT filename, last_modified, line, text, list_type, items, item, item->>'op' AS op,
+               json_type(item->'time') AS time_type,
+               CASE WHEN list_contains({list(NUMERIC_JSON_TYPES)}, json_type(item->'time'))
+                    THEN CAST(item->>'time' AS DOUBLE) END AS time
+        FROM runtime_items
+    """
+
+
+def default_time_limit(source: Path = P022_SOURCE) -> float:
+    """The solve budget in seconds that p022 applies when --time-limit is not given, read from its source."""
+    # p022 passes `time_limit_seconds=time_limit or <default>` to solve_ilp.
+    matches = re.findall(r'time_limit_seconds\s*=\s*time_limit\s+or\s+([0-9]*\.?[0-9]+)', source.read_text())
+    # Exactly one call site, or the default is ambiguous.
+    assert len(matches) == 1, f'{source}: expected one `time_limit or <default>` call, found {len(matches)}'
+    return float(matches[0])
+
+
+def load_prune_runs(con: duckdb.DuckDBPyConnection, files: list[str], default_limit: float):
+    """Table runs: one row per p022 run (one clip under one pruning configuration) from its score/runtime.jsonl.
+
+    Columns: dataset, video, param (from the path), split (from the video name), sample_rate, tilesize, time_limit
+    (as logged), budget_s (p022's `time_limit or default_limit`), build_ms, solve_ms, build_plus_solve_ms, stage_ms
+    (every logged op), last_modified, filename. Strict: each file must hold exactly one record with a time_limit
+    (number or null) and its ops under 'runtime', exactly one build_ilp and one solve_ilp, and no negative or
+    non-numeric time; every path must name a dataset, video, and parseable parameter string of a known split.
+    """
+    # Reading zero files would fail inside DuckDB with a less clear message.
+    assert files, 'no runtime files to read'
+    # Every op of every file, with the record's time_limit (SQL NULL when the key is absent, JSON null when null).
+    con.execute(f"""
+        CREATE OR REPLACE TABLE run_ops AS
+        SELECT filename, last_modified, line, list_type, op, time, json_extract(text, '$.time_limit') AS time_limit
+        FROM ({runtime_items_sql(OP_LIST_PATHS[PRUNE_STAGE])})
+    """, {'paths': files})
+    # p022 writes one record per file, so a file with no record or several is not one run.
+    bad = query_dicts(con, """
+        SELECT f.filename, count(DISTINCT o.line) AS records
+        FROM (SELECT unnest($files) AS filename) f LEFT JOIN run_ops o USING (filename)
+        GROUP BY f.filename HAVING records <> 1 LIMIT 5
+    """, {'files': files})
+    assert not bad, f'runtime files without exactly one record: {bad}'
+    # The budget is unknown without a numeric or null time_limit.
+    bad = query_dicts(con, f"""
+        SELECT DISTINCT filename FROM run_ops
+        WHERE time_limit IS NULL OR NOT list_contains({['NULL', *NUMERIC_JSON_TYPES]}, json_type(time_limit)) LIMIT 5
+    """)
+    assert not bad, f'runtime files without a numeric or null time_limit: {bad}'
+    # Every path must name a dataset, video, and parameter string.
+    con.execute(f"""
+        CREATE OR REPLACE TABLE raw_runs AS
+        SELECT filename, any_value(last_modified) AS last_modified, CAST(any_value(time_limit) AS DOUBLE) AS time_limit,
+               regexp_extract(filename, '{PRUNE_PATH_PATTERN}', ['dataset', 'video', 'param']) AS loc
+        FROM run_ops GROUP BY filename
+    """)
+    bad = query_dicts(con, "SELECT filename FROM raw_runs WHERE loc.param = '' LIMIT 5")
+    assert not bad, f'unrecognized runtime paths: {bad}'
+    # Each run must log build_ilp and solve_ilp exactly once, under an op list, and no negative or non-numeric time.
+    bad = query_dicts(con, """
+        SELECT filename, count(*) FILTER (op = 'build_ilp') AS builds, count(*) FILTER (op = 'solve_ilp') AS solves,
+               count(*) FILTER (time < 0 OR (op IS NOT NULL AND time IS NULL)
+                                OR list_type IS DISTINCT FROM 'ARRAY') AS invalid
+        FROM run_ops GROUP BY filename HAVING builds <> 1 OR solves <> 1 OR invalid > 0 LIMIT 5
+    """)
+    assert not bad, f'runs without exactly one valid build_ilp and solve_ilp: {bad}'
+    # Parse the parameter string and split, apply p022's `time_limit or default`, and sum the stage.
+    con.execute(f"""
+        CREATE OR REPLACE TABLE runs AS
+        WITH params AS (
+            SELECT filename, last_modified, loc.dataset, loc.video, loc.param, time_limit,
+                   regexp_extract(loc.param, '{PRUNE_PARAM_PATTERN}',
+                                  ['classifier', 'tilesize', 'sample_rate', 'threshold', 'relevance', 'tracker']) AS p
+            FROM raw_runs
+        ),
+        times AS (
+            SELECT filename, sum(time) FILTER (op = 'build_ilp') AS build_ms, sum(time) FILTER (op = 'solve_ilp') AS solve_ms,
+                   sum(time) AS stage_ms
+            FROM run_ops GROUP BY filename
+        )
+        SELECT dataset, video, param,
+               CASE {' '.join(f"WHEN video LIKE '{k}%' THEN '{v}'" for k, v in SPLIT_PREFIXES.items())} END AS split,
+               TRY_CAST(p.sample_rate AS INTEGER) AS sample_rate, TRY_CAST(p.tilesize AS INTEGER) AS tilesize,
+               time_limit, coalesce(nullif(time_limit, 0), $default_limit) AS budget_s,
+               build_ms, solve_ms, build_ms + solve_ms AS build_plus_solve_ms, stage_ms, last_modified, filename
+        FROM params JOIN times USING (filename)
+    """, {'default_limit': default_limit})
+    # Every run must belong to a known split and carry a parseable sampling rate.
+    bad = query_dicts(con, 'SELECT filename FROM runs WHERE split IS NULL OR sample_rate IS NULL LIMIT 5')
+    assert not bad, f'runs with an unknown split or unparseable parameter string: {bad}'
+
+
+def load_tradeoff_points(con: duckdb.DuckDBPyConnection, table: str, tradeoffs: dict[str, tuple[pd.DataFrame, pd.Series]],
+                         columns: dict[str, str] | None = None):
+    """Table <table>(dataset, system, config, fps, accuracy, *columns) from {dataset: load_test_tradeoff(dataset)}.
+
+    Per dataset, the reference pipeline's test row (system 'reference', config 'naive') and every validated Tetris
+    configuration (system 'tetris', config its variant id); fps is throughput and accuracy test HOTA, the shape
+    fastest_within reads. `columns` maps further tradeoff columns to their DuckDB types; the reference row takes
+    them from its own row (NULL where it has none or NaN), Tetris rows from theirs (pandas NaN arrives as NULL).
+    """
+    # An empty mapping has no dataset to report.
+    assert tradeoffs, 'no tradeoff tables'
+    # The table with the fixed columns and the requested ones.
+    columns = columns or {}
+    extra = ''.join(f', "{c}" {t}' for c, t in columns.items())
+    con.execute(f'CREATE OR REPLACE TABLE {table} (dataset VARCHAR, system VARCHAR, config VARCHAR, fps DOUBLE, '
+                f'accuracy DOUBLE{extra})')
+    # One reference row and one insert of the Tetris rows per dataset (a handful of tables, not data rows).
+    for dataset, (tetris, naive) in tradeoffs.items():
+        # The reference row, its extra values as plain Python values (NaN as NULL).
+        con.execute(f"INSERT INTO {table} VALUES (?, 'reference', 'naive', ?, ?{', ?' * len(columns)})",
+                    [dataset, float(naive['throughput_fps']), float(naive['HOTA_HOTA']),
+                     *[plain(naive.get(c)) for c in columns]])
+        # Every Tetris configuration, read straight from the pandas frame and cast to the table's types.
+        con.register('tradeoff_frame', tetris)
+        con.execute(f"""
+            INSERT INTO {table} SELECT $dataset, 'tetris', variant_id, throughput_fps, HOTA_HOTA
+                   {''.join(f', "{c}"' for c in columns)}
+            FROM tradeoff_frame
+        """, {'dataset': dataset})
+        # Release the view so the next dataset can register its own frame.
+        con.unregister('tradeoff_frame')
+
+
+def load_pruning_points(con: duckdb.DuckDBPyConnection, tradeoffs: dict[str, tuple[pd.DataFrame, pd.Series]],
+                        table: str = 'points'):
+    """Table <table>(dataset, system, config, fps, accuracy, time_s, prunes) from {dataset: load_test_tradeoff(dataset)}.
+
+    load_tradeoff_points with each row's runtime (time_s) and whether it prunes (a Tetris configuration with a
+    tracking-accuracy threshold; the reference never does), plus the pruning configurations again as system
+    'tetris_pruned', so fastest_within can select among all and among pruning configurations at once.
+    """
+    # Reference and Tetris rows with their runtime and pruning threshold.
+    load_tradeoff_points(con, table, tradeoffs, {'time': 'DOUBLE', 'tracking_accuracy_threshold': 'DOUBLE'})
+    # The pruning flag, and the pruning configurations again under their own system name.
+    con.execute(f"""
+        CREATE OR REPLACE TABLE {table} AS
+        WITH p AS (
+            SELECT dataset, system, config, fps, accuracy, "time" AS time_s,
+                   system = 'tetris' AND tracking_accuracy_threshold IS NOT NULL AS prunes
+            FROM {table}
+        )
+        SELECT * FROM p
+        UNION ALL SELECT * REPLACE ('tetris_pruned' AS system) FROM p WHERE system = 'tetris' AND prunes
+    """)
+
+
+# The two selections the R9.O3 reports make over load_pruning_points' systems: the fastest configuration within the
+# bound, and the fastest one that prunes.
+PRUNING_POINTS = {'tetris': 'operating_point', 'tetris_pruned': 'fastest_pruning_point'}
+
+
+def pruning_operating_points(con: duckdb.DuckDBPyConnection, loss: float, table: str = 'points') -> list[dict]:
+    """fastest_within over load_pruning_points' `table` among all and among pruning configurations, per dataset.
+
+    Each row also carries `point`, its name in PRUNING_POINTS; table chosen_points(dataset, point, config) holds the
+    selections that meet the bound.
+    """
+    # Fastest configuration within the bound, among all and among pruning configurations, named by its role.
+    chosen = [dict(r, point=PRUNING_POINTS[r['system']]) for r in fastest_within(con, table, loss, list(PRUNING_POINTS))]
+    # The selections that meet the bound, as a table to join with per-configuration data.
+    con.execute('CREATE OR REPLACE TABLE chosen_points (dataset VARCHAR, point VARCHAR, config VARCHAR)')
+    selected = [(r['dataset'], r['point'], r['config']) for r in chosen if r['meets_bound']]
+    # Insert them only when there are any (executemany needs at least one row).
+    if selected:
+        con.executemany('INSERT INTO chosen_points VALUES (?, ?, ?)', selected)
+    return chosen
+
+
+def fastest_tetris(con: duckdb.DuckDBPyConnection, table: str, loss: float) -> dict[str, dict]:
+    """Per dataset of `table` (load_tradeoff_points' shape), the fastest Tetris configuration whose HOTA is within
+    `loss` of the reference pipeline's, as a fastest_within row; fails when some dataset has none."""
+    # The shared selection rule (inclusive bound, ties to the more accurate configuration, then the smaller name).
+    met = {r['dataset']: r for r in fastest_within(con, table, loss, ['tetris']) if r['meets_bound']}
+    # Every dataset of the table needs an operating point, including one without any Tetris row.
+    missed = sorted({r['dataset'] for r in query_dicts(con, f'SELECT DISTINCT dataset FROM {table}')} - set(met))
+    assert not missed, f'no Tetris configuration within {loss:.0%} HOTA loss on {missed}'
+    return met
 
 
 def load_test_tradeoff(dataset: str) -> tuple[pd.DataFrame, pd.Series]:

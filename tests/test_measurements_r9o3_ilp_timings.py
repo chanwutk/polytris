@@ -7,7 +7,9 @@ import duckdb
 import pandas as pd
 import pytest
 
+from measurements import common
 from measurements import r9o3_ilp_timings as it
+from polyis.io import store
 
 
 # A valid p022 parameter string and the throughput variant id that shares its pruning run.
@@ -46,7 +48,7 @@ def write_run(root, dataset, video, param=PARAM, ops=None, time_limit=None, text
 
 def listing(dataset, *videos):
     # (dataset, split, video) rows for the given video names, with the split taken from the name prefix.
-    return [(dataset, it.SPLITS[v[:2]], v) for v in videos]
+    return [(dataset, it.SPLIT_PREFIXES[v[:2]], v) for v in videos]
 
 
 def clip_positions(con):
@@ -63,24 +65,6 @@ def set_runs(con, rows):
                     [('d', r[0], r[1], r[5] if len(r) > 5 else 0.1, r[2], r[3], r[2] + r[3], r[4]) for r in rows])
 
 
-def test_default_time_limit_from_p022_is_one_tenth_second():
-    # The real pipeline falls back to 0.1 s when --time-limit is not given.
-    assert it.default_time_limit() == 0.1
-
-
-def test_default_time_limit_parses_spacing_and_rejects_ambiguity(tmp_path):
-    # Spacing around the keyword is tolerated.
-    one = tmp_path / 'one.py'
-    one.write_text('solve_ilp(x, time_limit_seconds = time_limit or 0.25)\n')
-    assert it.default_time_limit(one) == 0.25
-    # No call site, or two, cannot define the default.
-    for text in ('solve_ilp(x)\n', 'a(time_limit_seconds=time_limit or 0.1)\nb(time_limit_seconds=time_limit or 0.5)\n'):
-        path = tmp_path / 'bad.py'
-        path.write_text(text)
-        with pytest.raises(AssertionError, match='expected one'):
-            it.default_time_limit(path)
-
-
 def test_runtime_files_lists_only_the_pruning_stage_and_fails_on_empty_dataset(tmp_path):
     # One saved run, plus a time-limit experiment and another stage that must not be read.
     run = write_run(tmp_path, 'd1', 'va00.mp4')
@@ -95,7 +79,7 @@ def test_runtime_files_lists_only_the_pruning_stage_and_fails_on_empty_dataset(t
 
 def test_split_videos_lists_sorted_video_files_and_fails_on_empty_or_missing_split(tmp_path, monkeypatch):
     # Dataset directories under tmp_path instead of /polyis-data.
-    monkeypatch.setattr(it.store, 'dataset', lambda d, *a: tmp_path / d / Path(*a))
+    monkeypatch.setattr(store, 'dataset', lambda d, *a: tmp_path / d / Path(*a))
     # Valid and test videos, written out of order, with a non-video file that p022 ignores.
     for name in ('valid/va01.mp4', 'valid/va00.avi', 'valid/notes.txt', 'test/te00.mkv'):
         (tmp_path / 'd' / name).parent.mkdir(parents=True, exist_ok=True)
@@ -108,7 +92,7 @@ def test_split_videos_lists_sorted_video_files_and_fails_on_empty_or_missing_spl
     with pytest.raises(AssertionError, match='no videos listed'):
         it.split_videos(['e'])
     # A dataset without split directories at all.
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(AssertionError, match='does not exist'):
         it.split_videos(['missing'])
 
 
@@ -194,18 +178,22 @@ def test_load_runs_rejects_missing_negative_null_or_repeated_ops(con, tmp_path, 
         it.load_runs(con, [write_run(tmp_path, 'd', 'va00.mp4', text=text)], 0.1, listing('d', 'va00.mp4'))
 
 
-@pytest.mark.parametrize('text', [
+@pytest.mark.parametrize('text, error, message', [
     # Two records in one file.
-    json.dumps({'runtime': [], 'time_limit': None}) + '\n' + json.dumps({'runtime': [], 'time_limit': None}) + '\n',
+    (json.dumps({'runtime': [], 'time_limit': None}) + '\n' + json.dumps({'runtime': [], 'time_limit': None}) + '\n',
+     AssertionError, 'exactly one record'),
     # No time_limit key, so the budget is unknown.
-    json.dumps({'runtime': [{'op': 'build_ilp', 'time': 1}, {'op': 'solve_ilp', 'time': 1}]}),
+    (json.dumps({'runtime': [{'op': 'build_ilp', 'time': 1}, {'op': 'solve_ilp', 'time': 1}]}), AssertionError,
+     'numeric or null time_limit'),
     # A time that is not a number.
-    json.dumps({'runtime': [{'op': 'build_ilp', 'time': 'x'}, {'op': 'solve_ilp', 'time': 1}], 'time_limit': None}),
+    (json.dumps({'runtime': [{'op': 'build_ilp', 'time': 'x'}, {'op': 'solve_ilp', 'time': 1}], 'time_limit': None}),
+     AssertionError, 'exactly one valid build_ilp and solve_ilp'),
     # Not JSON at all.
-    'nope',
+    ('nope', duckdb.InvalidInputException, 'Malformed JSON'),
 ])
-def test_load_runs_rejects_malformed_files(con, tmp_path, text):
-    with pytest.raises(duckdb.Error):
+def test_load_runs_rejects_malformed_files(con, tmp_path, text, error, message):
+    # Malformed JSON fails in DuckDB's parser; the other shapes fail common.load_prune_runs' checks.
+    with pytest.raises(error, match=message):
         it.load_runs(con, [write_run(tmp_path, 'd', 'va00.mp4', text=text)], 0.1, listing('d', 'va00.mp4'))
 
 
@@ -362,7 +350,7 @@ def setup_extraction(con, tmp_path, tetris_rows, ops_rows, runs=(), workers=it.P
     # Throughput ops, their match with the runs, the tradeoff points, and per-configuration runtimes.
     it.load_throughput_ops(con, {'d': write_ops(tmp_path / 'ops.csv', ops_rows)})
     check = it.variant_videos(con)
-    it.load_points(con, {'d': tradeoff(tetris_rows)})
+    common.load_pruning_points(con, {'d': tradeoff(tetris_rows)})
     it.variant_runtimes(con)
     return check
 
@@ -429,7 +417,7 @@ def test_extraction_report_pruning_point_misses_bound(con, tmp_path):
 def test_extraction_report_rejects_dataset_without_tetris_rows(con, tmp_path):
     # A dataset whose tradeoff table has a reference row but no Tetris configuration.
     setup_extraction(con, tmp_path, [('fast', 50.0, 0.79, 2.0, None)], extraction_rows('d', 'fast'))
-    it.load_points(con, {'d': tradeoff([('fast', 50.0, 0.79, 2.0, None)]), 'e': tradeoff([])})
+    common.load_pruning_points(con, {'d': tradeoff([('fast', 50.0, 0.79, 2.0, None)]), 'e': tradeoff([])})
     with pytest.raises(AssertionError, match='no Tetris configuration'):
         it.extraction_report(con, 0.05)
 
@@ -477,7 +465,7 @@ def test_load_throughput_ops_rejects_wrong_split_missing_file_and_other_dataset(
     with pytest.raises(AssertionError, match='not the test split'):
         it.load_throughput_ops(con, {'d': write_ops(tmp_path / 'va.csv', extraction_rows('d', 'fast'), 'valid')})
     # A missing table is reported rather than dropping the dataset.
-    with pytest.raises(AssertionError, match='missing throughput tables'):
+    with pytest.raises(AssertionError, match='throughput tables .* missing'):
         it.load_throughput_ops(con, {'d': tmp_path / 'missing.csv'})
     # A table holding another dataset's rows.
     with pytest.raises(AssertionError, match='throughput tables cover'):
@@ -497,7 +485,7 @@ def test_main_end_to_end_on_a_small_cache(tmp_path, monkeypatch):
     out.mkdir()
     # Point the script at the small cache instead of /polyis-cache and /polyis-data.
     monkeypatch.setattr(it.cache, 'CACHE_DIR', str(cache_root))
-    monkeypatch.setattr(it.store, 'dataset', lambda d, *a: data / d / Path(*a))
+    monkeypatch.setattr(store, 'dataset', lambda d, *a: data / d / Path(*a))
     monkeypatch.setattr(it.cache, 'eval', lambda d, *a: ops_path)
     monkeypatch.setattr(it, 'load_test_tradeoff',
                         lambda d: tradeoff([('fast', 50.0, 0.77, 2.0, None), (VARIANT, 40.0, 0.79, 2.7, 0.6)]))

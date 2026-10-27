@@ -31,8 +31,8 @@ Operator ablation (ablation_speedup.json)
   fastest configuration within the bound, and averages its speedup over datasets.
 
 LEAP (provisional)
-  LEAP's CalDoT1 and CalDoT2 stat CSVs list every test video twice, and p140 sums both runs.
-  Its runtime is recomputed here from the raw stat CSV (mean over repeated runs per video).
+  LEAP's CalDoT1 and CalDoT2 stat CSVs list every test video twice; p140 counts each video's
+  mean run (since 2026-10-26), and the cached runtime is checked here against the raw stat CSV.
   LEAP's converted outputs are longer than the clips and hold same-frame duplicate boxes, so
   its HOTA, and every LEAP and leap_fit number, is provisional until R1.O2 fixes the conversion.
 
@@ -43,7 +43,7 @@ Checks
 
 Inputs are the test-split tradeoff tables (Tetris and the reference, from p130), the SOTA
 tables (OTIF and LEAP, from p142) through measurements.common.system_configs, and the raw LEAP
-stat CSVs and SOTA outputs under --sota-dir. HOTA is scored against the cached ground truth.
+stat CSVs (checks only) and SOTA outputs under --sota-dir. HOTA is scored against the cached ground truth.
 For B3D1-B3D4 that ground truth is automatic, so every B3D number here must be recomputed
 once R1.O1's human-verified labels replace it.
 
@@ -54,11 +54,9 @@ Writes measurements-results/r7o1_hota_matched_speedup/:
                          maximum, candidate counts, and the p204 port and manuscript checks
 """
 import argparse
-import hashlib
 import math
 import os
 from datetime import datetime, timezone
-from pathlib import Path
 
 import duckdb
 import pandas as pd
@@ -67,9 +65,10 @@ from evaluation import p203_compare_stats as p203
 from evaluation import p204_ablation_stats as p204
 from evaluation.ablation import ABLATION_CONDITIONS
 from evaluation.p140_otif_transform import build_expected_test_video_manifest, dataset_name_in_sota
-from measurements.common import (DATASET_LABELS, PRIOR_SYSTEMS, best_accuracy_bounds, fastest_within,
-                                 load_test_tradeoff, operating_points, print_operating_points, query_dicts,
-                                 results_dir, system_configs, write_json)
+from measurements.common import (DATASET_LABELS, PRIOR_SYSTEMS, assert_files_exist, best_accuracy_bounds,
+                                 fastest_within, file_record, load_test_tradeoff, operating_points, plain,
+                                 print_operating_points, query_dicts, results_dir, rounded, system_configs,
+                                 write_json)
 from polyis.io import cache
 from polyis.utilities import get_video_frame_count
 
@@ -129,7 +128,8 @@ LEAP_NOTE = ('Provisional. LEAP\'s HOTA comes from p140_otif_transform.transform
              'index; LEAP\'s outputs are longer than the clips and hold many same-frame identical boxes '
              '(leap_checks.output_alignment), so the conversion is unverified (R1.O2, "document the HOTA conversion"). '
              'Do not quote any LEAP or leap_fit number, or "LEAP misses the 5%/10% bound", until the conversion is '
-             'fixed and rescored. LEAP\'s runtime is deduplicated here (leap_checks.runtime).')
+             'fixed and rescored. LEAP\'s runtime is p140\'s per-video mean, checked against the raw stat CSV '
+             '(leap_checks.runtime).')
 # Schema of one raw SOTA output file: a list of frames, each a list of boxes (other fields are ignored).
 OUTPUT_SCHEMA = '[[{"left": "DOUBLE", "top": "DOUBLE", "right": "DOUBLE", "bottom": "DOUBLE"}]]'
 
@@ -160,33 +160,33 @@ def create_dataset_order(con: duckdb.DuckDBPyConnection, datasets: list[str]):
 
 
 def load_points(con: duckdb.DuckDBPyConnection, datasets: list[str]):
-    """Table p142_points(dataset, system, config, fps, hota, accuracy): every system's test configurations as p203 reads them."""
+    """Table hota_points(dataset, system, config, fps, hota, accuracy): every system's test configurations as p203 reads them."""
     # Fail on dataset names the manuscript does not evaluate.
     unknown = set(datasets) - set(DATASET_LABELS)
     assert not unknown, f'unknown datasets {sorted(unknown)}; choose from {sorted(DATASET_LABELS)}'
     # The tie-breaking order for maxima.
     create_dataset_order(con, datasets)
     # Replace any table from a previous call.
-    con.execute('CREATE OR REPLACE TABLE p142_points (dataset VARCHAR, system VARCHAR, config VARCHAR, '
+    con.execute('CREATE OR REPLACE TABLE hota_points (dataset VARCHAR, system VARCHAR, config VARCHAR, '
                 'fps DOUBLE, hota DOUBLE, accuracy DOUBLE)')
     # One row per configuration of the reference, Tetris, OTIF, and LEAP, keyed by the manuscript's dataset label.
-    con.executemany('INSERT INTO p142_points VALUES (?, ?, ?, ?, ?, ?)',
+    con.executemany('INSERT INTO hota_points VALUES (?, ?, ?, ?, ?, ?)',
                     [(DATASET_LABELS[d], r['system'], r['config'], r['fps'], r['hota'], r['hota'])
                      for d in datasets for r in system_configs(d)])
     # A NaN HOTA sorts above every number in DuckDB and would win every bound, so every value must be finite.
     bad = query_dicts(con, """
-        SELECT dataset, system, config, fps, hota FROM p142_points
+        SELECT dataset, system, config, fps, hota FROM hota_points
         WHERE hota IS NULL OR isnan(hota) OR hota < 0 OR hota > 1 OR fps IS NULL OR isnan(fps) OR isinf(fps) OR fps <= 0
     """)
     assert not bad, f'invalid HOTA or throughput: {bad}'
     # Configuration names identify points in the report, so they must be unique per dataset and system.
-    dup = query_dicts(con, 'SELECT dataset, system, config, count(*) AS n FROM p142_points GROUP BY ALL HAVING n > 1')
+    dup = query_dicts(con, 'SELECT dataset, system, config, count(*) AS n FROM hota_points GROUP BY ALL HAVING n > 1')
     assert not dup, f'duplicate configurations: {dup}'
     # Every dataset needs one reference row and at least one configuration of every compared system.
     gaps = query_dicts(con, """
         SELECT d.dataset, s.system, count(p.config) AS n
         FROM (SELECT unnest($datasets) AS dataset) d CROSS JOIN (SELECT unnest($systems) AS system) s
-        LEFT JOIN p142_points p ON p.dataset = d.dataset AND p.system = s.system
+        LEFT JOIN hota_points p ON p.dataset = d.dataset AND p.system = s.system
         GROUP BY ALL HAVING (s.system = 'reference' AND n <> 1) OR n = 0
     """, {'datasets': [DATASET_LABELS[d] for d in datasets], 'systems': ['reference', *SYSTEMS]})
     assert not gaps, f'missing or repeated test rows: {gaps}'
@@ -196,7 +196,7 @@ def load_tetris_knobs(con: duckdb.DuckDBPyConnection, datasets: list[str]):
     """Tables tetris_knobs (Tetris configurations with their classifier, sample rate, and pruning threshold) and frame_counts.
 
     Fails on Perfect (oracle) classifier rows, which p203 and p204 drop and system_configs does not, and on any
-    disagreement with p142_points, which reads the same tradeoff tables.
+    disagreement with hota_points, which reads the same tradeoff tables.
     """
     # Replace any tables from a previous call.
     con.execute('CREATE OR REPLACE TABLE tetris_knobs (dataset VARCHAR, config VARCHAR, classifier VARCHAR, '
@@ -222,9 +222,9 @@ def load_tetris_knobs(con: duckdb.DuckDBPyConnection, datasets: list[str]):
     # Rows in one table and not the other; both come from the same file, so this is empty.
     diff = query_dicts(con, """
         (SELECT dataset, config, fps, hota FROM tetris_knobs
-         EXCEPT SELECT dataset, config, fps, hota FROM p142_points WHERE system = 'tetris')
+         EXCEPT SELECT dataset, config, fps, hota FROM hota_points WHERE system = 'tetris')
         UNION ALL
-        (SELECT dataset, config, fps, hota FROM p142_points WHERE system = 'tetris'
+        (SELECT dataset, config, fps, hota FROM hota_points WHERE system = 'tetris'
          EXCEPT SELECT dataset, config, fps, hota FROM tetris_knobs)
     """)
     assert not diff, f'Tetris rows differ between system_configs and load_test_tradeoff: {diff}'
@@ -255,27 +255,28 @@ def load_clips(con: duckdb.DuckDBPyConnection, datasets: list[str]):
     assert not bad, f'test clips do not add up to the tradeoff frame count: {bad}'
 
 
-def correct_leap_runtime(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:
-    """Table hota_points: p142_points with LEAP's runtime recomputed from the raw stat CSV, one run per video.
+def check_leap_runtime(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:
+    """LEAP's cached test runtime checked against its raw stat CSV; returns {dataset: the runtime record} for the JSON.
 
-    p140 normalize_leap_stat_csv uses the CSV's 'total' row, which sums every row; on CalDoT1 and CalDoT2
-    each test video is listed twice (two runs), doubling the runtime. Here each video's runtime is
-    inference_total - decode averaged over its rows, summed over the test videos.
-    Returns {dataset: before and after} for the JSON.
+    Since 2026-10-26, p140 normalize_leap_stat_csv takes each test video's inference_total - decode averaged over
+    its rows (CalDoT1 and CalDoT2 list every video twice, two runs) and sums over the videos, instead of the CSV's
+    'total' row, which summed both runs. The same sum is recomputed here from the raw CSV, and the cached LEAP
+    throughput in hota_points (from p142) must equal the test frame count over it, or the run stops.
     """
     # Replace any table from a previous call.
     con.execute('CREATE OR REPLACE TABLE leap_stat_rows (dataset VARCHAR, video_name VARCHAR, runtime DOUBLE, '
                 'frames_sampled DOUBLE, frames_filtered DOUBLE)')
-    # Read each dataset's raw LEAP stat CSV.
-    for r in query_dicts(con, 'SELECT DISTINCT dataset, raw FROM clips ORDER BY dataset'):
-        # The raw export p140 reads.
-        path = os.path.join(sota_dir, r['raw'], f"leap_{r['raw']}.csv")
-        assert os.path.exists(path), f'missing raw LEAP stat CSV {path}'
+    # Each dataset's raw LEAP stat CSV, the export p140 reads.
+    raw = query_dicts(con, 'SELECT DISTINCT dataset, raw FROM clips ORDER BY dataset')
+    paths = {r['dataset']: os.path.join(sota_dir, r['raw'], f"leap_{r['raw']}.csv") for r in raw}
+    assert_files_exist(paths.values(), 'raw LEAP stat CSVs')
+    # Read each dataset's CSV.
+    for dataset, path in paths.items():
         # LEAP's runtime per row excludes decoding, as in p140.
         con.execute("""
             INSERT INTO leap_stat_rows
             SELECT ?, CAST(video_name AS VARCHAR), inference_total - decode, frames_sampled, frames_filtered FROM read_csv(?)
-        """, [r['dataset'], path])
+        """, [dataset, path])
     # Every row other than 'total' must name a numeric video id.
     bad = query_dicts(con, "SELECT dataset, video_name FROM leap_stat_rows WHERE video_name <> 'total' AND try_cast(video_name AS INTEGER) IS NULL")
     assert not bad, f'LEAP stat rows without a video id: {bad}'
@@ -299,17 +300,9 @@ def correct_leap_runtime(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:
     """)
     assert not mismatch, f'LEAP stat rows do not match the test videos: {mismatch}'
     # The stat CSV describes LEAP's single configuration.
-    multi = query_dicts(con, "SELECT dataset, count(*) AS n FROM p142_points WHERE system = 'leap' GROUP BY dataset HAVING n <> 1")
+    multi = query_dicts(con, "SELECT dataset, count(*) AS n FROM hota_points WHERE system = 'leap' GROUP BY dataset HAVING n <> 1")
     assert not multi, f'LEAP has more than one configuration: {multi}'
-    # The corrected table: LEAP's throughput is the test frame count over the deduplicated runtime.
-    con.execute("""
-        CREATE OR REPLACE TABLE hota_points AS
-        SELECT p.dataset, p.system, p.config,
-               CASE WHEN p.system = 'leap' THEN f.frames / r.runtime ELSE p.fps END AS fps, p.hota, p.accuracy
-        FROM p142_points p JOIN frame_counts f USING (dataset)
-        LEFT JOIN (SELECT dataset, sum(runtime) AS runtime FROM leap_video_runtime GROUP BY dataset) r USING (dataset)
-    """)
-    # Before and after per dataset, with the raw 'total' row for comparison with p142's runtime.
+    # Per dataset: the per-video runtimes summed, the raw 'total' row, and the runtime behind the cached throughput.
     rows = query_dicts(con, """
         WITH v AS (
             SELECT dataset, count(*) AS videos, sum(runs) AS stat_rows, max(runs) AS max_runs_per_video,
@@ -317,22 +310,20 @@ def correct_leap_runtime(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:
             FROM leap_video_runtime GROUP BY dataset
         ),
         t AS (SELECT dataset, sum(runtime) AS total_row_runtime FROM leap_stat_rows WHERE video_name = 'total' GROUP BY dataset)
-        SELECT v.*, t.total_row_runtime, f.frames, leap_prev.fps AS p142_fps, leap_cur.fps AS fps, ref.fps AS reference_fps
+        SELECT v.*, t.total_row_runtime, p.fps, f.frames / p.fps AS cached_runtime
         FROM v JOIN frame_counts f USING (dataset) LEFT JOIN t USING (dataset)
-        JOIN p142_points leap_prev ON leap_prev.dataset = v.dataset AND leap_prev.system = 'leap'
-        JOIN hota_points leap_cur ON leap_cur.dataset = v.dataset AND leap_cur.system = 'leap'
-        JOIN p142_points ref ON ref.dataset = v.dataset AND ref.system = 'reference'
+        JOIN hota_points p ON p.dataset = v.dataset AND p.system = 'leap'
         ORDER BY v.dataset
     """)
-    # Arrange for the JSON, with runtimes in seconds and throughputs rounded as elsewhere.
+    # The cached runtime must be the per-video one (summation orders differ, so up to 1e-9 relative).
+    bad = [r for r in rows if not math.isclose(r['cached_runtime'], r['runtime'], rel_tol=1e-9)]
+    assert not bad, f'cached LEAP runtime differs from the raw stat CSV (per-video mean, summed): {bad}'
+    # Arrange for the JSON, with runtimes in seconds and throughput rounded as elsewhere.
     return {r['dataset']: dict(
         videos=r['videos'], stat_rows=r['stat_rows'], max_runs_per_video=r['max_runs_per_video'],
         max_run_spread=round(r['max_run_spread'], 4), same_frames_across_runs=r['same_frames_across_runs'],
-        total_row_runtime_s=None if r['total_row_runtime'] is None else round(r['total_row_runtime'], 4),
-        p142_runtime_s=round(r['frames'] / r['p142_fps'], 4), deduplicated_runtime_s=round(r['runtime'], 4),
-        p142_fps=round(r['p142_fps'], 1), deduplicated_fps=round(r['fps'], 1),
-        p142_speedup_vs_reference=r1(r['p142_fps'] / r['reference_fps']),
-        deduplicated_speedup_vs_reference=r1(r['fps'] / r['reference_fps'])) for r in rows}
+        total_row_runtime_s=rounded(r['total_row_runtime'], 4),
+        runtime_s=round(r['runtime'], 4), fps=round(r['fps'], 1)) for r in rows}
 
 
 def output_alignment(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:
@@ -349,14 +340,13 @@ def output_alignment(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:
         SELECT c.dataset, p.system, p.config, c.video_id, c.frames,
                CASE WHEN p.system = 'leap' THEN concat($root, '/', c.raw, '/leap/', c.video_id, '.json')
                     ELSE concat($root, '/', c.raw, '/', replace(p.config, 'param ', ''), '/', c.video_id, '.json') END AS path
-        FROM clips c JOIN (SELECT DISTINCT dataset, system, config FROM p142_points WHERE system <> 'reference' AND system <> 'tetris') p
+        FROM clips c JOIN (SELECT DISTINCT dataset, system, config FROM hota_points WHERE system <> 'reference' AND system <> 'tetris') p
         USING (dataset)
     """, {'root': sota_dir.rstrip('/')})
     # The file paths, for one read.
     paths = [r[0] for r in con.execute('SELECT path FROM output_files ORDER BY path').fetchall()]
     # A missing file is an error with a clear message rather than a DuckDB IO error.
-    missing = [p for p in paths if not os.path.exists(p)]
-    assert not missing, f'missing raw SOTA outputs: {missing[:5]} ({len(missing)} in all)'
+    assert_files_exist(paths, 'raw SOTA outputs')
     # Entries, detections, and same-frame duplicate boxes per file; null files and frames count as empty.
     rows = query_dicts(con, f"""
         WITH f AS (SELECT filename, from_json(content, '{OUTPUT_SCHEMA}') AS frames FROM read_text($paths)),
@@ -383,7 +373,7 @@ def output_alignment(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:
     for r in rows:
         share = r.pop('duplicate_share')
         out.setdefault(r.pop('dataset'), {}).setdefault(r.pop('system'), {})[r.pop('config')] = dict(
-            r, duplicate_share=None if share is None else round(share, 4))
+            r, duplicate_share=rounded(share, 4))
     return out
 
 
@@ -570,12 +560,6 @@ def dominance(con: duckdb.DuckDBPyConnection, points: str, chosen: str) -> list[
     """)
 
 
-def r1(x: float | None) -> float | None:
-    """Round to one decimal as the manuscript macros do, keeping missing values missing."""
-    # Python's round matches the macros' :.1f formatting.
-    return None if x is None else round(x, 1)
-
-
 def arrange_ranges(speedups: list[dict], ratios: list[dict]) -> dict:
     """{bound: {systems, tetris_vs, prior_meets, prior_fail}} from speedup_stats and ratio_stats rows."""
     # The report, filled below.
@@ -583,22 +567,22 @@ def arrange_ranges(speedups: list[dict], ratios: list[dict]) -> dict:
     # Speedup over the reference per system, over the datasets where it qualifies.
     for s in speedups:
         out.setdefault(s['bound'], dict(systems={}, tetris_vs={}))['systems'][s['system']] = dict(
-            datasets=s['datasets'], meets_bound=s['meets_bound'], speedup_vs_reference_min=r1(s['min']),
-            speedup_vs_reference_max=r1(s['max']))
+            datasets=s['datasets'], meets_bound=s['meets_bound'], speedup_vs_reference_min=rounded(s['min'], 1),
+            speedup_vs_reference_max=rounded(s['max'], 1))
     # Tetris over each prior and over the fastest prior, where both qualify.
     for r in ratios:
         entry = out.setdefault(r['bound'], dict(systems={}, tetris_vs={}))
         entry.update(prior_meets=r['prior_meets'], prior_fail=r['prior_fail'])
         # A bound without any ratio has one row with a NULL system.
         if r['system'] is not None:
-            entry['tetris_vs'][r['system']] = dict(datasets=r['datasets'], min=r1(r['min']), max=r1(r['max']))
+            entry['tetris_vs'][r['system']] = dict(datasets=r['datasets'], min=rounded(r['min'], 1), max=rounded(r['max'], 1))
     return out
 
 
 def arrange_matched(rows: list[dict], stats: list[dict]) -> dict:
     """{bound: {summary, per_dataset}} from the accuracy-matched table and matched_stats rows."""
     # One summary per bound, ratios rounded as the macros are.
-    out = {s['bound']: dict(matched=s['matched'], min=r1(s['min']), max=r1(s['max']),
+    out = {s['bound']: dict(matched=s['matched'], min=rounded(s['min'], 1), max=rounded(s['max'], 1),
                             matched_outside_bound=s['matched_outside_bound'], prior_systems=s['prior_systems'],
                             per_dataset={}) for s in stats}
     # Each dataset's Tetris point, the matched prior point, and whether that point meets the bound.
@@ -609,7 +593,7 @@ def arrange_matched(rows: list[dict], stats: list[dict]) -> dict:
         out[r['bound']]['per_dataset'][r['dataset']] = dict(
             bound=round(r['bound_accuracy'], 4), tetris=dict(config=r['tetris_config'], hota=round(r['tetris_hota'], 4),
                                                              fps=round(r['tetris_fps'], 1)),
-            prior=prior, tetris_speedup_vs_prior=None if prior is None else r1(r['tetris_fps'] / r['prior_fps']))
+            prior=prior, tetris_speedup_vs_prior=None if prior is None else rounded(r['tetris_fps'] / r['prior_fps'], 1))
     return out
 
 
@@ -621,12 +605,12 @@ def arrange_dominance(rows: list[dict]) -> dict:
     for r in rows:
         # The prior system's chosen point.
         prior = dict(config=r['prior_config'], hota=round(r['prior_hota'], 4), fps=round(r['prior_fps'], 1),
-                     speedup_vs_reference=r1(r['prior_fps'] / r['reference_fps']))
+                     speedup_vs_reference=rounded(r['prior_fps'] / r['reference_fps'], 1))
         # The matching Tetris point, or None when no configuration is at least as accurate.
         tetris = None if r['tetris_config'] is None else dict(
             config=r['tetris_config'], hota=round(r['tetris_hota'], 4), fps=round(r['tetris_fps'], 1),
-            speedup_vs_reference=r1(r['tetris_fps'] / r['reference_fps']),
-            speedup_vs_prior=r1(r['tetris_fps'] / r['prior_fps']))
+            speedup_vs_reference=rounded(r['tetris_fps'] / r['reference_fps'], 1),
+            speedup_vs_prior=rounded(r['tetris_fps'] / r['prior_fps'], 1))
         # Nest under bound and dataset.
         out.setdefault(r['bound'], {}).setdefault(r['dataset'], {})[r['prior']] = dict(prior=prior, tetris=tetris)
     return out
@@ -661,15 +645,6 @@ def macro_values(speedups: list[dict], ratios: list[dict], matched: list[dict], 
             f'compareNaiveSpeedupMin{suffix}': tetris.get('min'), f'compareNaiveSpeedupMax{suffix}': tetris.get('max'),
         }
     return out
-
-
-def plain(value) -> object:
-    """A pandas or NumPy scalar as a Python value, with NA as None."""
-    # Missing values of any kind become None.
-    if value is None or pd.isna(value):
-        return None
-    # NumPy scalars become Python ints and floats.
-    return value.item() if hasattr(value, 'item') else value
 
 
 def p203_reference(datasets: list[str], specs: dict[str, dict]) -> dict:
@@ -739,12 +714,6 @@ def mismatches(checks: dict) -> list[str]:
     return [f'{b}/{k}' for b, entries in checks.items() for k, v in entries.items() if not v['match']]
 
 
-def rounded(values: dict) -> dict:
-    """Floats rounded to one decimal as the manuscript prints them; other values unchanged."""
-    # Counts and dataset names pass through.
-    return {k: r1(v) if isinstance(v, float) else v for k, v in values.items()}
-
-
 def ablation_points(con: duckdb.DuckDBPyConnection):
     """Table ablation_points(dataset, system, config, fps, hota, accuracy), system being an ablation condition.
 
@@ -789,8 +758,8 @@ def ablation_report(con: duckdb.DuckDBPyConnection, losses: list[float]) -> tupl
     macros: dict = {b: {} for b in specs}
     # Summary per bound and condition.
     for s in speedup_stats(con, 'ablation_chosen'):
-        out[s['bound']][s['system']].update(meets_bound=s['meets_bound'], mean_speedup=r1(s['mean']),
-                                            max_speedup=r1(s['max']), max_dataset=s['max_dataset'])
+        out[s['bound']][s['system']].update(meets_bound=s['meets_bound'], mean_speedup=rounded(s['mean'], 1),
+                                            max_speedup=rounded(s['max'], 1), max_dataset=s['max_dataset'])
         # The unrounded values p204 writes as macros.
         prefix = ABLATION_MACROS[s['system']]
         macros[s['bound']].update({f'{prefix}SpeedupAvg': s['mean'], f'{prefix}SpeedupMax': s['max'],
@@ -806,7 +775,7 @@ def ablation_report(con: duckdb.DuckDBPyConnection, losses: list[float]) -> tupl
     for r in query_dicts(con, 'SELECT * FROM ablation_chosen WHERE meets_bound ORDER BY bound, system, dataset'):
         out[r['bound']][r['system']]['per_dataset'][r['dataset']] = dict(
             config=r['config'], hota=round(r['accuracy'], 4), fps=round(r['fps'], 1),
-            speedup_vs_reference=r1(r['fps'] / r['reference_fps']))
+            speedup_vs_reference=rounded(r['fps'] / r['reference_fps'], 1))
     return out, macros
 
 
@@ -820,19 +789,6 @@ def config_counts(con: duckdb.DuckDBPyConnection, table: str) -> dict:
     return out
 
 
-def file_record(path: str | Path) -> dict:
-    """Path, size, modification time, and SHA-256 of one input file, or exists False."""
-    # A missing file is recorded rather than fatal; the loaders already failed on missing required inputs.
-    p = Path(path)
-    if not p.exists():
-        return dict(path=str(p), exists=False)
-    # Size and modification time identify the version read.
-    stat = p.stat()
-    return dict(path=str(p), exists=True, bytes=stat.st_size,
-                mtime=datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(timespec='seconds'),
-                sha256=hashlib.sha256(p.read_bytes()).hexdigest())
-
-
 def provenance(con: duckdb.DuckDBPyConnection, datasets: list[str], sota_dir: str) -> dict:
     """Run time, every input table's version, and the test rows read, so a copy shows which ground truth it used."""
     # One record per input table per dataset.
@@ -843,7 +799,7 @@ def provenance(con: duckdb.DuckDBPyConnection, datasets: list[str], sota_dir: st
         for d in datasets}
     # The run time and the per-system test-row counts.
     return dict(run_at=datetime.now(timezone.utc).isoformat(timespec='seconds'), files=files,
-                test_rows=config_counts(con, 'p142_points'))
+                test_rows=config_counts(con, 'hota_points'))
 
 
 def main():
@@ -858,13 +814,13 @@ def main():
     load_points(con, args.datasets)
     load_tetris_knobs(con, args.datasets)
     load_clips(con, args.datasets)
-    # LEAP checks: the deduplicated runtime (table hota_points) and the raw outputs against the clips.
-    leap_runtime = correct_leap_runtime(con, args.sota_dir)
+    # LEAP checks: the cached runtime against the raw stat CSV, and the raw outputs against the clips.
+    leap_runtime = check_leap_runtime(con, args.sota_dir)
     alignment = output_alignment(con, args.sota_dir)
 
-    # Bounds; LEAP's HOTA, and so leap_fit, is the same in both tables.
+    # Bounds, relative and at LEAP's best HOTA.
     specs = bound_specs(con, 'hota_points', args.losses, 'leap')
-    # Primary results on the corrected table: the JSON's chosen points, then the same choices as a table.
+    # The JSON's chosen points, then the same choices as a table.
     points = {name: operating_points(con, 'hota_points', SYSTEMS, **spec) for name, spec in specs.items()}
     choose(con, 'hota_points', specs, SYSTEMS, 'chosen')
     # Shared-bound ranges, the accuracy-matched rule, and their p203 macro values.
@@ -872,13 +828,8 @@ def main():
     accuracy_matched(con, 'hota_points', 'chosen', 'matched')
     matched = matched_stats(con, 'chosen', 'matched')
     macros = macro_values(speedups, ratios, matched, specs)
-    # The same selections on the table as p203 reads it (LEAP runtime not deduplicated), for the checks.
-    choose(con, 'p142_points', specs, SYSTEMS, 'p142_chosen')
-    accuracy_matched(con, 'p142_points', 'p142_chosen', 'p142_matched')
-    p142_macros = macro_values(speedup_stats(con, 'p142_chosen'), ratio_stats(con, 'p142_chosen'),
-                               matched_stats(con, 'p142_chosen', 'p142_matched'), specs)
     # The port against p203's own functions on the same inputs.
-    port = {b: check(v, p142_macros.get(b, {}), 'p203') for b, v in p203_reference(ordered(args.datasets), specs).items()}
+    port = {b: check(v, macros.get(b, {}), 'p203') for b, v in p203_reference(ordered(args.datasets), specs).items()}
 
     # The operator ablation from the same tradeoff tables, and the port against p204's own functions.
     ablation_points(con)
@@ -891,11 +842,8 @@ def main():
     assert not failed, f'port disagrees with p203/p204 on {failed}: {port} {ablation_port}'
 
     # The submitted manuscript's macros, reproduced from p203's inputs (they change by design after R1.O1).
-    manuscript = ({b: check(v, rounded(p142_macros.get(b, {})), 'manuscript') for b, v in MANUSCRIPT_COMPARE.items()}
+    manuscript = ({b: check(v, rounded(macros.get(b, {}), 1), 'manuscript') for b, v in MANUSCRIPT_COMPARE.items()}
                   if all_datasets else 'skipped: not all seven datasets')
-    # p203 macros that the LEAP runtime deduplication changes.
-    leap_effect = {b: {k: dict(p142=v, deduplicated=macros[b][k]) for k, v in values.items() if not same(v, macros[b][k])}
-                   for b, values in p142_macros.items()}
     # Provenance shared by both reports.
     inputs = provenance(con, args.datasets, args.sota_dir)
     # About the primary report.
@@ -923,8 +871,9 @@ def main():
             otif='runtime_total from OTIF\'s stat CSV (p140 normalize_otif_stat_csv). OTIF\'s per-stage columns '
                  '(seg, detect, track, decode) sum to more than runtime_total, so stages overlap and its decoding '
                  'time cannot be separated out.',
-            leap='inference_total - decode per test video from LEAP\'s raw stat CSV, so decoding is excluded; '
-                 'repeated runs of a video are averaged (leap_checks.runtime). p140 uses the total row instead.',
+            leap='runtime from p140 (p142\'s table): inference_total - decode per test video from LEAP\'s raw stat '
+                 'CSV, so decoding is excluded, with repeated runs of a video averaged; checked against the raw CSV '
+                 '(leap_checks.runtime).',
             prior_fps='Prior systems\' throughput is the test split\'s frame count (our clips) over their runtime, as '
                       'in evaluation/p200_compare_compute.py and p203, not the frames the system decoded.'),
         ratios='Speedups and ratios divide unrounded throughputs, then round to 0.1 (common.operating_points).',
@@ -936,7 +885,8 @@ def main():
         manuscript_rules=MANUSCRIPT_RULES,
         checks='port_check: this script\'s values on p203\'s inputs against p203\'s own functions (must match, or the '
                'run stops). manuscript_check: the same values rounded to 0.1 against the submitted macros. '
-               'leap_runtime_effect: p203 macros that change when LEAP\'s runtime is deduplicated.',
+               'leap_checks.runtime: the cached LEAP runtime must equal the raw stat CSV\'s per-video means, summed '
+               '(or the run stops).',
         configurations=config_counts(con, 'hota_points'), inputs=inputs, ground_truth=B3D_NOTE,
         estimates='LEAP\'s CalDoT1 and CalDoT2 runtimes are the mean of two recorded runs per video (an estimate of '
                   'one run). Every other number is measured.')
@@ -946,7 +896,7 @@ def main():
                   operating_points=points, ranges=arrange_ranges(speedups, ratios),
                   accuracy_matched=arrange_matched(query_dicts(con, 'SELECT * FROM matched ORDER BY bound, dataset'), matched),
                   dominance=arrange_dominance(dominance(con, 'hota_points', 'chosen')),
-                  port_check=port, manuscript_check=manuscript, leap_runtime_effect=leap_effect)
+                  port_check=port, manuscript_check=manuscript)
     # The ablation report.
     ablation = dict(
         about=dict(
@@ -965,7 +915,7 @@ def main():
         bounds=ablation_bounds, port_check=ablation_port,
         manuscript_check=('skipped: not all seven datasets' if not all_datasets
                           else 'skipped: the 5% bound was not computed' if ABLATION_BOUND not in ablation_macros
-                          else check(MANUSCRIPT_ABLATION, rounded(ablation_macros[ABLATION_BOUND]), 'manuscript')))
+                          else check(MANUSCRIPT_ABLATION, rounded(ablation_macros[ABLATION_BOUND], 1), 'manuscript')))
     # Write both reports only after every check passed.
     write_json(out_dir, 'matched_speedup.json', report)
     write_json(out_dir, 'ablation_speedup.json', ablation)
@@ -974,7 +924,6 @@ def main():
     print('\nranges', report['ranges'])
     print('accuracy matched', {b: {k: v for k, v in m.items() if k != 'per_dataset'} for b, m in report['accuracy_matched'].items()})
     print('LEAP runtime', leap_runtime)
-    print('LEAP runtime effect on p203 macros', leap_effect)
     print('port check failures', failed, '| manuscript p203 check', manuscript)
     print('ablation', {b: {n: (v['mean_speedup'], v['max_speedup'], v['max_dataset']) for n, v in c.items()}
                        for b, c in ablation_bounds.items()})

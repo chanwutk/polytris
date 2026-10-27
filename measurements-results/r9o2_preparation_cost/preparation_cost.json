@@ -3827,9 +3827,9 @@
     "finetune_wall_slack_s": 300.0,
     "host": {
       "cpus": 80,
-      "gpus_now": [
-        "Quadro RTX 6000"
-      ],
+      "gpus": {
+        "Quadro RTX 6000": 8
+      },
       "hostname": "ace",
       "note": "cache host, assumed for all runs; GPUs are those present when this script ran"
     },

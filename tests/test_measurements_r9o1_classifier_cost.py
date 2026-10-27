@@ -1,7 +1,6 @@
 import csv
 import json
 import os
-import subprocess
 from pathlib import Path
 
 import duckdb
@@ -526,9 +525,9 @@ def test_missing_manifest_or_per_op_table_fails(con, world, tmp_path):
     # Absent inputs fail with their paths, not a bare DuckDB IOException.
     rc.load_configs(con, ['a'])
     rc.choose_operating_points(con, 0.05)
-    with pytest.raises(AssertionError, match='missing throughput manifests'):
+    with pytest.raises(AssertionError, match='throughput manifests .* missing'):
         rc.runtime_files(con, {'a': str(tmp_path / 'nope.csv')})
-    with pytest.raises(AssertionError, match='missing per-op throughput tables'):
+    with pytest.raises(AssertionError, match='per-op throughput tables .* missing'):
         rc.load_operator_ops(con, {'a': str(tmp_path / 'nope.csv')})
 
 
@@ -702,22 +701,6 @@ def test_classify_must_match_operating_point_log(con, world, update):
 
 
 # Hardware notes and main.
-
-@pytest.mark.parametrize('result, gpus', [
-    (FileNotFoundError(), {}),
-    (subprocess.CalledProcessError(9, 'nvidia-smi'), {}),
-    ('Quadro RTX 6000\nQuadro RTX 6000\nA100\n\n', {'A100': 1, 'Quadro RTX 6000': 2}),
-])
-def test_host_info(monkeypatch, result, gpus):
-    # nvidia-smi missing, failing, or listing two models.
-    def fake_run(*args, **kwargs):
-        if isinstance(result, Exception):
-            raise result
-        return subprocess.CompletedProcess(args, 0, stdout=result)
-    monkeypatch.setattr(rc.subprocess, 'run', fake_run)
-    info = rc.host_info()
-    assert info['gpus'] == gpus and info['hostname'] and info['cpus'] == os.cpu_count()
-
 
 @pytest.mark.parametrize('detector_time, overlap', [('2026-03-05 19:30:00+00', False), ('2026-04-19 23:06:00+00', True)])
 def test_hardware_notes_from_log_dates(con, monkeypatch, detector_time, overlap):

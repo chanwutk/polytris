@@ -43,7 +43,7 @@ Measured, per dataset, tracker, and threshold (every threshold p016 stored):
   - the measured kept fraction of every validated pruning setting: tile-frames kept in
     022_pruned_polyominoes over the ILP's input tile-frames, from 020_relevancy binarized at the
     setting's T_r, summed over the test videos. The cached test outputs follow the rule
-    score >= floor(T_r * 255) (see measurements/r9o3_ilp_instance_sizes.py RULES), not the
+    score >= floor(T_r * 255) (common.RELEVANCE_RULES 'floor', see measurements/r9o3_ilp_instance_sizes.py), not the
     current p022's score > T_r * 255, and no kept tile-frame falls outside it (kept_outside);
   - diagnostics: relevant tiles whose gap (> 1) rests on no observations at that gap (its rate
     is the 0.5 prior) or on fewer than LOW_EVIDENCE_OBSERVATIONS, and tiles whose gap skips a
@@ -63,20 +63,19 @@ Writes measurements-results/r1o5_gap_tolerance/:
 Gap and sampling-rate keys are zero-padded ('01' ... '16') so that sorted JSON keys stay in order.
 """
 import argparse
-import hashlib
 import json
 import os
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 
 import duckdb
 import numpy as np
 import pandas as pd
 
-from measurements.common import DATASET_LABELS, load_test_tradeoff, query_dicts, results_dir, write_json
-from measurements.r9o3_ilp_instance_sizes import RULES, VIDEO_EXTENSIONS, decode_grids
-from polyis.io import cache, store
+from evaluation.manifests import list_split_videos
+from measurements.common import (DATASET_LABELS, RELEVANCE_RULES, assert_files_exist, decode_grids, file_record,
+                                 iso_utc, load_test_tradeoff, query_dicts, results_dir, rounded, write_json)
+from polyis.io import cache
 from polyis.utilities import build_param_str, load_classification_results, load_pruned_classification_results
 
 
@@ -124,23 +123,11 @@ def gap_key(value: int) -> str:
     return f'{value:02d}'
 
 
-def mtime_iso(path: Path | str) -> str:
-    """A file's modification time in UTC, ISO format (comparable as strings)."""
-    # Seconds are enough to order the pipeline's stages, which ran days apart.
-    return datetime.fromtimestamp(os.path.getmtime(path), timezone.utc).isoformat(timespec='seconds')
-
-
-def file_record(path: Path) -> dict:
-    """Path, MD5, and modification time of an input file, so the JSON says which version was read."""
-    # The inputs are small arrays and tables, so hashing them whole is cheap.
-    return dict(path=str(path), md5=hashlib.md5(path.read_bytes()).hexdigest(), mtime=mtime_iso(path))
-
-
 def load_profile(directory: Path) -> dict:
     """One p016 profile: candidate gaps, counts, accuracy, the cached gap table, its thresholds (percent), and input records."""
     # Every file the measurement reads must exist; a missing one means p016 never ran here.
-    for name in ('sample_rates.json', 'counts.npy', 'accuracy.npy', 'max_rate_table.npy'):
-        assert (directory / name).exists(), f'{directory}: missing {name} (run scripts/p016_tune_track_rate.py)'
+    assert_files_exist([directory / name for name in ('sample_rates.json', 'counts.npy', 'accuracy.npy', 'max_rate_table.npy')],
+                       'p016 profile files (run scripts/p016_tune_track_rate.py)')
     # Candidate gaps, in the order of the counts' first axis.
     gaps = json.loads((directory / 'sample_rates.json').read_text())
     # A gap set must be non-empty integers (not floats or booleans), strictly increasing, and start at the native rate.
@@ -406,13 +393,11 @@ def pruning_settings(con: duckdb.DuckDBPyConnection) -> list[dict]:
 
 
 def list_test_videos(dataset: str) -> list[str]:
-    """The dataset's test videos, listed as p022 lists them."""
+    """The dataset's test videos, listed as p022 lists them; fails on a missing or empty videoset."""
     # The videoset directory p022 iterates.
-    directory = store.dataset(dataset, 'test')
-    assert os.path.isdir(directory), f'{dataset}: missing test videoset {directory}'
-    videos = sorted(f for f in os.listdir(directory) if f.endswith(VIDEO_EXTENSIONS))
+    videos = list_split_videos(dataset, 'test')
     # A measured kept fraction over no videos would be empty.
-    assert videos, f'{dataset}: no test videos in {directory}'
+    assert videos, f'{dataset}: no test videos'
     return videos
 
 
@@ -451,7 +436,7 @@ def kept_counts(dataset: str, settings: list[dict], profiles: dict, videos: list
             # The gaps p022 handed this ILP, in sampled frames.
             ilp_gap = np.maximum(profile['table'][..., profile['thresholds'].index(s['threshold_pct'])] // s['sample_rate'], 1)
             # ILP input under the cached outputs' rule, and kept tiles.
-            covered = RULES[PRUNE_RULE](grids, s['relevance_threshold'])
+            covered = RELEVANCE_RULES[PRUNE_RULE](grids, s['relevance_threshold'])
             kept = pruned > 0
             # File versions, to check that each input predates the output that read it.
             score_path = cache.exec(dataset, 'relevancy', video, '_'.join(map(str, source)), 'score', 'score.jsonl')
@@ -460,10 +445,10 @@ def kept_counts(dataset: str, settings: list[dict], profiles: dict, videos: list
             rows.append(dict(
                 dataset=dataset, prune_id=s['prune_id'], video=video, frames=grids.shape[0],
                 tiles=grids.shape[1] * grids.shape[2], covered=int(covered.sum()),
-                covered_current_rule=int(RULES['current'](grids, s['relevance_threshold']).sum()),
+                covered_current_rule=int(RELEVANCE_RULES['current'](grids, s['relevance_threshold']).sum()),
                 kept=int(kept.sum()), kept_outside=int((kept & ~covered).sum()),
                 bound_tile_frames=float((covered.sum(axis=0) / ilp_gap).sum()),
-                relevancy_mtime=mtime_iso(score_path), pruned_mtime=mtime_iso(pruned_path)))
+                relevancy_mtime=iso_utc(os.path.getmtime(score_path)), pruned_mtime=iso_utc(os.path.getmtime(pruned_path))))
     return rows
 
 
@@ -543,11 +528,6 @@ def figure_crop(profile: dict, rows: tuple[int, int], cols: tuple[int, int]) -> 
         mistrack_pct={gap_key(g): np.round(100 * mistrack[i]).astype(int).tolist() for i, g in enumerate(profile['gaps'])},
         gaps_by_tolerance={tolerance_key(t): table[rows[0]:rows[1], cols[0]:cols[1], k].tolist()
                            for k, t in enumerate(profile['thresholds'])})
-
-
-def rounded(value, digits: int = 4):
-    """Round floats for the report; pass integers, strings, and None through."""
-    return round(value, digits) if isinstance(value, float) else value
 
 
 def assemble(profiles: dict, summary: list[dict], distribution: list[dict], effect: list[dict],
@@ -746,8 +726,7 @@ def main(args):
     # Flat rows for a plot or table, and one row per validated pruning setting.
     write_json(out, 'table_rows.json', rows)
     write_json(out, 'pruning_settings.json', [
-        {k: rounded(v) for k, v in r.items()} | dict(label=DATASET_LABELS[r['dataset']],
-                                                     mistrack_tolerance=(100 - r['threshold_pct']) / 100)
+        rounded(r) | dict(label=DATASET_LABELS[r['dataset']], mistrack_tolerance=(100 - r['threshold_pct']) / 100)
         for r in per_setting])
     # Human-readable summary for the run log.
     print_report(report)

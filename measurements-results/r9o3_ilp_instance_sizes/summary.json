@@ -1546,7 +1546,7 @@
     "rules": "current p022: score > r * 255; floor (what the April 2026 cache matches): score >= floor(r * 255); each instance uses the rule its saved selection is consistent with (checks.json solutions, rule_* counts)",
     "solve_at_budget": "estimate: solve_ms >= 1000 * budget_s, budget = time_limit or 0.1 s; Gurobi termination status is not logged, so a slow optimal solve also counts (budget_sensitivity)",
     "test": "validated (Pareto) Tetris configurations that run the ILP, on every test video; other test outputs excluded (checks.json coverage)",
-    "timings": "p022 runtime.jsonl via r9o3_ilp_timings.load_runs: build_ilp (includes Gurobi env start) and solve_ilp (includes solution read and env release)",
+    "timings": "p022 runtime.jsonl via common.load_prune_runs: build_ilp (includes Gurobi env start) and solve_ilp (includes solution read and env release)",
     "unit": "an instance is one (clip, ILP configuration) pair; pooled rows weight datasets by videos x configurations and mix sample rates, so cite level dataset_sample_rate or operating_points",
     "valid": "every configuration p022 left on the validation videos; not a complete video x configuration grid on every dataset (checks.json coverage missing_instances)",
     "variables": "one binary per polyomino per sampled frame, summed over the clip"
