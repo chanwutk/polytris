@@ -90,16 +90,50 @@ additional. Extraction seconds saved per video minute are frames per video minut
 minutes are preparation seconds over that saving, when it is positive.
 
 Not included: detector training (shared), detector loading per p011 and reference video and per
-p040 configuration (not recorded), and OTIF's and LEAP's preparation (not recorded in this cache;
-measurements-gpu/r9o2_preparation_cost.py prints the re-timing plan, whose timings.jsonl this
-script does not read yet).
+p040 configuration (not recorded), and OTIF's and LEAP's preparation (not recorded in this cache).
+
+Re-timing (`retiming` per dataset). measurements-gpu/r9o2_preparation_cost.py --run re-ran p110
+(validation scoring), p011, p012, p013, detector loading, and p016 on idle bombe GPUs pinned to
+their NUMA node (measurements-gpu/r9o2_preparation_retiming.sh), and its records are collected in
+measurements-results/r9o2_preparation_retiming/ (timings.jsonl, files.jsonl.gz, detector_load.jsonl,
+and the launcher's run summaries in launcher_runs.jsonl; this script fails when they are missing,
+unless --no-retiming). Per dataset and step the latest run that exited 0 counts, preferring runs
+without foreign processes on their GPU, and its launcher run must have a summary. The cache figures
+above are kept as they are; `retiming.components` holds each re-timed component with its cache
+figures, the measured figure over the cache's process figure, and which boundaries it replaces:
+  validation_scoring          both: the sum of each configuration task's span in the re-run (output
+                              directory creation to last result file), the rule the estimate applies
+                              to the test split; on CalDoT2 the re-run scores the 50 complete videos
+                              and is scaled to 60 (finding 5). The re-run ran 16 TrackEval processes
+                              on 40 CPUs, half the deployed 0.8 per CPU at which the estimate's
+                              test-split runs ran (64 on ace's 80); an optional re-run at the deployed
+                              density (step p110_density) is reported in `density_cross_check`
+  mistrack_profiling          both: p016's wall clock with one worker, which is its process seconds
+                              (the estimate is an upper bound from its 40-worker elapsed time)
+  training_data_pruning       both: p013's wall clock (one task, so one process), a component the
+                              cache lacks; its work varies with p012's race (finding 10), so the
+                              cache's run's statistics are reported beside the re-run's
+  reference_detection_train   process: the sum of each video's detections-file span in the re-run
+                              (the cache's creation times are stale, so it kept the recorded ops)
+  training_data_creation      neither (cross-check): the sum of each video's runtime-file span in the
+                              re-run. p012 runs one worker per training video, up to 20, which kept
+                              36-38 of the 40 CPUs of a bombe NUMA node busy on CalDoT and Amsterdam,
+                              so its spans measure contention among its own workers on half of ace's
+                              CPUs (about 2x the cache's); with B3D's 8 videos they are within 15% of
+                              the cache's
+p011 keeps its recorded ops at the instrumented boundary. `totals_with_retiming` and
+`break_even_with_retiming` sum the cache components with the replaced figures, plus p013, against
+the same extraction throughput; `measured_components` lists the replaced components and
+`cross_checks` the ones reported only. Detector loading (`detector_loading`) is reported, not added,
+since it is outside both boundaries on both sides. Each run carries its interference: the busy CPUs
+of its NUMA node beyond its own processes and the launcher's samples of foreign processes on its GPU.
 
 Writes measurements-results/r9o2_preparation_cost/preparation_cost.json.
 """
 import argparse
 import glob
+import json
 import os
-import subprocess
 from pathlib import Path
 
 import cv2
@@ -111,8 +145,9 @@ from evaluation.p120_throughput_gather import (build_index_construction_manifest
                                                build_stage020_manifest, build_stage022_manifest, build_stage030_manifest,
                                                build_stage040_manifest, build_stage050_manifest, build_stage060_manifest)
 from evaluation.p121_throughput_compute import excluded_runtime_ops
-from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, fastest_tetris, host_info, iso_utc, load_test_tradeoff,
-                                 load_tradeoff_points, query_dicts, results_dir, rounded, runtime_items_sql, write_json)
+from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, RESULTS_ROOT, fastest_tetris, file_times, host_info,
+                                 iso_utc, load_test_tradeoff, load_tradeoff_points, query_dicts, results_dir, rounded,
+                                 runtime_items_sql, write_json)
 from polyis.io import cache, store
 from polyis.utilities import get_config, parse_execution_param_str
 
@@ -161,8 +196,11 @@ FINETUNE_WALL_MAX_RATIO = 1.5
 FINETUNE_WALL_SLACK_S = 300.0
 # p014 trains each stage for at most this many epochs (n_epochs=7 for both stages).
 P014_EPOCHS_PER_STAGE = 7
-# p016's default worker count, for converting its elapsed time into process seconds.
-P016_WORKERS = 40
+# p016's default worker count, with which the cache's profiles ran, for converting their elapsed time into process seconds.
+P016_CACHE_WORKERS = 40
+# p016's worker count in the re-timing: one, the only count whose wall clock is the process seconds of its profiles
+# (measurements-gpu/r9o2_preparation_cost.py runs p016 with its own P016_RETIMING_WORKERS; a test keeps the two equal).
+P016_RETIMING_WORKERS = 1
 # Files p016 writes after aggregating a profile's partial counts.
 PROFILE_OUTPUT_GLOBS = ('accuracy.npy', 'counts.npy', 'max_rate_table.npy', 'sample_rates.json', 'max_rate_*.txt')
 # p015 writes a resolution group's datasets within moments; files further apart than this are different groups.
@@ -201,12 +239,34 @@ BASELINE_PREPARATION = {
         'confirm with the LEAP operator which steps the reported runs executed and on which splits',
     ]),
 }
+# Where measurements-gpu/r9o2_preparation_retiming.sh collects the re-timing records of
+# measurements-gpu/r9o2_preparation_cost.py --run, and the record files it writes there.
+RETIMING_DIR = RESULTS_ROOT / 'r9o2_preparation_retiming'
+RETIMING_FILES = ('timings.jsonl', 'files.jsonl.gz', 'detector_load.jsonl', 'launcher_runs.jsonl')
+# Per re-timed step: the component it measures and the boundaries whose figure the measurement replaces. p011 keeps
+# its recorded ops at the instrumented boundary; steps without op records enter both at process time. p012 replaces
+# neither: its workers (up to 20) saturate the re-run's 40-CPU set, so its spans are a cross-check only (module
+# docstring).
+RETIMED = {
+    'p110': ('validation_scoring', ('instrumented', 'process')),
+    'p016': ('mistrack_profiling', ('instrumented', 'process')),
+    'p013': ('training_data_pruning', ('instrumented', 'process')),
+    'p012': ('training_data_creation', ()),
+    'p011': ('reference_detection_train', ('process',)),
+}
+# The optional p110 re-run at the deployed process density, reported inside validation_scoring and never substituted.
+P110_DENSITY_STEP = 'p110_density'
+# p110 runs max(1, int(this x multiprocessing.cpu_count())) TrackEval processes at once, so 0.8 per CPU as deployed
+# (64 on ace's 80 CPUs); the re-timing sets PYTHON_CPU_COUNT to choose the count.
+P110_PROCESS_FRACTION = 0.8
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='R9.O2: preparation cost and break-even video duration per dataset')
     parser.add_argument('--datasets', nargs='+', default=list(DATASET_LABELS), choices=list(DATASET_LABELS))
     parser.add_argument('--loss', type=float, default=0.05)
+    parser.add_argument('--retiming', default=str(RETIMING_DIR))
+    parser.add_argument('--no-retiming', action='store_true')
     return parser.parse_args()
 
 
@@ -278,29 +338,6 @@ def first_frame_seconds(con: duckdb.DuckDBPyConnection, paths: list[str]) -> flo
     # One split per frame and file (one tile size per file); otherwise the first call is ambiguous.
     assert duplicates == 0, f'{duplicates} frames with more than one split call in one file'
     return seconds
-
-
-def file_times(paths: list[str]) -> dict[str, tuple[float | None, float]]:
-    """{path: (creation time or None when unknown, modification time)} in epoch seconds, for the paths that exist.
-
-    Python's os.stat has no creation time on Linux, so GNU stat reads both (%.9W is 0 when the file
-    system keeps none). Missing paths are left out; callers treat them as unknown.
-    """
-    # Nothing to stat.
-    if not paths:
-        return {}
-    # One xargs-batched stat over NUL-separated paths, so any number of paths and any name without NUL works.
-    result = subprocess.run(['xargs', '-0', 'stat', '-c', '%.9W %.9Y %n'], input='\0'.join(paths),
-                            capture_output=True, text=True)
-    # xargs exits 123 when stat failed on some path (a missing one); anything else is a real failure.
-    assert result.returncode in (0, 123), f'stat failed ({result.returncode}): {result.stderr[:500]}'
-    # Parse stat's output into {path: (birth, mtime)}.
-    times = {}
-    # Each line is "<birth> <mtime> <name>"; the name may contain spaces, so split twice only.
-    for line in result.stdout.splitlines():
-        birth, mtime, name = line.split(' ', 2)
-        times[name] = (float(birth) or None, float(mtime))
-    return times
 
 
 def load_units(con: duckdb.DuckDBPyConnection, units: str, videos: str):
@@ -853,7 +890,7 @@ def profiling_component(con: duckdb.DuckDBPyConnection, dataset: str, tilesize: 
         SELECT profile, videos, seconds, lower_bound, first_partial_s, last_output_s,
                seconds * least($workers, videos) AS process_upper_bound_s, list_contains($needed, profile) AS needed
         FROM profile_estimates WHERE dataset = $dataset ORDER BY profile
-    """, dict(workers=P016_WORKERS, needed=needed, dataset=dataset))
+    """, dict(workers=P016_CACHE_WORKERS, needed=needed, dataset=dataset))
     # Only the needed ones are charged.
     used = [r for r in rows if r['needed']]
     # Every configured tracker needs a finished profile.
@@ -867,7 +904,7 @@ def profiling_component(con: duckdb.DuckDBPyConnection, dataset: str, tilesize: 
     # The component, with each profile's provenance.
     profiling = component(
         'estimate: elapsed time from output modification times x min(40 workers, videos), an upper bound on process '
-        'seconds', 0.0, seconds, seconds, unit=f'process seconds, upper bound (elapsed x min({P016_WORKERS} workers, videos))',
+        'seconds', 0.0, seconds, seconds, unit=f'process seconds, upper bound (elapsed x min({P016_CACHE_WORKERS} workers, videos))',
         elapsed_s=round(sum(r['seconds'] for r in used), 1), first_profile_of_run=any(r['lower_bound'] for r in used),
         profiles={r['profile']: dict(elapsed_s=round(r['seconds'], 1), videos=r['videos'], lower_bound=r['lower_bound'],
                                      first_partial=iso_utc(r['first_partial_s']), last_output=iso_utc(r['last_output_s']))
@@ -875,6 +912,353 @@ def profiling_component(con: duckdb.DuckDBPyConnection, dataset: str, tilesize: 
     # Profiles the reported configuration does not read.
     unneeded = {r['profile']: dict(elapsed_s=round(r['seconds'], 1), lower_bound=r['lower_bound']) for r in rows if not r['needed']}
     return profiling, unneeded
+
+
+def load_retiming(con: duckdb.DuckDBPyConnection, directory: Path):
+    """Tables retimed_runs (per dataset and step, the chosen record with every attempt counted and its launcher run's
+    summary), retimed_files (those runs' output timestamps), and detector_loads (those runs' detector constructions),
+    from the re-timing records in `directory` (module docstring).
+
+    The chosen record is the latest that exited 0 among those without foreign GPU samples, or the latest that exited 0
+    when every one had some (then flagged in gpu_contaminated_steps). A chosen record started by the launcher must
+    have that run's summary in launcher_runs.jsonl (a killed run writes none).
+    """
+    # The plan's record files and the launcher's run summaries must all be there.
+    missing = [name for name in RETIMING_FILES if not (directory / name).exists()]
+    assert not missing, (f'{directory}: missing {missing}; run measurements-gpu/r9o2_preparation_retiming.sh (run, '
+                         'then collect), or pass --no-retiming')
+    # Every record as a row; nested objects stay JSON, since their keys differ between steps.
+    con.execute("""
+        CREATE OR REPLACE TABLE retiming_records AS
+        SELECT json->>'record_id' AS record_id, json->>'dataset' AS dataset, json->>'step' AS step,
+               CAST(json->>'start' AS DOUBLE) AS start_s, CAST(json->>'end' AS DOUBLE) AS end_s,
+               CAST(json->>'seconds' AS DOUBLE) AS seconds, CAST(json->>'cpu_s' AS DOUBLE) AS cpu_s,
+               CAST(json->>'returncode' AS INTEGER) AS returncode, json->>'host' AS host,
+               CAST(json->>'uses_gpu' AS BOOLEAN) AS uses_gpu, json->'argv' AS argv, json->'env' AS env,
+               json->'interference' AS interference, json->'placement' AS placement, json->'meta' AS meta,
+               json->'outputs' AS outputs
+        FROM read_json_objects($path, format = 'newline_delimited')
+    """, dict(path=str(directory / 'timings.jsonl')))
+    # Record ids tie outputs to their run; a repeated id anywhere would mix two runs' outputs.
+    (duplicates,) = con.execute('SELECT count(*) - count(DISTINCT record_id) FROM retiming_records').fetchone()
+    assert duplicates == 0, f'{duplicates} repeated record ids in {directory / "timings.jsonl"}'
+    # One summary per launcher run: its exit code, contamination flag, and image.
+    con.execute("""
+        CREATE OR REPLACE TABLE launcher_runs AS
+        SELECT json->>'run' AS launcher_run, CAST(json->>'exit' AS INTEGER) AS launcher_exit,
+               CAST(json->>'contaminated' AS BOOLEAN) AS launcher_contaminated, json->>'image' AS launcher_image
+        FROM read_json_objects($path, format = 'newline_delimited')
+    """, dict(path=str(directory / 'launcher_runs.jsonl')))
+    # A repeated run id would attach one run's summary to another's records.
+    (repeated,) = con.execute('SELECT count(*) - count(DISTINCT launcher_run) FROM launcher_runs').fetchone()
+    assert repeated == 0, f'{repeated} repeated run ids in {directory / "launcher_runs.jsonl"}'
+    # Per dataset and step, the chosen record (docstring), with its launcher run's summary.
+    con.execute("""
+        CREATE OR REPLACE TABLE retimed_runs AS
+        WITH counted AS (
+            SELECT *, count(*) OVER (PARTITION BY dataset, step) AS attempts,
+                   coalesce(CAST(interference->>'gpu_foreign_samples' AS BIGINT), 0) > 0 AS foreign_gpu_use
+            FROM retiming_records
+        )
+        SELECT c.*, l.launcher_exit, l.launcher_contaminated, l.launcher_image
+        FROM counted c LEFT JOIN launcher_runs l ON l.launcher_run = c.placement->>'launcher_run'
+        WHERE c.returncode = 0
+        QUALIFY row_number() OVER (PARTITION BY c.dataset, c.step ORDER BY c.foreign_gpu_use, c.start_s DESC) = 1
+    """)
+    # Records started by the launcher whose run left no summary (killed, or not collected).
+    orphans = query_dicts(con, """
+        SELECT DISTINCT placement->>'launcher_run' AS launcher_run FROM retimed_runs
+        WHERE placement->>'launcher_run' IS NOT NULL AND launcher_exit IS NULL
+    """)
+    assert not orphans, f'launcher runs without a summary in {directory / "launcher_runs.jsonl"}: {orphans}'
+    # Output timestamps of the chosen runs only.
+    con.execute("""
+        CREATE OR REPLACE TABLE retimed_files AS
+        SELECT f.* FROM read_json($path, format = 'newline_delimited',
+                                  columns = {'record_id': 'VARCHAR', 'dataset': 'VARCHAR', 'step': 'VARCHAR',
+                                             'path': 'VARCHAR', 'birth_s': 'DOUBLE', 'mtime_s': 'DOUBLE'}) f
+        JOIN retimed_runs r USING (record_id)
+    """, dict(path=str(directory / 'files.jsonl.gz')))
+    # Detector constructions written during the chosen detector_load runs.
+    con.execute("""
+        CREATE OR REPLACE TABLE detector_loads AS
+        SELECT d.* FROM read_json($path, format = 'newline_delimited',
+                                  columns = {'dataset': 'VARCHAR', 'start': 'DOUBLE', 'end': 'DOUBLE',
+                                             'device': 'VARCHAR', 'cuda_init_s': 'DOUBLE', 'load_s': 'DOUBLE[]'}) d
+        JOIN retimed_runs r ON r.step = 'detector_load' AND r.dataset = d.dataset AND d.start BETWEEN r.start_s AND r.end_s
+    """, dict(path=str(directory / 'detector_load.jsonl')))
+
+
+def retimed_run(con: duckdb.DuckDBPyConnection, dataset: str, step: str) -> dict | None:
+    """The chosen re-timing run of one step on one dataset with its placement and interference (None without one)."""
+    # The run's figures, with the nested JSON fields it reports.
+    rows = query_dicts(con, """
+        SELECT record_id, seconds, cpu_s, attempts, host, uses_gpu, start_s, end_s, argv, env, meta, outputs,
+               placement->>'physical_gpu' AS physical_gpu, placement->>'launcher_cpus' AS cpus,
+               placement->>'launcher_run' AS launcher_run, launcher_exit, launcher_contaminated, launcher_image,
+               CAST(interference->>'cpu_set_size' AS BIGINT) AS cpu_set_size,
+               CAST(interference->>'own_cpus' AS DOUBLE) AS own_cpus,
+               CAST(interference->>'other_busy_cpus' AS DOUBLE) AS other_busy_cpus,
+               CAST(interference->>'host_busy_cpus' AS DOUBLE) AS host_busy_cpus,
+               CAST(interference->>'gpu_samples' AS BIGINT) AS gpu_samples,
+               CAST(interference->>'gpu_foreign_samples' AS BIGINT) AS gpu_foreign_samples
+        FROM retimed_runs WHERE dataset = $dataset AND step = $step
+    """, dict(dataset=dataset, step=step))
+    # Not re-timed.
+    if not rows:
+        return None
+    (row,) = rows
+    # JSON fields as Python values, epoch times as UTC strings, and the GPU contamination flag (None when unsampled).
+    return dict(row, **{k: json.loads(row[k] or 'null') for k in ('argv', 'env', 'meta', 'outputs')},
+                started=iso_utc(row['start_s']), ended=iso_utc(row['end_s']),
+                gpu_contaminated=None if row['gpu_foreign_samples'] is None else row['gpu_foreign_samples'] > 0)
+
+
+def retimed_component(cache_component: dict | None, measured_s: float, replaces: tuple[str, ...], basis: str,
+                      run: dict, **extra) -> dict:
+    """A component with the boundaries in `replaces` at the measured seconds and the others at the cache's figures,
+    keeping the cache's figures, the measured figure's ratio to the cache's process figure, the run, and `extra`."""
+    # The cache's figures, or none for a component the cache lacks.
+    cache_figures = {k: (cache_component or {}).get(f'{k}_s', 0.0) for k in ('recorded', 'instrumented', 'process')}
+    # Measured where replaced, the cache's elsewhere.
+    figures = {k: measured_s if k in replaces else cache_figures[k] for k in ('instrumented', 'process')}
+    # The measured figure over the cache's process figure (None without a positive one), so a gap is visible.
+    ratio = round(measured_s / cache_figures['process'], 3) if cache_figures['process'] > 0 else None
+    return component(basis, cache_figures['recorded'], figures['instrumented'], figures['process'],
+                     measured_s=round(measured_s, 1), replaces=list(replaces), measured_over_cache_process=ratio,
+                     run=run_report(run),
+                     cache=None if cache_component is None else {k: cache_component[k] for k in
+                                                                 ('basis', 'recorded_s', 'instrumented_s', 'process_s')},
+                     **extra)
+
+
+def run_report(run: dict) -> dict:
+    """A run's reported fields, rounded, without the epoch times, plan metadata, and summaries used only here."""
+    # Start and end are reported as UTC strings (started, ended); meta and outputs feed the component's own fields.
+    return rounded({k: v for k, v in run.items() if k not in ('start_s', 'end_s', 'meta', 'outputs')}, 3)
+
+
+def scoring_run(con: duckdb.DuckDBPyConnection, dataset: str, step: str, run: dict, configurations: int,
+                valid_videos: int) -> dict:
+    """One p110 re-run (`step`): its configuration tasks' spans scaled to every validation video, after checking that
+    every configuration was scored on every covered video, and the TrackEval processes it ran at once."""
+    # Per task directory: its creation, its last result file, and its scored videos (not the combined DATASET.json).
+    con.execute("""
+        CREATE OR REPLACE TABLE retimed_scoring_tasks AS
+        WITH f AS (SELECT * FROM retimed_files WHERE dataset = $dataset AND step = $step),
+        dirs AS (SELECT regexp_extract(path, '/raw/valid/([^/]+)$', 1) AS task, birth_s AS start_s
+                 FROM f WHERE regexp_matches(path, '/raw/valid/[^/]+$')),
+        results AS (SELECT regexp_extract(path, '/raw/valid/([^/]+)/[^/]+$', 1) AS task,
+                           count(*) FILTER (WHERE NOT ends_with(path, '/DATASET.json')) AS videos, max(mtime_s) AS end_s
+                    FROM f WHERE regexp_matches(path, '/raw/valid/[^/]+/[^/]+[.]json$') GROUP BY ALL)
+        SELECT task, coalesce(r.videos, 0) AS videos, d.start_s, r.end_s FROM dirs d LEFT JOIN results r USING (task)
+    """, dict(dataset=dataset, step=step))
+    # The videos the re-run scored, and the ones it left out for missing sweep outputs.
+    covered, excluded = run['meta']['videos'], run['meta']['excluded_videos']
+    # Every configuration must have been scored on every covered video.
+    (check,) = query_dicts(con, """
+        SELECT count(*) FILTER (WHERE task <> 'naive') AS tasks,
+               count(*) FILTER (WHERE task <> 'naive' AND videos <> $covered) AS short_tasks,
+               any_value(end_s - start_s) FILTER (WHERE task = 'naive') AS reference_task_s
+        FROM retimed_scoring_tasks
+    """, dict(covered=len(covered)))
+    assert check['tasks'] == configurations and check['short_tasks'] == 0, \
+        f'{dataset}: the {step} re-run scored {check["tasks"]} of {configurations} configurations, ' \
+        f'{check["short_tasks"]} on fewer than its {len(covered)} videos'
+    # The test split's rule on the re-run: seconds per (configuration, video) x configurations x every video.
+    rows = con.execute("SELECT task, videos, start_s, end_s FROM retimed_scoring_tasks WHERE task <> 'naive'").fetchall()
+    scoring = scoring_estimate(con, rows, configurations, valid_videos)
+    # Fresh spans are all usable.
+    assert scoring['unusable_tasks'] == 0, f'{dataset}: {scoring["unusable_tasks"]} {step} re-run tasks without a usable span'
+    # The CPU count p110 saw (PYTHON_CPU_COUNT; without it the host's, unknown here) and its concurrent processes.
+    count = (run['env'] or {}).get('PYTHON_CPU_COUNT')
+    processes = None if count is None else max(1, int(P110_PROCESS_FRACTION * int(count)))
+    return dict(scoring=scoring, check=check, covered=covered, excluded=excluded, processes=processes,
+                processes_per_cpu=None if processes is None else round(processes / run['cpu_set_size'], 3))
+
+
+def retimed_scoring(con: duckdb.DuckDBPyConnection, dataset: str, run: dict, density_run: dict | None,
+                    configurations: int, valid_videos: int, cache_component: dict) -> dict:
+    """validation_scoring from the p110 re-run: each configuration task's span, scaled to every validation video, with
+    the deployed-density re-run (P110_DENSITY_STEP) as a cross-check when there is one."""
+    # The substituted re-run.
+    main = scoring_run(con, dataset, 'p110', run, configurations, valid_videos)
+    covered, excluded = main['covered'], main['excluded']
+    # The deployed-density re-run on the same videos, reported beside it and never substituted.
+    density = None
+    if density_run:
+        dense = scoring_run(con, dataset, P110_DENSITY_STEP, density_run, configurations, valid_videos)
+        assert (dense['covered'], dense['excluded']) == (covered, excluded), \
+            f'{dataset}: the {P110_DENSITY_STEP} re-run scored other videos than p110'
+        density = dict(
+            basis=f'cross-check, not substituted: p110 re-run at the deployed density ({P110_PROCESS_FRACTION} '
+                  'TrackEval processes per CPU), the same rule',
+            measured_s=round(dense['scoring']['estimate_s'], 1), processes=dense['processes'],
+            processes_per_cpu=dense['processes_per_cpu'],
+            over_substituted=round(dense['scoring']['estimate_s'] / main['scoring']['estimate_s'], 3),
+            seconds_per_pair=round(dense['scoring']['seconds_per_pair'], 3), wall_s=round(density_run['seconds'], 1),
+            run=run_report(density_run))
+    # The figure substituted, with its density named, and scaled only when videos were left out.
+    basis = ("measured: p110 --valid re-run, each configuration task's span (output directory creation to last "
+             f"result file), summed, at {main['processes']} TrackEval processes on {run['cpu_set_size']} CPUs "
+             f"(deployed: {P110_PROCESS_FRACTION} per CPU, 64 on ace's 80; the estimate's test-split runs were at that "
+             'density)' + (f'; scored {len(covered)} of {valid_videos} videos (the others lack sweep outputs) and '
+                           'scaled to all' if excluded else ''))
+    return retimed_component(cache_component, main['scoring']['estimate_s'], RETIMED['p110'][1], basis, run,
+                             unit='process seconds (one TrackEval process per configuration)',
+                             tasks=main['check']['tasks'], spans_s=round(main['scoring']['seconds'], 1),
+                             scored_videos=len(covered), valid_videos=valid_videos, excluded_videos=excluded,
+                             scale=round(valid_videos / len(covered), 4),
+                             seconds_per_pair=round(main['scoring']['seconds_per_pair'], 3),
+                             processes=main['processes'], processes_per_cpu=main['processes_per_cpu'],
+                             reference_task_s=rounded(main['check']['reference_task_s'], 1),
+                             wall_s=round(run['seconds'], 1), density_cross_check=density)
+
+
+def file_spans(con: duckdb.DuckDBPyConnection, dataset: str, step: str, pattern: str) -> dict:
+    """Count, unknown creation times, and summed creation-to-last-write spans of a re-run step's outputs matching
+    the regular expression `pattern`."""
+    # One row: how many files, how many without a creation time, and their spans.
+    (row,) = query_dicts(con, """
+        SELECT count(*) AS files, count(*) FILTER (WHERE birth_s IS NULL) AS unknown,
+               coalesce(sum(mtime_s - birth_s), 0) AS spans_s
+        FROM retimed_files WHERE dataset = $dataset AND step = $step AND regexp_matches(path, $pattern)
+    """, dict(dataset=dataset, step=step, pattern=pattern))
+    return row
+
+
+def retimed_unit_spans(con: duckdb.DuckDBPyConnection, dataset: str, step: str, pattern: str, videos: int, run: dict,
+                       cache_component: dict, basis: str) -> dict:
+    """A component from one re-run output file per training video: the sum of their spans."""
+    # The step's per-video files.
+    spans = file_spans(con, dataset, step, pattern)
+    # One file per training video, each with a creation time.
+    assert spans['files'] == videos and spans['unknown'] == 0, \
+        f'{dataset}: the {step} re-run has {spans["files"]} files for {videos} training videos ({spans["unknown"]} without a creation time)'
+    return retimed_component(cache_component, spans['spans_s'], RETIMED[step][1], basis, run, videos=videos,
+                             wall_s=round(run['seconds'], 1))
+
+
+def retiming_section(con: duckdb.DuckDBPyConnection, dataset: str, components: dict, train_videos: int, tilesize: int,
+                     configurations: int, valid_videos: int, extract: dict, frames_per_minute: float) -> dict:
+    """The re-timed components, detector loading, and the totals and break-even with the measured figures in place
+    of the cache's (module docstring)."""
+    # The chosen run of each re-timed step, if any, and of the optional deployed-density p110 re-run.
+    runs = {step: retimed_run(con, dataset, step) for step in (*RETIMED, 'detector_load', P110_DENSITY_STEP)}
+    measured = {}
+    # The density re-run is a cross-check of the p110 re-run, so it cannot stand alone.
+    assert runs['p110'] or not runs[P110_DENSITY_STEP], f'{dataset}: a {P110_DENSITY_STEP} re-run without a p110 re-run'
+    # Validation scoring from the p110 re-run, with the density re-run beside it.
+    if runs['p110']:
+        measured['validation_scoring'] = retimed_scoring(con, dataset, runs['p110'], runs[P110_DENSITY_STEP],
+                                                         configurations, valid_videos, components['validation_scoring'])
+    # Mistrack profiling: the wall clock of p016 with one worker, over the configured trackers' profiles.
+    if runs['p016']:
+        # The run's worker count; with more than one, the wall clock is not process seconds.
+        argv = runs['p016']['argv']
+        assert '--num_workers' in argv and argv[argv.index('--num_workers') + 1] == str(P016_RETIMING_WORKERS), \
+            f'{dataset}: p016 re-run with {argv}, not {P016_RETIMING_WORKERS} worker'
+        # Each profile's partial files.
+        profiles = dict(con.execute("""
+            SELECT regexp_extract(path, '/track_rate/([^/]+)/', 1) AS profile,
+                   count(*) FILTER (WHERE regexp_matches(path, '/partial/[^/]+[.]npy$')) AS partials
+            FROM retimed_files WHERE dataset = $dataset AND step = 'p016' GROUP BY ALL ORDER BY profile
+        """, dict(dataset=dataset)).fetchall())
+        # Exactly the configured trackers' profiles at this tile size, each over every training video.
+        needed = sorted(f'{t}_{tilesize}' for t in TRACKERS)
+        assert sorted(profiles) == needed and set(profiles.values()) == {train_videos}, \
+            f'{dataset}: p016 re-run profiles {profiles}, expected {needed} with {train_videos} partial files each'
+        measured['mistrack_profiling'] = retimed_component(
+            components['mistrack_profiling'], runs['p016']['seconds'], RETIMED['p016'][1],
+            'measured: p016 re-run with one worker, its wall clock (the process seconds of its profiles)', runs['p016'],
+            unit='process seconds (one worker)', profiles=profiles)
+    # Training-data pruning: p013's wall clock, one process; a component the cache lacks.
+    if runs['p013']:
+        # p013 runs one task per (dataset, tile size), each writing one statistics file; with one, its wall clock is
+        # one process's.
+        stats = runs['p013']['outputs']
+        assert len(stats) == 1, f'{dataset}: the p013 re-run wrote {len(stats)} statistics files, not one task'
+        # p013 combines the per-video relevance bitmaps p012 left (p012 deletes their directory per video, finding 10).
+        bitmaps = file_spans(con, dataset, 'p013', f'/{tilesize}_[^/]+[.]npy$')['files'] - \
+            file_spans(con, dataset, 'p013', f'/{tilesize}_all[.]npy$')['files']
+        # Which bitmaps survive p012's race varies between runs, so p013's work does too: the cache's run (whose
+        # output the classifier was trained on), for comparison; None when the cache has no statistics.
+        cached = Path(cache.index(dataset, 'never-relevant'))
+        cached_stats_path = cached / f'{tilesize}_optimization_stats.json'
+        cached_stats = json.loads(cached_stats_path.read_text()) if cached_stats_path.exists() else None
+        cached_bitmaps = len([p for p in glob.glob(str(cached / f'{tilesize}_*.npy'))
+                              if not p.endswith(f'/{tilesize}_all.npy')])
+        (rerun_stats,) = stats.values()
+        measured['training_data_pruning'] = retimed_component(
+            None, runs['p013']['seconds'], RETIMED['p013'][1],
+            "measured: p013 re-run's wall clock (one process); its work depends on which per-video relevance bitmaps "
+            "p012's race on always_relevant/ leaves (finding 10), so it removed a different number of training images "
+            "than the cache's run (files_removed_over_cache), on whose output the classifier was trained",
+            runs['p013'], unit='process seconds of one process', relevance_bitmaps=bitmaps, training_videos=train_videos,
+            stats={Path(k).name: v for k, v in stats.items()},
+            cache_run=dict(stats=cached_stats, relevance_bitmaps=cached_bitmaps, path=str(cached_stats_path)),
+            files_removed_over_cache=None if not (cached_stats or {}).get('files_removed') else
+            round(rerun_stats['files_removed'] / cached_stats['files_removed'], 4))
+    # Training-data creation: each video's runtime file at the operating point's tile size, a cross-check only.
+    if runs['p012']:
+        measured['training_data_creation'] = retimed_unit_spans(
+            con, dataset, 'p012', f'/tilesize_{tilesize}/[^/]+_creating_training_data[.]jsonl$', train_videos,
+            runs['p012'], components['training_data_creation'],
+            "cross-check, not substituted: p012 re-run, each video's runtime file from creation to last write, "
+            "summed; its workers (up to 20, one per training video) share the run's CPU set (run.own_cpus of "
+            "run.cpu_set_size busy), so the spans include contention among them")
+    # Reference detection on the training split: each video's detections file.
+    if runs['p011']:
+        measured['reference_detection_train'] = retimed_unit_spans(
+            con, dataset, 'p011', '[.]detections[.]jsonl$', train_videos, runs['p011'],
+            components['reference_detection_train'],
+            "measured: p011 re-run, each video's detections file from creation (after the detector loads) to last "
+            'write, summed')
+
+    # Detector construction as p040 does it, reported apart.
+    loading = None
+    if runs['detector_load']:
+        # The first construction in a process follows CUDA start-up; later ones are warm (their median).
+        (load,) = query_dicts(con, """
+            SELECT count(*) AS records, any_value(device) AS device, any_value(cuda_init_s) AS cuda_init_s,
+                   any_value(load_s) AS load_s, any_value(load_s[1]) AS first_load_s,
+                   any_value(list_median(load_s[2:])) AS warm_load_s
+            FROM detector_loads WHERE dataset = $dataset
+        """, dict(dataset=dataset))
+        # One record per detector_load run, with at least one warm construction after the first.
+        assert load['records'] == 1 and load['warm_load_s'] is not None, f'{dataset}: detector_load records {load}'
+        # A process that loads the detector once pays CUDA start-up and the first construction.
+        cold = load['cuda_init_s'] + load['first_load_s']
+        loading = rounded(dict(
+            basis='measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), '
+                  "without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first "
+                  "video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and "
+                  'RetinaNet)',
+            device=load['device'], cuda_init_s=load['cuda_init_s'], load_s=load['load_s'],
+            first_load_s=load['first_load_s'], warm_load_s=load['warm_load_s'], cold_process_s=cold,
+            p011_videos=train_videos, p011_cold_loads_s=train_videos * cold,
+            note='not added to any total: detector loading is outside both boundaries on both sides (p011 and the '
+                 'reference pipeline load once per video process, p040 once per configuration); p011_cold_loads_s is '
+                 'what one cold load per training video would add to preparation',
+            run=run_report(runs['detector_load'])), 3)
+
+    # Every component at its measured figures where re-timed, the cache's elsewhere, plus p013 (a cross-check keeps the
+    # cache's figures, so it can stand in too).
+    figures = {**components, **measured}
+    totals = {b: round(sum(c[f'{b}_s'] for c in figures.values()), 1) for b in ('instrumented', 'process')}
+    # Components whose figures the re-timing replaced, and the ones it only cross-checks.
+    replaced = sorted(k for k, c in measured.items() if c['replaces'])
+    return dict(
+        components=measured, detector_loading=loading,
+        missing_steps=[step for step, run in runs.items() if run is None and step != P110_DENSITY_STEP],
+        gpu_contaminated_steps=[step for step, run in runs.items() if run and run['gpu_contaminated']],
+        totals_with_retiming=dict(
+            instrumented_s=totals['instrumented'], instrumented_hours=round(totals['instrumented'] / 3600, 3),
+            process_s=totals['process'], process_hours=round(totals['process'] / 3600, 3),
+            measured_components=replaced, cross_checks=sorted(set(measured) - set(replaced)),
+            cache_components=sorted(set(components) - set(replaced))),
+        break_even_with_retiming={b: break_even(totals[b], extract['fps']['reference'][b], extract['fps']['tetris'][b],
+                                                frames_per_minute) for b in ('instrumented', 'process')})
 
 
 def extraction(con: duckdb.DuckDBPyConnection, point: dict, test: dict) -> dict:
@@ -905,10 +1289,12 @@ def extraction(con: duckdb.DuckDBPyConnection, point: dict, test: dict) -> dict:
                                 tetris=round(seconds['tetris']['process'] / seconds['tetris']['paper'], 3)))
 
 
-def measure_dataset(con: duckdb.DuckDBPyConnection, dataset: str, loss: float, compilations: list[dict]) -> dict:
+def measure_dataset(con: duckdb.DuckDBPyConnection, dataset: str, loss: float, compilations: list[dict],
+                    retiming: bool = False) -> dict:
     """Every preparation component, totals at each boundary, and the break-even durations for one dataset.
 
-    Needs the profile_estimates table (profile_estimates) for every dataset.
+    Needs the profile_estimates table (profile_estimates) for every dataset, and with `retiming` the
+    re-timing tables (load_retiming).
     """
     # The operating point and the reference it is compared against.
     point = operating_point(con, dataset, loss)
@@ -1008,6 +1394,9 @@ def measure_dataset(con: duckdb.DuckDBPyConnection, dataset: str, loss: float, c
     extract = extraction(con, point, test)
     # Frames per minute of test video.
     frames_per_minute = 60 * test['frames'] / test['seconds']
+    # The re-timed components and the totals and break-even with them, beside the cache's.
+    retimed = retiming_section(con, dataset, components, train['videos'], point['tilesize'], configurations,
+                               coverage['videos'], extract, frames_per_minute) if retiming else None
     # The dataset's report.
     return dict(
         label=DATASET_LABELS[dataset],
@@ -1034,6 +1423,7 @@ def measure_dataset(con: duckdb.DuckDBPyConnection, dataset: str, loss: float, c
         break_even=dict(frames_per_video_minute=round(frames_per_minute, 2),
                         **{b: break_even(totals[b], extract['fps']['reference'][b], extract['fps']['tetris'][b],
                                          frames_per_minute) for b in ('instrumented', 'process')}),
+        retiming=retimed,
     )
 
 
@@ -1052,17 +1442,24 @@ def main():
     profile_estimates(con, profiles)
     # p015 benchmark estimates of every dataset.
     compilations = optimization_estimates(con, gather_compilations(list(DATASET_LABELS)))
+    # The re-timing records, unless left out on purpose.
+    retiming = Path(args.retiming)
+    if not args.no_retiming:
+        load_retiming(con, retiming)
     # Measure each requested dataset.
     results = {}
     for dataset in args.datasets:
-        results[dataset] = measure_dataset(con, dataset, args.loss, compilations)
-        # One line per dataset and boundary for the run log.
-        t, b = results[dataset]['totals'], results[dataset]['break_even']
+        results[dataset] = measure_dataset(con, dataset, args.loss, compilations, retiming=not args.no_retiming)
+        # One line per dataset and boundary for the run log, with the re-timed figures when there are any.
+        t, b, r = results[dataset]['totals'], results[dataset]['break_even'], results[dataset]['retiming']
         for boundary in ('instrumented', 'process'):
             print(f"{dataset:12s} {boundary:12s} preparation {t[f'{boundary}_hours']:.2f} h | Tetris "
                   f"{b[boundary]['tetris_fps']:.1f} fps vs reference {b[boundary]['reference_fps']:.1f} fps | saves "
                   f"{b[boundary]['saving_s_per_video_minute']:.1f} s per video minute | break-even "
-                  f"{b[boundary]['break_even_video_minutes']} video minutes")
+                  f"{b[boundary]['break_even_video_minutes']} video minutes"
+                  + ('' if r is None else f" | with re-timing {r['totals_with_retiming'][f'{boundary}_hours']:.2f} h, "
+                                          f"break-even {r['break_even_with_retiming'][boundary]['break_even_video_minutes']}"
+                                          ' video minutes'))
 
     # One JSON with every dataset, the method, and the baselines' re-timing needs.
     write_json(results_dir(__file__), 'preparation_cost.json', dict(
@@ -1091,9 +1488,23 @@ def main():
                          for k, (level, ends, chain) in STAGE_SPANS.items()},
             chain_gap_s=CHAIN_GAP_S, stale_span_s=STALE_SPAN_S, timestamp_tolerance_s=TIMESTAMP_TOLERANCE_S,
             finetune_wall_max_ratio=FINETUNE_WALL_MAX_RATIO, finetune_wall_slack_s=FINETUNE_WALL_SLACK_S,
-            p014_epochs_per_stage=P014_EPOCHS_PER_STAGE, p016_workers=P016_WORKERS, p015_group_gap_s=P015_GROUP_GAP_S,
+            p014_epochs_per_stage=P014_EPOCHS_PER_STAGE, p016_workers=P016_CACHE_WORKERS, p015_group_gap_s=P015_GROUP_GAP_S,
             incomplete_profiles=incomplete_profiles,
-            host=dict(host_info(), note='cache host, assumed for all runs; GPUs are those present when this script ran')),
+            host=dict(host_info(), note='the host this script ran on, which holds the cache and ran its stages; the '
+                                        're-timed components ran on bombe (retiming.components.*.run.host, '
+                                        'physical_gpu, and cpus); GPUs are those present when this script ran'),
+            retiming=None if args.no_retiming else dict(
+                directory=str(retiming), files=list(RETIMING_FILES),
+                replaces={component: list(boundaries) for component, boundaries in RETIMED.values()},
+                runs='per dataset and step, the latest record that exited 0 among those without foreign GPU samples, '
+                     'else the latest that exited 0 (flagged in gpu_contaminated_steps); attempts counts all records; '
+                     "each chosen record's launcher run must have a summary in launcher_runs.jsonl",
+                p110_density=f'{P110_DENSITY_STEP}: optional p110 re-run at the deployed {P110_PROCESS_FRACTION} '
+                             'TrackEval processes per CPU, reported in validation_scoring.density_cross_check and '
+                             'never substituted',
+                p016_retiming_workers=P016_RETIMING_WORKERS,
+                plan='measurements-gpu/r9o2_preparation_cost.py --run, driven by '
+                     'measurements-gpu/r9o2_preparation_retiming.sh on bombe')),
         baselines=dict(BASELINE_PREPARATION, plan='measurements-gpu/r9o2_preparation_cost.py (dry run by default)'),
     ))
 

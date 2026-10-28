@@ -514,6 +514,446 @@
         "time_s": 51.4622,
         "tracker": "sortcython"
       },
+      "retiming": {
+        "break_even_with_retiming": {
+          "instrumented": {
+            "break_even_video_hours": 17.24,
+            "break_even_video_minutes": 1034.2,
+            "reference_extraction_s_per_video_minute": 57.872,
+            "reference_fps": 15.55,
+            "saving_s_per_video_minute": 57.014,
+            "tetris_extraction_s_per_video_minute": 0.858,
+            "tetris_fps": 1049.53
+          },
+          "process": {
+            "break_even_video_hours": 54.19,
+            "break_even_video_minutes": 3251.1,
+            "reference_extraction_s_per_video_minute": 61.921,
+            "reference_fps": 14.53,
+            "saving_s_per_video_minute": 51.412,
+            "tetris_extraction_s_per_video_minute": 10.509,
+            "tetris_fps": 85.64
+          }
+        },
+        "components": {
+          "mistrack_profiling": {
+            "basis": "measured: p016 re-run with one worker, its wall clock (the process seconds of its profiles)",
+            "cache": {
+              "basis": "estimate: elapsed time from output modification times x min(40 workers, videos), an upper bound on process seconds",
+              "instrumented_s": 818.9,
+              "process_s": 818.9,
+              "recorded_s": 0.0
+            },
+            "instrumented_hours": 0.088,
+            "instrumented_s": 317.0,
+            "measured_over_cache_process": 0.387,
+            "measured_s": 317.0,
+            "process_hours": 0.088,
+            "process_s": 317.0,
+            "profiles": {
+              "bytetrackcython_60": 60,
+              "sortcython_60": 60
+            },
+            "recorded_s": 0.0,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p016_tune_track_rate.py",
+                "--num_workers",
+                "1"
+              ],
+              "attempts": 1,
+              "cpu_s": 1725.161,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T15:29:35+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/ams-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": ""
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 198,
+              "host": "bombe",
+              "host_busy_cpus": 8.44,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 2.25,
+              "own_cpus": 5.44,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793114658144849",
+              "seconds": 317.018,
+              "started": "2026-10-27T15:24:18+00:00",
+              "uses_gpu": false
+            },
+            "unit": "process seconds (one worker)"
+          },
+          "reference_detection_train": {
+            "basis": "measured: p011 re-run, each video's detections file from creation (after the detector loads) to last write, summed",
+            "cache": {
+              "basis": "recorded: p011 times each frame's read and detect; process: recorded (file creation times are stale on some datasets); detector loading per video is not recorded",
+              "instrumented_s": 2935.2,
+              "process_s": 3013.1,
+              "recorded_s": 3013.1
+            },
+            "instrumented_hours": 0.815,
+            "instrumented_s": 2935.2,
+            "measured_over_cache_process": 1.048,
+            "measured_s": 3156.9,
+            "process_hours": 0.877,
+            "process_s": 3156.9,
+            "recorded_s": 3013.1,
+            "replaces": [
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p011_tune_detect.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 17263.76,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T15:05:09+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/ams-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 1724,
+              "host": "bombe",
+              "host_busy_cpus": 21.58,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 4.45,
+              "own_cpus": 4.7,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793109837441994",
+              "seconds": 3671.935,
+              "started": "2026-10-27T14:03:57+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 60,
+            "wall_s": 3671.9
+          },
+          "training_data_creation": {
+            "basis": "cross-check, not substituted: p012 re-run, each video's runtime file from creation to last write, summed; its workers (up to 20, one per training video) share the run's CPU set (run.own_cpus of run.cpu_set_size busy), so the spans include contention among them",
+            "cache": {
+              "basis": "recorded: split and save per frame; process: estimate from each video's runtime file creation to last write (adds the untimed seek, decode, and detection parsing)",
+              "instrumented_s": 4147.1,
+              "process_s": 8644.6,
+              "recorded_s": 4147.1
+            },
+            "instrumented_hours": 1.152,
+            "instrumented_s": 4147.1,
+            "measured_over_cache_process": 1.938,
+            "measured_s": 16749.5,
+            "process_hours": 2.401,
+            "process_s": 8644.6,
+            "recorded_s": 4147.1,
+            "replaces": [],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p012_tune_create_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 30590.114,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T15:19:21+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/ams-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 514,
+              "host": "bombe",
+              "host_busy_cpus": 41.24,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 2.21,
+              "own_cpus": 35.91,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793113509496820",
+              "seconds": 851.957,
+              "started": "2026-10-27T15:05:09+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 60,
+            "wall_s": 852.0
+          },
+          "training_data_pruning": {
+            "basis": "measured: p013 re-run's wall clock (one process); its work depends on which per-video relevance bitmaps p012's race on always_relevant/ leaves (finding 10), so it removed a different number of training images than the cache's run (files_removed_over_cache), on whose output the classifier was trained",
+            "cache": null,
+            "cache_run": {
+              "path": "/polyis-cache/ams-y05/indexing/always_relevant/60_optimization_stats.json",
+              "relevance_bitmaps": 20,
+              "stats": {
+                "files_after": 2268430,
+                "files_before": 4536504,
+                "files_removed": 2268074,
+                "never_relevant_tiles": 126,
+                "percentage_removed": 49.99607627371209
+              }
+            },
+            "files_removed_over_cache": 1.0714,
+            "instrumented_hours": 0.073,
+            "instrumented_s": 263.5,
+            "measured_over_cache_process": null,
+            "measured_s": 263.5,
+            "process_hours": 0.073,
+            "process_s": 263.5,
+            "recorded_s": 0.0,
+            "relevance_bitmaps": 20,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p013_tune_optimize_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 272.24,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T15:23:45+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/ams-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 164,
+              "host": "bombe",
+              "host_busy_cpus": 6.05,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 2.8,
+              "own_cpus": 1.03,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793114361812535",
+              "seconds": 263.506,
+              "started": "2026-10-27T15:19:21+00:00",
+              "uses_gpu": true
+            },
+            "stats": {
+              "60_optimization_stats.json": {
+                "files_after": 2106444,
+                "files_before": 4536504,
+                "files_removed": 2430060,
+                "never_relevant_tiles": 135,
+                "percentage_removed": 53.566799456145084
+              }
+            },
+            "training_videos": 60,
+            "unit": "process seconds of one process"
+          },
+          "validation_scoring": {
+            "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
+            "cache": {
+              "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
+              "instrumented_s": 15403.7,
+              "process_s": 15403.7,
+              "recorded_s": 0.0
+            },
+            "density_cross_check": {
+              "basis": "cross-check, not substituted: p110 re-run at the deployed density (0.8 TrackEval processes per CPU), the same rule",
+              "measured_s": 14941.9,
+              "over_substituted": 1.617,
+              "processes": 32,
+              "processes_per_cpu": 0.8,
+              "run": {
+                "argv": [
+                  "python",
+                  "evaluation/p110_accuracy_compute.py",
+                  "--valid"
+                ],
+                "attempts": 1,
+                "cpu_s": 14988.583,
+                "cpu_set_size": 40,
+                "cpus": "0-19,40-59",
+                "ended": "2026-10-27T17:45:06+00:00",
+                "env": {
+                  "CONFIG": "/scratch/retime/configs/ams-y05.yaml",
+                  "CUDA_VISIBLE_DEVICES": "",
+                  "PYTHON_CPU_COUNT": "40"
+                },
+                "gpu_contaminated": false,
+                "gpu_foreign_samples": 0,
+                "gpu_samples": 231,
+                "host": "bombe",
+                "host_busy_cpus": 59.45,
+                "launcher_contaminated": false,
+                "launcher_exit": 0,
+                "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+                "launcher_run": "g3-20261027T102953",
+                "other_busy_cpus": 0.59,
+                "own_cpus": 31.14,
+                "physical_gpu": "3",
+                "record_id": "bombe-g3-20261027T102953-1-1793122624973120",
+                "seconds": 481.335,
+                "started": "2026-10-27T17:37:04+00:00",
+                "uses_gpu": false
+              },
+              "seconds_per_pair": 0.519,
+              "wall_s": 481.3
+            },
+            "excluded_videos": [],
+            "instrumented_hours": 2.567,
+            "instrumented_s": 9242.5,
+            "measured_over_cache_process": 0.6,
+            "measured_s": 9242.5,
+            "process_hours": 2.567,
+            "process_s": 9242.5,
+            "processes": 16,
+            "processes_per_cpu": 0.4,
+            "recorded_s": 0.0,
+            "reference_task_s": 19.3,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "evaluation/p110_accuracy_compute.py",
+                "--valid"
+              ],
+              "attempts": 1,
+              "cpu_s": 9283.687,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T14:03:56+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/ams-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "",
+                "PYTHON_CPU_COUNT": "20"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 233,
+              "host": "bombe",
+              "host_busy_cpus": 37.2,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 4.88,
+              "own_cpus": 15.68,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793109244313106",
+              "seconds": 592.05,
+              "started": "2026-10-27T13:54:04+00:00",
+              "uses_gpu": false
+            },
+            "scale": 1.0,
+            "scored_videos": 60,
+            "seconds_per_pair": 0.321,
+            "spans_s": 9242.5,
+            "tasks": 480,
+            "unit": "process seconds (one TrackEval process per configuration)",
+            "valid_videos": 60,
+            "wall_s": 592.1
+          }
+        },
+        "detector_loading": {
+          "basis": "measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and RetinaNet)",
+          "cold_process_s": 4.119,
+          "cuda_init_s": 1.098,
+          "device": "Quadro RTX 6000",
+          "first_load_s": 3.021,
+          "load_s": [
+            3.021,
+            4.822,
+            6.278,
+            6.421,
+            6.24
+          ],
+          "note": "not added to any total: detector loading is outside both boundaries on both sides (p011 and the reference pipeline load once per video process, p040 once per configuration); p011_cold_loads_s is what one cold load per training video would add to preparation",
+          "p011_cold_loads_s": 247.125,
+          "p011_videos": 60,
+          "run": {
+            "argv": [
+              "python",
+              "-c",
+              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "ams-y05",
+              "/scratch/retime/detector_load.jsonl",
+              "5"
+            ],
+            "attempts": 1,
+            "cpu_s": 893.75,
+            "cpu_set_size": 40,
+            "cpus": "0-19,40-59",
+            "ended": "2026-10-27T15:24:17+00:00",
+            "env": {
+              "CONFIG": "/scratch/retime/configs/ams-y05.yaml",
+              "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "gpu_contaminated": false,
+            "gpu_foreign_samples": 0,
+            "gpu_samples": 20,
+            "host": "bombe",
+            "host_busy_cpus": 30.32,
+            "launcher_contaminated": false,
+            "launcher_exit": 0,
+            "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+            "launcher_run": "g3-20261027T061546",
+            "other_busy_cpus": 1.18,
+            "own_cpus": 28.4,
+            "physical_gpu": "3",
+            "record_id": "bombe-1-1793114626137112",
+            "seconds": 31.472,
+            "started": "2026-10-27T15:23:46+00:00",
+            "uses_gpu": true
+          },
+          "warm_load_s": 6.259
+        },
+        "gpu_contaminated_steps": [],
+        "missing_steps": [],
+        "totals_with_retiming": {
+          "cache_components": [
+            "classifier_optimization",
+            "classifier_training",
+            "reference_outputs_valid",
+            "training_data_creation",
+            "validation_sweep"
+          ],
+          "cross_checks": [
+            "training_data_creation"
+          ],
+          "instrumented_hours": 16.378,
+          "instrumented_s": 58961.4,
+          "measured_components": [
+            "mistrack_profiling",
+            "reference_detection_train",
+            "training_data_pruning",
+            "validation_scoring"
+          ],
+          "process_hours": 46.429,
+          "process_s": 167145.7
+        }
+      },
       "totals": {
         "instrumented_hours": 18.156,
         "instrumented_s": 65361.0,
@@ -1047,6 +1487,446 @@
         "tilesize": 60,
         "time_s": 74.0414,
         "tracker": "sortcython"
+      },
+      "retiming": {
+        "break_even_with_retiming": {
+          "instrumented": {
+            "break_even_video_hours": 20.89,
+            "break_even_video_minutes": 1253.5,
+            "reference_extraction_s_per_video_minute": 28.46,
+            "reference_fps": 31.62,
+            "saving_s_per_video_minute": 27.226,
+            "tetris_extraction_s_per_video_minute": 1.234,
+            "tetris_fps": 729.32
+          },
+          "process": {
+            "break_even_video_hours": 53.26,
+            "break_even_video_minutes": 3195.7,
+            "reference_extraction_s_per_video_minute": 31.037,
+            "reference_fps": 29.0,
+            "saving_s_per_video_minute": 25.386,
+            "tetris_extraction_s_per_video_minute": 5.651,
+            "tetris_fps": 159.26
+          }
+        },
+        "components": {
+          "mistrack_profiling": {
+            "basis": "measured: p016 re-run with one worker, its wall clock (the process seconds of its profiles)",
+            "cache": {
+              "basis": "estimate: elapsed time from output modification times x min(40 workers, videos), an upper bound on process seconds",
+              "instrumented_s": 668.1,
+              "process_s": 668.1,
+              "recorded_s": 0.0
+            },
+            "instrumented_hours": 0.084,
+            "instrumented_s": 301.3,
+            "measured_over_cache_process": 0.451,
+            "measured_s": 301.3,
+            "process_hours": 0.084,
+            "process_s": 301.3,
+            "profiles": {
+              "bytetrackcython_60": 60,
+              "sortcython_60": 60
+            },
+            "recorded_s": 0.0,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p016_tune_track_rate.py",
+                "--num_workers",
+                "1"
+              ],
+              "attempts": 1,
+              "cpu_s": 1720.938,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T14:14:53+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot1-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": ""
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 127,
+              "host": "bombe",
+              "host_busy_cpus": 16.22,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 0.72,
+              "own_cpus": 5.71,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793110192316258",
+              "seconds": 301.26,
+              "started": "2026-10-27T14:09:52+00:00",
+              "uses_gpu": false
+            },
+            "unit": "process seconds (one worker)"
+          },
+          "reference_detection_train": {
+            "basis": "measured: p011 re-run, each video's detections file from creation (after the detector loads) to last write, summed",
+            "cache": {
+              "basis": "recorded: p011 times each frame's read and detect; process: recorded (file creation times are stale on some datasets); detector loading per video is not recorded",
+              "instrumented_s": 1200.6,
+              "process_s": 1252.5,
+              "recorded_s": 1252.5
+            },
+            "instrumented_hours": 0.333,
+            "instrumented_s": 1200.6,
+            "measured_over_cache_process": 0.997,
+            "measured_s": 1249.1,
+            "process_hours": 0.347,
+            "process_s": 1249.1,
+            "recorded_s": 1252.5,
+            "replaces": [
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p011_tune_detect.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 4908.339,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T14:00:07+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot1-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 616,
+              "host": "bombe",
+              "host_busy_cpus": 17.58,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 1.28,
+              "own_cpus": 3.37,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793108150808270",
+              "seconds": 1456.5,
+              "started": "2026-10-27T13:35:50+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 60,
+            "wall_s": 1456.5
+          },
+          "training_data_creation": {
+            "basis": "cross-check, not substituted: p012 re-run, each video's runtime file from creation to last write, summed; its workers (up to 20, one per training video) share the run's CPU set (run.own_cpus of run.cpu_set_size busy), so the spans include contention among them",
+            "cache": {
+              "basis": "recorded: split and save per frame; process: estimate from each video's runtime file creation to last write (adds the untimed seek, decode, and detection parsing)",
+              "instrumented_s": 2464.1,
+              "process_s": 5271.2,
+              "recorded_s": 2464.1
+            },
+            "instrumented_hours": 0.684,
+            "instrumented_s": 2464.1,
+            "measured_over_cache_process": 1.811,
+            "measured_s": 9546.9,
+            "process_hours": 1.464,
+            "process_s": 5271.2,
+            "recorded_s": 2464.1,
+            "replaces": [],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p012_tune_create_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 18193.541,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T14:08:17+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot1-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 179,
+              "host": "bombe",
+              "host_busy_cpus": 54.11,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 0.68,
+              "own_cpus": 37.09,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793109607410587",
+              "seconds": 490.498,
+              "started": "2026-10-27T14:00:07+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 60,
+            "wall_s": 490.5
+          },
+          "training_data_pruning": {
+            "basis": "measured: p013 re-run's wall clock (one process); its work depends on which per-video relevance bitmaps p012's race on always_relevant/ leaves (finding 10), so it removed a different number of training images than the cache's run (files_removed_over_cache), on whose output the classifier was trained",
+            "cache": null,
+            "cache_run": {
+              "path": "/polyis-cache/caldot1-y05/indexing/always_relevant/60_optimization_stats.json",
+              "relevance_bitmaps": 20,
+              "stats": {
+                "files_after": 576031,
+                "files_before": 1728000,
+                "files_removed": 1151969,
+                "never_relevant_tiles": 64,
+                "percentage_removed": 66.66487268518519
+              }
+            },
+            "files_removed_over_cache": 0.9844,
+            "instrumented_hours": 0.021,
+            "instrumented_s": 77.3,
+            "measured_over_cache_process": null,
+            "measured_s": 77.3,
+            "process_hours": 0.021,
+            "process_s": 77.3,
+            "recorded_s": 0.0,
+            "relevance_bitmaps": 20,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p013_tune_optimize_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 85.486,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T14:09:35+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot1-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 33,
+              "host": "bombe",
+              "host_busy_cpus": 13.25,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 2.46,
+              "own_cpus": 1.11,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793110098023005",
+              "seconds": 77.294,
+              "started": "2026-10-27T14:08:18+00:00",
+              "uses_gpu": true
+            },
+            "stats": {
+              "60_optimization_stats.json": {
+                "files_after": 594004,
+                "files_before": 1728000,
+                "files_removed": 1133996,
+                "never_relevant_tiles": 63,
+                "percentage_removed": 65.62476851851852
+              }
+            },
+            "training_videos": 60,
+            "unit": "process seconds of one process"
+          },
+          "validation_scoring": {
+            "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
+            "cache": {
+              "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
+              "instrumented_s": 13137.9,
+              "process_s": 13137.9,
+              "recorded_s": 0.0
+            },
+            "density_cross_check": {
+              "basis": "cross-check, not substituted: p110 re-run at the deployed density (0.8 TrackEval processes per CPU), the same rule",
+              "measured_s": 9972.1,
+              "over_substituted": 1.619,
+              "processes": 32,
+              "processes_per_cpu": 0.8,
+              "run": {
+                "argv": [
+                  "python",
+                  "evaluation/p110_accuracy_compute.py",
+                  "--valid"
+                ],
+                "attempts": 1,
+                "cpu_s": 10024.981,
+                "cpu_set_size": 40,
+                "cpus": "0-19,40-59",
+                "ended": "2026-10-27T17:36:58+00:00",
+                "env": {
+                  "CONFIG": "/scratch/retime/configs/caldot1-y05.yaml",
+                  "CUDA_VISIBLE_DEVICES": "",
+                  "PYTHON_CPU_COUNT": "40"
+                },
+                "gpu_contaminated": false,
+                "gpu_foreign_samples": 0,
+                "gpu_samples": 169,
+                "host": "bombe",
+                "host_busy_cpus": 52.23,
+                "launcher_contaminated": false,
+                "launcher_exit": 0,
+                "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+                "launcher_run": "g3-20261027T102953",
+                "other_busy_cpus": 0.23,
+                "own_cpus": 31.19,
+                "physical_gpu": "3",
+                "record_id": "bombe-g3-20261027T102953-1-1793122297475677",
+                "seconds": 321.389,
+                "started": "2026-10-27T17:31:37+00:00",
+                "uses_gpu": false
+              },
+              "seconds_per_pair": 0.346,
+              "wall_s": 321.4
+            },
+            "excluded_videos": [],
+            "instrumented_hours": 1.711,
+            "instrumented_s": 6159.8,
+            "measured_over_cache_process": 0.469,
+            "measured_s": 6159.8,
+            "process_hours": 1.711,
+            "process_s": 6159.8,
+            "processes": 16,
+            "processes_per_cpu": 0.4,
+            "recorded_s": 0.0,
+            "reference_task_s": 14.4,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "evaluation/p110_accuracy_compute.py",
+                "--valid"
+              ],
+              "attempts": 1,
+              "cpu_s": 6209.522,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T13:35:48+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot1-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "",
+                "PYTHON_CPU_COUNT": "20"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 142,
+              "host": "bombe",
+              "host_busy_cpus": 29.28,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 4.09,
+              "own_cpus": 15.61,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793107751016703",
+              "seconds": 397.678,
+              "started": "2026-10-27T13:29:11+00:00",
+              "uses_gpu": false
+            },
+            "scale": 1.0,
+            "scored_videos": 60,
+            "seconds_per_pair": 0.214,
+            "spans_s": 6159.8,
+            "tasks": 480,
+            "unit": "process seconds (one TrackEval process per configuration)",
+            "valid_videos": 60,
+            "wall_s": 397.7
+          }
+        },
+        "detector_loading": {
+          "basis": "measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and RetinaNet)",
+          "cold_process_s": 2.34,
+          "cuda_init_s": 0.345,
+          "device": "Quadro RTX 6000",
+          "first_load_s": 1.995,
+          "load_s": [
+            1.995,
+            2.252,
+            2.28,
+            2.185,
+            2.143
+          ],
+          "note": "not added to any total: detector loading is outside both boundaries on both sides (p011 and the reference pipeline load once per video process, p040 once per configuration); p011_cold_loads_s is what one cold load per training video would add to preparation",
+          "p011_cold_loads_s": 140.389,
+          "p011_videos": 60,
+          "run": {
+            "argv": [
+              "python",
+              "-c",
+              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "caldot1-y05",
+              "/scratch/retime/detector_load.jsonl",
+              "5"
+            ],
+            "attempts": 1,
+            "cpu_s": 142.925,
+            "cpu_set_size": 40,
+            "cpus": "20-39,60-79",
+            "ended": "2026-10-27T14:09:51+00:00",
+            "env": {
+              "CONFIG": "/scratch/retime/configs/caldot1-y05.yaml",
+              "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "gpu_contaminated": false,
+            "gpu_foreign_samples": 0,
+            "gpu_samples": 7,
+            "host": "bombe",
+            "host_busy_cpus": 16.88,
+            "launcher_contaminated": false,
+            "launcher_exit": 0,
+            "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+            "launcher_run": "g4-20261027T061546",
+            "other_busy_cpus": 1.06,
+            "own_cpus": 9.54,
+            "physical_gpu": "4",
+            "record_id": "bombe-1-1793110176190931",
+            "seconds": 14.983,
+            "started": "2026-10-27T14:09:36+00:00",
+            "uses_gpu": true
+          },
+          "warm_load_s": 2.219
+        },
+        "gpu_contaminated_steps": [],
+        "missing_steps": [],
+        "totals_with_retiming": {
+          "cache_components": [
+            "classifier_optimization",
+            "classifier_training",
+            "reference_outputs_valid",
+            "training_data_creation",
+            "validation_sweep"
+          ],
+          "cross_checks": [
+            "training_data_creation"
+          ],
+          "instrumented_hours": 9.48,
+          "instrumented_s": 34128.7,
+          "measured_components": [
+            "mistrack_profiling",
+            "reference_detection_train",
+            "training_data_pruning",
+            "validation_scoring"
+          ],
+          "process_hours": 22.535,
+          "process_s": 81125.9
+        }
       },
       "totals": {
         "instrumented_hours": 11.499,
@@ -1593,6 +2473,416 @@
         "time_s": 373.1589,
         "tracker": "bytetrackcython"
       },
+      "retiming": {
+        "break_even_with_retiming": {
+          "instrumented": {
+            "break_even_video_hours": 32.05,
+            "break_even_video_minutes": 1923.0,
+            "reference_extraction_s_per_video_minute": 28.543,
+            "reference_fps": 31.53,
+            "saving_s_per_video_minute": 22.324,
+            "tetris_extraction_s_per_video_minute": 6.219,
+            "tetris_fps": 144.71
+          },
+          "process": {
+            "break_even_video_hours": 79.41,
+            "break_even_video_minutes": 4764.5,
+            "reference_extraction_s_per_video_minute": 31.047,
+            "reference_fps": 28.99,
+            "saving_s_per_video_minute": 19.558,
+            "tetris_extraction_s_per_video_minute": 11.49,
+            "tetris_fps": 78.33
+          }
+        },
+        "components": {
+          "mistrack_profiling": {
+            "basis": "measured: p016 re-run with one worker, its wall clock (the process seconds of its profiles)",
+            "cache": {
+              "basis": "estimate: elapsed time from output modification times x min(40 workers, videos), an upper bound on process seconds",
+              "instrumented_s": 807.2,
+              "process_s": 807.2,
+              "recorded_s": 0.0
+            },
+            "instrumented_hours": 0.082,
+            "instrumented_s": 293.5,
+            "measured_over_cache_process": 0.364,
+            "measured_s": 293.5,
+            "process_hours": 0.082,
+            "process_s": 293.5,
+            "profiles": {
+              "bytetrackcython_60": 60,
+              "sortcython_60": 60
+            },
+            "recorded_s": 0.0,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p016_tune_track_rate.py",
+                "--num_workers",
+                "1"
+              ],
+              "attempts": 1,
+              "cpu_s": 1742.609,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T15:00:32+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot2-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": ""
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 158,
+              "host": "bombe",
+              "host_busy_cpus": 13.76,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 0.36,
+              "own_cpus": 5.94,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793112938662908",
+              "seconds": 293.533,
+              "started": "2026-10-27T14:55:38+00:00",
+              "uses_gpu": false
+            },
+            "unit": "process seconds (one worker)"
+          },
+          "reference_detection_train": {
+            "basis": "measured: p011 re-run, each video's detections file from creation (after the detector loads) to last write, summed",
+            "cache": {
+              "basis": "recorded: p011 times each frame's read and detect; process: recorded (file creation times are stale on some datasets); detector loading per video is not recorded",
+              "instrumented_s": 1198.5,
+              "process_s": 1235.5,
+              "recorded_s": 1235.5
+            },
+            "instrumented_hours": 0.333,
+            "instrumented_s": 1198.5,
+            "measured_over_cache_process": 1.01,
+            "measured_s": 1248.1,
+            "process_hours": 0.347,
+            "process_s": 1248.1,
+            "recorded_s": 1235.5,
+            "replaces": [
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p011_tune_detect.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 4391.702,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T14:46:15+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot2-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 652,
+              "host": "bombe",
+              "host_busy_cpus": 13.13,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 0.88,
+              "own_cpus": 3.08,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793110951837115",
+              "seconds": 1423.609,
+              "started": "2026-10-27T14:22:31+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 60,
+            "wall_s": 1423.6
+          },
+          "training_data_creation": {
+            "basis": "cross-check, not substituted: p012 re-run, each video's runtime file from creation to last write, summed; its workers (up to 20, one per training video) share the run's CPU set (run.own_cpus of run.cpu_set_size busy), so the spans include contention among them",
+            "cache": {
+              "basis": "recorded: split and save per frame; process: estimate from each video's runtime file creation to last write (adds the untimed seek, decode, and detection parsing)",
+              "instrumented_s": 2087.5,
+              "process_s": 4629.9,
+              "recorded_s": 2087.5
+            },
+            "instrumented_hours": 0.58,
+            "instrumented_s": 2087.5,
+            "measured_over_cache_process": 1.985,
+            "measured_s": 9189.7,
+            "process_hours": 1.286,
+            "process_s": 4629.9,
+            "recorded_s": 2087.5,
+            "replaces": [],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p012_tune_create_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 17682.057,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T14:54:07+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot2-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 232,
+              "host": "bombe",
+              "host_busy_cpus": 47.66,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 0.43,
+              "own_cpus": 37.54,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793112376161002",
+              "seconds": 470.997,
+              "started": "2026-10-27T14:46:16+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 60,
+            "wall_s": 471.0
+          },
+          "training_data_pruning": {
+            "basis": "measured: p013 re-run's wall clock (one process); its work depends on which per-video relevance bitmaps p012's race on always_relevant/ leaves (finding 10), so it removed a different number of training images than the cache's run (files_removed_over_cache), on whose output the classifier was trained",
+            "cache": null,
+            "cache_run": {
+              "path": "/polyis-cache/caldot2-y05/indexing/always_relevant/60_optimization_stats.json",
+              "relevance_bitmaps": 20,
+              "stats": {
+                "files_after": 522012,
+                "files_before": 1728000,
+                "files_removed": 1205988,
+                "never_relevant_tiles": 67,
+                "percentage_removed": 69.79097222222222
+              }
+            },
+            "files_removed_over_cache": 0.9254,
+            "instrumented_hours": 0.021,
+            "instrumented_s": 77.2,
+            "measured_over_cache_process": null,
+            "measured_s": 77.2,
+            "process_hours": 0.021,
+            "process_s": 77.2,
+            "recorded_s": 0.0,
+            "relevance_bitmaps": 20,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p013_tune_optimize_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 85.748,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T14:55:24+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot2-y05.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 41,
+              "host": "bombe",
+              "host_busy_cpus": 9.75,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 2.03,
+              "own_cpus": 1.11,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793112847478528",
+              "seconds": 77.182,
+              "started": "2026-10-27T14:54:07+00:00",
+              "uses_gpu": true
+            },
+            "stats": {
+              "60_optimization_stats.json": {
+                "files_after": 612002,
+                "files_before": 1728000,
+                "files_removed": 1115998,
+                "never_relevant_tiles": 62,
+                "percentage_removed": 64.58321759259259
+              }
+            },
+            "training_videos": 60,
+            "unit": "process seconds of one process"
+          },
+          "validation_scoring": {
+            "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density); scored 50 of 60 videos (the others lack sweep outputs) and scaled to all",
+            "cache": {
+              "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
+              "instrumented_s": 14142.7,
+              "process_s": 14142.7,
+              "recorded_s": 0.0
+            },
+            "density_cross_check": null,
+            "excluded_videos": [
+              "va00.mp4",
+              "va01.mp4",
+              "va02.mp4",
+              "va03.mp4",
+              "va04.mp4",
+              "va05.mp4",
+              "va06.mp4",
+              "va07.mp4",
+              "va08.mp4",
+              "va09.mp4"
+            ],
+            "instrumented_hours": 2.339,
+            "instrumented_s": 8421.3,
+            "measured_over_cache_process": 0.595,
+            "measured_s": 8421.3,
+            "process_hours": 2.339,
+            "process_s": 8421.3,
+            "processes": 16,
+            "processes_per_cpu": 0.4,
+            "recorded_s": 0.0,
+            "reference_task_s": 18.5,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "evaluation/p110_accuracy_compute.py",
+                "--valid"
+              ],
+              "attempts": 1,
+              "cpu_s": 7069.075,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T14:22:30+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/caldot2-y05.p110.yaml",
+                "CUDA_VISIBLE_DEVICES": "",
+                "PYTHON_CPU_COUNT": "20"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 191,
+              "host": "bombe",
+              "host_busy_cpus": 25.99,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 0.54,
+              "own_cpus": 15.66,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793110499380580",
+              "seconds": 451.413,
+              "started": "2026-10-27T14:14:59+00:00",
+              "uses_gpu": false
+            },
+            "scale": 1.2,
+            "scored_videos": 50,
+            "seconds_per_pair": 0.292,
+            "spans_s": 7017.8,
+            "tasks": 480,
+            "unit": "process seconds (one TrackEval process per configuration)",
+            "valid_videos": 60,
+            "wall_s": 451.4
+          }
+        },
+        "detector_loading": {
+          "basis": "measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and RetinaNet)",
+          "cold_process_s": 3.283,
+          "cuda_init_s": 1.383,
+          "device": "Quadro RTX 6000",
+          "first_load_s": 1.9,
+          "load_s": [
+            1.9,
+            1.713,
+            2.005,
+            1.587,
+            1.164
+          ],
+          "note": "not added to any total: detector loading is outside both boundaries on both sides (p011 and the reference pipeline load once per video process, p040 once per configuration); p011_cold_loads_s is what one cold load per training video would add to preparation",
+          "p011_cold_loads_s": 196.995,
+          "p011_videos": 60,
+          "run": {
+            "argv": [
+              "python",
+              "-c",
+              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "caldot2-y05",
+              "/scratch/retime/detector_load.jsonl",
+              "5"
+            ],
+            "attempts": 1,
+            "cpu_s": 120.273,
+            "cpu_set_size": 40,
+            "cpus": "20-39,60-79",
+            "ended": "2026-10-27T14:55:38+00:00",
+            "env": {
+              "CONFIG": "/scratch/retime/configs/caldot2-y05.yaml",
+              "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "gpu_contaminated": false,
+            "gpu_foreign_samples": 0,
+            "gpu_samples": 8,
+            "host": "bombe",
+            "host_busy_cpus": 18.11,
+            "launcher_contaminated": false,
+            "launcher_exit": 0,
+            "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+            "launcher_run": "g4-20261027T061546",
+            "other_busy_cpus": 0.64,
+            "own_cpus": 8.99,
+            "physical_gpu": "4",
+            "record_id": "bombe-1-1793112925168623",
+            "seconds": 13.385,
+            "started": "2026-10-27T14:55:25+00:00",
+            "uses_gpu": true
+          },
+          "warm_load_s": 1.65
+        },
+        "gpu_contaminated_steps": [],
+        "missing_steps": [],
+        "totals_with_retiming": {
+          "cache_components": [
+            "classifier_optimization",
+            "classifier_training",
+            "reference_outputs_valid",
+            "training_data_creation",
+            "validation_sweep"
+          ],
+          "cross_checks": [
+            "training_data_creation"
+          ],
+          "instrumented_hours": 11.925,
+          "instrumented_s": 42929.0,
+          "measured_components": [
+            "mistrack_profiling",
+            "reference_detection_train",
+            "training_data_pruning",
+            "validation_scoring"
+          ],
+          "process_hours": 25.884,
+          "process_s": 93182.1
+        }
+      },
       "totals": {
         "instrumented_hours": 13.635,
         "instrumented_s": 49086.9,
@@ -2128,6 +3418,446 @@
         "time_s": 21.1092,
         "tracker": "sortcython"
       },
+      "retiming": {
+        "break_even_with_retiming": {
+          "instrumented": {
+            "break_even_video_hours": 7.54,
+            "break_even_video_minutes": 452.2,
+            "reference_extraction_s_per_video_minute": 60.119,
+            "reference_fps": 14.97,
+            "saving_s_per_video_minute": 56.584,
+            "tetris_extraction_s_per_video_minute": 3.535,
+            "tetris_fps": 254.63
+          },
+          "process": {
+            "break_even_video_hours": 10.81,
+            "break_even_video_minutes": 648.5,
+            "reference_extraction_s_per_video_minute": 63.983,
+            "reference_fps": 14.07,
+            "saving_s_per_video_minute": 52.418,
+            "tetris_extraction_s_per_video_minute": 11.566,
+            "tetris_fps": 77.82
+          }
+        },
+        "components": {
+          "mistrack_profiling": {
+            "basis": "measured: p016 re-run with one worker, its wall clock (the process seconds of its profiles)",
+            "cache": {
+              "basis": "estimate: elapsed time from output modification times x min(40 workers, videos), an upper bound on process seconds",
+              "instrumented_s": 74.5,
+              "process_s": 74.5,
+              "recorded_s": 0.0
+            },
+            "instrumented_hours": 0.015,
+            "instrumented_s": 54.5,
+            "measured_over_cache_process": 0.731,
+            "measured_s": 54.5,
+            "process_hours": 0.015,
+            "process_s": 54.5,
+            "profiles": {
+              "bytetrackcython_60": 8,
+              "sortcython_60": 8
+            },
+            "recorded_s": 0.0,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p016_tune_track_rate.py",
+                "--num_workers",
+                "1"
+              ],
+              "attempts": 1,
+              "cpu_s": 252.665,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:29:36+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc0.yaml",
+                "CUDA_VISIBLE_DEVICES": ""
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 19,
+              "host": "bombe",
+              "host_busy_cpus": 20.67,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.93,
+              "own_cpus": 4.64,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793107722456357",
+              "seconds": 54.463,
+              "started": "2026-10-27T13:28:42+00:00",
+              "uses_gpu": false
+            },
+            "unit": "process seconds (one worker)"
+          },
+          "reference_detection_train": {
+            "basis": "measured: p011 re-run, each video's detections file from creation (after the detector loads) to last write, summed",
+            "cache": {
+              "basis": "recorded: p011 times each frame's read and detect; process: recorded (file creation times are stale on some datasets); detector loading per video is not recorded",
+              "instrumented_s": 472.1,
+              "process_s": 479.7,
+              "recorded_s": 479.7
+            },
+            "instrumented_hours": 0.131,
+            "instrumented_s": 472.1,
+            "measured_over_cache_process": 1.056,
+            "measured_s": 506.6,
+            "process_hours": 0.141,
+            "process_s": 506.6,
+            "recorded_s": 479.7,
+            "replaces": [
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p011_tune_detect.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 890.988,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:26:48+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc0.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 214,
+              "host": "bombe",
+              "host_busy_cpus": 14.42,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 6.07,
+              "own_cpus": 1.66,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793107073076945",
+              "seconds": 535.537,
+              "started": "2026-10-27T13:17:53+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 8,
+            "wall_s": 535.5
+          },
+          "training_data_creation": {
+            "basis": "cross-check, not substituted: p012 re-run, each video's runtime file from creation to last write, summed; its workers (up to 20, one per training video) share the run's CPU set (run.own_cpus of run.cpu_set_size busy), so the spans include contention among them",
+            "cache": {
+              "basis": "recorded: split and save per frame; process: estimate from each video's runtime file creation to last write (adds the untimed seek, decode, and detection parsing)",
+              "instrumented_s": 432.9,
+              "process_s": 612.7,
+              "recorded_s": 432.9
+            },
+            "instrumented_hours": 0.12,
+            "instrumented_s": 432.9,
+            "measured_over_cache_process": 0.963,
+            "measured_s": 590.1,
+            "process_hours": 0.17,
+            "process_s": 612.7,
+            "recorded_s": 432.9,
+            "replaces": [],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p012_tune_create_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 2334.839,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:28:10+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc0.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 27,
+              "host": "bombe",
+              "host_busy_cpus": 56.82,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 4.69,
+              "own_cpus": 29.27,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793107610338237",
+              "seconds": 79.778,
+              "started": "2026-10-27T13:26:50+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 8,
+            "wall_s": 79.8
+          },
+          "training_data_pruning": {
+            "basis": "measured: p013 re-run's wall clock (one process); its work depends on which per-video relevance bitmaps p012's race on always_relevant/ leaves (finding 10), so it removed a different number of training images than the cache's run (files_removed_over_cache), on whose output the classifier was trained",
+            "cache": null,
+            "cache_run": {
+              "path": "/polyis-cache/jnc0/indexing/always_relevant/60_optimization_stats.json",
+              "relevance_bitmaps": 8,
+              "stats": {
+                "files_after": 432478,
+                "files_before": 434912,
+                "files_removed": 2434,
+                "never_relevant_tiles": 60,
+                "percentage_removed": 0.5596534471341329
+              }
+            },
+            "files_removed_over_cache": 1.0,
+            "instrumented_hours": 0.003,
+            "instrumented_s": 10.9,
+            "measured_over_cache_process": null,
+            "measured_s": 10.9,
+            "process_hours": 0.003,
+            "process_s": 10.9,
+            "recorded_s": 0.0,
+            "relevance_bitmaps": 8,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p013_tune_optimize_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 18.701,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:28:21+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc0.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 3,
+              "host": "bombe",
+              "host_busy_cpus": 13.36,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.98,
+              "own_cpus": 1.72,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793107690207266",
+              "seconds": 10.9,
+              "started": "2026-10-27T13:28:10+00:00",
+              "uses_gpu": true
+            },
+            "stats": {
+              "60_optimization_stats.json": {
+                "files_after": 432478,
+                "files_before": 434912,
+                "files_removed": 2434,
+                "never_relevant_tiles": 60,
+                "percentage_removed": 0.5596534471341329
+              }
+            },
+            "training_videos": 8,
+            "unit": "process seconds of one process"
+          },
+          "validation_scoring": {
+            "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
+            "cache": {
+              "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
+              "instrumented_s": 2476.1,
+              "process_s": 2476.1,
+              "recorded_s": 0.0
+            },
+            "density_cross_check": {
+              "basis": "cross-check, not substituted: p110 re-run at the deployed density (0.8 TrackEval processes per CPU), the same rule",
+              "measured_s": 2478.7,
+              "over_substituted": 1.598,
+              "processes": 32,
+              "processes_per_cpu": 0.8,
+              "run": {
+                "argv": [
+                  "python",
+                  "evaluation/p110_accuracy_compute.py",
+                  "--valid"
+                ],
+                "attempts": 1,
+                "cpu_s": 2515.692,
+                "cpu_set_size": 40,
+                "cpus": "0-19,40-59",
+                "ended": "2026-10-27T17:31:33+00:00",
+                "env": {
+                  "CONFIG": "/scratch/retime/configs/jnc0.yaml",
+                  "CUDA_VISIBLE_DEVICES": "",
+                  "PYTHON_CPU_COUNT": "40"
+                },
+                "gpu_contaminated": false,
+                "gpu_foreign_samples": 0,
+                "gpu_samples": 43,
+                "host": "bombe",
+                "host_busy_cpus": 52.39,
+                "launcher_contaminated": false,
+                "launcher_exit": 0,
+                "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+                "launcher_run": "g3-20261027T102953",
+                "other_busy_cpus": 0.27,
+                "own_cpus": 30.48,
+                "physical_gpu": "3",
+                "record_id": "bombe-g3-20261027T102953-1-1793122210467835",
+                "seconds": 82.536,
+                "started": "2026-10-27T17:30:10+00:00",
+                "uses_gpu": false
+              },
+              "seconds_per_pair": 1.033,
+              "wall_s": 82.5
+            },
+            "excluded_videos": [],
+            "instrumented_hours": 0.431,
+            "instrumented_s": 1551.1,
+            "measured_over_cache_process": 0.626,
+            "measured_s": 1551.1,
+            "process_hours": 0.431,
+            "process_s": 1551.1,
+            "processes": 16,
+            "processes_per_cpu": 0.4,
+            "recorded_s": 0.0,
+            "reference_task_s": 3.3,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "evaluation/p110_accuracy_compute.py",
+                "--valid"
+              ],
+              "attempts": 1,
+              "cpu_s": 1586.363,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:17:52+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc0.yaml",
+                "CUDA_VISIBLE_DEVICES": "",
+                "PYTHON_CPU_COUNT": "20"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 53,
+              "host": "bombe",
+              "host_busy_cpus": 36.48,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.81,
+              "own_cpus": 15.38,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793106969690676",
+              "seconds": 103.128,
+              "started": "2026-10-27T13:16:09+00:00",
+              "uses_gpu": false
+            },
+            "scale": 1.0,
+            "scored_videos": 5,
+            "seconds_per_pair": 0.646,
+            "spans_s": 1551.1,
+            "tasks": 480,
+            "unit": "process seconds (one TrackEval process per configuration)",
+            "valid_videos": 5,
+            "wall_s": 103.1
+          }
+        },
+        "detector_loading": {
+          "basis": "measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and RetinaNet)",
+          "cold_process_s": 4.123,
+          "cuda_init_s": 1.421,
+          "device": "Quadro RTX 6000",
+          "first_load_s": 2.703,
+          "load_s": [
+            2.703,
+            2.759,
+            2.828,
+            2.712,
+            2.99
+          ],
+          "note": "not added to any total: detector loading is outside both boundaries on both sides (p011 and the reference pipeline load once per video process, p040 once per configuration); p011_cold_loads_s is what one cold load per training video would add to preparation",
+          "p011_cold_loads_s": 32.986,
+          "p011_videos": 8,
+          "run": {
+            "argv": [
+              "python",
+              "-c",
+              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "jnc0",
+              "/scratch/retime/detector_load.jsonl",
+              "5"
+            ],
+            "attempts": 1,
+            "cpu_s": 15.79,
+            "cpu_set_size": 40,
+            "cpus": "0-19,40-59",
+            "ended": "2026-10-27T13:28:42+00:00",
+            "env": {
+              "CONFIG": "/scratch/retime/configs/jnc0.yaml",
+              "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "gpu_contaminated": false,
+            "gpu_foreign_samples": 0,
+            "gpu_samples": 7,
+            "host": "bombe",
+            "host_busy_cpus": 12.85,
+            "launcher_contaminated": false,
+            "launcher_exit": 0,
+            "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+            "launcher_run": "g3-20261027T061546",
+            "other_busy_cpus": 3.64,
+            "own_cpus": 0.76,
+            "physical_gpu": "3",
+            "record_id": "bombe-1-1793107701510877",
+            "seconds": 20.801,
+            "started": "2026-10-27T13:28:21+00:00",
+            "uses_gpu": true
+          },
+          "warm_load_s": 2.794
+        },
+        "gpu_contaminated_steps": [],
+        "missing_steps": [],
+        "totals_with_retiming": {
+          "cache_components": [
+            "classifier_optimization",
+            "classifier_training",
+            "reference_outputs_valid",
+            "training_data_creation",
+            "validation_sweep"
+          ],
+          "cross_checks": [
+            "training_data_creation"
+          ],
+          "instrumented_hours": 7.107,
+          "instrumented_s": 25586.5,
+          "measured_components": [
+            "mistrack_profiling",
+            "reference_detection_train",
+            "training_data_pruning",
+            "validation_scoring"
+          ],
+          "process_hours": 9.443,
+          "process_s": 33994.4
+        }
+      },
       "totals": {
         "instrumented_hours": 7.367,
         "instrumented_s": 26520.6,
@@ -2499,8 +4229,8 @@
             "process": 13.721156441060153
           },
           "tetris": {
-            "instrumented": 346.49802014125635,
-            "paper": 346.49802014125635,
+            "instrumented": 346.4980201412563,
+            "paper": 346.4980201412563,
             "process": 88.10035592436572
           }
         },
@@ -2661,6 +4391,405 @@
         "tilesize": 60,
         "time_s": 13.5383,
         "tracker": "sortcython"
+      },
+      "retiming": {
+        "break_even_with_retiming": {
+          "instrumented": {
+            "break_even_video_hours": 8.01,
+            "break_even_video_minutes": 480.5,
+            "reference_extraction_s_per_video_minute": 61.547,
+            "reference_fps": 14.62,
+            "saving_s_per_video_minute": 58.949,
+            "tetris_extraction_s_per_video_minute": 2.597,
+            "tetris_fps": 346.5
+          },
+          "process": {
+            "break_even_video_hours": 10.85,
+            "break_even_video_minutes": 650.8,
+            "reference_extraction_s_per_video_minute": 65.592,
+            "reference_fps": 13.72,
+            "saving_s_per_video_minute": 55.377,
+            "tetris_extraction_s_per_video_minute": 10.216,
+            "tetris_fps": 88.1
+          }
+        },
+        "components": {
+          "mistrack_profiling": {
+            "basis": "measured: p016 re-run with one worker, its wall clock (the process seconds of its profiles)",
+            "cache": {
+              "basis": "estimate: elapsed time from output modification times x min(40 workers, videos), an upper bound on process seconds",
+              "instrumented_s": 74.4,
+              "process_s": 74.4,
+              "recorded_s": 0.0
+            },
+            "instrumented_hours": 0.016,
+            "instrumented_s": 56.1,
+            "measured_over_cache_process": 0.754,
+            "measured_s": 56.1,
+            "process_hours": 0.016,
+            "process_s": 56.1,
+            "profiles": {
+              "bytetrackcython_60": 8,
+              "sortcython_60": 8
+            },
+            "recorded_s": 0.0,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p016_tune_track_rate.py",
+                "--num_workers",
+                "1"
+              ],
+              "attempts": 1,
+              "cpu_s": 254.223,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:41:28+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc2.yaml",
+                "CUDA_VISIBLE_DEVICES": ""
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 25,
+              "host": "bombe",
+              "host_busy_cpus": 11.43,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.52,
+              "own_cpus": 4.53,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793108432376069",
+              "seconds": 56.063,
+              "started": "2026-10-27T13:40:32+00:00",
+              "uses_gpu": false
+            },
+            "unit": "process seconds (one worker)"
+          },
+          "reference_detection_train": {
+            "basis": "measured: p011 re-run, each video's detections file from creation (after the detector loads) to last write, summed",
+            "cache": {
+              "basis": "recorded: p011 times each frame's read and detect; process: recorded (file creation times are stale on some datasets); detector loading per video is not recorded",
+              "instrumented_s": 415.8,
+              "process_s": 422.8,
+              "recorded_s": 422.8
+            },
+            "instrumented_hours": 0.116,
+            "instrumented_s": 415.8,
+            "measured_over_cache_process": 1.027,
+            "measured_s": 434.1,
+            "process_hours": 0.121,
+            "process_s": 434.1,
+            "recorded_s": 422.8,
+            "replaces": [
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p011_tune_detect.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 779.592,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:38:58+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc2.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 174,
+              "host": "bombe",
+              "host_busy_cpus": 20.92,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 4.17,
+              "own_cpus": 1.7,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793107879486810",
+              "seconds": 459.05,
+              "started": "2026-10-27T13:31:19+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 8,
+            "wall_s": 459.0
+          },
+          "training_data_creation": {
+            "basis": "cross-check, not substituted: p012 re-run, each video's runtime file from creation to last write, summed; its workers (up to 20, one per training video) share the run's CPU set (run.own_cpus of run.cpu_set_size busy), so the spans include contention among them",
+            "cache": {
+              "basis": "recorded: split and save per frame; process: estimate from each video's runtime file creation to last write (adds the untimed seek, decode, and detection parsing)",
+              "instrumented_s": 351.6,
+              "process_s": 506.2,
+              "recorded_s": 351.6
+            },
+            "instrumented_hours": 0.098,
+            "instrumented_s": 351.6,
+            "measured_over_cache_process": 0.963,
+            "measured_s": 487.3,
+            "process_hours": 0.141,
+            "process_s": 506.2,
+            "recorded_s": 351.6,
+            "replaces": [],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p012_tune_create_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 2015.958,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:40:04+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc2.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 28,
+              "host": "bombe",
+              "host_busy_cpus": 41.54,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.96,
+              "own_cpus": 30.54,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793108338920193",
+              "seconds": 66.003,
+              "started": "2026-10-27T13:38:58+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 8,
+            "wall_s": 66.0
+          },
+          "training_data_pruning": {
+            "basis": "measured: p013 re-run's wall clock (one process); its work depends on which per-video relevance bitmaps p012's race on always_relevant/ leaves (finding 10), so it removed a different number of training images than the cache's run (files_removed_over_cache), on whose output the classifier was trained",
+            "cache": null,
+            "cache_run": {
+              "path": "/polyis-cache/jnc2/indexing/always_relevant/60_optimization_stats.json",
+              "relevance_bitmaps": 8,
+              "stats": {
+                "files_after": 324610,
+                "files_before": 332045,
+                "files_removed": 7435,
+                "never_relevant_tiles": 86,
+                "percentage_removed": 2.2391543314912132
+              }
+            },
+            "files_removed_over_cache": 1.0,
+            "instrumented_hours": 0.003,
+            "instrumented_s": 10.8,
+            "measured_over_cache_process": null,
+            "measured_s": 10.8,
+            "process_hours": 0.003,
+            "process_s": 10.8,
+            "recorded_s": 0.0,
+            "relevance_bitmaps": 8,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p013_tune_optimize_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 18.195,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:40:15+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc2.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 4,
+              "host": "bombe",
+              "host_busy_cpus": 7.72,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.7,
+              "own_cpus": 1.69,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793108405005522",
+              "seconds": 10.78,
+              "started": "2026-10-27T13:40:05+00:00",
+              "uses_gpu": true
+            },
+            "stats": {
+              "60_optimization_stats.json": {
+                "files_after": 324610,
+                "files_before": 332045,
+                "files_removed": 7435,
+                "never_relevant_tiles": 86,
+                "percentage_removed": 2.2391543314912132
+              }
+            },
+            "training_videos": 8,
+            "unit": "process seconds of one process"
+          },
+          "validation_scoring": {
+            "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
+            "cache": {
+              "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
+              "instrumented_s": 2380.1,
+              "process_s": 2380.1,
+              "recorded_s": 0.0
+            },
+            "density_cross_check": null,
+            "excluded_videos": [],
+            "instrumented_hours": 0.422,
+            "instrumented_s": 1517.6,
+            "measured_over_cache_process": 0.638,
+            "measured_s": 1517.6,
+            "process_hours": 0.422,
+            "process_s": 1517.6,
+            "processes": 16,
+            "processes_per_cpu": 0.4,
+            "recorded_s": 0.0,
+            "reference_task_s": 3.1,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "evaluation/p110_accuracy_compute.py",
+                "--valid"
+              ],
+              "attempts": 1,
+              "cpu_s": 1557.093,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:31:19+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc2.yaml",
+                "CUDA_VISIBLE_DEVICES": "",
+                "PYTHON_CPU_COUNT": "20"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 31,
+              "host": "bombe",
+              "host_busy_cpus": 40.17,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.87,
+              "own_cpus": 15.39,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793107778049910",
+              "seconds": 101.178,
+              "started": "2026-10-27T13:29:38+00:00",
+              "uses_gpu": false
+            },
+            "scale": 1.0,
+            "scored_videos": 5,
+            "seconds_per_pair": 0.632,
+            "spans_s": 1517.6,
+            "tasks": 480,
+            "unit": "process seconds (one TrackEval process per configuration)",
+            "valid_videos": 5,
+            "wall_s": 101.2
+          }
+        },
+        "detector_loading": {
+          "basis": "measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and RetinaNet)",
+          "cold_process_s": 2.174,
+          "cuda_init_s": 0.374,
+          "device": "Quadro RTX 6000",
+          "first_load_s": 1.801,
+          "load_s": [
+            1.801,
+            2.416,
+            2.31,
+            2.364,
+            2.247
+          ],
+          "note": "not added to any total: detector loading is outside both boundaries on both sides (p011 and the reference pipeline load once per video process, p040 once per configuration); p011_cold_loads_s is what one cold load per training video would add to preparation",
+          "p011_cold_loads_s": 17.394,
+          "p011_videos": 8,
+          "run": {
+            "argv": [
+              "python",
+              "-c",
+              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "jnc2",
+              "/scratch/retime/detector_load.jsonl",
+              "5"
+            ],
+            "attempts": 1,
+            "cpu_s": 15.207,
+            "cpu_set_size": 40,
+            "cpus": "0-19,40-59",
+            "ended": "2026-10-27T13:40:32+00:00",
+            "env": {
+              "CONFIG": "/scratch/retime/configs/jnc2.yaml",
+              "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "gpu_contaminated": false,
+            "gpu_foreign_samples": 0,
+            "gpu_samples": 7,
+            "host": "bombe",
+            "host_busy_cpus": 8.06,
+            "launcher_contaminated": false,
+            "launcher_exit": 0,
+            "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+            "launcher_run": "g3-20261027T061546",
+            "other_busy_cpus": 3.67,
+            "own_cpus": 0.93,
+            "physical_gpu": "3",
+            "record_id": "bombe-1-1793108415879414",
+            "seconds": 16.335,
+            "started": "2026-10-27T13:40:15+00:00",
+            "uses_gpu": true
+          },
+          "warm_load_s": 2.337
+        },
+        "gpu_contaminated_steps": [],
+        "missing_steps": [],
+        "totals_with_retiming": {
+          "cache_components": [
+            "classifier_optimization",
+            "classifier_training",
+            "reference_outputs_valid",
+            "training_data_creation",
+            "validation_sweep"
+          ],
+          "cross_checks": [
+            "training_data_creation"
+          ],
+          "instrumented_hours": 7.869,
+          "instrumented_s": 28327.4,
+          "measured_components": [
+            "mistrack_profiling",
+            "reference_detection_train",
+            "training_data_pruning",
+            "validation_scoring"
+          ],
+          "process_hours": 10.01,
+          "process_s": 36037.4
+        }
       },
       "totals": {
         "instrumented_hours": 8.11,
@@ -3209,6 +5338,405 @@
         "time_s": 18.1797,
         "tracker": "sortcython"
       },
+      "retiming": {
+        "break_even_with_retiming": {
+          "instrumented": {
+            "break_even_video_hours": 7.13,
+            "break_even_video_minutes": 427.7,
+            "reference_extraction_s_per_video_minute": 60.969,
+            "reference_fps": 14.76,
+            "saving_s_per_video_minute": 57.817,
+            "tetris_extraction_s_per_video_minute": 3.151,
+            "tetris_fps": 285.59
+          },
+          "process": {
+            "break_even_video_hours": 10.16,
+            "break_even_video_minutes": 609.4,
+            "reference_extraction_s_per_video_minute": 64.979,
+            "reference_fps": 13.85,
+            "saving_s_per_video_minute": 53.875,
+            "tetris_extraction_s_per_video_minute": 11.104,
+            "tetris_fps": 81.05
+          }
+        },
+        "components": {
+          "mistrack_profiling": {
+            "basis": "measured: p016 re-run with one worker, its wall clock (the process seconds of its profiles)",
+            "cache": {
+              "basis": "estimate: elapsed time from output modification times x min(40 workers, videos), an upper bound on process seconds",
+              "instrumented_s": 71.9,
+              "process_s": 71.9,
+              "recorded_s": 0.0
+            },
+            "instrumented_hours": 0.015,
+            "instrumented_s": 54.5,
+            "measured_over_cache_process": 0.758,
+            "measured_s": 54.5,
+            "process_hours": 0.015,
+            "process_s": 54.5,
+            "profiles": {
+              "bytetrackcython_60": 8,
+              "sortcython_60": 8
+            },
+            "recorded_s": 0.0,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p016_tune_track_rate.py",
+                "--num_workers",
+                "1"
+              ],
+              "attempts": 1,
+              "cpu_s": 250.517,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:53:57+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc6.yaml",
+                "CUDA_VISIBLE_DEVICES": ""
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 24,
+              "host": "bombe",
+              "host_busy_cpus": 11.77,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.52,
+              "own_cpus": 4.6,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793109183448427",
+              "seconds": 54.473,
+              "started": "2026-10-27T13:53:03+00:00",
+              "uses_gpu": false
+            },
+            "unit": "process seconds (one worker)"
+          },
+          "reference_detection_train": {
+            "basis": "measured: p011 re-run, each video's detections file from creation (after the detector loads) to last write, summed",
+            "cache": {
+              "basis": "recorded: p011 times each frame's read and detect; process: recorded (file creation times are stale on some datasets); detector loading per video is not recorded",
+              "instrumented_s": 457.5,
+              "process_s": 465.3,
+              "recorded_s": 465.3
+            },
+            "instrumented_hours": 0.127,
+            "instrumented_s": 457.5,
+            "measured_over_cache_process": 1.013,
+            "measured_s": 471.6,
+            "process_hours": 0.131,
+            "process_s": 471.6,
+            "recorded_s": 465.3,
+            "replaces": [
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p011_tune_detect.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 866.712,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:51:21+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc6.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 214,
+              "host": "bombe",
+              "host_busy_cpus": 8.94,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.57,
+              "own_cpus": 1.76,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793108588492655",
+              "seconds": 492.895,
+              "started": "2026-10-27T13:43:08+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 8,
+            "wall_s": 492.9
+          },
+          "training_data_creation": {
+            "basis": "cross-check, not substituted: p012 re-run, each video's runtime file from creation to last write, summed; its workers (up to 20, one per training video) share the run's CPU set (run.own_cpus of run.cpu_set_size busy), so the spans include contention among them",
+            "cache": {
+              "basis": "recorded: split and save per frame; process: estimate from each video's runtime file creation to last write (adds the untimed seek, decode, and detection parsing)",
+              "instrumented_s": 464.3,
+              "process_s": 647.9,
+              "recorded_s": 464.3
+            },
+            "instrumented_hours": 0.129,
+            "instrumented_s": 464.3,
+            "measured_over_cache_process": 0.852,
+            "measured_s": 552.3,
+            "process_hours": 0.18,
+            "process_s": 647.9,
+            "recorded_s": 464.3,
+            "replaces": [],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p012_tune_create_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 2266.193,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:52:35+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc6.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 31,
+              "host": "bombe",
+              "host_busy_cpus": 42.08,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.99,
+              "own_cpus": 30.99,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793109081913086",
+              "seconds": 73.124,
+              "started": "2026-10-27T13:51:21+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 8,
+            "wall_s": 73.1
+          },
+          "training_data_pruning": {
+            "basis": "measured: p013 re-run's wall clock (one process); its work depends on which per-video relevance bitmaps p012's race on always_relevant/ leaves (finding 10), so it removed a different number of training images than the cache's run (files_removed_over_cache), on whose output the classifier was trained",
+            "cache": null,
+            "cache_run": {
+              "path": "/polyis-cache/jnc6/indexing/always_relevant/60_optimization_stats.json",
+              "relevance_bitmaps": 8,
+              "stats": {
+                "files_after": 431822,
+                "files_before": 437358,
+                "files_removed": 5536,
+                "never_relevant_tiles": 54,
+                "percentage_removed": 1.265782265329547
+              }
+            },
+            "files_removed_over_cache": 1.0,
+            "instrumented_hours": 0.003,
+            "instrumented_s": 10.6,
+            "measured_over_cache_process": null,
+            "measured_s": 10.6,
+            "process_hours": 0.003,
+            "process_s": 10.6,
+            "recorded_s": 0.0,
+            "relevance_bitmaps": 8,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p013_tune_optimize_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 18.378,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:52:46+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc6.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 5,
+              "host": "bombe",
+              "host_busy_cpus": 8.75,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 4.35,
+              "own_cpus": 1.74,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793109155720104",
+              "seconds": 10.58,
+              "started": "2026-10-27T13:52:35+00:00",
+              "uses_gpu": true
+            },
+            "stats": {
+              "60_optimization_stats.json": {
+                "files_after": 431822,
+                "files_before": 437358,
+                "files_removed": 5536,
+                "never_relevant_tiles": 54,
+                "percentage_removed": 1.265782265329547
+              }
+            },
+            "training_videos": 8,
+            "unit": "process seconds of one process"
+          },
+          "validation_scoring": {
+            "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
+            "cache": {
+              "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
+              "instrumented_s": 2377.4,
+              "process_s": 2377.4,
+              "recorded_s": 0.0
+            },
+            "density_cross_check": null,
+            "excluded_videos": [],
+            "instrumented_hours": 0.408,
+            "instrumented_s": 1467.9,
+            "measured_over_cache_process": 0.617,
+            "measured_s": 1467.9,
+            "process_hours": 0.408,
+            "process_s": 1467.9,
+            "processes": 16,
+            "processes_per_cpu": 0.4,
+            "recorded_s": 0.0,
+            "reference_task_s": 3.2,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "evaluation/p110_accuracy_compute.py",
+                "--valid"
+              ],
+              "attempts": 1,
+              "cpu_s": 1506.196,
+              "cpu_set_size": 40,
+              "cpus": "0-19,40-59",
+              "ended": "2026-10-27T13:43:08+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc6.yaml",
+                "CUDA_VISIBLE_DEVICES": "",
+                "PYTHON_CPU_COUNT": "20"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 42,
+              "host": "bombe",
+              "host_busy_cpus": 22.47,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g3-20261027T061546",
+              "other_busy_cpus": 3.45,
+              "own_cpus": 15.41,
+              "physical_gpu": "3",
+              "record_id": "bombe-1-1793108490408104",
+              "seconds": 97.756,
+              "started": "2026-10-27T13:41:30+00:00",
+              "uses_gpu": false
+            },
+            "scale": 1.0,
+            "scored_videos": 5,
+            "seconds_per_pair": 0.612,
+            "spans_s": 1467.9,
+            "tasks": 480,
+            "unit": "process seconds (one TrackEval process per configuration)",
+            "valid_videos": 5,
+            "wall_s": 97.8
+          }
+        },
+        "detector_loading": {
+          "basis": "measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and RetinaNet)",
+          "cold_process_s": 2.412,
+          "cuda_init_s": 0.686,
+          "device": "Quadro RTX 6000",
+          "first_load_s": 1.726,
+          "load_s": [
+            1.726,
+            2.082,
+            2.164,
+            1.371,
+            2.471
+          ],
+          "note": "not added to any total: detector loading is outside both boundaries on both sides (p011 and the reference pipeline load once per video process, p040 once per configuration); p011_cold_loads_s is what one cold load per training video would add to preparation",
+          "p011_cold_loads_s": 19.295,
+          "p011_videos": 8,
+          "run": {
+            "argv": [
+              "python",
+              "-c",
+              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "jnc6",
+              "/scratch/retime/detector_load.jsonl",
+              "5"
+            ],
+            "attempts": 1,
+            "cpu_s": 15.62,
+            "cpu_set_size": 40,
+            "cpus": "0-19,40-59",
+            "ended": "2026-10-27T13:53:03+00:00",
+            "env": {
+              "CONFIG": "/scratch/retime/configs/jnc6.yaml",
+              "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "gpu_contaminated": false,
+            "gpu_foreign_samples": 0,
+            "gpu_samples": 7,
+            "host": "bombe",
+            "host_busy_cpus": 8.11,
+            "launcher_contaminated": false,
+            "launcher_exit": 0,
+            "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+            "launcher_run": "g3-20261027T061546",
+            "other_busy_cpus": 3.5,
+            "own_cpus": 0.97,
+            "physical_gpu": "3",
+            "record_id": "bombe-1-1793109167247077",
+            "seconds": 16.06,
+            "started": "2026-10-27T13:52:47+00:00",
+            "uses_gpu": true
+          },
+          "warm_load_s": 2.123
+        },
+        "gpu_contaminated_steps": [],
+        "missing_steps": [],
+        "totals_with_retiming": {
+          "cache_components": [
+            "classifier_optimization",
+            "classifier_training",
+            "reference_outputs_valid",
+            "training_data_creation",
+            "validation_sweep"
+          ],
+          "cross_checks": [
+            "training_data_creation"
+          ],
+          "instrumented_hours": 6.869,
+          "instrumented_s": 24728.5,
+          "measured_components": [
+            "mistrack_profiling",
+            "reference_detection_train",
+            "training_data_pruning",
+            "validation_scoring"
+          ],
+          "process_hours": 9.12,
+          "process_s": 32831.9
+        }
+      },
       "totals": {
         "instrumented_hours": 7.124,
         "instrumented_s": 25644.8,
@@ -3756,6 +6284,405 @@
         "time_s": 12.3559,
         "tracker": "sortcython"
       },
+      "retiming": {
+        "break_even_with_retiming": {
+          "instrumented": {
+            "break_even_video_hours": 4.86,
+            "break_even_video_minutes": 291.3,
+            "reference_extraction_s_per_video_minute": 61.095,
+            "reference_fps": 14.73,
+            "saving_s_per_video_minute": 58.966,
+            "tetris_extraction_s_per_video_minute": 2.128,
+            "tetris_fps": 422.87
+          },
+          "process": {
+            "break_even_video_hours": 7.62,
+            "break_even_video_minutes": 457.1,
+            "reference_extraction_s_per_video_minute": 65.079,
+            "reference_fps": 13.83,
+            "saving_s_per_video_minute": 54.507,
+            "tetris_extraction_s_per_video_minute": 10.571,
+            "tetris_fps": 85.14
+          }
+        },
+        "components": {
+          "mistrack_profiling": {
+            "basis": "measured: p016 re-run with one worker, its wall clock (the process seconds of its profiles)",
+            "cache": {
+              "basis": "estimate: elapsed time from output modification times x min(40 workers, videos), an upper bound on process seconds",
+              "instrumented_s": 72.5,
+              "process_s": 72.5,
+              "recorded_s": 0.0
+            },
+            "instrumented_hours": 0.015,
+            "instrumented_s": 53.6,
+            "measured_over_cache_process": 0.74,
+            "measured_s": 53.6,
+            "process_hours": 0.015,
+            "process_s": 53.6,
+            "profiles": {
+              "bytetrackcython_60": 8,
+              "sortcython_60": 8
+            },
+            "recorded_s": 0.0,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p016_tune_track_rate.py",
+                "--num_workers",
+                "1"
+              ],
+              "attempts": 1,
+              "cpu_s": 254.052,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T13:29:03+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc7.yaml",
+                "CUDA_VISIBLE_DEVICES": ""
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 19,
+              "host": "bombe",
+              "host_busy_cpus": 14.64,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 3.43,
+              "own_cpus": 4.74,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793107689695807",
+              "seconds": 53.628,
+              "started": "2026-10-27T13:28:09+00:00",
+              "uses_gpu": false
+            },
+            "unit": "process seconds (one worker)"
+          },
+          "reference_detection_train": {
+            "basis": "measured: p011 re-run, each video's detections file from creation (after the detector loads) to last write, summed",
+            "cache": {
+              "basis": "recorded: p011 times each frame's read and detect; process: recorded (file creation times are stale on some datasets); detector loading per video is not recorded",
+              "instrumented_s": 459.4,
+              "process_s": 467.2,
+              "recorded_s": 467.2
+            },
+            "instrumented_hours": 0.128,
+            "instrumented_s": 459.4,
+            "measured_over_cache_process": 1.029,
+            "measured_s": 480.6,
+            "process_hours": 0.134,
+            "process_s": 480.6,
+            "recorded_s": 467.2,
+            "replaces": [
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p011_tune_detect.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 874.969,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T13:26:13+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc7.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 206,
+              "host": "bombe",
+              "host_busy_cpus": 12.82,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 3.27,
+              "own_cpus": 1.72,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793107065699547",
+              "seconds": 508.005,
+              "started": "2026-10-27T13:17:45+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 8,
+            "wall_s": 508.0
+          },
+          "training_data_creation": {
+            "basis": "cross-check, not substituted: p012 re-run, each video's runtime file from creation to last write, summed; its workers (up to 20, one per training video) share the run's CPU set (run.own_cpus of run.cpu_set_size busy), so the spans include contention among them",
+            "cache": {
+              "basis": "recorded: split and save per frame; process: estimate from each video's runtime file creation to last write (adds the untimed seek, decode, and detection parsing)",
+              "instrumented_s": 394.6,
+              "process_s": 568.1,
+              "recorded_s": 394.6
+            },
+            "instrumented_hours": 0.11,
+            "instrumented_s": 394.6,
+            "measured_over_cache_process": 1.012,
+            "measured_s": 574.7,
+            "process_hours": 0.158,
+            "process_s": 568.1,
+            "recorded_s": 394.6,
+            "replaces": [],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p012_tune_create_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 2268.462,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T13:27:31+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc7.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 26,
+              "host": "bombe",
+              "host_busy_cpus": 54.53,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 4.62,
+              "own_cpus": 29.32,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793107574542952",
+              "seconds": 77.38,
+              "started": "2026-10-27T13:26:14+00:00",
+              "uses_gpu": true
+            },
+            "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
+            "videos": 8,
+            "wall_s": 77.4
+          },
+          "training_data_pruning": {
+            "basis": "measured: p013 re-run's wall clock (one process); its work depends on which per-video relevance bitmaps p012's race on always_relevant/ leaves (finding 10), so it removed a different number of training images than the cache's run (files_removed_over_cache), on whose output the classifier was trained",
+            "cache": null,
+            "cache_run": {
+              "path": "/polyis-cache/jnc7/indexing/always_relevant/60_optimization_stats.json",
+              "relevance_bitmaps": 8,
+              "stats": {
+                "files_after": 348000,
+                "files_before": 372889,
+                "files_removed": 24889,
+                "never_relevant_tiles": 91,
+                "percentage_removed": 6.674640442598199
+              }
+            },
+            "files_removed_over_cache": 1.0,
+            "instrumented_hours": 0.005,
+            "instrumented_s": 16.3,
+            "measured_over_cache_process": null,
+            "measured_s": 16.3,
+            "process_hours": 0.005,
+            "process_s": 16.3,
+            "recorded_s": 0.0,
+            "relevance_bitmaps": 8,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "scripts/p013_tune_optimize_training_data.py"
+              ],
+              "attempts": 1,
+              "cpu_s": 23.588,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T13:27:48+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc7.yaml",
+                "CUDA_VISIBLE_DEVICES": "0"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 5,
+              "host": "bombe",
+              "host_busy_cpus": 47.36,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 7.75,
+              "own_cpus": 1.44,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793107652030076",
+              "seconds": 16.331,
+              "started": "2026-10-27T13:27:32+00:00",
+              "uses_gpu": true
+            },
+            "stats": {
+              "60_optimization_stats.json": {
+                "files_after": 348000,
+                "files_before": 372889,
+                "files_removed": 24889,
+                "never_relevant_tiles": 91,
+                "percentage_removed": 6.674640442598199
+              }
+            },
+            "training_videos": 8,
+            "unit": "process seconds of one process"
+          },
+          "validation_scoring": {
+            "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
+            "cache": {
+              "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
+              "instrumented_s": 2321.6,
+              "process_s": 2321.6,
+              "recorded_s": 0.0
+            },
+            "density_cross_check": null,
+            "excluded_videos": [],
+            "instrumented_hours": 0.396,
+            "instrumented_s": 1427.3,
+            "measured_over_cache_process": 0.615,
+            "measured_s": 1427.3,
+            "process_hours": 0.396,
+            "process_s": 1427.3,
+            "processes": 16,
+            "processes_per_cpu": 0.4,
+            "recorded_s": 0.0,
+            "reference_task_s": 2.9,
+            "replaces": [
+              "instrumented",
+              "process"
+            ],
+            "run": {
+              "argv": [
+                "python",
+                "evaluation/p110_accuracy_compute.py",
+                "--valid"
+              ],
+              "attempts": 1,
+              "cpu_s": 1464.781,
+              "cpu_set_size": 40,
+              "cpus": "20-39,60-79",
+              "ended": "2026-10-27T13:17:45+00:00",
+              "env": {
+                "CONFIG": "/scratch/retime/configs/jnc7.yaml",
+                "CUDA_VISIBLE_DEVICES": "",
+                "PYTHON_CPU_COUNT": "20"
+              },
+              "gpu_contaminated": false,
+              "gpu_foreign_samples": 0,
+              "gpu_samples": 48,
+              "host": "bombe",
+              "host_busy_cpus": 38.04,
+              "launcher_contaminated": false,
+              "launcher_exit": 0,
+              "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+              "launcher_run": "g4-20261027T061546",
+              "other_busy_cpus": 2.87,
+              "own_cpus": 15.4,
+              "physical_gpu": "4",
+              "record_id": "bombe-1-1793106970055177",
+              "seconds": 95.092,
+              "started": "2026-10-27T13:16:10+00:00",
+              "uses_gpu": false
+            },
+            "scale": 1.0,
+            "scored_videos": 5,
+            "seconds_per_pair": 0.595,
+            "spans_s": 1427.3,
+            "tasks": 480,
+            "unit": "process seconds (one TrackEval process per configuration)",
+            "valid_videos": 5,
+            "wall_s": 95.1
+          }
+        },
+        "detector_loading": {
+          "basis": "measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and RetinaNet)",
+          "cold_process_s": 3.088,
+          "cuda_init_s": 0.627,
+          "device": "Quadro RTX 6000",
+          "first_load_s": 2.461,
+          "load_s": [
+            2.461,
+            2.634,
+            2.699,
+            2.783,
+            2.92
+          ],
+          "note": "not added to any total: detector loading is outside both boundaries on both sides (p011 and the reference pipeline load once per video process, p040 once per configuration); p011_cold_loads_s is what one cold load per training video would add to preparation",
+          "p011_cold_loads_s": 24.706,
+          "p011_videos": 8,
+          "run": {
+            "argv": [
+              "python",
+              "-c",
+              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "jnc7",
+              "/scratch/retime/detector_load.jsonl",
+              "5"
+            ],
+            "attempts": 1,
+            "cpu_s": 15.489,
+            "cpu_set_size": 40,
+            "cpus": "20-39,60-79",
+            "ended": "2026-10-27T13:28:09+00:00",
+            "env": {
+              "CONFIG": "/scratch/retime/configs/jnc7.yaml",
+              "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "gpu_contaminated": false,
+            "gpu_foreign_samples": 0,
+            "gpu_samples": 7,
+            "host": "bombe",
+            "host_busy_cpus": 43.71,
+            "launcher_contaminated": false,
+            "launcher_exit": 0,
+            "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+            "launcher_run": "g4-20261027T061546",
+            "other_busy_cpus": 7.74,
+            "own_cpus": 0.76,
+            "physical_gpu": "4",
+            "record_id": "bombe-1-1793107668784325",
+            "seconds": 20.294,
+            "started": "2026-10-27T13:27:48+00:00",
+            "uses_gpu": true
+          },
+          "warm_load_s": 2.741
+        },
+        "gpu_contaminated_steps": [],
+        "missing_steps": [],
+        "totals_with_retiming": {
+          "cache_components": [
+            "classifier_optimization",
+            "classifier_training",
+            "reference_outputs_valid",
+            "training_data_creation",
+            "validation_sweep"
+          ],
+          "cross_checks": [
+            "training_data_creation"
+          ],
+          "instrumented_hours": 4.772,
+          "instrumented_s": 17177.7,
+          "measured_components": [
+            "mistrack_profiling",
+            "reference_detection_train",
+            "training_data_pruning",
+            "validation_scoring"
+          ],
+          "process_hours": 6.921,
+          "process_s": 24917.0
+        }
+      },
       "totals": {
         "instrumented_hours": 5.021,
         "instrumented_s": 18074.6,
@@ -3831,7 +6758,7 @@
         "Quadro RTX 6000": 8
       },
       "hostname": "ace",
-      "note": "cache host, assumed for all runs; GPUs are those present when this script ran"
+      "note": "the host this script ran on, which holds the cache and ran its stages; the re-timed components ran on bombe (retiming.components.*.run.host, physical_gpu, and cpus); GPUs are those present when this script ran"
     },
     "ignored_ops": [
       "total_frame_time",
@@ -3866,6 +6793,37 @@
     "p014_epochs_per_stage": 7,
     "p015_group_gap_s": 1.0,
     "p016_workers": 40,
+    "retiming": {
+      "directory": "/polyis/measurements-results/r9o2_preparation_retiming",
+      "files": [
+        "timings.jsonl",
+        "files.jsonl.gz",
+        "detector_load.jsonl",
+        "launcher_runs.jsonl"
+      ],
+      "p016_retiming_workers": 1,
+      "p110_density": "p110_density: optional p110 re-run at the deployed 0.8 TrackEval processes per CPU, reported in validation_scoring.density_cross_check and never substituted",
+      "plan": "measurements-gpu/r9o2_preparation_cost.py --run, driven by measurements-gpu/r9o2_preparation_retiming.sh on bombe",
+      "replaces": {
+        "mistrack_profiling": [
+          "instrumented",
+          "process"
+        ],
+        "reference_detection_train": [
+          "process"
+        ],
+        "training_data_creation": [],
+        "training_data_pruning": [
+          "instrumented",
+          "process"
+        ],
+        "validation_scoring": [
+          "instrumented",
+          "process"
+        ]
+      },
+      "runs": "per dataset and step, the latest record that exited 0 among those without foreign GPU samples, else the latest that exited 0 (flagged in gpu_contaminated_steps); attempts counts all records; each chosen record's launcher run must have a summary in launcher_runs.jsonl"
+    },
     "stage_spans": {
       "001_preprocess_groundtruth_detection": {
         "chained": false,

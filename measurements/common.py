@@ -175,6 +175,29 @@ def file_record(path: str | Path) -> dict:
                 sha256=hashlib.sha256(p.read_bytes()).hexdigest())
 
 
+def file_times(paths: list[str]) -> dict[str, tuple[float | None, float]]:
+    """{path: (creation time or None when unknown, modification time)} in epoch seconds, for the paths that exist.
+
+    Python's os.stat has no creation time on Linux, so GNU stat reads both (%.9W is 0 when the file
+    system keeps none). Missing paths are left out; callers treat them as unknown.
+    """
+    # Nothing to stat.
+    if not paths:
+        return {}
+    # One xargs-batched stat over NUL-separated paths, so any number of paths and any name without NUL works.
+    result = subprocess.run(['xargs', '-0', 'stat', '-c', '%.9W %.9Y %n'], input='\0'.join(paths),
+                            capture_output=True, text=True)
+    # xargs exits 123 when stat failed on some path (a missing one); anything else is a real failure.
+    assert result.returncode in (0, 123), f'stat failed ({result.returncode}): {result.stderr[:500]}'
+    # Parse stat's output into {path: (birth, mtime)}.
+    times = {}
+    # Each line is "<birth> <mtime> <name>"; the name may contain spaces, so split twice only.
+    for line in result.stdout.splitlines():
+        birth, mtime, name = line.split(' ', 2)
+        times[name] = (float(birth) or None, float(mtime))
+    return times
+
+
 def host_info() -> dict:
     """The host running the measurement: name, CPU count, and GPU models with their counts (nvidia-smi, if present)."""
     # GPU names from nvidia-smi, which only queries the driver and runs nothing on the GPUs.
