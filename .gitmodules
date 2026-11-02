@@ -11,3 +11,6 @@
 [submodule "modules/lap"]
 	path = modules/lap
 	url = git@github.com:chanwutk/lap.git
+[submodule "baselines/tetris-leap"]
+	path = baselines/tetris-leap
+	url = git@github.com:chanwutk/tetris-leap.git

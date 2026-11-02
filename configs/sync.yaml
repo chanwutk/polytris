@@ -51,6 +51,7 @@ includes:
     - "demo"
     - "measurements"
     - "measurements-gpu"
+    - "baselines"
 
   # File extensions to include within each directory
   extensions:
