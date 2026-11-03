@@ -62,12 +62,6 @@ AP50        all-point interpolated average precision over the counted detections
             confidence. Detections exist only above the detector's threshold (0.25 for the
             YOLO detectors, 0.45 for B3D's RetinaNet), so the curve is truncated there.
 
-JPEG control  measurements-gpu/r1o4_packing_detection_accuracy.py reruns the reference detector
-            on the operating point's frames as decoded ('rerun') and after a JPEG round trip at
-            p030's quality ('jpeg'). Scored like the reference at the operating point, rerun vs
-            reference is the environment's noise, jpeg vs rerun JPEG's effect alone, and packed vs
-            jpeg the rest of packing. The script fails when those outputs are missing, unless
-            --skip-jpeg-control is given.
 
 Configurations are every validated Tetris test configuration in the tradeoff table (p130).
 Configurations that differ only in the tracker share one detection directory (detection config),
@@ -76,8 +70,7 @@ operating point is the fastest configuration within --loss of the reference pipe
 (common.fastest_tetris). For context, the reference detections are also scored on every test
 frame without a region filter.
 
-B3D (jnc*) still uses the automatic ground truth, produced with the same RetinaNet as the
-detector under test, so its numbers are provisional until R1.O1's human-verified labels exist.
+B3D (jnc*) is scored against its human-verified test ground truth (R1.O1).
 
 Writes measurements-results/r1o4_packing_detection_accuracy/:
   configs.json           per dataset: every detection config's frames, retained tiles, and scores
@@ -86,7 +79,7 @@ Writes measurements-results/r1o4_packing_detection_accuracy/:
                          median, min, and max of packing's effect over detection configs, per
                          padding mode and overall (sweep)
   operating_points.json  per dataset, the operating point's scores, the reference pipeline's
-                         scores on all frames, and the JPEG control (jpeg_control)
+                         scores on all frames
 """
 import argparse
 import json
@@ -112,26 +105,19 @@ IOU_THRESHOLD = 0.5
 FILTERS = {'frame': None, 'center': 0.0, 'center_cover50': 0.5, 'inside': 1 - 1e-9}
 # Reported sides: the detections each scores (det_in.side), and whether its unmatched detections whose center
 # lies outside every retained tile are false positives under every filter (True) or ignored when they fail it (False).
-SIDES = {'reference': ('reference', False), 'packed': ('packed', True), 'packed_ignore_outside': ('packed', False),
-         'rerun': ('rerun', False), 'jpeg': ('jpeg', False)}
-# Sides of the sweep over every configuration, and of the JPEG control at the operating point.
+SIDES = {'reference': ('reference', False), 'packed': ('packed', True), 'packed_ignore_outside': ('packed', False)}
+# Sides scored for every configuration.
 MAIN_SIDES = ['reference', 'packed', 'packed_ignore_outside']
-CONTROL_SIDES = MAIN_SIDES + ['rerun', 'jpeg']
-# Detection sources on original frames: the reference (002_naive) and the JPEG control's two runs.
-ORIGINAL_SOURCES = ['reference', 'rerun', 'jpeg']
-# Compared pairs (side, baseline): each side against the reference, plus the JPEG control's decomposition
-# (JPEG alone against the same-environment rerun, and the rest of packing against JPEG).
+# Detection sources on original frames: the reference (002_naive).
+ORIGINAL_SOURCES = ['reference']
+# Compared pairs (side, baseline): each packed side against the reference.
 MAIN_PAIRS = [(s, 'reference') for s in MAIN_SIDES[1:]]
-CONTROL_PAIRS = [(s, 'reference') for s in CONTROL_SIDES[1:]] + [('jpeg', 'rerun'), ('packed', 'jpeg')]
-# The JPEG control's outputs inside this script's result directory (written by measurements-gpu/<same name>.py).
-CONTROL_DIR = 'jpeg_control'
 # Metrics compared between the sides.
 METRICS = ('precision', 'recall', 'ap50')
-# Schemas of the box files: frame index plus a list of boxes per frame (two lists in the JPEG control's files); the
-# ground truth is a tracking.jsonl (common.TRACK_COLUMNS).
+# Schemas of the box files: frame index plus a list of boxes per frame; the ground truth is a tracking.jsonl
+# (common.TRACK_COLUMNS).
 REFERENCE_COLUMNS = "{'frame_idx': 'BIGINT', 'detections': 'DOUBLE[][]'}"
 PACKED_COLUMNS = "{'frame_idx': 'BIGINT', 'bboxes': 'DOUBLE[][]'}"
-CONTROL_COLUMNS = "{'frame_idx': 'BIGINT', 'plain': 'DOUBLE[][]', 'jpeg': 'DOUBLE[][]'}"
 # Pseudo-configuration under which the reference is scored on every test frame.
 ALL_FRAMES = 'all frames'
 
@@ -140,7 +126,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='R1.O4: detection precision/recall before and after packing')
     parser.add_argument('--datasets', nargs='+', choices=list(DATASET_LABELS), default=list(DATASET_LABELS))
     parser.add_argument('--loss', type=float, default=0.05)
-    parser.add_argument('--skip-jpeg-control', action='store_true')
     return parser.parse_args()
 
 
@@ -261,16 +246,14 @@ def read_boxes(con: duckdb.DuckDBPyConnection, table: str, files: list[tuple[str
     Files are given as (source, video, path). kind 'gt' reads tracking.jsonl ([track id, x1, y1,
     x2, y2]) into (video, frame, gid, x1, y1, x2, y2), with the track id as the box id; kind
     'reference' or 'packed' reads detection files ([x1, y1, x2, y2, score]) into (source, video,
-    frame, did, x1, y1, x2, y2, score), with the box's 1-based position in its frame as the box id;
-    kinds 'rerun' and 'jpeg' read the same columns from the JPEG control's 'plain' and 'jpeg' lists.
+    frame, did, x1, y1, x2, y2, score), with the box's 1-based position in its frame as the box id.
     Each file must hold at most one line per frame.
     """
     # Register the files, checking that each exists.
     paths = register_files(con, files)
     # Each kind's column holding the boxes and its schema.
     key, columns = {'gt': ('tracks', TRACK_COLUMNS), 'reference': ('detections', REFERENCE_COLUMNS),
-                    'packed': ('bboxes', PACKED_COLUMNS), 'rerun': ('plain', CONTROL_COLUMNS),
-                    'jpeg': ('jpeg', CONTROL_COLUMNS)}[kind]
+                    'packed': ('bboxes', PACKED_COLUMNS)}[kind]
     # Every line once, with its frame and box list.
     con.execute(f"""
         CREATE OR REPLACE TEMP TABLE box_lines AS
@@ -668,10 +651,7 @@ def sweep_summary(con: duckdb.DuckDBPyConnection) -> list[dict]:
 
 
 def operating_config(tetris: pd.DataFrame, naive: pd.Series, loss: float) -> dict:
-    """The fastest Tetris configuration within `loss` of the reference pipeline's HOTA (common.fastest_tetris).
-
-    measurements-gpu/r1o4_packing_detection_accuracy.py calls it to run the JPEG control on the same point.
-    """
+    """The fastest Tetris configuration within `loss` of the reference pipeline's HOTA (common.fastest_tetris)."""
     # A private connection, so the caller's tables are untouched.
     with duckdb.connect() as con:
         # The reference row and every Tetris configuration, in the shape the shared selection rule reads.
@@ -763,70 +743,8 @@ def check_inputs(con: duckdb.DuckDBPyConnection, dataset: str, grids: dict[str, 
     """)[0]
 
 
-def load_control_manifest(directory: Path) -> dict:
-    """The JPEG control's manifest (measurements-gpu/r1o4_packing_detection_accuracy.py), or a clear error."""
-    # The GPU job writes its manifest after each dataset it finishes.
-    path = directory / 'manifest.json'
-    assert path.is_file(), (f'missing {path}: run measurements-gpu/r1o4_packing_detection_accuracy.py on a GPU first, '
-                            'or pass --skip-jpeg-control')
-    # The manifest's datasets, configuration, and environment.
-    with open(path) as f:
-        return json.load(f)
-
-
-def score_controls(con: duckdb.DuckDBPyConnection, dataset: str, op_cfg: str, videos: list[str], tile_size: int,
-                   directory: Path, entry: dict | None) -> dict:
-    """The operating point's scores with the JPEG control's runs (rerun, jpeg) on the frames the control covered.
-
-    entry is the manifest's record for this dataset and directory holds the control's files. Replaces
-    tables tiles, configs, and dets with the operating point's rows on those frames (gt, frames, and
-    sampled_frames are kept), then reruns matching and scoring with every side in CONTROL_SIDES.
-    """
-    # The control must have run on this dataset's operating point.
-    assert entry is not None, f'{dataset}: no JPEG control in the manifest; rerun measurements-gpu/r1o4_packing_detection_accuracy.py'
-    assert entry['detection_config'] == op_cfg, \
-        f"{dataset}: the JPEG control ran on {entry['detection_config']}, the operating point is {op_cfg}"
-    # Both runs of a video are in one file, read once per run.
-    paths = {v: str(directory / dataset / f'{v}.jsonl.gz') for v in videos}
-    read_boxes(con, 'rerun_dets', [('rerun', v, p) for v, p in paths.items()], 'rerun')
-    read_boxes(con, 'jpeg_dets', [('jpeg', v, p) for v, p in paths.items()], 'jpeg')
-    # The control covers exactly the frames on which the operating point ran detection.
-    uncovered = con.execute("""
-        WITH covered AS (SELECT video, frame FROM rerun_dets_lines),
-             detected AS (SELECT DISTINCT video, frame FROM tiles WHERE cfg = ?)
-        SELECT (SELECT count(*) FROM covered ANTI JOIN detected USING (video, frame))
-             + (SELECT count(*) FROM detected ANTI JOIN covered USING (video, frame))
-    """, [op_cfg]).fetchone()[0]
-    assert uncovered == 0, f'{dataset}: the JPEG control covers {uncovered} frames more or fewer than {op_cfg} detected on'
-    # Keep only the operating point's tiles and configuration.
-    con.execute('CREATE OR REPLACE TABLE tiles AS SELECT * FROM tiles WHERE cfg = ?', [op_cfg])
-    con.execute('CREATE OR REPLACE TABLE configs AS SELECT * FROM configs WHERE cfg = ?', [op_cfg])
-    # Reference and packed detections on the covered frames, plus the control's two runs.
-    con.execute("""
-        CREATE OR REPLACE TABLE dets AS
-        SELECT d.* FROM dets d SEMI JOIN rerun_dets_lines l ON l.video = d.video AND l.frame = d.frame
-        WHERE d.source IN ('reference', ?)
-        UNION ALL SELECT * FROM rerun_dets UNION ALL SELECT * FROM jpeg_dets
-    """, [op_cfg])
-    # Match, locate, and score every side on the operating point.
-    greedy_match(con)
-    box_regions(con, tile_size)
-    build_config_inputs(con)
-    scores = arrange(score(con, CONTROL_SIDES), deltas(con, CONTROL_PAIRS), retained_alternatives(con))[op_cfg]
-    # How many frames and boxes each run covered.
-    counts = query_dicts(con, """
-        SELECT (SELECT count(*) FROM rerun_dets_lines) AS frames, (SELECT count(*) FROM rerun_dets) AS rerun_detections,
-               (SELECT count(*) FROM jpeg_dets) AS jpeg_detections
-    """)[0]
-    return dict(detection_config=op_cfg, **counts, environment=entry.get('environment'), seconds=entry.get('seconds'),
-                scores=scores)
-
-
-def score_dataset(dataset: str, loss: float, control_dir: Path | None = None, control_entry: dict | None = None) -> dict:
-    """Every detection config's before/after-packing scores on one dataset, plus the reference on all frames.
-
-    With control_dir set, also scores the JPEG control (control_entry, its manifest record) at the operating point.
-    """
+def score_dataset(dataset: str, loss: float) -> dict:
+    """Every detection config's before/after-packing scores on one dataset, plus the reference on all frames."""
     # One in-memory database per dataset.
     con = duckdb.connect()
     # Tetris's validated test configurations and the reference pipeline's row.
@@ -892,8 +810,6 @@ def score_dataset(dataset: str, loss: float, control_dir: Path | None = None, co
     # The dataset's operating point and its detection config.
     chosen = operating_config(tetris, naive, loss)
     op_cfg = next(r['detection_config'] for r in rows if r['variant_id'] == chosen['config'])
-    # The JPEG control at the operating point (it replaces the loaded tables, so it runs last).
-    control = None if control_dir is None else score_controls(con, dataset, op_cfg, videos, tile_size, control_dir, control_entry)
     con.close()
 
     # Variants by name, and the variants sharing each detection config (config metadata, not data).
@@ -912,13 +828,12 @@ def score_dataset(dataset: str, loss: float, control_dir: Path | None = None, co
                     fps=round(float(r['throughput_fps']), 1), hota=round(float(r['HOTA_HOTA']), 4),
                     operating_point=r['variant_id'] == chosen['config'])
                for r in ordered]
-    # B3D stays provisional until R1.O1's human-verified labels replace its automatic ground truth.
-    return dict(provisional=dataset.startswith('jnc'), ground_truth_dataset=gt_dataset, videos=len(videos),
+    return dict(ground_truth_dataset=gt_dataset, videos=len(videos),
                 frames=int(naive['frame_count']), tile_size=tile_size, matching_rounds=rounds, **counts,
                 reference=dict(fps=round(float(naive['throughput_fps']), 1), hota=round(float(naive['HOTA_HOTA']), 4),
                                all_frames=all_frames),
                 operating_point=dict(config=chosen['config'], detection_config=op_cfg, hota_bound=round(chosen['bound'], 4), loss=loss),
-                detection_configs=detection_configs, configs=configs, sweep=sweep, jpeg_control=control)
+                detection_configs=detection_configs, configs=configs, sweep=sweep)
 
 
 def method(loss: float) -> dict:
@@ -941,7 +856,7 @@ def method(loss: float) -> dict:
                  'center_cover50': f"box center in a retained tile and >= {FILTERS['center_cover50']:.0%} of its area in retained tiles",
                  'inside': 'box entirely inside retained tiles (area cover >= 1 - 1e-9); no counted box is cut at the region boundary'},
         counting='TP = detection matched to retained ground truth; detections matched to non-retained ground truth are ignored; '
-                 'unmatched retained detections are FP. Unmatched detections that fail the filter: reference, rerun, jpeg '
+                 'unmatched retained detections are FP. Unmatched detections that fail the filter: reference '
                  'ignored (content Tetris dropped, or boxes crossing the region boundary); packed FP when the box center lies '
                  'outside every retained tile (p050 mapped it through a corner, the detector drew it over black canvas or a '
                  'neighbouring polyomino, and Tetris emits it to the tracker; fp_outside_filter), ignored otherwise; '
@@ -955,15 +870,9 @@ def method(loss: float) -> dict:
         packing_includes='packing as implemented: tile rearrangement, black canvas background, neighbouring polyominoes from '
                          'other frames, JPEG re-encoding of canvases (cv2.imwrite default quality 95), batch-4 inference, '
                          'canvas size of whole tiles (Amsterdam 1260 px canvases for 1280 px frames, which also changes the '
-                         'detector letterbox scale); jpeg_control separates the JPEG re-encoding',
-        jpeg_control='measurements-gpu/r1o4_packing_detection_accuracy.py: the reference detector (as in p002, batch size 1) on '
-                     'every frame the operating point detected on, as decoded (rerun) and after cv2.imencode/imdecode at the '
-                     'default JPEG quality p030 uses (jpeg), on another GPU server with the same container image; scored like the '
-                     'reference. delta.rerun = environment noise against 002_naive, delta.jpeg_vs_rerun = JPEG alone, '
-                     'delta.packed_vs_jpeg = the rest of packing (plus the environment noise)',
+                         'detector letterbox scale)',
         sampling='none: every validated test configuration, every test video, every detected frame',
-        estimates='none',
-        provisional='B3D (jnc*) scored against automatic ground truth from the same RetinaNet; rerun after R1.O1')
+        estimates='none')
 
 
 def main():
@@ -971,16 +880,13 @@ def main():
     args = parse_args()
     # A loss outside [0, 1) defines no meaningful bound.
     assert 0 <= args.loss < 1, f'--loss must be in [0, 1), got {args.loss}'
-    # Results go to measurements-results/<script name>/, next to the JPEG control's outputs.
+    # Results go to measurements-results/<script name>/.
     out_dir = results_dir(__file__)
-    control_dir = None if args.skip_jpeg_control else out_dir / CONTROL_DIR
-    # The control's record per dataset (missing outputs fail here, before any work).
-    manifest = {} if control_dir is None else load_control_manifest(control_dir)['datasets']
 
     # Score each dataset.
     scored = {}
     for dataset in args.datasets:
-        scored[DATASET_LABELS[dataset]] = score_dataset(dataset, args.loss, control_dir, manifest.get(dataset))
+        scored[DATASET_LABELS[dataset]] = score_dataset(dataset, args.loss)
         print(f"{DATASET_LABELS[dataset]}: {len(scored[DATASET_LABELS[dataset]]['detection_configs'])} detection configs scored")
     write_json(out_dir, 'configs.json', dict(method=method(args.loss), datasets=scored))
 
@@ -992,28 +898,22 @@ def main():
         assert len(ops) == 1, f'{label}: {len(ops)} operating points'
         # Its detection config holds the scores.
         dc = s['detection_configs'][ops[0]['detection_config']]
-        points[label] = dict(provisional=s['provisional'], reference_all_frames=s['reference']['all_frames'],
+        points[label] = dict(reference_all_frames=s['reference']['all_frames'],
                              hota_bound=s['operating_point']['hota_bound'],
                              **{k: ops[0][k] for k in ('config', 'detection_config', 'fps', 'hota')},
-                             **{k: dc[k] for k in ('tilepadding', 'frames_sampled', 'frames_detected', 'retained_tiles', 'scores')},
-                             jpeg_control=s['jpeg_control'])
+                             **{k: dc[k] for k in ('tilepadding', 'frames_sampled', 'frames_detected', 'retained_tiles', 'scores')})
     write_json(out_dir, 'operating_points.json', dict(method=method(args.loss), datasets=points))
 
     # One line per dataset, filter, and side at the operating point.
     for label, p in points.items():
         ref = p['reference_all_frames']
-        print(f"\n{label}{' (provisional)' if p['provisional'] else ''}: {p['config']} | reference on all frames "
+        print(f"\n{label}: {p['config']} | reference on all frames "
               f"P {ref['precision']} R {ref['recall']} AP50 {ref['ap50']}")
         for name, e in p['scores'].items():
             print(f"  {name:15s} n_gt {e['reference']['n_gt']:7d} | before P {e['reference']['precision']} R {e['reference']['recall']} "
                   f"AP50 {e['reference']['ap50']} | after P {e['packed']['precision']} R {e['packed']['recall']} "
                   f"AP50 {e['packed']['ap50']} (fp outside filter {e['packed']['fp_outside_filter']}) | delta {e['delta']['packed']} "
                   f"| ignore-outside delta {e['delta']['packed_ignore_outside']}")
-        # The JPEG control's decomposition, when it ran.
-        if p['jpeg_control'] is not None:
-            for name, e in p['jpeg_control']['scores'].items():
-                print(f"  control {name:15s} rerun {e['delta']['rerun']} | jpeg vs rerun {e['delta']['jpeg_vs_rerun']} "
-                      f"| packed vs jpeg {e['delta']['packed_vs_jpeg']}")
 
 
 if __name__ == '__main__':

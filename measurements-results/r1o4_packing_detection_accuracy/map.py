@@ -57,7 +57,7 @@ def main():
                     assert abs(result[metric] - expected[metric]) <= .000051, (label, result)
             results = packing.mean_ap(con)
             report['datasets'][label] = dict(config=point['config'], detection_config=cfg,
-                provisional=point['provisional'], counts=counts, scores=results)
+                counts=counts, scores=results)
         write_json(DIRECTORY, 'map.json', report)
         print(label, [(r['side'], r['map']) for r in results if r['filter'] == 'center'], flush=True)
 

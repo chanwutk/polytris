@@ -1,6 +1,4 @@
 import argparse
-import gzip
-import importlib.util
 import json
 import random
 from pathlib import Path
@@ -624,7 +622,7 @@ def test_score_equals_python_oracle_on_random_scopes(con):
     for cfg, flt in scopes:
         boxes = [(v, f, g) for v in ('a', 'b') for f in range(rng.randint(0, 4)) for g in range(rng.randint(0, 3))]
         gt_rows += [(cfg, flt, v, f, g, rng.random() < 0.7) for v, f, g in boxes]
-        for side in ('reference', 'packed', 'rerun', 'jpeg'):
+        for side in ('reference', 'packed'):
             for did in range(rng.randint(0, 25)):
                 # Matched to an existing box (sometimes one missing from gt_in), or unmatched.
                 gid = rng.choice(boxes)[2] if boxes and rng.random() < 0.6 else (99 if rng.random() < 0.05 else None)
@@ -658,8 +656,8 @@ def test_arrange_reports_float_noise_as_zero():
     # Two equal metrics summed in different orders can differ by float noise; the delta reads 0.0, not -0.0.
     rows = [dict(cfg='c', filter='center', side='reference', n_gt=1, tp=1, fp=0, ignored_matched_nonretained=0,
                  ignored_unmatched_outside=0, fp_outside_filter=0, precision=1.0, recall=1.0, ap50=1.0)]
-    out = pa.arrange(rows, [dict(cfg='c', filter='center', side='rerun', precision=0.0, recall=-1e-17, ap50=None)])
-    delta = out['c']['center']['delta']['rerun']
+    out = pa.arrange(rows, [dict(cfg='c', filter='center', side='packed', precision=0.0, recall=-1e-17, ap50=None)])
+    delta = out['c']['center']['delta']['packed']
     assert delta == dict(precision=0.0, recall=0.0, ap50=None)
     assert str(delta['recall']) == '0.0'
 
@@ -685,7 +683,7 @@ def test_sweep_summary_per_padding_and_overall(con):
 
 
 def test_operating_config_picks_fastest_within_bound():
-    # The GPU job's entry point to the shared selection rule (common.fastest_tetris).
+    # The operating point uses the shared selection rule (common.fastest_tetris).
     naive = pd.Series(dict(throughput_fps=10.0, HOTA_HOTA=0.8))
     tetris = pd.DataFrame(dict(variant_id=['a', 'b', 'c'], throughput_fps=[500.0, 300.0, 100.0], HOTA_HOTA=[0.70, 0.77, 0.79]))
     assert pa.operating_config(tetris, naive, 0.05)['config'] == 'b'
@@ -896,7 +894,7 @@ def fake_cache(tmp_path, monkeypatch):
 def test_score_dataset_on_fake_cache(fake_cache):
     s = pa.score_dataset('caldot1-y05', 0.05)
     # Inputs and checks.
-    assert (s['provisional'], s['ground_truth_dataset'], s['videos'], s['frames'], s['tile_size']) == (False, 'caldot1', 2, 7, 10)
+    assert (s['ground_truth_dataset'], s['videos'], s['frames'], s['tile_size']) == ('caldot1', 2, 7, 10)
     assert (s['gt_boxes'], s['tile_grids'], s['gt_boxes_outside_clip_frames']) == (4, '2x3', 0)
     # Reference on every clip frame: 4 hits and the false positive.
     assert s['reference']['all_frames'] == entry(4, 4, 1, 0.8, 1.0, 1.0)
@@ -931,62 +929,6 @@ def test_score_dataset_on_fake_cache(fake_cache):
     assert sweep[('all', 'center', 'packed', 'recall')]['detection_configs'] == 2
     assert sweep[('none', 'center', 'packed', 'recall')] == dict(tilepadding='none', filter='center', side='packed', metric='recall',
                                                                  detection_configs=1, median=-0.25, min=-0.25, max=-0.25)
-    # No JPEG control was asked for.
-    assert s['jpeg_control'] is None
-
-
-# The JPEG control at DC_A's frames (te00 0, 2, 3; te01 1): 'plain' repeats the reference, 'jpeg' misses te00 frame 2.
-CONTROL = {'te00.mp4': [(0, [[1, 1, 9, 9, 0.9]], [[1, 1, 9, 9, 0.9]]), (2, [[11, 1, 19, 9, 0.8]], []),
-                        (3, [[21, 11, 29, 19, 0.7], [1, 11, 9, 19, 0.6]], [[21, 11, 29, 19, 0.7], [1, 11, 9, 19, 0.6]])],
-           'te01.mp4': [(1, [[1, 1, 9, 9, 0.9]], [[1, 1, 9, 9, 0.9]])]}
-
-
-def write_control(root, dataset, detection_config=DC_A, control=CONTROL):
-    # The GPU job's files for one dataset under root/out/jpeg_control, and its manifest record.
-    directory = root / 'out' / pa.CONTROL_DIR
-    (directory / dataset).mkdir(parents=True, exist_ok=True)
-    for video, lines in control.items():
-        with gzip.open(directory / dataset / f'{video}.jsonl.gz', 'wt') as f:
-            f.write(''.join(json.dumps(dict(frame_idx=i, plain=p, jpeg=j)) + '\n' for i, p, j in lines))
-    manifest_path = directory / 'manifest.json'
-    manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else dict(datasets={})
-    manifest['datasets'][dataset] = dict(detection_config=detection_config, frames=sum(map(len, control.values())),
-                                         environment=dict(host='fake'), seconds=1.0)
-    manifest_path.write_text(json.dumps(manifest))
-    return directory, manifest['datasets'][dataset]
-
-
-def test_score_dataset_with_jpeg_control(fake_cache):
-    directory, record = write_control(fake_cache, 'caldot1-y05')
-    s = pa.score_dataset('caldot1-y05', 0.05, directory, record)
-    control = s['jpeg_control']
-    assert (control['detection_config'], control['frames'], control['rerun_detections'], control['jpeg_detections']) == (DC_A, 4, 5, 4)
-    center = control['scores']['center']
-    # The rerun repeats the reference exactly; JPEG loses te00 frame 2; packing as a whole loses the same box.
-    assert center['rerun'] == center['reference'] == dict(entry(4, 4, 0, 1.0, 1.0, 1.0, unmatched_outside=1),
-                                                          matched_nonretained_with_retained_candidate=0)
-    assert center['jpeg'] == dict(entry(4, 3, 0, 1.0, 0.75, 0.75, unmatched_outside=1), matched_nonretained_with_retained_candidate=0)
-    # The control's packed side is the sweep's packed side at the operating point.
-    assert center['packed'] == s['detection_configs'][DC_A]['scores']['center']['packed']
-    assert center['delta'] == dict(
-        packed=dict(precision=-0.25, recall=-0.25, ap50=-0.25), packed_ignore_outside=dict(precision=0.0, recall=-0.25, ap50=-0.25),
-        rerun=dict(precision=0.0, recall=0.0, ap50=0.0), jpeg=dict(precision=0.0, recall=-0.25, ap50=-0.25),
-        jpeg_vs_rerun=dict(precision=0.0, recall=-0.25, ap50=-0.25), packed_vs_jpeg=dict(precision=-0.25, recall=0.0, ap50=0.0))
-
-
-@pytest.mark.parametrize('change', ['other config', 'missing frame', 'extra frame', 'missing record', 'missing file'])
-def test_score_dataset_rejects_mismatched_jpeg_control(fake_cache, change):
-    # A control run on another configuration, on other frames, or not at all for this dataset or video.
-    control = dict(CONTROL)
-    if change == 'missing frame':
-        control['te00.mp4'] = CONTROL['te00.mp4'][:2]
-    if change == 'extra frame':
-        control['te01.mp4'] = CONTROL['te01.mp4'] + [(2, [], [])]
-    directory, record = write_control(fake_cache, 'caldot1-y05', DC_B if change == 'other config' else DC_A, control)
-    if change == 'missing file':
-        (directory / 'caldot1-y05' / 'te01.mp4.jsonl.gz').unlink()
-    with pytest.raises(AssertionError):
-        pa.score_dataset('caldot1-y05', 0.05, directory, None if change == 'missing record' else record)
 
 
 def test_score_dataset_fails_on_missing_packed_file(fake_cache):
@@ -1004,114 +946,25 @@ def test_score_dataset_fails_without_configurations(fake_cache, monkeypatch):
 
 
 def test_main_writes_both_reports(fake_cache, monkeypatch):
-    # The JPEG control for both datasets.
-    write_control(fake_cache, 'caldot1-y05')
-    write_control(fake_cache, 'jnc0')
-    monkeypatch.setattr(pa, 'parse_args', lambda: argparse.Namespace(datasets=['caldot1-y05', 'jnc0'], loss=0.05,
-                                                                     skip_jpeg_control=False))
+    monkeypatch.setattr(pa, 'parse_args', lambda: argparse.Namespace(datasets=['caldot1-y05', 'jnc0'], loss=0.05))
     pa.main()
     configs = json.loads((fake_cache / 'out' / 'configs.json').read_text())
     points = json.loads((fake_cache / 'out' / 'operating_points.json').read_text())
-    # Both datasets under their labels; only B3D is provisional.
+    # Both datasets under their labels.
     assert set(configs['datasets']) == set(points['datasets']) == {'CalDoT1', 'B3D1'}
-    assert (points['datasets']['CalDoT1']['provisional'], points['datasets']['B3D1']['provisional']) == (False, True)
     # The operating point carries its detection config's scores and frame counts.
     op = points['datasets']['CalDoT1']
     assert (op['config'], op['detection_config'], op['fps'], op['hota'], op['hota_bound']) == (f'{DC_A}_bytetrackcython', DC_A, 200.0, 0.78, 0.76)
     assert op['scores'] == configs['datasets']['CalDoT1']['detection_configs'][DC_A]['scores']
     assert (op['frames_detected'], op['retained_tiles'], op['tilepadding']) == (4, 4, 'none')
     assert set(op['scores']) == set(pa.FILTERS)
-    # The JPEG control appears in both reports.
-    assert op['jpeg_control'] == configs['datasets']['CalDoT1']['jpeg_control']
-    assert op['jpeg_control']['scores']['center']['delta']['jpeg_vs_rerun']['recall'] == -0.25
     # Both files record the method.
     assert configs['method'] == points['method'] and configs['method']['sampling'].startswith('none')
-
-
-def test_main_without_control_fails_unless_skipped(fake_cache, monkeypatch):
-    # No manifest: a clear error naming the GPU job.
-    monkeypatch.setattr(pa, 'parse_args', lambda: argparse.Namespace(datasets=['caldot1-y05'], loss=0.05, skip_jpeg_control=False))
-    with pytest.raises(AssertionError, match='measurements-gpu'):
-        pa.main()
-    # Skipped: the reports carry no control.
-    monkeypatch.setattr(pa, 'parse_args', lambda: argparse.Namespace(datasets=['caldot1-y05'], loss=0.05, skip_jpeg_control=True))
-    pa.main()
-    points = json.loads((fake_cache / 'out' / 'operating_points.json').read_text())
-    assert points['datasets']['CalDoT1']['jpeg_control'] is None
 
 
 def test_main_rejects_bad_loss(fake_cache, monkeypatch):
     # A loss of 1 or more, or below 0, defines no bound.
     for loss in (1.0, -0.1):
-        monkeypatch.setattr(pa, 'parse_args', lambda: argparse.Namespace(datasets=['caldot1-y05'], loss=loss, skip_jpeg_control=True))
+        monkeypatch.setattr(pa, 'parse_args', lambda: argparse.Namespace(datasets=['caldot1-y05'], loss=loss))
         with pytest.raises(AssertionError):
             pa.main()
-
-
-# The GPU job, loaded from its file (measurements-gpu is not a package).
-GPU_PATH = Path(__file__).resolve().parent.parent / 'measurements-gpu' / 'r1o4_packing_detection_accuracy.py'
-gpu_spec = importlib.util.spec_from_file_location('r1o4_gpu', GPU_PATH)
-gpu = importlib.util.module_from_spec(gpu_spec)
-gpu_spec.loader.exec_module(gpu)
-
-
-def test_jpeg_round_trip_is_lossy_but_close():
-    # A smooth gradient survives JPEG nearly unchanged, with the same shape and type.
-    frame = np.tile(np.arange(64, dtype=np.uint8)[None, :, None] * 4, (48, 1, 3))
-    out = gpu.jpeg_round_trip(frame)
-    assert out.shape == frame.shape and out.dtype == np.uint8
-    assert np.abs(out.astype(int) - frame.astype(int)).max() <= 8
-
-
-def test_gpu_operating_frames_match_the_measurement(fake_cache, monkeypatch):
-    # The GPU job picks the measurement's operating point and DC_A's detected frames.
-    monkeypatch.setattr(gpu, 'load_test_tradeoff', lambda dataset: fake_tradeoff())
-    row, cfg, frames = gpu.operating_frames('caldot1-y05', 0.05, ['te00.mp4', 'te01.mp4'])
-    assert (row['variant_id'], cfg, frames) == (f'{DC_A}_bytetrackcython', DC_A, {'te00.mp4': [0, 2, 3], 'te01.mp4': [1]})
-
-
-@pytest.fixture
-def fake_detector(fake_cache, monkeypatch):
-    # A detector that sees a marker for JPEG frames, no GPU, and results under the fake cache's out/.
-    monkeypatch.setattr(gpu, 'load_test_tradeoff', lambda dataset: fake_tradeoff())
-    monkeypatch.setattr(gpu, 'results_dir', lambda script: fake_cache / 'out')
-    monkeypatch.setattr(gpu, 'warm_up', lambda dataset, video, detector: None)
-    monkeypatch.setattr(gpu, 'environment', lambda g: dict(host='fake', gpu=g))
-    monkeypatch.setattr(gpu, 'jpeg_round_trip', lambda frame: None)
-    monkeypatch.setattr(gpu.polyis.models.detector, 'get_detector', lambda dataset, g, batch_size: 'detector')
-    monkeypatch.setattr(gpu.polyis.models.detector, 'delete', lambda detector: None)
-    monkeypatch.setattr(gpu.polyis.models.detector, 'detect', lambda image, detector:
-                        np.array([[1, 1, 9, 9, 0.9]]) if image is not None else np.zeros((0, 5)))
-    return fake_cache
-
-
-def test_gpu_detect_video_writes_only_wanted_frames(fake_detector):
-    path = fake_detector / 'te00.jsonl.gz'
-    gpu.detect_video('caldot1-y05', 'te00.mp4', [0, 3], 'detector', path)
-    with gzip.open(path, 'rt') as f:
-        lines = [json.loads(l) for l in f]
-    # One line per wanted frame, with both runs.
-    assert lines == [dict(frame_idx=0, plain=[[1, 1, 9, 9, 0.9]], jpeg=[]), dict(frame_idx=3, plain=[[1, 1, 9, 9, 0.9]], jpeg=[])]
-    # No wanted frame: an empty file.
-    gpu.detect_video('caldot1-y05', 'te00.mp4', [], 'detector', path)
-    with gzip.open(path, 'rt') as f:
-        assert f.read() == ''
-    # A frame beyond the clip.
-    with pytest.raises(AssertionError):
-        gpu.detect_video('caldot1-y05', 'te00.mp4', [5], 'detector', path)
-
-
-def test_gpu_job_feeds_the_measurement(fake_detector, monkeypatch):
-    # The GPU job on CalDoT1, then the measurement on its outputs.
-    monkeypatch.setattr(gpu, 'parse_args', lambda: argparse.Namespace(datasets=['caldot1-y05'], loss=0.05, gpu=0))
-    gpu.main()
-    manifest = json.loads((fake_detector / 'out' / pa.CONTROL_DIR / 'manifest.json').read_text())
-    assert manifest['datasets']['caldot1-y05']['detection_config'] == DC_A
-    assert manifest['datasets']['caldot1-y05']['videos'] == {'te00.mp4': 3, 'te01.mp4': 1}
-    monkeypatch.setattr(pa, 'parse_args', lambda: argparse.Namespace(datasets=['caldot1-y05'], loss=0.05, skip_jpeg_control=False))
-    pa.main()
-    control = json.loads((fake_detector / 'out' / 'operating_points.json').read_text())['datasets']['CalDoT1']['jpeg_control']
-    # The fake detector finds the top-left box on every plain frame (te00 frames 2 and 3 have other boxes) and nothing after JPEG.
-    assert control['frames'] == 4 and control['jpeg_detections'] == 0
-    assert control['scores']['frame']['jpeg']['recall'] == 0.0
-    assert control['scores']['frame']['rerun']['tp'] == 2

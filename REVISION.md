@@ -89,7 +89,7 @@ python measurements/r9o2_preparation_overheads.py --timings measurements-results
 | --- | --- | --- | --- |
 | R1.O2 counting query | `r1o2_count_query.py` | none | Done: bounds 5%, 10%, and LEAP's own accuracy per dataset (`leap_fit`) |
 | R1.O2 LEAP native queries | `r1o2_leap_native_queries.py` | none | Done for a merged vehicle class (selection F1, aggregation 1 - MAPE, top-10 precision); author accepts this scope |
-| R1.O4 packing precision/recall | `r1o4_packing_detection_accuracy.py` | `r1o4_packing_detection_accuracy.py` (JPEG control, ran on bombe GPU 4) | Done for CalDoT/Amsterdam; B3D provisional until R1.O1 |
+| R1.O4 packing precision/recall | `r1o4_packing_detection_accuracy.py` | none (the JPEG control was removed on 2026-11-03: not requested, JPEG changed precision/recall/AP50 by at most 0.2 pp, and removing it leaves Table 3 identical) | Done; B3D on human-verified labels |
 | R1.O5 tolerance-to-gap | `r1o5_gap_tolerance.py` | none | Done; see the tolerance-label finding below |
 | R7.O1 matched HOTA speedup | `r7o1_hota_matched_speedup.py` | none | Done; reproduces all p203/p204 macros; rerun after R1.O1 |
 | R9.O1 classifier cost | `r9o1_classifier_cost.py` | none | Done (from pipeline logs) |
