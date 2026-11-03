@@ -44,10 +44,10 @@ import pandas as pd
 
 from polyis.io import cache
 from evaluation.p201_compare_pareto import (
-    SYSTEM_COLOR_SCHEME,
     _add_dataset_display_names,
     _get_dataset_display_sort,
 )
+from evaluation.colors import categorical_color_scale
 
 # Subplot geometry: matches p205's per-metric subplot footprint so the
 # stitched figure reads at a familiar density. Packing panel reuses the
@@ -129,12 +129,10 @@ def _load_jsonl(path: Path, source_label: str) -> pd.DataFrame:
 def _build_color_scale(domain: list[str]) -> alt.Scale:
     """Build a categorical color scale shared across both panels.
 
-    Uses the same Vega ``observable10`` scheme as p201/p205/p038 so this
+    Uses the shared Tetris palette from p201/p205/p038 so this
     figure visually composes with the rest of the paper.
     """
-    if not domain:
-        return alt.Scale(scheme=SYSTEM_COLOR_SCHEME)
-    return alt.Scale(domain=domain, scheme=SYSTEM_COLOR_SCHEME)
+    return categorical_color_scale(domain or None)
 
 
 def _y_domain_for_metric(df: pd.DataFrame, field: str) -> tuple[float, float]:

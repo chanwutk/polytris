@@ -47,10 +47,10 @@ from polyis.io import cache
 from polyis.utilities import get_config, parse_execution_param_str
 from evaluation.p036_compress_effectiveness_compute import count_tiles_for_path
 from evaluation.p201_compare_pareto import (
-    SYSTEM_COLOR_SCHEME,
     _add_dataset_display_names,
     _get_dataset_display_sort,
 )
+from evaluation.colors import categorical_color_scale
 
 # Fixed experimental knobs -- this chart only makes sense at every-frame
 # compression with the canonical canvas size.
@@ -587,11 +587,7 @@ def write_chart(df: pd.DataFrame, path: str) -> None:
 
     # Match p201/p205 categorical coloring so datasets keep a stable palette.
     dataset_domain = _get_dataset_display_sort(plot_df) or []
-    color_scale = (
-        alt.Scale(domain=dataset_domain, scheme=SYSTEM_COLOR_SCHEME)
-        if dataset_domain
-        else alt.Scale(scheme=SYSTEM_COLOR_SCHEME)
-    )
+    color_scale = categorical_color_scale(dataset_domain or None)
 
     chart = (
         alt.Chart(plot_df)

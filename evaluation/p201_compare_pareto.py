@@ -26,6 +26,7 @@ from polyis.io import cache
 from polyis.pareto import compute_pareto_front
 from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 from evaluation.utilities import SYSTEM_COLOR_DOMAIN
+from evaluation.colors import TETRIS_COLORS, categorical_color_scale
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
 
@@ -84,9 +85,6 @@ def _legend_grid_position(facet_columns: int, n_datasets: int,
     legend_y = legend_row * row_stride
     return legend_x, legend_y
 
-# Categorical palette for ``system`` encoding (Vega named scheme).
-SYSTEM_COLOR_SCHEME = 'observable10'
-
 # Vega expression that splits legend labels on spaces so each token renders on
 # its own line -- keeps long ablation labels readable in narrow legends.
 LEGEND_LABEL_BREAK_ON_SPACE = "split(datum.label, ' ')"
@@ -108,10 +106,7 @@ PRESENTATION_SYSTEM_ORDER = [
     'LEAP',
 ]
 PRESENTATION_SYSTEM_COLORS = {
-    'Tetris': '#4269d0',
-    'Reference': '#6cc5b0',
-    'OTIF': '#3ca951',
-    'LEAP': '#ff8ab7',
+    system: TETRIS_COLORS[SYSTEM_COLOR_DOMAIN.index(system)] for system in PRESENTATION_SYSTEM_ORDER
 }
 PRESENTATION_MUTED_COLOR = '#b8b8b8'
 PRESENTATION_FOCUSED_OPACITY = 0.9
@@ -206,13 +201,10 @@ def _default_system_color_scale(systems: list[str]) -> alt.Scale:
     """
     Nominal colors in canonical ``SYSTEM_COLOR_DOMAIN`` order (then extras).
 
-    Uses ``SYSTEM_COLOR_SCHEME`` (Vega categorical scheme); domain order maps
+    Uses the shared Tetris palette; domain order maps
     systems to palette entries so the mapping stays stable across charts.
     """
-    return alt.Scale(
-        domain=_ordered_systems_for_chart(systems),
-        scheme=SYSTEM_COLOR_SCHEME,
-    )
+    return categorical_color_scale(_ordered_systems_for_chart(systems))
 
 
 def _system_color_scale(systems: list[str],
@@ -223,7 +215,7 @@ def _system_color_scale(systems: list[str],
     if color_range is not None:
         return alt.Scale(domain=domain, range=color_range)
     if color_domain is not None:
-        return alt.Scale(domain=domain, scheme=SYSTEM_COLOR_SCHEME)
+        return categorical_color_scale(domain)
     return _default_system_color_scale(systems)
 
 

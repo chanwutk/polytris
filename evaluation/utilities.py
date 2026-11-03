@@ -42,7 +42,7 @@ class ColorScheme:
 
 
 # Canonical system labels for comparison charts, including ablation variants.
-# Order determines legend layout; colors are assigned from CarbonDark by index.
+# Order determines legend layout and assignment from the shared categorical palette.
 SYSTEM_COLOR_DOMAIN = [
     'Tetris',
     'Tetris (-Sampling)',

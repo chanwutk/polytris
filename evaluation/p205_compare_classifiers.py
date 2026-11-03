@@ -23,10 +23,10 @@ from polyis.io import cache, store
 from evaluation.p201_compare_pareto import (
     FACET_SUBPLOT_HEIGHT,
     FACET_SUBPLOT_WIDTH,
-    SYSTEM_COLOR_SCHEME,
     _add_dataset_display_names,
     _get_dataset_display_sort,
 )
+from evaluation.colors import categorical_color_scale
 from polyis.utilities import (
     get_accuracy,
     get_config,
@@ -402,12 +402,8 @@ def write_chart(rows: list[dict[str, Any]], path: str, _videoset: str):
     ).reset_index(drop=True)
 
     dataset_domain = _get_dataset_display_sort(df_line)
-    # Match p201_compare_pareto nominal colors (Vega ``observable10``).
-    color_scale = (
-        alt.Scale(domain=dataset_domain, scheme=SYSTEM_COLOR_SCHEME)
-        if dataset_domain
-        else alt.Scale(scheme=SYSTEM_COLOR_SCHEME)
-    )
+    # Match the shared palette used by the other paper figures.
+    color_scale = categorical_color_scale(dataset_domain or None)
     subplot_w = max(1, int(round(FACET_SUBPLOT_WIDTH)))
     subplot_h = max(1, int(round(FACET_SUBPLOT_HEIGHT)))
 

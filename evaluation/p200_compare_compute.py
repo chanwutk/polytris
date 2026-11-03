@@ -7,6 +7,7 @@ import pandas as pd
 import altair as alt
 
 from polyis.io import cache
+from polyis.leap_results import canonical_leap_result
 from polyis.utilities import (
     STR_NA,
     get_config,
@@ -76,6 +77,18 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             raise ValueError(f"Missing required columns in {tradeoff_csv_path}: {missing_columns}")
+
+        # Reviewed LEAP runs supersede only the test point; the underlying cache stays archived in place.
+        selected = canonical_leap_result(dataset_name) if system == 'leap' else None
+        if selected is not None:
+            test = df['videoset'].eq('test') if 'videoset' in df else pd.Series(True, index=df.index)
+            assert test.sum() == 1 and int(df.loc[test, 'param_id'].iloc[0]) == selected['param_id']
+            for column in df.columns:
+                if column.startswith(('HOTA_', 'MOTA_', 'Count_')):
+                    df.loc[test, column] = float('nan')
+            df.loc[test, runtime_column] = selected['compute_s']
+            for metric, value in selected['hota'].items():
+                df.loc[test, 'HOTA_'+metric] = value
         
         # Define all possible submetrics that might be in the CSV
         submetric_columns = ['HOTA_HOTA', 'HOTA_AssA', 'HOTA_DetA', 'MOTA_MOTA', 
