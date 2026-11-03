@@ -432,12 +432,9 @@ def main() -> None:
     print(f"  Wrote {chart_pdf}")
     print(f"  Wrote {chart_png}")
 
-    # Only the validation split (canonical paper artifact) is propagated to
-    # paper/figures/generated; test runs stay cache-only.
-    if videoset == 'valid':
-        _copy_paper_figure_artifacts(summary_dir, base_name, PAPER_FIGURES_GENERATED_DIR)
-    else:
-        print(f"  Skipping paper-figures copy for videoset={videoset}")
+    # Propagate either split to paper/figures/generated under its split-suffixed name; the paper
+    # shows the test split, matching the p205 test macros its text quotes.
+    _copy_paper_figure_artifacts(summary_dir, base_name, PAPER_FIGURES_GENERATED_DIR)
 
 
 if __name__ == '__main__':
