@@ -457,7 +457,8 @@ def rescore(task: dict) -> dict:
             track_dir, track_file = task['track_dir'], task['track_file']
         # Score against the padded or the cached ground truth, with the HOTA metric only, as p110 and p141 do.
         combined = trackeval_rerun(task['gt_dir'], task['gt_file'], track_dir, track_file,
-                                   [v for v, *_ in task['files']], os.path.join(scratch, 'trackeval'), ('HOTA',))
+                                   [v for v, *_ in task['files']], os.path.join(scratch, 'trackeval'), ('HOTA',),
+                                   pad_scoring_window=False)
     # The key and the summary only.
     return dict(dataset=task['dataset'], system=task['system'], config=task['config'], padded=task['padded'],
                 metrics=metric_summary(combined))

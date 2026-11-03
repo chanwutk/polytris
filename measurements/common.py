@@ -854,12 +854,14 @@ def output_path(dataset: str, system: str, config: str, video: str, kind: str = 
 
 
 def trackeval_rerun(gt_dir: str, gt_file: str, track_dir: str, track_file: str, videos: list[str], output_dir: str,
-                    metrics: tuple[str, ...] = ('HOTA',)) -> dict:
+                    metrics: tuple[str, ...] = ('HOTA',), pad_scoring_window: bool | None = None) -> dict:
     """TrackEval's combined results over `videos`, configured as p110 (evaluate_tracking_accuracy) and p141 (its SOTA
     task) configure it, with the TRACKEVAL_METRICS families named in `metrics` (TrackEval adds Count itself).
 
     Each clip's files are <gt_dir>/<video>/<gt_file> and <track_dir>/<video>/<track_file>. Returns the vehicle class
     combined over the clips (raw arrays and scalars); TrackEval writes nothing but an error log into output_dir.
+    pad_scoring_window None uses the canonical scoring (padded, see polyis.trackeval.dataset); False reproduces
+    TrackEval's truncated window, which audits of that window and of older cached results need.
     """
     # Unknown families would fail inside TrackEval with a less clear message.
     unknown = sorted(set(metrics) - set(TRACKEVAL_METRICS))
@@ -870,6 +872,9 @@ def trackeval_rerun(gt_dir: str, gt_file: str, track_dir: str, track_file: str, 
         'tracker': 'rerun', 'seq_list': sorted(videos), 'input_dir': track_dir, 'input_gt_dir': gt_dir,
         'input_track_dir': track_dir,
     }
+    # Only an explicit choice overrides the canonical scoring window.
+    if pad_scoring_window is not None:
+        dataset_config['pad_scoring_window'] = pad_scoring_window
     # The evaluator settings both use, on one core per run.
     eval_config = {
         'USE_PARALLEL': False, 'NUM_PARALLEL_CORES': 1, 'BREAK_ON_ERROR': True,

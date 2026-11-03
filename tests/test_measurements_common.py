@@ -947,7 +947,7 @@ def test_trackeval_rerun_and_unscored_boxes(tmp_path):
     write_track_lines(tmp_path / 'gt' / 'v' / 'gt.jsonl', gt)
     write_track_lines(tmp_path / 'tr' / 'v' / 'tr.jsonl', tracks)
     combined = common.trackeval_rerun(str(tmp_path / 'gt'), 'gt.jsonl', str(tmp_path / 'tr'), 'tr.jsonl', ['v'],
-                                      str(tmp_path / 'out'), ('HOTA', 'CLEAR', 'Identity'))
+                                      str(tmp_path / 'out'), ('HOTA', 'CLEAR', 'Identity'), pad_scoring_window=False)
     summary = common.metric_summary(combined)
     # Every requested family and TrackEval's own Count.
     assert set(summary) == {'HOTA', 'CLEAR', 'Identity', 'Count'}
@@ -956,6 +956,10 @@ def test_trackeval_rerun_and_unscored_boxes(tmp_path):
     loosest = summary['HOTA']['alpha_0.05']
     assert (loosest['HOTA_TP'], loosest['HOTA_FN'], loosest['HOTA_FP']) == (2.0, 0.0, 2.0)
     assert common.unscored_boxes(summary) == dict(gt=2, tracker=0)
+    # The canonical (padded) window scores the ground truth on frames 2-3 as misses.
+    padded = common.metric_summary(common.trackeval_rerun(str(tmp_path / 'gt'), 'gt.jsonl', str(tmp_path / 'tr'), 'tr.jsonl',
+                                                          ['v'], str(tmp_path / 'outp')))
+    assert (padded['HOTA']['alpha_0.05']['HOTA_FN'], common.unscored_boxes(padded)) == (2.0, dict(gt=0, tracker=0))
     # The HOTA metric alone is the default, as p110 and p141 run it.
     assert set(common.metric_summary(common.trackeval_rerun(
         str(tmp_path / 'gt'), 'gt.jsonl', str(tmp_path / 'tr'), 'tr.jsonl', ['v'], str(tmp_path / 'out2')))) == {'HOTA', 'Count'}

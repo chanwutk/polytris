@@ -691,7 +691,7 @@ def trackeval_combined(task: dict) -> dict:
     configures it (raw arrays and scalars). TrackEval writes nothing but an error log into output_dir."""
     # The shared rerun with the three families this script reports.
     return trackeval_rerun(task['gt_dir'], task['gt_file'], task['track_dir'], task['track_file'], task['videos'],
-                           task['output_dir'], ('HOTA', 'CLEAR', 'Identity'))
+                           task['output_dir'], ('HOTA', 'CLEAR', 'Identity'), pad_scoring_window=False)
 
 
 def run_trackeval(task: dict) -> dict:

@@ -91,7 +91,8 @@ def build_dataset(tmp_path, monkeypatch, ground_truth):
         # Its cached combined result, from TrackEval on the files as they are.
         gt_dir, gt_file = sw.split_path(output_path(DATASET, 'ground truth', '', 'te00.mp4'), 'te00.mp4')
         track_dir, track_file = sw.split_path(output_path(DATASET, system, config, 'te00.mp4'), 'te00.mp4')
-        combined = sw.trackeval_rerun(gt_dir, gt_file, track_dir, track_file, sorted(CLIPS), str(tmp_path / 'te' / system / config))
+        combined = sw.trackeval_rerun(gt_dir, gt_file, track_dir, track_file, sorted(CLIPS), str(tmp_path / 'te' / system / config),
+                                      pad_scoring_window=False)
         accuracy = sw.accuracy_path(DATASET, system, config)
         accuracy.parent.mkdir(parents=True, exist_ok=True)
         accuracy.write_text(json.dumps({'video': None, 'metrics': to_json(combined)}))
@@ -135,7 +136,8 @@ def score(root, gt_rows, track_rows):
     # TrackEval's HOTA on one clip, configured as p110 and p141.
     write_lines(root / 'gt' / 'v' / 't.jsonl', gt_rows)
     write_lines(root / 'tr' / 'v' / 't.jsonl', track_rows)
-    combined = sw.trackeval_rerun(str(root / 'gt'), 't.jsonl', str(root / 'tr'), 't.jsonl', ['v'], str(root / 'out'))
+    combined = sw.trackeval_rerun(str(root / 'gt'), 't.jsonl', str(root / 'tr'), 't.jsonl', ['v'], str(root / 'out'),
+                                  pad_scoring_window=False)
     return sw.metric_summary(combined)
 
 

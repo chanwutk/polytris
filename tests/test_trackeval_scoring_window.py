@@ -40,8 +40,14 @@ GT = {i: [1] for i in range(6)}
 SHORT = {0: [7], 1: [7], 2: [7]}
 
 
-def test_default_keeps_trackeval_behavior(tmp_path, monkeypatch):
+def test_default_pads_the_scoring_window(tmp_path, monkeypatch):
     monkeypatch.delenv('POLYIS_PAD_SCORING_WINDOW', raising=False)
+    raw = dataset(tmp_path, GT, SHORT, None).get_raw_seq_data('cfg', SEQ)
+    assert scored(raw) == (6, 3, 6)
+
+
+def test_env_zero_restores_trackeval_truncation(tmp_path, monkeypatch):
+    monkeypatch.setenv('POLYIS_PAD_SCORING_WINDOW', '0')
     raw = dataset(tmp_path, GT, SHORT, None).get_raw_seq_data('cfg', SEQ)
     # Only the 3 frames both files cover are scored; ground truth on frames 3-5 is never counted.
     assert scored(raw) == (3, 3, 3)

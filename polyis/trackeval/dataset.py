@@ -7,8 +7,8 @@ from modules.TrackEval.trackeval.datasets._base_dataset import _BaseDataset
 
 
 def pad_scoring_window_from_env() -> bool:
-    """POLYIS_PAD_SCORING_WINDOW=1 pads both sides to the longer file; unset or 0 keeps TrackEval's behavior."""
-    value = os.environ.get('POLYIS_PAD_SCORING_WINDOW', '0')
+    """Padding is the canonical scoring; POLYIS_PAD_SCORING_WINDOW=0 restores TrackEval's truncated window."""
+    value = os.environ.get('POLYIS_PAD_SCORING_WINDOW', '1')
     if value not in ('0', '1'):
         raise ValueError(f'POLYIS_PAD_SCORING_WINDOW must be 0 or 1, not {value!r}')
     return value == '1'
@@ -38,7 +38,7 @@ class Dataset(_BaseDataset):
         self.input_track = config['input_track']
         self.skip = config['skip']
         self.tracker = config['tracker']
-        # Score each sequence over the longer of the two files (see get_raw_seq_data); off unless requested.
+        # Score each sequence over the longer of the two files (see get_raw_seq_data); on unless disabled.
         self.pad_scoring_window = config.get('pad_scoring_window', pad_scoring_window_from_env())
 
     def get_display_name(self, tracker):
