@@ -238,21 +238,21 @@
       }
     },
     "jnc0": {
-      "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
-      "detection_config": "ShuffleNet05_60_4_r025_none_s100",
+      "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+      "detection_config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
       "environment": {
-        "container_image": "polyis-polyis@efe83173d8fd",
+        "container_image": "polyis (unrecorded tag)",
         "cuda": "12.4",
         "cudnn": 90100,
         "gpu": "Quadro RTX 6000",
-        "host": "240baeefc8c6",
+        "host": "bombe",
         "opencv": "4.13.0",
         "python": "3.13.12",
         "torch": "2.6.0+cu124",
         "ultralytics": "8.4.22"
       },
       "frames": 1350,
-      "seconds": 193.7,
+      "seconds": 214.3,
       "videos": {
         "te01.mp4": 270,
         "te04.mp4": 270,
@@ -310,36 +310,36 @@
       }
     },
     "jnc7": {
-      "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
-      "detection_config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "detection_config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
       "environment": {
-        "container_image": "polyis-polyis@efe83173d8fd",
+        "container_image": "polyis (unrecorded tag)",
         "cuda": "12.4",
         "cudnn": 90100,
         "gpu": "Quadro RTX 6000",
-        "host": "240baeefc8c6",
+        "host": "bombe",
         "opencv": "4.13.0",
         "python": "3.13.12",
         "torch": "2.6.0+cu124",
         "ultralytics": "8.4.22"
       },
-      "frames": 1304,
-      "seconds": 186.1,
+      "frames": 1298,
+      "seconds": 204.4,
       "videos": {
-        "te01.mp4": 257,
-        "te04.mp4": 262,
+        "te01.mp4": 256,
+        "te04.mp4": 259,
         "te08.mp4": 262,
-        "te12.mp4": 261,
-        "te13.mp4": 262
+        "te12.mp4": 260,
+        "te13.mp4": 261
       }
     }
   },
   "environment": {
-    "container_image": "polyis-polyis@efe83173d8fd",
+    "container_image": "polyis (unrecorded tag)",
     "cuda": "12.4",
     "cudnn": 90100,
     "gpu": "Quadro RTX 6000",
-    "host": "240baeefc8c6",
+    "host": "bombe",
     "opencv": "4.13.0",
     "python": "3.13.12",
     "torch": "2.6.0+cu124",

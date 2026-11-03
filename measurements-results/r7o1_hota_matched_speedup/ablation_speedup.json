@@ -60,11 +60,11 @@
         },
         "B3D1": {
           "leap": {
-            "bytes": 284,
+            "bytes": 285,
             "exists": true,
-            "mtime": "2026-10-26T17:31:10+00:00",
+            "mtime": "2026-11-03T03:53:17+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc0/tradeoff.csv",
-            "sha256": "aeeb97f45aeabd9459624588914c4273414ef831534d00a792c0d613c22be719"
+            "sha256": "7034865e10356da0af884cd6ef976dd28d6e3550c869acb80f7b14b6fd75984f"
           },
           "leap_stat": {
             "bytes": 426,
@@ -74,27 +74,27 @@
             "sha256": "d7890b5c3e4acb96704e9049337fee80d337baa53b0944925f84cbd6c5ffe66f"
           },
           "otif": {
-            "bytes": 2288,
+            "bytes": 2292,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-11-03T03:53:17+00:00",
             "path": "/polyis-cache/SOTA/otif/jnc0/tradeoff.csv",
-            "sha256": "aae46c9152c86dfaa11dc38ea3f3effe018eba3a8e81e92ee85783572589f804"
+            "sha256": "d27a01542adf0c87bcb778fdb68f70883eeb78f7fe9dfa52907735d677b3f982"
           },
           "tradeoff": {
-            "bytes": 18362,
+            "bytes": 18366,
             "exists": true,
-            "mtime": "2026-04-20T00:56:31+00:00",
+            "mtime": "2026-11-03T03:53:05+00:00",
             "path": "/polyis-cache/jnc0/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "8a43c3c60d8c4ade15bfe6b2f6391744b2276a03d336fdc67f8c27f24089b2fb"
+            "sha256": "f2b2d9efdd539f048a40dad391e55b79e34c2f69d83c84902b8c6083c67ffff8"
           }
         },
         "B3D2": {
           "leap": {
-            "bytes": 286,
+            "bytes": 288,
             "exists": true,
-            "mtime": "2026-10-26T17:31:10+00:00",
+            "mtime": "2026-11-03T03:53:17+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc2/tradeoff.csv",
-            "sha256": "1e55c78f93e3015230ac6c8e1fa56e6a4367b760e32dd14de23457252e0e1b59"
+            "sha256": "139da9e8444793fae6c5be8db40b6a3d18038be0e5da9b2a9f06107a38ebf190"
           },
           "leap_stat": {
             "bytes": 400,
@@ -104,27 +104,27 @@
             "sha256": "2aaf345ae057ebfbf6282bc832110e055ec7fe9c3cb5d008a67e60bdbf76b338"
           },
           "otif": {
-            "bytes": 2117,
+            "bytes": 2119,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-11-03T03:53:17+00:00",
             "path": "/polyis-cache/SOTA/otif/jnc2/tradeoff.csv",
-            "sha256": "7669ff9ef60dff374bcca22c18648f8100d932c02a29b58e067a2355ddf8f9e4"
+            "sha256": "8f0eecc3b5b09cab7a9b0a7174acb586eaf36784d0a8a87ce60be36f14327945"
           },
           "tradeoff": {
-            "bytes": 18118,
+            "bytes": 18119,
             "exists": true,
-            "mtime": "2026-04-20T00:56:31+00:00",
+            "mtime": "2026-11-03T03:53:05+00:00",
             "path": "/polyis-cache/jnc2/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "a1c8a3a1f82e59aa4fb04a4f298918053eedd275886b8bb7bc2143c9c1e7be41"
+            "sha256": "d6a1fbaafa563cac409555a102aea308897617f0ec795911249a65dfb48559d5"
           }
         },
         "B3D3": {
           "leap": {
-            "bytes": 287,
+            "bytes": 289,
             "exists": true,
-            "mtime": "2026-10-26T17:31:10+00:00",
+            "mtime": "2026-11-03T03:53:17+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc6/tradeoff.csv",
-            "sha256": "7c010070c440a6ac74b30945c4b424fbdc770a2166e5d6d98751bd068ac86d53"
+            "sha256": "fbbc0b1c3aae6f6aa1c72ee303a6c53a1dfd990add27cdd0c8544333de517a9f"
           },
           "leap_stat": {
             "bytes": 445,
@@ -134,27 +134,27 @@
             "sha256": "47c75c48a6a8259a51c91a835f442347c6c8789afe98816305cc3e02e1a919ef"
           },
           "otif": {
-            "bytes": 2341,
+            "bytes": 2338,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-11-03T03:53:17+00:00",
             "path": "/polyis-cache/SOTA/otif/jnc6/tradeoff.csv",
-            "sha256": "e49979145592de8b113c7c81dbd4dc74d8d7eead2bb28c337d7c1bb6944df98c"
+            "sha256": "fbd17109ad62626b40f627613db3e1934cb752d8f15b4090cd8734c370d77316"
           },
           "tradeoff": {
-            "bytes": 19118,
+            "bytes": 19114,
             "exists": true,
-            "mtime": "2026-04-20T00:56:31+00:00",
+            "mtime": "2026-11-03T03:53:05+00:00",
             "path": "/polyis-cache/jnc6/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "13928e7bb0e6e4e5a908ea307a780bc1eea768863fd0d0397bbadf21d8a7df7c"
+            "sha256": "535d60763195e830dfbea50be077676a394ad5983888e0bff0cc89a7e8fa9f49"
           }
         },
         "B3D4": {
           "leap": {
-            "bytes": 283,
+            "bytes": 286,
             "exists": true,
-            "mtime": "2026-10-26T17:31:10+00:00",
+            "mtime": "2026-11-03T03:53:17+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc7/tradeoff.csv",
-            "sha256": "00ad55366a23b891c2e4360c5808f293850c9751615b75f3100d1df014292ef2"
+            "sha256": "169a8b26a04a233fee5f4c12ef66f1d0bdcd1625c97bcfb8ccc618a49641bbc4"
           },
           "leap_stat": {
             "bytes": 426,
@@ -164,18 +164,18 @@
             "sha256": "4d4f3e2efc158bda891ae0be88849c33ab130afac07495013cacd5f472c515c6"
           },
           "otif": {
-            "bytes": 2625,
+            "bytes": 2623,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-11-03T03:53:17+00:00",
             "path": "/polyis-cache/SOTA/otif/jnc7/tradeoff.csv",
-            "sha256": "b5e9cd95725bae002e72044eb11cc4eafc1d4f4eacb965c35c74df04ff35afa0"
+            "sha256": "ed3e657389dd7cd4d0451f1d348a2d5976c8048f56bf853b3ac7a44b36595da2"
           },
           "tradeoff": {
-            "bytes": 16478,
+            "bytes": 16524,
             "exists": true,
-            "mtime": "2026-04-20T00:56:31+00:00",
+            "mtime": "2026-11-03T03:53:05+00:00",
             "path": "/polyis-cache/jnc7/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "2161e3111faca044a0057defeac95ca6e6b874c09d248b60c87fba69a9553996"
+            "sha256": "372de249b1a67ff6840be50132f4b51008d685a0e7f66c2d70e0283280a12993"
           }
         },
         "CalDoT1": {
@@ -239,7 +239,7 @@
           }
         }
       },
-      "run_at": "2026-10-27T01:44:03+00:00",
+      "run_at": "2026-11-03T04:40:36+00:00",
       "test_rows": {
         "Amsterdam": {
           "leap": 1,
@@ -304,7 +304,7 @@
         "datasets": 7,
         "max_dataset": "Amsterdam",
         "max_speedup": 68.8,
-        "mean_speedup": 26.7,
+        "mean_speedup": 26.9,
         "meets_bound": 7,
         "per_dataset": {
           "Amsterdam": {
@@ -314,28 +314,28 @@
             "speedup_vs_reference": 68.8
           },
           "B3D1": {
-            "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
-            "fps": 254.6,
-            "hota": 0.779,
-            "speedup_vs_reference": 17.3
+            "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+            "fps": 263.8,
+            "hota": 0.7542,
+            "speedup_vs_reference": 17.9
           },
           "B3D2": {
             "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
             "fps": 346.5,
-            "hota": 0.7841,
+            "hota": 0.7314,
             "speedup_vs_reference": 24.0
           },
           "B3D3": {
             "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
             "fps": 285.6,
-            "hota": 0.8013,
+            "hota": 0.789,
             "speedup_vs_reference": 19.6
           },
           "B3D4": {
-            "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
-            "fps": 422.9,
-            "hota": 0.8051,
-            "speedup_vs_reference": 29.1
+            "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+            "fps": 427.9,
+            "hota": 0.7996,
+            "speedup_vs_reference": 29.5
           },
           "CalDoT1": {
             "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
@@ -376,25 +376,25 @@
           "B3D1": {
             "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
             "fps": 68.8,
-            "hota": 0.7802,
+            "hota": 0.7769,
             "speedup_vs_reference": 4.7
           },
           "B3D2": {
             "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
             "fps": 57.6,
-            "hota": 0.8054,
+            "hota": 0.7645,
             "speedup_vs_reference": 4.0
           },
           "B3D3": {
             "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
             "fps": 76.9,
-            "hota": 0.802,
+            "hota": 0.8043,
             "speedup_vs_reference": 5.3
           },
           "B3D4": {
             "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
             "fps": 110.4,
-            "hota": 0.8116,
+            "hota": 0.812,
             "speedup_vs_reference": 7.6
           },
           "CalDoT1": {
@@ -424,7 +424,7 @@
         "datasets": 7,
         "max_dataset": "Amsterdam",
         "max_speedup": 17.9,
-        "mean_speedup": 11.1,
+        "mean_speedup": 11.2,
         "meets_bound": 7,
         "per_dataset": {
           "Amsterdam": {
@@ -436,25 +436,25 @@
           "B3D1": {
             "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
             "fps": 134.2,
-            "hota": 0.7677,
+            "hota": 0.7598,
             "speedup_vs_reference": 9.1
           },
           "B3D2": {
-            "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
-            "fps": 125.2,
-            "hota": 0.7931,
-            "speedup_vs_reference": 8.7
+            "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+            "fps": 131.0,
+            "hota": 0.7279,
+            "speedup_vs_reference": 9.1
           },
           "B3D3": {
-            "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
-            "fps": 139.4,
-            "hota": 0.7976,
-            "speedup_vs_reference": 9.6
+            "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+            "fps": 150.0,
+            "hota": 0.7815,
+            "speedup_vs_reference": 10.3
           },
           "B3D4": {
             "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
             "fps": 208.5,
-            "hota": 0.8066,
+            "hota": 0.8034,
             "speedup_vs_reference": 14.4
           },
           "CalDoT1": {
@@ -498,25 +498,25 @@
           "B3D1": {
             "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
             "fps": 307.7,
-            "hota": 0.7401,
+            "hota": 0.7291,
             "speedup_vs_reference": 20.9
           },
           "B3D2": {
             "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
             "fps": 390.6,
-            "hota": 0.768,
+            "hota": 0.7169,
             "speedup_vs_reference": 27.1
           },
           "B3D3": {
             "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
             "fps": 330.8,
-            "hota": 0.7525,
+            "hota": 0.7356,
             "speedup_vs_reference": 22.8
           },
           "B3D4": {
             "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
             "fps": 663.9,
-            "hota": 0.7609,
+            "hota": 0.7558,
             "speedup_vs_reference": 45.7
           },
           "CalDoT1": {
@@ -558,25 +558,25 @@
           "B3D1": {
             "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
             "fps": 76.8,
-            "hota": 0.7374,
+            "hota": 0.7324,
             "speedup_vs_reference": 5.2
           },
           "B3D2": {
             "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
             "fps": 57.6,
-            "hota": 0.8054,
+            "hota": 0.7645,
             "speedup_vs_reference": 4.0
           },
           "B3D3": {
             "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
             "fps": 76.9,
-            "hota": 0.802,
+            "hota": 0.8043,
             "speedup_vs_reference": 5.3
           },
           "B3D4": {
             "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
             "fps": 110.4,
-            "hota": 0.8116,
+            "hota": 0.812,
             "speedup_vs_reference": 7.6
           },
           "CalDoT1": {
@@ -606,7 +606,7 @@
         "datasets": 7,
         "max_dataset": "CalDoT1",
         "max_speedup": 22.6,
-        "mean_speedup": 13.7,
+        "mean_speedup": 13.8,
         "meets_bound": 7,
         "per_dataset": {
           "Amsterdam": {
@@ -618,25 +618,25 @@
           "B3D1": {
             "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
             "fps": 152.3,
-            "hota": 0.7404,
+            "hota": 0.7311,
             "speedup_vs_reference": 10.3
           },
           "B3D2": {
             "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
             "fps": 131.0,
-            "hota": 0.772,
+            "hota": 0.7279,
             "speedup_vs_reference": 9.1
           },
           "B3D3": {
-            "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
-            "fps": 150.0,
-            "hota": 0.7906,
-            "speedup_vs_reference": 10.3
+            "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
+            "fps": 162.3,
+            "hota": 0.7322,
+            "speedup_vs_reference": 11.2
           },
           "B3D4": {
             "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
             "fps": 208.5,
-            "hota": 0.8066,
+            "hota": 0.8034,
             "speedup_vs_reference": 14.4
           },
           "CalDoT1": {
@@ -673,8 +673,8 @@
     },
     "ablationThreeSpeedupAvg": {
       "manuscript": 26.7,
-      "match": true,
-      "measured": 26.7
+      "match": false,
+      "measured": 26.9
     },
     "ablationThreeSpeedupMax": {
       "manuscript": 68.8,
@@ -688,8 +688,8 @@
     },
     "ablationTwoSpeedupAvg": {
       "manuscript": 11.1,
-      "match": true,
-      "measured": 11.1
+      "match": false,
+      "measured": 11.2
     },
     "ablationTwoSpeedupMax": {
       "manuscript": 17.9,
@@ -721,8 +721,8 @@
       },
       "ablationThreeSpeedupAvg": {
         "match": true,
-        "measured": 26.73074627859246,
-        "p204": 26.730746278592456
+        "measured": 26.868380749892623,
+        "p204": 26.86838074989262
       },
       "ablationThreeSpeedupMax": {
         "match": true,
@@ -736,8 +736,8 @@
       },
       "ablationTwoSpeedupAvg": {
         "match": true,
-        "measured": 11.078225523069928,
-        "p204": 11.078225523069927
+        "measured": 11.240460005565783,
+        "p204": 11.240460005565783
       },
       "ablationTwoSpeedupMax": {
         "match": true,
@@ -783,8 +783,8 @@
       },
       "ablationTwoSpeedupAvg": {
         "match": true,
-        "measured": 13.709469804501937,
-        "p204": 13.709469804501937
+        "measured": 13.829805724717389,
+        "p204": 13.829805724717389
       },
       "ablationTwoSpeedupMax": {
         "match": true,

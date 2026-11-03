@@ -13,12 +13,12 @@
         "videos": 60
       },
       {
-        "accuracy": -0.6888,
+        "accuracy": 0.3678,
         "config": "param 0",
-        "fps": 555.638427122801,
-        "hota": 0.0560928901670109,
+        "fps": 389.21965821943775,
+        "hota": 0.5433764552721264,
         "predicted_per_segment": [
-          739
+          118
         ],
         "system": "leap",
         "videos": 60
@@ -1070,13 +1070,13 @@
         "videos": 60
       },
       {
-        "accuracy": 0.5157,
+        "accuracy": 0.4806,
         "config": "param 0",
-        "fps": 747.0191859427589,
-        "hota": 0.076668338929593,
+        "fps": 353.51997878880127,
+        "hota": 0.5266317214933866,
         "predicted_per_segment": [
-          196,
-          358
+          82,
+          62
         ],
         "system": "leap",
         "videos": 60
@@ -1982,13 +1982,13 @@
         "videos": 30
       },
       {
-        "accuracy": 0.5128,
+        "accuracy": 0.2392,
         "config": "param 0",
-        "fps": 1012.7740819859374,
-        "hota": 0.1066040084605179,
+        "fps": 487.29601247477797,
+        "hota": 0.13909939038238148,
         "predicted_per_segment": [
-          173,
-          247
+          45,
+          90
         ],
         "system": "leap",
         "videos": 30

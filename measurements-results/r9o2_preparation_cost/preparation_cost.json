@@ -224,7 +224,7 @@
           "instrumented_s": 24891.9,
           "lower_bound_units": 1835,
           "process_hours": 35.587,
-          "process_s": 128113.5,
+          "process_s": 128113.9,
           "recorded_s": 24891.9,
           "stage_shares": {
             "instrumented": {
@@ -264,11 +264,11 @@
               "elapsed_span_s": 40.4,
               "instrumented_s": 475.1,
               "manifest_rows": 21600,
-              "process_s": 532.5,
+              "process_s": 533.0,
               "recorded_s": 475.1,
               "stale_starts": 0,
               "without_sharing_instrumented_s": 1900.6,
-              "without_sharing_process_s": 2130.0,
+              "without_sharing_process_s": 2131.8,
               "work_units": 5400
             },
             "030_exec_compress": {
@@ -327,7 +327,7 @@
           "stale_starts": 0,
           "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
           "without_sharing_instrumented_s": 56063.4,
-          "without_sharing_process_s": 359709.7
+          "without_sharing_process_s": 359711.6
         }
       },
       "extraction": {
@@ -340,7 +340,7 @@
           "tetris": {
             "instrumented": 1049.5275719502336,
             "paper": 1049.5275719502336,
-            "process": 85.6399710092699
+            "process": 85.63969941555374
           }
         },
         "frames": 54011,
@@ -389,7 +389,7 @@
           "tetris": {
             "instrumented": 51.462,
             "paper": 51.462,
-            "process": 630.675
+            "process": 630.677
           }
         },
         "tetris_stages": {
@@ -951,14 +951,14 @@
             "validation_scoring"
           ],
           "process_hours": 46.429,
-          "process_s": 167145.7
+          "process_s": 167146.1
         }
       },
       "totals": {
         "instrumented_hours": 18.156,
         "instrumented_s": 65361.0,
         "process_hours": 48.167,
-        "process_s": 173401.5,
+        "process_s": 173401.9,
         "recorded_lower_bound_hours": 11.661,
         "recorded_lower_bound_omits": [
           "classifier frozen stage",
@@ -1211,7 +1211,7 @@
           "instrumented_s": 18482.0,
           "lower_bound_units": 1835,
           "process_hours": 17.354,
-          "process_s": 62473.0,
+          "process_s": 62473.2,
           "recorded_s": 18482.0,
           "stage_shares": {
             "instrumented": {
@@ -1251,11 +1251,11 @@
               "elapsed_span_s": 26.8,
               "instrumented_s": 228.9,
               "manifest_rows": 21600,
-              "process_s": 276.8,
+              "process_s": 277.1,
               "recorded_s": 228.9,
               "stale_starts": 0,
               "without_sharing_instrumented_s": 915.4,
-              "without_sharing_process_s": 1107.2,
+              "without_sharing_process_s": 1108.2,
               "work_units": 5400
             },
             "030_exec_compress": {
@@ -1314,7 +1314,7 @@
           "stale_starts": 0,
           "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
           "without_sharing_instrumented_s": 32157.1,
-          "without_sharing_process_s": 161288.8
+          "without_sharing_process_s": 161289.8
         }
       },
       "extraction": {
@@ -1925,14 +1925,14 @@
             "validation_scoring"
           ],
           "process_hours": 22.535,
-          "process_s": 81125.9
+          "process_s": 81126.1
         }
       },
       "totals": {
         "instrumented_hours": 11.499,
         "instrumented_s": 41396.3,
         "process_hours": 24.555,
-        "process_s": 88396.9,
+        "process_s": 88397.1,
         "recorded_lower_bound_hours": 7.182,
         "recorded_lower_bound_omits": [
           "classifier frozen stage",
@@ -2196,7 +2196,7 @@
           "instrumented_s": 26058.0,
           "lower_bound_units": 1835,
           "process_hours": 20.436,
-          "process_s": 73569.3,
+          "process_s": 73569.6,
           "recorded_s": 21715.0,
           "stage_shares": {
             "instrumented": {
@@ -2236,11 +2236,11 @@
               "elapsed_span_s": 31.0,
               "instrumented_s": 251.2,
               "manifest_rows": 18000,
-              "process_s": 290.8,
+              "process_s": 291.1,
               "recorded_s": 251.2,
               "stale_starts": 0,
               "without_sharing_instrumented_s": 1004.8,
-              "without_sharing_process_s": 1163.2,
+              "without_sharing_process_s": 1164.2,
               "work_units": 4500
             },
             "030_exec_compress": {
@@ -2299,7 +2299,7 @@
           "stale_starts": 0,
           "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
           "without_sharing_instrumented_s": 39421.5,
-          "without_sharing_process_s": 167360.8
+          "without_sharing_process_s": 167361.9
         }
       },
       "extraction": {
@@ -2476,8 +2476,8 @@
       "retiming": {
         "break_even_with_retiming": {
           "instrumented": {
-            "break_even_video_hours": 32.05,
-            "break_even_video_minutes": 1923.0,
+            "break_even_video_hours": 31.95,
+            "break_even_video_minutes": 1916.7,
             "reference_extraction_s_per_video_minute": 28.543,
             "reference_fps": 31.53,
             "saving_s_per_video_minute": 22.324,
@@ -2485,8 +2485,8 @@
             "tetris_fps": 144.71
           },
           "process": {
-            "break_even_video_hours": 79.41,
-            "break_even_video_minutes": 4764.5,
+            "break_even_video_hours": 79.29,
+            "break_even_video_minutes": 4757.3,
             "reference_extraction_s_per_video_minute": 31.047,
             "reference_fps": 28.99,
             "saving_s_per_video_minute": 19.558,
@@ -2728,7 +2728,7 @@
             "unit": "process seconds of one process"
           },
           "validation_scoring": {
-            "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density); scored 50 of 60 videos (the others lack sweep outputs) and scaled to all",
+            "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
             "cache": {
               "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
               "instrumented_s": 14142.7,
@@ -2736,28 +2736,17 @@
               "recorded_s": 0.0
             },
             "density_cross_check": null,
-            "excluded_videos": [
-              "va00.mp4",
-              "va01.mp4",
-              "va02.mp4",
-              "va03.mp4",
-              "va04.mp4",
-              "va05.mp4",
-              "va06.mp4",
-              "va07.mp4",
-              "va08.mp4",
-              "va09.mp4"
-            ],
-            "instrumented_hours": 2.339,
-            "instrumented_s": 8421.3,
-            "measured_over_cache_process": 0.595,
-            "measured_s": 8421.3,
-            "process_hours": 2.339,
-            "process_s": 8421.3,
+            "excluded_videos": [],
+            "instrumented_hours": 2.3,
+            "instrumented_s": 8280.2,
+            "measured_over_cache_process": 0.585,
+            "measured_s": 8280.2,
+            "process_hours": 2.3,
+            "process_s": 8280.2,
             "processes": 16,
             "processes_per_cpu": 0.4,
             "recorded_s": 0.0,
-            "reference_task_s": 18.5,
+            "reference_task_s": 21.3,
             "replaces": [
               "instrumented",
               "process"
@@ -2768,41 +2757,41 @@
                 "evaluation/p110_accuracy_compute.py",
                 "--valid"
               ],
-              "attempts": 1,
-              "cpu_s": 7069.075,
+              "attempts": 2,
+              "cpu_s": 8311.942,
               "cpu_set_size": 40,
               "cpus": "20-39,60-79",
-              "ended": "2026-10-27T14:22:30+00:00",
+              "ended": "2026-11-03T00:53:16+00:00",
               "env": {
-                "CONFIG": "/scratch/retime/configs/caldot2-y05.p110.yaml",
+                "CONFIG": "/scratch/retime/configs/caldot2-y05.yaml",
                 "CUDA_VISIBLE_DEVICES": "",
                 "PYTHON_CPU_COUNT": "20"
               },
               "gpu_contaminated": false,
               "gpu_foreign_samples": 0,
-              "gpu_samples": 191,
+              "gpu_samples": 377,
               "host": "bombe",
-              "host_busy_cpus": 25.99,
+              "host_busy_cpus": 20.31,
               "launcher_contaminated": false,
               "launcher_exit": 0,
               "launcher_image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
-              "launcher_run": "g4-20261027T061546",
-              "other_busy_cpus": 0.54,
-              "own_cpus": 15.66,
+              "launcher_run": "g4-20261102T164349",
+              "other_busy_cpus": 0.58,
+              "own_cpus": 15.63,
               "physical_gpu": "4",
-              "record_id": "bombe-1-1793110499380580",
-              "seconds": 451.413,
-              "started": "2026-10-27T14:14:59+00:00",
+              "record_id": "bombe-g4-20261102T164349-1-1793666665052909",
+              "seconds": 531.911,
+              "started": "2026-11-03T00:44:25+00:00",
               "uses_gpu": false
             },
-            "scale": 1.2,
-            "scored_videos": 50,
-            "seconds_per_pair": 0.292,
-            "spans_s": 7017.8,
+            "scale": 1.0,
+            "scored_videos": 60,
+            "seconds_per_pair": 0.288,
+            "spans_s": 8280.2,
             "tasks": 480,
             "unit": "process seconds (one TrackEval process per configuration)",
             "valid_videos": 60,
-            "wall_s": 451.4
+            "wall_s": 531.9
           }
         },
         "detector_loading": {
@@ -2871,23 +2860,23 @@
           "cross_checks": [
             "training_data_creation"
           ],
-          "instrumented_hours": 11.925,
-          "instrumented_s": 42929.0,
+          "instrumented_hours": 11.886,
+          "instrumented_s": 42787.9,
           "measured_components": [
             "mistrack_profiling",
             "reference_detection_train",
             "training_data_pruning",
             "validation_scoring"
           ],
-          "process_hours": 25.884,
-          "process_s": 93182.1
+          "process_hours": 25.845,
+          "process_s": 93041.3
         }
       },
       "totals": {
         "instrumented_hours": 13.635,
         "instrumented_s": 49086.9,
         "process_hours": 27.591,
-        "process_s": 99327.4,
+        "process_s": 99327.7,
         "recorded_lower_bound_hours": 7.851,
         "recorded_lower_bound_omits": [
           "classifier frozen stage",
@@ -2946,22 +2935,22 @@
       "break_even": {
         "frames_per_video_minute": 900.0,
         "instrumented": {
-          "break_even_video_hours": 7.81,
-          "break_even_video_minutes": 468.7,
+          "break_even_video_hours": 7.95,
+          "break_even_video_minutes": 477.1,
           "reference_extraction_s_per_video_minute": 60.119,
           "reference_fps": 14.97,
-          "saving_s_per_video_minute": 56.584,
-          "tetris_extraction_s_per_video_minute": 3.535,
-          "tetris_fps": 254.63
+          "saving_s_per_video_minute": 56.707,
+          "tetris_extraction_s_per_video_minute": 3.412,
+          "tetris_fps": 263.76
         },
         "process": {
-          "break_even_video_hours": 11.1,
-          "break_even_video_minutes": 665.8,
+          "break_even_video_hours": 11.34,
+          "break_even_video_minutes": 680.6,
           "reference_extraction_s_per_video_minute": 63.983,
           "reference_fps": 14.07,
-          "saving_s_per_video_minute": 52.418,
-          "tetris_extraction_s_per_video_minute": 11.566,
-          "tetris_fps": 77.82
+          "saving_s_per_video_minute": 52.064,
+          "tetris_extraction_s_per_video_minute": 11.919,
+          "tetris_fps": 75.51
         }
       },
       "components": {
@@ -3103,14 +3092,14 @@
         "validation_scoring": {
           "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
           "estimated": true,
-          "instrumented_hours": 0.688,
-          "instrumented_s": 2476.1,
+          "instrumented_hours": 0.836,
+          "instrumented_s": 3008.4,
           "pairs": 355,
-          "process_hours": 0.688,
-          "process_s": 2476.1,
+          "process_hours": 0.836,
+          "process_s": 3008.4,
           "recorded_s": 0.0,
-          "seconds": 366.25,
-          "seconds_per_pair": 1.032,
+          "seconds": 444.992,
+          "seconds_per_pair": 1.253,
           "tasks": 71,
           "unit": "process seconds (one TrackEval process per configuration)",
           "unusable_tasks": 0,
@@ -3141,7 +3130,7 @@
           "instrumented_s": 19960.8,
           "lower_bound_units": 1835,
           "process_hours": 7.814,
-          "process_s": 28131.2,
+          "process_s": 28131.6,
           "recorded_s": 19960.8,
           "stage_shares": {
             "instrumented": {
@@ -3181,11 +3170,11 @@
               "elapsed_span_s": 17.8,
               "instrumented_s": 84.3,
               "manifest_rows": 1800,
-              "process_s": 89.9,
+              "process_s": 90.3,
               "recorded_s": 84.3,
               "stale_starts": 0,
               "without_sharing_instrumented_s": 337.1,
-              "without_sharing_process_s": 359.5,
+              "without_sharing_process_s": 361.1,
               "work_units": 450
             },
             "030_exec_compress": {
@@ -3244,7 +3233,7 @@
           "stale_starts": 0,
           "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
           "without_sharing_instrumented_s": 26686.5,
-          "without_sharing_process_s": 52980.6
+          "without_sharing_process_s": 52982.2
         }
       },
       "extraction": {
@@ -3255,9 +3244,9 @@
             "process": 14.06621093148365
           },
           "tetris": {
-            "instrumented": 254.62871187618566,
-            "paper": 254.62871187618566,
-            "process": 77.81715255713857
+            "instrumented": 263.7634673027583,
+            "paper": 263.7634673027583,
+            "process": 75.508139888452
           }
         },
         "frames": 5375,
@@ -3267,7 +3256,7 @@
         },
         "process_over_paper": {
           "reference": 1.049,
-          "tetris": 3.272
+          "tetris": 3.493
         },
         "reference_stages": {
           "001_preprocess_groundtruth_detection": {
@@ -3304,9 +3293,9 @@
             "process": 382.121
           },
           "tetris": {
-            "instrumented": 21.109,
-            "paper": 21.109,
-            "process": 69.072
+            "instrumented": 20.378,
+            "paper": 20.378,
+            "process": 71.184
           }
         },
         "tetris_stages": {
@@ -3323,30 +3312,43 @@
             "without_sharing_process_s": 39.8,
             "work_units": 5
           },
+          "022_exec_prune_polyominoes": {
+            "chained_units": 4,
+            "decode_s": 0.0,
+            "elapsed_span_s": 0.5,
+            "instrumented_s": 0.5,
+            "manifest_rows": 5,
+            "process_s": 0.6,
+            "recorded_s": 0.5,
+            "stale_starts": 0,
+            "without_sharing_instrumented_s": 0.5,
+            "without_sharing_process_s": 0.6,
+            "work_units": 5
+          },
           "030_exec_compress": {
             "chained_units": 4,
             "decode_s": 0.0,
-            "elapsed_span_s": 12.5,
-            "instrumented_s": 2.0,
+            "elapsed_span_s": 15.2,
+            "instrumented_s": 1.9,
             "manifest_rows": 5,
-            "process_s": 12.5,
-            "recorded_s": 2.0,
+            "process_s": 15.2,
+            "recorded_s": 1.9,
             "stale_starts": 0,
-            "without_sharing_instrumented_s": 2.0,
-            "without_sharing_process_s": 12.5,
+            "without_sharing_instrumented_s": 1.9,
+            "without_sharing_process_s": 15.2,
             "work_units": 5
           },
           "040_exec_detect": {
             "chained_units": 4,
             "decode_s": 0.0,
-            "elapsed_span_s": 15.6,
-            "instrumented_s": 15.5,
+            "elapsed_span_s": 14.2,
+            "instrumented_s": 14.2,
             "manifest_rows": 5,
-            "process_s": 15.6,
-            "recorded_s": 15.5,
+            "process_s": 14.2,
+            "recorded_s": 14.2,
             "stale_starts": 0,
-            "without_sharing_instrumented_s": 15.5,
-            "without_sharing_process_s": 15.6,
+            "without_sharing_instrumented_s": 14.2,
+            "without_sharing_process_s": 14.2,
             "work_units": 5
           },
           "050_exec_uncompress": {
@@ -3365,14 +3367,14 @@
           "060_exec_track": {
             "chained_units": 4,
             "decode_s": 0.0,
-            "elapsed_span_s": 0.9,
-            "instrumented_s": 0.5,
+            "elapsed_span_s": 1.2,
+            "instrumented_s": 0.6,
             "manifest_rows": 5,
-            "process_s": 0.9,
-            "recorded_s": 0.5,
+            "process_s": 1.2,
+            "recorded_s": 0.6,
             "stale_starts": 0,
-            "without_sharing_instrumented_s": 0.5,
-            "without_sharing_process_s": 0.9,
+            "without_sharing_instrumented_s": 0.6,
+            "without_sharing_process_s": 1.2,
             "work_units": 5
           }
         }
@@ -3401,42 +3403,42 @@
         "training_data_pruning": "p013 (deletes never-relevant tiles' training images) writes no timings"
       },
       "operating_point": {
-        "bound": 0.7653,
+        "bound": 0.7469,
         "classifier": "ShuffleNet05",
-        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
-        "fps": 254.6287,
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "fps": 263.7635,
         "frames": 5375,
-        "hota": 0.779,
+        "hota": 0.7542,
         "loss": 0.05,
         "provisional": "pending R1.O1 re-scoring of B3D",
         "reference_fps": 14.7533,
-        "reference_hota": 0.8056,
+        "reference_hota": 0.7862,
         "reference_time_s": 364.3242,
         "sample_rate": 4,
         "test_frames": 5375,
         "tilesize": 60,
-        "time_s": 21.1092,
+        "time_s": 20.3781,
         "tracker": "sortcython"
       },
       "retiming": {
         "break_even_with_retiming": {
           "instrumented": {
-            "break_even_video_hours": 7.54,
-            "break_even_video_minutes": 452.2,
+            "break_even_video_hours": 7.52,
+            "break_even_video_minutes": 451.2,
             "reference_extraction_s_per_video_minute": 60.119,
             "reference_fps": 14.97,
-            "saving_s_per_video_minute": 56.584,
-            "tetris_extraction_s_per_video_minute": 3.535,
-            "tetris_fps": 254.63
+            "saving_s_per_video_minute": 56.707,
+            "tetris_extraction_s_per_video_minute": 3.412,
+            "tetris_fps": 263.76
           },
           "process": {
-            "break_even_video_hours": 10.81,
-            "break_even_video_minutes": 648.5,
+            "break_even_video_hours": 10.88,
+            "break_even_video_minutes": 652.9,
             "reference_extraction_s_per_video_minute": 63.983,
             "reference_fps": 14.07,
-            "saving_s_per_video_minute": 52.418,
-            "tetris_extraction_s_per_video_minute": 11.566,
-            "tetris_fps": 77.82
+            "saving_s_per_video_minute": 52.064,
+            "tetris_extraction_s_per_video_minute": 11.919,
+            "tetris_fps": 75.51
           }
         },
         "components": {
@@ -3676,8 +3678,8 @@
             "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
             "cache": {
               "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
-              "instrumented_s": 2476.1,
-              "process_s": 2476.1,
+              "instrumented_s": 3008.4,
+              "process_s": 3008.4,
               "recorded_s": 0.0
             },
             "density_cross_check": {
@@ -3725,7 +3727,7 @@
             "excluded_videos": [],
             "instrumented_hours": 0.431,
             "instrumented_s": 1551.1,
-            "measured_over_cache_process": 0.626,
+            "measured_over_cache_process": 0.516,
             "measured_s": 1551.1,
             "process_hours": 0.431,
             "process_s": 1551.1,
@@ -3855,14 +3857,14 @@
             "validation_scoring"
           ],
           "process_hours": 9.443,
-          "process_s": 33994.4
+          "process_s": 33994.8
         }
       },
       "totals": {
-        "instrumented_hours": 7.367,
-        "instrumented_s": 26520.6,
-        "process_hours": 9.695,
-        "process_s": 34901.6,
+        "instrumented_hours": 7.515,
+        "instrumented_s": 27052.9,
+        "process_hours": 9.843,
+        "process_s": 35434.3,
         "recorded_lower_bound_hours": 6.253,
         "recorded_lower_bound_omits": [
           "classifier frozen stage",
@@ -3875,23 +3877,23 @@
         "shares": {
           "instrumented": {
             "classifier_optimization": 0.0011,
-            "classifier_training": 0.1024,
+            "classifier_training": 0.1004,
             "mistrack_profiling": 0.0028,
-            "reference_detection_train": 0.0178,
-            "reference_outputs_valid": 0.0136,
-            "training_data_creation": 0.0163,
-            "validation_scoring": 0.0934,
-            "validation_sweep": 0.7527
+            "reference_detection_train": 0.0175,
+            "reference_outputs_valid": 0.0133,
+            "training_data_creation": 0.016,
+            "validation_scoring": 0.1112,
+            "validation_sweep": 0.7378
           },
           "process": {
             "classifier_optimization": 0.0008,
-            "classifier_training": 0.0778,
+            "classifier_training": 0.0766,
             "mistrack_profiling": 0.0021,
-            "reference_detection_train": 0.0137,
-            "reference_outputs_valid": 0.011,
-            "training_data_creation": 0.0176,
-            "validation_scoring": 0.0709,
-            "validation_sweep": 0.806
+            "reference_detection_train": 0.0135,
+            "reference_outputs_valid": 0.0108,
+            "training_data_creation": 0.0173,
+            "validation_scoring": 0.0849,
+            "validation_sweep": 0.7939
           }
         }
       },
@@ -3920,8 +3922,8 @@
       "break_even": {
         "frames_per_video_minute": 900.0,
         "instrumented": {
-          "break_even_video_hours": 8.25,
-          "break_even_video_minutes": 495.3,
+          "break_even_video_hours": 8.41,
+          "break_even_video_minutes": 504.5,
           "reference_extraction_s_per_video_minute": 61.547,
           "reference_fps": 14.62,
           "saving_s_per_video_minute": 58.949,
@@ -3929,8 +3931,8 @@
           "tetris_fps": 346.5
         },
         "process": {
-          "break_even_video_hours": 11.1,
-          "break_even_video_minutes": 666.3,
+          "break_even_video_hours": 11.27,
+          "break_even_video_minutes": 676.0,
           "reference_extraction_s_per_video_minute": 65.592,
           "reference_fps": 13.72,
           "saving_s_per_video_minute": 55.377,
@@ -4077,14 +4079,14 @@
         "validation_scoring": {
           "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
           "estimated": true,
-          "instrumented_hours": 0.661,
-          "instrumented_s": 2380.1,
+          "instrumented_hours": 0.811,
+          "instrumented_s": 2920.7,
           "pairs": 350,
-          "process_hours": 0.661,
-          "process_s": 2380.1,
+          "process_hours": 0.811,
+          "process_s": 2920.7,
           "recorded_s": 0.0,
-          "seconds": 347.093,
-          "seconds_per_pair": 0.992,
+          "seconds": 425.936,
+          "seconds_per_pair": 1.217,
           "tasks": 70,
           "unit": "process seconds (one TrackEval process per configuration)",
           "unusable_tasks": 0,
@@ -4115,7 +4117,7 @@
           "instrumented_s": 23606.0,
           "lower_bound_units": 1835,
           "process_hours": 8.645,
-          "process_s": 31122.1,
+          "process_s": 31122.4,
           "recorded_s": 23606.0,
           "stage_shares": {
             "instrumented": {
@@ -4155,11 +4157,11 @@
               "elapsed_span_s": 16.3,
               "instrumented_s": 68.9,
               "manifest_rows": 1800,
-              "process_s": 73.7,
+              "process_s": 74.0,
               "recorded_s": 68.9,
               "stale_starts": 0,
               "without_sharing_instrumented_s": 275.7,
-              "without_sharing_process_s": 294.8,
+              "without_sharing_process_s": 296.0,
               "work_units": 450
             },
             "030_exec_compress": {
@@ -4218,7 +4220,7 @@
           "stale_starts": 0,
           "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
           "without_sharing_instrumented_s": 31019.3,
-          "without_sharing_process_s": 54804.4
+          "without_sharing_process_s": 54805.6
         }
       },
       "extraction": {
@@ -4375,16 +4377,16 @@
         "training_data_pruning": "p013 (deletes never-relevant tiles' training images) writes no timings"
       },
       "operating_point": {
-        "bound": 0.7744,
+        "bound": 0.7255,
         "classifier": "ShuffleNet05",
         "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
         "fps": 346.498,
         "frames": 4691,
-        "hota": 0.7841,
+        "hota": 0.7314,
         "loss": 0.05,
         "provisional": "pending R1.O1 re-scoring of B3D",
         "reference_fps": 14.4105,
-        "reference_hota": 0.8151,
+        "reference_hota": 0.7637,
         "reference_time_s": 325.5274,
         "sample_rate": 8,
         "test_frames": 4691,
@@ -4650,15 +4652,15 @@
             "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
             "cache": {
               "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
-              "instrumented_s": 2380.1,
-              "process_s": 2380.1,
+              "instrumented_s": 2920.7,
+              "process_s": 2920.7,
               "recorded_s": 0.0
             },
             "density_cross_check": null,
             "excluded_videos": [],
             "instrumented_hours": 0.422,
             "instrumented_s": 1517.6,
-            "measured_over_cache_process": 0.638,
+            "measured_over_cache_process": 0.52,
             "measured_s": 1517.6,
             "process_hours": 0.422,
             "process_s": 1517.6,
@@ -4788,14 +4790,14 @@
             "validation_scoring"
           ],
           "process_hours": 10.01,
-          "process_s": 36037.4
+          "process_s": 36037.7
         }
       },
       "totals": {
-        "instrumented_hours": 8.11,
-        "instrumented_s": 29197.4,
-        "process_hours": 10.249,
-        "process_s": 36896.1,
+        "instrumented_hours": 8.261,
+        "instrumented_s": 29738.0,
+        "process_hours": 10.399,
+        "process_s": 37437.0,
         "recorded_lower_bound_hours": 7.126,
         "recorded_lower_bound_omits": [
           "classifier frozen stage",
@@ -4808,23 +4810,23 @@
         "shares": {
           "instrumented": {
             "classifier_optimization": 0.001,
-            "classifier_training": 0.0691,
+            "classifier_training": 0.0679,
             "mistrack_profiling": 0.0025,
-            "reference_detection_train": 0.0142,
-            "reference_outputs_valid": 0.011,
-            "training_data_creation": 0.012,
-            "validation_scoring": 0.0815,
-            "validation_sweep": 0.8085
+            "reference_detection_train": 0.014,
+            "reference_outputs_valid": 0.0108,
+            "training_data_creation": 0.0118,
+            "validation_scoring": 0.0982,
+            "validation_sweep": 0.7938
           },
           "process": {
             "classifier_optimization": 0.0008,
-            "classifier_training": 0.0547,
+            "classifier_training": 0.0539,
             "mistrack_profiling": 0.002,
-            "reference_detection_train": 0.0115,
-            "reference_outputs_valid": 0.0093,
-            "training_data_creation": 0.0137,
-            "validation_scoring": 0.0645,
-            "validation_sweep": 0.8435
+            "reference_detection_train": 0.0113,
+            "reference_outputs_valid": 0.0092,
+            "training_data_creation": 0.0135,
+            "validation_scoring": 0.078,
+            "validation_sweep": 0.8313
           }
         }
       },
@@ -4853,8 +4855,8 @@
       "break_even": {
         "frames_per_video_minute": 900.0,
         "instrumented": {
-          "break_even_video_hours": 7.39,
-          "break_even_video_minutes": 443.5,
+          "break_even_video_hours": 7.54,
+          "break_even_video_minutes": 452.3,
           "reference_extraction_s_per_video_minute": 60.969,
           "reference_fps": 14.76,
           "saving_s_per_video_minute": 57.817,
@@ -4862,11 +4864,11 @@
           "tetris_fps": 285.59
         },
         "process": {
-          "break_even_video_hours": 10.44,
-          "break_even_video_minutes": 626.3,
+          "break_even_video_hours": 10.59,
+          "break_even_video_minutes": 635.7,
           "reference_extraction_s_per_video_minute": 64.979,
           "reference_fps": 13.85,
-          "saving_s_per_video_minute": 53.875,
+          "saving_s_per_video_minute": 53.874,
           "tetris_extraction_s_per_video_minute": 11.104,
           "tetris_fps": 81.05
         }
@@ -5010,14 +5012,14 @@
         "validation_scoring": {
           "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
           "estimated": true,
-          "instrumented_hours": 0.66,
-          "instrumented_s": 2377.4,
+          "instrumented_hours": 0.8,
+          "instrumented_s": 2880.9,
           "pairs": 370,
-          "process_hours": 0.66,
-          "process_s": 2377.4,
+          "process_hours": 0.8,
+          "process_s": 2880.9,
           "recorded_s": 0.0,
-          "seconds": 366.511,
-          "seconds_per_pair": 0.991,
+          "seconds": 444.141,
+          "seconds_per_pair": 1.2,
           "tasks": 74,
           "unit": "process seconds (one TrackEval process per configuration)",
           "unusable_tasks": 0,
@@ -5048,7 +5050,7 @@
           "instrumented_s": 19238.6,
           "lower_bound_units": 1835,
           "process_hours": 7.533,
-          "process_s": 27119.8,
+          "process_s": 27120.2,
           "recorded_s": 19238.6,
           "stage_shares": {
             "instrumented": {
@@ -5062,7 +5064,7 @@
             "process": {
               "020_exec_classify": 0.0073,
               "022_exec_prune_polyominoes": 0.0031,
-              "030_exec_compress": 0.3125,
+              "030_exec_compress": 0.3124,
               "040_exec_detect": 0.6354,
               "050_exec_uncompress": 0.01,
               "060_exec_track": 0.0319
@@ -5088,11 +5090,11 @@
               "elapsed_span_s": 17.8,
               "instrumented_s": 78.3,
               "manifest_rows": 1800,
-              "process_s": 82.8,
+              "process_s": 83.2,
               "recorded_s": 78.3,
               "stale_starts": 0,
               "without_sharing_instrumented_s": 313.2,
-              "without_sharing_process_s": 331.2,
+              "without_sharing_process_s": 332.8,
               "work_units": 450
             },
             "030_exec_compress": {
@@ -5151,7 +5153,7 @@
           "stale_starts": 0,
           "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
           "without_sharing_instrumented_s": 26080.2,
-          "without_sharing_process_s": 51376.3
+          "without_sharing_process_s": 51377.9
         }
       },
       "extraction": {
@@ -5164,7 +5166,7 @@
           "tetris": {
             "instrumented": 285.59328158197616,
             "paper": 285.59328158197616,
-            "process": 81.05290927625693
+            "process": 81.04911344860929
           }
         },
         "frames": 5192,
@@ -5213,7 +5215,7 @@
           "tetris": {
             "instrumented": 18.18,
             "paper": 18.18,
-            "process": 64.057
+            "process": 64.06
           }
         },
         "tetris_stages": {
@@ -5321,16 +5323,16 @@
         "training_data_pruning": "p013 (deletes never-relevant tiles' training images) writes no timings"
       },
       "operating_point": {
-        "bound": 0.7937,
+        "bound": 0.7703,
         "classifier": "ShuffleNet05",
         "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
         "fps": 285.5933,
         "frames": 5192,
-        "hota": 0.8013,
+        "hota": 0.789,
         "loss": 0.05,
         "provisional": "pending R1.O1 re-scoring of B3D",
         "reference_fps": 14.5389,
-        "reference_hota": 0.8355,
+        "reference_hota": 0.8109,
         "reference_time_s": 357.1108,
         "sample_rate": 4,
         "test_frames": 5192,
@@ -5354,7 +5356,7 @@
             "break_even_video_minutes": 609.4,
             "reference_extraction_s_per_video_minute": 64.979,
             "reference_fps": 13.85,
-            "saving_s_per_video_minute": 53.875,
+            "saving_s_per_video_minute": 53.874,
             "tetris_extraction_s_per_video_minute": 11.104,
             "tetris_fps": 81.05
           }
@@ -5596,15 +5598,15 @@
             "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
             "cache": {
               "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
-              "instrumented_s": 2377.4,
-              "process_s": 2377.4,
+              "instrumented_s": 2880.9,
+              "process_s": 2880.9,
               "recorded_s": 0.0
             },
             "density_cross_check": null,
             "excluded_videos": [],
             "instrumented_hours": 0.408,
             "instrumented_s": 1467.9,
-            "measured_over_cache_process": 0.617,
+            "measured_over_cache_process": 0.51,
             "measured_s": 1467.9,
             "process_hours": 0.408,
             "process_s": 1467.9,
@@ -5734,14 +5736,14 @@
             "validation_scoring"
           ],
           "process_hours": 9.12,
-          "process_s": 32831.9
+          "process_s": 32832.3
         }
       },
       "totals": {
-        "instrumented_hours": 7.124,
-        "instrumented_s": 25644.8,
-        "process_hours": 9.373,
-        "process_s": 33741.9,
+        "instrumented_hours": 7.263,
+        "instrumented_s": 26148.3,
+        "process_hours": 9.513,
+        "process_s": 34245.8,
         "recorded_lower_bound_hours": 6.051,
         "recorded_lower_bound_omits": [
           "classifier frozen stage",
@@ -5754,23 +5756,23 @@
         "shares": {
           "instrumented": {
             "classifier_optimization": 0.0011,
-            "classifier_training": 0.1034,
-            "mistrack_profiling": 0.0028,
-            "reference_detection_train": 0.0178,
-            "reference_outputs_valid": 0.0138,
-            "training_data_creation": 0.0181,
-            "validation_scoring": 0.0927,
-            "validation_sweep": 0.7502
+            "classifier_training": 0.1014,
+            "mistrack_profiling": 0.0027,
+            "reference_detection_train": 0.0175,
+            "reference_outputs_valid": 0.0135,
+            "training_data_creation": 0.0178,
+            "validation_scoring": 0.1102,
+            "validation_sweep": 0.7357
           },
           "process": {
-            "classifier_optimization": 0.0009,
-            "classifier_training": 0.0786,
+            "classifier_optimization": 0.0008,
+            "classifier_training": 0.0774,
             "mistrack_profiling": 0.0021,
-            "reference_detection_train": 0.0138,
-            "reference_outputs_valid": 0.0112,
-            "training_data_creation": 0.0192,
-            "validation_scoring": 0.0705,
-            "validation_sweep": 0.8037
+            "reference_detection_train": 0.0136,
+            "reference_outputs_valid": 0.011,
+            "training_data_creation": 0.0189,
+            "validation_scoring": 0.0841,
+            "validation_sweep": 0.7919
           }
         }
       },
@@ -5799,22 +5801,22 @@
       "break_even": {
         "frames_per_video_minute": 900.0,
         "instrumented": {
-          "break_even_video_hours": 5.11,
-          "break_even_video_minutes": 306.5,
+          "break_even_video_hours": 5.07,
+          "break_even_video_minutes": 304.0,
           "reference_extraction_s_per_video_minute": 61.095,
           "reference_fps": 14.73,
-          "saving_s_per_video_minute": 58.966,
-          "tetris_extraction_s_per_video_minute": 2.128,
-          "tetris_fps": 422.87
+          "saving_s_per_video_minute": 58.991,
+          "tetris_extraction_s_per_video_minute": 2.103,
+          "tetris_fps": 427.87
         },
         "process": {
-          "break_even_video_hours": 7.89,
-          "break_even_video_minutes": 473.3,
+          "break_even_video_hours": 7.74,
+          "break_even_video_minutes": 464.6,
           "reference_extraction_s_per_video_minute": 65.079,
           "reference_fps": 13.83,
-          "saving_s_per_video_minute": 54.507,
-          "tetris_extraction_s_per_video_minute": 10.571,
-          "tetris_fps": 85.14
+          "saving_s_per_video_minute": 55.223,
+          "tetris_extraction_s_per_video_minute": 9.856,
+          "tetris_fps": 91.31
         }
       },
       "components": {
@@ -5956,14 +5958,14 @@
         "validation_scoring": {
           "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
           "estimated": true,
-          "instrumented_hours": 0.645,
-          "instrumented_s": 2321.6,
+          "instrumented_hours": 0.605,
+          "instrumented_s": 2177.5,
           "pairs": 320,
-          "process_hours": 0.645,
-          "process_s": 2321.6,
+          "process_hours": 0.605,
+          "process_s": 2177.5,
           "recorded_s": 0.0,
-          "seconds": 309.547,
-          "seconds_per_pair": 0.967,
+          "seconds": 290.334,
+          "seconds_per_pair": 0.907,
           "tasks": 64,
           "unit": "process seconds (one TrackEval process per configuration)",
           "unusable_tasks": 0,
@@ -5994,7 +5996,7 @@
           "instrumented_s": 12225.1,
           "lower_bound_units": 1835,
           "process_hours": 5.485,
-          "process_s": 19745.6,
+          "process_s": 19745.9,
           "recorded_s": 12225.1,
           "stage_shares": {
             "instrumented": {
@@ -6007,7 +6009,7 @@
             },
             "process": {
               "020_exec_classify": 0.0101,
-              "022_exec_prune_polyominoes": 0.0032,
+              "022_exec_prune_polyominoes": 0.0033,
               "030_exec_compress": 0.3917,
               "040_exec_detect": 0.5481,
               "050_exec_uncompress": 0.0091,
@@ -6034,11 +6036,11 @@
               "elapsed_span_s": 16.6,
               "instrumented_s": 59.1,
               "manifest_rows": 1800,
-              "process_s": 64.1,
+              "process_s": 64.5,
               "recorded_s": 59.1,
               "stale_starts": 0,
               "without_sharing_instrumented_s": 236.4,
-              "without_sharing_process_s": 256.5,
+              "without_sharing_process_s": 257.9,
               "work_units": 450
             },
             "030_exec_compress": {
@@ -6097,7 +6099,7 @@
           "stale_starts": 0,
           "unit": "process seconds, summed over work units (single-worker equivalent, not elapsed time)",
           "without_sharing_instrumented_s": 17473.6,
-          "without_sharing_process_s": 42721.3
+          "without_sharing_process_s": 42722.7
         }
       },
       "extraction": {
@@ -6108,9 +6110,9 @@
             "process": 13.829400696199182
           },
           "tetris": {
-            "instrumented": 422.8733215698087,
-            "paper": 422.8733215698087,
-            "process": 85.13509863869689
+            "instrumented": 427.8707965352292,
+            "paper": 427.8707965352292,
+            "process": 91.31465080740875
           }
         },
         "frames": 5225,
@@ -6120,7 +6122,7 @@
         },
         "process_over_paper": {
           "reference": 1.05,
-          "tetris": 4.967
+          "tetris": 4.686
         },
         "reference_stages": {
           "001_preprocess_groundtruth_detection": {
@@ -6157,9 +6159,9 @@
             "process": 377.818
           },
           "tetris": {
-            "instrumented": 12.356,
-            "paper": 12.356,
-            "process": 61.373
+            "instrumented": 12.212,
+            "paper": 12.212,
+            "process": 57.22
           }
         },
         "tetris_stages": {
@@ -6180,39 +6182,39 @@
             "chained_units": 4,
             "decode_s": 0.0,
             "elapsed_span_s": 0.3,
-            "instrumented_s": 0.4,
+            "instrumented_s": 0.5,
             "manifest_rows": 5,
             "process_s": 0.5,
-            "recorded_s": 0.4,
+            "recorded_s": 0.5,
             "stale_starts": 0,
-            "without_sharing_instrumented_s": 0.4,
+            "without_sharing_instrumented_s": 0.5,
             "without_sharing_process_s": 0.5,
             "work_units": 5
           },
           "030_exec_compress": {
             "chained_units": 4,
             "decode_s": 0.0,
-            "elapsed_span_s": 14.7,
-            "instrumented_s": 1.1,
+            "elapsed_span_s": 10.3,
+            "instrumented_s": 0.8,
             "manifest_rows": 5,
-            "process_s": 14.7,
-            "recorded_s": 1.1,
+            "process_s": 10.3,
+            "recorded_s": 0.8,
             "stale_starts": 0,
-            "without_sharing_instrumented_s": 1.1,
-            "without_sharing_process_s": 14.7,
+            "without_sharing_instrumented_s": 0.8,
+            "without_sharing_process_s": 10.3,
             "work_units": 5
           },
           "040_exec_detect": {
             "chained_units": 4,
             "decode_s": 0.0,
-            "elapsed_span_s": 7.0,
-            "instrumented_s": 7.0,
+            "elapsed_span_s": 7.2,
+            "instrumented_s": 7.2,
             "manifest_rows": 5,
-            "process_s": 7.0,
-            "recorded_s": 7.0,
+            "process_s": 7.2,
+            "recorded_s": 7.2,
             "stale_starts": 0,
-            "without_sharing_instrumented_s": 7.0,
-            "without_sharing_process_s": 7.0,
+            "without_sharing_instrumented_s": 7.2,
+            "without_sharing_process_s": 7.2,
             "work_units": 5
           },
           "050_exec_uncompress": {
@@ -6231,14 +6233,14 @@
           "060_exec_track": {
             "chained_units": 4,
             "decode_s": 0.0,
-            "elapsed_span_s": 1.3,
-            "instrumented_s": 0.6,
+            "elapsed_span_s": 1.2,
+            "instrumented_s": 0.5,
             "manifest_rows": 5,
-            "process_s": 1.3,
-            "recorded_s": 0.6,
+            "process_s": 1.2,
+            "recorded_s": 0.5,
             "stale_starts": 0,
-            "without_sharing_instrumented_s": 0.6,
-            "without_sharing_process_s": 1.3,
+            "without_sharing_instrumented_s": 0.5,
+            "without_sharing_process_s": 1.2,
             "work_units": 5
           }
         }
@@ -6267,42 +6269,42 @@
         "training_data_pruning": "p013 (deletes never-relevant tiles' training images) writes no timings"
       },
       "operating_point": {
-        "bound": 0.803,
+        "bound": 0.7908,
         "classifier": "ShuffleNet05",
-        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
-        "fps": 422.8733,
+        "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+        "fps": 427.8708,
         "frames": 5225,
-        "hota": 0.8051,
+        "hota": 0.7996,
         "loss": 0.05,
         "provisional": "pending R1.O1 re-scoring of B3D",
         "reference_fps": 14.5159,
-        "reference_hota": 0.8453,
+        "reference_hota": 0.8324,
         "reference_time_s": 359.9504,
         "sample_rate": 4,
         "test_frames": 5225,
         "tilesize": 60,
-        "time_s": 12.3559,
+        "time_s": 12.2116,
         "tracker": "sortcython"
       },
       "retiming": {
         "break_even_with_retiming": {
           "instrumented": {
-            "break_even_video_hours": 4.86,
-            "break_even_video_minutes": 291.3,
+            "break_even_video_hours": 4.85,
+            "break_even_video_minutes": 291.2,
             "reference_extraction_s_per_video_minute": 61.095,
             "reference_fps": 14.73,
-            "saving_s_per_video_minute": 58.966,
-            "tetris_extraction_s_per_video_minute": 2.128,
-            "tetris_fps": 422.87
+            "saving_s_per_video_minute": 58.991,
+            "tetris_extraction_s_per_video_minute": 2.103,
+            "tetris_fps": 427.87
           },
           "process": {
-            "break_even_video_hours": 7.62,
-            "break_even_video_minutes": 457.1,
+            "break_even_video_hours": 7.52,
+            "break_even_video_minutes": 451.2,
             "reference_extraction_s_per_video_minute": 65.079,
             "reference_fps": 13.83,
-            "saving_s_per_video_minute": 54.507,
-            "tetris_extraction_s_per_video_minute": 10.571,
-            "tetris_fps": 85.14
+            "saving_s_per_video_minute": 55.223,
+            "tetris_extraction_s_per_video_minute": 9.856,
+            "tetris_fps": 91.31
           }
         },
         "components": {
@@ -6542,15 +6544,15 @@
             "basis": "measured: p110 --valid re-run, each configuration task's span (output directory creation to last result file), summed, at 16 TrackEval processes on 40 CPUs (deployed: 0.8 per CPU, 64 on ace's 80; the estimate's test-split runs were at that density)",
             "cache": {
               "basis": "estimate: test-split p110 seconds per (configuration, video) x validation configurations x videos",
-              "instrumented_s": 2321.6,
-              "process_s": 2321.6,
+              "instrumented_s": 2177.5,
+              "process_s": 2177.5,
               "recorded_s": 0.0
             },
             "density_cross_check": null,
             "excluded_videos": [],
             "instrumented_hours": 0.396,
             "instrumented_s": 1427.3,
-            "measured_over_cache_process": 0.615,
+            "measured_over_cache_process": 0.655,
             "measured_s": 1427.3,
             "process_hours": 0.396,
             "process_s": 1427.3,
@@ -6680,14 +6682,14 @@
             "validation_scoring"
           ],
           "process_hours": 6.921,
-          "process_s": 24917.0
+          "process_s": 24917.3
         }
       },
       "totals": {
-        "instrumented_hours": 5.021,
-        "instrumented_s": 18074.6,
-        "process_hours": 7.167,
-        "process_s": 25800.5,
+        "instrumented_hours": 4.981,
+        "instrumented_s": 17930.5,
+        "process_hours": 7.127,
+        "process_s": 25656.7,
         "recorded_lower_bound_hours": 4.027,
         "recorded_lower_bound_omits": [
           "classifier frozen stage",
@@ -6700,23 +6702,23 @@
         "shares": {
           "instrumented": {
             "classifier_optimization": 0.0016,
-            "classifier_training": 0.1228,
+            "classifier_training": 0.1238,
             "mistrack_profiling": 0.004,
-            "reference_detection_train": 0.0254,
-            "reference_outputs_valid": 0.0195,
-            "training_data_creation": 0.0218,
-            "validation_scoring": 0.1284,
-            "validation_sweep": 0.6764
+            "reference_detection_train": 0.0256,
+            "reference_outputs_valid": 0.0197,
+            "training_data_creation": 0.022,
+            "validation_scoring": 0.1214,
+            "validation_sweep": 0.6818
           },
           "process": {
             "classifier_optimization": 0.0011,
-            "classifier_training": 0.086,
+            "classifier_training": 0.0865,
             "mistrack_profiling": 0.0028,
-            "reference_detection_train": 0.0181,
-            "reference_outputs_valid": 0.0146,
-            "training_data_creation": 0.022,
-            "validation_scoring": 0.09,
-            "validation_sweep": 0.7653
+            "reference_detection_train": 0.0182,
+            "reference_outputs_valid": 0.0147,
+            "training_data_creation": 0.0221,
+            "validation_scoring": 0.0849,
+            "validation_sweep": 0.7696
           }
         }
       },

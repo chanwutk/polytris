@@ -1,0 +1,386 @@
+{
+  "datasets": {
+    "jnc0": {
+      "tetris": {
+        "reference_hota": {
+          "old": 0.8056165050815967,
+          "new": 0.7862202264503519
+        },
+        "tetris_hota_shift": {
+          "configs": 71,
+          "mean_delta": -0.01048535523702124,
+          "min_delta": -0.017073272785573135,
+          "max_delta": 0.0006266740660013925
+        },
+        "operating_points": {
+          "0.05": {
+            "old": {
+              "side": "old",
+              "variant_id": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+              "throughput_fps": 254.62871187618572,
+              "HOTA_HOTA": 0.7790148226312216
+            },
+            "new": {
+              "side": "new",
+              "variant_id": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+              "throughput_fps": 263.7634673027583,
+              "HOTA_HOTA": 0.7541645710206155
+            },
+            "moved": true
+          },
+          "0.1": {
+            "old": {
+              "side": "old",
+              "variant_id": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+              "throughput_fps": 307.6977283009617,
+              "HOTA_HOTA": 0.7401470909846285
+            },
+            "new": {
+              "side": "new",
+              "variant_id": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+              "throughput_fps": 307.6977283009617,
+              "HOTA_HOTA": 0.7290765805346825
+            },
+            "moved": false
+          }
+        }
+      },
+      "otif": [
+        {
+          "param_id": 0,
+          "old_hota": 0.8043004139294891,
+          "new_hota": 0.7962928423655806
+        },
+        {
+          "param_id": 1,
+          "old_hota": 0.7987515328275355,
+          "new_hota": 0.7908189244795583
+        },
+        {
+          "param_id": 2,
+          "old_hota": 0.715597693115656,
+          "new_hota": 0.7082392809402309
+        },
+        {
+          "param_id": 3,
+          "old_hota": 0.5954685841924469,
+          "new_hota": 0.5894556442194848
+        },
+        {
+          "param_id": 4,
+          "old_hota": 0.3967540564071957,
+          "new_hota": 0.39200335847954126
+        },
+        {
+          "param_id": 5,
+          "old_hota": 0.1761110395895483,
+          "new_hota": 0.17522954969778595
+        },
+        {
+          "param_id": 6,
+          "old_hota": 0.0,
+          "new_hota": 0.0
+        },
+        {
+          "param_id": 7,
+          "old_hota": 0.0,
+          "new_hota": 0.0
+        }
+      ],
+      "leap": [
+        {
+          "param_id": 0,
+          "old_hota": 0.04100133200452274,
+          "new_hota": 0.04084396909449639
+        }
+      ]
+    },
+    "jnc2": {
+      "tetris": {
+        "reference_hota": {
+          "old": 0.8151072920226305,
+          "new": 0.7637062274352553
+        },
+        "tetris_hota_shift": {
+          "configs": 70,
+          "mean_delta": -0.04772547019665701,
+          "min_delta": -0.05543963428962395,
+          "max_delta": -0.01610146223837211
+        },
+        "operating_points": {
+          "0.05": {
+            "old": {
+              "side": "old",
+              "variant_id": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+              "throughput_fps": 346.49802014125635,
+              "HOTA_HOTA": 0.784069611396217
+            },
+            "new": {
+              "side": "new",
+              "variant_id": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+              "throughput_fps": 346.49802014125635,
+              "HOTA_HOTA": 0.7314013683847359
+            },
+            "moved": false
+          },
+          "0.1": {
+            "old": {
+              "side": "old",
+              "variant_id": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+              "throughput_fps": 390.64174236751353,
+              "HOTA_HOTA": 0.7679925930677876
+            },
+            "new": {
+              "side": "new",
+              "variant_id": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+              "throughput_fps": 390.64174236751353,
+              "HOTA_HOTA": 0.7168684291985244
+            },
+            "moved": false
+          }
+        }
+      },
+      "otif": [
+        {
+          "param_id": 0,
+          "old_hota": 0.8109550178825453,
+          "new_hota": 0.766297459425162
+        },
+        {
+          "param_id": 1,
+          "old_hota": 0.8110911643629841,
+          "new_hota": 0.764356180298286
+        },
+        {
+          "param_id": 2,
+          "old_hota": 0.8047141055777882,
+          "new_hota": 0.7556103387373151
+        },
+        {
+          "param_id": 3,
+          "old_hota": 0.7308152860581663,
+          "new_hota": 0.687945340574351
+        },
+        {
+          "param_id": 4,
+          "old_hota": 0.5318972793805855,
+          "new_hota": 0.5077714433093901
+        },
+        {
+          "param_id": 5,
+          "old_hota": 0.33585525912616127,
+          "new_hota": 0.32869699170086303
+        },
+        {
+          "param_id": 6,
+          "old_hota": 0.0,
+          "new_hota": 0.0
+        }
+      ],
+      "leap": [
+        {
+          "param_id": 0,
+          "old_hota": 0.026190578720321277,
+          "new_hota": 0.025260350119070504
+        }
+      ]
+    },
+    "jnc6": {
+      "tetris": {
+        "reference_hota": {
+          "old": 0.8354907246247636,
+          "new": 0.8108938541593949
+        },
+        "tetris_hota_shift": {
+          "configs": 74,
+          "mean_delta": -0.014996521885243565,
+          "min_delta": -0.0289128757907382,
+          "max_delta": 0.002289640234988344
+        },
+        "operating_points": {
+          "0.05": {
+            "new": {
+              "side": "new",
+              "variant_id": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+              "throughput_fps": 285.59328158197616,
+              "HOTA_HOTA": 0.7890057810982147
+            },
+            "old": {
+              "side": "old",
+              "variant_id": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+              "throughput_fps": 285.59328158197616,
+              "HOTA_HOTA": 0.8013411152828708
+            },
+            "moved": false
+          },
+          "0.1": {
+            "old": {
+              "side": "old",
+              "variant_id": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+              "throughput_fps": 330.7975861453874,
+              "HOTA_HOTA": 0.7524508903735506
+            },
+            "new": {
+              "side": "new",
+              "variant_id": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+              "throughput_fps": 330.7975861453874,
+              "HOTA_HOTA": 0.7355754674023312
+            },
+            "moved": false
+          }
+        }
+      },
+      "otif": [
+        {
+          "param_id": 0,
+          "old_hota": 0.8293555062104765,
+          "new_hota": 0.8167353793353509
+        },
+        {
+          "param_id": 1,
+          "old_hota": 0.826668377010077,
+          "new_hota": 0.8103432198400528
+        },
+        {
+          "param_id": 2,
+          "old_hota": 0.797767395426269,
+          "new_hota": 0.7809814605783673
+        },
+        {
+          "param_id": 3,
+          "old_hota": 0.6176454482218365,
+          "new_hota": 0.598710578885164
+        },
+        {
+          "param_id": 4,
+          "old_hota": 0.34062049282069506,
+          "new_hota": 0.331836074929188
+        },
+        {
+          "param_id": 5,
+          "old_hota": 0.056431341806136605,
+          "new_hota": 0.05456683326931552
+        },
+        {
+          "param_id": 6,
+          "old_hota": 0.0,
+          "new_hota": 0.0
+        },
+        {
+          "param_id": 7,
+          "old_hota": 0.0,
+          "new_hota": 0.0
+        }
+      ],
+      "leap": [
+        {
+          "param_id": 0,
+          "old_hota": 0.014566817298528262,
+          "new_hota": 0.014798982345897011
+        }
+      ]
+    },
+    "jnc7": {
+      "tetris": {
+        "reference_hota": {
+          "old": 0.8452904103758538,
+          "new": 0.8323975587168102
+        },
+        "tetris_hota_shift": {
+          "configs": 64,
+          "mean_delta": -0.0062079889316444615,
+          "min_delta": -0.01574810755950795,
+          "max_delta": 0.003487177169676059
+        },
+        "operating_points": {
+          "0.05": {
+            "old": {
+              "side": "old",
+              "variant_id": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+              "throughput_fps": 422.8733215698087,
+              "HOTA_HOTA": 0.8050953871471719
+            },
+            "new": {
+              "side": "new",
+              "variant_id": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+              "throughput_fps": 427.8707965352292,
+              "HOTA_HOTA": 0.7995871382161804
+            },
+            "moved": true
+          },
+          "0.1": {
+            "old": {
+              "side": "old",
+              "variant_id": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+              "throughput_fps": 663.9004189602003,
+              "HOTA_HOTA": 0.7609466450374026
+            },
+            "new": {
+              "side": "new",
+              "variant_id": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+              "throughput_fps": 663.9004189602003,
+              "HOTA_HOTA": 0.7558085542318347
+            },
+            "moved": false
+          }
+        }
+      },
+      "otif": [
+        {
+          "param_id": 0,
+          "old_hota": 0.8420034471988211,
+          "new_hota": 0.8443342595723925
+        },
+        {
+          "param_id": 1,
+          "old_hota": 0.7375096612139292,
+          "new_hota": 0.7433597053750493
+        },
+        {
+          "param_id": 2,
+          "old_hota": 0.7361868885937178,
+          "new_hota": 0.7399689235015592
+        },
+        {
+          "param_id": 3,
+          "old_hota": 0.7146046337993223,
+          "new_hota": 0.7173279122675291
+        },
+        {
+          "param_id": 4,
+          "old_hota": 0.6307079809729059,
+          "new_hota": 0.630154922252564
+        },
+        {
+          "param_id": 5,
+          "old_hota": 0.3980214065926763,
+          "new_hota": 0.3954182724392472
+        },
+        {
+          "param_id": 6,
+          "old_hota": 0.12594435486210162,
+          "new_hota": 0.12347952669523926
+        },
+        {
+          "param_id": 7,
+          "old_hota": 0.0,
+          "new_hota": 0.0
+        },
+        {
+          "param_id": 8,
+          "old_hota": 0.0,
+          "new_hota": 0.0
+        }
+      ],
+      "leap": [
+        {
+          "param_id": 0,
+          "old_hota": 0.04262958140528674,
+          "new_hota": 0.04224653784672076
+        }
+      ]
+    }
+  },
+  "untouched_checked": 12,
+  "gate_failures": []
+}

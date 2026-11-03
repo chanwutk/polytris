@@ -128,69 +128,105 @@
       "fastest_pruning_point": {
         "clip_timings": {
           "build_ms": {
-            "max": 27.03,
-            "mean": 13.86,
-            "median": 12.18,
-            "p95": 24.12
+            "max": 28.76,
+            "mean": 16.79,
+            "median": 14.13,
+            "p95": 27.33
           },
           "build_plus_solve_ms": {
-            "max": 74.43,
-            "mean": 45.57,
-            "median": 36.94,
-            "p95": 70.69
+            "max": 135.2,
+            "mean": 59.42,
+            "median": 36.92,
+            "p95": 118.92
           },
           "dataset": "jnc0",
           "ilp_share_of_pruning_stage": {
-            "aggregate_percent": 40.51,
-            "median_per_run_percent": 42.85
+            "aggregate_percent": 58.69,
+            "median_per_run_percent": 57.59
           },
           "point": "fastest_pruning_point",
           "runs": 5,
           "solve_ms": {
-            "max": 47.4,
-            "mean": 31.71,
-            "median": 27.29,
-            "p95": 46.56
+            "max": 106.44,
+            "mean": 42.63,
+            "median": 26.22,
+            "p95": 91.59
           },
           "solve_reaches_budget": {
             "lower_bound_percent": 0.0,
-            "median_solve_over_budget": 0.273,
-            "percent": 0.0,
-            "runs": 0,
+            "median_solve_over_budget": 0.262,
+            "percent": 20.0,
+            "runs": 1,
             "runs_0_90_to_1_00x": 0,
             "runs_1_00_to_1_05x": 0,
-            "runs_1_05_to_1_10x": 0,
+            "runs_1_05_to_1_10x": 1,
             "runs_from_1_10x": 0
           }
         },
-        "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
-        "extraction_s": 22.086,
-        "fps": 243.4,
-        "hota": 0.7761650127756611,
-        "ilp_percent": 1.032,
-        "ilp_percent_excluding_launch_clips": 1.032,
-        "ilp_s": 0.228,
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "extraction_s": 20.378,
+        "fps": 263.8,
+        "hota": 0.7541645710206155,
+        "ilp_percent": 1.458,
+        "ilp_percent_excluding_launch_clips": 1.458,
+        "ilp_s": 0.297,
         "launch_clips": 0,
         "prunes": true,
-        "pruning_stage_percent": 2.547,
+        "pruning_stage_percent": 2.484,
         "videos": 5
       },
-      "hota_bound": 0.7653,
+      "hota_bound": 0.7469,
       "operating_point": {
-        "clip_timings": null,
-        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
-        "extraction_s": 21.109,
-        "fps": 254.6,
-        "hota": 0.7790148226312216,
-        "ilp_percent": 0.0,
-        "ilp_percent_excluding_launch_clips": 0.0,
-        "ilp_s": 0.0,
+        "clip_timings": {
+          "build_ms": {
+            "max": 28.76,
+            "mean": 16.79,
+            "median": 14.13,
+            "p95": 27.33
+          },
+          "build_plus_solve_ms": {
+            "max": 135.2,
+            "mean": 59.42,
+            "median": 36.92,
+            "p95": 118.92
+          },
+          "dataset": "jnc0",
+          "ilp_share_of_pruning_stage": {
+            "aggregate_percent": 58.69,
+            "median_per_run_percent": 57.59
+          },
+          "point": "operating_point",
+          "runs": 5,
+          "solve_ms": {
+            "max": 106.44,
+            "mean": 42.63,
+            "median": 26.22,
+            "p95": 91.59
+          },
+          "solve_reaches_budget": {
+            "lower_bound_percent": 0.0,
+            "median_solve_over_budget": 0.262,
+            "percent": 20.0,
+            "runs": 1,
+            "runs_0_90_to_1_00x": 0,
+            "runs_1_00_to_1_05x": 0,
+            "runs_1_05_to_1_10x": 1,
+            "runs_from_1_10x": 0
+          }
+        },
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "extraction_s": 20.378,
+        "fps": 263.8,
+        "hota": 0.7541645710206155,
+        "ilp_percent": 1.458,
+        "ilp_percent_excluding_launch_clips": 1.458,
+        "ilp_s": 0.297,
         "launch_clips": 0,
-        "prunes": false,
-        "pruning_stage_percent": 0.0,
+        "prunes": true,
+        "pruning_stage_percent": 2.484,
         "videos": 5
       },
-      "reference_hota": 0.8056165050815967
+      "reference_hota": 0.7862202264503519
     },
     "B3D2": {
       "all_pruning_configs": {
@@ -206,33 +242,33 @@
       "fastest_pruning_point": {
         "clip_timings": {
           "build_ms": {
-            "max": 9.07,
-            "mean": 7.35,
-            "median": 6.9,
-            "p95": 8.75
+            "max": 23.0,
+            "mean": 16.59,
+            "median": 17.13,
+            "p95": 22.03
           },
           "build_plus_solve_ms": {
-            "max": 26.49,
-            "mean": 19.43,
-            "median": 15.24,
-            "p95": 26.24
+            "max": 53.0,
+            "mean": 40.34,
+            "median": 42.31,
+            "p95": 50.88
           },
           "dataset": "jnc2",
           "ilp_share_of_pruning_stage": {
-            "aggregate_percent": 63.97,
-            "median_per_run_percent": 58.82
+            "aggregate_percent": 56.79,
+            "median_per_run_percent": 61.41
           },
           "point": "fastest_pruning_point",
           "runs": 5,
           "solve_ms": {
-            "max": 17.74,
-            "mean": 12.08,
-            "median": 8.6,
-            "p95": 17.68
+            "max": 36.38,
+            "mean": 23.74,
+            "median": 24.17,
+            "p95": 34.16
           },
           "solve_reaches_budget": {
             "lower_bound_percent": 0.0,
-            "median_solve_over_budget": 0.086,
+            "median_solve_over_budget": 0.242,
             "percent": 0.0,
             "runs": 0,
             "runs_0_90_to_1_00x": 0,
@@ -241,25 +277,25 @@
             "runs_from_1_10x": 0
           }
         },
-        "config": "ShuffleNet05_60_8_060_r075_tr_s100_sortcython",
-        "extraction_s": 21.182,
-        "fps": 221.5,
-        "hota": 0.7746873709786147,
-        "ilp_percent": 0.459,
-        "ilp_percent_excluding_launch_clips": 0.459,
-        "ilp_s": 0.097,
+        "config": "ShuffleNet05_60_8_040_r050_tr_s100_sortcython",
+        "extraction_s": 22.377,
+        "fps": 209.6,
+        "hota": 0.7349437195336936,
+        "ilp_percent": 0.901,
+        "ilp_percent_excluding_launch_clips": 0.901,
+        "ilp_s": 0.202,
         "launch_clips": 0,
         "prunes": true,
-        "pruning_stage_percent": 0.717,
+        "pruning_stage_percent": 1.587,
         "videos": 5
       },
-      "hota_bound": 0.7744,
+      "hota_bound": 0.7255,
       "operating_point": {
         "clip_timings": null,
         "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
         "extraction_s": 13.538,
         "fps": 346.5,
-        "hota": 0.784069611396217,
+        "hota": 0.7314013683847359,
         "ilp_percent": 0.0,
         "ilp_percent_excluding_launch_clips": 0.0,
         "ilp_s": 0.0,
@@ -268,7 +304,7 @@
         "pruning_stage_percent": 0.0,
         "videos": 5
       },
-      "reference_hota": 0.8151072920226305
+      "reference_hota": 0.7637062274352553
     },
     "B3D3": {
       "all_pruning_configs": {
@@ -322,7 +358,7 @@
         "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
         "extraction_s": 18.18,
         "fps": 285.6,
-        "hota": 0.8013411152828708,
+        "hota": 0.7890057810982147,
         "ilp_percent": 1.081,
         "ilp_percent_excluding_launch_clips": 1.081,
         "ilp_s": 0.197,
@@ -331,7 +367,7 @@
         "pruning_stage_percent": 3.302,
         "videos": 5
       },
-      "hota_bound": 0.7937,
+      "hota_bound": 0.7703,
       "operating_point": {
         "clip_timings": {
           "build_ms": {
@@ -373,7 +409,7 @@
         "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
         "extraction_s": 18.18,
         "fps": 285.6,
-        "hota": 0.8013411152828708,
+        "hota": 0.7890057810982147,
         "ilp_percent": 1.081,
         "ilp_percent_excluding_launch_clips": 1.081,
         "ilp_s": 0.197,
@@ -382,7 +418,7 @@
         "pruning_stage_percent": 3.302,
         "videos": 5
       },
-      "reference_hota": 0.8354907246247636
+      "reference_hota": 0.8108938541593949
     },
     "B3D4": {
       "all_pruning_configs": {
@@ -398,105 +434,105 @@
       "fastest_pruning_point": {
         "clip_timings": {
           "build_ms": {
-            "max": 20.94,
-            "mean": 17.55,
-            "median": 19.98,
-            "p95": 20.88
+            "max": 12.83,
+            "mean": 10.55,
+            "median": 11.88,
+            "p95": 12.81
           },
           "build_plus_solve_ms": {
-            "max": 107.31,
-            "mean": 52.21,
-            "median": 41.44,
-            "p95": 96.57
+            "max": 164.89,
+            "mean": 64.81,
+            "median": 29.42,
+            "p95": 147.01
           },
           "dataset": "jnc7",
           "ilp_share_of_pruning_stage": {
-            "aggregate_percent": 60.35,
-            "median_per_run_percent": 59.39
+            "aggregate_percent": 65.74,
+            "median_per_run_percent": 49.86
           },
           "point": "fastest_pruning_point",
           "runs": 5,
           "solve_ms": {
-            "max": 86.36,
-            "mean": 34.67,
-            "median": 21.45,
-            "p95": 75.7
+            "max": 153.01,
+            "mean": 54.26,
+            "median": 17.25,
+            "p95": 136.04
           },
           "solve_reaches_budget": {
-            "lower_bound_percent": 0.0,
-            "median_solve_over_budget": 0.215,
-            "percent": 0.0,
-            "runs": 0,
+            "lower_bound_percent": 20.0,
+            "median_solve_over_budget": 0.173,
+            "percent": 20.0,
+            "runs": 1,
             "runs_0_90_to_1_00x": 0,
             "runs_1_00_to_1_05x": 0,
             "runs_1_05_to_1_10x": 0,
-            "runs_from_1_10x": 0
+            "runs_from_1_10x": 1
           }
         },
-        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
-        "extraction_s": 12.356,
-        "fps": 422.9,
-        "hota": 0.8050953871471719,
-        "ilp_percent": 2.113,
-        "ilp_percent_excluding_launch_clips": 2.113,
-        "ilp_s": 0.261,
+        "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+        "extraction_s": 12.212,
+        "fps": 427.9,
+        "hota": 0.7995871382161804,
+        "ilp_percent": 2.653,
+        "ilp_percent_excluding_launch_clips": 2.653,
+        "ilp_s": 0.324,
         "launch_clips": 0,
         "prunes": true,
-        "pruning_stage_percent": 3.501,
+        "pruning_stage_percent": 4.037,
         "videos": 5
       },
-      "hota_bound": 0.803,
+      "hota_bound": 0.7908,
       "operating_point": {
         "clip_timings": {
           "build_ms": {
-            "max": 20.94,
-            "mean": 17.55,
-            "median": 19.98,
-            "p95": 20.88
+            "max": 12.83,
+            "mean": 10.55,
+            "median": 11.88,
+            "p95": 12.81
           },
           "build_plus_solve_ms": {
-            "max": 107.31,
-            "mean": 52.21,
-            "median": 41.44,
-            "p95": 96.57
+            "max": 164.89,
+            "mean": 64.81,
+            "median": 29.42,
+            "p95": 147.01
           },
           "dataset": "jnc7",
           "ilp_share_of_pruning_stage": {
-            "aggregate_percent": 60.35,
-            "median_per_run_percent": 59.39
+            "aggregate_percent": 65.74,
+            "median_per_run_percent": 49.86
           },
           "point": "operating_point",
           "runs": 5,
           "solve_ms": {
-            "max": 86.36,
-            "mean": 34.67,
-            "median": 21.45,
-            "p95": 75.7
+            "max": 153.01,
+            "mean": 54.26,
+            "median": 17.25,
+            "p95": 136.04
           },
           "solve_reaches_budget": {
-            "lower_bound_percent": 0.0,
-            "median_solve_over_budget": 0.215,
-            "percent": 0.0,
-            "runs": 0,
+            "lower_bound_percent": 20.0,
+            "median_solve_over_budget": 0.173,
+            "percent": 20.0,
+            "runs": 1,
             "runs_0_90_to_1_00x": 0,
             "runs_1_00_to_1_05x": 0,
             "runs_1_05_to_1_10x": 0,
-            "runs_from_1_10x": 0
+            "runs_from_1_10x": 1
           }
         },
-        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
-        "extraction_s": 12.356,
-        "fps": 422.9,
-        "hota": 0.8050953871471719,
-        "ilp_percent": 2.113,
-        "ilp_percent_excluding_launch_clips": 2.113,
-        "ilp_s": 0.261,
+        "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+        "extraction_s": 12.212,
+        "fps": 427.9,
+        "hota": 0.7995871382161804,
+        "ilp_percent": 2.653,
+        "ilp_percent_excluding_launch_clips": 2.653,
+        "ilp_s": 0.324,
         "launch_clips": 0,
         "prunes": true,
-        "pruning_stage_percent": 3.501,
+        "pruning_stage_percent": 4.037,
         "videos": 5
       },
-      "reference_hota": 0.8452904103758538
+      "reference_hota": 0.8323975587168102
     },
     "CalDoT1": {
       "all_pruning_configs": {

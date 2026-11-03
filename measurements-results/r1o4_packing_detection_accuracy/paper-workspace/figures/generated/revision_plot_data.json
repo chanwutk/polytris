@@ -1,0 +1,2476 @@
+{
+  "preparation": [
+    {
+      "dataset": "ams-y05",
+      "system": "leap",
+      "training_h": 6.873388888888889,
+      "validation_h": 0.0,
+      "total_s": 24744.2
+    },
+    {
+      "dataset": "ams-y05",
+      "system": "otif",
+      "training_h": 4.597191666666666,
+      "validation_h": 13.472552777777778,
+      "total_s": 65051.08
+    },
+    {
+      "dataset": "ams-y05",
+      "system": "tetris",
+      "training_h": 7.293544344739114,
+      "validation_h": 24.05019109273763,
+      "total_s": 112837.44757491625
+    },
+    {
+      "dataset": "caldot1-y05",
+      "system": "leap",
+      "training_h": 11.964027777777778,
+      "validation_h": 0.0,
+      "total_s": 43070.5
+    },
+    {
+      "dataset": "caldot1-y05",
+      "system": "otif",
+      "training_h": 2.9366333333333334,
+      "validation_h": 4.563586111111111,
+      "total_s": 27000.79
+    },
+    {
+      "dataset": "caldot1-y05",
+      "system": "tetris",
+      "training_h": 3.005595770251144,
+      "validation_h": 14.242977598433969,
+      "total_s": 62094.864127266395
+    },
+    {
+      "dataset": "caldot2-y05",
+      "system": "leap",
+      "training_h": 7.081861111111111,
+      "validation_h": 0.0,
+      "total_s": 25494.7
+    },
+    {
+      "dataset": "caldot2-y05",
+      "system": "otif",
+      "training_h": 2.9557416666666665,
+      "validation_h": 3.6878944444444444,
+      "total_s": 23917.09
+    },
+    {
+      "dataset": "caldot2-y05",
+      "system": "tetris",
+      "training_h": 2.640056686210601,
+      "validation_h": 18.235227048483377,
+      "total_s": 75151.02144489833
+    },
+    {
+      "dataset": "jnc0",
+      "system": "leap",
+      "training_h": 6.445163888888889,
+      "validation_h": 0.0,
+      "total_s": 23202.59
+    },
+    {
+      "dataset": "jnc0",
+      "system": "otif",
+      "training_h": 2.181377777777778,
+      "validation_h": 0.3402,
+      "total_s": 9077.68
+    },
+    {
+      "dataset": "jnc0",
+      "system": "tetris",
+      "training_h": 1.0996927157877328,
+      "validation_h": 8.018749183047833,
+      "total_s": 32826.39083580803
+    },
+    {
+      "dataset": "jnc2",
+      "system": "leap",
+      "training_h": 6.432677777777777,
+      "validation_h": 0.0,
+      "total_s": 23157.64
+    },
+    {
+      "dataset": "jnc2",
+      "system": "otif",
+      "training_h": 2.9892416666666666,
+      "validation_h": 0.2971361111111111,
+      "total_s": 11830.960000000001
+    },
+    {
+      "dataset": "jnc2",
+      "system": "tetris",
+      "training_h": 0.8567469168225647,
+      "validation_h": 9.018093052279367,
+      "total_s": 35549.423888766956
+    },
+    {
+      "dataset": "jnc6",
+      "system": "leap",
+      "training_h": 6.924805555555555,
+      "validation_h": 0.0,
+      "total_s": 24929.3
+    },
+    {
+      "dataset": "jnc6",
+      "system": "otif",
+      "training_h": 2.561438888888889,
+      "validation_h": 0.3276888888888889,
+      "total_s": 10400.86
+    },
+    {
+      "dataset": "jnc6",
+      "system": "tetris",
+      "training_h": 1.081845085706226,
+      "validation_h": 7.739128119143528,
+      "total_s": 31755.50353745911
+    },
+    {
+      "dataset": "jnc7",
+      "system": "leap",
+      "training_h": 5.6556138888888885,
+      "validation_h": 0.0,
+      "total_s": 20360.21
+    },
+    {
+      "dataset": "jnc7",
+      "system": "otif",
+      "training_h": 2.7853194444444442,
+      "validation_h": 0.31409722222222225,
+      "total_s": 11157.9
+    },
+    {
+      "dataset": "jnc7",
+      "system": "tetris",
+      "training_h": 0.9445110892580382,
+      "validation_h": 5.521795166767628,
+      "total_s": 23278.7025216924
+    },
+    {
+      "dataset": "ams-y05",
+      "system": "reference",
+      "training_h": 0,
+      "validation_h": 0,
+      "total_s": 0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "system": "reference",
+      "training_h": 0,
+      "validation_h": 0,
+      "total_s": 0
+    },
+    {
+      "dataset": "caldot2-y05",
+      "system": "reference",
+      "training_h": 0,
+      "validation_h": 0,
+      "total_s": 0
+    },
+    {
+      "dataset": "jnc0",
+      "system": "reference",
+      "training_h": 0,
+      "validation_h": 0,
+      "total_s": 0
+    },
+    {
+      "dataset": "jnc2",
+      "system": "reference",
+      "training_h": 0,
+      "validation_h": 0,
+      "total_s": 0
+    },
+    {
+      "dataset": "jnc6",
+      "system": "reference",
+      "training_h": 0,
+      "validation_h": 0,
+      "total_s": 0
+    },
+    {
+      "dataset": "jnc7",
+      "system": "reference",
+      "training_h": 0,
+      "validation_h": 0,
+      "total_s": 0
+    }
+  ],
+  "components": [
+    [
+      "ams-y05",
+      "tetris",
+      "training",
+      "classifier_optimization",
+      27.1
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "training",
+      "classifier_training",
+      13670.0
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "training",
+      "mistrack_profiling",
+      317.0
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "training",
+      "reference_detection_train",
+      3156.9
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "validation",
+      "reference_outputs_valid",
+      3710.6
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "training",
+      "training_data_creation",
+      8644.6
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "validation",
+      "validation_scoring",
+      9242.5
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "validation",
+      "validation_sweep",
+      128113.9
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "training",
+      "training_data_pruning",
+      263.5
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "training",
+      "classifier_optimization",
+      0.0
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "training",
+      "classifier_training",
+      3741.8
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "training",
+      "mistrack_profiling",
+      301.3
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "training",
+      "reference_detection_train",
+      1249.1
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "validation",
+      "reference_outputs_valid",
+      1852.4
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "training",
+      "training_data_creation",
+      5271.2
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "validation",
+      "validation_scoring",
+      6159.8
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "validation",
+      "validation_sweep",
+      62473.2
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "training",
+      "training_data_pruning",
+      77.3
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "training",
+      "classifier_optimization",
+      0.0
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "training",
+      "classifier_training",
+      3081.2
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "training",
+      "mistrack_profiling",
+      293.5
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "training",
+      "reference_detection_train",
+      1248.1
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "validation",
+      "reference_outputs_valid",
+      1861.6
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "training",
+      "training_data_creation",
+      4629.9
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "validation",
+      "validation_scoring",
+      8421.3
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "validation",
+      "validation_sweep",
+      73569.6
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "training",
+      "training_data_pruning",
+      77.2
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "training",
+      "classifier_optimization",
+      29.1
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "training",
+      "classifier_training",
+      2715.5
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "training",
+      "mistrack_profiling",
+      54.5
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "training",
+      "reference_detection_train",
+      506.6
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "validation",
+      "reference_outputs_valid",
+      382.8
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "training",
+      "training_data_creation",
+      612.7
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "validation",
+      "validation_scoring",
+      1551.1
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "validation",
+      "validation_sweep",
+      28131.6
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "training",
+      "training_data_pruning",
+      10.9
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "training",
+      "classifier_optimization",
+      29.1
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "training",
+      "classifier_training",
+      2018.8
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "training",
+      "mistrack_profiling",
+      56.1
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "training",
+      "reference_detection_train",
+      434.1
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "validation",
+      "reference_outputs_valid",
+      342.6
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "training",
+      "training_data_creation",
+      506.2
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "validation",
+      "validation_scoring",
+      1517.6
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "validation",
+      "validation_sweep",
+      31122.4
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "training",
+      "training_data_pruning",
+      10.8
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "training",
+      "classifier_optimization",
+      29.1
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "training",
+      "classifier_training",
+      2652.2
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "training",
+      "mistrack_profiling",
+      54.5
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "training",
+      "reference_detection_train",
+      471.6
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "validation",
+      "reference_outputs_valid",
+      378.3
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "training",
+      "training_data_creation",
+      647.9
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "validation",
+      "validation_scoring",
+      1467.9
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "validation",
+      "validation_sweep",
+      27120.2
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "training",
+      "training_data_pruning",
+      10.6
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "training",
+      "classifier_optimization",
+      29.1
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "training",
+      "classifier_training",
+      2219.6
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "training",
+      "mistrack_profiling",
+      53.6
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "training",
+      "reference_detection_train",
+      480.6
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "validation",
+      "reference_outputs_valid",
+      376.8
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "training",
+      "training_data_creation",
+      568.1
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "validation",
+      "validation_scoring",
+      1427.3
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "validation",
+      "validation_sweep",
+      19745.9
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "training",
+      "training_data_pruning",
+      16.3
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "training",
+      "classifier benchmark adjustment",
+      13.238435167446731
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "training",
+      "detector loading",
+      164.42120589336585
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "validation",
+      "detector loading",
+      1315.3696471469268
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "validation",
+      "tables/Pareto",
+      1.5948781920596957
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "training",
+      "classifier benchmark adjustment",
+      39.03122382611036
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "training",
+      "detector loading",
+      140.41354907800752
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "validation",
+      "detector loading",
+      1123.3083926240602
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "validation",
+      "tables/Pareto",
+      1.2866670079529285
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "training",
+      "classifier benchmark adjustment",
+      38.97630089242011
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "training",
+      "detector loading",
+      135.3277694657445
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "validation",
+      "detector loading",
+      1082.622155725956
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "validation",
+      "tables/Pareto",
+      1.1069766068831086
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "training",
+      "classifier benchmark adjustment",
+      10.38211451154202
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "training",
+      "detector loading",
+      19.211662324295997
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "validation",
+      "detector loading",
+      1020.6195609782249
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "validation",
+      "tables/Pareto",
+      0.11766811646521091
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "training",
+      "classifier benchmark adjustment",
+      9.800290540419518
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "training",
+      "detector loading",
+      19.388610020813296
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "validation",
+      "detector loading",
+      1030.0199073557064
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "validation",
+      "tables/Pareto",
+      0.10548421740531921
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "training",
+      "classifier benchmark adjustment",
+      10.511754184588789
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "training",
+      "detector loading",
+      18.23055435782492
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "validation",
+      "detector loading",
+      968.4982002594489
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "validation",
+      "tables/Pareto",
+      0.10996988415718079
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "training",
+      "classifier benchmark adjustment",
+      10.719534501060842
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "training",
+      "detector loading",
+      22.220386827876467
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "validation",
+      "detector loading",
+      1180.4580502309375
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "validation",
+      "tables/Pareto",
+      0.10588012728840113
+    ],
+    [
+      "jnc2",
+      "leap",
+      "training",
+      "labels_train",
+      850.32
+    ],
+    [
+      "jnc2",
+      "leap",
+      "training",
+      "reid_data",
+      13.5
+    ],
+    [
+      "jnc2",
+      "leap",
+      "training",
+      "reid_train",
+      22278.0
+    ],
+    [
+      "jnc2",
+      "leap",
+      "training",
+      "motion_patterns",
+      15.82
+    ],
+    [
+      "jnc7",
+      "leap",
+      "training",
+      "labels_train",
+      906.02
+    ],
+    [
+      "jnc7",
+      "leap",
+      "training",
+      "reid_data",
+      14.05
+    ],
+    [
+      "jnc7",
+      "leap",
+      "training",
+      "reid_train",
+      19430.0
+    ],
+    [
+      "jnc7",
+      "leap",
+      "training",
+      "motion_patterns",
+      10.14
+    ],
+    [
+      "ams-y05",
+      "otif",
+      "training",
+      "detect_train",
+      4204.0
+    ],
+    [
+      "ams-y05",
+      "otif",
+      "training",
+      "tracks_train",
+      44.37
+    ],
+    [
+      "ams-y05",
+      "otif",
+      "training",
+      "extract_frames",
+      475.52
+    ],
+    [
+      "ams-y05",
+      "otif",
+      "training",
+      "train_proxy",
+      6594.0
+    ],
+    [
+      "ams-y05",
+      "otif",
+      "training",
+      "train_tracker",
+      5232.0
+    ],
+    [
+      "ams-y05",
+      "otif",
+      "validation",
+      "detect_valid",
+      3393.19
+    ],
+    [
+      "ams-y05",
+      "otif",
+      "validation",
+      "tune_valid",
+      45108.0
+    ],
+    [
+      "caldot1-y05",
+      "otif",
+      "training",
+      "detect_train",
+      1392.8
+    ],
+    [
+      "caldot1-y05",
+      "otif",
+      "training",
+      "tracks_train",
+      32.35
+    ],
+    [
+      "caldot1-y05",
+      "otif",
+      "training",
+      "extract_frames",
+      206.73
+    ],
+    [
+      "caldot1-y05",
+      "otif",
+      "training",
+      "train_proxy",
+      4665.0
+    ],
+    [
+      "caldot1-y05",
+      "otif",
+      "training",
+      "train_tracker",
+      4275.0
+    ],
+    [
+      "caldot1-y05",
+      "otif",
+      "validation",
+      "detect_valid",
+      1336.91
+    ],
+    [
+      "caldot1-y05",
+      "otif",
+      "validation",
+      "tune_valid",
+      15092.0
+    ],
+    [
+      "caldot2-y05",
+      "otif",
+      "training",
+      "detect_train",
+      1346.81
+    ],
+    [
+      "caldot2-y05",
+      "otif",
+      "training",
+      "tracks_train",
+      29.27
+    ],
+    [
+      "caldot2-y05",
+      "otif",
+      "training",
+      "extract_frames",
+      180.59
+    ],
+    [
+      "caldot2-y05",
+      "otif",
+      "training",
+      "train_proxy",
+      4077.0
+    ],
+    [
+      "caldot2-y05",
+      "otif",
+      "training",
+      "train_tracker",
+      5007.0
+    ],
+    [
+      "caldot2-y05",
+      "otif",
+      "validation",
+      "detect_valid",
+      1341.42
+    ],
+    [
+      "caldot2-y05",
+      "otif",
+      "validation",
+      "tune_valid",
+      11935.0
+    ],
+    [
+      "ams-y05",
+      "leap",
+      "training",
+      "labels_train",
+      3672.0
+    ],
+    [
+      "ams-y05",
+      "leap",
+      "training",
+      "reid_data",
+      184.51
+    ],
+    [
+      "ams-y05",
+      "leap",
+      "training",
+      "reid_train",
+      20872.0
+    ],
+    [
+      "ams-y05",
+      "leap",
+      "training",
+      "motion_patterns",
+      15.69
+    ],
+    [
+      "caldot1-y05",
+      "leap",
+      "training",
+      "labels_train",
+      1786.77
+    ],
+    [
+      "caldot1-y05",
+      "leap",
+      "training",
+      "reid_data",
+      110.02
+    ],
+    [
+      "caldot1-y05",
+      "leap",
+      "training",
+      "reid_train",
+      41157.0
+    ],
+    [
+      "caldot1-y05",
+      "leap",
+      "training",
+      "motion_patterns",
+      16.71
+    ],
+    [
+      "caldot2-y05",
+      "leap",
+      "training",
+      "labels_train",
+      1777.86
+    ],
+    [
+      "caldot2-y05",
+      "leap",
+      "training",
+      "reid_data",
+      70.66
+    ],
+    [
+      "caldot2-y05",
+      "leap",
+      "training",
+      "reid_train",
+      23634.0
+    ],
+    [
+      "caldot2-y05",
+      "leap",
+      "training",
+      "motion_patterns",
+      12.18
+    ],
+    [
+      "jnc0",
+      "leap",
+      "training",
+      "labels_train",
+      963.35
+    ],
+    [
+      "jnc0",
+      "leap",
+      "training",
+      "reid_data",
+      15.74
+    ],
+    [
+      "jnc0",
+      "leap",
+      "training",
+      "reid_train",
+      22203.0
+    ],
+    [
+      "jnc0",
+      "leap",
+      "training",
+      "motion_patterns",
+      20.5
+    ],
+    [
+      "jnc6",
+      "leap",
+      "training",
+      "labels_train",
+      905.15
+    ],
+    [
+      "jnc6",
+      "leap",
+      "training",
+      "reid_data",
+      14.88
+    ],
+    [
+      "jnc6",
+      "leap",
+      "training",
+      "reid_train",
+      24003.0
+    ],
+    [
+      "jnc6",
+      "leap",
+      "training",
+      "motion_patterns",
+      6.27
+    ],
+    [
+      "jnc0",
+      "otif",
+      "training",
+      "detect_train",
+      483.89
+    ],
+    [
+      "jnc0",
+      "otif",
+      "training",
+      "tracks_train",
+      11.41
+    ],
+    [
+      "jnc0",
+      "otif",
+      "training",
+      "extract_frames",
+      66.01
+    ],
+    [
+      "jnc0",
+      "otif",
+      "training",
+      "train_proxy",
+      4871.0
+    ],
+    [
+      "jnc0",
+      "otif",
+      "training",
+      "train_tracker",
+      2420.65
+    ],
+    [
+      "jnc0",
+      "otif",
+      "validation",
+      "detect_valid",
+      310.44
+    ],
+    [
+      "jnc0",
+      "otif",
+      "validation",
+      "tune_valid",
+      914.28
+    ],
+    [
+      "jnc2",
+      "otif",
+      "training",
+      "detect_train",
+      420.72
+    ],
+    [
+      "jnc2",
+      "otif",
+      "training",
+      "tracks_train",
+      10.91
+    ],
+    [
+      "jnc2",
+      "otif",
+      "training",
+      "extract_frames",
+      59.64
+    ],
+    [
+      "jnc2",
+      "otif",
+      "training",
+      "train_proxy",
+      5140.0
+    ],
+    [
+      "jnc2",
+      "otif",
+      "training",
+      "train_tracker",
+      5130.0
+    ],
+    [
+      "jnc2",
+      "otif",
+      "validation",
+      "detect_valid",
+      268.04
+    ],
+    [
+      "jnc2",
+      "otif",
+      "validation",
+      "tune_valid",
+      801.65
+    ],
+    [
+      "jnc6",
+      "otif",
+      "training",
+      "detect_train",
+      461.64
+    ],
+    [
+      "jnc6",
+      "otif",
+      "training",
+      "tracks_train",
+      11.89
+    ],
+    [
+      "jnc6",
+      "otif",
+      "training",
+      "extract_frames",
+      67.65
+    ],
+    [
+      "jnc6",
+      "otif",
+      "training",
+      "train_proxy",
+      4801.0
+    ],
+    [
+      "jnc6",
+      "otif",
+      "training",
+      "train_tracker",
+      3879.0
+    ],
+    [
+      "jnc6",
+      "otif",
+      "validation",
+      "detect_valid",
+      294.94
+    ],
+    [
+      "jnc6",
+      "otif",
+      "validation",
+      "tune_valid",
+      884.74
+    ],
+    [
+      "jnc7",
+      "otif",
+      "training",
+      "detect_train",
+      461.7
+    ],
+    [
+      "jnc7",
+      "otif",
+      "training",
+      "tracks_train",
+      11.24
+    ],
+    [
+      "jnc7",
+      "otif",
+      "training",
+      "extract_frames",
+      65.21
+    ],
+    [
+      "jnc7",
+      "otif",
+      "training",
+      "train_proxy",
+      4614.0
+    ],
+    [
+      "jnc7",
+      "otif",
+      "training",
+      "train_tracker",
+      4875.0
+    ],
+    [
+      "jnc7",
+      "otif",
+      "validation",
+      "detect_valid",
+      294.57
+    ],
+    [
+      "jnc7",
+      "otif",
+      "validation",
+      "tune_valid",
+      836.18
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "validation",
+      "packing span outside ops",
+      -90679.50000000001
+    ],
+    [
+      "ams-y05",
+      "tetris",
+      "validation",
+      "packing untimed work, re-measured",
+      34876.2234085165
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "validation",
+      "packing span outside ops",
+      -35135.3
+    ],
+    [
+      "caldot1-y05",
+      "tetris",
+      "validation",
+      "packing untimed work, re-measured",
+      14800.024294730276
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "validation",
+      "packing span outside ops",
+      -32423.640000000003
+    ],
+    [
+      "caldot2-y05",
+      "tetris",
+      "validation",
+      "packing untimed work, re-measured",
+      13134.228242207319
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "validation",
+      "packing span outside ops",
+      -3698.0999999999995
+    ],
+    [
+      "jnc0",
+      "tetris",
+      "validation",
+      "packing untimed work, re-measured",
+      1479.3598298775032
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "validation",
+      "packing span outside ops",
+      -2766.399999999999
+    ],
+    [
+      "jnc2",
+      "tetris",
+      "validation",
+      "packing untimed work, re-measured",
+      1218.8095966326073
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "validation",
+      "packing span outside ops",
+      -3582.5000000000005
+    ],
+    [
+      "jnc6",
+      "tetris",
+      "validation",
+      "packing untimed work, re-measured",
+      1508.353058773093
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "validation",
+      "packing span outside ops",
+      -4428.1
+    ],
+    [
+      "jnc7",
+      "tetris",
+      "validation",
+      "packing untimed work, re-measured",
+      1575.9986700052395
+    ]
+  ],
+  "operating_points": [
+    {
+      "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+      "fps": 1049.5,
+      "hota": 0.6966,
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "loss": "0.05",
+      "system": "tetris"
+    },
+    {
+      "config": "param 2",
+      "fps": 60.3,
+      "hota": 0.6805,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "loss": "0.05"
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "loss": "0.05",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 389.21965821943775,
+      "hota": 0.5433764552721264
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "loss": "0.05",
+      "system": "reference",
+      "config": "naive",
+      "fps": 15.261813771643736,
+      "hota": 0.7315250495020468
+    },
+    {
+      "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+      "fps": 729.3,
+      "hota": 0.7787,
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "loss": "0.05",
+      "system": "tetris"
+    },
+    {
+      "config": "param 2",
+      "fps": 58.7,
+      "hota": 0.7705,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "loss": "0.05"
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "loss": "0.05",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 353.51997878880127,
+      "hota": 0.5266317214933866
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "loss": "0.05",
+      "system": "reference",
+      "config": "naive",
+      "fps": 30.93095505912012,
+      "hota": 0.8180912461425098
+    },
+    {
+      "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "fps": 144.7,
+      "hota": 0.6921,
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "loss": "0.05",
+      "system": "tetris"
+    },
+    {
+      "config": "param 0",
+      "fps": 28.9,
+      "hota": 0.6675,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "loss": "0.05"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "loss": "0.05",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 487.29601247477797,
+      "hota": 0.13909939038238148
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "loss": "0.05",
+      "system": "reference",
+      "config": "naive",
+      "fps": 30.8622484710686,
+      "hota": 0.7155520702265457
+    },
+    {
+      "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "fps": 254.6,
+      "hota": 0.779,
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "loss": "0.05",
+      "system": "tetris"
+    },
+    {
+      "config": "param 2",
+      "fps": 101.6,
+      "hota": 0.7156,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "loss": "0.05"
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "loss": "0.05",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 265.3443058346128,
+      "hota": 0.1675
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "loss": "0.05",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.7533442052176,
+      "hota": 0.8056165050815967
+    },
+    {
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "fps": 346.5,
+      "hota": 0.7841,
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "loss": "0.05",
+      "system": "tetris"
+    },
+    {
+      "config": "param 3",
+      "fps": 229.5,
+      "hota": 0.7308,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "loss": "0.05"
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "loss": "0.05",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 181.66749929323558,
+      "hota": 0.1096
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "loss": "0.05",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.410461834543112,
+      "hota": 0.8151072920226305
+    },
+    {
+      "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+      "fps": 285.6,
+      "hota": 0.8013,
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "loss": "0.05",
+      "system": "tetris"
+    },
+    {
+      "config": "param 2",
+      "fps": 98.7,
+      "hota": 0.7978,
+      "meets_bound": true,
+      "rule": "threshold_feasible_not_more_accurate",
+      "system": "otif",
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "loss": "0.05"
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "loss": "0.05",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 30.03711828793054,
+      "hota": 0.0963
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "loss": "0.05",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.538907037803993,
+      "hota": 0.8354907246247636
+    },
+    {
+      "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "fps": 422.9,
+      "hota": 0.8051,
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "loss": "0.05",
+      "system": "tetris"
+    },
+    {
+      "config": "param 1",
+      "fps": 26.9,
+      "hota": 0.7375,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "loss": "0.05"
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "loss": "0.05",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 268.2031671072556,
+      "hota": 0.1544
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "loss": "0.05",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.515887451819244,
+      "hota": 0.8452904103758538
+    },
+    {
+      "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
+      "fps": 1391.9,
+      "hota": 0.6593,
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "loss": "0.10",
+      "system": "tetris"
+    },
+    {
+      "config": "param 5",
+      "fps": 491.6,
+      "hota": 0.63,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "loss": "0.10"
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "loss": "0.10",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 389.21965821943775,
+      "hota": 0.5433764552721264
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "loss": "0.10",
+      "system": "reference",
+      "config": "naive",
+      "fps": 15.261813771643736,
+      "hota": 0.7315250495020468
+    },
+    {
+      "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
+      "fps": 1560.1,
+      "hota": 0.7414,
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "loss": "0.10",
+      "system": "tetris"
+    },
+    {
+      "config": "param 4",
+      "fps": 235.1,
+      "hota": 0.7331,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "loss": "0.10"
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "loss": "0.10",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 353.51997878880127,
+      "hota": 0.5266317214933866
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "loss": "0.10",
+      "system": "reference",
+      "config": "naive",
+      "fps": 30.93095505912012,
+      "hota": 0.8180912461425098
+    },
+    {
+      "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+      "fps": 321.5,
+      "hota": 0.6454,
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "loss": "0.10",
+      "system": "tetris"
+    },
+    {
+      "config": "param 2",
+      "fps": 104.7,
+      "hota": 0.5526,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "loss": "0.10"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "loss": "0.10",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 487.29601247477797,
+      "hota": 0.13909939038238148
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "loss": "0.10",
+      "system": "reference",
+      "config": "naive",
+      "fps": 30.8622484710686,
+      "hota": 0.7155520702265457
+    },
+    {
+      "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "fps": 307.7,
+      "hota": 0.7401,
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "loss": "0.10",
+      "system": "tetris"
+    },
+    {
+      "config": "param 2",
+      "fps": 101.6,
+      "hota": 0.7156,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "loss": "0.10"
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "loss": "0.10",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 265.3443058346128,
+      "hota": 0.1675
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "loss": "0.10",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.7533442052176,
+      "hota": 0.8056165050815967
+    },
+    {
+      "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+      "fps": 390.6,
+      "hota": 0.768,
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "loss": "0.10",
+      "system": "tetris"
+    },
+    {
+      "config": "param 3",
+      "fps": 229.5,
+      "hota": 0.7308,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "loss": "0.10"
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "loss": "0.10",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 181.66749929323558,
+      "hota": 0.1096
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "loss": "0.10",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.410461834543112,
+      "hota": 0.8151072920226305
+    },
+    {
+      "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "fps": 330.8,
+      "hota": 0.7525,
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "loss": "0.10",
+      "system": "tetris"
+    },
+    {
+      "config": "param 3",
+      "fps": 203.4,
+      "hota": 0.6176,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "loss": "0.10"
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "loss": "0.10",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 30.03711828793054,
+      "hota": 0.0963
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "loss": "0.10",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.538907037803993,
+      "hota": 0.8354907246247636
+    },
+    {
+      "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+      "fps": 663.9,
+      "hota": 0.7609,
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "loss": "0.10",
+      "system": "tetris"
+    },
+    {
+      "config": "param 1",
+      "fps": 26.9,
+      "hota": 0.7375,
+      "meets_bound": false,
+      "rule": "nearest_not_more_accurate",
+      "system": "otif",
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "loss": "0.10"
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "loss": "0.10",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 268.2031671072556,
+      "hota": 0.1544
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "loss": "0.10",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.515887451819244,
+      "hota": 0.8452904103758538
+    }
+  ],
+  "break_even": [
+    {
+      "dataset": "ams-y05",
+      "loss": "0.05",
+      "baseline": "leap",
+      "tetris_fps": 1049.5,
+      "baseline_fps": 389.21965821943775,
+      "tetris_preparation_s": 112837.44757491625,
+      "baseline_preparation_s": 24744.2,
+      "break_even_video_minutes": 60554.852923500286,
+      "catch_up_elapsed_h": 45.76842646260782
+    },
+    {
+      "dataset": "ams-y05",
+      "loss": "0.05",
+      "baseline": "otif",
+      "tetris_fps": 1049.5,
+      "baseline_fps": 60.3,
+      "tetris_preparation_s": 112837.44757491625,
+      "baseline_preparation_s": 65051.08,
+      "break_even_video_minutes": 3396.8561621326307,
+      "catch_up_elapsed_h": 32.152896028742255
+    },
+    {
+      "dataset": "ams-y05",
+      "loss": "0.05",
+      "baseline": "reference",
+      "tetris_fps": 1049.5,
+      "baseline_fps": 15.261813771643736,
+      "tetris_preparation_s": 112837.44757491625,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 1941.6849672372707,
+      "catch_up_elapsed_h": 31.80626163262616
+    },
+    {
+      "dataset": "ams-y05",
+      "loss": "0.10",
+      "baseline": "leap",
+      "tetris_fps": 1391.9,
+      "baseline_fps": 389.21965821943775,
+      "tetris_preparation_s": 112837.44757491625,
+      "baseline_preparation_s": 24744.2,
+      "break_even_video_minutes": 52885.9624845887,
+      "catch_up_elapsed_h": 40.84261511356494
+    },
+    {
+      "dataset": "ams-y05",
+      "loss": "0.10",
+      "baseline": "otif",
+      "tetris_fps": 1391.9,
+      "baseline_fps": 491.6,
+      "tetris_preparation_s": 112837.44757491625,
+      "baseline_preparation_s": 65051.08,
+      "break_even_video_minutes": 40354.70425355962,
+      "catch_up_elapsed_h": 38.59186825117736
+    },
+    {
+      "dataset": "ams-y05",
+      "loss": "0.10",
+      "baseline": "reference",
+      "tetris_fps": 1391.9,
+      "baseline_fps": 15.261813771643736,
+      "tetris_preparation_s": 112837.44757491625,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 1934.6620682951689,
+      "catch_up_elapsed_h": 31.691221260505543
+    },
+    {
+      "dataset": "caldot1-y05",
+      "loss": "0.05",
+      "baseline": "leap",
+      "tetris_fps": 729.3,
+      "baseline_fps": 353.51997878880127,
+      "tetris_preparation_s": 62094.864127266395,
+      "baseline_preparation_s": 43070.5,
+      "break_even_video_minutes": 14502.875867612962,
+      "catch_up_elapsed_h": 22.220078876573826
+    },
+    {
+      "dataset": "caldot1-y05",
+      "loss": "0.05",
+      "baseline": "otif",
+      "tetris_fps": 729.3,
+      "baseline_fps": 58.7,
+      "tetris_preparation_s": 62094.864127266395,
+      "baseline_preparation_s": 27000.79,
+      "break_even_video_minutes": 2489.270230509333,
+      "catch_up_elapsed_h": 18.101881414245693
+    },
+    {
+      "dataset": "caldot1-y05",
+      "loss": "0.05",
+      "baseline": "reference",
+      "tetris_fps": 729.3,
+      "baseline_fps": 30.93095505912012,
+      "tetris_preparation_s": 62094.864127266395,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 2228.577461998389,
+      "catch_up_elapsed_h": 18.01251737732298
+    },
+    {
+      "dataset": "caldot1-y05",
+      "loss": "0.10",
+      "baseline": "leap",
+      "tetris_fps": 1560.1,
+      "baseline_fps": 353.51997878880127,
+      "tetris_preparation_s": 62094.864127266395,
+      "baseline_preparation_s": 43070.5,
+      "break_even_video_minutes": 9662.241981564313,
+      "catch_up_elapsed_h": 18.796910331309995
+    },
+    {
+      "dataset": "caldot1-y05",
+      "loss": "0.10",
+      "baseline": "otif",
+      "tetris_fps": 1560.1,
+      "baseline_fps": 235.1,
+      "tetris_preparation_s": 62094.864127266395,
+      "baseline_preparation_s": 27000.79,
+      "break_even_video_minutes": 10793.951624572283,
+      "catch_up_elapsed_h": 18.978262431016415
+    },
+    {
+      "dataset": "caldot1-y05",
+      "loss": "0.10",
+      "baseline": "reference",
+      "tetris_fps": 1560.1,
+      "baseline_fps": 30.93095505912012,
+      "tetris_preparation_s": 62094.864127266395,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 2177.2256419959026,
+      "catch_up_elapsed_h": 17.597465369517735
+    },
+    {
+      "dataset": "caldot2-y05",
+      "loss": "0.05",
+      "baseline": "leap",
+      "tetris_fps": 144.7,
+      "baseline_fps": 487.29601247477797,
+      "tetris_preparation_s": 75151.02144489833,
+      "baseline_preparation_s": 25494.7,
+      "break_even_video_minutes": null,
+      "catch_up_elapsed_h": null
+    },
+    {
+      "dataset": "caldot2-y05",
+      "loss": "0.05",
+      "baseline": "otif",
+      "tetris_fps": 144.7,
+      "baseline_fps": 28.9,
+      "tetris_preparation_s": 75151.02144489833,
+      "baseline_preparation_s": 23917.09,
+      "break_even_video_minutes": 2055.76272821166,
+      "catch_up_elapsed_h": 24.427050715018204
+    },
+    {
+      "dataset": "caldot2-y05",
+      "loss": "0.05",
+      "baseline": "reference",
+      "tetris_fps": 144.7,
+      "baseline_fps": 30.8622484710686,
+      "tetris_preparation_s": 75151.02144489833,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 3275.6852397688717,
+      "catch_up_elapsed_h": 26.53472609780537
+    },
+    {
+      "dataset": "caldot2-y05",
+      "loss": "0.10",
+      "baseline": "leap",
+      "tetris_fps": 321.5,
+      "baseline_fps": 487.29601247477797,
+      "tetris_preparation_s": 75151.02144489833,
+      "baseline_preparation_s": 25494.7,
+      "break_even_video_minutes": null,
+      "catch_up_elapsed_h": null
+    },
+    {
+      "dataset": "caldot2-y05",
+      "loss": "0.10",
+      "baseline": "otif",
+      "tetris_fps": 321.5,
+      "baseline_fps": 104.7,
+      "tetris_preparation_s": 75151.02144489833,
+      "baseline_preparation_s": 23917.09,
+      "break_even_video_minutes": 8838.601517339559,
+      "catch_up_elapsed_h": 27.748224261396597
+    },
+    {
+      "dataset": "caldot2-y05",
+      "loss": "0.10",
+      "baseline": "reference",
+      "tetris_fps": 321.5,
+      "baseline_fps": 30.8622484710686,
+      "tetris_preparation_s": 75151.02144489833,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 2850.682791597445,
+      "catch_up_elapsed_h": 23.09198886035296
+    },
+    {
+      "dataset": "jnc0",
+      "loss": "0.05",
+      "baseline": "leap",
+      "tetris_fps": 254.6,
+      "baseline_fps": 265.3443058346128,
+      "tetris_preparation_s": 32826.39083580803,
+      "baseline_preparation_s": 23202.59,
+      "break_even_video_minutes": null,
+      "catch_up_elapsed_h": null
+    },
+    {
+      "dataset": "jnc0",
+      "loss": "0.05",
+      "baseline": "otif",
+      "tetris_fps": 254.6,
+      "baseline_fps": 101.6,
+      "tetris_preparation_s": 32826.39083580803,
+      "baseline_preparation_s": 9077.68,
+      "break_even_video_minutes": 4461.266904326413,
+      "catch_up_elapsed_h": 13.499104609289622
+    },
+    {
+      "dataset": "jnc0",
+      "loss": "0.05",
+      "baseline": "reference",
+      "tetris_fps": 254.6,
+      "baseline_fps": 14.7533442052176,
+      "tetris_preparation_s": 32826.39083580803,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 571.2100413269022,
+      "catch_up_elapsed_h": 9.679331570209191
+    },
+    {
+      "dataset": "jnc0",
+      "loss": "0.10",
+      "baseline": "leap",
+      "tetris_fps": 307.7,
+      "baseline_fps": 265.3443058346128,
+      "tetris_preparation_s": 32826.39083580803,
+      "baseline_preparation_s": 23202.59,
+      "break_even_video_minutes": 20612.448428480402,
+      "catch_up_elapsed_h": 25.86563756708418
+    },
+    {
+      "dataset": "jnc0",
+      "loss": "0.10",
+      "baseline": "otif",
+      "tetris_fps": 307.7,
+      "baseline_fps": 101.6,
+      "tetris_preparation_s": 32826.39083580803,
+      "baseline_preparation_s": 9077.68,
+      "break_even_video_minutes": 4002.5866501509413,
+      "catch_up_elapsed_h": 12.370462251574384
+    },
+    {
+      "dataset": "jnc0",
+      "loss": "0.10",
+      "baseline": "reference",
+      "tetris_fps": 307.7,
+      "baseline_fps": 14.7533442052176,
+      "tetris_preparation_s": 32826.39083580803,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 565.2102812280368,
+      "catch_up_elapsed_h": 9.577663771786522
+    },
+    {
+      "dataset": "jnc2",
+      "loss": "0.05",
+      "baseline": "leap",
+      "tetris_fps": 346.5,
+      "baseline_fps": 181.66749929323558,
+      "tetris_preparation_s": 35549.423888766956,
+      "baseline_preparation_s": 23157.64,
+      "break_even_video_minutes": 5258.101325665407,
+      "catch_up_elapsed_h": 13.668563869293424
+    },
+    {
+      "dataset": "jnc2",
+      "loss": "0.05",
+      "baseline": "otif",
+      "tetris_fps": 346.5,
+      "baseline_fps": 229.5,
+      "tetris_preparation_s": 35549.423888766956,
+      "baseline_preparation_s": 11830.960000000001,
+      "break_even_video_minutes": 17912.001479074588,
+      "catch_up_elapsed_h": 22.798361959776237
+    },
+    {
+      "dataset": "jnc2",
+      "loss": "0.05",
+      "baseline": "reference",
+      "tetris_fps": 346.5,
+      "baseline_fps": 14.410461834543112,
+      "tetris_preparation_s": 35549.423888766956,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 593.9036602066249,
+      "catch_up_elapsed_h": 10.303341888442933
+    },
+    {
+      "dataset": "jnc2",
+      "loss": "0.10",
+      "baseline": "leap",
+      "tetris_fps": 390.6,
+      "baseline_fps": 181.66749929323558,
+      "tetris_preparation_s": 35549.423888766956,
+      "baseline_preparation_s": 23157.64,
+      "break_even_video_minutes": 4676.218502750255,
+      "catch_up_elapsed_h": 12.867811361031178
+    },
+    {
+      "dataset": "jnc2",
+      "loss": "0.10",
+      "baseline": "otif",
+      "tetris_fps": 390.6,
+      "baseline_fps": 229.5,
+      "tetris_preparation_s": 35549.423888766956,
+      "baseline_preparation_s": 11830.960000000001,
+      "break_even_video_minutes": 14664.370941730944,
+      "catch_up_elapsed_h": 19.260638062887733
+    },
+    {
+      "dataset": "jnc2",
+      "loss": "0.10",
+      "baseline": "reference",
+      "tetris_fps": 390.6,
+      "baseline_fps": 14.410461834543112,
+      "tetris_preparation_s": 35549.423888766956,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 591.0081670805811,
+      "catch_up_elapsed_h": 10.253109405277419
+    },
+    {
+      "dataset": "jnc6",
+      "loss": "0.05",
+      "baseline": "leap",
+      "tetris_fps": 285.6,
+      "baseline_fps": 30.03711828793054,
+      "tetris_preparation_s": 31755.50353745911,
+      "baseline_preparation_s": 24929.3,
+      "break_even_video_minutes": 254.598250751565,
+      "catch_up_elapsed_h": 9.043835819303153
+    },
+    {
+      "dataset": "jnc6",
+      "loss": "0.05",
+      "baseline": "otif",
+      "tetris_fps": 285.6,
+      "baseline_fps": 98.7,
+      "tetris_preparation_s": 31755.50353745911,
+      "baseline_preparation_s": 10400.86,
+      "break_even_video_minutes": 3578.622361198765,
+      "catch_up_elapsed_h": 11.953520789932703
+    },
+    {
+      "dataset": "jnc6",
+      "loss": "0.05",
+      "baseline": "reference",
+      "tetris_fps": 285.6,
+      "baseline_fps": 14.538907037803993,
+      "tetris_preparation_s": 31755.50353745911,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 540.5044474178426,
+      "catch_up_elapsed_h": 9.294103848597862
+    },
+    {
+      "dataset": "jnc6",
+      "loss": "0.10",
+      "baseline": "leap",
+      "tetris_fps": 330.8,
+      "baseline_fps": 30.03711828793054,
+      "tetris_preparation_s": 31755.50353745911,
+      "baseline_preparation_s": 24929.3,
+      "break_even_video_minutes": 250.57414231806,
+      "catch_up_elapsed_h": 9.01034302220016
+    },
+    {
+      "dataset": "jnc6",
+      "loss": "0.10",
+      "baseline": "otif",
+      "tetris_fps": 330.8,
+      "baseline_fps": 203.4,
+      "tetris_preparation_s": 31755.50353745911,
+      "baseline_preparation_s": 10400.86,
+      "break_even_video_minutes": 12531.320522568862,
+      "catch_up_elapsed_h": 18.291439137867336
+    },
+    {
+      "dataset": "jnc6",
+      "loss": "0.10",
+      "baseline": "reference",
+      "tetris_fps": 330.8,
+      "baseline_fps": 14.538907037803993,
+      "tetris_preparation_s": 31755.50353745911,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 536.5719767157957,
+      "catch_up_elapsed_h": 9.22648406996145
+    },
+    {
+      "dataset": "jnc7",
+      "loss": "0.05",
+      "baseline": "leap",
+      "tetris_fps": 422.9,
+      "baseline_fps": 268.2031671072556,
+      "tetris_preparation_s": 23278.7025216924,
+      "baseline_preparation_s": 20360.21,
+      "break_even_video_minutes": 2377.586028372749,
+      "catch_up_elapsed_h": 7.87183121959433
+    },
+    {
+      "dataset": "jnc7",
+      "loss": "0.05",
+      "baseline": "otif",
+      "tetris_fps": 422.9,
+      "baseline_fps": 26.9,
+      "tetris_preparation_s": 23278.7025216924,
+      "baseline_preparation_s": 11157.9,
+      "break_even_video_minutes": 386.8865619943826,
+      "catch_up_elapsed_h": 6.695016685201821
+    },
+    {
+      "dataset": "jnc7",
+      "loss": "0.05",
+      "baseline": "reference",
+      "tetris_fps": 422.9,
+      "baseline_fps": 14.515887451819244,
+      "tetris_preparation_s": 23278.7025216924,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 388.802187919312,
+      "catch_up_elapsed_h": 6.696149119539093
+    },
+    {
+      "dataset": "jnc7",
+      "loss": "0.10",
+      "baseline": "leap",
+      "tetris_fps": 663.9,
+      "baseline_fps": 268.2031671072556,
+      "tetris_preparation_s": 23278.7025216924,
+      "baseline_preparation_s": 20360.21,
+      "break_even_video_minutes": 1459.2176423019455,
+      "catch_up_elapsed_h": 7.01579324288436
+    },
+    {
+      "dataset": "jnc7",
+      "loss": "0.10",
+      "baseline": "otif",
+      "tetris_fps": 663.9,
+      "baseline_fps": 26.9,
+      "tetris_preparation_s": 23278.7025216924,
+      "baseline_preparation_s": 11157.9,
+      "break_even_video_minutes": 377.5760009814715,
+      "catch_up_elapsed_h": 6.608487307758409
+    },
+    {
+      "dataset": "jnc7",
+      "loss": "0.10",
+      "baseline": "reference",
+      "tetris_fps": 663.9,
+      "baseline_fps": 14.515887451819244,
+      "tetris_preparation_s": 23278.7025216924,
+      "baseline_preparation_s": 0.0,
+      "break_even_video_minutes": 383.84939704679897,
+      "catch_up_elapsed_h": 6.610849634940714
+    }
+  ],
+  "projection": "max(0, elapsed_hours*3600-preparation_seconds)*throughput_fps/(15*60)",
+  "note": "Accounting projection; Tetris summed work and reconstructed baseline stage wall times; B3D points provisional."
+}

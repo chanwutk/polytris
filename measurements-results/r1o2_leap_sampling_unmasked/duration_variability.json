@@ -23,25 +23,25 @@
       "dataset": "jnc0",
       "label": "B3D1",
       "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc0-tracks.parquet",
-      "sha256": "da69a41ebb0485abc847564a5bd8ace35c51ec5586963516db2700247b1f92be"
+      "sha256": "70f5c52caca64f33d14a86a4a5d19cbcec72212d8e7b2a048376165b7113aecf"
     },
     {
       "dataset": "jnc2",
       "label": "B3D2",
       "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc2-tracks.parquet",
-      "sha256": "21f8b7ae537b5b1d4b8c06ef87b9312a8aa2b7f658e24220c83873acd29e667b"
+      "sha256": "343d1a08e5837a7b26fba344352cb4a0189f7606492a438c88077b94ebcadcf5"
     },
     {
       "dataset": "jnc6",
       "label": "B3D3",
       "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc6-tracks.parquet",
-      "sha256": "6902358136313fb4d92d2c91bcded6b9c61d71b26e8479d63b3889faa5a2b27c"
+      "sha256": "3459318f45b337c21e54009d5c9115f0e3add59adc601b0bbc356116e9aa5e38"
     },
     {
       "dataset": "jnc7",
       "label": "B3D4",
       "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc7-tracks.parquet",
-      "sha256": "c6b4dc9c24f8d7636f09640428afceaf82264d57a70569293e1550b1a8240bcb"
+      "sha256": "4bcb0ee9d73667271f9b5d64c1d65a4ce0959e0e7a0d303172f7a09f2d76f7c4"
     }
   ],
   "rows": [
@@ -58,58 +58,58 @@
     },
     {
       "label": "B3D pooled",
-      "tracks": 1085,
-      "mean_s": 11.35539170506912,
-      "stddev_s": 8.263306441510627,
-      "variance_s2": 68.28223334631102,
-      "coefficient_of_variation": 0.7276989342271507,
-      "p10_s": 1.4,
-      "p50_s": 10.8,
-      "p90_s": 22.266666666666666
+      "tracks": 721,
+      "mean_s": 16.250208044382813,
+      "stddev_s": 7.164219950469954,
+      "variance_s2": 51.326047498711716,
+      "coefficient_of_variation": 0.44086942954225133,
+      "p10_s": 8.4,
+      "p50_s": 14.933333333333334,
+      "p90_s": 25.866666666666667
     },
     {
       "label": "B3D1",
-      "tracks": 322,
-      "mean_s": 11.017184265010348,
-      "stddev_s": 7.197263498823594,
-      "variance_s2": 51.80060187149844,
-      "coefficient_of_variation": 0.6532761298802543,
-      "p10_s": 1.4066666666666667,
-      "p50_s": 12.0,
-      "p90_s": 20.380000000000006
+      "tracks": 217,
+      "mean_s": 15.713056835637488,
+      "stddev_s": 5.432329925850697,
+      "variance_s2": 29.51020842329304,
+      "coefficient_of_variation": 0.3457207583905684,
+      "p10_s": 10.253333333333334,
+      "p50_s": 14.733333333333333,
+      "p90_s": 23.49333333333334
     },
     {
       "label": "B3D2",
-      "tracks": 295,
-      "mean_s": 10.381016949152546,
-      "stddev_s": 9.215446037503877,
-      "variance_s2": 84.92444567014591,
-      "coefficient_of_variation": 0.8877209316430391,
-      "p10_s": 1.2,
-      "p50_s": 8.533333333333333,
-      "p90_s": 24.346666666666668
+      "tracks": 168,
+      "mean_s": 17.057539682539677,
+      "stddev_s": 8.246201388098727,
+      "variance_s2": 67.99983733308139,
+      "coefficient_of_variation": 0.4834343956731139,
+      "p10_s": 7.713333333333333,
+      "p50_s": 15.866666666666667,
+      "p90_s": 28.433333333333337
     },
     {
       "label": "B3D3",
-      "tracks": 245,
-      "mean_s": 13.8073469387755,
-      "stddev_s": 8.088813164083035,
-      "variance_s2": 65.42889840344301,
-      "coefficient_of_variation": 0.585833991131709,
-      "p10_s": 1.9600000000000002,
-      "p50_s": 13.4,
-      "p90_s": 24.279999999999994
+      "tracks": 187,
+      "mean_s": 17.806773618538326,
+      "stddev_s": 7.142836173686803,
+      "variance_s2": 51.02010860412872,
+      "coefficient_of_variation": 0.40113028484006324,
+      "p10_s": 8.706666666666665,
+      "p50_s": 17.066666666666666,
+      "p90_s": 27.333333333333336
     },
     {
       "label": "B3D4",
-      "tracks": 223,
-      "mean_s": 10.438863976083706,
-      "stddev_s": 8.020837604599349,
-      "variance_s2": 64.33383587935501,
-      "coefficient_of_variation": 0.7683630731251739,
-      "p10_s": 1.4666666666666666,
-      "p50_s": 9.333333333333334,
-      "p90_s": 20.52
+      "tracks": 149,
+      "mean_s": 14.168680089485465,
+      "stddev_s": 7.493557987218018,
+      "variance_s2": 56.15341130779895,
+      "coefficient_of_variation": 0.5288818676045177,
+      "p10_s": 7.666666666666667,
+      "p50_s": 12.6,
+      "p90_s": 22.76000000000001
     },
     {
       "label": "CalDoT1",

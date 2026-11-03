@@ -257,44 +257,48 @@
       "classifier": "ShuffleNet05",
       "classify_inference_spikes": {
         "batches": 1,
-        "classify_share_without_excess_pct": 14.3,
+        "classify_share_without_excess_pct": 14.8,
         "excess_seconds": 0.096,
         "last_batch_of_video": 1,
         "share_of_classify_pct": 3.1
       },
-      "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
       "dataset": "jnc0",
-      "detect_canvas_read_share_pct": 5.26,
-      "extraction_seconds": 21.109,
-      "fps": 254.6,
+      "detect_canvas_read_share_pct": 4.87,
+      "extraction_seconds": 20.378,
+      "fps": 263.8,
       "frames": 5375,
-      "hota": 0.779,
-      "hota_loss_pct": 3.3,
+      "hota": 0.7542,
+      "hota_loss_pct": 4.08,
       "operators": {
         "classify": {
           "ms_per_frame": 0.5757,
           "seconds": 3.094,
-          "share_pct": 14.7
+          "share_pct": 15.2
         },
         "detect": {
-          "ms_per_frame": 2.8923,
-          "seconds": 15.546,
-          "share_pct": 73.6
+          "ms_per_frame": 2.6351,
+          "seconds": 14.164,
+          "share_pct": 69.5
         },
         "pack": {
-          "ms_per_frame": 0.3686,
-          "seconds": 1.981,
-          "share_pct": 9.4
+          "ms_per_frame": 0.3626,
+          "seconds": 1.949,
+          "share_pct": 9.6
         },
-        "prune": null,
+        "prune": {
+          "ms_per_frame": 0.0942,
+          "seconds": 0.506,
+          "share_pct": 2.5
+        },
         "track": {
-          "ms_per_frame": 0.0852,
-          "seconds": 0.458,
-          "share_pct": 2.2
+          "ms_per_frame": 0.1189,
+          "seconds": 0.639,
+          "share_pct": 3.1
         },
         "unpack": {
-          "ms_per_frame": 0.0056,
-          "seconds": 0.03,
+          "ms_per_frame": 0.0048,
+          "seconds": 0.026,
           "share_pct": 0.1
         }
       },
@@ -310,11 +314,11 @@
           },
           "inference": {
             "seconds": 0.433,
-            "share_pct": 2.05
+            "share_pct": 2.13
           },
           "mask": {
             "seconds": 0.3,
-            "share_pct": 1.42
+            "share_pct": 1.47
           },
           "reshape": {
             "seconds": 0.008,
@@ -322,85 +326,107 @@
           },
           "resize": {
             "seconds": 0.001,
-            "share_pct": 0.0
+            "share_pct": 0.01
           },
           "send": {
             "seconds": 2.326,
-            "share_pct": 11.02
+            "share_pct": 11.41
           }
         },
         "detect": {
           "detect": {
-            "seconds": 14.435,
-            "share_pct": 68.38
+            "seconds": 13.172,
+            "share_pct": 64.64
           },
           "read": {
-            "seconds": 1.111,
-            "share_pct": 5.26
+            "seconds": 0.991,
+            "share_pct": 4.87
           }
         },
         "pack": {
           "create_bitmap": {
-            "seconds": 0.012,
-            "share_pct": 0.06
+            "seconds": 0.017,
+            "share_pct": 0.08
           },
           "get_classifications": {
             "seconds": 0.001,
             "share_pct": 0.0
           },
           "group_tiles": {
-            "seconds": 0.011,
-            "share_pct": 0.05
+            "seconds": 0.018,
+            "share_pct": 0.09
           },
           "initialize_canvas": {
-            "seconds": 0.188,
-            "share_pct": 0.89
+            "seconds": 0.128,
+            "share_pct": 0.63
           },
           "pack_batch": {
-            "seconds": 0.243,
-            "share_pct": 1.15
+            "seconds": 0.207,
+            "share_pct": 1.02
           },
           "render_copy": {
-            "seconds": 1.054,
-            "share_pct": 5.0
+            "seconds": 1.126,
+            "share_pct": 5.53
           },
           "render_crop": {
             "seconds": 0.0,
             "share_pct": 0.0
           },
           "render_fetch": {
-            "seconds": 0.028,
-            "share_pct": 0.13
+            "seconds": 0.03,
+            "share_pct": 0.15
           },
           "render_metadata": {
-            "seconds": 0.116,
-            "share_pct": 0.55
+            "seconds": 0.111,
+            "share_pct": 0.54
           },
           "render_pad": {
             "seconds": 0.0,
             "share_pct": 0.0
           },
           "render_tile_bound": {
-            "seconds": 0.328,
-            "share_pct": 1.56
+            "seconds": 0.312,
+            "share_pct": 1.53
           },
           "render_tile_size": {
             "seconds": 0.0,
             "share_pct": 0.0
           }
         },
+        "prune": {
+          "build_ilp": {
+            "seconds": 0.084,
+            "share_pct": 0.41
+          },
+          "extract_grids": {
+            "seconds": 0.196,
+            "share_pct": 0.96
+          },
+          "group_tiles": {
+            "seconds": 0.011,
+            "share_pct": 0.05
+          },
+          "prepare_bitmaps": {
+            "seconds": 0.002,
+            "share_pct": 0.01
+          },
+          "solve_ilp": {
+            "seconds": 0.213,
+            "share_pct": 1.05
+          }
+        },
         "track": {
           "convert_detections": {
-            "seconds": 0.026,
-            "share_pct": 0.12
+            "seconds": 0.03,
+            "share_pct": 0.15
           },
           "interpolate_trajectory": {
-            "seconds": 0.374,
-            "share_pct": 1.77
+            "seconds": 0.532,
+            "share_pct": 2.61
           },
           "tracker_update": {
-            "seconds": 0.058,
-            "share_pct": 0.27
+            "seconds": 0.077,
+            "share_pct": 0.38
           }
         },
         "unpack": {
@@ -409,8 +435,8 @@
             "share_pct": 0.0
           },
           "unpack_detections": {
-            "seconds": 0.03,
-            "share_pct": 0.14
+            "seconds": 0.026,
+            "share_pct": 0.13
           }
         }
       },
@@ -420,10 +446,10 @@
         "classifier_ms_per_classified_frame": 2.292,
         "classifier_ms_per_frame_every_frame": 2.3874,
         "classify_ms_per_original_frame": 0.5757,
-        "classify_share_pct": 14.7,
-        "detect_ms_per_original_frame": 2.8923,
-        "detection_reduction": 23.0,
-        "explanation": "Per frame, classifying costs 2.387 ms and reference detection 66.5 ms (means; 28x). At sample rate 4 the classifier runs on 1350 of 5375 frames (3.98x fewer). The operating point's run cost 2.292 ms per classified frame, -4% against the every-frame run, so classification costs 0.576 ms per original frame (4.15x less than classifying every frame). Detection on packed canvases costs 2.892 ms per original frame (23.0x less than reference detection). Classification is 14.7% of extraction, against 3.5% if both ran on every frame and nothing else ran.",
+        "classify_share_pct": 15.2,
+        "detect_ms_per_original_frame": 2.6351,
+        "detection_reduction": 25.2,
+        "explanation": "Per frame, classifying costs 2.387 ms and reference detection 66.5 ms (means; 28x). At sample rate 4 the classifier runs on 1350 of 5375 frames (3.98x fewer). The operating point's run cost 2.292 ms per classified frame, -4% against the every-frame run, so classification costs 0.576 ms per original frame (4.15x less than classifying every frame). Detection on packed canvases costs 2.635 ms per original frame (25.2x less than reference detection). Classification is 15.2% of extraction, against 3.5% if both ran on every frame and nothing else ran.",
         "frames": 5375,
         "per_classified_frame_cost_vs_every_frame": 0.96,
         "per_frame_ratio_of_means": 27.9,
@@ -432,7 +458,7 @@
         "sampling_factor": 3.981,
         "share_if_every_frame_and_nothing_else_pct": 3.5
       },
-      "pruning_threshold": null,
+      "pruning_threshold": 0.4,
       "reference": {
         "detect_frame_read_share_pct": 1.45,
         "operators": {
@@ -476,7 +502,7 @@
         "seconds": 364.324
       },
       "reference_fps": 14.8,
-      "reference_hota": 0.8056,
+      "reference_hota": 0.7862,
       "sample_rate": 4,
       "tilesize": 60
     },
@@ -495,8 +521,8 @@
       "extraction_seconds": 13.538,
       "fps": 346.5,
       "frames": 4691,
-      "hota": 0.7841,
-      "hota_loss_pct": 3.81,
+      "hota": 0.7314,
+      "hota_loss_pct": 4.23,
       "operators": {
         "classify": {
           "ms_per_frame": 0.3486,
@@ -703,7 +729,7 @@
         "seconds": 325.527
       },
       "reference_fps": 14.4,
-      "reference_hota": 0.8151,
+      "reference_hota": 0.7637,
       "sample_rate": 8,
       "tilesize": 60
     },
@@ -722,8 +748,8 @@
       "extraction_seconds": 18.18,
       "fps": 285.6,
       "frames": 5192,
-      "hota": 0.8013,
-      "hota_loss_pct": 4.09,
+      "hota": 0.789,
+      "hota_loss_pct": 2.7,
       "operators": {
         "classify": {
           "ms_per_frame": 0.7767,
@@ -956,7 +982,7 @@
         "seconds": 357.111
       },
       "reference_fps": 14.5,
-      "reference_hota": 0.8355,
+      "reference_hota": 0.8109,
       "sample_rate": 4,
       "tilesize": 60
     },
@@ -964,48 +990,48 @@
       "classifier": "ShuffleNet05",
       "classify_inference_spikes": {
         "batches": 1,
-        "classify_share_without_excess_pct": 25.1,
+        "classify_share_without_excess_pct": 25.4,
         "excess_seconds": 0.141,
         "last_batch_of_video": 1,
         "share_of_classify_pct": 4.4
       },
-      "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
       "dataset": "jnc7",
       "detect_canvas_read_share_pct": 4.01,
-      "extraction_seconds": 12.356,
-      "fps": 422.9,
+      "extraction_seconds": 12.212,
+      "fps": 427.9,
       "frames": 5225,
-      "hota": 0.8051,
-      "hota_loss_pct": 4.76,
+      "hota": 0.7996,
+      "hota_loss_pct": 3.94,
       "operators": {
         "classify": {
           "ms_per_frame": 0.6139,
           "seconds": 3.207,
-          "share_pct": 26.0
+          "share_pct": 26.3
         },
         "detect": {
-          "ms_per_frame": 1.3392,
-          "seconds": 6.998,
-          "share_pct": 56.6
+          "ms_per_frame": 1.3736,
+          "seconds": 7.177,
+          "share_pct": 58.8
         },
         "pack": {
-          "ms_per_frame": 0.214,
-          "seconds": 1.118,
-          "share_pct": 9.0
+          "ms_per_frame": 0.1465,
+          "seconds": 0.766,
+          "share_pct": 6.3
         },
         "prune": {
-          "ms_per_frame": 0.0828,
-          "seconds": 0.433,
-          "share_pct": 3.5
+          "ms_per_frame": 0.0943,
+          "seconds": 0.493,
+          "share_pct": 4.0
         },
         "track": {
-          "ms_per_frame": 0.1099,
-          "seconds": 0.574,
-          "share_pct": 4.6
+          "ms_per_frame": 0.1045,
+          "seconds": 0.546,
+          "share_pct": 4.5
         },
         "unpack": {
-          "ms_per_frame": 0.005,
-          "seconds": 0.026,
+          "ms_per_frame": 0.0043,
+          "seconds": 0.022,
           "share_pct": 0.2
         }
       },
@@ -1021,11 +1047,11 @@
           },
           "inference": {
             "seconds": 0.485,
-            "share_pct": 3.92
+            "share_pct": 3.97
           },
           "mask": {
             "seconds": 0.294,
-            "share_pct": 2.38
+            "share_pct": 2.41
           },
           "reshape": {
             "seconds": 0.009,
@@ -1037,23 +1063,23 @@
           },
           "send": {
             "seconds": 2.392,
-            "share_pct": 19.36
+            "share_pct": 19.58
           }
         },
         "detect": {
           "detect": {
-            "seconds": 6.501,
-            "share_pct": 52.62
+            "seconds": 6.688,
+            "share_pct": 54.77
           },
           "read": {
-            "seconds": 0.496,
+            "seconds": 0.489,
             "share_pct": 4.01
           }
         },
         "pack": {
           "create_bitmap": {
-            "seconds": 0.012,
-            "share_pct": 0.1
+            "seconds": 0.011,
+            "share_pct": 0.09
           },
           "get_classifications": {
             "seconds": 0.001,
@@ -1061,39 +1087,39 @@
           },
           "group_tiles": {
             "seconds": 0.008,
-            "share_pct": 0.07
+            "share_pct": 0.06
           },
           "initialize_canvas": {
-            "seconds": 0.084,
-            "share_pct": 0.68
+            "seconds": 0.072,
+            "share_pct": 0.59
           },
           "pack_batch": {
-            "seconds": 0.065,
-            "share_pct": 0.53
+            "seconds": 0.051,
+            "share_pct": 0.42
           },
           "render_copy": {
-            "seconds": 0.681,
-            "share_pct": 5.51
+            "seconds": 0.435,
+            "share_pct": 3.56
           },
           "render_crop": {
             "seconds": 0.0,
             "share_pct": 0.0
           },
           "render_fetch": {
-            "seconds": 0.021,
-            "share_pct": 0.17
+            "seconds": 0.012,
+            "share_pct": 0.09
           },
           "render_metadata": {
-            "seconds": 0.071,
-            "share_pct": 0.58
+            "seconds": 0.047,
+            "share_pct": 0.38
           },
           "render_pad": {
             "seconds": 0.0,
             "share_pct": 0.0
           },
           "render_tile_bound": {
-            "seconds": 0.175,
-            "share_pct": 1.41
+            "seconds": 0.13,
+            "share_pct": 1.06
           },
           "render_tile_size": {
             "seconds": 0.0,
@@ -1102,38 +1128,38 @@
         },
         "prune": {
           "build_ilp": {
-            "seconds": 0.088,
-            "share_pct": 0.71
+            "seconds": 0.053,
+            "share_pct": 0.43
           },
           "extract_grids": {
-            "seconds": 0.161,
+            "seconds": 0.16,
             "share_pct": 1.31
           },
           "group_tiles": {
-            "seconds": 0.008,
-            "share_pct": 0.07
+            "seconds": 0.007,
+            "share_pct": 0.06
           },
           "prepare_bitmaps": {
             "seconds": 0.002,
             "share_pct": 0.02
           },
           "solve_ilp": {
-            "seconds": 0.173,
-            "share_pct": 1.4
+            "seconds": 0.271,
+            "share_pct": 2.22
           }
         },
         "track": {
           "convert_detections": {
-            "seconds": 0.041,
-            "share_pct": 0.33
+            "seconds": 0.037,
+            "share_pct": 0.3
           },
           "interpolate_trajectory": {
-            "seconds": 0.453,
-            "share_pct": 3.67
+            "seconds": 0.428,
+            "share_pct": 3.51
           },
           "tracker_update": {
-            "seconds": 0.08,
-            "share_pct": 0.65
+            "seconds": 0.081,
+            "share_pct": 0.66
           }
         },
         "unpack": {
@@ -1142,8 +1168,8 @@
             "share_pct": 0.0
           },
           "unpack_detections": {
-            "seconds": 0.026,
-            "share_pct": 0.21
+            "seconds": 0.022,
+            "share_pct": 0.18
           }
         }
       },
@@ -1153,10 +1179,10 @@
         "classifier_ms_per_classified_frame": 2.4485,
         "classifier_ms_per_frame_every_frame": 2.2516,
         "classify_ms_per_original_frame": 0.6139,
-        "classify_share_pct": 26.0,
-        "detect_ms_per_original_frame": 1.3392,
-        "detection_reduction": 50.5,
-        "explanation": "Per frame, classifying costs 2.252 ms and reference detection 67.6 ms (means; 30x). At sample rate 4 the classifier runs on 1310 of 5225 frames (3.99x fewer). The operating point's run cost 2.448 ms per classified frame, +9% against the every-frame run, so classification costs 0.614 ms per original frame (3.67x less than classifying every frame). Detection on packed canvases costs 1.339 ms per original frame (50.5x less than reference detection). Classification is 26.0% of extraction, against 3.2% if both ran on every frame and nothing else ran.",
+        "classify_share_pct": 26.3,
+        "detect_ms_per_original_frame": 1.3736,
+        "detection_reduction": 49.2,
+        "explanation": "Per frame, classifying costs 2.252 ms and reference detection 67.6 ms (means; 30x). At sample rate 4 the classifier runs on 1310 of 5225 frames (3.99x fewer). The operating point's run cost 2.448 ms per classified frame, +9% against the every-frame run, so classification costs 0.614 ms per original frame (3.67x less than classifying every frame). Detection on packed canvases costs 1.374 ms per original frame (49.2x less than reference detection). Classification is 26.3% of extraction, against 3.2% if both ran on every frame and nothing else ran.",
         "frames": 5225,
         "per_classified_frame_cost_vs_every_frame": 1.087,
         "per_frame_ratio_of_means": 30.0,
@@ -1165,7 +1191,7 @@
         "sampling_factor": 3.989,
         "share_if_every_frame_and_nothing_else_pct": 3.2
       },
-      "pruning_threshold": 0.6,
+      "pruning_threshold": 0.4,
       "reference": {
         "detect_frame_read_share_pct": 1.46,
         "operators": {
@@ -1209,7 +1235,7 @@
         "seconds": 359.95
       },
       "reference_fps": 14.5,
-      "reference_hota": 0.8453,
+      "reference_hota": 0.8324,
       "sample_rate": 4,
       "tilesize": 60
     },
@@ -1717,25 +1743,25 @@
     "detect": {
       "datasets": 7,
       "max_pct": 77.7,
-      "median_pct": 73.6,
+      "median_pct": 69.5,
       "min_pct": 54.6
     },
     "pack": {
       "datasets": 7,
-      "max_pct": 9.4,
+      "max_pct": 9.6,
       "median_pct": 6.7,
       "min_pct": 5.5
     },
     "prune": {
-      "datasets": 3,
-      "max_pct": 3.5,
-      "median_pct": 3.3,
-      "min_pct": 3.1
+      "datasets": 4,
+      "max_pct": 4.0,
+      "median_pct": 3.2,
+      "min_pct": 2.5
     },
     "track": {
       "datasets": 7,
-      "max_pct": 4.6,
-      "median_pct": 2.8,
+      "max_pct": 4.5,
+      "median_pct": 3.1,
       "min_pct": 1.9
     },
     "unpack": {

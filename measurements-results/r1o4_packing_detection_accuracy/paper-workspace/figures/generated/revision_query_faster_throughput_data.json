@@ -1,0 +1,847 @@
+{
+  "source": "scripts/data/revision_evidence/native_query_configs.json",
+  "source_sha256": "30e6e7a9d12f6ef3d237b53e95f963b1616cd508c8d28be241d4ace706ffd9a6",
+  "selection": "OTIF minimizes absolute FPS difference from LEAP. Tetris minimizes that difference among tested configurations strictly faster than both selected baselines. Ties prefer lower counting MAPE or higher other query scores, then configuration name. No query-score bound.",
+  "count_metric": "MAPE",
+  "selection_metric": "selection_query_1",
+  "topk_metric": "top_k_query_1",
+  "matches": [
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "query": "count",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.5926976441894718,
+      "fps": 389.21965821943775,
+      "otif_fps": 491.63480793737483,
+      "leap_fps": 389.21965821943775
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "query": "count",
+      "system": "otif",
+      "config": "param 5",
+      "score": 0.23336445574140208,
+      "fps": 491.63480793737483,
+      "otif_fps": 491.63480793737483,
+      "leap_fps": 389.21965821943775
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "query": "count",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+      "score": 0.19864250903624403,
+      "fps": 580.867283269078,
+      "otif_fps": 491.63480793737483,
+      "leap_fps": 389.21965821943775
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "query": "presence",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.9816,
+      "fps": 389.21965821943775,
+      "otif_fps": 491.63480793737483,
+      "leap_fps": 389.21965821943775
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "query": "presence",
+      "system": "otif",
+      "config": "param 5",
+      "score": 0.9786,
+      "fps": 491.63480793737483,
+      "otif_fps": 491.63480793737483,
+      "leap_fps": 389.21965821943775
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "query": "presence",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+      "score": 0.9832,
+      "fps": 580.867283269078,
+      "otif_fps": 491.63480793737483,
+      "leap_fps": 389.21965821943775
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "query": "topk",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.9,
+      "fps": 389.21965821943775,
+      "otif_fps": 491.63480793737483,
+      "leap_fps": 389.21965821943775
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "query": "topk",
+      "system": "otif",
+      "config": "param 5",
+      "score": 1.0,
+      "fps": 491.63480793737483,
+      "otif_fps": 491.63480793737483,
+      "leap_fps": 389.21965821943775
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "query": "topk",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+      "score": 0.9,
+      "fps": 580.867283269078,
+      "otif_fps": 491.63480793737483,
+      "leap_fps": 389.21965821943775
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "query": "count",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.4437800385881573,
+      "fps": 265.3443058346128,
+      "otif_fps": 222.52121713930862,
+      "leap_fps": 265.3443058346128
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "query": "count",
+      "system": "otif",
+      "config": "param 3",
+      "score": 0.38314515693946527,
+      "fps": 222.52121713930862,
+      "otif_fps": 222.52121713930862,
+      "leap_fps": 265.3443058346128
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "query": "count",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+      "score": 0.19752361581951405,
+      "fps": 281.2512363665616,
+      "otif_fps": 222.52121713930862,
+      "leap_fps": 265.3443058346128
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "query": "presence",
+      "system": "leap",
+      "config": "param 0",
+      "score": 1.0,
+      "fps": 265.3443058346128,
+      "otif_fps": 222.52121713930862,
+      "leap_fps": 265.3443058346128
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "query": "presence",
+      "system": "otif",
+      "config": "param 3",
+      "score": 0.999,
+      "fps": 222.52121713930862,
+      "otif_fps": 222.52121713930862,
+      "leap_fps": 265.3443058346128
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "query": "presence",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+      "score": 1.0,
+      "fps": 281.2512363665616,
+      "otif_fps": 222.52121713930862,
+      "leap_fps": 265.3443058346128
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "query": "topk",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.8,
+      "fps": 265.3443058346128,
+      "otif_fps": 222.52121713930862,
+      "leap_fps": 265.3443058346128
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "query": "topk",
+      "system": "otif",
+      "config": "param 3",
+      "score": 0.9,
+      "fps": 222.52121713930862,
+      "otif_fps": 222.52121713930862,
+      "leap_fps": 265.3443058346128
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "query": "topk",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+      "score": 0.9,
+      "fps": 281.2512363665616,
+      "otif_fps": 222.52121713930862,
+      "leap_fps": 265.3443058346128
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "query": "count",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.24893869254253054,
+      "fps": 181.66749929323558,
+      "otif_fps": 229.5009784735812,
+      "leap_fps": 181.66749929323558
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "query": "count",
+      "system": "otif",
+      "config": "param 3",
+      "score": 0.2375895681275335,
+      "fps": 229.5009784735812,
+      "otif_fps": 229.5009784735812,
+      "leap_fps": 181.66749929323558
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "query": "count",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "score": 0.20460637976579654,
+      "fps": 346.49802014125635,
+      "otif_fps": 229.5009784735812,
+      "leap_fps": 181.66749929323558
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "query": "presence",
+      "system": "leap",
+      "config": "param 0",
+      "score": 1.0,
+      "fps": 181.66749929323558,
+      "otif_fps": 229.5009784735812,
+      "leap_fps": 181.66749929323558
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "query": "presence",
+      "system": "otif",
+      "config": "param 3",
+      "score": 0.9951,
+      "fps": 229.5009784735812,
+      "otif_fps": 229.5009784735812,
+      "leap_fps": 181.66749929323558
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "query": "presence",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "score": 1.0,
+      "fps": 346.49802014125635,
+      "otif_fps": 229.5009784735812,
+      "leap_fps": 181.66749929323558
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "query": "topk",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.6,
+      "fps": 181.66749929323558,
+      "otif_fps": 229.5009784735812,
+      "leap_fps": 181.66749929323558
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "query": "topk",
+      "system": "otif",
+      "config": "param 3",
+      "score": 0.6,
+      "fps": 229.5009784735812,
+      "otif_fps": 229.5009784735812,
+      "leap_fps": 181.66749929323558
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "query": "topk",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "score": 0.5,
+      "fps": 346.49802014125635,
+      "otif_fps": 229.5009784735812,
+      "leap_fps": 181.66749929323558
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "query": "count",
+      "system": "leap",
+      "config": "param 0",
+      "score": 1.025145152940015,
+      "fps": 30.03711828793054,
+      "otif_fps": 25.042807186784035,
+      "leap_fps": 30.03711828793054
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "query": "count",
+      "system": "otif",
+      "config": "param 0",
+      "score": 0.04135447034778528,
+      "fps": 25.042807186784035,
+      "otif_fps": 25.042807186784035,
+      "leap_fps": 30.03711828793054
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "query": "count",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+      "score": 0.06231464159211286,
+      "fps": 31.139364807642902,
+      "otif_fps": 25.042807186784035,
+      "leap_fps": 30.03711828793054
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "query": "presence",
+      "system": "leap",
+      "config": "param 0",
+      "score": 1.0,
+      "fps": 30.03711828793054,
+      "otif_fps": 25.042807186784035,
+      "leap_fps": 30.03711828793054
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "query": "presence",
+      "system": "otif",
+      "config": "param 0",
+      "score": 0.9997,
+      "fps": 25.042807186784035,
+      "otif_fps": 25.042807186784035,
+      "leap_fps": 30.03711828793054
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "query": "presence",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+      "score": 1.0,
+      "fps": 31.139364807642902,
+      "otif_fps": 25.042807186784035,
+      "leap_fps": 30.03711828793054
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "query": "topk",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.7,
+      "fps": 30.03711828793054,
+      "otif_fps": 25.042807186784035,
+      "leap_fps": 30.03711828793054
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "query": "topk",
+      "system": "otif",
+      "config": "param 0",
+      "score": 0.8,
+      "fps": 25.042807186784035,
+      "otif_fps": 25.042807186784035,
+      "leap_fps": 30.03711828793054
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "query": "topk",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+      "score": 0.7,
+      "fps": 31.139364807642902,
+      "otif_fps": 25.042807186784035,
+      "leap_fps": 30.03711828793054
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "query": "count",
+      "system": "leap",
+      "config": "param 0",
+      "score": 1.383950685950628,
+      "fps": 268.2031671072556,
+      "otif_fps": 188.15268275117032,
+      "leap_fps": 268.2031671072556
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "query": "count",
+      "system": "otif",
+      "config": "param 4",
+      "score": 0.37436659980700615,
+      "fps": 188.15268275117032,
+      "otif_fps": 188.15268275117032,
+      "leap_fps": 268.2031671072556
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "query": "count",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+      "score": 0.13391230184253589,
+      "fps": 363.0709984021765,
+      "otif_fps": 188.15268275117032,
+      "leap_fps": 268.2031671072556
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "query": "presence",
+      "system": "leap",
+      "config": "param 0",
+      "score": 1.0,
+      "fps": 268.2031671072556,
+      "otif_fps": 188.15268275117032,
+      "leap_fps": 268.2031671072556
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "query": "presence",
+      "system": "otif",
+      "config": "param 4",
+      "score": 0.9897,
+      "fps": 188.15268275117032,
+      "otif_fps": 188.15268275117032,
+      "leap_fps": 268.2031671072556
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "query": "presence",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+      "score": 1.0,
+      "fps": 363.0709984021765,
+      "otif_fps": 188.15268275117032,
+      "leap_fps": 268.2031671072556
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "query": "topk",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.5,
+      "fps": 268.2031671072556,
+      "otif_fps": 188.15268275117032,
+      "leap_fps": 268.2031671072556
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "query": "topk",
+      "system": "otif",
+      "config": "param 4",
+      "score": 0.9,
+      "fps": 188.15268275117032,
+      "otif_fps": 188.15268275117032,
+      "leap_fps": 268.2031671072556
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "query": "topk",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+      "score": 0.8,
+      "fps": 363.0709984021765,
+      "otif_fps": 188.15268275117032,
+      "leap_fps": 268.2031671072556
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "query": "count",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.3301604140631642,
+      "fps": 353.51997878880127,
+      "otif_fps": 421.7432052483599,
+      "leap_fps": 353.51997878880127
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "query": "count",
+      "system": "otif",
+      "config": "param 5",
+      "score": 0.09976219394693031,
+      "fps": 421.7432052483599,
+      "otif_fps": 421.7432052483599,
+      "leap_fps": 353.51997878880127
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "query": "count",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_bl_s100_sortcython",
+      "score": 0.10900770880390442,
+      "fps": 458.31105053591017,
+      "otif_fps": 421.7432052483599,
+      "leap_fps": 353.51997878880127
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "query": "presence",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.9543,
+      "fps": 353.51997878880127,
+      "otif_fps": 421.7432052483599,
+      "leap_fps": 353.51997878880127
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "query": "presence",
+      "system": "otif",
+      "config": "param 5",
+      "score": 0.9681,
+      "fps": 421.7432052483599,
+      "otif_fps": 421.7432052483599,
+      "leap_fps": 353.51997878880127
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "query": "presence",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_bl_s100_sortcython",
+      "score": 0.959,
+      "fps": 458.31105053591017,
+      "otif_fps": 421.7432052483599,
+      "leap_fps": 353.51997878880127
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "query": "topk",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.9,
+      "fps": 353.51997878880127,
+      "otif_fps": 421.7432052483599,
+      "leap_fps": 353.51997878880127
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "query": "topk",
+      "system": "otif",
+      "config": "param 5",
+      "score": 0.9,
+      "fps": 421.7432052483599,
+      "otif_fps": 421.7432052483599,
+      "leap_fps": 353.51997878880127
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "query": "topk",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_bl_s100_sortcython",
+      "score": 1.0,
+      "fps": 458.31105053591017,
+      "otif_fps": 421.7432052483599,
+      "leap_fps": 353.51997878880127
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "query": "count",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.41981163640886043,
+      "fps": 487.29601247477797,
+      "otif_fps": 478.4688995215311,
+      "leap_fps": 487.29601247477797
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "query": "count",
+      "system": "otif",
+      "config": "param 5",
+      "score": 0.15394851804574428,
+      "fps": 478.4688995215311,
+      "otif_fps": 478.4688995215311,
+      "leap_fps": 487.29601247477797
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "query": "count",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
+      "score": 0.22131603648409903,
+      "fps": 492.8248012754396,
+      "otif_fps": 478.4688995215311,
+      "leap_fps": 487.29601247477797
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "query": "presence",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.9155,
+      "fps": 487.29601247477797,
+      "otif_fps": 478.4688995215311,
+      "leap_fps": 487.29601247477797
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "query": "presence",
+      "system": "otif",
+      "config": "param 5",
+      "score": 0.9745,
+      "fps": 478.4688995215311,
+      "otif_fps": 478.4688995215311,
+      "leap_fps": 487.29601247477797
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "query": "presence",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
+      "score": 0.9447,
+      "fps": 492.8248012754396,
+      "otif_fps": 478.4688995215311,
+      "leap_fps": 487.29601247477797
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "query": "topk",
+      "system": "leap",
+      "config": "param 0",
+      "score": 0.9,
+      "fps": 487.29601247477797,
+      "otif_fps": 478.4688995215311,
+      "leap_fps": 487.29601247477797
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "query": "topk",
+      "system": "otif",
+      "config": "param 5",
+      "score": 0.9,
+      "fps": 478.4688995215311,
+      "otif_fps": 478.4688995215311,
+      "leap_fps": 487.29601247477797
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "query": "topk",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
+      "score": 0.9,
+      "fps": 492.8248012754396,
+      "otif_fps": 478.4688995215311,
+      "leap_fps": 487.29601247477797
+    }
+  ],
+  "comparison_basis": "Saved scores before display rounding; compare Tetris against the better of OTIF and LEAP for each dataset and query. Positive gain favors Tetris. Best means gain >= 0, including exact ties. Nonzero losses of at most 1 pp are comparable; remaining losses are at most 5 pp or greater than 5 pp.",
+  "comparison_groups": {
+    "best": [
+      {
+        "dataset": "CalDoT1",
+        "query": "topk",
+        "baseline": "otif",
+        "gain_pp": 10.0
+      },
+      {
+        "dataset": "CalDoT2",
+        "query": "topk",
+        "baseline": "otif",
+        "gain_pp": 0.0
+      },
+      {
+        "dataset": "B3D1",
+        "query": "presence",
+        "baseline": "leap",
+        "gain_pp": 0.0
+      },
+      {
+        "dataset": "B3D1",
+        "query": "count",
+        "baseline": "otif",
+        "gain_pp": 18.56215411199512
+      },
+      {
+        "dataset": "B3D1",
+        "query": "topk",
+        "baseline": "otif",
+        "gain_pp": 0.0
+      },
+      {
+        "dataset": "B3D2",
+        "query": "presence",
+        "baseline": "leap",
+        "gain_pp": 0.0
+      },
+      {
+        "dataset": "B3D2",
+        "query": "count",
+        "baseline": "otif",
+        "gain_pp": 3.298318836173696
+      },
+      {
+        "dataset": "B3D3",
+        "query": "presence",
+        "baseline": "leap",
+        "gain_pp": 0.0
+      },
+      {
+        "dataset": "B3D4",
+        "query": "presence",
+        "baseline": "leap",
+        "gain_pp": 0.0
+      },
+      {
+        "dataset": "B3D4",
+        "query": "count",
+        "baseline": "otif",
+        "gain_pp": 24.045429796447024
+      },
+      {
+        "dataset": "Amsterdam",
+        "query": "presence",
+        "baseline": "leap",
+        "gain_pp": 0.16
+      },
+      {
+        "dataset": "Amsterdam",
+        "query": "count",
+        "baseline": "otif",
+        "gain_pp": 3.472194670515805
+      }
+    ],
+    "comparable": [
+      {
+        "dataset": "CalDoT1",
+        "query": "presence",
+        "baseline": "otif",
+        "gain_pp": -0.91
+      },
+      {
+        "dataset": "CalDoT1",
+        "query": "count",
+        "baseline": "otif",
+        "gain_pp": -0.924551485697411
+      }
+    ],
+    "within5pp": [
+      {
+        "dataset": "CalDoT2",
+        "query": "presence",
+        "baseline": "otif",
+        "gain_pp": -2.98
+      },
+      {
+        "dataset": "B3D3",
+        "query": "count",
+        "baseline": "otif",
+        "gain_pp": -2.096017124432758
+      }
+    ],
+    "lower": [
+      {
+        "dataset": "CalDoT2",
+        "query": "count",
+        "baseline": "otif",
+        "gain_pp": -6.736751843835475
+      },
+      {
+        "dataset": "B3D2",
+        "query": "topk",
+        "baseline": "otif",
+        "gain_pp": -10.0
+      },
+      {
+        "dataset": "B3D3",
+        "query": "topk",
+        "baseline": "otif",
+        "gain_pp": -10.0
+      },
+      {
+        "dataset": "B3D4",
+        "query": "topk",
+        "baseline": "otif",
+        "gain_pp": -10.0
+      },
+      {
+        "dataset": "Amsterdam",
+        "query": "topk",
+        "baseline": "otif",
+        "gain_pp": -10.0
+      }
+    ]
+  },
+  "percentage_summary": {
+    "best_pct": 57.142857142857146,
+    "comparable_pct": 9.523809523809524,
+    "within5_pct": 9.523809523809524,
+    "remaining_pct": 23.80952380952381,
+    "remaining_max_gap_pp": 10.0
+  }
+}
