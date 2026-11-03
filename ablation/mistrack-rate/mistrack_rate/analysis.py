@@ -96,6 +96,8 @@ class PairDefinition:
     zero_y_axis: bool = True
     # When True, each facet subplot gets its own independent y-axis scale.
     resolve_y_independent: bool = False
+    # Height of each facet subplot in the full chart (with the exhaustive background).
+    height: int = 110
 
 
 PAIR_DEFINITIONS = (
@@ -137,6 +139,7 @@ PAIR_DEFINITIONS = (
         # HOTA y-axis is synced (shared) across facets so datasets are directly
         # comparable on the same HOTA scale.
         resolve_y_independent=False,
+        height=110,
     ),
 )
 
@@ -516,7 +519,7 @@ def _make_single_chart(
         plot_df = _prune_for_pareto_only(plot_df, pareto_flag_col)
     layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
     # Pareto-only variant gets 3× width and 2× height for readability.
-    width, height = (300, 220) if not include_background else (100, 110)
+    width, height = (300, 220) if not include_background else (100, pair.height)
     return alt.layer(*layers).properties(title=title, width=width, height=height)
 
 
@@ -617,23 +620,26 @@ def _make_altair_chart(
         plot_df = _prune_for_pareto_only(plot_df, pareto_flag_col)
     layers = _build_chart_layers(alt.Chart(plot_df), pair, include_background=include_background)
     # Pareto-only variant gets 3× width and 2× height for readability.
-    width, height = (300, 220) if not include_background else (100, 110)
+    width, height = (300, 220) if not include_background else (100, pair.height)
+    # Each subplot names its dataset in its lower-left corner, with a white outline for legibility.
+    # Amsterdam is abbreviated so its label fits beside the points.
+    label = (
+        alt.Chart(plot_df)
+        .transform_aggregate(rows='count()', groupby=['facet_dataset'])
+        .transform_calculate(name="datum.facet_dataset == 'Amsterdam' ? 'Ams.' : datum.facet_dataset")
+        .encode(x=alt.value(0), y=alt.value(height), text='name:N')
+    )
+    text = dict(align='left', baseline='bottom', dx=3, dy=-3, fontSize=11)
+    labels = [label.mark_text(**text, stroke='white', strokeWidth=3), label.mark_text(**text)]
     return (
-        alt.layer(*layers)
+        alt.layer(*layers, *labels)
         .properties(width=width, height=height)
         .facet(
-            # Drop the shared 'Dataset' facet title and instead prefix each
-            # per-facet header label with 'Dataset: ' via a Vega labelExpr.
-            # labelPadding is negative so the 'Dataset: ...' label sits closer
-            # to (just above) the subplot rather than floating well above it.
             facet=alt.Facet(
                 'facet_dataset:N',
                 title=None,
                 sort=list(prepared['facet_dataset'].cat.categories),
-                header=alt.Header(
-                    labelExpr="'Dataset: ' + datum.value",
-                    labelPadding=2,
-                ),
+                header=alt.Header(labelExpr="''", labelPadding=0, labelFontSize=0),
             ),
             # columns=3,
         )
