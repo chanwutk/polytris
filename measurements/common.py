@@ -25,8 +25,10 @@ sys.path.append('/polyis/modules/TrackEval')
 import trackeval  # noqa: E402
 from trackeval.metrics import CLEAR, HOTA, Identity  # noqa: E402
 
+from evaluation.p121_throughput_compute import excluded_runtime_ops  # noqa: E402
 from evaluation.p200_compare_compute import load_sota_tradeoff_data  # noqa: E402
 from polyis.io import cache  # noqa: E402
+from polyis.leap_results import canonical_leap_result  # noqa: E402
 from polyis.trackeval.dataset import Dataset  # noqa: E402
 from polyis.utilities import dataset_root_name, load_tradeoff_data, split_tradeoff_variants  # noqa: E402
 
@@ -64,6 +66,12 @@ OP_LIST_PATHS = {
 # JSON types DuckDB reports for numeric op times; anything else (a string such as p040's image_file name, a
 # boolean, null) is not a duration.
 NUMERIC_JSON_TYPES = ('DOUBLE', 'BIGINT', 'UBIGINT')
+# Ops p121 drops from every runtime file (a local list inside evaluation/p121_throughput_compute.py's
+# parse_runtime_file, copied here; tests/test_measurements_common.py checks the copy against p121's source and parser).
+P121_IGNORED_OPS = ('total_frame_time', 'read_frame', 'save_canvas', 'save_mapping_files')
+# Types of the columns of p121's per-op table (query_execution_per_op.csv) that the measurements read.
+P121_PER_OP_TYPES = {'dataset': 'VARCHAR', 'videoset': 'VARCHAR', 'variant_id': 'VARCHAR', 'video': 'VARCHAR',
+                     'stage': 'VARCHAR', 'op': 'VARCHAR', 'time': 'DOUBLE', 'count': 'BIGINT'}
 # The pruning stage (scripts/p022_exec_prune_polyominoes.py): its directory, its name in the throughput tables, and
 # its source, whose call to solve_ilp sets the default solve budget.
 PRUNE_DIR = cache.EXEC_STAGE_MAP['pruned-polyominoes']
@@ -77,9 +85,9 @@ PRUNE_PARAM_PATTERN = r'^(.+)_([0-9]+)_([0-9]+)_([0-9]{3})_r([0-9]{3})_([^_]+)$'
 VARIANT_PATTERN = r'^(.+_[0-9]{3}_r[0-9]{3})_[^_]+_s[0-9]+_([^_]+)$'
 # Video-name prefix of each split p022 runs on.
 SPLIT_PREFIXES = {'va': 'valid', 'te': 'test'}
-# Relevance binarization rules for p022's input (020 scores, 0-255, at relevance threshold r). 'current' is p022
-# as committed since 2026-05-22 (score > r * 255). 'floor' (score >= floor(r * 255)) is what the April 2026 outputs
-# in the cache match: they keep tiles scoring exactly 63, 127, or 191 at r = 0.25, 0.5, 0.75, which 'current' drops.
+# Historical audit keys are retained so saved measurements remain comparable: 'current' names the strict
+# rule committed on 2026-05-22, before the 2026-10-28 restoration. 'floor' matches the April 2026 cache and
+# the restored p022; it keeps boundary scores 63, 127, or 191 at r = 0.25, 0.5, 0.75, which 'current' drops.
 RELEVANCE_RULES = {'current': lambda scores, r: scores > r * 255,
                    'floor': lambda scores, r: scores >= np.floor(r * 255)}
 # TrackEval metric families a rerun can ask for by name. HOTA ignores its config; CLEAR and Identity only print theirs.
@@ -269,6 +277,77 @@ def runtime_items_sql(op_path: str, numbered: bool = True) -> str:
                     THEN CAST(item->>'time' AS DOUBLE) END AS time
         FROM runtime_items
     """
+
+
+def load_p121_runtime_ops(con: duckdb.DuckDBPyConnection, table: str, files: list[tuple[str, str]],
+                          flags: dict[str, dict] | None = None):
+    """Table <table>(stage, runtime_file, op, seconds, records, negative_records, boolean_records, bad_lines, counted,
+    ignored, <flag> ...): per runtime file and op, its seconds and timed items, as p121 parses runtime logs.
+
+    `files` are (stage, path) pairs of JSONL files (gzip-compressed ones too); each stage's op list is found with
+    OP_LIST_PATHS and parsed by runtime_items_sql. counted: p121 keeps the op for that stage (it is neither in
+    P121_IGNORED_OPS nor in the stage's excluded_runtime_ops); ignored: it is in P121_IGNORED_OPS; each of `flags`
+    ({column: {stage: ops}}) marks the listed ops of a stage. Sums are exact (fsum), so reruns agree to the bit. As in
+    p121, items without a numeric time are skipped and blank lines ignored; lines without an op list, timed items
+    without an op, boolean times (which p121 would count as 0 or 1 ms), and negative times of ops p121 does not ignore
+    (it checks the sign before excluding ops) raise, each with its own message.
+    """
+    # Flag names become column names (DuckDB rejects one that repeats a column) and parameter names (prefixed).
+    flags = flags or {}
+    bad = [f for f in flags if not re.fullmatch(r'[a-z][a-z_]*', f)]
+    assert not bad, f'bad flag names {bad}'
+    # One row per (file, op): seconds, record counts for the checks below, and the flags.
+    con.execute(f'CREATE OR REPLACE TABLE {table} (stage VARCHAR, runtime_file VARCHAR, op VARCHAR, seconds DOUBLE, '
+                'records BIGINT, negative_records BIGINT, boolean_records BIGINT, bad_lines BIGINT, counted BOOLEAN, '
+                f'ignored BOOLEAN{"".join(f", {f} BOOLEAN" for f in flags)})')
+    # p121 parses .json files as one array, which these queries do not.
+    not_jsonl = [path for _, path in files if not str(path).endswith(('.jsonl', '.jsonl.gz'))]
+    assert not not_jsonl, f'runtime files must be JSONL: {not_jsonl[:5]}'
+    # One query per stage, since each stage stores its op list at a different place in a line.
+    for stage in sorted({stage for stage, _ in files}):
+        # Each file once, even when several callers' rows share it.
+        paths = sorted({str(path) for s, path in files if s == stage})
+        # Ops outside p121's boundary for this stage.
+        dropped = sorted({*P121_IGNORED_OPS, *excluded_runtime_ops(stage)})
+        # One parallel pass over every line's op items (an object counts as a one-item list), summed per file and op.
+        con.execute(f"""
+            INSERT INTO {table}
+            SELECT $stage, filename, op, coalesce(fsum(time), 0) / 1000, count(time), count(*) FILTER (WHERE time < 0),
+                   count(*) FILTER (WHERE time_type = 'BOOLEAN'),
+                   count(*) FILTER (WHERE coalesce(list_type NOT IN ('ARRAY', 'OBJECT'), true)),
+                   NOT list_contains($dropped, op), list_contains($ignored, op)
+                   {''.join(f', list_contains($flag_{f}, op)' for f in flags)}
+            FROM ({runtime_items_sql(OP_LIST_PATHS[stage], numbered=False)}) GROUP BY filename, op
+        """, dict(paths=paths, stage=stage, dropped=dropped, ignored=list(P121_IGNORED_OPS),
+                  **{f'flag_{f}': list(by_stage.get(stage, ())) for f, by_stage in flags.items()}))
+    # A line without an op list means the layout assumption is wrong (p121's accessor would raise).
+    bad = query_dicts(con, f'SELECT stage, runtime_file FROM {table} WHERE bad_lines > 0 LIMIT 5')
+    assert not bad, f'runtime lines without an op list: {bad}'
+    # A timed item without an op cannot be attributed (p121 raises on it too).
+    bad = query_dicts(con, f'SELECT stage, runtime_file FROM {table} WHERE op IS NULL AND records > 0 LIMIT 5')
+    assert not bad, f'timed items without an op: {bad}'
+    # Boolean times are not durations, although Python's isinstance would let p121 count them.
+    bad = query_dicts(con, f'SELECT stage, runtime_file, op FROM {table} WHERE boolean_records > 0 LIMIT 5')
+    assert not bad, f'boolean op times: {bad}'
+    # Negative durations cannot be summed into a cost; p121 checks every op it does not ignore.
+    bad = query_dicts(con, f'SELECT stage, runtime_file, op FROM {table} WHERE NOT ignored AND negative_records > 0 LIMIT 5')
+    assert not bad, f'negative op times: {bad}'
+    # Ops that never carry a numeric time (p040's image_file, untimed items) are not timings.
+    con.execute(f'DELETE FROM {table} WHERE records = 0')
+
+
+def load_p121_per_op(con: duckdb.DuckDBPyConnection, table: str, paths: dict[str, str | Path]):
+    """Table <table>(dataset, videoset, variant_id, video, stage, op, seconds, records) from p121's per-op tables
+    (<dataset>/evaluation/080_throughput/measurements/query_execution_per_op.csv), given as {dataset: path}: one row
+    per configuration, video, stage, and op, with its seconds and timed items. Callers select splits and rows."""
+    # A missing table would otherwise surface as a bare DuckDB error.
+    assert_files_exist(list(paths.values()), 'per-op throughput tables (run evaluation/p120 and p121 --test)')
+    # Every dataset's table at once, the columns read typed explicitly.
+    con.execute(f"""
+        CREATE OR REPLACE TABLE {table} AS
+        SELECT dataset, videoset, variant_id, video, stage, op, "time" AS seconds, "count" AS records
+        FROM read_csv($paths, union_by_name = true, types = {P121_PER_OP_TYPES})
+    """, {'paths': [str(p) for p in paths.values()]})
 
 
 def default_time_limit(source: Path = P022_SOURCE) -> float:
@@ -765,6 +844,12 @@ def output_path(dataset: str, system: str, config: str, video: str, kind: str = 
     # Prior systems store one directory per parameter id.
     assert system in PRIOR_SYSTEMS and kind == 'tracking', f'no {kind} output for system {system!r}'
     param = int(config.removeprefix('param '))
+    if system == 'leap' and param == 0:
+        selected = canonical_leap_result(dataset)
+        if selected is not None:
+            path = selected['tracking_root'] / video / name
+            assert path.is_file(), f'Missing canonical LEAP tracks: {path}'
+            return path
     return Path(cache.sota(system, dataset, video, 'tracking_results', f'{param:03d}', name))
 
 

@@ -44,7 +44,7 @@ Measured, per dataset, tracker, and threshold (every threshold p016 stored):
     022_pruned_polyominoes over the ILP's input tile-frames, from 020_relevancy binarized at the
     setting's T_r, summed over the test videos. The cached test outputs follow the rule
     score >= floor(T_r * 255) (common.RELEVANCE_RULES 'floor', see measurements/r9o3_ilp_instance_sizes.py), not the
-    current p022's score > T_r * 255, and no kept tile-frame falls outside it (kept_outside);
+    historical strict rule's score > T_r * 255, and no kept tile-frame falls outside it (kept_outside);
   - diagnostics: relevant tiles whose gap (> 1) rests on no observations at that gap (its rate
     is the 0.5 prior) or on fewer than LOW_EVIDENCE_OBSERVATIONS, and tiles whose gap skips a
     smaller gap that misses the tolerance.
@@ -405,7 +405,7 @@ def kept_counts(dataset: str, settings: list[dict], profiles: dict, videos: list
     """Per pruning setting and test video: the ILP's input and kept tile-frames, from the cached 020 and 022 outputs.
 
     Every setting must have a 022 output on every video with the same frames as its 020 input.
-    covered is the input under PRUNE_RULE, covered_current_rule the input under the current p022
+    covered is the input under PRUNE_RULE, covered_current_rule the input under the historical strict
     rule, kept_outside the kept tile-frames outside the input (0 when PRUNE_RULE is the rule the
     output was made with), and bound_tile_frames the sum over tiles of covered / (gap // s).
     """

@@ -1,7 +1,10 @@
 import ast
+import gzip
+import inspect
 import json
 import math
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -10,6 +13,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from evaluation import p121_throughput_compute as p121
 from evaluation.p140_otif_transform import unwrap_leap_frames
 from measurements import common
 
@@ -567,6 +571,141 @@ def test_runtime_items_unnumbered_reader_matches_the_numbered_one(con, tmp_path)
     with pytest.raises(duckdb.InvalidInputException, match='Malformed JSON'):
         query(con, f'SELECT * FROM ({common.runtime_items_sql("$", numbered=False)})',
               {'paths': [write_text(tmp_path / 'bad.jsonl', 'not json\n')]})
+
+
+# ---------------------------------------------------------------- p121's runtime-log parser and per-op table
+
+
+def test_p121_ignored_ops_match_p121_source_and_parser(tmp_path):
+    # p121 keeps its ignored ops in a local list inside parse_runtime_file; read the literal so a change there fails here.
+    (literal,) = re.findall(r'ignored_ops = (\[[^\]]*\])', inspect.getsource(p121.parse_runtime_file))
+    assert tuple(ast.literal_eval(literal)) == common.P121_IGNORED_OPS
+    # p121's parser drops exactly those ops (not a name that only starts like one).
+    path = write_text(tmp_path / 'runtime.jsonl',
+                      json.dumps([{'op': op, 'time': 1.0} for op in [*common.P121_IGNORED_OPS, 'kept', 'read_framex']]) + '\n')
+    assert set(p121.parse_runtime_file(path, '040_exec_detect', p121.QUERY_DATA_ACCESSORS['040_exec_detect'])['op']) == \
+        {'kept', 'read_framex'}
+
+
+# How each JSON path wraps a list of op items into one line of that stage's layout.
+P121_LAYOUTS = {'$[#-1]': lambda items: [0, [[1, 2, 3, 4, 0.9]], items], '$': lambda items: items,
+                '$.runtime': lambda items: {'step': 's', 'runtime': items}}
+
+
+def write_runtime(path: Path, stage: str, lines: list, compress: bool = False) -> str:
+    # One JSONL runtime log in the stage's layout, a blank line after the first record, optionally gzip-compressed.
+    wrap = P121_LAYOUTS[common.OP_LIST_PATHS[stage]]
+    text = json.dumps(wrap(lines[0])) + '\n\n' + ''.join(json.dumps(wrap(x)) + '\n' for x in lines[1:])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if compress:
+        with gzip.open(path, 'wt') as f:
+            f.write(text)
+    else:
+        path.write_text(text)
+    return str(path)
+
+
+@pytest.mark.parametrize('stage', sorted(common.OP_LIST_PATHS))
+def test_load_p121_runtime_ops_matches_p121_parser(con, tmp_path, stage):
+    # Every op p121 drops for this stage, among ops it counts.
+    dropped = sorted({*common.P121_IGNORED_OPS, *p121.excluded_runtime_ops(stage)})
+    lines = [
+        # Integer and float times, a non-numeric "time" (p040's image file name), and an item without a time.
+        [{'op': 'work', 'time': 1500}, {'op': 'work', 'time': 2.25}, {'op': 'image_file', 'time': 'x.jpg'}, {'op': 'note'}],
+        [{'op': op, 'time': 1000 + i} for i, op in enumerate(dropped)] + [{'op': 'other', 'time': 7}],
+        # A single op object where a list is expected; p121 treats it as a one-item list.
+        {'op': 'single', 'time': 5},
+    ]
+    path = write_runtime(tmp_path / f'{stage}.jsonl', stage, lines)
+    accessor = {**p121.INDEX_DATA_ACCESSORS, **p121.QUERY_DATA_ACCESSORS}[stage]
+    parsed = p121.aggregate_per_op(p121.filter_excluded_runtime_ops(p121.parse_runtime_file(path, stage, accessor), stage))
+    seconds, items = ({r.op: r.time for r in parsed.itertuples()}, {r.op: r.count for r in parsed.itertuples()})
+    # The same file gzip-compressed (as the GPU jobs harvest logs) reads the same.
+    gz = write_runtime(tmp_path / 'gz' / f'{stage}.jsonl.gz', stage, lines, compress=True)
+    for f in (path, gz):
+        common.load_p121_runtime_ops(con, 'ops', [(stage, f)])
+        rows = query(con, 'SELECT * FROM ops')
+        # The same counted ops with the same seconds and items, every row of this file and stage.
+        assert {r['op']: r['seconds'] for r in rows if r['counted']} == pytest.approx(seconds, abs=1e-12)
+        assert {r['op']: r['records'] for r in rows if r['counted']} == items
+        assert all(r['stage'] == stage and r['runtime_file'] == f for r in rows)
+        # Dropped ops are kept but not counted; ignored marks p121's global list only; untimed ops are gone.
+        assert {r['op'] for r in rows if not r['counted']} == set(dropped)
+        assert {r['op'] for r in rows if r['ignored']} == set(common.P121_IGNORED_OPS)
+        assert not {'image_file', 'note'} & {r['op'] for r in rows}
+
+
+def test_load_p121_runtime_ops_flags_and_shared_paths(con, tmp_path):
+    det = write_runtime(tmp_path / 'det.jsonl', '001_preprocess_groundtruth_detection',
+                        [[{'op': 'read', 'time': 2.0}, {'op': 'detect', 'time': 40.0}]])
+    cls = write_runtime(tmp_path / 'cls.jsonl', '020_exec_classify', [[{'op': 'read', 'time': 50.0}]])
+    # A file named twice (two configurations sharing it) is read once; flags mark only their own stage's ops.
+    common.load_p121_runtime_ops(con, 'ops', [('001_preprocess_groundtruth_detection', det)] * 2 +
+                                 [('020_exec_classify', cls)],
+                                 {'decode': {'001_preprocess_groundtruth_detection': ('read',)}, 'canvas_read': {}})
+    rows = query(con, 'SELECT stage, op, seconds, records, counted, decode, canvas_read FROM ops ORDER BY stage, op')
+    assert rows == [dict(stage='001_preprocess_groundtruth_detection', op='detect', seconds=0.04, records=1, counted=True,
+                         decode=False, canvas_read=False),
+                    dict(stage='001_preprocess_groundtruth_detection', op='read', seconds=0.002, records=1, counted=True,
+                         decode=True, canvas_read=False),
+                    dict(stage='020_exec_classify', op='read', seconds=0.05, records=1, counted=False, decode=False,
+                         canvas_read=False)]
+    # No files give an empty table.
+    common.load_p121_runtime_ops(con, 'empty', [])
+    assert con.execute('SELECT count(*) FROM empty').fetchone() == (0,)
+
+
+@pytest.mark.parametrize('stage, line, message', [
+    ('060_exec_track', {'frame_idx': 0}, 'runtime lines without an op list'),
+    ('060_exec_track', {'frame_idx': 0, 'runtime': 3}, 'runtime lines without an op list'),
+    ('040_exec_detect', [{'time': 1.0}], 'timed items without an op'),
+    ('040_exec_detect', [{'op': 'detect', 'time': True}], 'boolean op times'),
+    ('040_exec_detect', [{'op': 'detect', 'time': -1.0}], 'negative op times'),
+    # p121 checks the sign before it drops a stage's excluded ops.
+    ('020_exec_classify', [{'op': 'read', 'time': -1.0}], 'negative op times'),
+])
+def test_load_p121_runtime_ops_rejects_what_p121_rejects(con, tmp_path, stage, line, message):
+    path = write_text(tmp_path / 'r.jsonl', json.dumps(line) + '\n')
+    with pytest.raises(AssertionError, match=f'^{message}: '):
+        common.load_p121_runtime_ops(con, 'ops', [(stage, path)])
+
+
+def test_load_p121_runtime_ops_allows_negative_ignored_ops_and_checks_its_arguments(con, tmp_path):
+    # p121 skips its ignored ops before the sign check.
+    path = write_text(tmp_path / 'r.jsonl', json.dumps({'runtime': [{'op': 'save_canvas', 'time': -1.0}]}) + '\n')
+    common.load_p121_runtime_ops(con, 'ops', [('030_exec_compress', path)])
+    assert query(con, 'SELECT op, counted, ignored FROM ops') == [dict(op='save_canvas', counted=False, ignored=True)]
+    # JSON array files (which p121 also parses) and flag names that are not plain identifiers are refused.
+    with pytest.raises(AssertionError, match='must be JSONL'):
+        common.load_p121_runtime_ops(con, 'ops', [('060_exec_track', str(tmp_path / 'runtime.json'))])
+    with pytest.raises(AssertionError, match='bad flag names'):
+        common.load_p121_runtime_ops(con, 'ops', [], {'decode; DROP TABLE ops': {}})
+
+
+def test_load_p121_per_op_reads_typed_rows_and_needs_every_file(con, tmp_path):
+    # p121's per-op tables with every column it writes, for two datasets.
+    header = ['op', 'time', 'count', 'stage', 'dataset', 'videoset', 'video', 'variant', 'variant_id', 'classifier',
+              'tilesize', 'tilepadding', 'sample_rate', 'tracking_accuracy_threshold', 'canvas_scale', 'tracker']
+    paths = {}
+    for d, rows in (('a', [['detect', 1.5, 3, '040_exec_detect', 'a', 'test', 'te00.mp4', 'polytris', 'X', 'Net', 60, 'bl',
+                            4, '', 1.0, 'sort']]),
+                    ('b', [['read', 2, 10, '001_preprocess_groundtruth_detection', 'b', 'valid', 'va00.mp4', 'naive',
+                            'naive', '', '', '', '', '', '', '']])):
+        paths[d] = tmp_path / d / 'query_execution_per_op.csv'
+        paths[d].parent.mkdir()
+        pd.DataFrame(rows, columns=header).to_csv(paths[d], index=False)
+    common.load_p121_per_op(con, 'per_op', paths)
+    assert query(con, 'SELECT * FROM per_op ORDER BY dataset') == [
+        dict(dataset='a', videoset='test', variant_id='X', video='te00.mp4', stage='040_exec_detect', op='detect',
+             seconds=1.5, records=3),
+        dict(dataset='b', videoset='valid', variant_id='naive', video='va00.mp4', stage='001_preprocess_groundtruth_detection',
+             op='read', seconds=2.0, records=10)]
+    # Typed as p121 writes them, even where a value looks like another type.
+    assert dict(con.execute('SELECT column_name, column_type FROM (DESCRIBE per_op)').fetchall()) == dict(
+        dataset='VARCHAR', videoset='VARCHAR', variant_id='VARCHAR', video='VARCHAR', stage='VARCHAR', op='VARCHAR',
+        seconds='DOUBLE', records='BIGINT')
+    with pytest.raises(AssertionError, match='1 per-op throughput tables .* missing'):
+        common.load_p121_per_op(con, 'per_op', {'a': paths['a'], 'c': tmp_path / 'c.csv'})
 
 
 # ---------------------------------------------------------------- p140's unwrap.json and LEAP's raw exports

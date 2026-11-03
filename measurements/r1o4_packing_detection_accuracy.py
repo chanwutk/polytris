@@ -463,7 +463,7 @@ def build_all_frame_inputs(con: duckdb.DuckDBPyConnection):
     """, [ALL_FRAMES])
 
 
-def score(con: duckdb.DuckDBPyConnection, sides: list[str]) -> list[dict]:
+def score(con: duckdb.DuckDBPyConnection, sides: list[str], *, coco_recall: bool = False) -> list[dict]:
     """Table scores and its rows: ground truth, TP, FP, precision, recall, AP50, and ignored counts per (cfg, filter, side).
 
     `sides` are keys of SIDES. Reads scopes(cfg, filter), gt_in(cfg, filter, video, frame, gid,
@@ -472,6 +472,7 @@ def score(con: duckdb.DuckDBPyConnection, sides: list[str]) -> list[dict]:
     box (NULL when unmatched). Precision is NULL without counted detections, recall and AP50 without retained
     ground truth. AP50 is all-point interpolated: the sum, over true positives in confidence
     order, of the best precision at that rank or later, divided by the retained ground truth.
+    With coco_recall, average that precision envelope at COCO's 101 recall levels instead.
     """
     # Each requested side's input rows and its rule for unmatched detections centered outside the region.
     metadata_table(con, 'side_rules', side=('VARCHAR', sides), input=('VARCHAR', [SIDES[s][0] for s in sides]),
@@ -522,21 +523,49 @@ def score(con: duckdb.DuckDBPyConnection, sides: list[str]) -> list[dict]:
             -- Retained ground truth per scope (zero when the scope has none).
             SELECT s.cfg, s.filter, count(g.gid) FILTER (WHERE g.retained) AS n_gt
             FROM scopes s LEFT JOIN gt_in g ON g.cfg = s.cfg AND g.filter = s.filter GROUP BY s.cfg, s.filter
+        ),
+        recall_samples AS (
+            -- COCO averages the precision envelope at recall 0, 0.01, ..., 1 (zero beyond achieved recall).
+            SELECT e.cfg, e.filter, e.side, q,
+                   coalesce(max(e.envelope) FILTER (WHERE e.cum_tp >= p.n_gt * q / 100.0), 0) AS precision
+            FROM enveloped e JOIN positives p USING (cfg, filter)
+            CROSS JOIN range(CASE WHEN $coco_recall THEN 101 ELSE 0 END) recalls(q)
+            GROUP BY e.cfg, e.filter, e.side, q
+        ),
+        sampled_ap AS (
+            SELECT cfg, filter, side, avg(precision) AS ap FROM recall_samples GROUP BY cfg, filter, side
         )
         -- Every scope and side, with zero counts when nothing was counted.
         SELECT p.cfg, p.filter, s.side, p.n_gt, CAST(coalesce(r.tp, 0) AS BIGINT) AS tp, CAST(coalesce(r.fp, 0) AS BIGINT) AS fp,
                CASE WHEN coalesce(r.tp, 0) + coalesce(r.fp, 0) > 0 THEN r.tp / (r.tp + r.fp) END AS precision,
                CASE WHEN p.n_gt > 0 THEN coalesce(r.tp, 0) / p.n_gt END AS recall,
-               CASE WHEN p.n_gt > 0 THEN coalesce(r.ap_sum, 0) / p.n_gt END AS ap50,
+               CASE WHEN p.n_gt > 0 THEN CASE WHEN $coco_recall THEN coalesce(a.ap, 0)
+                    ELSE coalesce(r.ap_sum, 0) / p.n_gt END END AS ap50,
                coalesce(t.ignored_matched_nonretained, 0) AS ignored_matched_nonretained,
                coalesce(t.ignored_unmatched_outside, 0) AS ignored_unmatched_outside,
                coalesce(t.fp_outside_filter, 0) AS fp_outside_filter
         FROM positives p CROSS JOIN side_rules s
         LEFT JOIN per_side r ON r.cfg = p.cfg AND r.filter = p.filter AND r.side = s.side
         LEFT JOIN tallies t ON t.cfg = p.cfg AND t.filter = p.filter AND t.side = s.side
-    """)
+        LEFT JOIN sampled_ap a ON a.cfg = p.cfg AND a.filter = p.filter AND a.side = s.side
+    """, {'coco_recall': coco_recall})
     # The rows in a stable order.
     return query_dicts(con, 'SELECT * FROM scores ORDER BY cfg, filter, side')
+
+
+def mean_ap(con: duckdb.DuckDBPyConnection) -> list[dict]:
+    """Mean 101-point AP over IoU 0.50:0.05:0.95, using the same retained-content rules."""
+    con.execute('CREATE OR REPLACE TABLE ap_thresholds '
+                '(cfg VARCHAR, filter VARCHAR, side VARCHAR, iou DOUBLE, ap DOUBLE)')
+    # Matching must be recomputed at each threshold: a lower-confidence box can take a freed match.
+    for threshold in range(50, 100, 5):
+        greedy_match(con, threshold / 100)
+        build_config_inputs(con)
+        score(con, MAIN_SIDES, coco_recall=True)
+        con.execute('INSERT INTO ap_thresholds SELECT cfg, filter, side, ?, ap50 FROM scores', [threshold / 100])
+    return query_dicts(con, '''SELECT cfg, filter, side, avg(ap) AS map,
+        list(struct_pack(iou := iou, ap := ap) ORDER BY iou) AS thresholds
+        FROM ap_thresholds GROUP BY cfg, filter, side ORDER BY cfg, filter, side''')
 
 
 def deltas(con: duckdb.DuckDBPyConnection, pairs: list[tuple[str, str]]) -> list[dict]:

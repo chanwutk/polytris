@@ -513,6 +513,63 @@ def test_score_all_point_ap_and_ignore_rules(con):
             rows['packed']['ap50']) == (0, 0, None, 0.0, 0.0)
 
 
+def test_score_coco_recall_grid_includes_zero_and_unreached_recall(con):
+    gt = [('c', 'frame', 'v', 0, g, True) for g in (1, 2, 3)]
+    dets = [('c', 'frame', 'reference', 'v', 0, 1, .9, True, 1)]
+    set_score_inputs(con, [('c', 'frame')], gt, dets)
+    rows = {r['side']: r for r in pa.score(con, ['reference', 'packed'], coco_recall=True)}
+    assert rows['reference']['ap50'] == pytest.approx(34 / 101)
+    assert rows['packed']['ap50'] == 0
+
+
+def test_mean_ap_rematches_at_each_threshold(con):
+    set_boxes(con, [('v', 0, 1, 0, 0, 10, 10)], [
+        ('reference', 'v', 0, 1, 0, 0, 6, 10, .9),
+        ('reference', 'v', 0, 2, 0, 0, 10, 10, .8),
+        ('c', 'v', 0, 1, 0, 0, 8, 10, .9)])
+    set_configs(con, [('c', 1)])
+    set_tiles(con, [('c', 'v', 0, 0, 0)])
+    pa.box_regions(con, 10)
+    rows = {(r['filter'], r['side']): r for r in pa.mean_ap(con)}
+    assert rows['center', 'reference']['map'] == pytest.approx(.65)
+    assert rows['center', 'packed']['map'] == pytest.approx(.7)
+    assert rows['center', 'reference']['thresholds'][3] == dict(iou=.65, ap=.5)
+    assert len(rows['center', 'packed']['thresholds']) == 10
+
+
+def test_mean_ap_without_ground_truth(con):
+    set_boxes(con, [], [('reference', 'v', 0, 1, 0, 0, 10, 10, .9)])
+    set_configs(con, [('c', 1)])
+    set_tiles(con, [('c', 'v', 0, 0, 0)])
+    pa.box_regions(con, 10)
+    assert all(r['map'] is None for r in pa.mean_ap(con))
+
+
+def test_mean_ap_matches_official_coco_evaluator(con):
+    coco = pytest.importorskip('pycocotools.coco')
+    cocoeval = pytest.importorskip('pycocotools.cocoeval')
+    gt = [('v', 0, 1, 0, 0, 10, 10), ('v', 0, 2, 20, 20, 30, 30), ('v', 1, 3, 0, 0, 10, 10)]
+    detections = [('reference', 'v', 0, 1, 0, 0, 6, 10, .9),
+                  ('reference', 'v', 0, 2, 0, 0, 10, 10, .8),
+                  ('reference', 'v', 0, 3, 20, 20, 30, 30, .7)]
+    set_boxes(con, gt, detections)
+    set_configs(con, [('c', 1)])
+    set_tiles(con, [('c', 'v', frame, tile, tile) for frame in (0, 1) for tile in (0, 2)])
+    pa.box_regions(con, 10)
+    actual = next(r['map'] for r in pa.mean_ap(con) if r['filter'] == 'center' and r['side'] == 'reference')
+    truth = coco.COCO()
+    truth.dataset = dict(info={}, images=[dict(id=frame + 1) for frame in (0, 1)], categories=[dict(id=1)],
+        annotations=[dict(id=gid, image_id=frame + 1, category_id=1, bbox=[x1, y1, x2-x1, y2-y1],
+                          area=(x2-x1)*(y2-y1), iscrowd=0) for _, frame, gid, x1, y1, x2, y2 in gt])
+    truth.createIndex()
+    predicted = truth.loadRes([dict(image_id=frame + 1, category_id=1, bbox=[x1, y1, x2-x1, y2-y1], score=confidence)
+                               for _, _, frame, _, x1, y1, x2, y2, confidence in detections])
+    evaluator = cocoeval.COCOeval(truth, predicted, 'bbox')
+    evaluator.evaluate()
+    evaluator.accumulate()
+    assert actual == pytest.approx(evaluator.eval['precision'][:, :, 0, 0, 2].mean())
+
+
 def test_score_without_ground_truth_and_with_score_ties(con):
     set_score_inputs(con, [('z', 'frame'), ('t', 'frame')], [('t', 'frame', 'v', 0, 1, True)], [
         # No ground truth: one false positive gives precision 0 and undefined recall and AP.

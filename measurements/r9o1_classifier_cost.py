@@ -42,8 +42,8 @@ import duckdb
 import numpy as np
 
 from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, PRUNE_STAGE, assert_files_exist, fastest_tetris,
-                                 host_info, iso_utc, load_test_tradeoff, load_tradeoff_points, query_dicts,
-                                 results_dir, runtime_items_sql, write_json)
+                                 host_info, iso_utc, load_p121_per_op, load_test_tradeoff, load_tradeoff_points,
+                                 query_dicts, results_dir, runtime_items_sql, write_json)
 from polyis.io import cache
 from polyis.utilities import CONFIG_DIR, get_config
 
@@ -498,8 +498,8 @@ def load_operator_ops(con: duckdb.DuckDBPyConnection, per_op_tables: dict[str, s
     Both hold the chosen configuration and the reference. `per_op_tables` maps each dataset to p121's
     query_execution_per_op.csv; needs table chosen.
     """
-    # A missing table would otherwise surface as a bare DuckDB error.
-    assert_files_exist(list(per_op_tables.values()), 'per-op throughput tables (run evaluation/p121 --test)')
+    # Every dataset's p121 per-op table (the shared loader checks that each exists).
+    load_p121_per_op(con, 'p121_per_op', per_op_tables)
     # p121's per-op, per-video rows (seconds) for each dataset's chosen configuration and its reference, test split.
     con.execute("""
         CREATE OR REPLACE TABLE operator_rows AS
@@ -507,13 +507,10 @@ def load_operator_ops(con: duckdb.DuckDBPyConnection, per_op_tables: dict[str, s
             SELECT dataset, 'tetris' AS system, config FROM chosen
             UNION ALL SELECT dataset, 'reference', 'naive' FROM chosen
         )
-        SELECT w.dataset, w.system, p.stage, p.op, p.video, p.time AS seconds, p.count AS records
-        FROM read_csv($paths, union_by_name := true,
-                      types := {'op': 'VARCHAR', 'time': 'DOUBLE', 'count': 'BIGINT', 'stage': 'VARCHAR', 'dataset': 'VARCHAR',
-                                'videoset': 'VARCHAR', 'video': 'VARCHAR', 'variant_id': 'VARCHAR'}) p
-        JOIN wanted w ON p.dataset = w.dataset AND p.variant_id = w.config
+        SELECT w.dataset, w.system, p.stage, p.op, p.video, p.seconds, p.records
+        FROM p121_per_op p JOIN wanted w ON p.dataset = w.dataset AND p.variant_id = w.config
         WHERE p.videoset = 'test'
-    """, {'paths': list(per_op_tables.values())})
+    """)
     # Per-op totals over the test split.
     con.execute("""
         CREATE OR REPLACE TABLE operator_ops AS
