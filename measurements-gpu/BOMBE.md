@@ -96,6 +96,34 @@ portal.gurobi.com and replaces `~/.gurobi/gurobi.lic`. Everything else in `bombe
 
 ## Notes for tracks
 
+- LEAP with matched detectors (2026-10-29): `r1o2_leap_matched.py --dataset <dataset> --gpu <gpu> --run`
+  reuses Alena's recorded LEAP checkout, environment, configuration, and training commands. It rebuilds all
+  60 training and 60 test clips' pseudo labels, re-identification crops and 120-epoch training, and motion patterns,
+  then reruns extraction and CPU accuracy evaluation. The detector adapter uses the exact dataset-specific
+  Tetris YOLOv5x6 checkpoint and Ultralytics inference defaults, mapping its single car class 0 to LEAP's class 2.
+  New artifacts live in `scratch/r1o2_leap_matched/`, and records in
+  `measurements-results/r1o2_leap_matched/`; the original results remain available for comparison. Each queue
+  stops on a failed stage, missing required outputs, or foreign GPU use. Completed stages resume on restart.
+  Dataset queues use GPUs 0/2/5 and disjoint CPU subsets; commands and queue logs are in the new scratch root.
+  The 2026-10-30 repair namespaces clip-local training track IDs only for motion clustering: otherwise unrelated
+  tracks merge and Amsterdam yields an empty library. Original labels and trained re-ID models are reused;
+  clustering thresholds stay unchanged. The exporter also drops negative frame writes before indexing, retaining
+  pattern alignment. Pre-repair outputs are under `scratch/r1o2_leap_matched/repair-archives/`; `repair-launch.json`
+  records the resumed commands and source hashes. Use the repaired summaries after fresh completion markers appear.
+
+- OTIF B3D preparation (2026-10-29): `r1o2_leap_otif_rerun.py prep --system otif` now covers `jnc0`, `jnc2`,
+  `jnc6`, and `jnc7`, using the scored `retinanet-1080x720` detector, `640_352_-1` proxy start, and recorded tracker
+  thresholds. Each run regenerates training detection/tracking, proxy frames and training, RNN training, validation
+  detection, and validation tuning in a copy-on-write clone. The original source data and scored outputs stay intact.
+  Four queues use GPUs 0/2/5/6 with disjoint 10-core CPU subsets, one GPU per dataset. Queue sessions are
+  `otif-b3d-jncN`; their commands and logs are recorded in
+  `scratch/r1o2_leap_otif_rerun/prep/otif/b3d-launch.json` under the revision data root. Raw step records land in
+  `measurements-results/r1o2_leap_otif_rerun/raw/prep/otif/jncN/` in the shared checkout. Each queue stops on a failed
+  or contaminated step; these are new preparation measurements, not a rerun of the paper's scored configurations.
+  Detached queues use `bash -c` and `DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock`: the login shell changes
+  `DOCKER_CONFIG` and selects a different daemon. The RetinaNet config/weight root is also mounted read-only at
+  `/path/to/otif-dataset`, matching the scored loader's hardcoded paths.
+
 - nvidia-smi persistence mode is off, so a cold `nvidia-smi` call takes about 5 s; the idle check takes 15-40 s, and
   the launcher's own `nvidia-smi -lms 1000` loop keeps the driver warm during the run. A cold call sometimes reports
   3-4% on an idle GPU with 0 MiB; if the launcher refuses a GPU with 0 MiB and no process, run it again.
