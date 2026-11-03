@@ -347,13 +347,12 @@ def main(args):
 
     # Expand the validated task list for each configured dataset.
     for dataset in DATASETS:
-        # Resolve the dataset-local evaluation directory.
-        evaluation_dir = cache.eval(dataset, 'acc')
-        # Remove stale accuracy outputs before scheduling the new run.
-        if os.path.exists(evaluation_dir):
-            shutil.rmtree(evaluation_dir)
-        # Recreate the raw accuracy root eagerly so later writes are simple.
-        os.makedirs(evaluation_dir / 'raw', exist_ok=True)
+        # Remove only this split's stale raw outputs, keeping the other split and the aggregated CSV.
+        split_dir = cache.eval(dataset, 'acc', 'raw', videoset)
+        if os.path.exists(split_dir):
+            shutil.rmtree(split_dir)
+        # Recreate the split's raw accuracy root eagerly so later writes are simple.
+        os.makedirs(split_dir, exist_ok=True)
 
         # Schedule one worker task per validated split-level variant.
         for task_row, videos, output_dir in build_accuracy_task_rows(dataset, videoset):
