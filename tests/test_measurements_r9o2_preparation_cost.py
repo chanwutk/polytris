@@ -1,10 +1,7 @@
-import ast
 import gzip
 import importlib.util
-import inspect
 import json
 import os
-import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -67,12 +64,6 @@ def test_op_list_paths_cover_every_p121_stage():
     assert set(prep.OP_LIST_PATHS) == set(p121.INDEX_DATA_ACCESSORS) | set(p121.QUERY_DATA_ACCESSORS)
 
 
-def test_ignored_ops_match_p121_source():
-    # p121 keeps its ignored ops in a local list inside parse_runtime_file; read the literal so a change there fails here.
-    (literal,) = re.findall(r'ignored_ops = (\[[^\]]*\])', inspect.getsource(p121.parse_runtime_file))
-    assert tuple(ast.literal_eval(literal)) == prep.IGNORED_OPS
-
-
 # How each JSON path wraps a list of op items into one line of that stage's layout.
 LAYOUTS = {'$[#-1]': lambda items: [0, [[1, 2, 3, 4, 0.9]], items], '$': lambda items: items,
            '$.runtime': lambda items: {'step': 's', 'runtime': items}}
@@ -83,7 +74,7 @@ def test_load_runtime_ops_matches_p121_parser(con, tmp_path, stage):
     accessor = {**p121.INDEX_DATA_ACCESSORS, **p121.QUERY_DATA_ACCESSORS}[stage]
     wrap = LAYOUTS[prep.OP_LIST_PATHS[stage]]
     # Every op p121 drops for this stage, among ops it counts.
-    dropped = sorted({*prep.IGNORED_OPS, *p121.excluded_runtime_ops(stage)})
+    dropped = sorted({*common.P121_IGNORED_OPS, *p121.excluded_runtime_ops(stage)})
     lines = [
         # Integer and float times, a non-numeric "time" (p040's image file name), and an item without a time.
         wrap([{'op': 'work', 'time': 1500}, {'op': 'work', 'time': 2.25}, {'op': 'image_file', 'time': 'x.jpg'},
@@ -359,6 +350,17 @@ def test_load_units_never_chains_one_task_per_video_stages(con, tmp_path, monkey
     units = build_units(con, monkeypatch, files, times, [('test', 'v0', 1), ('test', 'v1', 2)])
     # Own spans: 4 s and 2.5 s, each above its 1 s of recorded detection.
     assert [(units[p]['chained'], units[p]['process_s']) for p in paths] == [(False, 4.0), (False, 2.5)]
+
+
+def test_load_units_adds_own_span_and_recorded_ops_when_the_directory_follows_the_work(con, tmp_path, monkeypatch):
+    # p022 creates <params>/ after pruning, so an unchained unit's 1 s of writes come after its 5 s of recorded ops.
+    path = unit_file(tmp_path, 'v0', '022_pruned_polyominoes', 'runtime.jsonl',
+                     [{'runtime': [{'op': 'solve_ilp', 'time': 5000}]}], level=2)
+    params = str(Path(path).parent.parent)
+    times = {params: (100.0, 100.0), path: (None, 101.0), str(Path(path).with_name('score.jsonl')): (None, 100.5)}
+    units = build_units(con, monkeypatch, [('022_exec_prune_polyominoes', path, 'valid', 'v0')], times,
+                        [('valid', 'v0', 1)])
+    assert not units[path]['chained'] and units[path]['process_s'] == pytest.approx(6)
 
 
 def test_load_units_reads_creation_two_levels_up_and_the_latest_sibling(con, tmp_path, monkeypatch):
@@ -1278,7 +1280,7 @@ def p110_outputs(record_id, tasks, step='p110'):
 
 
 def world_retiming(tmp_path, p016_workers='1', p012_videos=('tr0.mp4', 'tr1.mp4'), tasks=None, foreign=0, skip=(),
-                   p013_tile_sizes=(60,), p011_birth=5.0, p016_profiles=('sortcython_60', 'bytetrackcython_60'),
+                   p013_tile_sizes=(60,), p011_birth=1005.0, p016_profiles=('sortcython_60', 'bytetrackcython_60'),
                    p016_partials=('tr0.mp4', 'tr1.mp4'), loads=None, density=None, density_meta=None):
     """Re-timing records of every step for the world's dataset (spans in the comments of the end-to-end test);
     `density` adds a p110_density run with those tasks."""
@@ -1299,9 +1301,9 @@ def world_retiming(tmp_path, p016_workers='1', p012_videos=('tr0.mp4', 'tr1.mp4'
     files = (p110_outputs('old', {'stray': (0.0, 1.0, ['va0.mp4'])}) + p110_outputs('p110-95', tasks)
              + (p110_outputs('p110_density-500', density, 'p110_density') if density else [])
              + [output('p011', f'indexing/segment/detection/{v}.detections.jsonl', b, m, 'p011-1000')
-                for v, b, m in (('tr0.mp4', 0.0, 4.0), ('tr1.mp4', p011_birth, 10.0))]
+                for v, b, m in (('tr0.mp4', 1000.0, 1004.0), ('tr1.mp4', p011_birth, 1010.0))]
              + [output('p012', f'indexing/training/runtime/tilesize_60/{v}_creating_training_data.jsonl', b, m, 'p012-1100')
-                for v, b, m in zip(p012_videos, (0.0, 10.0, 20.0), (7.0, 18.0, 29.0))]
+                for v, b, m in zip(p012_videos, (1100.0, 1110.0, 1120.0), (1107.0, 1118.0, 1129.0))]
              + [output('p013', f'indexing/always_relevant/{name}', 0.0, 1.0, 'p013-1200')
                 for name in ('60_tr1.mp4.npy', '60_all.npy', '60_optimization_stats.json')]
              + [output('p016', f'indexing/track_rate/{profile}/{name}', 0.0, 1.0, 'p016-1400')
@@ -1511,6 +1513,8 @@ def test_measure_dataset_retiming_compares_p013_with_the_cache(con, world, tmp_p
 @pytest.mark.parametrize('kwargs, message', [
     # A p011 detections file without a creation time has no span.
     (dict(p011_birth=None), r'p011 re-run has 2 files for 2 training videos \(1 without a creation time\)'),
+    # A detections file left from an earlier run keeps its old creation time when p011 truncates it in place.
+    (dict(p011_birth=900.0), 'p011 re-run files were created before the run started'),
     # p016 profiled another tracker than the configured ones.
     (dict(p016_profiles=('sortcython_60', 'ocsortcython_60')), 'p016 re-run profiles'),
     # p016 profiled one of two training videos.

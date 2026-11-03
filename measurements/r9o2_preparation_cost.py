@@ -47,7 +47,8 @@ chained to the same task's unit on the previous video when it starts no earlier 
 ended, at most CHAIN_GAP_S later, and the span is at least the unit's recorded ops; its process
 time is then the time between the two units' last writes, which includes work before its
 directory was created (loading upstream outputs). The first video of a task, or a unit that
-fails those checks, gets max(own span, recorded ops), a lower bound; an own span over
+fails those checks, gets max(own span, recorded ops), a lower bound (p022, whose directory is created
+after its work so the two do not overlap, gets their sum); an own span over
 STALE_SPAN_S is taken as a stale creation time and replaced by the recorded ops. p012 and the
 reference pipeline's detection run one task per video, so they are never chained and get
 max(own span, recorded ops) from their runtime file's creation to their last write.
@@ -131,6 +132,7 @@ of its NUMA node beyond its own processes and the launcher's samples of foreign 
 Writes measurements-results/r9o2_preparation_cost/preparation_cost.json.
 """
 import argparse
+from datetime import datetime
 import glob
 import json
 import os
@@ -144,10 +146,9 @@ from evaluation.manifests import build_polytris_variant_manifest, build_split_vi
 from evaluation.p120_throughput_gather import (build_index_construction_manifest, build_naive_query_manifest,
                                                build_stage020_manifest, build_stage022_manifest, build_stage030_manifest,
                                                build_stage040_manifest, build_stage050_manifest, build_stage060_manifest)
-from evaluation.p121_throughput_compute import excluded_runtime_ops
-from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, RESULTS_ROOT, fastest_tetris, file_times, host_info,
-                                 iso_utc, load_test_tradeoff, load_tradeoff_points, query_dicts, results_dir, rounded,
-                                 runtime_items_sql, write_json)
+from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, P121_IGNORED_OPS, RESULTS_ROOT, fastest_tetris,
+                                 file_times, host_info, iso_utc, load_p121_runtime_ops, load_test_tradeoff,
+                                 load_tradeoff_points, query_dicts, results_dir, rounded, write_json)
 from polyis.io import cache, store
 from polyis.utilities import get_config, parse_execution_param_str
 
@@ -155,9 +156,6 @@ from polyis.utilities import get_config, parse_execution_param_str
 CONFIG = get_config()
 # Trackers the configured sweep searches over; their mistrack profiles feed p022.
 TRACKERS = CONFIG['EXEC']['TRACKERS']
-# Ops p121 drops from every runtime file (a local list inside p121's parse_runtime_file, copied here; a test
-# checks the copy against p121's parser).
-IGNORED_OPS = ('total_frame_time', 'read_frame', 'save_canvas', 'save_mapping_files')
 # Per-frame video decoding ops that p121 counts and the instrumented boundary drops (p121 already drops p020's 'read').
 VIDEO_DECODE_OPS = {'001_preprocess_groundtruth_detection': ['read'], '011_tune_detect': ['read']}
 # Which timestamps bound one work unit, per stage: how many path levels above the runtime file the creation time is
@@ -183,6 +181,9 @@ STAGE_SPANS = {
     # <variant>/ is created after loading the detections; tracking.jsonl is written last.
     '060_exec_track': (1, ['tracking.jsonl'], True),
 }
+# Stages that create a unit's output directory only after its work, so the unit's own span (directory creation to last
+# write) and its recorded ops are disjoint: a unit that is not chained costs their sum rather than the larger of the two.
+SPAN_AFTER_WORK = ('022_exec_prune_polyominoes',)
 # Largest gap between one unit's last write and the next video's start in the same task for the two to be
 # consecutive (observed gaps are under one second); also used for p015 and p016 runs.
 CHAIN_GAP_S = 60.0
@@ -271,54 +272,10 @@ def parse_args():
 
 
 def load_runtime_ops(con: duckdb.DuckDBPyConnection, files: list[tuple[str, str]]):
-    """Table runtime_ops(stage, runtime_file, op, seconds, records, ..., counted, ignored, decode): op times per file.
-
-    `files` are (stage, path) pairs; each stage's op list is found with common.OP_LIST_PATHS and parsed by
-    common.runtime_items_sql. An op is counted when p121 would keep it for that stage, and decode marks
-    VIDEO_DECODE_OPS. As in p121, items without a numeric time are skipped and blank lines ignored; lines
-    without an op list, timed items without an op, negative times of ops p121 does not ignore, and boolean
-    times (which p121 would count as 0 or 1 ms) raise.
-    """
-    # One row per (file, op): seconds, record counts for the checks below, and whether p121 counts the op.
-    con.execute('CREATE OR REPLACE TABLE runtime_ops (stage VARCHAR, runtime_file VARCHAR, op VARCHAR, seconds DOUBLE, '
-                'records BIGINT, negative_records BIGINT, boolean_records BIGINT, bad_lines BIGINT, counted BOOLEAN, '
-                'ignored BOOLEAN, decode BOOLEAN)')
-    # p121 parses .json files as one array, which these queries do not.
-    not_jsonl = [path for _, path in files if not str(path).endswith('.jsonl')]
-    assert not not_jsonl, f'runtime files must be JSONL: {not_jsonl[:5]}'
-    # Group paths by stage, since each stage stores its op list at a different place in a line.
-    by_stage: dict[str, list[str]] = {}
-    for stage, path in files:
-        by_stage.setdefault(stage, []).append(str(path))
-    # One query per stage.
-    for stage, paths in sorted(by_stage.items()):
-        # Ops outside p121's boundary for this stage.
-        dropped = sorted({*IGNORED_OPS, *excluded_runtime_ops(stage)})
-        # One parallel pass over every line's op items (an object counts as a one-item list), summed per file and op.
-        con.execute(f"""
-            INSERT INTO runtime_ops
-            SELECT $stage, filename, op, coalesce(sum(time), 0) / 1000, count(time), count(*) FILTER (WHERE time < 0),
-                   count(*) FILTER (WHERE time_type = 'BOOLEAN'),
-                   count(*) FILTER (WHERE coalesce(list_type NOT IN ('ARRAY', 'OBJECT'), true)),
-                   NOT list_contains($dropped, op), list_contains($ignored, op), list_contains($decode, op)
-            FROM ({runtime_items_sql(OP_LIST_PATHS[stage], numbered=False)}) GROUP BY filename, op
-        """, dict(paths=sorted(set(paths)), stage=stage, dropped=dropped, ignored=list(IGNORED_OPS),
-                  decode=VIDEO_DECODE_OPS.get(stage, [])))
-    # A line without an op list means the layout assumption is wrong (p121's accessor would raise).
-    bad = query_dicts(con, 'SELECT stage, runtime_file FROM runtime_ops WHERE bad_lines > 0 LIMIT 5')
-    assert not bad, f'runtime lines without an op list: {bad}'
-    # A timed item without an op cannot be attributed (p121 raises on it too).
-    nameless = query_dicts(con, 'SELECT stage, runtime_file FROM runtime_ops WHERE op IS NULL AND records > 0 LIMIT 5')
-    assert not nameless, f'timed items without an op: {nameless}'
-    # Boolean times are not durations, although Python's isinstance would let p121 count them.
-    boolean = query_dicts(con, 'SELECT stage, runtime_file, op FROM runtime_ops WHERE boolean_records > 0 LIMIT 5')
-    assert not boolean, f'boolean op times: {boolean}'
-    # Negative durations cannot be summed into a cost; p121 checks every op it does not ignore.
-    negative = query_dicts(con, 'SELECT stage, runtime_file, op FROM runtime_ops '
-                                'WHERE NOT ignored AND negative_records > 0 LIMIT 5')
-    assert not negative, f'negative op times: {negative}'
-    # Ops that never carry a numeric time (p040's image_file, untimed items) are not timings.
-    con.execute('DELETE FROM runtime_ops WHERE records = 0')
+    """Table runtime_ops: op times per (stage, path) file, as common.load_p121_runtime_ops parses them (p121's
+    boundary and checks), with decode marking VIDEO_DECODE_OPS."""
+    # The shared p121 parser, with this measurement's decode flag.
+    load_p121_runtime_ops(con, 'runtime_ops', files, {'decode': VIDEO_DECODE_OPS})
 
 
 def first_frame_seconds(con: duckdb.DuckDBPyConnection, paths: list[str]) -> float:
@@ -415,6 +372,7 @@ def load_units(con: duckdb.DuckDBPyConnection, units: str, videos: str):
         SELECT stage, runtime_file, task, start_s, end_s, recorded_s, decode_s, chained, stale_start,
                CASE WHEN chained THEN end_s - previous_end_s
                     WHEN stale_start THEN recorded_s
+                    WHEN stage IN ({', '.join(f"'{s}'" for s in SPAN_AFTER_WORK)}) THEN recorded_s + coalesce(own_s, 0)
                     ELSE greatest(recorded_s, coalesce(own_s, 0)) END AS process_s
         FROM classified
         UNION ALL
@@ -1135,6 +1093,14 @@ def retimed_unit_spans(con: duckdb.DuckDBPyConnection, dataset: str, step: str, 
     # One file per training video, each with a creation time.
     assert spans['files'] == videos and spans['unknown'] == 0, \
         f'{dataset}: the {step} re-run has {spans["files"]} files for {videos} training videos ({spans["unknown"]} without a creation time)'
+    # p011 truncates an existing output in place, which keeps its creation time; a file left from an earlier run would
+    # stretch the span, so every file must have been created during this run.
+    (older,) = con.execute("""
+        SELECT count(*) FROM retimed_files
+        WHERE dataset = $dataset AND step = $step AND regexp_matches(path, $pattern) AND birth_s < $start
+    """, dict(dataset=dataset, step=step, pattern=pattern,
+              start=datetime.fromisoformat(run['started']).timestamp() - TIMESTAMP_TOLERANCE_S)).fetchone()
+    assert older == 0, f'{dataset}: {older} {step} re-run files were created before the run started'
     return retimed_component(cache_component, spans['spans_s'], RETIMED[step][1], basis, run, videos=videos,
                              wall_s=round(run['seconds'], 1))
 
@@ -1483,7 +1449,7 @@ def main():
                     '<ds>/execution/*/{002_naive,020,022,033,040,050,060}/** runtime files (+ timestamps)',
                     '<ds>/evaluation/070_accuracy/raw/test/*/ (timestamps)',
                     '<ds>/evaluation/090_tradeoff/tradeoff.csv'],
-            ignored_ops=list(IGNORED_OPS), op_list_paths=OP_LIST_PATHS, video_decode_ops=VIDEO_DECODE_OPS,
+            ignored_ops=list(P121_IGNORED_OPS), op_list_paths=OP_LIST_PATHS, video_decode_ops=VIDEO_DECODE_OPS,
             stage_spans={k: dict(start_level=level, end_siblings=ends, chained=chain)
                          for k, (level, ends, chain) in STAGE_SPANS.items()},
             chain_gap_s=CHAIN_GAP_S, stale_span_s=STALE_SPAN_S, timestamp_tolerance_s=TIMESTAMP_TOLERANCE_S,
