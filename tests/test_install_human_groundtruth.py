@@ -170,3 +170,15 @@ def test_p003_scripts_call_the_guard_before_scheduling(script):
     main = source[source.index('def main'):]
     assert 'assert_not_installed(dataset,' in main
     assert main.index('assert_not_installed(dataset,') < main.index('ProgressBar(')
+
+
+def test_p003_skips_human_ground_truth_datasets(capsys):
+    assert groundtruth.without_human_groundtruth(['caldot1', 'jnc0', 'ams', 'jnc7', 'jnc2', 'jnc6']) == ['caldot1', 'ams']
+    assert 'Skipping jnc0' in capsys.readouterr().out
+
+
+@pytest.mark.parametrize('script', ['p003_preprocess_groundtruth_detection.py', 'p003_preprocess_groundtruth_tracking.py'])
+def test_p003_scripts_drop_human_ground_truth_datasets(script):
+    # Both p003 entry points filter the configured datasets before any work.
+    source = (Path(__file__).parent.parent / 'preprocess' / script).read_text()
+    assert 'datasets_to_process = without_human_groundtruth(dedupe_datasets_by_root(EXEC_DATASETS))' in source

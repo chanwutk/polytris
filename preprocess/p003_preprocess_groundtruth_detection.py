@@ -14,7 +14,7 @@ import torch
 
 import polyis.models.detector
 from polyis.b3d.nms import nms
-from polyis.groundtruth import assert_not_installed
+from polyis.groundtruth import assert_not_installed, without_human_groundtruth
 from polyis.utilities import (
     ProgressBar,
     build_b3d_mask_and_crop,
@@ -541,7 +541,8 @@ def main():
         splits = ['test']
 
     # Resolve configured datasets to unique dataset roots.
-    datasets_to_process = dedupe_datasets_by_root(EXEC_DATASETS)
+    # Never regenerate human-verified ground truth (B3D).
+    datasets_to_process = without_human_groundtruth(dedupe_datasets_by_root(EXEC_DATASETS))
     print(f'Resolved datasets for groundtruth preprocessing: {datasets_to_process}')
 
     funcs = []
