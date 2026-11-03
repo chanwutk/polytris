@@ -1,0 +1,20 @@
+{
+  "caldot1-y05": {
+    "gpu": 0,
+    "session": "r1o4-padding-caldot1-y05",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/caldot1-y05",
+    "command": "env BOMBE_CPU_SUBSET=0-3 measurements-gpu/bombe_container.sh 0 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/caldot1-y05 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_padding.py --dataset caldot1-y05' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32-padding-matched/caldot1-y05.log 2>&1"
+  },
+  "caldot2-y05": {
+    "gpu": 1,
+    "session": "r1o4-padding-caldot2-y05",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/caldot2-y05",
+    "command": "env BOMBE_CPU_SUBSET=4-7 measurements-gpu/bombe_container.sh 1 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/caldot2-y05 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_padding.py --dataset caldot2-y05' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32-padding-matched/caldot2-y05.log 2>&1"
+  },
+  "ams-y05": {
+    "gpu": 2,
+    "session": "r1o4-padding-ams-y05",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/ams-y05",
+    "command": "env BOMBE_CPU_SUBSET=8-11 measurements-gpu/bombe_container.sh 2 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/ams-y05 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_padding.py --dataset ams-y05' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32-padding-matched/ams-y05.log 2>&1"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "caldot1-y05": {
+    "host": "bombe",
+    "gpu": 0,
+    "cpus": "0-3",
+    "session": "r1o4-oracle-caldot1-y05",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/caldot1-y05",
+    "command": "env BOMBE_CPU_SUBSET=0-3 measurements-gpu/bombe_container.sh 0 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/caldot1-y05 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_packing.py --dataset caldot1-y05 --stride 32' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32/caldot1-y05.log 2>&1"
+  },
+  "jnc0": {
+    "host": "bombe",
+    "gpu": 3,
+    "cpus": "12-15",
+    "session": "r1o4-oracle-jnc0",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/jnc0",
+    "command": "env BOMBE_CPU_SUBSET=12-15 measurements-gpu/bombe_container.sh 3 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/jnc0 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_packing.py --dataset jnc0 --stride 32' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32/jnc0.log 2>&1"
+  },
+  "caldot2-y05": {
+    "host": "bombe",
+    "gpu": 1,
+    "cpus": "4-7",
+    "session": "r1o4-oracle-caldot2-y05",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/caldot2-y05",
+    "command": "env BOMBE_CPU_SUBSET=4-7 measurements-gpu/bombe_container.sh 1 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/caldot2-y05 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_packing.py --dataset caldot2-y05 --stride 32' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32/caldot2-y05.log 2>&1"
+  },
+  "ams-y05": {
+    "host": "bombe",
+    "gpu": 2,
+    "cpus": "8-11",
+    "session": "r1o4-oracle-ams-y05",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/ams-y05",
+    "command": "env BOMBE_CPU_SUBSET=8-11 measurements-gpu/bombe_container.sh 2 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/ams-y05 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_packing.py --dataset ams-y05 --stride 32' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32/ams-y05.log 2>&1"
+  },
+  "jnc2": {
+    "host": "bombe",
+    "gpu": 4,
+    "cpus": "20-23",
+    "session": "r1o4-oracle-jnc2",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/jnc2",
+    "command": "env BOMBE_CPU_SUBSET=20-23 measurements-gpu/bombe_container.sh 4 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/jnc2 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_packing.py --dataset jnc2 --stride 32' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32/jnc2.log 2>&1"
+  },
+  "jnc6": {
+    "host": "bombe",
+    "gpu": 5,
+    "cpus": "24-27",
+    "session": "r1o4-oracle-jnc6",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/jnc6",
+    "command": "env BOMBE_CPU_SUBSET=24-27 measurements-gpu/bombe_container.sh 5 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/jnc6 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_packing.py --dataset jnc6 --stride 32' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32/jnc6.log 2>&1"
+  },
+  "jnc7": {
+    "host": "bombe",
+    "gpu": 6,
+    "cpus": "28-31",
+    "session": "r1o4-oracle-jnc7",
+    "scratch": "/data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/jnc7",
+    "command": "env BOMBE_CPU_SUBSET=28-31 measurements-gpu/bombe_container.sh 6 /data/cwkt/data/bombe-revision/scratch/r1o4_oracle_packing/jnc7 'env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_packing.py --dataset jnc7 --stride 32' >> /work/cwkt/projects/tetris/measurements-results/r1o4_oracle_packing/sr32/jnc7.log 2>&1"
+  }
+}

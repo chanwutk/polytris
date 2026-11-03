@@ -1,0 +1,9 @@
+{
+  "measurements-gpu/r1o4_oracle_packing.py": "935a071ce78e923dbeeacb1a1624832bca35e7881321a6e76378ff88c118b044",
+  "measurements/r1o4_packing_detection_accuracy.py": "b5a6329a47da0ddbc62abf942f7e54bbeb2fb3e260a1974ff569ff4b6f14f8d7",
+  "tests/test_measurements_oracle_packing.py": "1c0b475c028055389fe55e428c74b6c72d7cc3bc6ab5ec6bddf1c36da014615f",
+  "scripts/p030_exec_compress.py": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+  "scripts/p040_exec_detect.py": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+  "scripts/p050_exec_uncompress.py": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798",
+  "measurements-results/r1o4_oracle_packing/summarize.py": "402b2b53e980fe4482580d9a141746755a790f326b3611ea83001f2512d3d779"
+}

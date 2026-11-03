@@ -1,0 +1,5 @@
+jnc6/execution/te01.mp4/003_groundtruth/tracking.jsonl
+jnc6/execution/te04.mp4/003_groundtruth/tracking.jsonl
+jnc6/execution/te08.mp4/003_groundtruth/tracking.jsonl
+jnc6/execution/te12.mp4/003_groundtruth/tracking.jsonl
+jnc6/execution/te13.mp4/003_groundtruth/tracking.jsonl

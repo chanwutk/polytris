@@ -1,0 +1,47 @@
+{
+  "method": "Only tile padding changed; same original detections, annotation maps, frames, detector weights, and scoring.",
+  "rows": [
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "restored_padding": "tr",
+      "original_precision_pct": 86.01,
+      "original_recall_pct": 93.68,
+      "original_map50_pct": 90.38,
+      "unpadded_precision_pct": 94.3,
+      "unpadded_recall_pct": 85.44,
+      "unpadded_map50_pct": 83.99,
+      "restored_precision_pct": 93.01,
+      "restored_recall_pct": 92.45,
+      "restored_map50_pct": 90.53
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "restored_padding": "bl",
+      "original_precision_pct": 95.85,
+      "original_recall_pct": 97.44,
+      "original_map50_pct": 97.31,
+      "unpadded_precision_pct": 97.47,
+      "unpadded_recall_pct": 94.34,
+      "unpadded_map50_pct": 94.22,
+      "restored_precision_pct": 96.82,
+      "restored_recall_pct": 96.82,
+      "restored_map50_pct": 96.71
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "restored_padding": "square",
+      "original_precision_pct": 90.02,
+      "original_recall_pct": 95.59,
+      "original_map50_pct": 94.61,
+      "unpadded_precision_pct": 97.28,
+      "unpadded_recall_pct": 85.05,
+      "unpadded_map50_pct": 84.77,
+      "restored_precision_pct": 91.95,
+      "restored_recall_pct": 95.65,
+      "restored_map50_pct": 94.84
+    }
+  ]
+}

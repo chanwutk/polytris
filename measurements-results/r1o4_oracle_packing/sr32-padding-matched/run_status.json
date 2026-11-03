@@ -1,0 +1,50 @@
+{
+  "caldot1-y05": {
+    "run": "g0-20261101T214217",
+    "host": "bombe",
+    "gpu": 0,
+    "gpu_uuid": "GPU-0997b8f5-904d-8e15-0da8-1c28bb1e348c",
+    "numa_node": 0,
+    "cpus": "0-3",
+    "image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+    "start": "2026-11-01T21:42:42-08:00",
+    "end": "2026-11-01T21:43:52-08:00",
+    "exit": 0,
+    "samples": 32,
+    "foreign_samples": 0,
+    "contaminated": false,
+    "command": "env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_padding.py --dataset caldot1-y05"
+  },
+  "caldot2-y05": {
+    "run": "g1-20261101T214217",
+    "host": "bombe",
+    "gpu": 1,
+    "gpu_uuid": "GPU-e8034b31-aa87-2489-156d-927ea00e6009",
+    "numa_node": 0,
+    "cpus": "4-7",
+    "image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+    "start": "2026-11-01T21:42:42-08:00",
+    "end": "2026-11-01T21:43:47-08:00",
+    "exit": 0,
+    "samples": 29,
+    "foreign_samples": 0,
+    "contaminated": false,
+    "command": "env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_padding.py --dataset caldot2-y05"
+  },
+  "ams-y05": {
+    "run": "g2-20261101T214217",
+    "host": "bombe",
+    "gpu": 2,
+    "gpu_uuid": "GPU-93a19c10-7c18-92b2-8e33-c0e121e77e2a",
+    "numa_node": 0,
+    "cpus": "8-11",
+    "image": "sha256:efe83173d8fdb17ca41d0ab7813508c3a9efe951ff707036650575c63e9a2cb3",
+    "start": "2026-11-01T21:42:42-08:00",
+    "end": "2026-11-01T21:44:33-08:00",
+    "exit": 0,
+    "samples": 62,
+    "foreign_samples": 0,
+    "contaminated": false,
+    "command": "env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python measurements-gpu/r1o4_oracle_padding.py --dataset ams-y05"
+  }
+}

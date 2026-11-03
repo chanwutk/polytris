@@ -1,0 +1,2363 @@
+{
+  "dataset": "caldot1-y05",
+  "label": "CalDoT1",
+  "method": {
+    "split": "test",
+    "stride": 32,
+    "first_frame": 0,
+    "tile_size": 60,
+    "classifier": "test annotation box overlap",
+    "tile_padding": "bl",
+    "ilp_pruning": false,
+    "tracking": false,
+    "track_interpolation": false,
+    "original_batch_size": 1,
+    "packed_batch_size": 4,
+    "packed_jpeg_quality": 95,
+    "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+    "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+    "pipeline_sha256": {
+      "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+      "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+      "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+    }
+  },
+  "baseline": "/polyis/measurements-results/r1o4_oracle_packing/sr32/caldot1-y05.json",
+  "reference_sha256": {
+    "te00.mp4": "9e3da851c27302f52794cf263e61eaf93e184f4c4a6556c254d44223dd839f6f",
+    "te01.mp4": "fa637a8ffbb51ec92c2a4c60c1bf4866df4ecc091e72ce2582f1fcc7e18d2af5",
+    "te02.mp4": "3a8d1208cba085f4e13ca902d38cc8035efbded6fcb978b0732874855ec193b7",
+    "te03.mp4": "90cbc13642eb06675b6af0e050c693cabbd5600fe5e99a621216e0e5c4066f32",
+    "te04.mp4": "0f7832c62abdb0225f81f9b442acfb693fad19eda2f1f551b7d69c1e978e18b5",
+    "te05.mp4": "b2562c8e8a71d30aaea541b1cdc48ca4db668371024f1e48f00c0ee1996aeca2",
+    "te06.mp4": "956ffef8ca0a57191e499594143fdb868a3f46db8e46beaa85e94d0e84c18b53",
+    "te07.mp4": "af817f8c4df78a561a839bd93ee523e8cfffe0434989ea0c7b1dbbc62958b15f",
+    "te08.mp4": "4d20e72fc8a614057fb74d4a1c2bb6e32d569f4d3d8935fc26c95b6fde2e62ad",
+    "te09.mp4": "d97c0852d75ed6362283812007c8b7002f30bccfd5c8a34c99523140810e8ae8",
+    "te10.mp4": "3d125fef20ea0f46ffd3c2b73c32794aed7d829307e666965da6fc9adc14372f",
+    "te11.mp4": "b2cb6ff300b91596d8f8c5c9e83653c5dfb5e5cf2867b33089d459a6c0bedfc3",
+    "te12.mp4": "90d3c84c304d4015eeb211fd7142a817306393956a72077b8f378ba5da4c39d8",
+    "te13.mp4": "5bb6f06771f3af5bad9fe0497dca283fcc3d3ed23f022093812b05298a77be03",
+    "te14.mp4": "ac79cf292d38344038210da5d245aed1f5f135c8f7a8bf57ff97d8ed6b54e297",
+    "te15.mp4": "d684f6d74c5304d93901301384df8667f0c3dec58655e8d44e679e1479a0a6e4",
+    "te16.mp4": "05933e25f8256b534d08d3d4955752f57b3698084db18c30d9a21cdfec354652",
+    "te17.mp4": "a5e8477d8236ae878c7e0c228f6988cbdb4ce1f67a90adfe3ec8f6a45422aa69",
+    "te18.mp4": "6d7d51af2d6deaee0517abfe29fc5fbe3964f30035486173e2e2eb055f7714ce",
+    "te19.mp4": "5551a9e08f6b298f3f8aabafe3a5b64b22033e553e3ff49f8e28ee788443b296",
+    "te20.mp4": "a3e15d657b580df88c8127068afecad99f5258df757b38fcda42766d77c4229f",
+    "te21.mp4": "1e399e61ed351b449b1526ebea9c20d543b3447030f216fd404a847c83fc6ffd",
+    "te22.mp4": "6747532edc6d2e3cb0ab1f2fbf01eb006d54a0f54435a614de28d01c3a784197",
+    "te23.mp4": "89c137f8b5227d7e93498def2948bf81b0a9d3249a23cf6db213c8564a884f9b",
+    "te24.mp4": "6d7d51af2d6deaee0517abfe29fc5fbe3964f30035486173e2e2eb055f7714ce",
+    "te25.mp4": "536e97f9158fb18a81820123b7374e8cadf5a10d25bbbc96f7da2f662987b949",
+    "te26.mp4": "819a946d22a83b66f2b67958c6e8c2c7f2407244122b91a2786543877d9f3969",
+    "te27.mp4": "57662454d513b2216a7d94b67def3bdc605da84f1dd2173ea7f59b20eb6473a5",
+    "te28.mp4": "58e7a4640fdfc90469e8faa124568f3dd279687f7148603ac5fe23bd205f81f8",
+    "te29.mp4": "8075151bbcf34277840831b750bb41e2b0286efb61b49ecbb3ee17d079f624a6",
+    "te30.mp4": "67b5e8587c4faf8eb9ef97481bca061160420a4ed3a948b6e67b1cf5fc6b4883",
+    "te31.mp4": "77875bf2498f2309146b0ff2c781d0b0da5f62c4a79fae89cdbdb6ae6517de8c",
+    "te32.mp4": "8115c9b3ff5af18f83ee025f40d6659cf7f5ac497a8d132704caaa1a95ceddb0",
+    "te33.mp4": "687506ee2b7e641de185179da336ff77e6467db4da8f4c26f0382ad43cba27a9",
+    "te34.mp4": "f49806181a19c290190a53562e8c2a28f0d3aae5df861c4f92378da01f9e7512",
+    "te35.mp4": "46912786f33f5eb39b0837cf05669d5a571c92b3e8fa055ec5d8ee46926b40c9",
+    "te36.mp4": "89ae2591b6e8a59bc983690050cdd77285bc04b0daf34a0ed77d4cf17a321671",
+    "te37.mp4": "6a96fd9082c851befd3aa174bf1f999f17c504155b6ebee2be17cd30d4533cb4",
+    "te38.mp4": "e18c791b74c0d000402b90a732b28a09c93dadcaf60e2e735f0ae595d4c6241c",
+    "te39.mp4": "3496355588ffafca2b57a4c1c7ac87d4989cf93b965950ac63d8626796595d89",
+    "te40.mp4": "8dc5d028ce4be138ab884b2944c388bdf8fe3f3ebe5a14de479b1d64c0166d8f",
+    "te41.mp4": "fdc955251460b8981ac1d9207b7d831d8af839d7b9138e640f193797a8a2fc23",
+    "te42.mp4": "a8103db130a781071716afa999049a5d484d896716f8c9eadcc67aa6b1e3d5d5",
+    "te43.mp4": "4823e5564f6696fa762ea94a63ee12bcc365011f7795a2c34b2b41c5e24f3b64",
+    "te44.mp4": "99be777aa91136c92bd3020448447cd0a9f2cc7139808e89f3215156f1dea931",
+    "te45.mp4": "7cb3a450633201aa853e5f0f2be4088e56793cd14fedb94a177304d88cdcb98b",
+    "te46.mp4": "007b8ae32d2794c20e081bad7f05399a3b8f09bcd9fc9bd4b666a06e04a80a22",
+    "te47.mp4": "37bdf169a3505af9bf211de6e3b56efe9078f42fe1ac49a2c2fd9bf414899538",
+    "te48.mp4": "cd22ebcb3a79de358382ecf59a5073842ed5c973a4e13178bc80b13e4420fe6b",
+    "te49.mp4": "570125f2e366211bd2b7ea9da5fd2b4b581d35d9287767983b059dc816dbef41",
+    "te50.mp4": "ec0fe410a0559855788dc0e9f300d4cbefae4cd2b7833ddbde0e2920263e35c0",
+    "te51.mp4": "7418d8d307b8c583c6553922ee55d4f4243e2f6725668121983057e638432ef5",
+    "te52.mp4": "63e21a1fc7817b6b2be784c8489f0daac8f0bdb676d5cd66f2f87849f4cd6dd9",
+    "te53.mp4": "c8ef42848b9d0ad29c8469dbb3f39db416270affd5a29983345cf1b5c72b6031",
+    "te54.mp4": "8608020db7cb3f032cdd0ec68ba7ef00f04a9c437461cb683f7e3c7d2cd88221",
+    "te55.mp4": "ad15866c572f0129ae35a2ff081ab263db141308c3f808563b716d96ba897b00",
+    "te56.mp4": "df358e11382f339c09d76893b25d6c5da7193530caf77a077a07a7565b225f99",
+    "te57.mp4": "e02ae38bfba1ee32532f24e4a94fe67195e2e51504ecb16d9215136cd6781158",
+    "te58.mp4": "ae9edb8e9b477cf3e06c17a0359c0282a2fdf923e197d2210aad2a1dbd98257c",
+    "te59.mp4": "0db0a17eba3bf683cd373f0651816f7d58bc1342d1d053a68e542ff9e56a4da1"
+  },
+  "provisional": false,
+  "videos": {
+    "te00.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te00.mp4",
+        "ground_truth_sha256": "6b5db4005fc397636c632fa9f85b8a453a3561b4cb0350d574e8053d7cd5911e"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te01.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te01.mp4",
+        "ground_truth_sha256": "626dcd9dd55c52a9b3631cc081186cf3f39b341094c111d79926651c6279a71e"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 8
+    },
+    "te02.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te02.mp4",
+        "ground_truth_sha256": "dcd965b60c2e0c4b5fb94d76c5a93d371a686a21d0ec6c45a4b304e6c035fedb"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 6
+    },
+    "te03.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te03.mp4",
+        "ground_truth_sha256": "7d6f989d5f835ed00a7554ae33b445ecb222fe09b0590a1e439326961e748ed9"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te04.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te04.mp4",
+        "ground_truth_sha256": "8a8ada7abdc7f4f24c383782d011b21167311d77102dc368230fbe0f191350f7"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te05.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te05.mp4",
+        "ground_truth_sha256": "cbb9004ede1c0fbcd84979a48f6fe906b19c035e71fe1c77ed92751ebf4f3ff7"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te06.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te06.mp4",
+        "ground_truth_sha256": "42718a133e9ae617fef99d814d14781d8fce3036c37a78e608157e8ee6ae142e"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 6
+    },
+    "te07.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te07.mp4",
+        "ground_truth_sha256": "2ee9195ad973d6afc47fbd5f07fb8d741edf2d71efabd839008fdd03d4baee29"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te08.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te08.mp4",
+        "ground_truth_sha256": "a6839fb515ca068776378e13a7b6f6f9b9c38257cdc16ebb624e0ff791f97fa4"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te09.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te09.mp4",
+        "ground_truth_sha256": "c76f2629153af9b6a3ce53e8985c6a0025c4a3c47e403a50502330d5b089d3f6"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 6
+    },
+    "te10.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te10.mp4",
+        "ground_truth_sha256": "e9e76b3d6c7df0991e8825cb176950a29017365fad8e6eea1f1efe82dea93cec"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te11.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te11.mp4",
+        "ground_truth_sha256": "d8bf82a3ed49ea8004789d690c92ce9b27be725ff1c5a95f43554acfa2bb739c"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te12.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te12.mp4",
+        "ground_truth_sha256": "057be688a9b988cd6270ae020b7edad28f34f6d7f30a30177e76593ee3f9df1f"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te13.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te13.mp4",
+        "ground_truth_sha256": "e4180fd01bae4fa599fbcb0288f1d4eb0c04ef15f71525216f10724b2ff48458"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te14.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te14.mp4",
+        "ground_truth_sha256": "ce338a345904b07e07e5aa924a95243817e7ca421f398f61007af475804ecd6d"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 4
+    },
+    "te15.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te15.mp4",
+        "ground_truth_sha256": "c15ace0a2e7f80a59f78ac921b37890769848f5e62d091c3f0050e11df99a85b"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te16.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te16.mp4",
+        "ground_truth_sha256": "1eb6fe674a42b7c8ba71fc97145404292fe547736f0086055c4854502d4bca6b"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 9
+    },
+    "te17.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te17.mp4",
+        "ground_truth_sha256": "27741447850b6f0b69eab064a163d1b9b7c9afa7da4a4a4248c5e0ae1a7c5d5f"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 10
+    },
+    "te18.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te18.mp4",
+        "ground_truth_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 0
+    },
+    "te19.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te19.mp4",
+        "ground_truth_sha256": "24d6418e37a20fbac77621c0f0d623ff2085f10c0615eaf250ba809118a7f461"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te20.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te20.mp4",
+        "ground_truth_sha256": "aebf2b554162e0df1a90e790eb0d28bf6e732cd4965e71d2c461e71b8bf9c223"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te21.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te21.mp4",
+        "ground_truth_sha256": "51fcf822c9741aab86365e1088ffe329e2888543a769bbfe2ec11435248de1ae"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te22.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te22.mp4",
+        "ground_truth_sha256": "3d0177d4561b19e151ca599218e275ca0e16043ded3a0d90ce7f9ea7ba375ec3"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 3
+    },
+    "te23.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te23.mp4",
+        "ground_truth_sha256": "d92a6993658fd8a7dddd3c9da64b6ff024f2ef232920675743747eeb6a6fa699"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te24.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te24.mp4",
+        "ground_truth_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 0
+    },
+    "te25.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te25.mp4",
+        "ground_truth_sha256": "7f66e5dc609d08f63205c19015843bc71186b2836237cd297a78e16b92802843"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te26.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te26.mp4",
+        "ground_truth_sha256": "893938fa1aed6ae0fd33a2896f8f07eaf36efc6bc057629b0f1c6de78255e2e9"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te27.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te27.mp4",
+        "ground_truth_sha256": "2d3937dd1d0291e88597ab0ef937aad782283b8102728ed3e00ad3f671c0107a"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te28.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te28.mp4",
+        "ground_truth_sha256": "5d997cdf4221258883f5bb7b33cdd48c6bb5561a7b117f74af57f137353de66f"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 3
+    },
+    "te29.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te29.mp4",
+        "ground_truth_sha256": "2397002f29496ca93db4359965dca744d2528a24ab1ddcb3cbdcdc55141c14f5"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te30.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te30.mp4",
+        "ground_truth_sha256": "62a4dc15d23a8298e77f93dcf301c7704777ded14b5163be95f4161676d467e2"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 8
+    },
+    "te31.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te31.mp4",
+        "ground_truth_sha256": "96596375cac2cacb254f0d8504f531d3aa2d6ee84725a2be496f813e96a5bfc3"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 3
+    },
+    "te32.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te32.mp4",
+        "ground_truth_sha256": "5d40ee84862266d11b776489af253e688cc20566a226e7733f3d4677b805b1c2"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te33.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te33.mp4",
+        "ground_truth_sha256": "370a07065c75134882a7e039f64956dc6a897ff845f780248f2336831fd20c8f"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 8
+    },
+    "te34.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te34.mp4",
+        "ground_truth_sha256": "40e4f89af21e8916a52c6501ad6e57d7f6c93bbe3e6a2402b7174956b06c0e12"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te35.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te35.mp4",
+        "ground_truth_sha256": "2754cb575c166f0bc81d7e2c9e2f3cdf57538b10a6a60510edc71bf0c71c9772"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te36.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te36.mp4",
+        "ground_truth_sha256": "7781b58b43574e3476e363c804849a4d5428988d83e698c7e389b575de94b733"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te37.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te37.mp4",
+        "ground_truth_sha256": "7e63ccf1d092b4392d5a9a075a1d93cf79666995c9429836a0f71b607271f663"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 7
+    },
+    "te38.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te38.mp4",
+        "ground_truth_sha256": "96a470ee074aaba49ebb720e4f3c3011b6fb44add85274a5def9d0f1c52e6e2a"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te39.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te39.mp4",
+        "ground_truth_sha256": "57cb8221a60596d24bbd5b9a9772410a69afecb4c3d55dd409ca5420ac711ea9"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 9
+    },
+    "te40.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te40.mp4",
+        "ground_truth_sha256": "a6143fb38a4fe686ad578359e820f898800eaeabd587ea2a0f519adb35c77ef5"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te41.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te41.mp4",
+        "ground_truth_sha256": "bc4d54a3843e15083fb48b701af8dd4287153afa63bd2072174d8a5c71a2cf89"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te42.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te42.mp4",
+        "ground_truth_sha256": "d449681d7a1c6337d4e42e95c5a9d03297fa5d38231ba94c90af715635201263"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te43.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te43.mp4",
+        "ground_truth_sha256": "4eebba3131bfebe911053b2e28239bb5524eb92d817c9bb8151367e1162cb3f3"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te44.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te44.mp4",
+        "ground_truth_sha256": "67272bf2de4e84fab14a4f5beb633bf221f434f151cd9d9429b791d54dfdedba"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te45.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te45.mp4",
+        "ground_truth_sha256": "6d0ffff996a15cf5a92450cbf5b3c02ffd849749eb7c6932dc6ae409c38fa953"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te46.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te46.mp4",
+        "ground_truth_sha256": "70303b29d790eb3d8a87feb03e4b800c51dd63954a4fa922e0ddd3286a789ff2"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 3
+    },
+    "te47.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te47.mp4",
+        "ground_truth_sha256": "59d93256ed9289eddb6628703dbd442f134bb5b8ee57878713fa7a36b0a2696b"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te48.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te48.mp4",
+        "ground_truth_sha256": "d3f90756e7cb780eef6c8bc0af262dc9e10d88ba93a4b3d3cafac721b3991b3e"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te49.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te49.mp4",
+        "ground_truth_sha256": "6aeaf877c1a77f65622c46a954107d233178ec95a907705be66c3d453836e8d5"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te50.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te50.mp4",
+        "ground_truth_sha256": "731ef8efc9d5d43191180d316274c39ad22f5d579c84724efc7a174e1203e0da"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te51.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te51.mp4",
+        "ground_truth_sha256": "304575b2d92b73d5fefbfe9e709a99c3d052debe5a38251e43d776089d0ac8e5"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te52.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te52.mp4",
+        "ground_truth_sha256": "1fad0a2296bc046c487703a5421e9e92030124e41eb95b385aff5bacf3c38c41"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te53.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te53.mp4",
+        "ground_truth_sha256": "8158136ef1e69fe0e48a9c3886483aa9e058d7b0c74828341a142f1819745019"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te54.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te54.mp4",
+        "ground_truth_sha256": "f5cb87f9c216ad4ccaed77f7beee4982402d097b883093b03c505af88b7acdf5"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 3
+    },
+    "te55.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te55.mp4",
+        "ground_truth_sha256": "5b9711e15e7ba5ce48c7f48ff20e4f7a2e6f07a4fafefa0be2dab6503e8b89a9"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 4
+    },
+    "te56.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te56.mp4",
+        "ground_truth_sha256": "153f730752cc26c99ad26b7b3fc6f8080a4f69beba0deded1302859481288bca"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 1
+    },
+    "te57.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te57.mp4",
+        "ground_truth_sha256": "b884879913b60aaee777e9031ac7fe7e92e0a89e983c5ed357ed56d215ed59f6"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te58.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te58.mp4",
+        "ground_truth_sha256": "15cc94f19ffa0d315afe4aca1d21afad9a1f48b9566c9bfe73223a02566ecd91"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    },
+    "te59.mp4": {
+      "inputs": {
+        "method": {
+          "split": "test",
+          "stride": 32,
+          "first_frame": 0,
+          "tile_size": 60,
+          "classifier": "test annotation box overlap",
+          "tile_padding": "none",
+          "ilp_pruning": false,
+          "tracking": false,
+          "track_interpolation": false,
+          "original_batch_size": 1,
+          "packed_batch_size": 4,
+          "packed_jpeg_quality": 95,
+          "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+          "weights_sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+          "pipeline_sha256": {
+            "p030_exec_compress": "0e0c1e0a088b3f09f98c318b05479723f95e6338481f62ec6c80f8d8718e8b26",
+            "p040_exec_detect": "91497b1c66f6271d44c0a0a541c1cb1a9ce6c41ba2b1e66047dba25a72c0ace7",
+            "p050_exec_uncompress": "5fae0225184d67696fcc0754e14a4a3d069550fdd1af8ee018a5df040b2fd798"
+          }
+        },
+        "video": "te59.mp4",
+        "ground_truth_sha256": "9fd532b52c0ebc79ecb41378075e3f1f9dc01451a9ec53a8ebcde2b046860a61"
+      },
+      "frames": 900,
+      "sampled_frames": 29,
+      "width": 720,
+      "height": 480,
+      "grid_width": 720,
+      "grid_height": 480,
+      "canvases": 2
+    }
+  },
+  "sampled_frames": 1740,
+  "all_sampled_frames": {
+    "packed": {
+      "n_gt": 6416,
+      "tp": 6212,
+      "fp": 204,
+      "ignored_matched_nonretained": 0,
+      "ignored_unmatched_outside": 0,
+      "fp_outside_filter": 0,
+      "precision": 0.9682,
+      "recall": 0.9682,
+      "ap50": 0.9671
+    },
+    "reference": {
+      "n_gt": 6416,
+      "tp": 6252,
+      "fp": 271,
+      "ignored_matched_nonretained": 0,
+      "ignored_unmatched_outside": 0,
+      "fp_outside_filter": 0,
+      "precision": 0.9585,
+      "recall": 0.9744,
+      "ap50": 0.9731
+    }
+  },
+  "retained_content": {
+    "center": {
+      "packed": {
+        "n_gt": 6416,
+        "tp": 6212,
+        "fp": 204,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 0,
+        "fp_outside_filter": 0,
+        "precision": 0.9682,
+        "recall": 0.9682,
+        "ap50": 0.9671,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "packed_ignore_outside": {
+        "n_gt": 6416,
+        "tp": 6212,
+        "fp": 204,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 0,
+        "fp_outside_filter": 0,
+        "precision": 0.9682,
+        "recall": 0.9682,
+        "ap50": 0.9671,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "reference": {
+        "n_gt": 6416,
+        "tp": 6252,
+        "fp": 219,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 47,
+        "fp_outside_filter": 0,
+        "precision": 0.9662,
+        "recall": 0.9744,
+        "ap50": 0.9734,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "delta": {
+        "packed": {
+          "precision": 0.002,
+          "recall": -0.0062,
+          "ap50": -0.0063
+        },
+        "packed_ignore_outside": {
+          "precision": 0.002,
+          "recall": -0.0062,
+          "ap50": -0.0063
+        }
+      }
+    },
+    "center_cover50": {
+      "packed": {
+        "n_gt": 6416,
+        "tp": 6212,
+        "fp": 204,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 0,
+        "fp_outside_filter": 0,
+        "precision": 0.9682,
+        "recall": 0.9682,
+        "ap50": 0.9671,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "packed_ignore_outside": {
+        "n_gt": 6416,
+        "tp": 6212,
+        "fp": 204,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 0,
+        "fp_outside_filter": 0,
+        "precision": 0.9682,
+        "recall": 0.9682,
+        "ap50": 0.9671,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "reference": {
+        "n_gt": 6416,
+        "tp": 6252,
+        "fp": 219,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 47,
+        "fp_outside_filter": 0,
+        "precision": 0.9662,
+        "recall": 0.9744,
+        "ap50": 0.9734,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "delta": {
+        "packed": {
+          "precision": 0.002,
+          "recall": -0.0062,
+          "ap50": -0.0063
+        },
+        "packed_ignore_outside": {
+          "precision": 0.002,
+          "recall": -0.0062,
+          "ap50": -0.0063
+        }
+      }
+    },
+    "frame": {
+      "packed": {
+        "n_gt": 6416,
+        "tp": 6212,
+        "fp": 204,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 0,
+        "fp_outside_filter": 0,
+        "precision": 0.9682,
+        "recall": 0.9682,
+        "ap50": 0.9671,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "packed_ignore_outside": {
+        "n_gt": 6416,
+        "tp": 6212,
+        "fp": 204,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 0,
+        "fp_outside_filter": 0,
+        "precision": 0.9682,
+        "recall": 0.9682,
+        "ap50": 0.9671,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "reference": {
+        "n_gt": 6416,
+        "tp": 6252,
+        "fp": 266,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 0,
+        "fp_outside_filter": 0,
+        "precision": 0.9592,
+        "recall": 0.9744,
+        "ap50": 0.9731,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "delta": {
+        "packed": {
+          "precision": 0.009,
+          "recall": -0.0062,
+          "ap50": -0.006
+        },
+        "packed_ignore_outside": {
+          "precision": 0.009,
+          "recall": -0.0062,
+          "ap50": -0.006
+        }
+      }
+    },
+    "inside": {
+      "packed": {
+        "n_gt": 6416,
+        "tp": 6212,
+        "fp": 197,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 7,
+        "fp_outside_filter": 0,
+        "precision": 0.9693,
+        "recall": 0.9682,
+        "ap50": 0.9672,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "packed_ignore_outside": {
+        "n_gt": 6416,
+        "tp": 6212,
+        "fp": 197,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 7,
+        "fp_outside_filter": 0,
+        "precision": 0.9693,
+        "recall": 0.9682,
+        "ap50": 0.9672,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "reference": {
+        "n_gt": 6416,
+        "tp": 6252,
+        "fp": 207,
+        "ignored_matched_nonretained": 0,
+        "ignored_unmatched_outside": 59,
+        "fp_outside_filter": 0,
+        "precision": 0.968,
+        "recall": 0.9744,
+        "ap50": 0.9735,
+        "matched_nonretained_with_retained_candidate": 0
+      },
+      "delta": {
+        "packed": {
+          "precision": 0.0013,
+          "recall": -0.0062,
+          "ap50": -0.0063
+        },
+        "packed_ignore_outside": {
+          "precision": 0.0013,
+          "recall": -0.0062,
+          "ap50": -0.0063
+        }
+      }
+    }
+  },
+  "environment": {
+    "gpu": "0",
+    "run": "g0-20261101T214217"
+  },
+  "source_sha256": "c86be40e73b60c0df80b101a5b77823fe2423a001749c178d1bbd53b36626d9e"
+}
