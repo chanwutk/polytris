@@ -11,7 +11,7 @@ from typing import Any, Dict, List
 import multiprocessing as mp
 
 from polyis.io import cache, store
-from polyis.utilities import get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, mark_detections, get_config
+from polyis.utilities import get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, tile_confusion, get_config
 
 
 config = get_config()
@@ -29,70 +29,16 @@ def parse_args():
 def evaluate_classification_accuracy(classifications: np.ndarray,
                                      detections: list[list[float]], tile_size: int,
                                      threshold: float) -> dict[str, Any]:
-    """
-    Evaluate classification accuracy by comparing predictions with groundtruth detections.
-
-    Args:
-        classifications (np.ndarray): 2D grid of classification scores
-        detections (list[dict]): list of detection dictionaries
-        tile_size (int): Size of each tile
-        threshold (float): Classification threshold
-
-    Returns:
-        dict: dictionary containing evaluation metrics
-    """
-    grid_height = classifications.shape[0]
-    grid_width = classifications.shape[1] if grid_height > 0 else 0
-
-    # Initialize counters
-    # tp: True Positive: predicted above threshold, has detection overlap
-    # tn: True Negative: predicted below threshold, no detection overlap
-    # fp: False Positive: predicted above threshold, no detection overlap
-    # fn: False Negative: predicted below threshold, has detection overlap
-
-    # tp fn
-    # fp tn
-    metrics = np.zeros((2, 2), dtype=int)
-
-    # Create a bitmap for all detections first
-    # Calculate the total image dimensions based on grid and tile size
-    total_height = grid_height * tile_size
-    total_width = grid_width * tile_size
-
-    detection_bitmap = mark_detections(detections, total_width, total_height,
-                                       tile_size, slice(-4, None))
-
-    # Extract tile regions from the detection bitmap and calculate overlap ratios
-    for i in range(grid_height):
-        for j in range(grid_width):
-            score = classifications[i][j]
-
-            # Determine prediction
-            predicted_positive = score >= threshold
-            actual_positive = detection_bitmap[i, j] > 0
-
-            metrics[int(predicted_positive), int(actual_positive)] += 1
-            # print(predicted_positive, actual_positive)
-    
-    tp, fp, fn, tn = map(int, metrics.flatten().tolist())
-    assert tp + fp + fn + tn == grid_height * grid_width, \
-        "tp + fp + fn + tn != grid_height * grid_width: " \
-        f"{tp + fp + fn + tn} != {grid_height * grid_width}\n" \
-        f"tp: {tp}, fp: {fp}, fn: {fn}, tn: {tn}\n" \
-        f"grid_height: {grid_height}, grid_width: {grid_width}\n" \
-        f"metrics:\n{metrics}"
-
-    # Calculate precision, recall, and accuracy
-    precision = get_precision(tp, fp)
-    recall = get_recall(tp, fn)
-    accuracy = get_accuracy(tp, tn, fp, fn)
-    f1_score = get_f1_score(tp, fp, fn)
-
+    """Tile-level metrics of one frame against tracks [id, x1, y1, x2, y2]; relevant tiles are the positive class."""
+    # Count tiles with the shared scorer, passing the box part of each track.
+    counts = tile_confusion(classifications, [track[-4:] for track in detections], tile_size, threshold)
+    tp, tn, fp, fn = counts['tp'], counts['tn'], counts['fp'], counts['fn']
+    # Derive the summary metrics from the counts.
     return {
         'tp': tp, 'tn': tn, 'fp': fp, 'fn': fn,
-        'precision': precision, 'recall': recall,
-        'accuracy': accuracy, 'f1_score': f1_score,
-        'total_tiles': grid_height * grid_width
+        'precision': get_precision(tp, fp), 'recall': get_recall(tp, fn),
+        'accuracy': get_accuracy(tp, tn, fp, fn), 'f1_score': get_f1_score(tp, fp, fn),
+        'total_tiles': classifications.shape[0] * classifications.shape[1],
     }
 
 

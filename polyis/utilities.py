@@ -1215,6 +1215,32 @@ def mark_detections(
     return bitmap
 
 
+def tile_confusion(scores: np.ndarray, boxes: list[list[float]], tilesize: int, threshold: float,
+                   eval_mask: np.ndarray | None = None) -> dict[str, int]:
+    """Tile-level confusion counts of a relevance grid against ground-truth boxes.
+
+    The positive class is "relevant": a tile is actually positive when a box [x1, y1, x2, y2] overlaps it,
+    and predicted positive when its score is at least the threshold. Tiles where eval_mask is zero are not
+    counted. Returns {'tp', 'fp', 'fn', 'tn'}.
+    """
+    # Rasterize the boxes onto the same grid as the scores.
+    grid_h, grid_w = scores.shape
+    actual = mark_detections(boxes, grid_w * tilesize, grid_h * tilesize, tilesize, slice(0, 4)) > 0
+    # Threshold the relevance scores.
+    predicted = scores >= threshold
+    # Count every tile unless a mask excludes it.
+    counted = np.ones_like(actual) if eval_mask is None else eval_mask > 0
+    if counted.shape != actual.shape:
+        raise ValueError(f'eval_mask shape {counted.shape} does not match grid {actual.shape}')
+    # Name each cell of the confusion matrix explicitly.
+    return {
+        'tp': int(np.sum(predicted & actual & counted)),
+        'fp': int(np.sum(predicted & ~actual & counted)),
+        'fn': int(np.sum(~predicted & actual & counted)),
+        'tn': int(np.sum(~predicted & ~actual & counted)),
+    }
+
+
 def create_timer(file: typing.TextIO, meta: dict | None = None):
     row = []
     def timer(op: str) -> Timer:

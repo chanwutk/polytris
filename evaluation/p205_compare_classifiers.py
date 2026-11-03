@@ -28,14 +28,14 @@ from evaluation.p201_compare_pareto import (
 )
 from evaluation.colors import categorical_color_scale
 from polyis.utilities import (
+    dataset_root_name,
     get_accuracy,
     get_config,
     get_f1_score,
     get_precision,
     get_recall,
     load_classification_results,
-    load_detection_results,
-    mark_detections,
+    tile_confusion,
 )
 
 FACET_SUBPLOT_WIDTH = 150
@@ -70,45 +70,13 @@ def evaluate_classification_accuracy(
     threshold: float,
     eval_mask: np.ndarray,
 ) -> dict[str, Any]:
-    """Per-frame tile metrics vs GT boxes (detections are [x1,y1,x2,y2,score]).
+    """Per-frame tile counts vs ground-truth boxes [x1, y1, x2, y2]; relevant tiles are the positive class.
 
     Tiles where ``eval_mask`` is zero are considered always-discarded and are
     skipped entirely (they count toward neither TP/TN nor FP/FN).
     """
-    grid_height = classifications.shape[0]
-    grid_width = classifications.shape[1] if grid_height > 0 else 0
-    assert eval_mask.shape == (grid_height, grid_width), (
-        f"eval_mask shape {eval_mask.shape} does not match grid "
-        f"({grid_height},{grid_width})"
-    )
-
-    metrics = np.zeros((2, 2), dtype=int)
-
-    total_height = grid_height * tile_size
-    total_width = grid_width * tile_size
-
-    detection_bitmap = mark_detections(detections, total_width, total_height, tile_size, slice(0, 4))
-
-    counted = 0
-    for i in range(grid_height):
-        for j in range(grid_width):
-            if eval_mask[i, j] == 0:
-                continue
-            score = classifications[i][j]
-            predicted_positive = score >= threshold
-            actual_positive = detection_bitmap[i, j] > 0
-            metrics[int(predicted_positive), int(actual_positive)] += 1
-            counted += 1
-
-    tp, fp, fn, tn = map(int, metrics.flatten().tolist())
-    assert tp + fp + fn + tn == counted
-
-    return {
-        'tp': tp,
-        'tn': tn,
-        'fp': fp,
-        'fn': fn,
-    }
+    # Delegate to the shared scorer so every tile-accuracy script counts the same way.
+    return tile_confusion(classifications, [box[:4] for box in detections], tile_size, threshold, eval_mask)
 
 
 def _decode_classification_hex(entry: dict) -> np.ndarray:
@@ -122,14 +90,24 @@ def _decode_classification_hex(entry: dict) -> np.ndarray:
     )
 
 
-def _build_gt_frame_map(groundtruth_frames: list[dict]) -> dict[int, list[list[float]]]:
-    out: dict[int, list[list[float]]] = {}
-    for row in groundtruth_frames:
-        if 'frame_idx' in row:
-            idx = int(row['frame_idx'])
-            dets = row.get('detections', [])
-            out[idx] = dets
-    return out
+def load_groundtruth_boxes(dataset: str, video: str) -> dict[int, list[list[float]]]:
+    """Ground-truth boxes [x1, y1, x2, y2] per clip frame, from the tracks HOTA is scored against.
+
+    The root dataset's 003_groundtruth/tracking.jsonl is indexed by 15 FPS clip frame, like the classifier
+    output. Detector variants' own 003_groundtruth copies and the 30 FPS detection.jsonl of jnc and ams are
+    not frame-aligned with the classifier, so they are not used.
+    """
+    # Resolve the shared ground truth of detector variants (ams-y05 -> ams).
+    path = cache.exec(dataset_root_name(dataset), 'groundtruth', video, 'tracking.jsonl')
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Missing groundtruth tracks: {path}")
+    # Keep each frame's boxes, dropping the track id.
+    boxes: dict[int, list[list[float]]] = {}
+    with open(path) as source:
+        for line in source:
+            row = json.loads(line)
+            boxes[int(row['frame_idx'])] = [track[1:5] for track in row['tracks']]
+    return boxes
 
 
 def load_runtime(dataset: str, video: str, classifier: str, tile_size: int,
@@ -201,12 +179,8 @@ def evaluate_video_pair(
     threshold: float,
     eval_mask: np.ndarray,
 ) -> tuple[dict[str, int], dict[str, int]]:
-    gt_path = cache.exec(dataset, 'groundtruth', video, 'detection.jsonl')
-    if not os.path.exists(gt_path):
-        raise FileNotFoundError(f"Missing groundtruth detections: {gt_path}")
-
-    gt_frames = load_detection_results(dataset, video, groundtruth=True)
-    gt_by_idx = _build_gt_frame_map(gt_frames)
+    # Ground-truth boxes indexed by the same clip frame as the classifier output.
+    gt_by_idx = load_groundtruth_boxes(dataset, video)
 
     exp_results = load_classification_results(dataset, video, tile_size, experimental_name, sample_rate)
     base_results = load_classification_results(dataset, video, tile_size, baseline_name, sample_rate)
@@ -214,14 +188,17 @@ def evaluate_video_pair(
     exp_by_idx = {int(r['idx']): r for r in exp_results}
     base_by_idx = {int(r['idx']): r for r in base_results}
     common_idx = sorted(set(exp_by_idx.keys()) & set(base_by_idx.keys()))
+    # Ground truth past the last classified frame means the two are indexed at different frame rates.
+    if gt_by_idx and common_idx and max(gt_by_idx) > max(common_idx):
+        raise ValueError(f'{dataset}/{video}: ground truth reaches frame {max(gt_by_idx)}, '
+                         f'classifier output ends at {max(common_idx)}; frame rates differ')
 
     totals_exp = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
     totals_base = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
 
     for idx in common_idx:
-        if idx not in gt_by_idx:
-            continue
-        dets = gt_by_idx[idx]
+        # Frames without a ground-truth row have no objects; they still count toward the metrics.
+        dets = gt_by_idx.get(idx, [])
 
         exp_grid = _decode_classification_hex(exp_by_idx[idx])
         base_grid = _decode_classification_hex(base_by_idx[idx])
