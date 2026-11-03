@@ -63,7 +63,8 @@ stage B06_p206 py evaluation/p206_classifier_and_packing.py --test
 # Measurements that select operating points or score against ground truth.
 stage B07_r7o1 py measurements/r7o1_hota_matched_speedup.py
 stage B08_count_query py measurements/r1o2_count_query.py
-stage B09_native_queries py measurements/r1o2_leap_native_queries.py
+# r1o2_leap_native_queries is not run: the paper reads native_query_configs.json (B12-B13), and the script
+# needs p140 unwrap.json files that the canonical CalDoT/Ams LEAP reruns (leap_canonical.json) never got.
 stage B10_leap_rerun py measurements/r1o2_leap_otif_rerun.py --datasets "${B3D[@]}" --output-dir "$COUT/leap_rerun"
 stage B11_sampling py measurements/r1o2_leap_sampling_diagnostics.py --datasets "${B3D[@]}"
 stage B12_score_queries score_queries
