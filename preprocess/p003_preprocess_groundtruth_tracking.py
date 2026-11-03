@@ -8,7 +8,7 @@ from functools import partial
 import queue
 import multiprocessing as mp
 
-from polyis.groundtruth import assert_not_installed, without_human_groundtruth
+from polyis.groundtruth import assert_no_human_groundtruth, assert_not_installed
 from polyis.io import cache, store
 from polyis.utilities import create_tracker, dedupe_datasets_by_root, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
@@ -188,8 +188,9 @@ def main():
         splits = ['test']
     
     # Resolve configured datasets to unique dataset roots.
-    # Never regenerate human-verified ground truth (B3D).
-    datasets_to_process = without_human_groundtruth(dedupe_datasets_by_root(EXEC_DATASETS))
+    # Fail before any work when human-verified ground truth (B3D) would be regenerated.
+    assert_no_human_groundtruth(EXEC_DATASETS)
+    datasets_to_process = dedupe_datasets_by_root(EXEC_DATASETS)
     print(f'Resolved datasets for groundtruth tracking preprocessing: {datasets_to_process}')
 
     funcs = []
