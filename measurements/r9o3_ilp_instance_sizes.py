@@ -28,10 +28,11 @@ left in the cache, which is not a complete video x configuration grid everywhere
 coverage). Configurations that differ only in packing settings (tile padding, canvas scale) share
 one ILP instance and are counted once. Nothing is sampled.
 
-The binarization differs between code versions. p022 as committed since 2026-05-22 keeps
-score > r * 255, but the April 2026 outputs that make up most of the cache keep score >= floor(r * 255)
-(tiles scoring exactly 63, 127, or 191 at r = 0.25, 0.5, 0.75), and that p022 version was never
-committed. Every instance is therefore rebuilt under both rules (common.RELEVANCE_RULES), and the one its saved
+The binarization differs between code versions. The historical audit key 'current' names p022's
+strict score > r * 255 rule committed on 2026-05-22. On 2026-10-28 p022 was restored to the 'floor'
+rule used by the April 2026 cache, score >= floor(r * 255), keeping boundary scores 63, 127, or 191
+at r = 0.25, 0.5, 0.75. Both audit keys retain their original meanings for saved-result compatibility.
+Every instance is therefore rebuilt under both rules (common.RELEVANCE_RULES), and the one its saved
 selection is consistent with is reported; rule_effect in checks.json says how much the rules differ.
 
 Validation, per instance: the saved pruned grid must have the same frames, contain no tile outside the
@@ -54,7 +55,7 @@ Writes measurements-results/r9o3_ilp_instance_sizes/:
                 the timings, budget sensitivity, and the instances at each dataset's operating points
   configs.json  per split, dataset, and ILP configuration: median and max sizes and timings over its clips
   checks.json   validation against p022's outputs and log, input freshness, the rule decided per
-                instance (and per day written), the size change under the current rule, coverage of
+                instance (and per day written), the size change under the historical strict rule, coverage of
                 the video x configuration grid, and the feedback repo's sample recounted
 """
 import argparse
@@ -804,7 +805,7 @@ def rule_by_day(con: duckdb.DuckDBPyConnection) -> list[dict]:
 
 
 def rule_effect(con: duckdb.DuckDBPyConnection) -> list[dict]:
-    """Per split and dataset, how much the current p022 rule changes the instance relative to the floor rule."""
+    """Per split and dataset, how much the historical strict rule changes the instance relative to the floor rule."""
     return query_dicts(con, """
         WITH paired AS (
             SELECT c.split, c.dataset, c.variables AS current_variables, f.variables AS floor_variables,
@@ -921,7 +922,8 @@ def main():
                   'grid on every dataset (checks.json coverage missing_instances)',
             input='020_relevancy scores binarized at relevance_threshold, grouped by group_tiles_all '
                   f'with TILEPADDING_MODE {TILEPADDING_MODE} (4-connected polyominoes)',
-            rules='current p022: score > r * 255; floor (what the April 2026 cache matches): '
+            rules='current (historical strict rule, before restoration): score > r * 255; '
+                  'floor (April 2026 cache and restored p022): '
                   'score >= floor(r * 255); each instance uses the rule its saved selection is consistent with '
                   '(checks.json solutions, rule_* counts)',
             variables='one binary per polyomino per sampled frame, summed over the clip',

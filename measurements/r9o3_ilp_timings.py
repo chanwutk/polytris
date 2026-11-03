@@ -68,7 +68,7 @@ import duckdb
 
 from evaluation.manifests import list_split_videos
 from measurements.common import (DATASET_LABELS, PRUNE_DIR, PRUNE_STAGE, SPLIT_PREFIXES, VARIANT_PATTERN,
-                                 assert_files_exist, default_time_limit, load_prune_runs, load_pruning_points,
+                                 default_time_limit, load_p121_per_op, load_prune_runs, load_pruning_points,
                                  load_test_tradeoff, pruning_operating_points, query_dicts, results_dir, write_json)
 from polyis.io import cache
 
@@ -283,17 +283,10 @@ def timing_report(con: duckdb.DuckDBPyConnection, default_limit: float, workers:
 
 
 def load_throughput_ops(con: duckdb.DuckDBPyConnection, paths: dict[str, Path]):
-    """Table ops(dataset, variant_id, video, stage, op, seconds) from p121's per-operation tables, test split only."""
-    # A missing table would silently drop a dataset.
-    assert_files_exist(paths.values(), 'throughput tables (run p120/p121 --test)')
-    # Read every dataset's table at once with the columns this measurement needs typed explicitly.
-    con.execute("""
-        CREATE OR REPLACE TABLE ops AS
-        SELECT dataset, videoset, variant_id, video, stage, op, time AS seconds
-        FROM read_csv(?, union_by_name = true,
-                      types = {'dataset': 'VARCHAR', 'videoset': 'VARCHAR', 'variant_id': 'VARCHAR', 'video': 'VARCHAR',
-                               'stage': 'VARCHAR', 'op': 'VARCHAR', 'time': 'DOUBLE'})
-    """, [[str(p) for p in paths.values()]])
+    """Table ops(dataset, videoset, variant_id, video, stage, op, seconds, records) from p121's per-operation tables
+    (common.load_p121_per_op), test split only."""
+    # Every dataset's table at once (the shared loader fails on a missing one, which would silently drop a dataset).
+    load_p121_per_op(con, 'ops', paths)
     # The tradeoff table is the test split, so the runtime table must be too.
     bad = query_dicts(con, "SELECT DISTINCT dataset, videoset FROM ops WHERE videoset IS DISTINCT FROM 'test'")
     assert not bad, f'throughput tables are not the test split: {bad}'

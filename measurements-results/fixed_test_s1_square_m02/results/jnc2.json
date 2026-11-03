@@ -1,0 +1,79 @@
+{
+  "dataset": "jnc2",
+  "config": "ShuffleNet05_60_1_080_r050_square_s100_sortcython",
+  "clips": 5,
+  "frames": 4691,
+  "seconds": 95.23751504706635,
+  "fps": 49.255800066619855,
+  "hota": 0.8194943895872382,
+  "speedup": 3.4180583961958444,
+  "relative_hota_loss": -0.00538223324406939,
+  "reference": {
+    "label": "B3D2",
+    "videos": [
+      "te01.mp4",
+      "te04.mp4",
+      "te08.mp4",
+      "te12.mp4",
+      "te13.mp4"
+    ],
+    "ground_truth_dataset": "jnc2",
+    "reuse": {},
+    "reference_fps": 14.410461834543112,
+    "reference_hota": 0.8151072920226305,
+    "reuse_pruning": [
+      "te01.mp4",
+      "te04.mp4",
+      "te08.mp4",
+      "te12.mp4",
+      "te13.mp4"
+    ]
+  },
+  "seconds_by_stage": {
+    "020_exec_classify": 10.083304199218754,
+    "022_exec_prune_polyominoes": 1.6380816974639896,
+    "030_exec_compress": 2.271070312500226,
+    "060_exec_track": 0.7769587402343718,
+    "040_exec_detect": 80.40723559570318,
+    "050_exec_uncompress": 0.060864501953125046
+  },
+  "metrics": {
+    "HOTA": {
+      "AssRe": 0.9131945174400911,
+      "AssPr": 0.9261653071580249,
+      "AssA": 0.882741503694418,
+      "LocA": 0.9092005523183854,
+      "DetRe": 0.7909422116411752,
+      "DetPr": 0.9077918237975741,
+      "DetA": 0.7619330926089364,
+      "HOTA": 0.8194943895872382,
+      "OWTA": 0.8355338456427076,
+      "HOTA(0)": 0.8980714351253863,
+      "LocA(0)": 0.9013232203798088,
+      "HOTALocA(0)": 0.8094526380383298,
+      "alpha_0.05": {
+        "HOTA_TP": 81263.0,
+        "HOTA_FN": 13533.0,
+        "HOTA_FP": 1331.0,
+        "AssRe": 0.9675401015444496,
+        "AssPr": 0.9856938269503216,
+        "AssA": 0.9540569588975685,
+        "LocA": 0.9013232203798088,
+        "DetRe": 0.8572408118486012,
+        "DetPr": 0.9838850279681333,
+        "DetA": 0.845371227646759,
+        "HOTA": 0.8980714351253863,
+        "OWTA": 0.9043542237393262
+      }
+    },
+    "Count": {
+      "Dets": 82594,
+      "GT_Dets": 94796,
+      "IDs": 559,
+      "GT_IDs": 918
+    }
+  },
+  "weights_sha256": "cd48354aed70787596c4783fe2d1df1d90bfd790e41ae82627580dacd8a1a0c3",
+  "timing_note": "Cached classification plus newly measured downstream operations; Figure 8 exclusions.",
+  "provisional_groundtruth": true
+}

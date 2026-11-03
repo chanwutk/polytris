@@ -1,0 +1,37 @@
+{
+  "caldot1-y05": {
+    "gpu": 0,
+    "sampler_dataset": "caldot1-y05",
+    "cached_pruning": 60
+  },
+  "caldot2-y05": {
+    "gpu": 1,
+    "sampler_dataset": "caldot2-y05",
+    "cached_pruning": 0
+  },
+  "jnc7": {
+    "gpu": 1,
+    "sampler_dataset": "caldot2-y05",
+    "cached_pruning": 0
+  },
+  "ams-y05": {
+    "gpu": 2,
+    "sampler_dataset": "ams-y05",
+    "cached_pruning": 0
+  },
+  "jnc0": {
+    "gpu": 3,
+    "sampler_dataset": "jnc0",
+    "cached_pruning": 5
+  },
+  "jnc2": {
+    "gpu": 4,
+    "sampler_dataset": "jnc2",
+    "cached_pruning": 5
+  },
+  "jnc6": {
+    "gpu": 5,
+    "sampler_dataset": "jnc6",
+    "cached_pruning": 5
+  }
+}

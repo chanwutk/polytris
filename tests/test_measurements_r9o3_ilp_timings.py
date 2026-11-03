@@ -313,8 +313,8 @@ def tradeoff(rows):
 
 
 def write_ops(path, rows, videoset='test'):
-    # A per-operation runtime table with (dataset, variant_id, video, stage, op, seconds) rows.
-    pd.DataFrame([dict(op=o, time=t, stage=s, dataset=d, videoset=videoset, video=v, variant_id=c)
+    # A per-operation runtime table with (dataset, variant_id, video, stage, op, seconds) rows; count as p121 writes it.
+    pd.DataFrame([dict(op=o, time=t, count=1, stage=s, dataset=d, videoset=videoset, video=v, variant_id=c)
                   for d, c, v, s, o, t in rows]).to_csv(path, index=False)
     return path
 

@@ -1,0 +1,44 @@
+[
+  {
+    "dataset": "caldot1-y05",
+    "naive_seconds": 1745.8238808593749,
+    "detector_seconds": 1702.0759975585938,
+    "frames": 54000.0
+  },
+  {
+    "dataset": "caldot2-y05",
+    "naive_seconds": 1749.7104934082006,
+    "detector_seconds": 1707.8738520507811,
+    "frames": 54000.0
+  },
+  {
+    "dataset": "ams-y05",
+    "naive_seconds": 3538.963376708985,
+    "detector_seconds": 3468.942115478517,
+    "frames": 54011.0
+  },
+  {
+    "dataset": "jnc0",
+    "naive_seconds": 364.3241779785156,
+    "detector_seconds": 357.46200537109377,
+    "frames": 5375.0
+  },
+  {
+    "dataset": "jnc2",
+    "naive_seconds": 325.52738793945326,
+    "detector_seconds": 319.10322070312503,
+    "frames": 4691.0
+  },
+  {
+    "dataset": "jnc6",
+    "naive_seconds": 357.11075024414055,
+    "detector_seconds": 349.8420571289062,
+    "frames": 5192.0
+  },
+  {
+    "dataset": "jnc7",
+    "naive_seconds": 359.9504348144531,
+    "detector_seconds": 353.37844140625,
+    "frames": 5225.0
+  }
+]

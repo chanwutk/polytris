@@ -1,0 +1,16 @@
+jnc7/execution/te01.mp4/020_relevancy/ShuffleNet05_60_1/score/score.jsonl
+jnc7/execution/te01.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl
+jnc7/execution/te01.mp4/003_groundtruth/tracking.jsonl
+jnc7/execution/te04.mp4/020_relevancy/ShuffleNet05_60_1/score/score.jsonl
+jnc7/execution/te04.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl
+jnc7/execution/te04.mp4/003_groundtruth/tracking.jsonl
+jnc7/execution/te08.mp4/020_relevancy/ShuffleNet05_60_1/score/score.jsonl
+jnc7/execution/te08.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl
+jnc7/execution/te08.mp4/003_groundtruth/tracking.jsonl
+jnc7/execution/te12.mp4/020_relevancy/ShuffleNet05_60_1/score/score.jsonl
+jnc7/execution/te12.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl
+jnc7/execution/te12.mp4/003_groundtruth/tracking.jsonl
+jnc7/execution/te13.mp4/020_relevancy/ShuffleNet05_60_1/score/score.jsonl
+jnc7/execution/te13.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl
+jnc7/execution/te13.mp4/003_groundtruth/tracking.jsonl
+jnc7/indexing/track_rate/sortcython_60/max_rate_table.npy

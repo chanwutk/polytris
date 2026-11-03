@@ -1,0 +1,9 @@
+[
+	{"dataset":"CalDoT1","s2_no_padding_fps":896.5136315897666,"s1_square_fps":339.79047607024677,"s2_no_padding_hota":0.7514502629014139,"s1_square_hota":0.7793746928203681,"hota_gain_pp":2.7924429918954163,"s1_square_relative_hota_loss":0.04732547072798943},
+	{"dataset":"CalDoT2","s2_no_padding_fps":955.4506664514358,"s1_square_fps":221.72924019000342,"s2_no_padding_hota":0.5682735705492533,"s1_square_hota":0.6085162587458164,"hota_gain_pp":4.024268819656307,"s1_square_relative_hota_loss":0.14958493718960442},
+	{"dataset":"Amsterdam","s2_no_padding_fps":535.0710091705457,"s1_square_fps":216.19015152611368,"s2_no_padding_hota":0.6267090404412682,"s1_square_hota":0.7079323331151537,"hota_gain_pp":8.122329267388551,"s1_square_relative_hota_loss":0.03225141285722588},
+	{"dataset":"B3D1","s2_no_padding_fps":173.33916093563124,"s1_square_fps":46.19065692134509,"s2_no_padding_hota":0.7706930617980385,"s1_square_hota":0.8016367396592402,"hota_gain_pp":3.094367786120167,"s1_square_relative_hota_loss":0.0049400246857570496},
+	{"dataset":"B3D2","s2_no_padding_fps":149.29150990784413,"s1_square_fps":49.255800066619855,"s2_no_padding_hota":0.8084450012679157,"s1_square_hota":0.8194943895872382,"hota_gain_pp":1.104938831932245,"s1_square_relative_hota_loss":-0.00538223324406939},
+	{"dataset":"B3D3","s2_no_padding_fps":210.3015160578253,"s1_square_fps":50.4526259714514,"s2_no_padding_hota":0.7958443883076826,"s1_square_hota":0.8476360708556613,"hota_gain_pp":5.179168254797872,"s1_square_relative_hota_loss":-0.014536781645723806},
+	{"dataset":"B3D4","s2_no_padding_fps":271.0083664573757,"s1_square_fps":77.54624623433301,"s2_no_padding_hota":0.8245714118835729,"s1_square_hota":0.8386136027334192,"hota_gain_pp":1.404219084984637,"s1_square_relative_hota_loss":0.00789883282772108}
+]

@@ -102,7 +102,7 @@ def random_instance(rng, frames, rows, cols, density, max_rate):
     return tile_ids, lengths, max_dist
 
 
-def test_binarize_current_rule_uses_strict_cutoff():
+def test_binarize_historical_current_key_retains_strict_cutoff():
     scores = np.array([0, 1, 51, 52, 127, 128, 255], dtype=np.uint8)
     # r = 0.5: the cutoff 127.5 keeps 128 and above.
     assert ilp.binarize(scores, 0.5, 'current').tolist() == [0, 0, 0, 0, 0, 1, 1]

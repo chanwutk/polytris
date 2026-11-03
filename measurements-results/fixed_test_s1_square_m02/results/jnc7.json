@@ -1,0 +1,73 @@
+{
+  "dataset": "jnc7",
+  "config": "ShuffleNet05_60_1_080_r050_square_s100_sortcython",
+  "clips": 5,
+  "frames": 5225,
+  "seconds": 67.37914797591674,
+  "fps": 77.54624623433301,
+  "hota": 0.8386136027334192,
+  "speedup": 5.342163645985992,
+  "relative_hota_loss": 0.00789883282772108,
+  "reference": {
+    "label": "B3D4",
+    "videos": [
+      "te01.mp4",
+      "te04.mp4",
+      "te08.mp4",
+      "te12.mp4",
+      "te13.mp4"
+    ],
+    "ground_truth_dataset": "jnc7",
+    "reuse": {},
+    "reference_fps": 14.515887451819244,
+    "reference_hota": 0.8452904103758538,
+    "reuse_pruning": []
+  },
+  "seconds_by_stage": {
+    "050_exec_uncompress": 0.03800805664062494,
+    "020_exec_classify": 11.764618408203141,
+    "022_exec_prune_polyominoes": 1.0711950950622557,
+    "030_exec_compress": 1.844507080078262,
+    "060_exec_track": 0.3377402343749889,
+    "040_exec_detect": 52.32307910156241
+  },
+  "metrics": {
+    "HOTA": {
+      "AssRe": 0.8954961250710007,
+      "AssPr": 0.9395073112534064,
+      "AssA": 0.8755841392083046,
+      "LocA": 0.9123534579804371,
+      "DetRe": 0.8284843415725358,
+      "DetPr": 0.918886502323344,
+      "DetA": 0.8044558238258936,
+      "HOTA": 0.8386136027334192,
+      "OWTA": 0.8516773753610453,
+      "HOTA(0)": 0.9147500095855987,
+      "LocA(0)": 0.90638419317681,
+      "HOTALocA(0)": 0.829114949396722,
+      "alpha_0.05": {
+        "HOTA_TP": 50055.0,
+        "HOTA_FN": 6012.0,
+        "HOTA_FP": 496.0,
+        "AssRe": 0.9486836674384831,
+        "AssPr": 0.99676514182505,
+        "AssA": 0.9455615748601441,
+        "LocA": 0.90638419317681,
+        "DetRe": 0.8927711488041093,
+        "DetPr": 0.9901881268421989,
+        "DetA": 0.884942453547372,
+        "HOTA": 0.9147500095855987,
+        "OWTA": 0.9187872949997261
+      }
+    },
+    "Count": {
+      "Dets": 50551,
+      "GT_Dets": 56067,
+      "IDs": 388,
+      "GT_IDs": 794
+    }
+  },
+  "weights_sha256": "cd48354aed70787596c4783fe2d1df1d90bfd790e41ae82627580dacd8a1a0c3",
+  "timing_note": "Cached classification plus newly measured downstream operations; Figure 8 exclusions.",
+  "provisional_groundtruth": true
+}
