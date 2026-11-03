@@ -65,6 +65,7 @@ from evaluation import p203_compare_stats as p203
 from evaluation import p204_ablation_stats as p204
 from evaluation.ablation import ABLATION_CONDITIONS
 from evaluation.p140_otif_transform import build_expected_test_video_manifest, dataset_name_in_sota
+from polyis.leap_results import canonical_leap_result
 from measurements.common import (DATASET_LABELS, PRIOR_SYSTEMS, accuracy_matched, arrange_matched,
                                  assert_files_exist, bound_specs, choose, file_record, load_test_tradeoff,
                                  matched_stats, operating_points, plain, print_operating_points, query_dicts,
@@ -315,15 +316,23 @@ def check_leap_runtime(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:
         JOIN hota_points p ON p.dataset = v.dataset AND p.system = 'leap'
         ORDER BY v.dataset
     """)
-    # The cached runtime must be the per-video one (summation orders differ, so up to 1e-9 relative).
-    bad = [r for r in rows if not math.isclose(r['cached_runtime'], r['runtime'], rel_tol=1e-9)]
-    assert not bad, f'cached LEAP runtime differs from the raw stat CSV (per-video mean, summed): {bad}'
+    # Datasets whose LEAP was replaced by a promoted rerun (measurements-results/leap_canonical.json) are timed
+    # by that rerun, which the cached throughput uses; the raw stat CSV describes the replaced run.
+    canonical = {DATASET_LABELS[d]: result['compute_s'] for d in DATASET_LABELS
+                 if (result := canonical_leap_result(d)) is not None}
+    for r in rows:
+        r['runtime_source'] = 'canonical rerun' if r['dataset'] in canonical else 'raw stat CSV'
+        r['expected_runtime'] = canonical.get(r['dataset'], r['runtime'])
+    # The cached runtime must be the expected one (summation orders differ, so up to 1e-9 relative).
+    bad = [r for r in rows if not math.isclose(r['cached_runtime'], r['expected_runtime'], rel_tol=1e-9)]
+    assert not bad, f'cached LEAP runtime differs from its source (canonical rerun, else raw stat CSV): {bad}'
     # Arrange for the JSON, with runtimes in seconds and throughput rounded as elsewhere.
     return {r['dataset']: dict(
         videos=r['videos'], stat_rows=r['stat_rows'], max_runs_per_video=r['max_runs_per_video'],
         max_run_spread=round(r['max_run_spread'], 4), same_frames_across_runs=r['same_frames_across_runs'],
         total_row_runtime_s=rounded(r['total_row_runtime'], 4),
-        runtime_s=round(r['runtime'], 4), fps=round(r['fps'], 1)) for r in rows}
+        runtime_s=round(r['expected_runtime'], 4), runtime_source=r['runtime_source'],
+        raw_stat_runtime_s=round(r['runtime'], 4), fps=round(r['fps'], 1)) for r in rows}
 
 
 def output_alignment(con: duckdb.DuckDBPyConnection, sota_dir: str) -> dict:

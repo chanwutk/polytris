@@ -205,6 +205,22 @@ def test_leap_runtime_rejects_bad_stat_rows(con, tmp_path, lines, message):
         ms.check_leap_runtime(con, str(tmp_path))
 
 
+def test_leap_runtime_uses_the_canonical_rerun_when_one_is_promoted(con, tmp_path, monkeypatch):
+    # The raw CSV says 3.5 s, but a promoted rerun timed at 7 s replaced it; the cache holds the rerun's 100 / 7 fps.
+    setup_leap(con, tmp_path, REPEATED_RUNS, leap_rows=(('B3D1', 'leap', 'param 0', 100 / 7.0, 0.05),))
+    monkeypatch.setattr(ms, 'canonical_leap_result', lambda d: {'compute_s': 7.0} if d == 'jnc0' else None)
+    out = ms.check_leap_runtime(con, str(tmp_path))['B3D1']
+    assert (out['runtime_s'], out['runtime_source'], out['raw_stat_runtime_s']) == (7.0, 'canonical rerun', 3.5)
+
+
+def test_leap_runtime_rejects_a_cache_that_disagrees_with_the_canonical_rerun(con, tmp_path, monkeypatch):
+    # The cache still holds the replaced run's 3.5 s while the promoted rerun took 7 s.
+    setup_leap(con, tmp_path, REPEATED_RUNS)
+    monkeypatch.setattr(ms, 'canonical_leap_result', lambda d: {'compute_s': 7.0} if d == 'jnc0' else None)
+    with pytest.raises(AssertionError, match='cached LEAP runtime differs'):
+        ms.check_leap_runtime(con, str(tmp_path))
+
+
 def test_leap_runtime_rejects_missing_csv_and_several_configs(con, tmp_path):
     # No raw stat CSV for the dataset.
     setup_leap(con, tmp_path, ['1,3.0,0,0,0,0,1.0,9,7', '4,2.0,0,0,0,0,1.0,9,7'])
@@ -639,6 +655,8 @@ def test_main_seven_datasets_writes_checks_and_caveats(tmp_path, monkeypatch):
     # The same simple shape on all seven datasets, with LEAP's CalDoT stat rows doubled as in the real export.
     world = {d: dict(SIMPLE, leap_runs=2 if d.startswith('caldot') else 1) for d in common.DATASET_LABELS}
     out = install_world(tmp_path, monkeypatch, world)
+    # The synthetic world has no promoted LEAP reruns; keep the checkout's real registry out of it.
+    monkeypatch.setattr(ms, 'canonical_leap_result', lambda d: None)
     ms.main()
     report, ablation = read_reports(out)
     # Three bounds over seven datasets, and both manuscript checks with the accuracy-matched macros.
