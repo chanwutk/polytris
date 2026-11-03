@@ -8,6 +8,7 @@ from functools import partial
 import queue
 import multiprocessing as mp
 
+from polyis.groundtruth import assert_not_installed
 from polyis.io import cache, store
 from polyis.utilities import create_tracker, dedupe_datasets_by_root, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
@@ -202,6 +203,8 @@ def main():
             assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
             video_files.extend([videoset + '/' + f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))])
         assert len(video_files) > 0, f"No video files found in {dataset_dir}"
+        # Refuse before scheduling work when any video's ground truth was installed from external labels.
+        assert_not_installed(dataset, [video_file.split('/')[-1] for video_file in video_files])
         
         for video_file in video_files:
             video = video_file.split('/')[-1]

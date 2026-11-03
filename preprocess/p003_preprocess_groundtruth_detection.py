@@ -14,6 +14,7 @@ import torch
 
 import polyis.models.detector
 from polyis.b3d.nms import nms
+from polyis.groundtruth import assert_not_installed
 from polyis.utilities import (
     ProgressBar,
     build_b3d_mask_and_crop,
@@ -558,6 +559,8 @@ def main():
                 if file_name.endswith(('.mp4', '.avi', '.mov', '.mkv'))
             ])
         assert len(videos) > 0, f'No video files found in {dataset_dir}'
+        # Refuse before scheduling work when any video's ground truth was installed from external labels.
+        assert_not_installed(dataset, [video.split('/')[-1] for video in videos])
 
         for video in videos:
             print(f'Processing {dataset}/{video}')
