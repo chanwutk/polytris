@@ -65,27 +65,27 @@
           }
         },
         "unmasked": {
-          "best_hota": 0.5266317214933866,
+          "best_hota": 0.5095169726663112,
           "best_reconstruction": "linear",
           "ground_truth_count_sha256": "45a4e37b1a480cdf4b26c150a74afbeedd354c4f8c1f663b01339bc4434e7286",
           "hota": {
+            "raw": {
+              "HOTA": 0.013769994256107075,
+              "DetA": 0.014226804245244523,
+              "AssA": 0.013485353743822485,
+              "LocA": 0.890995856760076
+            },
             "linear": {
-              "AssA": 0.6784750453632682,
-              "DetA": 0.4155896872843459,
-              "HOTA": 0.5266317214933866,
-              "LocA": 0.8775563057567816
+              "HOTA": 0.5095169726663112,
+              "DetA": 0.4009581104624077,
+              "AssA": 0.6580829244778441,
+              "LocA": 0.8775520150600734
             },
             "pattern": {
-              "AssA": 0.13885887919739603,
-              "DetA": 0.1664041675191872,
-              "HOTA": 0.14861787429371917,
-              "LocA": 0.6648982627127444
-            },
-            "raw": {
-              "AssA": 0.015048510680172048,
-              "DetA": 0.014812596500630744,
-              "HOTA": 0.014854408463674803,
-              "LocA": 0.890995856760076
+              "HOTA": 0.14837369579033596,
+              "DetA": 0.1661498253249906,
+              "AssA": 0.13861867700945865,
+              "LocA": 0.6649015149967012
             }
           },
           "native_queries": {
@@ -113,6 +113,26 @@
             "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
             "inference_s": 277.04499999999996,
             "names": 60
+          },
+          "hota_unpadded": {
+            "linear": {
+              "AssA": 0.6784750453632682,
+              "DetA": 0.4155896872843459,
+              "HOTA": 0.5266317214933866,
+              "LocA": 0.8775563057567816
+            },
+            "pattern": {
+              "AssA": 0.13885887919739603,
+              "DetA": 0.1664041675191872,
+              "HOTA": 0.14861787429371917,
+              "LocA": 0.6648982627127444
+            },
+            "raw": {
+              "AssA": 0.015048510680172048,
+              "DetA": 0.014812596500630744,
+              "HOTA": 0.014854408463674803,
+              "LocA": 0.890995856760076
+            }
           }
         }
       }
@@ -181,27 +201,27 @@
           }
         },
         "unmasked": {
-          "best_hota": 0.13909939038238148,
+          "best_hota": 0.13376839573539373,
           "best_reconstruction": "linear",
           "ground_truth_count_sha256": "5d86fdf2955659269f4117429619df3f5b7f53168cbdd7c75a37f174c60dd50d",
           "hota": {
+            "raw": {
+              "HOTA": 0.01606931122089892,
+              "DetA": 0.013775024501449983,
+              "AssA": 0.019347931544637584,
+              "LocA": 0.8615258839346552
+            },
             "linear": {
-              "AssA": 0.25296666985656935,
-              "DetA": 0.08549350394893702,
-              "HOTA": 0.13909939038238148,
-              "LocA": 0.7110459606548482
+              "HOTA": 0.13376839573539373,
+              "DetA": 0.08128612888484517,
+              "AssA": 0.2454248836487966,
+              "LocA": 0.7110442093718633
             },
             "pattern": {
-              "AssA": 0.21703080000658004,
-              "DetA": 0.09485915960156634,
-              "HOTA": 0.133598084995679,
+              "HOTA": 0.1327974389641494,
+              "DetA": 0.09372164792539836,
+              "AssA": 0.2169659679336039,
               "LocA": 0.6023786843887042
-            },
-            "raw": {
-              "AssA": 0.021741446694057438,
-              "DetA": 0.01465270397133927,
-              "HOTA": 0.017583522764493303,
-              "LocA": 0.8615278955017353
             }
           },
           "native_queries": {
@@ -229,6 +249,26 @@
             "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
             "inference_s": 190.9867999999999,
             "names": 60
+          },
+          "hota_unpadded": {
+            "linear": {
+              "AssA": 0.25296666985656935,
+              "DetA": 0.08549350394893702,
+              "HOTA": 0.13909939038238148,
+              "LocA": 0.7110459606548482
+            },
+            "pattern": {
+              "AssA": 0.21703080000658004,
+              "DetA": 0.09485915960156634,
+              "HOTA": 0.133598084995679,
+              "LocA": 0.6023786843887042
+            },
+            "raw": {
+              "AssA": 0.021741446694057438,
+              "DetA": 0.01465270397133927,
+              "HOTA": 0.017583522764493303,
+              "LocA": 0.8615278955017353
+            }
           }
         }
       }
@@ -240,7 +280,8 @@
     "hota": "Unchanged TrackEval and root ground truth; raw, linear, assigned-pattern reconstructions.",
     "numpy": "2.3.5",
     "queries": "Original LEAP evaluator on pooled native intervals and shared ground-truth counts.",
-    "throughput": "Native inference_total - decode; one GPU per dataset."
+    "throughput": "Native inference_total - decode; one GPU per dataset.",
+    "hota_scoring_window": "padded to the longer file (2026-11-03); truncated values kept as hota_unpadded"
   },
   "version": "r1o2_leap_unmasked"
 }

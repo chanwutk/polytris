@@ -12,8 +12,11 @@ COUT=/polyis/measurements-results/b3d_human_gt
 RESULTS=/polyis/measurements-results
 PAPER=/polytris-paper
 EVIDENCE=$PAPER/scripts/data/revision_evidence
-mkdir -p "$OUT/done_b"
-exec > >(tee -a "$OUT/phase_b.log") 2>&1
+# A rerun under different scoring uses its own snapshot suffix, done markers and log.
+SUFFIX=${SNAPSHOT_SUFFIX:-.auto-gt}
+RUN=${RUN_NAME:-b}
+mkdir -p "$OUT/done_$RUN"
+exec > >(tee -a "$OUT/phase_$RUN.log") 2>&1
 
 # Run a Python entry point in the polyis container from /polyis on 40 cores, over every configured dataset.
 py() { docker exec -i -w /polyis polyis taskset -c 0-39 python "$@"; }
@@ -22,10 +25,10 @@ py_in() { local dir=$1; shift; docker exec -i -w "$dir" polyis taskset -c 0-39 p
 # Run a stage once: skip it when its done marker exists, otherwise run and then mark it.
 stage() {
   local name=$1; shift
-  if [[ -e "$OUT/done_b/$name" ]]; then echo "== skip $name (done)"; return; fi
+  if [[ -e "$OUT/done_$RUN/$name" ]]; then echo "== skip $name (done)"; return; fi
   echo "== $(date -Is) start $name"
   "$@"
-  touch "$OUT/done_b/$name"
+  touch "$OUT/done_$RUN/$name"
   echo "== $(date -Is) done $name"
 }
 
@@ -53,7 +56,7 @@ evidence() {
     --sampling "$RESULTS/r1o2_leap_sampling_diagnostics/results.json"
 }
 
-stage B01_snapshot py measurements/snapshot_outputs.py "${SNAPSHOT[@]}"
+stage B01_snapshot py measurements/snapshot_outputs.py --suffix "$SUFFIX" "${SNAPSHOT[@]}"
 # Cross-dataset statistics and figures (all datasets; they read the rescored B3D tables).
 stage B02_p201 py evaluation/p201_compare_pareto.py --test
 stage B03_p203 py evaluation/p203_compare_stats.py --test

@@ -74,27 +74,27 @@
           }
         },
         "regions_v2": {
-          "best_hota": 0.5433764552721264,
+          "best_hota": 0.52584602676162,
           "best_reconstruction": "linear",
           "ground_truth_count_sha256": "e32813682a6f5cf05726d375f4b241967948bfe99d7462e6f7427efbbd179514",
           "hota": {
+            "raw": {
+              "HOTA": 0.014180484861395842,
+              "DetA": 0.014812989406398892,
+              "AssA": 0.01376080750426772,
+              "LocA": 0.9092497496171553
+            },
             "linear": {
-              "AssA": 0.5806475150539003,
-              "DetA": 0.5122825597243329,
-              "HOTA": 0.5433764552721264,
-              "LocA": 0.8913385247510949
+              "HOTA": 0.52584602676162,
+              "DetA": 0.4946669029250594,
+              "AssA": 0.5630520422563408,
+              "LocA": 0.8913320376619606
             },
             "pattern": {
-              "AssA": 0.2350461858504678,
-              "DetA": 0.059176209738887216,
-              "HOTA": 0.11073467823630055,
+              "HOTA": 0.11065689032705839,
+              "DetA": 0.05910438525919683,
+              "AssA": 0.23499490121947003,
               "LocA": 0.6693199328989298
-            },
-            "raw": {
-              "AssA": 0.015146815146103998,
-              "DetA": 0.015426123690138733,
-              "HOTA": 0.015185501242028034,
-              "LocA": 0.9092497496171553
             }
           },
           "native_queries": {
@@ -122,6 +122,26 @@
             "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
             "inference_s": 338.56139999999994,
             "names": 60
+          },
+          "hota_unpadded": {
+            "linear": {
+              "AssA": 0.5806475150539003,
+              "DetA": 0.5122825597243329,
+              "HOTA": 0.5433764552721264,
+              "LocA": 0.8913385247510949
+            },
+            "pattern": {
+              "AssA": 0.2350461858504678,
+              "DetA": 0.059176209738887216,
+              "HOTA": 0.11073467823630055,
+              "LocA": 0.6693199328989298
+            },
+            "raw": {
+              "AssA": 0.015146815146103998,
+              "DetA": 0.015426123690138733,
+              "HOTA": 0.015185501242028034,
+              "LocA": 0.9092497496171553
+            }
           }
         }
       }
@@ -384,7 +404,8 @@
     "evaluator_sha256": "9b560687fdbd22e071d3c6d9df34fd53eb50b4e08c1684d38252cf18d761536c",
     "hota": "Original v1 summaries; fresh v2 raw/linear/pattern TrackEval, unchanged root ground truth and p140 transform.",
     "queries": "Original LEAP selection_query_1, aggregation_query_1, top_k_query_1 on pooled native intervals and shared ground-truth counts.",
-    "throughput": "Native inference_total - decode; one GPU per dataset."
+    "throughput": "Native inference_total - decode; one GPU per dataset.",
+    "hota_scoring_window": "padded to the longer file (2026-11-03); truncated values kept as hota_unpadded"
   },
   "version": "regions_v2"
 }

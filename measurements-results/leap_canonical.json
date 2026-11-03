@@ -11,15 +11,15 @@
       "fps": 389.21965821943775,
       "best_reconstruction": "linear",
       "hota": {
-        "AssA": 0.5806475150539003,
-        "DetA": 0.5122825597243329,
-        "HOTA": 0.5433764552721264,
-        "LocA": 0.8913385247510949
+        "HOTA": 0.52584602676162,
+        "DetA": 0.4946669029250594,
+        "AssA": 0.5630520422563408,
+        "LocA": 0.8913320376619606
       },
       "tracking_root": "measurements-results/r1o2_leap_regions_v2/tracks/ams-y05/linear",
       "native_intervals": "measurements-results/r1o2_leap_regions_v2/raw/ams-y05/leap_rerun.jsonl.gz",
       "source_comparison": "measurements-results/r1o2_leap_regions_v2/comparison/results.json",
-      "source_sha256": "a36e514d90b6fe3c87fb0167995a40f29e94dc4dc84a4785e80b03753c57bae7"
+      "source_sha256": "8d73ed0d8c6a69ed3d306283256f5688113df3a78b12d6c826402abde3e45cd8"
     },
     "caldot1-y05": {
       "param_id": 0,
@@ -32,15 +32,15 @@
       "fps": 353.51997878880127,
       "best_reconstruction": "linear",
       "hota": {
-        "AssA": 0.6784750453632682,
-        "DetA": 0.4155896872843459,
-        "HOTA": 0.5266317214933866,
-        "LocA": 0.8775563057567816
+        "HOTA": 0.5095169726663112,
+        "DetA": 0.4009581104624077,
+        "AssA": 0.6580829244778441,
+        "LocA": 0.8775520150600734
       },
       "tracking_root": "measurements-results/r1o2_leap_unmasked/tracks/caldot1-y05/linear",
       "native_intervals": "measurements-results/r1o2_leap_unmasked/raw/caldot1-y05/leap_rerun.jsonl.gz",
       "source_comparison": "measurements-results/r1o2_leap_unmasked/comparison/results.json",
-      "source_sha256": "ebf953cf773b345a5ebeeb044214e7a6359a4a4dd2bce6b97924ccf2ca79efd5"
+      "source_sha256": "c9e014f92cd64d80a88b60c65794825ac83f8fe0a4ff3a2b2407ca960f793f56"
     },
     "caldot2-y05": {
       "param_id": 0,
@@ -53,15 +53,15 @@
       "fps": 487.29601247477797,
       "best_reconstruction": "linear",
       "hota": {
-        "AssA": 0.25296666985656935,
-        "DetA": 0.08549350394893702,
-        "HOTA": 0.13909939038238148,
-        "LocA": 0.7110459606548482
+        "HOTA": 0.13376839573539373,
+        "DetA": 0.08128612888484517,
+        "AssA": 0.2454248836487966,
+        "LocA": 0.7110442093718633
       },
       "tracking_root": "measurements-results/r1o2_leap_unmasked/tracks/caldot2-y05/linear",
       "native_intervals": "measurements-results/r1o2_leap_unmasked/raw/caldot2-y05/leap_rerun.jsonl.gz",
       "source_comparison": "measurements-results/r1o2_leap_unmasked/comparison/results.json",
-      "source_sha256": "ebf953cf773b345a5ebeeb044214e7a6359a4a4dd2bce6b97924ccf2ca79efd5"
+      "source_sha256": "c9e014f92cd64d80a88b60c65794825ac83f8fe0a4ff3a2b2407ca960f793f56"
     }
   }
 }
