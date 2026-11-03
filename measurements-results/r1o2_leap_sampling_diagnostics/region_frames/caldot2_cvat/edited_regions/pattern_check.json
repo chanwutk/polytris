@@ -1,0 +1,76 @@
+{
+  "dataset": "CalDoT2",
+  "patterns": 3,
+  "eligible_before": 1,
+  "eligible_after": 2,
+  "starts_inside_new_regions": 3,
+  "ends_inside_new_regions": 2,
+  "excluded_patterns": [
+    1
+  ],
+  "stop_area": [
+    [
+      0.0,
+      309.0,
+      93.0,
+      363.0
+    ],
+    [
+      11.0,
+      373.0,
+      220.0,
+      479.0
+    ],
+    [
+      295.8,
+      228.2,
+      351.55,
+      255.96
+    ],
+    [
+      354.9,
+      213.0,
+      431.5,
+      261.5
+    ]
+  ],
+  "source": "measurements-results/r1o2_leap_sampling_diagnostics/caldot2-y05-patterns.parquet",
+  "source_sha256": "cce270e4cfefe86e3e3b1043695cade229b4b04ab46e4f46d29e8a63fb034d64",
+  "rule": "Both endpoint centers inside a region, inclusive bounds; first matching region, as in LEAP allocate_tracks.",
+  "execution": "CPU read-only check of the saved motion library on ace; no extraction or retraining.",
+  "patterns_detail": [
+    {
+      "pattern": 0,
+      "sx": 331.5,
+      "sy": 244.0,
+      "ex": 15.0,
+      "ey": 339.0,
+      "old_start": null,
+      "old_end": 0,
+      "new_start": 2,
+      "new_end": 0
+    },
+    {
+      "pattern": 1,
+      "sx": 312.0,
+      "sy": 251.5,
+      "ex": 131.5,
+      "ey": 308.5,
+      "old_start": 2,
+      "old_end": null,
+      "new_start": 2,
+      "new_end": null
+    },
+    {
+      "pattern": 2,
+      "sx": 58.0,
+      "sy": 453.5,
+      "ex": 390.0,
+      "ey": 251.5,
+      "old_start": 3,
+      "old_end": 2,
+      "new_start": 1,
+      "new_end": 3
+    }
+  ]
+}

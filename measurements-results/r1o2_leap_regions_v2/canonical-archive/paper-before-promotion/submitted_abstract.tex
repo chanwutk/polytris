@@ -1,0 +1,31 @@
+\begin{abstract}
+Track materialization converts raw videos into reusable object tracks that downstream queries can run against without rerunning tracking,
+but extracting those tracks efficiently and with high fidelity remains expensive.
+Prior systems reduce track materialization cost through temporal frame sampling,
+but aggressive sampling spaces each track's detection points too far apart
+to faithfully capture the object's actual trajectory.
+% , and through rectangular regions of interest, which still enclose irrelevant pixels whenever the underlying relevant region is non-rectangular.
+In stationary video, however,
+large portions of each frame contain no objects of interest,
+and different sampling rates can be used to extract tracks from the remaining regions.
+Leveraging this idea, we present \sys{},
+a track-extraction system that decomposes videos into a tile-based \emph{polyomino} data model,
+enabling fine-grained spatiotemporal pruning that reduces detector calls with minimal fidelity loss.
+\sys{} implements track materialization in three steps: 
+%runs three operators upstream of the user-provided detector:
+first, a classifier identifies relevant tiles and groups them into polyominoes.
+Then, we use an integer linear program (ILP) to prune redundant polyominoes under a user-specified accuracy constraint,
+before packing the remaining polyominoes into canvases to minimize detector calls.
+Across \revisionDatasetCount{} stationary-video datasets,
+\sys{} stays within a 5\% tracking accuracy loss as compared to a reference pipeline that processes every frame in its entirety,
+while prior systems exceed this bound on \comparePriorFailDatasetsFivePct{}
+of the \revisionDatasetCount{} datasets.
+Moreover, with this 5\% bound,
+\sys{} achieves
+up to \compareAccuracyMatchedSpeedupMaxFivePct{}$\times$ higher throughput
+than prior systems,
+and up to \compareNaiveSpeedupMaxFivePct{}$\times$ higher than the reference pipeline.
+Conversely,
+\sys{} delivers up to \compareMaxHotaImprovement{} higher HOTA tracking accuracy
+than the best prior system at matched throughput.
+\end{abstract}

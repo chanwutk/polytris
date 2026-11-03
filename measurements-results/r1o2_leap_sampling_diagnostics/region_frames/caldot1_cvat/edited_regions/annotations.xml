@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<annotations>
+  <version>1.1</version>
+  <meta>
+    <job>
+      <id>1</id>
+      <size>1</size>
+      <mode>annotation</mode>
+      <overlap>0</overlap>
+      <bugtracker></bugtracker>
+      <created>2026-10-31 23:05:56.144426+00:00</created>
+      <updated>2026-10-31 23:06:59.822000+00:00</updated>
+      <subset>default</subset>
+      <start_frame>0</start_frame>
+      <stop_frame>0</stop_frame>
+      <frame_filter></frame_filter>
+      <segments>
+        <segment>
+          <id>1</id>
+          <start>0</start>
+          <stop>0</stop>
+          <url>http://localhost:8080/api/jobs/1/dataset/export/api/jobs/1</url>
+        </segment>
+      </segments>
+      <owner>
+        <username>admin</username>
+        <email></email>
+      </owner>
+      <assignee></assignee>
+      <labels>
+        <label>
+          <name>region</name>
+          <color>#1db7fa</color>
+          <type>any</type>
+          <attributes>
+          </attributes>
+        </label>
+      </labels>
+    </job>
+    <dumped>2026-10-31 23:07:08.348678+00:00</dumped>
+  </meta>
+  <image id="0" name="caldot1_te00_frame450.png" width="720" height="480">
+    <box label="region" source="file" occluded="0" xtl="111.00" ytl="406.00" xbr="360.00" ybr="479.00" z_order="0">
+    </box>
+    <box label="region" source="manual" occluded="0" xtl="404.00" ytl="198.80" xbr="504.00" ybr="272.00" z_order="0">
+    </box>
+  </image>
+</annotations>

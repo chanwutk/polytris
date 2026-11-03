@@ -1,0 +1,108 @@
+{
+  "dataset": "CalDoT1",
+  "patterns": 7,
+  "eligible_before": 2,
+  "eligible_after": 6,
+  "starts_inside_new_regions": 7,
+  "ends_inside_new_regions": 6,
+  "excluded_patterns": [
+    5
+  ],
+  "stop_area": [
+    [
+      111.0,
+      406.0,
+      360.0,
+      479.0
+    ],
+    [
+      404.0,
+      198.8,
+      504.0,
+      272.0
+    ]
+  ],
+  "source": "measurements-results/r1o2_leap_sampling_diagnostics/caldot1-y05-patterns.parquet",
+  "source_sha256": "4075853ca833256624aab3bd165bcdcac24d2b6e82d2c02326eefa0c37640539",
+  "rule": "Both endpoint centers inside a region, inclusive bounds; first matching region, as in LEAP allocate_tracks.",
+  "execution": "CPU read-only check of the saved motion library on ace; no extraction or retraining.",
+  "patterns_detail": [
+    {
+      "pattern": 0,
+      "sx": 259.5,
+      "sy": 462.5,
+      "ex": 435.0,
+      "ey": 218.0,
+      "old_start": 1,
+      "old_end": null,
+      "new_start": 0,
+      "new_end": 1
+    },
+    {
+      "pattern": 1,
+      "sx": 422.0,
+      "sy": 221.0,
+      "ex": 211.0,
+      "ey": 435.5,
+      "old_start": null,
+      "old_end": 1,
+      "new_start": 1,
+      "new_end": 0
+    },
+    {
+      "pattern": 2,
+      "sx": 229.0,
+      "sy": 469.0,
+      "ex": 428.5,
+      "ey": 211.5,
+      "old_start": 1,
+      "old_end": null,
+      "new_start": 0,
+      "new_end": 1
+    },
+    {
+      "pattern": 3,
+      "sx": 260.5,
+      "sy": 468.0,
+      "ex": 462.5,
+      "ey": 238.0,
+      "old_start": 1,
+      "old_end": 0,
+      "new_start": 0,
+      "new_end": 1
+    },
+    {
+      "pattern": 4,
+      "sx": 234.5,
+      "sy": 474.0,
+      "ex": 466.0,
+      "ey": 245.5,
+      "old_start": 1,
+      "old_end": 0,
+      "new_start": 0,
+      "new_end": 1
+    },
+    {
+      "pattern": 5,
+      "sx": 237.5,
+      "sy": 470.5,
+      "ex": 441.0,
+      "ey": 302.0,
+      "old_start": 1,
+      "old_end": null,
+      "new_start": 0,
+      "new_end": null
+    },
+    {
+      "pattern": 6,
+      "sx": 338.0,
+      "sy": 416.5,
+      "ex": 448.5,
+      "ey": 224.5,
+      "old_start": 1,
+      "old_end": null,
+      "new_start": 0,
+      "new_end": 1
+    }
+  ]
+}

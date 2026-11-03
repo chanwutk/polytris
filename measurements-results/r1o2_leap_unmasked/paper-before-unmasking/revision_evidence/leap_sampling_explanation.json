@@ -1,0 +1,444 @@
+{
+  "CalDoT1": {
+    "provenance": {
+      "config": {
+        "video_name": "caldot1",
+        "full_name": "caldot1",
+        "dataset_group": "blazeit",
+        "w": 720,
+        "h": 480,
+        "seed": 100,
+        "start_frame": 0,
+        "end_frame": 44535,
+        "fps": 15,
+        "skip_frames": 60,
+        "max_gap_time": 5,
+        "min_gap_time": 2,
+        "traj_dist_min": 50,
+        "thresh_len": 25,
+        "max_len": 300,
+        "dis_thresh": 1250,
+        "difference_thresh": 0.0001,
+        "differ_abs_thresh": 32,
+        "iou_thresh": 0.45,
+        "conf_thresh": 0.1,
+        "stop_iou_thresh": 0.7,
+        "intersect_overlap_thresh": 0.7,
+        "image_thresh_score": 0.99,
+        "ignore_region": [],
+        "stop_area": [
+          [
+            111.0,
+            406.0,
+            360.0,
+            479.0
+          ],
+          [
+            404.0,
+            198.8,
+            504.0,
+            272.0
+          ]
+        ],
+        "car_count": 2,
+        "truck_count": 1,
+        "bus_count": 0
+      },
+      "arguments": [
+        "--config",
+        "/data/alenachao/data/leap-dataset/configs/caldot1.yaml",
+        "--weight",
+        "/data/alenachao/data/leap-dataset/models/yolov5/caldot1-y05.pt",
+        "--reid_weight",
+        "/data/alenachao/data/leap-dataset/logs",
+        "--video_dir",
+        "/scratch/videos/caldot1-y05/test",
+        "--log_dir",
+        "/scratch/runs/leap/caldot1-y05-20261031T164804/logs",
+        "--output_dir",
+        "/scratch/runs/leap/caldot1-y05-20261031T164804/outputs",
+        "--type",
+        "test",
+        "--active_log",
+        "--device",
+        "0",
+        "--motion_dir",
+        "/data/alenachao/data/leap-dataset/motion_patterns"
+      ],
+      "source": "/polyis/measurements-results/r1o2_leap_regions_v2/raw/caldot1-y05/leap_rerun.jsonl.gz",
+      "source_sha256": "c634964fd3217c7bf3ead944c5445b435fd66a329214cb639a4d57ac7adb09d0",
+      "pattern_sha256": "03af048af4e329c5492a30c9430d45c55a28a81e990bee48f04b6a2feb94f064",
+      "clips": 60,
+      "excluded_out_of_clip_gt_boxes": 0
+    },
+    "predicted_exit_timing": {
+      "predicted_ids": 592,
+      "annotated_tracks": 455,
+      "signed_exit_error_s_p10_p50_p90": [
+        -12.4,
+        -0.9,
+        0.26666666666666666
+      ],
+      "median_absolute_exit_error_s": 1.6,
+      "over_one_second_late": 0.07601351351351351,
+      "over_one_second_early": 0.4797297297297297
+    },
+    "mask": {
+      "path": "/polyis/measurements-results/r1o2_leap_sampling_canonical/caldot1_mask.jpg",
+      "sha256": "841c73ec41431f3b7c1ca4632c498b61840de09b5bef54dce9a28f313ec2bbe7",
+      "boxes": [
+        {
+          "scope": "all annotated frames",
+          "gt_boxes": 199445,
+          "centers_masked_share": 0.4105292185815638,
+          "entire_boxes_masked_share": 0.34732883752412946,
+          "boxes_with_visible_pixels": 130172
+        },
+        {
+          "scope": "recorded detector frames",
+          "gt_boxes": 3418,
+          "centers_masked_share": 0.40433001755412523,
+          "entire_boxes_masked_share": 0.33703920421299005,
+          "boxes_with_visible_pixels": 2266
+        }
+      ],
+      "sampled_recall": [
+        {
+          "box_kept": false,
+          "gt_boxes": 1152,
+          "matched_boxes": 0,
+          "matched_share": 0.0
+        },
+        {
+          "box_kept": true,
+          "gt_boxes": 2266,
+          "matched_boxes": 1881,
+          "matched_share": 0.8300970873786407
+        }
+      ]
+    },
+    "background_filter": {
+      "filtered_frames": 276,
+      "detector_frames": 719
+    },
+    "visible_geometry": [
+      {
+        "near_stationary": false,
+        "bracketed_boxes": 29314,
+        "mean_iou": 0.41807727935388644,
+        "iou_ge_half_share": 0.4312273998771918
+      },
+      {
+        "near_stationary": true,
+        "bracketed_boxes": 61001,
+        "mean_iou": 0.9471284591400766,
+        "iou_ge_half_share": 0.9995573843051754
+      }
+    ]
+  },
+  "CalDoT2": {
+    "provenance": {
+      "config": {
+        "video_name": "caldot2",
+        "full_name": "caldot2",
+        "dataset_group": "blazeit",
+        "w": 720,
+        "h": 480,
+        "seed": 100,
+        "start_frame": 0,
+        "end_frame": 32850,
+        "fps": 15,
+        "skip_frames": 60,
+        "max_gap_time": 5,
+        "min_gap_time": 2,
+        "traj_dist_min": 50,
+        "thresh_len": 25,
+        "max_len": 300,
+        "dis_thresh": 1250,
+        "difference_thresh": 0.0001,
+        "differ_abs_thresh": 64,
+        "iou_thresh": 0.45,
+        "conf_thresh": 0.05,
+        "stop_iou_thresh": 0.7,
+        "intersect_overlap_thresh": 0.7,
+        "image_thresh_score": 0.99,
+        "ignore_region": [],
+        "stop_area": [
+          [
+            0.0,
+            309.0,
+            93.0,
+            363.0
+          ],
+          [
+            11.0,
+            373.0,
+            220.0,
+            479.0
+          ],
+          [
+            295.8,
+            228.2,
+            351.55,
+            255.96
+          ],
+          [
+            354.9,
+            213.0,
+            431.5,
+            261.5
+          ]
+        ],
+        "car_count": 3,
+        "truck_count": 2,
+        "bus_count": 0
+      },
+      "arguments": [
+        "--config",
+        "/data/alenachao/data/leap-dataset/configs/caldot2.yaml",
+        "--weight",
+        "/data/alenachao/data/leap-dataset/models/yolov5/caldot2-y05.pt",
+        "--reid_weight",
+        "/data/alenachao/data/leap-dataset/logs",
+        "--video_dir",
+        "/scratch/videos/caldot2-y05/test",
+        "--log_dir",
+        "/scratch/runs/leap/caldot2-y05-20261031T164804/logs",
+        "--output_dir",
+        "/scratch/runs/leap/caldot2-y05-20261031T164804/outputs",
+        "--type",
+        "test",
+        "--active_log",
+        "--device",
+        "0",
+        "--motion_dir",
+        "/data/alenachao/data/leap-dataset/motion_patterns"
+      ],
+      "source": "/polyis/measurements-results/r1o2_leap_regions_v2/raw/caldot2-y05/leap_rerun.jsonl.gz",
+      "source_sha256": "9575a3351085029bbe39f7e3edb6f998bc5f09771bc08646a1b5989fffc46b7d",
+      "pattern_sha256": "595d74bdd3a6c692e25f8bc0675e9ff51b882bd31be7859eaf1bdb315f6a28b9",
+      "clips": 60,
+      "excluded_out_of_clip_gt_boxes": 0
+    },
+    "predicted_exit_timing": {
+      "predicted_ids": 816,
+      "annotated_tracks": 763,
+      "signed_exit_error_s_p10_p50_p90": [
+        -2.7,
+        -0.13333333333333333,
+        1.6
+      ],
+      "median_absolute_exit_error_s": 0.7333333333333333,
+      "over_one_second_late": 0.14215686274509803,
+      "over_one_second_early": 0.25735294117647056
+    },
+    "mask": {
+      "path": "/polyis/measurements-results/r1o2_leap_sampling_canonical/caldot2_mask.jpg",
+      "sha256": "d30c60a87cc8e17c97588a09d3681e51f3a2bcabfaa7e8789531491b2490d903",
+      "boxes": [
+        {
+          "scope": "all annotated frames",
+          "gt_boxes": 141915,
+          "centers_masked_share": 0.2566043053940739,
+          "entire_boxes_masked_share": 0.1093682838318712,
+          "boxes_with_visible_pixels": 126394
+        },
+        {
+          "scope": "recorded detector frames",
+          "gt_boxes": 2438,
+          "centers_masked_share": 0.2666119770303528,
+          "entire_boxes_masked_share": 0.11074651353568499,
+          "boxes_with_visible_pixels": 2168
+        }
+      ],
+      "sampled_recall": [
+        {
+          "box_kept": false,
+          "gt_boxes": 270,
+          "matched_boxes": 0,
+          "matched_share": 0.0
+        },
+        {
+          "box_kept": true,
+          "gt_boxes": 2168,
+          "matched_boxes": 1352,
+          "matched_share": 0.6236162361623616
+        }
+      ]
+    },
+    "background_filter": {
+      "filtered_frames": 289,
+      "detector_frames": 758
+    },
+    "visible_geometry": [
+      {
+        "near_stationary": false,
+        "bracketed_boxes": 44039,
+        "mean_iou": 0.2981787176820543,
+        "iou_ge_half_share": 0.27818524489656893
+      },
+      {
+        "near_stationary": true,
+        "bracketed_boxes": 324,
+        "mean_iou": 0.8875346691152003,
+        "iou_ge_half_share": 0.9907407407407407
+      }
+    ],
+    "linear_case": [
+      {
+        "video": "te58.mp4",
+        "id": 19,
+        "frame": 694,
+        "x1": 325.0,
+        "y1": 283.0,
+        "x2": 342.0,
+        "y2": 299.0,
+        "s": 660,
+        "e": 729,
+        "a": [
+          112.0,
+          411.0,
+          182.0,
+          457.0
+        ],
+        "b": [
+          373.0,
+          258.0,
+          384.0,
+          267.0
+        ],
+        "px1": 240.6086956521739,
+        "py1": 335.6086956521739,
+        "px2": 281.536231884058,
+        "py2": 363.3768115942029,
+        "predicted_id": 9,
+        "start_iou": 0.9379310344827586,
+        "end_iou": 0.8461538461538461,
+        "inter": 0.0,
+        "total": 1408.48057130855,
+        "interpolated_iou": 0.0
+      }
+    ]
+  },
+  "Amsterdam": {
+    "provenance": {
+      "config": {
+        "video_name": "amsterdam-y5",
+        "full_name": "amsterdam-y5",
+        "dataset_group": "blazeit",
+        "w": 1280,
+        "h": 720,
+        "seed": 100,
+        "start_frame": 0,
+        "end_frame": 44535,
+        "fps": 15,
+        "skip_frames": 60,
+        "max_gap_time": 5,
+        "min_gap_time": 2,
+        "traj_dist_min": 50,
+        "thresh_len": 25,
+        "max_len": 300,
+        "dis_thresh": 1250,
+        "difference_thresh": 0.0001,
+        "differ_abs_thresh": 32,
+        "iou_thresh": 0.45,
+        "conf_thresh": 0.1,
+        "stop_iou_thresh": 0.7,
+        "intersect_overlap_thresh": 0.7,
+        "image_thresh_score": 0.99,
+        "ignore_region": [],
+        "stop_area": [
+          [
+            31.04,
+            249.9,
+            167.8,
+            341.0
+          ],
+          [
+            405.9,
+            174.41,
+            563.32,
+            261.7
+          ],
+          [
+            1167.1,
+            327.97,
+            1280.0,
+            606.8
+          ],
+          [
+            384.3,
+            580.1,
+            1000.82,
+            720.0
+          ],
+          [
+            0.0,
+            553.2,
+            209.6,
+            720.0
+          ]
+        ],
+        "car_count": 2,
+        "truck_count": 1,
+        "bus_count": 0
+      },
+      "arguments": [
+        "--config",
+        "/data/alenachao/data/leap-dataset/configs/amsterdam.yaml",
+        "--weight",
+        "/data/alenachao/data/leap-dataset/models/yolov5/ams-y05.pt",
+        "--reid_weight",
+        "/data/alenachao/data/leap-dataset/logs",
+        "--video_dir",
+        "/scratch/videos/ams-y05/test",
+        "--log_dir",
+        "/scratch/runs/leap/ams-y05-20261031T164804/logs",
+        "--output_dir",
+        "/scratch/runs/leap/ams-y05-20261031T164804/outputs",
+        "--type",
+        "test",
+        "--active_log",
+        "--device",
+        "0",
+        "--motion_dir",
+        "/data/alenachao/data/leap-dataset/motion_patterns"
+      ],
+      "source": "/polyis/measurements-results/r1o2_leap_regions_v2/raw/ams-y05/leap_rerun.jsonl.gz",
+      "source_sha256": "ddafad8c639beca826b72f2a32fa9e0b3af5c0e450cd7039999364819b13dee0",
+      "pattern_sha256": "b1c909dba0ff097b9199e9baf8c6cfbf0bc7d916c51871b62aac282b4bae52a5",
+      "clips": 60,
+      "excluded_out_of_clip_gt_boxes": 0
+    },
+    "predicted_exit_timing": {
+      "predicted_ids": 412,
+      "annotated_tracks": 300,
+      "signed_exit_error_s_p10_p50_p90": [
+        -7.853333333333333,
+        0.0,
+        4.773333333333342
+      ],
+      "median_absolute_exit_error_s": 1.7333333333333334,
+      "over_one_second_late": 0.2621359223300971,
+      "over_one_second_early": 0.3325242718446602
+    },
+    "background_filter": {
+      "filtered_frames": 0,
+      "detector_frames": 953
+    },
+    "visible_geometry": [
+      {
+        "near_stationary": false,
+        "bracketed_boxes": 18812,
+        "mean_iou": 0.6338020893154891,
+        "iou_ge_half_share": 0.7319795874973422
+      },
+      {
+        "near_stationary": true,
+        "bracketed_boxes": 69960,
+        "mean_iou": 0.9419659656120213,
+        "iou_ge_half_share": 0.9987850200114351
+      }
+    ]
+  }
+}

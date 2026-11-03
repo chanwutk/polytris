@@ -1,0 +1,236 @@
+{
+  "dockerfile": "FROM docker-config-leap-alenatunnel-leap:latest\nRUN rm -rf /opt/conda/envs/leap\nADD leap-env.tar /opt/conda/envs/\n",
+  "export_policy": "drop negative frame writes before original pattern export; clip video ends in p140",
+  "images": {
+    "bombe-revision-leap:scored-env": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de 2026-10-27T06:18:19.359192963-07:00",
+    "docker-config-leap-alenatunnel-leap:latest": "sha256:2e4b25e098c87769e671a7de7a2cb45be9e510846bf78ac42f382d6f1527e659 2026-03-13T13:35:52.462123054-07:00"
+  },
+  "label_aliases": {
+    "caldot1": "caldot1-y5",
+    "caldot2": "caldot2-y5"
+  },
+  "leap_datasets": {
+    "ams-y05": {
+      "config": "amsterdam.yaml",
+      "detector": "yolov5",
+      "full_name": "amsterdam-y5",
+      "labels": "amsterdam-y5",
+      "reid": "Amsterdam",
+      "root": "ams",
+      "workspace_motion": true
+    },
+    "caldot1-y05": {
+      "config": "caldot1.yaml",
+      "detector": "yolov5",
+      "full_name": "caldot1",
+      "labels": "caldot1-y5",
+      "reid": "Caldot1",
+      "root": "caldot1",
+      "workspace_motion": false
+    },
+    "caldot2-y05": {
+      "config": "caldot2.yaml",
+      "detector": "yolov5",
+      "full_name": "caldot2",
+      "labels": "caldot2-y5",
+      "reid": "Caldot2",
+      "root": "caldot2",
+      "workspace_motion": false
+    },
+    "jnc0": {
+      "config": "jnc0.yaml",
+      "detector": "retinanet",
+      "full_name": "jnc0",
+      "labels": "jnc0",
+      "reid": "Jnc0",
+      "root": "jnc0",
+      "workspace_motion": true
+    },
+    "jnc2": {
+      "config": "jnc2.yaml",
+      "detector": "retinanet",
+      "full_name": "jnc2",
+      "labels": "jnc2",
+      "reid": "Jnc2",
+      "root": "jnc2",
+      "workspace_motion": true
+    },
+    "jnc6": {
+      "config": "jnc6.yaml",
+      "detector": "retinanet",
+      "full_name": "jnc6",
+      "labels": "jnc6",
+      "reid": "Jnc6",
+      "root": "jnc6",
+      "workspace_motion": true
+    },
+    "jnc7": {
+      "config": "jnc7.yaml",
+      "detector": "retinanet",
+      "full_name": "jnc7",
+      "labels": "jnc7",
+      "reid": "Jnc7",
+      "root": "jnc7",
+      "workspace_motion": true
+    }
+  },
+  "matched_detector": {
+    "adapter_sha256": "007b1760ae96014f261865b004d6148805c1225db6a36eaebadca828631d4f8a",
+    "checkpoint": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+    "config_sha256": "89c23ca2f0a2cc8e9d816a782213f873b368d8b22267900c8748acd0ffae00ac",
+    "dataset": "caldot1-y05",
+    "inference": "polyis/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2",
+    "preparation": "fresh labels, crops, re-identification training, and motion patterns; no distillation",
+    "sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135"
+  },
+  "motion_pattern_policy": "clip-local training track IDs are namespaced before original clustering",
+  "scored_container": {
+    "created": "2026-03-16T22:53:22.158600103Z",
+    "env_tar_bytes": 11536444416,
+    "finished": "2026-09-12T03:07:51.443764247Z",
+    "host": "manchester",
+    "image": "sha256:c81e26981cd717fb682f22009891bbbb0dc3579a712cda481ac783dceb8551ea",
+    "manchester_image_created": "2026-03-16T15:50:46.277936433-07:00",
+    "mounts": [
+      "/data/alenachao/data/otif-dataset -> /path/to/otif-dataset",
+      "/data/alenachao/polyis-cache -> /polyis-cache",
+      "/work/alenachao/tunnel/hota_outputs -> /sota-results",
+      "/work/alenachao/tunnel/work -> /work/alenachao",
+      "/data/alenachao -> /data/alenachao",
+      "/data/alenachao/polyis-data -> /polyis-data",
+      "/work/alenachao/tunnel/home-config -> /root/.config",
+      "/work/alenachao/tunnel/home-ssh -> /root/.ssh",
+      "/work/alenachao/tunnel/workspace -> /workspace"
+    ],
+    "name": "alenatunnel-leap",
+    "started": "2026-03-16T22:53:22.206422514Z"
+  },
+  "video_identity": [
+    {
+      "dataset": "caldot1-y05",
+      "differing": [],
+      "identical": 60,
+      "leap_dir": "videos/caldot1/test/",
+      "leap_videos": 60,
+      "our_videos": 60,
+      "split": "test"
+    },
+    {
+      "dataset": "caldot1-y05",
+      "differing": [],
+      "identical": 60,
+      "leap_dir": "videos/caldot1/train/",
+      "leap_videos": 60,
+      "our_videos": 60,
+      "split": "train"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "differing": [],
+      "identical": 60,
+      "leap_dir": "videos/caldot2/test/",
+      "leap_videos": 60,
+      "our_videos": 60,
+      "split": "test"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "differing": [],
+      "identical": 60,
+      "leap_dir": "videos/caldot2/train/",
+      "leap_videos": 60,
+      "our_videos": 60,
+      "split": "train"
+    },
+    {
+      "dataset": "ams-y05",
+      "differing": [],
+      "identical": 60,
+      "leap_dir": "videos/amsterdam-y5/test/",
+      "leap_videos": 60,
+      "our_videos": 60,
+      "split": "test"
+    },
+    {
+      "dataset": "ams-y05",
+      "differing": [],
+      "identical": 60,
+      "leap_dir": "videos/amsterdam-y5/train/",
+      "leap_videos": 60,
+      "our_videos": 60,
+      "split": "train"
+    },
+    {
+      "dataset": "jnc0",
+      "differing": [],
+      "identical": 5,
+      "leap_dir": "videos/jnc0/test/",
+      "leap_videos": 5,
+      "our_videos": 5,
+      "split": "test"
+    },
+    {
+      "dataset": "jnc0",
+      "differing": [],
+      "identical": 8,
+      "leap_dir": "videos/jnc0/train/",
+      "leap_videos": 8,
+      "our_videos": 8,
+      "split": "train"
+    },
+    {
+      "dataset": "jnc2",
+      "differing": [],
+      "identical": 5,
+      "leap_dir": "videos/jnc2/test/",
+      "leap_videos": 5,
+      "our_videos": 5,
+      "split": "test"
+    },
+    {
+      "dataset": "jnc2",
+      "differing": [],
+      "identical": 8,
+      "leap_dir": "videos/jnc2/train/",
+      "leap_videos": 8,
+      "our_videos": 8,
+      "split": "train"
+    },
+    {
+      "dataset": "jnc6",
+      "differing": [],
+      "identical": 5,
+      "leap_dir": "videos/jnc6/test/",
+      "leap_videos": 5,
+      "our_videos": 5,
+      "split": "test"
+    },
+    {
+      "dataset": "jnc6",
+      "differing": [],
+      "identical": 8,
+      "leap_dir": "videos/jnc6/train/",
+      "leap_videos": 8,
+      "our_videos": 8,
+      "split": "train"
+    },
+    {
+      "dataset": "jnc7",
+      "differing": [],
+      "identical": 5,
+      "leap_dir": "videos/jnc7/test/",
+      "leap_videos": 5,
+      "our_videos": 5,
+      "split": "test"
+    },
+    {
+      "dataset": "jnc7",
+      "differing": [],
+      "identical": 8,
+      "leap_dir": "videos/jnc7/train/",
+      "leap_videos": 8,
+      "our_videos": 8,
+      "split": "train"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "dataset": "B3D3",
+  "dataset_id": "jnc6",
+  "resolution": [
+    1080,
+    720
+  ],
+  "stop_area": [
+    [
+      0,
+      100,
+      250,
+      490
+    ],
+    [
+      420,
+      0,
+      750,
+      75
+    ],
+    [
+      815,
+      100,
+      1080,
+      545
+    ],
+    [
+      300,
+      600,
+      750,
+      720
+    ]
+  ],
+  "source": "Recorded configuration from the saved LEAP run; no manual edits yet.",
+  "source_report": "/Users/chanwutk/Documents/tetris/tetris/measurements-results/r1o2_leap_sampling_diagnostics/results.json",
+  "source_report_sha256": "351fdb13b7008adfce72d78930a168165f3de0d52da094d5dc5ed5204f5fd86d",
+  "background_video": "te01.mp4",
+  "background_frame": 519,
+  "existing_pattern_check": {
+    "patterns": 4,
+    "eligible_before": 0,
+    "eligible_after": 0
+  },
+  "numbering": "Region indices follow the saved stop_area order; learned-pattern IDs are zero-based."
+}

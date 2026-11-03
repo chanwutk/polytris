@@ -1,0 +1,4 @@
+# CalDoT1 LEAP stop_area in CVAT XML order; native 720 x 480 pixels.
+stop_area:
+  - [111.00, 406.00, 360.00, 479.00]
+  - [404.00, 198.80, 504.00, 272.00]

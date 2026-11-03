@@ -1,0 +1,109 @@
+{
+  "generator": "scripts/refresh_leap_matched.py",
+  "files": [
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/results-ams-y05.json",
+      "sha256": "35a843c3d21ceaa3d0c253b8410e8575928f492aebf04beafb230c526202c978"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/speed-ams-y05.tsv",
+      "sha256": "baf3e56eb3bd7025115244a6e1b720166681b9dc14cd12941de119b9ddccd629"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/manifest-ams-y05.json",
+      "sha256": "0d6453da8dd2c0c4158d3b16c1a445ba89bbe454e551f99ddafb80cc61d7c50a"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/results-caldot1-y05.json",
+      "sha256": "71c936acfa7a35cf51ff22b71154beb270601ac3003cfb7ed5a3f2659a6bdd5d"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/speed-caldot1-y05.tsv",
+      "sha256": "ce7bcb3446b3f83ba4133e7b233e1777c52fc83c8728eeb307d9dbec40ea5a8b"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/manifest-caldot1-y05.json",
+      "sha256": "46634b8fa020c2ff9e6ea1da044290412222745e6e1e94a493345725600fb993"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/results-caldot2-y05.json",
+      "sha256": "bf0a710308ea9ff18b706136e957624ceb3dee8f65db6eb061156f331cf9e578"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/speed-caldot2-y05.tsv",
+      "sha256": "ab5e6999026235a6db295affbf6e374e3bd29e33cc11cd6342e95b619b0d3bf2"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/manifest-caldot2-y05.json",
+      "sha256": "7e3844fbdfabc86a755037623d2129adc88d41f995ce7d5bd11a13e018cef912"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/comparison/results.json",
+      "sha256": "a36e514d90b6fe3c87fb0167995a40f29e94dc4dc84a4785e80b03753c57bae7"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/summary/native_intervals.json",
+      "sha256": "1d41eca5248205574dc9d2f3dc9fffc65a683c1f09ecdfad5cb9c685b0e5fa85"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/inputs.json",
+      "sha256": "2b9682be98c1ac0510859fb1465927cff9704ef5e5538a9d357e98561323762e"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/comparison/results.json",
+      "sha256": "a36e514d90b6fe3c87fb0167995a40f29e94dc4dc84a4785e80b03753c57bae7"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/summary/native_intervals.json",
+      "sha256": "1d41eca5248205574dc9d2f3dc9fffc65a683c1f09ecdfad5cb9c685b0e5fa85"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/inputs.json",
+      "sha256": "2b9682be98c1ac0510859fb1465927cff9704ef5e5538a9d357e98561323762e"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/comparison/results.json",
+      "sha256": "a36e514d90b6fe3c87fb0167995a40f29e94dc4dc84a4785e80b03753c57bae7"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/summary/native_intervals.json",
+      "sha256": "1d41eca5248205574dc9d2f3dc9fffc65a683c1f09ecdfad5cb9c685b0e5fa85"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/inputs.json",
+      "sha256": "2b9682be98c1ac0510859fb1465927cff9704ef5e5538a9d357e98561323762e"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/caldot1-y05.json",
+      "sha256": "668a1776350e9b0049ac69d2b0e468f46f24ef07952e9f7f3c9c5dc555e1a72f"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/caldot2-y05.json",
+      "sha256": "695fcfcea69507734c473cbc3d9e9213f6a4007b985880deb4ee4431cd0f474f"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/ams-y05.json",
+      "sha256": "660fac2eb0a3943c7b53985e8c495a98c2e6d1d9f39231de1f658a27d271c894"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/jnc0.json",
+      "sha256": "e8d026f79e0e7087fa7467d7133cba23087fb9d30ef26cc77942783fa0642ec4"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/jnc2.json",
+      "sha256": "cef1bbafd8682b3e3a3de9fd66aa3bb734cc578abf583d96f394b879be650b7b"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/jnc6.json",
+      "sha256": "5f9b2149ece00c6b062c0f68a0d32b95386bbe15cb9be8e8a8938eee90f9ba40"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/jnc7.json",
+      "sha256": "e3b4f02ee06f53476898915b0990edbd240f2ef119d519b947379c56001a016b"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/canonical-archive/matched_summary/native_intervals.json",
+      "sha256": "c55806306bec99fdc51b70c58bacb17dab5727b9ca49357324352e6ac1580f94"
+    }
+  ]
+}

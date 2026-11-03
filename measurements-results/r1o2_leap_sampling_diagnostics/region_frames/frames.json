@@ -1,0 +1,277 @@
+[
+  {
+    "dataset": "CalDoT1",
+    "dataset_id": "caldot1-y05",
+    "source_video": "/polyis-data/datasets/caldot1-y05/test/te00.mp4",
+    "video": "te00.mp4",
+    "frame": 450,
+    "resolution": [
+      720,
+      480
+    ],
+    "rectangles": [
+      {
+        "label": "R0",
+        "index": 0,
+        "left": 404,
+        "top": 226,
+        "right": 504,
+        "bottom": 272
+      },
+      {
+        "label": "R1",
+        "index": 1,
+        "left": 111,
+        "top": 406,
+        "right": 360,
+        "bottom": 479
+      }
+    ]
+  },
+  {
+    "dataset": "CalDoT2",
+    "dataset_id": "caldot2-y05",
+    "source_video": "/polyis-data/datasets/caldot2-y05/test/te00.mp4",
+    "video": "te00.mp4",
+    "frame": 450,
+    "resolution": [
+      720,
+      480
+    ],
+    "rectangles": [
+      {
+        "label": "R0",
+        "index": 0,
+        "left": 0,
+        "top": 309,
+        "right": 93,
+        "bottom": 363
+      },
+      {
+        "label": "R1",
+        "index": 1,
+        "left": 173,
+        "top": 257,
+        "right": 258,
+        "bottom": 298
+      },
+      {
+        "label": "R2",
+        "index": 2,
+        "left": 289,
+        "top": 248,
+        "right": 401,
+        "bottom": 299
+      },
+      {
+        "label": "R3",
+        "index": 3,
+        "left": 11,
+        "top": 373,
+        "right": 220,
+        "bottom": 479
+      }
+    ]
+  },
+  {
+    "dataset": "Amsterdam",
+    "dataset_id": "ams-y05",
+    "source_video": "/polyis-data/datasets/ams-y05/test/te00.mp4",
+    "video": "te00.mp4",
+    "frame": 450,
+    "resolution": [
+      1280,
+      720
+    ],
+    "rectangles": [
+      {
+        "label": "R0",
+        "index": 0,
+        "left": 404,
+        "top": 226,
+        "right": 504,
+        "bottom": 272
+      },
+      {
+        "label": "R1",
+        "index": 1,
+        "left": 111,
+        "top": 406,
+        "right": 360,
+        "bottom": 479
+      }
+    ]
+  },
+  {
+    "dataset": "B3D1",
+    "dataset_id": "jnc0",
+    "source_video": "/polyis-data/datasets/jnc0/test/te01.mp4",
+    "video": "te01.mp4",
+    "frame": 537,
+    "resolution": [
+      1080,
+      720
+    ],
+    "rectangles": [
+      {
+        "label": "R0",
+        "index": 0,
+        "left": 0,
+        "top": 94,
+        "right": 300,
+        "bottom": 406
+      },
+      {
+        "label": "R1",
+        "index": 1,
+        "left": 780,
+        "top": 0,
+        "right": 1080,
+        "bottom": 230
+      },
+      {
+        "label": "R2",
+        "index": 2,
+        "left": 740,
+        "top": 380,
+        "right": 1080,
+        "bottom": 720
+      }
+    ]
+  },
+  {
+    "dataset": "B3D2",
+    "dataset_id": "jnc2",
+    "source_video": "/polyis-data/datasets/jnc2/test/te01.mp4",
+    "video": "te01.mp4",
+    "frame": 469,
+    "resolution": [
+      1080,
+      720
+    ],
+    "rectangles": [
+      {
+        "label": "R0",
+        "index": 0,
+        "left": 0,
+        "top": 300,
+        "right": 250,
+        "bottom": 490
+      },
+      {
+        "label": "R1",
+        "index": 1,
+        "left": 380,
+        "top": 0,
+        "right": 680,
+        "bottom": 230
+      },
+      {
+        "label": "R2",
+        "index": 2,
+        "left": 815,
+        "top": 260,
+        "right": 1080,
+        "bottom": 540
+      },
+      {
+        "label": "R3",
+        "index": 3,
+        "left": 300,
+        "top": 600,
+        "right": 750,
+        "bottom": 720
+      }
+    ]
+  },
+  {
+    "dataset": "B3D3",
+    "dataset_id": "jnc6",
+    "source_video": "/polyis-data/datasets/jnc6/test/te01.mp4",
+    "video": "te01.mp4",
+    "frame": 519,
+    "resolution": [
+      1080,
+      720
+    ],
+    "rectangles": [
+      {
+        "label": "R0",
+        "index": 0,
+        "left": 0,
+        "top": 100,
+        "right": 250,
+        "bottom": 490
+      },
+      {
+        "label": "R1",
+        "index": 1,
+        "left": 420,
+        "top": 0,
+        "right": 750,
+        "bottom": 75
+      },
+      {
+        "label": "R2",
+        "index": 2,
+        "left": 815,
+        "top": 100,
+        "right": 1080,
+        "bottom": 545
+      },
+      {
+        "label": "R3",
+        "index": 3,
+        "left": 300,
+        "top": 600,
+        "right": 750,
+        "bottom": 720
+      }
+    ]
+  },
+  {
+    "dataset": "B3D4",
+    "dataset_id": "jnc7",
+    "source_video": "/polyis-data/datasets/jnc7/test/te01.mp4",
+    "video": "te01.mp4",
+    "frame": 522,
+    "resolution": [
+      1080,
+      720
+    ],
+    "rectangles": [
+      {
+        "label": "R0",
+        "index": 0,
+        "left": 0,
+        "top": 230,
+        "right": 320,
+        "bottom": 430
+      },
+      {
+        "label": "R1",
+        "index": 1,
+        "left": 360,
+        "top": 0,
+        "right": 810,
+        "bottom": 150
+      },
+      {
+        "label": "R2",
+        "index": 2,
+        "left": 815,
+        "top": 230,
+        "right": 1080,
+        "bottom": 520
+      },
+      {
+        "label": "R3",
+        "index": 3,
+        "left": 300,
+        "top": 600,
+        "right": 800,
+        "bottom": 720
+      }
+    ]
+  }
+]

@@ -1,0 +1,390 @@
+{
+  "baseline": "r1o2_leap_matched",
+  "datasets": {
+    "Amsterdam": {
+      "change": {
+        "count_mape": 0.1133051747542495,
+        "fps_ratio": 1.1289632867662003,
+        "hota": -0.06462354472787357,
+        "selection_f1": -0.0022999999999999687,
+        "top10": 0.0
+      },
+      "clips": 60,
+      "dataset": "ams-y05",
+      "frames": 54011,
+      "versions": {
+        "original": {
+          "best_hota": 0.608,
+          "best_reconstruction": "linear",
+          "ground_truth_count_sha256": "e32813682a6f5cf05726d375f4b241967948bfe99d7462e6f7427efbbd179514",
+          "hota": {
+            "linear": {
+              "AssA": 0.7105,
+              "DetA": 0.5216,
+              "HOTA": 0.608,
+              "LocA": 0.9115,
+              "dets": 85081,
+              "gt_dets": 123724,
+              "ids": 901
+            },
+            "pattern": {
+              "AssA": 0.0509,
+              "DetA": 0.0144,
+              "HOTA": 0.0258,
+              "LocA": 0.6232,
+              "dets": 174876,
+              "gt_dets": 123724,
+              "ids": 901
+            },
+            "raw": {
+              "AssA": 0.0165,
+              "DetA": 0.0154,
+              "HOTA": 0.0158,
+              "LocA": 0.912,
+              "dets": 2242,
+              "gt_dets": 123724,
+              "ids": 901
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.5206075305647777,
+              "mae": 1.0440465831034418,
+              "mape": 0.4793924694352223
+            },
+            "selection": {
+              "accuracy": 0.9708,
+              "f1": 0.9839,
+              "precision": 0.9773,
+              "recall": 0.9906
+            },
+            "topk": 0.9
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 156.66330000000002,
+            "contaminated": false,
+            "cpus": "20-29,60-69",
+            "decode_s": 187.43610000000007,
+            "fps": 344.758472469302,
+            "gpu": 5,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 344.09939999999995,
+            "names": 60
+          }
+        },
+        "regions_v2": {
+          "best_hota": 0.5433764552721264,
+          "best_reconstruction": "linear",
+          "ground_truth_count_sha256": "e32813682a6f5cf05726d375f4b241967948bfe99d7462e6f7427efbbd179514",
+          "hota": {
+            "linear": {
+              "AssA": 0.5806475150539003,
+              "DetA": 0.5122825597243329,
+              "HOTA": 0.5433764552721264,
+              "LocA": 0.8913385247510949
+            },
+            "pattern": {
+              "AssA": 0.2350461858504678,
+              "DetA": 0.059176209738887216,
+              "HOTA": 0.11073467823630055,
+              "LocA": 0.6693199328989298
+            },
+            "raw": {
+              "AssA": 0.015146815146103998,
+              "DetA": 0.015426123690138733,
+              "HOTA": 0.015185501242028034,
+              "LocA": 0.9092497496171553
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.40730235581052815,
+              "mae": 1.2035696432208254,
+              "mape": 0.5926976441894718
+            },
+            "selection": {
+              "accuracy": 0.9668,
+              "f1": 0.9816,
+              "precision": 0.9785,
+              "recall": 0.9848
+            },
+            "topk": 0.9
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 138.76739999999998,
+            "contaminated": false,
+            "cpus": "20-29,60-69",
+            "decode_s": 199.79399999999998,
+            "fps": 389.21965821943775,
+            "gpu": 5,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 338.56139999999994,
+            "names": 60
+          }
+        }
+      }
+    },
+    "CalDoT1": {
+      "change": {
+        "count_mape": -0.05235312506524348,
+        "fps_ratio": 0.9780296676361395,
+        "hota": 0.0080160314573553,
+        "selection_f1": 0.008199999999999985,
+        "top10": 0.20000000000000007
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "frames": 54000,
+      "versions": {
+        "original": {
+          "best_hota": 0.4706,
+          "best_reconstruction": "linear",
+          "ground_truth_count_sha256": "45a4e37b1a480cdf4b26c150a74afbeedd354c4f8c1f663b01339bc4434e7286",
+          "hota": {
+            "linear": {
+              "AssA": 0.7803,
+              "DetA": 0.2859,
+              "HOTA": 0.4706,
+              "LocA": 0.9004,
+              "dets": 68710,
+              "gt_dets": 199445,
+              "ids": 900
+            },
+            "pattern": {
+              "AssA": 0.0748,
+              "DetA": 0.0887,
+              "HOTA": 0.0788,
+              "LocA": 0.6498,
+              "dets": 152947,
+              "gt_dets": 199445,
+              "ids": 900
+            },
+            "raw": {
+              "AssA": 0.0138,
+              "DetA": 0.0092,
+              "HOTA": 0.0112,
+              "LocA": 0.8968,
+              "dets": 1969,
+              "gt_dets": 199445,
+              "ids": 900
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.6624870413755943,
+              "mae": 1.3205185185185184,
+              "mape": 0.33751295862440567
+            },
+            "selection": {
+              "accuracy": 0.8946,
+              "f1": 0.9232,
+              "precision": 0.9263,
+              "recall": 0.9202
+            },
+            "topk": 0.6
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 99.23489999999998,
+            "contaminated": false,
+            "cpus": "0-9,40-49",
+            "decode_s": 131.96069999999997,
+            "fps": 544.1633941284771,
+            "gpu": 0,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 231.19559999999998,
+            "names": 60
+          }
+        },
+        "regions_v2": {
+          "best_hota": 0.4786160314573553,
+          "best_reconstruction": "linear",
+          "ground_truth_count_sha256": "45a4e37b1a480cdf4b26c150a74afbeedd354c4f8c1f663b01339bc4434e7286",
+          "hota": {
+            "linear": {
+              "AssA": 0.8117565843502895,
+              "DetA": 0.28376274841859395,
+              "HOTA": 0.4786160314573553,
+              "LocA": 0.9043271949314033
+            },
+            "pattern": {
+              "AssA": 0.16269829572975159,
+              "DetA": 0.1391579095794527,
+              "HOTA": 0.14752880003262994,
+              "LocA": 0.6644447450206818
+            },
+            "raw": {
+              "AssA": 0.015513717347842605,
+              "DetA": 0.009033902548218347,
+              "HOTA": 0.011785071514813646,
+              "LocA": 0.8968322903822016
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.7148401664408378,
+              "mae": 1.3407777777777778,
+              "mape": 0.2851598335591622
+            },
+            "selection": {
+              "accuracy": 0.9075,
+              "f1": 0.9314,
+              "precision": 0.9526,
+              "recall": 0.9111
+            },
+            "topk": 0.8
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 101.46409999999996,
+            "contaminated": false,
+            "cpus": "0-9,40-49",
+            "decode_s": 128.92020000000002,
+            "fps": 532.207943499228,
+            "gpu": 0,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 230.38429999999997,
+            "names": 60
+          }
+        }
+      }
+    },
+    "CalDoT2": {
+      "change": {
+        "count_mape": -0.0274544729961409,
+        "fps_ratio": 0.9965350372727497,
+        "hota": 0.021198967932628557,
+        "selection_f1": -0.006900000000000017,
+        "top10": 0.0
+      },
+      "clips": 60,
+      "dataset": "caldot2-y05",
+      "frames": 54000,
+      "versions": {
+        "original": {
+          "best_hota": 0.1115,
+          "best_reconstruction": "pattern",
+          "ground_truth_count_sha256": "5d86fdf2955659269f4117429619df3f5b7f53168cbdd7c75a37f174c60dd50d",
+          "hota": {
+            "linear": {
+              "AssA": 0.0821,
+              "DetA": 0.0203,
+              "HOTA": 0.0406,
+              "LocA": 0.7316,
+              "dets": 10542,
+              "gt_dets": 141915,
+              "ids": 1234
+            },
+            "pattern": {
+              "AssA": 0.2278,
+              "DetA": 0.0616,
+              "HOTA": 0.1115,
+              "LocA": 0.604,
+              "dets": 119214,
+              "gt_dets": 141915,
+              "ids": 1234
+            },
+            "raw": {
+              "AssA": 0.0217,
+              "DetA": 0.0089,
+              "HOTA": 0.0136,
+              "LocA": 0.8646,
+              "dets": 1381,
+              "gt_dets": 141915,
+              "ids": 1234
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.5951074077671257,
+              "mae": 0.969462962962963,
+              "mape": 0.4048925922328743
+            },
+            "selection": {
+              "accuracy": 0.7956,
+              "f1": 0.8645,
+              "precision": 0.9745,
+              "recall": 0.7768
+            },
+            "topk": 0.9
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 89.84729999999996,
+            "contaminated": false,
+            "cpus": "10-19,50-59",
+            "decode_s": 78.84940000000002,
+            "fps": 601.0197301421414,
+            "gpu": 2,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 168.69670000000002,
+            "names": 60
+          }
+        },
+        "regions_v2": {
+          "best_hota": 0.13269896793262856,
+          "best_reconstruction": "pattern",
+          "ground_truth_count_sha256": "5d86fdf2955659269f4117429619df3f5b7f53168cbdd7c75a37f174c60dd50d",
+          "hota": {
+            "linear": {
+              "AssA": 0.1014189015110226,
+              "DetA": 0.03291171954491944,
+              "HOTA": 0.057668567966036456,
+              "LocA": 0.7135409351709789
+            },
+            "pattern": {
+              "AssA": 0.22322181618957795,
+              "DetA": 0.09024840170956915,
+              "HOTA": 0.13269896793262856,
+              "LocA": 0.6055983740495655
+            },
+            "raw": {
+              "AssA": 0.021348254415467182,
+              "DetA": 0.008977917955171272,
+              "HOTA": 0.013623853370017624,
+              "LocA": 0.8645586198435314
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.6225618807632666,
+              "mae": 0.9340925925925926,
+              "mape": 0.3774381192367334
+            },
+            "selection": {
+              "accuracy": 0.7886,
+              "f1": 0.8576,
+              "precision": 0.9864,
+              "recall": 0.7586
+            },
+            "topk": 0.9
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 90.15970000000003,
+            "contaminated": false,
+            "cpus": "10-19,50-59",
+            "decode_s": 82.4135,
+            "fps": 598.9372191788568,
+            "gpu": 2,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 172.57320000000004,
+            "names": 60
+          }
+        }
+      }
+    }
+  },
+  "display_name": "LEAP2",
+  "method": {
+    "baseline_hota_precision": "Original summaries retain four decimal places.",
+    "changed": "stop_area only; preparation reused",
+    "evaluator_sha256": "9b560687fdbd22e071d3c6d9df34fd53eb50b4e08c1684d38252cf18d761536c",
+    "hota": "Original v1 summaries; fresh v2 raw/linear/pattern TrackEval, unchanged root ground truth and p140 transform.",
+    "queries": "Original LEAP selection_query_1, aggregation_query_1, top_k_query_1 on pooled native intervals and shared ground-truth counts.",
+    "throughput": "Native inference_total - decode; one GPU per dataset."
+  },
+  "version": "regions_v2"
+}

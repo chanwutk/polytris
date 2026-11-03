@@ -1,0 +1,36 @@
+video_name: caldot1
+full_name: caldot1
+dataset_group: blazeit
+w: 720
+h: 480
+seed: 100
+start_frame: 0
+end_frame: 44535
+fps: 15
+skip_frames: 60
+max_gap_time: 5
+min_gap_time: 2
+traj_dist_min: 50
+thresh_len: 25
+max_len: 300
+dis_thresh: 1250
+difference_thresh: 0.0001
+differ_abs_thresh: 32
+iou_thresh: 0.45
+conf_thresh: 0.1
+stop_iou_thresh: 0.7
+intersect_overlap_thresh: 0.7
+image_thresh_score: 0.99
+ignore_region: []
+stop_area:
+- - 111.0
+  - 406.0
+  - 360.0
+  - 479.0
+- - 404.0
+  - 198.8
+  - 504.0
+  - 272.0
+car_count: 2
+truck_count: 1
+bus_count: 0

@@ -1,0 +1,79 @@
+{
+  "dataset": "CalDoT2",
+  "patterns": 3,
+  "eligible": 2,
+  "uncovered_endpoints": [
+    {
+      "pattern": 1,
+      "endpoint": "E",
+      "x": 131.5,
+      "y": 308.5,
+      "inside": false,
+      "label": "P1-E",
+      "label_x": 143.5,
+      "label_y": 296.5
+    }
+  ],
+  "patterns_detail": [
+    {
+      "pattern": 0,
+      "sx": 331.5,
+      "sy": 244.0,
+      "ex": 15.0,
+      "ey": 339.0,
+      "start_region": 2,
+      "end_region": 0
+    },
+    {
+      "pattern": 1,
+      "sx": 312.0,
+      "sy": 251.5,
+      "ex": 131.5,
+      "ey": 308.5,
+      "start_region": 2,
+      "end_region": null
+    },
+    {
+      "pattern": 2,
+      "sx": 58.0,
+      "sy": 453.5,
+      "ex": 390.0,
+      "ey": 251.5,
+      "start_region": 1,
+      "end_region": 3
+    }
+  ],
+  "stop_area": [
+    [
+      0.0,
+      309.0,
+      93.0,
+      363.0
+    ],
+    [
+      11.0,
+      373.0,
+      220.0,
+      479.0
+    ],
+    [
+      295.8,
+      228.2,
+      351.55,
+      255.96
+    ],
+    [
+      354.9,
+      213.0,
+      431.5,
+      261.5
+    ]
+  ],
+  "source": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/caldot2-y05-patterns.parquet",
+  "source_sha256": "cce270e4cfefe86e3e3b1043695cade229b4b04ab46e4f46d29e8a63fb034d64",
+  "image_name": "caldot2_leap_patterns.png",
+  "resolution": [
+    720,
+    480
+  ]
+}

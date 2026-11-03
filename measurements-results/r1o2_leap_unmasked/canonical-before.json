@@ -1,0 +1,62 @@
+{
+  "display_name": "LEAP",
+  "selected_version": "LEAP2",
+  "version_id": "r1o2_leap_regions_v2",
+  "archived_original": "measurements-results/r1o2_leap_matched",
+  "datasets": {
+    "ams-y05": {
+      "param_id": 0,
+      "version": "LEAP2",
+      "frames": 54011,
+      "compute_s": 138.76739999999998,
+      "fps": 389.21965821943775,
+      "best_reconstruction": "linear",
+      "hota": {
+        "AssA": 0.5806475150539003,
+        "DetA": 0.5122825597243329,
+        "HOTA": 0.5433764552721264,
+        "LocA": 0.8913385247510949
+      },
+      "tracking_root": "measurements-results/r1o2_leap_regions_v2/tracks/ams-y05/linear",
+      "native_intervals": "measurements-results/r1o2_leap_regions_v2/raw/ams-y05/leap_rerun.jsonl.gz",
+      "source_comparison": "measurements-results/r1o2_leap_regions_v2/comparison/results.json",
+      "source_sha256": "a36e514d90b6fe3c87fb0167995a40f29e94dc4dc84a4785e80b03753c57bae7"
+    },
+    "caldot1-y05": {
+      "param_id": 0,
+      "version": "LEAP2",
+      "frames": 54000,
+      "compute_s": 101.46409999999996,
+      "fps": 532.207943499228,
+      "best_reconstruction": "linear",
+      "hota": {
+        "AssA": 0.8117565843502895,
+        "DetA": 0.28376274841859395,
+        "HOTA": 0.4786160314573553,
+        "LocA": 0.9043271949314033
+      },
+      "tracking_root": "measurements-results/r1o2_leap_regions_v2/tracks/caldot1-y05/linear",
+      "native_intervals": "measurements-results/r1o2_leap_regions_v2/raw/caldot1-y05/leap_rerun.jsonl.gz",
+      "source_comparison": "measurements-results/r1o2_leap_regions_v2/comparison/results.json",
+      "source_sha256": "a36e514d90b6fe3c87fb0167995a40f29e94dc4dc84a4785e80b03753c57bae7"
+    },
+    "caldot2-y05": {
+      "param_id": 0,
+      "version": "LEAP2",
+      "frames": 54000,
+      "compute_s": 90.15970000000003,
+      "fps": 598.9372191788568,
+      "best_reconstruction": "pattern",
+      "hota": {
+        "AssA": 0.22322181618957795,
+        "DetA": 0.09024840170956915,
+        "HOTA": 0.13269896793262856,
+        "LocA": 0.6055983740495655
+      },
+      "tracking_root": "measurements-results/r1o2_leap_regions_v2/tracks/caldot2-y05/pattern",
+      "native_intervals": "measurements-results/r1o2_leap_regions_v2/raw/caldot2-y05/leap_rerun.jsonl.gz",
+      "source_comparison": "measurements-results/r1o2_leap_regions_v2/comparison/results.json",
+      "source_sha256": "a36e514d90b6fe3c87fb0167995a40f29e94dc4dc84a4785e80b03753c57bae7"
+    }
+  }
+}

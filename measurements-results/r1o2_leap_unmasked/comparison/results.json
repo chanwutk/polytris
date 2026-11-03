@@ -1,0 +1,246 @@
+{
+  "baseline": "r1o2_leap_regions_v2",
+  "datasets": {
+    "CalDoT1": {
+      "change": {
+        "count_mape": 0.04500058050400202,
+        "fps_ratio": 0.664251601478237,
+        "hota": 0.04801569003603123,
+        "selection_f1": 0.02290000000000003,
+        "top10": 0.09999999999999998
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "frames": 54000,
+      "versions": {
+        "masked": {
+          "best_hota": 0.4786160314573553,
+          "best_reconstruction": "linear",
+          "ground_truth_count_sha256": "45a4e37b1a480cdf4b26c150a74afbeedd354c4f8c1f663b01339bc4434e7286",
+          "hota": {
+            "linear": {
+              "AssA": 0.8117565843502895,
+              "DetA": 0.28376274841859395,
+              "HOTA": 0.4786160314573553,
+              "LocA": 0.9043271949314033
+            },
+            "pattern": {
+              "AssA": 0.16269829572975159,
+              "DetA": 0.1391579095794527,
+              "HOTA": 0.14752880003262994,
+              "LocA": 0.6644447450206818
+            },
+            "raw": {
+              "AssA": 0.015513717347842605,
+              "DetA": 0.009033902548218347,
+              "HOTA": 0.011785071514813646,
+              "LocA": 0.8968322903822016
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.7148401664408378,
+              "mae": 1.3407777777777778,
+              "mape": 0.2851598335591622
+            },
+            "selection": {
+              "accuracy": 0.9075,
+              "f1": 0.9314,
+              "precision": 0.9526,
+              "recall": 0.9111
+            },
+            "topk": 0.8
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 101.46409999999996,
+            "contaminated": false,
+            "cpus": "0-9,40-49",
+            "decode_s": 128.92020000000002,
+            "fps": 532.207943499228,
+            "gpu": 0,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 230.38429999999997,
+            "names": 60
+          }
+        },
+        "unmasked": {
+          "best_hota": 0.5266317214933866,
+          "best_reconstruction": "linear",
+          "ground_truth_count_sha256": "45a4e37b1a480cdf4b26c150a74afbeedd354c4f8c1f663b01339bc4434e7286",
+          "hota": {
+            "linear": {
+              "AssA": 0.6784750453632682,
+              "DetA": 0.4155896872843459,
+              "HOTA": 0.5266317214933866,
+              "LocA": 0.8775563057567816
+            },
+            "pattern": {
+              "AssA": 0.13885887919739603,
+              "DetA": 0.1664041675191872,
+              "HOTA": 0.14861787429371917,
+              "LocA": 0.6648982627127444
+            },
+            "raw": {
+              "AssA": 0.015048510680172048,
+              "DetA": 0.014812596500630744,
+              "HOTA": 0.014854408463674803,
+              "LocA": 0.890995856760076
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.6698395859368358,
+              "mae": 0.9959814814814815,
+              "mape": 0.3301604140631642
+            },
+            "selection": {
+              "accuracy": 0.9361,
+              "f1": 0.9543,
+              "precision": 0.941,
+              "recall": 0.9679
+            },
+            "topk": 0.9
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 152.7495,
+            "contaminated": false,
+            "cpus": "0-9,40-49",
+            "decode_s": 124.2955,
+            "fps": 353.51997878880127,
+            "gpu": 0,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 277.04499999999996,
+            "names": 60
+          }
+        }
+      }
+    },
+    "CalDoT2": {
+      "change": {
+        "count_mape": 0.042373517172127007,
+        "fps_ratio": 0.81360115362819,
+        "hota": 0.006400422449752918,
+        "selection_f1": 0.05789999999999995,
+        "top10": 0.0
+      },
+      "clips": 60,
+      "dataset": "caldot2-y05",
+      "frames": 54000,
+      "versions": {
+        "masked": {
+          "best_hota": 0.13269896793262856,
+          "best_reconstruction": "pattern",
+          "ground_truth_count_sha256": "5d86fdf2955659269f4117429619df3f5b7f53168cbdd7c75a37f174c60dd50d",
+          "hota": {
+            "linear": {
+              "AssA": 0.1014189015110226,
+              "DetA": 0.03291171954491944,
+              "HOTA": 0.057668567966036456,
+              "LocA": 0.7135409351709789
+            },
+            "pattern": {
+              "AssA": 0.22322181618957795,
+              "DetA": 0.09024840170956915,
+              "HOTA": 0.13269896793262856,
+              "LocA": 0.6055983740495655
+            },
+            "raw": {
+              "AssA": 0.021348254415467182,
+              "DetA": 0.008977917955171272,
+              "HOTA": 0.013623853370017624,
+              "LocA": 0.8645586198435314
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.6225618807632666,
+              "mae": 0.9340925925925926,
+              "mape": 0.3774381192367334
+            },
+            "selection": {
+              "accuracy": 0.7886,
+              "f1": 0.8576,
+              "precision": 0.9864,
+              "recall": 0.7586
+            },
+            "topk": 0.9
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 90.15970000000003,
+            "contaminated": false,
+            "cpus": "10-19,50-59",
+            "decode_s": 82.4135,
+            "fps": 598.9372191788568,
+            "gpu": 2,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 172.57320000000004,
+            "names": 60
+          }
+        },
+        "unmasked": {
+          "best_hota": 0.13909939038238148,
+          "best_reconstruction": "linear",
+          "ground_truth_count_sha256": "5d86fdf2955659269f4117429619df3f5b7f53168cbdd7c75a37f174c60dd50d",
+          "hota": {
+            "linear": {
+              "AssA": 0.25296666985656935,
+              "DetA": 0.08549350394893702,
+              "HOTA": 0.13909939038238148,
+              "LocA": 0.7110459606548482
+            },
+            "pattern": {
+              "AssA": 0.21703080000658004,
+              "DetA": 0.09485915960156634,
+              "HOTA": 0.133598084995679,
+              "LocA": 0.6023786843887042
+            },
+            "raw": {
+              "AssA": 0.021741446694057438,
+              "DetA": 0.01465270397133927,
+              "HOTA": 0.017583522764493303,
+              "LocA": 0.8615278955017353
+            }
+          },
+          "native_queries": {
+            "aggregation": {
+              "acc": 0.5801883635911396,
+              "mae": 0.908962962962963,
+              "mape": 0.41981163640886043
+            },
+            "selection": {
+              "accuracy": 0.8617,
+              "f1": 0.9155,
+              "precision": 0.9392,
+              "recall": 0.893
+            },
+            "topk": 0.9
+          },
+          "timing": {
+            "clips": 60,
+            "compute_s": 110.81559999999999,
+            "contaminated": false,
+            "cpus": "10-19,50-59",
+            "decode_s": 80.1712,
+            "fps": 487.29601247477797,
+            "gpu": 2,
+            "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+            "inference_s": 190.9867999999999,
+            "names": 60
+          }
+        }
+      }
+    }
+  },
+  "method": {
+    "changed": "mask disabled only; reviewed stop_area and learned artifacts unchanged",
+    "evaluator_sha256": "9b560687fdbd22e071d3c6d9df34fd53eb50b4e08c1684d38252cf18d761536c",
+    "hota": "Unchanged TrackEval and root ground truth; raw, linear, assigned-pattern reconstructions.",
+    "numpy": "2.3.5",
+    "queries": "Original LEAP evaluator on pooled native intervals and shared ground-truth counts.",
+    "throughput": "Native inference_total - decode; one GPU per dataset."
+  },
+  "version": "r1o2_leap_unmasked"
+}

@@ -1,0 +1,36 @@
+{
+  "method": "CalDoT2 unmasked run; annotated entries and exits inside the clip; visibility at least one second; matches require IoU>=0.5. Follow-up is the next actual sampled frame after the first matched detection.",
+  "source_sha256": "4c3431288f908543b1b4a95f375cb6998d44557eac7382a3f60fad599aa15f9a",
+  "cohort": {
+    "eligible_vehicles": 1153,
+    "observed_vehicles": 985,
+    "observed_once": 403,
+    "observed_at_least_twice": 582
+  },
+  "first_followup": [
+    {
+      "outcome": "detected with different identity",
+      "vehicles": 242
+    },
+    {
+      "outcome": "detected with same identity",
+      "vehicles": 340
+    },
+    {
+      "outcome": "exited before next sample",
+      "vehicles": 360
+    },
+    {
+      "outcome": "no following sample",
+      "vehicles": 18
+    },
+    {
+      "outcome": "present but detection missed",
+      "vehicles": 25
+    }
+  ],
+  "first_two_detections": {
+    "pairs": 582,
+    "different_identity": 242
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "dataset": "B3D4",
+  "patterns": 11,
+  "eligible": 7,
+  "uncovered_endpoints": [
+    {
+      "pattern": 4,
+      "endpoint": "E",
+      "x": 522.5,
+      "y": 185.5,
+      "inside": false,
+      "label": "P4-E",
+      "label_x": 534.5,
+      "label_y": 173.5
+    },
+    {
+      "pattern": 7,
+      "endpoint": "E",
+      "x": 522.0,
+      "y": 592.0,
+      "inside": false,
+      "label": "P7-E",
+      "label_x": 534.0,
+      "label_y": 580.0
+    },
+    {
+      "pattern": 9,
+      "endpoint": "E",
+      "x": 782.0,
+      "y": 337.5,
+      "inside": false,
+      "label": "P9-E",
+      "label_x": 794.0,
+      "label_y": 325.5
+    },
+    {
+      "pattern": 10,
+      "endpoint": "E",
+      "x": 520.5,
+      "y": 321.5,
+      "inside": false,
+      "label": "P10-E",
+      "label_x": 532.5,
+      "label_y": 309.5
+    }
+  ],
+  "patterns_detail": [
+    {
+      "pattern": 0,
+      "sx": 525.0,
+      "sy": 16.5,
+      "ex": 675.0,
+      "ey": 698.0,
+      "start_region": 1,
+      "end_region": 3
+    },
+    {
+      "pattern": 1,
+      "sx": 558.5,
+      "sy": 17.0,
+      "ex": 988.0,
+      "ey": 325.5,
+      "start_region": 1,
+      "end_region": 2
+    },
+    {
+      "pattern": 2,
+      "sx": 1054.5,
+      "sy": 354.5,
+      "ex": 384.5,
+      "ey": 30.5,
+      "start_region": 2,
+      "end_region": 1
+    },
+    {
+      "pattern": 3,
+      "sx": 522.5,
+      "sy": 13.0,
+      "ex": 520.0,
+      "ey": 700.5,
+      "start_region": 1,
+      "end_region": 3
+    },
+    {
+      "pattern": 4,
+      "sx": 524.0,
+      "sy": 11.5,
+      "ex": 522.5,
+      "ey": 185.5,
+      "start_region": 1,
+      "end_region": null
+    },
+    {
+      "pattern": 5,
+      "sx": 757.5,
+      "sy": 102.5,
+      "ex": 638.5,
+      "ey": 28.0,
+      "start_region": 1,
+      "end_region": 1
+    },
+    {
+      "pattern": 6,
+      "sx": 525.0,
+      "sy": 15.5,
+      "ex": 519.0,
+      "ey": 704.5,
+      "start_region": 1,
+      "end_region": 3
+    },
+    {
+      "pattern": 7,
+      "sx": 417.0,
+      "sy": 84.5,
+      "ex": 522.0,
+      "ey": 592.0,
+      "start_region": 1,
+      "end_region": null
+    },
+    {
+      "pattern": 8,
+      "sx": 660.5,
+      "sy": 698.0,
+      "ex": 740.5,
+      "ey": 133.0,
+      "start_region": 3,
+      "end_region": 1
+    },
+    {
+      "pattern": 9,
+      "sx": 1055.5,
+      "sy": 355.0,
+      "ex": 782.0,
+      "ey": 337.5,
+      "start_region": 2,
+      "end_region": null
+    },
+    {
+      "pattern": 10,
+      "sx": 522.5,
+      "sy": 14.0,
+      "ex": 520.5,
+      "ey": 321.5,
+      "start_region": 1,
+      "end_region": null
+    }
+  ],
+  "stop_area": [
+    [
+      0,
+      230,
+      320,
+      430
+    ],
+    [
+      360,
+      0,
+      810,
+      150
+    ],
+    [
+      815,
+      230,
+      1080,
+      520
+    ],
+    [
+      300,
+      600,
+      800,
+      720
+    ]
+  ],
+  "source": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc7-patterns.parquet",
+  "source_sha256": "3bf6b7c04f200c1145e42e6c1fa04f71d8f812aec537a9ec0aabfb4c02f2c55d",
+  "image_name": "b3d4_leap_patterns.png",
+  "resolution": [
+    1080,
+    720
+  ]
+}

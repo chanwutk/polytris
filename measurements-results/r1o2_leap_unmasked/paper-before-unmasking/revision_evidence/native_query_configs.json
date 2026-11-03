@@ -1,0 +1,5379 @@
+{
+  "records": [
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 532.207943499228,
+      "presence": 0.9314,
+      "count": 0.2851598335591622,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 0",
+      "fps": 30.020013342228154,
+      "presence": 0.9827,
+      "count": 0.05765615438511951,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 1",
+      "fps": 29.8943732146416,
+      "presence": 0.9827,
+      "count": 0.05768701858265046,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 2",
+      "fps": 58.727569331158236,
+      "presence": 0.9817,
+      "count": 0.05879134519508489,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 3",
+      "fps": 115.07479861910242,
+      "presence": 0.9793,
+      "count": 0.062467025435260726,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 4",
+      "fps": 235.10971786833855,
+      "presence": 0.9727,
+      "count": 0.08416452959701048,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 5",
+      "fps": 421.7432052483599,
+      "presence": 0.9681,
+      "count": 0.09976219394693031,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 6",
+      "fps": 600.8010680907878,
+      "presence": 0.9596,
+      "count": 0.1150524720863465,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 7",
+      "fps": 1204.8192771084337,
+      "presence": 0.9486,
+      "count": 0.1618986189440007,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 8",
+      "fps": 1492.5373134328358,
+      "presence": 0.9448,
+      "count": 0.1881322259474819,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "otif",
+      "config": "param 9",
+      "fps": 2017.9372197309415,
+      "presence": 0.9415,
+      "count": 0.21236048890770376,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "reference",
+      "config": "naive",
+      "fps": 30.93095505912012,
+      "presence": 0.9868,
+      "count": 0.04632782888222153,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+      "fps": 4409.935817633333,
+      "presence": 0.7127,
+      "count": 0.4079679053969256,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
+      "fps": 2811.917294614788,
+      "presence": 0.732,
+      "count": 0.39175920397391817,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+      "fps": 4830.280449510638,
+      "presence": 0.7025,
+      "count": 0.4155862243290782,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
+      "fps": 2964.854919905327,
+      "presence": 0.7213,
+      "count": 0.3986369789570394,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+      "fps": 4968.380886558944,
+      "presence": 0.6946,
+      "count": 0.4212386358093504,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+      "fps": 700.4950864972536,
+      "presence": 0.8974,
+      "count": 0.20917361844012905,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+      "fps": 760.8103462523839,
+      "presence": 0.8837,
+      "count": 0.23234142039455896,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+      "fps": 781.6514629474196,
+      "presence": 0.8705,
+      "count": 0.2514455796979559,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
+      "fps": 698.8475123332847,
+      "presence": 0.8972,
+      "count": 0.20966346493057764,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+      "fps": 408.609470805599,
+      "presence": 0.9611,
+      "count": 0.10179581665654591,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+      "fps": 587.8010269979641,
+      "presence": 0.9462,
+      "count": 0.13264327291832645,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_bl_s100_sortcython",
+      "fps": 458.31105053591017,
+      "presence": 0.959,
+      "count": 0.10900770880390442,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+      "fps": 632.3515730112217,
+      "presence": 0.9396,
+      "count": 0.14582136958063763,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r075_bl_s100_sortcython",
+      "fps": 481.8811881489132,
+      "presence": 0.9547,
+      "count": 0.11640634384062032,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
+      "fps": 667.0120774918919,
+      "presence": 0.932,
+      "count": 0.15962984108283285,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_bl_s100_bytetrackcython",
+      "fps": 193.00109652011412,
+      "presence": 0.982,
+      "count": 0.05737188057117615,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+      "fps": 357.73870013842185,
+      "presence": 0.9652,
+      "count": 0.09358268170453443,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+      "fps": 120.74743026186265,
+      "presence": 0.9845,
+      "count": 0.05062082825796799,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+      "fps": 187.4916797197625,
+      "presence": 0.9825,
+      "count": 0.05869024596657091,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_bl_s100_bytetrackcython",
+      "fps": 208.242539757664,
+      "presence": 0.9772,
+      "count": 0.06468793123448358,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+      "fps": 378.1421060988955,
+      "presence": 0.9598,
+      "count": 0.10571433381503437,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "fps": 130.73322570479846,
+      "presence": 0.9796,
+      "count": 0.05658209124758584,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+      "fps": 222.66575778640663,
+      "presence": 0.9698,
+      "count": 0.08030992346852928,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+      "fps": 402.26678599722896,
+      "presence": 0.9548,
+      "count": 0.11924262150243181,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+      "fps": 405.4801363451157,
+      "presence": 0.9623,
+      "count": 0.10155843832931266,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+      "fps": 142.32943970665764,
+      "presence": 0.9786,
+      "count": 0.0591981542321427,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r025_bl_s100_bytetrackcython",
+      "fps": 367.022596867966,
+      "presence": 0.9769,
+      "count": 0.08241021832115492,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r025_square_s100_bytetrackcython",
+      "fps": 233.7588744489904,
+      "presence": 0.9819,
+      "count": 0.06992851503259989,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r050_bl_s100_bytetrackcython",
+      "fps": 388.058268911264,
+      "presence": 0.971,
+      "count": 0.09117034504648902,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+      "fps": 256.738836426707,
+      "presence": 0.9818,
+      "count": 0.06890908627387726,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r075_square_s100_bytetrackcython",
+      "fps": 273.7046123084312,
+      "presence": 0.9723,
+      "count": 0.08572100091980117,
+      "topk": 0.7
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r050_bl_s100_sortcython",
+      "fps": 840.4866615044168,
+      "presence": 0.9405,
+      "count": 0.14291735583599363,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r075_bl_s100_sortcython",
+      "fps": 873.0450976499521,
+      "presence": 0.9309,
+      "count": 0.15959002134636102,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+      "fps": 729.3215749046271,
+      "presence": 0.9615,
+      "count": 0.10256579271217448,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "fps": 1254.7841752667723,
+      "presence": 0.9453,
+      "count": 0.13495409206468323,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+      "fps": 464.6230627873568,
+      "presence": 0.9662,
+      "count": 0.08902723904242504,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_bl_s100_sortcython",
+      "fps": 765.5571072706992,
+      "presence": 0.9551,
+      "count": 0.11270603296918369,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+      "fps": 1349.0438947816513,
+      "presence": 0.9349,
+      "count": 0.15163105969064838,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+      "fps": 507.4960873511855,
+      "presence": 0.9615,
+      "count": 0.09505827882459139,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r075_bl_s100_sortcython",
+      "fps": 820.5119560726959,
+      "presence": 0.9438,
+      "count": 0.1305367336724017,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r075_square_s100_sortcython",
+      "fps": 546.6278128528401,
+      "presence": 0.9546,
+      "count": 0.10677091365214775,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
+      "fps": 2647.4630426043127,
+      "presence": 0.7826,
+      "count": 0.34766838260152944,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
+      "fps": 2761.297040147503,
+      "presence": 0.7612,
+      "count": 0.3628702951527928,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
+      "fps": 2547.1615253557115,
+      "presence": 0.7826,
+      "count": 0.34766838260152944,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+      "fps": 2224.11461803424,
+      "presence": 0.8853,
+      "count": 0.24133574913886624,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r050_bl_s100_sortcython",
+      "fps": 1412.4379545948425,
+      "presence": 0.9062,
+      "count": 0.20728585795977184,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
+      "fps": 2263.655616628157,
+      "presence": 0.8764,
+      "count": 0.2521450028219495,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_bl_s100_sortcython",
+      "fps": 1395.8472169541974,
+      "presence": 0.9159,
+      "count": 0.19670508654273278,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "fps": 2355.524096124178,
+      "presence": 0.8853,
+      "count": 0.24095474871752542,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+      "fps": 912.6371728528468,
+      "presence": 0.9257,
+      "count": 0.17750775529890161,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_bl_s100_sortcython",
+      "fps": 1479.227584304065,
+      "presence": 0.9062,
+      "count": 0.2075275510902268,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+      "fps": 2486.877791179756,
+      "presence": 0.8733,
+      "count": 0.2551782895885498,
+      "topk": 1.0
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
+      "fps": 986.459273903732,
+      "presence": 0.9181,
+      "count": 0.1872888260761486,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
+      "fps": 1560.0932018570545,
+      "presence": 0.8904,
+      "count": 0.22719472211670144,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+      "fps": 2614.4968878380555,
+      "presence": 0.8556,
+      "count": 0.2745478430239996,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 598.9372191788568,
+      "presence": 0.8576,
+      "count": 0.3774381192367334,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 0",
+      "fps": 28.873917228103945,
+      "presence": 0.9761,
+      "count": 0.1683968311009898,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 1",
+      "fps": 56.95121179522876,
+      "presence": 0.9761,
+      "count": 0.16022320066763496,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 2",
+      "fps": 104.69986040018614,
+      "presence": 0.9716,
+      "count": 0.17494442877082228,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 3",
+      "fps": 215.31100478468898,
+      "presence": 0.9684,
+      "count": 0.1814305637264092,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 4",
+      "fps": 398.58281665190435,
+      "presence": 0.9574,
+      "count": 0.21834960954684168,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 5",
+      "fps": 478.4688995215311,
+      "presence": 0.9745,
+      "count": 0.15394851804574428,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 6",
+      "fps": 566.7506297229219,
+      "presence": 0.9744,
+      "count": 0.1543523417940127,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 7",
+      "fps": 789.4736842105264,
+      "presence": 0.9489,
+      "count": 0.2307116405713796,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 8",
+      "fps": 1282.0512820512822,
+      "presence": 0.8499,
+      "count": 0.4014637114942703,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "otif",
+      "config": "param 9",
+      "fps": 1449.2753623188407,
+      "presence": 0.786,
+      "count": 0.5047927410552452,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "reference",
+      "config": "naive",
+      "fps": 30.8622484710686,
+      "presence": 0.9773,
+      "count": 0.11875340066310736,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r025_none_s100_sortcython",
+      "fps": 4544.909875724819,
+      "presence": 0.524,
+      "count": 0.7164550844731312,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r025_none_s100_sortcython",
+      "fps": 4577.897586613812,
+      "presence": 0.524,
+      "count": 0.7164550844731312,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r025_none_s100_sortcython",
+      "fps": 4586.49780553538,
+      "presence": 0.524,
+      "count": 0.7164550844731312,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+      "fps": 5169.854873172091,
+      "presence": 0.5201,
+      "count": 0.7169078703703629,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+      "fps": 5629.783403104092,
+      "presence": 0.4479,
+      "count": 0.7432526482262544,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+      "fps": 6054.361644147441,
+      "presence": 0.4075,
+      "count": 0.7526174640174603,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+      "fps": 563.5021713369891,
+      "presence": 0.9465,
+      "count": 0.21129226473115637,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+      "fps": 603.0577521707244,
+      "presence": 0.9385,
+      "count": 0.22620730231703257,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+      "fps": 640.2012352597408,
+      "presence": 0.9268,
+      "count": 0.25175503195365534,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
+      "fps": 258.246897373859,
+      "presence": 0.9692,
+      "count": 0.15977358824302523,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
+      "fps": 492.8248012754396,
+      "presence": 0.9447,
+      "count": 0.22131603648409903,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+      "fps": 566.4777827104875,
+      "presence": 0.9548,
+      "count": 0.1964356414162015,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
+      "fps": 292.19043330133803,
+      "presence": 0.9653,
+      "count": 0.15534402382596202,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
+      "fps": 525.8205919565085,
+      "presence": 0.9366,
+      "count": 0.2399129256546061,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
+      "fps": 607.1013620253159,
+      "presence": 0.9443,
+      "count": 0.2075552815497318,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+      "fps": 321.5401284465076,
+      "presence": 0.9665,
+      "count": 0.14766966562243466,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+      "fps": 245.6219830035432,
+      "presence": 0.9735,
+      "count": 0.1486650011511056,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
+      "fps": 475.280927377154,
+      "presence": 0.9459,
+      "count": 0.21631736473404228,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
+      "fps": 272.53812834587507,
+      "presence": 0.9658,
+      "count": 0.1537106544689768,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r075_none_s100_bytetrackcython",
+      "fps": 512.9800530483944,
+      "presence": 0.9408,
+      "count": 0.23073872526651706,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r075_tr_s100_bytetrackcython",
+      "fps": 299.16088509166764,
+      "presence": 0.9677,
+      "count": 0.14560106524132865,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+      "fps": 398.442058836427,
+      "presence": 0.9537,
+      "count": 0.21342746507607468,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+      "fps": 123.0971595288142,
+      "presence": 0.9784,
+      "count": 0.1317834394514822,
+      "topk": 0.8
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+      "fps": 203.9892240523238,
+      "presence": 0.9725,
+      "count": 0.1620753001627907,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+      "fps": 455.3616387168862,
+      "presence": 0.9503,
+      "count": 0.20196852607269522,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "fps": 144.71047122670748,
+      "presence": 0.9708,
+      "count": 0.13623889479860263,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+      "fps": 238.84861207196047,
+      "presence": 0.9664,
+      "count": 0.1577893406490566,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+      "fps": 278.84233166928016,
+      "presence": 0.9611,
+      "count": 0.16844190685857174,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+      "fps": 501.2879340426702,
+      "presence": 0.9456,
+      "count": 0.20608420776754333,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+      "fps": 503.1564282748116,
+      "presence": 0.9588,
+      "count": 0.16563549804104827,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+      "fps": 264.22263500717474,
+      "presence": 0.9643,
+      "count": 0.1445972467861253,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_040_r025_none_s100_sortcython",
+      "fps": 907.8841133030548,
+      "presence": 0.9386,
+      "count": 0.23497812403646812,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
+      "fps": 799.4853730845593,
+      "presence": 0.9534,
+      "count": 0.2093535710174551,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r050_tr_s100_sortcython",
+      "fps": 1011.6836176023688,
+      "presence": 0.942,
+      "count": 0.22331809964727667,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
+      "fps": 1521.9557079024405,
+      "presence": 0.9336,
+      "count": 0.2739394637255895,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "fps": 1702.1601262140446,
+      "presence": 0.9279,
+      "count": 0.2794697010294346,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r075_tr_s100_sortcython",
+      "fps": 1039.2527614379158,
+      "presence": 0.9398,
+      "count": 0.21709058369614254,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+      "fps": 793.1326914793398,
+      "presence": 0.9615,
+      "count": 0.2071023506329106,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r075_tr_s100_sortcython",
+      "fps": 1022.8341857442044,
+      "presence": 0.9393,
+      "count": 0.21771050646884293,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+      "fps": 840.8689691020345,
+      "presence": 0.953,
+      "count": 0.23620669484836943,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "fps": 1571.8839045367638,
+      "presence": 0.9354,
+      "count": 0.27663069451126343,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+      "fps": 824.2929980885491,
+      "presence": 0.9621,
+      "count": 0.20500696623336234,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+      "fps": 1801.3843891177278,
+      "presence": 0.9282,
+      "count": 0.28020499053416736,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_tr_s100_sortcython",
+      "fps": 936.7241847604092,
+      "presence": 0.9558,
+      "count": 0.20344858336109384,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r075_none_s100_sortcython",
+      "fps": 2009.2582087836968,
+      "presence": 0.9148,
+      "count": 0.2995766483002633,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r075_tr_s100_sortcython",
+      "fps": 1058.2629483340477,
+      "presence": 0.9391,
+      "count": 0.21905687512077032,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
+      "fps": 2749.9474959772897,
+      "presence": 0.7997,
+      "count": 0.5039499301624284,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "fps": 2877.669312674649,
+      "presence": 0.8099,
+      "count": 0.4997170219184135,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+      "fps": 3183.6011378886888,
+      "presence": 0.7709,
+      "count": 0.5282807929210739,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+      "fps": 3431.967060787498,
+      "presence": 0.7383,
+      "count": 0.5623234400887118,
+      "topk": 0.9
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r075_tr_s100_sortcython",
+      "fps": 1971.57373325113,
+      "presence": 0.8145,
+      "count": 0.4731347176999934,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 389.21965821943775,
+      "presence": 0.9816,
+      "count": 0.5926976441894718,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 0",
+      "fps": 28.894630973015772,
+      "presence": 0.9894,
+      "count": 0.22521862830412742,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 1",
+      "fps": 57.781843079358964,
+      "presence": 0.988,
+      "count": 0.22071713492814715,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 2",
+      "fps": 60.277442971295926,
+      "presence": 0.9887,
+      "count": 0.2150296985358482,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 3",
+      "fps": 121.95953574493068,
+      "presence": 0.9875,
+      "count": 0.2132684391451245,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 4",
+      "fps": 241.14206625591572,
+      "presence": 0.9834,
+      "count": 0.21990780537652377,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 5",
+      "fps": 491.63480793737483,
+      "presence": 0.9786,
+      "count": 0.23336445574140208,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 6",
+      "fps": 963.7937187723054,
+      "presence": 0.9661,
+      "count": 0.28571034030987097,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 7",
+      "fps": 1034.6934865900382,
+      "presence": 0.9654,
+      "count": 0.29378019116035614,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 8",
+      "fps": 846.0369674185463,
+      "presence": 0.9424,
+      "count": 0.32164517192706477,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "otif",
+      "config": "param 9",
+      "fps": 908.3585603767239,
+      "presence": 0.9422,
+      "count": 0.3199437915792108,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "reference",
+      "config": "naive",
+      "fps": 15.261813771643736,
+      "presence": 0.9924,
+      "count": 0.17156412582625957,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r025_none_s100_bytetrackcython",
+      "fps": 2344.549510437016,
+      "presence": 0.9511,
+      "count": 0.3235016500165968,
+      "topk": 0.4
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r025_square_s100_sortcython",
+      "fps": 1091.420937063626,
+      "presence": 0.9624,
+      "count": 0.24874338501885573,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r025_tr_s100_sortcython",
+      "fps": 1543.9720205142764,
+      "presence": 0.9574,
+      "count": 0.25429985161751967,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r075_none_s100_bytetrackcython",
+      "fps": 2618.166298880072,
+      "presence": 0.95,
+      "count": 0.3170425601134115,
+      "topk": 0.6
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r075_tr_s100_sortcython",
+      "fps": 1775.3411149991855,
+      "presence": 0.953,
+      "count": 0.26372307904354364,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r025_none_s100_bytetrackcython",
+      "fps": 2384.762158661419,
+      "presence": 0.9511,
+      "count": 0.3235016500165968,
+      "topk": 0.4
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r025_square_s100_sortcython",
+      "fps": 1097.870394877445,
+      "presence": 0.9624,
+      "count": 0.24874338501885573,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r025_tr_s100_sortcython",
+      "fps": 1511.5979993335957,
+      "presence": 0.9574,
+      "count": 0.25429985161751967,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r050_square_s100_sortcython",
+      "fps": 1214.5731999501304,
+      "presence": 0.9584,
+      "count": 0.2580271199899463,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r075_bl_s100_bytetrackcython",
+      "fps": 1946.0513246459432,
+      "presence": 0.9635,
+      "count": 0.2745367345805019,
+      "topk": 0.5
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r075_none_s100_bytetrackcython",
+      "fps": 2683.2538017686798,
+      "presence": 0.95,
+      "count": 0.3170425601134115,
+      "topk": 0.6
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r025_none_s100_bytetrackcython",
+      "fps": 2416.995154473622,
+      "presence": 0.9511,
+      "count": 0.3235016500165968,
+      "topk": 0.4
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r025_square_s100_sortcython",
+      "fps": 1116.0728538438796,
+      "presence": 0.9624,
+      "count": 0.24874338501885573,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r025_tr_s100_sortcython",
+      "fps": 1527.6538810589568,
+      "presence": 0.9574,
+      "count": 0.25429985161751967,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r050_square_s100_sortcython",
+      "fps": 1255.0745659905458,
+      "presence": 0.9584,
+      "count": 0.2580271199899463,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
+      "fps": 2522.706590543679,
+      "presence": 0.95,
+      "count": 0.3170425601134115,
+      "topk": 0.6
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r075_tr_s100_sortcython",
+      "fps": 1851.740827551756,
+      "presence": 0.953,
+      "count": 0.26372307904354364,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r025_square_s100_sortcython",
+      "fps": 1105.497568974338,
+      "presence": 0.9631,
+      "count": 0.24737210350741634,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r025_tr_s100_sortcython",
+      "fps": 1561.8299252084091,
+      "presence": 0.9584,
+      "count": 0.2521187556444122,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
+      "fps": 1796.545965461734,
+      "presence": 0.9466,
+      "count": 0.27317679702517816,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r050_none_s100_bytetrackcython",
+      "fps": 2689.0815856831687,
+      "presence": 0.9625,
+      "count": 0.2962753618971673,
+      "topk": 0.6
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r050_tr_s100_sortcython",
+      "fps": 1704.4948645160416,
+      "presence": 0.9591,
+      "count": 0.2514141666615036,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
+      "fps": 1964.1424698768576,
+      "presence": 0.9418,
+      "count": 0.28873629651573807,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
+      "fps": 2840.253768763739,
+      "presence": 0.9554,
+      "count": 0.3041325723478273,
+      "topk": 0.7
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+      "fps": 2841.011122780016,
+      "presence": 0.8831,
+      "count": 0.4040850585110206,
+      "topk": 0.8
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
+      "fps": 1391.9090347607282,
+      "presence": 0.9579,
+      "count": 0.253744085934261,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_tr_s100_sortcython",
+      "fps": 1861.254984902216,
+      "presence": 0.9532,
+      "count": 0.26208148222596395,
+      "topk": 0.8
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython",
+      "fps": 305.0009740403884,
+      "presence": 0.969,
+      "count": 0.25002723578061425,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+      "fps": 311.96775192841096,
+      "presence": 0.9437,
+      "count": 0.26337197478586005,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_square_s100_sortcython",
+      "fps": 214.16592081272637,
+      "presence": 0.9807,
+      "count": 0.19783548648087856,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+      "fps": 256.188121949012,
+      "presence": 0.9784,
+      "count": 0.19166110489547816,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython",
+      "fps": 318.1387553085702,
+      "presence": 0.9747,
+      "count": 0.23595364759618542,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+      "fps": 322.7349583327264,
+      "presence": 0.941,
+      "count": 0.27329013372643407,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_square_s100_sortcython",
+      "fps": 230.1915274580789,
+      "presence": 0.9807,
+      "count": 0.19577071748760577,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+      "fps": 273.2718999874168,
+      "presence": 0.9773,
+      "count": 0.18508504146570504,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_bl_s100_sortcython",
+      "fps": 289.9084750661932,
+      "presence": 0.9723,
+      "count": 0.1965025789867212,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_none_s100_bytetrackcython",
+      "fps": 329.7803721042757,
+      "presence": 0.9578,
+      "count": 0.2701393866563916,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+      "fps": 331.8680938691716,
+      "presence": 0.9275,
+      "count": 0.2975034186157989,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_square_s100_sortcython",
+      "fps": 248.9547847922066,
+      "presence": 0.9818,
+      "count": 0.18299004641326333,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_tr_s100_sortcython",
+      "fps": 286.9151493407409,
+      "presence": 0.9773,
+      "count": 0.1875365702989188,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_none_s100_bytetrackcython",
+      "fps": 298.0098089866493,
+      "presence": 0.9748,
+      "count": 0.2382982831539625,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_square_s100_sortcython",
+      "fps": 198.8189434300392,
+      "presence": 0.9832,
+      "count": 0.19880186076148143,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
+      "fps": 311.02873164729067,
+      "presence": 0.9753,
+      "count": 0.23990022020795354,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_square_s100_sortcython",
+      "fps": 223.07041353398057,
+      "presence": 0.9827,
+      "count": 0.19675908905094042,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
+      "fps": 323.06836738699445,
+      "presence": 0.9676,
+      "count": 0.25775508545732306,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+      "fps": 290.22957784180727,
+      "presence": 0.9482,
+      "count": 0.26866438582616203,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_square_s100_sortcython",
+      "fps": 184.6156709046884,
+      "presence": 0.9843,
+      "count": 0.2051960461904936,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+      "fps": 189.4895712038445,
+      "presence": 0.9879,
+      "count": 0.18443021453891972,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_none_s100_sortcython",
+      "fps": 190.12574421047344,
+      "presence": 0.9837,
+      "count": 0.212838169649742,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+      "fps": 75.00284080870877,
+      "presence": 0.9919,
+      "count": 0.1814193566684067,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+      "fps": 109.22911397909924,
+      "presence": 0.9946,
+      "count": 0.15819730871991133,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+      "fps": 207.96018176562623,
+      "presence": 0.9876,
+      "count": 0.17631567849350072,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+      "fps": 208.1979573032756,
+      "presence": 0.9804,
+      "count": 0.20380123919496151,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "fps": 84.35455327776666,
+      "presence": 0.9917,
+      "count": 0.16927122870035716,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+      "fps": 125.11102378304658,
+      "presence": 0.9942,
+      "count": 0.15432489795584559,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+      "fps": 142.35804213348084,
+      "presence": 0.9903,
+      "count": 0.15437989116269524,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+      "fps": 221.6331970425448,
+      "presence": 0.9826,
+      "count": 0.18776512456460204,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+      "fps": 222.4071484445681,
+      "presence": 0.9806,
+      "count": 0.20090229268408122,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+      "fps": 95.11428847186929,
+      "presence": 0.9913,
+      "count": 0.16500190437400875,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+      "fps": 132.68977329109066,
+      "presence": 0.9906,
+      "count": 0.15966673308466883,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+      "fps": 169.7200057363351,
+      "presence": 0.9911,
+      "count": 0.17981916088230465,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+      "fps": 297.52115019545005,
+      "presence": 0.9881,
+      "count": 0.2060581795066554,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+      "fps": 335.51417262849145,
+      "presence": 0.9878,
+      "count": 0.19707505937211134,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r025_square_s100_sortcython",
+      "fps": 734.1416867528491,
+      "presence": 0.9764,
+      "count": 0.20179282997322656,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r025_tr_s100_sortcython",
+      "fps": 1002.0714329776516,
+      "presence": 0.9779,
+      "count": 0.19465123653532956,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r025_tr_s100_sortcython",
+      "fps": 940.8615726832816,
+      "presence": 0.9785,
+      "count": 0.1933154416222952,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
+      "fps": 1055.5380694575747,
+      "presence": 0.9729,
+      "count": 0.19557801717641643,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r075_square_s100_sortcython",
+      "fps": 888.6762789873558,
+      "presence": 0.973,
+      "count": 0.20133969623473846,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r025_square_s100_sortcython",
+      "fps": 647.3816682781883,
+      "presence": 0.9775,
+      "count": 0.20215519736869292,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r050_square_s100_sortcython",
+      "fps": 749.2238980251789,
+      "presence": 0.9776,
+      "count": 0.19743559733426264,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+      "fps": 1049.5275719502338,
+      "presence": 0.973,
+      "count": 0.1932571201692559,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+      "fps": 580.867283269078,
+      "presence": 0.9832,
+      "count": 0.19864250903624403,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_tr_s100_sortcython",
+      "fps": 824.3164332491374,
+      "presence": 0.9823,
+      "count": 0.18635477105930898,
+      "topk": 1.0
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
+      "fps": 649.251985035592,
+      "presence": 0.9812,
+      "count": 0.19648923661349404,
+      "topk": 0.9
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_tr_s100_sortcython",
+      "fps": 893.1932313081572,
+      "presence": 0.979,
+      "count": 0.18280536915908918,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 265.3443058346128,
+      "presence": 1.0,
+      "count": 0.4437800385881573,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "otif",
+      "config": "param 0",
+      "fps": 26.386843397152678,
+      "presence": 1.0,
+      "count": 0.10285900345429211,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "otif",
+      "config": "param 1",
+      "fps": 47.93970745629682,
+      "presence": 0.999,
+      "count": 0.12638138245872077,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "otif",
+      "config": "param 2",
+      "fps": 101.59720253284189,
+      "presence": 0.999,
+      "count": 0.22835626785504848,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "otif",
+      "config": "param 3",
+      "fps": 222.52121713930862,
+      "presence": 0.999,
+      "count": 0.38314515693946527,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "otif",
+      "config": "param 4",
+      "fps": 461.968199398367,
+      "presence": 0.9916,
+      "count": 0.5337592401224132,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "otif",
+      "config": "param 5",
+      "fps": 1115.1452282157675,
+      "presence": 0.9762,
+      "count": 0.6487889039466481,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "otif",
+      "config": "param 6",
+      "fps": 1643.730886850153,
+      "presence": 0.0004,
+      "count": 1.0,
+      "topk": 0.1
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "otif",
+      "config": "param 7",
+      "fps": 1537.9113018597998,
+      "presence": 0.0004,
+      "count": 1.0,
+      "topk": 0.1
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.7533442052176,
+      "presence": 1.0,
+      "count": 0.1275922806101666,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r075_none_s100_bytetrackcython",
+      "fps": 1065.7395105662488,
+      "presence": 0.9563,
+      "count": 0.7529899205210998,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
+      "fps": 1092.206119077449,
+      "presence": 0.9563,
+      "count": 0.7529899205210998,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+      "fps": 880.6078402016758,
+      "presence": 0.9865,
+      "count": 0.7093383797780606,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+      "fps": 1012.6206868066694,
+      "presence": 0.9806,
+      "count": 0.7415398285006597,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+      "fps": 1135.3848442007136,
+      "presence": 0.9564,
+      "count": 0.8015622970876202,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_bl_s100_sortcython",
+      "fps": 66.30951276449939,
+      "presence": 1.0,
+      "count": 0.13594560376212927,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+      "fps": 111.83639974025964,
+      "presence": 1.0,
+      "count": 0.15349440215674814,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_bl_s100_sortcython",
+      "fps": 76.31083151890104,
+      "presence": 1.0,
+      "count": 0.1483467343502407,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+      "fps": 134.24839133123822,
+      "presence": 1.0,
+      "count": 0.1781113841469507,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_square_s100_sortcython",
+      "fps": 52.17348734971849,
+      "presence": 1.0,
+      "count": 0.12813326126336066,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+      "fps": 77.81681825847132,
+      "presence": 1.0,
+      "count": 0.14774199942367994,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+      "fps": 152.288723927371,
+      "presence": 1.0,
+      "count": 0.20623384439393444,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_bl_s100_sortcython",
+      "fps": 59.903425778994965,
+      "presence": 1.0,
+      "count": 0.12720940443933304,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
+      "fps": 107.23336460542887,
+      "presence": 1.0,
+      "count": 0.1408294977751462,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
+      "fps": 49.11639259772709,
+      "presence": 1.0,
+      "count": 0.16069094165012754,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_tr_s100_sortcython",
+      "fps": 59.06290237331608,
+      "presence": 1.0,
+      "count": 0.12100633719263598,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_bl_s100_sortcython",
+      "fps": 70.77701741153383,
+      "presence": 1.0,
+      "count": 0.13711102068189884,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+      "fps": 126.84121954092952,
+      "presence": 1.0,
+      "count": 0.1687085025376882,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_square_s100_bytetrackcython",
+      "fps": 39.00390884481696,
+      "presence": 1.0,
+      "count": 0.15948635843070103,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+      "fps": 54.39216652632581,
+      "presence": 1.0,
+      "count": 0.12496702578486829,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython",
+      "fps": 81.52230059684908,
+      "presence": 1.0,
+      "count": 0.16558118676128586,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+      "fps": 100.25340420699858,
+      "presence": 1.0,
+      "count": 0.13662247627437019,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+      "fps": 30.081969623266875,
+      "presence": 1.0,
+      "count": 0.1487917611486118,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+      "fps": 45.408465887778085,
+      "presence": 1.0,
+      "count": 0.15664078545037607,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+      "fps": 56.292884778007846,
+      "presence": 1.0,
+      "count": 0.11542425041196702,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+      "fps": 116.3706618982954,
+      "presence": 1.0,
+      "count": 0.1592769069362514,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_square_s100_bytetrackcython",
+      "fps": 34.82927223692516,
+      "presence": 1.0,
+      "count": 0.1537495516137607,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r075_square_s100_bytetrackcython",
+      "fps": 39.630667678252976,
+      "presence": 1.0,
+      "count": 0.16060847868597128,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+      "fps": 60.63832312385328,
+      "presence": 1.0,
+      "count": 0.1442275355905408,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+      "fps": 17.721862511048965,
+      "presence": 1.0,
+      "count": 0.12332759607224919,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+      "fps": 27.51413928197689,
+      "presence": 1.0,
+      "count": 0.12807597732856546,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+      "fps": 68.75506534190538,
+      "presence": 1.0,
+      "count": 0.16174439718234668,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+      "fps": 68.80764667978508,
+      "presence": 1.0,
+      "count": 0.1400297415896926,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "fps": 20.505021371543865,
+      "presence": 1.0,
+      "count": 0.1323093705842805,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+      "fps": 32.19041406607399,
+      "presence": 1.0,
+      "count": 0.13516306630138875,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+      "fps": 76.76251258068754,
+      "presence": 1.0,
+      "count": 0.1673238455028463,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+      "fps": 21.969539323537983,
+      "presence": 1.0,
+      "count": 0.1367015592429386,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+      "fps": 36.6273037057598,
+      "presence": 1.0,
+      "count": 0.15257902746281282,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r025_square_s100_bytetrackcython",
+      "fps": 36.09300825264437,
+      "presence": 1.0,
+      "count": 0.1456323556023683,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r025_square_s100_sortcython",
+      "fps": 36.05619973203444,
+      "presence": 1.0,
+      "count": 0.10767179918291014,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r050_square_s100_sortcython",
+      "fps": 41.203387451457445,
+      "presence": 1.0,
+      "count": 0.11564740563103904,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r025_bl_s100_sortcython",
+      "fps": 130.64265729571915,
+      "presence": 1.0,
+      "count": 0.16320979478618036,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+      "fps": 263.7634673027583,
+      "presence": 1.0,
+      "count": 0.18970561162558885,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r050_bl_s100_sortcython",
+      "fps": 157.65700438473658,
+      "presence": 1.0,
+      "count": 0.1855695423467396,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "fps": 307.6977283009617,
+      "presence": 1.0,
+      "count": 0.2164369722982724,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r050_square_s100_sortcython",
+      "fps": 102.31554661005774,
+      "presence": 1.0,
+      "count": 0.15775933171826018,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r075_none_s100_sortcython",
+      "fps": 347.8330042579556,
+      "presence": 1.0,
+      "count": 0.26391450446603226,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r025_bl_s100_sortcython",
+      "fps": 127.49527604331266,
+      "presence": 1.0,
+      "count": 0.15864148145376467,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "fps": 297.8434078844806,
+      "presence": 1.0,
+      "count": 0.20980775256959305,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r050_square_s100_sortcython",
+      "fps": 98.6532602847697,
+      "presence": 1.0,
+      "count": 0.1535625477276954,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_bl_s100_sortcython",
+      "fps": 124.3200217606624,
+      "presence": 1.0,
+      "count": 0.15576783742513178,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+      "fps": 243.3703868931873,
+      "presence": 1.0,
+      "count": 0.17752655673095163,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r050_bl_s100_sortcython",
+      "fps": 144.77679677457104,
+      "presence": 1.0,
+      "count": 0.1731192048367769,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r050_square_s100_sortcython",
+      "fps": 91.39452360599348,
+      "presence": 1.0,
+      "count": 0.151342082460051,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r050_tr_s100_sortcython",
+      "fps": 142.88374455260933,
+      "presence": 1.0,
+      "count": 0.16902477516560155,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r075_none_s100_sortcython",
+      "fps": 323.29533394952574,
+      "presence": 1.0,
+      "count": 0.25068129676967743,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+      "fps": 111.2256233645265,
+      "presence": 1.0,
+      "count": 0.15272909523944456,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "fps": 254.6287118761857,
+      "presence": 1.0,
+      "count": 0.17188603781292022,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+      "fps": 72.79483326767658,
+      "presence": 1.0,
+      "count": 0.13905044508905895,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+      "fps": 111.21399067557373,
+      "presence": 1.0,
+      "count": 0.1482141946172758,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+      "fps": 281.2512363665616,
+      "presence": 1.0,
+      "count": 0.19752361581951405,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+      "fps": 81.23844766285703,
+      "presence": 1.0,
+      "count": 0.14328933386145792,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
+      "fps": 524.0376197975247,
+      "presence": 0.9986,
+      "count": 0.38026003835967725,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
+      "fps": 584.9295373728988,
+      "presence": 1.0,
+      "count": 0.4261994320093708,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
+      "fps": 501.0467972132458,
+      "presence": 1.0,
+      "count": 0.36276891159336666,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r075_none_s100_sortcython",
+      "fps": 532.3455739913632,
+      "presence": 0.9993,
+      "count": 0.4226309605578732,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+      "fps": 449.4620927463461,
+      "presence": 1.0,
+      "count": 0.3255360994357337,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r075_none_s100_sortcython",
+      "fps": 573.9242472656066,
+      "presence": 1.0,
+      "count": 0.41936754540085697,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "fps": 459.794821155666,
+      "presence": 1.0,
+      "count": 0.3312767126781603,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+      "fps": 493.96232249435,
+      "presence": 1.0,
+      "count": 0.3703886411465831,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+      "fps": 585.2763545960171,
+      "presence": 0.9986,
+      "count": 0.4219934961996705,
+      "topk": 1.0
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 181.66749929323558,
+      "presence": 1.0,
+      "count": 0.24893869254253054,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "otif",
+      "config": "param 0",
+      "fps": 26.329526001178678,
+      "presence": 0.9995,
+      "count": 0.11508455996683908,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "otif",
+      "config": "param 1",
+      "fps": 55.95181297709924,
+      "presence": 0.9993,
+      "count": 0.12629668063680022,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "otif",
+      "config": "param 2",
+      "fps": 108.751593833314,
+      "presence": 0.9993,
+      "count": 0.1447262662198434,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "otif",
+      "config": "param 3",
+      "fps": 229.5009784735812,
+      "presence": 0.9951,
+      "count": 0.2375895681275335,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "otif",
+      "config": "param 4",
+      "fps": 554.1642055522741,
+      "presence": 0.9951,
+      "count": 0.43221954765186854,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "otif",
+      "config": "param 5",
+      "fps": 1084.6242774566474,
+      "presence": 0.9776,
+      "count": 0.4845211067831555,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "otif",
+      "config": "param 6",
+      "fps": 2462.4671916010498,
+      "presence": 0.0004,
+      "count": 1.0,
+      "topk": 0.1
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.410461834543112,
+      "presence": 1.0,
+      "count": 0.1696709134301223,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r050_none_s100_sortcython",
+      "fps": 707.8030423295291,
+      "presence": 1.0,
+      "count": 0.43802538983234485,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r050_none_s100_sortcython",
+      "fps": 723.2120318787844,
+      "presence": 1.0,
+      "count": 0.43802538983234485,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r050_none_s100_sortcython",
+      "fps": 716.6554889738578,
+      "presence": 1.0,
+      "count": 0.43802538983234485,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
+      "fps": 813.490635856328,
+      "presence": 1.0,
+      "count": 0.4765734293462659,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+      "fps": 634.4184095533408,
+      "presence": 1.0,
+      "count": 0.4230407046642535,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+      "fps": 818.3722071790526,
+      "presence": 1.0,
+      "count": 0.49155232272542526,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython",
+      "fps": 51.773606296994494,
+      "presence": 1.0,
+      "count": 0.2020755611645738,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+      "fps": 107.45142949736588,
+      "presence": 1.0,
+      "count": 0.17032522993833943,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython",
+      "fps": 63.14719206459668,
+      "presence": 1.0,
+      "count": 0.2128612720976918,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+      "fps": 70.25151944935413,
+      "presence": 1.0,
+      "count": 0.1670383963065899,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+      "fps": 131.04958222433328,
+      "presence": 1.0,
+      "count": 0.18838645864775494,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_tr_s100_sortcython",
+      "fps": 81.78798613101627,
+      "presence": 1.0,
+      "count": 0.17408948925974943,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
+      "fps": 47.35407557987661,
+      "presence": 1.0,
+      "count": 0.19513962348957148,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+      "fps": 104.1893757240366,
+      "presence": 1.0,
+      "count": 0.1622685911984848,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
+      "fps": 56.96004532984581,
+      "presence": 1.0,
+      "count": 0.20077279325964503,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_tr_s100_sortcython",
+      "fps": 68.71963902551833,
+      "presence": 1.0,
+      "count": 0.16154216067306904,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
+      "fps": 125.18526951293045,
+      "presence": 1.0,
+      "count": 0.17734042233258374,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+      "fps": 29.90186528610122,
+      "presence": 1.0,
+      "count": 0.18238469490244835,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+      "fps": 39.508461295453344,
+      "presence": 1.0,
+      "count": 0.18471534562366665,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+      "fps": 98.1505049301026,
+      "presence": 1.0,
+      "count": 0.15383864896091815,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
+      "fps": 49.09332281496497,
+      "presence": 1.0,
+      "count": 0.18722993840418767,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
+      "fps": 112.04573551617008,
+      "presence": 1.0,
+      "count": 0.16893385273403894,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r075_tr_s100_bytetrackcython",
+      "fps": 56.58734216537498,
+      "presence": 1.0,
+      "count": 0.202366623585304,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r075_tr_s100_sortcython",
+      "fps": 72.01594116677428,
+      "presence": 1.0,
+      "count": 0.16046006619381725,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_bl_s100_bytetrackcython",
+      "fps": 20.772088509300826,
+      "presence": 1.0,
+      "count": 0.16162594204165048,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+      "fps": 44.19943043402516,
+      "presence": 1.0,
+      "count": 0.16073614132802927,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+      "fps": 15.68063342475071,
+      "presence": 1.0,
+      "count": 0.1677717664018077,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+      "fps": 50.62067865193594,
+      "presence": 1.0,
+      "count": 0.15206973794747214,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+      "fps": 50.64959727236101,
+      "presence": 1.0,
+      "count": 0.13938829224101779,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "fps": 16.962906230829198,
+      "presence": 1.0,
+      "count": 0.16801827745961562,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+      "fps": 23.20978858361412,
+      "presence": 1.0,
+      "count": 0.16690868678062087,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+      "fps": 25.2623894503498,
+      "presence": 1.0,
+      "count": 0.1686730183272528,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+      "fps": 57.373095583350974,
+      "presence": 1.0,
+      "count": 0.16072396797393296,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+      "fps": 57.640564328275296,
+      "presence": 1.0,
+      "count": 0.1510923596335083,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+      "fps": 18.407470397616397,
+      "presence": 1.0,
+      "count": 0.16797803507293896,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+      "fps": 25.274382003694026,
+      "presence": 1.0,
+      "count": 0.16639980917728625,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_080_r025_square_s100_bytetrackcython",
+      "fps": 40.67531985835239,
+      "presence": 1.0,
+      "count": 0.18015835882587938,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r025_bl_s100_bytetrackcython",
+      "fps": 40.54635979769455,
+      "presence": 1.0,
+      "count": 0.1715347604095393,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r025_square_s100_bytetrackcython",
+      "fps": 30.371799842925505,
+      "presence": 1.0,
+      "count": 0.17605276654580537,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+      "fps": 32.66175070528064,
+      "presence": 1.0,
+      "count": 0.17739748906465347,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r075_square_s100_bytetrackcython",
+      "fps": 36.44891236566193,
+      "presence": 1.0,
+      "count": 0.1797323612040711,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_square_s100_sortcython",
+      "fps": 72.64102922483004,
+      "presence": 1.0,
+      "count": 0.15344539165711846,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r050_square_s100_sortcython",
+      "fps": 86.85894487895332,
+      "presence": 1.0,
+      "count": 0.15932517956386527,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+      "fps": 60.30554553715177,
+      "presence": 1.0,
+      "count": 0.14738650276392395,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
+      "fps": 66.96974308054915,
+      "presence": 1.0,
+      "count": 0.15089048131782312,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r075_square_s100_sortcython",
+      "fps": 71.29827086645595,
+      "presence": 1.0,
+      "count": 0.15443743476926297,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
+      "fps": 349.9577035520396,
+      "presence": 1.0,
+      "count": 0.21995410489447664,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r025_tr_s100_sortcython",
+      "fps": 181.9017220074719,
+      "presence": 1.0,
+      "count": 0.20063033106921624,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r050_bl_s100_sortcython",
+      "fps": 205.24116550036115,
+      "presence": 1.0,
+      "count": 0.21582737148984033,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r050_square_s100_sortcython",
+      "fps": 153.83724448878033,
+      "presence": 1.0,
+      "count": 0.19784286552194275,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r050_tr_s100_sortcython",
+      "fps": 209.6376923287373,
+      "presence": 1.0,
+      "count": 0.20854171268915378,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
+      "fps": 452.73223503964783,
+      "presence": 1.0,
+      "count": 0.27024861581547055,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r025_square_s100_sortcython",
+      "fps": 128.90146224070696,
+      "presence": 1.0,
+      "count": 0.19022934419616389,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r050_square_s100_sortcython",
+      "fps": 148.2994631967126,
+      "presence": 1.0,
+      "count": 0.19202829357701268,
+      "topk": 0.4
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
+      "fps": 193.81246535051605,
+      "presence": 1.0,
+      "count": 0.20599508515105025,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r075_none_s100_sortcython",
+      "fps": 439.7956727373696,
+      "presence": 1.0,
+      "count": 0.25911886892390545,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r075_square_s100_sortcython",
+      "fps": 156.55798405594618,
+      "presence": 1.0,
+      "count": 0.19765620421535957,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r075_tr_s100_sortcython",
+      "fps": 221.4628898635121,
+      "presence": 1.0,
+      "count": 0.21893509021454882,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r025_tr_s100_sortcython",
+      "fps": 157.49770678655915,
+      "presence": 1.0,
+      "count": 0.19331490291677467,
+      "topk": 0.4
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
+      "fps": 378.1184592180901,
+      "presence": 1.0,
+      "count": 0.21265166490442877,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r050_square_s100_sortcython",
+      "fps": 139.36630792586058,
+      "presence": 1.0,
+      "count": 0.19149448044432726,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+      "fps": 186.19029779761632,
+      "presence": 1.0,
+      "count": 0.19948721147986914,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r075_none_s100_sortcython",
+      "fps": 405.5700044459563,
+      "presence": 1.0,
+      "count": 0.2512209654885701,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r075_square_s100_sortcython",
+      "fps": 151.42715679794537,
+      "presence": 1.0,
+      "count": 0.19690973170278903,
+      "topk": 0.4
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r075_tr_s100_sortcython",
+      "fps": 206.41273223243235,
+      "presence": 1.0,
+      "count": 0.21593105918060918,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "fps": 346.49802014125635,
+      "presence": 1.0,
+      "count": 0.20460637976579654,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
+      "fps": 121.0869378612477,
+      "presence": 1.0,
+      "count": 0.18662741285722606,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+      "fps": 390.64174236751353,
+      "presence": 1.0,
+      "count": 0.2134429655702621,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+      "fps": 436.838178088813,
+      "presence": 1.0,
+      "count": 0.24538965526363288,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r075_square_s100_sortcython",
+      "fps": 142.73487722415217,
+      "presence": 1.0,
+      "count": 0.19479294606787734,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 30.03711828793054,
+      "presence": 1.0,
+      "count": 1.025145152940015,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "otif",
+      "config": "param 0",
+      "fps": 25.042807186784035,
+      "presence": 0.9997,
+      "count": 0.04135447034778528,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "otif",
+      "config": "param 1",
+      "fps": 49.40997335363533,
+      "presence": 0.9993,
+      "count": 0.04731829181516689,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "otif",
+      "config": "param 2",
+      "fps": 98.72599353489255,
+      "presence": 0.9974,
+      "count": 0.07261160047109294,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "otif",
+      "config": "param 3",
+      "fps": 203.3685859772816,
+      "presence": 0.9935,
+      "count": 0.2663913564058925,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "otif",
+      "config": "param 4",
+      "fps": 479.4090489381348,
+      "presence": 0.9935,
+      "count": 0.5428512842922285,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "otif",
+      "config": "param 5",
+      "fps": 1065.025641025641,
+      "presence": 0.9686,
+      "count": 0.731148181302826,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "otif",
+      "config": "param 6",
+      "fps": 1509.3023255813955,
+      "presence": 0.0004,
+      "count": 1.0,
+      "topk": 0.1
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "otif",
+      "config": "param 7",
+      "fps": 1653.5031847133757,
+      "presence": 0.0004,
+      "count": 1.0,
+      "topk": 0.1
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.538907037803993,
+      "presence": 1.0,
+      "count": 0.043356139714095576,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r050_none_s100_sortcython",
+      "fps": 1071.9352960240465,
+      "presence": 0.9133,
+      "count": 0.7881196400574408,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r075_none_s100_sortcython",
+      "fps": 1159.3251365861788,
+      "presence": 0.8647,
+      "count": 0.8382521316130399,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r050_none_s100_sortcython",
+      "fps": 1049.222371906371,
+      "presence": 0.9133,
+      "count": 0.7881196400574408,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r075_none_s100_sortcython",
+      "fps": 1153.7727974691736,
+      "presence": 0.8647,
+      "count": 0.8382521316130399,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r050_none_s100_sortcython",
+      "fps": 1054.100827890779,
+      "presence": 0.9133,
+      "count": 0.7881196400574408,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
+      "fps": 1201.8533360444976,
+      "presence": 0.8647,
+      "count": 0.8382521316130399,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
+      "fps": 948.3592193662918,
+      "presence": 0.9119,
+      "count": 0.7540011600182015,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+      "fps": 1094.8936804459183,
+      "presence": 0.91,
+      "count": 0.7927945143173345,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
+      "fps": 1214.497097852921,
+      "presence": 0.9638,
+      "count": 0.8048861714125637,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+      "fps": 1201.7263460350052,
+      "presence": 0.8624,
+      "count": 0.8436777499451429,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+      "fps": 128.78879880552836,
+      "presence": 1.0,
+      "count": 0.07630279691786501,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_square_s100_bytetrackcython",
+      "fps": 37.6960661032354,
+      "presence": 1.0,
+      "count": 0.07600223995224586,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython",
+      "fps": 57.90688770426457,
+      "presence": 1.0,
+      "count": 0.08865416153915096,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+      "fps": 73.07674920614646,
+      "presence": 1.0,
+      "count": 0.062376676056022595,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+      "fps": 150.01116441350246,
+      "presence": 1.0,
+      "count": 0.0993043157158855,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+      "fps": 170.32446958379205,
+      "presence": 1.0,
+      "count": 0.15762727459979464,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_bl_s100_sortcython",
+      "fps": 67.4753989975518,
+      "presence": 1.0,
+      "count": 0.057582749297804714,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_none_s100_bytetrackcython",
+      "fps": 98.4586332184014,
+      "presence": 1.0,
+      "count": 0.09719658773057438,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
+      "fps": 119.24074404239023,
+      "presence": 1.0,
+      "count": 0.06603508763255139,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_square_s100_bytetrackcython",
+      "fps": 34.54334257360042,
+      "presence": 1.0,
+      "count": 0.07183791388798455,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
+      "fps": 53.120525273439696,
+      "presence": 1.0,
+      "count": 0.08131576136574614,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_tr_s100_sortcython",
+      "fps": 66.0945380295135,
+      "presence": 1.0,
+      "count": 0.05354631310200908,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_bl_s100_sortcython",
+      "fps": 79.43207042886827,
+      "presence": 1.0,
+      "count": 0.06609345923738397,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+      "fps": 139.4167632645919,
+      "presence": 1.0,
+      "count": 0.08535045959903398,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_tr_s100_sortcython",
+      "fps": 80.0573546887721,
+      "presence": 1.0,
+      "count": 0.06483809637724547,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
+      "fps": 162.2580337147498,
+      "presence": 1.0,
+      "count": 0.13389423020953772,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_bl_s100_bytetrackcython",
+      "fps": 48.59762065858179,
+      "presence": 1.0,
+      "count": 0.07658791784488161,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython",
+      "fps": 88.44128737115967,
+      "presence": 1.0,
+      "count": 0.08586927714882497,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+      "fps": 108.2385982901945,
+      "presence": 1.0,
+      "count": 0.05740343880346788,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+      "fps": 31.139364807642902,
+      "presence": 1.0,
+      "count": 0.06231464159211286,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+      "fps": 47.54074872502676,
+      "presence": 1.0,
+      "count": 0.06996987955269618,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+      "fps": 62.01725574459567,
+      "presence": 1.0,
+      "count": 0.05048204182633498,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+      "fps": 129.50599561660516,
+      "presence": 1.0,
+      "count": 0.08053401411263628,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_square_s100_bytetrackcython",
+      "fps": 36.364457675155,
+      "presence": 1.0,
+      "count": 0.07179375776697183,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
+      "fps": 151.74622810247877,
+      "presence": 1.0,
+      "count": 0.12856176363072436,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+      "fps": 65.26754743718153,
+      "presence": 1.0,
+      "count": 0.057534034988276916,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+      "fps": 19.037388312158125,
+      "presence": 1.0,
+      "count": 0.045854276331909194,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+      "fps": 29.26625264664225,
+      "presence": 1.0,
+      "count": 0.04968369455466903,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+      "fps": 76.20606621935411,
+      "presence": 1.0,
+      "count": 0.07817590592643597,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+      "fps": 76.9272649326286,
+      "presence": 1.0,
+      "count": 0.0642968519998589,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "fps": 22.171581285246443,
+      "presence": 1.0,
+      "count": 0.05293280832514613,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+      "fps": 35.38496733794759,
+      "presence": 1.0,
+      "count": 0.06265913356944863,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
+      "fps": 84.58720801380096,
+      "presence": 1.0,
+      "count": 0.13235139085705483,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+      "fps": 25.220848869256123,
+      "presence": 1.0,
+      "count": 0.06477718953386669,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+      "fps": 39.786538946825424,
+      "presence": 1.0,
+      "count": 0.08825442745914558,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_040_r025_none_s100_sortcython",
+      "fps": 187.19744903103975,
+      "presence": 1.0,
+      "count": 0.08248214664554576,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_060_r025_none_s100_sortcython",
+      "fps": 167.1630825319248,
+      "presence": 1.0,
+      "count": 0.07112642047508,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
+      "fps": 164.29917967737052,
+      "presence": 1.0,
+      "count": 0.06466413531722925,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+      "fps": 285.59328158197616,
+      "presence": 1.0,
+      "count": 0.1010419651472293,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r025_tr_s100_sortcython",
+      "fps": 146.8672879736038,
+      "presence": 1.0,
+      "count": 0.08353355960476683,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "fps": 330.7975861453874,
+      "presence": 1.0,
+      "count": 0.15240570213453375,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
+      "fps": 267.1827220736559,
+      "presence": 1.0,
+      "count": 0.09055798552517957,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r025_square_s100_sortcython",
+      "fps": 88.98978415762919,
+      "presence": 1.0,
+      "count": 0.06458592217590009,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r025_tr_s100_sortcython",
+      "fps": 135.18837480528055,
+      "presence": 1.0,
+      "count": 0.07542246516306994,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "fps": 309.62354624759433,
+      "presence": 1.0,
+      "count": 0.12969590827866762,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r050_tr_s100_sortcython",
+      "fps": 159.3377485248053,
+      "presence": 1.0,
+      "count": 0.10216441905107454,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+      "fps": 253.7079142856075,
+      "presence": 1.0,
+      "count": 0.08512705804493481,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_square_s100_sortcython",
+      "fps": 86.33385827984338,
+      "presence": 1.0,
+      "count": 0.06337135997080712,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+      "fps": 129.3971420912719,
+      "presence": 1.0,
+      "count": 0.07324356168396084,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r050_tr_s100_sortcython",
+      "fps": 153.32151298013915,
+      "presence": 1.0,
+      "count": 0.09631961557022684,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r075_none_s100_sortcython",
+      "fps": 330.7681484200051,
+      "presence": 1.0,
+      "count": 0.20461402100456627,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "fps": 261.24001776238794,
+      "presence": 1.0,
+      "count": 0.08481884952039953,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+      "fps": 76.52384446574325,
+      "presence": 1.0,
+      "count": 0.060402661139019376,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+      "fps": 117.4490917875388,
+      "presence": 1.0,
+      "count": 0.06955184797528613,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
+      "fps": 479.6863735939855,
+      "presence": 1.0,
+      "count": 0.2780938586991425,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
+      "fps": 532.2311294187084,
+      "presence": 1.0,
+      "count": 0.33831555223658183,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
+      "fps": 589.0513637077938,
+      "presence": 0.9971,
+      "count": 0.4439637701033978,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
+      "fps": 535.8976381272865,
+      "presence": 1.0,
+      "count": 0.31543481925650474,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_060_r075_none_s100_sortcython",
+      "fps": 589.1911368999516,
+      "presence": 0.9979,
+      "count": 0.4117503334645055,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
+      "fps": 532.3527324303109,
+      "presence": 1.0,
+      "count": 0.3145734449022777,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r075_none_s100_sortcython",
+      "fps": 597.3974111863582,
+      "presence": 0.9979,
+      "count": 0.4129268655734346,
+      "topk": 0.6
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "fps": 453.7823449649203,
+      "presence": 1.0,
+      "count": 0.2594791149379432,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+      "fps": 530.9954494269817,
+      "presence": 1.0,
+      "count": 0.3106353121606744,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+      "fps": 608.7558123820983,
+      "presence": 0.9993,
+      "count": 0.412343804277702,
+      "topk": 0.7
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "leap",
+      "config": "param 0",
+      "fps": 268.2031671072556,
+      "presence": 1.0,
+      "count": 1.383950685950628,
+      "topk": 0.5
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "otif",
+      "config": "param 0",
+      "fps": 25.660544150869267,
+      "presence": 1.0,
+      "count": 0.08589595384022808,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "otif",
+      "config": "param 1",
+      "fps": 26.91010223263719,
+      "presence": 1.0,
+      "count": 0.21579336704852814,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "otif",
+      "config": "param 2",
+      "fps": 51.11274150158963,
+      "presence": 1.0,
+      "count": 0.22832690110298637,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "otif",
+      "config": "param 3",
+      "fps": 100.69377529389092,
+      "presence": 0.9981,
+      "count": 0.2576434104514249,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "otif",
+      "config": "param 4",
+      "fps": 188.15268275117032,
+      "presence": 0.9897,
+      "count": 0.37436659980700615,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "otif",
+      "config": "param 5",
+      "fps": 438.7069689336692,
+      "presence": 0.9755,
+      "count": 0.5302446505029397,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "otif",
+      "config": "param 6",
+      "fps": 1023.5063663075415,
+      "presence": 0.978,
+      "count": 0.614875838764213,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "otif",
+      "config": "param 7",
+      "fps": 2453.0516431924884,
+      "presence": 0.0004,
+      "count": 1.0,
+      "topk": 0.1
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "otif",
+      "config": "param 8",
+      "fps": 1780.2385008517888,
+      "presence": 0.0004,
+      "count": 1.0,
+      "topk": 0.1
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "reference",
+      "config": "naive",
+      "fps": 14.515887451819244,
+      "presence": 1.0,
+      "count": 0.0939003129929682,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_040_r025_none_s100_sortcython",
+      "fps": 1111.8801739721937,
+      "presence": 0.9719,
+      "count": 0.5591978665541906,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_060_r025_none_s100_sortcython",
+      "fps": 1130.5380099134418,
+      "presence": 0.9719,
+      "count": 0.5591978665541906,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r025_none_s100_sortcython",
+      "fps": 1187.6412143964171,
+      "presence": 0.9719,
+      "count": 0.5591978665541906,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
+      "fps": 1410.9964884817423,
+      "presence": 0.9686,
+      "count": 0.5846626298118218,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+      "fps": 1324.335292171697,
+      "presence": 0.967,
+      "count": 0.5719434617145689,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+      "fps": 1278.7769783097997,
+      "presence": 0.9686,
+      "count": 0.5899496090642198,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_bl_s100_sortcython",
+      "fps": 108.85450303401844,
+      "presence": 1.0,
+      "count": 0.12238710243656292,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+      "fps": 171.46489115514032,
+      "presence": 1.0,
+      "count": 0.12291602768609744,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+      "fps": 109.37773844889382,
+      "presence": 1.0,
+      "count": 0.12391421782268475,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+      "fps": 191.5985677061788,
+      "presence": 1.0,
+      "count": 0.13262908780896487,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+      "fps": 208.54743212002293,
+      "presence": 1.0,
+      "count": 0.14677523801011783,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r025_bl_s100_sortcython",
+      "fps": 103.81717670562333,
+      "presence": 1.0,
+      "count": 0.11606973341806737,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+      "fps": 181.38711153476837,
+      "presence": 1.0,
+      "count": 0.1278269255134371,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_060_r050_tr_s100_sortcython",
+      "fps": 115.36400124769374,
+      "presence": 1.0,
+      "count": 0.11791616366091429,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+      "fps": 89.6313839062362,
+      "presence": 1.0,
+      "count": 0.10689746640382558,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+      "fps": 150.2438601056222,
+      "presence": 1.0,
+      "count": 0.11173989333770673,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+      "fps": 52.16574979975207,
+      "presence": 1.0,
+      "count": 0.11256862377708488,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_square_s100_sortcython",
+      "fps": 63.39837305824912,
+      "presence": 1.0,
+      "count": 0.09325851331568502,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+      "fps": 92.44393846978602,
+      "presence": 1.0,
+      "count": 0.10548413287615277,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_080_r050_square_s100_bytetrackcython",
+      "fps": 60.88567649263344,
+      "presence": 1.0,
+      "count": 0.12945985036514263,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+      "fps": 93.07989699817983,
+      "presence": 1.0,
+      "count": 0.10938164977200948,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_none_s100_sortcython",
+      "fps": 93.82306486629808,
+      "presence": 1.0,
+      "count": 0.09872572134218849,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+      "fps": 26.640245667936824,
+      "presence": 1.0,
+      "count": 0.09627514668365689,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+      "fps": 39.08723246935724,
+      "presence": 1.0,
+      "count": 0.1057724217811713,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+      "fps": 100.4868901973474,
+      "presence": 1.0,
+      "count": 0.120596507687878,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+      "fps": 100.9192457084246,
+      "presence": 1.0,
+      "count": 0.10890975189930852,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "fps": 29.666476684647364,
+      "presence": 1.0,
+      "count": 0.10399515391500502,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+      "fps": 44.109898578973535,
+      "presence": 1.0,
+      "count": 0.1110782882490482,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+      "fps": 47.99196654808163,
+      "presence": 1.0,
+      "count": 0.1250366290681919,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+      "fps": 110.39848997711331,
+      "presence": 1.0,
+      "count": 0.12143619580602516,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+      "fps": 32.14304766414493,
+      "presence": 1.0,
+      "count": 0.1141845685900601,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+      "fps": 48.44866191970171,
+      "presence": 1.0,
+      "count": 0.12011688382264984,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_060_r025_none_s100_sortcython",
+      "fps": 239.30377254675383,
+      "presence": 1.0,
+      "count": 0.12223544469021341,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_060_r025_tr_s100_sortcython",
+      "fps": 139.86415044399294,
+      "presence": 1.0,
+      "count": 0.11785683559057991,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_080_r025_square_s100_sortcython",
+      "fps": 85.5319518531358,
+      "presence": 1.0,
+      "count": 0.10233728067665371,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_080_r025_tr_s100_sortcython",
+      "fps": 127.4821462340704,
+      "presence": 1.0,
+      "count": 0.11177909417383125,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r025_bl_s100_sortcython",
+      "fps": 78.56404069498075,
+      "presence": 1.0,
+      "count": 0.10854249325795828,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r025_square_s100_sortcython",
+      "fps": 54.48692200578088,
+      "presence": 1.0,
+      "count": 0.09371490772171154,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+      "fps": 61.03974782908544,
+      "presence": 1.0,
+      "count": 0.11592705838395145,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_2_r050_square_s100_sortcython",
+      "fps": 61.21643523530782,
+      "presence": 1.0,
+      "count": 0.10305826799336182,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r025_bl_s100_sortcython",
+      "fps": 206.17321439786053,
+      "presence": 1.0,
+      "count": 0.1445052879261206,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+      "fps": 398.506153727164,
+      "presence": 1.0,
+      "count": 0.14231660686598313,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r025_tr_s100_sortcython",
+      "fps": 205.3594858755581,
+      "presence": 1.0,
+      "count": 0.14117188388461943,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "fps": 427.8707965352292,
+      "presence": 1.0,
+      "count": 0.15824304675868273,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_040_r075_none_s100_sortcython",
+      "fps": 483.3604887529148,
+      "presence": 1.0,
+      "count": 0.17342135768741695,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r025_bl_s100_sortcython",
+      "fps": 197.68843952082625,
+      "presence": 1.0,
+      "count": 0.135928867709465,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
+      "fps": 392.6581721779549,
+      "presence": 1.0,
+      "count": 0.14249218254527307,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r025_square_s100_sortcython",
+      "fps": 138.6136587159317,
+      "presence": 1.0,
+      "count": 0.12129159692006752,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r025_tr_s100_sortcython",
+      "fps": 201.03764135236975,
+      "presence": 1.0,
+      "count": 0.13393863520238036,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "fps": 422.8733215698087,
+      "presence": 1.0,
+      "count": 0.15734563569629423,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_060_r075_none_s100_sortcython",
+      "fps": 453.1422710304759,
+      "presence": 1.0,
+      "count": 0.16707344347725017,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_bl_s100_sortcython",
+      "fps": 182.4508862389545,
+      "presence": 1.0,
+      "count": 0.13316594275877247,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+      "fps": 363.0709984021765,
+      "presence": 1.0,
+      "count": 0.13391230184253589,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_square_s100_sortcython",
+      "fps": 127.02795607810592,
+      "presence": 1.0,
+      "count": 0.12105938830918495,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+      "fps": 187.9432335709693,
+      "presence": 1.0,
+      "count": 0.13035855874352775,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+      "fps": 156.0783767592109,
+      "presence": 1.0,
+      "count": 0.12989540044562975,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+      "fps": 109.75640013777398,
+      "presence": 1.0,
+      "count": 0.11680559790949374,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+      "fps": 155.52356192209467,
+      "presence": 1.0,
+      "count": 0.12878976767898564,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+      "fps": 387.5791473885357,
+      "presence": 1.0,
+      "count": 0.14612127857108026,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+      "fps": 663.9004189602003,
+      "presence": 0.9962,
+      "count": 0.25728231717916283,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_080_r075_none_s100_sortcython",
+      "fps": 724.4680787047181,
+      "presence": 0.9947,
+      "count": 0.28635495483905904,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "fps": 652.5701719668275,
+      "presence": 0.9962,
+      "count": 0.2560185988355643,
+      "topk": 0.8
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+      "fps": 669.2329518928151,
+      "presence": 0.9947,
+      "count": 0.27139297610361,
+      "topk": 0.9
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "system": "tetris",
+      "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+      "fps": 740.6385869118528,
+      "presence": 0.9947,
+      "count": 0.291504296703045,
+      "topk": 0.8
+    }
+  ],
+  "ground_truth": "all vehicles, LEAP pseudo_label mode",
+  "selection_metric": "selection_query_1",
+  "topk_metric": "top_k_query_1",
+  "count_metric": "MAPE",
+  "evaluator": {
+    "evaluator_sha256": "9b560687fdbd22e071d3c6d9df34fd53eb50b4e08c1684d38252cf18d761536c",
+    "numpy": "2.3.5",
+    "ground_truth_mode": "LEAP preprocess(pseudo_label), shared 003_groundtruth boxes; all vehicles as car",
+    "queries": [
+      "selection_query_1",
+      "aggregation_query_1",
+      "top_k_query_1"
+    ]
+  },
+  "note": "Every tested configuration before query Pareto filtering. Calls LEAP original preprocessing and query methods. Count is MAPE = 1 - aggregation_query_1 ACC (lower is better). Selection retains LEAP rounding and zero-TP handling; top-10 uses its native clustering and default sort. LEAP uses native intervals."
+}

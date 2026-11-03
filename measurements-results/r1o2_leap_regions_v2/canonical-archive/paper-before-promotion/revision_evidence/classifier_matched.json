@@ -1,0 +1,3181 @@
+{
+  "datasets": {
+    "Amsterdam": {
+      "classifier": {
+        "grid": [
+          12,
+          21
+        ],
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles_inferred_at_most": 126,
+        "tilesize": 60
+      },
+      "classify_share_pct": {
+        "log_derived": 33.0,
+        "with_matched_classifier_cost": 32.0025
+      },
+      "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+      "dataset": "ams-y05",
+      "detector": {
+        "detector": "ultralytics",
+        "weights": "/polyis-data/training/ultralytics/amsterdam/weights/yolov5x6/weights/best.pt"
+      },
+      "finished": "2026-10-27T07:04:19+00:00",
+      "gpu": {
+        "driver_version": "610.57.04",
+        "name": "Quadro RTX 6000",
+        "pci.bus_id": "00000000:B2:00.0",
+        "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "vbios_version": "90.02.15.00.04"
+      },
+      "host": "bombe",
+      "host_processes": {
+        "load_1m_max": 3.32,
+        "load_1m_median": 2.55,
+        "max_processes": 1,
+        "max_processes_all_gpus": 1,
+        "samples": 228,
+        "samples_with_other_processes": 0
+      },
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "log_derived": {
+        "classifier_mean_ms": 2.4,
+        "classifier_median_ms": 2.31,
+        "classify_seconds": 16.978,
+        "classify_share_pct": 33.0,
+        "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+        "detector_mean_ms": 64.227,
+        "detector_median_ms": 64.221,
+        "extraction_seconds": 51.462,
+        "frames": 54011,
+        "ratio_of_means": 26.8,
+        "ratio_of_means_across_runs": {
+          "max": 28.8,
+          "min": 25.9,
+          "operating_point": 25.9
+        },
+        "ratio_of_medians": 27.8,
+        "videos": 60
+      },
+      "matched_over_log": {
+        "classifier_mean": 0.9559,
+        "detector_mean": 0.9728,
+        "ratio_of_means": 1.0162
+      },
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+        "hota": 0.6966,
+        "loss": 0.05,
+        "reference_hota": 0.7315,
+        "sample_rate": 8,
+        "tilesize": 60
+      },
+      "placement": {
+        "anon_pages_on_gpu_node_share": {
+          "te00.mp4": 1.0,
+          "te29.mp4": 1.0,
+          "te59.mp4": 1.0
+        },
+        "cpus": 40,
+        "cpus_local_to_gpu": true,
+        "gpu_numa_node": 1,
+        "membind": "1"
+      },
+      "ratios": {
+        "as_deployed": {
+          "per_video": {
+            "te00.mp4": 27.3379,
+            "te29.mp4": 27.2303,
+            "te59.mp4": 27.1374
+          },
+          "ratio_of_means": 27.2346,
+          "ratio_of_means_video_max": 27.3379,
+          "ratio_of_means_video_min": 27.1374,
+          "ratio_of_medians": 27.5192,
+          "reference_mean_ms": 62.482,
+          "tetris_mean_ms": 2.2942
+        },
+        "as_deployed_unsynchronized": {
+          "per_video": {
+            "te00.mp4": 27.7358,
+            "te29.mp4": 27.8455,
+            "te59.mp4": 27.8081
+          },
+          "ratio_of_means": 27.7965,
+          "ratio_of_means_video_max": 27.8455,
+          "ratio_of_means_video_min": 27.7358,
+          "ratio_of_medians": 27.803,
+          "reference_mean_ms": 62.482,
+          "tetris_mean_ms": 2.2478
+        },
+        "as_deployed_with_rgb_copy": {
+          "per_video": {
+            "te00.mp4": 8.6804,
+            "te29.mp4": 8.7083,
+            "te59.mp4": 8.7189
+          },
+          "ratio_of_means": 8.7026,
+          "ratio_of_means_video_max": 8.7189,
+          "ratio_of_means_video_min": 8.6804,
+          "ratio_of_medians": null,
+          "reference_mean_ms": 62.482,
+          "tetris_mean_ms": 7.1797
+        },
+        "same_batch_1": {
+          "per_video": {
+            "te00.mp4": 12.5984,
+            "te29.mp4": 12.6927,
+            "te59.mp4": 12.6709
+          },
+          "ratio_of_means": 12.654,
+          "ratio_of_means_video_max": 12.6927,
+          "ratio_of_means_video_min": 12.5984,
+          "ratio_of_medians": 12.731,
+          "reference_mean_ms": 62.482,
+          "tetris_mean_ms": 4.9377
+        },
+        "same_batch_16": {
+          "per_video": {
+            "te00.mp4": 20.9175,
+            "te29.mp4": 20.8224,
+            "te59.mp4": 20.7848
+          },
+          "ratio_of_means": 20.8412,
+          "ratio_of_means_video_max": 20.9175,
+          "ratio_of_means_video_min": 20.7848,
+          "ratio_of_medians": 21.0476,
+          "reference_mean_ms": 47.8141,
+          "tetris_mean_ms": 2.2942
+        }
+      },
+      "runs": {
+        "classifier": {
+          "calls": 171,
+          "fps": 435.8802,
+          "fps_at_median": 440.3693,
+          "frames": 2704,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000",
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 6783.0,
+            "other_gpu_samples": 68,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 188.02,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 3,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 62.0,
+            "utilization_max_pct": 79.0,
+            "utilization_median_pct": 78.0,
+            "utilization_min_pct": 77.0
+          },
+          "max_ms_per_frame": 5.6105,
+          "mean_ms_per_frame": 2.2942,
+          "median_ms_per_frame": 2.2708,
+          "min_ms_per_frame": 2.242,
+          "p95_ms_per_frame": 2.4001,
+          "per_video_mean_ms": {
+            "te00.mp4": 2.2761,
+            "te29.mp4": 2.2984,
+            "te59.mp4": 2.3081
+          },
+          "videos": 3
+        },
+        "classifier_1": {
+          "calls": 2704,
+          "fps": 202.5226,
+          "fps_at_median": 203.7251,
+          "frames": 2704,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 6783.0,
+            "other_gpu_samples": 126,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 136.42,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 13,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 45.0,
+            "utilization_median_pct": 45.0,
+            "utilization_min_pct": 45.0
+          },
+          "max_ms_per_frame": 5.9769,
+          "mean_ms_per_frame": 4.9377,
+          "median_ms_per_frame": 4.9086,
+          "min_ms_per_frame": 4.8474,
+          "p95_ms_per_frame": 5.0789,
+          "per_video_mean_ms": {
+            "te00.mp4": 4.939,
+            "te29.mp4": 4.9309,
+            "te59.mp4": 4.9433
+          },
+          "videos": 3
+        },
+        "classifier_stream": {
+          "calls": 3,
+          "fps": 444.873,
+          "fps_at_median": 444.9118,
+          "frames": 2704,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000",
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 6783.0,
+            "other_gpu_samples": 68,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 182.39,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 2,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1897.5,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 60.0,
+            "utilization_max_pct": 79.0,
+            "utilization_median_pct": 78.5,
+            "utilization_min_pct": 78.0
+          },
+          "max_ms_per_frame": 2.2524,
+          "mean_ms_per_frame": 2.2478,
+          "median_ms_per_frame": 2.2476,
+          "min_ms_per_frame": 2.2434,
+          "p95_ms_per_frame": 2.2524,
+          "per_video_mean_ms": {
+            "te00.mp4": 2.2434,
+            "te29.mp4": 2.2476,
+            "te59.mp4": 2.2524
+          },
+          "videos": 3
+        },
+        "decode": {
+          "calls": 3,
+          "fps": 673.5936,
+          "fps_at_median": 674.9938,
+          "frames": 2704,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 6783.0,
+            "other_gpu_samples": 42,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 92.86,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 1,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1905.0,
+            "sm_clock_min_mhz": 1905.0,
+            "temperature_max_c": 57.0,
+            "utilization_max_pct": 0.0,
+            "utilization_median_pct": 0.0,
+            "utilization_min_pct": 0.0
+          },
+          "max_ms_per_frame": 1.5552,
+          "mean_ms_per_frame": 1.4846,
+          "median_ms_per_frame": 1.4815,
+          "min_ms_per_frame": 1.4171,
+          "p95_ms_per_frame": 1.5552,
+          "per_video_mean_ms": {
+            "te00.mp4": 1.5552,
+            "te29.mp4": 1.4171,
+            "te59.mp4": 1.4815
+          },
+          "videos": 3
+        },
+        "detector": {
+          "calls": 2704,
+          "fps": 16.0046,
+          "fps_at_median": 16.0023,
+          "frames": 2704,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 6783.0,
+            "other_gpu_samples": 1272,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 257.03,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 205,
+            "sm_clock_max_mhz": 1755.0,
+            "sm_clock_median_mhz": 1710.0,
+            "sm_clock_min_mhz": 1680.0,
+            "temperature_max_c": 68.0,
+            "utilization_max_pct": 95.0,
+            "utilization_median_pct": 94.0,
+            "utilization_min_pct": 93.0
+          },
+          "max_ms_per_frame": 64.3019,
+          "mean_ms_per_frame": 62.482,
+          "median_ms_per_frame": 62.4911,
+          "min_ms_per_frame": 60.9299,
+          "p95_ms_per_frame": 63.0737,
+          "per_video_mean_ms": {
+            "te00.mp4": 62.2232,
+            "te29.mp4": 62.5865,
+            "te59.mp4": 62.6356
+          },
+          "videos": 3
+        },
+        "detector_16": {
+          "calls": 171,
+          "fps": 20.9144,
+          "fps_at_median": 20.9225,
+          "frames": 2704,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 6783.0,
+            "other_gpu_samples": 973,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 257.22,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 157,
+            "sm_clock_max_mhz": 1875.0,
+            "sm_clock_median_mhz": 1590.0,
+            "sm_clock_min_mhz": 1530.0,
+            "temperature_max_c": 68.0,
+            "utilization_max_pct": 100.0,
+            "utilization_median_pct": 100.0,
+            "utilization_min_pct": 72.0
+          },
+          "max_ms_per_frame": 55.3717,
+          "mean_ms_per_frame": 47.8141,
+          "median_ms_per_frame": 47.7954,
+          "min_ms_per_frame": 47.206,
+          "p95_ms_per_frame": 48.0745,
+          "per_video_mean_ms": {
+            "te00.mp4": 47.6099,
+            "te29.mp4": 47.8585,
+            "te59.mp4": 47.9731
+          },
+          "videos": 3
+        },
+        "rgb_copy": {
+          "calls": 3,
+          "fps": 204.6884,
+          "fps_at_median": 204.5597,
+          "frames": 2704,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 6783.0,
+            "other_gpu_samples": 126,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 67.7,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 12,
+            "sm_clock_max_mhz": 1440.0,
+            "sm_clock_median_mhz": 1440.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 0.0,
+            "utilization_median_pct": 0.0,
+            "utilization_min_pct": 0.0
+          },
+          "max_ms_per_frame": 4.8921,
+          "mean_ms_per_frame": 4.8855,
+          "median_ms_per_frame": 4.8885,
+          "min_ms_per_frame": 4.8758,
+          "p95_ms_per_frame": 4.8921,
+          "per_video_mean_ms": {
+            "te00.mp4": 4.8921,
+            "te29.mp4": 4.8885,
+            "te59.mp4": 4.8758
+          },
+          "videos": 3
+        }
+      },
+      "started": "2026-10-27T06:58:13+00:00",
+      "videos": {
+        "te00.mp4": 900,
+        "te29.mp4": 901,
+        "te59.mp4": 903
+      }
+    },
+    "B3D1": {
+      "classifier": {
+        "grid": [
+          12,
+          18
+        ],
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles_inferred_at_most": 156,
+        "tilesize": 60
+      },
+      "classify_share_pct": {
+        "log_derived": 14.7,
+        "with_matched_classifier_cost": 13.4213
+      },
+      "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+      "dataset": "jnc0",
+      "detector": {
+        "detector": "retina",
+        "weights": "weights/retinanet_b3d.pth"
+      },
+      "finished": "2026-10-27T07:11:54+00:00",
+      "gpu": {
+        "driver_version": "610.57.04",
+        "name": "Quadro RTX 6000",
+        "pci.bus_id": "00000000:B2:00.0",
+        "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "vbios_version": "90.02.15.00.04"
+      },
+      "host": "bombe",
+      "host_processes": {
+        "load_1m_max": 12.74,
+        "load_1m_median": 7.21,
+        "max_processes": 1,
+        "max_processes_all_gpus": 1,
+        "samples": 280,
+        "samples_with_other_processes": 0
+      },
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "log_derived": {
+        "classifier_mean_ms": 2.387,
+        "classifier_median_ms": 2.189,
+        "classify_seconds": 3.094,
+        "classify_share_pct": 14.7,
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "detector_mean_ms": 66.505,
+        "detector_median_ms": 66.529,
+        "extraction_seconds": 21.109,
+        "frames": 5375,
+        "ratio_of_means": 27.9,
+        "ratio_of_means_across_runs": {
+          "max": 29.0,
+          "min": 22.2,
+          "operating_point": 29.0
+        },
+        "ratio_of_medians": 30.4,
+        "videos": 5
+      },
+      "matched_over_log": {
+        "classifier_mean": 0.9026,
+        "detector_mean": 1.0342,
+        "ratio_of_means": 1.1442
+      },
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "hota": 0.779,
+        "loss": 0.05,
+        "reference_hota": 0.8056,
+        "sample_rate": 4,
+        "tilesize": 60
+      },
+      "placement": {
+        "anon_pages_on_gpu_node_share": {
+          "te01.mp4": 1.0,
+          "te08.mp4": 1.0,
+          "te13.mp4": 1.0
+        },
+        "cpus": 40,
+        "cpus_local_to_gpu": true,
+        "gpu_numa_node": 1,
+        "membind": "1"
+      },
+      "ratios": {
+        "as_deployed": {
+          "per_video": {
+            "te01.mp4": 31.8676,
+            "te08.mp4": 31.9936,
+            "te13.mp4": 31.9044
+          },
+          "ratio_of_means": 31.9219,
+          "ratio_of_means_video_max": 31.9936,
+          "ratio_of_means_video_min": 31.8676,
+          "ratio_of_medians": 31.9603,
+          "reference_mean_ms": 68.7764,
+          "tetris_mean_ms": 2.1545
+        },
+        "as_deployed_unsynchronized": {
+          "per_video": {
+            "te01.mp4": 32.4026,
+            "te08.mp4": 32.2179,
+            "te13.mp4": 32.4025
+          },
+          "ratio_of_means": 32.3406,
+          "ratio_of_means_video_max": 32.4026,
+          "ratio_of_means_video_min": 32.2179,
+          "ratio_of_medians": 32.3081,
+          "reference_mean_ms": 68.7764,
+          "tetris_mean_ms": 2.1266
+        },
+        "as_deployed_with_rgb_copy": {
+          "per_video": {
+            "te01.mp4": 11.24,
+            "te08.mp4": 11.3541,
+            "te13.mp4": 11.3246
+          },
+          "ratio_of_means": 11.3061,
+          "ratio_of_means_video_max": 11.3541,
+          "ratio_of_means_video_min": 11.24,
+          "ratio_of_medians": null,
+          "reference_mean_ms": 68.7764,
+          "tetris_mean_ms": 6.0831
+        },
+        "same_batch_1": {
+          "per_video": {
+            "te01.mp4": 15.2492,
+            "te08.mp4": 13.8243,
+            "te13.mp4": 15.3276
+          },
+          "ratio_of_means": 14.7659,
+          "ratio_of_means_video_max": 15.3276,
+          "ratio_of_means_video_min": 13.8243,
+          "ratio_of_medians": 15.2927,
+          "reference_mean_ms": 68.7764,
+          "tetris_mean_ms": 4.6578
+        },
+        "same_batch_16": {
+          "per_video": {
+            "te01.mp4": 23.5414,
+            "te08.mp4": 23.4651,
+            "te13.mp4": 23.4064
+          },
+          "ratio_of_means": 23.471,
+          "ratio_of_means_video_max": 23.5414,
+          "ratio_of_means_video_min": 23.4064,
+          "ratio_of_medians": 23.485,
+          "reference_mean_ms": 50.5689,
+          "tetris_mean_ms": 2.1545
+        }
+      },
+      "runs": {
+        "classifier": {
+          "calls": 204,
+          "fps": 464.1396,
+          "fps_at_median": 466.2316,
+          "frames": 3225,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11413.0,
+            "other_gpu_samples": 71,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 179.445,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 4,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 62.0,
+            "utilization_max_pct": 74.0,
+            "utilization_median_pct": 73.5,
+            "utilization_min_pct": 73.0
+          },
+          "max_ms_per_frame": 2.4804,
+          "mean_ms_per_frame": 2.1545,
+          "median_ms_per_frame": 2.1449,
+          "min_ms_per_frame": 2.1216,
+          "p95_ms_per_frame": 2.2652,
+          "per_video_mean_ms": {
+            "te01.mp4": 2.1574,
+            "te08.mp4": 2.1544,
+            "te13.mp4": 2.1518
+          },
+          "videos": 3
+        },
+        "classifier_1": {
+          "calls": 3225,
+          "fps": 214.6944,
+          "fps_at_median": 223.0871,
+          "frames": 3225,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11413.0,
+            "other_gpu_samples": 132,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 133.62,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 15,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1845.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 46.0,
+            "utilization_median_pct": 45.0,
+            "utilization_min_pct": 38.0
+          },
+          "max_ms_per_frame": 7.8518,
+          "mean_ms_per_frame": 4.6578,
+          "median_ms_per_frame": 4.4826,
+          "min_ms_per_frame": 4.3708,
+          "p95_ms_per_frame": 5.2979,
+          "per_video_mean_ms": {
+            "te01.mp4": 4.5085,
+            "te08.mp4": 4.9859,
+            "te13.mp4": 4.4789
+          },
+          "videos": 3
+        },
+        "classifier_stream": {
+          "calls": 3,
+          "fps": 470.2283,
+          "fps_at_median": 471.3052,
+          "frames": 3225,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11413.0,
+            "other_gpu_samples": 74,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 181.685,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 6,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 75.0,
+            "utilization_median_pct": 74.0,
+            "utilization_min_pct": 74.0
+          },
+          "max_ms_per_frame": 2.1394,
+          "mean_ms_per_frame": 2.1266,
+          "median_ms_per_frame": 2.1218,
+          "min_ms_per_frame": 2.1187,
+          "p95_ms_per_frame": 2.1394,
+          "per_video_mean_ms": {
+            "te01.mp4": 2.1218,
+            "te08.mp4": 2.1394,
+            "te13.mp4": 2.1187
+          },
+          "videos": 3
+        },
+        "decode": {
+          "calls": 3,
+          "fps": 1413.1654,
+          "fps_at_median": 1413.6688,
+          "frames": 3225,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 34,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 0.7083,
+          "mean_ms_per_frame": 0.7076,
+          "median_ms_per_frame": 0.7074,
+          "min_ms_per_frame": 0.7073,
+          "p95_ms_per_frame": 0.7083,
+          "per_video_mean_ms": {
+            "te01.mp4": 0.7083,
+            "te08.mp4": 0.7073,
+            "te13.mp4": 0.7074
+          },
+          "videos": 3
+        },
+        "detector": {
+          "calls": 3225,
+          "fps": 14.5399,
+          "fps_at_median": 14.5878,
+          "frames": 3225,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 11413.0,
+            "other_gpu_samples": 1656,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 245.13,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 270,
+            "sm_clock_max_mhz": 1830.0,
+            "sm_clock_median_mhz": 1747.5,
+            "sm_clock_min_mhz": 1635.0,
+            "temperature_max_c": 68.0,
+            "utilization_max_pct": 92.0,
+            "utilization_median_pct": 88.0,
+            "utilization_min_pct": 82.0
+          },
+          "max_ms_per_frame": 80.4305,
+          "mean_ms_per_frame": 68.7764,
+          "median_ms_per_frame": 68.5503,
+          "min_ms_per_frame": 65.6857,
+          "p95_ms_per_frame": 72.2465,
+          "per_video_mean_ms": {
+            "te01.mp4": 68.7508,
+            "te08.mp4": 68.9274,
+            "te13.mp4": 68.651
+          },
+          "videos": 3
+        },
+        "detector_16": {
+          "calls": 204,
+          "fps": 19.775,
+          "fps_at_median": 19.8523,
+          "frames": 3225,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000",
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 11413.0,
+            "other_gpu_samples": 1224,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 253.46,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 197,
+            "sm_clock_max_mhz": 1875.0,
+            "sm_clock_median_mhz": 1710.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 68.0,
+            "utilization_max_pct": 100.0,
+            "utilization_median_pct": 100.0,
+            "utilization_min_pct": 60.0
+          },
+          "max_ms_per_frame": 66.8943,
+          "mean_ms_per_frame": 50.5689,
+          "median_ms_per_frame": 50.372,
+          "min_ms_per_frame": 50.0694,
+          "p95_ms_per_frame": 51.8909,
+          "per_video_mean_ms": {
+            "te01.mp4": 50.7879,
+            "te08.mp4": 50.5535,
+            "te13.mp4": 50.3653
+          },
+          "videos": 3
+        },
+        "rgb_copy": {
+          "calls": 3,
+          "fps": 254.542,
+          "fps_at_median": 255.3434,
+          "frames": 3225,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11413.0,
+            "other_gpu_samples": 117,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 67.1,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 12,
+            "sm_clock_max_mhz": 1440.0,
+            "sm_clock_median_mhz": 1440.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 0.0,
+            "utilization_median_pct": 0.0,
+            "utilization_min_pct": 0.0
+          },
+          "max_ms_per_frame": 3.9592,
+          "mean_ms_per_frame": 3.9286,
+          "median_ms_per_frame": 3.9163,
+          "min_ms_per_frame": 3.9104,
+          "p95_ms_per_frame": 3.9592,
+          "per_video_mean_ms": {
+            "te01.mp4": 3.9592,
+            "te08.mp4": 3.9163,
+            "te13.mp4": 3.9104
+          },
+          "videos": 3
+        }
+      },
+      "started": "2026-10-27T07:04:20+00:00",
+      "videos": {
+        "te01.mp4": 1075,
+        "te08.mp4": 1075,
+        "te13.mp4": 1075
+      }
+    },
+    "B3D2": {
+      "classifier": {
+        "grid": [
+          12,
+          18
+        ],
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles_inferred_at_most": 130,
+        "tilesize": 60
+      },
+      "classify_share_pct": {
+        "log_derived": 12.1,
+        "with_matched_classifier_cost": 11.6451
+      },
+      "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+      "dataset": "jnc2",
+      "detector": {
+        "detector": "retina",
+        "weights": "weights/retinanet_b3d.pth"
+      },
+      "finished": "2026-10-27T07:18:33+00:00",
+      "gpu": {
+        "driver_version": "610.57.04",
+        "name": "Quadro RTX 6000",
+        "pci.bus_id": "00000000:B2:00.0",
+        "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "vbios_version": "90.02.15.00.04"
+      },
+      "host": "bombe",
+      "host_processes": {
+        "load_1m_max": 16.25,
+        "load_1m_median": 6.81,
+        "max_processes": 1,
+        "max_processes_all_gpus": 1,
+        "samples": 245,
+        "samples_with_other_processes": 0
+      },
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "log_derived": {
+        "classifier_mean_ms": 2.149,
+        "classifier_median_ms": 2.074,
+        "classify_seconds": 1.635,
+        "classify_share_pct": 12.1,
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "detector_mean_ms": 68.025,
+        "detector_median_ms": 67.944,
+        "extraction_seconds": 13.538,
+        "frames": 4691,
+        "ratio_of_means": 31.6,
+        "ratio_of_means_across_runs": {
+          "max": 31.6,
+          "min": 22.9,
+          "operating_point": 24.8
+        },
+        "ratio_of_medians": 32.8,
+        "videos": 5
+      },
+      "matched_over_log": {
+        "classifier_mean": 0.9595,
+        "detector_mean": 1.012,
+        "ratio_of_means": 1.0565
+      },
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "hota": 0.7841,
+        "loss": 0.05,
+        "reference_hota": 0.8151,
+        "sample_rate": 8,
+        "tilesize": 60
+      },
+      "placement": {
+        "anon_pages_on_gpu_node_share": {
+          "te01.mp4": 1.0,
+          "te08.mp4": 1.0,
+          "te13.mp4": 1.0
+        },
+        "cpus": 40,
+        "cpus_local_to_gpu": true,
+        "gpu_numa_node": 1,
+        "membind": "1"
+      },
+      "ratios": {
+        "as_deployed": {
+          "per_video": {
+            "te01.mp4": 33.3735,
+            "te08.mp4": 33.1717,
+            "te13.mp4": 33.6122
+          },
+          "ratio_of_means": 33.3852,
+          "ratio_of_means_video_max": 33.6122,
+          "ratio_of_means_video_min": 33.1717,
+          "ratio_of_medians": 33.4745,
+          "reference_mean_ms": 68.8403,
+          "tetris_mean_ms": 2.062
+        },
+        "as_deployed_unsynchronized": {
+          "per_video": {
+            "te01.mp4": 33.9977,
+            "te08.mp4": 33.9056,
+            "te13.mp4": 34.1266
+          },
+          "ratio_of_means": 34.0099,
+          "ratio_of_means_video_max": 34.1266,
+          "ratio_of_means_video_min": 33.9056,
+          "ratio_of_medians": 33.8842,
+          "reference_mean_ms": 68.8403,
+          "tetris_mean_ms": 2.0241
+        },
+        "as_deployed_with_rgb_copy": {
+          "per_video": {
+            "te01.mp4": 11.462,
+            "te08.mp4": 11.3559,
+            "te13.mp4": 11.7061
+          },
+          "ratio_of_means": 11.5065,
+          "ratio_of_means_video_max": 11.7061,
+          "ratio_of_means_video_min": 11.3559,
+          "ratio_of_medians": null,
+          "reference_mean_ms": 68.8403,
+          "tetris_mean_ms": 5.9827
+        },
+        "same_batch_1": {
+          "per_video": {
+            "te01.mp4": 15.256,
+            "te08.mp4": 15.1816,
+            "te13.mp4": 15.3352
+          },
+          "ratio_of_means": 15.2575,
+          "ratio_of_means_video_max": 15.3352,
+          "ratio_of_means_video_min": 15.1816,
+          "ratio_of_medians": 15.278,
+          "reference_mean_ms": 68.8403,
+          "tetris_mean_ms": 4.5119
+        },
+        "same_batch_16": {
+          "per_video": {
+            "te01.mp4": 24.9108,
+            "te08.mp4": 24.2666,
+            "te13.mp4": 25.0483
+          },
+          "ratio_of_means": 24.7405,
+          "ratio_of_means_video_max": 25.0483,
+          "ratio_of_means_video_min": 24.2666,
+          "ratio_of_medians": 25.0451,
+          "reference_mean_ms": 51.015,
+          "tetris_mean_ms": 2.062
+        }
+      },
+      "runs": {
+        "classifier": {
+          "calls": 177,
+          "fps": 484.9652,
+          "fps_at_median": 487.7829,
+          "frames": 2815,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11679.0,
+            "other_gpu_samples": 67,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 171.56,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 3,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 63.0,
+            "utilization_max_pct": 72.0,
+            "utilization_median_pct": 72.0,
+            "utilization_min_pct": 72.0
+          },
+          "max_ms_per_frame": 3.1277,
+          "mean_ms_per_frame": 2.062,
+          "median_ms_per_frame": 2.0501,
+          "min_ms_per_frame": 2.0286,
+          "p95_ms_per_frame": 2.1504,
+          "per_video_mean_ms": {
+            "te01.mp4": 2.057,
+            "te08.mp4": 2.0727,
+            "te13.mp4": 2.0563
+          },
+          "videos": 3
+        },
+        "classifier_1": {
+          "calls": 2815,
+          "fps": 221.6357,
+          "fps_at_median": 222.6275,
+          "frames": 2815,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11679.0,
+            "other_gpu_samples": 120,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 131.825,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 12,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 43.0,
+            "utilization_median_pct": 43.0,
+            "utilization_min_pct": 43.0
+          },
+          "max_ms_per_frame": 5.5483,
+          "mean_ms_per_frame": 4.5119,
+          "median_ms_per_frame": 4.4918,
+          "min_ms_per_frame": 4.4168,
+          "p95_ms_per_frame": 4.6385,
+          "per_video_mean_ms": {
+            "te01.mp4": 4.4998,
+            "te08.mp4": 4.5289,
+            "te13.mp4": 4.507
+          },
+          "videos": 3
+        },
+        "classifier_stream": {
+          "calls": 3,
+          "fps": 494.0403,
+          "fps_at_median": 493.7539,
+          "frames": 2815,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11679.0,
+            "other_gpu_samples": 66,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 176.49,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 3,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 74.0,
+            "utilization_median_pct": 73.0,
+            "utilization_min_pct": 72.0
+          },
+          "max_ms_per_frame": 2.0279,
+          "mean_ms_per_frame": 2.0241,
+          "median_ms_per_frame": 2.0253,
+          "min_ms_per_frame": 2.0192,
+          "p95_ms_per_frame": 2.0279,
+          "per_video_mean_ms": {
+            "te01.mp4": 2.0192,
+            "te08.mp4": 2.0279,
+            "te13.mp4": 2.0253
+          },
+          "videos": 3
+        },
+        "decode": {
+          "calls": 3,
+          "fps": 1415.0798,
+          "fps_at_median": 1412.9541,
+          "frames": 2815,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 34,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 0.7091,
+          "mean_ms_per_frame": 0.7067,
+          "median_ms_per_frame": 0.7077,
+          "min_ms_per_frame": 0.7032,
+          "p95_ms_per_frame": 0.7091,
+          "per_video_mean_ms": {
+            "te01.mp4": 0.7032,
+            "te08.mp4": 0.7077,
+            "te13.mp4": 0.7091
+          },
+          "videos": 3
+        },
+        "detector": {
+          "calls": 2815,
+          "fps": 14.5264,
+          "fps_at_median": 14.5718,
+          "frames": 2815,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 11679.0,
+            "other_gpu_samples": 1456,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 243.745,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 234,
+            "sm_clock_max_mhz": 1830.0,
+            "sm_clock_median_mhz": 1755.0,
+            "sm_clock_min_mhz": 1620.0,
+            "temperature_max_c": 68.0,
+            "utilization_max_pct": 91.0,
+            "utilization_median_pct": 88.0,
+            "utilization_min_pct": 80.0
+          },
+          "max_ms_per_frame": 77.2343,
+          "mean_ms_per_frame": 68.8403,
+          "median_ms_per_frame": 68.6258,
+          "min_ms_per_frame": 65.6732,
+          "p95_ms_per_frame": 72.5418,
+          "per_video_mean_ms": {
+            "te01.mp4": 68.6489,
+            "te08.mp4": 68.7557,
+            "te13.mp4": 69.1165
+          },
+          "videos": 3
+        },
+        "detector_16": {
+          "calls": 177,
+          "fps": 19.6021,
+          "fps_at_median": 19.4762,
+          "frames": 2815,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000",
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 11679.0,
+            "other_gpu_samples": 1076,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 256.105,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 172,
+            "sm_clock_max_mhz": 1875.0,
+            "sm_clock_median_mhz": 1680.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 67.0,
+            "utilization_max_pct": 100.0,
+            "utilization_median_pct": 100.0,
+            "utilization_min_pct": 54.0
+          },
+          "max_ms_per_frame": 59.7981,
+          "mean_ms_per_frame": 51.015,
+          "median_ms_per_frame": 51.3448,
+          "min_ms_per_frame": 49.7556,
+          "p95_ms_per_frame": 51.9098,
+          "per_video_mean_ms": {
+            "te01.mp4": 51.2412,
+            "te08.mp4": 50.2978,
+            "te13.mp4": 51.5068
+          },
+          "videos": 3
+        },
+        "rgb_copy": {
+          "calls": 3,
+          "fps": 255.0537,
+          "fps_at_median": 254.3055,
+          "frames": 2815,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11679.0,
+            "other_gpu_samples": 104,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 67.86,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 9,
+            "sm_clock_max_mhz": 1440.0,
+            "sm_clock_median_mhz": 1440.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 0.0,
+            "utilization_median_pct": 0.0,
+            "utilization_min_pct": 0.0
+          },
+          "max_ms_per_frame": 3.9819,
+          "mean_ms_per_frame": 3.9207,
+          "median_ms_per_frame": 3.9323,
+          "min_ms_per_frame": 3.848,
+          "p95_ms_per_frame": 3.9819,
+          "per_video_mean_ms": {
+            "te01.mp4": 3.9323,
+            "te08.mp4": 3.9819,
+            "te13.mp4": 3.848
+          },
+          "videos": 3
+        }
+      },
+      "started": "2026-10-27T07:11:55+00:00",
+      "videos": {
+        "te01.mp4": 938,
+        "te08.mp4": 939,
+        "te13.mp4": 938
+      }
+    },
+    "B3D3": {
+      "classifier": {
+        "grid": [
+          12,
+          18
+        ],
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles_inferred_at_most": 162,
+        "tilesize": 60
+      },
+      "classify_share_pct": {
+        "log_derived": 22.2,
+        "with_matched_classifier_cost": 19.47
+      },
+      "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+      "dataset": "jnc6",
+      "detector": {
+        "detector": "retina",
+        "weights": "weights/retinanet_b3d.pth"
+      },
+      "finished": "2026-10-27T07:25:50+00:00",
+      "gpu": {
+        "driver_version": "610.57.04",
+        "name": "Quadro RTX 6000",
+        "pci.bus_id": "00000000:B2:00.0",
+        "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "vbios_version": "90.02.15.00.04"
+      },
+      "host": "bombe",
+      "host_processes": {
+        "load_1m_max": 15.66,
+        "load_1m_median": 7.21,
+        "max_processes": 1,
+        "max_processes_all_gpus": 1,
+        "samples": 268,
+        "samples_with_other_processes": 0
+      },
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "log_derived": {
+        "classifier_mean_ms": 2.565,
+        "classifier_median_ms": 2.25,
+        "classify_seconds": 4.033,
+        "classify_share_pct": 22.2,
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "detector_mean_ms": 67.381,
+        "detector_median_ms": 67.452,
+        "extraction_seconds": 18.18,
+        "frames": 5192,
+        "ratio_of_means": 26.3,
+        "ratio_of_means_across_runs": {
+          "max": 26.3,
+          "min": 19.4,
+          "operating_point": 21.8
+        },
+        "ratio_of_medians": 30.0,
+        "videos": 5
+      },
+      "matched_over_log": {
+        "classifier_mean": 0.8481,
+        "detector_mean": 1.0166,
+        "ratio_of_means": 1.1973
+      },
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "hota": 0.8013,
+        "loss": 0.05,
+        "reference_hota": 0.8355,
+        "sample_rate": 4,
+        "tilesize": 60
+      },
+      "placement": {
+        "anon_pages_on_gpu_node_share": {
+          "te01.mp4": 1.0,
+          "te08.mp4": 1.0,
+          "te13.mp4": 1.0
+        },
+        "cpus": 40,
+        "cpus_local_to_gpu": true,
+        "gpu_numa_node": 1,
+        "membind": "1"
+      },
+      "ratios": {
+        "as_deployed": {
+          "per_video": {
+            "te01.mp4": 31.4788,
+            "te08.mp4": 31.4061,
+            "te13.mp4": 31.5798
+          },
+          "ratio_of_means": 31.488,
+          "ratio_of_means_video_max": 31.5798,
+          "ratio_of_means_video_min": 31.4061,
+          "ratio_of_medians": 31.5419,
+          "reference_mean_ms": 68.4977,
+          "tetris_mean_ms": 2.1754
+        },
+        "as_deployed_unsynchronized": {
+          "per_video": {
+            "te01.mp4": 31.9035,
+            "te08.mp4": 32.1083,
+            "te13.mp4": 32.1184
+          },
+          "ratio_of_means": 32.0435,
+          "ratio_of_means_video_max": 32.1184,
+          "ratio_of_means_video_min": 31.9035,
+          "ratio_of_medians": 31.9043,
+          "reference_mean_ms": 68.4977,
+          "tetris_mean_ms": 2.1376
+        },
+        "as_deployed_with_rgb_copy": {
+          "per_video": {
+            "te01.mp4": 11.1942,
+            "te08.mp4": 11.3589,
+            "te13.mp4": 11.0844
+          },
+          "ratio_of_means": 11.2115,
+          "ratio_of_means_video_max": 11.3589,
+          "ratio_of_means_video_min": 11.0844,
+          "ratio_of_medians": null,
+          "reference_mean_ms": 68.4977,
+          "tetris_mean_ms": 6.1096
+        },
+        "same_batch_1": {
+          "per_video": {
+            "te01.mp4": 14.9329,
+            "te08.mp4": 15.1122,
+            "te13.mp4": 15.2774
+          },
+          "ratio_of_means": 15.1066,
+          "ratio_of_means_video_max": 15.2774,
+          "ratio_of_means_video_min": 14.9329,
+          "ratio_of_medians": 15.0766,
+          "reference_mean_ms": 68.4977,
+          "tetris_mean_ms": 4.5343
+        },
+        "same_batch_16": {
+          "per_video": {
+            "te01.mp4": 22.993,
+            "te08.mp4": 23.2592,
+            "te13.mp4": 22.976
+          },
+          "ratio_of_means": 23.0767,
+          "ratio_of_means_video_max": 23.2592,
+          "ratio_of_means_video_min": 22.976,
+          "ratio_of_medians": 23.0735,
+          "reference_mean_ms": 50.2,
+          "tetris_mean_ms": 2.1754
+        }
+      },
+      "runs": {
+        "classifier": {
+          "calls": 195,
+          "fps": 459.6946,
+          "fps_at_median": 462.774,
+          "frames": 3116,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11453.0,
+            "other_gpu_samples": 72,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 180.185,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 4,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 63.0,
+            "utilization_max_pct": 75.0,
+            "utilization_median_pct": 74.5,
+            "utilization_min_pct": 73.0
+          },
+          "max_ms_per_frame": 2.653,
+          "mean_ms_per_frame": 2.1754,
+          "median_ms_per_frame": 2.1609,
+          "min_ms_per_frame": 2.1314,
+          "p95_ms_per_frame": 2.279,
+          "per_video_mean_ms": {
+            "te01.mp4": 2.1652,
+            "te08.mp4": 2.1892,
+            "te13.mp4": 2.1717
+          },
+          "videos": 3
+        },
+        "classifier_1": {
+          "calls": 3116,
+          "fps": 220.5416,
+          "fps_at_median": 221.1995,
+          "frames": 3116,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11453.0,
+            "other_gpu_samples": 132,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 138.605,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 14,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 46.0,
+            "utilization_median_pct": 46.0,
+            "utilization_min_pct": 45.0
+          },
+          "max_ms_per_frame": 19.6106,
+          "mean_ms_per_frame": 4.5343,
+          "median_ms_per_frame": 4.5208,
+          "min_ms_per_frame": 4.4136,
+          "p95_ms_per_frame": 4.6512,
+          "per_video_mean_ms": {
+            "te01.mp4": 4.5642,
+            "te08.mp4": 4.5497,
+            "te13.mp4": 4.489
+          },
+          "videos": 3
+        },
+        "classifier_stream": {
+          "calls": 3,
+          "fps": 467.8037,
+          "fps_at_median": 468.0907,
+          "frames": 3116,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11453.0,
+            "other_gpu_samples": 72,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 185.985,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 4,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 62.0,
+            "utilization_max_pct": 75.0,
+            "utilization_median_pct": 75.0,
+            "utilization_min_pct": 74.0
+          },
+          "max_ms_per_frame": 2.1414,
+          "mean_ms_per_frame": 2.1376,
+          "median_ms_per_frame": 2.1363,
+          "min_ms_per_frame": 2.1352,
+          "p95_ms_per_frame": 2.1414,
+          "per_video_mean_ms": {
+            "te01.mp4": 2.1363,
+            "te08.mp4": 2.1414,
+            "te13.mp4": 2.1352
+          },
+          "videos": 3
+        },
+        "decode": {
+          "calls": 3,
+          "fps": 1420.036,
+          "fps_at_median": 1415.8765,
+          "frames": 3116,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 28,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 0.7095,
+          "mean_ms_per_frame": 0.7042,
+          "median_ms_per_frame": 0.7063,
+          "min_ms_per_frame": 0.6969,
+          "p95_ms_per_frame": 0.7095,
+          "per_video_mean_ms": {
+            "te01.mp4": 0.7063,
+            "te08.mp4": 0.7095,
+            "te13.mp4": 0.6969
+          },
+          "videos": 3
+        },
+        "detector": {
+          "calls": 3116,
+          "fps": 14.599,
+          "fps_at_median": 14.6717,
+          "frames": 3116,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 11453.0,
+            "other_gpu_samples": 1591,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 248.59,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 258,
+            "sm_clock_max_mhz": 1815.0,
+            "sm_clock_median_mhz": 1740.0,
+            "sm_clock_min_mhz": 1635.0,
+            "temperature_max_c": 68.0,
+            "utilization_max_pct": 92.0,
+            "utilization_median_pct": 88.0,
+            "utilization_min_pct": 79.0
+          },
+          "max_ms_per_frame": 78.0186,
+          "mean_ms_per_frame": 68.4977,
+          "median_ms_per_frame": 68.1584,
+          "min_ms_per_frame": 65.1987,
+          "p95_ms_per_frame": 72.0712,
+          "per_video_mean_ms": {
+            "te01.mp4": 68.1566,
+            "te08.mp4": 68.7556,
+            "te13.mp4": 68.5806
+          },
+          "videos": 3
+        },
+        "detector_16": {
+          "calls": 195,
+          "fps": 19.9203,
+          "fps_at_median": 20.0565,
+          "frames": 3116,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000",
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 11453.0,
+            "other_gpu_samples": 1175,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 260.085,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 190,
+            "sm_clock_max_mhz": 1875.0,
+            "sm_clock_median_mhz": 1642.5,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 68.0,
+            "utilization_max_pct": 100.0,
+            "utilization_median_pct": 100.0,
+            "utilization_min_pct": 65.0
+          },
+          "max_ms_per_frame": 52.1792,
+          "mean_ms_per_frame": 50.2,
+          "median_ms_per_frame": 49.859,
+          "min_ms_per_frame": 49.3847,
+          "p95_ms_per_frame": 51.6679,
+          "per_video_mean_ms": {
+            "te01.mp4": 49.7835,
+            "te08.mp4": 50.92,
+            "te13.mp4": 49.8961
+          },
+          "videos": 3
+        },
+        "rgb_copy": {
+          "calls": 3,
+          "fps": 254.1793,
+          "fps_at_median": 254.8804,
+          "frames": 3116,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11453.0,
+            "other_gpu_samples": 117,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 67.43,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 11,
+            "sm_clock_max_mhz": 1440.0,
+            "sm_clock_median_mhz": 1440.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 0.0,
+            "utilization_median_pct": 0.0,
+            "utilization_min_pct": 0.0
+          },
+          "max_ms_per_frame": 4.0155,
+          "mean_ms_per_frame": 3.9342,
+          "median_ms_per_frame": 3.9234,
+          "min_ms_per_frame": 3.8638,
+          "p95_ms_per_frame": 4.0155,
+          "per_video_mean_ms": {
+            "te01.mp4": 3.9234,
+            "te08.mp4": 3.8638,
+            "te13.mp4": 4.0155
+          },
+          "videos": 3
+        }
+      },
+      "started": "2026-10-27T07:18:34+00:00",
+      "videos": {
+        "te01.mp4": 1038,
+        "te08.mp4": 1039,
+        "te13.mp4": 1039
+      }
+    },
+    "B3D4": {
+      "classifier": {
+        "grid": [
+          12,
+          18
+        ],
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles_inferred_at_most": 125,
+        "tilesize": 60
+      },
+      "classify_share_pct": {
+        "log_derived": 26.0,
+        "with_matched_classifier_cost": 24.0636
+      },
+      "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+      "dataset": "jnc7",
+      "detector": {
+        "detector": "retina",
+        "weights": "weights/retinanet_b3d.pth"
+      },
+      "finished": "2026-10-27T07:33:11+00:00",
+      "gpu": {
+        "driver_version": "610.57.04",
+        "name": "Quadro RTX 6000",
+        "pci.bus_id": "00000000:B2:00.0",
+        "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "vbios_version": "90.02.15.00.04"
+      },
+      "host": "bombe",
+      "host_processes": {
+        "load_1m_max": 20.67,
+        "load_1m_median": 9.72,
+        "max_processes": 1,
+        "max_processes_all_gpus": 1,
+        "samples": 265,
+        "samples_with_other_processes": 0
+      },
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "log_derived": {
+        "classifier_mean_ms": 2.252,
+        "classifier_median_ms": 2.086,
+        "classify_seconds": 3.207,
+        "classify_share_pct": 26.0,
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "detector_mean_ms": 67.632,
+        "detector_median_ms": 67.536,
+        "extraction_seconds": 12.356,
+        "frames": 5225,
+        "ratio_of_means": 30.0,
+        "ratio_of_means_across_runs": {
+          "max": 30.0,
+          "min": 25.4,
+          "operating_point": 27.6
+        },
+        "ratio_of_medians": 32.4,
+        "videos": 5
+      },
+      "matched_over_log": {
+        "classifier_mean": 0.904,
+        "detector_mean": 1.0112,
+        "ratio_of_means": 1.1198
+      },
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "hota": 0.8051,
+        "loss": 0.05,
+        "reference_hota": 0.8453,
+        "sample_rate": 4,
+        "tilesize": 60
+      },
+      "placement": {
+        "anon_pages_on_gpu_node_share": {
+          "te01.mp4": 1.0,
+          "te08.mp4": 1.0,
+          "te13.mp4": 1.0
+        },
+        "cpus": 40,
+        "cpus_local_to_gpu": true,
+        "gpu_numa_node": 1,
+        "membind": "1"
+      },
+      "ratios": {
+        "as_deployed": {
+          "per_video": {
+            "te01.mp4": 33.3973,
+            "te08.mp4": 33.6522,
+            "te13.mp4": 33.7285
+          },
+          "ratio_of_means": 33.5928,
+          "ratio_of_means_video_max": 33.7285,
+          "ratio_of_means_video_min": 33.3973,
+          "ratio_of_medians": 33.5596,
+          "reference_mean_ms": 68.391,
+          "tetris_mean_ms": 2.0359
+        },
+        "as_deployed_unsynchronized": {
+          "per_video": {
+            "te01.mp4": 33.8095,
+            "te08.mp4": 34.2518,
+            "te13.mp4": 34.1274
+          },
+          "ratio_of_means": 34.0628,
+          "ratio_of_means_video_max": 34.2518,
+          "ratio_of_means_video_min": 33.8095,
+          "ratio_of_medians": 33.876,
+          "reference_mean_ms": 68.391,
+          "tetris_mean_ms": 2.0078
+        },
+        "as_deployed_with_rgb_copy": {
+          "per_video": {
+            "te01.mp4": 11.4472,
+            "te08.mp4": 11.4432,
+            "te13.mp4": 11.535
+          },
+          "ratio_of_means": 11.4751,
+          "ratio_of_means_video_max": 11.535,
+          "ratio_of_means_video_min": 11.4432,
+          "ratio_of_medians": null,
+          "reference_mean_ms": 68.391,
+          "tetris_mean_ms": 5.96
+        },
+        "same_batch_1": {
+          "per_video": {
+            "te01.mp4": 13.9741,
+            "te08.mp4": 14.5015,
+            "te13.mp4": 13.7914
+          },
+          "ratio_of_means": 14.0828,
+          "ratio_of_means_video_max": 14.5015,
+          "ratio_of_means_video_min": 13.7914,
+          "ratio_of_medians": 14.8482,
+          "reference_mean_ms": 68.391,
+          "tetris_mean_ms": 4.8563
+        },
+        "same_batch_16": {
+          "per_video": {
+            "te01.mp4": 24.6701,
+            "te08.mp4": 25.0683,
+            "te13.mp4": 24.8143
+          },
+          "ratio_of_means": 24.8511,
+          "ratio_of_means_video_max": 25.0683,
+          "ratio_of_means_video_min": 24.6701,
+          "ratio_of_medians": 24.7294,
+          "reference_mean_ms": 50.5939,
+          "tetris_mean_ms": 2.0359
+        }
+      },
+      "runs": {
+        "classifier": {
+          "calls": 198,
+          "fps": 491.1872,
+          "fps_at_median": 493.3655,
+          "frames": 3135,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11659.0,
+            "other_gpu_samples": 70,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 168.04,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 3,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 62.0,
+            "utilization_max_pct": 72.0,
+            "utilization_median_pct": 72.0,
+            "utilization_min_pct": 72.0
+          },
+          "max_ms_per_frame": 2.1457,
+          "mean_ms_per_frame": 2.0359,
+          "median_ms_per_frame": 2.0269,
+          "min_ms_per_frame": 2.0085,
+          "p95_ms_per_frame": 2.1256,
+          "per_video_mean_ms": {
+            "te01.mp4": 2.0327,
+            "te08.mp4": 2.0381,
+            "te13.mp4": 2.0368
+          },
+          "videos": 3
+        },
+        "classifier_1": {
+          "calls": 3135,
+          "fps": 205.9164,
+          "fps_at_median": 218.2864,
+          "frames": 3135,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11659.0,
+            "other_gpu_samples": 136,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 128.01,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 15,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1710.0,
+            "temperature_max_c": 60.0,
+            "utilization_max_pct": 42.0,
+            "utilization_median_pct": 41.0,
+            "utilization_min_pct": 35.0
+          },
+          "max_ms_per_frame": 164.5356,
+          "mean_ms_per_frame": 4.8563,
+          "median_ms_per_frame": 4.5811,
+          "min_ms_per_frame": 4.4348,
+          "p95_ms_per_frame": 5.3666,
+          "per_video_mean_ms": {
+            "te01.mp4": 4.8581,
+            "te08.mp4": 4.7297,
+            "te13.mp4": 4.9812
+          },
+          "videos": 3
+        },
+        "classifier_stream": {
+          "calls": 3,
+          "fps": 498.0592,
+          "fps_at_median": 498.0176,
+          "frames": 3135,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11659.0,
+            "other_gpu_samples": 61,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 169.5,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 3,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1890.0,
+            "sm_clock_min_mhz": 1890.0,
+            "temperature_max_c": 60.0,
+            "utilization_max_pct": 72.0,
+            "utilization_median_pct": 72.0,
+            "utilization_min_pct": 72.0
+          },
+          "max_ms_per_frame": 2.013,
+          "mean_ms_per_frame": 2.0078,
+          "median_ms_per_frame": 2.008,
+          "min_ms_per_frame": 2.0025,
+          "p95_ms_per_frame": 2.013,
+          "per_video_mean_ms": {
+            "te01.mp4": 2.008,
+            "te08.mp4": 2.0025,
+            "te13.mp4": 2.013
+          },
+          "videos": 3
+        },
+        "decode": {
+          "calls": 3,
+          "fps": 1414.061,
+          "fps_at_median": 1414.2971,
+          "frames": 3135,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 31,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 0.7088,
+          "mean_ms_per_frame": 0.7072,
+          "median_ms_per_frame": 0.7071,
+          "min_ms_per_frame": 0.7057,
+          "p95_ms_per_frame": 0.7088,
+          "per_video_mean_ms": {
+            "te01.mp4": 0.7071,
+            "te08.mp4": 0.7057,
+            "te13.mp4": 0.7088
+          },
+          "videos": 3
+        },
+        "detector": {
+          "calls": 3135,
+          "fps": 14.6218,
+          "fps_at_median": 14.7012,
+          "frames": 3135,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 11659.0,
+            "other_gpu_samples": 1576,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 247.63,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 255,
+            "sm_clock_max_mhz": 1830.0,
+            "sm_clock_median_mhz": 1740.0,
+            "sm_clock_min_mhz": 1635.0,
+            "temperature_max_c": 68.0,
+            "utilization_max_pct": 92.0,
+            "utilization_median_pct": 88.0,
+            "utilization_min_pct": 80.0
+          },
+          "max_ms_per_frame": 78.8619,
+          "mean_ms_per_frame": 68.391,
+          "median_ms_per_frame": 68.0218,
+          "min_ms_per_frame": 65.4703,
+          "p95_ms_per_frame": 72.0136,
+          "per_video_mean_ms": {
+            "te01.mp4": 67.8881,
+            "te08.mp4": 68.5879,
+            "te13.mp4": 68.6971
+          },
+          "videos": 3
+        },
+        "detector_16": {
+          "calls": 198,
+          "fps": 19.7652,
+          "fps_at_median": 19.9506,
+          "frames": 3135,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 11659.0,
+            "other_gpu_samples": 1160,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 258.895,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 186,
+            "sm_clock_max_mhz": 1890.0,
+            "sm_clock_median_mhz": 1680.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 68.0,
+            "utilization_max_pct": 100.0,
+            "utilization_median_pct": 100.0,
+            "utilization_min_pct": 55.0
+          },
+          "max_ms_per_frame": 63.4729,
+          "mean_ms_per_frame": 50.5939,
+          "median_ms_per_frame": 50.1239,
+          "min_ms_per_frame": 49.5967,
+          "p95_ms_per_frame": 51.5155,
+          "per_video_mean_ms": {
+            "te01.mp4": 50.148,
+            "te08.mp4": 51.0926,
+            "te13.mp4": 50.541
+          },
+          "videos": 3
+        },
+        "rgb_copy": {
+          "calls": 3,
+          "fps": 254.8371,
+          "fps_at_median": 255.1807,
+          "frames": 3135,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 11659.0,
+            "other_gpu_samples": 110,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 67.36,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 11,
+            "sm_clock_max_mhz": 1440.0,
+            "sm_clock_median_mhz": 1440.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 61.0,
+            "utilization_max_pct": 0.0,
+            "utilization_median_pct": 0.0,
+            "utilization_min_pct": 0.0
+          },
+          "max_ms_per_frame": 3.9556,
+          "mean_ms_per_frame": 3.9241,
+          "median_ms_per_frame": 3.9188,
+          "min_ms_per_frame": 3.8978,
+          "p95_ms_per_frame": 3.9556,
+          "per_video_mean_ms": {
+            "te01.mp4": 3.8978,
+            "te08.mp4": 3.9556,
+            "te13.mp4": 3.9188
+          },
+          "videos": 3
+        }
+      },
+      "started": "2026-10-27T07:25:51+00:00",
+      "videos": {
+        "te01.mp4": 1045,
+        "te08.mp4": 1045,
+        "te13.mp4": 1045
+      }
+    },
+    "CalDoT1": {
+      "classifier": {
+        "grid": [
+          8,
+          12
+        ],
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles_inferred_at_most": 32,
+        "tilesize": 60
+      },
+      "classify_share_pct": {
+        "log_derived": 17.6,
+        "with_matched_classifier_cost": 19.1731
+      },
+      "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+      "dataset": "caldot1-y05",
+      "detector": {
+        "detector": "ultralytics",
+        "weights": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt"
+      },
+      "finished": "2026-10-27T06:55:19+00:00",
+      "gpu": {
+        "driver_version": "610.57.04",
+        "name": "Quadro RTX 6000",
+        "pci.bus_id": "00000000:B2:00.0",
+        "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "vbios_version": "90.02.15.00.04"
+      },
+      "host": "bombe",
+      "host_processes": {
+        "load_1m_max": 5.31,
+        "load_1m_median": 3.605,
+        "max_processes": 1,
+        "max_processes_all_gpus": 1,
+        "samples": 106,
+        "samples_with_other_processes": 0
+      },
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "log_derived": {
+        "classifier_mean_ms": 0.714,
+        "classifier_median_ms": 0.683,
+        "classify_seconds": 13.028,
+        "classify_share_pct": 17.6,
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "detector_mean_ms": 31.52,
+        "detector_median_ms": 31.5,
+        "extraction_seconds": 74.041,
+        "frames": 54000,
+        "ratio_of_means": 44.1,
+        "ratio_of_means_across_runs": {
+          "max": 44.1,
+          "min": 31.5,
+          "operating_point": 32.8
+        },
+        "ratio_of_medians": 46.1,
+        "videos": 60
+      },
+      "matched_over_log": {
+        "classifier_mean": 1.1109,
+        "detector_mean": 0.9643,
+        "ratio_of_means": 0.8689
+      },
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "hota": 0.7787,
+        "loss": 0.05,
+        "reference_hota": 0.8181,
+        "sample_rate": 4,
+        "tilesize": 60
+      },
+      "placement": {
+        "anon_pages_on_gpu_node_share": {
+          "te00.mp4": 1.0,
+          "te29.mp4": 1.0,
+          "te59.mp4": 1.0
+        },
+        "cpus": 40,
+        "cpus_local_to_gpu": true,
+        "gpu_numa_node": 1,
+        "membind": "1"
+      },
+      "ratios": {
+        "as_deployed": {
+          "per_video": {
+            "te00.mp4": 37.838,
+            "te29.mp4": 38.5748,
+            "te59.mp4": 38.5427
+          },
+          "ratio_of_means": 38.3188,
+          "ratio_of_means_video_max": 38.5748,
+          "ratio_of_means_video_min": 37.838,
+          "ratio_of_medians": 38.5445,
+          "reference_mean_ms": 30.3942,
+          "tetris_mean_ms": 0.7932
+        },
+        "as_deployed_unsynchronized": {
+          "per_video": {
+            "te00.mp4": 38.0541,
+            "te29.mp4": 38.8834,
+            "te59.mp4": 38.8527
+          },
+          "ratio_of_means": 38.5967,
+          "ratio_of_means_video_max": 38.8834,
+          "ratio_of_means_video_min": 38.0541,
+          "ratio_of_medians": 38.6545,
+          "reference_mean_ms": 30.3942,
+          "tetris_mean_ms": 0.7875
+        },
+        "as_deployed_with_rgb_copy": {
+          "per_video": {
+            "te00.mp4": 10.4691,
+            "te29.mp4": 10.6305,
+            "te59.mp4": 10.9288
+          },
+          "ratio_of_means": 10.6746,
+          "ratio_of_means_video_max": 10.9288,
+          "ratio_of_means_video_min": 10.4691,
+          "ratio_of_medians": null,
+          "reference_mean_ms": 30.3942,
+          "tetris_mean_ms": 2.8473
+        },
+        "same_batch_1": {
+          "per_video": {
+            "te00.mp4": 7.747,
+            "te29.mp4": 7.896,
+            "te59.mp4": 7.8719
+          },
+          "ratio_of_means": 7.8384,
+          "ratio_of_means_video_max": 7.896,
+          "ratio_of_means_video_min": 7.747,
+          "ratio_of_medians": 7.9315,
+          "reference_mean_ms": 30.3942,
+          "tetris_mean_ms": 3.8776
+        },
+        "same_batch_16": {
+          "per_video": {
+            "te00.mp4": 24.0421,
+            "te29.mp4": 24.3782,
+            "te59.mp4": 24.3925
+          },
+          "ratio_of_means": 24.2711,
+          "ratio_of_means_video_max": 24.3925,
+          "ratio_of_means_video_min": 24.0421,
+          "ratio_of_medians": 24.4504,
+          "reference_mean_ms": 19.2517,
+          "tetris_mean_ms": 0.7932
+        }
+      },
+      "runs": {
+        "classifier": {
+          "calls": 171,
+          "fps": 1260.7295,
+          "fps_at_median": 1266.4331,
+          "frames": 2700,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 35,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 1.4298,
+          "mean_ms_per_frame": 0.7932,
+          "median_ms_per_frame": 0.7896,
+          "min_ms_per_frame": 0.7704,
+          "p95_ms_per_frame": 0.8071,
+          "per_video_mean_ms": {
+            "te00.mp4": 0.7919,
+            "te29.mp4": 0.7902,
+            "te59.mp4": 0.7975
+          },
+          "videos": 3
+        },
+        "classifier_1": {
+          "calls": 2700,
+          "fps": 257.8904,
+          "fps_at_median": 260.5991,
+          "frames": 2700,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 3169.0,
+            "other_gpu_samples": 101,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 75.495,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 10,
+            "sm_clock_max_mhz": 1920.0,
+            "sm_clock_median_mhz": 1440.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 62.0,
+            "utilization_max_pct": 33.0,
+            "utilization_median_pct": 32.0,
+            "utilization_min_pct": 27.0
+          },
+          "max_ms_per_frame": 11.3784,
+          "mean_ms_per_frame": 3.8776,
+          "median_ms_per_frame": 3.8373,
+          "min_ms_per_frame": 3.7672,
+          "p95_ms_per_frame": 4.0276,
+          "per_video_mean_ms": {
+            "te00.mp4": 3.8677,
+            "te29.mp4": 3.8602,
+            "te59.mp4": 3.905
+          },
+          "videos": 3
+        },
+        "classifier_stream": {
+          "calls": 3,
+          "fps": 1269.8729,
+          "fps_at_median": 1270.048,
+          "frames": 2700,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 29,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 0.7912,
+          "mean_ms_per_frame": 0.7875,
+          "median_ms_per_frame": 0.7874,
+          "min_ms_per_frame": 0.7839,
+          "p95_ms_per_frame": 0.7912,
+          "per_video_mean_ms": {
+            "te00.mp4": 0.7874,
+            "te29.mp4": 0.7839,
+            "te59.mp4": 0.7912
+          },
+          "videos": 3
+        },
+        "decode": {
+          "calls": 3,
+          "fps": 1243.0604,
+          "fps_at_median": 1287.3582,
+          "frames": 2700,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 38,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 0.8634,
+          "mean_ms_per_frame": 0.8045,
+          "median_ms_per_frame": 0.7768,
+          "min_ms_per_frame": 0.7732,
+          "p95_ms_per_frame": 0.8634,
+          "per_video_mean_ms": {
+            "te00.mp4": 0.7768,
+            "te29.mp4": 0.8634,
+            "te59.mp4": 0.7732
+          },
+          "videos": 3
+        },
+        "detector": {
+          "calls": 2700,
+          "fps": 32.901,
+          "fps_at_median": 32.8564,
+          "frames": 2700,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 3169.0,
+            "other_gpu_samples": 635,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 256.225,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 98,
+            "sm_clock_max_mhz": 1845.0,
+            "sm_clock_median_mhz": 1785.0,
+            "sm_clock_min_mhz": 1740.0,
+            "temperature_max_c": 67.0,
+            "utilization_max_pct": 91.0,
+            "utilization_median_pct": 89.0,
+            "utilization_min_pct": 88.0
+          },
+          "max_ms_per_frame": 32.0227,
+          "mean_ms_per_frame": 30.3942,
+          "median_ms_per_frame": 30.4354,
+          "min_ms_per_frame": 29.2213,
+          "p95_ms_per_frame": 31.0169,
+          "per_video_mean_ms": {
+            "te00.mp4": 29.9627,
+            "te29.mp4": 30.4802,
+            "te59.mp4": 30.7395
+          },
+          "videos": 3
+        },
+        "detector_16": {
+          "calls": 171,
+          "fps": 51.9436,
+          "fps_at_median": 51.796,
+          "frames": 2700,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 3169.0,
+            "other_gpu_samples": 397,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 257.64,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 60,
+            "sm_clock_max_mhz": 1845.0,
+            "sm_clock_median_mhz": 1635.0,
+            "sm_clock_min_mhz": 1605.0,
+            "temperature_max_c": 67.0,
+            "utilization_max_pct": 100.0,
+            "utilization_median_pct": 84.0,
+            "utilization_min_pct": 80.0
+          },
+          "max_ms_per_frame": 24.2588,
+          "mean_ms_per_frame": 19.2517,
+          "median_ms_per_frame": 19.3065,
+          "min_ms_per_frame": 18.6625,
+          "p95_ms_per_frame": 19.5632,
+          "per_video_mean_ms": {
+            "te00.mp4": 19.0382,
+            "te29.mp4": 19.2627,
+            "te59.mp4": 19.4541
+          },
+          "videos": 3
+        },
+        "rgb_copy": {
+          "calls": 3,
+          "fps": 486.8231,
+          "fps_at_median": 483.0576,
+          "frames": 2700,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 3169.0,
+            "other_gpu_samples": 60,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 66.75,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 3,
+            "sm_clock_max_mhz": 1440.0,
+            "sm_clock_median_mhz": 1440.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 62.0,
+            "utilization_max_pct": 0.0,
+            "utilization_median_pct": 0.0,
+            "utilization_min_pct": 0.0
+          },
+          "max_ms_per_frame": 2.0771,
+          "mean_ms_per_frame": 2.0541,
+          "median_ms_per_frame": 2.0701,
+          "min_ms_per_frame": 2.0152,
+          "p95_ms_per_frame": 2.0771,
+          "per_video_mean_ms": {
+            "te00.mp4": 2.0701,
+            "te29.mp4": 2.0771,
+            "te59.mp4": 2.0152
+          },
+          "videos": 3
+        }
+      },
+      "started": "2026-10-27T06:52:26+00:00",
+      "videos": {
+        "te00.mp4": 900,
+        "te29.mp4": 900,
+        "te59.mp4": 900
+      }
+    },
+    "CalDoT2": {
+      "classifier": {
+        "grid": [
+          8,
+          12
+        ],
+        "name": "ShuffleNet05",
+        "optimization": "torchscript_optimize",
+        "tiles_inferred_at_most": 29,
+        "tilesize": 60
+      },
+      "classify_share_pct": {
+        "log_derived": 13.8,
+        "with_matched_classifier_cost": 12.0735
+      },
+      "cpu": "Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz",
+      "dataset": "caldot2-y05",
+      "detector": {
+        "detector": "ultralytics",
+        "weights": "/polyis-data/training/ultralytics/caldot2/weights/yolov5x6/weights/best.pt"
+      },
+      "finished": "2026-10-27T06:58:12+00:00",
+      "gpu": {
+        "driver_version": "610.57.04",
+        "name": "Quadro RTX 6000",
+        "pci.bus_id": "00000000:B2:00.0",
+        "uuid": "GPU-a8e8ea1e-8cd7-d49a-f661-30d510f60c1b",
+        "vbios_version": "90.02.15.00.04"
+      },
+      "host": "bombe",
+      "host_processes": {
+        "load_1m_max": 3.03,
+        "load_1m_median": 2.63,
+        "max_processes": 1,
+        "max_processes_all_gpus": 1,
+        "samples": 107,
+        "samples_with_other_processes": 0
+      },
+      "idle_before_launch": {
+        "clock_event_reasons": "0x0000000000000000",
+        "gpu_index": 6,
+        "memory_clock_mhz": 7000.0,
+        "memory_used_mib": 0.0,
+        "power_w": 60.68,
+        "pstate": "P0",
+        "sm_clock_mhz": 1440.0,
+        "t": "2026-10-27T06:52:26+00:00",
+        "temperature_c": 43.0,
+        "utilization_gpu_pct": 0.0,
+        "utilization_memory_pct": 0.0
+      },
+      "log_derived": {
+        "classifier_mean_ms": 0.954,
+        "classifier_median_ms": 0.908,
+        "classify_seconds": 51.528,
+        "classify_share_pct": 13.8,
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "detector_mean_ms": 31.627,
+        "detector_median_ms": 31.615,
+        "extraction_seconds": 373.159,
+        "frames": 54000,
+        "ratio_of_means": 33.1,
+        "ratio_of_means_across_runs": {
+          "max": 38.4,
+          "min": 31.4,
+          "operating_point": 33.1
+        },
+        "ratio_of_medians": 34.8,
+        "videos": 60
+      },
+      "matched_over_log": {
+        "classifier_mean": 0.8571,
+        "detector_mean": 0.9657,
+        "ratio_of_means": 1.1285
+      },
+      "operating_point": {
+        "classifier": "ShuffleNet05",
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "hota": 0.6921,
+        "loss": 0.05,
+        "reference_hota": 0.7156,
+        "sample_rate": 1,
+        "tilesize": 60
+      },
+      "placement": {
+        "anon_pages_on_gpu_node_share": {
+          "te00.mp4": 1.0,
+          "te29.mp4": 1.0,
+          "te59.mp4": 1.0
+        },
+        "cpus": 40,
+        "cpus_local_to_gpu": true,
+        "gpu_numa_node": 1,
+        "membind": "1"
+      },
+      "ratios": {
+        "as_deployed": {
+          "per_video": {
+            "te00.mp4": 37.352,
+            "te29.mp4": 37.2573,
+            "te59.mp4": 37.4513
+          },
+          "ratio_of_means": 37.3531,
+          "ratio_of_means_video_max": 37.4513,
+          "ratio_of_means_video_min": 37.2573,
+          "ratio_of_medians": 37.6488,
+          "reference_mean_ms": 30.5423,
+          "tetris_mean_ms": 0.8177
+        },
+        "as_deployed_unsynchronized": {
+          "per_video": {
+            "te00.mp4": 37.4855,
+            "te29.mp4": 37.5875,
+            "te59.mp4": 37.718
+          },
+          "ratio_of_means": 37.5967,
+          "ratio_of_means_video_max": 37.718,
+          "ratio_of_means_video_min": 37.4855,
+          "ratio_of_medians": 37.597,
+          "reference_mean_ms": 30.5423,
+          "tetris_mean_ms": 0.8124
+        },
+        "as_deployed_with_rgb_copy": {
+          "per_video": {
+            "te00.mp4": 10.0045,
+            "te29.mp4": 10.2637,
+            "te59.mp4": 10.6601
+          },
+          "ratio_of_means": 10.3023,
+          "ratio_of_means_video_max": 10.6601,
+          "ratio_of_means_video_min": 10.0045,
+          "ratio_of_medians": null,
+          "reference_mean_ms": 30.5423,
+          "tetris_mean_ms": 2.9646
+        },
+        "same_batch_1": {
+          "per_video": {
+            "te00.mp4": 7.6879,
+            "te29.mp4": 7.6468,
+            "te59.mp4": 7.7156
+          },
+          "ratio_of_means": 7.6832,
+          "ratio_of_means_video_max": 7.7156,
+          "ratio_of_means_video_min": 7.6468,
+          "ratio_of_medians": 7.772,
+          "reference_mean_ms": 30.5423,
+          "tetris_mean_ms": 3.9752
+        },
+        "same_batch_16": {
+          "per_video": {
+            "te00.mp4": 23.7491,
+            "te29.mp4": 23.5689,
+            "te59.mp4": 23.8458
+          },
+          "ratio_of_means": 23.7206,
+          "ratio_of_means_video_max": 23.8458,
+          "ratio_of_means_video_min": 23.5689,
+          "ratio_of_medians": 23.8924,
+          "reference_mean_ms": 19.3955,
+          "tetris_mean_ms": 0.8177
+        }
+      },
+      "runs": {
+        "classifier": {
+          "calls": 171,
+          "fps": 1222.9971,
+          "fps_at_median": 1232.2638,
+          "frames": 2700,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 37,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 1.4748,
+          "mean_ms_per_frame": 0.8177,
+          "median_ms_per_frame": 0.8115,
+          "min_ms_per_frame": 0.795,
+          "p95_ms_per_frame": 0.8351,
+          "per_video_mean_ms": {
+            "te00.mp4": 0.8155,
+            "te29.mp4": 0.8241,
+            "te59.mp4": 0.8134
+          },
+          "videos": 3
+        },
+        "classifier_1": {
+          "calls": 2700,
+          "fps": 251.5607,
+          "fps_at_median": 254.381,
+          "frames": 2700,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 3163.0,
+            "other_gpu_samples": 98,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 75.01,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 9,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1440.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 62.0,
+            "utilization_max_pct": 33.0,
+            "utilization_median_pct": 32.0,
+            "utilization_min_pct": 26.0
+          },
+          "max_ms_per_frame": 5.9784,
+          "mean_ms_per_frame": 3.9752,
+          "median_ms_per_frame": 3.9311,
+          "min_ms_per_frame": 3.8616,
+          "p95_ms_per_frame": 4.1632,
+          "per_video_mean_ms": {
+            "te00.mp4": 3.9623,
+            "te29.mp4": 4.015,
+            "te59.mp4": 3.9482
+          },
+          "videos": 3
+        },
+        "classifier_stream": {
+          "calls": 3,
+          "fps": 1230.9738,
+          "fps_at_median": 1230.5676,
+          "frames": 2700,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 36,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 0.8168,
+          "mean_ms_per_frame": 0.8124,
+          "median_ms_per_frame": 0.8126,
+          "min_ms_per_frame": 0.8076,
+          "p95_ms_per_frame": 0.8168,
+          "per_video_mean_ms": {
+            "te00.mp4": 0.8126,
+            "te29.mp4": 0.8168,
+            "te59.mp4": 0.8076
+          },
+          "videos": 3
+        },
+        "decode": {
+          "calls": 3,
+          "fps": 2174.4341,
+          "fps_at_median": 2184.5216,
+          "frames": 2700,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": null,
+            "memory_used_max_mib": null,
+            "other_gpu_samples": 18,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": null,
+            "pstates": null,
+            "samples": 0,
+            "sm_clock_max_mhz": null,
+            "sm_clock_median_mhz": null,
+            "sm_clock_min_mhz": null,
+            "temperature_max_c": null,
+            "utilization_max_pct": null,
+            "utilization_median_pct": null,
+            "utilization_min_pct": null
+          },
+          "max_ms_per_frame": 0.4861,
+          "mean_ms_per_frame": 0.4599,
+          "median_ms_per_frame": 0.4578,
+          "min_ms_per_frame": 0.4358,
+          "p95_ms_per_frame": 0.4861,
+          "per_video_mean_ms": {
+            "te00.mp4": 0.4578,
+            "te29.mp4": 0.4358,
+            "te59.mp4": 0.4861
+          },
+          "videos": 3
+        },
+        "detector": {
+          "calls": 2700,
+          "fps": 32.7415,
+          "fps_at_median": 32.7305,
+          "frames": 2700,
+          "frames_per_call": 1,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 3163.0,
+            "other_gpu_samples": 639,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 257.105,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 98,
+            "sm_clock_max_mhz": 1815.0,
+            "sm_clock_median_mhz": 1785.0,
+            "sm_clock_min_mhz": 1755.0,
+            "temperature_max_c": 67.0,
+            "utilization_max_pct": 91.0,
+            "utilization_median_pct": 89.0,
+            "utilization_min_pct": 88.0
+          },
+          "max_ms_per_frame": 33.1318,
+          "mean_ms_per_frame": 30.5423,
+          "median_ms_per_frame": 30.5526,
+          "min_ms_per_frame": 29.8587,
+          "p95_ms_per_frame": 30.9535,
+          "per_video_mean_ms": {
+            "te00.mp4": 30.4619,
+            "te29.mp4": 30.7021,
+            "te59.mp4": 30.4628
+          },
+          "videos": 3
+        },
+        "detector_16": {
+          "calls": 171,
+          "fps": 51.5584,
+          "fps_at_median": 51.5756,
+          "frames": 2700,
+          "frames_per_call": 16,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000004"
+            ],
+            "memory_used_max_mib": 3163.0,
+            "other_gpu_samples": 409,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 257.99,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 61,
+            "sm_clock_max_mhz": 1860.0,
+            "sm_clock_median_mhz": 1635.0,
+            "sm_clock_min_mhz": 1605.0,
+            "temperature_max_c": 67.0,
+            "utilization_max_pct": 100.0,
+            "utilization_median_pct": 84.0,
+            "utilization_min_pct": 79.0
+          },
+          "max_ms_per_frame": 24.39,
+          "mean_ms_per_frame": 19.3955,
+          "median_ms_per_frame": 19.389,
+          "min_ms_per_frame": 18.8124,
+          "p95_ms_per_frame": 19.657,
+          "per_video_mean_ms": {
+            "te00.mp4": 19.3683,
+            "te29.mp4": 19.4221,
+            "te59.mp4": 19.3961
+          },
+          "videos": 3
+        },
+        "rgb_copy": {
+          "calls": 3,
+          "fps": 465.7785,
+          "fps_at_median": 461.4092,
+          "frames": 2700,
+          "frames_per_call": null,
+          "gpu": {
+            "clock_event_reasons": [
+              "0x0000000000000000"
+            ],
+            "memory_used_max_mib": 3163.0,
+            "other_gpu_samples": 64,
+            "other_gpus_memory_used_max_mib": 0.0,
+            "other_gpus_utilization_max_pct": 0.0,
+            "power_median_w": 68.43,
+            "pstates": [
+              "P2"
+            ],
+            "samples": 5,
+            "sm_clock_max_mhz": 1905.0,
+            "sm_clock_median_mhz": 1440.0,
+            "sm_clock_min_mhz": 1440.0,
+            "temperature_max_c": 63.0,
+            "utilization_max_pct": 0.0,
+            "utilization_median_pct": 0.0,
+            "utilization_min_pct": 0.0
+          },
+          "max_ms_per_frame": 2.2293,
+          "mean_ms_per_frame": 2.1469,
+          "median_ms_per_frame": 2.1673,
+          "min_ms_per_frame": 2.0443,
+          "p95_ms_per_frame": 2.2293,
+          "per_video_mean_ms": {
+            "te00.mp4": 2.2293,
+            "te29.mp4": 2.1673,
+            "te59.mp4": 2.0443
+          },
+          "videos": 3
+        }
+      },
+      "started": "2026-10-27T06:55:20+00:00",
+      "videos": {
+        "te00.mp4": 900,
+        "te29.mp4": 900,
+        "te59.mp4": 900
+      }
+    }
+  },
+  "method": {
+    "aggregation": "Per-frame ms (a call's time split evenly over its frames); mean = summed time / frames, so fps = 1000 / mean and the ratio of means equals the ratio of throughputs; p95 by linear interpolation. A comparison's Tetris side adds its runs' means (they cover the same frames) and has a median only when it is one run. per_video and video_min/max are the same ratio per timed video. GPU conditions are the timed GPU's samples whose arrival and window-start phases are both the run, and the other GPUs' peaks while either phase is. host_processes counts compute processes from the host (null when the host-side sampler did not run); the job itself is one. log_derived is r9o1_classifier_cost over every test frame from the pipeline logs; matched_over_log divides the matched as_deployed value by it; classify_share_pct.with_matched_classifier_cost scales the logged classification time by matched_over_log.classifier_mean and keeps every other operator.",
+    "classifier": "scripts/p020_exec_classify.py load_model, select_model_optimization, and classify_batch, prepared as classify_all; every frame paired with its previous frame (sample rate 1)",
+    "estimates": "none",
+    "gpu_samples": "nvidia-smi on every GPU every 500 ms, labeled with the phase on arrival and 1000 ms earlier",
+    "operating_point": "fastest Tetris test configuration with HOTA >= reference HOTA x (1 - 0.05) (common.fastest_tetris)",
+    "order": "per video: decode, rgb_copy, classifier, classifier_1, classifier_stream, detector, detector_16, on the same decoded frames",
+    "pairs": {
+      "as_deployed": {
+        "description": "classifier in p020's 16-frame batches against the reference detector at p002's batch size 1",
+        "reference": "detector",
+        "tetris": [
+          "classifier"
+        ]
+      },
+      "as_deployed_unsynchronized": {
+        "description": "as_deployed with the classifier synchronized once per video instead of after every call",
+        "reference": "detector",
+        "tetris": [
+          "classifier_stream"
+        ]
+      },
+      "as_deployed_with_rgb_copy": {
+        "description": "as_deployed with p020's BGR-to-RGB copy charged to Tetris (the detector reads BGR)",
+        "reference": "detector",
+        "tetris": [
+          "classifier",
+          "rgb_copy"
+        ]
+      },
+      "same_batch_1": {
+        "description": "both models one frame per call",
+        "reference": "detector",
+        "tetris": [
+          "classifier_1"
+        ]
+      },
+      "same_batch_16": {
+        "description": "both models 16 consecutive frames per call",
+        "reference": "detector_16",
+        "tetris": [
+          "classifier"
+        ]
+      }
+    },
+    "placement": "CPU affinity and memory bound to the GPU's NUMA node (numactl --cpunodebind --membind), checked at start; anonymous pages per node recorded per video",
+    "runs": {
+      "classifier": "p020's classify_batch, 16 consecutive frames per call (p020's batching)",
+      "classifier_1": "classify_batch, one frame per call",
+      "classifier_stream": "classify_batch over the video in 16-frame calls, synchronized only before the first and after the last call (one interval), as p020 runs",
+      "decode": "cv2 decoding of the whole video to BGR frames (one interval)",
+      "detector": "polyis.models.detector.detect, one BGR frame per call (p002, batch size 1)",
+      "detector_16": "polyis.models.detector.detect_batch, 16 consecutive BGR frames per call",
+      "rgb_copy": "p020's BGR-to-RGB contiguous copy of every frame (one interval; Tetris only, untimed in p121)"
+    },
+    "sampling": "none",
+    "timing": "torch.cuda.synchronize() before and after every timed call; time.perf_counter_ns; a call's time split evenly over its frames. Per-call synchronization removes p020's overlap of host work with the previous batch's GPU tail, so the per-call classifier runs are an upper bound on its steady-state cost; classifier_stream synchronizes once per video",
+    "videos": "3 test videos per dataset, evenly spaced in name order, every frame",
+    "warmup": "untimed: every run over the first video, the detector runs on its first 32 frames only"
+  },
+  "summary": {
+    "ratio_of_means": {
+      "as_deployed": {
+        "datasets": 7,
+        "max": 38.3188,
+        "median": 33.3852,
+        "min": 27.2346,
+        "video_max": 38.5748,
+        "video_min": 27.1374
+      },
+      "as_deployed_unsynchronized": {
+        "datasets": 7,
+        "max": 38.5967,
+        "median": 34.0099,
+        "min": 27.7965,
+        "video_max": 38.8834,
+        "video_min": 27.7358
+      },
+      "as_deployed_with_rgb_copy": {
+        "datasets": 7,
+        "max": 11.5065,
+        "median": 11.2115,
+        "min": 8.7026,
+        "video_max": 11.7061,
+        "video_min": 8.6804
+      },
+      "same_batch_1": {
+        "datasets": 7,
+        "max": 15.2575,
+        "median": 14.0828,
+        "min": 7.6832,
+        "video_max": 15.3352,
+        "video_min": 7.6468
+      },
+      "same_batch_16": {
+        "datasets": 7,
+        "max": 24.8511,
+        "median": 23.7206,
+        "min": 20.8412,
+        "video_max": 25.0683,
+        "video_min": 20.7848
+      }
+    }
+  }
+}

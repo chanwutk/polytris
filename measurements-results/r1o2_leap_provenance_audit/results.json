@@ -1,0 +1,223 @@
+{
+  "audit_date": "2026-10-30",
+  "scope": "Read-only audit of Alena LEAP candidates on Manchester and Bombe, plus the exact accuracy/runtime artifacts consumed on ace.",
+  "experiments_modified": false,
+  "notes": {
+    "source": "User-pasted Notion notes after ntn access failed",
+    "page_id": "265a3700-53c5-807a-82c9-cca1f04281d3",
+    "ntn_status": "404 object_not_found; page not shared with Notion CLI integration",
+    "findings": [
+      "Early Jackson commands use weights/yolov5s.pt.",
+      "CalDoT commands use standard weights/yolov5s.pt or weights/yolov5l.pt; notes explicitly link official v5.0 YOLOv5x/l/s downloads.",
+      "No pasted LEAP command references our dataset-specific best.pt checkpoints.",
+      "Notes show a TITAN Xp environment and mention a Freddie data transfer; neither establishes the host of the scored April invocation.",
+      "Month/day note headings do not explicitly specify a year."
+    ]
+  },
+  "exact_paper_input_chain": {
+    "host": "ace",
+    "host_root": "/work/alenachao/tunnel/hota_outputs",
+    "container_root": "/sota-results",
+    "accuracy": "<label>/leap/<clip>.json",
+    "runtime": "<label>/leap_<label>.csv",
+    "native_source": "/data/alenachao/data/leap-dataset/outputs/parsed_results/<full_name>",
+    "copied_native_source": "/data/cwkt/data/bombe-revision/scratch/r1o2_leap_otif_rerun/inputs/leap-dataset/outputs/parsed_results/<full_name>",
+    "pipeline": [
+      "p140_otif_transform.py",
+      "p141_otif_accuracy.py",
+      "p142_otif_tradeoff.py",
+      "p200_compare_compute.py"
+    ],
+    "checks": [
+      {
+        "dataset": "caldot1-y05",
+        "label": "caldot1-y5",
+        "accuracy_exports_total": 60,
+        "accuracy_exports_exactly_matched": 60,
+        "runtime_rows_total": 120,
+        "runtime_rows_numerically_matched": 120,
+        "current_canonical_compute_s": 72.2873
+      },
+      {
+        "dataset": "caldot2-y05",
+        "label": "caldot2-y5",
+        "accuracy_exports_total": 60,
+        "accuracy_exports_exactly_matched": 60,
+        "runtime_rows_total": 120,
+        "runtime_rows_numerically_matched": 120,
+        "current_canonical_compute_s": 53.3189
+      },
+      {
+        "dataset": "ams-y05",
+        "label": "amsterdam-y5",
+        "accuracy_exports_total": 60,
+        "accuracy_exports_exactly_matched": 60,
+        "runtime_rows_total": 60,
+        "runtime_rows_numerically_matched": 60,
+        "current_canonical_compute_s": 97.2053
+      },
+      {
+        "dataset": "jnc0",
+        "label": "jnc0",
+        "accuracy_exports_total": 5,
+        "accuracy_exports_exactly_matched": 5,
+        "runtime_rows_total": 5,
+        "runtime_rows_numerically_matched": 5,
+        "current_canonical_compute_s": 20.2567
+      },
+      {
+        "dataset": "jnc2",
+        "label": "jnc2",
+        "accuracy_exports_total": 5,
+        "accuracy_exports_exactly_matched": 5,
+        "runtime_rows_total": 5,
+        "runtime_rows_numerically_matched": 5,
+        "current_canonical_compute_s": 25.8219
+      },
+      {
+        "dataset": "jnc6",
+        "label": "jnc6",
+        "accuracy_exports_total": 5,
+        "accuracy_exports_exactly_matched": 5,
+        "runtime_rows_total": 5,
+        "runtime_rows_numerically_matched": 5,
+        "current_canonical_compute_s": 172.8528
+      },
+      {
+        "dataset": "jnc7",
+        "label": "jnc7",
+        "accuracy_exports_total": 5,
+        "accuracy_exports_exactly_matched": 5,
+        "runtime_rows_total": 5,
+        "runtime_rows_numerically_matched": 5,
+        "current_canonical_compute_s": 19.4815
+      }
+    ],
+    "exporter_sha256": "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b",
+    "runtime_csv_sha256": {
+      "caldot1-y5": "c33ba055ebbff7f2d461a90b555aef3a477635c9718a8b5e25a42a94f5549701",
+      "caldot2-y5": "0e0e5f860dc65ef384e59e25277d729c7abe69db6cf2f0d7e48349bb45dc2169",
+      "amsterdam-y5": "3453e951493dabd6fbba246b5cc7d451f2a6539c777f0bfcd90f856058cf1938"
+    },
+    "export_date": "2026-04-11 UTC / 2026-04-10 Pacific",
+    "same_invocation_limit": "CalDoT runtime includes two complete executions averaged per clip; accuracy holds one saved result per clip. Same output family is confirmed, but an exact accuracy-to-individual-runtime-invocation binding is not proven."
+  },
+  "april_checkpoint_evidence": {
+    "confidence": "Strong launch-path, loader-log, checkpoint-identity, output-match, and reproduction evidence; no checksum recorded at original invocation.",
+    "manchester_container_id": "4cfe8eac6553cc95a9cbd9d717debeacf25fbf2187a9b39beab551a678e1117f",
+    "container_name": "alenatunnel-leap",
+    "created": "2026-03-16",
+    "retained_history": "/data/cwkt/l/.local/var/lib/docker/overlay2/8422277ca7d2a8e27e0a14341494a0392bfb5e63921977c747f646b050321989/diff/root/.bash_history",
+    "lines": {
+      "caldot1": [
+        235,
+        240
+      ],
+      "caldot2": [
+        81,
+        87
+      ],
+      "amsterdam": [
+        [
+          176,
+          184
+        ],
+        [
+          185,
+          193
+        ]
+      ]
+    },
+    "recorded_weight": "/data/alenachao/data/leap-dataset/models/yolov5/yolov5x.pt",
+    "current_weight_bytes": 176120518,
+    "current_weight_sha256": "a2eff493b236c6aa22caac3af5116b174a1d599e95b44813f25fa59f0e8fdba0",
+    "identical_current_bundled_weight": "/work/alenachao/tunnel/work/LEAP/weights/yolov5x.pt",
+    "loader": "No --use_distill flag in retained launches. Current parser uses action=store_false and defaults True: Detector(args.weight). April logs corroborate the misleadingly named Distilled branch.",
+    "class_handling": "Current/copied Detector keeps COCO IDs 2,5,7; no class-0 mapping.",
+    "inputs": "Workspace videos/{caldot1-y5,caldot2-y5,amsterdam-y5}/test; workspace logs/outputs; Amsterdam also workspace motion_patterns.",
+    "source_caution": "Current copied source passes YAML iou_thresh/conf_thresh to constructor conf_thres/iou_thres in reversed positional order. This was observed, not repaired during this audit.",
+    "historical_hash_limit": "Retained shell history is undated and the checkpoint bytes were not checksummed at launch; current files and reproductions do not alone prove immutable historical bytes."
+  },
+  "older_candidates": {
+    "root": "/work/alenachao/tunnel/work/LEAP/outputs/parsed_results",
+    "date_caution": "March 12 timestamps cluster within seconds and indicate copy timestamps, not established execution dates.",
+    "caldot1": {
+      "clips": 60,
+      "objects": 638,
+      "paper_exports_matching": 10,
+      "nonempty_matching": 3,
+      "empty_matching": 7,
+      "native_arrays_matching_april": 9
+    },
+    "caldot2": {
+      "clips": 60,
+      "objects": 743,
+      "paper_exports_matching": 6,
+      "nonempty_matching": 2,
+      "empty_matching": 4,
+      "native_arrays_matching_april": 6
+    },
+    "classes": [
+      2,
+      5,
+      7
+    ],
+    "pattern_libraries": "All 60 pattern files per CalDoT dataset match April.",
+    "duplicate": "old/caldot1 duplicates the older CalDoT1 candidate; old/caldot1_old and old/jackson also exist.",
+    "input_samples": "All four checked old/April video pairs (CalDoT1/2 clips0,1) differ bytewise. Decoded-frame equivalence was not established.",
+    "detector_provenance": "Unresolved: no matching launch log/checkpoint binding. Class IDs do not exclude every hypothetical older multiclass dataset-specific detector.",
+    "reuse": "Not the paper source and not a verified reusable run with our exact checkpoints."
+  },
+  "bombe": {
+    "containers": [
+      {
+        "name": "alenatunnel",
+        "id": "733bd9f9d207",
+        "created": "2026-02-16",
+        "stopped": "2026-03-12"
+      },
+      {
+        "name": "alenatunnel-leap",
+        "id": "ac60cabecdab",
+        "created": "2026-03-13",
+        "stopped": "2026-09-12"
+      }
+    ],
+    "shared_mount": "/work/alenachao/tunnel/work -> /work/alenachao",
+    "historical_source_limit": "Files obtained from the bind-mounted checkout are current shared files, not frozen historical container source.",
+    "launch_history": "Only tunnel/setup commands found; no LEAP launch arguments.",
+    "current_native_workspace": "No /data/alenachao/data/leap-dataset currently present on native Bombe; the revision copy is separate."
+  },
+  "our_checkpoints": {
+    "path_on_bombe": "/data/alenachao/data/otif-dataset/yolov5/<label>/best.pt",
+    "shared_path": "/work/alenachao/tunnel/work/data/otif-dataset/yolov5/<label>/best.pt",
+    "sha256": {
+      "caldot1-y5": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135",
+      "caldot2-y5": "ef2b32e315aca947405be755ac32ef497ed4216de56dbc0fea9ac14ca3987c7c",
+      "amsterdam-y5": "be2b26074f713f27b3ebe36c7a3a6e2c38076874ed64c296fae069ead1337ab6"
+    },
+    "launch_binding": "Available on both workspaces, but no retained LEAP launch referencing these files was found."
+  },
+  "student_artifacts": {
+    "root": "/work/alenachao/tunnel/work/LEAP/runs/train",
+    "targets": {
+      "exp19": "VOC",
+      "exp20": "VisDrone",
+      "exp24": "StanfordCars",
+      "exp33": "Object365"
+    },
+    "architecture": "YOLOv5s students with YOLOv5l teacher; distinct from our dataset-specific x6 checkpoints.",
+    "inference_binding": "No retained scored inference launch references these artifacts; existence does not prove use."
+  },
+  "metric_versions": {
+    "duplicate_runtime_fix": "Commit 33b7ec8 on 2026-10-26 changed CalDoT aggregation from summing two blocks to averaging per clip. Earlier totals: CalDoT1 144.5746s and CalDoT2 106.6378s.",
+    "revision_figure": "Current renderer replaces HOTA using max(linear,pattern) from copied-workspace reruns but retains original corrected CSV FPS; it is a reconstruction-sensitivity figure, not one newly paired accuracy/runtime invocation.",
+    "fresh_rerun_caution": "Refresh future FPS using the established speed.tsv inference_total-minus-decode convention, not an unverified sum of component timers."
+  },
+  "conclusion": "No verified existing Alena run with our exact CalDoT1, CalDoT2, and Amsterdam checkpoints was found. Evidence strongly supports standard YOLOv5x for the paper source; this does not prove that Alena never ran our detector elsewhere.",
+  "limitations": [
+    "Deleted containers, unretained shell history, overwritten checkpoints, and arbitrary historical locations cannot be ruled out.",
+    "Exact historical checkpoint checksums and the older output set detector remain unproven.",
+    "Notion notes were read from the user paste because CLI access was unavailable."
+  ]
+}

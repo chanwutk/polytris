@@ -1,0 +1,54 @@
+{
+  "dataset": "CalDoT1",
+  "dataset_id": "caldot1-y05",
+  "resolution": [
+    720,
+    480
+  ],
+  "source_zip": "/Users/chanwutk/Downloads/job_1_annotations_2026_10_31_23_06_59_cvat for images 1.1.zip",
+  "source_sha256": "243e92c3199c303fbe3c673410716c3bf4831fcd54e0aa26683646f3f76d4588",
+  "cvat_job": "1",
+  "stop_area": [
+    [
+      111.0,
+      406.0,
+      360.0,
+      479.0
+    ],
+    [
+      404.0,
+      198.8,
+      504.0,
+      272.0
+    ]
+  ],
+  "previous_stop_area": [
+    [
+      404,
+      226,
+      504,
+      272
+    ],
+    [
+      111,
+      406,
+      360,
+      479
+    ]
+  ],
+  "numbering": "Display labels R0 onward follow XML order. Geometry is preserved exactly; region order may differ from the original export.",
+  "existing_pattern_check": {
+    "patterns": 7,
+    "eligible_before": 2,
+    "eligible_after": 6,
+    "starts_inside_new_regions": 7,
+    "ends_inside_new_regions": 6,
+    "excluded_patterns": [
+      5
+    ],
+    "source": "measurements-results/r1o2_leap_sampling_diagnostics/caldot1-y05-patterns.parquet",
+    "source_sha256": "4075853ca833256624aab3bd165bcdcac24d2b6e82d2c02326eefa0c37640539",
+    "rule": "Both endpoint centers inside a region, inclusive bounds; first matching region, as in LEAP allocate_tracks.",
+    "execution": "CPU read-only check of the saved motion library on ace; no extraction or retraining."
+  }
+}

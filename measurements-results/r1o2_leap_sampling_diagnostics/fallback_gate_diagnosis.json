@@ -1,0 +1,20 @@
+[
+  {
+    "dataset": "Amsterdam",
+    "pattern_frames": 120,
+    "fallback_point": 60,
+    "median_gap_frames": 60.0,
+    "interval_overlap": 0.3333333333333333,
+    "temporal_threshold": 0.7,
+    "appearance_threshold": 0.99
+  },
+  {
+    "dataset": "B3D3",
+    "pattern_frames": 107,
+    "fallback_point": 60,
+    "median_gap_frames": 47.0,
+    "interval_overlap": 0.38961038961038963,
+    "temporal_threshold": 0.7,
+    "appearance_threshold": 0.99
+  }
+]

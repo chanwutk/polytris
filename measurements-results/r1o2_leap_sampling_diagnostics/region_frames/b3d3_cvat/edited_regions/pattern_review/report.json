@@ -1,0 +1,118 @@
+{
+  "dataset": "B3D3",
+  "patterns": 4,
+  "eligible": 0,
+  "uncovered_endpoints": [
+    {
+      "pattern": 0,
+      "endpoint": "S",
+      "x": 744.5,
+      "y": 514.5,
+      "inside": false,
+      "label": "P0-S",
+      "label_x": 756.5,
+      "label_y": 502.5
+    },
+    {
+      "pattern": 1,
+      "endpoint": "E",
+      "x": 503.5,
+      "y": 105.5,
+      "inside": false,
+      "label": "P1-E",
+      "label_x": 515.5,
+      "label_y": 93.5
+    },
+    {
+      "pattern": 2,
+      "endpoint": "S",
+      "x": 315.5,
+      "y": 180.0,
+      "inside": false,
+      "label": "P2-S",
+      "label_x": 327.5,
+      "label_y": 168.0
+    },
+    {
+      "pattern": 3,
+      "endpoint": "E",
+      "x": 395.5,
+      "y": 480.0,
+      "inside": false,
+      "label": "P3-E",
+      "label_x": 407.5,
+      "label_y": 468.0
+    }
+  ],
+  "patterns_detail": [
+    {
+      "pattern": 0,
+      "sx": 744.5,
+      "sy": 514.5,
+      "ex": 528.5,
+      "ey": 27.0,
+      "start_region": null,
+      "end_region": 1
+    },
+    {
+      "pattern": 1,
+      "sx": 22.5,
+      "sy": 351.0,
+      "ex": 503.5,
+      "ey": 105.5,
+      "start_region": 0,
+      "end_region": null
+    },
+    {
+      "pattern": 2,
+      "sx": 315.5,
+      "sy": 180.0,
+      "ex": 1037.5,
+      "ey": 304.0,
+      "start_region": null,
+      "end_region": 2
+    },
+    {
+      "pattern": 3,
+      "sx": 19.5,
+      "sy": 345.5,
+      "ex": 395.5,
+      "ey": 480.0,
+      "start_region": 0,
+      "end_region": null
+    }
+  ],
+  "stop_area": [
+    [
+      0,
+      100,
+      250,
+      490
+    ],
+    [
+      420,
+      0,
+      750,
+      75
+    ],
+    [
+      815,
+      100,
+      1080,
+      545
+    ],
+    [
+      300,
+      600,
+      750,
+      720
+    ]
+  ],
+  "source": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc6-patterns.parquet",
+  "source_sha256": "92d95d6c25115d922458b6a129d9024b382425bf5533025ca1144d9e6ec4b298",
+  "image_name": "b3d3_leap_patterns.png",
+  "resolution": [
+    1080,
+    720
+  ]
+}

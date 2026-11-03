@@ -1,0 +1,41 @@
+{
+  "note": "matching includes re-identification; do not sum both fields",
+  "rows": [
+    {
+      "dataset": "caldot1-y05",
+      "version": "masked",
+      "detector_s": 51.6618,
+      "differencer_s": 2.794599999999999,
+      "reid_s": 29.812200000000004,
+      "matching_including_reid_s": 31.24039999999999,
+      "compute_s": 101.46409999999996
+    },
+    {
+      "dataset": "caldot1-y05",
+      "version": "unmasked",
+      "detector_s": 48.8415,
+      "differencer_s": 2.1548999999999996,
+      "reid_s": 82.79920000000001,
+      "matching_including_reid_s": 85.3867,
+      "compute_s": 152.7495
+    },
+    {
+      "dataset": "caldot2-y05",
+      "version": "masked",
+      "detector_s": 51.95789999999997,
+      "differencer_s": 2.803100000000001,
+      "reid_s": 23.216800000000003,
+      "matching_including_reid_s": 23.80919999999999,
+      "compute_s": 90.15970000000003
+    },
+    {
+      "dataset": "caldot2-y05",
+      "version": "unmasked",
+      "detector_s": 51.089600000000004,
+      "differencer_s": 1.5570999999999997,
+      "reid_s": 45.2527,
+      "matching_including_reid_s": 46.3219,
+      "compute_s": 110.81559999999999
+    }
+  ]
+}

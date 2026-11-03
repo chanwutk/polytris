@@ -1,0 +1,395 @@
+{
+  "dataset": "Amsterdam",
+  "patterns": 33,
+  "eligible": 29,
+  "uncovered_endpoints": [
+    {
+      "pattern": 2,
+      "endpoint": "E",
+      "x": 874.5,
+      "y": 357.0,
+      "inside": false,
+      "label": "P2-E",
+      "label_x": 886.5,
+      "label_y": 345.0
+    },
+    {
+      "pattern": 2,
+      "endpoint": "S",
+      "x": 1063.5,
+      "y": 381.5,
+      "inside": false,
+      "label": "P2-S",
+      "label_x": 1075.5,
+      "label_y": 369.5
+    },
+    {
+      "pattern": 3,
+      "endpoint": "S",
+      "x": 1144.5,
+      "y": 538.5,
+      "inside": false,
+      "label": "P3-S",
+      "label_x": 1069.5,
+      "label_y": 518.5
+    },
+    {
+      "pattern": 13,
+      "endpoint": "S",
+      "x": 674.5,
+      "y": 302.5,
+      "inside": false,
+      "label": "P13-S",
+      "label_x": 686.5,
+      "label_y": 290.5
+    },
+    {
+      "pattern": 21,
+      "endpoint": "S",
+      "x": 1090.0,
+      "y": 560.5,
+      "inside": false,
+      "label": "P21-S",
+      "label_x": 1015.0,
+      "label_y": 585.5
+    }
+  ],
+  "patterns_detail": [
+    {
+      "pattern": 0,
+      "sx": 178.5,
+      "sy": 681.0,
+      "ex": 78.0,
+      "ey": 307.0,
+      "start_region": 4,
+      "end_region": 0
+    },
+    {
+      "pattern": 1,
+      "sx": 774.5,
+      "sy": 695.5,
+      "ex": 1262.5,
+      "ey": 491.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 2,
+      "sx": 1063.5,
+      "sy": 381.5,
+      "ex": 874.5,
+      "ey": 357.0,
+      "start_region": null,
+      "end_region": null
+    },
+    {
+      "pattern": 3,
+      "sx": 1144.5,
+      "sy": 538.5,
+      "ex": 8.0,
+      "ey": 675.5,
+      "start_region": null,
+      "end_region": 4
+    },
+    {
+      "pattern": 4,
+      "sx": 749.5,
+      "sy": 695.5,
+      "ex": 1267.5,
+      "ey": 490.0,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 5,
+      "sx": 1264.5,
+      "sy": 489.0,
+      "ex": 6.0,
+      "ey": 668.0,
+      "start_region": 2,
+      "end_region": 4
+    },
+    {
+      "pattern": 6,
+      "sx": 830.0,
+      "sy": 707.0,
+      "ex": 1269.5,
+      "ey": 484.0,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 7,
+      "sx": 1246.5,
+      "sy": 502.5,
+      "ex": 628.0,
+      "ey": 696.5,
+      "start_region": 2,
+      "end_region": 3
+    },
+    {
+      "pattern": 8,
+      "sx": 858.5,
+      "sy": 695.5,
+      "ex": 1268.5,
+      "ey": 489.0,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 9,
+      "sx": 817.0,
+      "sy": 681.0,
+      "ex": 1268.5,
+      "ey": 478.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 10,
+      "sx": 723.0,
+      "sy": 700.0,
+      "ex": 1187.5,
+      "ey": 531.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 11,
+      "sx": 750.0,
+      "sy": 700.5,
+      "ex": 981.5,
+      "ey": 609.5,
+      "start_region": 3,
+      "end_region": 3
+    },
+    {
+      "pattern": 12,
+      "sx": 794.0,
+      "sy": 691.5,
+      "ex": 1268.5,
+      "ey": 490.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 13,
+      "sx": 674.5,
+      "sy": 302.5,
+      "ex": 1276.5,
+      "ey": 385.5,
+      "start_region": null,
+      "end_region": 2
+    },
+    {
+      "pattern": 14,
+      "sx": 855.5,
+      "sy": 682.0,
+      "ex": 1263.5,
+      "ey": 482.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 15,
+      "sx": 823.0,
+      "sy": 692.0,
+      "ex": 1268.5,
+      "ey": 474.0,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 16,
+      "sx": 852.0,
+      "sy": 699.0,
+      "ex": 1266.5,
+      "ey": 492.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 17,
+      "sx": 782.5,
+      "sy": 698.0,
+      "ex": 1266.5,
+      "ey": 491.0,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 18,
+      "sx": 1269.5,
+      "sy": 428.0,
+      "ex": 513.0,
+      "ey": 252.0,
+      "start_region": 2,
+      "end_region": 1
+    },
+    {
+      "pattern": 19,
+      "sx": 886.0,
+      "sy": 691.5,
+      "ex": 1271.5,
+      "ey": 492.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 20,
+      "sx": 419.5,
+      "sy": 702.0,
+      "ex": 1268.0,
+      "ey": 483.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 21,
+      "sx": 1090.0,
+      "sy": 560.5,
+      "ex": 1267.5,
+      "ey": 489.0,
+      "start_region": null,
+      "end_region": 2
+    },
+    {
+      "pattern": 22,
+      "sx": 1267.0,
+      "sy": 417.0,
+      "ex": 523.5,
+      "ey": 204.5,
+      "start_region": 2,
+      "end_region": 1
+    },
+    {
+      "pattern": 23,
+      "sx": 840.0,
+      "sy": 697.0,
+      "ex": 1260.0,
+      "ey": 490.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 24,
+      "sx": 830.0,
+      "sy": 705.5,
+      "ex": 1268.0,
+      "ey": 493.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 25,
+      "sx": 806.5,
+      "sy": 700.5,
+      "ex": 1264.0,
+      "ey": 493.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 26,
+      "sx": 1266.0,
+      "sy": 493.0,
+      "ex": 746.0,
+      "ey": 697.0,
+      "start_region": 2,
+      "end_region": 3
+    },
+    {
+      "pattern": 27,
+      "sx": 769.0,
+      "sy": 692.5,
+      "ex": 1266.0,
+      "ey": 491.0,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 28,
+      "sx": 652.5,
+      "sy": 666.5,
+      "ex": 71.0,
+      "ey": 302.0,
+      "start_region": 3,
+      "end_region": 0
+    },
+    {
+      "pattern": 29,
+      "sx": 518.5,
+      "sy": 203.5,
+      "ex": 1268.5,
+      "ey": 421.5,
+      "start_region": 1,
+      "end_region": 2
+    },
+    {
+      "pattern": 30,
+      "sx": 779.0,
+      "sy": 656.0,
+      "ex": 1268.0,
+      "ey": 474.5,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 31,
+      "sx": 709.5,
+      "sy": 703.0,
+      "ex": 1265.0,
+      "ey": 488.0,
+      "start_region": 3,
+      "end_region": 2
+    },
+    {
+      "pattern": 32,
+      "sx": 677.0,
+      "sy": 696.0,
+      "ex": 1267.5,
+      "ey": 482.5,
+      "start_region": 3,
+      "end_region": 2
+    }
+  ],
+  "stop_area": [
+    [
+      31.04,
+      249.9,
+      167.8,
+      341.0
+    ],
+    [
+      405.9,
+      174.41,
+      563.32,
+      261.7
+    ],
+    [
+      1167.1,
+      327.97,
+      1280.0,
+      606.8
+    ],
+    [
+      384.3,
+      580.1,
+      1000.82,
+      720.0
+    ],
+    [
+      0.0,
+      553.2,
+      209.6,
+      720.0
+    ]
+  ],
+  "source": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/ams-y05-patterns.parquet",
+  "source_sha256": "998594fb0da2878d95fbd289986dc5b91fed25b2aae9e30a1429f9078a70e8d6",
+  "image_name": "amsterdam_leap_patterns.png",
+  "resolution": [
+    1280,
+    720
+  ]
+}

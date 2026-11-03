@@ -1,0 +1,8 @@
+{
+  "dataset": "caldot1-y05",
+  "exported": true,
+  "extracted": true,
+  "gpu": 0,
+  "scored": true,
+  "version": "r1o2_leap_unmasked"
+}

@@ -1,0 +1,157 @@
+{
+  "time_utc": "2026-10-30T18:17:49.768266+00:00",
+  "datasets": [
+    {
+      "dataset": "caldot1-y05",
+      "complete": true,
+      "queue_active": false,
+      "stages": [
+        {
+          "stage": "labels_test",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "labels_train",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "motion_patterns",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "reid_data",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "reid_train",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "extraction",
+          "exit": 0,
+          "contaminated": false
+        }
+      ],
+      "labels": {
+        "train": 60,
+        "test": 60
+      },
+      "latest_log": "/data/cwkt/data/bombe-revision/scratch/r1o2_leap_matched/runs/leap/caldot1-y05-20261030T105801/stdout.log",
+      "log_tail": [
+        "|      bus      |   1.0    |",
+        "+---------------+----------+",
+        "===================== The End  =====================",
+        "",
+        "wrote /polyis/measurements-results/r1o2_leap_matched/raw/caldot1-y05/leap_rerun*.jsonl.gz: 60 clips, 843 objects"
+      ],
+      "warnings": []
+    },
+    {
+      "dataset": "caldot2-y05",
+      "complete": true,
+      "queue_active": false,
+      "stages": [
+        {
+          "stage": "labels_test",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "labels_train",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "motion_patterns",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "reid_data",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "reid_train",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "extraction",
+          "exit": 0,
+          "contaminated": false
+        }
+      ],
+      "labels": {
+        "train": 60,
+        "test": 60
+      },
+      "latest_log": "/data/cwkt/data/bombe-revision/scratch/r1o2_leap_matched/runs/leap/caldot2-y05-20261030T105758/stdout.log",
+      "log_tail": [
+        "|      bus      |   1.0    |",
+        "+---------------+----------+",
+        "===================== The End  =====================",
+        "",
+        "wrote /polyis/measurements-results/r1o2_leap_matched/raw/caldot2-y05/leap_rerun*.jsonl.gz: 60 clips, 1177 objects"
+      ],
+      "warnings": []
+    },
+    {
+      "dataset": "ams-y05",
+      "complete": true,
+      "queue_active": false,
+      "stages": [
+        {
+          "stage": "labels_test",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "labels_train",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "motion_patterns",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "reid_data",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "reid_train",
+          "exit": 0,
+          "contaminated": false
+        },
+        {
+          "stage": "extraction",
+          "exit": 0,
+          "contaminated": false
+        }
+      ],
+      "labels": {
+        "train": 60,
+        "test": 60
+      },
+      "latest_log": "/data/cwkt/data/bombe-revision/scratch/r1o2_leap_matched/runs/leap/ams-y05-20261030T105801/stdout.log",
+      "log_tail": [
+        "|      bus      |   1.0    |",
+        "+---------------+----------+",
+        "===================== The End  =====================",
+        "",
+        "wrote /polyis/measurements-results/r1o2_leap_matched/raw/ams-y05/leap_rerun*.jsonl.gz: 60 clips, 841 objects"
+      ],
+      "warnings": []
+    }
+  ],
+  "all_complete": true,
+  "automatic_repairs": false
+}

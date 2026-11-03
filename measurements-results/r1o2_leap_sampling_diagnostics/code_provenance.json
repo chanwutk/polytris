@@ -1,0 +1,42 @@
+{
+  "host": "bombe",
+  "runtime_root": "/data/cwkt/data/bombe-revision/scratch/r1o2_leap_otif_rerun/inputs/LEAP",
+  "files": {
+    "main.py": {
+      "sha256": "cfefffb19776acbda9b40bdc37a1ea501cbd604aefadcb1bd7f2c4e9aca33095"
+    },
+    "inference.py": {
+      "sha256": "25bfa7caf660fea3f378737ece2e6fd71255c5850eaab3e77b046d3c264ab152"
+    },
+    "match_object.py": {
+      "sha256": "cc882ba7ff99f0bdd27ac71a190920af570e4b504f8ef31b6b1f9299a5e403be"
+    },
+    "initialize.py": {
+      "sha256": "2c84afcec51933b6681c55c485d79de2c7163661bcc2b10c938b40462fa69d03"
+    },
+    "tools/utils.py": {
+      "sha256": "d62fb312fc8569e16cd8e36592cc8ba146dc1f735e0ed787d1f321f25a4639ba"
+    },
+    "tools/frame_difference.py": {
+      "sha256": "f2fd172f924a3ff6a85b5f801d075fdc3642dd03a0e59f4c7067875b3deace43"
+    },
+    "settings/settings.py": {
+      "sha256": "7dea47bcd61ff6f624d41d67ae1c31a67658e238479e8d03601c57041c2daafa"
+    },
+    "evaluate.py": {
+      "sha256": "9b560687fdbd22e071d3c6d9df34fd53eb50b4e08c1684d38252cf18d761536c"
+    },
+    "export-leap-outputs.py": {
+      "sha256": "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b"
+    }
+  },
+  "paper": "https://doi.org/10.1145/3639274",
+  "sampling_rule": "inference.py:244-262; exit-derived gaps, min/max clamps; no observed-twice guarantee",
+  "pattern_gate": "inference.py:20-53 and match_object.py:9-41; both endpoints need configured regions",
+  "association_rule": "match_object.py:124-239; stationary overlap, interval consistency, or appearance score",
+  "diagnostic_code": {
+    "measurements/r1o2_leap_sampling_diagnostics.py": "d0f283294d6d4abfcf6c6dc30e4821fa12400956bc11d3ef934c56e4044f1c6d",
+    "measurements/r1o2_leap_sampling_plots.py": "3bf473294cab5008771f1f980f986b7f70c0f9f6a01e0ea216573d1ca7ad1ad9",
+    "tests/test_measurements_r1o2_leap_sampling_diagnostics.py": "41ac573fef5adee899a393c176e3983ac00161e1019a451ba7330a6960584f0e"
+  }
+}

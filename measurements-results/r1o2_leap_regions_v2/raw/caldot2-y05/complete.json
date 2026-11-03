@@ -1,0 +1,10 @@
+{
+  "dataset": "caldot2-y05",
+  "exported": true,
+  "extracted": true,
+  "gpu": 2,
+  "scored": true,
+  "version": "regions_v2",
+  "display_name": "LEAP2",
+  "comparison": "comparison/results.json"
+}

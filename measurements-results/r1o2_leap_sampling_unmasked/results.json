@@ -1,0 +1,1241 @@
+{
+  "datasets": {
+    "Amsterdam": {
+      "association": {
+        "matched_consecutive_frame_pairs": 1431,
+        "same_id_share": 0.7868623340321453,
+        "same_predicted_id": 1126
+      },
+      "continuity_by_stationarity": [
+        {
+          "high_confidence_pairs": 303,
+          "high_confidence_same_id_share": 0.3465346534653465,
+          "pairs": 332,
+          "passes_stationary_rule": false,
+          "same_id": 111,
+          "same_id_share": 0.33433734939759036
+        },
+        {
+          "high_confidence_pairs": 1062,
+          "high_confidence_same_id_share": 0.931261770244821,
+          "pairs": 1099,
+          "passes_stationary_rule": true,
+          "same_id": 1015,
+          "same_id_share": 0.9235668789808917
+        }
+      ],
+      "coverage": {
+        "fragmented_among_reobserved": 163,
+        "gt_tracks": 975,
+        "max_predicted_ids_per_gt_track": 8,
+        "never_matched": 431,
+        "one_matched_observation": 253,
+        "one_sample_exposure": 307,
+        "predicted_ids_per_gt_track": 0.8769230769230769,
+        "two_plus_matched_observations": 291,
+        "two_plus_sample_exposure": 306,
+        "zero_sample_exposure": 362
+      },
+      "coverage_uncensored_at_least_one_second": {
+        "fragmented_among_reobserved": 91,
+        "gt_tracks": 530,
+        "never_matched": 174,
+        "one_matched_observation": 205,
+        "one_sample_exposure": 243,
+        "two_plus_matched_observations": 151,
+        "two_plus_sample_exposure": 164,
+        "zero_sample_exposure": 123
+      },
+      "duration_all": {
+        "coefficient_of_variation": 1.7331947900238311,
+        "max_s": 60.266666666666666,
+        "mean_s": 8.45976068376067,
+        "mean_visible_fraction": 1.0,
+        "min_s": 0.06666666666666667,
+        "p10_p50_p90_s": [
+          0.2,
+          3.2,
+          21.28
+        ],
+        "tracks": 975
+      },
+      "duration_uncensored": {
+        "coefficient_of_variation": 1.3617802088666782,
+        "max_s": 45.2,
+        "mean_s": 4.227965367965362,
+        "mean_visible_fraction": 1.0,
+        "min_s": 0.06666666666666667,
+        "p10_p50_p90_s": [
+          0.13333333333333333,
+          2.066666666666667,
+          10.133333333333333
+        ],
+        "tracks": 770
+      },
+      "duration_uncensored_at_least_one_second": {
+        "coefficient_of_variation": 1.0364290787724892,
+        "max_s": 45.2,
+        "mean_s": 5.9743396226415095,
+        "mean_visible_fraction": 1.0,
+        "min_s": 1.0,
+        "p10_p50_p90_s": [
+          1.4,
+          4.066666666666666,
+          13.420000000000005
+        ],
+        "tracks": 530
+      },
+      "first_sample_exit": {
+        "exits_before_next_sample": 233,
+        "exits_before_next_sample_share": 0.5869017632241813,
+        "tracks_with_next_sample": 397
+      },
+      "matching": {
+        "gt_boxes_on_sampled_frames": 2110,
+        "matched_observations": 1991,
+        "mean_matched_iou": 0.902607830031796,
+        "predicted_observations": 2334
+      },
+      "observed_box_dimensions": {
+        "height_px_p10_p50_p90": [
+          22.0,
+          28.0,
+          89.0
+        ],
+        "width_px_p10_p50_p90": [
+          33.0,
+          44.0,
+          156.0
+        ]
+      },
+      "oracle_bracket_coverage": {
+        "covered_gt_boxes": 89385,
+        "total_gt_boxes": 123724
+      },
+      "oracle_interpolation": {
+        "center_and_size": [
+          {
+            "iou_ge_half_share": 0.9460640742576488,
+            "mean_iou": 0.8931063521298268,
+            "name": "interpolated_center_true_size"
+          },
+          {
+            "iou_ge_half_share": 0.9961812283152345,
+            "mean_iou": 0.9294919007556816,
+            "name": "true_center_interpolated_size"
+          }
+        ],
+        "evaluated_gt_boxes": 88772,
+        "iou_ge_half_share": 0.9422453025728833,
+        "mean_iou": 0.876661828711964,
+        "motion": {
+          "mean_along_line_error_box_diagonals": 0.1320163249495718,
+          "mean_along_line_progress_error": 0.09323548132452056,
+          "mean_perpendicular_box_diagonals": 0.05377103481032624,
+          "near_stationary_box_share": 0.7880863335285901,
+          "p90_along_line_progress_error": 0.21004670048717258,
+          "p90_perpendicular_box_diagonals": 0.12737893822223162
+        }
+      },
+      "pattern_endpoints": [
+        {
+          "end_region": 0,
+          "ex": 78.0,
+          "ey": 307.0,
+          "frames": 169,
+          "pattern": 0,
+          "start_region": 4,
+          "sx": 178.5,
+          "sy": 681.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1262.5,
+          "ey": 491.5,
+          "frames": 74,
+          "pattern": 1,
+          "start_region": 3,
+          "sx": 774.5,
+          "sy": 695.5
+        },
+        {
+          "end_region": null,
+          "ex": 874.5,
+          "ey": 357.0,
+          "frames": 48,
+          "pattern": 2,
+          "start_region": null,
+          "sx": 1063.5,
+          "sy": 381.5
+        },
+        {
+          "end_region": 4,
+          "ex": 8.0,
+          "ey": 675.5,
+          "frames": 90,
+          "pattern": 3,
+          "start_region": null,
+          "sx": 1144.5,
+          "sy": 538.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1267.5,
+          "ey": 490.0,
+          "frames": 77,
+          "pattern": 4,
+          "start_region": 3,
+          "sx": 749.5,
+          "sy": 695.5
+        },
+        {
+          "end_region": 4,
+          "ex": 6.0,
+          "ey": 668.0,
+          "frames": 120,
+          "pattern": 5,
+          "start_region": 2,
+          "sx": 1264.5,
+          "sy": 489.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1269.5,
+          "ey": 484.0,
+          "frames": 227,
+          "pattern": 6,
+          "start_region": 3,
+          "sx": 830.0,
+          "sy": 707.0
+        },
+        {
+          "end_region": 3,
+          "ex": 628.0,
+          "ey": 696.5,
+          "frames": 86,
+          "pattern": 7,
+          "start_region": 2,
+          "sx": 1246.5,
+          "sy": 502.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1268.5,
+          "ey": 489.0,
+          "frames": 90,
+          "pattern": 8,
+          "start_region": 3,
+          "sx": 858.5,
+          "sy": 695.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1268.5,
+          "ey": 478.5,
+          "frames": 95,
+          "pattern": 9,
+          "start_region": 3,
+          "sx": 817.0,
+          "sy": 681.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1187.5,
+          "ey": 531.5,
+          "frames": 72,
+          "pattern": 10,
+          "start_region": 3,
+          "sx": 723.0,
+          "sy": 700.0
+        },
+        {
+          "end_region": 3,
+          "ex": 981.5,
+          "ey": 609.5,
+          "frames": 36,
+          "pattern": 11,
+          "start_region": 3,
+          "sx": 750.0,
+          "sy": 700.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1268.5,
+          "ey": 490.5,
+          "frames": 81,
+          "pattern": 12,
+          "start_region": 3,
+          "sx": 794.0,
+          "sy": 691.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1276.5,
+          "ey": 385.5,
+          "frames": 120,
+          "pattern": 13,
+          "start_region": null,
+          "sx": 674.5,
+          "sy": 302.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1263.5,
+          "ey": 482.5,
+          "frames": 87,
+          "pattern": 14,
+          "start_region": 3,
+          "sx": 855.5,
+          "sy": 682.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1268.5,
+          "ey": 474.0,
+          "frames": 85,
+          "pattern": 15,
+          "start_region": 3,
+          "sx": 823.0,
+          "sy": 692.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1266.5,
+          "ey": 492.5,
+          "frames": 107,
+          "pattern": 16,
+          "start_region": 3,
+          "sx": 852.0,
+          "sy": 699.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1266.5,
+          "ey": 491.0,
+          "frames": 118,
+          "pattern": 17,
+          "start_region": 3,
+          "sx": 782.5,
+          "sy": 698.0
+        },
+        {
+          "end_region": 1,
+          "ex": 513.0,
+          "ey": 252.0,
+          "frames": 177,
+          "pattern": 18,
+          "start_region": 2,
+          "sx": 1269.5,
+          "sy": 428.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1271.5,
+          "ey": 492.5,
+          "frames": 64,
+          "pattern": 19,
+          "start_region": 3,
+          "sx": 886.0,
+          "sy": 691.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1268.0,
+          "ey": 483.5,
+          "frames": 232,
+          "pattern": 20,
+          "start_region": 3,
+          "sx": 419.5,
+          "sy": 702.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1267.5,
+          "ey": 489.0,
+          "frames": 31,
+          "pattern": 21,
+          "start_region": null,
+          "sx": 1090.0,
+          "sy": 560.5
+        },
+        {
+          "end_region": 1,
+          "ex": 523.5,
+          "ey": 204.5,
+          "frames": 243,
+          "pattern": 22,
+          "start_region": 2,
+          "sx": 1267.0,
+          "sy": 417.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1260.0,
+          "ey": 490.5,
+          "frames": 135,
+          "pattern": 23,
+          "start_region": 3,
+          "sx": 840.0,
+          "sy": 697.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1268.0,
+          "ey": 493.5,
+          "frames": 133,
+          "pattern": 24,
+          "start_region": 3,
+          "sx": 830.0,
+          "sy": 705.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1264.0,
+          "ey": 493.5,
+          "frames": 102,
+          "pattern": 25,
+          "start_region": 3,
+          "sx": 806.5,
+          "sy": 700.5
+        },
+        {
+          "end_region": 3,
+          "ex": 746.0,
+          "ey": 697.0,
+          "frames": 94,
+          "pattern": 26,
+          "start_region": 2,
+          "sx": 1266.0,
+          "sy": 493.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1266.0,
+          "ey": 491.0,
+          "frames": 78,
+          "pattern": 27,
+          "start_region": 3,
+          "sx": 769.0,
+          "sy": 692.5
+        },
+        {
+          "end_region": 0,
+          "ex": 71.0,
+          "ey": 302.0,
+          "frames": 302,
+          "pattern": 28,
+          "start_region": 3,
+          "sx": 652.5,
+          "sy": 666.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1268.5,
+          "ey": 421.5,
+          "frames": 221,
+          "pattern": 29,
+          "start_region": 1,
+          "sx": 518.5,
+          "sy": 203.5
+        },
+        {
+          "end_region": 2,
+          "ex": 1268.0,
+          "ey": 474.5,
+          "frames": 94,
+          "pattern": 30,
+          "start_region": 3,
+          "sx": 779.0,
+          "sy": 656.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1265.0,
+          "ey": 488.0,
+          "frames": 112,
+          "pattern": 31,
+          "start_region": 3,
+          "sx": 709.5,
+          "sy": 703.0
+        },
+        {
+          "end_region": 2,
+          "ex": 1267.5,
+          "ey": 482.5,
+          "frames": 97,
+          "pattern": 32,
+          "start_region": 3,
+          "sx": 677.0,
+          "sy": 696.0
+        }
+      ],
+      "pattern_export_anchor_fit": {
+        "iou_ge_half_share_all_observations": 0.1868037703513282,
+        "mean_iou_when_present": 0.20179257537012316,
+        "observations": 2334,
+        "reconstructed_anchor_boxes": 2120
+      },
+      "pattern_point_coverage": {
+        "near_any_pattern_share": 0.9978577549271637,
+        "near_eligible_pattern_share": 0.9905741216795202,
+        "nearest_any_point_px_p10_p50_p90": [
+          1.118033988749895,
+          8.06225774829855,
+          15.524174696260024
+        ],
+        "observations": 2334
+      },
+      "patterns": {
+        "eligible_patterns": 29,
+        "length_frames_p10_p50_p90": [
+          65.6,
+          95.0,
+          225.8
+        ],
+        "patterns": 33
+      },
+      "predicted_objects": {
+        "fallback_pattern_objects": 7,
+        "interval_frames_p10_p50_p90": [
+          87.0,
+          242.0,
+          545.0000000000005
+        ],
+        "objects": 750,
+        "observed_once": 436
+      },
+      "provenance": {
+        "arguments": [
+          "--config",
+          "/data/alenachao/data/leap-dataset/configs/amsterdam.yaml",
+          "--weight",
+          "/data/alenachao/data/leap-dataset/models/yolov5/ams-y05.pt",
+          "--reid_weight",
+          "/data/alenachao/data/leap-dataset/logs",
+          "--video_dir",
+          "/scratch/videos/ams-y05/test",
+          "--log_dir",
+          "/scratch/runs/leap/ams-y05-20261031T164804/logs",
+          "--output_dir",
+          "/scratch/runs/leap/ams-y05-20261031T164804/outputs",
+          "--type",
+          "test",
+          "--active_log",
+          "--device",
+          "0",
+          "--motion_dir",
+          "/data/alenachao/data/leap-dataset/motion_patterns"
+        ],
+        "clips": 60,
+        "config": {
+          "bus_count": 0,
+          "car_count": 2,
+          "conf_thresh": 0.1,
+          "dataset_group": "blazeit",
+          "differ_abs_thresh": 32,
+          "difference_thresh": 0.0001,
+          "dis_thresh": 1250,
+          "end_frame": 44535,
+          "fps": 15,
+          "full_name": "amsterdam-y5",
+          "h": 720,
+          "ignore_region": [],
+          "image_thresh_score": 0.99,
+          "intersect_overlap_thresh": 0.7,
+          "iou_thresh": 0.45,
+          "max_gap_time": 5,
+          "max_len": 300,
+          "min_gap_time": 2,
+          "seed": 100,
+          "skip_frames": 60,
+          "start_frame": 0,
+          "stop_area": [
+            [
+              31.04,
+              249.9,
+              167.8,
+              341.0
+            ],
+            [
+              405.9,
+              174.41,
+              563.32,
+              261.7
+            ],
+            [
+              1167.1,
+              327.97,
+              1280.0,
+              606.8
+            ],
+            [
+              384.3,
+              580.1,
+              1000.82,
+              720.0
+            ],
+            [
+              0.0,
+              553.2,
+              209.6,
+              720.0
+            ]
+          ],
+          "stop_iou_thresh": 0.7,
+          "thresh_len": 25,
+          "traj_dist_min": 50,
+          "truck_count": 1,
+          "video_name": "amsterdam-y5",
+          "w": 1280
+        },
+        "excluded_out_of_clip_gt_boxes": 0,
+        "mask_enabled": true,
+        "pattern_sha256": "b1c909dba0ff097b9199e9baf8c6cfbf0bc7d916c51871b62aac282b4bae52a5",
+        "source": "/polyis/measurements-results/r1o2_leap_regions_v2/raw/ams-y05/leap_rerun.jsonl.gz",
+        "source_sha256": "ddafad8c639beca826b72f2a32fa9e0b3af5c0e450cd7039999364819b13dee0"
+      },
+      "sampling": {
+        "gap_p10_p50_p90_s": [
+          3.2666666666666666,
+          4.0,
+          4.266666666666667
+        ],
+        "max_gap_s": 5.0,
+        "sampled_frames": 953
+      }
+    },
+    "CalDoT1": {
+      "association": {
+        "matched_consecutive_frame_pairs": 2207,
+        "same_id_share": 0.6841866787494336,
+        "same_predicted_id": 1510
+      },
+      "continuity_by_stationarity": [
+        {
+          "high_confidence_pairs": 641,
+          "high_confidence_same_id_share": 0.21840873634945399,
+          "pairs": 800,
+          "passes_stationary_rule": false,
+          "same_id": 183,
+          "same_id_share": 0.22875
+        },
+        {
+          "high_confidence_pairs": 1321,
+          "high_confidence_same_id_share": 0.9530658591975776,
+          "pairs": 1407,
+          "passes_stationary_rule": true,
+          "same_id": 1327,
+          "same_id_share": 0.9431414356787491
+        }
+      ],
+      "coverage": {
+        "fragmented_among_reobserved": 394,
+        "gt_tracks": 1340,
+        "max_predicted_ids_per_gt_track": 9,
+        "never_matched": 388,
+        "one_matched_observation": 353,
+        "one_sample_exposure": 363,
+        "predicted_ids_per_gt_track": 1.2343283582089553,
+        "two_plus_matched_observations": 599,
+        "two_plus_sample_exposure": 633,
+        "zero_sample_exposure": 344
+      },
+      "coverage_uncensored_at_least_one_second": {
+        "fragmented_among_reobserved": 259,
+        "gt_tracks": 700,
+        "never_matched": 96,
+        "one_matched_observation": 232,
+        "one_sample_exposure": 234,
+        "two_plus_matched_observations": 372,
+        "two_plus_sample_exposure": 402,
+        "zero_sample_exposure": 64
+      },
+      "duration_all": {
+        "coefficient_of_variation": 1.472632264368698,
+        "max_s": 60.0,
+        "mean_s": 9.922636815920425,
+        "mean_visible_fraction": 1.0,
+        "min_s": 0.06666666666666667,
+        "p10_p50_p90_s": [
+          0.2,
+          6.0,
+          22.813333333333354
+        ],
+        "tracks": 1340
+      },
+      "duration_uncensored": {
+        "coefficient_of_variation": 0.9854574246481448,
+        "max_s": 36.93333333333333,
+        "mean_s": 5.667554644808728,
+        "mean_visible_fraction": 1.0,
+        "min_s": 0.06666666666666667,
+        "p10_p50_p90_s": [
+          0.13333333333333333,
+          5.6,
+          12.333333333333334
+        ],
+        "tracks": 976
+      },
+      "duration_uncensored_at_least_one_second": {
+        "coefficient_of_variation": 0.673747627181262,
+        "max_s": 36.93333333333333,
+        "mean_s": 7.789714285714286,
+        "mean_visible_fraction": 1.0,
+        "min_s": 1.0,
+        "p10_p50_p90_s": [
+          2.1333333333333333,
+          6.733333333333333,
+          16.006666666666668
+        ],
+        "tracks": 700
+      },
+      "first_sample_exit": {
+        "exits_before_next_sample": 220,
+        "exits_before_next_sample_share": 0.3536977491961415,
+        "tracks_with_next_sample": 622
+      },
+      "matching": {
+        "gt_boxes_on_sampled_frames": 3267,
+        "matched_observations": 3167,
+        "mean_matched_iou": 0.8774885134564858,
+        "predicted_observations": 3324
+      },
+      "observed_box_dimensions": {
+        "height_px_p10_p50_p90": [
+          10.0,
+          18.0,
+          47.0
+        ],
+        "width_px_p10_p50_p90": [
+          13.0,
+          20.0,
+          70.0
+        ]
+      },
+      "oracle_bracket_coverage": {
+        "covered_gt_boxes": 144916,
+        "total_gt_boxes": 199445
+      },
+      "oracle_interpolation": {
+        "center_and_size": [
+          {
+            "iou_ge_half_share": 0.8294747081712063,
+            "mean_iou": 0.7771301101567959,
+            "name": "interpolated_center_true_size"
+          },
+          {
+            "iou_ge_half_share": 0.9668426903835464,
+            "mean_iou": 0.8860048339306922,
+            "name": "true_center_interpolated_size"
+          }
+        ],
+        "evaluated_gt_boxes": 143920,
+        "iou_ge_half_share": 0.8285714285714286,
+        "mean_iou": 0.7650866224110816,
+        "motion": {
+          "mean_along_line_error_box_diagonals": 0.37480047471963845,
+          "mean_along_line_progress_error": 0.11360223794007089,
+          "mean_perpendicular_box_diagonals": 0.1684844931200699,
+          "near_stationary_box_share": 0.6568162868260145,
+          "p90_along_line_progress_error": 0.27591804470417186,
+          "p90_perpendicular_box_diagonals": 0.4604014346891706
+        }
+      },
+      "pattern_endpoints": [
+        {
+          "end_region": 1,
+          "ex": 435.0,
+          "ey": 218.0,
+          "frames": 93,
+          "pattern": 0,
+          "start_region": 0,
+          "sx": 259.5,
+          "sy": 462.5
+        },
+        {
+          "end_region": 0,
+          "ex": 211.0,
+          "ey": 435.5,
+          "frames": 98,
+          "pattern": 1,
+          "start_region": 1,
+          "sx": 422.0,
+          "sy": 221.0
+        },
+        {
+          "end_region": 1,
+          "ex": 428.5,
+          "ey": 211.5,
+          "frames": 200,
+          "pattern": 2,
+          "start_region": 0,
+          "sx": 229.0,
+          "sy": 469.0
+        },
+        {
+          "end_region": 1,
+          "ex": 462.5,
+          "ey": 238.0,
+          "frames": 97,
+          "pattern": 3,
+          "start_region": 0,
+          "sx": 260.5,
+          "sy": 468.0
+        },
+        {
+          "end_region": 1,
+          "ex": 466.0,
+          "ey": 245.5,
+          "frames": 178,
+          "pattern": 4,
+          "start_region": 0,
+          "sx": 234.5,
+          "sy": 474.0
+        },
+        {
+          "end_region": null,
+          "ex": 441.0,
+          "ey": 302.0,
+          "frames": 58,
+          "pattern": 5,
+          "start_region": 0,
+          "sx": 237.5,
+          "sy": 470.5
+        },
+        {
+          "end_region": 1,
+          "ex": 448.5,
+          "ey": 224.5,
+          "frames": 74,
+          "pattern": 6,
+          "start_region": 0,
+          "sx": 338.0,
+          "sy": 416.5
+        }
+      ],
+      "pattern_export_anchor_fit": {
+        "iou_ge_half_share_all_observations": 0.31829121540312877,
+        "mean_iou_when_present": 0.3079041382246699,
+        "observations": 3324,
+        "reconstructed_anchor_boxes": 3043
+      },
+      "pattern_point_coverage": {
+        "near_any_pattern_share": 0.9828519855595668,
+        "near_eligible_pattern_share": 0.9828519855595668,
+        "nearest_any_point_px_p10_p50_p90": [
+          0.5,
+          1.5811388300841898,
+          5.315072906367325
+        ],
+        "observations": 3324
+      },
+      "patterns": {
+        "eligible_patterns": 6,
+        "length_frames_p10_p50_p90": [
+          67.6,
+          97.0,
+          186.8
+        ],
+        "patterns": 7
+      },
+      "predicted_objects": {
+        "fallback_pattern_objects": 49,
+        "interval_frames_p10_p50_p90": [
+          74.0,
+          99.0,
+          271.0
+        ],
+        "objects": 1406,
+        "observed_once": 866
+      },
+      "provenance": {
+        "arguments": [
+          "--config",
+          "/data/alenachao/data/leap-dataset/configs/caldot1.yaml",
+          "--weight",
+          "/data/alenachao/data/leap-dataset/models/yolov5/caldot1-y05.pt",
+          "--reid_weight",
+          "/data/alenachao/data/leap-dataset/logs",
+          "--video_dir",
+          "/scratch/videos/caldot1-y05/test",
+          "--log_dir",
+          "/scratch/runs/leap/caldot1-y05-20261031T223644/logs",
+          "--output_dir",
+          "/scratch/runs/leap/caldot1-y05-20261031T223644/outputs",
+          "--type",
+          "test",
+          "--active_log",
+          "--device",
+          "0",
+          "--motion_dir",
+          "/data/alenachao/data/leap-dataset/motion_patterns",
+          "--use_mask"
+        ],
+        "clips": 60,
+        "config": {
+          "bus_count": 0,
+          "car_count": 2,
+          "conf_thresh": 0.1,
+          "dataset_group": "blazeit",
+          "differ_abs_thresh": 32,
+          "difference_thresh": 0.0001,
+          "dis_thresh": 1250,
+          "end_frame": 44535,
+          "fps": 15,
+          "full_name": "caldot1",
+          "h": 480,
+          "ignore_region": [],
+          "image_thresh_score": 0.99,
+          "intersect_overlap_thresh": 0.7,
+          "iou_thresh": 0.45,
+          "max_gap_time": 5,
+          "max_len": 300,
+          "min_gap_time": 2,
+          "seed": 100,
+          "skip_frames": 60,
+          "start_frame": 0,
+          "stop_area": [
+            [
+              111.0,
+              406.0,
+              360.0,
+              479.0
+            ],
+            [
+              404.0,
+              198.8,
+              504.0,
+              272.0
+            ]
+          ],
+          "stop_iou_thresh": 0.7,
+          "thresh_len": 25,
+          "traj_dist_min": 50,
+          "truck_count": 1,
+          "video_name": "caldot1",
+          "w": 720
+        },
+        "excluded_out_of_clip_gt_boxes": 0,
+        "mask_enabled": false,
+        "pattern_sha256": "03af048af4e329c5492a30c9430d45c55a28a81e990bee48f04b6a2feb94f064",
+        "source": "/polyis/measurements-results/r1o2_leap_unmasked/raw/caldot1-y05/leap_rerun.jsonl.gz",
+        "source_sha256": "7ae6286acea8ca508093acdd6ddd7296bf0f39cbc6af851ad92f756319565be1"
+      },
+      "sampling": {
+        "gap_p10_p50_p90_s": [
+          2.0,
+          4.0,
+          4.933333333333334
+        ],
+        "max_gap_s": 36.0,
+        "sampled_frames": 749
+      }
+    },
+    "CalDoT2": {
+      "association": {
+        "matched_consecutive_frame_pairs": 992,
+        "same_id_share": 0.5403225806451613,
+        "same_predicted_id": 536
+      },
+      "continuity_by_stationarity": [
+        {
+          "high_confidence_pairs": 638,
+          "high_confidence_same_id_share": 0.5266457680250783,
+          "pairs": 960,
+          "passes_stationary_rule": false,
+          "same_id": 505,
+          "same_id_share": 0.5260416666666666
+        },
+        {
+          "high_confidence_pairs": 31,
+          "high_confidence_same_id_share": 1.0,
+          "pairs": 32,
+          "passes_stationary_rule": true,
+          "same_id": 31,
+          "same_id_share": 0.96875
+        }
+      ],
+      "coverage": {
+        "fragmented_among_reobserved": 319,
+        "gt_tracks": 1817,
+        "max_predicted_ids_per_gt_track": 8,
+        "never_matched": 526,
+        "one_matched_observation": 610,
+        "one_sample_exposure": 586,
+        "predicted_ids_per_gt_track": 0.9559713813979086,
+        "two_plus_matched_observations": 681,
+        "two_plus_sample_exposure": 732,
+        "zero_sample_exposure": 499
+      },
+      "coverage_uncensored_at_least_one_second": {
+        "fragmented_among_reobserved": 269,
+        "gt_tracks": 1153,
+        "never_matched": 168,
+        "one_matched_observation": 403,
+        "one_sample_exposure": 376,
+        "two_plus_matched_observations": 582,
+        "two_plus_sample_exposure": 628,
+        "zero_sample_exposure": 149
+      },
+      "duration_all": {
+        "coefficient_of_variation": 0.7894965983546538,
+        "max_s": 60.0,
+        "mean_s": 5.2069345074298345,
+        "mean_visible_fraction": 1.0,
+        "min_s": 0.06666666666666667,
+        "p10_p50_p90_s": [
+          0.26666666666666666,
+          5.466666666666667,
+          9.6
+        ],
+        "tracks": 1817
+      },
+      "duration_uncensored": {
+        "coefficient_of_variation": 0.70925769221919,
+        "max_s": 25.266666666666666,
+        "mean_s": 5.442679558011042,
+        "mean_visible_fraction": 1.0,
+        "min_s": 0.06666666666666667,
+        "p10_p50_p90_s": [
+          0.2,
+          6.0,
+          9.666666666666666
+        ],
+        "tracks": 1448
+      },
+      "duration_uncensored_at_least_one_second": {
+        "coefficient_of_variation": 0.4757873964617473,
+        "max_s": 25.266666666666666,
+        "mean_s": 6.749522983521246,
+        "mean_visible_fraction": 1.0,
+        "min_s": 1.0,
+        "p10_p50_p90_s": [
+          2.4266666666666667,
+          6.733333333333333,
+          10.386666666666665
+        ],
+        "tracks": 1153
+      },
+      "first_sample_exit": {
+        "exits_before_next_sample": 358,
+        "exits_before_next_sample_share": 0.3630831643002028,
+        "tracks_with_next_sample": 986
+      },
+      "matching": {
+        "gt_boxes_on_sampled_frames": 2384,
+        "matched_observations": 2283,
+        "mean_matched_iou": 0.8393695369277918,
+        "predicted_observations": 2549
+      },
+      "observed_box_dimensions": {
+        "height_px_p10_p50_p90": [
+          8.0,
+          12.0,
+          36.0
+        ],
+        "width_px_p10_p50_p90": [
+          8.0,
+          18.0,
+          50.0
+        ]
+      },
+      "oracle_bracket_coverage": {
+        "covered_gt_boxes": 61658,
+        "total_gt_boxes": 141915
+      },
+      "oracle_interpolation": {
+        "center_and_size": [
+          {
+            "iou_ge_half_share": 0.30540271793172025,
+            "mean_iou": 0.31989134882199394,
+            "name": "interpolated_center_true_size"
+          },
+          {
+            "iou_ge_half_share": 0.9014418296320849,
+            "mean_iou": 0.7479049537638799,
+            "name": "true_center_interpolated_size"
+          }
+        ],
+        "evaluated_gt_boxes": 60340,
+        "iou_ge_half_share": 0.3031488233344382,
+        "mean_iou": 0.31880179386094765,
+        "motion": {
+          "mean_along_line_error_box_diagonals": 0.7380907787929588,
+          "mean_along_line_progress_error": 0.1192473296313991,
+          "mean_perpendicular_box_diagonals": 0.044035536476272376,
+          "near_stationary_box_share": 0.034968511766655615,
+          "p90_along_line_progress_error": 0.23078699588252094,
+          "p90_perpendicular_box_diagonals": 0.10273499863804172
+        }
+      },
+      "pattern_endpoints": [
+        {
+          "end_region": 0,
+          "ex": 15.0,
+          "ey": 339.0,
+          "frames": 110,
+          "pattern": 0,
+          "start_region": 2,
+          "sx": 331.5,
+          "sy": 244.0
+        },
+        {
+          "end_region": null,
+          "ex": 131.5,
+          "ey": 308.5,
+          "frames": 54,
+          "pattern": 1,
+          "start_region": 2,
+          "sx": 312.0,
+          "sy": 251.5
+        },
+        {
+          "end_region": 3,
+          "ex": 390.0,
+          "ey": 251.5,
+          "frames": 107,
+          "pattern": 2,
+          "start_region": 1,
+          "sx": 58.0,
+          "sy": 453.5
+        }
+      ],
+      "pattern_export_anchor_fit": {
+        "iou_ge_half_share_all_observations": 0.10827775598273832,
+        "mean_iou_when_present": 0.24054541316555206,
+        "observations": 2549,
+        "reconstructed_anchor_boxes": 2454
+      },
+      "pattern_point_coverage": {
+        "near_any_pattern_share": 0.9317379364456649,
+        "near_eligible_pattern_share": 0.9317379364456649,
+        "nearest_any_point_px_p10_p50_p90": [
+          1.118033988749895,
+          4.301162633521313,
+          22.616363056420738
+        ],
+        "observations": 2549
+      },
+      "patterns": {
+        "eligible_patterns": 2,
+        "length_frames_p10_p50_p90": [
+          64.60000000000001,
+          107.0,
+          109.39999999999999
+        ],
+        "patterns": 3
+      },
+      "predicted_objects": {
+        "fallback_pattern_objects": 90,
+        "interval_frames_p10_p50_p90": [
+          107.0,
+          110.0,
+          123.0
+        ],
+        "objects": 1537,
+        "observed_once": 770
+      },
+      "provenance": {
+        "arguments": [
+          "--config",
+          "/data/alenachao/data/leap-dataset/configs/caldot2.yaml",
+          "--weight",
+          "/data/alenachao/data/leap-dataset/models/yolov5/caldot2-y05.pt",
+          "--reid_weight",
+          "/data/alenachao/data/leap-dataset/logs",
+          "--video_dir",
+          "/scratch/videos/caldot2-y05/test",
+          "--log_dir",
+          "/scratch/runs/leap/caldot2-y05-20261031T223644/logs",
+          "--output_dir",
+          "/scratch/runs/leap/caldot2-y05-20261031T223644/outputs",
+          "--type",
+          "test",
+          "--active_log",
+          "--device",
+          "0",
+          "--motion_dir",
+          "/data/alenachao/data/leap-dataset/motion_patterns",
+          "--use_mask"
+        ],
+        "clips": 60,
+        "config": {
+          "bus_count": 0,
+          "car_count": 3,
+          "conf_thresh": 0.05,
+          "dataset_group": "blazeit",
+          "differ_abs_thresh": 64,
+          "difference_thresh": 0.0001,
+          "dis_thresh": 1250,
+          "end_frame": 32850,
+          "fps": 15,
+          "full_name": "caldot2",
+          "h": 480,
+          "ignore_region": [],
+          "image_thresh_score": 0.99,
+          "intersect_overlap_thresh": 0.7,
+          "iou_thresh": 0.45,
+          "max_gap_time": 5,
+          "max_len": 300,
+          "min_gap_time": 2,
+          "seed": 100,
+          "skip_frames": 60,
+          "start_frame": 0,
+          "stop_area": [
+            [
+              0.0,
+              309.0,
+              93.0,
+              363.0
+            ],
+            [
+              11.0,
+              373.0,
+              220.0,
+              479.0
+            ],
+            [
+              295.8,
+              228.2,
+              351.55,
+              255.96
+            ],
+            [
+              354.9,
+              213.0,
+              431.5,
+              261.5
+            ]
+          ],
+          "stop_iou_thresh": 0.7,
+          "thresh_len": 25,
+          "traj_dist_min": 50,
+          "truck_count": 2,
+          "video_name": "caldot2",
+          "w": 720
+        },
+        "excluded_out_of_clip_gt_boxes": 0,
+        "mask_enabled": false,
+        "pattern_sha256": "595d74bdd3a6c692e25f8bc0675e9ff51b882bd31be7859eaf1bdb315f6a28b9",
+        "source": "/polyis/measurements-results/r1o2_leap_unmasked/raw/caldot2-y05/leap_rerun.jsonl.gz",
+        "source_sha256": "4c3431288f908543b1b4a95f375cb6998d44557eac7382a3f60fad599aa15f9a"
+      },
+      "sampling": {
+        "gap_p10_p50_p90_s": [
+          2.0,
+          4.0,
+          4.813333333333336
+        ],
+        "max_gap_s": 52.0,
+        "sampled_frames": 849
+      }
+    }
+  },
+  "method": {
+    "duration": "annotated last-minus-first frame plus one; uncensored excludes clip boundaries",
+    "fps": 15,
+    "matching": "one-to-one Hungarian, maximum valid cardinality then IoU, on sampled frames only",
+    "matching_iou": 0.5,
+    "oracle": "ground-truth identities and boxes only diagnose sampling/reconstruction, never replace baseline outputs"
+  }
+}

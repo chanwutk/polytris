@@ -1,0 +1,266 @@
+{
+  "CalDoT1": {
+    "dataset": "caldot1-y05",
+    "clips": 60,
+    "frames": 54000,
+    "source": "/polyis/measurements-results/r1o2_leap_matched/raw/caldot1-y05/leap_rerun.jsonl.gz",
+    "interval_rule": "start <= frame < end, clipped to actual video length",
+    "scores": {
+      "all": {
+        "selection": {
+          "tp": 34225,
+          "fp": 2725,
+          "fn": 2967,
+          "precision": 0.9262516914749662,
+          "recall": 0.9202247795224779,
+          "f1": 0.9232283995576057,
+          "f1_leap_code": 0.9232
+        },
+        "aggregation": {
+          "mae": 1.3205185185185184,
+          "mape_leap": 0.3375129586244159,
+          "acc_leap": 0.6624870413755841,
+          "mape_pos": 0.4167751066282657,
+          "zero_fp_rate": 0.16212517848643504,
+          "mean_predicted": 2.832351851851852
+        },
+        "topk": {
+          "topk_paper": 0.3449999999999999,
+          "topk_paper_min": 0.2,
+          "topk_paper_max": 0.4,
+          "topk_paper_pooled_order": 0.4,
+          "tau": 17,
+          "tau_zero": false,
+          "ties_at_cutoff": 343,
+          "returned_min": 10,
+          "topk_leap_code": 0.8,
+          "topk_leap_code_default_sort": 0.6
+        },
+        "tau": {
+          "tau": 17,
+          "tau_min_over_draws": 17,
+          "tau_max_over_draws": 17
+        }
+      },
+      "moving": {
+        "selection": {
+          "tp": 29588,
+          "fp": 7362,
+          "fn": 2428,
+          "precision": 0.8007577807848444,
+          "recall": 0.9241629185407296,
+          "f1": 0.8580459936780442,
+          "f1_leap_code": 0.8581
+        },
+        "aggregation": {
+          "mae": 1.6343333333333334,
+          "mape_leap": 0.7170853916145583,
+          "acc_leap": 0.2829146083854417,
+          "mape_pos": 0.9795293336827258,
+          "zero_fp_rate": 0.33487991266375544,
+          "mean_predicted": 2.832351851851852
+        },
+        "topk": {
+          "topk_paper": 0.29599999999999993,
+          "topk_paper_min": 0.2,
+          "topk_paper_max": 0.3,
+          "topk_paper_pooled_order": 0.2,
+          "tau": 8,
+          "tau_zero": false,
+          "ties_at_cutoff": 343,
+          "returned_min": 10,
+          "topk_leap_code": 0.5,
+          "topk_leap_code_default_sort": 0.5
+        },
+        "tau": {
+          "tau": 8,
+          "tau_min_over_draws": 8,
+          "tau_max_over_draws": 9
+        }
+      }
+    },
+    "intervals": [
+      {
+        "objects": 843,
+        "first": -150,
+        "last": 1060
+      }
+    ]
+  },
+  "CalDoT2": {
+    "dataset": "caldot2-y05",
+    "clips": 60,
+    "frames": 54000,
+    "source": "/polyis/measurements-results/r1o2_leap_matched/raw/caldot2-y05/leap_rerun.jsonl.gz",
+    "interval_rule": "start <= frame < end, clipped to actual video length",
+    "scores": {
+      "all": {
+        "selection": {
+          "tp": 35201,
+          "fp": 921,
+          "fn": 10117,
+          "precision": 0.9745030729195504,
+          "recall": 0.7767553731409154,
+          "f1": 0.8644646365422397,
+          "f1_leap_code": 0.8645
+        },
+        "aggregation": {
+          "mae": 0.969462962962963,
+          "mape_leap": 0.40489259223287,
+          "acc_leap": 0.59510740776713,
+          "mape_pos": 0.46213866411966503,
+          "zero_fp_rate": 0.10608154803040774,
+          "mean_predicted": 2.207666666666667
+        },
+        "topk": {
+          "topk_paper": 0.30999999999999994,
+          "topk_paper_min": 0.2,
+          "topk_paper_max": 0.5,
+          "topk_paper_pooled_order": 0.3,
+          "tau": 12,
+          "tau_zero": false,
+          "ties_at_cutoff": 216,
+          "returned_min": 10,
+          "topk_leap_code": 1.0,
+          "topk_leap_code_default_sort": 0.9
+        },
+        "tau": {
+          "tau": 12,
+          "tau_min_over_draws": 12,
+          "tau_max_over_draws": 12
+        }
+      },
+      "moving": {
+        "selection": {
+          "tp": 35011,
+          "fp": 1111,
+          "fn": 9240,
+          "precision": 0.9692431205359615,
+          "recall": 0.7911911595218187,
+          "f1": 0.8712129695295684,
+          "f1_leap_code": 0.8712
+        },
+        "aggregation": {
+          "mae": 0.8870370370370371,
+          "mape_leap": 0.402853956434512,
+          "acc_leap": 0.5971460435654881,
+          "mape_pos": 0.4665005004963424,
+          "zero_fp_rate": 0.11396040619550724,
+          "mean_predicted": 2.207666666666667
+        },
+        "topk": {
+          "topk_paper": 0.419,
+          "topk_paper_min": 0.3,
+          "topk_paper_max": 0.5,
+          "topk_paper_pooled_order": 0.4,
+          "tau": 10,
+          "tau_zero": false,
+          "ties_at_cutoff": 216,
+          "returned_min": 10,
+          "topk_leap_code": 1.0,
+          "topk_leap_code_default_sort": 1.0
+        },
+        "tau": {
+          "tau": 10,
+          "tau_min_over_draws": 10,
+          "tau_max_over_draws": 11
+        }
+      }
+    },
+    "intervals": [
+      {
+        "objects": 1177,
+        "first": -74,
+        "last": 997
+      }
+    ]
+  },
+  "Amsterdam": {
+    "dataset": "ams-y05",
+    "clips": 60,
+    "frames": 54011,
+    "source": "/polyis/measurements-results/r1o2_leap_matched/raw/ams-y05/leap_rerun.jsonl.gz",
+    "interval_rule": "start <= frame < end, clipped to actual video length",
+    "scores": {
+      "all": {
+        "selection": {
+          "tp": 48211,
+          "fp": 1120,
+          "fn": 458,
+          "precision": 0.977296223470029,
+          "recall": 0.9905894922846165,
+          "f1": 0.9838979591836735,
+          "f1_leap_code": 0.9839
+        },
+        "aggregation": {
+          "mae": 1.0440465831034418,
+          "mape_leap": 0.4793924694352385,
+          "acc_leap": 0.5206075305647615,
+          "mape_pos": 0.5089988836151691,
+          "zero_fp_rate": 0.20965930363159865,
+          "mean_predicted": 3.237784895669401
+        },
+        "topk": {
+          "topk_paper": 0.27199999999999996,
+          "topk_paper_min": 0.1,
+          "topk_paper_max": 0.4,
+          "topk_paper_pooled_order": 0.3,
+          "tau": 7,
+          "tau_zero": false,
+          "ties_at_cutoff": 600,
+          "returned_min": 10,
+          "topk_leap_code": 0.9,
+          "topk_leap_code_default_sort": 0.9
+        },
+        "tau": {
+          "tau": 7,
+          "tau_min_over_draws": 7,
+          "tau_max_over_draws": 7
+        }
+      },
+      "moving": {
+        "selection": {
+          "tp": 24170,
+          "fp": 25161,
+          "fn": 0,
+          "precision": 0.4899556060083923,
+          "recall": 1.0,
+          "f1": 0.6576781268282064,
+          "f1_leap_code": 0.6577
+        },
+        "aggregation": {
+          "mae": 2.5780304012145674,
+          "mape_leap": 1.5488079588725754,
+          "acc_leap": -0.5488079588725754,
+          "mape_pos": 2.420011032960971,
+          "zero_fp_rate": 0.8431687946114407,
+          "mean_predicted": 3.237784895669401
+        },
+        "topk": {
+          "topk_paper": 0.46599999999999997,
+          "topk_paper_min": 0.3,
+          "topk_paper_max": 0.7,
+          "topk_paper_pooled_order": 0.6,
+          "tau": 4,
+          "tau_zero": false,
+          "ties_at_cutoff": 600,
+          "returned_min": 10,
+          "topk_leap_code": 0.8,
+          "topk_leap_code_default_sort": 1.0
+        },
+        "tau": {
+          "tau": 4,
+          "tau_min_over_draws": 4,
+          "tau_max_over_draws": 4
+        }
+      }
+    },
+    "intervals": [
+      {
+        "objects": 841,
+        "first": -60,
+        "last": 960
+      }
+    ]
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "CalDoT1": {
+    "totals": [
+      {
+        "version": "masked",
+        "frames": 54000,
+        "mean_truth": 3.693425925925926,
+        "mean_predicted": 2.5658703703703702,
+        "mae": 1.3407777777777778,
+        "mape": 0.2851598335591516,
+        "overcount_frame_share": 0.09109259259259259,
+        "undercount_frame_share": 0.44483333333333336,
+        "overcount_mape_contribution": 0.07654063786008214,
+        "undercount_mape_contribution": 0.20861919569906298
+      },
+      {
+        "version": "unmasked",
+        "frames": 54000,
+        "mean_truth": 3.693425925925926,
+        "mean_predicted": 4.296518518518519,
+        "mae": 0.9959814814814815,
+        "mape": 0.3301604140631961,
+        "overcount_frame_share": 0.39846296296296296,
+        "undercount_frame_share": 0.12494444444444444,
+        "overcount_mape_contribution": 0.2835362406736224,
+        "undercount_mape_contribution": 0.04662417338956474
+      }
+    ],
+    "bins": [
+      {
+        "version": "masked",
+        "bucket": "0",
+        "frames": 16808,
+        "mae": 0.10643741075678248,
+        "mape": 0.10030937648738696,
+        "mape_contribution": 0.03122222222222222,
+        "overcount_share": 0.10030937648738696
+      },
+      {
+        "version": "unmasked",
+        "bucket": "0",
+        "frames": 16808,
+        "mae": 0.1662303664921466,
+        "mape": 0.13422179914326512,
+        "mape_contribution": 0.041777777777777775,
+        "overcount_share": 0.13422179914326512
+      },
+      {
+        "version": "masked",
+        "bucket": "1",
+        "frames": 8586,
+        "mae": 0.4595853715350571,
+        "mape": 0.4595853715350571,
+        "mape_contribution": 0.07307407407407407,
+        "overcount_share": 0.16491963661774983
+      },
+      {
+        "version": "unmasked",
+        "bucket": "1",
+        "frames": 8586,
+        "mae": 0.7499417656650361,
+        "mape": 0.7499417656650361,
+        "mape_contribution": 0.11924074074074074,
+        "overcount_share": 0.43442813883065456
+      },
+      {
+        "version": "masked",
+        "bucket": "2-4",
+        "frames": 12051,
+        "mae": 0.9118745332337566,
+        "mape": 0.3506901225347822,
+        "mape_contribution": 0.07826234567901223,
+        "overcount_share": 0.11119409177661604
+      },
+      {
+        "version": "unmasked",
+        "bucket": "2-4",
+        "frames": 12051,
+        "mae": 1.088623350759273,
+        "mape": 0.43171382734489866,
+        "mape_contribution": 0.0963441358024699,
+        "overcount_share": 0.5495809476392001
+      },
+      {
+        "version": "masked",
+        "bucket": "5+",
+        "frames": 16555,
+        "mae": 3.363213530655391,
+        "mape": 0.3346701507415828,
+        "mape_contribution": 0.10260119158383155,
+        "overcount_share": 0.028813047417698582
+      },
+      {
+        "version": "unmasked",
+        "bucket": "5+",
+        "frames": 16555,
+        "mae": 1.8985804892781637,
+        "mape": 0.23745569471929337,
+        "mape_contribution": 0.07279775974218336,
+        "overcount_share": 0.5380851706433102
+      }
+    ]
+  },
+  "CalDoT2": {
+    "totals": [
+      {
+        "version": "masked",
+        "frames": 54000,
+        "mean_truth": 2.6280555555555556,
+        "mean_predicted": 1.9656666666666667,
+        "mae": 0.9340925925925926,
+        "mape": 0.37743811923674714,
+        "overcount_frame_share": 0.10498148148148148,
+        "undercount_frame_share": 0.4903888888888889,
+        "overcount_mape_contribution": 0.06408598885682198,
+        "undercount_mape_contribution": 0.3133521303799153
+      },
+      {
+        "version": "unmasked",
+        "frames": 54000,
+        "mean_truth": 2.6280555555555556,
+        "mean_predicted": 3.010685185185185,
+        "mae": 0.908962962962963,
+        "mape": 0.41981163640886526,
+        "overcount_frame_share": 0.4220925925925926,
+        "undercount_frame_share": 0.18518518518518517,
+        "overcount_mape_contribution": 0.29868097180598036,
+        "undercount_mape_contribution": 0.12113066460288546
+      }
+    ],
+    "bins": [
+      {
+        "version": "masked",
+        "bucket": "0",
+        "frames": 8682,
+        "mae": 0.056438608615526374,
+        "mape": 0.05448053443906934,
+        "mape_contribution": 0.00875925925925926,
+        "overcount_share": 0.05448053443906934
+      },
+      {
+        "version": "unmasked",
+        "bucket": "0",
+        "frames": 8682,
+        "mae": 0.3451969592259848,
+        "mape": 0.3018889656761115,
+        "mape_contribution": 0.04853703703703704,
+        "overcount_share": 0.3018889656761115
+      },
+      {
+        "version": "masked",
+        "bucket": "1",
+        "frames": 12022,
+        "mae": 0.6691898186657794,
+        "mape": 0.6691898186657794,
+        "mape_contribution": 0.1489814814814815,
+        "overcount_share": 0.07544501746797538
+      },
+      {
+        "version": "unmasked",
+        "bucket": "1",
+        "frames": 12022,
+        "mae": 0.7326567958742306,
+        "mape": 0.7326567958742306,
+        "mape_contribution": 0.16311111111111112,
+        "overcount_share": 0.3456163699883547
+      },
+      {
+        "version": "masked",
+        "bucket": "2-4",
+        "frames": 24143,
+        "mae": 1.01652652942882,
+        "mape": 0.38137003134103553,
+        "mape_contribution": 0.17050771604938186,
+        "overcount_share": 0.1290643250631653
+      },
+      {
+        "version": "unmasked",
+        "bucket": "2-4",
+        "frames": 24143,
+        "mae": 1.0328045396181087,
+        "mape": 0.38609534854823013,
+        "mape_contribution": 0.1726203703703689,
+        "overcount_share": 0.47011556144638195
+      },
+      {
+        "version": "masked",
+        "bucket": "5+",
+        "frames": 9153,
+        "mae": 1.8970829236315963,
+        "mape": 0.2902044982100677,
+        "mape_contribution": 0.049189662446606476,
+        "overcount_share": 0.1281547033759423
+      },
+      {
+        "version": "unmasked",
+        "bucket": "5+",
+        "frames": 9153,
+        "mae": 1.3486288648530536,
+        "mape": 0.20969391085746666,
+        "mape_contribution": 0.0355431178903406,
+        "overcount_share": 0.5098874685895335
+      }
+    ]
+  }
+}

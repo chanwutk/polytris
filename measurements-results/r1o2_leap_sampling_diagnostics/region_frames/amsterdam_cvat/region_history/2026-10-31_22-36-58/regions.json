@@ -1,0 +1,64 @@
+{
+  "dataset": "Amsterdam",
+  "dataset_id": "ams-y05",
+  "resolution": [
+    1280,
+    720
+  ],
+  "source_zip": "/Users/chanwutk/Downloads/job_4684555_annotations_2026_10_31_22_36_58_cvat for images 1.1.zip",
+  "source_sha256": "1b73f31abf49cf9ccb1c497e2a4619ade253ad050ed3f08ebdbe686be86b5e53",
+  "cvat_job": "4684555",
+  "stop_area": [
+    [
+      405.9,
+      174.41,
+      563.32,
+      247.5
+    ],
+    [
+      31.04,
+      249.9,
+      167.8,
+      341.0
+    ],
+    [
+      1194.8,
+      327.97,
+      1280.0,
+      606.8
+    ],
+    [
+      506.8,
+      580.1,
+      1009.2,
+      720.0
+    ],
+    [
+      17.37,
+      533.2,
+      230.9,
+      720.0
+    ]
+  ],
+  "numbering": "R0 through R4 follow XML order; these names are display labels only.",
+  "existing_pattern_check": {
+    "patterns": 33,
+    "eligible_before": 0,
+    "eligible_after": 25,
+    "starts_inside_new_regions": 28,
+    "ends_inside_new_regions": 28,
+    "excluded_patterns": [
+      2,
+      3,
+      5,
+      10,
+      13,
+      18,
+      20,
+      21
+    ],
+    "source": "measurements-results/r1o2_leap_sampling_diagnostics/ams-y05-patterns.parquet",
+    "rule": "Both endpoint centers inside a region, inclusive bounds; first matching region, matching LEAP allocate_tracks.",
+    "execution": "CPU read-only check on ace; no extraction or retraining"
+  }
+}

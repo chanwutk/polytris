@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<annotations>
+  <version>1.1</version>
+  <meta>
+    <task>
+      <id>0</id>
+      <name>B3D1 LEAP pattern region review</name>
+      <size>1</size>
+      <mode>annotation</mode>
+      <overlap>0</overlap>
+      <bugtracker />
+      <flipped>False</flipped>
+      <created>2026-10-31 22:17:19.037023+00:00</created>
+      <updated>2026-10-31 22:17:19.037023+00:00</updated>
+      <start_frame>0</start_frame>
+      <stop_frame>0</stop_frame>
+      <frame_filter />
+      <labels>
+        <label>
+          <name>region</name>
+          <color>#e6194b</color>
+          <type>any</type>
+          <attributes />
+        </label>
+      </labels>
+      <segments />
+    </task>
+    <dumped>2026-10-31 22:17:19.037023+00:00</dumped>
+  </meta>
+  <image id="0" name="b3d1_leap_patterns.png" width="1080" height="720">
+    <box label="region" source="manual" occluded="0" xtl="0" ytl="94" xbr="300" ybr="406" z_order="0" />
+    <box label="region" source="manual" occluded="0" xtl="780" ytl="0" xbr="1080" ybr="230" z_order="0" />
+    <box label="region" source="manual" occluded="0" xtl="740" ytl="380" xbr="1080" ybr="720" z_order="0" />
+  </image>
+</annotations>

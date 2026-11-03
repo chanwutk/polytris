@@ -1,0 +1,78 @@
+{
+  "repository": "https://github.com/zju-xuyc/LEAP",
+  "configuration_checks": {
+    "CalDoT1": {
+      "differences": {},
+      "upstream_blob": "cefc5d6ce4e353d5966c83508a7caf0fb86c4806",
+      "url": "https://github.com/zju-xuyc/LEAP/blob/main/configs/caldot1.yaml"
+    },
+    "CalDoT2": {
+      "differences": {},
+      "upstream_blob": "99871e728f060be4206c025a4cec076ac4a7025f",
+      "url": "https://github.com/zju-xuyc/LEAP/blob/main/configs/caldot2.yaml"
+    }
+  },
+  "functions": {
+    "inference.py": {
+      "allocate_tracks": "identical AST",
+      "filter_by_predefined_area": "identical AST",
+      "filter_by_status": "identical AST",
+      "filter_related_detections": "identical AST",
+      "get_final_tuple_from_detector": "modified",
+      "is_point_in_rectangle": "identical AST",
+      "save_sampled_pics": "identical AST"
+    },
+    "match_object.py": {
+      "get_point_update": "modified",
+      "match_cars_main_updated": "identical AST",
+      "sort_detections": "identical AST"
+    },
+    "tools/utils.py": {
+      "associate_cars": "identical AST",
+      "calculate_IOU": "identical AST",
+      "calculate_intersection": "identical AST",
+      "concat_video_slices": "identical AST",
+      "concat_videos": "identical AST",
+      "convert_detection": "identical AST",
+      "convert_float": "identical AST",
+      "cosine_similarity": "identical AST",
+      "filter_by_region": "identical AST",
+      "filter_tracks": "identical AST",
+      "generate_video": "identical AST",
+      "get_background_color": "identical AST",
+      "get_img": "identical AST",
+      "get_sample_gap": "modified",
+      "judge_traffic_light": "identical AST",
+      "justify_intersect": "identical AST",
+      "justify_intersect_rate": "identical AST",
+      "locate_background_color": "identical AST",
+      "match_last_car_with_gt": "identical AST",
+      "matrix_fill": "identical AST",
+      "paint_image": "identical AST",
+      "palette_perc": "identical AST",
+      "pic_difference": "identical AST"
+    }
+  },
+  "upstream_sources": {
+    "main.py": {
+      "sha": "bc9108be86468cabcdfdbd45863456307f88d620",
+      "url": "https://github.com/zju-xuyc/LEAP/blob/main/main.py"
+    },
+    "inference.py": {
+      "sha": "33d5d519292cda3c3a758a996d7e5910dd634d91",
+      "url": "https://github.com/zju-xuyc/LEAP/blob/main/inference.py"
+    },
+    "match_object.py": {
+      "sha": "0f7471ba8c2051f312ffdfb8f7e8fb369d15557d",
+      "url": "https://github.com/zju-xuyc/LEAP/blob/main/match_object.py"
+    },
+    "tools/utils.py": {
+      "sha": "806ba977446c7e8874ac08c1ab89ad749722f9d2",
+      "url": "https://github.com/zju-xuyc/LEAP/blob/main/tools/utils.py"
+    },
+    "track_cluster_updated.py": {
+      "sha": "88efe1f831ac7e9c8206d2c14b9dc9dea9c4f7cc",
+      "url": "https://github.com/zju-xuyc/LEAP/blob/main/track_cluster_updated.py"
+    }
+  }
+}

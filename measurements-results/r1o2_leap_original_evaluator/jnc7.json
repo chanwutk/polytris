@@ -1,0 +1,1243 @@
+{
+  "evaluator_sha256": "9b560687fdbd22e071d3c6d9df34fd53eb50b4e08c1684d38252cf18d761536c",
+  "numpy": "2.3.5",
+  "ground_truth_mode": "LEAP preprocess(pseudo_label), shared 003_groundtruth boxes; all vehicles as car",
+  "queries": [
+    "selection_query_1",
+    "aggregation_query_1",
+    "top_k_query_1"
+  ],
+  "datasets": {
+    "B3D4": {
+      "dataset": "jnc7",
+      "frames": 5225,
+      "clips": 5,
+      "ground_truth_files": [
+        [
+          "te01.mp4",
+          "/polyis-cache/jnc7/execution/te01.mp4/003_groundtruth/tracking.jsonl"
+        ],
+        [
+          "te04.mp4",
+          "/polyis-cache/jnc7/execution/te04.mp4/003_groundtruth/tracking.jsonl"
+        ],
+        [
+          "te08.mp4",
+          "/polyis-cache/jnc7/execution/te08.mp4/003_groundtruth/tracking.jsonl"
+        ],
+        [
+          "te12.mp4",
+          "/polyis-cache/jnc7/execution/te12.mp4/003_groundtruth/tracking.jsonl"
+        ],
+        [
+          "te13.mp4",
+          "/polyis-cache/jnc7/execution/te13.mp4/003_groundtruth/tracking.jsonl"
+        ]
+      ],
+      "native_intervals": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc7/leap_rerun.jsonl.gz",
+      "ground_truth_count_sha256": "2d59a18621752bfb886af99409a4d0f01dc3691454eb75dad196b194fdebd369",
+      "records": [
+        {
+          "system": "leap",
+          "config": "param 0",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 10.767464114832537,
+            "acc": -0.3839506859506281,
+            "mape": 1.383950685950628
+          },
+          "topk": 0.5
+        },
+        {
+          "system": "otif",
+          "config": "param 0",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 0.9640191387559809,
+            "acc": 0.9141040461597719,
+            "mape": 0.08589595384022808
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "otif",
+          "config": "param 1",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 2.3064114832535885,
+            "acc": 0.7842066329514719,
+            "mape": 0.21579336704852814
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "otif",
+          "config": "param 2",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 2.4382775119617226,
+            "acc": 0.7716730988970136,
+            "mape": 0.22832690110298637
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "otif",
+          "config": "param 3",
+          "selection": {
+            "f1": 0.9981,
+            "recall": 0.9962,
+            "precision": 1.0,
+            "accuracy": 0.9962
+          },
+          "aggregation": {
+            "mae": 2.743732057416268,
+            "acc": 0.7423565895485751,
+            "mape": 0.2576434104514249
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "otif",
+          "config": "param 4",
+          "selection": {
+            "f1": 0.9897,
+            "recall": 0.9797,
+            "precision": 1.0,
+            "accuracy": 0.9797
+          },
+          "aggregation": {
+            "mae": 3.835215311004785,
+            "acc": 0.6256334001929938,
+            "mape": 0.37436659980700615
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "otif",
+          "config": "param 5",
+          "selection": {
+            "f1": 0.9755,
+            "recall": 0.9522,
+            "precision": 1.0,
+            "accuracy": 0.9522
+          },
+          "aggregation": {
+            "mae": 5.462392344497608,
+            "acc": 0.4697553494970603,
+            "mape": 0.5302446505029397
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "otif",
+          "config": "param 6",
+          "selection": {
+            "f1": 0.978,
+            "recall": 0.9569,
+            "precision": 1.0,
+            "accuracy": 0.9569
+          },
+          "aggregation": {
+            "mae": 6.530143540669856,
+            "acc": 0.3851241612357869,
+            "mape": 0.614875838764213
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "otif",
+          "config": "param 7",
+          "selection": {
+            "f1": 0.0004,
+            "recall": 0.0002,
+            "precision": 1.0,
+            "accuracy": 0.0002
+          },
+          "aggregation": {
+            "mae": 10.730526315789474,
+            "acc": 0.0,
+            "mape": 1.0
+          },
+          "topk": 0.1
+        },
+        {
+          "system": "otif",
+          "config": "param 8",
+          "selection": {
+            "f1": 0.0004,
+            "recall": 0.0002,
+            "precision": 1.0,
+            "accuracy": 0.0002
+          },
+          "aggregation": {
+            "mae": 10.730526315789474,
+            "acc": 0.0,
+            "mape": 1.0
+          },
+          "topk": 0.1
+        },
+        {
+          "system": "reference",
+          "config": "naive",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.0532057416267944,
+            "acc": 0.9060996870070318,
+            "mape": 0.0939003129929682
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_16_040_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9719,
+            "recall": 0.9453,
+            "precision": 1.0,
+            "accuracy": 0.9453
+          },
+          "aggregation": {
+            "mae": 5.786985645933014,
+            "acc": 0.4408021334458094,
+            "mape": 0.5591978665541906
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_16_060_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9719,
+            "recall": 0.9453,
+            "precision": 1.0,
+            "accuracy": 0.9453
+          },
+          "aggregation": {
+            "mae": 5.786985645933014,
+            "acc": 0.4408021334458094,
+            "mape": 0.5591978665541906
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_16_080_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9719,
+            "recall": 0.9453,
+            "precision": 1.0,
+            "accuracy": 0.9453
+          },
+          "aggregation": {
+            "mae": 5.786985645933014,
+            "acc": 0.4408021334458094,
+            "mape": 0.5591978665541906
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9686,
+            "recall": 0.9391,
+            "precision": 1.0,
+            "accuracy": 0.9391
+          },
+          "aggregation": {
+            "mae": 6.02354066985646,
+            "acc": 0.4153373701881781,
+            "mape": 0.5846626298118218
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
+          "selection": {
+            "f1": 0.967,
+            "recall": 0.9361,
+            "precision": 1.0,
+            "accuracy": 0.9361
+          },
+          "aggregation": {
+            "mae": 5.922296650717703,
+            "acc": 0.42805653828543105,
+            "mape": 0.5719434617145689
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9686,
+            "recall": 0.9391,
+            "precision": 1.0,
+            "accuracy": 0.9391
+          },
+          "aggregation": {
+            "mae": 6.087846889952153,
+            "acc": 0.41005039093578016,
+            "mape": 0.5899496090642198
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_040_r025_bl_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3458373205741627,
+            "acc": 0.8776128975634371,
+            "mape": 0.12238710243656292
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3538755980861243,
+            "acc": 0.8770839723139026,
+            "mape": 0.12291602768609744
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3483253588516746,
+            "acc": 0.8760857821773153,
+            "mape": 0.12391421782268475
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.454736842105263,
+            "acc": 0.8673709121910351,
+            "mape": 0.13262908780896487
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.5850717703349282,
+            "acc": 0.8532247619898822,
+            "mape": 0.14677523801011783
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_060_r025_bl_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.28,
+            "acc": 0.8839302665819326,
+            "mape": 0.11606973341806737
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.4057416267942584,
+            "acc": 0.8721730744865629,
+            "mape": 0.1278269255134371
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_060_r050_tr_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.2995215311004784,
+            "acc": 0.8820838363390857,
+            "mape": 0.11791616366091429
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.1831578947368422,
+            "acc": 0.8931025335961744,
+            "mape": 0.10689746640382558
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.2254545454545454,
+            "acc": 0.8882601066622933,
+            "mape": 0.11173989333770673
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_080_r025_square_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.2421052631578948,
+            "acc": 0.8874313762229151,
+            "mape": 0.11256862377708488
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_080_r025_square_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.0243062200956938,
+            "acc": 0.906741486684315,
+            "mape": 0.09325851331568502
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.1577033492822966,
+            "acc": 0.8945158671238472,
+            "mape": 0.10548413287615277
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_080_r050_square_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.419712918660287,
+            "acc": 0.8705401496348574,
+            "mape": 0.12945985036514263
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.2133971291866028,
+            "acc": 0.8906183502279905,
+            "mape": 0.10938164977200948
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.0889952153110047,
+            "acc": 0.9012742786578115,
+            "mape": 0.09872572134218849
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.06622009569378,
+            "acc": 0.9037248533163431,
+            "mape": 0.09627514668365689
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.18066985645933,
+            "acc": 0.8942275782188287,
+            "mape": 0.1057724217811713
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3169377990430622,
+            "acc": 0.879403492312122,
+            "mape": 0.120596507687878
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.1835406698564592,
+            "acc": 0.8910902481006915,
+            "mape": 0.10890975189930852
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.1544497607655502,
+            "acc": 0.896004846084995,
+            "mape": 0.10399515391500502
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.2388516746411484,
+            "acc": 0.8889217117509518,
+            "mape": 0.1110782882490482
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3707177033492823,
+            "acc": 0.8749633709318081,
+            "mape": 0.1250366290681919
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.333397129186603,
+            "acc": 0.8785638041939748,
+            "mape": 0.12143619580602516
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.2555023923444977,
+            "acc": 0.8858154314099399,
+            "mape": 0.1141845685900601
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3247846889952153,
+            "acc": 0.8798831161773502,
+            "mape": 0.12011688382264984
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_2_060_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3672727272727272,
+            "acc": 0.8777645553097866,
+            "mape": 0.12223544469021341
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_2_060_r025_tr_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3044976076555024,
+            "acc": 0.8821431644094201,
+            "mape": 0.11785683559057991
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_2_080_r025_square_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.1178947368421053,
+            "acc": 0.8976627193233463,
+            "mape": 0.10233728067665371
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_2_080_r025_tr_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.2436363636363637,
+            "acc": 0.8882209058261687,
+            "mape": 0.11177909417383125
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_2_r025_bl_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.195980861244019,
+            "acc": 0.8914575067420417,
+            "mape": 0.10854249325795828
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_2_r025_square_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.0325358851674642,
+            "acc": 0.9062850922782885,
+            "mape": 0.09371490772171154
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.268133971291866,
+            "acc": 0.8840729416160485,
+            "mape": 0.11592705838395145
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_2_r050_square_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.1232535885167465,
+            "acc": 0.8969417320066382,
+            "mape": 0.10305826799336182
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_040_r025_bl_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.547177033492823,
+            "acc": 0.8554947120738794,
+            "mape": 0.1445052879261206
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.5536842105263158,
+            "acc": 0.8576833931340169,
+            "mape": 0.14231660686598313
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_040_r025_tr_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.5322488038277513,
+            "acc": 0.8588281161153806,
+            "mape": 0.14117188388461943
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.7075598086124402,
+            "acc": 0.8417569532413173,
+            "mape": 0.15824304675868273
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_040_r075_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.8723444976076555,
+            "acc": 0.826578642312583,
+            "mape": 0.17342135768741695
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_060_r025_bl_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.4796172248803827,
+            "acc": 0.864071132290535,
+            "mape": 0.135928867709465
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.5366507177033493,
+            "acc": 0.8575078174547269,
+            "mape": 0.14249218254527307
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_060_r025_square_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3108133971291867,
+            "acc": 0.8787084030799325,
+            "mape": 0.12129159692006752
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_060_r025_tr_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.4667942583732057,
+            "acc": 0.8660613647976196,
+            "mape": 0.13393863520238036
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.7000956937799043,
+            "acc": 0.8426543643037058,
+            "mape": 0.15734563569629423
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_060_r075_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.8132057416267942,
+            "acc": 0.8329265565227498,
+            "mape": 0.16707344347725017
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_080_r025_bl_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.4472727272727273,
+            "acc": 0.8668340572412275,
+            "mape": 0.13316594275877247
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.4673684210526317,
+            "acc": 0.8660876981574641,
+            "mape": 0.13391230184253589
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_080_r025_square_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.3025837320574163,
+            "acc": 0.878940611690815,
+            "mape": 0.12105938830918495
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.426602870813397,
+            "acc": 0.8696414412564722,
+            "mape": 0.13035855874352775
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.4126315789473685,
+            "acc": 0.8701045995543703,
+            "mape": 0.12989540044562975
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.2694736842105263,
+            "acc": 0.8831944020905063,
+            "mape": 0.11680559790949374
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.4222009569377991,
+            "acc": 0.8712102323210144,
+            "mape": 0.12878976767898564
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+          "selection": {
+            "f1": 1.0,
+            "recall": 1.0,
+            "precision": 1.0,
+            "accuracy": 1.0
+          },
+          "aggregation": {
+            "mae": 1.601531100478469,
+            "acc": 0.8538787214289197,
+            "mape": 0.14612127857108026
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9962,
+            "recall": 0.9925,
+            "precision": 1.0,
+            "accuracy": 0.9925
+          },
+          "aggregation": {
+            "mae": 2.5217224880382774,
+            "acc": 0.7427176828208372,
+            "mape": 0.25728231717916283
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_8_080_r075_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9947,
+            "recall": 0.9895,
+            "precision": 1.0,
+            "accuracy": 0.9895
+          },
+          "aggregation": {
+            "mae": 2.8166507177033493,
+            "acc": 0.713645045160941,
+            "mape": 0.28635495483905904
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9962,
+            "recall": 0.9925,
+            "precision": 1.0,
+            "accuracy": 0.9925
+          },
+          "aggregation": {
+            "mae": 2.5111961722488036,
+            "acc": 0.7439814011644357,
+            "mape": 0.2560185988355643
+          },
+          "topk": 0.8
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9947,
+            "recall": 0.9895,
+            "precision": 1.0,
+            "accuracy": 0.9895
+          },
+          "aggregation": {
+            "mae": 2.652822966507177,
+            "acc": 0.72860702389639,
+            "mape": 0.27139297610361
+          },
+          "topk": 0.9
+        },
+        {
+          "system": "tetris",
+          "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
+          "selection": {
+            "f1": 0.9947,
+            "recall": 0.9895,
+            "precision": 1.0,
+            "accuracy": 0.9895
+          },
+          "aggregation": {
+            "mae": 2.856842105263158,
+            "acc": 0.708495703296955,
+            "mape": 0.291504296703045
+          },
+          "topk": 0.8
+        }
+      ]
+    }
+  }
+}

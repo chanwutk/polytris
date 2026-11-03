@@ -1,0 +1,130 @@
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage[normalem]{ulem}
+% Revision view retains proposed removals; accepted view is used for page counting.
+\newif\ifrevisionmarkup
+\ifdefined\acceptedrevision\revisionmarkupfalse\else\revisionmarkuptrue\fi
+% \AtBeginDocument{\let\revaddautoref\autoref}
+% \DeclareRobustCommand{\revadd}[1]{\bgroup\color{black}%
+%   \def\autoref##1{\mbox{\revaddautoref{##1}}}%
+%   \markoverwith{\textcolor{teal!15}{\rule[-.5ex]{2pt}{2.5ex}}}\ULon{#1}}
+\DeclareRobustCommand{\revadd}[1]{\textcolor{teal}{#1}}
+\DeclareRobustCommand{\revpending}[1]{\textcolor{orange}{#1}}
+\DeclareRobustCommand{\revdel}[1]{\ifrevisionmarkup\textcolor{red}{\sout{#1}}\fi}
+\newcommand{\revdone}{\textcolor{teal}{\fbox{x}}}
+\newcommand{\revpendingmark}{\textcolor{teal}{\fbox{--}}}
+% Display/list removals are crossed as a block so their mathematics stays legible.
+\long\def\revdeletedtext#1{#1}
+\newsavebox{\revremovedbox}
+\newlength{\revremovedwidth}
+\makeatletter
+\long\def\revdelblock#1{\ifrevisionmarkup\par\if@noskipsec\leavevmode\par\fi\noindent\begingroup%
+  \setlength{\revremovedwidth}{\linewidth}%
+  \let\revdel\revdeletedtext\let\revadd\revdeletedtext\let\revpending\revdeletedtext\let\revdelblock\revdeletedtext%
+  \begin{lrbox}{\revremovedbox}\begin{minipage}{\revremovedwidth}\color{red}#1\end{minipage}\end{lrbox}%
+  \begin{tikzpicture}%
+  \node[inner sep=0pt,outer sep=0pt,anchor=south west] (removedtext) at (0,0) {\usebox{\revremovedbox}};%
+  \draw[red] (removedtext.south west) -- (removedtext.north east);%
+  \draw[red] (removedtext.north west) -- (removedtext.south east);%
+  \end{tikzpicture}\par\endgroup\fi}
+\makeatother
+\usepackage{tikz}
+\usepackage{xspace}
+\usepackage[outline]{contour}
+\contourlength{0.8pt}
+\newcommand{\todo}[1]{\textcolor{red}{\tiny{TODO: #1}}}
+\newcommand{\ck}[1]{\textcolor{olive}{\tiny{CK: #1}}}
+\newcommand{\ac}[1]{\textcolor{magenta}{\tiny{Alena: #1}}}
+\newcommand{\alvin}[1]{\textcolor{blue}{\tiny{Alvin: #1}}}
+\newcommand{\charlie}[1]{\textcolor{orange}{\tiny{Charlie: #1}}}
+
+% Toggle for auto-generated number highlighting. Set to false for submission.
+\newif\ifshowautogen
+\showautogenfalse % Approved additions have a light teal highlight.
+% \showautogenfalse  % \showautogenfalse to disable coloring.
+\newcommand{\autogen}[1]{\ifshowautogen\textcolor{cyan}{#1}\else#1\fi}
+
+\newcommand{\sys}[0]{Tetris\xspace}
+\DeclareRobustCommand{\panellabel}[1]{%
+    \tikz[baseline=(panelcaptionlabel.base)]{%
+        \node[
+            draw=black!75,
+            fill=black!10,
+            text=black,
+            rounded corners=2pt,
+            inner xsep=1pt,
+            inner ysep=1pt,
+            outer sep=0pt,
+            % text height=1.5ex,
+            text depth=0pt
+        ] (panelcaptionlabel) {#1};%
+    }%
+}
+\DeclareRobustCommand{\panellabelcolor}[2]{%
+    \tikz[baseline=(panelcaptionlabel.base)]{%
+        \node[
+            draw=#1,
+            fill=#1,
+            text=white,
+            rounded corners=4pt,
+            inner xsep=1.7pt,
+            inner ysep=1.5pt,
+            outer sep=0pt,
+            % text height=1.5ex,
+            text depth=0pt
+        ] (panelcaptionlabel) {#2};%
+    }%
+}
+
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{codestyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    captionpos=b,
+    keepspaces=true,
+    % columns=fullflexible,
+    showtabs=true,
+    tabsize=2,
+    frame=single,
+    numbers=left
+}
+\lstset{style=codestyle}
+
+% Autoref Custom Categories
+\newcommand{\algorithmautorefname}{Algorithm}
+\newcommand{\listingautorefname}{Listing}
+\newcommand{\lstnumberautorefname}{Line}
+\renewcommand{\equationautorefname}{Eq.}
+\renewcommand{\figureautorefname}{Fig.}
+\renewcommand{\sectionautorefname}{\S\kern-1.5pt}
+\renewcommand{\subsectionautorefname}{\S\kern-1.5pt}
+\renewcommand{\subsubsectionautorefname}{\S\kern-1.5pt}
+
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=*, topsep=0.5em, itemsep=0pt, parsep=0pt}
+\setlist[enumerate]{leftmargin=*, topsep=0.5em, itemsep=0pt, parsep=0pt}
+
+
+\input{figures/generated/p003_tile_irrelevance_visualize.tex}
+\input{figures/generated/p004_polyomino_vs_roi_visualize.tex}
+\input{figures/generated/p203_compare_stats.tex}
+\input{figures/generated/p204_ablation_stats.tex}
+\input{figures/generated/p205_compare_classifiers_test_macros.tex}
+\input{figures/generated/p038_packing_efficacy_macros.tex}
+\input{figures/generated/p017_mistrack_variance.tex}
+\input{figures/generated/mistrack_rate_heuristic_hota_loss_macros_bytetrackcython.tex}%
+
+\input{figures/generated/revision_numbers.tex}
+\input{figures/generated/leap2_numbers.tex}

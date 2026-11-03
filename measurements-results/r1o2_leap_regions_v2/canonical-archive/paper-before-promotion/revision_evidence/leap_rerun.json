@@ -1,0 +1,6263 @@
+{
+  "datasets": {
+    "Amsterdam": {
+      "agreement": {
+        "clips": {
+          "clips": 60,
+          "differing_clips": [
+            "0",
+            "1",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "2",
+            "20",
+            "21",
+            "22",
+            "23",
+            "24",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "3",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+            "38",
+            "39",
+            "4",
+            "40",
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "5",
+            "50",
+            "51",
+            "52",
+            "53",
+            "54",
+            "55",
+            "56",
+            "57",
+            "58",
+            "59",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "identical_clips": 0
+        },
+        "exporter_sha256": [
+          "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b"
+        ],
+        "exports": {
+          "rerun_vs_scored": {
+            "clips": 60,
+            "differing_clips": [
+              "0",
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "2",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "3",
+              "30",
+              "31",
+              "32",
+              "33",
+              "34",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "4",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "48",
+              "49",
+              "5",
+              "50",
+              "51",
+              "52",
+              "53",
+              "54",
+              "55",
+              "56",
+              "57",
+              "58",
+              "59",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "identical_clips": 0
+          },
+          "rerun_vs_sota": {
+            "clips": 60,
+            "differing_clips": [
+              "0",
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "2",
+              "20",
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "3",
+              "30",
+              "31",
+              "32",
+              "33",
+              "34",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "4",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "48",
+              "49",
+              "5",
+              "50",
+              "51",
+              "52",
+              "53",
+              "54",
+              "55",
+              "56",
+              "57",
+              "58",
+              "59",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "identical_clips": 0
+          },
+          "scored_vs_sota": {
+            "clips": 60,
+            "differing_clips": [],
+            "identical_clips": 60
+          }
+        },
+        "frames_sampled": {
+          "clip_runs": 60,
+          "rerun_frames_sampled": 904,
+          "same_sampled_count": 6,
+          "scored_runs": 1
+        },
+        "objects": {
+          "identical": 0,
+          "matched_ids": 714,
+          "rerun_objects": 841,
+          "same_class": 668,
+          "same_interval": 0,
+          "same_pattern": 0,
+          "scored_objects": 800
+        },
+        "patterns": {
+          "identical_clips": 0,
+          "rerun_pattern_files": 1,
+          "scored_pattern_files": 1
+        }
+      },
+      "classes": {
+        "observations": {
+          "2": 2242
+        },
+        "observations_per_object": {
+          "max_observations": 16,
+          "mean_observations": 2.6659,
+          "objects": 841,
+          "objects_observed_once": 639,
+          "objects_observed_twice_or_more": 202,
+          "objects_unobserved": 0,
+          "observations": 2242
+        },
+        "rerun_objects": {
+          "2": 841
+        },
+        "scored_objects": {
+          "2": 742,
+          "5": 2,
+          "7": 56
+        }
+      },
+      "clips": 60,
+      "dataset": "ams-y05",
+      "frame_base": {
+        "aligned": true,
+        "best": {
+          "lag": 0,
+          "matched_share": 0.8604,
+          "mean_best_iou": 0.7811,
+          "observations": 2242,
+          "scale": 1.0
+        },
+        "shifts": [
+          {
+            "lag": 0,
+            "matched_share": 0.5865,
+            "mean_best_iou": 0.539,
+            "observations": 2242,
+            "scale": 0.5
+          },
+          {
+            "lag": -3,
+            "matched_share": 0.7966,
+            "mean_best_iou": 0.6842,
+            "observations": 2242,
+            "scale": 1.0
+          },
+          {
+            "lag": -2,
+            "matched_share": 0.8078,
+            "mean_best_iou": 0.7029,
+            "observations": 2242,
+            "scale": 1.0
+          },
+          {
+            "lag": -1,
+            "matched_share": 0.8091,
+            "mean_best_iou": 0.7205,
+            "observations": 2242,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.8604,
+            "mean_best_iou": 0.7811,
+            "observations": 2242,
+            "scale": 1.0
+          },
+          {
+            "lag": 1,
+            "matched_share": 0.8635,
+            "mean_best_iou": 0.7717,
+            "observations": 2242,
+            "scale": 1.0
+          },
+          {
+            "lag": 2,
+            "matched_share": 0.8613,
+            "mean_best_iou": 0.7518,
+            "observations": 2242,
+            "scale": 1.0
+          },
+          {
+            "lag": 3,
+            "matched_share": 0.8497,
+            "mean_best_iou": 0.7306,
+            "observations": 2242,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.3225,
+            "mean_best_iou": 0.2951,
+            "observations": 2242,
+            "scale": 2.0
+          }
+        ]
+      },
+      "hota": {
+        "linear": {
+          "AssA": 0.7105,
+          "DetA": 0.5216,
+          "HOTA": 0.608,
+          "LocA": 0.9115,
+          "dets": 85081,
+          "gt_dets": 123724,
+          "ids": 901
+        },
+        "pattern": {
+          "AssA": 0.0509,
+          "DetA": 0.0144,
+          "HOTA": 0.0258,
+          "LocA": 0.6232,
+          "dets": 174876,
+          "gt_dets": 123724,
+          "ids": 901
+        },
+        "pattern_minus_reported_e6": -30304.1615,
+        "pattern_reproduces_reported": false,
+        "raw": {
+          "AssA": 0.0165,
+          "DetA": 0.0154,
+          "HOTA": 0.0158,
+          "LocA": 0.912,
+          "dets": 2242,
+          "gt_dets": 123724,
+          "ids": 901
+        },
+        "reported": {
+          "AssA": 0.1499,
+          "DetA": 0.0218,
+          "HOTA": 0.0561,
+          "LocA": 0.6489,
+          "dets": 170553,
+          "gt_dets": 123724,
+          "ids": 859
+        }
+      },
+      "timing": {
+        "contaminated": false,
+        "cpus": "20-29,60-69",
+        "end": "2026-10-30T11:06:33-07:00",
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_time_wall_s": 498.66,
+        "gpu": 5,
+        "host": "bombe",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "leap_timers": {
+          "rerun_decode_s": 187.4361,
+          "rerun_detector_s": 84.5707,
+          "rerun_differencer_s": 0.5318,
+          "rerun_match_s": 40.9361,
+          "rerun_reid_s": 35.8772,
+          "rerun_run_session_s": 493.067,
+          "scored_decode_s": 198.7918,
+          "scored_detector_s": 36.392,
+          "scored_differencer_s": 0.6273,
+          "scored_inference_total_s": 295.9971,
+          "scored_match_s": 26.4755,
+          "scored_reid_s": 25.4201,
+          "scored_runs_max": 1,
+          "scored_runs_min": 1
+        },
+        "max_rss_kb": 2632576,
+        "neighbors": {
+          "node_neighbor_busy_share": 0.0,
+          "other_gpus": [
+            {
+              "busy_share": 0.4416,
+              "gpu": 0,
+              "mem_max_mib": 8803.0,
+              "util_mean": 10.1565
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 1,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.3785,
+              "gpu": 2,
+              "mem_max_mib": 14377.0,
+              "util_mean": 10.9159
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 3,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 4,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 6,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            }
+          ]
+        },
+        "numa_node": 1,
+        "run": "g5-20261030T105803",
+        "start": "2026-10-30T10:58:10-07:00"
+      },
+      "video_identity": [
+        {
+          "dataset": "ams-y05",
+          "differing": [],
+          "identical": 60,
+          "leap_dir": "videos/amsterdam-y5/test/",
+          "leap_videos": 60,
+          "our_videos": 60,
+          "split": "test"
+        },
+        {
+          "dataset": "ams-y05",
+          "differing": [],
+          "identical": 60,
+          "leap_dir": "videos/amsterdam-y5/train/",
+          "leap_videos": 60,
+          "our_videos": 60,
+          "split": "train"
+        }
+      ],
+      "extraction": {
+        "frames": 54011,
+        "compute_s": 156.66330000000002,
+        "fps": 344.758472469302,
+        "inference_s": 344.09939999999995,
+        "decode_s": 187.43610000000007,
+        "boundary": "sum(speed.tsv inference_total - decode), one run per clip"
+      },
+      "matched_detector": {
+        "adapter_sha256": "007b1760ae96014f261865b004d6148805c1225db6a36eaebadca828631d4f8a",
+        "checkpoint": "/polyis-data/training/ultralytics/amsterdam/weights/yolov5x6/weights/best.pt",
+        "config_sha256": "773a9178508ca3dd492120c12637704197af77b8a7325556c491dcbcec218e6a",
+        "dataset": "ams-y05",
+        "inference": "polyis/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2",
+        "preparation": "fresh labels, crops, re-identification training, and motion patterns; no distillation",
+        "sha256": "be2b26074f713f27b3ebe36c7a3a6e2c38076874ed64c296fae069ead1337ab6"
+      }
+    },
+    "B3D1": {
+      "agreement": {
+        "clips": {
+          "clips": 5,
+          "differing_clips": [],
+          "identical_clips": 5
+        },
+        "exporter_sha256": [
+          "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b"
+        ],
+        "exports": {
+          "rerun_vs_scored": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          },
+          "rerun_vs_sota": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          },
+          "scored_vs_sota": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          }
+        },
+        "frames_sampled": {
+          "clip_runs": 5,
+          "rerun_frames_sampled": 88,
+          "same_sampled_count": 5,
+          "scored_runs": 1
+        },
+        "objects": {
+          "identical": 283,
+          "matched_ids": 283,
+          "rerun_objects": 283,
+          "same_class": 283,
+          "same_interval": 283,
+          "same_pattern": 283,
+          "scored_objects": 283
+        },
+        "patterns": {
+          "identical_clips": 5,
+          "rerun_pattern_files": 1,
+          "scored_pattern_files": 1
+        }
+      },
+      "classes": {
+        "observations": {
+          "2": 1089
+        },
+        "observations_per_object": {
+          "max_observations": 19,
+          "mean_observations": 3.8481,
+          "objects": 283,
+          "objects_observed_once": 123,
+          "objects_observed_twice_or_more": 160,
+          "objects_unobserved": 0,
+          "observations": 1089
+        },
+        "rerun_objects": {
+          "2": 283
+        },
+        "scored_objects": {
+          "2": 283
+        }
+      },
+      "clips": 5,
+      "dataset": "jnc0",
+      "frame_base": {
+        "aligned": true,
+        "best": {
+          "lag": 0,
+          "matched_share": 0.9789,
+          "mean_best_iou": 0.8662,
+          "observations": 1089,
+          "scale": 1.0
+        },
+        "shifts": [
+          {
+            "lag": 0,
+            "matched_share": 0.1212,
+            "mean_best_iou": 0.1352,
+            "observations": 1089,
+            "scale": 0.5
+          },
+          {
+            "lag": -3,
+            "matched_share": 0.5418,
+            "mean_best_iou": 0.5093,
+            "observations": 1089,
+            "scale": 1.0
+          },
+          {
+            "lag": -2,
+            "matched_share": 0.8026,
+            "mean_best_iou": 0.6021,
+            "observations": 1089,
+            "scale": 1.0
+          },
+          {
+            "lag": -1,
+            "matched_share": 0.9137,
+            "mean_best_iou": 0.7096,
+            "observations": 1089,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.9789,
+            "mean_best_iou": 0.8662,
+            "observations": 1089,
+            "scale": 1.0
+          },
+          {
+            "lag": 1,
+            "matched_share": 0.9715,
+            "mean_best_iou": 0.8116,
+            "observations": 1089,
+            "scale": 1.0
+          },
+          {
+            "lag": 2,
+            "matched_share": 0.9265,
+            "mean_best_iou": 0.6906,
+            "observations": 1089,
+            "scale": 1.0
+          },
+          {
+            "lag": 3,
+            "matched_share": 0.7273,
+            "mean_best_iou": 0.5861,
+            "observations": 1089,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.09,
+            "mean_best_iou": 0.092,
+            "observations": 1089,
+            "scale": 2.0
+          }
+        ]
+      },
+      "hota": {
+        "linear": {
+          "AssA": 0.2154,
+          "DetA": 0.1416,
+          "HOTA": 0.1675,
+          "LocA": 0.7517,
+          "dets": 50189,
+          "gt_dets": 74105,
+          "ids": 288
+        },
+        "pattern": {
+          "AssA": 0.0663,
+          "DetA": 0.03,
+          "HOTA": 0.041,
+          "LocA": 0.624,
+          "dets": 94583,
+          "gt_dets": 74105,
+          "ids": 288
+        },
+        "pattern_minus_reported_e6": 0.0,
+        "pattern_reproduces_reported": true,
+        "raw": {
+          "AssA": 0.0082,
+          "DetA": 0.0135,
+          "HOTA": 0.0104,
+          "LocA": 0.8904,
+          "dets": 1089,
+          "gt_dets": 74105,
+          "ids": 288
+        },
+        "reported": {
+          "AssA": 0.0663,
+          "DetA": 0.03,
+          "HOTA": 0.041,
+          "LocA": 0.624,
+          "dets": 94583,
+          "gt_dets": 74105,
+          "ids": 288
+        }
+      },
+      "timing": {
+        "contaminated": false,
+        "cpus": "20-39,60-79",
+        "end": "2026-10-27T06:37:31-07:00",
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_time_wall_s": 49.46,
+        "gpu": 5,
+        "host": "bombe",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "leap_timers": {
+          "rerun_decode_s": 1.3883,
+          "rerun_detector_s": 11.4474,
+          "rerun_differencer_s": 0.0,
+          "rerun_match_s": 12.9295,
+          "rerun_reid_s": 10.0607,
+          "rerun_run_session_s": 43.4238,
+          "scored_decode_s": 1.3541,
+          "scored_detector_s": 9.2168,
+          "scored_differencer_s": 0.0,
+          "scored_inference_total_s": 21.6108,
+          "scored_match_s": 10.1347,
+          "scored_reid_s": 7.7392,
+          "scored_runs_max": 1,
+          "scored_runs_min": 1
+        },
+        "max_rss_kb": 1534528,
+        "neighbors": {
+          "node_neighbor_busy_share": 0.775,
+          "other_gpus": [
+            {
+              "busy_share": 0.875,
+              "gpu": 0,
+              "mem_max_mib": 1883.0,
+              "util_mean": 78.675
+            },
+            {
+              "busy_share": 0.8,
+              "gpu": 1,
+              "mem_max_mib": 1753.0,
+              "util_mean": 63.125
+            },
+            {
+              "busy_share": 0.775,
+              "gpu": 2,
+              "mem_max_mib": 1753.0,
+              "util_mean": 64.225
+            },
+            {
+              "busy_share": 0.95,
+              "gpu": 3,
+              "mem_max_mib": 10785.0,
+              "util_mean": 68.325
+            },
+            {
+              "busy_share": 0.775,
+              "gpu": 4,
+              "mem_max_mib": 2573.0,
+              "util_mean": 53.925
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 6,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            }
+          ]
+        },
+        "numa_node": 1,
+        "run": "g5-20261027T063630",
+        "start": "2026-10-27T06:36:38-07:00"
+      },
+      "video_identity": [
+        {
+          "dataset": "jnc0",
+          "differing": [],
+          "identical": 5,
+          "leap_dir": "videos/jnc0/test/",
+          "leap_videos": 5,
+          "our_videos": 5,
+          "split": "test"
+        },
+        {
+          "dataset": "jnc0",
+          "differing": [],
+          "identical": 8,
+          "leap_dir": "videos/jnc0/train/",
+          "leap_videos": 8,
+          "our_videos": 8,
+          "split": "train"
+        }
+      ]
+    },
+    "B3D2": {
+      "agreement": {
+        "clips": {
+          "clips": 5,
+          "differing_clips": [],
+          "identical_clips": 5
+        },
+        "exporter_sha256": [
+          "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b"
+        ],
+        "exports": {
+          "rerun_vs_scored": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          },
+          "rerun_vs_sota": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          },
+          "scored_vs_sota": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          }
+        },
+        "frames_sampled": {
+          "clip_runs": 5,
+          "rerun_frames_sampled": 79,
+          "same_sampled_count": 5,
+          "scored_runs": 1
+        },
+        "objects": {
+          "identical": 377,
+          "matched_ids": 377,
+          "rerun_objects": 377,
+          "same_class": 377,
+          "same_interval": 377,
+          "same_pattern": 377,
+          "scored_objects": 377
+        },
+        "patterns": {
+          "identical_clips": 5,
+          "rerun_pattern_files": 1,
+          "scored_pattern_files": 1
+        }
+      },
+      "classes": {
+        "observations": {
+          "2": 1406
+        },
+        "observations_per_object": {
+          "max_observations": 16,
+          "mean_observations": 3.7294,
+          "objects": 377,
+          "objects_observed_once": 151,
+          "objects_observed_twice_or_more": 226,
+          "objects_unobserved": 0,
+          "observations": 1406
+        },
+        "rerun_objects": {
+          "2": 377
+        },
+        "scored_objects": {
+          "2": 377
+        }
+      },
+      "clips": 5,
+      "dataset": "jnc2",
+      "frame_base": {
+        "aligned": true,
+        "best": {
+          "lag": 0,
+          "matched_share": 0.9744,
+          "mean_best_iou": 0.8663,
+          "observations": 1406,
+          "scale": 1.0
+        },
+        "shifts": [
+          {
+            "lag": 0,
+            "matched_share": 0.2646,
+            "mean_best_iou": 0.2639,
+            "observations": 1406,
+            "scale": 0.5
+          },
+          {
+            "lag": -3,
+            "matched_share": 0.8805,
+            "mean_best_iou": 0.6901,
+            "observations": 1406,
+            "scale": 1.0
+          },
+          {
+            "lag": -2,
+            "matched_share": 0.9132,
+            "mean_best_iou": 0.7375,
+            "observations": 1406,
+            "scale": 1.0
+          },
+          {
+            "lag": -1,
+            "matched_share": 0.9189,
+            "mean_best_iou": 0.7847,
+            "observations": 1406,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.9744,
+            "mean_best_iou": 0.8663,
+            "observations": 1406,
+            "scale": 1.0
+          },
+          {
+            "lag": 1,
+            "matched_share": 0.9531,
+            "mean_best_iou": 0.821,
+            "observations": 1406,
+            "scale": 1.0
+          },
+          {
+            "lag": 2,
+            "matched_share": 0.9452,
+            "mean_best_iou": 0.7722,
+            "observations": 1406,
+            "scale": 1.0
+          },
+          {
+            "lag": 3,
+            "matched_share": 0.926,
+            "mean_best_iou": 0.7247,
+            "observations": 1406,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.1529,
+            "mean_best_iou": 0.1515,
+            "observations": 1406,
+            "scale": 2.0
+          }
+        ]
+      },
+      "hota": {
+        "linear": {
+          "AssA": 0.0977,
+          "DetA": 0.1324,
+          "HOTA": 0.1096,
+          "LocA": 0.7676,
+          "dets": 64224,
+          "gt_dets": 94796,
+          "ids": 382
+        },
+        "pattern": {
+          "AssA": 0.0441,
+          "DetA": 0.0188,
+          "HOTA": 0.0262,
+          "LocA": 0.6154,
+          "dets": 81635,
+          "gt_dets": 94796,
+          "ids": 382
+        },
+        "pattern_minus_reported_e6": 0.0,
+        "pattern_reproduces_reported": true,
+        "raw": {
+          "AssA": 0.0054,
+          "DetA": 0.0134,
+          "HOTA": 0.0084,
+          "LocA": 0.895,
+          "dets": 1406,
+          "gt_dets": 94796,
+          "ids": 382
+        },
+        "reported": {
+          "AssA": 0.0441,
+          "DetA": 0.0188,
+          "HOTA": 0.0262,
+          "LocA": 0.6154,
+          "dets": 81635,
+          "gt_dets": 94796,
+          "ids": 382
+        }
+      },
+      "timing": {
+        "contaminated": false,
+        "cpus": "20-39,60-79",
+        "end": "2026-10-27T06:38:41-07:00",
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_time_wall_s": 56.39,
+        "gpu": 5,
+        "host": "bombe",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "leap_timers": {
+          "rerun_decode_s": 1.2883,
+          "rerun_detector_s": 11.7246,
+          "rerun_differencer_s": 0.0,
+          "rerun_match_s": 19.6167,
+          "rerun_reid_s": 16.3595,
+          "rerun_run_session_s": 48.6064,
+          "scored_decode_s": 1.1212,
+          "scored_detector_s": 8.5007,
+          "scored_differencer_s": 0.0,
+          "scored_inference_total_s": 26.9431,
+          "scored_match_s": 16.5106,
+          "scored_reid_s": 13.6476,
+          "scored_runs_max": 1,
+          "scored_runs_min": 1
+        },
+        "max_rss_kb": 1497912,
+        "neighbors": {
+          "node_neighbor_busy_share": 0.7111,
+          "other_gpus": [
+            {
+              "busy_share": 0.9111,
+              "gpu": 0,
+              "mem_max_mib": 1883.0,
+              "util_mean": 80.4444
+            },
+            {
+              "busy_share": 0.8889,
+              "gpu": 1,
+              "mem_max_mib": 1753.0,
+              "util_mean": 72.0889
+            },
+            {
+              "busy_share": 0.8444,
+              "gpu": 2,
+              "mem_max_mib": 1753.0,
+              "util_mean": 72.7778
+            },
+            {
+              "busy_share": 0.9778,
+              "gpu": 3,
+              "mem_max_mib": 10787.0,
+              "util_mean": 75.8667
+            },
+            {
+              "busy_share": 0.7111,
+              "gpu": 4,
+              "mem_max_mib": 2573.0,
+              "util_mean": 50.9556
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 6,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            }
+          ]
+        },
+        "numa_node": 1,
+        "run": "g5-20261027T063733",
+        "start": "2026-10-27T06:37:41-07:00"
+      },
+      "video_identity": [
+        {
+          "dataset": "jnc2",
+          "differing": [],
+          "identical": 5,
+          "leap_dir": "videos/jnc2/test/",
+          "leap_videos": 5,
+          "our_videos": 5,
+          "split": "test"
+        },
+        {
+          "dataset": "jnc2",
+          "differing": [],
+          "identical": 8,
+          "leap_dir": "videos/jnc2/train/",
+          "leap_videos": 8,
+          "our_videos": 8,
+          "split": "train"
+        }
+      ]
+    },
+    "B3D3": {
+      "agreement": {
+        "clips": {
+          "clips": 5,
+          "differing_clips": [],
+          "identical_clips": 5
+        },
+        "exporter_sha256": [
+          "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b"
+        ],
+        "exports": {
+          "rerun_vs_scored": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          },
+          "rerun_vs_sota": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          },
+          "scored_vs_sota": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          }
+        },
+        "frames_sampled": {
+          "clip_runs": 5,
+          "rerun_frames_sampled": 105,
+          "same_sampled_count": 5,
+          "scored_runs": 1
+        },
+        "objects": {
+          "identical": 1330,
+          "matched_ids": 1330,
+          "rerun_objects": 1330,
+          "same_class": 1330,
+          "same_interval": 1330,
+          "same_pattern": 1330,
+          "scored_objects": 1330
+        },
+        "patterns": {
+          "identical_clips": 5,
+          "rerun_pattern_files": 1,
+          "scored_pattern_files": 1
+        }
+      },
+      "classes": {
+        "observations": {
+          "2": 1365
+        },
+        "observations_per_object": {
+          "max_observations": 16,
+          "mean_observations": 1.0263,
+          "objects": 1330,
+          "objects_observed_once": 1310,
+          "objects_observed_twice_or_more": 20,
+          "objects_unobserved": 0,
+          "observations": 1365
+        },
+        "rerun_objects": {
+          "2": 1330
+        },
+        "scored_objects": {
+          "2": 1330
+        }
+      },
+      "clips": 5,
+      "dataset": "jnc6",
+      "frame_base": {
+        "aligned": true,
+        "best": {
+          "lag": 0,
+          "matched_share": 0.9875,
+          "mean_best_iou": 0.867,
+          "observations": 1365,
+          "scale": 1.0
+        },
+        "shifts": [
+          {
+            "lag": 0,
+            "matched_share": 0.0733,
+            "mean_best_iou": 0.0892,
+            "observations": 1365,
+            "scale": 0.5
+          },
+          {
+            "lag": -3,
+            "matched_share": 0.5487,
+            "mean_best_iou": 0.5105,
+            "observations": 1365,
+            "scale": 1.0
+          },
+          {
+            "lag": -2,
+            "matched_share": 0.8264,
+            "mean_best_iou": 0.6063,
+            "observations": 1365,
+            "scale": 1.0
+          },
+          {
+            "lag": -1,
+            "matched_share": 0.9429,
+            "mean_best_iou": 0.7205,
+            "observations": 1365,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.9875,
+            "mean_best_iou": 0.867,
+            "observations": 1365,
+            "scale": 1.0
+          },
+          {
+            "lag": 1,
+            "matched_share": 0.9861,
+            "mean_best_iou": 0.8257,
+            "observations": 1365,
+            "scale": 1.0
+          },
+          {
+            "lag": 2,
+            "matched_share": 0.9626,
+            "mean_best_iou": 0.7028,
+            "observations": 1365,
+            "scale": 1.0
+          },
+          {
+            "lag": 3,
+            "matched_share": 0.7385,
+            "mean_best_iou": 0.5914,
+            "observations": 1365,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.0557,
+            "mean_best_iou": 0.062,
+            "observations": 1365,
+            "scale": 2.0
+          }
+        ]
+      },
+      "hota": {
+        "linear": {
+          "AssA": 0.2836,
+          "DetA": 0.0327,
+          "HOTA": 0.0963,
+          "LocA": 0.8655,
+          "dets": 3222,
+          "gt_dets": 70124,
+          "ids": 1335
+        },
+        "pattern": {
+          "AssA": 0.0793,
+          "DetA": 0.0029,
+          "HOTA": 0.0146,
+          "LocA": 0.646,
+          "dets": 138558,
+          "gt_dets": 70124,
+          "ids": 1335
+        },
+        "pattern_minus_reported_e6": 0.0,
+        "pattern_reproduces_reported": true,
+        "raw": {
+          "AssA": 0.0066,
+          "DetA": 0.0176,
+          "HOTA": 0.0106,
+          "LocA": 0.8853,
+          "dets": 1365,
+          "gt_dets": 70124,
+          "ids": 1335
+        },
+        "reported": {
+          "AssA": 0.0793,
+          "DetA": 0.0029,
+          "HOTA": 0.0146,
+          "LocA": 0.646,
+          "dets": 138558,
+          "gt_dets": 70124,
+          "ids": 1335
+        }
+      },
+      "timing": {
+        "contaminated": false,
+        "cpus": "20-39,60-79",
+        "end": "2026-10-27T06:32:35-07:00",
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_time_wall_s": 248.49,
+        "gpu": 6,
+        "host": "bombe",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "leap_timers": {
+          "rerun_decode_s": 1.4301,
+          "rerun_detector_s": 15.9508,
+          "rerun_differencer_s": 0.0,
+          "rerun_match_s": 204.7999,
+          "rerun_reid_s": 201.5726,
+          "rerun_run_session_s": 240.8619,
+          "scored_decode_s": 1.5702,
+          "scored_detector_s": 10.7084,
+          "scored_differencer_s": 0.0,
+          "scored_inference_total_s": 174.423,
+          "scored_match_s": 161.1574,
+          "scored_reid_s": 159.0519,
+          "scored_runs_max": 1,
+          "scored_runs_min": 1
+        },
+        "max_rss_kb": 1536384,
+        "neighbors": {
+          "node_neighbor_busy_share": 0.6667,
+          "other_gpus": [
+            {
+              "busy_share": 0.9006,
+              "gpu": 0,
+              "mem_max_mib": 1883.0,
+              "util_mean": 79.0292
+            },
+            {
+              "busy_share": 0.7661,
+              "gpu": 1,
+              "mem_max_mib": 1753.0,
+              "util_mean": 62.4152
+            },
+            {
+              "busy_share": 0.807,
+              "gpu": 2,
+              "mem_max_mib": 1753.0,
+              "util_mean": 64.7018
+            },
+            {
+              "busy_share": 0.2749,
+              "gpu": 3,
+              "mem_max_mib": 10785.0,
+              "util_mean": 21.5906
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 4,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.6667,
+              "gpu": 5,
+              "mem_max_mib": 1193.0,
+              "util_mean": 8.4386
+            }
+          ]
+        },
+        "numa_node": 1,
+        "run": "g6-20261027T062813",
+        "start": "2026-10-27T06:28:22-07:00"
+      },
+      "video_identity": [
+        {
+          "dataset": "jnc6",
+          "differing": [],
+          "identical": 5,
+          "leap_dir": "videos/jnc6/test/",
+          "leap_videos": 5,
+          "our_videos": 5,
+          "split": "test"
+        },
+        {
+          "dataset": "jnc6",
+          "differing": [],
+          "identical": 8,
+          "leap_dir": "videos/jnc6/train/",
+          "leap_videos": 8,
+          "our_videos": 8,
+          "split": "train"
+        }
+      ]
+    },
+    "B3D4": {
+      "agreement": {
+        "clips": {
+          "clips": 5,
+          "differing_clips": [],
+          "identical_clips": 5
+        },
+        "exporter_sha256": [
+          "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b"
+        ],
+        "exports": {
+          "rerun_vs_scored": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          },
+          "rerun_vs_sota": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          },
+          "scored_vs_sota": {
+            "clips": 5,
+            "differing_clips": [],
+            "identical_clips": 5
+          }
+        },
+        "frames_sampled": {
+          "clip_runs": 5,
+          "rerun_frames_sampled": 100,
+          "same_sampled_count": 5,
+          "scored_runs": 1
+        },
+        "objects": {
+          "identical": 318,
+          "matched_ids": 318,
+          "rerun_objects": 318,
+          "same_class": 318,
+          "same_interval": 318,
+          "same_pattern": 318,
+          "scored_objects": 318
+        },
+        "patterns": {
+          "identical_clips": 5,
+          "rerun_pattern_files": 1,
+          "scored_pattern_files": 1
+        }
+      },
+      "classes": {
+        "observations": {
+          "2": 947
+        },
+        "observations_per_object": {
+          "max_observations": 19,
+          "mean_observations": 2.978,
+          "objects": 318,
+          "objects_observed_once": 154,
+          "objects_observed_twice_or_more": 164,
+          "objects_unobserved": 0,
+          "observations": 947
+        },
+        "rerun_objects": {
+          "2": 318
+        },
+        "scored_objects": {
+          "2": 318
+        }
+      },
+      "clips": 5,
+      "dataset": "jnc7",
+      "frame_base": {
+        "aligned": true,
+        "best": {
+          "lag": 0,
+          "matched_share": 0.9894,
+          "mean_best_iou": 0.8828,
+          "observations": 947,
+          "scale": 1.0
+        },
+        "shifts": [
+          {
+            "lag": 0,
+            "matched_share": 0.1257,
+            "mean_best_iou": 0.1368,
+            "observations": 947,
+            "scale": 0.5
+          },
+          {
+            "lag": -3,
+            "matched_share": 0.7223,
+            "mean_best_iou": 0.5867,
+            "observations": 947,
+            "scale": 1.0
+          },
+          {
+            "lag": -2,
+            "matched_share": 0.8807,
+            "mean_best_iou": 0.6591,
+            "observations": 947,
+            "scale": 1.0
+          },
+          {
+            "lag": -1,
+            "matched_share": 0.9187,
+            "mean_best_iou": 0.7418,
+            "observations": 947,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.9894,
+            "mean_best_iou": 0.8828,
+            "observations": 947,
+            "scale": 1.0
+          },
+          {
+            "lag": 1,
+            "matched_share": 0.9926,
+            "mean_best_iou": 0.8546,
+            "observations": 947,
+            "scale": 1.0
+          },
+          {
+            "lag": 2,
+            "matched_share": 0.9863,
+            "mean_best_iou": 0.7636,
+            "observations": 947,
+            "scale": 1.0
+          },
+          {
+            "lag": 3,
+            "matched_share": 0.8912,
+            "mean_best_iou": 0.6812,
+            "observations": 947,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.0929,
+            "mean_best_iou": 0.0935,
+            "observations": 947,
+            "scale": 2.0
+          }
+        ]
+      },
+      "hota": {
+        "linear": {
+          "AssA": 0.1654,
+          "DetA": 0.1541,
+          "HOTA": 0.1544,
+          "LocA": 0.7683,
+          "dets": 34845,
+          "gt_dets": 56067,
+          "ids": 323
+        },
+        "pattern": {
+          "AssA": 0.0656,
+          "DetA": 0.0302,
+          "HOTA": 0.0426,
+          "LocA": 0.6436,
+          "dets": 110343,
+          "gt_dets": 56067,
+          "ids": 323
+        },
+        "pattern_minus_reported_e6": 0.0,
+        "pattern_reproduces_reported": true,
+        "raw": {
+          "AssA": 0.0088,
+          "DetA": 0.0157,
+          "HOTA": 0.0117,
+          "LocA": 0.8973,
+          "dets": 947,
+          "gt_dets": 56067,
+          "ids": 323
+        },
+        "reported": {
+          "AssA": 0.0656,
+          "DetA": 0.0302,
+          "HOTA": 0.0426,
+          "LocA": 0.6436,
+          "dets": 110343,
+          "gt_dets": 56067,
+          "ids": 323
+        }
+      },
+      "timing": {
+        "contaminated": false,
+        "cpus": "20-39,60-79",
+        "end": "2026-10-27T06:22:22-07:00",
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_time_wall_s": 48.36,
+        "gpu": 5,
+        "host": "bombe",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "leap_timers": {
+          "rerun_decode_s": 1.5221,
+          "rerun_detector_s": 12.0426,
+          "rerun_differencer_s": 0.0,
+          "rerun_match_s": 11.0088,
+          "rerun_reid_s": 9.6097,
+          "rerun_run_session_s": 41.2189,
+          "scored_decode_s": 1.5677,
+          "scored_detector_s": 10.0826,
+          "scored_differencer_s": 0.0,
+          "scored_inference_total_s": 21.0492,
+          "scored_match_s": 8.4517,
+          "scored_reid_s": 7.1621,
+          "scored_runs_max": 1,
+          "scored_runs_min": 1
+        },
+        "max_rss_kb": 1525360,
+        "neighbors": {
+          "node_neighbor_busy_share": 0.95,
+          "other_gpus": [
+            {
+              "busy_share": 0.875,
+              "gpu": 0,
+              "mem_max_mib": 1883.0,
+              "util_mean": 78.825
+            },
+            {
+              "busy_share": 0.9,
+              "gpu": 1,
+              "mem_max_mib": 1753.0,
+              "util_mean": 74.25
+            },
+            {
+              "busy_share": 0.75,
+              "gpu": 2,
+              "mem_max_mib": 1753.0,
+              "util_mean": 60.075
+            },
+            {
+              "busy_share": 1.0,
+              "gpu": 3,
+              "mem_max_mib": 10785.0,
+              "util_mean": 83.6
+            },
+            {
+              "busy_share": 0.95,
+              "gpu": 4,
+              "mem_max_mib": 10785.0,
+              "util_mean": 77.8
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 6,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            }
+          ]
+        },
+        "numa_node": 1,
+        "run": "g5-20261027T062121",
+        "start": "2026-10-27T06:21:30-07:00"
+      },
+      "video_identity": [
+        {
+          "dataset": "jnc7",
+          "differing": [],
+          "identical": 5,
+          "leap_dir": "videos/jnc7/test/",
+          "leap_videos": 5,
+          "our_videos": 5,
+          "split": "test"
+        },
+        {
+          "dataset": "jnc7",
+          "differing": [],
+          "identical": 8,
+          "leap_dir": "videos/jnc7/train/",
+          "leap_videos": 8,
+          "our_videos": 8,
+          "split": "train"
+        }
+      ]
+    },
+    "CalDoT1": {
+      "agreement": {
+        "clips": {
+          "clips": 60,
+          "differing_clips": [
+            "0",
+            "1",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "2",
+            "20",
+            "21",
+            "22",
+            "23",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "3",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+            "38",
+            "39",
+            "4",
+            "40",
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "5",
+            "50",
+            "51",
+            "52",
+            "53",
+            "54",
+            "55",
+            "56",
+            "57",
+            "58",
+            "59",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "identical_clips": 3
+        },
+        "exporter_sha256": [
+          "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b"
+        ],
+        "exports": {
+          "rerun_vs_scored": {
+            "clips": 60,
+            "differing_clips": [
+              "0",
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "2",
+              "20",
+              "21",
+              "22",
+              "23",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "3",
+              "30",
+              "31",
+              "32",
+              "33",
+              "34",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "4",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "48",
+              "49",
+              "5",
+              "50",
+              "51",
+              "52",
+              "53",
+              "54",
+              "55",
+              "56",
+              "57",
+              "58",
+              "59",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "identical_clips": 3
+          },
+          "rerun_vs_sota": {
+            "clips": 60,
+            "differing_clips": [
+              "0",
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "2",
+              "20",
+              "21",
+              "22",
+              "23",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "3",
+              "30",
+              "31",
+              "32",
+              "33",
+              "34",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "4",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "48",
+              "49",
+              "5",
+              "50",
+              "51",
+              "52",
+              "53",
+              "54",
+              "55",
+              "56",
+              "57",
+              "58",
+              "59",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "identical_clips": 3
+          },
+          "scored_vs_sota": {
+            "clips": 60,
+            "differing_clips": [],
+            "identical_clips": 60
+          }
+        },
+        "frames_sampled": {
+          "clip_runs": 120,
+          "rerun_frames_sampled": 734,
+          "same_sampled_count": 36,
+          "scored_runs": 2
+        },
+        "objects": {
+          "identical": 0,
+          "matched_ids": 534,
+          "rerun_objects": 843,
+          "same_class": 444,
+          "same_interval": 0,
+          "same_pattern": 23,
+          "scored_objects": 584
+        },
+        "patterns": {
+          "identical_clips": 0,
+          "rerun_pattern_files": 1,
+          "scored_pattern_files": 1
+        }
+      },
+      "classes": {
+        "observations": {
+          "2": 1969
+        },
+        "observations_per_object": {
+          "max_observations": 15,
+          "mean_observations": 2.3357,
+          "objects": 843,
+          "objects_observed_once": 617,
+          "objects_observed_twice_or_more": 226,
+          "objects_unobserved": 0,
+          "observations": 1969
+        },
+        "rerun_objects": {
+          "2": 843
+        },
+        "scored_objects": {
+          "2": 491,
+          "5": 4,
+          "7": 89
+        }
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "frame_base": {
+        "aligned": true,
+        "best": {
+          "lag": 0,
+          "matched_share": 0.9711,
+          "mean_best_iou": 0.8651,
+          "observations": 1969,
+          "scale": 1.0
+        },
+        "shifts": [
+          {
+            "lag": 0,
+            "matched_share": 0.5896,
+            "mean_best_iou": 0.5586,
+            "observations": 1969,
+            "scale": 0.5
+          },
+          {
+            "lag": -3,
+            "matched_share": 0.7242,
+            "mean_best_iou": 0.667,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": -2,
+            "matched_share": 0.7989,
+            "mean_best_iou": 0.7087,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": -1,
+            "matched_share": 0.8888,
+            "mean_best_iou": 0.759,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.9711,
+            "mean_best_iou": 0.8651,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 1,
+            "matched_share": 0.9431,
+            "mean_best_iou": 0.8132,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 2,
+            "matched_share": 0.8395,
+            "mean_best_iou": 0.7539,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 3,
+            "matched_share": 0.7547,
+            "mean_best_iou": 0.7083,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.3123,
+            "mean_best_iou": 0.2988,
+            "observations": 1969,
+            "scale": 2.0
+          }
+        ]
+      },
+      "hota": {
+        "linear": {
+          "AssA": 0.7803,
+          "DetA": 0.2859,
+          "HOTA": 0.4706,
+          "LocA": 0.9004,
+          "dets": 68710,
+          "gt_dets": 199445,
+          "ids": 900
+        },
+        "pattern": {
+          "AssA": 0.0748,
+          "DetA": 0.0887,
+          "HOTA": 0.0788,
+          "LocA": 0.6498,
+          "dets": 152947,
+          "gt_dets": 199445,
+          "ids": 900
+        },
+        "pattern_minus_reported_e6": 2173.6472,
+        "pattern_reproduces_reported": false,
+        "raw": {
+          "AssA": 0.0138,
+          "DetA": 0.0092,
+          "HOTA": 0.0112,
+          "LocA": 0.8968,
+          "dets": 1969,
+          "gt_dets": 199445,
+          "ids": 900
+        },
+        "reported": {
+          "AssA": 0.0847,
+          "DetA": 0.0776,
+          "HOTA": 0.0767,
+          "LocA": 0.6356,
+          "dets": 70045,
+          "gt_dets": 199445,
+          "ids": 633
+        }
+      },
+      "timing": {
+        "contaminated": false,
+        "cpus": "0-9,40-49",
+        "end": "2026-10-30T11:04:42-07:00",
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_time_wall_s": 389.4,
+        "gpu": 0,
+        "host": "bombe",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "leap_timers": {
+          "rerun_decode_s": 131.9607,
+          "rerun_detector_s": 53.8342,
+          "rerun_differencer_s": 2.7786,
+          "rerun_match_s": 26.6005,
+          "rerun_reid_s": 25.1908,
+          "rerun_run_session_s": 383.9792,
+          "scored_decode_s": 115.4352,
+          "scored_detector_s": 23.7238,
+          "scored_differencer_s": 3.8837,
+          "scored_inference_total_s": 187.7225,
+          "scored_match_s": 30.169,
+          "scored_reid_s": 29.1302,
+          "scored_runs_max": 2,
+          "scored_runs_min": 2
+        },
+        "max_rss_kb": 2601752,
+        "neighbors": {
+          "node_neighbor_busy_share": 0.4773,
+          "other_gpus": [
+            {
+              "busy_share": 0.0,
+              "gpu": 1,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.4773,
+              "gpu": 2,
+              "mem_max_mib": 14355.0,
+              "util_mean": 13.571
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 3,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 4,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.6526,
+              "gpu": 5,
+              "mem_max_mib": 15989.0,
+              "util_mean": 17.7281
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 6,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            }
+          ]
+        },
+        "numa_node": 0,
+        "run": "g0-20261030T105803",
+        "start": "2026-10-30T10:58:10-07:00"
+      },
+      "video_identity": [
+        {
+          "dataset": "caldot1-y05",
+          "differing": [],
+          "identical": 60,
+          "leap_dir": "videos/caldot1/test/",
+          "leap_videos": 60,
+          "our_videos": 60,
+          "split": "test"
+        },
+        {
+          "dataset": "caldot1-y05",
+          "differing": [],
+          "identical": 60,
+          "leap_dir": "videos/caldot1/train/",
+          "leap_videos": 60,
+          "our_videos": 60,
+          "split": "train"
+        }
+      ],
+      "extraction": {
+        "frames": 54000,
+        "compute_s": 99.23489999999998,
+        "fps": 544.1633941284771,
+        "inference_s": 231.19559999999998,
+        "decode_s": 131.96069999999997,
+        "boundary": "sum(speed.tsv inference_total - decode), one run per clip"
+      },
+      "matched_detector": {
+        "adapter_sha256": "007b1760ae96014f261865b004d6148805c1225db6a36eaebadca828631d4f8a",
+        "checkpoint": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
+        "config_sha256": "89c23ca2f0a2cc8e9d816a782213f873b368d8b22267900c8748acd0ffae00ac",
+        "dataset": "caldot1-y05",
+        "inference": "polyis/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2",
+        "preparation": "fresh labels, crops, re-identification training, and motion patterns; no distillation",
+        "sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135"
+      }
+    },
+    "CalDoT2": {
+      "agreement": {
+        "clips": {
+          "clips": 60,
+          "differing_clips": [
+            "0",
+            "1",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "16",
+            "17",
+            "18",
+            "19",
+            "2",
+            "20",
+            "21",
+            "22",
+            "24",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "3",
+            "30",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+            "38",
+            "39",
+            "4",
+            "40",
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "5",
+            "50",
+            "51",
+            "52",
+            "53",
+            "54",
+            "55",
+            "56",
+            "57",
+            "58",
+            "59",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "identical_clips": 3
+        },
+        "exporter_sha256": [
+          "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b"
+        ],
+        "exports": {
+          "rerun_vs_scored": {
+            "clips": 60,
+            "differing_clips": [
+              "0",
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "16",
+              "17",
+              "18",
+              "19",
+              "2",
+              "20",
+              "21",
+              "22",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "3",
+              "30",
+              "32",
+              "33",
+              "34",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "4",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "48",
+              "49",
+              "5",
+              "50",
+              "51",
+              "52",
+              "53",
+              "54",
+              "55",
+              "56",
+              "57",
+              "58",
+              "59",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "identical_clips": 3
+          },
+          "rerun_vs_sota": {
+            "clips": 60,
+            "differing_clips": [
+              "0",
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "16",
+              "17",
+              "18",
+              "19",
+              "2",
+              "20",
+              "21",
+              "22",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "3",
+              "30",
+              "32",
+              "33",
+              "34",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "4",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "48",
+              "49",
+              "5",
+              "50",
+              "51",
+              "52",
+              "53",
+              "54",
+              "55",
+              "56",
+              "57",
+              "58",
+              "59",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "identical_clips": 3
+          },
+          "scored_vs_sota": {
+            "clips": 60,
+            "differing_clips": [],
+            "identical_clips": 60
+          }
+        },
+        "frames_sampled": {
+          "clip_runs": 120,
+          "rerun_frames_sampled": 744,
+          "same_sampled_count": 22,
+          "scored_runs": 2
+        },
+        "objects": {
+          "identical": 0,
+          "matched_ids": 789,
+          "rerun_objects": 1177,
+          "same_class": 624,
+          "same_interval": 0,
+          "same_pattern": 93,
+          "scored_objects": 805
+        },
+        "patterns": {
+          "identical_clips": 0,
+          "rerun_pattern_files": 1,
+          "scored_pattern_files": 1
+        }
+      },
+      "classes": {
+        "observations": {
+          "2": 1381
+        },
+        "observations_per_object": {
+          "max_observations": 3,
+          "mean_observations": 1.1733,
+          "objects": 1177,
+          "objects_observed_once": 979,
+          "objects_observed_twice_or_more": 198,
+          "objects_unobserved": 0,
+          "observations": 1381
+        },
+        "rerun_objects": {
+          "2": 1177
+        },
+        "scored_objects": {
+          "2": 638,
+          "5": 1,
+          "7": 166
+        }
+      },
+      "clips": 60,
+      "dataset": "caldot2-y05",
+      "frame_base": {
+        "aligned": true,
+        "best": {
+          "lag": 0,
+          "matched_share": 0.9761,
+          "mean_best_iou": 0.8297,
+          "observations": 1381,
+          "scale": 1.0
+        },
+        "shifts": [
+          {
+            "lag": 0,
+            "matched_share": 0.097,
+            "mean_best_iou": 0.1055,
+            "observations": 1381,
+            "scale": 0.5
+          },
+          {
+            "lag": -3,
+            "matched_share": 0.1687,
+            "mean_best_iou": 0.2856,
+            "observations": 1381,
+            "scale": 1.0
+          },
+          {
+            "lag": -2,
+            "matched_share": 0.3628,
+            "mean_best_iou": 0.401,
+            "observations": 1381,
+            "scale": 1.0
+          },
+          {
+            "lag": -1,
+            "matched_share": 0.7104,
+            "mean_best_iou": 0.5713,
+            "observations": 1381,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.9761,
+            "mean_best_iou": 0.8297,
+            "observations": 1381,
+            "scale": 1.0
+          },
+          {
+            "lag": 1,
+            "matched_share": 0.8168,
+            "mean_best_iou": 0.6341,
+            "observations": 1381,
+            "scale": 1.0
+          },
+          {
+            "lag": 2,
+            "matched_share": 0.4127,
+            "mean_best_iou": 0.4538,
+            "observations": 1381,
+            "scale": 1.0
+          },
+          {
+            "lag": 3,
+            "matched_share": 0.202,
+            "mean_best_iou": 0.3285,
+            "observations": 1381,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.0862,
+            "mean_best_iou": 0.0834,
+            "observations": 1381,
+            "scale": 2.0
+          }
+        ]
+      },
+      "hota": {
+        "linear": {
+          "AssA": 0.0821,
+          "DetA": 0.0203,
+          "HOTA": 0.0406,
+          "LocA": 0.7316,
+          "dets": 10542,
+          "gt_dets": 141915,
+          "ids": 1234
+        },
+        "pattern": {
+          "AssA": 0.2278,
+          "DetA": 0.0616,
+          "HOTA": 0.1115,
+          "LocA": 0.604,
+          "dets": 119214,
+          "gt_dets": 141915,
+          "ids": 1234
+        },
+        "pattern_minus_reported_e6": 4868.7512,
+        "pattern_reproduces_reported": false,
+        "raw": {
+          "AssA": 0.0217,
+          "DetA": 0.0089,
+          "HOTA": 0.0136,
+          "LocA": 0.8646,
+          "dets": 1381,
+          "gt_dets": 141915,
+          "ids": 1234
+        },
+        "reported": {
+          "AssA": 0.1976,
+          "DetA": 0.06,
+          "HOTA": 0.1066,
+          "LocA": 0.6524,
+          "dets": 56446,
+          "gt_dets": 141915,
+          "ids": 861
+        }
+      },
+      "timing": {
+        "contaminated": false,
+        "cpus": "10-19,50-59",
+        "end": "2026-10-30T11:03:36-07:00",
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_time_wall_s": 328.46,
+        "gpu": 2,
+        "host": "bombe",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "leap_timers": {
+          "rerun_decode_s": 78.8492,
+          "rerun_detector_s": 49.5761,
+          "rerun_differencer_s": 2.5613,
+          "rerun_match_s": 26.2709,
+          "rerun_reid_s": 25.6696,
+          "rerun_run_session_s": 321.6111,
+          "scored_decode_s": 71.6677,
+          "scored_detector_s": 23.8865,
+          "scored_differencer_s": 3.7375,
+          "scored_inference_total_s": 124.9866,
+          "scored_match_s": 14.7074,
+          "scored_reid_s": 13.7988,
+          "scored_runs_max": 2,
+          "scored_runs_min": 2
+        },
+        "max_rss_kb": 2603248,
+        "neighbors": {
+          "node_neighbor_busy_share": 0.5652,
+          "other_gpus": [
+            {
+              "busy_share": 0.5652,
+              "gpu": 0,
+              "mem_max_mib": 14355.0,
+              "util_mean": 13.0072
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 1,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 3,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 4,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.6304,
+              "gpu": 5,
+              "mem_max_mib": 14729.0,
+              "util_mean": 17.4638
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 6,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            }
+          ]
+        },
+        "numa_node": 0,
+        "run": "g2-20261030T105758",
+        "start": "2026-10-30T10:58:04-07:00"
+      },
+      "video_identity": [
+        {
+          "dataset": "caldot2-y05",
+          "differing": [],
+          "identical": 60,
+          "leap_dir": "videos/caldot2/test/",
+          "leap_videos": 60,
+          "our_videos": 60,
+          "split": "test"
+        },
+        {
+          "dataset": "caldot2-y05",
+          "differing": [],
+          "identical": 60,
+          "leap_dir": "videos/caldot2/train/",
+          "leap_videos": 60,
+          "our_videos": 60,
+          "split": "train"
+        }
+      ],
+      "extraction": {
+        "frames": 54000,
+        "compute_s": 89.84729999999996,
+        "fps": 601.0197301421414,
+        "inference_s": 168.69670000000002,
+        "decode_s": 78.84940000000002,
+        "boundary": "sum(speed.tsv inference_total - decode), one run per clip"
+      },
+      "matched_detector": {
+        "adapter_sha256": "007b1760ae96014f261865b004d6148805c1225db6a36eaebadca828631d4f8a",
+        "checkpoint": "/polyis-data/training/ultralytics/caldot2/weights/yolov5x6/weights/best.pt",
+        "config_sha256": "55ead92bdcb6972256e1c02e9bacb6c51cb41ac9236caeedcae08eaedf203a21",
+        "dataset": "caldot2-y05",
+        "inference": "polyis/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2",
+        "preparation": "fresh labels, crops, re-identification training, and motion patterns; no distillation",
+        "sha256": "ef2b32e315aca947405be755ac32ef497ed4216de56dbc0fea9ac14ca3987c7c"
+      }
+    }
+  },
+  "environment": {
+    "dockerfile": "FROM docker-config-leap-alenatunnel-leap:latest\nRUN rm -rf /opt/conda/envs/leap\nADD leap-env.tar /opt/conda/envs/\n",
+    "images": {
+      "bombe-revision-leap:scored-env": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de 2026-10-27T06:18:19.359192963-07:00",
+      "docker-config-leap-alenatunnel-leap:latest": "sha256:2e4b25e098c87769e671a7de7a2cb45be9e510846bf78ac42f382d6f1527e659 2026-03-13T13:35:52.462123054-07:00"
+    },
+    "label_aliases": {
+      "caldot1": "caldot1-y5",
+      "caldot2": "caldot2-y5"
+    },
+    "scored_container": {
+      "created": "2026-03-16T22:53:22.158600103Z",
+      "env_tar_bytes": 11536444416,
+      "finished": "2026-09-12T03:07:51.443764247Z",
+      "host": "manchester",
+      "image": "sha256:c81e26981cd717fb682f22009891bbbb0dc3579a712cda481ac783dceb8551ea",
+      "manchester_image_created": "2026-03-16T15:50:46.277936433-07:00",
+      "mounts": [
+        "/data/alenachao/data/otif-dataset -> /path/to/otif-dataset",
+        "/data/alenachao/polyis-cache -> /polyis-cache",
+        "/work/alenachao/tunnel/hota_outputs -> /sota-results",
+        "/work/alenachao/tunnel/work -> /work/alenachao",
+        "/data/alenachao -> /data/alenachao",
+        "/data/alenachao/polyis-data -> /polyis-data",
+        "/work/alenachao/tunnel/home-config -> /root/.config",
+        "/work/alenachao/tunnel/home-ssh -> /root/.ssh",
+        "/work/alenachao/tunnel/workspace -> /workspace"
+      ],
+      "name": "alenatunnel-leap",
+      "started": "2026-03-16T22:53:22.206422514Z"
+    }
+  },
+  "inputs": [
+    {
+      "bytes": 5849,
+      "exists": true,
+      "mtime": "2026-10-27T13:20:32+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/manifest.json",
+      "sha256": "04c10bd5db8a3ee257f230e1ad23f485dcb3fa2ef9645b7d30a538714b723b99"
+    },
+    {
+      "bytes": 27134,
+      "exists": true,
+      "mtime": "2026-10-27T13:28:56+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot1-y05/leap_rerun.jsonl.gz",
+      "sha256": "c78541d9de190603cd91abd47ab1d97e8e71af131c3cb166b73673329169a52c"
+    },
+    {
+      "bytes": 4779,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:11+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot1-y05/leap_scored.jsonl.gz",
+      "sha256": "3a5fb37ef99ea6190804c6e96999b8a9be6e85d32e20e92569f037d27e1726f1"
+    },
+    {
+      "bytes": 9574,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:11+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot1-y05/leap_scored_run.jsonl.gz",
+      "sha256": "17e916bbea16391ddec3aa67878d4660780d386e1af6ba5fef376dcb936389ab"
+    },
+    {
+      "bytes": 823571,
+      "exists": true,
+      "mtime": "2026-10-27T16:50:26+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot1-y05/leap_rerun_export.jsonl.gz",
+      "sha256": "850f1e4aee8c42a95df4dcf6f9c351ced72768bb38a97cd8d9e23afb83bdabe9"
+    },
+    {
+      "bytes": 823415,
+      "exists": true,
+      "mtime": "2026-10-27T16:50:30+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot1-y05/leap_scored_export.jsonl.gz",
+      "sha256": "c56a66b367acfffd59ae3fe63aeeacdd1030b821fc1aa116a950a46b9a2bf536"
+    },
+    {
+      "bytes": 4080,
+      "exists": true,
+      "mtime": "2026-10-27T13:29:02+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot1-y05/leap_rerun_launch.json",
+      "sha256": "25591892839911cc9beb67d4c5585d02ae83de7972758288a94550a36fe3997b"
+    },
+    {
+      "bytes": 6602,
+      "exists": true,
+      "mtime": "2026-10-26T17:31:01+00:00",
+      "path": "/polyis-cache/SOTA/leap/caldot1-y05/accuracy/raw/test/000/DATASET.json",
+      "sha256": "c3bb1a0ef652c766f3ec06780498e4aa53ae7bf5e3d637147f5966c338a15e6d"
+    },
+    {
+      "bytes": 28717,
+      "exists": true,
+      "mtime": "2026-10-27T13:28:09+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot2-y05/leap_rerun.jsonl.gz",
+      "sha256": "c67de17e600d6e5d4725276fd6588909916358486c0ffb126bd828e010f0acf6"
+    },
+    {
+      "bytes": 6516,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:11+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot2-y05/leap_scored.jsonl.gz",
+      "sha256": "955db608439ce243e98c3654582fa60bf491aa8474eaa72010ea8ed988083609"
+    },
+    {
+      "bytes": 11236,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:11+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot2-y05/leap_scored_run.jsonl.gz",
+      "sha256": "7f6900eb63126cf13b7700886249469b17e66f625800ba125d89c352959da073"
+    },
+    {
+      "bytes": 443144,
+      "exists": true,
+      "mtime": "2026-10-27T16:50:33+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot2-y05/leap_rerun_export.jsonl.gz",
+      "sha256": "3a4ff5fa4cd16c548a1f904d807b9b18ec23db893e13ecaed61458fe86058e9e"
+    },
+    {
+      "bytes": 443165,
+      "exists": true,
+      "mtime": "2026-10-27T16:50:36+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot2-y05/leap_scored_export.jsonl.gz",
+      "sha256": "786f2929bdd77ce259b94dfe6b35edee7d2d1292fcb9a3a1310ecccaecfd4575"
+    },
+    {
+      "bytes": 4081,
+      "exists": true,
+      "mtime": "2026-10-27T13:28:12+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/caldot2-y05/leap_rerun_launch.json",
+      "sha256": "7b2a7111c7ee29a57e1b6e35bf7b7c12851cff908d74c27e47ac0daa783b398c"
+    },
+    {
+      "bytes": 6584,
+      "exists": true,
+      "mtime": "2026-10-26T17:31:02+00:00",
+      "path": "/polyis-cache/SOTA/leap/caldot2-y05/accuracy/raw/test/000/DATASET.json",
+      "sha256": "bad87c7b5fa66802fae245721958617a4ad5170a83185d6f3e0942d2719a69c1"
+    },
+    {
+      "bytes": 23000,
+      "exists": true,
+      "mtime": "2026-10-27T13:36:25+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/ams-y05/leap_rerun.jsonl.gz",
+      "sha256": "68a7b48b18389ba3acbd4e39228787ae1f642bf6efadf6564f23b9b10142e6a0"
+    },
+    {
+      "bytes": 2696,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:11+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/ams-y05/leap_scored.jsonl.gz",
+      "sha256": "742f1987c08d5769716025840834fb0226545a3d5708dcd5aab012577b23505c"
+    },
+    {
+      "bytes": 5371,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:11+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/ams-y05/leap_scored_run.jsonl.gz",
+      "sha256": "abc3553be94e00fb8d20014b32fd4accff0f5538c3fbfae2c901d3a9a1be053d"
+    },
+    {
+      "bytes": 2108602,
+      "exists": true,
+      "mtime": "2026-10-27T16:50:42+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/ams-y05/leap_rerun_export.jsonl.gz",
+      "sha256": "ad1965a353abaadb7b89c80a1051ee7514fffd81ede61ed08f8d89a790daa8f3"
+    },
+    {
+      "bytes": 2108603,
+      "exists": true,
+      "mtime": "2026-10-27T16:50:48+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/ams-y05/leap_scored_export.jsonl.gz",
+      "sha256": "534a41cc51133cf041e5814d16dd7c87d8e594871a5e9726000a7728a1f854e9"
+    },
+    {
+      "bytes": 4204,
+      "exists": true,
+      "mtime": "2026-10-27T13:36:29+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/ams-y05/leap_rerun_launch.json",
+      "sha256": "3a0c045b5c38598826f6867f131e9ba3b75b02fa3f179752a8c3e6dc5a414195"
+    },
+    {
+      "bytes": 6638,
+      "exists": true,
+      "mtime": "2026-10-26T17:31:07+00:00",
+      "path": "/polyis-cache/SOTA/leap/ams-y05/accuracy/raw/test/000/DATASET.json",
+      "sha256": "5f6ca74eec6e07f04424a6e201962e8d951159d4f15dc5aca53e7294470d5082"
+    },
+    {
+      "bytes": 22216,
+      "exists": true,
+      "mtime": "2026-10-27T13:37:29+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc0/leap_rerun.jsonl.gz",
+      "sha256": "22026f4de73fc202a8da601a813fadc12ad59126f927b4c17cf81795bf0c52cf"
+    },
+    {
+      "bytes": 2601,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:12+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc0/leap_scored.jsonl.gz",
+      "sha256": "cf22cd15c7c40b90f85248c89a391174741b372dcf16ac72c33836758c465b85"
+    },
+    {
+      "bytes": 43758,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:12+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc0/leap_scored_run.jsonl.gz",
+      "sha256": "4ff1a1f6199930745baefcb8a92210034070107d57a6d931eca31a73ea772e97"
+    },
+    {
+      "bytes": 2236534,
+      "exists": true,
+      "mtime": "2026-10-27T16:50:54+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc0/leap_rerun_export.jsonl.gz",
+      "sha256": "55e71bcb4d06c501ef5668cd09d4994d9af8557791b83d351d7ed73291659bac"
+    },
+    {
+      "bytes": 2236535,
+      "exists": true,
+      "mtime": "2026-10-27T16:50:59+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc0/leap_scored_export.jsonl.gz",
+      "sha256": "51d7f6eb3a7e2cbca58b80cdd0e6b3762eaef0af473150f0dbc54af7fb30ef86"
+    },
+    {
+      "bytes": 4195,
+      "exists": true,
+      "mtime": "2026-10-27T13:37:32+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc0/leap_rerun_launch.json",
+      "sha256": "1dfb6225053c41152c11bd78db8cc5d8a61b877c4ddcde737cc7c91f47ce186a"
+    },
+    {
+      "bytes": 6594,
+      "exists": true,
+      "mtime": "2026-10-26T17:30:55+00:00",
+      "path": "/polyis-cache/SOTA/leap/jnc0/accuracy/raw/test/000/DATASET.json",
+      "sha256": "ca967f868c6319c296fb4183dafd628a26091a5a0aee9d85eab6010028584fca"
+    },
+    {
+      "bytes": 22920,
+      "exists": true,
+      "mtime": "2026-10-27T13:38:38+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc2/leap_rerun.jsonl.gz",
+      "sha256": "04033a84fd0246c2610bc73a3662900f1e2d9959e73eb457a3fb464896a9e5d2"
+    },
+    {
+      "bytes": 2873,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:12+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc2/leap_scored.jsonl.gz",
+      "sha256": "870f168d3aa9834212d23527865341d1adba687e67aa2e09d97976e5ec8d58d9"
+    },
+    {
+      "bytes": 31479,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:12+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc2/leap_scored_run.jsonl.gz",
+      "sha256": "a214bdd8113b2e53558f901cef97d563f8eda10ffd510b537a9d3b958b1ff4d9"
+    },
+    {
+      "bytes": 1265626,
+      "exists": true,
+      "mtime": "2026-10-27T16:51:04+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc2/leap_rerun_export.jsonl.gz",
+      "sha256": "e29ad615d88f5130c4b91cb83e26baf5f129453d19ac6808ee84f2f7719e2e5c"
+    },
+    {
+      "bytes": 1265627,
+      "exists": true,
+      "mtime": "2026-10-27T16:51:09+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc2/leap_scored_export.jsonl.gz",
+      "sha256": "b484cea0cfad53841e5710928c58ad41f43856826548b05668257a0753ee4002"
+    },
+    {
+      "bytes": 4195,
+      "exists": true,
+      "mtime": "2026-10-27T13:38:42+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc2/leap_rerun_launch.json",
+      "sha256": "151ecf4b6f69a50de72c49f349d31d81012cb558cbe9b3ae948a32dc119f1b42"
+    },
+    {
+      "bytes": 6633,
+      "exists": true,
+      "mtime": "2026-10-26T17:30:54+00:00",
+      "path": "/polyis-cache/SOTA/leap/jnc2/accuracy/raw/test/000/DATASET.json",
+      "sha256": "105cc5943cf825ea09f9852ef6d27bd46d0a20ae77ec962ce6b12f81bbe6a0dc"
+    },
+    {
+      "bytes": 21930,
+      "exists": true,
+      "mtime": "2026-10-27T13:32:32+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc6/leap_rerun.jsonl.gz",
+      "sha256": "cff71394e7e5be13e6794af9448c7161773dfe47ffb42dac78402f79c3176b76"
+    },
+    {
+      "bytes": 4076,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:12+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc6/leap_scored.jsonl.gz",
+      "sha256": "4666c33dd7581f789187d35aa11310f33e92d8c3872fb2b0df41e1b8418106a7"
+    },
+    {
+      "bytes": 8584,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:12+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc6/leap_scored_run.jsonl.gz",
+      "sha256": "6521f6486b1c03cd8942af4d1e16328aafb33d6ea6718412db1af057d93aed26"
+    },
+    {
+      "bytes": 573934,
+      "exists": true,
+      "mtime": "2026-10-27T16:51:13+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc6/leap_rerun_export.jsonl.gz",
+      "sha256": "8ece1c9c543080c7e7e87e5dce0e93620249b2fef935b60121241063380c81d0"
+    },
+    {
+      "bytes": 573935,
+      "exists": true,
+      "mtime": "2026-10-27T16:51:17+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc6/leap_scored_export.jsonl.gz",
+      "sha256": "270716751e86d17c448d4270eda28a1e80ed2c12a70f4ad914ebc36bf7cc8033"
+    },
+    {
+      "bytes": 4200,
+      "exists": true,
+      "mtime": "2026-10-27T13:32:36+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc6/leap_rerun_launch.json",
+      "sha256": "ac06f53419d56ba1ec0f02f531bf423ff0f4159cc8f3235c6ac441c419fd14d3"
+    },
+    {
+      "bytes": 6517,
+      "exists": true,
+      "mtime": "2026-10-26T17:30:54+00:00",
+      "path": "/polyis-cache/SOTA/leap/jnc6/accuracy/raw/test/000/DATASET.json",
+      "sha256": "0e480f68020c92238954d0903829f9302a795fd6739a01af8dfc2ae37aa9c72c"
+    },
+    {
+      "bytes": 18942,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:18+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc7/leap_rerun.jsonl.gz",
+      "sha256": "b573e8edc1a3496bb95a422aaccad777c6d7141ace8ffbb562ece8217829da68"
+    },
+    {
+      "bytes": 2664,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:12+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc7/leap_scored.jsonl.gz",
+      "sha256": "dee2a457dc538c2ff5e641d291886d4555a1f1df1b1c5cfa1e87212a2bf9dd4a"
+    },
+    {
+      "bytes": 20789,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:12+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc7/leap_scored_run.jsonl.gz",
+      "sha256": "3f094239142bf7fa609491f2d8d35099961e5aa91d243d218b2fc7b32c9ac963"
+    },
+    {
+      "bytes": 2089589,
+      "exists": true,
+      "mtime": "2026-10-27T13:24:30+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc7/leap_rerun_export.jsonl.gz",
+      "sha256": "b94249f6ab465908e18f2684c09edda7087b0de399e9b32db0f27881d0bdf781"
+    },
+    {
+      "bytes": 2089590,
+      "exists": true,
+      "mtime": "2026-10-27T13:24:36+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc7/leap_scored_export.jsonl.gz",
+      "sha256": "308fbee9f0b1f16391f81b68c80b1ba5aaa12ded37cd26e0c72dd79fcd10562e"
+    },
+    {
+      "bytes": 4202,
+      "exists": true,
+      "mtime": "2026-10-27T13:22:23+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/jnc7/leap_rerun_launch.json",
+      "sha256": "80059a9c0e398d29b8cf7e6b7dbf0025fc6c88fbbc4c0a28a6353fac8156e303"
+    },
+    {
+      "bytes": 6610,
+      "exists": true,
+      "mtime": "2026-10-26T17:30:55+00:00",
+      "path": "/polyis-cache/SOTA/leap/jnc7/accuracy/raw/test/000/DATASET.json",
+      "sha256": "04c5ab8ef07b9b7ce0d9cc84dd2cc1fc0367e6f6b4ffff88943be45649d9fe53"
+    }
+  ],
+  "method": {
+    "hota_variants": [
+      "raw",
+      "linear",
+      "pattern"
+    ],
+    "iou_match": 0.5,
+    "lags": [
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3
+    ],
+    "leap_param": "000",
+    "scales": [
+      0.5,
+      1.0,
+      2.0
+    ]
+  },
+  "preparation": {
+    "steps_defined": {
+      "leap": [
+        "labels_train",
+        "labels_test",
+        "reid_data",
+        "reid_train",
+        "motion_patterns"
+      ],
+      "otif": [
+        "detect_train",
+        "tracks_train",
+        "extract_frames",
+        "train_proxy",
+        "train_tracker",
+        "detect_valid",
+        "tune_valid"
+      ]
+    },
+    "steps": [
+      {
+        "system": "leap",
+        "dataset": "jnc0",
+        "step": "labels_train",
+        "run": "g5-20261028T183050",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T18:30:55-07:00",
+        "end": "2026-10-28T18:47:01-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 24,
+          "bytes": 205137838
+        },
+        "compare_error": null,
+        "wall_s": 963.35,
+        "user_s": 17492.19,
+        "system_s": 1447.23,
+        "max_rss_kb": 1378924.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 609,
+        "gpu_util_mean": 55.36945812807882,
+        "gpu_util_busy_share": 0.9835796387520526,
+        "gpu_mem_max_mib": 12597.0,
+        "load_1m_mean": 22.36817733990146,
+        "load_1m_max": 23.92,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.9829978720091347
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc0",
+        "step": "labels_test",
+        "run": "g5-20261028T184705",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T18:47:10-07:00",
+        "end": "2026-10-28T18:56:57-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 39,
+          "bytes": 327412737
+        },
+        "compare_error": null,
+        "wall_s": 584.58,
+        "user_s": 10566.02,
+        "system_s": 872.42,
+        "max_rss_kb": 1406348.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 370,
+        "gpu_util_mean": 57.372972972972974,
+        "gpu_util_busy_share": 0.9837837837837838,
+        "gpu_mem_max_mib": 4285.0,
+        "load_1m_mean": 22.96705405405403,
+        "load_1m_max": 24.25,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": true,
+        "cpu_busy_share": 0.9783468473091792
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc0",
+        "step": "reid_data",
+        "run": "g5-20261028T185700",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T18:57:05-07:00",
+        "end": "2026-10-28T18:57:23-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 33594,
+          "bytes": 60698106
+        },
+        "compare_error": null,
+        "wall_s": 15.74,
+        "user_s": 48.58,
+        "system_s": 5.59,
+        "max_rss_kb": 615812.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 11,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 18.566363636363633,
+        "load_1m_max": 20.47,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.17207750952986023
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc2",
+        "step": "labels_train",
+        "run": "g6-20261028T081805",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T08:18:10-07:00",
+        "end": "2026-10-28T08:32:23-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 24,
+          "bytes": 149154634
+        },
+        "compare_error": null,
+        "wall_s": 850.32,
+        "user_s": 15386.23,
+        "system_s": 1262.42,
+        "max_rss_kb": 1389416.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 537,
+        "gpu_util_mean": 54.46182495344507,
+        "gpu_util_busy_share": 0.9795158286778398,
+        "gpu_mem_max_mib": 909.0,
+        "load_1m_mean": 27.808770949720678,
+        "load_1m_max": 31.62,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.9789638018628282
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc2",
+        "step": "labels_test",
+        "run": "g6-20261028T083227",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T08:32:31-07:00",
+        "end": "2026-10-28T08:41:11-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 39,
+          "bytes": 238106861
+        },
+        "compare_error": null,
+        "wall_s": 516.73,
+        "user_s": 9301.97,
+        "system_s": 769.57,
+        "max_rss_kb": 1398376.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 327,
+        "gpu_util_mean": 56.281345565749234,
+        "gpu_util_busy_share": 0.9785932721712538,
+        "gpu_mem_max_mib": 12597.0,
+        "load_1m_mean": 23.279633027522934,
+        "load_1m_max": 24.73,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": true,
+        "cpu_busy_share": 0.9745457008495733
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc2",
+        "step": "reid_data",
+        "run": "g6-20261028T084113",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T08:41:19-07:00",
+        "end": "2026-10-28T08:41:35-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 35470,
+          "bytes": 57068917
+        },
+        "compare_error": null,
+        "wall_s": 13.5,
+        "user_s": 38.61,
+        "system_s": 4.59,
+        "max_rss_kb": 557168.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 10,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 18.987000000000002,
+        "load_1m_max": 21.33,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.16
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc2",
+        "step": "reid_train",
+        "run": "g6-20261028T084139",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T08:41:43-07:00",
+        "end": "2026-10-28T14:53:05-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 17,
+          "bytes": 1185628526
+        },
+        "compare_error": null,
+        "wall_s": 22278.0,
+        "user_s": 37433.03,
+        "system_s": 4592.27,
+        "max_rss_kb": 6833616.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 14029,
+        "gpu_util_mean": 73.34464323900492,
+        "gpu_util_busy_share": 0.9988595053104284,
+        "gpu_mem_max_mib": 6799.0,
+        "load_1m_mean": 9.666237793142752,
+        "load_1m_max": 50.32,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.09432018134482449
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc2",
+        "step": "motion_patterns",
+        "run": "g6-20261028T145307",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T14:53:13-07:00",
+        "end": "2026-10-28T14:53:31-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 3,
+          "bytes": 2788311
+        },
+        "compare_error": null,
+        "wall_s": 15.82,
+        "user_s": 169.55,
+        "system_s": 1.86,
+        "max_rss_kb": 244904.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 11,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 6.746363636363637,
+        "load_1m_max": 7.7,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.5417509481668774
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc6",
+        "step": "labels_train",
+        "run": "g6-20261028T204313",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T20:43:18-07:00",
+        "end": "2026-10-28T20:58:26-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 24,
+          "bytes": 214818322
+        },
+        "compare_error": null,
+        "wall_s": 905.15,
+        "user_s": 16418.31,
+        "system_s": 1361.41,
+        "max_rss_kb": 1412616.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 574,
+        "gpu_util_mean": 56.836236933797906,
+        "gpu_util_busy_share": 0.9860627177700348,
+        "gpu_mem_max_mib": 1213.0,
+        "load_1m_mean": 22.34263066202092,
+        "load_1m_max": 24.21,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.9821421863779485
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc6",
+        "step": "labels_test",
+        "run": "g6-20261028T205830",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T20:58:35-07:00",
+        "end": "2026-10-28T21:08:06-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 39,
+          "bytes": 342438687
+        },
+        "compare_error": null,
+        "wall_s": 567.78,
+        "user_s": 10244.55,
+        "system_s": 845.71,
+        "max_rss_kb": 1374828.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 358,
+        "gpu_util_mean": 56.8268156424581,
+        "gpu_util_busy_share": 0.9804469273743017,
+        "gpu_mem_max_mib": 9081.0,
+        "load_1m_mean": 22.779329608938554,
+        "load_1m_max": 24.09,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": true,
+        "cpu_busy_share": 0.976633555250273
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc6",
+        "step": "reid_data",
+        "run": "g6-20261028T210808",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T21:08:14-07:00",
+        "end": "2026-10-28T21:08:32-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 36920,
+          "bytes": 54538201
+        },
+        "compare_error": null,
+        "wall_s": 14.88,
+        "user_s": 52.14,
+        "system_s": 5.26,
+        "max_rss_kb": 601884.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 11,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 18.85363636363637,
+        "load_1m_max": 20.03,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.1928763440860215
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc7",
+        "step": "labels_train",
+        "run": "g6-20261028T145333",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T14:53:38-07:00",
+        "end": "2026-10-28T15:08:46-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 24,
+          "bytes": 172737902
+        },
+        "compare_error": null,
+        "wall_s": 906.02,
+        "user_s": 16450.03,
+        "system_s": 1359.81,
+        "max_rss_kb": 1402860.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 570,
+        "gpu_util_mean": 57.09298245614035,
+        "gpu_util_busy_share": 0.9859649122807017,
+        "gpu_mem_max_mib": 909.0,
+        "load_1m_mean": 25.75770175438598,
+        "load_1m_max": 45.15,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.9828613054899451
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc7",
+        "step": "labels_test",
+        "run": "g6-20261028T150849",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T15:08:54-07:00",
+        "end": "2026-10-28T15:18:23-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 39,
+          "bytes": 273103312
+        },
+        "compare_error": null,
+        "wall_s": 566.86,
+        "user_s": 10240.47,
+        "system_s": 843.67,
+        "max_rss_kb": 1377676.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 361,
+        "gpu_util_mean": 57.398891966759,
+        "gpu_util_busy_share": 0.9889196675900277,
+        "gpu_mem_max_mib": 12597.0,
+        "load_1m_mean": 23.9163988919668,
+        "load_1m_max": 26.86,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": true,
+        "cpu_busy_share": 0.9776787919415728
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc7",
+        "step": "reid_data",
+        "run": "g6-20261028T151825",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T15:18:31-07:00",
+        "end": "2026-10-28T15:18:47-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 29641,
+          "bytes": 43794093
+        },
+        "compare_error": null,
+        "wall_s": 14.05,
+        "user_s": 47.05,
+        "system_s": 4.99,
+        "max_rss_kb": 601664.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 10,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 19.663,
+        "load_1m_max": 21.04,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.18519572953736654
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc7",
+        "step": "reid_train",
+        "run": "g6-20261028T151850",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T15:18:55-07:00",
+        "end": "2026-10-28T20:42:49-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 17,
+          "bytes": 1179545124
+        },
+        "compare_error": null,
+        "wall_s": 19430.0,
+        "user_s": 32590.96,
+        "system_s": 4058.59,
+        "max_rss_kb": 6726244.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 12216,
+        "gpu_util_mean": 73.35920104780615,
+        "gpu_util_busy_share": 0.9989358218729535,
+        "gpu_mem_max_mib": 8047.0,
+        "load_1m_mean": 9.255082678454517,
+        "load_1m_max": 57.06,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.09431176016469378
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc7",
+        "step": "motion_patterns",
+        "run": "g6-20261028T204251",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "start": "2026-10-28T20:42:57-07:00",
+        "end": "2026-10-28T20:43:10-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 3,
+          "bytes": 2125588
+        },
+        "compare_error": null,
+        "wall_s": 10.14,
+        "user_s": 88.79,
+        "system_s": 1.71,
+        "max_rss_kb": 223776.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 8,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 6.123749999999999,
+        "load_1m_max": 6.73,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.44625246548323466
+      },
+      {
+        "system": "otif",
+        "dataset": "ams-y05",
+        "step": "detect_train",
+        "run": "g5-20261028T002527",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-28T00:25:32-07:00",
+        "end": "2026-10-28T01:35:39-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 61,
+          "bytes": 10617528
+        },
+        "compare_error": null,
+        "wall_s": 4204.0,
+        "user_s": 4154.0,
+        "system_s": 1129.75,
+        "max_rss_kb": 2092068.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 2647,
+        "gpu_util_mean": 67.92066490366453,
+        "gpu_util_busy_share": 0.8167737060823573,
+        "gpu_mem_max_mib": 5773.0,
+        "load_1m_mean": 8.516176803928982,
+        "load_1m_max": 16.07,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.06284193625118935
+      },
+      {
+        "system": "otif",
+        "dataset": "ams-y05",
+        "step": "tracks_train",
+        "run": "g5-20261028T013541",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-28T01:35:47-07:00",
+        "end": "2026-10-28T01:36:34-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 60,
+          "bytes": 12176386
+        },
+        "compare_error": null,
+        "wall_s": 44.37,
+        "user_s": 588.69,
+        "system_s": 93.34,
+        "max_rss_kb": 13560908.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 29,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 16.40206896551724,
+        "load_1m_max": 22.56,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.7685711066035611
+      },
+      {
+        "system": "otif",
+        "dataset": "ams-y05",
+        "step": "extract_frames",
+        "run": "g5-20261028T013637",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-28T01:36:43-07:00",
+        "end": "2026-10-28T01:44:40-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 4036,
+          "bytes": 325820567
+        },
+        "compare_error": null,
+        "wall_s": 475.52,
+        "user_s": 830.57,
+        "system_s": 300.59,
+        "max_rss_kb": 119628.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 299,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 14.262341137123753,
+        "load_1m_max": 41.04,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": 1000,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.11893926648721401
+      },
+      {
+        "system": "otif",
+        "dataset": "ams-y05",
+        "step": "train_proxy",
+        "run": "g5-20261028T014442",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-28T01:44:46-07:00",
+        "end": "2026-10-28T03:34:44-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 20,
+          "bytes": 18534319
+        },
+        "compare_error": null,
+        "wall_s": 6594.0,
+        "user_s": 50093.3,
+        "system_s": 5157.9,
+        "max_rss_kb": 3668960.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 4148,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 18.372733847637406,
+        "load_1m_max": 55.15,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.41895056111616624
+      },
+      {
+        "system": "otif",
+        "dataset": "ams-y05",
+        "step": "train_tracker",
+        "run": "g5-20261028T033446",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-28T03:34:51-07:00",
+        "end": "2026-10-28T05:02:05-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 8,
+          "bytes": 7663960
+        },
+        "compare_error": null,
+        "wall_s": 5232.0,
+        "user_s": 21974.19,
+        "system_s": 1557.79,
+        "max_rss_kb": 2113400.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 3284,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 24.98733861144945,
+        "load_1m_max": 46.27,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.22488512996941895
+      },
+      {
+        "system": "otif",
+        "dataset": "ams-y05",
+        "step": "detect_valid",
+        "run": "g5-20261028T050206",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-28T05:02:12-07:00",
+        "end": "2026-10-28T05:58:48-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 61,
+          "bytes": 9803585
+        },
+        "compare_error": null,
+        "wall_s": 3393.19,
+        "user_s": 4188.77,
+        "system_s": 300.31,
+        "max_rss_kb": 2093812.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 2139,
+        "gpu_util_mean": 82.68302945301542,
+        "gpu_util_busy_share": 0.9962599345488546,
+        "gpu_mem_max_mib": 5773.0,
+        "load_1m_mean": 23.716531089293973,
+        "load_1m_max": 27.41,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.06614837365428992
+      },
+      {
+        "system": "otif",
+        "dataset": "ams-y05",
+        "step": "tune_valid",
+        "run": "g5-20261028T055850",
+        "gpu": 5,
+        "cpus": "20-29,60-69",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-28T05:58:56-07:00",
+        "end": "2026-10-28T18:30:47-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 1,
+          "bytes": 1910
+        },
+        "compare_error": null,
+        "wall_s": 45108.0,
+        "user_s": 178748.5,
+        "system_s": 25099.03,
+        "max_rss_kb": 39834408.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 28394,
+        "gpu_util_mean": 87.32933014017046,
+        "gpu_util_busy_share": 0.9727407198703951,
+        "gpu_mem_max_mib": 6645.0,
+        "load_1m_mean": 14.004291399591184,
+        "load_1m_max": 57.06,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.2259549636428128
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot1-y05",
+        "step": "detect_train",
+        "run": "g6-20261027T101105",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T10:11:34-07:00",
+        "end": "2026-10-27T10:34:49-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 61,
+          "bytes": 18397838
+        },
+        "compare_error": null,
+        "wall_s": 1392.8,
+        "user_s": 1797.01,
+        "system_s": 247.31,
+        "max_rss_kb": 2054208.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 849,
+        "gpu_util_mean": 74.4263839811543,
+        "gpu_util_busy_share": 0.9929328621908127,
+        "gpu_mem_max_mib": 2771.0,
+        "load_1m_mean": 26.777526501766786,
+        "load_1m_max": 52.71,
+        "node_neighbor_busy_share": 0.9835164835164835,
+        "other_gpus": [
+          {
+            "gpu": 0,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 1,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 2,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 3,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 4,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 5,
+            "util_mean": 35.65463108320251,
+            "busy_share": 0.9835164835164835,
+            "mem_max_mib": 1515.0
+          }
+        ],
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.07338885697874784
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot1-y05",
+        "step": "tracks_train",
+        "run": "g6-20261027T144049",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T14:40:55-07:00",
+        "end": "2026-10-27T14:41:29-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 60,
+          "bytes": 21169012
+        },
+        "compare_error": null,
+        "wall_s": 32.35,
+        "user_s": 307.61,
+        "system_s": 79.18,
+        "max_rss_kb": 17365928.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 21,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 8.990952380952379,
+        "load_1m_max": 16.07,
+        "node_neighbor_busy_share": 1.0,
+        "other_gpus": [
+          {
+            "gpu": 0,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 1,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 2,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 3,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 4,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 5,
+            "util_mean": 64.96774193548387,
+            "busy_share": 1.0,
+            "mem_max_mib": 2001.0
+          }
+        ],
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.5978207109737249
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot1-y05",
+        "step": "extract_frames",
+        "run": "g6-20261027T144130",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T14:41:35-07:00",
+        "end": "2026-10-27T14:45:05-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 4026,
+          "bytes": 167983135
+        },
+        "compare_error": null,
+        "wall_s": 206.73,
+        "user_s": 407.79,
+        "system_s": 128.21,
+        "max_rss_kb": 120444.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 131,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 10.33702290076336,
+        "load_1m_max": 21.05,
+        "node_neighbor_busy_share": 1.0,
+        "other_gpus": [
+          {
+            "gpu": 0,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 1,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 2,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 3,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 4,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 5,
+            "util_mean": 66.5561224489796,
+            "busy_share": 1.0,
+            "mem_max_mib": 2001.0
+          }
+        ],
+        "tracked_frames": 1000,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.1296376916751318
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot1-y05",
+        "step": "train_proxy",
+        "run": "g6-20261027T144507",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T14:45:12-07:00",
+        "end": "2026-10-27T16:03:00-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 20,
+          "bytes": 18534299
+        },
+        "compare_error": null,
+        "wall_s": 4665.0,
+        "user_s": 42388.53,
+        "system_s": 4004.23,
+        "max_rss_kb": 3780340.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 2572,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 15.8770645412131,
+        "load_1m_max": 27.62,
+        "node_neighbor_busy_share": 0.946236559139785,
+        "other_gpus": [
+          {
+            "gpu": 0,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 1,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 2,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 3,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 4,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 5,
+            "util_mean": 51.630824372759854,
+            "busy_share": 0.946236559139785,
+            "mem_max_mib": 1989.0
+          }
+        ],
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.49724287245444804
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot1-y05",
+        "step": "train_tracker",
+        "run": "g6-20261027T160302",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T16:03:07-07:00",
+        "end": "2026-10-27T17:14:27-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 8,
+          "bytes": 7663952
+        },
+        "compare_error": null,
+        "wall_s": 4275.0,
+        "user_s": 17677.81,
+        "system_s": 1403.17,
+        "max_rss_kb": 2331456.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 2313,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 11.176485084306101,
+        "load_1m_max": 19.57,
+        "node_neighbor_busy_share": 1.0,
+        "other_gpus": [
+          {
+            "gpu": 0,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 1,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 2,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 3,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 4,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 5,
+            "util_mean": 77.66666666666667,
+            "busy_share": 1.0,
+            "mem_max_mib": 1989.0
+          }
+        ],
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.2231693567251462
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot1-y05",
+        "step": "detect_valid",
+        "run": "g6-20261027T112701",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T11:27:07-07:00",
+        "end": "2026-10-27T11:49:27-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 61,
+          "bytes": 12956086
+        },
+        "compare_error": null,
+        "wall_s": 1336.91,
+        "user_s": 1788.52,
+        "system_s": 207.48,
+        "max_rss_kb": 2051524.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 844,
+        "gpu_util_mean": 77.22037914691943,
+        "gpu_util_busy_share": 0.990521327014218,
+        "gpu_mem_max_mib": 2771.0,
+        "load_1m_mean": 5.558400473933641,
+        "load_1m_max": 11.24,
+        "node_neighbor_busy_share": 1.0,
+        "other_gpus": [
+          {
+            "gpu": 0,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 1,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 2,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 3,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 4,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 5,
+            "util_mean": 74.25873015873016,
+            "busy_share": 1.0,
+            "mem_max_mib": 1989.0
+          }
+        ],
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.07464975204015228
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot1-y05",
+        "step": "tune_valid",
+        "run": "g6-20261027T171429",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T17:14:34-07:00",
+        "end": "2026-10-27T21:26:10-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 1,
+          "bytes": 1843
+        },
+        "compare_error": null,
+        "wall_s": 15092.0,
+        "user_s": 67774.86,
+        "system_s": 14412.8,
+        "max_rss_kb": 27806376.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 8816,
+        "gpu_util_mean": 75.83200998185119,
+        "gpu_util_busy_share": 0.9624546279491834,
+        "gpu_mem_max_mib": 4351.0,
+        "load_1m_mean": 16.910871143375644,
+        "load_1m_max": 52.48,
+        "node_neighbor_busy_share": 1.0,
+        "other_gpus": [
+          {
+            "gpu": 0,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 1,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 2,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 3,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 4,
+            "util_mean": 0.0,
+            "busy_share": 0.0,
+            "mem_max_mib": 0.0
+          },
+          {
+            "gpu": 5,
+            "util_mean": 85.8,
+            "busy_share": 1.0,
+            "mem_max_mib": 1989.0
+          }
+        ],
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.27228882851842034
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot2-y05",
+        "step": "detect_train",
+        "run": "g6-20261027T212613",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T21:26:18-07:00",
+        "end": "2026-10-27T21:48:47-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 61,
+          "bytes": 13955214
+        },
+        "compare_error": null,
+        "wall_s": 1346.81,
+        "user_s": 1758.14,
+        "system_s": 224.48,
+        "max_rss_kb": 2039992.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 845,
+        "gpu_util_mean": 76.32189349112426,
+        "gpu_util_busy_share": 0.9928994082840237,
+        "gpu_mem_max_mib": 2771.0,
+        "load_1m_mean": 6.47795266272189,
+        "load_1m_max": 33.97,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.07360429459240725
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot2-y05",
+        "step": "tracks_train",
+        "run": "g6-20261027T214849",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T21:48:54-07:00",
+        "end": "2026-10-27T21:49:26-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 60,
+          "bytes": 16102367
+        },
+        "compare_error": null,
+        "wall_s": 29.27,
+        "user_s": 302.76,
+        "system_s": 82.98,
+        "max_rss_kb": 16737064.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 20,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 9.452499999999997,
+        "load_1m_max": 13.62,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.6589340621797062
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot2-y05",
+        "step": "extract_frames",
+        "run": "g6-20261027T214928",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T21:49:34-07:00",
+        "end": "2026-10-27T21:52:36-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 4018,
+          "bytes": 86214260
+        },
+        "compare_error": null,
+        "wall_s": 180.59,
+        "user_s": 379.86,
+        "system_s": 137.83,
+        "max_rss_kb": 118876.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 114,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 12.261140350877195,
+        "load_1m_max": 24.41,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": 1000,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.14333296417298855
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot2-y05",
+        "step": "train_proxy",
+        "run": "g6-20261027T215238",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T21:52:43-07:00",
+        "end": "2026-10-27T23:00:43-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 20,
+          "bytes": 18534299
+        },
+        "compare_error": null,
+        "wall_s": 4077.0,
+        "user_s": 36421.61,
+        "system_s": 3581.31,
+        "max_rss_kb": 3624712.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 2547,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 14.267345897133895,
+        "load_1m_max": 20.77,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.4905925925925926
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot2-y05",
+        "step": "train_tracker",
+        "run": "g6-20261027T230044",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-27T23:00:50-07:00",
+        "end": "2026-10-28T00:24:20-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 8,
+          "bytes": 7663952
+        },
+        "compare_error": null,
+        "wall_s": 5007.0,
+        "user_s": 21083.48,
+        "system_s": 1583.96,
+        "max_rss_kb": 2352420.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 3120,
+        "gpu_util_mean": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_mem_max_mib": 0.0,
+        "load_1m_mean": 7.97884615384615,
+        "load_1m_max": 13.3,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.226357499500699
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot2-y05",
+        "step": "detect_valid",
+        "run": "g6-20261028T002421",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-28T00:24:56-07:00",
+        "end": "2026-10-28T00:47:20-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 61,
+          "bytes": 14816016
+        },
+        "compare_error": null,
+        "wall_s": 1341.42,
+        "user_s": 1753.28,
+        "system_s": 211.52,
+        "max_rss_kb": 2027788.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 851,
+        "gpu_util_mean": 77.12808460634548,
+        "gpu_util_busy_share": 0.9917743830787309,
+        "gpu_mem_max_mib": 2771.0,
+        "load_1m_mean": 4.728930669800242,
+        "load_1m_max": 9.79,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.07323582472305466
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot2-y05",
+        "step": "tune_valid",
+        "run": "g6-20261028T004722",
+        "gpu": 6,
+        "cpus": "30-39,70-79",
+        "image": "sha256:350221799df15fd25f96c00f7db0f547f84d3c0e2891f163edf19ac767d61683",
+        "start": "2026-10-28T00:47:27-07:00",
+        "end": "2026-10-28T04:06:25-07:00",
+        "exit": 0,
+        "contaminated": false,
+        "foreign_samples": 0,
+        "output_size": {
+          "exists": true,
+          "files": 1,
+          "bytes": 1916
+        },
+        "compare_error": null,
+        "wall_s": 11935.0,
+        "user_s": 57177.09,
+        "system_s": 10996.34,
+        "max_rss_kb": 27713696.0,
+        "gnu_exit": 0.0,
+        "cpu_threads": 20,
+        "samples": 7494,
+        "gpu_util_mean": 72.34040565785962,
+        "gpu_util_busy_share": 0.9526287696824126,
+        "gpu_mem_max_mib": 4631.0,
+        "load_1m_mean": 17.161692020282796,
+        "load_1m_max": 55.15,
+        "node_neighbor_busy_share": null,
+        "other_gpus": null,
+        "tracked_frames": null,
+        "evaluation_only": false,
+        "cpu_busy_share": 0.2856029744449099
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0592,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-29T22:56:53-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 14187.0,
+        "gpu_util_busy_share": 0.9891,
+        "gpu_util_mean": 79.2138,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 11.47,
+        "load_1m_mean": 6.5281,
+        "max_rss_kb": 3906032.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.9473,
+            "gpu": 0,
+            "mem_max_mib": 14285.0,
+            "util_mean": 72.4324
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9453,
+            "gpu": 2,
+            "mem_max_mib": 14285.0,
+            "util_mean": 72.1434
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1921609841,
+          "exists": true,
+          "files": 180
+        },
+        "run": "g5-20261029T215503",
+        "samples": 2021,
+        "start": "2026-10-29T21:55:28-07:00",
+        "step": "labels_train",
+        "system": "leap",
+        "system_s": 56.48,
+        "tracked_frames": null,
+        "user_s": 4288.21,
+        "wall_s": 3672.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0593,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-29T23:58:21-07:00",
+        "evaluation_only": true,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 7581.0,
+        "gpu_util_busy_share": 0.9896,
+        "gpu_util_mean": 78.9738,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 20.22,
+        "load_1m_mean": 16.2943,
+        "max_rss_kb": 3865244.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.9892,
+            "gpu": 0,
+            "mem_max_mib": 3513.0,
+            "util_mean": 71.9366
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 1.0,
+            "gpu": 2,
+            "mem_max_mib": 1853.0,
+            "util_mean": 92.5193
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 3887258582,
+          "exists": true,
+          "files": 360
+        },
+        "run": "g5-20261029T225655",
+        "samples": 2026,
+        "start": "2026-10-29T22:57:00-07:00",
+        "step": "labels_test",
+        "system": "leap",
+        "system_s": 58.64,
+        "tracked_frames": null,
+        "user_s": 4302.65,
+        "wall_s": 3678.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.3124,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-30T00:01:36-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 20.48,
+        "load_1m_mean": 18.4247,
+        "max_rss_kb": 659032.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 1.0,
+            "gpu": 0,
+            "mem_max_mib": 1827.0,
+            "util_mean": 73.3444
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9801,
+            "gpu": 2,
+            "mem_max_mib": 8063.0,
+            "util_mean": 89.8543
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 149452659,
+          "exists": true,
+          "files": 45971
+        },
+        "run": "g5-20261029T235824",
+        "samples": 100,
+        "start": "2026-10-29T23:58:29-07:00",
+        "step": "reid_data",
+        "system": "leap",
+        "system_s": 51.3,
+        "tracked_frames": null,
+        "user_s": 1101.49,
+        "wall_s": 184.51
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0942,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-30T05:49:41-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 7901.0,
+        "gpu_util_busy_share": 0.9986,
+        "gpu_util_mean": 74.9582,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 18.75,
+        "load_1m_mean": 16.4436,
+        "max_rss_kb": 7189064.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.9995,
+            "gpu": 0,
+            "mem_max_mib": 8029.0,
+            "util_mean": 72.3096
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9522,
+            "gpu": 2,
+            "mem_max_mib": 14355.0,
+            "util_mean": 85.3703
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1181535434,
+          "exists": true,
+          "files": 17
+        },
+        "run": "g5-20261030T000140",
+        "samples": 11537,
+        "start": "2026-10-30T00:01:45-07:00",
+        "step": "reid_train",
+        "system": "leap",
+        "system_s": 4443.85,
+        "tracked_frames": null,
+        "user_s": 34887.67,
+        "wall_s": 20872.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.6324,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-30T10:58:00-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 29.95,
+        "load_1m_mean": 21.801,
+        "max_rss_kb": 232436.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 0,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 2,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 992431,
+          "exists": true,
+          "files": 3
+        },
+        "run": "g5-20261030T105710",
+        "samples": 10,
+        "start": "2026-10-30T10:57:29-07:00",
+        "step": "motion_patterns",
+        "system": "leap",
+        "system_s": 2.48,
+        "tracked_frames": null,
+        "user_s": 195.98,
+        "wall_s": 15.69
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0605,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-29T22:25:28-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 2595.0,
+        "gpu_util_busy_share": 0.9777,
+        "gpu_util_mean": 74.6815,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 7.98,
+        "load_1m_mean": 6.5576,
+        "max_rss_kb": 3833760.0,
+        "node_neighbor_busy_share": 0.9713,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9713,
+            "gpu": 2,
+            "mem_max_mib": 14285.0,
+            "util_mean": 73.7025
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9867,
+            "gpu": 5,
+            "mem_max_mib": 20881.0,
+            "util_mean": 79.1975
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 724518073,
+          "exists": true,
+          "files": 180
+        },
+        "run": "g0-20261029T215503",
+        "samples": 986,
+        "start": "2026-10-29T21:55:28-07:00",
+        "step": "labels_train",
+        "system": "leap",
+        "system_s": 41.99,
+        "tracked_frames": null,
+        "user_s": 2121.4,
+        "wall_s": 1786.77
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0607,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-29T22:55:21-07:00",
+        "evaluation_only": true,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 14285.0,
+        "gpu_util_busy_share": 0.9715,
+        "gpu_util_mean": 74.2584,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 7.44,
+        "load_1m_mean": 6.3571,
+        "max_rss_kb": 3865156.0,
+        "node_neighbor_busy_share": 0.9647,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9647,
+            "gpu": 2,
+            "mem_max_mib": 14059.0,
+            "util_mean": 73.9539
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9898,
+            "gpu": 5,
+            "mem_max_mib": 2419.0,
+            "util_mean": 79.2687
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1453314496,
+          "exists": true,
+          "files": 360
+        },
+        "run": "g0-20261029T222530",
+        "samples": 983,
+        "start": "2026-10-29T22:25:36-07:00",
+        "step": "labels_test",
+        "system": "leap",
+        "system_s": 40.27,
+        "tracked_frames": null,
+        "user_s": 2122.9,
+        "wall_s": 1780.76
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.1989,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-29T22:57:24-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 14.49,
+        "load_1m_mean": 10.4437,
+        "max_rss_kb": 315384.0,
+        "node_neighbor_busy_share": 0.4111,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.4111,
+            "gpu": 2,
+            "mem_max_mib": 3861.0,
+            "util_mean": 36.6778
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.8222,
+            "gpu": 5,
+            "mem_max_mib": 8573.0,
+            "util_mean": 64.5444
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 100869890,
+          "exists": true,
+          "files": 78835
+        },
+        "run": "g0-20261029T225524",
+        "samples": 59,
+        "start": "2026-10-29T22:55:30-07:00",
+        "step": "reid_data",
+        "system": "leap",
+        "system_s": 29.53,
+        "tracked_frames": null,
+        "user_s": 408.12,
+        "wall_s": 110.02
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0941,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-30T10:23:34-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 6511.0,
+        "gpu_util_busy_share": 0.9991,
+        "gpu_util_mean": 71.622,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 20.48,
+        "load_1m_mean": 10.1633,
+        "max_rss_kb": 7920700.0,
+        "node_neighbor_busy_share": 0.5679,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.5679,
+            "gpu": 2,
+            "mem_max_mib": 14355.0,
+            "util_mean": 51.1614
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.5859,
+            "gpu": 5,
+            "mem_max_mib": 20993.0,
+            "util_mean": 44.4315
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1216370786,
+          "exists": true,
+          "files": 17
+        },
+        "run": "g0-20261029T225728",
+        "samples": 25751,
+        "start": "2026-10-29T22:57:34-07:00",
+        "step": "reid_train",
+        "system": "leap",
+        "system_s": 8641.08,
+        "tracked_frames": null,
+        "user_s": 68822.93,
+        "wall_s": 41157.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.7207,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-30T10:58:00-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 29.95,
+        "load_1m_mean": 20.5873,
+        "max_rss_kb": 288228.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 2,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 5,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1864197,
+          "exists": true,
+          "files": 5
+        },
+        "run": "g0-20261030T105710",
+        "samples": 11,
+        "start": "2026-10-30T10:57:29-07:00",
+        "step": "motion_patterns",
+        "system": "leap",
+        "system_s": 2.22,
+        "tracked_frames": null,
+        "user_s": 238.64,
+        "wall_s": 16.71
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0602,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-29T22:25:18-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 14285.0,
+        "gpu_util_busy_share": 0.9704,
+        "gpu_util_mean": 74.2165,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 7.98,
+        "load_1m_mean": 6.5506,
+        "max_rss_kb": 3817128.0,
+        "node_neighbor_busy_share": 0.9785,
+        "other_gpus": [
+          {
+            "busy_share": 0.9785,
+            "gpu": 0,
+            "mem_max_mib": 13899.0,
+            "util_mean": 74.7988
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9852,
+            "gpu": 5,
+            "mem_max_mib": 20841.0,
+            "util_mean": 79.1467
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 371553919,
+          "exists": true,
+          "files": 180
+        },
+        "run": "g2-20261029T215503",
+        "samples": 979,
+        "start": "2026-10-29T21:55:28-07:00",
+        "step": "labels_train",
+        "system": "leap",
+        "system_s": 41.29,
+        "tracked_frames": null,
+        "user_s": 2099.79,
+        "wall_s": 1777.86
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0603,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-29T22:54:56-07:00",
+        "evaluation_only": true,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 14241.0,
+        "gpu_util_busy_share": 0.9774,
+        "gpu_util_mean": 75.041,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 7.76,
+        "load_1m_mean": 6.3555,
+        "max_rss_kb": 3876908.0,
+        "node_neighbor_busy_share": 0.97,
+        "other_gpus": [
+          {
+            "busy_share": 0.97,
+            "gpu": 0,
+            "mem_max_mib": 14285.0,
+            "util_mean": 74.2318
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9898,
+            "gpu": 5,
+            "mem_max_mib": 2419.0,
+            "util_mean": 79.199
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 732506214,
+          "exists": true,
+          "files": 360
+        },
+        "run": "g2-20261029T222520",
+        "samples": 975,
+        "start": "2026-10-29T22:25:25-07:00",
+        "step": "labels_test",
+        "system": "leap",
+        "system_s": 39.62,
+        "tracked_frames": null,
+        "user_s": 2092.36,
+        "wall_s": 1767.06
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.2771,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-29T22:56:18-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 9.94,
+        "load_1m_mean": 8.4592,
+        "max_rss_kb": 307996.0,
+        "node_neighbor_busy_share": 0.1552,
+        "other_gpus": [
+          {
+            "busy_share": 0.1552,
+            "gpu": 0,
+            "mem_max_mib": 2285.0,
+            "util_mean": 10.6207
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 1.0,
+            "gpu": 5,
+            "mem_max_mib": 2419.0,
+            "util_mean": 81.9483
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 52469815,
+          "exists": true,
+          "files": 56469
+        },
+        "run": "g2-20261029T225459",
+        "samples": 39,
+        "start": "2026-10-29T22:55:04-07:00",
+        "step": "reid_data",
+        "system": "leap",
+        "system_s": 25.78,
+        "tracked_frames": null,
+        "user_s": 365.76,
+        "wall_s": 70.66
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.509,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-30T05:30:26-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 6537.0,
+        "gpu_util_busy_share": 0.9985,
+        "gpu_util_mean": 90.4888,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 20.48,
+        "load_1m_mean": 16.9134,
+        "max_rss_kb": 7525660.0,
+        "node_neighbor_busy_share": 0.9965,
+        "other_gpus": [
+          {
+            "busy_share": 0.9965,
+            "gpu": 0,
+            "mem_max_mib": 8029.0,
+            "util_mean": 72.1628
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9885,
+            "gpu": 5,
+            "mem_max_mib": 8573.0,
+            "util_mean": 75.0564
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1273239722,
+          "exists": true,
+          "files": 17
+        },
+        "run": "g2-20261029T225622",
+        "samples": 12995,
+        "start": "2026-10-29T22:56:28-07:00",
+        "step": "reid_train",
+        "system": "leap",
+        "system_s": 11723.83,
+        "tracked_frames": null,
+        "user_s": 228875.97,
+        "wall_s": 23634.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.6417,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-30T10:57:57-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 28.73,
+        "load_1m_mean": 19.7637,
+        "max_rss_kb": 255836.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 0,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 5,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 2798166,
+          "exists": true,
+          "files": 5
+        },
+        "run": "g2-20261030T105710",
+        "samples": 8,
+        "start": "2026-10-30T10:57:29-07:00",
+        "step": "motion_patterns",
+        "system": "leap",
+        "system_s": 2.77,
+        "tracked_frames": null,
+        "user_s": 153.55,
+        "wall_s": 12.18
+      }
+    ],
+    "totals": [
+      {
+        "system": "leap",
+        "dataset": "jnc0",
+        "missing_steps": [
+          "reid_train",
+          "motion_patterns"
+        ],
+        "failed_steps": [],
+        "contaminated_steps": [],
+        "wall_s": 1563.67,
+        "cpu_s": 30432.03,
+        "preparation_wall_s": 979.09,
+        "preparation_cpu_s": 18993.589999999997,
+        "cpu_busy_share": 0.9730963054864517,
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "node_neighbor_busy_share_max": null,
+        "complete": false,
+        "clean": true,
+        "cpu_sets": [
+          "20-29,60-69"
+        ],
+        "gpus": [
+          5
+        ]
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc2",
+        "missing_steps": [],
+        "failed_steps": [],
+        "contaminated_steps": [],
+        "wall_s": 23674.37,
+        "cpu_s": 68960.1,
+        "preparation_wall_s": 23157.64,
+        "preparation_cpu_s": 58888.560000000005,
+        "cpu_busy_share": 0.14564294635929068,
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "node_neighbor_busy_share_max": null,
+        "complete": true,
+        "clean": true,
+        "cpu_sets": [
+          "30-39,70-79"
+        ],
+        "gpus": [
+          6
+        ]
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc6",
+        "missing_steps": [
+          "reid_train",
+          "motion_patterns"
+        ],
+        "failed_steps": [],
+        "contaminated_steps": [],
+        "wall_s": 1487.81,
+        "cpu_s": 28927.379999999997,
+        "preparation_wall_s": 920.03,
+        "preparation_cpu_s": 17837.120000000003,
+        "cpu_busy_share": 0.97214630900451,
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "node_neighbor_busy_share_max": null,
+        "complete": false,
+        "clean": true,
+        "cpu_sets": [
+          "30-39,70-79"
+        ],
+        "gpus": [
+          6
+        ]
+      },
+      {
+        "system": "leap",
+        "dataset": "jnc7",
+        "missing_steps": [],
+        "failed_steps": [],
+        "contaminated_steps": [],
+        "wall_s": 20927.07,
+        "cpu_s": 65686.07,
+        "preparation_wall_s": 20360.21,
+        "preparation_cpu_s": 54601.93000000001,
+        "cpu_busy_share": 0.15694043647772957,
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "node_neighbor_busy_share_max": null,
+        "complete": true,
+        "clean": true,
+        "cpu_sets": [
+          "30-39,70-79"
+        ],
+        "gpus": [
+          6
+        ]
+      },
+      {
+        "system": "otif",
+        "dataset": "ams-y05",
+        "missing_steps": [],
+        "failed_steps": [],
+        "contaminated_steps": [],
+        "wall_s": 65051.08,
+        "cpu_s": 294216.73000000004,
+        "preparation_wall_s": 65051.08,
+        "preparation_cpu_s": 294216.73000000004,
+        "cpu_busy_share": 0.22614284805110083,
+        "evaluation_only_steps": [],
+        "node_neighbor_busy_share_max": null,
+        "complete": true,
+        "clean": true,
+        "cpu_sets": [
+          "20-29,60-69"
+        ],
+        "gpus": [
+          5
+        ]
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot1-y05",
+        "missing_steps": [],
+        "failed_steps": [],
+        "contaminated_steps": [],
+        "wall_s": 27000.789999999997,
+        "cpu_s": 152624.51000000004,
+        "preparation_wall_s": 27000.789999999997,
+        "preparation_cpu_s": 152624.51000000004,
+        "cpu_busy_share": 0.2826297119454653,
+        "evaluation_only_steps": [],
+        "node_neighbor_busy_share_max": 1.0,
+        "complete": true,
+        "clean": true,
+        "cpu_sets": [
+          "30-39,70-79"
+        ],
+        "gpus": [
+          6
+        ]
+      },
+      {
+        "system": "otif",
+        "dataset": "caldot2-y05",
+        "missing_steps": [],
+        "failed_steps": [],
+        "contaminated_steps": [],
+        "wall_s": 23917.09,
+        "cpu_s": 135694.63999999998,
+        "preparation_wall_s": 23917.09,
+        "preparation_cpu_s": 135694.63999999998,
+        "cpu_busy_share": 0.283677153031577,
+        "evaluation_only_steps": [],
+        "node_neighbor_busy_share_max": null,
+        "complete": true,
+        "clean": true,
+        "cpu_sets": [
+          "30-39,70-79"
+        ],
+        "gpus": [
+          6
+        ]
+      },
+      {
+        "clean": true,
+        "complete": true,
+        "contaminated_steps": [],
+        "cpu_busy_share": 0.0869,
+        "cpu_s": 49388.75,
+        "cpu_sets": [
+          "20-29,60-69"
+        ],
+        "dataset": "ams-y05",
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "failed_steps": [],
+        "gpus": [
+          5
+        ],
+        "missing_steps": [],
+        "node_neighbor_busy_share_max": 0.0,
+        "preparation_cpu_s": 45027.46,
+        "preparation_wall_s": 24744.2,
+        "system": "leap",
+        "wall_s": 28422.2
+      },
+      {
+        "clean": true,
+        "complete": true,
+        "contaminated_steps": [],
+        "cpu_busy_share": 0.0919,
+        "cpu_s": 82469.08,
+        "cpu_sets": [
+          "0-9,40-49"
+        ],
+        "dataset": "caldot1-y05",
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "failed_steps": [],
+        "gpus": [
+          0
+        ],
+        "missing_steps": [],
+        "node_neighbor_busy_share_max": 0.9713,
+        "preparation_cpu_s": 80305.91,
+        "preparation_wall_s": 43070.5,
+        "system": "leap",
+        "wall_s": 44851.26
+      },
+      {
+        "clean": true,
+        "complete": true,
+        "contaminated_steps": [],
+        "cpu_busy_share": 0.4501,
+        "cpu_s": 245420.72,
+        "cpu_sets": [
+          "10-19,50-59"
+        ],
+        "dataset": "caldot2-y05",
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "failed_steps": [],
+        "gpus": [
+          2
+        ],
+        "missing_steps": [],
+        "node_neighbor_busy_share_max": 0.9965,
+        "preparation_cpu_s": 243288.74,
+        "preparation_wall_s": 25494.7,
+        "system": "leap",
+        "wall_s": 27261.76
+      }
+    ],
+    "leap_labels": [
+      {
+        "dataset": "jnc0",
+        "split": "test",
+        "rerun_clips": 5,
+        "scored_clips": 5,
+        "identical_clips": 5,
+        "rerun_lines": 64664,
+        "scored_lines": 64664,
+        "identical_lines": 64664,
+        "paired_lines": 64664,
+        "paired_within_px": 64664,
+        "paired_max_px": 0.0,
+        "scored_span_s": 947.7819604873657,
+        "scored_duration_estimate_s": 1184.7274506092072
+      },
+      {
+        "dataset": "jnc0",
+        "split": "train",
+        "rerun_clips": 8,
+        "scored_clips": 8,
+        "identical_clips": 0,
+        "rerun_lines": 112112,
+        "scored_lines": 112112,
+        "identical_lines": 111951,
+        "paired_lines": 112112,
+        "paired_within_px": 112110,
+        "paired_max_px": 1.7300000000000182,
+        "scored_span_s": 1242.1590926647186,
+        "scored_duration_estimate_s": 1419.6103916168213
+      },
+      {
+        "dataset": "jnc2",
+        "split": "test",
+        "rerun_clips": 5,
+        "scored_clips": 5,
+        "identical_clips": 0,
+        "rerun_lines": 81540,
+        "scored_lines": 81540,
+        "identical_lines": 81470,
+        "paired_lines": 81540,
+        "paired_within_px": 81540,
+        "paired_max_px": 0.010000000000104592,
+        "scored_span_s": 783.2423839569092,
+        "scored_duration_estimate_s": 979.0529799461365
+      },
+      {
+        "dataset": "jnc2",
+        "split": "train",
+        "rerun_clips": 8,
+        "scored_clips": 8,
+        "identical_clips": 0,
+        "rerun_lines": 135892,
+        "scored_lines": 135892,
+        "identical_lines": 135745,
+        "paired_lines": 135892,
+        "paired_within_px": 135891,
+        "paired_max_px": 1.9399999999999977,
+        "scored_span_s": 1095.9989001750946,
+        "scored_duration_estimate_s": 1252.5701716286796
+      },
+      {
+        "dataset": "jnc6",
+        "split": "test",
+        "rerun_clips": 5,
+        "scored_clips": 5,
+        "identical_clips": 0,
+        "rerun_lines": 67209,
+        "scored_lines": 67209,
+        "identical_lines": 67165,
+        "paired_lines": 67209,
+        "paired_within_px": 67209,
+        "paired_max_px": 0.010000000000019327,
+        "scored_span_s": 903.5082452297211,
+        "scored_duration_estimate_s": 1129.3853065371513
+      },
+      {
+        "dataset": "jnc6",
+        "split": "train",
+        "rerun_clips": 8,
+        "scored_clips": 8,
+        "identical_clips": 4,
+        "rerun_lines": 118704,
+        "scored_lines": 118704,
+        "identical_lines": 118700,
+        "paired_lines": 118704,
+        "paired_within_px": 118704,
+        "paired_max_px": 0.010000000000104592,
+        "scored_span_s": 1204.7693140506744,
+        "scored_duration_estimate_s": 1376.8792160579137
+      },
+      {
+        "dataset": "jnc7",
+        "split": "test",
+        "rerun_clips": 5,
+        "scored_clips": 5,
+        "identical_clips": 5,
+        "rerun_lines": 50725,
+        "scored_lines": 50725,
+        "identical_lines": 50725,
+        "paired_lines": 50725,
+        "paired_within_px": 50725,
+        "paired_max_px": 0.0,
+        "scored_span_s": 897.5332999229431,
+        "scored_duration_estimate_s": 1121.916624903679
+      },
+      {
+        "dataset": "jnc7",
+        "split": "train",
+        "rerun_clips": 8,
+        "scored_clips": 8,
+        "identical_clips": 0,
+        "rerun_lines": 97673,
+        "scored_lines": 97673,
+        "identical_lines": 97616,
+        "paired_lines": 97673,
+        "paired_within_px": 97673,
+        "paired_max_px": 0.010000000000104592,
+        "scored_span_s": 1197.1903529167175,
+        "scored_duration_estimate_s": 1368.2175461905342
+      }
+    ],
+    "leap_crops": [
+      {
+        "dataset": "jnc0",
+        "dir": "image_query",
+        "rerun_crops": 351,
+        "scored_crops": 523,
+        "common_crops": 35
+      },
+      {
+        "dataset": "jnc0",
+        "dir": "image_test",
+        "rerun_crops": 11841,
+        "scored_crops": 12013,
+        "common_crops": 11674
+      },
+      {
+        "dataset": "jnc0",
+        "dir": "image_train",
+        "rerun_crops": 21402,
+        "scored_crops": 21402,
+        "common_crops": 21399
+      },
+      {
+        "dataset": "jnc2",
+        "dir": "image_query",
+        "rerun_crops": 298,
+        "scored_crops": 298,
+        "common_crops": 14
+      },
+      {
+        "dataset": "jnc2",
+        "dir": "image_test",
+        "rerun_crops": 12779,
+        "scored_crops": 12779,
+        "common_crops": 12494
+      },
+      {
+        "dataset": "jnc2",
+        "dir": "image_train",
+        "rerun_crops": 22393,
+        "scored_crops": 22393,
+        "common_crops": 22392
+      },
+      {
+        "dataset": "jnc6",
+        "dir": "image_query",
+        "rerun_crops": 329,
+        "scored_crops": 329,
+        "common_crops": 11
+      },
+      {
+        "dataset": "jnc6",
+        "dir": "image_test",
+        "rerun_crops": 12888,
+        "scored_crops": 12888,
+        "common_crops": 12570
+      },
+      {
+        "dataset": "jnc6",
+        "dir": "image_train",
+        "rerun_crops": 23703,
+        "scored_crops": 23703,
+        "common_crops": 23703
+      },
+      {
+        "dataset": "jnc7",
+        "dir": "image_query",
+        "rerun_crops": 272,
+        "scored_crops": 272,
+        "common_crops": 5
+      },
+      {
+        "dataset": "jnc7",
+        "dir": "image_test",
+        "rerun_crops": 9851,
+        "scored_crops": 9851,
+        "common_crops": 9584
+      },
+      {
+        "dataset": "jnc7",
+        "dir": "image_train",
+        "rerun_crops": 19518,
+        "scored_crops": 19518,
+        "common_crops": 19518
+      }
+    ],
+    "leap_reid_training": [
+      {
+        "dataset": "jnc2",
+        "source": "rerun",
+        "total_training_s": 22266.0,
+        "rank1": null,
+        "map": null,
+        "last_total_loss": 7.80140495300293,
+        "last_cls_accuracy": 0.0
+      },
+      {
+        "dataset": "jnc2",
+        "source": "scored",
+        "total_training_s": 19720.0,
+        "rank1": null,
+        "map": null,
+        "last_total_loss": 7.067490041255951,
+        "last_cls_accuracy": 0.0
+      },
+      {
+        "dataset": "jnc7",
+        "source": "rerun",
+        "total_training_s": 19419.0,
+        "rank1": null,
+        "map": null,
+        "last_total_loss": 7.816261291503906,
+        "last_cls_accuracy": 0.0
+      },
+      {
+        "dataset": "jnc7",
+        "source": "scored",
+        "total_training_s": 16631.0,
+        "rank1": null,
+        "map": null,
+        "last_total_loss": 7.546641170978546,
+        "last_cls_accuracy": 0.0
+      }
+    ],
+    "leap_motion_patterns": [
+      {
+        "dataset": "jnc2",
+        "scored_dir": "/data/alenachao/data/leap-dataset/motion_patterns/jnc2",
+        "rerun_clusters": 8,
+        "scored_clusters": 16
+      },
+      {
+        "dataset": "jnc7",
+        "scored_dir": "/data/alenachao/data/leap-dataset/motion_patterns/jnc7",
+        "rerun_clusters": 6,
+        "scored_clusters": 11
+      }
+    ],
+    "otif_curves": [
+      {
+        "dataset": "ams-y05",
+        "source": "rerun",
+        "points": 10,
+        "best_valid_accuracy": 0.8049729437229438,
+        "last_config": "{\"Name\":\"yolov3\",\"Dims\":[320,192],\"Sizes\":[[320,192],[128,96],[64,64]],\"Threshold\":0.25} 160_96_1e-05 {\"NumFrames\":0,\"Thresholds\":[0,0,0,0,0,1,1]}",
+        "last_runtime": 3183.0,
+        "last_valid_accuracy": 0.7653036315536313
+      },
+      {
+        "dataset": "ams-y05",
+        "source": "scored",
+        "points": 10,
+        "best_valid_accuracy": 0.43455168445283204,
+        "last_config": "{\"Name\":\"yolov3\",\"Dims\":[736,416],\"Sizes\":[[736,416],[288,192],[128,96]],\"Threshold\":0.25} 224_128_0.04096 {\"NumFrames\":0,\"Thresholds\":[0,0,0,0,0,0,0]}",
+        "last_runtime": 923.0,
+        "last_valid_accuracy": 0.41482072316950835
+      },
+      {
+        "dataset": "caldot1-y05",
+        "source": "rerun",
+        "points": 10,
+        "best_valid_accuracy": 0.7647840293712326,
+        "last_config": "{\"Name\":\"yolov3\",\"Dims\":[512,352],\"Sizes\":[[512,352],[192,192]],\"Threshold\":0.25} 224_128_0.32768 {\"NumFrames\":0,\"Thresholds\":[0,0,0,0,0,1,1]}",
+        "last_runtime": 422.0,
+        "last_valid_accuracy": 0.5652825771406359
+      },
+      {
+        "dataset": "caldot1-y05",
+        "source": "scored",
+        "points": 10,
+        "best_valid_accuracy": 0.7788449810900789,
+        "last_config": "{\"Name\":\"yolov3\",\"Dims\":[512,352],\"Sizes\":[[512,352],[192,192]],\"Threshold\":0.25} 320_192_0.04096 {\"NumFrames\":0,\"Thresholds\":[0,0,0,0,0,1,1]}",
+        "last_runtime": 416.0,
+        "last_valid_accuracy": 0.6307798821548819
+      },
+      {
+        "dataset": "caldot2-y05",
+        "source": "rerun",
+        "points": 10,
+        "best_valid_accuracy": 0.9596742821305514,
+        "last_config": "{\"Name\":\"yolov3\",\"Dims\":[416,288],\"Sizes\":[[416,288],[160,96],[64,64]],\"Threshold\":0.25} 224_128_0.16384 {\"NumFrames\":0,\"Thresholds\":[0,0,0,0,1,1,1]}",
+        "last_runtime": 912.0,
+        "last_valid_accuracy": 0.9215670996243749
+      },
+      {
+        "dataset": "caldot2-y05",
+        "source": "scored",
+        "points": 10,
+        "best_valid_accuracy": 0.9557739790023072,
+        "last_config": "{\"Name\":\"yolov3\",\"Dims\":[416,288],\"Sizes\":[[416,288],[160,96],[64,64]],\"Threshold\":0.25} 224_128_0.65536 {\"NumFrames\":0,\"Thresholds\":[0,0,0,0,1,1,1]}",
+        "last_runtime": 675.0,
+        "last_valid_accuracy": 0.8736152809226853
+      }
+    ]
+  }
+}

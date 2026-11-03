@@ -1,0 +1,586 @@
+\section{Evaluation}
+\label{sec:evaluation}
+
+We evaluate \sys's efficiency in tracking objects while maintaining tracking fidelity, comparing against prior systems on seven datasets.
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{figures/generated/revision_hota_summary.pdf}
+    \caption{End-to-end throughput-accuracy results across seven datasets.
+    \panellabel{Top}
+    Tracking accuracy (HOTA) versus throughput for \sys{}, the reference pipeline, prior systems, and ablations.
+    \panellabel{Middle}
+    Speedup of \sys{} over each prior system at matched HOTA accuracy levels.
+    \panellabel{Bottom}
+    HOTA gain of \sys{} over each prior system at matched throughput levels.
+    % \revpending{LEAP uses the higher-HOTA valid reconstruction per dataset from \autoref{tab:leap-reconstruction}.}
+    % \ck{split the ablation if we have space.}
+    }
+    \Description{}
+    \label{fig:e2e-results}
+\end{figure*}
+
+% \paragraph
+\textbf{\em Accuracy Metrics.}
+Prior systems evaluate accuracy using predefined queries~\cite{kang2017noscope,bastani2022otif,xu2024leap},
+which can restrict evaluation to anticipated situations and fail to capture more complex object behaviors.
+We instead adopt HOTA (\autoref{sec:track-materialization}) as a query-agnostic measure of track reconstruction quality.
+HOTA
+% evaluates reconstructed tracks by matching predicted and ground-truth detections at multiple localization thresholds.
+% It
+balances detection accuracy with trajectory association accuracy,
+so missing detections,
+fragmented tracks,
+and merged identities all reduce the score.
+
+% \paragraph
+\textbf{\em Datasets.}
+We evaluate \sys{} on seven video datasets (CalDoT1/2, B3D1/2/3/4, and Amsterdam) that vary in scene density, camera viewpoint, and object motion patterns,
+allowing us to test performance across a diverse set of real-world conditions.
+CalDoT1/2 (720 $\times$ 480 pixels) were introduced by OTIF~\cite{bastani2022otif},
+while Amsterdam (1280 $\times$ 720 pixels) was introduced by NoScope~\cite{kang2017noscope}.
+We add the B3D (1080 $\times$ 720 pixels) datasets
+(B3D1/2/3/4)
+to expand the evaluation beyond existing benchmarks.
+All datasets consist of approximately one-minute clips captured at 15 FPS;
+CalDoT1/2,
+and Amsterdam each include 180 clips,
+while each B3D dataset includes 18 clips.
+
+CalDoT1/2~\cite{bastani2022otif} consist of highway traffic footage from California Department of Transportation cameras;
+Amsterdam~\cite{kang2017noscope} is captured from an urban street-side camera.
+These datasets exhibit structured motion in relatively constrained settings.
+The B3D datasets are drawn from the Berkeley DeepDrive Drone Dataset~\cite{wu2025b3d},
+consisting of aerial footage of unsignalized intersections and roundabouts with less predictable motion and higher interaction density.
+We mask non-road and parking areas in the B3D videos.
+By including B3D, we extend beyond the structured highway and low-density roadway settings of CalDoT and Amsterdam.
+% \alvin{what does robustness mean ad how is this more dynamic than the other datasets?}
+
+For CalDoT1/2 and Amsterdam,
+we partition the data into training,
+validation,
+and testing splits,
+each consisting of 60 one-minute clips.
+For the B3D datasets,
+because of the amount of footage available,
+we use training,
+validation,
+and testing splits of 8,
+5,
+and 5 approximately one-minute clips,
+respectively.
+
+% \ck{we can mention that caldots come from OTIF, might make our evaluation results stronger} \ck{amsterdam, if I remember correctly, is not from OTIF. So, amsterdam videos can represent independent videos that are not from either of the system (us / otif).}
+
+% \paragraph
+\textbf{\em Ground Truth.}
+We obtain ground truth detection and tracking annotations for the test splits used in our end-to-end evaluation (\autoref{sec:e2e-results}).
+For CalDoT1 and CalDoT2,
+we use the dense per-frame object detection labels provided by the OTIF dataset.
+For Amsterdam,
+we start from the same OTIF dense labels,
+filter to vehicle classes only,
+and apply minor manual corrections to remove erroneous annotations.
+For B3D1/2/3/4,
+we generate dense detection labels using
+\revadd{
+Faster R-CNN~\cite{ren2016fasterrcnn} trained with training labels from the B3D paper.
+The labels are then verified and corrected by the authors.}
+% to ensure high-quality ground truth for evaluation.
+% the RetinaNet~\cite{lin2017focal} detector from the B3D paper with overlapping tiled inference~\cite{unel2019tiling,akyon2022sahi}.
+% Specifically,
+% we extract four fixed crops at the corners of each frame,
+% each spanning two-thirds of the frame width and height,
+% and merge the resulting detections via non-maximum suppression (NMS).
+
+Ground truth tracking annotations for all datasets are generated using OC-SORT~\cite{cao2023ocsort},
+a multi-object tracker that supersedes BYTETrack~\cite{zhang2022bytetrack} and SORT~\cite{bewley2016sort}.
+In our experiments, the user-provided tracker is BYTETrack,
+which also serves as the reference while generating the Pareto frontier.
+% \sys{}'s built-in SORT is the second tracker option considered during Pareto frontier generation.
+OC-SORT is used only for ground truth generation,
+ensuring that evaluation results are not biased by shared tracking components.
+Ground-truth annotations are used only for evaluation;
+\sys does not access them while learning the artifacts or generating the Pareto frontier.
+
+% \paragraph
+\textbf{\em Prior Systems.}
+We compare \sys{} against two prior approaches: OTIF~\cite{bastani2022otif} and LEAP~\cite{xu2024leap}.
+OTIF utilizes a lightweight proxy model to identify irrelevant regions within frames for more efficient batching, along with uniform frame sampling and a specialized tracker to further reduce calls to the object detector.
+
+LEAP uses predictive sampling to prune frames that are unlikely to contain relevant information.
+For both methods,
+we use the authors' publicly available implementations.
+
+For OTIF,
+we use the training split for its recurrent rate tracker,
+since the original ``tracker'' split is unavailable across all datasets.
+For LEAP,
+the distilled detector weights are not publicly available,
+so we use the original non-distilled detector to ensure reproducibility.
+
+% In particular, while the authors describe training on multiple datasets (e.g., PASCAL VOC, Stanford Car Dataset, Object365, and VisDrone), they retain only samples with “vehicle-related” labels without clearly defining this subset. 
+
+For a fair comparison across systems,
+we standardize the object detector used in all experiments.
+Specifically,
+we use YOLOv5~\cite{khanam2024yolov5} for the CalDoT1, CalDoT2, and Amsterdam datasets,
+and RetinaNet~\cite{lin2017focal} for the B3D datasets,
+i.e., the detector released with B3D.
+This ensures that any throughput and accuracy differences arise from the system rather than underlying detection models.
+% \revpending{For CalDoT1/2 and Amsterdam,
+% we rerun LEAP's preparation and extraction with the same dataset-specific YOLOv5 checkpoint as the reference pipeline,
+% regenerating its pseudo-labels,
+% re-identification model,
+% and motion patterns.}
+% \revpending{The reference pipeline,
+% \sys{},
+% and the recorded OTIF configurations use the dataset-specific detector weights.
+% LEAP's CalDoT/Amsterdam runs use its non-distilled YOLOv5x weights;
+% its B3D runs use the released RetinaNet.
+% This substitution limits attribution of LEAP's accuracy differences to sampling alone.}
+For \sys{},
+the user-provided tracker is BYTETrack and the built-in default is SORT,
+so Pareto frontier generation searches over the two tracker options $\{\text{BYTETrack}, \text{SORT}\}$.
+When generating the Pareto frontier (\autoref{sec:pareto-frontier}),
+BYTETrack at full frame rate serves as the user-provided tracker in the
+% full-frame,
+% every-frame
+reference pipeline~(\autoref{sec:tracking-by-detection}), and 
+the Pareto-optimal operating points may draw from either tracker option.
+
+% \paragraph
+\textbf{\em Detector Training.}
+We train the YOLOv5 models on the training splits using the same curated labels described above:
+the dense detection labels from the OTIF dataset for CalDoT1 and CalDoT2,
+and the vehicle-filtered,
+manually corrected OTIF labels for Amsterdam.
+
+% \paragraph
+\textbf{\em Experiment Setup.}
+All evaluated systems consist of two stages:
+a preparation stage to learn from the training split and generate their configurations using the validation split,
+and a track extraction stage to track objects in the test split.
+% \revpending{We separate training-data preparation from test-split extraction.
+% \sys{} and OTIF select configurations using validation;
+% LEAP uses one fixed configuration.}
+We report throughput on track extraction only.
+\revadd{For \sys{},
+this includes relevance classification,
+polyomino grouping,
+ILP construction and solving,
+packing,
+detection,
+unpacking,
+tracking,
+and interpolation.
+Preparation is accounted for separately in \autoref{sec:preparation-cost}.}
+% and exclude preparation.
+Each data point in the results corresponds to a distinct system configuration.
+For \sys{} and OTIF,
+configurations are the Pareto-optimal operating points selected on the validation set (\autoref{sec:pareto-frontier}).
+% For OTIF,
+% configurations are produced by its joint parameter tuning procedure~\cite{bastani2022otif}.
+LEAP, having a single fixed configuration, contributes one point.
+For \sys{} and OTIF,
+we report only the Pareto-optimal points from the test split results.
+% \alvin{LEAP doesn't have pareto points?}
+
+% \paragraph
+\textbf{\em Hardware.}
+All experiments are conducted on a server equipped with dual Intel Xeon Gold 6248 CPUs (2.50\,GHz),
+504\,GB of RAM,
+and an NVIDIA Quadro RTX 6000 GPU (24\,GB VRAM).
+% All systems are evaluated using a single GPU.
+Reported runtimes measure computation time only,
+excluding disk I/O.
+
+% \paragraph
+\textbf{\em Track Interpolation.}
+Tracking outputs from all systems are linearly interpolated to produce detection points on every frame for every track.
+This step ensures a fair comparison under the HOTA metric,
+which penalizes missing per-frame detections within tracks.
+Systems that employ frame skipping inherently produce tracks with detection gaps;
+without interpolation,
+these gaps would exaggerate the HOTA penalty even when the underlying motion is faithfully captured,
+for example,
+a vehicle traveling at constant speed along a straight path.
+By applying interpolation uniformly across all systems,
+we isolate tracking quality from the detection gaps that frame-sampling strategies introduce.
+% \revpending{For \sys{} and OTIF,
+% we linearly interpolate between consecutive observations of the same track,
+% without extrapolating beyond its observed endpoints.
+% This fills sampling gaps for straight,
+% constant-speed motion but cannot recover arbitrary motion changes.
+% For LEAP,
+% we separately evaluate raw boxes,
+% linear interpolation,
+% and assigned-pattern reconstruction (\autoref{sec:leap-queries}).
+% HOTA then measures both per-frame detection and association quality.}
+
+\subsection{End-to-end Results}
+\label{sec:e2e-results}
+
+\autoref{fig:e2e-results} summarizes the throughput-accuracy tradeoff across all seven datasets.
+% \sys{}'s Pareto frontier is produced by a configuration search that treats the tracking algorithm as one of its dimensions,
+% so the frontier for each dataset may contain operating points drawn from both SORT and BYTETrack,
+% depending on which algorithm yields better throughput or accuracy in that regime (\autoref{sec:candidate-algorithms}).
+\sys{} consistently dominates the Pareto frontier,
+achieving higher HOTA scores than both OTIF and LEAP at the same throughput,
+and higher throughput at the same accuracy level.
+At matched throughput,
+we compare each prior work's Pareto-optimal configuration against the most accurate \sys{} configuration that is at least as fast.
+\sys{} achieves higher HOTA in every such comparison across all seven datasets
+(\compareMatchedTputReachableCount{} of \compareMatchedTputPriorConfigCount{} prior works' configurations).
+Of the remaining \compareMatchedTputUnreachableCount{} prior configurations that exceed \sys{}'s highest throughput,
+\compareMatchedTputUnreachableZeroHotaCount{} produce zero HOTA;
+the last achieves a \compareMatchedTputUnreachableRestSpeedup{}$\times$ speedup over \sys{}'s fastest configuration
+while dropping HOTA by \compareMatchedTputUnreachableRestHotaDrop{}
+on the \compareMatchedTputUnreachableRestDataset{} dataset.
+The median HOTA gain across these comparisons is \compareMatchedTputMedianHotaGain{},
+per-dataset maximum gains range from \compareMatchedTputPerDatasetMaxGainMin{} to \compareMaxHotaImprovement{},
+and the largest gain occurs at \compareMaxHotaImprovementFps{} FPS on the \compareMaxHotaImprovementDataset{} dataset.
+
+In realistic deployment scenarios where tracking accuracy is critical,
+we measure the maximum speedup each system achieves over the full-frame,
+every-frame reference pipeline at bounded HOTA accuracy loss.
+% \todo{Add speedup table.}
+\sys{} achieves a speedup while staying within a 5\% HOTA drop from the reference pipeline on all
+% \comparePolytrisMeetFivePct{}/7
+\revisionDatasetCount{} datasets,
+while prior systems meet this constraint on only \comparePriorMeetFivePct{}/\revisionDatasetCount{} datasets.
+% ,
+% failing on \comparePriorFailDatasetsFivePct{} datasets.
+To avoid overclaiming \sys{}'s improvement over prior systems,
+we restrict prior systems to Pareto-optimal configurations and compare against a prior configuration whose HOTA is no higher than \sys{}'s selected configuration.
+% \revpending{To avoid overclaiming,
+% we first choose the fastest \sys{} configuration within the loss bound.
+% If the fastest Pareto-optimal prior configuration meeting the bound has HOTA no higher than this \sys{} point,
+% we use it.
+% Otherwise,
+% we use the most accurate prior Pareto point with HOTA no higher than \sys{}'s,
+% breaking accuracy ties by throughput.
+% The bound therefore constrains \sys{};
+% the compared prior point can fall below it.}
+Under this 5\% constraint,
+% \revpending{With \sys{} constrained to at most 5\% HOTA loss,}
+\sys{} achieves \compareAccuracyMatchedSpeedupMinFivePct{}$\times$ to \compareAccuracyMatchedSpeedupMaxFivePct{}$\times$ speedup over prior systems,
+and \compareNaiveSpeedupMinFivePct{}$\times$ to \compareNaiveSpeedupMaxFivePct{}$\times$ speedup over the reference pipeline.
+At a 10\% HOTA drop,
+% \revpending{Applying the same selection rule with a 10\% loss bound for \sys{},}
+\sys{} achieves \compareAccuracyMatchedSpeedupMinTenPct{}$\times$ to \compareAccuracyMatchedSpeedupMaxTenPct{}$\times$ speedup over prior systems,
+and \compareNaiveSpeedupMinTenPct{}$\times$ to \compareNaiveSpeedupMaxTenPct{}$\times$ speedup over the reference pipeline.
+Under both constraints,
+% \revpending{In both comparisons,}
+\sys{} consistently achieves higher speedup than all other systems on every dataset.
+
+% \paragraph
+\textbf{\em Analysis.} LEAP is designed to optimize for object-existence queries,
+such as counting or detecting the time period during which an object is present,
+rather than reconstructing full per-frame object tracks.
+Accordingly,
+LEAP outputs a time interval and \revadd{an assigned} motion pattern for each detected object rather than a per-frame trajectory.
+% \revdelblock{To evaluate LEAP under the HOTA metric,
+% we assign the closest reference track to each detected object.
+% However,
+% the resulting trajectories exhibit substantial misalignment with ground truth tracks,
+% leading to low accuracy scores across all datasets.}
+\revadd{For LEAP's HOTA evaluation,
+we consider two approaches:
+% \revdel{(i) raw boxes on sampled frames,}
+(i) linear interpolation between consecutive boxes of the same object on sampled frames,
+and (ii) trajectories reconstructed from LEAP's assigned motion patterns and predicted presence intervals.
+The second approach uses LEAP's own pattern assignments without matching objects to evaluation reference tracks.
+% \revdel{We report all three HOTA scores in Table~2 and use}
+We use the highest-HOTA approach for each dataset in comparisons with \sys{} and OTIF,
+giving LEAP its most favorable result among the two approaches.}
+
+\revdelblock{Dense B3D scenes contain varied motion and frequent object entries and exits,
+which can limit the coverage of a fixed motion-pattern library and leave few observations of each object.
+For example,
+LEAP observes \revisionLeapBThreeDThreeObjectsOnce{} of its \revisionLeapBThreeDThreeObjects{} predicted objects on B3D3 only once,
+leaving no pair of boxes to interpolate.
+An assigned motion pattern can also differ from an object's actual path,
+so an approximately correct presence interval need not yield well-aligned per-frame boxes or high HOTA.}
+\revpending{LEAP's low HOTA reflects masking,
+association,
+and reconstruction losses.
+Its configured masks completely obscure \revisionLeapCalDoTOneMaskedBoxesPct{}\% and \revisionLeapCalDoTTwoMaskedBoxesPct{}\% of evaluated ground-truth boxes on CalDoT1 and CalDoT2,
+respectively.
+On CalDoT1,
+only \revisionLeapCalDoTOneMovingContinuityPct{}\% of consecutive ground-truth-matched observations below LEAP's stationary-overlap threshold retain an identity.
+On CalDoT2,
+\revisionLeapCalDoTTwoEarlyExitPct{}\% of uncensored tracks lasting at least one second and having a following sample exit between their first two recorded detection frames.
+Even with true boxes and identities at LEAP's sample times,
+linear interpolation reaches IoU $\geq0.5$ on only \revisionLeapCalDoTTwoOracleBoxMatchPct{}\% of bracketed CalDoT2 boxes;
+straight roads do not imply uniform image-space motion.
+Assigned-pattern reconstruction also aligns with only \revisionLeapCalDoTTwoPatternAnchorMatchPct{}\% of LEAP's observed boxes at this threshold.}
+
+\revpending{B3D's unsignalized intersections and traffic circles also expose pattern-coverage and association limitations.
+On B3D3,
+\revisionLeapBThreeDThreeEligiblePatterns{}/\revisionLeapBThreeDThreePatterns{} learned patterns pass the configured endpoint-region filter,
+and only \revisionLeapBThreeDThreeContinuityPct{}\% of consecutive ground-truth-matched observations retain an identity.
+Thus repeated observations can still yield separate one-observation identities.
+Amsterdam's higher reported HOTA uses linear reconstruction;
+its limited movement between many sampled endpoints makes interpolation more accurate,
+with the same true-box diagnostic reaching \revisionLeapAmsterdamOracleBoxMatchPct{}\% at IoU $\geq0.5$.}
+
+% \input{content/revision/native_queries}
+% \input{content/revision/leap_reconstruction}
+
+On the other hand, OTIF achieves reasonable accuracy,
+but its speedup derives primarily from uniform frame skipping,
+with its segmentation proxy model contributing comparatively little to throughput gains,
+as reported by Bastani et al.~\cite{bastani2022otif}.
+This reliance on frame skipping produces coarse-grained tracks that degrade accuracy at higher throughput operating points,
+consistent with the observation that uniform temporal sampling cannot accommodate spatially varying sampling requirements (\autoref{sec:motivation}, Obs.~2).
+The limited benefit of OTIF's proxy is visible directly in the B3D4 Pareto front.
+Its most accurate point disables the segmentation proxy entirely,
+while the next point enables it and exhibits a sharp accuracy drop with little speedup gain.
+This points to a limitation that motivates \sys{}'s design:
+OTIF's rectangular crops are a poor fit for the irregular shape of real activity regions (\autoref{sec:motivation}, Obs.~3),
+forcing the proxy to either over-include background (yielding little speedup) or aggressively discard tiles with detections (yielding the observed accuracy drop).
+% Second, the proxy considers only the pixel content of the current frame,
+% ignoring the motion and positional cues that \sys{}'s relevance classifier combines;
+% without these cues, the proxy cannot reliably distinguish moving objects from background,
+% precisely the failure mode that \autoref{sec:relevance-classification} aims to addresses.
+
+\input{content/revision/preparation}
+
+\subsection{Ablation Studies}
+
+We now systematically break down the contribution of the operators in \sys{}'s tracking pipeline.
+We examine the throughput improvements achieved by sequentially enabling our core spatial and temporal optimization operators,
+and then whole-frame sampling.
+% ,
+% a standard technique that runs upstream of the three \sys{} operators
+% and is swept as an additional configuration parameter (\autoref{sec:additional-knobs}).
+We also validate the one-dimensional tolerance sweep against the full combinatorial per-tile gap search.
+% \subsubsection{Tracking Algorithm Selection}
+% \label{sec:ablation-algorithm}
+% To evaluate the impact of including tracking algorithm as a dimension of the Pareto search,
+% we compare three configurations:
+% (1)~only BYTETrack configurations,
+% (2)~only SORT configurations,
+% and (3)~the full Pareto frontier,
+% which admits configurations from both algorithms.
+% Depending on the dataset and the desired throughput-accuracy operating point,
+% either algorithm may contribute Pareto-optimal points,
+% so restricting the search to a single algorithm leaves gaps in the frontier.
+% \ck{todo: add table or figure showing per-dataset Pareto frontiers under each condition, highlighting regimes where each algorithm contributes Pareto-optimal points and where the combined frontier strictly dominates.}
+
+\subsubsection{Relevance Classifier Accuracy}
+\label{sec:ablation-classifier}
+
+We compare the deployed relevance classifier against the original RGB-only ShuffleNet baseline.
+% on the \PtwozerofiveCompareClassifiersVideoset{} split.
+Across \PtwozerofiveCompareClassifiersDatasetCount{} datasets at $T_r=\PtwozerofiveCompareClassifiersThreshold$,
+adding the frame-difference image and position encoding improves F1 over the baseline on all \PtwozerofiveCompareClassifiersImprovedFOneDatasetCount{} datasets,
+as shown in the \panellabel{Left} panel of \autoref{fig:classifier-and-packing}.
+The augmented classifier yields an average F1 gain of \PtwozerofiveCompareClassifiersMacroAvgFOneDeltaPp{}\%.
+The largest gain appears on \PtwozerofiveCompareClassifiersBestDatasetDisplay{},
+where F1 rises from \PtwozerofiveCompareClassifiersBestFOneBaseline{} to \PtwozerofiveCompareClassifiersBestFOneModified{}
+(gain \PtwozerofiveCompareClassifiersBestFOneDeltaPp{}\%).
+This gain comes with \PtwozerofiveCompareClassifiersMacroAvgRuntimeSlowerPct{}\% higher classifier inference time on average.
+\revpending{On three clips per dataset,
+matched-frame timing on an idle Quadro RTX 6000 with local CPU/memory placement finds classification \revisionClassifierSpeedupMin{}--\revisionClassifierSpeedupMax{}$\times$ faster than detection at deployed batch sizes (16 versus one).
+At equal batch size 16 it is \revisionClassifierEqualBatchSpeedupMin{}--\revisionClassifierEqualBatchSpeedupMax{}$\times$ faster;
+including RGB copying gives \revisionClassifierWithCopySpeedupMin{}--\revisionClassifierWithCopySpeedupMax{}$\times$.
+Classification achieves \revisionClassifierFpsMin{}--\revisionClassifierFpsMax{} FPS versus \revisionDetectorFpsMin{}--\revisionDetectorFpsMax{} detector FPS,
+and occupies \revisionClassifierShareMinPct{}--\revisionClassifierShareMaxPct{}\% of extraction (median \revisionClassifierShareMedianPct{}\%) at the 5\% points.}
+% We therefore use the augmented classifier in the end-to-end system.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/generated/p206_classifier_and_packing.pdf}
+    \caption{\revpending{\panellabel{Left} Relevance-classifier comparison.}
+    % across all
+    % % \PtwozerofiveCompareClassifiersDatasetCount{}
+    % datasets.
+    Modified:
+    \autoref{sec:relevance-classification}.
+    % ShuffleNet augmented with the frame-difference image and tile-position encoding.
+    Baseline:
+    RGB-only ShuffleNet.
+    % We report F1, recall, and precision against classifier runtime.
+    % tile size \PtwozerofiveCompareClassifiersBestTileSize{},
+    % and sample rate \PtwozerofiveCompareClassifiersSampleRate{}.
+    \revpending{\panellabel{Right} Packing efficacy.}
+    % ,
+    % on the \packingEfficacyEvalSplit{}~split
+    % across datasets,
+    % at sample rate \packingEfficacySampleRate{},
+    % restricted to the ``none'' tile-padding mode.
+    % Packing efficacy is the fraction of total canvas tile-cells that the packer uses,
+    % counting unoccupied tiles in the denominator.
+    }
+    \Description{}
+    \label{fig:classifier-and-packing}
+\end{figure}
+
+% \subsubsection{pruning efficacy}
+% \ck{show how our pruning algorithm is able to prune out at 0.5 sec runtime constraints}
+
+\subsubsection{Packing Efficacy}
+\label{sec:ablation-packing}
+We quantify how tightly \sys{}'s packer fills each generated canvas by measuring the
+fraction of total canvas tile-cells that the packer actually uses,
+\[
+\text{packing efficacy} \;=\; \frac{\text{occupied tiles}}{\text{occupied tiles} + \text{empty tiles}},
+\]
+where the denominator is
+the number of canvases $\times$ canvas height $\times$ canvas width,
+measured in tile units.
+% This metric isolates the quality of the packing algorithm and is independent of the
+% per-polyomino tile padding,
+% which is intended to improve downstream detection rather than packing density.
+% At sample rate \packingEfficacySampleRate{},
+% and canvas scale \packingEfficacyCanvasScale{},
+Without tile padding, the packer utilizes
+\packingEfficacyMeanAcrossDatasets{}\% of the available canvas area on average across
+\packingEfficacyDatasetCount{} datasets,
+peaking at \packingEfficacyBestValue{}\% on \packingEfficacyBestDatasetDisplay{}.
+The \panellabel{Right} panel of \autoref{fig:classifier-and-packing} shows the per-dataset packing
+efficacy without tile-padding.
+
+The two least densely packed datasets are B3D~2 and CalDoT~1,
+which fall noticeably below the per-dataset average
+(CalDoT~1 down to \packingEfficacyWorstValue{}\%).
+We traced both to dataset-specific properties of the relevant polyominoes.
+% rather than to limitations of the packer itself.
+B3D~2 captures a busy unsignalized intersection in which vehicles routinely cluster
+shoulder-to-shoulder.
+% while waiting for
+% % or yielding to
+% crossing traffic.
+Adjacent tiles with vehicles merge into a single connected polyomino,
+so the per-canvas polyomino population is shifted toward fewer,
+larger polyominoes than on the less-congested B3D scenes.
+Specifically, aggregated across all validation videos,
+B3D~2 produces \packingEfficacyBThreeDTwoPolyPerCanvas{} polyominoes per canvas
+averaging \packingEfficacyBThreeDTwoPolyMeanTiles{} tiles each,
+versus \packingEfficacyBThreeDThreePolyPerCanvas{} polyominoes per canvas
+averaging \packingEfficacyBThreeDThreePolyMeanTiles{} tiles each on B3D~3.
+% A handful of these merged blobs span the full canvas height,
+% which blocks entire row bands of the canvas once placed.
+CalDoT~1 exhibits a similar effect.
+Aggregated across all validation videos,
+CalDoT~1 produces \packingEfficacyCalDoTOnePolyPerCanvas{} polyominoes per canvas
+averaging \packingEfficacyCalDoTOnePolyMeanTiles{} tiles each,
+versus \packingEfficacyCalDoTTwoPolyPerCanvas{} polyominoes per canvas
+averaging \packingEfficacyCalDoTTwoPolyMeanTiles{} tiles each on CalDoT~2.
+% The CalDoT~1 polyominoes are also markedly taller and closer to square than on CalDoT~2,
+% so they occupy both row and column slots of the fixed canvas
+% rather than stacking cleanly along the bottom rows.
+% Because \sys{}'s packer does not rotate polyominoes,
+% since rotation would invalidate the
+% tile-position encoding used by the relevance classifier
+% (\autoref{sec:ablation-classifier}),
+% these
+% two effects translate directly into reduced packing density.
+
+\revpending{Packing density measures canvas use;
+its effect on detector accuracy is measured separately in \autoref{sec:packed-detection}.}
+
+\subsubsection{Optimization Operators}
+We measure the impact of each optimization technique by incrementally enabling them and comparing their throughput over the reference baseline under a strict 5\% maximum HOTA loss.
+% Starting from the naive execution,
+\sys{} first introduces the relevance classification and polyomino packing operators.
+As shown by the Pareto front results,
+this combined spatial pruning approach brings the throughput speedup over the reference execution up to \ablationOneSpeedupMax{}$\times$
+(average \ablationOneSpeedupAvg{}$\times$)
+while safely remaining within the tracking accuracy constraint.
+Next, \sys{} adds the fine-grained polyomino pruning operator, which significantly accelerates tracking in simple, low-activity video regions.
+The inclusion of polyomino pruning further increases the maximum speedup to \ablationTwoSpeedupMax{}$\times$
+(average \ablationTwoSpeedupAvg{}$\times$)
+over the baseline execution.
+Finally, we evaluate enabling the whole-frame sampling knob $s > 1$ (\autoref{sec:additional-knobs}).
+% for high-throughput operating points where the accuracy budget permits skipping whole frames upstream of the tracking pipeline.
+Together,
+the complete execution engine achieves a maximum speedup of \ablationThreeSpeedupMax{}$\times$
+(average \ablationThreeSpeedupAvg{}$\times$)
+while still strictly adhering to the 5\% tracking accuracy loss constraint.
+
+% \subsubsection{why canvas size has to be the same as the video frame size?}
+% \subsubsection{Canvas Size}
+% \label{sec:ablation-canvas-size}
+% \sys{} fixes the canvas pixel dimensions to match those of the source video frame
+% (canvas scale \packingEfficacyCanvasScale{}) for three reasons.
+% First,
+% both the relevance classifier and the object detector are invoked on canvas content
+% rather than on raw frames.
+% Each was trained on inputs drawn at the source-frame scale,
+% so a canvas at the same scale preserves the per-tile pixel resolution they expect
+% and avoids any train/test distribution shift caused by re-sampling.
+% Second,
+% polyominoes can be arbitrarily large within the always-relevant region of a frame.
+% Empirically,
+% the bounding box of the largest polyominoes we observed fills nearly the full source
+% frame;
+% for example,
+% $12 \times 15$ tiles inside a $12 \times 18$-tile canvas on B3D~2.
+% A canvas strictly smaller than the source frame would force such polyominoes to be
+% split,
+% breaking the tile-position encoding used by the classifier
+% (\autoref{sec:ablation-classifier})
+% and complicating the inverse mapping from detected boxes back to source-frame
+% coordinates.
+% Third,
+% a canvas strictly larger than the source frame would waste detector compute on tiles
+% that can never be filled,
+% since the foreground area per frame is upper-bounded by the source-frame area itself.
+% Setting the canvas equal to the source frame size therefore upper-bounds the packing
+% problem at exactly the resolution required for downstream tracking accuracy,
+% with no excess detector work.
+
+\subsubsection{Maximum tile sampling gaps}
+\label{sec:ablation-constraints}
+
+We evaluate the sweep over the mistrack-rate tolerance~$\bar{M}$ from \autoref{sec:learn-constraints}.
+Each tolerance yields a different $\bar{G}^{\bar{M}}$.
+We show that the sweep approximates the Pareto frontier of pruning ratio versus HOTA against obtained by exhaustively enumerating all possible $\bar{G}$.
+% exhaustive per-tile gap selection.
+To keep the exhaustive baseline feasible,
+we reduce the tile grid to $3 \times 3$
+and the candidate gap set to $\{1, 2, 4\}$,
+yielding $3^9 \approx 20{,}000$ per-tile gap assignments.
+We do not report throughput directly on this sweep,
+because re-running full tracking execution on every assignment is prohibitively expensive;
+instead,
+we use the pruning ratio (fraction of tiles skipped)
+as a throughput proxy.
+We use BYTETrack as the tracker.
+
+To isolate the effect of the maximum tile sampling gaps
+from classifier and detector variance,
+the experimental pipeline constructs polyominoes directly from the reference-pipeline bounding boxes rather than classifier output,
+retains only detections whose centers fall inside a retained polyomino,
+and feeds the retained detections to BYTETrack.
+We report HOTA against the reference tracking output
+alongside the pruning ratio.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/generated/pruning_vs_hota.png}
+    \caption{HOTA vs.\ pruning ratio per dataset.
+    Gray: exhaustive per-tile sampling assignments
+    over a $3\times 3$ grid with gaps $\{1, 2, 4\}$.
+    Black: Pareto frontier of the exhaustive sweep.
+    Blue diamonds: our heuristic $\bar{G}^{\bar{M}}$ swept over $\bar{M}$ with BYTETrack.}
+    \Description{}
+    \label{fig:sampling-constraints-ablation}
+    % \vspace{-0.25in}
+\end{figure}
+
+\autoref{fig:sampling-constraints-ablation} shows the resulting trade-off per dataset.
+The heuristic points (blue diamonds),
+obtained by sweeping $\bar{M}$,
+lie on or near the Pareto frontier of the exhaustive per-tile sweep across datasets,
+indicating that the one-dimensional tolerance sweep loses little
+relative to the full combinatorial search.
+Quantitatively,
+at each heuristic pruning level we compare against the exhaustive
+Pareto point with the highest pruning ratio not exceeding that level;
+HOTA loss versus that anchor is at most \MistrackHeuristicMaxHotaLossPercent\%{}
+(mean \MistrackHeuristicAvgHotaLossPercent\%).
+\input{content/revision/additional_evaluation}

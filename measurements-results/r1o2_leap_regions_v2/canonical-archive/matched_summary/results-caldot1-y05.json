@@ -1,0 +1,1782 @@
+{
+  "datasets": {
+    "CalDoT1": {
+      "agreement": {
+        "clips": {
+          "clips": 60,
+          "differing_clips": [
+            "0",
+            "1",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "2",
+            "20",
+            "21",
+            "22",
+            "23",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "3",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+            "38",
+            "39",
+            "4",
+            "40",
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "5",
+            "50",
+            "51",
+            "52",
+            "53",
+            "54",
+            "55",
+            "56",
+            "57",
+            "58",
+            "59",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "identical_clips": 3
+        },
+        "exporter_sha256": [
+          "f63df0207254312fc7f29b92b3ce0f0c6c0e27c75d8bed89043b07262579493b"
+        ],
+        "exports": {
+          "rerun_vs_scored": {
+            "clips": 60,
+            "differing_clips": [
+              "0",
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "2",
+              "20",
+              "21",
+              "22",
+              "23",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "3",
+              "30",
+              "31",
+              "32",
+              "33",
+              "34",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "4",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "48",
+              "49",
+              "5",
+              "50",
+              "51",
+              "52",
+              "53",
+              "54",
+              "55",
+              "56",
+              "57",
+              "58",
+              "59",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "identical_clips": 3
+          },
+          "rerun_vs_sota": {
+            "clips": 60,
+            "differing_clips": [
+              "0",
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "2",
+              "20",
+              "21",
+              "22",
+              "23",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "3",
+              "30",
+              "31",
+              "32",
+              "33",
+              "34",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "4",
+              "40",
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "48",
+              "49",
+              "5",
+              "50",
+              "51",
+              "52",
+              "53",
+              "54",
+              "55",
+              "56",
+              "57",
+              "58",
+              "59",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "identical_clips": 3
+          },
+          "scored_vs_sota": {
+            "clips": 60,
+            "differing_clips": [],
+            "identical_clips": 60
+          }
+        },
+        "frames_sampled": {
+          "clip_runs": 120,
+          "rerun_frames_sampled": 734,
+          "same_sampled_count": 36,
+          "scored_runs": 2
+        },
+        "objects": {
+          "identical": 0,
+          "matched_ids": 534,
+          "rerun_objects": 843,
+          "same_class": 444,
+          "same_interval": 0,
+          "same_pattern": 23,
+          "scored_objects": 584
+        },
+        "patterns": {
+          "identical_clips": 0,
+          "rerun_pattern_files": 1,
+          "scored_pattern_files": 1
+        }
+      },
+      "classes": {
+        "observations": {
+          "2": 1969
+        },
+        "observations_per_object": {
+          "max_observations": 15,
+          "mean_observations": 2.3357,
+          "objects": 843,
+          "objects_observed_once": 617,
+          "objects_observed_twice_or_more": 226,
+          "objects_unobserved": 0,
+          "observations": 1969
+        },
+        "rerun_objects": {
+          "2": 843
+        },
+        "scored_objects": {
+          "2": 491,
+          "5": 4,
+          "7": 89
+        }
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "frame_base": {
+        "aligned": true,
+        "best": {
+          "lag": 0,
+          "matched_share": 0.9711,
+          "mean_best_iou": 0.8651,
+          "observations": 1969,
+          "scale": 1.0
+        },
+        "shifts": [
+          {
+            "lag": 0,
+            "matched_share": 0.5896,
+            "mean_best_iou": 0.5586,
+            "observations": 1969,
+            "scale": 0.5
+          },
+          {
+            "lag": -3,
+            "matched_share": 0.7242,
+            "mean_best_iou": 0.667,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": -2,
+            "matched_share": 0.7989,
+            "mean_best_iou": 0.7087,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": -1,
+            "matched_share": 0.8888,
+            "mean_best_iou": 0.759,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.9711,
+            "mean_best_iou": 0.8651,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 1,
+            "matched_share": 0.9431,
+            "mean_best_iou": 0.8132,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 2,
+            "matched_share": 0.8395,
+            "mean_best_iou": 0.7539,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 3,
+            "matched_share": 0.7547,
+            "mean_best_iou": 0.7083,
+            "observations": 1969,
+            "scale": 1.0
+          },
+          {
+            "lag": 0,
+            "matched_share": 0.3123,
+            "mean_best_iou": 0.2988,
+            "observations": 1969,
+            "scale": 2.0
+          }
+        ]
+      },
+      "hota": {
+        "linear": {
+          "AssA": 0.7803,
+          "DetA": 0.2859,
+          "HOTA": 0.4706,
+          "LocA": 0.9004,
+          "dets": 68710,
+          "gt_dets": 199445,
+          "ids": 900
+        },
+        "pattern": {
+          "AssA": 0.0748,
+          "DetA": 0.0887,
+          "HOTA": 0.0788,
+          "LocA": 0.6498,
+          "dets": 152947,
+          "gt_dets": 199445,
+          "ids": 900
+        },
+        "pattern_minus_reported_e6": 2173.6472,
+        "pattern_reproduces_reported": false,
+        "raw": {
+          "AssA": 0.0138,
+          "DetA": 0.0092,
+          "HOTA": 0.0112,
+          "LocA": 0.8968,
+          "dets": 1969,
+          "gt_dets": 199445,
+          "ids": 900
+        },
+        "reported": {
+          "AssA": 0.0847,
+          "DetA": 0.0776,
+          "HOTA": 0.0767,
+          "LocA": 0.6356,
+          "dets": 70045,
+          "gt_dets": 199445,
+          "ids": 633
+        }
+      },
+      "timing": {
+        "contaminated": false,
+        "cpus": "0-9,40-49",
+        "end": "2026-10-30T11:04:42-07:00",
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_time_wall_s": 389.4,
+        "gpu": 0,
+        "host": "bombe",
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "leap_timers": {
+          "rerun_decode_s": 131.9607,
+          "rerun_detector_s": 53.8342,
+          "rerun_differencer_s": 2.7786,
+          "rerun_match_s": 26.6005,
+          "rerun_reid_s": 25.1908,
+          "rerun_run_session_s": 383.9792,
+          "scored_decode_s": 115.4352,
+          "scored_detector_s": 23.7238,
+          "scored_differencer_s": 3.8837,
+          "scored_inference_total_s": 187.7225,
+          "scored_match_s": 30.169,
+          "scored_reid_s": 29.1302,
+          "scored_runs_max": 2,
+          "scored_runs_min": 2
+        },
+        "max_rss_kb": 2601752,
+        "neighbors": {
+          "node_neighbor_busy_share": 0.4773,
+          "other_gpus": [
+            {
+              "busy_share": 0.0,
+              "gpu": 1,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.4773,
+              "gpu": 2,
+              "mem_max_mib": 14355.0,
+              "util_mean": 13.571
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 3,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 4,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            },
+            {
+              "busy_share": 0.6526,
+              "gpu": 5,
+              "mem_max_mib": 15989.0,
+              "util_mean": 17.7281
+            },
+            {
+              "busy_share": 0.0,
+              "gpu": 6,
+              "mem_max_mib": 0.0,
+              "util_mean": 0.0
+            }
+          ]
+        },
+        "numa_node": 0,
+        "run": "g0-20261030T105803",
+        "start": "2026-10-30T10:58:10-07:00"
+      },
+      "video_identity": [
+        {
+          "dataset": "caldot1-y05",
+          "differing": [],
+          "identical": 60,
+          "leap_dir": "videos/caldot1/test/",
+          "leap_videos": 60,
+          "our_videos": 60,
+          "split": "test"
+        },
+        {
+          "dataset": "caldot1-y05",
+          "differing": [],
+          "identical": 60,
+          "leap_dir": "videos/caldot1/train/",
+          "leap_videos": 60,
+          "our_videos": 60,
+          "split": "train"
+        }
+      ]
+    }
+  },
+  "environment": {
+    "dockerfile": "FROM docker-config-leap-alenatunnel-leap:latest\nRUN rm -rf /opt/conda/envs/leap\nADD leap-env.tar /opt/conda/envs/\n",
+    "images": {
+      "bombe-revision-leap:scored-env": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de 2026-10-27T06:18:19.359192963-07:00",
+      "docker-config-leap-alenatunnel-leap:latest": "sha256:2e4b25e098c87769e671a7de7a2cb45be9e510846bf78ac42f382d6f1527e659 2026-03-13T13:35:52.462123054-07:00"
+    },
+    "label_aliases": {
+      "caldot1": "caldot1-y5",
+      "caldot2": "caldot2-y5"
+    },
+    "scored_container": {
+      "created": "2026-03-16T22:53:22.158600103Z",
+      "env_tar_bytes": 11536444416,
+      "finished": "2026-09-12T03:07:51.443764247Z",
+      "host": "manchester",
+      "image": "sha256:c81e26981cd717fb682f22009891bbbb0dc3579a712cda481ac783dceb8551ea",
+      "manchester_image_created": "2026-03-16T15:50:46.277936433-07:00",
+      "mounts": [
+        "/data/alenachao/data/otif-dataset -> /path/to/otif-dataset",
+        "/data/alenachao/polyis-cache -> /polyis-cache",
+        "/work/alenachao/tunnel/hota_outputs -> /sota-results",
+        "/work/alenachao/tunnel/work -> /work/alenachao",
+        "/data/alenachao -> /data/alenachao",
+        "/data/alenachao/polyis-data -> /polyis-data",
+        "/work/alenachao/tunnel/home-config -> /root/.config",
+        "/work/alenachao/tunnel/home-ssh -> /root/.ssh",
+        "/work/alenachao/tunnel/workspace -> /workspace"
+      ],
+      "name": "alenatunnel-leap",
+      "started": "2026-03-16T22:53:22.206422514Z"
+    }
+  },
+  "inputs": [
+    {
+      "bytes": 6056,
+      "exists": true,
+      "mtime": "2026-10-30T17:57:06+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_matched/raw/manifest.json",
+      "sha256": "69c4583c57cdafd4bbf14b325eeb5ed3dc70325a6d6a6ecba10e82d1456eae21"
+    },
+    {
+      "bytes": 41598,
+      "exists": true,
+      "mtime": "2026-10-30T18:04:41+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_matched/raw/caldot1-y05/leap_rerun.jsonl.gz",
+      "sha256": "914b342b3331c747f6061185194becab631ad962f7678675dfbd60a601309a50"
+    },
+    {
+      "bytes": 4779,
+      "exists": true,
+      "mtime": "2026-10-30T17:57:04+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_matched/raw/caldot1-y05/leap_scored.jsonl.gz",
+      "sha256": "3a5fb37ef99ea6190804c6e96999b8a9be6e85d32e20e92569f037d27e1726f1"
+    },
+    {
+      "bytes": 9574,
+      "exists": true,
+      "mtime": "2026-10-30T17:57:04+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_matched/raw/caldot1-y05/leap_scored_run.jsonl.gz",
+      "sha256": "17e916bbea16391ddec3aa67878d4660780d386e1af6ba5fef376dcb936389ab"
+    },
+    {
+      "bytes": 1599740,
+      "exists": true,
+      "mtime": "2026-10-30T18:04:51+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_matched/raw/caldot1-y05/leap_rerun_export.jsonl.gz",
+      "sha256": "b15722b31e77b55417bcfbac605008ef8fba9962b203da1df898f3f6ed341369"
+    },
+    {
+      "bytes": 823415,
+      "exists": true,
+      "mtime": "2026-10-30T17:57:05+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_matched/raw/caldot1-y05/leap_scored_export.jsonl.gz",
+      "sha256": "c56a66b367acfffd59ae3fe63aeeacdd1030b821fc1aa116a950a46b9a2bf536"
+    },
+    {
+      "bytes": 4262,
+      "exists": true,
+      "mtime": "2026-10-30T18:04:45+00:00",
+      "path": "/polyis/measurements-results/r1o2_leap_matched/raw/caldot1-y05/leap_rerun_launch.json",
+      "sha256": "13d9de024d3f81cb7cc0a2ed6a46233619242031d14b68ffa99312d83a92c0ca"
+    },
+    {
+      "bytes": 6602,
+      "exists": true,
+      "mtime": "2026-10-26T17:31:01+00:00",
+      "path": "/polyis-cache/SOTA/leap/caldot1-y05/accuracy/raw/test/000/DATASET.json",
+      "sha256": "c3bb1a0ef652c766f3ec06780498e4aa53ae7bf5e3d637147f5966c338a15e6d"
+    }
+  ],
+  "method": {
+    "hota_variants": [
+      "raw",
+      "linear",
+      "pattern"
+    ],
+    "iou_match": 0.5,
+    "lags": [
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3
+    ],
+    "leap_param": "000",
+    "scales": [
+      0.5,
+      1.0,
+      2.0
+    ]
+  },
+  "preparation": {
+    "leap_crops": [],
+    "leap_labels": [],
+    "leap_motion_patterns": [],
+    "leap_reid_training": [],
+    "otif_curves": [],
+    "steps": [
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0592,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-29T22:56:53-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 14187.0,
+        "gpu_util_busy_share": 0.9891,
+        "gpu_util_mean": 79.2138,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 11.47,
+        "load_1m_mean": 6.5281,
+        "max_rss_kb": 3906032.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.9473,
+            "gpu": 0,
+            "mem_max_mib": 14285.0,
+            "util_mean": 72.4324
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9453,
+            "gpu": 2,
+            "mem_max_mib": 14285.0,
+            "util_mean": 72.1434
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1921609841,
+          "exists": true,
+          "files": 180
+        },
+        "run": "g5-20261029T215503",
+        "samples": 2021,
+        "start": "2026-10-29T21:55:28-07:00",
+        "step": "labels_train",
+        "system": "leap",
+        "system_s": 56.48,
+        "tracked_frames": null,
+        "user_s": 4288.21,
+        "wall_s": 3672.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0593,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-29T23:58:21-07:00",
+        "evaluation_only": true,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 7581.0,
+        "gpu_util_busy_share": 0.9896,
+        "gpu_util_mean": 78.9738,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 20.22,
+        "load_1m_mean": 16.2943,
+        "max_rss_kb": 3865244.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.9892,
+            "gpu": 0,
+            "mem_max_mib": 3513.0,
+            "util_mean": 71.9366
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 1.0,
+            "gpu": 2,
+            "mem_max_mib": 1853.0,
+            "util_mean": 92.5193
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 3887258582,
+          "exists": true,
+          "files": 360
+        },
+        "run": "g5-20261029T225655",
+        "samples": 2026,
+        "start": "2026-10-29T22:57:00-07:00",
+        "step": "labels_test",
+        "system": "leap",
+        "system_s": 58.64,
+        "tracked_frames": null,
+        "user_s": 4302.65,
+        "wall_s": 3678.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.3124,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-30T00:01:36-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 20.48,
+        "load_1m_mean": 18.4247,
+        "max_rss_kb": 659032.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 1.0,
+            "gpu": 0,
+            "mem_max_mib": 1827.0,
+            "util_mean": 73.3444
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9801,
+            "gpu": 2,
+            "mem_max_mib": 8063.0,
+            "util_mean": 89.8543
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 149452659,
+          "exists": true,
+          "files": 45971
+        },
+        "run": "g5-20261029T235824",
+        "samples": 100,
+        "start": "2026-10-29T23:58:29-07:00",
+        "step": "reid_data",
+        "system": "leap",
+        "system_s": 51.3,
+        "tracked_frames": null,
+        "user_s": 1101.49,
+        "wall_s": 184.51
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0942,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-30T05:49:41-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 7901.0,
+        "gpu_util_busy_share": 0.9986,
+        "gpu_util_mean": 74.9582,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 18.75,
+        "load_1m_mean": 16.4436,
+        "max_rss_kb": 7189064.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.9995,
+            "gpu": 0,
+            "mem_max_mib": 8029.0,
+            "util_mean": 72.3096
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9522,
+            "gpu": 2,
+            "mem_max_mib": 14355.0,
+            "util_mean": 85.3703
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1181535434,
+          "exists": true,
+          "files": 17
+        },
+        "run": "g5-20261030T000140",
+        "samples": 11537,
+        "start": "2026-10-30T00:01:45-07:00",
+        "step": "reid_train",
+        "system": "leap",
+        "system_s": 4443.85,
+        "tracked_frames": null,
+        "user_s": 34887.67,
+        "wall_s": 20872.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.6324,
+        "cpu_threads": 20,
+        "cpus": "20-29,60-69",
+        "dataset": "ams-y05",
+        "end": "2026-10-30T10:58:00-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 5,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 29.95,
+        "load_1m_mean": 21.801,
+        "max_rss_kb": 232436.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 0,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 2,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 992431,
+          "exists": true,
+          "files": 3
+        },
+        "run": "g5-20261030T105710",
+        "samples": 10,
+        "start": "2026-10-30T10:57:29-07:00",
+        "step": "motion_patterns",
+        "system": "leap",
+        "system_s": 2.48,
+        "tracked_frames": null,
+        "user_s": 195.98,
+        "wall_s": 15.69
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0605,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-29T22:25:28-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 2595.0,
+        "gpu_util_busy_share": 0.9777,
+        "gpu_util_mean": 74.6815,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 7.98,
+        "load_1m_mean": 6.5576,
+        "max_rss_kb": 3833760.0,
+        "node_neighbor_busy_share": 0.9713,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9713,
+            "gpu": 2,
+            "mem_max_mib": 14285.0,
+            "util_mean": 73.7025
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9867,
+            "gpu": 5,
+            "mem_max_mib": 20881.0,
+            "util_mean": 79.1975
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 724518073,
+          "exists": true,
+          "files": 180
+        },
+        "run": "g0-20261029T215503",
+        "samples": 986,
+        "start": "2026-10-29T21:55:28-07:00",
+        "step": "labels_train",
+        "system": "leap",
+        "system_s": 41.99,
+        "tracked_frames": null,
+        "user_s": 2121.4,
+        "wall_s": 1786.77
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0607,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-29T22:55:21-07:00",
+        "evaluation_only": true,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 14285.0,
+        "gpu_util_busy_share": 0.9715,
+        "gpu_util_mean": 74.2584,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 7.44,
+        "load_1m_mean": 6.3571,
+        "max_rss_kb": 3865156.0,
+        "node_neighbor_busy_share": 0.9647,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9647,
+            "gpu": 2,
+            "mem_max_mib": 14059.0,
+            "util_mean": 73.9539
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9898,
+            "gpu": 5,
+            "mem_max_mib": 2419.0,
+            "util_mean": 79.2687
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1453314496,
+          "exists": true,
+          "files": 360
+        },
+        "run": "g0-20261029T222530",
+        "samples": 983,
+        "start": "2026-10-29T22:25:36-07:00",
+        "step": "labels_test",
+        "system": "leap",
+        "system_s": 40.27,
+        "tracked_frames": null,
+        "user_s": 2122.9,
+        "wall_s": 1780.76
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.1989,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-29T22:57:24-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 14.49,
+        "load_1m_mean": 10.4437,
+        "max_rss_kb": 315384.0,
+        "node_neighbor_busy_share": 0.4111,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.4111,
+            "gpu": 2,
+            "mem_max_mib": 3861.0,
+            "util_mean": 36.6778
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.8222,
+            "gpu": 5,
+            "mem_max_mib": 8573.0,
+            "util_mean": 64.5444
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 100869890,
+          "exists": true,
+          "files": 78835
+        },
+        "run": "g0-20261029T225524",
+        "samples": 59,
+        "start": "2026-10-29T22:55:30-07:00",
+        "step": "reid_data",
+        "system": "leap",
+        "system_s": 29.53,
+        "tracked_frames": null,
+        "user_s": 408.12,
+        "wall_s": 110.02
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0941,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-30T10:23:34-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 6511.0,
+        "gpu_util_busy_share": 0.9991,
+        "gpu_util_mean": 71.622,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 20.48,
+        "load_1m_mean": 10.1633,
+        "max_rss_kb": 7920700.0,
+        "node_neighbor_busy_share": 0.5679,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.5679,
+            "gpu": 2,
+            "mem_max_mib": 14355.0,
+            "util_mean": 51.1614
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.5859,
+            "gpu": 5,
+            "mem_max_mib": 20993.0,
+            "util_mean": 44.4315
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1216370786,
+          "exists": true,
+          "files": 17
+        },
+        "run": "g0-20261029T225728",
+        "samples": 25751,
+        "start": "2026-10-29T22:57:34-07:00",
+        "step": "reid_train",
+        "system": "leap",
+        "system_s": 8641.08,
+        "tracked_frames": null,
+        "user_s": 68822.93,
+        "wall_s": 41157.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.7207,
+        "cpu_threads": 20,
+        "cpus": "0-9,40-49",
+        "dataset": "caldot1-y05",
+        "end": "2026-10-30T10:58:00-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 0,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 29.95,
+        "load_1m_mean": 20.5873,
+        "max_rss_kb": 288228.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 2,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 5,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1864197,
+          "exists": true,
+          "files": 5
+        },
+        "run": "g0-20261030T105710",
+        "samples": 11,
+        "start": "2026-10-30T10:57:29-07:00",
+        "step": "motion_patterns",
+        "system": "leap",
+        "system_s": 2.22,
+        "tracked_frames": null,
+        "user_s": 238.64,
+        "wall_s": 16.71
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0602,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-29T22:25:18-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 14285.0,
+        "gpu_util_busy_share": 0.9704,
+        "gpu_util_mean": 74.2165,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 7.98,
+        "load_1m_mean": 6.5506,
+        "max_rss_kb": 3817128.0,
+        "node_neighbor_busy_share": 0.9785,
+        "other_gpus": [
+          {
+            "busy_share": 0.9785,
+            "gpu": 0,
+            "mem_max_mib": 13899.0,
+            "util_mean": 74.7988
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9852,
+            "gpu": 5,
+            "mem_max_mib": 20841.0,
+            "util_mean": 79.1467
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 371553919,
+          "exists": true,
+          "files": 180
+        },
+        "run": "g2-20261029T215503",
+        "samples": 979,
+        "start": "2026-10-29T21:55:28-07:00",
+        "step": "labels_train",
+        "system": "leap",
+        "system_s": 41.29,
+        "tracked_frames": null,
+        "user_s": 2099.79,
+        "wall_s": 1777.86
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.0603,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-29T22:54:56-07:00",
+        "evaluation_only": true,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 14241.0,
+        "gpu_util_busy_share": 0.9774,
+        "gpu_util_mean": 75.041,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 7.76,
+        "load_1m_mean": 6.3555,
+        "max_rss_kb": 3876908.0,
+        "node_neighbor_busy_share": 0.97,
+        "other_gpus": [
+          {
+            "busy_share": 0.97,
+            "gpu": 0,
+            "mem_max_mib": 14285.0,
+            "util_mean": 74.2318
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9898,
+            "gpu": 5,
+            "mem_max_mib": 2419.0,
+            "util_mean": 79.199
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 732506214,
+          "exists": true,
+          "files": 360
+        },
+        "run": "g2-20261029T222520",
+        "samples": 975,
+        "start": "2026-10-29T22:25:25-07:00",
+        "step": "labels_test",
+        "system": "leap",
+        "system_s": 39.62,
+        "tracked_frames": null,
+        "user_s": 2092.36,
+        "wall_s": 1767.06
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.2771,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-29T22:56:18-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 9.94,
+        "load_1m_mean": 8.4592,
+        "max_rss_kb": 307996.0,
+        "node_neighbor_busy_share": 0.1552,
+        "other_gpus": [
+          {
+            "busy_share": 0.1552,
+            "gpu": 0,
+            "mem_max_mib": 2285.0,
+            "util_mean": 10.6207
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 1.0,
+            "gpu": 5,
+            "mem_max_mib": 2419.0,
+            "util_mean": 81.9483
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 52469815,
+          "exists": true,
+          "files": 56469
+        },
+        "run": "g2-20261029T225459",
+        "samples": 39,
+        "start": "2026-10-29T22:55:04-07:00",
+        "step": "reid_data",
+        "system": "leap",
+        "system_s": 25.78,
+        "tracked_frames": null,
+        "user_s": 365.76,
+        "wall_s": 70.66
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.509,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-30T05:30:26-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 6537.0,
+        "gpu_util_busy_share": 0.9985,
+        "gpu_util_mean": 90.4888,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 20.48,
+        "load_1m_mean": 16.9134,
+        "max_rss_kb": 7525660.0,
+        "node_neighbor_busy_share": 0.9965,
+        "other_gpus": [
+          {
+            "busy_share": 0.9965,
+            "gpu": 0,
+            "mem_max_mib": 8029.0,
+            "util_mean": 72.1628
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.9885,
+            "gpu": 5,
+            "mem_max_mib": 8573.0,
+            "util_mean": 75.0564
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 1273239722,
+          "exists": true,
+          "files": 17
+        },
+        "run": "g2-20261029T225622",
+        "samples": 12995,
+        "start": "2026-10-29T22:56:28-07:00",
+        "step": "reid_train",
+        "system": "leap",
+        "system_s": 11723.83,
+        "tracked_frames": null,
+        "user_s": 228875.97,
+        "wall_s": 23634.0
+      },
+      {
+        "compare_error": null,
+        "contaminated": false,
+        "cpu_busy_share": 0.6417,
+        "cpu_threads": 20,
+        "cpus": "10-19,50-59",
+        "dataset": "caldot2-y05",
+        "end": "2026-10-30T10:57:57-07:00",
+        "evaluation_only": false,
+        "exit": 0,
+        "foreign_samples": 0,
+        "gnu_exit": 0.0,
+        "gpu": 2,
+        "gpu_mem_max_mib": 0.0,
+        "gpu_util_busy_share": 0.0,
+        "gpu_util_mean": 0.0,
+        "image": "sha256:7a33b77817b5cf89babe092af36dcc472e44868e0b92410f0f34ecbdeb2a36de",
+        "load_1m_max": 28.73,
+        "load_1m_mean": 19.7637,
+        "max_rss_kb": 255836.0,
+        "node_neighbor_busy_share": 0.0,
+        "other_gpus": [
+          {
+            "busy_share": 0.0,
+            "gpu": 0,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 1,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 3,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 4,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 5,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          },
+          {
+            "busy_share": 0.0,
+            "gpu": 6,
+            "mem_max_mib": 0.0,
+            "util_mean": 0.0
+          }
+        ],
+        "output_size": {
+          "bytes": 2798166,
+          "exists": true,
+          "files": 5
+        },
+        "run": "g2-20261030T105710",
+        "samples": 8,
+        "start": "2026-10-30T10:57:29-07:00",
+        "step": "motion_patterns",
+        "system": "leap",
+        "system_s": 2.77,
+        "tracked_frames": null,
+        "user_s": 153.55,
+        "wall_s": 12.18
+      }
+    ],
+    "steps_defined": {
+      "leap": [
+        "labels_train",
+        "labels_test",
+        "reid_data",
+        "reid_train",
+        "motion_patterns"
+      ],
+      "otif": [
+        "detect_train",
+        "tracks_train",
+        "extract_frames",
+        "train_proxy",
+        "train_tracker",
+        "detect_valid",
+        "tune_valid"
+      ]
+    },
+    "totals": [
+      {
+        "clean": true,
+        "complete": true,
+        "contaminated_steps": [],
+        "cpu_busy_share": 0.0869,
+        "cpu_s": 49388.75,
+        "cpu_sets": [
+          "20-29,60-69"
+        ],
+        "dataset": "ams-y05",
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "failed_steps": [],
+        "gpus": [
+          5
+        ],
+        "missing_steps": [],
+        "node_neighbor_busy_share_max": 0.0,
+        "preparation_cpu_s": 45027.46,
+        "preparation_wall_s": 24744.2,
+        "system": "leap",
+        "wall_s": 28422.2
+      },
+      {
+        "clean": true,
+        "complete": true,
+        "contaminated_steps": [],
+        "cpu_busy_share": 0.0919,
+        "cpu_s": 82469.08,
+        "cpu_sets": [
+          "0-9,40-49"
+        ],
+        "dataset": "caldot1-y05",
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "failed_steps": [],
+        "gpus": [
+          0
+        ],
+        "missing_steps": [],
+        "node_neighbor_busy_share_max": 0.9713,
+        "preparation_cpu_s": 80305.91,
+        "preparation_wall_s": 43070.5,
+        "system": "leap",
+        "wall_s": 44851.26
+      },
+      {
+        "clean": true,
+        "complete": true,
+        "contaminated_steps": [],
+        "cpu_busy_share": 0.4501,
+        "cpu_s": 245420.72,
+        "cpu_sets": [
+          "10-19,50-59"
+        ],
+        "dataset": "caldot2-y05",
+        "evaluation_only_steps": [
+          "labels_test"
+        ],
+        "failed_steps": [],
+        "gpus": [
+          2
+        ],
+        "missing_steps": [],
+        "node_neighbor_busy_share_max": 0.9965,
+        "preparation_cpu_s": 243288.74,
+        "preparation_wall_s": 25494.7,
+        "system": "leap",
+        "wall_s": 27261.76
+      }
+    ]
+  }
+}

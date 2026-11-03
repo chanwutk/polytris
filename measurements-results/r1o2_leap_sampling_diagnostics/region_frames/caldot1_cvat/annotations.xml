@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+<annotations>
+  <version>1.1</version>
+  <meta>
+    <task>
+      <id>0</id>
+      <name>CalDoT1 LEAP regions</name>
+      <size>1</size>
+      <mode>annotation</mode>
+      <overlap>0</overlap>
+      <bugtracker />
+      <flipped>False</flipped>
+      <created>2026-10-31 23:03:06.928816+00:00</created>
+      <updated>2026-10-31 23:03:06.928816+00:00</updated>
+      <start_frame>0</start_frame>
+      <stop_frame>0</stop_frame>
+      <frame_filter />
+      <labels>
+        <label>
+          <name>region</name>
+          <color>#e6194b</color>
+          <type>any</type>
+          <attributes />
+        </label>
+      </labels>
+      <segments />
+    </task>
+    <dumped>2026-10-31 23:03:06.928816+00:00</dumped>
+  </meta>
+  <image id="0" name="caldot1_te00_frame450.png" width="720" height="480">
+    <box label="region" source="manual" occluded="0" xtl="404" ytl="226" xbr="504" ybr="272" z_order="0" />
+    <box label="region" source="manual" occluded="0" xtl="111" ytl="406" xbr="360" ybr="479" z_order="0" />
+  </image>
+</annotations>

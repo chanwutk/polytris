@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<annotations>
+  <version>1.1</version>
+  <meta>
+    <job>
+      <id>4684555</id>
+      <size>1</size>
+      <mode>annotation</mode>
+      <overlap>0</overlap>
+      <bugtracker></bugtracker>
+      <created>2026-10-31 22:21:53.626940+00:00</created>
+      <updated>2026-10-31 22:36:58.655381+00:00</updated>
+      <subset>default</subset>
+      <start_frame>0</start_frame>
+      <stop_frame>0</stop_frame>
+      <frame_filter></frame_filter>
+      <segments>
+        <segment>
+          <id>4681499</id>
+          <start>0</start>
+          <stop>0</stop>
+          <url>https://app.cvat.ai/api/jobs/4684555/dataset/export/api/jobs/4684555</url>
+        </segment>
+      </segments>
+      <owner>
+        <username>chanwut4</username>
+        <email>chanwutk@berkeley.edu</email>
+      </owner>
+      <assignee></assignee>
+      <labels>
+        <label>
+          <name>region</name>
+          <color>#1db7fa</color>
+          <type>any</type>
+          <attributes>
+          </attributes>
+        </label>
+      </labels>
+    </job>
+    <dumped>2026-10-31 22:37:15.781282+00:00</dumped>
+  </meta>
+  <image id="0" name="amsterdam_te00_frame450.png" width="1280" height="720">
+    <box label="region" source="manual" occluded="0" xtl="405.90" ytl="174.41" xbr="563.32" ybr="247.50" z_order="0">
+    </box>
+    <box label="region" source="manual" occluded="0" xtl="31.04" ytl="249.90" xbr="167.80" ybr="341.00" z_order="0">
+    </box>
+    <box label="region" source="manual" occluded="0" xtl="1194.80" ytl="327.97" xbr="1280.00" ybr="606.80" z_order="0">
+    </box>
+    <box label="region" source="manual" occluded="0" xtl="506.80" ytl="580.10" xbr="1009.20" ybr="720.00" z_order="0">
+    </box>
+    <box label="region" source="manual" occluded="0" xtl="17.37" ytl="533.20" xbr="230.90" ybr="720.00" z_order="0">
+    </box>
+  </image>
+</annotations>

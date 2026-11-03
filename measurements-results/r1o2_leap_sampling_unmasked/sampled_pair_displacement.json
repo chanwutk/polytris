@@ -1,0 +1,32 @@
+{
+  "method": "Consecutive sampled observations of the same annotated vehicle; small displacement means endpoint box centers differ by less than 10 pixels. Each pair has equal weight.",
+  "rows": [
+    {
+      "pairs": 2271,
+      "small_displacement_pairs": 1487,
+      "small_displacement_share": 0.6547776309995597,
+      "median_displacement_px": 1.118033988749895,
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "source_sha256": "7ae6286acea8ca508093acdd6ddd7296bf0f39cbc6af851ad92f756319565be1"
+    },
+    {
+      "pairs": 1066,
+      "small_displacement_pairs": 39,
+      "small_displacement_share": 0.036585365853658534,
+      "median_displacement_px": 95.6333886159804,
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "source_sha256": "4c3431288f908543b1b4a95f375cb6998d44557eac7382a3f60fad599aa15f9a"
+    },
+    {
+      "pairs": 1497,
+      "small_displacement_pairs": 1174,
+      "small_displacement_share": 0.7842351369405478,
+      "median_displacement_px": 0.7941131591796875,
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "source_sha256": "ddafad8c639beca826b72f2a32fa9e0b3af5c0e450cd7039999364819b13dee0"
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "dataset": "Amsterdam",
+  "dataset_id": "ams-y05",
+  "resolution": [
+    1280,
+    720
+  ],
+  "source_zip": "/Users/chanwutk/Downloads/job_4684555_annotations_2026_10_31_23_25_48_cvat for images 1.1.zip",
+  "source_sha256": "5ef0d3ee8e9fce98334b0e7f630db66bd86ebce11c2aa30b1e971849ae407aa0",
+  "cvat_job": "4684555",
+  "stop_area": [
+    [
+      31.04,
+      249.9,
+      167.8,
+      341.0
+    ],
+    [
+      405.9,
+      174.41,
+      563.32,
+      261.7
+    ],
+    [
+      1167.1,
+      327.97,
+      1280.0,
+      606.8
+    ],
+    [
+      384.3,
+      580.1,
+      1000.82,
+      720.0
+    ],
+    [
+      0.0,
+      553.2,
+      209.6,
+      720.0
+    ]
+  ],
+  "previous_stop_area": [
+    [
+      405.9,
+      174.41,
+      563.32,
+      247.5
+    ],
+    [
+      31.04,
+      249.9,
+      167.8,
+      341.0
+    ],
+    [
+      1194.8,
+      327.97,
+      1280.0,
+      606.8
+    ],
+    [
+      506.8,
+      580.1,
+      1009.2,
+      720.0
+    ],
+    [
+      17.37,
+      533.2,
+      230.9,
+      720.0
+    ]
+  ],
+  "previous_revision": "/Users/chanwutk/Documents/tetris/tetris/measurements-results/r1o2_leap_sampling_diagnostics/region_frames/amsterdam_cvat/region_history/2026-10-31_22-36-58",
+  "previous_eligible_patterns": 25,
+  "numbering": "Display labels R0 onward follow XML order; exported coordinates are preserved exactly.",
+  "existing_pattern_check": {
+    "patterns": 33,
+    "eligible_before": 0,
+    "eligible_previous": 25,
+    "eligible_after": 29,
+    "starts_inside_new_regions": 29,
+    "ends_inside_new_regions": 32,
+    "excluded_patterns": [
+      2,
+      3,
+      13,
+      21
+    ],
+    "previously_eligible_lost": [],
+    "source": "measurements-results/r1o2_leap_sampling_diagnostics/ams-y05-patterns.parquet",
+    "source_sha256": "998594fb0da2878d95fbd289986dc5b91fed25b2aae9e30a1429f9078a70e8d6",
+    "rule": "Both endpoint centers inside a configured region, inclusive bounds; first matching region, as in LEAP allocate_tracks.",
+    "execution": "CPU read-only check of the saved motion library; no extraction, training, or accuracy rerun."
+  }
+}

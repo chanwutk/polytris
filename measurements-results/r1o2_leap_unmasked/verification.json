@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "changed": [
+    [
+      "caldot1-y05",
+      "leap"
+    ],
+    [
+      "caldot2-y05",
+      "leap"
+    ]
+  ],
+  "configurations": 536,
+  "unchanged_query_configurations": 534,
+  "preparation_unchanged": true,
+  "other_datasets_unchanged": true
+}

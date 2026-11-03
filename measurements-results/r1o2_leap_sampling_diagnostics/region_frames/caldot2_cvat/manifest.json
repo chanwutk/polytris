@@ -1,0 +1,49 @@
+{
+  "dataset": "CalDoT2",
+  "dataset_id": "caldot2-y05",
+  "source_video": "/polyis-data/datasets/caldot2-y05/test/te00.mp4",
+  "video": "te00.mp4",
+  "frame": 450,
+  "resolution": [
+    720,
+    480
+  ],
+  "rectangles": [
+    {
+      "label": "R0",
+      "index": 0,
+      "left": 0,
+      "top": 309,
+      "right": 93,
+      "bottom": 363
+    },
+    {
+      "label": "R1",
+      "index": 1,
+      "left": 173,
+      "top": 257,
+      "right": 258,
+      "bottom": 298
+    },
+    {
+      "label": "R2",
+      "index": 2,
+      "left": 289,
+      "top": 248,
+      "right": 401,
+      "bottom": 299
+    },
+    {
+      "label": "R3",
+      "index": 3,
+      "left": 11,
+      "top": 373,
+      "right": 220,
+      "bottom": 479
+    }
+  ],
+  "annotation_image": "caldot2_te00_frame450.png",
+  "label": "region",
+  "package": "/Users/chanwutk/Documents/tetris/tetris/measurements-results/r1o2_leap_sampling_diagnostics/region_frames/caldot2_cvat/caldot2-leap-regions.zip",
+  "source_image_sha256": "f0a7ac70ab2d23436ee76c0228e27bcdb5620b56166fe82488e45fda8585c2da"
+}

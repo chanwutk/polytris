@@ -1,0 +1,6 @@
+# B3D3 (jnc6) LEAP stop_area from the saved run; native 1080 x 720 pixels.
+stop_area:
+  - [0, 100, 250, 490]
+  - [420, 0, 750, 75]
+  - [815, 100, 1080, 545]
+  - [300, 600, 750, 720]
