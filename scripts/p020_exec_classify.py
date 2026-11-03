@@ -33,6 +33,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Execute tile classification using trained models')
     parser.add_argument('--test', action='store_true', help='Process test videoset')
     parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    parser.add_argument('--videos', nargs='+')
     return parser.parse_args()
 
 
@@ -447,6 +448,8 @@ def main():
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        # Restrict to --videos when given, so other videos' outputs are neither deleted nor rerun.
+        videos = [v for v in videos if args.videos is None or v in args.videos]
         for video in videos:
             shutil.rmtree(cache.exec(dataset, 'relevancy', video), ignore_errors=True)
         for classifier, tile_size, sample_rate in itertools.product(

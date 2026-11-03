@@ -917,17 +917,17 @@ def create_visualization_frame(frame: np.ndarray, tracks: list[list[float]], fra
         tracks_in_track_ids = [track for track in tracks if track[0] in (track_ids or [track[0]])]
         draw_track_bounding_boxes(vis_frame, tracks_in_track_ids, track_ids)
 
-    # Draw frame index in the upper left corner
+    # Draw frame index in the bottom left corner
     frame_label = f"Frame: {frame_idx}"
     font_scale = 0.7
     font_thickness = 2
     (text_width, text_height), baseline = cv2.getTextSize(frame_label, cv2.FONT_HERSHEY_SIMPLEX,
                                                           font_scale, font_thickness)
 
-    # Position text in upper left corner with padding
+    # Position text in bottom left corner with padding
     padding = 10
     text_x = padding
-    text_y = text_height + padding
+    text_y = vis_frame.shape[0] - baseline - padding
 
     # Draw text background for better visibility
     cv2.rectangle(vis_frame, (text_x - 2, text_y - text_height - 2),
@@ -1527,10 +1527,9 @@ def load_tradeoff_data(dataset: str):
     Returns:
         pd.DataFrame: Split-level tradeoff rows for the dataset
     """
-    # Construct the canonical split-level tradeoff directory path.
-    tradeoff_dir = os.path.join(CACHE_DIR, dataset, 'evaluation', '090_tradeoff')
-    # Resolve the canonical split-level tradeoff CSV.
-    tradeoff_path = os.path.join(tradeoff_dir, 'tradeoff.csv')
+    # Honor the same configured cache as the writer, including isolated measurement runs.
+    from polyis.io import cache
+    tradeoff_path = cache.eval(dataset, 'tradeoff', 'tradeoff.csv')
     # Fail fast when the canonical tradeoff CSV is missing.
     assert os.path.exists(tradeoff_path), \
         f"Tradeoff data not found: {tradeoff_path}. " \

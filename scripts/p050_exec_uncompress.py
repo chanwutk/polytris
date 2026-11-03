@@ -32,6 +32,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Unpack compressed detections from 040_exec_detect.py')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--valid', action='store_true')
+    parser.add_argument('--videos', nargs='+')
     return parser.parse_args()
 
 
@@ -378,6 +379,8 @@ def main():
 
         # Get all video files from the dataset directory
         videos = [f for f in os.listdir(videosets_dir) if f.endswith('.mp4')]
+        # Restrict to --videos when given, so other videos' outputs are neither deleted nor rerun.
+        videos = [v for v in videos if args.videos is None or v in args.videos]
         print(f"Found {len(videos)} video files in dataset {dataset}/{videoset}")
 
         # Remove all existing ucomp-dets output for every video in this split

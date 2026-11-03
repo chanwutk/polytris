@@ -42,6 +42,7 @@ def parse_args():
                         help='Batch size for detection processing (default: 4)')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--valid', action='store_true')
+    parser.add_argument('--videos', nargs='+')
     return parser.parse_args()
 
 
@@ -441,6 +442,8 @@ def main(args):
                 if not os.path.exists(videoset_dir):
                     continue
                 videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+                # Restrict to --videos when given, so other videos' outputs are neither deleted nor rerun.
+                videos = [v for v in videos if args.videos is None or v in args.videos]
                 for video in sorted(videos):
                     compressed_detections_dir = cache.exec(dataset, 'comp-dets', video)
                     if os.path.exists(compressed_detections_dir):
@@ -451,6 +454,8 @@ def main(args):
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        # Restrict to --videos when given, so other videos' outputs are neither deleted nor rerun.
+        videos = [v for v in videos if args.videos is None or v in args.videos]
         for video in videos:
             shutil.rmtree(cache.exec(dataset, 'comp-dets', video), ignore_errors=True)
         for classifier, tilesize, tilepadding, sample_rate, canvas_scale, acc_threshold, relevance_threshold in itertools.product(

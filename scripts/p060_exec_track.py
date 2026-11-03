@@ -41,6 +41,7 @@ def parse_args():
                         help='Whether to not perform trajectory interpolation')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--valid', action='store_true')
+    parser.add_argument('--videos', nargs='+')
     return parser.parse_args()
 
 
@@ -275,6 +276,8 @@ def main(args: argparse.Namespace):
 
         # Find all videos with uncompressed detection results
         videos = [f for f in os.listdir(videosets_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        # Restrict to --videos when given, so other videos' outputs are neither deleted nor rerun.
+        videos = [v for v in videos if args.videos is None or v in args.videos]
         for video in videos:
             shutil.rmtree(cache.exec(dataset, 'ucomp-tracks', video), ignore_errors=True)
 

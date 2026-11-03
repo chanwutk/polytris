@@ -45,6 +45,7 @@ def parse_args():
     parser.add_argument('--time-limit', type=float, default=None,
                         dest='time_limit',
                         help='ILP solver wall-clock time limit in seconds (default: 0.5)')
+    parser.add_argument('--videos', nargs='+')
     return parser.parse_args()
 
 
@@ -140,8 +141,9 @@ def process_video(
         hex_data = frame_data['classification_hex']
         flat_data = np.frombuffer(bytes.fromhex(hex_data), dtype=np.uint8)
         classification_grid = flat_data.reshape((grid_height, grid_width))
-        cutoff = relevance_threshold * 255
-        binary_grid = (classification_grid > cutoff).astype(np.uint8) * 255
+        # Match the quantized boundary used by the April 2026 experiment cache.
+        cutoff = np.floor(relevance_threshold * 255)
+        binary_grid = (classification_grid >= cutoff).astype(np.uint8) * 255
         
         classifications.append(binary_grid)
     
@@ -344,6 +346,8 @@ def main():
         assert os.path.exists(videoset_dir), f"Videoset directory {videoset_dir} does not exist"
 
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        # Restrict to --videos when given, so other videos' outputs are neither deleted nor rerun.
+        videos = [v for v in videos if args.videos is None or v in args.videos]
         for video in videos:
             shutil.rmtree(cache.exec(dataset, 'pruned-polyominoes', video), ignore_errors=True)
         for classifier, tile_size, sample_rate in itertools.product(CLASSIFIERS, TILE_SIZES, SAMPLE_RATES):

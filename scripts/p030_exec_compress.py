@@ -269,6 +269,7 @@ def parse_args():
     parser.add_argument('--test', action='store_true', help='Process test videoset')
     parser.add_argument('--train', action='store_true', help='Process train videoset')
     parser.add_argument('--valid', action='store_true', help='Process valid videoset')
+    parser.add_argument('--videos', nargs='+')
     return parser.parse_args()
 
 
@@ -333,6 +334,8 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         relevance_threshold: Relevance classifier binarization threshold T_r (0–1)
         mode: Packing mode
     """
+    # Start the whole-unit clock, which also covers the untimed loading and video decoding.
+    compress_start = (time.time_ns() / 1e6)
     video_path = store.dataset(dataset, videoset, video)
 
     # Load classification results from either p022 (pruned) or p020/p021 (unpruned).
@@ -665,6 +668,10 @@ def compress(dataset: str, videoset: str, video: str, classifier: str, tilesize:
         for data in timing_data:
             f.write(json.dumps(data) + '\n')
 
+    # Save the whole-unit time apart from runtime.jsonl, whose ops p121 sums.
+    with open(os.path.join(output_dir, 'compress_total.json'), 'w') as f:
+        json.dump({'compress_total_ms': (time.time_ns() / 1e6) - compress_start}, f)
+
 
 def compress_all(dataset: str, videoset: str, videos: list[str], classifier: str, tilesize: int,
                  sample_rate: int, tilepadding: TilePadding, canvas_scale: float,
@@ -744,6 +751,8 @@ def main(args):
 
         # Get all video files from the dataset directory
         videos = [f for f in os.listdir(videoset_dir) if f.endswith(('.mp4', '.avi', '.mov', '.mkv'))]
+        # Restrict to --videos when given, so other videos' outputs are neither deleted nor rerun.
+        videos = [v for v in videos if args.videos is None or v in args.videos]
         for video in videos:
             shutil.rmtree(cache.exec(dataset, 'comp-frames', video), ignore_errors=True)
         for classifier, tilesize, tilepadding, sample_rate, canvas_scale, acc_threshold, relevance_threshold in itertools.product(
