@@ -6,6 +6,14 @@ import numpy as np
 from modules.TrackEval.trackeval.datasets._base_dataset import _BaseDataset
 
 
+def pad_scoring_window_from_env() -> bool:
+    """POLYIS_PAD_SCORING_WINDOW=1 pads both sides to the longer file; unset or 0 keeps TrackEval's behavior."""
+    value = os.environ.get('POLYIS_PAD_SCORING_WINDOW', '0')
+    if value not in ('0', '1'):
+        raise ValueError(f'POLYIS_PAD_SCORING_WINDOW must be 0 or 1, not {value!r}')
+    return value == '1'
+
+
 class Dataset(_BaseDataset):
     """Dataset class for Polyis bounding box tracking"""
 
@@ -30,11 +38,38 @@ class Dataset(_BaseDataset):
         self.input_track = config['input_track']
         self.skip = config['skip']
         self.tracker = config['tracker']
+        # Score each sequence over the longer of the two files (see get_raw_seq_data); off unless requested.
+        self.pad_scoring_window = config.get('pad_scoring_window', pad_scoring_window_from_env())
 
     def get_display_name(self, tracker):
         return tracker
 
-    def _load_raw_file(self, tracker, seq: str, is_gt: bool):
+    def get_raw_seq_data(self, tracker, seq):
+        """TrackEval's raw data, optionally padded so neither file's tail is dropped.
+
+        TrackEval takes the frame count from the ground-truth file and pairs frames with zip, so frames after
+        the shorter file's last row are never scored: ground truth after a system's last output row is not
+        counted as missed, and output after the ground truth's last row is not counted as a false positive.
+        With pad_scoring_window, both sides are loaded over the longer file's length, the shorter one padded
+        with empty frames; frames past both files are empty on both sides and do not affect the metrics.
+        """
+        if not self.pad_scoring_window:
+            return super().get_raw_seq_data(tracker, seq)
+        # Load both sides, then reload the shorter one over the longer one's length.
+        raw_gt = self._load_raw_file(tracker, seq, is_gt=True)
+        raw_tracker = self._load_raw_file(tracker, seq, is_gt=False)
+        timesteps = max(raw_gt['num_timesteps'], raw_tracker['num_timesteps'])
+        if raw_gt['num_timesteps'] < timesteps:
+            raw_gt = self._load_raw_file(tracker, seq, is_gt=True, num_timesteps=timesteps)
+        if raw_tracker['num_timesteps'] < timesteps:
+            raw_tracker = self._load_raw_file(tracker, seq, is_gt=False, num_timesteps=timesteps)
+        # Merge as TrackEval does, ground truth last, so num_timesteps is the padded length.
+        raw_data = {**raw_tracker, **raw_gt}
+        raw_data['similarity_scores'] = [self._calculate_similarities(g, t)
+                                         for g, t in zip(raw_data['gt_dets'], raw_data['tracker_dets'])]
+        return raw_data
+
+    def _load_raw_file(self, tracker, seq: str, is_gt: bool, num_timesteps: int | None = None):
         """Load a file (gt or tracker) in the MOT Challenge 2D box format
 
         If is_gt, this returns a dict which contains the fields:
@@ -65,6 +100,9 @@ class Dataset(_BaseDataset):
             assert frame_idx not in raw, (frame_idx, raw)
             raw[frame_idx] = dets
             data['num_timesteps'] = max(data['num_timesteps'], frame_idx + 1)
+        # Extend the sequence with empty frames when a longer scoring window is requested.
+        if num_timesteps is not None:
+            data['num_timesteps'] = max(data['num_timesteps'], num_timesteps)
         
         data[f'{prefix}ids'] = []
         data[f'{prefix}classes'] = []
