@@ -1,0 +1,226 @@
+{
+  "environment": {
+    "bombe_cpus": "0-19,40-59",
+    "bombe_gpu": "0",
+    "bombe_run": "g0-20261027T061745",
+    "cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "hostname": "bombe",
+    "nvidia_smi": "GPU 0: Quadro RTX 6000 (UUID: GPU-0997b8f5-904d-8e15-0da8-1c28bb1e348c)",
+    "python": "3.13.12"
+  },
+  "error": null,
+  "files": {
+    "cpu": "cpu.jsonl.gz",
+    "logs": "logs"
+  },
+  "finished": "2026-10-27T13:18:53.763+00:00",
+  "finished_ns": 1793107133763854039,
+  "gurobi": {
+    "available": false,
+    "error": "gurobipy._exception.GurobiError: License 2792523 has expired"
+  },
+  "inputs_copied": [
+    "jnc6/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/runtime.jsonl",
+    "jnc6/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/score.jsonl",
+    "jnc6/indexing/always_relevant/60_all.npy",
+    "jnc6/indexing/track_rate/sortcython_60/max_rate_table.npy",
+    "jnc6/indexing/training/results/ShuffleNet05_60/model_best.pth",
+    "jnc6/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl"
+  ],
+  "outputs": {
+    "020_exec_classify": {
+      "te01.mp4": {
+        "files": {
+          "score.jsonl": {
+            "bytes": 131527,
+            "sha256": "ae3021f51436391b8708bab5b4087d1dc47f2d70f219d765ad8a01a2ec927511"
+          }
+        },
+        "runtime": "jnc6/execution/te01.mp4/020_relevancy/ShuffleNet05_60_4/score/runtime.jsonl"
+      }
+    },
+    "022_exec_prune_polyominoes": {
+      "te01.mp4": {
+        "files": {
+          "score.jsonl": {
+            "bytes": 131527,
+            "sha256": "86e6ec42b739f09318d2b592bb38c4066aacb4e4afc371cd4adf309b44bd3df8"
+          }
+        },
+        "runtime": "jnc6/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/runtime.jsonl"
+      }
+    },
+    "030_exec_compress": {
+      "te01.mp4": {
+        "canvases": 29,
+        "files": {},
+        "runtime": "jnc6/execution/te01.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_none_s100_sortcython/runtime.jsonl"
+      }
+    },
+    "040_exec_detect": {
+      "te01.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 230888,
+            "sha256": "8623bcf9a94a038220310ddf2477ae97fb6834a2882fdef10554294fd61e2bd9"
+          }
+        },
+        "runtime": "jnc6/execution/te01.mp4/040_compressed_detections/ShuffleNet05_60_4_040_r025_none_s100_sortcython/runtimes.jsonl"
+      }
+    },
+    "050_exec_uncompress": {
+      "te01.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 263479,
+            "sha256": "8641ec4244d26070d161100a4ef9f5213b1841cdf905a470f6cd4fb4e9ca3322"
+          }
+        },
+        "runtime": "jnc6/execution/te01.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_none_s100_sortcython/runtime.jsonl"
+      }
+    },
+    "060_exec_track": {
+      "te01.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 932690,
+            "sha256": "f040ee0c150b4a79dc463985ccbbeebe330c41da58be01fc090277b5edb54486"
+          }
+        },
+        "runtime": "jnc6/execution/te01.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_none_s100_sortcython/runtimes.jsonl"
+      }
+    }
+  },
+  "p022_source": "cache",
+  "preread": [
+    {
+      "bytes": 14455591,
+      "seconds": 0.01632859,
+      "video": "te01.mp4"
+    }
+  ],
+  "stages": [
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793107102928403016,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p020_exec_classify.py",
+      "stage": "020_exec_classify",
+      "start_ns": 1793107073619613772,
+      "wall_s": 29.308785062
+    },
+    {
+      "ran": false,
+      "source": "cache",
+      "stage": "022_exec_prune_polyominoes"
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793107109914475623,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p030_exec_compress.py",
+      "stage": "030_exec_compress",
+      "start_ns": 1793107102928976635,
+      "wall_s": 6.985494879
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793107124875329422,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p040_exec_detect.py",
+      "stage": "040_exec_detect",
+      "start_ns": 1793107109916043546,
+      "wall_s": 14.959281949
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793107127380364402,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p050_exec_uncompress.py",
+      "stage": "050_exec_uncompress",
+      "start_ns": 1793107124876210335,
+      "wall_s": 2.504149657
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793107133423869918,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p060_exec_track.py",
+      "stage": "060_exec_track",
+      "start_ns": 1793107127381247957,
+      "wall_s": 6.042617553
+    }
+  ],
+  "started": "2026-10-27T13:17:53.216+00:00",
+  "started_ns": 1793107073216092267,
+  "status": "ok",
+  "unit": {
+    "attempt": 1,
+    "dataset": "jnc6",
+    "gpu": 0,
+    "phase": "smoke",
+    "raw": "units/smoke-jnc6-ShuffleNet05_60_4_040_r025_none_s100_sortcython/attempt-1",
+    "system": "tetris",
+    "unit": "smoke-jnc6-ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+    "variant_id": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+    "videos": [
+      "te01.mp4"
+    ]
+  }
+}

@@ -1,0 +1,440 @@
+{
+  "environment": {
+    "bombe_cpus": "0-19,40-59",
+    "bombe_gpu": "1",
+    "bombe_run": "g1-20261027T080509",
+    "cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "hostname": "bombe",
+    "nvidia_smi": "GPU 0: Quadro RTX 6000 (UUID: GPU-e8034b31-aa87-2489-156d-927ea00e6009)",
+    "python": "3.13.12"
+  },
+  "error": null,
+  "files": {
+    "cpu": "cpu.jsonl.gz",
+    "logs": "logs"
+  },
+  "finished": "2026-10-27T15:07:55.341+00:00",
+  "finished_ns": 1793113675341510559,
+  "gurobi": null,
+  "inputs_copied": [
+    "caldot2-y05/indexing/always_relevant/60_all.npy",
+    "caldot2-y05/indexing/track_rate/bytetrackcython_60/max_rate_table.npy",
+    "caldot2-y05/indexing/training/results/ShuffleNet05_60/model_best.pth",
+    "caldot2-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl"
+  ],
+  "outputs": {
+    "020_exec_classify": {
+      "te00.mp4": {
+        "files": {
+          "score.jsonl": {
+            "bytes": 236590,
+            "sha256": "423c25bd7de787b9a9c32a7e990093ed75186abef0b7b2296515dc4fee94a198"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te00.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "score.jsonl": {
+            "bytes": 236590,
+            "sha256": "9d645b8cf02df5b7faf255a0a2ee7da1a95f2462d1abcb5e3df37e6b95267b3d"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te12.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "score.jsonl": {
+            "bytes": 236590,
+            "sha256": "426ebdab0c24dad5ad58f16d1353b4bcd28e300e6368b78d7da9740369c7249b"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te24.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "score.jsonl": {
+            "bytes": 236590,
+            "sha256": "d93434842e4f1a9557fd7ee37e17a86382780fd22b0ddf9543d997bc3812e207"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te35.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "score.jsonl": {
+            "bytes": 236590,
+            "sha256": "ffb604c7bbe269692b23c716b97cd89ae79da17e3b7bd5a39c492b37c382a2d6"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te47.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "score.jsonl": {
+            "bytes": 236590,
+            "sha256": "c9751871fc383cd85ffdf2ca40e721e29574b2d98e05a2910d5e078572ab862c"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te59.mp4/020_relevancy/ShuffleNet05_60_1/score/runtime.jsonl"
+      }
+    },
+    "030_exec_compress": {
+      "te00.mp4": {
+        "canvases": 162,
+        "files": {},
+        "runtime": "caldot2-y05/execution/te00.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te12.mp4": {
+        "canvases": 124,
+        "files": {},
+        "runtime": "caldot2-y05/execution/te12.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te24.mp4": {
+        "canvases": 230,
+        "files": {},
+        "runtime": "caldot2-y05/execution/te24.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te35.mp4": {
+        "canvases": 213,
+        "files": {},
+        "runtime": "caldot2-y05/execution/te35.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te47.mp4": {
+        "canvases": 146,
+        "files": {},
+        "runtime": "caldot2-y05/execution/te47.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te59.mp4": {
+        "canvases": 191,
+        "files": {},
+        "runtime": "caldot2-y05/execution/te59.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      }
+    },
+    "040_exec_detect": {
+      "te00.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 195655,
+            "sha256": "ba630bd84348f4ffa57598ce90bfa087198b0d5db248596f8fd2ecb1de33f555"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te00.mp4/040_compressed_detections/ShuffleNet05_60_1_r050_square_s100/runtimes.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 94892,
+            "sha256": "9ce8fa6e75f42d162c189fa139141d1215aa2392a8a006d74c8d01b51565b605"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te12.mp4/040_compressed_detections/ShuffleNet05_60_1_r050_square_s100/runtimes.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 268541,
+            "sha256": "02e41e17b20d50e0b48f2619943310a3ec4d85155b39bd5e6e14b7bfe92e1646"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te24.mp4/040_compressed_detections/ShuffleNet05_60_1_r050_square_s100/runtimes.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 172860,
+            "sha256": "1d8fba8d20fcc2e1a4ca4c59e7ef70ed150b4c312d68bc9efaa0bb8e6c42efa8"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te35.mp4/040_compressed_detections/ShuffleNet05_60_1_r050_square_s100/runtimes.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 193413,
+            "sha256": "4e67f22419b508ac2e45305771ff928f0f9e5c52dd8bfec69e6996cc3aa79623"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te47.mp4/040_compressed_detections/ShuffleNet05_60_1_r050_square_s100/runtimes.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 311545,
+            "sha256": "a172ff200fc44f0315e2fc62a7f368f13f3b7bcb3e1557165ce139129e41dd25"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te59.mp4/040_compressed_detections/ShuffleNet05_60_1_r050_square_s100/runtimes.jsonl"
+      }
+    },
+    "050_exec_uncompress": {
+      "te00.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 214347,
+            "sha256": "a2b8b0bdc16e8777b8a39ef1dec7a51da9dcefcbe8fc0a6bc7c73ff82196377a"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te00.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 115385,
+            "sha256": "5de9ee640c8cf6d20d5d504501bf5828a1b7c6c784f6e3437d369050f0044ba3"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te12.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 284205,
+            "sha256": "0c66b0a0d3112f480db64877a70abdff0c31beee3b4c366de4af5675650bab84"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te24.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 188913,
+            "sha256": "14232e274df4a664b1be2181ac856d471522443de8be010030bb27ef9445bf7f"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te35.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 213399,
+            "sha256": "5f171c9be155a2346d70761abdf2c3277d5a07ad73c9f3c7dc642b4f02be7ad0"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te47.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 328971,
+            "sha256": "5a04b9800d0f8373b227f716e8217ae1c30e8a1cbc89c6fd11f933d3a70faeeb"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te59.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_square_s100/runtime.jsonl"
+      }
+    },
+    "060_exec_track": {
+      "te00.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 176182,
+            "sha256": "7ab31d5d0b08145ea9829db1eb8981e4ed1fe806532aa383a6bb07a7b5e23b6e"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te00.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_square_s100_bytetrackcython/runtimes.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 95652,
+            "sha256": "608bcef6bcb537a953f5424599abd41bb5b3e364bfe660639021c35a8d960ea8"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te12.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_square_s100_bytetrackcython/runtimes.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 233057,
+            "sha256": "1bdd002918424676998a43cdcf49760cfda0254c181aadc615bbee76214b70d1"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te24.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_square_s100_bytetrackcython/runtimes.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 152192,
+            "sha256": "34ec1318c3daa7867ae1e8c1e3cdc2ec4cb16d5bafe2953ffec3af071786f0ce"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te35.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_square_s100_bytetrackcython/runtimes.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 175705,
+            "sha256": "5c487f61f49cb5d2fb288639afb6eb1c8a58eaebf484da4e718a58bbf9a4617a"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te47.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_square_s100_bytetrackcython/runtimes.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 291354,
+            "sha256": "2a51f010c76936d9e77eb3b4b682bd8d8ad2156cb8885cdee1a97fef8af05499"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te59.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_square_s100_bytetrackcython/runtimes.jsonl"
+      }
+    }
+  },
+  "p022_source": null,
+  "preread": [
+    {
+      "bytes": 1721421,
+      "seconds": 0.00222807,
+      "video": "te00.mp4"
+    },
+    {
+      "bytes": 1837378,
+      "seconds": 0.001962391,
+      "video": "te12.mp4"
+    },
+    {
+      "bytes": 1678695,
+      "seconds": 0.001350005,
+      "video": "te24.mp4"
+    },
+    {
+      "bytes": 1705371,
+      "seconds": 0.001552028,
+      "video": "te35.mp4"
+    },
+    {
+      "bytes": 1721401,
+      "seconds": 0.001567926,
+      "video": "te47.mp4"
+    },
+    {
+      "bytes": 2020209,
+      "seconds": 0.001779916,
+      "video": "te59.mp4"
+    }
+  ],
+  "stages": [
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793113578529841484,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p020_exec_classify.py",
+      "stage": "020_exec_classify",
+      "start_ns": 1793113521027365104,
+      "wall_s": 57.502471039
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793113601742431411,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p030_exec_compress.py",
+      "stage": "030_exec_compress",
+      "start_ns": 1793113578532441719,
+      "wall_s": 23.209984899
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793113654038686005,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p040_exec_detect.py",
+      "stage": "040_exec_detect",
+      "start_ns": 1793113601747394837,
+      "wall_s": 52.291287411
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793113662258132963,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p050_exec_uncompress.py",
+      "stage": "050_exec_uncompress",
+      "start_ns": 1793113654040748619,
+      "wall_s": 8.217380662
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793113673574663000,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p060_exec_track.py",
+      "stage": "060_exec_track",
+      "start_ns": 1793113662260463411,
+      "wall_s": 11.314195606
+    }
+  ],
+  "started": "2026-10-27T15:05:20.938+00:00",
+  "started_ns": 1793113520938934750,
+  "status": "ok",
+  "unit": {
+    "attempt": 1,
+    "dataset": "caldot2-y05",
+    "gpu": 1,
+    "phase": "solo",
+    "raw": "units/solo-caldot2-y05-ShuffleNet05_60_1_r050_square_s100_bytetrackcython/attempt-1",
+    "system": "tetris",
+    "unit": "solo-caldot2-y05-ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+    "variant_id": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+    "videos": [
+      "te00.mp4",
+      "te12.mp4",
+      "te24.mp4",
+      "te35.mp4",
+      "te47.mp4",
+      "te59.mp4"
+    ]
+  }
+}

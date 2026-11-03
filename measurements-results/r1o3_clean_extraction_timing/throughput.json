@@ -1,0 +1,2066 @@
+{
+  "about": {
+    "attempt_choice": "per unit, among finished attempts: not contaminated first, then foreign_on_node mean over the timed steps at most 0.05, then the lowest foreign_on_node mean, then the latest attempt",
+    "boundaries": {
+      "decode_excluded": "p121 minus counted video decoding (the reference's p002 read)",
+      "one_decode": "decode_excluded plus one decode of every video on each side (clean: cv2 decode measured separately on the same videos, median pass, speedup_range over the fastest and slowest pass; paper: the reference's logged read)",
+      "one_decode_logged": "decode_excluded plus one decode of every video on each side at the reference's logged p002 read of the same run (equals one_decode on the paper side)",
+      "one_decode_no_canvas_read": "one_decode minus Tetris's canvas reads (p040 read)",
+      "p121": "p121 as published: reference decode counted, Tetris decodes not, Tetris canvas reads counted",
+      "wall_clock": "clean only: the staged prototype's stage processes, summed, one worker process at a time on one GPU, including per-process startup, so it depends on the videos per process (5 on B3D, 60 elsewhere); p022 from its log when it could not run",
+      "wall_clock_steady": "clean serial only: wall_clock with each stage's process startup taken out (first to last video's runtime write, times n / (n - 1)); the counterpart of REVISION.md finding 3's wall-clock row (r9o2's process boundary on ace)"
+    },
+    "foreign_cpu_max": 0.05,
+    "gpu_job": "measurements-gpu/r1o3_clean_extraction_timing.py",
+    "measured": "Throughput of the reference pipeline and of Tetris at its 5% and 10% HOTA-loss operating points, from the pipeline scripts rerun unchanged on idle Quadro RTX 6000 GPUs of bombe (NUMA-pinned), at seven timing boundaries, next to the same accounting over the paper's cached logs.",
+    "p022": "Gurobi's license had expired, so p022 did not run: its outputs and runtime log are the cached ones (p022_source cache), and the wall clock uses its logged time (p022_wall_from_cache).",
+    "phases": {
+      "parallel": "all test videos while this job's three GPUs on one NUMA node ran datasets at once",
+      "serial": "all test videos, one unit at a time on an idle node (headline numbers)",
+      "solo": "calibration videos, one unit at a time on an idle node (repeatability against serial)"
+    },
+    "plan": {
+      "created": "2026-10-27T13:09:33.011+00:00",
+      "units": 56
+    },
+    "worker_counts": "ProgressBar runs at most num_workers tasks of a stage at once: visible GPUs for p002, p020, p040, p060 (1 on bombe, 8 on ace), 20 for p022 and p030, 40 for p050. A Tetris stage has one task per configuration (its videos in sorted order), p002 one task per video; the clean runs ran one task at a time, the paper's runs every Pareto configuration at once."
+  },
+  "datasets": {
+    "Amsterdam": {
+      "0.05": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 15.6862,
+            "reference_s": 3443.2101,
+            "speedup": 71.5114,
+            "tetris_fps": 1121.7451,
+            "tetris_s": 48.1491
+          },
+          "one_decode": {
+            "reference_fps": 15.3619,
+            "reference_s": 3515.9129,
+            "speedup": 29.0927,
+            "speedup_range": [
+              29.0885,
+              29.2985
+            ],
+            "tetris_fps": 446.9189,
+            "tetris_s": 120.8519
+          },
+          "one_decode_logged": {
+            "reference_fps": 15.4554,
+            "reference_s": 3494.6328,
+            "speedup": 35.0966,
+            "tetris_fps": 542.4329,
+            "tetris_s": 99.5718
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 15.3619,
+            "reference_s": 3515.9129,
+            "speedup": 29.7697,
+            "speedup_range": [
+              29.7652,
+              29.9854
+            ],
+            "tetris_fps": 457.3184,
+            "tetris_s": 118.1037
+          },
+          "p121": {
+            "reference_fps": 15.4554,
+            "reference_s": 3494.6328,
+            "speedup": 72.5794,
+            "tetris_fps": 1121.7451,
+            "tetris_s": 48.1491
+          },
+          "wall_clock": {
+            "reference_fps": 13.3343,
+            "reference_s": 4050.5334,
+            "speedup": 7.3965,
+            "tetris_fps": 98.6275,
+            "tetris_s": 547.6263
+          },
+          "wall_clock_steady": {
+            "reference_fps": 13.3745,
+            "reference_s": 4038.3681,
+            "speedup": 8.0554,
+            "tetris_fps": 107.736,
+            "tetris_s": 501.3273
+          }
+        },
+        "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 54011,
+        "p022_source": "cache",
+        "p022_wall_from_cache": true,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 15.5516,
+            "reference_s": 3473.012,
+            "speedup": 67.4867,
+            "tetris_fps": 1049.5276,
+            "tetris_s": 51.4622
+          },
+          "one_decode": {
+            "reference_fps": 15.2618,
+            "reference_s": 3538.9634,
+            "speedup": 30.141,
+            "speedup_range": [
+              30.141,
+              30.141
+            ],
+            "tetris_fps": 460.0064,
+            "tetris_s": 117.4136
+          },
+          "one_decode_logged": {
+            "reference_fps": 15.2618,
+            "reference_s": 3538.9634,
+            "speedup": 30.141,
+            "tetris_fps": 460.0064,
+            "tetris_s": 117.4136
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 15.2618,
+            "reference_s": 3538.9634,
+            "speedup": 30.8994,
+            "speedup_range": [
+              30.8994,
+              30.8994
+            ],
+            "tetris_fps": 471.5815,
+            "tetris_s": 114.5316
+          },
+          "p121": {
+            "reference_fps": 15.2618,
+            "reference_s": 3538.9634,
+            "speedup": 68.7682,
+            "tetris_fps": 1049.5276,
+            "tetris_s": 51.4622
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 60
+      },
+      "0.10": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 15.6862,
+            "reference_s": 3443.2101,
+            "speedup": 94.6948,
+            "tetris_fps": 1485.4054,
+            "tetris_s": 36.3611
+          },
+          "one_decode": {
+            "reference_fps": 15.3619,
+            "reference_s": 3515.9129,
+            "speedup": 32.2372,
+            "speedup_range": [
+              32.2319,
+              32.4909
+            ],
+            "tetris_fps": 495.2233,
+            "tetris_s": 109.0639
+          },
+          "one_decode_logged": {
+            "reference_fps": 15.4554,
+            "reference_s": 3494.6328,
+            "speedup": 39.8095,
+            "tetris_fps": 615.273,
+            "tetris_s": 87.7838
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 15.3619,
+            "reference_s": 3515.9129,
+            "speedup": 33.0095,
+            "speedup_range": [
+              33.004,
+              33.2758
+            ],
+            "tetris_fps": 507.0878,
+            "tetris_s": 106.5121
+          },
+          "p121": {
+            "reference_fps": 15.4554,
+            "reference_s": 3494.6328,
+            "speedup": 96.1091,
+            "tetris_fps": 1485.4054,
+            "tetris_s": 36.3611
+          },
+          "wall_clock": {
+            "reference_fps": 13.3343,
+            "reference_s": 4050.5334,
+            "speedup": 7.4084,
+            "tetris_fps": 98.7852,
+            "tetris_s": 546.752
+          },
+          "wall_clock_steady": {
+            "reference_fps": 13.3745,
+            "reference_s": 4038.3681,
+            "speedup": 8.0839,
+            "tetris_fps": 108.1179,
+            "tetris_s": 499.5564
+          }
+        },
+        "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 54011,
+        "p022_source": null,
+        "p022_wall_from_cache": false,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 15.5516,
+            "reference_s": 3473.012,
+            "speedup": 89.5024,
+            "tetris_fps": 1391.909,
+            "tetris_s": 38.8035
+          },
+          "one_decode": {
+            "reference_fps": 15.2618,
+            "reference_s": 3538.9634,
+            "speedup": 33.7833,
+            "speedup_range": [
+              33.7833,
+              33.7833
+            ],
+            "tetris_fps": 515.5939,
+            "tetris_s": 104.7549
+          },
+          "one_decode_logged": {
+            "reference_fps": 15.2618,
+            "reference_s": 3538.9634,
+            "speedup": 33.7833,
+            "tetris_fps": 515.5939,
+            "tetris_s": 104.7549
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 15.2618,
+            "reference_s": 3538.9634,
+            "speedup": 34.6705,
+            "speedup_range": [
+              34.6705,
+              34.6705
+            ],
+            "tetris_fps": 529.1341,
+            "tetris_s": 102.0743
+          },
+          "p121": {
+            "reference_fps": 15.2618,
+            "reference_s": 3538.9634,
+            "speedup": 91.2021,
+            "tetris_fps": 1391.909,
+            "tetris_s": 38.8035
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 60
+      }
+    },
+    "B3D1": {
+      "0.05": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 14.8514,
+            "reference_s": 361.9188,
+            "speedup": 18.4913,
+            "tetris_fps": 274.621,
+            "tetris_s": 19.5724
+          },
+          "one_decode": {
+            "reference_fps": 14.7451,
+            "reference_s": 364.5278,
+            "speedup": 16.4339,
+            "speedup_range": [
+              16.4042,
+              16.4652
+            ],
+            "tetris_fps": 242.32,
+            "tetris_s": 22.1814
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.6719,
+            "reference_s": 366.3457,
+            "speedup": 15.2648,
+            "tetris_fps": 223.9643,
+            "tetris_s": 23.9994
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.7451,
+            "reference_s": 364.5278,
+            "speedup": 17.2648,
+            "speedup_range": [
+              17.2319,
+              17.2994
+            ],
+            "tetris_fps": 254.5715,
+            "tetris_s": 21.1139
+          },
+          "p121": {
+            "reference_fps": 14.6719,
+            "reference_s": 366.3457,
+            "speedup": 18.7174,
+            "tetris_fps": 274.621,
+            "tetris_s": 19.5724
+          },
+          "wall_clock": {
+            "reference_fps": 12.9014,
+            "reference_s": 416.622,
+            "speedup": 4.2492,
+            "tetris_fps": 54.8209,
+            "tetris_s": 98.0465
+          },
+          "wall_clock_steady": {
+            "reference_fps": 13.1865,
+            "reference_s": 407.6132,
+            "speedup": 7.7499,
+            "tetris_fps": 102.1938,
+            "tetris_s": 52.5962
+          }
+        },
+        "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 5375,
+        "p022_source": null,
+        "p022_wall_from_cache": false,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 14.9704,
+            "reference_s": 359.0427,
+            "speedup": 17.0089,
+            "tetris_fps": 254.6287,
+            "tetris_s": 21.1092
+          },
+          "one_decode": {
+            "reference_fps": 14.7533,
+            "reference_s": 364.3242,
+            "speedup": 13.8051,
+            "speedup_range": [
+              13.8051,
+              13.8051
+            ],
+            "tetris_fps": 203.6709,
+            "tetris_s": 26.3906
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.7533,
+            "reference_s": 364.3242,
+            "speedup": 13.8051,
+            "tetris_fps": 203.6709,
+            "tetris_s": 26.3906
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.7533,
+            "reference_s": 364.3242,
+            "speedup": 14.4118,
+            "speedup_range": [
+              14.4118,
+              14.4118
+            ],
+            "tetris_fps": 212.622,
+            "tetris_s": 25.2796
+          },
+          "p121": {
+            "reference_fps": 14.7533,
+            "reference_s": 364.3242,
+            "speedup": 17.2591,
+            "tetris_fps": 254.6287,
+            "tetris_s": 21.1092
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 5
+      },
+      "0.10": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 14.8514,
+            "reference_s": 361.9188,
+            "speedup": 22.8686,
+            "tetris_fps": 339.6312,
+            "tetris_s": 15.826
+          },
+          "one_decode": {
+            "reference_fps": 14.7451,
+            "reference_s": 364.5278,
+            "speedup": 19.7737,
+            "speedup_range": [
+              19.7302,
+              19.8195
+            ],
+            "tetris_fps": 291.5655,
+            "tetris_s": 18.435
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.6719,
+            "reference_s": 366.3457,
+            "speedup": 18.0885,
+            "tetris_fps": 265.3938,
+            "tetris_s": 20.2529
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.7451,
+            "reference_s": 364.5278,
+            "speedup": 20.6461,
+            "speedup_range": [
+              20.5985,
+              20.6961
+            ],
+            "tetris_fps": 304.4286,
+            "tetris_s": 17.656
+          },
+          "p121": {
+            "reference_fps": 14.6719,
+            "reference_s": 366.3457,
+            "speedup": 23.1484,
+            "tetris_fps": 339.6312,
+            "tetris_s": 15.826
+          },
+          "wall_clock": {
+            "reference_fps": 12.9014,
+            "reference_s": 416.622,
+            "speedup": 4.3119,
+            "tetris_fps": 55.6295,
+            "tetris_s": 96.6214
+          },
+          "wall_clock_steady": {
+            "reference_fps": 13.1865,
+            "reference_s": 407.6132,
+            "speedup": 7.8714,
+            "tetris_fps": 103.7969,
+            "tetris_s": 51.7838
+          }
+        },
+        "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 5375,
+        "p022_source": "cache",
+        "p022_wall_from_cache": true,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 14.9704,
+            "reference_s": 359.0427,
+            "speedup": 20.5538,
+            "tetris_fps": 307.6977,
+            "tetris_s": 17.4684
+          },
+          "one_decode": {
+            "reference_fps": 14.7533,
+            "reference_s": 364.3242,
+            "speedup": 16.0143,
+            "speedup_range": [
+              16.0143,
+              16.0143
+            ],
+            "tetris_fps": 236.2649,
+            "tetris_s": 22.7499
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.7533,
+            "reference_s": 364.3242,
+            "speedup": 16.0143,
+            "tetris_fps": 236.2649,
+            "tetris_s": 22.7499
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.7533,
+            "reference_s": 364.3242,
+            "speedup": 16.6151,
+            "speedup_range": [
+              16.6151,
+              16.6151
+            ],
+            "tetris_fps": 245.1287,
+            "tetris_s": 21.9273
+          },
+          "p121": {
+            "reference_fps": 14.7533,
+            "reference_s": 364.3242,
+            "speedup": 20.8561,
+            "tetris_fps": 307.6977,
+            "tetris_s": 17.4684
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 5
+      }
+    },
+    "B3D2": {
+      "0.05": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 14.772,
+            "reference_s": 317.5612,
+            "speedup": 25.358,
+            "tetris_fps": 374.5866,
+            "tetris_s": 12.5231
+          },
+          "one_decode": {
+            "reference_fps": 14.6663,
+            "reference_s": 319.8491,
+            "speedup": 21.5953,
+            "speedup_range": [
+              21.5358,
+              21.7011
+            ],
+            "tetris_fps": 316.723,
+            "tetris_s": 14.8111
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.5944,
+            "reference_s": 321.4251,
+            "speedup": 19.6145,
+            "tetris_fps": 286.2617,
+            "tetris_s": 16.3871
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.6663,
+            "reference_s": 319.8491,
+            "speedup": 22.4987,
+            "speedup_range": [
+              22.434,
+              22.6138
+            ],
+            "tetris_fps": 329.9732,
+            "tetris_s": 14.2163
+          },
+          "p121": {
+            "reference_fps": 14.5944,
+            "reference_s": 321.4251,
+            "speedup": 25.6665,
+            "tetris_fps": 374.5866,
+            "tetris_s": 12.5231
+          },
+          "wall_clock": {
+            "reference_fps": 12.6089,
+            "reference_s": 372.0379,
+            "speedup": 4.3098,
+            "tetris_fps": 54.3425,
+            "tetris_s": 86.3228
+          },
+          "wall_clock_steady": {
+            "reference_fps": 12.9049,
+            "reference_s": 363.504,
+            "speedup": 8.6911,
+            "tetris_fps": 112.1581,
+            "tetris_s": 41.8249
+          }
+        },
+        "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 4691,
+        "p022_source": null,
+        "p022_wall_from_cache": false,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 14.623,
+            "reference_s": 320.796,
+            "speedup": 23.6954,
+            "tetris_fps": 346.498,
+            "tetris_s": 13.5383
+          },
+          "one_decode": {
+            "reference_fps": 14.4105,
+            "reference_s": 325.5274,
+            "speedup": 17.8179,
+            "speedup_range": [
+              17.8179,
+              17.8179
+            ],
+            "tetris_fps": 256.7643,
+            "tetris_s": 18.2697
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.4105,
+            "reference_s": 325.5274,
+            "speedup": 17.8179,
+            "tetris_fps": 256.7643,
+            "tetris_s": 18.2697
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.4105,
+            "reference_s": 325.5274,
+            "speedup": 18.4395,
+            "speedup_range": [
+              18.4395,
+              18.4395
+            ],
+            "tetris_fps": 265.7223,
+            "tetris_s": 17.6538
+          },
+          "p121": {
+            "reference_fps": 14.4105,
+            "reference_s": 325.5274,
+            "speedup": 24.0449,
+            "tetris_fps": 346.498,
+            "tetris_s": 13.5383
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 5
+      },
+      "0.10": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 14.772,
+            "reference_s": 317.5612,
+            "speedup": 29.3742,
+            "tetris_fps": 433.914,
+            "tetris_s": 10.8109
+          },
+          "one_decode": {
+            "reference_fps": 14.6663,
+            "reference_s": 319.8491,
+            "speedup": 24.4182,
+            "speedup_range": [
+              24.3417,
+              24.5543
+            ],
+            "tetris_fps": 358.1241,
+            "tetris_s": 13.0988
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.5944,
+            "reference_s": 321.4251,
+            "speedup": 21.9031,
+            "tetris_fps": 319.6622,
+            "tetris_s": 14.6749
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.6663,
+            "reference_s": 319.8491,
+            "speedup": 25.4312,
+            "speedup_range": [
+              25.3481,
+              25.5792
+            ],
+            "tetris_fps": 372.982,
+            "tetris_s": 12.577
+          },
+          "p121": {
+            "reference_fps": 14.5944,
+            "reference_s": 321.4251,
+            "speedup": 29.7316,
+            "tetris_fps": 433.914,
+            "tetris_s": 10.8109
+          },
+          "wall_clock": {
+            "reference_fps": 12.6089,
+            "reference_s": 372.0379,
+            "speedup": 4.4903,
+            "tetris_fps": 56.6183,
+            "tetris_s": 82.8531
+          },
+          "wall_clock_steady": {
+            "reference_fps": 12.9049,
+            "reference_s": 363.504,
+            "speedup": 9.217,
+            "tetris_fps": 118.9443,
+            "tetris_s": 39.4386
+          }
+        },
+        "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 4691,
+        "p022_source": null,
+        "p022_wall_from_cache": false,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 14.623,
+            "reference_s": 320.796,
+            "speedup": 26.7142,
+            "tetris_fps": 390.6417,
+            "tetris_s": 12.0084
+          },
+          "one_decode": {
+            "reference_fps": 14.4105,
+            "reference_s": 325.5274,
+            "speedup": 19.4463,
+            "speedup_range": [
+              19.4463,
+              19.4463
+            ],
+            "tetris_fps": 280.2303,
+            "tetris_s": 16.7398
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.4105,
+            "reference_s": 325.5274,
+            "speedup": 19.4463,
+            "tetris_fps": 280.2303,
+            "tetris_s": 16.7398
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.4105,
+            "reference_s": 325.5274,
+            "speedup": 20.1003,
+            "speedup_range": [
+              20.1003,
+              20.1003
+            ],
+            "tetris_fps": 289.6544,
+            "tetris_s": 16.1952
+          },
+          "p121": {
+            "reference_fps": 14.4105,
+            "reference_s": 325.5274,
+            "speedup": 27.1082,
+            "tetris_fps": 390.6417,
+            "tetris_s": 12.0084
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 5
+      }
+    },
+    "B3D3": {
+      "0.05": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 14.8053,
+            "reference_s": 350.6845,
+            "speedup": 21.7241,
+            "tetris_fps": 321.6326,
+            "tetris_s": 16.1426
+          },
+          "one_decode": {
+            "reference_fps": 14.7004,
+            "reference_s": 353.1869,
+            "speedup": 18.9426,
+            "speedup_range": [
+              18.912,
+              18.9621
+            ],
+            "tetris_fps": 278.4644,
+            "tetris_s": 18.6451
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.6244,
+            "reference_s": 355.0239,
+            "speedup": 17.3334,
+            "tetris_fps": 253.4902,
+            "tetris_s": 20.4821
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.7004,
+            "reference_s": 353.1869,
+            "speedup": 19.7362,
+            "speedup_range": [
+              19.7029,
+              19.7575
+            ],
+            "tetris_fps": 290.1305,
+            "tetris_s": 17.8954
+          },
+          "p121": {
+            "reference_fps": 14.6244,
+            "reference_s": 355.0239,
+            "speedup": 21.9929,
+            "tetris_fps": 321.6326,
+            "tetris_s": 16.1426
+          },
+          "wall_clock": {
+            "reference_fps": 12.8375,
+            "reference_s": 404.4397,
+            "speedup": 4.2758,
+            "tetris_fps": 54.8912,
+            "tetris_s": 94.5871
+          },
+          "wall_clock_steady": {
+            "reference_fps": 13.1424,
+            "reference_s": 395.0576,
+            "speedup": 8.0231,
+            "tetris_fps": 105.4423,
+            "tetris_s": 49.2402
+          }
+        },
+        "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 5192,
+        "p022_source": "cache",
+        "p022_wall_from_cache": true,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 14.7617,
+            "reference_s": 351.7211,
+            "speedup": 19.3469,
+            "tetris_fps": 285.5933,
+            "tetris_s": 18.1797
+          },
+          "one_decode": {
+            "reference_fps": 14.5389,
+            "reference_s": 357.1108,
+            "speedup": 15.1515,
+            "speedup_range": [
+              15.1515,
+              15.1515
+            ],
+            "tetris_fps": 220.286,
+            "tetris_s": 23.5694
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.5389,
+            "reference_s": 357.1108,
+            "speedup": 15.1515,
+            "tetris_fps": 220.286,
+            "tetris_s": 23.5694
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.5389,
+            "reference_s": 357.1108,
+            "speedup": 15.6806,
+            "speedup_range": [
+              15.6806,
+              15.6806
+            ],
+            "tetris_fps": 227.9792,
+            "tetris_s": 22.774
+          },
+          "p121": {
+            "reference_fps": 14.5389,
+            "reference_s": 357.1108,
+            "speedup": 19.6434,
+            "tetris_fps": 285.5933,
+            "tetris_s": 18.1797
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 5
+      },
+      "0.10": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 14.8053,
+            "reference_s": 350.6845,
+            "speedup": 25.1584,
+            "tetris_fps": 372.4783,
+            "tetris_s": 13.9391
+          },
+          "one_decode": {
+            "reference_fps": 14.7004,
+            "reference_s": 353.1869,
+            "speedup": 21.4814,
+            "speedup_range": [
+              21.4418,
+              21.5067
+            ],
+            "tetris_fps": 315.7856,
+            "tetris_s": 16.4415
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.6244,
+            "reference_s": 355.0239,
+            "speedup": 19.4231,
+            "tetris_fps": 284.0499,
+            "tetris_s": 18.2785
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.7004,
+            "reference_s": 353.1869,
+            "speedup": 22.3317,
+            "speedup_range": [
+              22.2889,
+              22.3591
+            ],
+            "tetris_fps": 328.2859,
+            "tetris_s": 15.8155
+          },
+          "p121": {
+            "reference_fps": 14.6244,
+            "reference_s": 355.0239,
+            "speedup": 25.4697,
+            "tetris_fps": 372.4783,
+            "tetris_s": 13.9391
+          },
+          "wall_clock": {
+            "reference_fps": 12.8375,
+            "reference_s": 404.4397,
+            "speedup": 4.3482,
+            "tetris_fps": 55.8199,
+            "tetris_s": 93.0134
+          },
+          "wall_clock_steady": {
+            "reference_fps": 13.1424,
+            "reference_s": 395.0576,
+            "speedup": 8.4507,
+            "tetris_fps": 111.0628,
+            "tetris_s": 46.7483
+          }
+        },
+        "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 5192,
+        "p022_source": "cache",
+        "p022_wall_from_cache": true,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 14.7617,
+            "reference_s": 351.7211,
+            "speedup": 22.4092,
+            "tetris_fps": 330.7976,
+            "tetris_s": 15.6954
+          },
+          "one_decode": {
+            "reference_fps": 14.5389,
+            "reference_s": 357.1108,
+            "speedup": 16.9367,
+            "speedup_range": [
+              16.9367,
+              16.9367
+            ],
+            "tetris_fps": 246.2407,
+            "tetris_s": 21.0851
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.5389,
+            "reference_s": 357.1108,
+            "speedup": 16.9367,
+            "tetris_fps": 246.2407,
+            "tetris_s": 21.0851
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.5389,
+            "reference_s": 357.1108,
+            "speedup": 17.4848,
+            "speedup_range": [
+              17.4848,
+              17.4848
+            ],
+            "tetris_fps": 254.21,
+            "tetris_s": 20.4241
+          },
+          "p121": {
+            "reference_fps": 14.5389,
+            "reference_s": 357.1108,
+            "speedup": 22.7526,
+            "tetris_fps": 330.7976,
+            "tetris_s": 15.6954
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 5
+      }
+    },
+    "B3D4": {
+      "0.05": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 14.9098,
+            "reference_s": 350.4402,
+            "speedup": 32.9361,
+            "tetris_fps": 491.0716,
+            "tetris_s": 10.64
+          },
+          "one_decode": {
+            "reference_fps": 14.8009,
+            "reference_s": 353.018,
+            "speedup": 26.7078,
+            "speedup_range": [
+              26.6455,
+              26.7644
+            ],
+            "tetris_fps": 395.3004,
+            "tetris_s": 13.2178
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.7273,
+            "reference_s": 354.7827,
+            "speedup": 23.6798,
+            "tetris_fps": 348.7396,
+            "tetris_s": 14.9825
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.8009,
+            "reference_s": 353.018,
+            "speedup": 27.6932,
+            "speedup_range": [
+              27.6262,
+              27.7541
+            ],
+            "tetris_fps": 409.8856,
+            "tetris_s": 12.7475
+          },
+          "p121": {
+            "reference_fps": 14.7273,
+            "reference_s": 354.7827,
+            "speedup": 33.3443,
+            "tetris_fps": 491.0716,
+            "tetris_s": 10.64
+          },
+          "wall_clock": {
+            "reference_fps": 12.958,
+            "reference_s": 403.2256,
+            "speedup": 4.5354,
+            "tetris_fps": 58.7697,
+            "tetris_s": 88.9063
+          },
+          "wall_clock_steady": {
+            "reference_fps": 13.2501,
+            "reference_s": 394.3354,
+            "speedup": 8.5412,
+            "tetris_fps": 113.1718,
+            "tetris_s": 46.1687
+          }
+        },
+        "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 5225,
+        "p022_source": "cache",
+        "p022_wall_from_cache": true,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 14.7312,
+            "reference_s": 354.6891,
+            "speedup": 28.7059,
+            "tetris_fps": 422.8733,
+            "tetris_s": 12.3559
+          },
+          "one_decode": {
+            "reference_fps": 14.5159,
+            "reference_s": 359.9504,
+            "speedup": 20.4317,
+            "speedup_range": [
+              20.4317,
+              20.4317
+            ],
+            "tetris_fps": 296.5839,
+            "tetris_s": 17.6173
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.5159,
+            "reference_s": 359.9504,
+            "speedup": 20.4317,
+            "tetris_fps": 296.5839,
+            "tetris_s": 17.6173
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.5159,
+            "reference_s": 359.9504,
+            "speedup": 21.0237,
+            "speedup_range": [
+              21.0237,
+              21.0237
+            ],
+            "tetris_fps": 305.1773,
+            "tetris_s": 17.1212
+          },
+          "p121": {
+            "reference_fps": 14.5159,
+            "reference_s": 359.9504,
+            "speedup": 29.1318,
+            "tetris_fps": 422.8733,
+            "tetris_s": 12.3559
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 5
+      },
+      "0.10": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 14.9098,
+            "reference_s": 350.4402,
+            "speedup": 50.3571,
+            "tetris_fps": 750.8148,
+            "tetris_s": 6.9591
+          },
+          "one_decode": {
+            "reference_fps": 14.8009,
+            "reference_s": 353.018,
+            "speedup": 37.016,
+            "speedup_range": [
+              36.8952,
+              37.1259
+            ],
+            "tetris_fps": 547.8716,
+            "tetris_s": 9.5369
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.7273,
+            "reference_s": 354.7827,
+            "speedup": 31.3922,
+            "tetris_fps": 462.3223,
+            "tetris_s": 11.3016
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.8009,
+            "reference_s": 353.018,
+            "speedup": 38.3723,
+            "speedup_range": [
+              38.2423,
+              38.4905
+            ],
+            "tetris_fps": 567.9456,
+            "tetris_s": 9.1998
+          },
+          "p121": {
+            "reference_fps": 14.7273,
+            "reference_s": 354.7827,
+            "speedup": 50.9811,
+            "tetris_fps": 750.8148,
+            "tetris_s": 6.9591
+          },
+          "wall_clock": {
+            "reference_fps": 12.958,
+            "reference_s": 403.2256,
+            "speedup": 4.7796,
+            "tetris_fps": 61.9347,
+            "tetris_s": 84.3631
+          },
+          "wall_clock_steady": {
+            "reference_fps": 13.2501,
+            "reference_s": 394.3354,
+            "speedup": 9.6184,
+            "tetris_fps": 127.445,
+            "tetris_s": 40.9981
+          }
+        },
+        "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 5225,
+        "p022_source": "cache",
+        "p022_wall_from_cache": true,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 14.7312,
+            "reference_s": 354.6891,
+            "speedup": 45.0676,
+            "tetris_fps": 663.9004,
+            "tetris_s": 7.8702
+          },
+          "one_decode": {
+            "reference_fps": 14.5159,
+            "reference_s": 359.9504,
+            "speedup": 27.4112,
+            "speedup_range": [
+              27.4112,
+              27.4112
+            ],
+            "tetris_fps": 397.8986,
+            "tetris_s": 13.1315
+          },
+          "one_decode_logged": {
+            "reference_fps": 14.5159,
+            "reference_s": 359.9504,
+            "speedup": 27.4112,
+            "tetris_fps": 397.8986,
+            "tetris_s": 13.1315
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 14.5159,
+            "reference_s": 359.9504,
+            "speedup": 28.1619,
+            "speedup_range": [
+              28.1619,
+              28.1619
+            ],
+            "tetris_fps": 408.7954,
+            "tetris_s": 12.7815
+          },
+          "p121": {
+            "reference_fps": 14.5159,
+            "reference_s": 359.9504,
+            "speedup": 45.7361,
+            "tetris_fps": 663.9004,
+            "tetris_s": 7.8702
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 5
+      }
+    },
+    "CalDoT1": {
+      "0.05": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 32.1326,
+            "reference_s": 1680.5338,
+            "speedup": 24.2749,
+            "tetris_fps": 780.0164,
+            "tetris_s": 69.2293
+          },
+          "one_decode": {
+            "reference_fps": 31.2977,
+            "reference_s": 1725.3656,
+            "speedup": 15.1267,
+            "speedup_range": [
+              15.1,
+              15.1679
+            ],
+            "tetris_fps": 473.4302,
+            "tetris_s": 114.0612
+          },
+          "one_decode_logged": {
+            "reference_fps": 31.6223,
+            "reference_s": 1707.6557,
+            "speedup": 17.7232,
+            "tetris_fps": 560.4496,
+            "tetris_s": 96.3512
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 31.2977,
+            "reference_s": 1725.3656,
+            "speedup": 15.7126,
+            "speedup_range": [
+              15.6838,
+              15.7573
+            ],
+            "tetris_fps": 491.7687,
+            "tetris_s": 109.8077
+          },
+          "p121": {
+            "reference_fps": 31.6223,
+            "reference_s": 1707.6557,
+            "speedup": 24.6667,
+            "tetris_fps": 780.0164,
+            "tetris_s": 69.2293
+          },
+          "wall_clock": {
+            "reference_fps": 24.5233,
+            "reference_s": 2201.9856,
+            "speedup": 6.6728,
+            "tetris_fps": 163.6382,
+            "tetris_s": 329.9963
+          },
+          "wall_clock_steady": {
+            "reference_fps": 24.6393,
+            "reference_s": 2191.621,
+            "speedup": 7.5791,
+            "tetris_fps": 186.7442,
+            "tetris_s": 289.1657
+          }
+        },
+        "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 54000,
+        "p022_source": null,
+        "p022_wall_from_cache": false,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 31.6234,
+            "reference_s": 1707.5962,
+            "speedup": 23.0627,
+            "tetris_fps": 729.3216,
+            "tetris_s": 74.0414
+          },
+          "one_decode": {
+            "reference_fps": 30.931,
+            "reference_s": 1745.8239,
+            "speedup": 15.5504,
+            "speedup_range": [
+              15.5504,
+              15.5504
+            ],
+            "tetris_fps": 480.9874,
+            "tetris_s": 112.2691
+          },
+          "one_decode_logged": {
+            "reference_fps": 30.931,
+            "reference_s": 1745.8239,
+            "speedup": 15.5504,
+            "tetris_fps": 480.9874,
+            "tetris_s": 112.2691
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 30.931,
+            "reference_s": 1745.8239,
+            "speedup": 16.2004,
+            "speedup_range": [
+              16.2004,
+              16.2004
+            ],
+            "tetris_fps": 501.0937,
+            "tetris_s": 107.7643
+          },
+          "p121": {
+            "reference_fps": 30.931,
+            "reference_s": 1745.8239,
+            "speedup": 23.579,
+            "tetris_fps": 729.3216,
+            "tetris_s": 74.0414
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 60
+      },
+      "0.10": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 32.1326,
+            "reference_s": 1680.5338,
+            "speedup": 52.839,
+            "tetris_fps": 1697.856,
+            "tetris_s": 31.8048
+          },
+          "one_decode": {
+            "reference_fps": 31.2977,
+            "reference_s": 1725.3656,
+            "speedup": 22.5136,
+            "speedup_range": [
+              22.4533,
+              22.6073
+            ],
+            "tetris_fps": 704.6236,
+            "tetris_s": 76.6367
+          },
+          "one_decode_logged": {
+            "reference_fps": 31.6223,
+            "reference_s": 1707.6557,
+            "speedup": 28.9793,
+            "tetris_fps": 916.3924,
+            "tetris_s": 58.9267
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 31.2977,
+            "reference_s": 1725.3656,
+            "speedup": 23.0663,
+            "speedup_range": [
+              23.0029,
+              23.1648
+            ],
+            "tetris_fps": 721.9222,
+            "tetris_s": 74.8003
+          },
+          "p121": {
+            "reference_fps": 31.6223,
+            "reference_s": 1707.6557,
+            "speedup": 53.6917,
+            "tetris_fps": 1697.856,
+            "tetris_s": 31.8048
+          },
+          "wall_clock": {
+            "reference_fps": 24.5233,
+            "reference_s": 2201.9856,
+            "speedup": 7.741,
+            "tetris_fps": 189.8362,
+            "tetris_s": 284.4557
+          },
+          "wall_clock_steady": {
+            "reference_fps": 24.6393,
+            "reference_s": 2191.621,
+            "speedup": 8.9787,
+            "tetris_fps": 221.2291,
+            "tetris_s": 244.0908
+          }
+        },
+        "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 54000,
+        "p022_source": null,
+        "p022_wall_from_cache": false,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 31.6234,
+            "reference_s": 1707.5962,
+            "speedup": 49.3335,
+            "tetris_fps": 1560.0932,
+            "tetris_s": 34.6133
+          },
+          "one_decode": {
+            "reference_fps": 30.931,
+            "reference_s": 1745.8239,
+            "speedup": 23.9676,
+            "speedup_range": [
+              23.9676,
+              23.9676
+            ],
+            "tetris_fps": 741.3411,
+            "tetris_s": 72.841
+          },
+          "one_decode_logged": {
+            "reference_fps": 30.931,
+            "reference_s": 1745.8239,
+            "speedup": 23.9676,
+            "tetris_fps": 741.3411,
+            "tetris_s": 72.841
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 30.931,
+            "reference_s": 1745.8239,
+            "speedup": 24.6374,
+            "speedup_range": [
+              24.6374,
+              24.6374
+            ],
+            "tetris_fps": 762.0582,
+            "tetris_s": 70.8607
+          },
+          "p121": {
+            "reference_fps": 30.931,
+            "reference_s": 1745.8239,
+            "speedup": 50.4379,
+            "tetris_fps": 1560.0932,
+            "tetris_s": 34.6133
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 60
+      }
+    },
+    "CalDoT2": {
+      "0.05": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 32.0116,
+            "reference_s": 1686.8869,
+            "speedup": 4.8146,
+            "tetris_fps": 154.122,
+            "tetris_s": 350.3717
+          },
+          "one_decode": {
+            "reference_fps": 31.627,
+            "reference_s": 1707.4036,
+            "speedup": 4.6036,
+            "speedup_range": [
+              4.5984,
+              4.6137
+            ],
+            "tetris_fps": 145.5964,
+            "tetris_s": 370.8884
+          },
+          "one_decode_logged": {
+            "reference_fps": 31.5209,
+            "reference_s": 1713.1514,
+            "speedup": 4.5486,
+            "tetris_fps": 143.3744,
+            "tetris_s": 376.6362
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 31.627,
+            "reference_s": 1707.4036,
+            "speedup": 4.8932,
+            "speedup_range": [
+              4.8873,
+              4.9048
+            ],
+            "tetris_fps": 154.7562,
+            "tetris_s": 348.9359
+          },
+          "p121": {
+            "reference_fps": 31.5209,
+            "reference_s": 1713.1514,
+            "speedup": 4.8895,
+            "tetris_fps": 154.122,
+            "tetris_s": 350.3717
+          },
+          "wall_clock": {
+            "reference_fps": 24.4599,
+            "reference_s": 2207.6976,
+            "speedup": 3.5443,
+            "tetris_fps": 86.6932,
+            "tetris_s": 622.8866
+          },
+          "wall_clock_steady": {
+            "reference_fps": 24.5812,
+            "reference_s": 2196.7964,
+            "speedup": 3.7681,
+            "tetris_fps": 92.6242,
+            "tetris_s": 583.0009
+          }
+        },
+        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 54000,
+        "p022_source": null,
+        "p022_wall_from_cache": false,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 31.5314,
+            "reference_s": 1712.5813,
+            "speedup": 4.5894,
+            "tetris_fps": 144.7105,
+            "tetris_s": 373.1589
+          },
+          "one_decode": {
+            "reference_fps": 30.8622,
+            "reference_s": 1749.7105,
+            "speedup": 4.2646,
+            "speedup_range": [
+              4.2646,
+              4.2646
+            ],
+            "tetris_fps": 131.6148,
+            "tetris_s": 410.2881
+          },
+          "one_decode_logged": {
+            "reference_fps": 30.8622,
+            "reference_s": 1749.7105,
+            "speedup": 4.2646,
+            "tetris_fps": 131.6148,
+            "tetris_s": 410.2881
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 30.8622,
+            "reference_s": 1749.7105,
+            "speedup": 4.5173,
+            "speedup_range": [
+              4.5173,
+              4.5173
+            ],
+            "tetris_fps": 139.4132,
+            "tetris_s": 387.3378
+          },
+          "p121": {
+            "reference_fps": 30.8622,
+            "reference_s": 1749.7105,
+            "speedup": 4.6889,
+            "tetris_fps": 144.7105,
+            "tetris_s": 373.1589
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 60
+      },
+      "0.10": {
+        "clean": {
+          "decode_excluded": {
+            "reference_fps": 32.0116,
+            "reference_s": 1686.8869,
+            "speedup": 11.181,
+            "tetris_fps": 357.9215,
+            "tetris_s": 150.8711
+          },
+          "one_decode": {
+            "reference_fps": 31.627,
+            "reference_s": 1707.4036,
+            "speedup": 9.9622,
+            "speedup_range": [
+              9.9346,
+              10.0171
+            ],
+            "tetris_fps": 315.075,
+            "tetris_s": 171.3878
+          },
+          "one_decode_logged": {
+            "reference_fps": 31.5209,
+            "reference_s": 1713.1514,
+            "speedup": 9.6714,
+            "tetris_fps": 304.8511,
+            "tetris_s": 177.1356
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 31.627,
+            "reference_s": 1707.4036,
+            "speedup": 10.413,
+            "speedup_range": [
+              10.3827,
+              10.4732
+            ],
+            "tetris_fps": 329.3321,
+            "tetris_s": 163.9682
+          },
+          "p121": {
+            "reference_fps": 31.5209,
+            "reference_s": 1713.1514,
+            "speedup": 11.3551,
+            "tetris_fps": 357.9215,
+            "tetris_s": 150.8711
+          },
+          "wall_clock": {
+            "reference_fps": 24.4599,
+            "reference_s": 2207.6976,
+            "speedup": 5.5426,
+            "tetris_fps": 135.5704,
+            "tetris_s": 398.3171
+          },
+          "wall_clock_steady": {
+            "reference_fps": 24.5812,
+            "reference_s": 2196.7964,
+            "speedup": 6.1544,
+            "tetris_fps": 151.2831,
+            "tetris_s": 356.9467
+          }
+        },
+        "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+        "contaminated": false,
+        "cpu_clean": true,
+        "decode_passes": 5,
+        "frames": 54000,
+        "p022_source": "cache",
+        "p022_wall_from_cache": true,
+        "paper": {
+          "decode_excluded": {
+            "reference_fps": 31.5314,
+            "reference_s": 1712.5813,
+            "speedup": 10.1975,
+            "tetris_fps": 321.5401,
+            "tetris_s": 167.9417
+          },
+          "one_decode": {
+            "reference_fps": 30.8622,
+            "reference_s": 1749.7105,
+            "speedup": 8.5322,
+            "speedup_range": [
+              8.5322,
+              8.5322
+            ],
+            "tetris_fps": 263.3235,
+            "tetris_s": 205.0709
+          },
+          "one_decode_logged": {
+            "reference_fps": 30.8622,
+            "reference_s": 1749.7105,
+            "speedup": 8.5322,
+            "tetris_fps": 263.3235,
+            "tetris_s": 205.0709
+          },
+          "one_decode_no_canvas_read": {
+            "reference_fps": 30.8622,
+            "reference_s": 1749.7105,
+            "speedup": 8.8644,
+            "speedup_range": [
+              8.8644,
+              8.8644
+            ],
+            "tetris_fps": 273.5761,
+            "tetris_s": 197.3857
+          },
+          "p121": {
+            "reference_fps": 30.8622,
+            "reference_s": 1749.7105,
+            "speedup": 10.4186,
+            "tetris_fps": 321.5401,
+            "tetris_s": 167.9417
+          },
+          "wall_clock": null,
+          "wall_clock_steady": null
+        },
+        "videos": 60
+      }
+    }
+  },
+  "speedup_table": {
+    "0.05": {
+      "decode_excluded": {
+        "Amsterdam": {
+          "clean": 71.5114,
+          "paper": 67.4867
+        },
+        "B3D1": {
+          "clean": 18.4913,
+          "paper": 17.0089
+        },
+        "B3D2": {
+          "clean": 25.358,
+          "paper": 23.6954
+        },
+        "B3D3": {
+          "clean": 21.7241,
+          "paper": 19.3469
+        },
+        "B3D4": {
+          "clean": 32.9361,
+          "paper": 28.7059
+        },
+        "CalDoT1": {
+          "clean": 24.2749,
+          "paper": 23.0627
+        },
+        "CalDoT2": {
+          "clean": 4.8146,
+          "paper": 4.5894
+        }
+      },
+      "one_decode": {
+        "Amsterdam": {
+          "clean": 29.0927,
+          "paper": 30.141
+        },
+        "B3D1": {
+          "clean": 16.4339,
+          "paper": 13.8051
+        },
+        "B3D2": {
+          "clean": 21.5953,
+          "paper": 17.8179
+        },
+        "B3D3": {
+          "clean": 18.9426,
+          "paper": 15.1515
+        },
+        "B3D4": {
+          "clean": 26.7078,
+          "paper": 20.4317
+        },
+        "CalDoT1": {
+          "clean": 15.1267,
+          "paper": 15.5504
+        },
+        "CalDoT2": {
+          "clean": 4.6036,
+          "paper": 4.2646
+        }
+      },
+      "one_decode_logged": {
+        "Amsterdam": {
+          "clean": 35.0966,
+          "paper": 30.141
+        },
+        "B3D1": {
+          "clean": 15.2648,
+          "paper": 13.8051
+        },
+        "B3D2": {
+          "clean": 19.6145,
+          "paper": 17.8179
+        },
+        "B3D3": {
+          "clean": 17.3334,
+          "paper": 15.1515
+        },
+        "B3D4": {
+          "clean": 23.6798,
+          "paper": 20.4317
+        },
+        "CalDoT1": {
+          "clean": 17.7232,
+          "paper": 15.5504
+        },
+        "CalDoT2": {
+          "clean": 4.5486,
+          "paper": 4.2646
+        }
+      },
+      "one_decode_no_canvas_read": {
+        "Amsterdam": {
+          "clean": 29.7697,
+          "paper": 30.8994
+        },
+        "B3D1": {
+          "clean": 17.2648,
+          "paper": 14.4118
+        },
+        "B3D2": {
+          "clean": 22.4987,
+          "paper": 18.4395
+        },
+        "B3D3": {
+          "clean": 19.7362,
+          "paper": 15.6806
+        },
+        "B3D4": {
+          "clean": 27.6932,
+          "paper": 21.0237
+        },
+        "CalDoT1": {
+          "clean": 15.7126,
+          "paper": 16.2004
+        },
+        "CalDoT2": {
+          "clean": 4.8932,
+          "paper": 4.5173
+        }
+      },
+      "p121": {
+        "Amsterdam": {
+          "clean": 72.5794,
+          "paper": 68.7682
+        },
+        "B3D1": {
+          "clean": 18.7174,
+          "paper": 17.2591
+        },
+        "B3D2": {
+          "clean": 25.6665,
+          "paper": 24.0449
+        },
+        "B3D3": {
+          "clean": 21.9929,
+          "paper": 19.6434
+        },
+        "B3D4": {
+          "clean": 33.3443,
+          "paper": 29.1318
+        },
+        "CalDoT1": {
+          "clean": 24.6667,
+          "paper": 23.579
+        },
+        "CalDoT2": {
+          "clean": 4.8895,
+          "paper": 4.6889
+        }
+      },
+      "wall_clock": {
+        "Amsterdam": {
+          "clean": 7.3965
+        },
+        "B3D1": {
+          "clean": 4.2492
+        },
+        "B3D2": {
+          "clean": 4.3098
+        },
+        "B3D3": {
+          "clean": 4.2758
+        },
+        "B3D4": {
+          "clean": 4.5354
+        },
+        "CalDoT1": {
+          "clean": 6.6728
+        },
+        "CalDoT2": {
+          "clean": 3.5443
+        }
+      },
+      "wall_clock_steady": {
+        "Amsterdam": {
+          "clean": 8.0554
+        },
+        "B3D1": {
+          "clean": 7.7499
+        },
+        "B3D2": {
+          "clean": 8.6911
+        },
+        "B3D3": {
+          "clean": 8.0231
+        },
+        "B3D4": {
+          "clean": 8.5412
+        },
+        "CalDoT1": {
+          "clean": 7.5791
+        },
+        "CalDoT2": {
+          "clean": 3.7681
+        }
+      }
+    },
+    "0.10": {
+      "decode_excluded": {
+        "Amsterdam": {
+          "clean": 94.6948,
+          "paper": 89.5024
+        },
+        "B3D1": {
+          "clean": 22.8686,
+          "paper": 20.5538
+        },
+        "B3D2": {
+          "clean": 29.3742,
+          "paper": 26.7142
+        },
+        "B3D3": {
+          "clean": 25.1584,
+          "paper": 22.4092
+        },
+        "B3D4": {
+          "clean": 50.3571,
+          "paper": 45.0676
+        },
+        "CalDoT1": {
+          "clean": 52.839,
+          "paper": 49.3335
+        },
+        "CalDoT2": {
+          "clean": 11.181,
+          "paper": 10.1975
+        }
+      },
+      "one_decode": {
+        "Amsterdam": {
+          "clean": 32.2372,
+          "paper": 33.7833
+        },
+        "B3D1": {
+          "clean": 19.7737,
+          "paper": 16.0143
+        },
+        "B3D2": {
+          "clean": 24.4182,
+          "paper": 19.4463
+        },
+        "B3D3": {
+          "clean": 21.4814,
+          "paper": 16.9367
+        },
+        "B3D4": {
+          "clean": 37.016,
+          "paper": 27.4112
+        },
+        "CalDoT1": {
+          "clean": 22.5136,
+          "paper": 23.9676
+        },
+        "CalDoT2": {
+          "clean": 9.9622,
+          "paper": 8.5322
+        }
+      },
+      "one_decode_logged": {
+        "Amsterdam": {
+          "clean": 39.8095,
+          "paper": 33.7833
+        },
+        "B3D1": {
+          "clean": 18.0885,
+          "paper": 16.0143
+        },
+        "B3D2": {
+          "clean": 21.9031,
+          "paper": 19.4463
+        },
+        "B3D3": {
+          "clean": 19.4231,
+          "paper": 16.9367
+        },
+        "B3D4": {
+          "clean": 31.3922,
+          "paper": 27.4112
+        },
+        "CalDoT1": {
+          "clean": 28.9793,
+          "paper": 23.9676
+        },
+        "CalDoT2": {
+          "clean": 9.6714,
+          "paper": 8.5322
+        }
+      },
+      "one_decode_no_canvas_read": {
+        "Amsterdam": {
+          "clean": 33.0095,
+          "paper": 34.6705
+        },
+        "B3D1": {
+          "clean": 20.6461,
+          "paper": 16.6151
+        },
+        "B3D2": {
+          "clean": 25.4312,
+          "paper": 20.1003
+        },
+        "B3D3": {
+          "clean": 22.3317,
+          "paper": 17.4848
+        },
+        "B3D4": {
+          "clean": 38.3723,
+          "paper": 28.1619
+        },
+        "CalDoT1": {
+          "clean": 23.0663,
+          "paper": 24.6374
+        },
+        "CalDoT2": {
+          "clean": 10.413,
+          "paper": 8.8644
+        }
+      },
+      "p121": {
+        "Amsterdam": {
+          "clean": 96.1091,
+          "paper": 91.2021
+        },
+        "B3D1": {
+          "clean": 23.1484,
+          "paper": 20.8561
+        },
+        "B3D2": {
+          "clean": 29.7316,
+          "paper": 27.1082
+        },
+        "B3D3": {
+          "clean": 25.4697,
+          "paper": 22.7526
+        },
+        "B3D4": {
+          "clean": 50.9811,
+          "paper": 45.7361
+        },
+        "CalDoT1": {
+          "clean": 53.6917,
+          "paper": 50.4379
+        },
+        "CalDoT2": {
+          "clean": 11.3551,
+          "paper": 10.4186
+        }
+      },
+      "wall_clock": {
+        "Amsterdam": {
+          "clean": 7.4084
+        },
+        "B3D1": {
+          "clean": 4.3119
+        },
+        "B3D2": {
+          "clean": 4.4903
+        },
+        "B3D3": {
+          "clean": 4.3482
+        },
+        "B3D4": {
+          "clean": 4.7796
+        },
+        "CalDoT1": {
+          "clean": 7.741
+        },
+        "CalDoT2": {
+          "clean": 5.5426
+        }
+      },
+      "wall_clock_steady": {
+        "Amsterdam": {
+          "clean": 8.0839
+        },
+        "B3D1": {
+          "clean": 7.8714
+        },
+        "B3D2": {
+          "clean": 9.217
+        },
+        "B3D3": {
+          "clean": 8.4507
+        },
+        "B3D4": {
+          "clean": 9.6184
+        },
+        "CalDoT1": {
+          "clean": 8.9787
+        },
+        "CalDoT2": {
+          "clean": 6.1544
+        }
+      }
+    }
+  }
+}

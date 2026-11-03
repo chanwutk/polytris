@@ -1,0 +1,135 @@
+{
+  "environment": {
+    "bombe_cpus": "0-19,40-59",
+    "bombe_gpu": "0",
+    "bombe_run": "g0-20261027T061018",
+    "cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "hostname": "bombe",
+    "nvidia_smi": "GPU 0: Quadro RTX 6000 (UUID: GPU-0997b8f5-904d-8e15-0da8-1c28bb1e348c)",
+    "python": "3.13.12"
+  },
+  "error": null,
+  "files": {
+    "cpu": "cpu.jsonl.gz",
+    "decode": "decode.jsonl.gz",
+    "logs": "logs"
+  },
+  "finished": "2026-10-27T13:12:54.531+00:00",
+  "finished_ns": 1793106774531756258,
+  "inputs_copied": [],
+  "outputs": {
+    "001_preprocess_groundtruth_detection": {
+      "te01.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 1575419,
+            "sha256": "a994f3bd8c7bece34fb731844ed1e85017e78b57420b749fa95288c99c29a07e"
+          }
+        },
+        "runtime": "jnc0/execution/te01.mp4/002_naive/detection_runtime.jsonl"
+      }
+    },
+    "002_preprocess_groundtruth_tracking": {
+      "te01.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 1300946,
+            "sha256": "d3a1b9f65fbcafbd4035c894814605ea9a0ca44795d75466cb907bf8969a5108"
+          }
+        },
+        "runtime": "jnc0/execution/te01.mp4/002_naive/tracking_runtime.jsonl"
+      }
+    }
+  },
+  "p022_source": null,
+  "preread": [
+    {
+      "bytes": 15007464,
+      "seconds": 0.035621607,
+      "video": "te01.mp4"
+    }
+  ],
+  "stages": [
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793106767944104191,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_detection.py",
+      "stage": "001_preprocess_groundtruth_detection",
+      "start_ns": 1793106651445766301,
+      "wall_s": 116.498329931
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793106773641181057,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_tracking.py",
+      "stage": "002_preprocess_groundtruth_tracking",
+      "start_ns": 1793106767945104799,
+      "wall_s": 5.696070346
+    }
+  ],
+  "started": "2026-10-27T13:10:49.944+00:00",
+  "started_ns": 1793106649944111692,
+  "status": "ok",
+  "unit": {
+    "attempt": 1,
+    "dataset": "jnc0",
+    "gpu": 0,
+    "phase": "smoke",
+    "raw": "units/smoke-jnc0-reference/attempt-1",
+    "system": "reference",
+    "unit": "smoke-jnc0-reference",
+    "variant_id": null,
+    "videos": [
+      "te01.mp4"
+    ]
+  }
+}

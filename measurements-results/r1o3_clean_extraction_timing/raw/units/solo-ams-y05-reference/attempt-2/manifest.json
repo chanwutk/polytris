@@ -1,0 +1,255 @@
+{
+  "environment": {
+    "bombe_cpus": "0-19,40-59",
+    "bombe_gpu": "0",
+    "bombe_run": "g0-20261027T093638",
+    "cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "hostname": "bombe",
+    "nvidia_smi": "GPU 0: Quadro RTX 6000 (UUID: GPU-0997b8f5-904d-8e15-0da8-1c28bb1e348c)",
+    "python": "3.13.12"
+  },
+  "error": null,
+  "files": {
+    "cpu": "cpu.jsonl.gz",
+    "decode": "decode.jsonl.gz",
+    "logs": "logs"
+  },
+  "finished": "2026-10-27T16:44:25.043+00:00",
+  "finished_ns": 1793119465043945122,
+  "inputs_copied": [],
+  "outputs": {
+    "001_preprocess_groundtruth_detection": {
+      "te00.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 85817,
+            "sha256": "c1e1b0c5a60d773a092e21608c5cb269260ef426b24d33b96009cba3ab3de614"
+          }
+        },
+        "runtime": "ams-y05/execution/te00.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 281386,
+            "sha256": "7a21f6b4a75ce5a378f1cad76aadd99f43392f77017b43b39bb9bf2c954461c8"
+          }
+        },
+        "runtime": "ams-y05/execution/te12.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 111052,
+            "sha256": "6c303a9f4ce68b29e6c829808c9974559bbe4706c9d03a95879da9b4c8810dc2"
+          }
+        },
+        "runtime": "ams-y05/execution/te24.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 395285,
+            "sha256": "f61b07e96541bd9322e4e18fc63b33a49e6abf46f3e48b28cd59d1680f857e85"
+          }
+        },
+        "runtime": "ams-y05/execution/te35.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 318532,
+            "sha256": "ad604ee0a6fdf9bbc38a3296f1f7114a68589df5fe27284d4a2d037a5f525742"
+          }
+        },
+        "runtime": "ams-y05/execution/te47.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 335713,
+            "sha256": "b71bebe40945418e6e8b08cbe4f971ff9571e8098ff0ae2d23bc9d2616f0f5bf"
+          }
+        },
+        "runtime": "ams-y05/execution/te59.mp4/002_naive/detection_runtime.jsonl"
+      }
+    },
+    "002_preprocess_groundtruth_tracking": {
+      "te00.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 62739,
+            "sha256": "71c656e1d6831572536181bde1e1e8fcb6e5bfe7b631f40085041e894df245aa"
+          }
+        },
+        "runtime": "ams-y05/execution/te00.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 228188,
+            "sha256": "cfe2d7b23f4638553d8f5f0979d2523b1ffd4630fa2f6a5429483ddfeb6a2ce2"
+          }
+        },
+        "runtime": "ams-y05/execution/te12.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 101333,
+            "sha256": "9c734361530250b28230df6f8bb215fea06ecba0ef34b93f4eb49f6e4c6967e2"
+          }
+        },
+        "runtime": "ams-y05/execution/te24.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 311783,
+            "sha256": "952a19b76e25c80ca782c855d3056d3d1d01f83e09243e1d20f61883a1950b5b"
+          }
+        },
+        "runtime": "ams-y05/execution/te35.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 264104,
+            "sha256": "8c5418e84d3710ee34587c9e9bbc822c1911721414d13ca316461bd8a94a2210"
+          }
+        },
+        "runtime": "ams-y05/execution/te47.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 270983,
+            "sha256": "4e8fd6db61f3ddba44bc341b9275bfd1bd5082e7afa46ccd6e88ce4acfe1e398"
+          }
+        },
+        "runtime": "ams-y05/execution/te59.mp4/002_naive/tracking_runtime.jsonl"
+      }
+    }
+  },
+  "p022_source": null,
+  "preread": [
+    {
+      "bytes": 8397314,
+      "seconds": 0.015499371,
+      "video": "te00.mp4"
+    },
+    {
+      "bytes": 8659528,
+      "seconds": 0.015859105,
+      "video": "te12.mp4"
+    },
+    {
+      "bytes": 14005740,
+      "seconds": 0.025046315,
+      "video": "te24.mp4"
+    },
+    {
+      "bytes": 7723751,
+      "seconds": 0.01382359,
+      "video": "te35.mp4"
+    },
+    {
+      "bytes": 11466040,
+      "seconds": 0.013895991,
+      "video": "te47.mp4"
+    },
+    {
+      "bytes": 10138482,
+      "seconds": 0.011970545,
+      "video": "te59.mp4"
+    }
+  ],
+  "stages": [
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793119460134562138,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_detection.py",
+      "stage": "001_preprocess_groundtruth_detection",
+      "start_ns": 1793119055046168129,
+      "wall_s": 405.088389783
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793119464424490601,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_tracking.py",
+      "stage": "002_preprocess_groundtruth_tracking",
+      "start_ns": 1793119460136568568,
+      "wall_s": 4.287916131
+    }
+  ],
+  "started": "2026-10-27T16:37:27.237+00:00",
+  "started_ns": 1793119047238011531,
+  "status": "ok",
+  "unit": {
+    "attempt": 2,
+    "dataset": "ams-y05",
+    "gpu": 0,
+    "phase": "solo",
+    "raw": "units/solo-ams-y05-reference/attempt-2",
+    "system": "reference",
+    "unit": "solo-ams-y05-reference",
+    "variant_id": null,
+    "videos": [
+      "te00.mp4",
+      "te12.mp4",
+      "te24.mp4",
+      "te35.mp4",
+      "te47.mp4",
+      "te59.mp4"
+    ]
+  }
+}

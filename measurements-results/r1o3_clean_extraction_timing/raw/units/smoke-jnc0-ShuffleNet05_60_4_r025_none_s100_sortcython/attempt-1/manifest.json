@@ -1,0 +1,205 @@
+{
+  "environment": {
+    "bombe_cpus": "0-19,40-59",
+    "bombe_gpu": "0",
+    "bombe_run": "g0-20261027T061258",
+    "cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "hostname": "bombe",
+    "nvidia_smi": "GPU 0: Quadro RTX 6000 (UUID: GPU-0997b8f5-904d-8e15-0da8-1c28bb1e348c)",
+    "python": "3.13.12"
+  },
+  "error": null,
+  "files": {
+    "cpu": "cpu.jsonl.gz",
+    "logs": "logs"
+  },
+  "finished": "2026-10-27T13:14:35.416+00:00",
+  "finished_ns": 1793106875416339256,
+  "gurobi": null,
+  "inputs_copied": [
+    "jnc0/indexing/always_relevant/60_all.npy",
+    "jnc0/indexing/track_rate/sortcython_60/max_rate_table.npy",
+    "jnc0/indexing/training/results/ShuffleNet05_60/model_best.pth",
+    "jnc0/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl"
+  ],
+  "outputs": {
+    "020_exec_classify": {
+      "te01.mp4": {
+        "files": {
+          "score.jsonl": {
+            "bytes": 136072,
+            "sha256": "e202d886bafa969e33007e7db525d2d6a4ba1900d3996f3542a71262dff730c1"
+          }
+        },
+        "runtime": "jnc0/execution/te01.mp4/020_relevancy/ShuffleNet05_60_4/score/runtime.jsonl"
+      }
+    },
+    "030_exec_compress": {
+      "te01.mp4": {
+        "canvases": 53,
+        "files": {},
+        "runtime": "jnc0/execution/te01.mp4/033_compressed_frames/ShuffleNet05_60_4_r025_none_s100/runtime.jsonl"
+      }
+    },
+    "040_exec_detect": {
+      "te01.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 359552,
+            "sha256": "d2eb2056913447afc8e47d6955e3e4ed5b5609d4b8ac93a986367f5dafb2c66e"
+          }
+        },
+        "runtime": "jnc0/execution/te01.mp4/040_compressed_detections/ShuffleNet05_60_4_r025_none_s100/runtimes.jsonl"
+      }
+    },
+    "050_exec_uncompress": {
+      "te01.mp4": {
+        "files": {
+          "detections.jsonl": {
+            "bytes": 392740,
+            "sha256": "29065c6ddd027c6360fcdb3d473deb3b8070f0c45e6e7536dd8374c3f0a524eb"
+          }
+        },
+        "runtime": "jnc0/execution/te01.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r025_none_s100/runtime.jsonl"
+      }
+    },
+    "060_exec_track": {
+      "te01.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 1233372,
+            "sha256": "ee2fd3e2495da0766c71ed5040fd8818531a96be2bffa32a161625ae109181c9"
+          }
+        },
+        "runtime": "jnc0/execution/te01.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_none_s100_sortcython/runtimes.jsonl"
+      }
+    }
+  },
+  "p022_source": null,
+  "preread": [
+    {
+      "bytes": 15007464,
+      "seconds": 0.020021801,
+      "video": "te01.mp4"
+    }
+  ],
+  "stages": [
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793106843599539584,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p020_exec_classify.py",
+      "stage": "020_exec_classify",
+      "start_ns": 1793106818616777851,
+      "wall_s": 24.982758167
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793106850213096768,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p030_exec_compress.py",
+      "stage": "030_exec_compress",
+      "start_ns": 1793106843600131278,
+      "wall_s": 6.612960931
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793106866979665805,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p040_exec_detect.py",
+      "stage": "040_exec_detect",
+      "start_ns": 1793106850214642441,
+      "wall_s": 16.765018876
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793106869385620702,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p050_exec_uncompress.py",
+      "stage": "050_exec_uncompress",
+      "start_ns": 1793106866980627293,
+      "wall_s": 2.404987821
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793106874980143890,
+      "exit": 0,
+      "ran": true,
+      "script": "scripts/p060_exec_track.py",
+      "stage": "060_exec_track",
+      "start_ns": 1793106869386767157,
+      "wall_s": 5.59337327
+    }
+  ],
+  "started": "2026-10-27T13:13:38.512+00:00",
+  "started_ns": 1793106818512354927,
+  "status": "ok",
+  "unit": {
+    "attempt": 1,
+    "dataset": "jnc0",
+    "gpu": 0,
+    "phase": "smoke",
+    "raw": "units/smoke-jnc0-ShuffleNet05_60_4_r025_none_s100_sortcython/attempt-1",
+    "system": "tetris",
+    "unit": "smoke-jnc0-ShuffleNet05_60_4_r025_none_s100_sortcython",
+    "variant_id": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+    "videos": [
+      "te01.mp4"
+    ]
+  }
+}

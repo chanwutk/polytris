@@ -1,0 +1,255 @@
+{
+  "environment": {
+    "bombe_cpus": "0-19,40-59",
+    "bombe_gpu": "1",
+    "bombe_run": "g1-20261027T094609",
+    "cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "hostname": "bombe",
+    "nvidia_smi": "GPU 0: Quadro RTX 6000 (UUID: GPU-e8034b31-aa87-2489-156d-927ea00e6009)",
+    "python": "3.13.12"
+  },
+  "error": null,
+  "files": {
+    "cpu": "cpu.jsonl.gz",
+    "decode": "decode.jsonl.gz",
+    "logs": "logs"
+  },
+  "finished": "2026-10-27T16:50:37.071+00:00",
+  "finished_ns": 1793119837071871428,
+  "inputs_copied": [],
+  "outputs": {
+    "001_preprocess_groundtruth_detection": {
+      "te00.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 220410,
+            "sha256": "0dc934719cb303b2ed7f53d223e1fdc0f8def9d17a565f6ab6d2f25ba00e04de"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te00.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 124316,
+            "sha256": "84ff6def0f0615cd96331065104521687313215e8e4be62c63414bcc88b9a5c0"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te12.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 295846,
+            "sha256": "0b36422103d48d001b05140cb4bce4035ea8633657dd0dc279c49ed4dfddc713"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te24.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 177277,
+            "sha256": "670020dbfe8d1ae10f7c2186482df09069ac908c5018e564dddde29ffa7db7ac"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te35.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 243608,
+            "sha256": "90f675420ec2160a4477e90ef327df52ea8232da5574997b7b733eb6835c95cf"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te47.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 326465,
+            "sha256": "6f9667b950203f52df087f0efbb4c8a57f685d413eb79954f8cf5a7380458e05"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te59.mp4/002_naive/detection_runtime.jsonl"
+      }
+    },
+    "002_preprocess_groundtruth_tracking": {
+      "te00.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 180124,
+            "sha256": "1f88b2b4c437b34d446e0b5fcbb16765270004cd2137a2fea1bc6c796561f7ab"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te00.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 100695,
+            "sha256": "20ee7963240dfce7513fdfefe8258a50015e0ea919315fa0295e57c86a7e69ba"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te12.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 228722,
+            "sha256": "9d53bfe4621f3c50f3adf69ef034e907679d5977ece7ddd26359e6332fec0b6a"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te24.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 142625,
+            "sha256": "6387c43bdcd532601b0003294ce4c9692cf593c8e70fb692201b6bef16f0cdc0"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te35.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 197074,
+            "sha256": "c2208aa98fe3e5f6154127e3016e3e66d8e803779eafc97098cca2bcb83dfdbd"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te47.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 254326,
+            "sha256": "f612f618411b5de554253aea980946db47ef0fef10fbce088a84f0423cb1cfa5"
+          }
+        },
+        "runtime": "caldot2-y05/execution/te59.mp4/002_naive/tracking_runtime.jsonl"
+      }
+    }
+  },
+  "p022_source": null,
+  "preread": [
+    {
+      "bytes": 1721421,
+      "seconds": 0.002781681,
+      "video": "te00.mp4"
+    },
+    {
+      "bytes": 1837378,
+      "seconds": 0.002600281,
+      "video": "te12.mp4"
+    },
+    {
+      "bytes": 1678695,
+      "seconds": 0.002289451,
+      "video": "te24.mp4"
+    },
+    {
+      "bytes": 1705371,
+      "seconds": 0.002769297,
+      "video": "te35.mp4"
+    },
+    {
+      "bytes": 1721401,
+      "seconds": 0.002532316,
+      "video": "te47.mp4"
+    },
+    {
+      "bytes": 2020209,
+      "seconds": 0.002817705,
+      "video": "te59.mp4"
+    }
+  ],
+  "stages": [
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793119830638806229,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_detection.py",
+      "stage": "001_preprocess_groundtruth_detection",
+      "start_ns": 1793119611701035457,
+      "wall_s": 218.937765431
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793119835087169848,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_tracking.py",
+      "stage": "002_preprocess_groundtruth_tracking",
+      "start_ns": 1793119830641004584,
+      "wall_s": 4.446161188
+    }
+  ],
+  "started": "2026-10-27T16:46:49.599+00:00",
+  "started_ns": 1793119609599065251,
+  "status": "ok",
+  "unit": {
+    "attempt": 2,
+    "dataset": "caldot2-y05",
+    "gpu": 1,
+    "phase": "solo",
+    "raw": "units/solo-caldot2-y05-reference/attempt-2",
+    "system": "reference",
+    "unit": "solo-caldot2-y05-reference",
+    "variant_id": null,
+    "videos": [
+      "te00.mp4",
+      "te12.mp4",
+      "te24.mp4",
+      "te35.mp4",
+      "te47.mp4",
+      "te59.mp4"
+    ]
+  }
+}

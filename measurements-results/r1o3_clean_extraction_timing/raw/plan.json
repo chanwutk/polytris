@@ -1,0 +1,3389 @@
+{
+  "bounds": [
+    "0.05",
+    "0.10"
+  ],
+  "calibration_bound": "0.05",
+  "calibration_videos": 6,
+  "created": "2026-10-27T13:09:33.011+00:00",
+  "datasets": {
+    "ams-y05": {
+      "bounds": {
+        "0.05": {
+          "bound": 0.6949487970269445,
+          "fps": 1049.5275719502338,
+          "hota": 0.6965726417050139,
+          "variant_id": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython"
+        },
+        "0.10": {
+          "bound": 0.6583725445518421,
+          "fps": 1391.9090347607282,
+          "hota": 0.6592685681109561,
+          "variant_id": "ShuffleNet05_60_16_r075_square_s100_sortcython"
+        }
+      },
+      "calibration_videos": [
+        "te00.mp4",
+        "te12.mp4",
+        "te24.mp4",
+        "te35.mp4",
+        "te47.mp4",
+        "te59.mp4"
+      ],
+      "configs": {
+        "ShuffleNet05_60_16_r075_square_s100_sortcython": {
+          "fps": 1391.9090347607282,
+          "hota": 0.6592685681109561,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.75,
+            "sample_rate": 16,
+            "tilepadding": "square",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": null
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "ams-y05,valid,polytris,ShuffleNet05_60_16_r075_square_s100_sortcython,ShuffleNet05,60.0,16.0,,0.75,square,1.0,sortcython,54010,38.12584619140625,1416.6242954674176,0.7641198685666871,0.8343309963111232,0.7002755519951857,23.96128866437984,48.69565217391305",
+          "prune_param": null,
+          "prunes": false
+        },
+        "ShuffleNet05_60_8_080_r050_tr_s100_sortcython": {
+          "fps": 1049.5275719502338,
+          "hota": 0.6965726417050139,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.5,
+            "sample_rate": 8,
+            "tilepadding": "tr",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": 0.8
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "ams-y05,valid,polytris,ShuffleNet05_60_8_080_r050_tr_s100_sortcython,ShuffleNet05,60.0,8.0,0.8,0.5,tr,1.0,sortcython,54010,51.5769107017517,1047.1740021871,0.7845449078531611,0.818992347471908,0.7529763213105367,14.898328374143675,15.36231884057971",
+          "prune_param": "ShuffleNet05_60_8_080_r050_sortcython",
+          "prunes": true
+        }
+      },
+      "frame_count": 54011,
+      "inputs": {
+        "ams-y05/execution/te00.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "9b70492fb3873e71f13fff93fc598f530dbe378886c0ca4297096a0c7da3df4f",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te00.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "3bf30606a2da596e6e77ab9d11d9d8a752c0e20b04fc376c640a38479f3e78de",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "c57c1307b9a9b7c22e59d9a7aa4c16994efefaf684c472cf02bd1d4a1d8781f6",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "c29182bb61fe0b668323e8bfcc7b8b2de9f928709a007cb06dc88e3bf62d9716",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te02.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "5a34b167a66232ced9b51c1b886c1ada4cf9035e0788eefceab8d15ee186da6a",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te02.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "936532b780ff57b14e5b9e21a479a05177c8887052ca9097babdce59f0fe2db3",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te03.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "78665f583b850cffe4e615fd98a8c833c7c52d8f74bc7c921f959520986b20cb",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te03.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "eab194394b1f1aa4bb18d48267b03570fcac765037fbc129b8ba92f98cba55c9",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "594a588300c99224084dfba6a66277f2f5bd4b2b44c0477a05b3d9fd58eb715b",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "0bd24f0b939cad8496083415b83b891c9186a2a96950fd5b78bdad4d9327ed08",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te05.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "2ad1ea050ed47c51fa050726bf3e1c668bdb37f7de6230c31d87c309a88098ca",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te05.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "47a52de34d7872aaa5ba1b559aefff22868e7c051848c266065007fc8c303689",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te06.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "94d9818b23583c615251cf436d9c651e150e4ec70fdb6e04d96fa15701573aab",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te06.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "60a29e398a6815ea726d25ec9104ba770558cfa1c42c8932f6662a2e6c3827fe",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te07.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "97db1d9f186fbeeef947789230c7710dbb007051f0af70a91837ddad324b3c48",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te07.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "3360db3c5db9dae840fa62cd126f4b736cfe293a50fd32ba713dff28449f4d27",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "6aa385682f41a26e7c785420938db4842de265c46af77c5164753b0799cf4f3f",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "9139d376937ebabecd2fe79705d97de8c7d985b648c88e12f58ef1ae0c646720",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te09.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "95d8b9636380caa8c88797d19f9fc5351fa6ecb93527b1fd15638f02bae00f80",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te09.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "a4853bb84dcd096d50e266f52bf030da3ae7172d4281556ca5b32ae382527ca3",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te10.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "8db78568dff0b05e4991954de4843b1a39566987938ac95b776f6b5789fb8318",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te10.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "f6fb76b5edf1f0bb87a21d6b5084755ec44641d4a61823a5f48033ce2a52e7bd",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te11.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "935384aa19a36102683581c09620339266449ab6ff0b38c38604c2040f3524e3",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te11.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "6dd7e08bfe6cc85159ea1935a5072ced8aadba285d960e20c8edc7996c4733f6",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "302f9723e5fe98cf9733080dfd40e5c6b7b144ec7e133f76a48e5a23031ff594",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "6a6e259b741aae754d54c9108f75e4d6ee9ae97033e922d629ecb0ae41df6810",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 267,
+          "sha256": "099aee4486793b681e690c8a7b25db5e499b3d5578cc8f392e656b5fdfa373d0",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "1f199e158e803e47e3bfe6a851d8a9ae1783bc0e852913162ab14eab1d487dfa",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te14.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "531ea5e0a26f0aac301c26ad1521fecb485d4971803cb89a8f5cedaaa768ee68",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te14.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "832527ad975719409a10442435b36268785bd9848ecdb51985f2c67f8832e866",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te15.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "a4bf13274fe955ee4212e93cdf2bfdf66a8e8c5b47f63af68a962c28c49a3b71",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te15.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "e0cb5c33fffe9f77284398bc5287e9ad429d824cf98a06283d3a17e4e574265a",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te16.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "36667a30027c93cdcdfb2b6b49fbb54318e535d16a1420a723cfa4c3f245db6a",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te16.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "b936ec3cc58188ddfca834d94f0963334dc3f6308482c4d08b8734485344d1fa",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te17.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "98f275b5451e5e08457be4976c32ff5b8b3446334c7f6429f86772c75e8e6e65",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te17.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "f140d180ba5a310d83a1c728e7b1085840ddcd3417939375d010a65ed642386f",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te18.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "703266162a411c2b7a9e9cbb40c31db7deae578322266ab522b2913ef4a02952",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te18.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "cc9028e625072a389b3616c37d845df6219480c933177d1439130cfaf098afd1",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te19.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "7097b22c0ded33ce6f247c224f0d1a2212f3406f41deebe89bb6afc0ea0cbd68",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te19.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "a132bd4cbfe9ef70d007e918470447f9d72f3b7db638a40650f2c43fbd282557",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te20.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "0fbd4fef9ec2762de81f9f7c1e23818fe09c32fbd340b22e3ec719d8f4fed1ef",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te20.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "039513bab61a75124b4b8370d84b127f088726ad818275a76c2c8e1b054da44d",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te21.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "2781fba83486a931e15118caf50005f0bc2b52f07cc43c5079844b0add0a4043",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te21.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "e0d977bca1cedd098314e0c5d49df50ead702c24dcc8bbdf0ea40de4709cf999",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te22.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "e6586af37156be64116a8569e4dcf6c000413c643f74eb6e6861e8870125b24e",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te22.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "c9f013ddad358273fe261aade7292c0250f9245e327fa778f9ff394fe08a789e",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te23.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "828519f8199c6fd44494fee94c62d03c8743ad3692cec2977eb40c373353fae2",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te23.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "e604e6ff79f0b18980bfa7859df2534d7ae05c7101312fa3e6baa524870cda95",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te24.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "4bcab31728e7b04e8ebd167ddfa0980ecbdb6734e3eb625c7715c39b30925e03",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te24.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "5902e3719991fcdb23820d2d105245fdc1b2d4834daf2b31e80fc06c48023db8",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te25.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "ec726c3ec9512f6395797000b0af7ac01307da4222958f6a0c73b45e398ffe29",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te25.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "9481192115777a4d6f294a86c8dbc952f5d42dd5e3e3c566f4f4ecfe3faa9dfd",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te26.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 269,
+          "sha256": "15d4cefe172174a61d2be7cf3a6088a00cddc8dc74f6e9b42a14c1fc35c4ec27",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te26.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "f7bd93aa0fd159600acaeb79334255abaeaff4cd8d6b3ed01d9d700a4987a55e",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te27.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "47fac4bdf3c17c6121a9d3d89aa5cb48cebdc6898f68f963dca97a0a7e1a8a02",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te27.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "bb261170e9db6939fb82622b1c50d6eb96130d84706e84feae1e6f54164c8543",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te28.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "10fd639e523bf92e18a38d5ec8f427138c832a5496e55dca97f2fd6faed7e11c",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te28.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "2db926adaa399c0aa83522c972f4e19bac1815a663c592cef3c30f70d2653367",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te29.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "55ea56fa4c0a1f785139e6e4ecac7a550713d0f2bb53152fd326286e44db7095",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te29.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "5de7326397a43dd883d3d72f993c946c565b7dd7673588e11bb403d6e723a1a7",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te30.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "2f150151957740466e600a40eb064f6297e14f1306705d0d53a240e2f128fbc6",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te30.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "cccb3d3620086868aa5ec3f3efaca3abfca682d92b7ee110faa13707c34bbe31",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te31.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "c675127b3cc94be99e6b6bbe6716905b8e312994a84550ddfcfd6260b3d34693",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te31.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "7f3b3774cfd7f78cf1b3e102feae677cc642bc521259b6a6255456b53b6a42ae",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te32.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "b2d42b2c5f193c3654efecfa76fed8a941aeb1a1a82cb304bd08c736cd58be60",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te32.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "466149e7b5b03666fb29b88ef699c0a38f163f259635d3c0c2efbc19af644adf",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te33.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "0c15b8c8ca6671b8e7185117b2704f7ab0ebb6225b5c9a9815dc1cd47335f884",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te33.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "9251f93de763b716794e4c96ba922251bcdcfbf70cc24b43cb02ef230c1326d7",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te34.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "07fa45fa81674b9707f5d9a09dd75071c610afd69bd6988e761928714377ca91",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te34.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "c6ce775ad86433f249271213687ce70b0d14a6591fb4671d372fcfe255f44b03",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te35.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "1598a7e4fb4f116b58472eb15b9568bf7969b225ce97f5aecc955cedd81a78a4",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te35.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "7c76a702d966b926dca06093de1d36f0febcc27fd5c1a9efbdf0bc7b5c41695f",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te36.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "e1b59897432cf14bbac2dec4e5631fcedb0a2de53d81d5b236ace333f6525045",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te36.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "c1718ebaf07190fa23ac7fa2484dea7826739680ae1d203985fd875ec8dc2ece",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te37.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "1ba92eca5fc5c5b0d0447968535761dd5eb143ae368d3d67bc54e16714f340da",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te37.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "56c51e7b79a9bc9c9e38278aefc08373f1c41cbf69431b9990df124af794904a",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te38.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 279,
+          "sha256": "a7cd25b87a10dd88840542db3193142dbb360738a610daba7feb8eaab5dec1df",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te38.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "11f282f2c0a20b70665bd54716628071bfe1c39ee5d2fd62189648c13c116f8a",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te39.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "e6b639e2a24fd856e85c4c06746f59364b9283ddfb202517a6bd607f4bfa0cbf",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te39.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "af66c274804ca5dc4fa5cc128ed5177a8ad5aebfb89270b07e31c4de461fd9f4",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te40.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "f7a94588134e3a428c1e24cc60102354a3c58eb914d9b7472ef740e3afbdc406",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te40.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "050db6bf5ee485301baa19ed2892636424458d6643c4bce60c320be60283706b",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te41.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "e8ec5730022171b778fce2834d4dd2767ddbf936eda58aa20be7c939ffc90ae3",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te41.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "43b57c4d7e276e220e83b92cee416a6d4c43ee6098d1ff0bbc20f582b417aaba",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te42.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 270,
+          "sha256": "aac80d4d7f53560daf824dad9e687a01c12e9a9009d94ec73e0e82ac708a957a",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te42.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "449cce332030fdcbdb777fff7b35a0bd274656250142cc91ae6d871c9ae2c3b1",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te43.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "20e6d44f7cfb6173cce1a42ad72d50c09b03b0365b5e3cc9487584b233fabf61",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te43.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "ec909d0e9046bd4670fb1e1803a70dfdf3a3b21b1d87b0a5c415714bdf5c5052",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te44.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "c339cf9eb6566e5ce9a3fd5d44a2e8b357993ff44048ce33c155015d3e72beb1",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te44.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "134a106f1981911799adf504edbb68aa974b43e8b7ac320a9f88cd17d462b94b",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te45.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "c72a17680cdcd7b3da6218fd91cfaf662bfa48de9bac757360be5d7bf5f5066d",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te45.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "572cebb04368920bf5b09dbeeb19b72b3c6ded136a58bbfee2bda20bba0f90d7",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te46.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 260,
+          "sha256": "d6643024cb41157dcd20aa2d283951df532cc98ed520e1fc502083a535fa5044",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te46.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "21a759705e9e354831e51edd7e1d0456c283cc2641f1ef58f7515d9905a5d346",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te47.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "52c8b1a5d17e39f404bf2811b4211b6e7b03f595c2df9b66f3fa3b1543153ad2",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te47.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "ab2f2da6cad3e814188d695128bd0863335fca71a69682ea310faa43db4e81cf",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te48.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "9666bcf3b409d86c49300fc7cd14bdbfec53e21462e59a428d80222a7515d602",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te48.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "226f25573a8b730108d857b24398a471461ee6095e051116ea1053a6fa609693",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te49.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 269,
+          "sha256": "2264b5e76f7628ad9089c48c056e9e665d4d9e4c3c6ffccf99251d870a2a44d1",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te49.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "1e2d0d351f03542550dc5d9bcf3b10fcfd14aec47420f2f4526f1a0d3f0a064a",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te50.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "228908ce7288bd34c9f06a7d9633b5b5f14bb13cf342218a5afc3124d32e412e",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te50.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "b360d9e5fbc9d6e0fee042564af90f1d594038068685f8f04e840326d474e763",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te51.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "a2b1622b432adedbee618b1fc6a4e934766e61268ebcfe5b094cefca1a5eb215",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te51.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "dacd43b92089bc2eedb5c986e2cab514bd190b8da0ae90ab36c0c91c32dfdd1d",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te52.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "97271a6f4791395852278d962eb224658d3aa49a2f200cf64021d737d096dab5",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te52.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "580814b448d589a45f676902590818d055caadfd8e67afa936288585ca82fef5",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te53.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "86289c796473bda1659ec5564b5da000bef39b2f9f05194220a624e8b396c9a1",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te53.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "3679e1e418938e577682795988b0da4433a47564154dd06176a3e36ceab7decf",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te54.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "c1bcf9bf0bcb35393840113d7ffd9a5a1a329c5ab23a485ddcf2b3db1a4378ef",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te54.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "300816d392de4ac0bf76b1eaf6613ccda12b6b5d3ca58fb0421b56b76c0f7091",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te55.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "9060731bf28533408e12515a1988d168d331b8794c63cdfbbd7bd1b96c5b28ae",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te55.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "b85a05ff6342359a86200fad47c3f83db6cbec5667001d0737292d02f6d51a50",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te56.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "ada4cb7fefa06bcbd0d72cba2d3b41af28614c1280584200ccd731240e721dcc",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te56.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "94b00eb57591f6b99291df585b808fae29ec770b5092e5ad0bf5fd2ed07aa8be",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te57.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "5b6d57c21c32c88c9ddfddd252fb12206e758536097370a926ca33a0f191ba3c",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te57.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "6f6cf17c061b4a0296c9bc601e375f84ad5dab9fc8e27476715e026817dd87a0",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te58.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "9f59a5c87d5c1cdf0ddc6ed352bd13daffff6baa668a25f73c32adacef5165a8",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te58.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "bbe829a53887a2d9b047362aa3ff83a3c41fbfba6a9ad4bb349a93c665d05c12",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te59.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "2ee7b707153bf68edfcee773b4154ac2050a0170cc83bc9d95cd1d4e6078c098",
+          "staged_from": "ace"
+        },
+        "ams-y05/execution/te59.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r050_sortcython/score/score.jsonl": {
+          "bytes": 65649,
+          "sha256": "aa39a15e3388eacd71ba3c497224af5be7b14a8cba49615526b47456aa42553f",
+          "staged_from": "ace"
+        },
+        "ams-y05/indexing/always_relevant/60_all.npy": {
+          "bytes": 380,
+          "sha256": "05a8fdbeb381ab85a9db1ac34e8ed19dd7da9b518f10cd77155cf9b33be5e7ad",
+          "staged_from": "mirror"
+        },
+        "ams-y05/indexing/track_rate/sortcython_60/max_rate_table.npy": {
+          "bytes": 9200,
+          "sha256": "6d8d2ceb144563345f0f669dac6a9b6818df5642ba3acaa6ba4b051f437f9bf8",
+          "staged_from": "mirror"
+        },
+        "ams-y05/indexing/training/results/ShuffleNet05_60/model_best.pth": {
+          "bytes": 5907314,
+          "sha256": "557fabb17c115706ad4f4b5cb6e7aebd4825931ce603308b47fc0ddc12464997",
+          "staged_from": "mirror"
+        },
+        "ams-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl": {
+          "bytes": 6270,
+          "sha256": "fabdb485c1ff53a29417116aee093d1649597edbd7ee996d86a175edb7bd2678",
+          "staged_from": "mirror"
+        }
+      },
+      "label": "Amsterdam",
+      "pareto": {
+        "bytes": 19665,
+        "exists": true,
+        "mtime": "2026-04-19T23:04:47+00:00",
+        "path": "/polyis-cache/ams-y05/evaluation/095_pareto_params/pareto_params.csv",
+        "sha256": "0ec41b69b654e3d8502627a8face760ef2024d052090a07a3672bec8301c19bc"
+      },
+      "reference": {
+        "fps": 15.261813771643736,
+        "hota": 0.7315250495020468
+      },
+      "tradeoff": {
+        "bytes": 19796,
+        "exists": true,
+        "mtime": "2026-04-20T00:56:32+00:00",
+        "path": "/polyis-cache/ams-y05/evaluation/090_tradeoff/tradeoff.csv",
+        "sha256": "52ced6559546465e4a1b3a41c0c04c4b220fabff922c93705d69f51329d10829"
+      },
+      "videos": {
+        "te00.mp4": 900,
+        "te01.mp4": 900,
+        "te02.mp4": 904,
+        "te03.mp4": 900,
+        "te04.mp4": 900,
+        "te05.mp4": 900,
+        "te06.mp4": 900,
+        "te07.mp4": 900,
+        "te08.mp4": 900,
+        "te09.mp4": 900,
+        "te10.mp4": 900,
+        "te11.mp4": 900,
+        "te12.mp4": 900,
+        "te13.mp4": 900,
+        "te14.mp4": 900,
+        "te15.mp4": 900,
+        "te16.mp4": 901,
+        "te17.mp4": 900,
+        "te18.mp4": 900,
+        "te19.mp4": 900,
+        "te20.mp4": 900,
+        "te21.mp4": 900,
+        "te22.mp4": 900,
+        "te23.mp4": 900,
+        "te24.mp4": 900,
+        "te25.mp4": 900,
+        "te26.mp4": 900,
+        "te27.mp4": 900,
+        "te28.mp4": 900,
+        "te29.mp4": 901,
+        "te30.mp4": 900,
+        "te31.mp4": 900,
+        "te32.mp4": 900,
+        "te33.mp4": 900,
+        "te34.mp4": 900,
+        "te35.mp4": 900,
+        "te36.mp4": 900,
+        "te37.mp4": 900,
+        "te38.mp4": 900,
+        "te39.mp4": 900,
+        "te40.mp4": 900,
+        "te41.mp4": 902,
+        "te42.mp4": 900,
+        "te43.mp4": 900,
+        "te44.mp4": 900,
+        "te45.mp4": 900,
+        "te46.mp4": 900,
+        "te47.mp4": 900,
+        "te48.mp4": 900,
+        "te49.mp4": 900,
+        "te50.mp4": 900,
+        "te51.mp4": 900,
+        "te52.mp4": 900,
+        "te53.mp4": 900,
+        "te54.mp4": 900,
+        "te55.mp4": 900,
+        "te56.mp4": 900,
+        "te57.mp4": 900,
+        "te58.mp4": 900,
+        "te59.mp4": 903
+      }
+    },
+    "caldot1-y05": {
+      "bounds": {
+        "0.05": {
+          "bound": 0.7771866838353843,
+          "fps": 729.3215749046271,
+          "hota": 0.778685892269133,
+          "variant_id": "ShuffleNet05_60_4_r025_bl_s100_sortcython"
+        },
+        "0.10": {
+          "bound": 0.7362821215282589,
+          "fps": 1560.0932018570545,
+          "hota": 0.7414093835351455,
+          "variant_id": "ShuffleNet05_60_8_r075_bl_s100_sortcython"
+        }
+      },
+      "calibration_videos": [
+        "te00.mp4",
+        "te12.mp4",
+        "te24.mp4",
+        "te35.mp4",
+        "te47.mp4",
+        "te59.mp4"
+      ],
+      "configs": {
+        "ShuffleNet05_60_4_r025_bl_s100_sortcython": {
+          "fps": 729.3215749046271,
+          "hota": 0.778685892269133,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.25,
+            "sample_rate": 4,
+            "tilepadding": "bl",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": null
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "caldot1-y05,valid,polytris,ShuffleNet05_60_4_r025_bl_s100_sortcython,ShuffleNet05,60.0,4.0,,0.25,bl,1.0,sortcython,54000,64.69410986328124,834.6973181039012,0.8490616324596959,0.8766779304333484,0.8280342660656697,1.9346968880315447,14.655172413793103",
+          "prune_param": null,
+          "prunes": false
+        },
+        "ShuffleNet05_60_8_r075_bl_s100_sortcython": {
+          "fps": 1560.0932018570545,
+          "hota": 0.7414093835351455,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.75,
+            "sample_rate": 8,
+            "tilepadding": "bl",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": null
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "caldot1-y05,valid,polytris,ShuffleNet05_60_8_r075_bl_s100_sortcython,ShuffleNet05,60.0,8.0,,0.75,bl,1.0,sortcython,54000,27.977590087890626,1930.116204803948,0.8061421002861916,0.8591164438161775,0.7605498368260376,14.829366542793112,64.91379310344827",
+          "prune_param": null,
+          "prunes": false
+        }
+      },
+      "frame_count": 54000,
+      "inputs": {
+        "caldot1-y05/indexing/always_relevant/60_all.npy": {
+          "bytes": 224,
+          "sha256": "51942f4f45ae0fa9bc903b2b47ad6e050a839e0f4b6077d32deef0c07a63f017",
+          "staged_from": "mirror"
+        },
+        "caldot1-y05/indexing/training/results/ShuffleNet05_60/model_best.pth": {
+          "bytes": 5907314,
+          "sha256": "2f010852bbd9b2713af0abe170f39176eeedb6cfcc440b2ad01115a3bda28606",
+          "staged_from": "mirror"
+        },
+        "caldot1-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl": {
+          "bytes": 6272,
+          "sha256": "302e6cd381f5a4c7150d86fc5c8032f3ecfb613c6d16d2db7fc14d58148bd364",
+          "staged_from": "mirror"
+        }
+      },
+      "label": "CalDoT1",
+      "pareto": {
+        "bytes": 14414,
+        "exists": true,
+        "mtime": "2026-04-19T23:04:47+00:00",
+        "path": "/polyis-cache/caldot1-y05/evaluation/095_pareto_params/pareto_params.csv",
+        "sha256": "56869b82b1570f0df043c8210f8236abce700588811ac42321a59a5c4e494cab"
+      },
+      "reference": {
+        "fps": 30.93095505912012,
+        "hota": 0.8180912461425098
+      },
+      "tradeoff": {
+        "bytes": 14577,
+        "exists": true,
+        "mtime": "2026-04-20T00:56:32+00:00",
+        "path": "/polyis-cache/caldot1-y05/evaluation/090_tradeoff/tradeoff.csv",
+        "sha256": "e2168e92bae013c01cf2e6858cd9b2fe69e006a3b33c3dad5a77fb8541ac76d2"
+      },
+      "videos": {
+        "te00.mp4": 900,
+        "te01.mp4": 900,
+        "te02.mp4": 900,
+        "te03.mp4": 900,
+        "te04.mp4": 900,
+        "te05.mp4": 900,
+        "te06.mp4": 900,
+        "te07.mp4": 900,
+        "te08.mp4": 900,
+        "te09.mp4": 900,
+        "te10.mp4": 900,
+        "te11.mp4": 900,
+        "te12.mp4": 900,
+        "te13.mp4": 900,
+        "te14.mp4": 900,
+        "te15.mp4": 900,
+        "te16.mp4": 900,
+        "te17.mp4": 900,
+        "te18.mp4": 900,
+        "te19.mp4": 900,
+        "te20.mp4": 900,
+        "te21.mp4": 900,
+        "te22.mp4": 900,
+        "te23.mp4": 900,
+        "te24.mp4": 900,
+        "te25.mp4": 900,
+        "te26.mp4": 900,
+        "te27.mp4": 900,
+        "te28.mp4": 900,
+        "te29.mp4": 900,
+        "te30.mp4": 900,
+        "te31.mp4": 900,
+        "te32.mp4": 900,
+        "te33.mp4": 900,
+        "te34.mp4": 900,
+        "te35.mp4": 900,
+        "te36.mp4": 900,
+        "te37.mp4": 900,
+        "te38.mp4": 900,
+        "te39.mp4": 900,
+        "te40.mp4": 900,
+        "te41.mp4": 900,
+        "te42.mp4": 900,
+        "te43.mp4": 900,
+        "te44.mp4": 900,
+        "te45.mp4": 900,
+        "te46.mp4": 900,
+        "te47.mp4": 900,
+        "te48.mp4": 900,
+        "te49.mp4": 900,
+        "te50.mp4": 900,
+        "te51.mp4": 900,
+        "te52.mp4": 900,
+        "te53.mp4": 900,
+        "te54.mp4": 900,
+        "te55.mp4": 900,
+        "te56.mp4": 900,
+        "te57.mp4": 900,
+        "te58.mp4": 900,
+        "te59.mp4": 900
+      }
+    },
+    "caldot2-y05": {
+      "bounds": {
+        "0.05": {
+          "bound": 0.6797744667152184,
+          "fps": 144.71047122670748,
+          "hota": 0.6921171850406366,
+          "variant_id": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython"
+        },
+        "0.10": {
+          "bound": 0.6439968632038912,
+          "fps": 321.5401284465076,
+          "hota": 0.6453736903656221,
+          "variant_id": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython"
+        }
+      },
+      "calibration_videos": [
+        "te00.mp4",
+        "te12.mp4",
+        "te24.mp4",
+        "te35.mp4",
+        "te47.mp4",
+        "te59.mp4"
+      ],
+      "configs": {
+        "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython": {
+          "fps": 321.5401284465076,
+          "hota": 0.6453736903656221,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.75,
+            "sample_rate": 1,
+            "tilepadding": "tr",
+            "tilesize": 60,
+            "tracker": "bytetrackcython",
+            "tracking_accuracy_threshold": 0.6
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "caldot2-y05,valid,polytris,ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython,ShuffleNet05,60.0,1.0,0.6,0.75,tr,1.0,bytetrackcython,54000,162.4207471179962,332.46984118826776,0.7674152102122505,0.8047121677369703,0.73348997453252,5.671141152778396,169.19592298980749",
+          "prune_param": "ShuffleNet05_60_1_060_r075_bytetrackcython",
+          "prunes": true
+        },
+        "ShuffleNet05_60_1_r050_square_s100_bytetrackcython": {
+          "fps": 144.71047122670748,
+          "hota": 0.6921171850406366,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.5,
+            "sample_rate": 1,
+            "tilepadding": "square",
+            "tilesize": 60,
+            "tracker": "bytetrackcython",
+            "tracking_accuracy_threshold": null
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "caldot2-y05,valid,polytris,ShuffleNet05_60_1_r050_square_s100_bytetrackcython,ShuffleNet05,60.0,1.0,,0.5,square,1.0,bytetrackcython,54000,379.2593210449219,142.3827893042183,0.8639972038374087,0.8771709434773237,0.8516053333898201,0.8563569255007591,92.48773121932804",
+          "prune_param": null,
+          "prunes": false
+        }
+      },
+      "frame_count": 54000,
+      "inputs": {
+        "caldot2-y05/execution/te00.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "16fce315043322dd3599a2b33005de4a34f4cb3d9932ed203c747ededa86c816",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te00.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "fc26ba7dfd26a966401b48e74b4a5001226be5882e652a29e161361a17bd0c8e",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "dc05340165dea51e54a23242281975d1bc898c56b12db7f3110ceba5e2c013c6",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "fbb82d6f2f5216d4dac28d42d137003db0045122a4e8b2eaa8c42e53afc5ecd9",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te02.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "838b5d73c0c6f26136a50d3c2ce91fc18ad7af442ec5d6c9a70cc1d19426b7ab",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te02.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "c0dcabc31f7d8706cb1b5e8425217e63c754b36beffa4f3cb9ac32dbe24227e2",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te03.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "5644d524d818cf6cae6b3b959b2c74d372390a67afeda31f35aa7e32a2059077",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te03.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "d4498f2c28c88f3c653b33f204b90becbeaa22dd674b745b904a0d28a3b0fb66",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "a37e76b097297af7b814040fe658d757227b96d9beaed57e2dff97e92ef68858",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "c5df3fdd998c6ff19e8edf9f0c7a3b07848479d3c0dd9a7176f1f5374dc88b6a",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "c4aff24f790d068afcd083b3b5ca0ec65dedf0aebfbb5fdac9bed461a4a30e90",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "dd6de0c930fde8461ffb71382c72a372ea40eb73d84018de82b48edaf9b41af8",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "a3644c68052693827d77e45dc244ff711efdeac10dbe6dae67432d89d8b2e954",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "e70cd1076f9ab9b8e42fa5f9020e83bad2e992a459f3c8f8db3b61a7b19c6b19",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "70077d97faf627b9776abb9a6b64adb74954c2d68953d40421ac609d780058dd",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "5fe613b11573587ae6a415d175a53c46273130261161a8d49743a86aa5fdd5f8",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "cbe5c37a8b0a1f389c0b68d03bd7d9adcd9dc9d4faf0c68d5eb21a7d1396efb0",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "8fabf1afefe36f147ff259d3969872d9f3339936daf0b9d117836d146d43f864",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te09.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "4493215fb0f59121ca07c8f0c2bc8dd260c2434f4ac5a87f189a0be702ef7535",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te09.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "cdd70aa982906e90038b90a31aeebd30c4b452ef1b4b507e2b7542d939801720",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te10.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "28ab51e744a57a0113434e96fee3b1fc236a403608651779862f36f7f31072ac",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te10.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "e492ab0ecd479695f46940cf31bb041f7e6d16c07a79181b8b2373076e800948",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te11.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "27754f8d64f2115b93d07561aa471a8e66e05c5df5c90ce7f691fa53d0a9887a",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te11.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "0c9099a045df999ca4020dba21cda86f4e07ed7ccdd6ab9c4c6c56f2b2ab9880",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "ff7762b2217d59b7705587b4ed082ac2c6ad38d4f589f06b8ec67b5992a903e6",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "b4b6bd7221a256b8c2f1361fceb55da43bb2b163103152292e9a35566f4ff917",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "c1cc4ec6e796cc0b29d534f45a7ec6a4be676fb9f8f4c5fd9bfa72af100a2b7c",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "3782a86a8113ce36dfba93efe3800df58236e1c1a69571b66377c35fc7777fe8",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te14.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "2a6007d9aba235dae2600087d29ab7f181665418d5f2d13c23ba04874c361c66",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te14.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "ae7fb4c125edb0de9e1e94b346d9e19ef565a858b38beefe7c4dc682ce04e3bd",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te15.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "fe43c0a553574792ef2fd08a0af2a1164d6885f3b4995802ccbbe7024e3aaa28",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te15.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "9b20202185bd9a3477f8cf2b70e66dd2a62cf5d413e9193a0454b5c30466eaec",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te16.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "771eee70b647aacd7c7a3a62df22982a58ad88b4d9e14449fd11bbc20dd5c4c4",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te16.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "76900815fc4aa7534815dceefda589acaf6b0d3e443120ba2c771d69ee62416f",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te17.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 279,
+          "sha256": "dca9cc548b1c37fde6af8717e9a8e9f725847e6841f30bcf0e6ea61768cc4fb0",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te17.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "cf508d5f6fa2e388ae8cd71cac9c89277ae28af4ddad30d37af08e9e07606bc2",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te18.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "03749194060ce2d6626a0dc472ff84b7d6d47be6bd3e0a5671879f7754115bd7",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te18.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "79bc05a41d8fccbd7854a03c2e21d988c71985ba3dc796ed6a5be223415d8c18",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te19.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "7c9a3476d628b12ea678d69da404bafe3194164a73889f3e6639f7484e18ac6f",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te19.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "f126eb4a74e78a37dd3f16e7165f717b590be45f4ba9beb361dbfb88474b2f86",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te20.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "24e2290480f85b0ccb15dc6ec78f0e042502b212183ff34030b7c2aff0f21de2",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te20.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "cf1e0e2f5e632e213092cd76ca3d7045370f9304e4ad5934a7c1f0b0477d7f74",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te21.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "3b73546d8f7bc9c20f4160621f18b1fb86fc2788a53ccd99bec8e1c5c8573571",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te21.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "73976623c654facb5c22e891ea1837a7ab3430eb0ce51699f8c432908fbf1d7f",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te22.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "9314c4a00b821139ecaf2dd9d16e0252be118c98c01da7796bd844c06d9d7530",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te22.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "a0492f72f74b41d988b1de847b539b61512d682ab9d0ee6b08b3af428558a7ed",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te23.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "40c9cf65a3742fdb6968dea1853338d4b59ca6c7016d43f9442a3e3f803d32c6",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te23.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "d5ebd5d8d711a85b6cda36e8dfbab702e968388808c3f33b07063f7f2f569cdc",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te24.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "da0f822b86633f355219115f4e81d17931bb386b610c6d4139c200632be138e5",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te24.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "55744a259d477bfe63573ea128d4fedd32ced8dbb308b99ed7d81065b3cf3955",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te25.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "49371031858066a650e0cef13b6f4ce01d2ff09990c2f5802ee14b156b0162eb",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te25.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "7fc994310e852dddc2fa8e5e0d9ff542475821fe9490b7c1dd2c3ca8ca211bf9",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te26.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "4e8d44155739971808cbc301694ef589dacd3fb27b8d64ab02cfeecbb371a0f4",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te26.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "5edcece45f3e19fdae49427711e6979c92cfa8f4d147ec687a4d9e815c2227d8",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te27.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 279,
+          "sha256": "c622c9af5f0881d844aa121204231ed69f44e32758a970e727fe047afcbfddc9",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te27.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "d2b24463faeafd2726fba4f061ca722902ae6c714d8a8806356892b4037c048e",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te28.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "dafef31b9ea29b550daa79d32bb6abe657dec527274c34b304d9d57f1b1d5cf0",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te28.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "4a1f31335e407e0ff4971ea992b4ec51627233f17dcebbf349a1896ea9e83bd6",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te29.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "f5ed1bd7c88bafa90ac8a95caf29bd9e10aa36c7a9d15b1974cc24cd7fb4ee21",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te29.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "fe1efdfaaa4c725494a0534f03f280cc1baeda1d71633e7e2d992f130790f09d",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te30.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "4ac4b4a5a9e065f4eb3727f6c3e1225b5e081ee9eb5e5336fce94f934e7ea36a",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te30.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "ffa78cad5a0f33e580bdd04ae6901ce183bc90b763e06d56090963d4bb1b9eb2",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te31.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "81b461fb82a7565e1adda68e5b881711aaa0d2fbf86988dac951dfe62bcb3fe8",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te31.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "3f2d17f58f2ae530e124253773a381abdc643170f58e86e2d92f69cfd990ff9e",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te32.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "4fa736a7917e300d24fd70188355e7aa6a487e3fd4a532ed1f984f991420728e",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te32.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "b35a8b1b3db1f268c8a785dda888fb1e514015983044d414308bd62e5cd049a9",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te33.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "404dd454acbf49fbefc2730df351d59a281edfced8897031c97f2693a5757d73",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te33.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "6616fa8587cf9fa3fe32237b45e0127c224d9eaa1b3632571e9125272f6ab04a",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te34.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "2bbfb8fa0ff207304d8b6c6532d3797dc4c00fc84c5e5a58be851d9fe8fa203b",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te34.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "8e3e57e346291453171e60ea1da93f683d21ea807d2ac5cbb5693ada0a9782ac",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te35.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "4a6c4e63d5a6420464b72ff2958d25fa15ba83de28438f8be0d8d2f8f4e28649",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te35.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "8e210378d8067f29f210c7e8d99f40d88d69fdb294c73ce65aa8af48d68ad504",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te36.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "96fd36298cc038db83227ae58b2d6d9526b097dede09ac155ba1dc7ebabc6cea",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te36.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "c2becb857a6cfcdcbd86c1f407c86ca5060822dee2800d8d78815b708c87c207",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te37.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "adebea3a38ea117285e05e52c56e3b6848987060f626bb48c64a2c4d18a535ed",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te37.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "bbe0dc9ebddf94086ed7243c3d89c5f6fc42c1e932234a3cdab87bd803745fc4",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te38.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 279,
+          "sha256": "d1313a23ea7f52cfda4e43e19efd20bf6206b2b4d6df5b8f9d4fe571087b010a",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te38.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "daf36af58c5c33ff9d450b20761a50a2bc926bed36863daf48f4493c23893bb2",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te39.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "dbaefaa6f6d162a1c11c83ad6a6eb8ccf2804d831f0560201cd2479274082b3f",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te39.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "fac0654f993377360b95fb5023ba5e8c0b4833432edc861b23a58895b094abeb",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te40.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "4bdfa43666225d0071809f18caf8cd491143d7b3de060026172313408ad79154",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te40.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "724380844d307f3a908c0127a88043034beb5166db5aba12fbde51d4954a9737",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te41.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "be65c7e4918bbb74050f2e079c2e8396a016bce3f9333f3459ee4e9f6772c537",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te41.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "670fe0c63d242731d8a7930f00228495d8dd9a2ea583ea453b293b6b345cf794",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te42.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "cbc584844c419d6d6a992d911fd9012b6bb6d265cf4ffefd24a31bfdbc665f2e",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te42.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "03746431ef567df99d87bfbc6ac9929f88c881608061d92eebd12c072e1aa413",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te43.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "bc2939a5de457c51c8200f1256b031cccfb3007e3c20506f66b569bfca8f009f",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te43.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "4c610bc4c8e7d08a760639aa55db5f0e49225ff4e35b334f13a852f8ec20f88a",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te44.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "b3dd204a5dd619e74497eb2bc7acf49e28b90e2c8d4c1de16e892172b68c2f3e",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te44.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "4fb474095947bb10b328cd8d310a52c44adf5f6b37a69fc2f6195c405724226a",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te45.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 280,
+          "sha256": "00ffa1dc7c1794ef8380e0dadee97e7f4ae4687c96617002a36f271feeb27b60",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te45.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "3a70ebc0719c74ed54a31b5c54b6661e39e5ea7918039ea58552b6cf860b72ef",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te46.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "d36023698986b7928f4437e1d6606801ce8d7a7ebef6c56e3f9fc144bf6ffaa5",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te46.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "0cbb7749d4c1cb6f120f7fe2b0dbcacc745a23e9221e40e5061bd88a60579509",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te47.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "12477e5e3bd4d63e61d8cf5b8dc0241be22e1312e1c112d6d1a305cc89ddc6ff",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te47.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "bfa8758abe07bb2f852a2e181b5fc84212b43b7f2506ccc09837ff0a36b548b6",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te48.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "22dfbe1a965ae0da6f3d7f44c76ada974431cd5e14d7c8aab16f79990be2578b",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te48.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "451ef9cf196c07e1a24541b557a8d391b3f953a35c1dab3adc0a7492995de93c",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te49.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 273,
+          "sha256": "ba6d41fec7f0a89a1915167f7a26adf9be3302b1f26e1611d3b33bf7e73d3c72",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te49.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "1a0cb2378c97d29a4aa7954687da731841bb2e47b32c110266f7c7ab2a2ee87a",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te50.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "2b69a885a1137f8f5abecb8932bdee194ef0a38e15eca914d2e728b9ae87edf6",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te50.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "c92defc1f1a109e123307359295171b5d8392f3990cf3416d93b86d031cde295",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te51.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "2a0af6d57e9b127696aa6b92f4f58d8dffae1e79a533fb3d2c295f5037b2ec1b",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te51.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "90d468e5a495f27c2d47de30c0c66508d3d5920304f2e3709937c78deafa6def",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te52.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 280,
+          "sha256": "215b4354c6318e58a1be791e005e7714a6d6f3d7023a9efe9a5c14f42c521ca4",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te52.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "deab40f067fe9547cd5fb84c16c67b9e927b24af5ea668d12d5119963c2fbdeb",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te53.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "14e7873ffea6a079290c8d3d88267dc08b874a3640bae1c9de18b1ec568b6926",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te53.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "abe4abf3cf42e4f31c13be324cfdadb91e189fd1dbece4ccd3d9504305e58ad1",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te54.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "9d166e35e22dbc7be77689793482949e9b2fbcb5ed6c2ea9044d0f5be33dd86f",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te54.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "15e919d9dde4476f2b25be636190b0062757b565f7b14ec63adb720b364d6992",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te55.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "2b33c65f7707859cb0515c11672741f7f004528bfcddda1dc1e610983590c1b3",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te55.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "d4a94a455b7df7cd9610a754d1267f2fecbccc0e9c419d387b3a84a7aed1d2aa",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te56.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "6669ce92da4b66cd6ef0fc4a5627a404bf34bdc6181904cbda381e9ce7e2bb2b",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te56.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "f3b9748648fcb190be5bd59b19456e3eb5f611d7c7baba6bf5afea4f35bba871",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te57.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 270,
+          "sha256": "08a922c8a5ccbb384206eded0b8cf031853ffb0b338b5ef3426d9a72a7fe3d63",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te57.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "5619b614ecb602e87bc2c502dc6702396d0c33c8b78f6e966845c95a721a60cd",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te58.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "0a408f6a3b36182fdda32fb0fa3951621ec00bebba105db28ca9d0dfb1a0bdf1",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te58.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "c3b56b0d9f1b3f7565f634bbbad9af3451d2795a6b0bec6d739e6a3652c1ff69",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te59.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "f575b098ecc7903d85b71d2367ca31e88de0a90b4b46f9ff8f19db9d66de71b9",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/execution/te59.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_060_r075_bytetrackcython/score/score.jsonl": {
+          "bytes": 236590,
+          "sha256": "fee1fb482ca02125f2c837c563a62938af2a71dbb76281703ec41f0e104ca288",
+          "staged_from": "ace"
+        },
+        "caldot2-y05/indexing/always_relevant/60_all.npy": {
+          "bytes": 224,
+          "sha256": "93ec5be71a19cffc9bde769ed1394548b45370a3fb5509b14f9296ff1a73ab05",
+          "staged_from": "mirror"
+        },
+        "caldot2-y05/indexing/track_rate/bytetrackcython_60/max_rate_table.npy": {
+          "bytes": 3584,
+          "sha256": "8732846d63bbacfe7068d1c38c3abb23f08f78ed7562f1578d0290a4e7b5f1ed",
+          "staged_from": "mirror"
+        },
+        "caldot2-y05/indexing/training/results/ShuffleNet05_60/model_best.pth": {
+          "bytes": 5907314,
+          "sha256": "4f8568f52fb81f7e4e22562f703038d4d6cb163a2ab6d560de4979be8de5faae",
+          "staged_from": "mirror"
+        },
+        "caldot2-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl": {
+          "bytes": 6272,
+          "sha256": "302e6cd381f5a4c7150d86fc5c8032f3ecfb613c6d16d2db7fc14d58148bd364",
+          "staged_from": "mirror"
+        }
+      },
+      "label": "CalDoT2",
+      "pareto": {
+        "bytes": 13552,
+        "exists": true,
+        "mtime": "2026-04-19T23:04:47+00:00",
+        "path": "/polyis-cache/caldot2-y05/evaluation/095_pareto_params/pareto_params.csv",
+        "sha256": "b2f60c3031742ed92fd661ec96198edef6c395fb96fd5220cd556ab6cd7826b0"
+      },
+      "reference": {
+        "fps": 30.8622484710686,
+        "hota": 0.7155520702265457
+      },
+      "tradeoff": {
+        "bytes": 13677,
+        "exists": true,
+        "mtime": "2026-04-20T00:56:32+00:00",
+        "path": "/polyis-cache/caldot2-y05/evaluation/090_tradeoff/tradeoff.csv",
+        "sha256": "2f052122c3d79aeb9e4d9dc95fe24f6250884c37f134a0dca786b9e637fe58fc"
+      },
+      "videos": {
+        "te00.mp4": 900,
+        "te01.mp4": 900,
+        "te02.mp4": 900,
+        "te03.mp4": 900,
+        "te04.mp4": 900,
+        "te05.mp4": 900,
+        "te06.mp4": 900,
+        "te07.mp4": 900,
+        "te08.mp4": 900,
+        "te09.mp4": 900,
+        "te10.mp4": 900,
+        "te11.mp4": 900,
+        "te12.mp4": 900,
+        "te13.mp4": 900,
+        "te14.mp4": 900,
+        "te15.mp4": 900,
+        "te16.mp4": 900,
+        "te17.mp4": 900,
+        "te18.mp4": 900,
+        "te19.mp4": 900,
+        "te20.mp4": 900,
+        "te21.mp4": 900,
+        "te22.mp4": 900,
+        "te23.mp4": 900,
+        "te24.mp4": 900,
+        "te25.mp4": 900,
+        "te26.mp4": 900,
+        "te27.mp4": 900,
+        "te28.mp4": 900,
+        "te29.mp4": 900,
+        "te30.mp4": 900,
+        "te31.mp4": 900,
+        "te32.mp4": 900,
+        "te33.mp4": 900,
+        "te34.mp4": 900,
+        "te35.mp4": 900,
+        "te36.mp4": 900,
+        "te37.mp4": 900,
+        "te38.mp4": 900,
+        "te39.mp4": 900,
+        "te40.mp4": 900,
+        "te41.mp4": 900,
+        "te42.mp4": 900,
+        "te43.mp4": 900,
+        "te44.mp4": 900,
+        "te45.mp4": 900,
+        "te46.mp4": 900,
+        "te47.mp4": 900,
+        "te48.mp4": 900,
+        "te49.mp4": 900,
+        "te50.mp4": 900,
+        "te51.mp4": 900,
+        "te52.mp4": 900,
+        "te53.mp4": 900,
+        "te54.mp4": 900,
+        "te55.mp4": 900,
+        "te56.mp4": 900,
+        "te57.mp4": 900,
+        "te58.mp4": 900,
+        "te59.mp4": 900
+      }
+    },
+    "jnc0": {
+      "bounds": {
+        "0.05": {
+          "bound": 0.7653356798275168,
+          "fps": 254.6287118761857,
+          "hota": 0.7790148226312216,
+          "variant_id": "ShuffleNet05_60_4_r025_none_s100_sortcython"
+        },
+        "0.10": {
+          "bound": 0.725054854573437,
+          "fps": 307.6977283009617,
+          "hota": 0.7401470909846285,
+          "variant_id": "ShuffleNet05_60_4_040_r050_none_s100_sortcython"
+        }
+      },
+      "calibration_videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ],
+      "configs": {
+        "ShuffleNet05_60_4_040_r050_none_s100_sortcython": {
+          "fps": 307.6977283009617,
+          "hota": 0.7401470909846285,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.5,
+            "sample_rate": 4,
+            "tilepadding": "none",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": 0.4
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "jnc0,valid,polytris,ShuffleNet05_60_4_040_r050_none_s100_sortcython,ShuffleNet05,60.0,4.0,0.4,0.5,none,1.0,sortcython,5375,20.36405806541443,263.9454269249361,0.7992336035319387,0.8208728068245559,0.7790089453185319,11.3878855237566,20.6",
+          "prune_param": "ShuffleNet05_60_4_040_r050_sortcython",
+          "prunes": true
+        },
+        "ShuffleNet05_60_4_r025_none_s100_sortcython": {
+          "fps": 254.6287118761857,
+          "hota": 0.7790148226312216,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.25,
+            "sample_rate": 4,
+            "tilepadding": "none",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": null
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "jnc0,valid,polytris,ShuffleNet05_60_4_r025_none_s100_sortcython,ShuffleNet05,60.0,4.0,,0.25,none,1.0,sortcython,5375,24.89756689453125,215.88454899103488,0.8446183939982964,0.8643625965658175,0.8259843204582948,6.461517088080022,11.6",
+          "prune_param": null,
+          "prunes": false
+        }
+      },
+      "frame_count": 5375,
+      "inputs": {
+        "jnc0/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "25314f8583db8cec137178e0394f0fd91490c10bacdd55dc2e3a2896e53cd579",
+          "staged_from": "ace"
+        },
+        "jnc0/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 136072,
+          "sha256": "555043c82fd034cdeab4dea1dfbc16096e709461d9c2539595f34e475f4ac687",
+          "staged_from": "ace"
+        },
+        "jnc0/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 279,
+          "sha256": "6a4a68c2a504681aa88cda68dd48f93a51ff52b96c4cddb419208c273bc1265e",
+          "staged_from": "ace"
+        },
+        "jnc0/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 136072,
+          "sha256": "ba41157f70e8ec6a5ab4e1bd3f6fcc428c57f6a522481cae973eb82b47634ada",
+          "staged_from": "ace"
+        },
+        "jnc0/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 279,
+          "sha256": "779aed1e972616b6384792137539a4bbd0e951d4af65140a637e8968c15daa41",
+          "staged_from": "ace"
+        },
+        "jnc0/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 136072,
+          "sha256": "3872480b85610969b3ee2aa6cf05a2f58e0b644881c90514ec2bd0d97c0ab35d",
+          "staged_from": "ace"
+        },
+        "jnc0/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "87fb80543469c18a22076a2209006785cbd0dbbce9938d707b3e8e5e1c43e7da",
+          "staged_from": "ace"
+        },
+        "jnc0/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 136072,
+          "sha256": "7880a6d64818c0bc6c761df1510ffe512dc0cc103229b60074ccf1e9a95236bb",
+          "staged_from": "ace"
+        },
+        "jnc0/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 279,
+          "sha256": "aeae5bde166aea46e87163042d70dd2731ac00046d4bb6d7cfa60b65b6a0f126",
+          "staged_from": "ace"
+        },
+        "jnc0/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 136072,
+          "sha256": "a3e6f604191a37a753eaac0989d306b4f2de27e9ec487c5bcbc246885179eb88",
+          "staged_from": "ace"
+        },
+        "jnc0/indexing/always_relevant/60_all.npy": {
+          "bytes": 344,
+          "sha256": "4483626eefb6e1e594755ac7560e5a9a7fe43b0071822b80fc5b7b99e8f8023f",
+          "staged_from": "mirror"
+        },
+        "jnc0/indexing/track_rate/sortcython_60/max_rate_table.npy": {
+          "bytes": 7904,
+          "sha256": "67fbe394eed4391e6ee7ea451d2b1c4c4500013ad63bca6001c995f23442c613",
+          "staged_from": "mirror"
+        },
+        "jnc0/indexing/training/results/ShuffleNet05_60/model_best.pth": {
+          "bytes": 5907314,
+          "sha256": "aead5293a6fcd4336d2f4ea2f46e6dfa261663e0a519a56f192b26fdb1f9d31c",
+          "staged_from": "mirror"
+        },
+        "jnc0/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl": {
+          "bytes": 6270,
+          "sha256": "0e55a7f5ed8a7ff6c3414d24b108f530266f6622d59828e72e6a433fadeda97a",
+          "staged_from": "mirror"
+        }
+      },
+      "label": "B3D1",
+      "pareto": {
+        "bytes": 17278,
+        "exists": true,
+        "mtime": "2026-04-19T23:04:47+00:00",
+        "path": "/polyis-cache/jnc0/evaluation/095_pareto_params/pareto_params.csv",
+        "sha256": "f9ecd2712d7f500b2b3187f0ae64889bba4b3bb00f0b0ec08002aaf698d2e440"
+      },
+      "reference": {
+        "fps": 14.7533442052176,
+        "hota": 0.8056165050815967
+      },
+      "tradeoff": {
+        "bytes": 18362,
+        "exists": true,
+        "mtime": "2026-04-20T00:56:31+00:00",
+        "path": "/polyis-cache/jnc0/evaluation/090_tradeoff/tradeoff.csv",
+        "sha256": "8a43c3c60d8c4ade15bfe6b2f6391744b2276a03d336fdc67f8c27f24089b2fb"
+      },
+      "videos": {
+        "te01.mp4": 1075,
+        "te04.mp4": 1075,
+        "te08.mp4": 1075,
+        "te12.mp4": 1075,
+        "te13.mp4": 1075
+      }
+    },
+    "jnc2": {
+      "bounds": {
+        "0.05": {
+          "bound": 0.7743519274214989,
+          "fps": 346.49802014125635,
+          "hota": 0.784069611396217,
+          "variant_id": "ShuffleNet05_60_8_r025_none_s100_sortcython"
+        },
+        "0.10": {
+          "bound": 0.7335965628203676,
+          "fps": 390.64174236751353,
+          "hota": 0.7679925930677876,
+          "variant_id": "ShuffleNet05_60_8_r050_none_s100_sortcython"
+        }
+      },
+      "calibration_videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ],
+      "configs": {
+        "ShuffleNet05_60_8_r025_none_s100_sortcython": {
+          "fps": 346.49802014125635,
+          "hota": 0.784069611396217,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.25,
+            "sample_rate": 8,
+            "tilepadding": "none",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": null
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "jnc2,valid,polytris,ShuffleNet05_60_8_r025_none_s100_sortcython,ShuffleNet05,60.0,8.0,,0.25,none,1.0,sortcython,4691,18.742196533203128,250.2908339313144,0.8504875923897611,0.8697777967287933,0.832227473339544,4.106627463273844,49.58217270194986",
+          "prune_param": null,
+          "prunes": false
+        },
+        "ShuffleNet05_60_8_r050_none_s100_sortcython": {
+          "fps": 390.64174236751353,
+          "hota": 0.7679925930677876,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.5,
+            "sample_rate": 8,
+            "tilepadding": "none",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": null
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "jnc2,valid,polytris,ShuffleNet05_60_8_r050_none_s100_sortcython,ShuffleNet05,60.0,8.0,,0.5,none,1.0,sortcython,4691,15.814849853515623,296.61995171944017,0.8061468854935778,0.8205406295534855,0.7930276496236578,7.549535720848782,58.21727019498607",
+          "prune_param": null,
+          "prunes": false
+        }
+      },
+      "frame_count": 4691,
+      "inputs": {
+        "jnc2/indexing/always_relevant/60_all.npy": {
+          "bytes": 344,
+          "sha256": "3c9dfee45bfb2c04a6fce955a397f0bc500cdb536644c8e38357dd4f73076221",
+          "staged_from": "mirror"
+        },
+        "jnc2/indexing/training/results/ShuffleNet05_60/model_best.pth": {
+          "bytes": 5907314,
+          "sha256": "be196c597e3f30e417682df4661b1635808462b4e6b92368c55578d4bdacabb4",
+          "staged_from": "mirror"
+        },
+        "jnc2/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl": {
+          "bytes": 6270,
+          "sha256": "0e55a7f5ed8a7ff6c3414d24b108f530266f6622d59828e72e6a433fadeda97a",
+          "staged_from": "mirror"
+        }
+      },
+      "label": "B3D2",
+      "pareto": {
+        "bytes": 18012,
+        "exists": true,
+        "mtime": "2026-04-19T23:04:47+00:00",
+        "path": "/polyis-cache/jnc2/evaluation/095_pareto_params/pareto_params.csv",
+        "sha256": "3173bc1611f012a5bc1f5ef308dc26e452b646e62b291d7edf851c2b8a584693"
+      },
+      "reference": {
+        "fps": 14.410461834543112,
+        "hota": 0.8151072920226305
+      },
+      "tradeoff": {
+        "bytes": 18118,
+        "exists": true,
+        "mtime": "2026-04-20T00:56:31+00:00",
+        "path": "/polyis-cache/jnc2/evaluation/090_tradeoff/tradeoff.csv",
+        "sha256": "a1c8a3a1f82e59aa4fb04a4f298918053eedd275886b8bb7bc2143c9c1e7be41"
+      },
+      "videos": {
+        "te01.mp4": 938,
+        "te04.mp4": 938,
+        "te08.mp4": 939,
+        "te12.mp4": 938,
+        "te13.mp4": 938
+      }
+    },
+    "jnc6": {
+      "bounds": {
+        "0.05": {
+          "bound": 0.7937161883935254,
+          "fps": 285.59328158197616,
+          "hota": 0.8013411152828708,
+          "variant_id": "ShuffleNet05_60_4_040_r025_none_s100_sortcython"
+        },
+        "0.10": {
+          "bound": 0.7519416521622873,
+          "fps": 330.7975861453874,
+          "hota": 0.7524508903735506,
+          "variant_id": "ShuffleNet05_60_4_040_r050_none_s100_sortcython"
+        }
+      },
+      "calibration_videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ],
+      "configs": {
+        "ShuffleNet05_60_4_040_r025_none_s100_sortcython": {
+          "fps": 285.59328158197616,
+          "hota": 0.8013411152828708,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.25,
+            "sample_rate": 4,
+            "tilepadding": "none",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": 0.4
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "jnc6,valid,polytris,ShuffleNet05_60_4_040_r025_none_s100_sortcython,ShuffleNet05,60.0,4.0,0.4,0.25,none,1.0,sortcython,5194,21.36863788032532,243.0664990950245,0.8240057297674109,0.8292121572364192,0.819338108606754,5.907723668183061,33.66093366093366",
+          "prune_param": "ShuffleNet05_60_4_040_r025_sortcython",
+          "prunes": true
+        },
+        "ShuffleNet05_60_4_040_r050_none_s100_sortcython": {
+          "fps": 330.7975861453874,
+          "hota": 0.7524508903735506,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.5,
+            "sample_rate": 4,
+            "tilepadding": "none",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": 0.4
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "jnc6,valid,polytris,ShuffleNet05_60_4_040_r050_none_s100_sortcython,ShuffleNet05,60.0,4.0,0.4,0.5,none,1.0,sortcython,5194,17.86457837677002,290.74293781004945,0.7767074140242216,0.7822666539190778,0.7719452287944005,10.583687573023091,60.44226044226044",
+          "prune_param": "ShuffleNet05_60_4_040_r050_sortcython",
+          "prunes": true
+        }
+      },
+      "frame_count": 5192,
+      "inputs": {
+        "jnc6/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "d6f3de43e422b8b99ae26a05eb2722cf250dead104264c0894ccdceaaf450acf",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "86e6ec42b739f09318d2b592bb38c4066aacb4e4afc371cd4adf309b44bd3df8",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 279,
+          "sha256": "4354bf4aaedea34e78d3594609e2e8b1f1f3b58d19499f318c53665488fe05fd",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "946d0b754b63b6f33cc7d0a219412512a2855c117476274c9f38dcba233282b7",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 279,
+          "sha256": "7d9ad888bd7de28ce61e64bdcdced2a7a3325acb60f065f91629ed2a007cc7b3",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "c9d91f8d2dac57a478d262ceabc0b43e336561f94c46236302514e59e73a08f9",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "b2e0dfe399a09be497550d7022639611fc30f6843a5bfc48778f1d726d3e820a",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "7bf048e9338edb79d4bbbb590a798b542b111ff011d265507739c23a48b88316",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "6e72729e11050f4aef0c07d737e81238e5330db3ee504367d156426b9ee230b0",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "3cab06a33c31d7c26df63d249b6828f719fa03a1b4b9cd299bc21d6fd4461e59",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "2d7278458d986e8f5a0fa418bfe1d0b4eaa5f61267680ca5bcacdccf69ec0abb",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "7ee506171b330be5e53fcc88d1a38990a6dcd3985a61ba93db2ecc9bfb7cf866",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "1ecb98364b1268f2db6151b0bcf7967552671032cbea0bc7bbee204ac611e69e",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "dd0d58d0bdfb95e48c88d4bfd14d2f318baf1510131d1a62f37e100b565221ef",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 272,
+          "sha256": "69e1c65d9d0e65a3738dd37b0ea7979c7c47978b61b6c537181f91da1e4c2bdb",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "23ec5f7012af78fc904b800e9d61e63fa8d2dfeecf21d64785684a80d01195f8",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "e2e0053fa955b9f6c89d88e540074c153935dbf1f2f248a110a64650911a8293",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "873077e5c83dd0f07d600907c485c5610e9fe8e438c7145570ef7bbe741f4349",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 277,
+          "sha256": "1e7ea046fcb72b35bfac96868636c96f3208eb98a393a8b3f8b3064f08df0831",
+          "staged_from": "ace"
+        },
+        "jnc6/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl": {
+          "bytes": 131527,
+          "sha256": "1c4729ab74f29814aa4d90775c9e2fe1ab97067d325ba028291f2372a06861c2",
+          "staged_from": "ace"
+        },
+        "jnc6/indexing/always_relevant/60_all.npy": {
+          "bytes": 344,
+          "sha256": "d0156f8cd8dfee049198d9dd442851052b68755eece602ce0547dc08f8aa116d",
+          "staged_from": "mirror"
+        },
+        "jnc6/indexing/track_rate/sortcython_60/max_rate_table.npy": {
+          "bytes": 7904,
+          "sha256": "0e927c94509c3bb97a4f9068d83e77eab317e84f352038dfda0d0f55b54ad4aa",
+          "staged_from": "mirror"
+        },
+        "jnc6/indexing/training/results/ShuffleNet05_60/model_best.pth": {
+          "bytes": 5907314,
+          "sha256": "fa94e1041fa2912e2859e32f2b7f0d84906f7809555bf32d4b367d73e2d057ff",
+          "staged_from": "mirror"
+        },
+        "jnc6/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl": {
+          "bytes": 6270,
+          "sha256": "0e55a7f5ed8a7ff6c3414d24b108f530266f6622d59828e72e6a433fadeda97a",
+          "staged_from": "mirror"
+        }
+      },
+      "label": "B3D3",
+      "pareto": {
+        "bytes": 19015,
+        "exists": true,
+        "mtime": "2026-04-19T23:04:47+00:00",
+        "path": "/polyis-cache/jnc6/evaluation/095_pareto_params/pareto_params.csv",
+        "sha256": "57499ed9ad8f4c34638e2f109e857968bb65cdd9e65263015554e96278d3b379"
+      },
+      "reference": {
+        "fps": 14.538907037803993,
+        "hota": 0.8354907246247636
+      },
+      "tradeoff": {
+        "bytes": 19118,
+        "exists": true,
+        "mtime": "2026-04-20T00:56:31+00:00",
+        "path": "/polyis-cache/jnc6/evaluation/090_tradeoff/tradeoff.csv",
+        "sha256": "13928e7bb0e6e4e5a908ea307a780bc1eea768863fd0d0397bbadf21d8a7df7c"
+      },
+      "videos": {
+        "te01.mp4": 1038,
+        "te04.mp4": 1038,
+        "te08.mp4": 1039,
+        "te12.mp4": 1038,
+        "te13.mp4": 1039
+      }
+    },
+    "jnc7": {
+      "bounds": {
+        "0.05": {
+          "bound": 0.8030258898570611,
+          "fps": 422.8733215698087,
+          "hota": 0.8050953871471719,
+          "variant_id": "ShuffleNet05_60_4_060_r050_none_s100_sortcython"
+        },
+        "0.10": {
+          "bound": 0.7607613693382684,
+          "fps": 663.9004189602003,
+          "hota": 0.7609466450374026,
+          "variant_id": "ShuffleNet05_60_8_080_r025_none_s100_sortcython"
+        }
+      },
+      "calibration_videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ],
+      "configs": {
+        "ShuffleNet05_60_4_060_r050_none_s100_sortcython": {
+          "fps": 422.8733215698087,
+          "hota": 0.8050953871471719,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.5,
+            "sample_rate": 4,
+            "tilepadding": "none",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": 0.6
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "jnc7,valid,polytris,ShuffleNet05_60_4_060_r050_none_s100_sortcython,ShuffleNet05,60.0,4.0,0.6,0.5,none,1.0,sortcython,5226,14.353930892944335,364.0814519017112,0.8591398164384096,0.8755090310517977,0.8437136255802296,7.069613066643375,33.11258278145695",
+          "prune_param": "ShuffleNet05_60_4_060_r050_sortcython",
+          "prunes": true
+        },
+        "ShuffleNet05_60_8_080_r025_none_s100_sortcython": {
+          "fps": 663.9004189602003,
+          "hota": 0.7609466450374026,
+          "params": {
+            "canvas_scale": 1.0,
+            "classifier": "ShuffleNet05",
+            "relevance_threshold": 0.25,
+            "sample_rate": 8,
+            "tilepadding": "none",
+            "tilesize": 60,
+            "tracker": "sortcython",
+            "tracking_accuracy_threshold": 0.8
+          },
+          "pareto_header": "dataset,videoset,variant,variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,tilepadding,canvas_scale,tracker,frame_count,time,throughput_fps,HOTA_HOTA,HOTA_AssA,HOTA_DetA,Count_DetsMAPE,Count_TracksMAPE",
+          "pareto_line": "jnc7,valid,polytris,ShuffleNet05_60_8_080_r025_none_s100_sortcython,ShuffleNet05,60.0,8.0,0.8,0.25,none,1.0,sortcython,5226,9.318062236785888,560.8462218001479,0.8163532138959302,0.8566974437360039,0.778356200990705,15.231024543628264,181.1258278145696",
+          "prune_param": "ShuffleNet05_60_8_080_r025_sortcython",
+          "prunes": true
+        }
+      },
+      "frame_count": 5225,
+      "inputs": {
+        "jnc7/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "b024bd2a81332eda3c7bdc443dcd33ea5c5d23d1f0a3d47f8ec0d72955d2b914",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/score.jsonl": {
+          "bytes": 132032,
+          "sha256": "a15b3f6288cf2fe8e42fe74f257deec5a5532ae231473d1d80676cce1064aea2",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 274,
+          "sha256": "5230047948214ffcade910689ac7358c51ce73238820c86cac240000b845ebbf",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te01.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/score.jsonl": {
+          "bytes": 66520,
+          "sha256": "7153b11de26c0d5fbbd09a87833ad6837ea3db24674e7892dc236f84826ead9e",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "a629db5d575a01c34183c8d012ae9026185327e9e20c839a3983a06946c13d66",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/score.jsonl": {
+          "bytes": 132032,
+          "sha256": "ee64b5affcfeae984160007c69524850bae2972f51f1c3d6a75c820dbdb61f29",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 271,
+          "sha256": "0d56d0be62516c33dd20853525102c1f907d4d630fd6532e540e5bc7219c2372",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te04.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/score.jsonl": {
+          "bytes": 66520,
+          "sha256": "fef559c1cfbeb7443ddf3ea91bbc6fecc6c4c9a57760e4d17a90448c2fc765aa",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "bab60de7c8c4f2e5ddfc1cab49e65328caccb2e1633833ee2603c71c02571795",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/score.jsonl": {
+          "bytes": 132032,
+          "sha256": "78bf9b532fbb92752965b6909b09c375bd60ab038e9a1084605fd3b6d58ef349",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "504d27b354402efd871a1695ddf9479eeaf1802bd70a3e9836f20897b6d46565",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te08.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/score.jsonl": {
+          "bytes": 66520,
+          "sha256": "5fc0f9ed0cd56a837d0b750671ff86a292402d651c5a3e3705cf7e3cf9e56869",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 275,
+          "sha256": "81788fac5451e436e72a9b65256a8d76aa389bc1bb431c7545f6c5346d6d2c89",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/score.jsonl": {
+          "bytes": 132032,
+          "sha256": "b5aed1335b7032f515a94e6369469fb1b01449d7e4c8c6ad5c59d87834024ae1",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "a59e912c4f7370489983035abf008db5ea3759497d7c8944705dbb681f213b61",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te12.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/score.jsonl": {
+          "bytes": 66520,
+          "sha256": "efabe58c9339e1ed9d5b5d84f5f7c3abb203f65eb175a6ea560bc65a325427f7",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/runtime.jsonl": {
+          "bytes": 276,
+          "sha256": "232774a510e1c0769ebc73b7dddfb3a928da8134b4762c7abd8c871cb17a48d2",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_060_r050_sortcython/score/score.jsonl": {
+          "bytes": 132032,
+          "sha256": "805edd21ea194a00ad6b9759eddabf8c13142bd3d1dcccbf472f3ddf8e55c2e7",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/runtime.jsonl": {
+          "bytes": 278,
+          "sha256": "28f18d11d36c757f0cc9d566467aa2d16ada204a157067a603695fb1aa53d6f2",
+          "staged_from": "ace"
+        },
+        "jnc7/execution/te13.mp4/022_pruned_polyominoes/ShuffleNet05_60_8_080_r025_sortcython/score/score.jsonl": {
+          "bytes": 66520,
+          "sha256": "00efdb9f9bedf8e70c6266a4f4ba2bed30b7452ba26e8d899395b89a533c401a",
+          "staged_from": "ace"
+        },
+        "jnc7/indexing/always_relevant/60_all.npy": {
+          "bytes": 344,
+          "sha256": "212a1032e65934962e86b139533e698be7717e717a0e409f360d25f73614f571",
+          "staged_from": "mirror"
+        },
+        "jnc7/indexing/track_rate/sortcython_60/max_rate_table.npy": {
+          "bytes": 7904,
+          "sha256": "ce85adb80183047d5180b7a0b955c2eb086b2c9e39313f950040febd3fe3d224",
+          "staged_from": "mirror"
+        },
+        "jnc7/indexing/training/results/ShuffleNet05_60/model_best.pth": {
+          "bytes": 5907314,
+          "sha256": "e18570ad7e6fa3a1f6ab7fedb7e31a30b92d3851bef0475b1320290f10faa75a",
+          "staged_from": "mirror"
+        },
+        "jnc7/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl": {
+          "bytes": 6270,
+          "sha256": "0e55a7f5ed8a7ff6c3414d24b108f530266f6622d59828e72e6a433fadeda97a",
+          "staged_from": "mirror"
+        }
+      },
+      "label": "B3D4",
+      "pareto": {
+        "bytes": 16373,
+        "exists": true,
+        "mtime": "2026-04-19T23:04:47+00:00",
+        "path": "/polyis-cache/jnc7/evaluation/095_pareto_params/pareto_params.csv",
+        "sha256": "86c7fecfd11ced2f28d74155acc6efb7a87c9ebfd1cde42c4200479fa281429f"
+      },
+      "reference": {
+        "fps": 14.515887451819244,
+        "hota": 0.8452904103758538
+      },
+      "tradeoff": {
+        "bytes": 16478,
+        "exists": true,
+        "mtime": "2026-04-20T00:56:31+00:00",
+        "path": "/polyis-cache/jnc7/evaluation/090_tradeoff/tradeoff.csv",
+        "sha256": "2161e3111faca044a0057defeac95ca6e6b874c09d248b60c87fba69a9553996"
+      },
+      "videos": {
+        "te01.mp4": 1045,
+        "te04.mp4": 1045,
+        "te08.mp4": 1045,
+        "te12.mp4": 1045,
+        "te13.mp4": 1045
+      }
+    }
+  },
+  "host": {
+    "cpus": 80,
+    "gpus": {
+      "Quadro RTX 6000": 8
+    },
+    "hostname": "ace"
+  },
+  "units": [
+    {
+      "dataset": "caldot1-y05",
+      "phase": "parallel",
+      "system": "reference",
+      "unit": "parallel-caldot1-y05-reference",
+      "variant_id": null,
+      "videos": [
+        "te00.mp4",
+        "te01.mp4",
+        "te02.mp4",
+        "te03.mp4",
+        "te04.mp4",
+        "te05.mp4",
+        "te06.mp4",
+        "te07.mp4",
+        "te08.mp4",
+        "te09.mp4",
+        "te10.mp4",
+        "te11.mp4",
+        "te12.mp4",
+        "te13.mp4",
+        "te14.mp4",
+        "te15.mp4",
+        "te16.mp4",
+        "te17.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te20.mp4",
+        "te21.mp4",
+        "te22.mp4",
+        "te23.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te26.mp4",
+        "te27.mp4",
+        "te28.mp4",
+        "te29.mp4",
+        "te30.mp4",
+        "te31.mp4",
+        "te32.mp4",
+        "te33.mp4",
+        "te34.mp4",
+        "te35.mp4",
+        "te36.mp4",
+        "te37.mp4",
+        "te38.mp4",
+        "te39.mp4",
+        "te40.mp4",
+        "te41.mp4",
+        "te42.mp4",
+        "te43.mp4",
+        "te44.mp4",
+        "te45.mp4",
+        "te46.mp4",
+        "te47.mp4",
+        "te48.mp4",
+        "te49.mp4",
+        "te50.mp4",
+        "te51.mp4",
+        "te52.mp4",
+        "te53.mp4",
+        "te54.mp4",
+        "te55.mp4",
+        "te56.mp4",
+        "te57.mp4",
+        "te58.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "caldot1-y05",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-caldot1-y05-ShuffleNet05_60_4_r025_bl_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+      "videos": [
+        "te00.mp4",
+        "te01.mp4",
+        "te02.mp4",
+        "te03.mp4",
+        "te04.mp4",
+        "te05.mp4",
+        "te06.mp4",
+        "te07.mp4",
+        "te08.mp4",
+        "te09.mp4",
+        "te10.mp4",
+        "te11.mp4",
+        "te12.mp4",
+        "te13.mp4",
+        "te14.mp4",
+        "te15.mp4",
+        "te16.mp4",
+        "te17.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te20.mp4",
+        "te21.mp4",
+        "te22.mp4",
+        "te23.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te26.mp4",
+        "te27.mp4",
+        "te28.mp4",
+        "te29.mp4",
+        "te30.mp4",
+        "te31.mp4",
+        "te32.mp4",
+        "te33.mp4",
+        "te34.mp4",
+        "te35.mp4",
+        "te36.mp4",
+        "te37.mp4",
+        "te38.mp4",
+        "te39.mp4",
+        "te40.mp4",
+        "te41.mp4",
+        "te42.mp4",
+        "te43.mp4",
+        "te44.mp4",
+        "te45.mp4",
+        "te46.mp4",
+        "te47.mp4",
+        "te48.mp4",
+        "te49.mp4",
+        "te50.mp4",
+        "te51.mp4",
+        "te52.mp4",
+        "te53.mp4",
+        "te54.mp4",
+        "te55.mp4",
+        "te56.mp4",
+        "te57.mp4",
+        "te58.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "caldot1-y05",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-caldot1-y05-ShuffleNet05_60_8_r075_bl_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
+      "videos": [
+        "te00.mp4",
+        "te01.mp4",
+        "te02.mp4",
+        "te03.mp4",
+        "te04.mp4",
+        "te05.mp4",
+        "te06.mp4",
+        "te07.mp4",
+        "te08.mp4",
+        "te09.mp4",
+        "te10.mp4",
+        "te11.mp4",
+        "te12.mp4",
+        "te13.mp4",
+        "te14.mp4",
+        "te15.mp4",
+        "te16.mp4",
+        "te17.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te20.mp4",
+        "te21.mp4",
+        "te22.mp4",
+        "te23.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te26.mp4",
+        "te27.mp4",
+        "te28.mp4",
+        "te29.mp4",
+        "te30.mp4",
+        "te31.mp4",
+        "te32.mp4",
+        "te33.mp4",
+        "te34.mp4",
+        "te35.mp4",
+        "te36.mp4",
+        "te37.mp4",
+        "te38.mp4",
+        "te39.mp4",
+        "te40.mp4",
+        "te41.mp4",
+        "te42.mp4",
+        "te43.mp4",
+        "te44.mp4",
+        "te45.mp4",
+        "te46.mp4",
+        "te47.mp4",
+        "te48.mp4",
+        "te49.mp4",
+        "te50.mp4",
+        "te51.mp4",
+        "te52.mp4",
+        "te53.mp4",
+        "te54.mp4",
+        "te55.mp4",
+        "te56.mp4",
+        "te57.mp4",
+        "te58.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "caldot1-y05",
+      "phase": "solo",
+      "system": "reference",
+      "unit": "solo-caldot1-y05-reference",
+      "variant_id": null,
+      "videos": [
+        "te00.mp4",
+        "te12.mp4",
+        "te24.mp4",
+        "te35.mp4",
+        "te47.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "caldot1-y05",
+      "phase": "solo",
+      "system": "tetris",
+      "unit": "solo-caldot1-y05-ShuffleNet05_60_4_r025_bl_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
+      "videos": [
+        "te00.mp4",
+        "te12.mp4",
+        "te24.mp4",
+        "te35.mp4",
+        "te47.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "parallel",
+      "system": "reference",
+      "unit": "parallel-caldot2-y05-reference",
+      "variant_id": null,
+      "videos": [
+        "te00.mp4",
+        "te01.mp4",
+        "te02.mp4",
+        "te03.mp4",
+        "te04.mp4",
+        "te05.mp4",
+        "te06.mp4",
+        "te07.mp4",
+        "te08.mp4",
+        "te09.mp4",
+        "te10.mp4",
+        "te11.mp4",
+        "te12.mp4",
+        "te13.mp4",
+        "te14.mp4",
+        "te15.mp4",
+        "te16.mp4",
+        "te17.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te20.mp4",
+        "te21.mp4",
+        "te22.mp4",
+        "te23.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te26.mp4",
+        "te27.mp4",
+        "te28.mp4",
+        "te29.mp4",
+        "te30.mp4",
+        "te31.mp4",
+        "te32.mp4",
+        "te33.mp4",
+        "te34.mp4",
+        "te35.mp4",
+        "te36.mp4",
+        "te37.mp4",
+        "te38.mp4",
+        "te39.mp4",
+        "te40.mp4",
+        "te41.mp4",
+        "te42.mp4",
+        "te43.mp4",
+        "te44.mp4",
+        "te45.mp4",
+        "te46.mp4",
+        "te47.mp4",
+        "te48.mp4",
+        "te49.mp4",
+        "te50.mp4",
+        "te51.mp4",
+        "te52.mp4",
+        "te53.mp4",
+        "te54.mp4",
+        "te55.mp4",
+        "te56.mp4",
+        "te57.mp4",
+        "te58.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-caldot2-y05-ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "variant_id": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "videos": [
+        "te00.mp4",
+        "te01.mp4",
+        "te02.mp4",
+        "te03.mp4",
+        "te04.mp4",
+        "te05.mp4",
+        "te06.mp4",
+        "te07.mp4",
+        "te08.mp4",
+        "te09.mp4",
+        "te10.mp4",
+        "te11.mp4",
+        "te12.mp4",
+        "te13.mp4",
+        "te14.mp4",
+        "te15.mp4",
+        "te16.mp4",
+        "te17.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te20.mp4",
+        "te21.mp4",
+        "te22.mp4",
+        "te23.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te26.mp4",
+        "te27.mp4",
+        "te28.mp4",
+        "te29.mp4",
+        "te30.mp4",
+        "te31.mp4",
+        "te32.mp4",
+        "te33.mp4",
+        "te34.mp4",
+        "te35.mp4",
+        "te36.mp4",
+        "te37.mp4",
+        "te38.mp4",
+        "te39.mp4",
+        "te40.mp4",
+        "te41.mp4",
+        "te42.mp4",
+        "te43.mp4",
+        "te44.mp4",
+        "te45.mp4",
+        "te46.mp4",
+        "te47.mp4",
+        "te48.mp4",
+        "te49.mp4",
+        "te50.mp4",
+        "te51.mp4",
+        "te52.mp4",
+        "te53.mp4",
+        "te54.mp4",
+        "te55.mp4",
+        "te56.mp4",
+        "te57.mp4",
+        "te58.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-caldot2-y05-ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+      "variant_id": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
+      "videos": [
+        "te00.mp4",
+        "te01.mp4",
+        "te02.mp4",
+        "te03.mp4",
+        "te04.mp4",
+        "te05.mp4",
+        "te06.mp4",
+        "te07.mp4",
+        "te08.mp4",
+        "te09.mp4",
+        "te10.mp4",
+        "te11.mp4",
+        "te12.mp4",
+        "te13.mp4",
+        "te14.mp4",
+        "te15.mp4",
+        "te16.mp4",
+        "te17.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te20.mp4",
+        "te21.mp4",
+        "te22.mp4",
+        "te23.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te26.mp4",
+        "te27.mp4",
+        "te28.mp4",
+        "te29.mp4",
+        "te30.mp4",
+        "te31.mp4",
+        "te32.mp4",
+        "te33.mp4",
+        "te34.mp4",
+        "te35.mp4",
+        "te36.mp4",
+        "te37.mp4",
+        "te38.mp4",
+        "te39.mp4",
+        "te40.mp4",
+        "te41.mp4",
+        "te42.mp4",
+        "te43.mp4",
+        "te44.mp4",
+        "te45.mp4",
+        "te46.mp4",
+        "te47.mp4",
+        "te48.mp4",
+        "te49.mp4",
+        "te50.mp4",
+        "te51.mp4",
+        "te52.mp4",
+        "te53.mp4",
+        "te54.mp4",
+        "te55.mp4",
+        "te56.mp4",
+        "te57.mp4",
+        "te58.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "solo",
+      "system": "reference",
+      "unit": "solo-caldot2-y05-reference",
+      "variant_id": null,
+      "videos": [
+        "te00.mp4",
+        "te12.mp4",
+        "te24.mp4",
+        "te35.mp4",
+        "te47.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "solo",
+      "system": "tetris",
+      "unit": "solo-caldot2-y05-ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "variant_id": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "videos": [
+        "te00.mp4",
+        "te12.mp4",
+        "te24.mp4",
+        "te35.mp4",
+        "te47.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "ams-y05",
+      "phase": "parallel",
+      "system": "reference",
+      "unit": "parallel-ams-y05-reference",
+      "variant_id": null,
+      "videos": [
+        "te00.mp4",
+        "te01.mp4",
+        "te02.mp4",
+        "te03.mp4",
+        "te04.mp4",
+        "te05.mp4",
+        "te06.mp4",
+        "te07.mp4",
+        "te08.mp4",
+        "te09.mp4",
+        "te10.mp4",
+        "te11.mp4",
+        "te12.mp4",
+        "te13.mp4",
+        "te14.mp4",
+        "te15.mp4",
+        "te16.mp4",
+        "te17.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te20.mp4",
+        "te21.mp4",
+        "te22.mp4",
+        "te23.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te26.mp4",
+        "te27.mp4",
+        "te28.mp4",
+        "te29.mp4",
+        "te30.mp4",
+        "te31.mp4",
+        "te32.mp4",
+        "te33.mp4",
+        "te34.mp4",
+        "te35.mp4",
+        "te36.mp4",
+        "te37.mp4",
+        "te38.mp4",
+        "te39.mp4",
+        "te40.mp4",
+        "te41.mp4",
+        "te42.mp4",
+        "te43.mp4",
+        "te44.mp4",
+        "te45.mp4",
+        "te46.mp4",
+        "te47.mp4",
+        "te48.mp4",
+        "te49.mp4",
+        "te50.mp4",
+        "te51.mp4",
+        "te52.mp4",
+        "te53.mp4",
+        "te54.mp4",
+        "te55.mp4",
+        "te56.mp4",
+        "te57.mp4",
+        "te58.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "ams-y05",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-ams-y05-ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+      "videos": [
+        "te00.mp4",
+        "te01.mp4",
+        "te02.mp4",
+        "te03.mp4",
+        "te04.mp4",
+        "te05.mp4",
+        "te06.mp4",
+        "te07.mp4",
+        "te08.mp4",
+        "te09.mp4",
+        "te10.mp4",
+        "te11.mp4",
+        "te12.mp4",
+        "te13.mp4",
+        "te14.mp4",
+        "te15.mp4",
+        "te16.mp4",
+        "te17.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te20.mp4",
+        "te21.mp4",
+        "te22.mp4",
+        "te23.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te26.mp4",
+        "te27.mp4",
+        "te28.mp4",
+        "te29.mp4",
+        "te30.mp4",
+        "te31.mp4",
+        "te32.mp4",
+        "te33.mp4",
+        "te34.mp4",
+        "te35.mp4",
+        "te36.mp4",
+        "te37.mp4",
+        "te38.mp4",
+        "te39.mp4",
+        "te40.mp4",
+        "te41.mp4",
+        "te42.mp4",
+        "te43.mp4",
+        "te44.mp4",
+        "te45.mp4",
+        "te46.mp4",
+        "te47.mp4",
+        "te48.mp4",
+        "te49.mp4",
+        "te50.mp4",
+        "te51.mp4",
+        "te52.mp4",
+        "te53.mp4",
+        "te54.mp4",
+        "te55.mp4",
+        "te56.mp4",
+        "te57.mp4",
+        "te58.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "ams-y05",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-ams-y05-ShuffleNet05_60_16_r075_square_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_16_r075_square_s100_sortcython",
+      "videos": [
+        "te00.mp4",
+        "te01.mp4",
+        "te02.mp4",
+        "te03.mp4",
+        "te04.mp4",
+        "te05.mp4",
+        "te06.mp4",
+        "te07.mp4",
+        "te08.mp4",
+        "te09.mp4",
+        "te10.mp4",
+        "te11.mp4",
+        "te12.mp4",
+        "te13.mp4",
+        "te14.mp4",
+        "te15.mp4",
+        "te16.mp4",
+        "te17.mp4",
+        "te18.mp4",
+        "te19.mp4",
+        "te20.mp4",
+        "te21.mp4",
+        "te22.mp4",
+        "te23.mp4",
+        "te24.mp4",
+        "te25.mp4",
+        "te26.mp4",
+        "te27.mp4",
+        "te28.mp4",
+        "te29.mp4",
+        "te30.mp4",
+        "te31.mp4",
+        "te32.mp4",
+        "te33.mp4",
+        "te34.mp4",
+        "te35.mp4",
+        "te36.mp4",
+        "te37.mp4",
+        "te38.mp4",
+        "te39.mp4",
+        "te40.mp4",
+        "te41.mp4",
+        "te42.mp4",
+        "te43.mp4",
+        "te44.mp4",
+        "te45.mp4",
+        "te46.mp4",
+        "te47.mp4",
+        "te48.mp4",
+        "te49.mp4",
+        "te50.mp4",
+        "te51.mp4",
+        "te52.mp4",
+        "te53.mp4",
+        "te54.mp4",
+        "te55.mp4",
+        "te56.mp4",
+        "te57.mp4",
+        "te58.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "ams-y05",
+      "phase": "solo",
+      "system": "reference",
+      "unit": "solo-ams-y05-reference",
+      "variant_id": null,
+      "videos": [
+        "te00.mp4",
+        "te12.mp4",
+        "te24.mp4",
+        "te35.mp4",
+        "te47.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "ams-y05",
+      "phase": "solo",
+      "system": "tetris",
+      "unit": "solo-ams-y05-ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
+      "videos": [
+        "te00.mp4",
+        "te12.mp4",
+        "te24.mp4",
+        "te35.mp4",
+        "te47.mp4",
+        "te59.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "parallel",
+      "system": "reference",
+      "unit": "parallel-jnc0-reference",
+      "variant_id": null,
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-jnc0-ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-jnc0-ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "solo",
+      "system": "reference",
+      "unit": "solo-jnc0-reference",
+      "variant_id": null,
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "solo",
+      "system": "tetris",
+      "unit": "solo-jnc0-ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_r025_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "parallel",
+      "system": "reference",
+      "unit": "parallel-jnc2-reference",
+      "variant_id": null,
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-jnc2-ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-jnc2-ShuffleNet05_60_8_r050_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_8_r050_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "solo",
+      "system": "reference",
+      "unit": "solo-jnc2-reference",
+      "variant_id": null,
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "solo",
+      "system": "tetris",
+      "unit": "solo-jnc2-ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_8_r025_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "parallel",
+      "system": "reference",
+      "unit": "parallel-jnc6-reference",
+      "variant_id": null,
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-jnc6-ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-jnc6-ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "solo",
+      "system": "reference",
+      "unit": "solo-jnc6-reference",
+      "variant_id": null,
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "solo",
+      "system": "tetris",
+      "unit": "solo-jnc6-ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "parallel",
+      "system": "reference",
+      "unit": "parallel-jnc7-reference",
+      "variant_id": null,
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-jnc7-ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "parallel",
+      "system": "tetris",
+      "unit": "parallel-jnc7-ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "solo",
+      "system": "reference",
+      "unit": "solo-jnc7-reference",
+      "variant_id": null,
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "solo",
+      "system": "tetris",
+      "unit": "solo-jnc7-ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "variant_id": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
+      "videos": [
+        "te01.mp4",
+        "te04.mp4",
+        "te08.mp4",
+        "te12.mp4",
+        "te13.mp4"
+      ]
+    }
+  ]
+}

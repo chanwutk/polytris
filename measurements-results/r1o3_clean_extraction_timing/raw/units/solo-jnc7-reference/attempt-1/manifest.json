@@ -1,0 +1,231 @@
+{
+  "environment": {
+    "bombe_cpus": "0-19,40-59",
+    "bombe_gpu": "2",
+    "bombe_run": "g2-20261027T084359",
+    "cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "hostname": "bombe",
+    "nvidia_smi": "GPU 0: Quadro RTX 6000 (UUID: GPU-93a19c10-7c18-92b2-8e33-c0e121e77e2a)",
+    "python": "3.13.12"
+  },
+  "error": null,
+  "files": {
+    "cpu": "cpu.jsonl.gz",
+    "decode": "decode.jsonl.gz",
+    "logs": "logs"
+  },
+  "finished": "2026-10-27T15:51:22.131+00:00",
+  "finished_ns": 1793116282131384340,
+  "inputs_copied": [],
+  "outputs": {
+    "001_preprocess_groundtruth_detection": {
+      "te01.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 721300,
+            "sha256": "89af855090c284f40c09603ca799eb2d8bd2c581945a4a84b5f4038c839f9eaf"
+          }
+        },
+        "runtime": "jnc7/execution/te01.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te04.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 1039118,
+            "sha256": "957d350f6fc970ceaf0b2dfe01eac31bd31418e3461627cb5f2cfcb3cea059c5"
+          }
+        },
+        "runtime": "jnc7/execution/te04.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te08.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 1269277,
+            "sha256": "110e073ded2fb3821eb123dc8295c6f7d593c04a09346bb96c40420e33a09a17"
+          }
+        },
+        "runtime": "jnc7/execution/te08.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 827725,
+            "sha256": "73210f159cbf8dae10f88647b866fa3a612fe742d8c5134e6b0114258a53a60b"
+          }
+        },
+        "runtime": "jnc7/execution/te12.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te13.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 1302733,
+            "sha256": "6e7d5afaff5d6bb782653fd819fb8ed487f4c0d69055a1c77dae55e6d48a667a"
+          }
+        },
+        "runtime": "jnc7/execution/te13.mp4/002_naive/detection_runtime.jsonl"
+      }
+    },
+    "002_preprocess_groundtruth_tracking": {
+      "te01.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 598298,
+            "sha256": "93fbb6d735246211201a0331cdb2a31ef2d19af38f167a5dc28d53d7661224d4"
+          }
+        },
+        "runtime": "jnc7/execution/te01.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te04.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 854906,
+            "sha256": "ab5292e862233aef63c4b9e205b1e2855d7479c31bc3f527c7d00e3b87b69eeb"
+          }
+        },
+        "runtime": "jnc7/execution/te04.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te08.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 1054240,
+            "sha256": "b72da4febac10a68126598182867efe2d0d76c638d9e12356da0aaae48b9f6de"
+          }
+        },
+        "runtime": "jnc7/execution/te08.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 688075,
+            "sha256": "65265535a0849ad17d83376401f30c0930946b7d512bb966a780b9f76ad86f6e"
+          }
+        },
+        "runtime": "jnc7/execution/te12.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te13.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 1081434,
+            "sha256": "8374b4b5b67f641be5d86cbe9a68ee29fdb326d49123c1569d9e3e7ee7705c25"
+          }
+        },
+        "runtime": "jnc7/execution/te13.mp4/002_naive/tracking_runtime.jsonl"
+      }
+    }
+  },
+  "p022_source": null,
+  "preread": [
+    {
+      "bytes": 12675146,
+      "seconds": 0.01478036,
+      "video": "te01.mp4"
+    },
+    {
+      "bytes": 13126309,
+      "seconds": 0.014982267,
+      "video": "te04.mp4"
+    },
+    {
+      "bytes": 13857088,
+      "seconds": 0.01451023,
+      "video": "te08.mp4"
+    },
+    {
+      "bytes": 12889308,
+      "seconds": 0.013613419,
+      "video": "te12.mp4"
+    },
+    {
+      "bytes": 13987369,
+      "seconds": 0.008038697,
+      "video": "te13.mp4"
+    }
+  ],
+  "stages": [
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793116277055997394,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_detection.py",
+      "stage": "001_preprocess_groundtruth_detection",
+      "start_ns": 1793115884969157425,
+      "wall_s": 392.086836248
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793116281510467109,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_tracking.py",
+      "stage": "002_preprocess_groundtruth_tracking",
+      "start_ns": 1793116277057021206,
+      "wall_s": 4.453440011
+    }
+  ],
+  "started": "2026-10-27T15:44:42.081+00:00",
+  "started_ns": 1793115882081345524,
+  "status": "ok",
+  "unit": {
+    "attempt": 1,
+    "dataset": "jnc7",
+    "gpu": 2,
+    "phase": "solo",
+    "raw": "units/solo-jnc7-reference/attempt-1",
+    "system": "reference",
+    "unit": "solo-jnc7-reference",
+    "variant_id": null,
+    "videos": [
+      "te01.mp4",
+      "te04.mp4",
+      "te08.mp4",
+      "te12.mp4",
+      "te13.mp4"
+    ]
+  }
+}

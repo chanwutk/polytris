@@ -1,0 +1,314 @@
+{
+  "environment": {
+    "bombe_cpus": "0-19,40-59",
+    "bombe_gpu": "2",
+    "bombe_run": "g2-20261027T190755",
+    "cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "hostname": "bombe",
+    "nvidia_smi": "GPU 0: Quadro RTX 6000 (UUID: GPU-93a19c10-7c18-92b2-8e33-c0e121e77e2a)",
+    "python": "3.13.12"
+  },
+  "error": null,
+  "files": {
+    "cpu": "cpu.jsonl.gz",
+    "decode": "decode.jsonl.gz",
+    "logs": "logs"
+  },
+  "finished": "2026-10-28T02:12:14.001+00:00",
+  "finished_ns": 1793153534001789202,
+  "inputs_copied": [],
+  "outputs": {
+    "001_preprocess_groundtruth_detection": {
+      "te00.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 107022,
+            "sha256": "7356f133b0ebbd155854706440a01f06d27a5a6b6a01c2767eeb58985006b893"
+          }
+        },
+        "mtime_ns": 1793153453766257377,
+        "runtime": "caldot1-y05/execution/te00.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 167999,
+            "sha256": "1d1059df06fc9ef06e5279875e602aca213c081047e795f0410ee2de195b4049"
+          }
+        },
+        "mtime_ns": 1793153525895087808,
+        "runtime": "caldot1-y05/execution/te12.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 33190,
+            "sha256": "732dd92faba1d31e0cfa75ecc7a1028d38bf2eccf8dc37958fe9bff624c90ea2"
+          }
+        },
+        "mtime_ns": 1793153346500507876,
+        "runtime": "caldot1-y05/execution/te24.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 90750,
+            "sha256": "16f14790c30f79ab610b4b70ef2b005332783c7eec5ef0c5871e9eb18a66e097"
+          }
+        },
+        "mtime_ns": 1793153381835425601,
+        "runtime": "caldot1-y05/execution/te35.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 241130,
+            "sha256": "6978d913633d64cad7c8542195088f8140563490afa051c45fe30bcd9741be9b"
+          }
+        },
+        "mtime_ns": 1793153417856341477,
+        "runtime": "caldot1-y05/execution/te47.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 215619,
+            "sha256": "4a7476f12969f23980d83a1b163c328171e99b638b920d0fff9fb9729180a4db"
+          }
+        },
+        "mtime_ns": 1793153489699173005,
+        "runtime": "caldot1-y05/execution/te59.mp4/002_naive/detection_runtime.jsonl"
+      }
+    },
+    "002_preprocess_groundtruth_tracking": {
+      "te00.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 88920,
+            "sha256": "36b05d3384759b4bc2e7f46487740c1a0ac06e2a1a9b42d29d528495b6447e26"
+          }
+        },
+        "mtime_ns": 1793153531943073554,
+        "runtime": "caldot1-y05/execution/te00.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 135142,
+            "sha256": "9c0ab24aa105fc5944d0cfe08426de11060c05f6c17dfcda2bda179a43066baf"
+          }
+        },
+        "mtime_ns": 1793153532588072033,
+        "runtime": "caldot1-y05/execution/te12.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "mtime_ns": 1793153531003075770,
+        "runtime": "caldot1-y05/execution/te24.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 68933,
+            "sha256": "06d11c02310fbbcc66bcbaec06ed36af31e134bbfaee7087ba23da110b098abe"
+          }
+        },
+        "mtime_ns": 1793153531308075051,
+        "runtime": "caldot1-y05/execution/te35.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 198391,
+            "sha256": "cc6719f2e63abcec317aa92f3e7e3d8ec97b6e4bc3efcf54e07218ba4de48ef4"
+          }
+        },
+        "mtime_ns": 1793153531633074285,
+        "runtime": "caldot1-y05/execution/te47.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 179591,
+            "sha256": "92adfc409d9c64038a32766f5b48a5641e7e9dc894f769c1486a81a97143d402"
+          }
+        },
+        "mtime_ns": 1793153532268072788,
+        "runtime": "caldot1-y05/execution/te59.mp4/002_naive/tracking_runtime.jsonl"
+      }
+    }
+  },
+  "p022_source": null,
+  "preread": [
+    {
+      "bytes": 3731165,
+      "seconds": 0.004777963,
+      "video": "te00.mp4"
+    },
+    {
+      "bytes": 3420674,
+      "seconds": 0.003885061,
+      "video": "te12.mp4"
+    },
+    {
+      "bytes": 2891811,
+      "seconds": 0.003089931,
+      "video": "te24.mp4"
+    },
+    {
+      "bytes": 3350772,
+      "seconds": 0.00343813,
+      "video": "te35.mp4"
+    },
+    {
+      "bytes": 3292481,
+      "seconds": 0.003481126,
+      "video": "te47.mp4"
+    },
+    {
+      "bytes": 3494921,
+      "seconds": 0.003305954,
+      "video": "te59.mp4"
+    }
+  ],
+  "stages": [
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793153529017786039,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_detection.py",
+      "stage": "001_preprocess_groundtruth_detection",
+      "start_ns": 1793153305849002447,
+      "wall_s": 223.16877532
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793153533159810899,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_tracking.py",
+      "stage": "002_preprocess_groundtruth_tracking",
+      "start_ns": 1793153529020146656,
+      "wall_s": 4.139657551
+    }
+  ],
+  "started": "2026-10-28T02:08:03.185+00:00",
+  "started_ns": 1793153283185937503,
+  "status": "ok",
+  "unit": {
+    "attempt": 2,
+    "dataset": "caldot1-y05",
+    "gate": {
+      "checked": "2026-10-28T02:07:54.271+00:00",
+      "node_busy": 0.017934632653573132,
+      "node_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59
+      ],
+      "retries": 0
+    },
+    "gpu": 2,
+    "phase": "solo",
+    "raw": "units/solo-caldot1-y05-reference/attempt-2",
+    "system": "reference",
+    "unit": "solo-caldot1-y05-reference",
+    "variant_id": null,
+    "videos": [
+      "te00.mp4",
+      "te12.mp4",
+      "te24.mp4",
+      "te35.mp4",
+      "te47.mp4",
+      "te59.mp4"
+    ]
+  }
+}

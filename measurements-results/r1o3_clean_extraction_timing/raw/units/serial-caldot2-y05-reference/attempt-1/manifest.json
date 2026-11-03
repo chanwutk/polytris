@@ -1,0 +1,1718 @@
+{
+  "environment": {
+    "bombe_cpus": "0-19,40-59",
+    "bombe_gpu": "1",
+    "bombe_run": "g1-20261027T163246",
+    "cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "hostname": "bombe",
+    "nvidia_smi": "GPU 0: Quadro RTX 6000 (UUID: GPU-e8034b31-aa87-2489-156d-927ea00e6009)",
+    "python": "3.13.12"
+  },
+  "error": null,
+  "files": {
+    "cpu": "cpu.jsonl.gz",
+    "decode": "decode.jsonl.gz",
+    "logs": "logs"
+  },
+  "finished": "2026-10-28T00:11:34.861+00:00",
+  "finished_ns": 1793146294861776723,
+  "inputs_copied": [],
+  "outputs": {
+    "001_preprocess_groundtruth_detection": {
+      "te00.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 220410,
+            "sha256": "0dc934719cb303b2ed7f53d223e1fdc0f8def9d17a565f6ab6d2f25ba00e04de"
+          }
+        },
+        "mtime_ns": 1793144334363004705,
+        "runtime": "caldot2-y05/execution/te00.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te01.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 195009,
+            "sha256": "7e68a62d394e0f0f17b3a661efeeebf93383517dce78435be25a69780e8833b9"
+          }
+        },
+        "mtime_ns": 1793144736043774746,
+        "runtime": "caldot2-y05/execution/te01.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te02.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 128431,
+            "sha256": "8f17d077d119216e358330eb2adc5d543049665559bf09a7388609d678055e6d"
+          }
+        },
+        "mtime_ns": 1793145532335350829,
+        "runtime": "caldot2-y05/execution/te02.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te03.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 192501,
+            "sha256": "49357862370090920e849a9576249ed6ea7cf4df6d1b4216ba7a411d9da05d39"
+          }
+        },
+        "mtime_ns": 1793146257288911803,
+        "runtime": "caldot2-y05/execution/te03.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te04.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 315113,
+            "sha256": "0cfb615472c1bab188df9358b2c26a28d336e1bbe1787aac3363bea93412b27d"
+          }
+        },
+        "mtime_ns": 1793146221302028791,
+        "runtime": "caldot2-y05/execution/te04.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te05.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 479424,
+            "sha256": "08fe3e3292c911a0ae6a2682977342c1a9a0f7a092795904e548aea220d2d18d"
+          }
+        },
+        "mtime_ns": 1793145568148242007,
+        "runtime": "caldot2-y05/execution/te05.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te06.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 336770,
+            "sha256": "e771f2e0a2c591d5657a2406eacb82dc490f7626d0aa550e25a78f3f8f88b0e7"
+          }
+        },
+        "mtime_ns": 1793144699431886538,
+        "runtime": "caldot2-y05/execution/te06.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te07.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 176152,
+            "sha256": "ad98eb1b63c2995f64ef39ddf1f79cb0208eb52b477c95e631e681ea4d67ea71"
+          }
+        },
+        "mtime_ns": 1793144370680893112,
+        "runtime": "caldot2-y05/execution/te07.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te08.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 368507,
+            "sha256": "1a4158ad36f498f6acd66ddc8d6a3aa87334d464e98c6e9f94f71c6ce757d224"
+          }
+        },
+        "mtime_ns": 1793144771621666156,
+        "runtime": "caldot2-y05/execution/te08.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te09.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 392471,
+            "sha256": "2b838ad75799261695c6709f1ddb57368102132ea29fbea7378125c9c4646411"
+          }
+        },
+        "mtime_ns": 1793144297907116823,
+        "runtime": "caldot2-y05/execution/te09.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te10.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 233918,
+            "sha256": "e0d68d8c7f42fe26433df954abdf4a39b50f5dfd65c1990c81487842d260d3fc"
+          }
+        },
+        "mtime_ns": 1793145206467341543,
+        "runtime": "caldot2-y05/execution/te10.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te11.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 285614,
+            "sha256": "0f9e30eb032dcfc291e424b9462267fd9778fbf4f253f63b8d08927289eb3cc0"
+          }
+        },
+        "mtime_ns": 1793144442838671668,
+        "runtime": "caldot2-y05/execution/te11.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 124316,
+            "sha256": "84ff6def0f0615cd96331065104521687313215e8e4be62c63414bcc88b9a5c0"
+          }
+        },
+        "mtime_ns": 1793145785414481069,
+        "runtime": "caldot2-y05/execution/te12.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te13.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 348557,
+            "sha256": "8bf0860327ef8f29b137727aab4936bdb94d6a37b55830820d0d6c57a3610729"
+          }
+        },
+        "mtime_ns": 1793145496165460745,
+        "runtime": "caldot2-y05/execution/te13.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te14.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 395832,
+            "sha256": "c608e78c5d9042732cfc4987584942a48749835384fb818f08524e75a500d794"
+          }
+        },
+        "mtime_ns": 1793145459318572728,
+        "runtime": "caldot2-y05/execution/te14.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te15.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 105530,
+            "sha256": "09ddb3c4d4310130152ef81635f0d447790c277c1cc673e76f676955840d70b4"
+          }
+        },
+        "mtime_ns": 1793145821659357025,
+        "runtime": "caldot2-y05/execution/te15.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te16.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 370636,
+            "sha256": "2eb52ad6a21d2193b2ab9c31e714ecc912cab7c46afee6da40682f962027115b"
+          }
+        },
+        "mtime_ns": 1793144406337783642,
+        "runtime": "caldot2-y05/execution/te16.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te17.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 300516,
+            "sha256": "a6b548c1ee39fa754bf6fef98db98f85db79942126579c21f57858a97496460e"
+          }
+        },
+        "mtime_ns": 1793145242779231088,
+        "runtime": "caldot2-y05/execution/te17.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te18.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 171901,
+            "sha256": "49d8fab0526f996054759471bf6cb15df9630028f87f3e4ddebc99daecbaeeeb"
+          }
+        },
+        "mtime_ns": 1793144479689558703,
+        "runtime": "caldot2-y05/execution/te18.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te19.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 450720,
+            "sha256": "d7e2b18700c48922f68bb1d5c35b6dc2310ecbea587281d62e5e2d5428de3002"
+          }
+        },
+        "mtime_ns": 1793145170725450282,
+        "runtime": "caldot2-y05/execution/te19.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te20.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 262887,
+            "sha256": "ed5410cdf8c7427db04e0fcdfe30222ae0bd786ac6a97bbdfdfd5b63be0709da"
+          }
+        },
+        "mtime_ns": 1793145968080862961,
+        "runtime": "caldot2-y05/execution/te20.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te21.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 543650,
+            "sha256": "fab0a29dbac6cb36bd85a543b4809cfc1684f138ee62496b944934e21aa1f06d"
+          }
+        },
+        "mtime_ns": 1793145315060011271,
+        "runtime": "caldot2-y05/execution/te21.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te22.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 415797,
+            "sha256": "c8480cfdbf48c52432fec12ea31fc3236c026d633f8831e37d5f908897b1aa88"
+          }
+        },
+        "mtime_ns": 1793144990137000012,
+        "runtime": "caldot2-y05/execution/te22.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te23.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 95044,
+            "sha256": "55573ccb263ac09f93484e32c4c7b347222e811801732a64862708b2038037f9"
+          }
+        },
+        "mtime_ns": 1793144662581999108,
+        "runtime": "caldot2-y05/execution/te23.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 295846,
+            "sha256": "0b36422103d48d001b05140cb4bce4035ea8633657dd0dc279c49ed4dfddc713"
+          }
+        },
+        "mtime_ns": 1793144589538222408,
+        "runtime": "caldot2-y05/execution/te24.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te25.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 384864,
+            "sha256": "e8e73c126a708f5709350b0bbd413683457f6dfaacd7dc3fe484c9f7d703391d"
+          }
+        },
+        "mtime_ns": 1793145025688891741,
+        "runtime": "caldot2-y05/execution/te25.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te26.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 438877,
+            "sha256": "179c8562dad84778924435001816ad9f9aaf54bfce473bb7ffbc12319dd9d155"
+          }
+        },
+        "mtime_ns": 1793145278420122691,
+        "runtime": "caldot2-y05/execution/te26.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te27.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 301168,
+            "sha256": "f7c5112c2540b4d266755e47b08b98c605063d7908f9907deb3a0bd3b1ec622c"
+          }
+        },
+        "mtime_ns": 1793146004388741964,
+        "runtime": "caldot2-y05/execution/te27.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te28.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 236917,
+            "sha256": "082ef3cef31f7fb6063568a9a419531e5dd65ff53d4ab43d216d035290077614"
+          }
+        },
+        "mtime_ns": 1793145386791793183,
+        "runtime": "caldot2-y05/execution/te28.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te29.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 283896,
+            "sha256": "8b09c50866de6ddf33b7f84e4d4b168ce4b1d32f1e1fa9f21735e8b9e3aab177"
+          }
+        },
+        "mtime_ns": 1793145858595231382,
+        "runtime": "caldot2-y05/execution/te29.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te30.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 174034,
+            "sha256": "b3e489479b3d1545a96e4c77cfbb8f55c68e601f591479c37c01c2de65e92b79"
+          }
+        },
+        "mtime_ns": 1793145713660729044,
+        "runtime": "caldot2-y05/execution/te30.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te31.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 87102,
+            "sha256": "2a440de5299dba43c25e3bd3816e3a5a83b703e0241cd894239a5a6be7349b9b"
+          }
+        },
+        "mtime_ns": 1793146076305503801,
+        "runtime": "caldot2-y05/execution/te31.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te32.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 321200,
+            "sha256": "77cb16af9d0c8cf6613539b972cbbdc758ca2314092bb9ec040c904c7a09a65a"
+          }
+        },
+        "mtime_ns": 1793144117488673462,
+        "runtime": "caldot2-y05/execution/te32.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te33.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 355593,
+            "sha256": "11ad3b5986d442f68397db357a0739537cab1a6c868bd2559c97a3d9321b9bf7"
+          }
+        },
+        "mtime_ns": 1793144953619111253,
+        "runtime": "caldot2-y05/execution/te33.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te34.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 430998,
+            "sha256": "3dfa35b7473b0d711373c042ca3bf8db9b264fe41c1023e1b1c8f48c68e1416b"
+          }
+        },
+        "mtime_ns": 1793144880478334150,
+        "runtime": "caldot2-y05/execution/te34.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 177277,
+            "sha256": "670020dbfe8d1ae10f7c2186482df09069ac908c5018e564dddde29ffa7db7ac"
+          }
+        },
+        "mtime_ns": 1793144153536561981,
+        "runtime": "caldot2-y05/execution/te35.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te36.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 163390,
+            "sha256": "016da95d12e863a95b4d7e20a92c03647dbf27b82f765ea28b1bccd119a7d151"
+          }
+        },
+        "mtime_ns": 1793146040467622245,
+        "runtime": "caldot2-y05/execution/te36.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te37.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 287284,
+            "sha256": "19585263aa720f6bf9860642060d927cc691f27b9667e39d08d81a0bc3b4f85e"
+          }
+        },
+        "mtime_ns": 1793145749702604068,
+        "runtime": "caldot2-y05/execution/te37.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te38.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 294409,
+            "sha256": "f744fc7306ac518f37b184ffa52fc63fc91e085e724f95069d35eb97fdd81d59"
+          }
+        },
+        "mtime_ns": 1793146148208267464,
+        "runtime": "caldot2-y05/execution/te38.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te39.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 338274,
+            "sha256": "f08e91357d4fab495ea4432021cd7b0a0262e025d829864282d5c7b10c8791dc"
+          }
+        },
+        "mtime_ns": 1793145604526113272,
+        "runtime": "caldot2-y05/execution/te39.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te40.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 148957,
+            "sha256": "3a5c8010cefc8aa72bd2cff30cabc4a5d34532e5349f5d3f96aca1952cbe0781"
+          }
+        },
+        "mtime_ns": 1793144261068230230,
+        "runtime": "caldot2-y05/execution/te40.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te41.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 269568,
+            "sha256": "d597cc880ffce071dbb9aab0e5519a7b39b83f70f3a665a69109b179d0678b9e"
+          }
+        },
+        "mtime_ns": 1793144807960555286,
+        "runtime": "caldot2-y05/execution/te41.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te42.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 187654,
+            "sha256": "11b93e197b225b50bb88ddcc97930cce2d0d31884471934e3c680e3ab82681fa"
+          }
+        },
+        "mtime_ns": 1793145677985853639,
+        "runtime": "caldot2-y05/execution/te42.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te43.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 300328,
+            "sha256": "88ded520c80cca16bfee8d3978cf9c97ef2f1ea1833d2cba6e5d78705d9f17eb"
+          }
+        },
+        "mtime_ns": 1793146112659384101,
+        "runtime": "caldot2-y05/execution/te43.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te44.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 189050,
+            "sha256": "346fbe1a709cf6fefe334b2e48d836dc80a7192f8cd01299782689662ebc43f9"
+          }
+        },
+        "mtime_ns": 1793146184790147828,
+        "runtime": "caldot2-y05/execution/te44.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te45.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 289239,
+            "sha256": "a17edd74a94e66739862832c02c76951cc4451ed9a9f813cd00f99444aa7ff68"
+          }
+        },
+        "mtime_ns": 1793145641716981284,
+        "runtime": "caldot2-y05/execution/te45.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te46.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 231279,
+            "sha256": "6b13d2d16ccda4126ed82fe1732b75220cce679b46607522036582f4ad640454"
+          }
+        },
+        "mtime_ns": 1793144843651446432,
+        "runtime": "caldot2-y05/execution/te46.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 243608,
+            "sha256": "90f675420ec2160a4477e90ef327df52ea8232da5574997b7b733eb6835c95cf"
+          }
+        },
+        "mtime_ns": 1793144225636339420,
+        "runtime": "caldot2-y05/execution/te47.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te48.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 369298,
+            "sha256": "5060e55344753d62d3356eeb8dda8bfcfc0414752d4a8dff88c4539323614249"
+          }
+        },
+        "mtime_ns": 1793144916959222957,
+        "runtime": "caldot2-y05/execution/te48.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te49.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 267509,
+            "sha256": "f6d5c7e45218753013e52331a8bb4f226743002470a90b600db24e452dba0b75"
+          }
+        },
+        "mtime_ns": 1793144189312451480,
+        "runtime": "caldot2-y05/execution/te49.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te50.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 204306,
+            "sha256": "cce98481a9ef1e54c5e6a89ff26f75725b18813c9c9f4f47e959e5e5861014b6"
+          }
+        },
+        "mtime_ns": 1793145134617560153,
+        "runtime": "caldot2-y05/execution/te50.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te51.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 241599,
+            "sha256": "38a9026e13f44506ddc09ef187ecb44eb675b6f1c23ed0ad74d21558ec6720d7"
+          }
+        },
+        "mtime_ns": 1793144515805448067,
+        "runtime": "caldot2-y05/execution/te51.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te52.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 246879,
+            "sha256": "bf6e9ab8f482c224544d7d384932804328f437c58020e77018eb9bee2ce15b0e"
+          }
+        },
+        "mtime_ns": 1793145931546985277,
+        "runtime": "caldot2-y05/execution/te52.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te53.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 365809,
+            "sha256": "d01cfbb8910fc3925270df014744f3a83d46fe98d4d1454e00d8c98f174564c8"
+          }
+        },
+        "mtime_ns": 1793145351191901412,
+        "runtime": "caldot2-y05/execution/te53.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te54.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 321588,
+            "sha256": "62f5136e0eaae6c8733fcfb505c609c0dbbab3f2b8f69872ee15e524dd04e6a9"
+          }
+        },
+        "mtime_ns": 1793145422794683741,
+        "runtime": "caldot2-y05/execution/te54.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te55.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 211527,
+            "sha256": "b6a57c2396ca4fe8e1514944987ebf842cebe5fbb4cac0c678b0f2b05fd6ecdd"
+          }
+        },
+        "mtime_ns": 1793145895005108226,
+        "runtime": "caldot2-y05/execution/te55.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te56.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 318410,
+            "sha256": "aab938d1ddea32673d417c29c0c62ee4100ebda5fe554d629b522371368b9aeb"
+          }
+        },
+        "mtime_ns": 1793144552736335007,
+        "runtime": "caldot2-y05/execution/te56.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te57.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 260483,
+            "sha256": "581863c1597ab23071ace125ec386451d833b0491691c6bcd11600033348c1a0"
+          }
+        },
+        "mtime_ns": 1793145097719672450,
+        "runtime": "caldot2-y05/execution/te57.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te58.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 184973,
+            "sha256": "a65aa588324366d37acd18f040c05b03aafdd86680f5c8102558ff2dd89630b1"
+          }
+        },
+        "mtime_ns": 1793144626003110903,
+        "runtime": "caldot2-y05/execution/te58.mp4/002_naive/detection_runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "detection.jsonl": {
+            "bytes": 326465,
+            "sha256": "6f9667b950203f52df087f0efbb4c8a57f685d413eb79954f8cf5a7380458e05"
+          }
+        },
+        "mtime_ns": 1793145061748781948,
+        "runtime": "caldot2-y05/execution/te59.mp4/002_naive/detection_runtime.jsonl"
+      }
+    },
+    "002_preprocess_groundtruth_tracking": {
+      "te00.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 180124,
+            "sha256": "1f88b2b4c437b34d446e0b5fcbb16765270004cd2137a2fea1bc6c796561f7ab"
+          }
+        },
+        "mtime_ns": 1793146265139886322,
+        "runtime": "caldot2-y05/execution/te00.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te01.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 161124,
+            "sha256": "548547f4c897fdea8df6d4095ebf905abdcc77c2085be9f3a8b61909bdeb22dc"
+          }
+        },
+        "mtime_ns": 1793146268796874459,
+        "runtime": "caldot2-y05/execution/te01.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te02.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 105642,
+            "sha256": "388cac2a45ab043ca0a8dd6d402156b68e56988943cd5ff4387324d9ba199d56"
+          }
+        },
+        "mtime_ns": 1793146276795848520,
+        "runtime": "caldot2-y05/execution/te02.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te03.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 152761,
+            "sha256": "dca190b32847dcd6f877a33bc18422a3c39a09f6a8e4b90002c0f7e876afbea5"
+          }
+        },
+        "mtime_ns": 1793146283488826828,
+        "runtime": "caldot2-y05/execution/te03.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te04.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 252685,
+            "sha256": "e2f5447f2f229c06f4ea63b813e82263ce517132d174a9b8047ef4acb1da6dec"
+          }
+        },
+        "mtime_ns": 1793146283149827926,
+        "runtime": "caldot2-y05/execution/te04.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te05.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 395795,
+            "sha256": "26c4ce7c33a006466af1953adc31e7bf8688257cd56d884c441a16c2cec39f04"
+          }
+        },
+        "mtime_ns": 1793146277161847334,
+        "runtime": "caldot2-y05/execution/te05.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te06.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 271729,
+            "sha256": "f27b3a014028627a00cf879cc16085439806f942a251eb88c1de615e896534bb"
+          }
+        },
+        "mtime_ns": 1793146268455875565,
+        "runtime": "caldot2-y05/execution/te06.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te07.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 141940,
+            "sha256": "25b60e2a6de16a99bbd7be67d9b09c7b4a835c18b537053a210dfcc7b9a3a8f3"
+          }
+        },
+        "mtime_ns": 1793146265453885303,
+        "runtime": "caldot2-y05/execution/te07.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te08.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 295741,
+            "sha256": "f19c81d318a5b0d65c1572be9af9c36ba56af0a743afa303244f3c79967a38c7"
+          }
+        },
+        "mtime_ns": 1793146269144873330,
+        "runtime": "caldot2-y05/execution/te08.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te09.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 317980,
+            "sha256": "12b0ac4acc7a789dbf4fe6b11ff2e8151771ede9cc4e6f1d935da575eb83c491"
+          }
+        },
+        "mtime_ns": 1793146264806887403,
+        "runtime": "caldot2-y05/execution/te09.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te10.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 196974,
+            "sha256": "d44395f5bf20c8a33bafe471e255037ea47580b4ed9c90f2a5a0c1c38db111e5"
+          }
+        },
+        "mtime_ns": 1793146273564858995,
+        "runtime": "caldot2-y05/execution/te10.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te11.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 212595,
+            "sha256": "840c5f467891e02a7167f74923ac7cab6d5a03391709cc3345b39585c7fcfc90"
+          }
+        },
+        "mtime_ns": 1793146266138883081,
+        "runtime": "caldot2-y05/execution/te11.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te12.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 100695,
+            "sha256": "20ee7963240dfce7513fdfefe8258a50015e0ea919315fa0295e57c86a7e69ba"
+          }
+        },
+        "mtime_ns": 1793146279155840870,
+        "runtime": "caldot2-y05/execution/te12.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te13.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 268080,
+            "sha256": "b4cdb7493570e465c8a518631f68eabc01d49b583b0604c21bca0688005f737d"
+          }
+        },
+        "mtime_ns": 1793146276488849515,
+        "runtime": "caldot2-y05/execution/te13.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te14.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 302254,
+            "sha256": "8285c9def096b32e24760dc9da67e5d76813c825006ef658f58ba986d050559c"
+          }
+        },
+        "mtime_ns": 1793146276134850663,
+        "runtime": "caldot2-y05/execution/te14.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te15.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 81007,
+            "sha256": "4a27119dc2f37dbbbc3bfb16fd4697fc68df7ef57ae018162c8ed3ba1123739c"
+          }
+        },
+        "mtime_ns": 1793146279455839898,
+        "runtime": "caldot2-y05/execution/te15.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te16.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 304069,
+            "sha256": "d6a5c64f8c8fdfc3de394a4ebe5cc1f94941233b8db4ac944f6cdba24de7be46"
+          }
+        },
+        "mtime_ns": 1793146265799884181,
+        "runtime": "caldot2-y05/execution/te16.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te17.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 237419,
+            "sha256": "be9c66632162e4d0dc51d20a419023217d4f2601836e94227db1c766d4b7438c"
+          }
+        },
+        "mtime_ns": 1793146273948857750,
+        "runtime": "caldot2-y05/execution/te17.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te18.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 136433,
+            "sha256": "b13735572eb9976e4d9f657c97d85d7de544d5f69db96ecf9d724e4030df49eb"
+          }
+        },
+        "mtime_ns": 1793146266462882030,
+        "runtime": "caldot2-y05/execution/te18.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te19.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 367214,
+            "sha256": "646b5c3a04ad46da315d0201952050530e818e52878a5c3e52239e66dfcc9b44"
+          }
+        },
+        "mtime_ns": 1793146273199860179,
+        "runtime": "caldot2-y05/execution/te19.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te20.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 211246,
+            "sha256": "085d6491b7373546ee2d645a83e7e1b37415f9b305680491fc503923befc8faa"
+          }
+        },
+        "mtime_ns": 1793146280794835558,
+        "runtime": "caldot2-y05/execution/te20.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te21.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 446068,
+            "sha256": "ffabe8ab84d1d5ad1257d1cd2d599371a9e56bcdd55bf45a85ec62931f0fb29d"
+          }
+        },
+        "mtime_ns": 1793146274715855264,
+        "runtime": "caldot2-y05/execution/te21.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te22.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 329041,
+            "sha256": "5e2cc4e125e5e5f72088df5a18ba66d5fb2e031e0464211a7f66b560064efa04"
+          }
+        },
+        "mtime_ns": 1793146271325866256,
+        "runtime": "caldot2-y05/execution/te22.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te23.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 79477,
+            "sha256": "3fef41de2686488eeaf9f76380f2719a8a4084f6b25daf775c1dfc67474de223"
+          }
+        },
+        "mtime_ns": 1793146268112876677,
+        "runtime": "caldot2-y05/execution/te23.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te24.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 228722,
+            "sha256": "9d53bfe4621f3c50f3adf69ef034e907679d5977ece7ddd26359e6332fec0b6a"
+          }
+        },
+        "mtime_ns": 1793146267493878685,
+        "runtime": "caldot2-y05/execution/te24.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te25.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 314292,
+            "sha256": "6f6d116e7352c4ee0a9a35e402802325cd3d82c9845769222ea463f6724d1560"
+          }
+        },
+        "mtime_ns": 1793146271691865069,
+        "runtime": "caldot2-y05/execution/te25.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te26.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 352373,
+            "sha256": "1ee70cb7ed124fa4ebabba5c30c428d500635b9d27b7519abd50abcdc3eccb0a"
+          }
+        },
+        "mtime_ns": 1793146274333856502,
+        "runtime": "caldot2-y05/execution/te26.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te27.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 248485,
+            "sha256": "4093705b56ac7d89208df63a82a7fa8b3659ad3cfa811018dd646b3216f816c8"
+          }
+        },
+        "mtime_ns": 1793146281132834462,
+        "runtime": "caldot2-y05/execution/te27.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te28.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 194359,
+            "sha256": "2b7531923c709943059f14b859820651724ce14703dfd014fbe1e2f1ccda599c"
+          }
+        },
+        "mtime_ns": 1793146275445852897,
+        "runtime": "caldot2-y05/execution/te28.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te29.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 221903,
+            "sha256": "bcc65566c024499f562a5c5587ac80336b9e2d542004a31a1f203742020d3b0a"
+          }
+        },
+        "mtime_ns": 1793146279791838809,
+        "runtime": "caldot2-y05/execution/te29.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te30.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 141925,
+            "sha256": "a7840ff07633ac1960952e42e63417722d1b361f3ed2d940693c748a03263bea"
+          }
+        },
+        "mtime_ns": 1793146278495843009,
+        "runtime": "caldot2-y05/execution/te30.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te31.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 75419,
+            "sha256": "ab81ae2eb9e9e8d65d75c0a980a429e21edd33a3723117a43f8fe41fdc501dd3"
+          }
+        },
+        "mtime_ns": 1793146281778832369,
+        "runtime": "caldot2-y05/execution/te31.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te32.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 268190,
+            "sha256": "ca66ebb04310c2604f5d976d8d403e4ecee79343456434b818cd2df2acb60e95"
+          }
+        },
+        "mtime_ns": 1793146263105892922,
+        "runtime": "caldot2-y05/execution/te32.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te33.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 293708,
+            "sha256": "693c7defd2f9a0faeef6b6c928c8a63f25341503cfb171919d272d693bef1cd2"
+          }
+        },
+        "mtime_ns": 1793146270943867495,
+        "runtime": "caldot2-y05/execution/te33.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te34.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 332437,
+            "sha256": "e22575c03f8706f7ed8a5e0b01775866677c8fa25d079b528a6f1b73812313df"
+          }
+        },
+        "mtime_ns": 1793146270203869895,
+        "runtime": "caldot2-y05/execution/te34.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te35.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 142625,
+            "sha256": "6387c43bdcd532601b0003294ce4c9692cf593c8e70fb692201b6bef16f0cdc0"
+          }
+        },
+        "mtime_ns": 1793146263458891777,
+        "runtime": "caldot2-y05/execution/te35.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te36.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 131481,
+            "sha256": "b6e9b444897ebe607d63e7a96dfb22c670d638db6c912101dbc1aa11931a87e7"
+          }
+        },
+        "mtime_ns": 1793146281479833338,
+        "runtime": "caldot2-y05/execution/te36.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te37.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 225814,
+            "sha256": "e8030a4b94ab2422aebf6be7d7a568139f285bd86d815b423147a5bb7d91ceec"
+          }
+        },
+        "mtime_ns": 1793146278844841878,
+        "runtime": "caldot2-y05/execution/te37.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te38.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 238931,
+            "sha256": "7a33d26e04cd8b570c01b01d3974b6011736ec58908dd1a90d3ff8f80b741325"
+          }
+        },
+        "mtime_ns": 1793146282462830153,
+        "runtime": "caldot2-y05/execution/te38.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te39.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 257959,
+            "sha256": "4bd8783294af45d21c68ad858a8c6f52bdde664bbfa6edb4f9d67fe8c1606025"
+          }
+        },
+        "mtime_ns": 1793146277511846199,
+        "runtime": "caldot2-y05/execution/te39.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te40.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 121706,
+            "sha256": "a3208cfc5dffb209486d9711a088e9defae21c941695f0626213a5c89091be43"
+          }
+        },
+        "mtime_ns": 1793146264447888567,
+        "runtime": "caldot2-y05/execution/te40.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te41.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 221679,
+            "sha256": "af720b5e7e01475e1d6c4cba4c5c45f035d910e287547df0a5c07abe95a5272c"
+          }
+        },
+        "mtime_ns": 1793146269497872185,
+        "runtime": "caldot2-y05/execution/te41.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te42.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 143831,
+            "sha256": "47a9f608d26c599c8ce2f702f90bfa40cc0dddd08c3504940d0c3aa30174c5d0"
+          }
+        },
+        "mtime_ns": 1793146278179844033,
+        "runtime": "caldot2-y05/execution/te42.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te43.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 240241,
+            "sha256": "1596a6640c5d7e2edd5802479cc295aec701122693d8ade98aed77f508afebd4"
+          }
+        },
+        "mtime_ns": 1793146282119831264,
+        "runtime": "caldot2-y05/execution/te43.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te44.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 153530,
+            "sha256": "1147a9f8b86a7aa9d9e3229954634ce53c1d5826df559dbf428bd72ab4605dd7"
+          }
+        },
+        "mtime_ns": 1793146282799829060,
+        "runtime": "caldot2-y05/execution/te44.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te45.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 233553,
+            "sha256": "615827e9f873376b3c8bc6a1b90e9093866401d4dd98fca3c9c880573a04d912"
+          }
+        },
+        "mtime_ns": 1793146277852845094,
+        "runtime": "caldot2-y05/execution/te45.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te46.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 190149,
+            "sha256": "429ffe3ff015352b1a124ad2389507482a6f25227b224ed33e0fdaaa42db5c34"
+          }
+        },
+        "mtime_ns": 1793146269834871092,
+        "runtime": "caldot2-y05/execution/te46.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te47.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 197074,
+            "sha256": "c2208aa98fe3e5f6154127e3016e3e66d8e803779eafc97098cca2bcb83dfdbd"
+          }
+        },
+        "mtime_ns": 1793146264127889606,
+        "runtime": "caldot2-y05/execution/te47.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te48.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 283075,
+            "sha256": "643e73ba5347342aef8361af75c12b47bfba4198526112e40e1aac557253f547"
+          }
+        },
+        "mtime_ns": 1793146270589868643,
+        "runtime": "caldot2-y05/execution/te48.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te49.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 196414,
+            "sha256": "d6abcf93f2292d8563162a377a672401633d946deebcc6bbeeb4b52750036ffc"
+          }
+        },
+        "mtime_ns": 1793146263795890683,
+        "runtime": "caldot2-y05/execution/te49.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te50.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 167443,
+            "sha256": "c4ec795f1e842168f7d5994a318594e08141a7f29e2f364b68b651365ae914c0"
+          }
+        },
+        "mtime_ns": 1793146272819861411,
+        "runtime": "caldot2-y05/execution/te50.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te51.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 198826,
+            "sha256": "3ab9ab7f295d1545d380c149a2cd78ffe1ee9f74a0e958fefe4108c3bb884785"
+          }
+        },
+        "mtime_ns": 1793146266790880966,
+        "runtime": "caldot2-y05/execution/te51.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te52.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 196996,
+            "sha256": "0a7c62ac9a408a76ac3a115370cd7417035fabe4833ed6a2f957ce55ef995be4"
+          }
+        },
+        "mtime_ns": 1793146280456836653,
+        "runtime": "caldot2-y05/execution/te52.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te53.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 290273,
+            "sha256": "5ea3f32f444ebe442782d33e1aa3a2ef17db33c92600d1028eaf891165d677ed"
+          }
+        },
+        "mtime_ns": 1793146275083854070,
+        "runtime": "caldot2-y05/execution/te53.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te54.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 249231,
+            "sha256": "8164c99ff396b9ad6afb4c161e4dd8d7be5d5661e57a20dec719fe33f4d0244b"
+          }
+        },
+        "mtime_ns": 1793146275783851801,
+        "runtime": "caldot2-y05/execution/te54.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te55.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 167029,
+            "sha256": "46b4f37c447ff8cf8bbf2d78800ce22349e3a16cc3f07e23b6af4a153b6b6eee"
+          }
+        },
+        "mtime_ns": 1793146280130837710,
+        "runtime": "caldot2-y05/execution/te55.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te56.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 250069,
+            "sha256": "872f0b29aee5d12de165c3f95f31f123c0c92b2570d2df1a6f515b14a69afdf4"
+          }
+        },
+        "mtime_ns": 1793146267153879788,
+        "runtime": "caldot2-y05/execution/te56.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te57.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 194084,
+            "sha256": "8a8dcaf7c9ae3c7e493cdc9900c4dc6ea2ecf14842527faeaf73d4c609b5038e"
+          }
+        },
+        "mtime_ns": 1793146272447862618,
+        "runtime": "caldot2-y05/execution/te57.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te58.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 143911,
+            "sha256": "9717da88d1ad71580a23e2eae695476db2dd6169e2f2f7d7cf1ba70f57c5f7cb"
+          }
+        },
+        "mtime_ns": 1793146267810877657,
+        "runtime": "caldot2-y05/execution/te58.mp4/002_naive/tracking_runtime.jsonl"
+      },
+      "te59.mp4": {
+        "files": {
+          "tracking.jsonl": {
+            "bytes": 254326,
+            "sha256": "f612f618411b5de554253aea980946db47ef0fef10fbce088a84f0423cb1cfa5"
+          }
+        },
+        "mtime_ns": 1793146272060863873,
+        "runtime": "caldot2-y05/execution/te59.mp4/002_naive/tracking_runtime.jsonl"
+      }
+    }
+  },
+  "p022_source": null,
+  "preread": [
+    {
+      "bytes": 1721421,
+      "seconds": 0.002685286,
+      "video": "te00.mp4"
+    },
+    {
+      "bytes": 1834372,
+      "seconds": 0.002474189,
+      "video": "te01.mp4"
+    },
+    {
+      "bytes": 1658488,
+      "seconds": 0.002035774,
+      "video": "te02.mp4"
+    },
+    {
+      "bytes": 1699783,
+      "seconds": 0.002225849,
+      "video": "te03.mp4"
+    },
+    {
+      "bytes": 1793072,
+      "seconds": 0.002314674,
+      "video": "te04.mp4"
+    },
+    {
+      "bytes": 1892786,
+      "seconds": 0.002470757,
+      "video": "te05.mp4"
+    },
+    {
+      "bytes": 1924171,
+      "seconds": 0.002302733,
+      "video": "te06.mp4"
+    },
+    {
+      "bytes": 1947062,
+      "seconds": 0.002499096,
+      "video": "te07.mp4"
+    },
+    {
+      "bytes": 2126987,
+      "seconds": 0.002503201,
+      "video": "te08.mp4"
+    },
+    {
+      "bytes": 1848834,
+      "seconds": 0.002152095,
+      "video": "te09.mp4"
+    },
+    {
+      "bytes": 1925542,
+      "seconds": 0.002232023,
+      "video": "te10.mp4"
+    },
+    {
+      "bytes": 1738384,
+      "seconds": 0.002060974,
+      "video": "te11.mp4"
+    },
+    {
+      "bytes": 1837378,
+      "seconds": 0.002547349,
+      "video": "te12.mp4"
+    },
+    {
+      "bytes": 1738968,
+      "seconds": 0.001830806,
+      "video": "te13.mp4"
+    },
+    {
+      "bytes": 1768581,
+      "seconds": 0.001854684,
+      "video": "te14.mp4"
+    },
+    {
+      "bytes": 1812464,
+      "seconds": 0.002056936,
+      "video": "te15.mp4"
+    },
+    {
+      "bytes": 2190362,
+      "seconds": 0.002459282,
+      "video": "te16.mp4"
+    },
+    {
+      "bytes": 1712131,
+      "seconds": 0.002044185,
+      "video": "te17.mp4"
+    },
+    {
+      "bytes": 1735347,
+      "seconds": 0.00205179,
+      "video": "te18.mp4"
+    },
+    {
+      "bytes": 2289704,
+      "seconds": 0.002619261,
+      "video": "te19.mp4"
+    },
+    {
+      "bytes": 1987361,
+      "seconds": 0.002275059,
+      "video": "te20.mp4"
+    },
+    {
+      "bytes": 1876922,
+      "seconds": 0.002203842,
+      "video": "te21.mp4"
+    },
+    {
+      "bytes": 1818093,
+      "seconds": 0.001337849,
+      "video": "te22.mp4"
+    },
+    {
+      "bytes": 1313151,
+      "seconds": 0.000975164,
+      "video": "te23.mp4"
+    },
+    {
+      "bytes": 1678695,
+      "seconds": 0.001212829,
+      "video": "te24.mp4"
+    },
+    {
+      "bytes": 2335520,
+      "seconds": 0.001646279,
+      "video": "te25.mp4"
+    },
+    {
+      "bytes": 1836906,
+      "seconds": 0.001282234,
+      "video": "te26.mp4"
+    },
+    {
+      "bytes": 1833923,
+      "seconds": 0.001243135,
+      "video": "te27.mp4"
+    },
+    {
+      "bytes": 2075883,
+      "seconds": 0.001471552,
+      "video": "te28.mp4"
+    },
+    {
+      "bytes": 2055613,
+      "seconds": 0.001389018,
+      "video": "te29.mp4"
+    },
+    {
+      "bytes": 1839287,
+      "seconds": 0.001327515,
+      "video": "te30.mp4"
+    },
+    {
+      "bytes": 1802799,
+      "seconds": 0.001334136,
+      "video": "te31.mp4"
+    },
+    {
+      "bytes": 1807867,
+      "seconds": 0.001268125,
+      "video": "te32.mp4"
+    },
+    {
+      "bytes": 1927642,
+      "seconds": 0.001349226,
+      "video": "te33.mp4"
+    },
+    {
+      "bytes": 1772756,
+      "seconds": 0.001292854,
+      "video": "te34.mp4"
+    },
+    {
+      "bytes": 1705371,
+      "seconds": 0.001240518,
+      "video": "te35.mp4"
+    },
+    {
+      "bytes": 1818980,
+      "seconds": 0.001332613,
+      "video": "te36.mp4"
+    },
+    {
+      "bytes": 1975351,
+      "seconds": 0.001445658,
+      "video": "te37.mp4"
+    },
+    {
+      "bytes": 1765014,
+      "seconds": 0.001304785,
+      "video": "te38.mp4"
+    },
+    {
+      "bytes": 1749285,
+      "seconds": 0.001333258,
+      "video": "te39.mp4"
+    },
+    {
+      "bytes": 1910191,
+      "seconds": 0.001350525,
+      "video": "te40.mp4"
+    },
+    {
+      "bytes": 1833092,
+      "seconds": 0.001239674,
+      "video": "te41.mp4"
+    },
+    {
+      "bytes": 1899917,
+      "seconds": 0.001957996,
+      "video": "te42.mp4"
+    },
+    {
+      "bytes": 1890101,
+      "seconds": 0.001360391,
+      "video": "te43.mp4"
+    },
+    {
+      "bytes": 1758099,
+      "seconds": 0.001247715,
+      "video": "te44.mp4"
+    },
+    {
+      "bytes": 1882684,
+      "seconds": 0.001350375,
+      "video": "te45.mp4"
+    },
+    {
+      "bytes": 1943546,
+      "seconds": 0.001418717,
+      "video": "te46.mp4"
+    },
+    {
+      "bytes": 1721401,
+      "seconds": 0.001267173,
+      "video": "te47.mp4"
+    },
+    {
+      "bytes": 1813881,
+      "seconds": 0.001173745,
+      "video": "te48.mp4"
+    },
+    {
+      "bytes": 1753073,
+      "seconds": 0.001158576,
+      "video": "te49.mp4"
+    },
+    {
+      "bytes": 1869880,
+      "seconds": 0.00122757,
+      "video": "te50.mp4"
+    },
+    {
+      "bytes": 1758558,
+      "seconds": 0.001194306,
+      "video": "te51.mp4"
+    },
+    {
+      "bytes": 2018675,
+      "seconds": 0.001401955,
+      "video": "te52.mp4"
+    },
+    {
+      "bytes": 2145926,
+      "seconds": 0.001620646,
+      "video": "te53.mp4"
+    },
+    {
+      "bytes": 1499495,
+      "seconds": 0.002563059,
+      "video": "te54.mp4"
+    },
+    {
+      "bytes": 1865011,
+      "seconds": 0.00195083,
+      "video": "te55.mp4"
+    },
+    {
+      "bytes": 2005192,
+      "seconds": 0.002038321,
+      "video": "te56.mp4"
+    },
+    {
+      "bytes": 1729147,
+      "seconds": 0.001916573,
+      "video": "te57.mp4"
+    },
+    {
+      "bytes": 1687529,
+      "seconds": 0.00187217,
+      "video": "te58.mp4"
+    },
+    {
+      "bytes": 2020209,
+      "seconds": 0.002204031,
+      "video": "te59.mp4"
+    }
+  ],
+  "stages": [
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793146260990238099,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_detection.py",
+      "stage": "001_preprocess_groundtruth_detection",
+      "start_ns": 1793144076182087337,
+      "wall_s": 2184.808145289
+    },
+    {
+      "args": [
+        "--test"
+      ],
+      "end_ns": 1793146283893484649,
+      "exit": 0,
+      "ran": true,
+      "script": "preprocess/p002_preprocess_naive_tracking.py",
+      "stage": "002_preprocess_groundtruth_tracking",
+      "start_ns": 1793146261004052134,
+      "wall_s": 22.889426315
+    }
+  ],
+  "started": "2026-10-27T23:32:53.458+00:00",
+  "started_ns": 1793143973458553107,
+  "status": "ok",
+  "unit": {
+    "attempt": 1,
+    "dataset": "caldot2-y05",
+    "gate": {
+      "checked": "2026-10-27T23:32:44.704+00:00",
+      "node_busy": 0.01794138311753488,
+      "node_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59
+      ],
+      "retries": 0
+    },
+    "gpu": 1,
+    "phase": "serial",
+    "raw": "units/serial-caldot2-y05-reference/attempt-1",
+    "system": "reference",
+    "unit": "serial-caldot2-y05-reference",
+    "variant_id": null,
+    "videos": [
+      "te00.mp4",
+      "te01.mp4",
+      "te02.mp4",
+      "te03.mp4",
+      "te04.mp4",
+      "te05.mp4",
+      "te06.mp4",
+      "te07.mp4",
+      "te08.mp4",
+      "te09.mp4",
+      "te10.mp4",
+      "te11.mp4",
+      "te12.mp4",
+      "te13.mp4",
+      "te14.mp4",
+      "te15.mp4",
+      "te16.mp4",
+      "te17.mp4",
+      "te18.mp4",
+      "te19.mp4",
+      "te20.mp4",
+      "te21.mp4",
+      "te22.mp4",
+      "te23.mp4",
+      "te24.mp4",
+      "te25.mp4",
+      "te26.mp4",
+      "te27.mp4",
+      "te28.mp4",
+      "te29.mp4",
+      "te30.mp4",
+      "te31.mp4",
+      "te32.mp4",
+      "te33.mp4",
+      "te34.mp4",
+      "te35.mp4",
+      "te36.mp4",
+      "te37.mp4",
+      "te38.mp4",
+      "te39.mp4",
+      "te40.mp4",
+      "te41.mp4",
+      "te42.mp4",
+      "te43.mp4",
+      "te44.mp4",
+      "te45.mp4",
+      "te46.mp4",
+      "te47.mp4",
+      "te48.mp4",
+      "te49.mp4",
+      "te50.mp4",
+      "te51.mp4",
+      "te52.mp4",
+      "te53.mp4",
+      "te54.mp4",
+      "te55.mp4",
+      "te56.mp4",
+      "te57.mp4",
+      "te58.mp4",
+      "te59.mp4"
+    ]
+  }
+}
