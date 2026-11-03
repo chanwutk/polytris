@@ -16,7 +16,7 @@
           "accuracy": 0.8667,
           "config": "param 0",
           "fps": 28.9,
-          "hota": 0.6593776172831385,
+          "hota": 0.6586591182664102,
           "meets_bound": true,
           "speedup_vs_reference": 1.9
         },
@@ -24,7 +24,7 @@
           "accuracy": 0.8569,
           "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
           "fps": 335.5,
-          "hota": 0.7169121078712191,
+          "hota": 0.7167904160279337,
           "meets_bound": true,
           "speedup_vs_reference": 22.0
         }
@@ -47,7 +47,7 @@
           "accuracy": 0.9358,
           "config": "param 6",
           "fps": 600.8,
-          "hota": 0.7251885008476432,
+          "hota": 0.7226683859723121,
           "meets_bound": true,
           "speedup_vs_reference": 19.4
         },
@@ -55,7 +55,7 @@
           "accuracy": 0.9171,
           "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
           "fps": 405.5,
-          "hota": 0.7664021054547243,
+          "hota": 0.765921951149973,
           "meets_bound": true,
           "speedup_vs_reference": 13.1
         }
@@ -78,7 +78,7 @@
           "accuracy": 0.8883,
           "config": "param 9",
           "fps": 1449.3,
-          "hota": 0.3254203315404112,
+          "hota": 0.3216657596786511,
           "meets_bound": true,
           "speedup_vs_reference": 47.0
         },
@@ -86,7 +86,7 @@
           "accuracy": 0.8953,
           "config": "ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
           "fps": 475.3,
-          "hota": 0.6034439438618533,
+          "hota": 0.6025663189284274,
           "meets_bound": true,
           "speedup_vs_reference": 15.4
         }
@@ -111,7 +111,7 @@
           "accuracy": 0.8167,
           "config": "param 4",
           "fps": 241.1,
-          "hota": 0.6670862689327743,
+          "hota": 0.6648268611230516,
           "meets_bound": true,
           "speedup_vs_reference": 15.8
         },
@@ -119,7 +119,7 @@
           "accuracy": 0.8189,
           "config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
           "fps": 1055.5,
-          "hota": 0.6886726298481158,
+          "hota": 0.6884374728757371,
           "meets_bound": true,
           "speedup_vs_reference": 69.2
         }
@@ -142,7 +142,7 @@
           "accuracy": 0.9358,
           "config": "param 6",
           "fps": 600.8,
-          "hota": 0.7251885008476432,
+          "hota": 0.7226683859723121,
           "meets_bound": true,
           "speedup_vs_reference": 19.4
         },
@@ -150,7 +150,7 @@
           "accuracy": 0.8661,
           "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
           "fps": 729.3,
-          "hota": 0.778685892269133,
+          "hota": 0.7784689891145117,
           "meets_bound": true,
           "speedup_vs_reference": 23.6
         }
@@ -173,7 +173,7 @@
           "accuracy": 0.8883,
           "config": "param 9",
           "fps": 1449.3,
-          "hota": 0.3254203315404112,
+          "hota": 0.3216657596786511,
           "meets_bound": true,
           "speedup_vs_reference": 47.0
         },
@@ -181,7 +181,7 @@
           "accuracy": 0.8564,
           "config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
           "fps": 799.5,
-          "hota": 0.5740824332481858,
+          "hota": 0.5732424865270404,
           "meets_bound": true,
           "speedup_vs_reference": 25.9
         }
@@ -202,7 +202,7 @@
           "accuracy": 0.3678,
           "config": "param 0",
           "fps": 389.2,
-          "hota": 0.5433764552721264,
+          "hota": 0.52584602676162,
           "meets_bound": true,
           "speedup_vs_reference": 25.5
         },
@@ -210,7 +210,7 @@
           "accuracy": 0.4524,
           "config": "param 7",
           "fps": 1034.7,
-          "hota": 0.4327577762299421,
+          "hota": 0.4310088810497396,
           "meets_bound": true,
           "speedup_vs_reference": 67.8
         },
@@ -218,7 +218,7 @@
           "accuracy": 0.3936,
           "config": "ShuffleNet05_60_16_r075_tr_s100_sortcython",
           "fps": 1861.3,
-          "hota": 0.6362317383348752,
+          "hota": 0.6342121679607424,
           "meets_bound": true,
           "speedup_vs_reference": 122.0
         }
@@ -238,7 +238,7 @@
           "accuracy": 0.4806,
           "config": "param 0",
           "fps": 353.5,
-          "hota": 0.5266317214933866,
+          "hota": 0.5095169726663112,
           "meets_bound": true,
           "speedup_vs_reference": 11.4
         },
@@ -246,7 +246,7 @@
           "accuracy": 0.8106,
           "config": "param 9",
           "fps": 2017.9,
-          "hota": 0.4653857565862139,
+          "hota": 0.4634555582970289,
           "meets_bound": true,
           "speedup_vs_reference": 65.2
         },
@@ -254,7 +254,7 @@
           "accuracy": 0.4931,
           "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
           "fps": 2761.3,
-          "hota": 0.6954998242869187,
+          "hota": 0.6924113548772253,
           "meets_bound": true,
           "speedup_vs_reference": 89.3
         }
@@ -274,7 +274,7 @@
           "accuracy": 0.2392,
           "config": "param 0",
           "fps": 487.3,
-          "hota": 0.13909939038238148,
+          "hota": 0.13376839573539373,
           "meets_bound": true,
           "speedup_vs_reference": 15.8
         },
@@ -282,7 +282,7 @@
           "accuracy": 0.8883,
           "config": "param 9",
           "fps": 1449.3,
-          "hota": 0.3254203315404112,
+          "hota": 0.3216657596786511,
           "meets_bound": true,
           "speedup_vs_reference": 47.0
         },
@@ -290,7 +290,7 @@
           "accuracy": 0.4841,
           "config": "ShuffleNet05_60_4_r075_none_s100_sortcython",
           "fps": 2009.3,
-          "hota": 0.50099236464983,
+          "hota": 0.5002081074175062,
           "meets_bound": true,
           "speedup_vs_reference": 65.1
         }

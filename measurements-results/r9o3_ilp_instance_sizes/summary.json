@@ -1575,7 +1575,7 @@
         "frames_max": 114,
         "frames_median": 114.0,
         "frames_min": 114,
-        "hota": 0.6966,
+        "hota": 0.6962,
         "ilp_config": "ShuffleNet05_60_8_080_r050_sortcython",
         "ilp_ms_max": 48.9299,
         "ilp_ms_median": 14.911,
@@ -1601,7 +1601,7 @@
         "videos": 60,
         "window_constraints_median": 567.0
       },
-      "hota_bound": 0.6949487970269445,
+      "hota_bound": 0.6948311197001773,
       "operating_point": {
         "build_ms_max": 29.4391,
         "build_ms_median": 5.1515,
@@ -1623,7 +1623,7 @@
         "frames_max": 114,
         "frames_median": 114.0,
         "frames_min": 114,
-        "hota": 0.6966,
+        "hota": 0.6962,
         "ilp_config": "ShuffleNet05_60_8_080_r050_sortcython",
         "ilp_ms_max": 48.9299,
         "ilp_ms_median": 14.911,
@@ -2065,7 +2065,7 @@
         "frames_max": 900,
         "frames_median": 900.0,
         "frames_min": 900,
-        "hota": 0.7789,
+        "hota": 0.7785,
         "ilp_config": "ShuffleNet05_60_1_080_r025_sortcython",
         "ilp_ms_max": 842.5512,
         "ilp_ms_median": 45.1204,
@@ -2091,7 +2091,7 @@
         "videos": 60,
         "window_constraints_median": 2431.0
       },
-      "hota_bound": 0.7771866838353843,
+      "hota_bound": 0.7770713787292722,
       "operating_point": {
         "build_ms_max": null,
         "build_ms_median": null,
@@ -2113,7 +2113,7 @@
         "frames_max": null,
         "frames_median": null,
         "frames_min": null,
-        "hota": 0.7787,
+        "hota": 0.7785,
         "ilp_config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
         "ilp_ms_max": null,
         "ilp_ms_median": null,
@@ -2143,10 +2143,10 @@
     "CalDoT2": {
       "dataset": "caldot2-y05",
       "fastest_pruning_point": {
-        "best_hota": 0.6664529720656004,
+        "best_hota": 0.6659192014629916,
         "meets_bound": false
       },
-      "hota_bound": 0.6797744667152184,
+      "hota_bound": 0.6791990041821956,
       "operating_point": {
         "build_ms_max": null,
         "build_ms_median": null,
@@ -2164,12 +2164,12 @@
         "empty_instances": null,
         "equality_constraints_median": null,
         "forced_share_median": null,
-        "fps": 144.7105,
+        "fps": 203.9892,
         "frames_max": null,
         "frames_median": null,
         "frames_min": null,
-        "hota": 0.6921,
-        "ilp_config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "hota": 0.6792,
+        "ilp_config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
         "ilp_ms_max": null,
         "ilp_ms_median": null,
         "ilp_share_of_stage_median": null,
@@ -2190,7 +2190,7 @@
         "variables_median": null,
         "variables_min": null,
         "variables_p95": null,
-        "variant": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+        "variant": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
         "videos": null,
         "window_constraints_median": null
       }

@@ -16,7 +16,7 @@
         "accuracy": 0.3678,
         "config": "param 0",
         "fps": 389.21965821943775,
-        "hota": 0.5433764552721264,
+        "hota": 0.52584602676162,
         "predicted_per_segment": [
           118
         ],
@@ -27,7 +27,7 @@
         "accuracy": 0.8667,
         "config": "param 0",
         "fps": 28.894630973015772,
-        "hota": 0.6593776172831385,
+        "hota": 0.6586591182664102,
         "predicted_per_segment": [
           308
         ],
@@ -38,7 +38,7 @@
         "accuracy": 0.8492,
         "config": "param 1",
         "fps": 57.781843079358964,
-        "hota": 0.6556258364755521,
+        "hota": 0.6537229279201229,
         "predicted_per_segment": [
           290
         ],
@@ -49,7 +49,7 @@
         "accuracy": 0.8291,
         "config": "param 2",
         "fps": 60.277442971295926,
-        "hota": 0.6805375028285238,
+        "hota": 0.6786244241279945,
         "predicted_per_segment": [
           293
         ],
@@ -60,7 +60,7 @@
         "accuracy": 0.8349,
         "config": "param 3",
         "fps": 121.95953574493068,
-        "hota": 0.6736858684729414,
+        "hota": 0.6714704677063172,
         "predicted_per_segment": [
           272
         ],
@@ -71,7 +71,7 @@
         "accuracy": 0.8167,
         "config": "param 4",
         "fps": 241.14206625591572,
-        "hota": 0.6670862689327743,
+        "hota": 0.6648268611230516,
         "predicted_per_segment": [
           254
         ],
@@ -82,7 +82,7 @@
         "accuracy": 0.7331,
         "config": "param 5",
         "fps": 491.63480793737483,
-        "hota": 0.6300412453871768,
+        "hota": 0.6277289966994517,
         "predicted_per_segment": [
           240
         ],
@@ -93,7 +93,7 @@
         "accuracy": 0.4692,
         "config": "param 6",
         "fps": 963.7937187723054,
-        "hota": 0.4355833845299078,
+        "hota": 0.4338220354674035,
         "predicted_per_segment": [
           154
         ],
@@ -104,7 +104,7 @@
         "accuracy": 0.4524,
         "config": "param 7",
         "fps": 1034.6934865900382,
-        "hota": 0.4327577762299421,
+        "hota": 0.4310088810497396,
         "predicted_per_segment": [
           147
         ],
@@ -115,7 +115,7 @@
         "accuracy": 0.4182,
         "config": "param 8",
         "fps": 846.0369674185463,
-        "hota": 0.4300102445081419,
+        "hota": 0.4280715797793941,
         "predicted_per_segment": [
           144
         ],
@@ -126,7 +126,7 @@
         "accuracy": 0.41,
         "config": "param 9",
         "fps": 908.3585603767239,
-        "hota": 0.4173506611572972,
+        "hota": 0.4153588444343174,
         "predicted_per_segment": [
           144
         ],
@@ -137,7 +137,7 @@
         "accuracy": 0.8997,
         "config": "naive",
         "fps": 15.261813771643736,
-        "hota": 0.7315250495020468,
+        "hota": 0.7314011786317656,
         "predicted_per_segment": [
           260
         ],
@@ -148,7 +148,7 @@
         "accuracy": 0.1266,
         "config": "ShuffleNet05_60_16_040_r025_none_s100_bytetrackcython",
         "fps": 2344.549510437016,
-        "hota": 0.5796369818932005,
+        "hota": 0.5741574980209148,
         "predicted_per_segment": [
           42
         ],
@@ -159,7 +159,7 @@
         "accuracy": 0.4179,
         "config": "ShuffleNet05_60_16_040_r025_square_s100_sortcython",
         "fps": 1091.420937063626,
-        "hota": 0.6665493127956251,
+        "hota": 0.6644847503111291,
         "predicted_per_segment": [
           123
         ],
@@ -170,7 +170,7 @@
         "accuracy": 0.4197,
         "config": "ShuffleNet05_60_16_040_r025_tr_s100_sortcython",
         "fps": 1543.9720205142764,
-        "hota": 0.6535864182213192,
+        "hota": 0.6513918145011875,
         "predicted_per_segment": [
           124
         ],
@@ -181,7 +181,7 @@
         "accuracy": 0.1054,
         "config": "ShuffleNet05_60_16_040_r075_none_s100_bytetrackcython",
         "fps": 2618.166298880072,
-        "hota": 0.5691951917775658,
+        "hota": 0.5628256218307651,
         "predicted_per_segment": [
           31
         ],
@@ -192,7 +192,7 @@
         "accuracy": 0.3896,
         "config": "ShuffleNet05_60_16_040_r075_tr_s100_sortcython",
         "fps": 1775.3411149991855,
-        "hota": 0.6351645264199345,
+        "hota": 0.6325361626116034,
         "predicted_per_segment": [
           116
         ],
@@ -203,7 +203,7 @@
         "accuracy": 0.1266,
         "config": "ShuffleNet05_60_16_060_r025_none_s100_bytetrackcython",
         "fps": 2384.762158661419,
-        "hota": 0.5796369818932005,
+        "hota": 0.5741574980209148,
         "predicted_per_segment": [
           42
         ],
@@ -214,7 +214,7 @@
         "accuracy": 0.4179,
         "config": "ShuffleNet05_60_16_060_r025_square_s100_sortcython",
         "fps": 1097.870394877445,
-        "hota": 0.6665493127956251,
+        "hota": 0.6644847503111291,
         "predicted_per_segment": [
           123
         ],
@@ -225,7 +225,7 @@
         "accuracy": 0.4197,
         "config": "ShuffleNet05_60_16_060_r025_tr_s100_sortcython",
         "fps": 1511.5979993335957,
-        "hota": 0.6535864182213192,
+        "hota": 0.6513918145011875,
         "predicted_per_segment": [
           124
         ],
@@ -236,7 +236,7 @@
         "accuracy": 0.4085,
         "config": "ShuffleNet05_60_16_060_r050_square_s100_sortcython",
         "fps": 1214.5731999501304,
-        "hota": 0.6594937773261815,
+        "hota": 0.6572684805714559,
         "predicted_per_segment": [
           122
         ],
@@ -247,7 +247,7 @@
         "accuracy": 0.144,
         "config": "ShuffleNet05_60_16_060_r075_bl_s100_bytetrackcython",
         "fps": 1946.0513246459432,
-        "hota": 0.5931907451395609,
+        "hota": 0.5904562073649675,
         "predicted_per_segment": [
           46
         ],
@@ -258,7 +258,7 @@
         "accuracy": 0.1054,
         "config": "ShuffleNet05_60_16_060_r075_none_s100_bytetrackcython",
         "fps": 2683.2538017686798,
-        "hota": 0.5691951917775657,
+        "hota": 0.5628256218307651,
         "predicted_per_segment": [
           31
         ],
@@ -269,7 +269,7 @@
         "accuracy": 0.1266,
         "config": "ShuffleNet05_60_16_080_r025_none_s100_bytetrackcython",
         "fps": 2416.995154473622,
-        "hota": 0.5796369818932005,
+        "hota": 0.5741574980209148,
         "predicted_per_segment": [
           42
         ],
@@ -280,7 +280,7 @@
         "accuracy": 0.4179,
         "config": "ShuffleNet05_60_16_080_r025_square_s100_sortcython",
         "fps": 1116.0728538438796,
-        "hota": 0.6665493127956251,
+        "hota": 0.6644847503111291,
         "predicted_per_segment": [
           123
         ],
@@ -291,7 +291,7 @@
         "accuracy": 0.4197,
         "config": "ShuffleNet05_60_16_080_r025_tr_s100_sortcython",
         "fps": 1527.6538810589568,
-        "hota": 0.6535864182213192,
+        "hota": 0.6513918145011875,
         "predicted_per_segment": [
           124
         ],
@@ -302,7 +302,7 @@
         "accuracy": 0.4085,
         "config": "ShuffleNet05_60_16_080_r050_square_s100_sortcython",
         "fps": 1255.0745659905458,
-        "hota": 0.6594937773261815,
+        "hota": 0.6572684805714559,
         "predicted_per_segment": [
           122
         ],
@@ -313,7 +313,7 @@
         "accuracy": 0.1054,
         "config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
         "fps": 2522.706590543679,
-        "hota": 0.5691951917775658,
+        "hota": 0.5628256218307651,
         "predicted_per_segment": [
           31
         ],
@@ -324,7 +324,7 @@
         "accuracy": 0.3896,
         "config": "ShuffleNet05_60_16_080_r075_tr_s100_sortcython",
         "fps": 1851.740827551756,
-        "hota": 0.6351645264199345,
+        "hota": 0.6325361626116034,
         "predicted_per_segment": [
           116
         ],
@@ -335,7 +335,7 @@
         "accuracy": 0.41,
         "config": "ShuffleNet05_60_16_r025_square_s100_sortcython",
         "fps": 1105.497568974338,
-        "hota": 0.6676803877038592,
+        "hota": 0.6658968543518511,
         "predicted_per_segment": [
           121
         ],
@@ -346,7 +346,7 @@
         "accuracy": 0.3965,
         "config": "ShuffleNet05_60_16_r025_tr_s100_sortcython",
         "fps": 1561.8299252084091,
-        "hota": 0.6546604185076937,
+        "hota": 0.6520679564627592,
         "predicted_per_segment": [
           117
         ],
@@ -357,7 +357,7 @@
         "accuracy": 0.3297,
         "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
         "fps": 1796.545965461734,
-        "hota": 0.6278199526299132,
+        "hota": 0.6257777117309621,
         "predicted_per_segment": [
           110
         ],
@@ -368,7 +368,7 @@
         "accuracy": 0.1314,
         "config": "ShuffleNet05_60_16_r050_none_s100_bytetrackcython",
         "fps": 2689.0815856831687,
-        "hota": 0.5785355435468335,
+        "hota": 0.5746185835660337,
         "predicted_per_segment": [
           39
         ],
@@ -379,7 +379,7 @@
         "accuracy": 0.4016,
         "config": "ShuffleNet05_60_16_r050_tr_s100_sortcython",
         "fps": 1704.4948645160416,
-        "hota": 0.6432107531627235,
+        "hota": 0.6421188521954938,
         "predicted_per_segment": [
           119
         ],
@@ -390,7 +390,7 @@
         "accuracy": 0.3243,
         "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
         "fps": 1964.1424698768576,
-        "hota": 0.6153853683311472,
+        "hota": 0.6132222951000867,
         "predicted_per_segment": [
           106
         ],
@@ -401,7 +401,7 @@
         "accuracy": 0.1093,
         "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
         "fps": 2840.253768763739,
-        "hota": 0.5675040470902472,
+        "hota": 0.5612635208713379,
         "predicted_per_segment": [
           33
         ],
@@ -412,7 +412,7 @@
         "accuracy": 0.2797,
         "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
         "fps": 2841.011122780016,
-        "hota": 0.4993108930060543,
+        "hota": 0.4962594508812087,
         "predicted_per_segment": [
           91
         ],
@@ -423,7 +423,7 @@
         "accuracy": 0.3971,
         "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
         "fps": 1391.9090347607282,
-        "hota": 0.6592685681109561,
+        "hota": 0.6571824913277864,
         "predicted_per_segment": [
           117
         ],
@@ -434,7 +434,7 @@
         "accuracy": 0.3936,
         "config": "ShuffleNet05_60_16_r075_tr_s100_sortcython",
         "fps": 1861.254984902216,
-        "hota": 0.6362317383348752,
+        "hota": 0.6342121679607424,
         "predicted_per_segment": [
           118
         ],
@@ -445,7 +445,7 @@
         "accuracy": 0.8223,
         "config": "ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython",
         "fps": 305.0009740403884,
-        "hota": 0.6283207613544112,
+        "hota": 0.6268538665802205,
         "predicted_per_segment": [
           248
         ],
@@ -456,7 +456,7 @@
         "accuracy": 0.8123,
         "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
         "fps": 311.96775192841096,
-        "hota": 0.6277911889511713,
+        "hota": 0.6271038740923974,
         "predicted_per_segment": [
           254
         ],
@@ -467,7 +467,7 @@
         "accuracy": 0.8653,
         "config": "ShuffleNet05_60_1_040_r025_square_s100_sortcython",
         "fps": 214.16592081272637,
-        "hota": 0.7061095864741752,
+        "hota": 0.7058215764901479,
         "predicted_per_segment": [
           258
         ],
@@ -478,7 +478,7 @@
         "accuracy": 0.8388,
         "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
         "fps": 256.188121949012,
-        "hota": 0.7002310890941218,
+        "hota": 0.6998976008059087,
         "predicted_per_segment": [
           263
         ],
@@ -489,7 +489,7 @@
         "accuracy": 0.7767,
         "config": "ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython",
         "fps": 318.1387553085702,
-        "hota": 0.6303783256729417,
+        "hota": 0.6293221808347008,
         "predicted_per_segment": [
           253
         ],
@@ -500,7 +500,7 @@
         "accuracy": 0.8067,
         "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
         "fps": 322.7349583327264,
-        "hota": 0.6062470912659317,
+        "hota": 0.6051969273024057,
         "predicted_per_segment": [
           263
         ],
@@ -511,7 +511,7 @@
         "accuracy": 0.854,
         "config": "ShuffleNet05_60_1_040_r050_square_s100_sortcython",
         "fps": 230.1915274580789,
-        "hota": 0.7077254573542289,
+        "hota": 0.707393978160443,
         "predicted_per_segment": [
           255
         ],
@@ -522,7 +522,7 @@
         "accuracy": 0.8267,
         "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
         "fps": 273.2718999874168,
-        "hota": 0.6998111716914824,
+        "hota": 0.6996463199755523,
         "predicted_per_segment": [
           254
         ],
@@ -533,7 +533,7 @@
         "accuracy": 0.7784,
         "config": "ShuffleNet05_60_1_040_r075_bl_s100_sortcython",
         "fps": 289.9084750661932,
-        "hota": 0.6577685205012765,
+        "hota": 0.657409419161867,
         "predicted_per_segment": [
           283
         ],
@@ -544,7 +544,7 @@
         "accuracy": 0.8012,
         "config": "ShuffleNet05_60_1_040_r075_none_s100_bytetrackcython",
         "fps": 329.7803721042757,
-        "hota": 0.6023998603739521,
+        "hota": 0.6007520018020897,
         "predicted_per_segment": [
           248
         ],
@@ -555,7 +555,7 @@
         "accuracy": 0.7744,
         "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
         "fps": 331.8680938691716,
-        "hota": 0.5903773787942157,
+        "hota": 0.5893531862835598,
         "predicted_per_segment": [
           268
         ],
@@ -566,7 +566,7 @@
         "accuracy": 0.8418,
         "config": "ShuffleNet05_60_1_040_r075_square_s100_sortcython",
         "fps": 248.9547847922066,
-        "hota": 0.702620110986341,
+        "hota": 0.7024265092059425,
         "predicted_per_segment": [
           253
         ],
@@ -577,7 +577,7 @@
         "accuracy": 0.8102,
         "config": "ShuffleNet05_60_1_040_r075_tr_s100_sortcython",
         "fps": 286.9151493407409,
-        "hota": 0.679645439705261,
+        "hota": 0.6792873388875281,
         "predicted_per_segment": [
           258
         ],
@@ -588,7 +588,7 @@
         "accuracy": 0.8059,
         "config": "ShuffleNet05_60_1_060_r025_none_s100_bytetrackcython",
         "fps": 298.0098089866493,
-        "hota": 0.6400115761926091,
+        "hota": 0.6392016448449533,
         "predicted_per_segment": [
           243
         ],
@@ -599,7 +599,7 @@
         "accuracy": 0.853,
         "config": "ShuffleNet05_60_1_060_r025_square_s100_sortcython",
         "fps": 198.8189434300392,
-        "hota": 0.7032688577251367,
+        "hota": 0.7029825226297728,
         "predicted_per_segment": [
           258
         ],
@@ -610,7 +610,7 @@
         "accuracy": 0.7849,
         "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
         "fps": 311.02873164729067,
-        "hota": 0.6359566932048427,
+        "hota": 0.6347666410327689,
         "predicted_per_segment": [
           246
         ],
@@ -621,7 +621,7 @@
         "accuracy": 0.8366,
         "config": "ShuffleNet05_60_1_060_r050_square_s100_sortcython",
         "fps": 223.07041353398057,
-        "hota": 0.7118754285164414,
+        "hota": 0.7116903477689785,
         "predicted_per_segment": [
           257
         ],
@@ -632,7 +632,7 @@
         "accuracy": 0.7947,
         "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
         "fps": 323.06836738699445,
-        "hota": 0.6103051739762777,
+        "hota": 0.6091880477878168,
         "predicted_per_segment": [
           243
         ],
@@ -643,7 +643,7 @@
         "accuracy": 0.82,
         "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
         "fps": 290.22957784180727,
-        "hota": 0.6336542710025154,
+        "hota": 0.6330915879731273,
         "predicted_per_segment": [
           259
         ],
@@ -654,7 +654,7 @@
         "accuracy": 0.8777,
         "config": "ShuffleNet05_60_1_080_r025_square_s100_sortcython",
         "fps": 184.6156709046884,
-        "hota": 0.7132342024928144,
+        "hota": 0.7130662969963825,
         "predicted_per_segment": [
           254
         ],
@@ -665,7 +665,7 @@
         "accuracy": 0.8445,
         "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
         "fps": 189.4895712038445,
-        "hota": 0.6766986055228176,
+        "hota": 0.6763667162414544,
         "predicted_per_segment": [
           254
         ],
@@ -676,7 +676,7 @@
         "accuracy": 0.7902,
         "config": "ShuffleNet05_60_1_r025_none_s100_sortcython",
         "fps": 190.12574421047344,
-        "hota": 0.6788466365314744,
+        "hota": 0.6786777109207189,
         "predicted_per_segment": [
           286
         ],
@@ -687,7 +687,7 @@
         "accuracy": 0.8756,
         "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
         "fps": 75.00284080870877,
-        "hota": 0.716316445025367,
+        "hota": 0.7161294017492336,
         "predicted_per_segment": [
           257
         ],
@@ -698,7 +698,7 @@
         "accuracy": 0.8687,
         "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
         "fps": 109.22911397909924,
-        "hota": 0.7169768803528577,
+        "hota": 0.7168013305204004,
         "predicted_per_segment": [
           251
         ],
@@ -709,7 +709,7 @@
         "accuracy": 0.8112,
         "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
         "fps": 207.96018176562623,
-        "hota": 0.6624902763104101,
+        "hota": 0.6622382485271089,
         "predicted_per_segment": [
           268
         ],
@@ -720,7 +720,7 @@
         "accuracy": 0.739,
         "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
         "fps": 208.1979573032756,
-        "hota": 0.6576456432390057,
+        "hota": 0.6574660450074987,
         "predicted_per_segment": [
           308
         ],
@@ -731,7 +731,7 @@
         "accuracy": 0.8622,
         "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
         "fps": 84.35455327776666,
-        "hota": 0.7194065001407918,
+        "hota": 0.7192184517387206,
         "predicted_per_segment": [
           253
         ],
@@ -742,7 +742,7 @@
         "accuracy": 0.8561,
         "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
         "fps": 125.11102378304658,
-        "hota": 0.7146592404887382,
+        "hota": 0.7145972917110037,
         "predicted_per_segment": [
           249
         ],
@@ -753,7 +753,7 @@
         "accuracy": 0.846,
         "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
         "fps": 142.35804213348084,
-        "hota": 0.6923529636071593,
+        "hota": 0.6920771761230778,
         "predicted_per_segment": [
           266
         ],
@@ -764,7 +764,7 @@
         "accuracy": 0.7809,
         "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
         "fps": 221.6331970425448,
-        "hota": 0.6369679740224187,
+        "hota": 0.6362221266102668,
         "predicted_per_segment": [
           277
         ],
@@ -775,7 +775,7 @@
         "accuracy": 0.7537,
         "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
         "fps": 222.4071484445681,
-        "hota": 0.6317786428997704,
+        "hota": 0.6315087179148039,
         "predicted_per_segment": [
           308
         ],
@@ -786,7 +786,7 @@
         "accuracy": 0.8584,
         "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
         "fps": 95.11428847186929,
-        "hota": 0.7180781468073366,
+        "hota": 0.7178990751321023,
         "predicted_per_segment": [
           252
         ],
@@ -797,7 +797,7 @@
         "accuracy": 0.8492,
         "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
         "fps": 132.68977329109066,
-        "hota": 0.7047874808274578,
+        "hota": 0.7046516000484767,
         "predicted_per_segment": [
           251
         ],
@@ -808,7 +808,7 @@
         "accuracy": 0.8485,
         "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
         "fps": 169.7200057363351,
-        "hota": 0.7008752536061043,
+        "hota": 0.700653380608372,
         "predicted_per_segment": [
           247
         ],
@@ -819,7 +819,7 @@
         "accuracy": 0.8532,
         "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
         "fps": 297.52115019545005,
-        "hota": 0.7164966365557044,
+        "hota": 0.7163748316726181,
         "predicted_per_segment": [
           248
         ],
@@ -830,7 +830,7 @@
         "accuracy": 0.8569,
         "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
         "fps": 335.51417262849145,
-        "hota": 0.7169121078712191,
+        "hota": 0.7167904160279337,
         "predicted_per_segment": [
           247
         ],
@@ -841,7 +841,7 @@
         "accuracy": 0.831,
         "config": "ShuffleNet05_60_8_040_r025_square_s100_sortcython",
         "fps": 734.1416867528491,
-        "hota": 0.6974216570573504,
+        "hota": 0.697100749395952,
         "predicted_per_segment": [
           251
         ],
@@ -852,7 +852,7 @@
         "accuracy": 0.7927,
         "config": "ShuffleNet05_60_8_040_r025_tr_s100_sortcython",
         "fps": 1002.0714329776516,
-        "hota": 0.6938627124288902,
+        "hota": 0.6936425723170541,
         "predicted_per_segment": [
           253
         ],
@@ -863,7 +863,7 @@
         "accuracy": 0.8277,
         "config": "ShuffleNet05_60_8_060_r025_tr_s100_sortcython",
         "fps": 940.8615726832816,
-        "hota": 0.7008016002897827,
+        "hota": 0.7005644376316124,
         "predicted_per_segment": [
           244
         ],
@@ -874,7 +874,7 @@
         "accuracy": 0.8189,
         "config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
         "fps": 1055.5380694575747,
-        "hota": 0.6886726298481158,
+        "hota": 0.6884374728757371,
         "predicted_per_segment": [
           247
         ],
@@ -885,7 +885,7 @@
         "accuracy": 0.8418,
         "config": "ShuffleNet05_60_8_060_r075_square_s100_sortcython",
         "fps": 888.6762789873558,
-        "hota": 0.6899299168470576,
+        "hota": 0.6896613965602941,
         "predicted_per_segment": [
           251
         ],
@@ -896,7 +896,7 @@
         "accuracy": 0.8283,
         "config": "ShuffleNet05_60_8_080_r025_square_s100_sortcython",
         "fps": 647.3816682781883,
-        "hota": 0.7099909280888423,
+        "hota": 0.7096457461283261,
         "predicted_per_segment": [
           245
         ],
@@ -907,7 +907,7 @@
         "accuracy": 0.845,
         "config": "ShuffleNet05_60_8_080_r050_square_s100_sortcython",
         "fps": 749.2238980251789,
-        "hota": 0.7070903016243099,
+        "hota": 0.7067652362303539,
         "predicted_per_segment": [
           244
         ],
@@ -918,7 +918,7 @@
         "accuracy": 0.8143,
         "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
         "fps": 1049.5275719502338,
-        "hota": 0.6965726417050139,
+        "hota": 0.6962118739287152,
         "predicted_per_segment": [
           243
         ],
@@ -929,7 +929,7 @@
         "accuracy": 0.8454,
         "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
         "fps": 580.867283269078,
-        "hota": 0.7120399220884964,
+        "hota": 0.7117517970375536,
         "predicted_per_segment": [
           248
         ],
@@ -940,7 +940,7 @@
         "accuracy": 0.8403,
         "config": "ShuffleNet05_60_8_r025_tr_s100_sortcython",
         "fps": 824.3164332491374,
-        "hota": 0.7111749349252963,
+        "hota": 0.710955235387313,
         "predicted_per_segment": [
           245
         ],
@@ -951,7 +951,7 @@
         "accuracy": 0.8483,
         "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
         "fps": 649.251985035592,
-        "hota": 0.7130444187748256,
+        "hota": 0.7128110412268281,
         "predicted_per_segment": [
           244
         ],
@@ -962,7 +962,7 @@
         "accuracy": 0.8323,
         "config": "ShuffleNet05_60_8_r050_tr_s100_sortcython",
         "fps": 893.1932313081572,
-        "hota": 0.7073028940466433,
+        "hota": 0.7071334563806843,
         "predicted_per_segment": [
           243
         ],
@@ -1073,7 +1073,7 @@
         "accuracy": 0.4806,
         "config": "param 0",
         "fps": 353.51997878880127,
-        "hota": 0.5266317214933866,
+        "hota": 0.5095169726663112,
         "predicted_per_segment": [
           82,
           62
@@ -1085,7 +1085,7 @@
         "accuracy": 0.9441,
         "config": "param 0",
         "fps": 30.020013342228154,
-        "hota": 0.7536179174429152,
+        "hota": 0.7535678547647172,
         "predicted_per_segment": [
           311,
           265
@@ -1097,7 +1097,7 @@
         "accuracy": 0.945,
         "config": "param 1",
         "fps": 29.8943732146416,
-        "hota": 0.7536349062191977,
+        "hota": 0.7535848427285391,
         "predicted_per_segment": [
           309,
           266
@@ -1109,7 +1109,7 @@
         "accuracy": 0.9456,
         "config": "param 2",
         "fps": 58.727569331158236,
-        "hota": 0.7705010545172961,
+        "hota": 0.7696708828055595,
         "predicted_per_segment": [
           319,
           268
@@ -1121,7 +1121,7 @@
         "accuracy": 0.9471,
         "config": "param 3",
         "fps": 115.07479861910242,
-        "hota": 0.7702676679939657,
+        "hota": 0.767843019334281,
         "predicted_per_segment": [
           312,
           259
@@ -1133,7 +1133,7 @@
         "accuracy": 0.9579,
         "config": "param 4",
         "fps": 235.10971786833855,
-        "hota": 0.7331128671749492,
+        "hota": 0.7307496529420651,
         "predicted_per_segment": [
           302,
           253
@@ -1145,7 +1145,7 @@
         "accuracy": 0.9264,
         "config": "param 5",
         "fps": 421.7432052483599,
-        "hota": 0.7304781874798446,
+        "hota": 0.7279994744345301,
         "predicted_per_segment": [
           302,
           244
@@ -1157,7 +1157,7 @@
         "accuracy": 0.9358,
         "config": "param 6",
         "fps": 600.8010680907878,
-        "hota": 0.7251885008476432,
+        "hota": 0.7226683859723121,
         "predicted_per_segment": [
           300,
           243
@@ -1169,7 +1169,7 @@
         "accuracy": 0.8396,
         "config": "param 7",
         "fps": 1204.8192771084337,
-        "hota": 0.5695003084426312,
+        "hota": 0.567452624027974,
         "predicted_per_segment": [
           293,
           489
@@ -1181,7 +1181,7 @@
         "accuracy": 0.8373,
         "config": "param 8",
         "fps": 1492.5373134328358,
-        "hota": 0.4890615591837749,
+        "hota": 0.4872192559362953,
         "predicted_per_segment": [
           278,
           356
@@ -1193,7 +1193,7 @@
         "accuracy": 0.8106,
         "config": "param 9",
         "fps": 2017.9372197309415,
-        "hota": 0.4653857565862139,
+        "hota": 0.4634555582970289,
         "predicted_per_segment": [
           278,
           414
@@ -1205,7 +1205,7 @@
         "accuracy": 0.9568,
         "config": "naive",
         "fps": 30.93095505912012,
-        "hota": 0.8180912461425098,
+        "hota": 0.8179698723466023,
         "predicted_per_segment": [
           298,
           258
@@ -1217,7 +1217,7 @@
         "accuracy": 0.4096,
         "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
         "fps": 4409.935817633333,
-        "hota": 0.6816074530050972,
+        "hota": 0.6772421405431296,
         "predicted_per_segment": [
           21,
           20
@@ -1229,7 +1229,7 @@
         "accuracy": 0.4136,
         "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
         "fps": 2811.917294614788,
-        "hota": 0.6906707573153483,
+        "hota": 0.686713562660221,
         "predicted_per_segment": [
           24,
           23
@@ -1241,7 +1241,7 @@
         "accuracy": 0.4173,
         "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
         "fps": 4830.280449510638,
-        "hota": 0.6753249946189871,
+        "hota": 0.6696336363233245,
         "predicted_per_segment": [
           19,
           20
@@ -1253,7 +1253,7 @@
         "accuracy": 0.4144,
         "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
         "fps": 2964.854919905327,
-        "hota": 0.6880840831347375,
+        "hota": 0.6824892846941294,
         "predicted_per_segment": [
           24,
           23
@@ -1265,7 +1265,7 @@
         "accuracy": 0.4067,
         "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
         "fps": 4968.380886558944,
-        "hota": 0.670145143051155,
+        "hota": 0.6627235796610154,
         "predicted_per_segment": [
           20,
           21
@@ -1277,7 +1277,7 @@
         "accuracy": 0.771,
         "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
         "fps": 700.4950864972536,
-        "hota": 0.7400161467099747,
+        "hota": 0.7390430304521685,
         "predicted_per_segment": [
           270,
           152
@@ -1289,7 +1289,7 @@
         "accuracy": 0.7551,
         "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
         "fps": 760.8103462523839,
-        "hota": 0.7309506030738862,
+        "hota": 0.7297696720186219,
         "predicted_per_segment": [
           262,
           134
@@ -1301,7 +1301,7 @@
         "accuracy": 0.7293,
         "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
         "fps": 781.6514629474196,
-        "hota": 0.7188052855814934,
+        "hota": 0.7175665790574939,
         "predicted_per_segment": [
           232,
           135
@@ -1313,7 +1313,7 @@
         "accuracy": 0.7698,
         "config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
         "fps": 698.8475123332847,
-        "hota": 0.7403481283695584,
+        "hota": 0.7393747090534818,
         "predicted_per_segment": [
           268,
           152
@@ -1325,7 +1325,7 @@
         "accuracy": 0.8143,
         "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
         "fps": 408.609470805599,
-        "hota": 0.778921188031902,
+        "hota": 0.7785255292259208,
         "predicted_per_segment": [
           301,
           187
@@ -1337,7 +1337,7 @@
         "accuracy": 0.8088,
         "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
         "fps": 587.8010269979641,
-        "hota": 0.7648159793975331,
+        "hota": 0.7641736056652391,
         "predicted_per_segment": [
           284,
           186
@@ -1349,7 +1349,7 @@
         "accuracy": 0.8074,
         "config": "ShuffleNet05_60_1_080_r050_bl_s100_sortcython",
         "fps": 458.31105053591017,
-        "hota": 0.7765189472885292,
+        "hota": 0.776215905281774,
         "predicted_per_segment": [
           295,
           177
@@ -1361,7 +1361,7 @@
         "accuracy": 0.8018,
         "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
         "fps": 632.3515730112217,
-        "hota": 0.7566399465996405,
+        "hota": 0.756026464698094,
         "predicted_per_segment": [
           277,
           178
@@ -1373,7 +1373,7 @@
         "accuracy": 0.8073,
         "config": "ShuffleNet05_60_1_080_r075_bl_s100_sortcython",
         "fps": 481.8811881489132,
-        "hota": 0.7713383753665574,
+        "hota": 0.7708738007816734,
         "predicted_per_segment": [
           296,
           174
@@ -1385,7 +1385,7 @@
         "accuracy": 0.7675,
         "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
         "fps": 667.0120774918919,
-        "hota": 0.7472030737974058,
+        "hota": 0.7465505036336699,
         "predicted_per_segment": [
           258,
           166
@@ -1397,7 +1397,7 @@
         "accuracy": 0.9417,
         "config": "ShuffleNet05_60_1_r025_bl_s100_bytetrackcython",
         "fps": 193.00109652011412,
-        "hota": 0.8082024814684554,
+        "hota": 0.8080048444877711,
         "predicted_per_segment": [
           292,
           257
@@ -1409,7 +1409,7 @@
         "accuracy": 0.9313,
         "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
         "fps": 357.73870013842185,
-        "hota": 0.7883353638176435,
+        "hota": 0.7879429880213483,
         "predicted_per_segment": [
           271,
           251
@@ -1421,7 +1421,7 @@
         "accuracy": 0.9465,
         "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
         "fps": 120.74743026186265,
-        "hota": 0.817440530920063,
+        "hota": 0.8172632799287164,
         "predicted_per_segment": [
           297,
           256
@@ -1433,7 +1433,7 @@
         "accuracy": 0.9458,
         "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
         "fps": 187.4916797197625,
-        "hota": 0.8072672363916341,
+        "hota": 0.807124594947298,
         "predicted_per_segment": [
           291,
           258
@@ -1445,7 +1445,7 @@
         "accuracy": 0.9379,
         "config": "ShuffleNet05_60_1_r050_bl_s100_bytetrackcython",
         "fps": 208.242539757664,
-        "hota": 0.8044879405576922,
+        "hota": 0.8042641137631826,
         "predicted_per_segment": [
           289,
           256
@@ -1457,7 +1457,7 @@
         "accuracy": 0.9295,
         "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
         "fps": 378.1421060988955,
-        "hota": 0.7798909041052803,
+        "hota": 0.779423702351712,
         "predicted_per_segment": [
           262,
           253
@@ -1469,7 +1469,7 @@
         "accuracy": 0.9529,
         "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
         "fps": 130.73322570479846,
-        "hota": 0.816130871471669,
+        "hota": 0.8159225919619622,
         "predicted_per_segment": [
           297,
           257
@@ -1481,7 +1481,7 @@
         "accuracy": 0.9352,
         "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
         "fps": 222.66575778640663,
-        "hota": 0.7988196569259407,
+        "hota": 0.79731360190218,
         "predicted_per_segment": [
           285,
           249
@@ -1493,7 +1493,7 @@
         "accuracy": 0.8932,
         "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
         "fps": 402.26678599722896,
-        "hota": 0.7685520478477372,
+        "hota": 0.7679503205644457,
         "predicted_per_segment": [
           240,
           247
@@ -1505,7 +1505,7 @@
         "accuracy": 0.9171,
         "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
         "fps": 405.4801363451157,
-        "hota": 0.7664021054547243,
+        "hota": 0.765921951149973,
         "predicted_per_segment": [
           268,
           255
@@ -1517,7 +1517,7 @@
         "accuracy": 0.9423,
         "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
         "fps": 142.32943970665764,
-        "hota": 0.8148580237810585,
+        "hota": 0.8144982393013823,
         "predicted_per_segment": [
           293,
           256
@@ -1529,7 +1529,7 @@
         "accuracy": 0.884,
         "config": "ShuffleNet05_60_2_r025_bl_s100_bytetrackcython",
         "fps": 367.022596867966,
-        "hota": 0.7703606793358778,
+        "hota": 0.7700994971582223,
         "predicted_per_segment": [
           282,
           224
@@ -1541,7 +1541,7 @@
         "accuracy": 0.8995,
         "config": "ShuffleNet05_60_2_r025_square_s100_bytetrackcython",
         "fps": 233.7588744489904,
-        "hota": 0.778160974860809,
+        "hota": 0.7779426974457269,
         "predicted_per_segment": [
           288,
           234
@@ -1553,7 +1553,7 @@
         "accuracy": 0.8799,
         "config": "ShuffleNet05_60_2_r050_bl_s100_bytetrackcython",
         "fps": 388.058268911264,
-        "hota": 0.7684690052746859,
+        "hota": 0.7681188240887789,
         "predicted_per_segment": [
           278,
           226
@@ -1565,7 +1565,7 @@
         "accuracy": 0.9034,
         "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
         "fps": 256.738836426707,
-        "hota": 0.7778139041505298,
+        "hota": 0.7775585740285326,
         "predicted_per_segment": [
           284,
           233
@@ -1577,7 +1577,7 @@
         "accuracy": 0.887,
         "config": "ShuffleNet05_60_2_r075_square_s100_bytetrackcython",
         "fps": 273.7046123084312,
-        "hota": 0.7736602080657916,
+        "hota": 0.7732267030923929,
         "predicted_per_segment": [
           279,
           231
@@ -1589,7 +1589,7 @@
         "accuracy": 0.7836,
         "config": "ShuffleNet05_60_4_080_r050_bl_s100_sortcython",
         "fps": 840.4866615044168,
-        "hota": 0.7670031636167909,
+        "hota": 0.7666338255231385,
         "predicted_per_segment": [
           278,
           175
@@ -1601,7 +1601,7 @@
         "accuracy": 0.7488,
         "config": "ShuffleNet05_60_4_080_r075_bl_s100_sortcython",
         "fps": 873.0450976499521,
-        "hota": 0.759965939696273,
+        "hota": 0.7593664952293273,
         "predicted_per_segment": [
           270,
           165
@@ -1613,7 +1613,7 @@
         "accuracy": 0.8661,
         "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
         "fps": 729.3215749046271,
-        "hota": 0.778685892269133,
+        "hota": 0.7784689891145117,
         "predicted_per_segment": [
           298,
           215
@@ -1625,7 +1625,7 @@
         "accuracy": 0.8045,
         "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
         "fps": 1254.7841752667723,
-        "hota": 0.7618795995530581,
+        "hota": 0.761349789393561,
         "predicted_per_segment": [
           268,
           197
@@ -1637,7 +1637,7 @@
         "accuracy": 0.8634,
         "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
         "fps": 464.6230627873568,
-        "hota": 0.7852125471617102,
+        "hota": 0.7850184762300337,
         "predicted_per_segment": [
           298,
           213
@@ -1649,7 +1649,7 @@
         "accuracy": 0.8567,
         "config": "ShuffleNet05_60_4_r050_bl_s100_sortcython",
         "fps": 765.5571072706992,
-        "hota": 0.77524655595687,
+        "hota": 0.7748964830924747,
         "predicted_per_segment": [
           297,
           214
@@ -1661,7 +1661,7 @@
         "accuracy": 0.7803,
         "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
         "fps": 1349.0438947816513,
-        "hota": 0.7503464076791927,
+        "hota": 0.7496758195699113,
         "predicted_per_segment": [
           258,
           191
@@ -1673,7 +1673,7 @@
         "accuracy": 0.8505,
         "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
         "fps": 507.4960873511855,
-        "hota": 0.7843794852066882,
+        "hota": 0.7841422050549006,
         "predicted_per_segment": [
           296,
           210
@@ -1685,7 +1685,7 @@
         "accuracy": 0.8404,
         "config": "ShuffleNet05_60_4_r075_bl_s100_sortcython",
         "fps": 820.5119560726959,
-        "hota": 0.768891567111561,
+        "hota": 0.7683099033715808,
         "predicted_per_segment": [
           291,
           211
@@ -1697,7 +1697,7 @@
         "accuracy": 0.8431,
         "config": "ShuffleNet05_60_4_r075_square_s100_sortcython",
         "fps": 546.6278128528401,
-        "hota": 0.7821646579684924,
+        "hota": 0.7816718560143118,
         "predicted_per_segment": [
           291,
           209
@@ -1709,7 +1709,7 @@
         "accuracy": 0.5037,
         "config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
         "fps": 2647.4630426043127,
-        "hota": 0.7019233244888482,
+        "hota": 0.6980751735002101,
         "predicted_per_segment": [
           132,
           64
@@ -1721,7 +1721,7 @@
         "accuracy": 0.4931,
         "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
         "fps": 2761.297040147503,
-        "hota": 0.6954998242869187,
+        "hota": 0.6924113548772253,
         "predicted_per_segment": [
           104,
           64
@@ -1733,7 +1733,7 @@
         "accuracy": 0.5037,
         "config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
         "fps": 2547.1615253557115,
-        "hota": 0.7019230072429711,
+        "hota": 0.6980748575433262,
         "predicted_per_segment": [
           132,
           64
@@ -1745,7 +1745,7 @@
         "accuracy": 0.5883,
         "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
         "fps": 2224.11461803424,
-        "hota": 0.7339763232929007,
+        "hota": 0.732968952866084,
         "predicted_per_segment": [
           190,
           90
@@ -1757,7 +1757,7 @@
         "accuracy": 0.5992,
         "config": "ShuffleNet05_60_8_080_r050_bl_s100_sortcython",
         "fps": 1412.4379545948425,
-        "hota": 0.7469901406976608,
+        "hota": 0.7459992693611366,
         "predicted_per_segment": [
           215,
           92
@@ -1769,7 +1769,7 @@
         "accuracy": 0.5692,
         "config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
         "fps": 2263.655616628157,
-        "hota": 0.724225963258592,
+        "hota": 0.7224820774410965,
         "predicted_per_segment": [
           178,
           89
@@ -1781,7 +1781,7 @@
         "accuracy": 0.6127,
         "config": "ShuffleNet05_60_8_r025_bl_s100_sortcython",
         "fps": 1395.8472169541974,
-        "hota": 0.7503080198552364,
+        "hota": 0.7497528686549366,
         "predicted_per_segment": [
           227,
           94
@@ -1793,7 +1793,7 @@
         "accuracy": 0.5887,
         "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
         "fps": 2355.524096124178,
-        "hota": 0.7323999573476522,
+        "hota": 0.7314046243853216,
         "predicted_per_segment": [
           190,
           90
@@ -1805,7 +1805,7 @@
         "accuracy": 0.6152,
         "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
         "fps": 912.6371728528468,
-        "hota": 0.7583023587275252,
+        "hota": 0.757953464175706,
         "predicted_per_segment": [
           231,
           95
@@ -1817,7 +1817,7 @@
         "accuracy": 0.5992,
         "config": "ShuffleNet05_60_8_r050_bl_s100_sortcython",
         "fps": 1479.227584304065,
-        "hota": 0.7465908382323033,
+        "hota": 0.7456545922710627,
         "predicted_per_segment": [
           216,
           91
@@ -1829,7 +1829,7 @@
         "accuracy": 0.5697,
         "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
         "fps": 2486.877791179756,
-        "hota": 0.7248928309495719,
+        "hota": 0.72313766690523,
         "predicted_per_segment": [
           178,
           90
@@ -1841,7 +1841,7 @@
         "accuracy": 0.6126,
         "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
         "fps": 986.459273903732,
-        "hota": 0.7567226377047447,
+        "hota": 0.7561436475156219,
         "predicted_per_segment": [
           228,
           94
@@ -1853,7 +1853,7 @@
         "accuracy": 0.596,
         "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
         "fps": 1560.0932018570545,
-        "hota": 0.7414093835351455,
+        "hota": 0.7404031271690937,
         "predicted_per_segment": [
           208,
           93
@@ -1865,7 +1865,7 @@
         "accuracy": 0.5472,
         "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
         "fps": 2614.4968878380555,
-        "hota": 0.7155377878426945,
+        "hota": 0.7135880489206223,
         "predicted_per_segment": [
           148,
           87
@@ -1985,7 +1985,7 @@
         "accuracy": 0.2392,
         "config": "param 0",
         "fps": 487.29601247477797,
-        "hota": 0.13909939038238148,
+        "hota": 0.13376839573539373,
         "predicted_per_segment": [
           45,
           90
@@ -1997,7 +1997,7 @@
         "accuracy": 0.9378,
         "config": "param 0",
         "fps": 28.873917228103945,
-        "hota": 0.6675198281034291,
+        "hota": 0.6668144476835685,
         "predicted_per_segment": [
           278,
           331
@@ -2009,7 +2009,7 @@
         "accuracy": 0.92,
         "config": "param 1",
         "fps": 56.95121179522876,
-        "hota": 0.6549931653339102,
+        "hota": 0.6535587482578807,
         "predicted_per_segment": [
           278,
           341
@@ -2021,7 +2021,7 @@
         "accuracy": 0.9468,
         "config": "param 2",
         "fps": 104.69986040018614,
-        "hota": 0.5525727321124699,
+        "hota": 0.5515759974970574,
         "predicted_per_segment": [
           268,
           323
@@ -2033,7 +2033,7 @@
         "accuracy": 0.9312,
         "config": "param 3",
         "fps": 215.31100478468898,
-        "hota": 0.5455016964737058,
+        "hota": 0.5432967394158643,
         "predicted_per_segment": [
           265,
           322
@@ -2045,7 +2045,7 @@
         "accuracy": 0.9464,
         "config": "param 4",
         "fps": 398.58281665190435,
-        "hota": 0.5099614163964417,
+        "hota": 0.5079722585363726,
         "predicted_per_segment": [
           269,
           309
@@ -2057,7 +2057,7 @@
         "accuracy": 0.9546,
         "config": "param 5",
         "fps": 478.4688995215311,
-        "hota": 0.5251937982308114,
+        "hota": 0.5233470315141818,
         "predicted_per_segment": [
           274,
           307
@@ -2069,7 +2069,7 @@
         "accuracy": 0.9511,
         "config": "param 6",
         "fps": 566.7506297229219,
-        "hota": 0.5255491505930546,
+        "hota": 0.5237025610001411,
         "predicted_per_segment": [
           271,
           307
@@ -2081,7 +2081,7 @@
         "accuracy": 0.9485,
         "config": "param 7",
         "fps": 789.4736842105264,
-        "hota": 0.4783654494257485,
+        "hota": 0.4762856172960139,
         "predicted_per_segment": [
           269,
           311
@@ -2093,7 +2093,7 @@
         "accuracy": 0.9216,
         "config": "param 8",
         "fps": 1282.0512820512822,
-        "hota": 0.4007324368384903,
+        "hota": 0.3976142006394198,
         "predicted_per_segment": [
           254,
           306
@@ -2105,7 +2105,7 @@
         "accuracy": 0.8883,
         "config": "param 9",
         "fps": 1449.2753623188407,
-        "hota": 0.3254203315404112,
+        "hota": 0.3216657596786511,
         "predicted_per_segment": [
           239,
           292
@@ -2117,7 +2117,7 @@
         "accuracy": 0.9333,
         "config": "naive",
         "fps": 30.8622484710686,
-        "hota": 0.7155520702265457,
+        "hota": 0.7149463201917848,
         "predicted_per_segment": [
           262,
           315
@@ -2129,7 +2129,7 @@
         "accuracy": 0.0797,
         "config": "ShuffleNet05_60_16_040_r025_none_s100_sortcython",
         "fps": 4544.909875724819,
-        "hota": 0.2004638700612434,
+        "hota": 0.1984735916278147,
         "predicted_per_segment": [
           26,
           4
@@ -2141,7 +2141,7 @@
         "accuracy": 0.0797,
         "config": "ShuffleNet05_60_16_060_r025_none_s100_sortcython",
         "fps": 4577.897586613812,
-        "hota": 0.2004638700612434,
+        "hota": 0.1984735916278147,
         "predicted_per_segment": [
           26,
           4
@@ -2153,7 +2153,7 @@
         "accuracy": 0.0797,
         "config": "ShuffleNet05_60_16_080_r025_none_s100_sortcython",
         "fps": 4586.49780553538,
-        "hota": 0.2004638700612434,
+        "hota": 0.1984735916278147,
         "predicted_per_segment": [
           26,
           4
@@ -2165,7 +2165,7 @@
         "accuracy": 0.0803,
         "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
         "fps": 5169.854873172091,
-        "hota": 0.2031193703395333,
+        "hota": 0.2010216723269764,
         "predicted_per_segment": [
           26,
           5
@@ -2177,7 +2177,7 @@
         "accuracy": 0.0743,
         "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
         "fps": 5629.783403104092,
-        "hota": 0.1971245939705367,
+        "hota": 0.1936017377068823,
         "predicted_per_segment": [
           23,
           4
@@ -2189,7 +2189,7 @@
         "accuracy": 0.0695,
         "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
         "fps": 6054.361644147441,
-        "hota": 0.1820385447423985,
+        "hota": 0.1789689849817478,
         "predicted_per_segment": [
           20,
           3
@@ -2201,7 +2201,7 @@
         "accuracy": 0.6717,
         "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
         "fps": 563.5021713369891,
-        "hota": 0.5631420282024511,
+        "hota": 0.5622445118355334,
         "predicted_per_segment": [
           236,
           168
@@ -2213,7 +2213,7 @@
         "accuracy": 0.6375,
         "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
         "fps": 603.0577521707244,
-        "hota": 0.5505464963782931,
+        "hota": 0.5497091389768021,
         "predicted_per_segment": [
           225,
           165
@@ -2225,7 +2225,7 @@
         "accuracy": 0.5876,
         "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
         "fps": 640.2012352597408,
-        "hota": 0.53207346333324,
+        "hota": 0.5313789771113012,
         "predicted_per_segment": [
           211,
           165
@@ -2237,7 +2237,7 @@
         "accuracy": 0.8939,
         "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
         "fps": 258.246897373859,
-        "hota": 0.6598752279382549,
+        "hota": 0.659356307004986,
         "predicted_per_segment": [
           239,
           318
@@ -2249,7 +2249,7 @@
         "accuracy": 0.8558,
         "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
         "fps": 492.8248012754396,
-        "hota": 0.596666606363646,
+        "hota": 0.595614798186648,
         "predicted_per_segment": [
           218,
           305
@@ -2261,7 +2261,7 @@
         "accuracy": 0.7685,
         "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
         "fps": 566.4777827104875,
-        "hota": 0.5707153971537956,
+        "hota": 0.5700458800817253,
         "predicted_per_segment": [
           238,
           237
@@ -2273,7 +2273,7 @@
         "accuracy": 0.8664,
         "config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
         "fps": 292.19043330133803,
-        "hota": 0.655765730987467,
+        "hota": 0.6551546850794638,
         "predicted_per_segment": [
           227,
           314
@@ -2285,7 +2285,7 @@
         "accuracy": 0.8215,
         "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
         "fps": 525.8205919565085,
-        "hota": 0.5733309112588723,
+        "hota": 0.572530394267863,
         "predicted_per_segment": [
           216,
           292
@@ -2297,7 +2297,7 @@
         "accuracy": 0.7829,
         "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
         "fps": 607.1013620253159,
-        "hota": 0.5559646636552775,
+        "hota": 0.5554307665010159,
         "predicted_per_segment": [
           235,
           244
@@ -2309,7 +2309,7 @@
         "accuracy": 0.8621,
         "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
         "fps": 321.5401284465076,
-        "hota": 0.6453736903656221,
+        "hota": 0.6450230685886954,
         "predicted_per_segment": [
           230,
           311
@@ -2321,7 +2321,7 @@
         "accuracy": 0.9294,
         "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
         "fps": 245.6219830035432,
-        "hota": 0.6664529720656004,
+        "hota": 0.6659192014629916,
         "predicted_per_segment": [
           256,
           316
@@ -2333,7 +2333,7 @@
         "accuracy": 0.8953,
         "config": "ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
         "fps": 475.280927377154,
-        "hota": 0.6034439438618533,
+        "hota": 0.6025663189284274,
         "predicted_per_segment": [
           241,
           302
@@ -2345,7 +2345,7 @@
         "accuracy": 0.9031,
         "config": "ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
         "fps": 272.53812834587507,
-        "hota": 0.6604034899436684,
+        "hota": 0.6596848666942674,
         "predicted_per_segment": [
           248,
           312
@@ -2357,7 +2357,7 @@
         "accuracy": 0.8662,
         "config": "ShuffleNet05_60_1_080_r075_none_s100_bytetrackcython",
         "fps": 512.9800530483944,
-        "hota": 0.5825010532728471,
+        "hota": 0.5816871749200699,
         "predicted_per_segment": [
           230,
           294
@@ -2369,7 +2369,7 @@
         "accuracy": 0.8829,
         "config": "ShuffleNet05_60_1_080_r075_tr_s100_bytetrackcython",
         "fps": 299.16088509166764,
-        "hota": 0.6521753413824308,
+        "hota": 0.6517870473129238,
         "predicted_per_segment": [
           240,
           311
@@ -2381,7 +2381,7 @@
         "accuracy": 0.9273,
         "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
         "fps": 398.442058836427,
-        "hota": 0.6265074816101236,
+        "hota": 0.6257731117218759,
         "predicted_per_segment": [
           251,
           305
@@ -2393,7 +2393,7 @@
         "accuracy": 0.9417,
         "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
         "fps": 123.0971595288142,
-        "hota": 0.6962965979007619,
+        "hota": 0.6956787692546049,
         "predicted_per_segment": [
           263,
           317
@@ -2405,7 +2405,7 @@
         "accuracy": 0.9299,
         "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
         "fps": 203.9892240523238,
-        "hota": 0.6797627704596401,
+        "hota": 0.6792203135957958,
         "predicted_per_segment": [
           257,
           313
@@ -2417,7 +2417,7 @@
         "accuracy": 0.896,
         "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
         "fps": 455.3616387168862,
-        "hota": 0.6215288288510724,
+        "hota": 0.6206912043849452,
         "predicted_per_segment": [
           245,
           302
@@ -2429,7 +2429,7 @@
         "accuracy": 0.9154,
         "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
         "fps": 144.71047122670748,
-        "hota": 0.6921171850406366,
+        "hota": 0.6914701436446803,
         "predicted_per_segment": [
           256,
           315
@@ -2441,7 +2441,7 @@
         "accuracy": 0.8945,
         "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
         "fps": 238.84861207196047,
-        "hota": 0.6772377013216041,
+        "hota": 0.6765191623270594,
         "predicted_per_segment": [
           248,
           312
@@ -2453,7 +2453,7 @@
         "accuracy": 0.894,
         "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
         "fps": 278.84233166928016,
-        "hota": 0.6440755162447334,
+        "hota": 0.6435367750377218,
         "predicted_per_segment": [
           241,
           311
@@ -2465,7 +2465,7 @@
         "accuracy": 0.8597,
         "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
         "fps": 501.2879340426702,
-        "hota": 0.609233102392869,
+        "hota": 0.6087095043430019,
         "predicted_per_segment": [
           227,
           294
@@ -2477,7 +2477,7 @@
         "accuracy": 0.884,
         "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
         "fps": 503.1564282748116,
-        "hota": 0.5815255562790581,
+        "hota": 0.5810493153340514,
         "predicted_per_segment": [
           244,
           306
@@ -2489,7 +2489,7 @@
         "accuracy": 0.8771,
         "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
         "fps": 264.22263500717474,
-        "hota": 0.6691315597019596,
+        "hota": 0.668865984170713,
         "predicted_per_segment": [
           240,
           309
@@ -2501,7 +2501,7 @@
         "accuracy": 0.6461,
         "config": "ShuffleNet05_60_2_040_r025_none_s100_sortcython",
         "fps": 907.8841133030548,
-        "hota": 0.5493080509891303,
+        "hota": 0.5485343961199546,
         "predicted_per_segment": [
           214,
           167
@@ -2513,7 +2513,7 @@
         "accuracy": 0.8564,
         "config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
         "fps": 799.4853730845593,
-        "hota": 0.5740824332481858,
+        "hota": 0.5732424865270404,
         "predicted_per_segment": [
           256,
           258
@@ -2525,7 +2525,7 @@
         "accuracy": 0.4317,
         "config": "ShuffleNet05_60_4_040_r050_tr_s100_sortcython",
         "fps": 1011.6836176023688,
-        "hota": 0.5452174756482141,
+        "hota": 0.5446230369615344,
         "predicted_per_segment": [
           168,
           104
@@ -2537,7 +2537,7 @@
         "accuracy": 0.5608,
         "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
         "fps": 1521.9557079024405,
-        "hota": 0.5241774178029237,
+        "hota": 0.5233848888028065,
         "predicted_per_segment": [
           218,
           115
@@ -2549,7 +2549,7 @@
         "accuracy": 0.5316,
         "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
         "fps": 1702.1601262140446,
-        "hota": 0.5169404791397355,
+        "hota": 0.516250408567778,
         "predicted_per_segment": [
           201,
           115
@@ -2561,7 +2561,7 @@
         "accuracy": 0.5002,
         "config": "ShuffleNet05_60_4_060_r075_tr_s100_sortcython",
         "fps": 1039.2527614379158,
-        "hota": 0.5517571357845209,
+        "hota": 0.5514552981144792,
         "predicted_per_segment": [
           196,
           106
@@ -2573,7 +2573,7 @@
         "accuracy": 0.5415,
         "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
         "fps": 793.1326914793398,
-        "hota": 0.5622258405408753,
+        "hota": 0.5616947954225526,
         "predicted_per_segment": [
           213,
           106
@@ -2585,7 +2585,7 @@
         "accuracy": 0.501,
         "config": "ShuffleNet05_60_4_080_r075_tr_s100_sortcython",
         "fps": 1022.8341857442044,
-        "hota": 0.5509876340259151,
+        "hota": 0.5507111554337601,
         "predicted_per_segment": [
           195,
           108
@@ -2597,7 +2597,7 @@
         "accuracy": 0.5726,
         "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
         "fps": 840.8689691020345,
-        "hota": 0.5443036317491378,
+        "hota": 0.5437287660933776,
         "predicted_per_segment": [
           223,
           119
@@ -2609,7 +2609,7 @@
         "accuracy": 0.5554,
         "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
         "fps": 1571.8839045367638,
-        "hota": 0.522328126595969,
+        "hota": 0.5216726721661413,
         "predicted_per_segment": [
           216,
           114
@@ -2621,7 +2621,7 @@
         "accuracy": 0.5444,
         "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
         "fps": 824.2929980885491,
-        "hota": 0.5623625495444785,
+        "hota": 0.5617840786940972,
         "predicted_per_segment": [
           214,
           105
@@ -2633,7 +2633,7 @@
         "accuracy": 0.5277,
         "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
         "fps": 1801.3843891177278,
-        "hota": 0.5171107528700438,
+        "hota": 0.5165177083962227,
         "predicted_per_segment": [
           203,
           113
@@ -2645,7 +2645,7 @@
         "accuracy": 0.5109,
         "config": "ShuffleNet05_60_4_r050_tr_s100_sortcython",
         "fps": 936.7241847604092,
-        "hota": 0.5582177578042572,
+        "hota": 0.5578419337339728,
         "predicted_per_segment": [
           214,
           99
@@ -2657,7 +2657,7 @@
         "accuracy": 0.4841,
         "config": "ShuffleNet05_60_4_r075_none_s100_sortcython",
         "fps": 2009.2582087836968,
-        "hota": 0.50099236464983,
+        "hota": 0.5002081074175062,
         "predicted_per_segment": [
           184,
           106
@@ -2669,7 +2669,7 @@
         "accuracy": 0.5002,
         "config": "ShuffleNet05_60_4_r075_tr_s100_sortcython",
         "fps": 1058.2629483340477,
-        "hota": 0.5509185900608676,
+        "hota": 0.5506102610505161,
         "predicted_per_segment": [
           199,
           105
@@ -2681,7 +2681,7 @@
         "accuracy": 0.2357,
         "config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
         "fps": 2749.9474959772897,
-        "hota": 0.3681388580904752,
+        "hota": 0.367281344832327,
         "predicted_per_segment": [
           100,
           17
@@ -2693,7 +2693,7 @@
         "accuracy": 0.2236,
         "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
         "fps": 2877.669312674649,
-        "hota": 0.3693209212040199,
+        "hota": 0.3685460062691005,
         "predicted_per_segment": [
           103,
           16
@@ -2705,7 +2705,7 @@
         "accuracy": 0.2114,
         "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
         "fps": 3183.6011378886888,
-        "hota": 0.3557893683567884,
+        "hota": 0.354365453400256,
         "predicted_per_segment": [
           94,
           12
@@ -2717,7 +2717,7 @@
         "accuracy": 0.1804,
         "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
         "fps": 3431.967060787498,
-        "hota": 0.3355491186501663,
+        "hota": 0.3337803923754207,
         "predicted_per_segment": [
           79,
           10
@@ -2729,7 +2729,7 @@
         "accuracy": 0.1963,
         "config": "ShuffleNet05_60_8_r075_tr_s100_sortcython",
         "fps": 1971.57373325113,
-        "hota": 0.4038227356490509,
+        "hota": 0.4030454898408044,
         "predicted_per_segment": [
           86,
           12

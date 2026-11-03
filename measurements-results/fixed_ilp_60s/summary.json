@@ -1,0 +1,102 @@
+{
+  "measurement": "same fixed-test ILPs, sequential, Gurobi TimeLimit=60s",
+  "clips": 200,
+  "by_dataset_and_all": [
+    {
+      "dataset": "ams-y05",
+      "clips": 60,
+      "min_solve_ms": 7.173,
+      "median_solve_ms": 60518.122,
+      "p90_solve_ms": 62974.462,
+      "p95_solve_ms": 64307.419,
+      "max_solve_ms": 65853.196,
+      "mean_solve_ms": 47929.008,
+      "median_build_ms": 9.639,
+      "max_total_ms": 65883.1
+    },
+    {
+      "dataset": "caldot1-y05",
+      "clips": 60,
+      "min_solve_ms": 8.671,
+      "median_solve_ms": 37.861,
+      "p90_solve_ms": 31462.352,
+      "p95_solve_ms": 60116.095,
+      "max_solve_ms": 60476.868,
+      "mean_solve_ms": 6787.922,
+      "median_build_ms": 6.775,
+      "max_total_ms": 60490.492
+    },
+    {
+      "dataset": "caldot2-y05",
+      "clips": 60,
+      "min_solve_ms": 15.917,
+      "median_solve_ms": 28.228,
+      "p90_solve_ms": 468.427,
+      "p95_solve_ms": 7226.766,
+      "max_solve_ms": 32961.274,
+      "mean_solve_ms": 1363.653,
+      "median_build_ms": 6.592,
+      "max_total_ms": 32968.538
+    },
+    {
+      "dataset": "jnc0",
+      "clips": 5,
+      "min_solve_ms": 103.994,
+      "median_solve_ms": 2397.248,
+      "p90_solve_ms": 5524.126,
+      "p95_solve_ms": 5703.52,
+      "max_solve_ms": 5882.915,
+      "mean_solve_ms": 2701.772,
+      "median_build_ms": 293.099,
+      "max_total_ms": 6176.399
+    },
+    {
+      "dataset": "jnc2",
+      "clips": 5,
+      "min_solve_ms": 209.416,
+      "median_solve_ms": 3218.244,
+      "p90_solve_ms": 23906.93,
+      "p95_solve_ms": 27696.414,
+      "max_solve_ms": 31485.898,
+      "mean_solve_ms": 9643.85,
+      "median_build_ms": 279.182,
+      "max_total_ms": 31752.371
+    },
+    {
+      "dataset": "jnc6",
+      "clips": 5,
+      "min_solve_ms": 95.527,
+      "median_solve_ms": 113.764,
+      "p90_solve_ms": 147.396,
+      "p95_solve_ms": 149.011,
+      "max_solve_ms": 150.625,
+      "mean_solve_ms": 122.393,
+      "median_build_ms": 285.643,
+      "max_total_ms": 436.526
+    },
+    {
+      "dataset": "jnc7",
+      "clips": 5,
+      "min_solve_ms": 76.96,
+      "median_solve_ms": 134.421,
+      "p90_solve_ms": 40155.511,
+      "p95_solve_ms": 50187.958,
+      "max_solve_ms": 60220.404,
+      "mean_solve_ms": 14120.792,
+      "median_build_ms": 285.687,
+      "max_total_ms": 60497.08
+    },
+    {
+      "dataset": "all",
+      "clips": 200,
+      "min_solve_ms": 7.173,
+      "median_solve_ms": 144.804,
+      "p90_solve_ms": 60981.278,
+      "p95_solve_ms": 62134.098,
+      "max_solve_ms": 65853.196,
+      "mean_solve_ms": 17488.895,
+      "median_build_ms": 7.945,
+      "max_total_ms": 65883.1
+    }
+  ]
+}

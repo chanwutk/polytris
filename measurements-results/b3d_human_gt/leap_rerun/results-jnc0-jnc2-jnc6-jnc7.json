@@ -147,9 +147,9 @@
       },
       "hota": {
         "linear": {
-          "AssA": 0.2188,
-          "DetA": 0.1415,
-          "HOTA": 0.1684,
+          "AssA": 0.2128,
+          "DetA": 0.138,
+          "HOTA": 0.164,
           "LocA": 0.7551,
           "dets": 50189,
           "gt_dets": 74331,
@@ -167,9 +167,9 @@
         "pattern_minus_reported_e6": 0.0,
         "pattern_reproduces_reported": true,
         "raw": {
-          "AssA": 0.0073,
-          "DetA": 0.0135,
-          "HOTA": 0.0098,
+          "AssA": 0.0066,
+          "DetA": 0.0131,
+          "HOTA": 0.0092,
           "LocA": 0.9023,
           "dets": 1089,
           "gt_dets": 74331,
@@ -425,9 +425,9 @@
       },
       "hota": {
         "linear": {
-          "AssA": 0.0971,
-          "DetA": 0.1265,
-          "HOTA": 0.1066,
+          "AssA": 0.096,
+          "DetA": 0.1248,
+          "HOTA": 0.1053,
           "LocA": 0.7679,
           "dets": 64224,
           "gt_dets": 102177,
@@ -445,9 +445,9 @@
         "pattern_minus_reported_e6": 0.0,
         "pattern_reproduces_reported": true,
         "raw": {
-          "AssA": 0.0047,
-          "DetA": 0.0125,
-          "HOTA": 0.0075,
+          "AssA": 0.0045,
+          "DetA": 0.0123,
+          "HOTA": 0.0073,
           "LocA": 0.8906,
           "dets": 1406,
           "gt_dets": 102177,
@@ -703,9 +703,9 @@
       },
       "hota": {
         "linear": {
-          "AssA": 0.2821,
-          "DetA": 0.0325,
-          "HOTA": 0.0954,
+          "AssA": 0.2794,
+          "DetA": 0.0318,
+          "HOTA": 0.0939,
           "LocA": 0.8764,
           "dets": 3222,
           "gt_dets": 71997,
@@ -723,9 +723,9 @@
         "pattern_minus_reported_e6": 0.0,
         "pattern_reproduces_reported": true,
         "raw": {
-          "AssA": 0.0049,
-          "DetA": 0.0177,
-          "HOTA": 0.0092,
+          "AssA": 0.0047,
+          "DetA": 0.0173,
+          "HOTA": 0.0089,
           "LocA": 0.9039,
           "dets": 1365,
           "gt_dets": 71997,
@@ -981,9 +981,9 @@
       },
       "hota": {
         "linear": {
-          "AssA": 0.1542,
-          "DetA": 0.1545,
-          "HOTA": 0.1496,
+          "AssA": 0.1517,
+          "DetA": 0.1506,
+          "HOTA": 0.1465,
           "LocA": 0.7751,
           "dets": 34845,
           "gt_dets": 56673,
@@ -1001,9 +1001,9 @@
         "pattern_minus_reported_e6": 0.0,
         "pattern_reproduces_reported": true,
         "raw": {
-          "AssA": 0.0076,
-          "DetA": 0.0161,
-          "HOTA": 0.011,
+          "AssA": 0.007,
+          "DetA": 0.0155,
+          "HOTA": 0.0104,
           "LocA": 0.9146,
           "dets": 947,
           "gt_dets": 56673,
@@ -1198,7 +1198,7 @@
     {
       "bytes": 6605,
       "exists": true,
-      "mtime": "2026-11-03T03:53:12+00:00",
+      "mtime": "2026-11-03T11:35:13+00:00",
       "path": "/polyis-cache/SOTA/leap/jnc0/accuracy/raw/test/000/DATASET.json",
       "sha256": "38187d5cc39878727cbb2f0f905ac5476f43658f9fd88d8030917192e4cd46d7"
     },
@@ -1247,7 +1247,7 @@
     {
       "bytes": 6492,
       "exists": true,
-      "mtime": "2026-11-03T03:53:12+00:00",
+      "mtime": "2026-11-03T11:35:13+00:00",
       "path": "/polyis-cache/SOTA/leap/jnc2/accuracy/raw/test/000/DATASET.json",
       "sha256": "b9ce0d9e0061d5448e73c95b5533b7e8a2a30a25453219753d28a64259fa4b03"
     },
@@ -1296,7 +1296,7 @@
     {
       "bytes": 6659,
       "exists": true,
-      "mtime": "2026-11-03T03:53:12+00:00",
+      "mtime": "2026-11-03T11:35:14+00:00",
       "path": "/polyis-cache/SOTA/leap/jnc6/accuracy/raw/test/000/DATASET.json",
       "sha256": "75d1a6ddc6f7cc41ac7416eb3857dabbbdf6d7d2d046fac6bb1b700e6e96e9fe"
     },
@@ -1345,7 +1345,7 @@
     {
       "bytes": 6617,
       "exists": true,
-      "mtime": "2026-11-03T03:53:12+00:00",
+      "mtime": "2026-11-03T11:35:14+00:00",
       "path": "/polyis-cache/SOTA/leap/jnc7/accuracy/raw/test/000/DATASET.json",
       "sha256": "95eb5ce7517c6de8a5ef5d01def5d705474641fcc612b03619d9cf61cb689141"
     }

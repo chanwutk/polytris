@@ -23,25 +23,25 @@
       "dataset": "jnc0",
       "label": "B3D1",
       "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc0-tracks.parquet",
-      "sha256": "70f5c52caca64f33d14a86a4a5d19cbcec72212d8e7b2a048376165b7113aecf"
+      "sha256": "8c42cc077b1343e9e10df058701f3c7d940a8149db25f87112584cf974e6d516"
     },
     {
       "dataset": "jnc2",
       "label": "B3D2",
       "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc2-tracks.parquet",
-      "sha256": "343d1a08e5837a7b26fba344352cb4a0189f7606492a438c88077b94ebcadcf5"
+      "sha256": "6b40b325efe7b7e15e43a3c52d5446598f72c322b605918d6a0308c335ceb0eb"
     },
     {
       "dataset": "jnc6",
       "label": "B3D3",
       "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc6-tracks.parquet",
-      "sha256": "3459318f45b337c21e54009d5c9115f0e3add59adc601b0bbc356116e9aa5e38"
+      "sha256": "23b954bfa8adbe219a15b4b001a174b728e91b88ca59bdba5c4a3bb134663add"
     },
     {
       "dataset": "jnc7",
       "label": "B3D4",
       "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc7-tracks.parquet",
-      "sha256": "4bcb0ee9d73667271f9b5d64c1d65a4ce0959e0e7a0d303172f7a09f2d76f7c4"
+      "sha256": "7b65bcbd8251bfb3cddf49ee3639c0816bf28793ea2ae0442b35ea8a752397ef"
     }
   ],
   "rows": [
@@ -60,9 +60,9 @@
       "label": "B3D pooled",
       "tracks": 721,
       "mean_s": 16.250208044382813,
-      "stddev_s": 7.164219950469954,
-      "variance_s2": 51.326047498711716,
-      "coefficient_of_variation": 0.44086942954225133,
+      "stddev_s": 7.164219950469957,
+      "variance_s2": 51.32604749871175,
+      "coefficient_of_variation": 0.4408694295422515,
       "p10_s": 8.4,
       "p50_s": 14.933333333333334,
       "p90_s": 25.866666666666667
@@ -70,10 +70,10 @@
     {
       "label": "B3D1",
       "tracks": 217,
-      "mean_s": 15.713056835637488,
+      "mean_s": 15.71305683563749,
       "stddev_s": 5.432329925850697,
-      "variance_s2": 29.51020842329304,
-      "coefficient_of_variation": 0.3457207583905684,
+      "variance_s2": 29.510208423293037,
+      "coefficient_of_variation": 0.3457207583905683,
       "p10_s": 10.253333333333334,
       "p50_s": 14.733333333333333,
       "p90_s": 23.49333333333334
@@ -83,7 +83,7 @@
       "tracks": 168,
       "mean_s": 17.057539682539677,
       "stddev_s": 8.246201388098727,
-      "variance_s2": 67.99983733308139,
+      "variance_s2": 67.99983733308137,
       "coefficient_of_variation": 0.4834343956731139,
       "p10_s": 7.713333333333333,
       "p50_s": 15.866666666666667,
@@ -92,10 +92,10 @@
     {
       "label": "B3D3",
       "tracks": 187,
-      "mean_s": 17.806773618538326,
-      "stddev_s": 7.142836173686803,
-      "variance_s2": 51.02010860412872,
-      "coefficient_of_variation": 0.40113028484006324,
+      "mean_s": 17.806773618538323,
+      "stddev_s": 7.1428361736868045,
+      "variance_s2": 51.02010860412875,
+      "coefficient_of_variation": 0.4011302848400634,
       "p10_s": 8.706666666666665,
       "p50_s": 17.066666666666666,
       "p90_s": 27.333333333333336
@@ -104,8 +104,8 @@
       "label": "B3D4",
       "tracks": 149,
       "mean_s": 14.168680089485465,
-      "stddev_s": 7.493557987218018,
-      "variance_s2": 56.15341130779895,
+      "stddev_s": 7.4935579872180185,
+      "variance_s2": 56.153411307798955,
       "coefficient_of_variation": 0.5288818676045177,
       "p10_s": 7.666666666666667,
       "p50_s": 12.6,

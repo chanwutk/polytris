@@ -58,11 +58,11 @@
       "files": {
         "Amsterdam": {
           "leap": {
-            "bytes": 287,
+            "bytes": 288,
             "exists": true,
-            "mtime": "2026-10-26T17:31:10+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/leap/ams-y05/tradeoff.csv",
-            "sha256": "f8c8419f4ef7bcdfe41002a6c5c618bd40441ce664e303a9c7e94d6a4d79fdaf"
+            "sha256": "578afadc3fbb6fad225196b79512417bea01bcc2b180acbd73388aee16b3fce5"
           },
           "leap_stat": {
             "bytes": 3312,
@@ -72,25 +72,25 @@
             "sha256": "3453e951493dabd6fbba246b5cc7d451f2a6539c777f0bfcd90f856058cf1938"
           },
           "otif": {
-            "bytes": 3101,
+            "bytes": 3097,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/otif/ams-y05/tradeoff.csv",
-            "sha256": "9390ee7418333e26c70c145e37e25de3f10519dbb06f0743eb4c0432d2424bc3"
+            "sha256": "d9dcdd68a53fcbde09fea559188b9e444ae85f03b38c09bc0f2024d768ac169a"
           },
           "tradeoff": {
-            "bytes": 19796,
+            "bytes": 19787,
             "exists": true,
-            "mtime": "2026-04-20T00:56:32+00:00",
+            "mtime": "2026-11-03T11:35:04+00:00",
             "path": "/polyis-cache/ams-y05/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "52ced6559546465e4a1b3a41c0c04c4b220fabff922c93705d69f51329d10829"
+            "sha256": "2c7cf504cc80cfcf5f7f641ed8e43574d950758a84080e171477b3f2379d2320"
           }
         },
         "B3D1": {
           "leap": {
             "bytes": 285,
             "exists": true,
-            "mtime": "2026-11-03T03:53:17+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc0/tradeoff.csv",
             "sha256": "7034865e10356da0af884cd6ef976dd28d6e3550c869acb80f7b14b6fd75984f"
           },
@@ -102,16 +102,16 @@
             "sha256": "d7890b5c3e4acb96704e9049337fee80d337baa53b0944925f84cbd6c5ffe66f"
           },
           "otif": {
-            "bytes": 2292,
+            "bytes": 2289,
             "exists": true,
-            "mtime": "2026-11-03T03:53:17+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/otif/jnc0/tradeoff.csv",
-            "sha256": "d27a01542adf0c87bcb778fdb68f70883eeb78f7fe9dfa52907735d677b3f982"
+            "sha256": "53cfc9b587cc77aaca865c8cfdf18509db3b9b2c4ddfc241f4906511f6f5ab71"
           },
           "tradeoff": {
             "bytes": 18366,
             "exists": true,
-            "mtime": "2026-11-03T03:53:05+00:00",
+            "mtime": "2026-11-03T11:35:02+00:00",
             "path": "/polyis-cache/jnc0/evaluation/090_tradeoff/tradeoff.csv",
             "sha256": "f2b2d9efdd539f048a40dad391e55b79e34c2f69d83c84902b8c6083c67ffff8"
           }
@@ -120,7 +120,7 @@
           "leap": {
             "bytes": 288,
             "exists": true,
-            "mtime": "2026-11-03T03:53:17+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc2/tradeoff.csv",
             "sha256": "139da9e8444793fae6c5be8db40b6a3d18038be0e5da9b2a9f06107a38ebf190"
           },
@@ -132,16 +132,16 @@
             "sha256": "2aaf345ae057ebfbf6282bc832110e055ec7fe9c3cb5d008a67e60bdbf76b338"
           },
           "otif": {
-            "bytes": 2119,
+            "bytes": 2123,
             "exists": true,
-            "mtime": "2026-11-03T03:53:17+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/otif/jnc2/tradeoff.csv",
-            "sha256": "8f0eecc3b5b09cab7a9b0a7174acb586eaf36784d0a8a87ce60be36f14327945"
+            "sha256": "88d4d68fecc8879f701c3b7ef8b2549f8452102d667adda13b9d74d2a3a0175c"
           },
           "tradeoff": {
             "bytes": 18119,
             "exists": true,
-            "mtime": "2026-11-03T03:53:05+00:00",
+            "mtime": "2026-11-03T11:35:02+00:00",
             "path": "/polyis-cache/jnc2/evaluation/090_tradeoff/tradeoff.csv",
             "sha256": "d6a1fbaafa563cac409555a102aea308897617f0ec795911249a65dfb48559d5"
           }
@@ -150,7 +150,7 @@
           "leap": {
             "bytes": 289,
             "exists": true,
-            "mtime": "2026-11-03T03:53:17+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc6/tradeoff.csv",
             "sha256": "fbbc0b1c3aae6f6aa1c72ee303a6c53a1dfd990add27cdd0c8544333de517a9f"
           },
@@ -162,25 +162,25 @@
             "sha256": "47c75c48a6a8259a51c91a835f442347c6c8789afe98816305cc3e02e1a919ef"
           },
           "otif": {
-            "bytes": 2338,
+            "bytes": 2340,
             "exists": true,
-            "mtime": "2026-11-03T03:53:17+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/otif/jnc6/tradeoff.csv",
-            "sha256": "fbd17109ad62626b40f627613db3e1934cb752d8f15b4090cd8734c370d77316"
+            "sha256": "f475149dbf1993fb81463a60fcf87cf237d3d6a65109a393dad427b01997aa9a"
           },
           "tradeoff": {
             "bytes": 19114,
             "exists": true,
-            "mtime": "2026-11-03T03:53:05+00:00",
+            "mtime": "2026-11-03T11:35:02+00:00",
             "path": "/polyis-cache/jnc6/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "535d60763195e830dfbea50be077676a394ad5983888e0bff0cc89a7e8fa9f49"
+            "sha256": "3cd83c59601263d8aa5e90fd87c22e0a02bbc5186d703b11489e05253255784e"
           }
         },
         "B3D4": {
           "leap": {
             "bytes": 286,
             "exists": true,
-            "mtime": "2026-11-03T03:53:17+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/leap/jnc7/tradeoff.csv",
             "sha256": "169a8b26a04a233fee5f4c12ef66f1d0bdcd1625c97bcfb8ccc618a49641bbc4"
           },
@@ -192,16 +192,16 @@
             "sha256": "4d4f3e2efc158bda891ae0be88849c33ab130afac07495013cacd5f472c515c6"
           },
           "otif": {
-            "bytes": 2623,
+            "bytes": 2625,
             "exists": true,
-            "mtime": "2026-11-03T03:53:17+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/otif/jnc7/tradeoff.csv",
-            "sha256": "ed3e657389dd7cd4d0451f1d348a2d5976c8048f56bf853b3ac7a44b36595da2"
+            "sha256": "080f40b60f983836e95a44d9b6c88ff2cec34ad96da17065b0afd513a7a9a209"
           },
           "tradeoff": {
             "bytes": 16524,
             "exists": true,
-            "mtime": "2026-11-03T03:53:05+00:00",
+            "mtime": "2026-11-03T11:35:02+00:00",
             "path": "/polyis-cache/jnc7/evaluation/090_tradeoff/tradeoff.csv",
             "sha256": "372de249b1a67ff6840be50132f4b51008d685a0e7f66c2d70e0283280a12993"
           }
@@ -210,9 +210,9 @@
           "leap": {
             "bytes": 291,
             "exists": true,
-            "mtime": "2026-10-26T17:31:10+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/leap/caldot1-y05/tradeoff.csv",
-            "sha256": "84b8e6fa3ce874ae0b3c3f6d83517841b135379a9962b1bb23b43c5f4c6b988e"
+            "sha256": "4cfe94ab793025e1ef737ea44772f33fb43614a4b5db6d3a0d0bf65b96bfe607"
           },
           "leap_stat": {
             "bytes": 6540,
@@ -222,27 +222,27 @@
             "sha256": "c33ba055ebbff7f2d461a90b555aef3a477635c9718a8b5e25a42a94f5549701"
           },
           "otif": {
-            "bytes": 3030,
+            "bytes": 3028,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/otif/caldot1-y05/tradeoff.csv",
-            "sha256": "0c49fa3856359b0bfffa0e8185f5fea30e6fde225829c1bd289163ca7fe0a9fa"
+            "sha256": "927b913ab47522a3c7a61b289764ecc96089ee993fd13f96f19ba9ae6afeac11"
           },
           "tradeoff": {
-            "bytes": 14577,
+            "bytes": 14576,
             "exists": true,
-            "mtime": "2026-04-20T00:56:32+00:00",
+            "mtime": "2026-11-03T11:35:03+00:00",
             "path": "/polyis-cache/caldot1-y05/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "e2168e92bae013c01cf2e6858cd9b2fe69e006a3b33c3dad5a77fb8541ac76d2"
+            "sha256": "a7c8f10a72f60971fc53ddc5e68e1fabc9d26c9bf0833d52439ee3383f1965b9"
           }
         },
         "CalDoT2": {
           "leap": {
-            "bytes": 291,
+            "bytes": 293,
             "exists": true,
-            "mtime": "2026-10-26T17:31:10+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/leap/caldot2-y05/tradeoff.csv",
-            "sha256": "7dd5541f90f2d2c2c9b711f562dd4b56b81cbf1feea7842f685d2b0d45df524e"
+            "sha256": "bb9d65d133a1b726ff748c72484872a8d075052fa5c5fc70b1301953e00f836a"
           },
           "leap_stat": {
             "bytes": 6633,
@@ -252,22 +252,22 @@
             "sha256": "0e0e5f860dc65ef384e59e25277d729c7abe69db6cf2f0d7e48349bb45dc2169"
           },
           "otif": {
-            "bytes": 3112,
+            "bytes": 3113,
             "exists": true,
-            "mtime": "2026-04-20T00:58:14+00:00",
+            "mtime": "2026-11-03T11:35:39+00:00",
             "path": "/polyis-cache/SOTA/otif/caldot2-y05/tradeoff.csv",
-            "sha256": "dbe995f226be6aabc38cbb2fa7ef52e5695cd3bb04072c6abe263eb4c86e8b47"
+            "sha256": "4ade0f280bd6de2cc2150701fa0224041d6ce519e9f4856c6322d7d0dd2ab882"
           },
           "tradeoff": {
-            "bytes": 13677,
+            "bytes": 13678,
             "exists": true,
-            "mtime": "2026-04-20T00:56:32+00:00",
+            "mtime": "2026-11-03T11:35:03+00:00",
             "path": "/polyis-cache/caldot2-y05/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "2f052122c3d79aeb9e4d9dc95fe24f6250884c37f134a0dca786b9e637fe58fc"
+            "sha256": "4aae7a9b3419b23423c19dc9df3a505452d690beec01e273c47a6a00e994ad7b"
           }
         }
       },
-      "run_at": "2026-11-03T04:40:36+00:00",
+      "run_at": "2026-11-03T19:13:45+00:00",
       "test_rows": {
         "Amsterdam": {
           "leap": 1,
@@ -340,11 +340,11 @@
       "min": 1.5,
       "per_dataset": {
         "Amsterdam": {
-          "bound": 0.6949,
+          "bound": 0.6948,
           "prior": {
             "config": "param 2",
             "fps": 60.3,
-            "hota": 0.6805,
+            "hota": 0.6786,
             "meets_bound": false,
             "rule": "nearest_not_more_accurate",
             "system": "otif"
@@ -352,7 +352,7 @@
           "tetris": {
             "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
             "fps": 1049.5,
-            "hota": 0.6966
+            "hota": 0.6962
           },
           "tetris_speedup_vs_prior": 17.4
         },
@@ -361,7 +361,7 @@
           "prior": {
             "config": "param 2",
             "fps": 101.6,
-            "hota": 0.7082,
+            "hota": 0.7072,
             "meets_bound": false,
             "rule": "nearest_not_more_accurate",
             "system": "otif"
@@ -378,7 +378,7 @@
           "prior": {
             "config": "param 3",
             "fps": 229.5,
-            "hota": 0.6879,
+            "hota": 0.6811,
             "meets_bound": false,
             "rule": "nearest_not_more_accurate",
             "system": "otif"
@@ -395,7 +395,7 @@
           "prior": {
             "config": "param 2",
             "fps": 98.7,
-            "hota": 0.781,
+            "hota": 0.7775,
             "meets_bound": true,
             "rule": "threshold_feasible_not_more_accurate",
             "system": "otif"
@@ -425,11 +425,11 @@
           "tetris_speedup_vs_prior": 15.9
         },
         "CalDoT1": {
-          "bound": 0.7772,
+          "bound": 0.7771,
           "prior": {
             "config": "param 2",
             "fps": 58.7,
-            "hota": 0.7705,
+            "hota": 0.7697,
             "meets_bound": false,
             "rule": "nearest_not_more_accurate",
             "system": "otif"
@@ -437,26 +437,26 @@
           "tetris": {
             "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
             "fps": 729.3,
-            "hota": 0.7787
+            "hota": 0.7785
           },
           "tetris_speedup_vs_prior": 12.4
         },
         "CalDoT2": {
-          "bound": 0.6798,
+          "bound": 0.6792,
           "prior": {
             "config": "param 0",
             "fps": 28.9,
-            "hota": 0.6675,
+            "hota": 0.6668,
             "meets_bound": false,
             "rule": "nearest_not_more_accurate",
             "system": "otif"
           },
           "tetris": {
-            "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
-            "fps": 144.7,
-            "hota": 0.6921
+            "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+            "fps": 204.0,
+            "hota": 0.6792
           },
-          "tetris_speedup_vs_prior": 5.0
+          "tetris_speedup_vs_prior": 7.1
         }
       },
       "prior_systems": [
@@ -465,35 +465,35 @@
     },
     "0.10": {
       "matched": 7,
-      "matched_outside_bound": 5,
+      "matched_outside_bound": 7,
       "max": 24.7,
       "min": 1.6,
       "per_dataset": {
         "Amsterdam": {
-          "bound": 0.6584,
+          "bound": 0.6583,
           "prior": {
             "config": "param 5",
             "fps": 491.6,
-            "hota": 0.63,
+            "hota": 0.6277,
             "meets_bound": false,
             "rule": "nearest_not_more_accurate",
             "system": "otif"
           },
           "tetris": {
-            "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
-            "fps": 1391.9,
-            "hota": 0.6593
+            "config": "ShuffleNet05_60_16_080_r025_square_s100_sortcython",
+            "fps": 1116.1,
+            "hota": 0.6645
           },
-          "tetris_speedup_vs_prior": 2.8
+          "tetris_speedup_vs_prior": 2.3
         },
         "B3D1": {
           "bound": 0.7076,
           "prior": {
             "config": "param 2",
             "fps": 101.6,
-            "hota": 0.7082,
-            "meets_bound": true,
-            "rule": "threshold_feasible_not_more_accurate",
+            "hota": 0.7072,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
             "system": "otif"
           },
           "tetris": {
@@ -508,9 +508,9 @@
           "prior": {
             "config": "param 3",
             "fps": 229.5,
-            "hota": 0.6879,
-            "meets_bound": true,
-            "rule": "threshold_feasible_not_more_accurate",
+            "hota": 0.6811,
+            "meets_bound": false,
+            "rule": "nearest_not_more_accurate",
             "system": "otif"
           },
           "tetris": {
@@ -525,7 +525,7 @@
           "prior": {
             "config": "param 3",
             "fps": 203.4,
-            "hota": 0.5987,
+            "hota": 0.5918,
             "meets_bound": false,
             "rule": "nearest_not_more_accurate",
             "system": "otif"
@@ -555,11 +555,11 @@
           "tetris_speedup_vs_prior": 24.7
         },
         "CalDoT1": {
-          "bound": 0.7363,
+          "bound": 0.7362,
           "prior": {
             "config": "param 4",
             "fps": 235.1,
-            "hota": 0.7331,
+            "hota": 0.7307,
             "meets_bound": false,
             "rule": "nearest_not_more_accurate",
             "system": "otif"
@@ -567,16 +567,16 @@
           "tetris": {
             "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
             "fps": 1560.1,
-            "hota": 0.7414
+            "hota": 0.7404
           },
           "tetris_speedup_vs_prior": 6.6
         },
         "CalDoT2": {
-          "bound": 0.644,
+          "bound": 0.6435,
           "prior": {
             "config": "param 2",
             "fps": 104.7,
-            "hota": 0.5526,
+            "hota": 0.5516,
             "meets_bound": false,
             "rule": "nearest_not_more_accurate",
             "system": "otif"
@@ -584,7 +584,7 @@
           "tetris": {
             "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
             "fps": 321.5,
-            "hota": 0.6454
+            "hota": 0.645
           },
           "tetris_speedup_vs_prior": 3.1
         }
@@ -600,11 +600,11 @@
       "min": 0.8,
       "per_dataset": {
         "Amsterdam": {
-          "bound": 0.5434,
+          "bound": 0.5258,
           "prior": {
             "config": "param 0",
             "fps": 389.2,
-            "hota": 0.5434,
+            "hota": 0.5258,
             "meets_bound": true,
             "rule": "nearest_not_more_accurate",
             "system": "leap"
@@ -612,7 +612,7 @@
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 2840.3,
-            "hota": 0.5675
+            "hota": 0.5613
           },
           "tetris_speedup_vs_prior": 7.3
         },
@@ -621,7 +621,7 @@
           "prior": {
             "config": "param 5",
             "fps": 1115.1,
-            "hota": 0.1752,
+            "hota": 0.1693,
             "meets_bound": true,
             "rule": "threshold_feasible_not_more_accurate",
             "system": "otif"
@@ -638,7 +638,7 @@
           "prior": {
             "config": "param 5",
             "fps": 1084.6,
-            "hota": 0.3287,
+            "hota": 0.315,
             "meets_bound": true,
             "rule": "threshold_feasible_not_more_accurate",
             "system": "otif"
@@ -655,7 +655,7 @@
           "prior": {
             "config": "param 5",
             "fps": 1065.0,
-            "hota": 0.0546,
+            "hota": 0.0541,
             "meets_bound": true,
             "rule": "threshold_feasible_not_more_accurate",
             "system": "otif"
@@ -663,7 +663,7 @@
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 1214.5,
-            "hota": 0.1128
+            "hota": 0.1126
           },
           "tetris_speedup_vs_prior": 1.1
         },
@@ -672,7 +672,7 @@
           "prior": {
             "config": "param 6",
             "fps": 1023.5,
-            "hota": 0.1235,
+            "hota": 0.1216,
             "meets_bound": true,
             "rule": "threshold_feasible_not_more_accurate",
             "system": "otif"
@@ -685,11 +685,11 @@
           "tetris_speedup_vs_prior": 1.4
         },
         "CalDoT1": {
-          "bound": 0.5266,
+          "bound": 0.5095,
           "prior": {
             "config": "param 7",
             "fps": 1204.8,
-            "hota": 0.5695,
+            "hota": 0.5675,
             "meets_bound": true,
             "rule": "threshold_feasible_not_more_accurate",
             "system": "otif"
@@ -697,16 +697,16 @@
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 4968.4,
-            "hota": 0.6701
+            "hota": 0.6627
           },
           "tetris_speedup_vs_prior": 4.1
         },
         "CalDoT2": {
-          "bound": 0.1391,
+          "bound": 0.1338,
           "prior": {
             "config": "param 0",
             "fps": 487.3,
-            "hota": 0.1391,
+            "hota": 0.1338,
             "meets_bound": true,
             "rule": "nearest_not_more_accurate",
             "system": "leap"
@@ -714,7 +714,7 @@
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 6054.4,
-            "hota": 0.182
+            "hota": 0.179
           },
           "tetris_speedup_vs_prior": 12.4
         }
@@ -732,7 +732,7 @@
           "prior": {
             "config": "param 1",
             "fps": 47.9,
-            "hota": 0.7908,
+            "hota": 0.7895,
             "speedup_vs_reference": 3.2
           },
           "tetris": {
@@ -749,15 +749,15 @@
           "prior": {
             "config": "param 2",
             "fps": 108.8,
-            "hota": 0.7556,
+            "hota": 0.7546,
             "speedup_vs_reference": 7.5
           },
           "tetris": {
-            "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
-            "fps": 107.5,
-            "hota": 0.7568,
+            "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
+            "fps": 112.0,
+            "hota": 0.7546,
             "speedup_vs_prior": 1.0,
-            "speedup_vs_reference": 7.5
+            "speedup_vs_reference": 7.8
           }
         }
       },
@@ -766,7 +766,7 @@
           "prior": {
             "config": "param 2",
             "fps": 98.7,
-            "hota": 0.781,
+            "hota": 0.7775,
             "speedup_vs_reference": 6.8
           },
           "tetris": {
@@ -802,13 +802,13 @@
           "prior": {
             "config": "param 4",
             "fps": 241.1,
-            "hota": 0.6671,
+            "hota": 0.6648,
             "speedup_vs_reference": 15.8
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r025_square_s100_sortcython",
             "fps": 1105.5,
-            "hota": 0.6677,
+            "hota": 0.6659,
             "speedup_vs_prior": 4.6,
             "speedup_vs_reference": 72.4
           }
@@ -817,34 +817,34 @@
       "B3D1": {
         "otif": {
           "prior": {
-            "config": "param 2",
-            "fps": 101.6,
-            "hota": 0.7082,
-            "speedup_vs_reference": 6.9
+            "config": "param 1",
+            "fps": 47.9,
+            "hota": 0.7895,
+            "speedup_vs_reference": 3.2
           },
           "tetris": {
-            "config": "ShuffleNet05_60_4_040_r050_none_s100_sortcython",
-            "fps": 307.7,
-            "hota": 0.7291,
-            "speedup_vs_prior": 3.0,
-            "speedup_vs_reference": 20.9
+            "config": "ShuffleNet05_60_1_060_r025_tr_s100_sortcython",
+            "fps": 59.1,
+            "hota": 0.7914,
+            "speedup_vs_prior": 1.2,
+            "speedup_vs_reference": 4.0
           }
         }
       },
       "B3D2": {
         "otif": {
           "prior": {
-            "config": "param 3",
-            "fps": 229.5,
-            "hota": 0.6879,
-            "speedup_vs_reference": 15.9
+            "config": "param 2",
+            "fps": 108.8,
+            "hota": 0.7546,
+            "speedup_vs_reference": 7.5
           },
           "tetris": {
-            "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
-            "fps": 390.6,
-            "hota": 0.7169,
-            "speedup_vs_prior": 1.7,
-            "speedup_vs_reference": 27.1
+            "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
+            "fps": 112.0,
+            "hota": 0.7546,
+            "speedup_vs_prior": 1.0,
+            "speedup_vs_reference": 7.8
           }
         }
       },
@@ -853,7 +853,7 @@
           "prior": {
             "config": "param 2",
             "fps": 98.7,
-            "hota": 0.781,
+            "hota": 0.7775,
             "speedup_vs_reference": 6.8
           },
           "tetris": {
@@ -887,15 +887,15 @@
           "prior": {
             "config": "param 3",
             "fps": 115.1,
-            "hota": 0.7703,
+            "hota": 0.7678,
             "speedup_vs_reference": 3.7
           },
           "tetris": {
-            "config": "ShuffleNet05_60_4_r050_bl_s100_sortcython",
-            "fps": 765.6,
-            "hota": 0.7752,
-            "speedup_vs_prior": 6.7,
-            "speedup_vs_reference": 24.8
+            "config": "ShuffleNet05_60_4_r075_bl_s100_sortcython",
+            "fps": 820.5,
+            "hota": 0.7683,
+            "speedup_vs_prior": 7.1,
+            "speedup_vs_reference": 26.5
           }
         }
       },
@@ -904,13 +904,13 @@
           "prior": {
             "config": "param 1",
             "fps": 57.0,
-            "hota": 0.655,
+            "hota": 0.6536,
             "speedup_vs_reference": 1.8
           },
           "tetris": {
             "config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
             "fps": 292.2,
-            "hota": 0.6558,
+            "hota": 0.6552,
             "speedup_vs_prior": 5.1,
             "speedup_vs_reference": 9.5
           }
@@ -923,13 +923,13 @@
           "prior": {
             "config": "param 0",
             "fps": 389.2,
-            "hota": 0.5434,
+            "hota": 0.5258,
             "speedup_vs_reference": 25.5
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 2840.3,
-            "hota": 0.5675,
+            "hota": 0.5613,
             "speedup_vs_prior": 7.3,
             "speedup_vs_reference": 186.1
           }
@@ -938,13 +938,13 @@
           "prior": {
             "config": "param 5",
             "fps": 491.6,
-            "hota": 0.63,
+            "hota": 0.6277,
             "speedup_vs_reference": 32.2
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_tr_s100_sortcython",
             "fps": 1861.3,
-            "hota": 0.6362,
+            "hota": 0.6342,
             "speedup_vs_prior": 3.8,
             "speedup_vs_reference": 122.0
           }
@@ -970,7 +970,7 @@
           "prior": {
             "config": "param 5",
             "fps": 1115.1,
-            "hota": 0.1752,
+            "hota": 0.1693,
             "speedup_vs_reference": 75.6
           },
           "tetris": {
@@ -1002,7 +1002,7 @@
           "prior": {
             "config": "param 5",
             "fps": 1084.6,
-            "hota": 0.3287,
+            "hota": 0.315,
             "speedup_vs_reference": 75.3
           },
           "tetris": {
@@ -1025,7 +1025,7 @@
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 1214.5,
-            "hota": 0.1128,
+            "hota": 0.1126,
             "speedup_vs_prior": 40.4,
             "speedup_vs_reference": 83.5
           }
@@ -1034,13 +1034,13 @@
           "prior": {
             "config": "param 5",
             "fps": 1065.0,
-            "hota": 0.0546,
+            "hota": 0.0541,
             "speedup_vs_reference": 73.3
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 1214.5,
-            "hota": 0.1128,
+            "hota": 0.1126,
             "speedup_vs_prior": 1.1,
             "speedup_vs_reference": 83.5
           }
@@ -1066,7 +1066,7 @@
           "prior": {
             "config": "param 6",
             "fps": 1023.5,
-            "hota": 0.1235,
+            "hota": 0.1216,
             "speedup_vs_reference": 70.5
           },
           "tetris": {
@@ -1083,13 +1083,13 @@
           "prior": {
             "config": "param 0",
             "fps": 353.5,
-            "hota": 0.5266,
+            "hota": 0.5095,
             "speedup_vs_reference": 11.4
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 4968.4,
-            "hota": 0.6701,
+            "hota": 0.6627,
             "speedup_vs_prior": 14.1,
             "speedup_vs_reference": 160.6
           }
@@ -1098,13 +1098,13 @@
           "prior": {
             "config": "param 7",
             "fps": 1204.8,
-            "hota": 0.5695,
+            "hota": 0.5675,
             "speedup_vs_reference": 39.0
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 4968.4,
-            "hota": 0.6701,
+            "hota": 0.6627,
             "speedup_vs_prior": 4.1,
             "speedup_vs_reference": 160.6
           }
@@ -1115,13 +1115,13 @@
           "prior": {
             "config": "param 0",
             "fps": 487.3,
-            "hota": 0.1391,
+            "hota": 0.1338,
             "speedup_vs_reference": 15.8
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 6054.4,
-            "hota": 0.182,
+            "hota": 0.179,
             "speedup_vs_prior": 12.4,
             "speedup_vs_reference": 196.2
           }
@@ -1130,13 +1130,13 @@
           "prior": {
             "config": "param 9",
             "fps": 1449.3,
-            "hota": 0.3254,
+            "hota": 0.3217,
             "speedup_vs_reference": 47.0
           },
           "tetris": {
             "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
             "fps": 3432.0,
-            "hota": 0.3355,
+            "hota": 0.3338,
             "speedup_vs_prior": 2.4,
             "speedup_vs_reference": 111.2
           }
@@ -2335,8 +2335,8 @@
       },
       "compareNaiveSpeedupMinFivePct": {
         "manuscript": 4.7,
-        "match": true,
-        "measured": 4.7
+        "match": false,
+        "measured": 6.6
       },
       "comparePolytrisMeetFivePct": {
         "manuscript": 7,
@@ -2382,8 +2382,8 @@
       },
       "compareNaiveSpeedupMaxTenPct": {
         "manuscript": 91.2,
-        "match": true,
-        "measured": 91.2
+        "match": false,
+        "measured": 73.1
       },
       "compareNaiveSpeedupMinTenPct": {
         "manuscript": 10.4,
@@ -2412,34 +2412,34 @@
       },
       "compareSpeedupMinTenPct": {
         "manuscript": 3.4,
-        "match": false,
-        "measured": 1.7
+        "match": true,
+        "measured": 3.4
       }
     }
   },
   "operating_points": {
     "0.05": {
       "Amsterdam": {
-        "bound": 0.6949,
+        "bound": 0.6948,
         "loss": 0.05,
         "reference": {
-          "accuracy": 0.7315250495020468,
+          "accuracy": 0.7314011786317656,
           "fps": 15.3
         },
         "systems": {
           "leap": {
-            "best_accuracy": 0.5433764552721264,
+            "best_accuracy": 0.52584602676162,
             "meets_bound": false
           },
           "otif": {
-            "best_accuracy": 0.6805375028285238,
+            "best_accuracy": 0.6786244241279945,
             "meets_bound": false
           },
           "tetris": {
-            "accuracy": 0.6965726417050139,
+            "accuracy": 0.6962118739287152,
             "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
             "fps": 1049.5,
-            "hota": 0.6965726417050139,
+            "hota": 0.6962118739287152,
             "meets_bound": true,
             "speedup_vs_reference": 68.8
           }
@@ -2458,10 +2458,10 @@
             "meets_bound": false
           },
           "otif": {
-            "accuracy": 0.7908189244795583,
+            "accuracy": 0.7895443700984175,
             "config": "param 1",
             "fps": 47.9,
-            "hota": 0.7908189244795583,
+            "hota": 0.7895443700984175,
             "meets_bound": true,
             "speedup_vs_reference": 3.2
           },
@@ -2489,10 +2489,10 @@
             "meets_bound": false
           },
           "otif": {
-            "accuracy": 0.7556103387373151,
+            "accuracy": 0.7545910357335472,
             "config": "param 2",
             "fps": 108.8,
-            "hota": 0.7556103387373151,
+            "hota": 0.7545910357335472,
             "meets_bound": true,
             "speedup_vs_reference": 7.5
           },
@@ -2520,10 +2520,10 @@
             "meets_bound": false
           },
           "otif": {
-            "accuracy": 0.7809814605783673,
+            "accuracy": 0.7775022910349932,
             "config": "param 2",
             "fps": 98.7,
-            "hota": 0.7809814605783673,
+            "hota": 0.7775022910349932,
             "meets_bound": true,
             "speedup_vs_reference": 6.8
           },
@@ -2570,89 +2570,89 @@
         "tetris_speedup_vs_otif": 16.7
       },
       "CalDoT1": {
-        "bound": 0.7772,
+        "bound": 0.7771,
         "loss": 0.05,
         "reference": {
-          "accuracy": 0.8180912461425098,
+          "accuracy": 0.8179698723466023,
           "fps": 30.9
         },
         "systems": {
           "leap": {
-            "best_accuracy": 0.5266317214933866,
+            "best_accuracy": 0.5095169726663112,
             "meets_bound": false
           },
           "otif": {
-            "best_accuracy": 0.7705010545172961,
+            "best_accuracy": 0.7696708828055595,
             "meets_bound": false
           },
           "tetris": {
-            "accuracy": 0.778685892269133,
+            "accuracy": 0.7784689891145117,
             "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
             "fps": 729.3,
-            "hota": 0.778685892269133,
+            "hota": 0.7784689891145117,
             "meets_bound": true,
             "speedup_vs_reference": 23.6
           }
         }
       },
       "CalDoT2": {
-        "bound": 0.6798,
+        "bound": 0.6792,
         "loss": 0.05,
         "reference": {
-          "accuracy": 0.7155520702265457,
+          "accuracy": 0.7149463201917848,
           "fps": 30.9
         },
         "systems": {
           "leap": {
-            "best_accuracy": 0.13909939038238148,
+            "best_accuracy": 0.13376839573539373,
             "meets_bound": false
           },
           "otif": {
-            "best_accuracy": 0.6675198281034291,
+            "best_accuracy": 0.6668144476835685,
             "meets_bound": false
           },
           "tetris": {
-            "accuracy": 0.6921171850406366,
-            "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
-            "fps": 144.7,
-            "hota": 0.6921171850406366,
+            "accuracy": 0.6792203135957958,
+            "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+            "fps": 204.0,
+            "hota": 0.6792203135957958,
             "meets_bound": true,
-            "speedup_vs_reference": 4.7
+            "speedup_vs_reference": 6.6
           }
         }
       }
     },
     "0.10": {
       "Amsterdam": {
-        "bound": 0.6584,
+        "bound": 0.6583,
         "loss": 0.1,
         "reference": {
-          "accuracy": 0.7315250495020468,
+          "accuracy": 0.7314011786317656,
           "fps": 15.3
         },
         "systems": {
           "leap": {
-            "best_accuracy": 0.5433764552721264,
+            "best_accuracy": 0.52584602676162,
             "meets_bound": false
           },
           "otif": {
-            "accuracy": 0.6670862689327743,
+            "accuracy": 0.6648268611230516,
             "config": "param 4",
             "fps": 241.1,
-            "hota": 0.6670862689327743,
+            "hota": 0.6648268611230516,
             "meets_bound": true,
             "speedup_vs_reference": 15.8
           },
           "tetris": {
-            "accuracy": 0.6592685681109561,
-            "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
-            "fps": 1391.9,
-            "hota": 0.6592685681109561,
+            "accuracy": 0.6644847503111291,
+            "config": "ShuffleNet05_60_16_080_r025_square_s100_sortcython",
+            "fps": 1116.1,
+            "hota": 0.6644847503111291,
             "meets_bound": true,
-            "speedup_vs_reference": 91.2
+            "speedup_vs_reference": 73.1
           }
         },
-        "tetris_speedup_vs_otif": 5.8
+        "tetris_speedup_vs_otif": 4.6
       },
       "B3D1": {
         "bound": 0.7076,
@@ -2667,12 +2667,12 @@
             "meets_bound": false
           },
           "otif": {
-            "accuracy": 0.7082392809402309,
-            "config": "param 2",
-            "fps": 101.6,
-            "hota": 0.7082392809402309,
+            "accuracy": 0.7895443700984175,
+            "config": "param 1",
+            "fps": 47.9,
+            "hota": 0.7895443700984175,
             "meets_bound": true,
-            "speedup_vs_reference": 6.9
+            "speedup_vs_reference": 3.2
           },
           "tetris": {
             "accuracy": 0.7290765805346825,
@@ -2683,7 +2683,7 @@
             "speedup_vs_reference": 20.9
           }
         },
-        "tetris_speedup_vs_otif": 3.0
+        "tetris_speedup_vs_otif": 6.4
       },
       "B3D2": {
         "bound": 0.6873,
@@ -2698,12 +2698,12 @@
             "meets_bound": false
           },
           "otif": {
-            "accuracy": 0.687945340574351,
-            "config": "param 3",
-            "fps": 229.5,
-            "hota": 0.687945340574351,
+            "accuracy": 0.7545910357335472,
+            "config": "param 2",
+            "fps": 108.8,
+            "hota": 0.7545910357335472,
             "meets_bound": true,
-            "speedup_vs_reference": 15.9
+            "speedup_vs_reference": 7.5
           },
           "tetris": {
             "accuracy": 0.7168684291985244,
@@ -2714,7 +2714,7 @@
             "speedup_vs_reference": 27.1
           }
         },
-        "tetris_speedup_vs_otif": 1.7
+        "tetris_speedup_vs_otif": 3.6
       },
       "B3D3": {
         "bound": 0.7298,
@@ -2729,10 +2729,10 @@
             "meets_bound": false
           },
           "otif": {
-            "accuracy": 0.7809814605783673,
+            "accuracy": 0.7775022910349932,
             "config": "param 2",
             "fps": 98.7,
-            "hota": 0.7809814605783673,
+            "hota": 0.7775022910349932,
             "meets_bound": true,
             "speedup_vs_reference": 6.8
           },
@@ -2779,30 +2779,30 @@
         "tetris_speedup_vs_otif": 25.9
       },
       "CalDoT1": {
-        "bound": 0.7363,
+        "bound": 0.7362,
         "loss": 0.1,
         "reference": {
-          "accuracy": 0.8180912461425098,
+          "accuracy": 0.8179698723466023,
           "fps": 30.9
         },
         "systems": {
           "leap": {
-            "best_accuracy": 0.5266317214933866,
+            "best_accuracy": 0.5095169726663112,
             "meets_bound": false
           },
           "otif": {
-            "accuracy": 0.7702676679939657,
+            "accuracy": 0.767843019334281,
             "config": "param 3",
             "fps": 115.1,
-            "hota": 0.7702676679939657,
+            "hota": 0.767843019334281,
             "meets_bound": true,
             "speedup_vs_reference": 3.7
           },
           "tetris": {
-            "accuracy": 0.7414093835351455,
+            "accuracy": 0.7404031271690937,
             "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
             "fps": 1560.1,
-            "hota": 0.7414093835351455,
+            "hota": 0.7404031271690937,
             "meets_bound": true,
             "speedup_vs_reference": 50.4
           }
@@ -2810,30 +2810,30 @@
         "tetris_speedup_vs_otif": 13.6
       },
       "CalDoT2": {
-        "bound": 0.644,
+        "bound": 0.6435,
         "loss": 0.1,
         "reference": {
-          "accuracy": 0.7155520702265457,
+          "accuracy": 0.7149463201917848,
           "fps": 30.9
         },
         "systems": {
           "leap": {
-            "best_accuracy": 0.13909939038238148,
+            "best_accuracy": 0.13376839573539373,
             "meets_bound": false
           },
           "otif": {
-            "accuracy": 0.6549931653339102,
+            "accuracy": 0.6535587482578807,
             "config": "param 1",
             "fps": 57.0,
-            "hota": 0.6549931653339102,
+            "hota": 0.6535587482578807,
             "meets_bound": true,
             "speedup_vs_reference": 1.8
           },
           "tetris": {
-            "accuracy": 0.6453736903656221,
+            "accuracy": 0.6450230685886954,
             "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
             "fps": 321.5,
-            "hota": 0.6453736903656221,
+            "hota": 0.6450230685886954,
             "meets_bound": true,
             "speedup_vs_reference": 10.4
           }
@@ -2843,34 +2843,34 @@
     },
     "leap_fit": {
       "Amsterdam": {
-        "bound": 0.5434,
-        "loss": 0.2572,
+        "bound": 0.5258,
+        "loss": 0.281,
         "reference": {
-          "accuracy": 0.7315250495020468,
+          "accuracy": 0.7314011786317656,
           "fps": 15.3
         },
         "systems": {
           "leap": {
-            "accuracy": 0.5433764552721264,
+            "accuracy": 0.52584602676162,
             "config": "param 0",
             "fps": 389.2,
-            "hota": 0.5433764552721264,
+            "hota": 0.52584602676162,
             "meets_bound": true,
             "speedup_vs_reference": 25.5
           },
           "otif": {
-            "accuracy": 0.6300412453871768,
+            "accuracy": 0.6277289966994517,
             "config": "param 5",
             "fps": 491.6,
-            "hota": 0.6300412453871768,
+            "hota": 0.6277289966994517,
             "meets_bound": true,
             "speedup_vs_reference": 32.2
           },
           "tetris": {
-            "accuracy": 0.5675040470902472,
+            "accuracy": 0.5612635208713379,
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 2840.3,
-            "hota": 0.5675040470902472,
+            "hota": 0.5612635208713379,
             "meets_bound": true,
             "speedup_vs_reference": 186.1
           }
@@ -2895,10 +2895,10 @@
             "speedup_vs_reference": 18.0
           },
           "otif": {
-            "accuracy": 0.1752295496977859,
+            "accuracy": 0.1693253050557907,
             "config": "param 5",
             "fps": 1115.1,
-            "hota": 0.1752295496977859,
+            "hota": 0.1693253050557907,
             "meets_bound": true,
             "speedup_vs_reference": 75.6
           },
@@ -2931,10 +2931,10 @@
             "speedup_vs_reference": 12.6
           },
           "otif": {
-            "accuracy": 0.328696991700863,
+            "accuracy": 0.3150059684264534,
             "config": "param 5",
             "fps": 1084.6,
-            "hota": 0.328696991700863,
+            "hota": 0.3150059684264534,
             "meets_bound": true,
             "speedup_vs_reference": 75.3
           },
@@ -2967,18 +2967,18 @@
             "speedup_vs_reference": 2.1
           },
           "otif": {
-            "accuracy": 0.0545668332693155,
+            "accuracy": 0.0541008082356734,
             "config": "param 5",
             "fps": 1065.0,
-            "hota": 0.0545668332693155,
+            "hota": 0.0541008082356734,
             "meets_bound": true,
             "speedup_vs_reference": 73.3
           },
           "tetris": {
-            "accuracy": 0.1128466103118136,
+            "accuracy": 0.1126392887283785,
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 1214.5,
-            "hota": 0.1128466103118136,
+            "hota": 0.1126392887283785,
             "meets_bound": true,
             "speedup_vs_reference": 83.5
           }
@@ -3003,10 +3003,10 @@
             "speedup_vs_reference": 18.5
           },
           "otif": {
-            "accuracy": 0.1234795266952392,
+            "accuracy": 0.1215771563395051,
             "config": "param 6",
             "fps": 1023.5,
-            "hota": 0.1234795266952392,
+            "hota": 0.1215771563395051,
             "meets_bound": true,
             "speedup_vs_reference": 70.5
           },
@@ -3023,34 +3023,34 @@
         "tetris_speedup_vs_otif": 1.4
       },
       "CalDoT1": {
-        "bound": 0.5266,
-        "loss": 0.3563,
+        "bound": 0.5095,
+        "loss": 0.3771,
         "reference": {
-          "accuracy": 0.8180912461425098,
+          "accuracy": 0.8179698723466023,
           "fps": 30.9
         },
         "systems": {
           "leap": {
-            "accuracy": 0.5266317214933866,
+            "accuracy": 0.5095169726663112,
             "config": "param 0",
             "fps": 353.5,
-            "hota": 0.5266317214933866,
+            "hota": 0.5095169726663112,
             "meets_bound": true,
             "speedup_vs_reference": 11.4
           },
           "otif": {
-            "accuracy": 0.5695003084426312,
+            "accuracy": 0.567452624027974,
             "config": "param 7",
             "fps": 1204.8,
-            "hota": 0.5695003084426312,
+            "hota": 0.567452624027974,
             "meets_bound": true,
             "speedup_vs_reference": 39.0
           },
           "tetris": {
-            "accuracy": 0.670145143051155,
+            "accuracy": 0.6627235796610154,
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 4968.4,
-            "hota": 0.670145143051155,
+            "hota": 0.6627235796610154,
             "meets_bound": true,
             "speedup_vs_reference": 160.6
           }
@@ -3059,34 +3059,34 @@
         "tetris_speedup_vs_otif": 4.1
       },
       "CalDoT2": {
-        "bound": 0.1391,
-        "loss": 0.8056,
+        "bound": 0.1338,
+        "loss": 0.8129,
         "reference": {
-          "accuracy": 0.7155520702265457,
+          "accuracy": 0.7149463201917848,
           "fps": 30.9
         },
         "systems": {
           "leap": {
-            "accuracy": 0.13909939038238148,
+            "accuracy": 0.13376839573539373,
             "config": "param 0",
             "fps": 487.3,
-            "hota": 0.13909939038238148,
+            "hota": 0.13376839573539373,
             "meets_bound": true,
             "speedup_vs_reference": 15.8
           },
           "otif": {
-            "accuracy": 0.3254203315404112,
+            "accuracy": 0.3216657596786511,
             "config": "param 9",
             "fps": 1449.3,
-            "hota": 0.3254203315404112,
+            "hota": 0.3216657596786511,
             "meets_bound": true,
             "speedup_vs_reference": 47.0
           },
           "tetris": {
-            "accuracy": 0.1820385447423985,
+            "accuracy": 0.1789689849817478,
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 6054.4,
-            "hota": 0.1820385447423985,
+            "hota": 0.1789689849817478,
             "meets_bound": true,
             "speedup_vs_reference": 196.2
           }
@@ -3120,8 +3120,8 @@
       },
       "compareNaiveSpeedupMinFivePct": {
         "match": true,
-        "measured": 4.6889153705817765,
-        "p203": 4.6889153705817765
+        "measured": 6.609668256787925,
+        "p203": 6.609668256787925
       },
       "comparePolytrisMeetFivePct": {
         "match": true,
@@ -3167,8 +3167,8 @@
       },
       "compareNaiveSpeedupMaxTenPct": {
         "match": true,
-        "measured": 91.2020717581339,
-        "p203": 91.2020717581339
+        "measured": 73.1284544906143,
+        "p203": 73.1284544906143
       },
       "compareNaiveSpeedupMinTenPct": {
         "match": true,
@@ -3197,8 +3197,8 @@
       },
       "compareSpeedupMinTenPct": {
         "match": true,
-        "measured": 1.7021354112112508,
-        "p203": 1.7021354112112508
+        "measured": 3.350663531468784,
+        "p203": 3.350663531468784
       }
     }
   },
@@ -3232,7 +3232,7 @@
           "datasets": 7,
           "meets_bound": 7,
           "speedup_vs_reference_max": 68.8,
-          "speedup_vs_reference_min": 4.7
+          "speedup_vs_reference_min": 6.6
         }
       },
       "tetris_vs": {
@@ -3261,13 +3261,13 @@
         "otif": {
           "datasets": 7,
           "meets_bound": 7,
-          "speedup_vs_reference_max": 15.9,
+          "speedup_vs_reference_max": 15.8,
           "speedup_vs_reference_min": 1.8
         },
         "tetris": {
           "datasets": 7,
           "meets_bound": 7,
-          "speedup_vs_reference_max": 91.2,
+          "speedup_vs_reference_max": 73.1,
           "speedup_vs_reference_min": 10.4
         }
       },
@@ -3275,12 +3275,12 @@
         "fastest prior": {
           "datasets": 7,
           "max": 25.9,
-          "min": 1.7
+          "min": 3.4
         },
         "otif": {
           "datasets": 7,
           "max": 25.9,
-          "min": 1.7
+          "min": 3.4
         }
       }
     },

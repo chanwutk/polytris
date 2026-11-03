@@ -15,8 +15,8 @@
       "extraction_seconds": 51.462,
       "fps": 1049.5,
       "frames": 54011,
-      "hota": 0.6966,
-      "hota_loss_pct": 4.78,
+      "hota": 0.6962,
+      "hota_loss_pct": 4.81,
       "operators": {
         "classify": {
           "ms_per_frame": 0.3143,
@@ -249,7 +249,7 @@
         "seconds": 3538.963
       },
       "reference_fps": 15.3,
-      "reference_hota": 0.7315,
+      "reference_hota": 0.7314,
       "sample_rate": 8,
       "tilesize": 60
     },
@@ -1254,8 +1254,8 @@
       "extraction_seconds": 74.041,
       "fps": 729.3,
       "frames": 54000,
-      "hota": 0.7787,
-      "hota_loss_pct": 4.82,
+      "hota": 0.7785,
+      "hota_loss_pct": 4.83,
       "operators": {
         "classify": {
           "ms_per_frame": 0.2413,
@@ -1462,7 +1462,7 @@
         "seconds": 1745.824
       },
       "reference_fps": 30.9,
-      "reference_hota": 0.8181,
+      "reference_hota": 0.818,
       "sample_rate": 4,
       "tilesize": 60
     },
@@ -1470,68 +1470,68 @@
       "classifier": "ShuffleNet05",
       "classify_inference_spikes": {
         "batches": 1,
-        "classify_share_without_excess_pct": 13.8,
+        "classify_share_without_excess_pct": 19.4,
         "excess_seconds": 0.141,
         "last_batch_of_video": 1,
         "share_of_classify_pct": 0.3
       },
-      "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
+      "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
       "dataset": "caldot2-y05",
-      "detect_canvas_read_share_pct": 6.15,
-      "extraction_seconds": 373.159,
-      "fps": 144.7,
+      "detect_canvas_read_share_pct": 5.89,
+      "extraction_seconds": 264.72,
+      "fps": 204.0,
       "frames": 54000,
-      "hota": 0.6921,
-      "hota_loss_pct": 3.28,
+      "hota": 0.6792,
+      "hota_loss_pct": 5.0,
       "operators": {
         "classify": {
           "ms_per_frame": 0.9542,
           "seconds": 51.528,
-          "share_pct": 13.8
+          "share_pct": 19.5
         },
         "detect": {
-          "ms_per_frame": 5.3727,
-          "seconds": 290.128,
-          "share_pct": 77.7
+          "ms_per_frame": 3.3917,
+          "seconds": 183.153,
+          "share_pct": 69.2
         },
         "pack": {
-          "ms_per_frame": 0.4433,
-          "seconds": 23.936,
-          "share_pct": 6.4
+          "ms_per_frame": 0.4106,
+          "seconds": 22.172,
+          "share_pct": 8.4
         },
         "prune": null,
         "track": {
-          "ms_per_frame": 0.1327,
-          "seconds": 7.168,
-          "share_pct": 1.9
+          "ms_per_frame": 0.136,
+          "seconds": 7.346,
+          "share_pct": 2.8
         },
         "unpack": {
-          "ms_per_frame": 0.0074,
-          "seconds": 0.398,
-          "share_pct": 0.1
+          "ms_per_frame": 0.0097,
+          "seconds": 0.521,
+          "share_pct": 0.2
         }
       },
       "ops": {
         "classify": {
           "collect": {
             "seconds": 0.489,
-            "share_pct": 0.13
+            "share_pct": 0.18
           },
           "diff": {
             "seconds": 0.55,
-            "share_pct": 0.15
+            "share_pct": 0.21
           },
           "inference": {
             "seconds": 13.048,
-            "share_pct": 3.5
+            "share_pct": 4.93
           },
           "mask": {
             "seconds": 5.477,
-            "share_pct": 1.47
+            "share_pct": 2.07
           },
           "reshape": {
             "seconds": 0.311,
-            "share_pct": 0.08
+            "share_pct": 0.12
           },
           "resize": {
             "seconds": 0.039,
@@ -1539,63 +1539,63 @@
           },
           "send": {
             "seconds": 31.613,
-            "share_pct": 8.47
+            "share_pct": 11.94
           }
         },
         "detect": {
           "detect": {
-            "seconds": 267.178,
-            "share_pct": 71.6
+            "seconds": 167.565,
+            "share_pct": 63.3
           },
           "read": {
-            "seconds": 22.95,
-            "share_pct": 6.15
+            "seconds": 15.587,
+            "share_pct": 5.89
           }
         },
         "pack": {
           "create_bitmap": {
-            "seconds": 0.454,
-            "share_pct": 0.12
+            "seconds": 0.486,
+            "share_pct": 0.18
           },
           "get_classifications": {
-            "seconds": 0.036,
-            "share_pct": 0.01
+            "seconds": 0.046,
+            "share_pct": 0.02
           },
           "group_tiles": {
-            "seconds": 0.319,
-            "share_pct": 0.09
+            "seconds": 0.308,
+            "share_pct": 0.12
           },
           "initialize_canvas": {
-            "seconds": 2.904,
-            "share_pct": 0.78
+            "seconds": 2.016,
+            "share_pct": 0.76
           },
           "pack_batch": {
-            "seconds": 1.859,
-            "share_pct": 0.5
+            "seconds": 1.929,
+            "share_pct": 0.73
           },
           "render_copy": {
-            "seconds": 14.401,
-            "share_pct": 3.86
+            "seconds": 12.75,
+            "share_pct": 4.82
           },
           "render_crop": {
             "seconds": 0.0,
             "share_pct": 0.0
           },
           "render_fetch": {
-            "seconds": 0.31,
-            "share_pct": 0.08
+            "seconds": 0.341,
+            "share_pct": 0.13
           },
           "render_metadata": {
-            "seconds": 1.028,
-            "share_pct": 0.28
+            "seconds": 1.202,
+            "share_pct": 0.45
           },
           "render_pad": {
             "seconds": 0.0,
             "share_pct": 0.0
           },
           "render_tile_bound": {
-            "seconds": 2.626,
-            "share_pct": 0.7
+            "seconds": 3.094,
+            "share_pct": 1.17
           },
           "render_tile_size": {
             "seconds": 0.0,
@@ -1604,16 +1604,16 @@
         },
         "track": {
           "convert_detections": {
-            "seconds": 0.513,
-            "share_pct": 0.14
+            "seconds": 0.522,
+            "share_pct": 0.2
           },
           "interpolate_trajectory": {
-            "seconds": 4.549,
-            "share_pct": 1.22
+            "seconds": 4.529,
+            "share_pct": 1.71
           },
           "tracker_update": {
-            "seconds": 2.107,
-            "share_pct": 0.56
+            "seconds": 2.294,
+            "share_pct": 0.87
           }
         },
         "unpack": {
@@ -1622,8 +1622,8 @@
             "share_pct": 0.0
           },
           "unpack_detections": {
-            "seconds": 0.397,
-            "share_pct": 0.11
+            "seconds": 0.52,
+            "share_pct": 0.2
           }
         }
       },
@@ -1633,10 +1633,10 @@
         "classifier_ms_per_classified_frame": 0.9542,
         "classifier_ms_per_frame_every_frame": 0.9542,
         "classify_ms_per_original_frame": 0.9542,
-        "classify_share_pct": 13.8,
-        "detect_ms_per_original_frame": 5.3727,
-        "detection_reduction": 5.9,
-        "explanation": "Per frame, classifying costs 0.954 ms and reference detection 31.6 ms (means; 33x). At sample rate 1 the classifier runs on 54000 of 54000 frames (1.00x fewer). The operating point's run cost 0.954 ms per classified frame, -0% against the every-frame run, so classification costs 0.954 ms per original frame (1.00x less than classifying every frame). Detection on packed canvases costs 5.373 ms per original frame (5.9x less than reference detection). Classification is 13.8% of extraction, against 2.9% if both ran on every frame and nothing else ran.",
+        "classify_share_pct": 19.5,
+        "detect_ms_per_original_frame": 3.3917,
+        "detection_reduction": 9.3,
+        "explanation": "Per frame, classifying costs 0.954 ms and reference detection 31.6 ms (means; 33x). At sample rate 1 the classifier runs on 54000 of 54000 frames (1.00x fewer). The operating point's run cost 0.954 ms per classified frame, +0% against the every-frame run, so classification costs 0.954 ms per original frame (1.00x less than classifying every frame). Detection on packed canvases costs 3.392 ms per original frame (9.3x less than reference detection). Classification is 19.5% of extraction, against 2.9% if both ran on every frame and nothing else ran.",
         "frames": 54000,
         "per_classified_frame_cost_vs_every_frame": 1.0,
         "per_frame_ratio_of_means": 33.1,
@@ -1689,7 +1689,7 @@
         "seconds": 1749.71
       },
       "reference_fps": 30.9,
-      "reference_hota": 0.7156,
+      "reference_hota": 0.7149,
       "sample_rate": 1,
       "tilesize": 60
     }
@@ -1737,13 +1737,13 @@
     "classify": {
       "datasets": 7,
       "max_pct": 33.0,
-      "median_pct": 17.6,
+      "median_pct": 19.5,
       "min_pct": 12.1
     },
     "detect": {
       "datasets": 7,
-      "max_pct": 77.7,
-      "median_pct": 69.5,
+      "max_pct": 77.5,
+      "median_pct": 69.2,
       "min_pct": 54.6
     },
     "pack": {
@@ -1762,12 +1762,12 @@
       "datasets": 7,
       "max_pct": 4.5,
       "median_pct": 3.1,
-      "min_pct": 1.9
+      "min_pct": 2.5
     },
     "unpack": {
       "datasets": 7,
       "max_pct": 0.2,
-      "median_pct": 0.1,
+      "median_pct": 0.2,
       "min_pct": 0.1
     }
   }

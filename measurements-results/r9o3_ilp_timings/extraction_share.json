@@ -52,7 +52,7 @@
         "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
         "extraction_s": 51.462,
         "fps": 1049.5,
-        "hota": 0.6965726417050139,
+        "hota": 0.6962118739287152,
         "ilp_percent": 2.218,
         "ilp_percent_excluding_launch_clips": 2.218,
         "ilp_s": 1.142,
@@ -61,7 +61,7 @@
         "pruning_stage_percent": 3.141,
         "videos": 60
       },
-      "hota_bound": 0.6949,
+      "hota_bound": 0.6948,
       "operating_point": {
         "clip_timings": {
           "build_ms": {
@@ -103,7 +103,7 @@
         "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
         "extraction_s": 51.462,
         "fps": 1049.5,
-        "hota": 0.6965726417050139,
+        "hota": 0.6962118739287152,
         "ilp_percent": 2.218,
         "ilp_percent_excluding_launch_clips": 2.218,
         "ilp_s": 1.142,
@@ -112,7 +112,7 @@
         "pruning_stage_percent": 3.141,
         "videos": 60
       },
-      "reference_hota": 0.7315250495020468
+      "reference_hota": 0.7314011786317656
     },
     "B3D1": {
       "all_pruning_configs": {
@@ -586,7 +586,7 @@
         "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
         "extraction_s": 132.156,
         "fps": 408.6,
-        "hota": 0.778921188031902,
+        "hota": 0.7785255292259208,
         "ilp_percent": 3.47,
         "ilp_percent_excluding_launch_clips": 2.877,
         "ilp_s": 4.586,
@@ -595,13 +595,13 @@
         "pruning_stage_percent": 5.425,
         "videos": 60
       },
-      "hota_bound": 0.7772,
+      "hota_bound": 0.7771,
       "operating_point": {
         "clip_timings": null,
         "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
         "extraction_s": 74.041,
         "fps": 729.3,
-        "hota": 0.778685892269133,
+        "hota": 0.7784689891145117,
         "ilp_percent": 0.0,
         "ilp_percent_excluding_launch_clips": 0.0,
         "ilp_s": 0.0,
@@ -610,7 +610,7 @@
         "pruning_stage_percent": 0.0,
         "videos": 60
       },
-      "reference_hota": 0.8180912461425098
+      "reference_hota": 0.8179698723466023
     },
     "CalDoT2": {
       "all_pruning_configs": {
@@ -624,16 +624,16 @@
       },
       "dataset": "caldot2-y05",
       "fastest_pruning_point": {
-        "best_hota": 0.6664529720656004,
+        "best_hota": 0.6659192014629916,
         "meets_bound": false
       },
-      "hota_bound": 0.6798,
+      "hota_bound": 0.6792,
       "operating_point": {
         "clip_timings": null,
-        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
-        "extraction_s": 373.159,
-        "fps": 144.7,
-        "hota": 0.6921171850406366,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "extraction_s": 264.72,
+        "fps": 204.0,
+        "hota": 0.6792203135957958,
         "ilp_percent": 0.0,
         "ilp_percent_excluding_launch_clips": 0.0,
         "ilp_s": 0.0,
@@ -642,7 +642,7 @@
         "pruning_stage_percent": 0.0,
         "videos": 60
       },
-      "reference_hota": 0.7155520702265457
+      "reference_hota": 0.7149463201917848
     }
   },
   "launch_clips": "ilp_percent_excluding_launch_clips drops the (configuration, video) pairs whose pruning run is a launch first clip (see ilp_timings.json timing_boundaries.clip_position) from both sides",

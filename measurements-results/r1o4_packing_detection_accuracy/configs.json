@@ -6,7 +6,7 @@
           "config": "ShuffleNet05_60_16_040_r025_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_040_r025_none_s100_bytetrackcython",
           "fps": 2344.5,
-          "hota": 0.5796,
+          "hota": 0.5742,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -14,7 +14,7 @@
           "config": "ShuffleNet05_60_16_040_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_040_r025_square_s100_sortcython",
           "fps": 1091.4,
-          "hota": 0.6665,
+          "hota": 0.6645,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -22,7 +22,7 @@
           "config": "ShuffleNet05_60_16_040_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_040_r025_tr_s100_sortcython",
           "fps": 1544.0,
-          "hota": 0.6536,
+          "hota": 0.6514,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -30,7 +30,7 @@
           "config": "ShuffleNet05_60_16_040_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_040_r075_none_s100_bytetrackcython",
           "fps": 2618.2,
-          "hota": 0.5692,
+          "hota": 0.5628,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -38,7 +38,7 @@
           "config": "ShuffleNet05_60_16_040_r075_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_040_r075_tr_s100_sortcython",
           "fps": 1775.3,
-          "hota": 0.6352,
+          "hota": 0.6325,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -46,7 +46,7 @@
           "config": "ShuffleNet05_60_16_060_r025_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_060_r025_none_s100_bytetrackcython",
           "fps": 2384.8,
-          "hota": 0.5796,
+          "hota": 0.5742,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -54,7 +54,7 @@
           "config": "ShuffleNet05_60_16_060_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_060_r025_square_s100_sortcython",
           "fps": 1097.9,
-          "hota": 0.6665,
+          "hota": 0.6645,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -62,7 +62,7 @@
           "config": "ShuffleNet05_60_16_060_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_060_r025_tr_s100_sortcython",
           "fps": 1511.6,
-          "hota": 0.6536,
+          "hota": 0.6514,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -70,7 +70,7 @@
           "config": "ShuffleNet05_60_16_060_r050_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_060_r050_square_s100_sortcython",
           "fps": 1214.6,
-          "hota": 0.6595,
+          "hota": 0.6573,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -78,7 +78,7 @@
           "config": "ShuffleNet05_60_16_060_r075_bl_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_060_r075_bl_s100_bytetrackcython",
           "fps": 1946.1,
-          "hota": 0.5932,
+          "hota": 0.5905,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -86,7 +86,7 @@
           "config": "ShuffleNet05_60_16_060_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_060_r075_none_s100_bytetrackcython",
           "fps": 2683.3,
-          "hota": 0.5692,
+          "hota": 0.5628,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -94,7 +94,7 @@
           "config": "ShuffleNet05_60_16_080_r025_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_080_r025_none_s100_bytetrackcython",
           "fps": 2417.0,
-          "hota": 0.5796,
+          "hota": 0.5742,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -102,7 +102,7 @@
           "config": "ShuffleNet05_60_16_080_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_080_r025_square_s100_sortcython",
           "fps": 1116.1,
-          "hota": 0.6665,
+          "hota": 0.6645,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -110,7 +110,7 @@
           "config": "ShuffleNet05_60_16_080_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_080_r025_tr_s100_sortcython",
           "fps": 1527.7,
-          "hota": 0.6536,
+          "hota": 0.6514,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -118,7 +118,7 @@
           "config": "ShuffleNet05_60_16_080_r050_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_080_r050_square_s100_sortcython",
           "fps": 1255.1,
-          "hota": 0.6595,
+          "hota": 0.6573,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -126,7 +126,7 @@
           "config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_080_r075_none_s100_bytetrackcython",
           "fps": 2522.7,
-          "hota": 0.5692,
+          "hota": 0.5628,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -134,7 +134,7 @@
           "config": "ShuffleNet05_60_16_080_r075_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_080_r075_tr_s100_sortcython",
           "fps": 1851.7,
-          "hota": 0.6352,
+          "hota": 0.6325,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -142,7 +142,7 @@
           "config": "ShuffleNet05_60_16_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r025_square_s100",
           "fps": 1105.5,
-          "hota": 0.6677,
+          "hota": 0.6659,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -150,7 +150,7 @@
           "config": "ShuffleNet05_60_16_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r025_tr_s100",
           "fps": 1561.8,
-          "hota": 0.6547,
+          "hota": 0.6521,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -158,7 +158,7 @@
           "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r050_bl_s100",
           "fps": 1796.5,
-          "hota": 0.6278,
+          "hota": 0.6258,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -166,7 +166,7 @@
           "config": "ShuffleNet05_60_16_r050_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_r050_none_s100",
           "fps": 2689.1,
-          "hota": 0.5785,
+          "hota": 0.5746,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -174,7 +174,7 @@
           "config": "ShuffleNet05_60_16_r050_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r050_tr_s100",
           "fps": 1704.5,
-          "hota": 0.6432,
+          "hota": 0.6421,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -182,7 +182,7 @@
           "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r075_bl_s100",
           "fps": 1964.1,
-          "hota": 0.6154,
+          "hota": 0.6132,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -190,7 +190,7 @@
           "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_r075_none_s100",
           "fps": 2840.3,
-          "hota": 0.5675,
+          "hota": 0.5613,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -198,7 +198,7 @@
           "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r075_none_s100",
           "fps": 2841.0,
-          "hota": 0.4993,
+          "hota": 0.4963,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -206,7 +206,7 @@
           "config": "ShuffleNet05_60_16_r075_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r075_square_s100",
           "fps": 1391.9,
-          "hota": 0.6593,
+          "hota": 0.6572,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -214,7 +214,7 @@
           "config": "ShuffleNet05_60_16_r075_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r075_tr_s100",
           "fps": 1861.3,
-          "hota": 0.6362,
+          "hota": 0.6342,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -222,7 +222,7 @@
           "config": "ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython",
           "fps": 305.0,
-          "hota": 0.6283,
+          "hota": 0.6269,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -230,7 +230,7 @@
           "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
           "fps": 312.0,
-          "hota": 0.6278,
+          "hota": 0.6271,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -238,7 +238,7 @@
           "config": "ShuffleNet05_60_1_040_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r025_square_s100_sortcython",
           "fps": 214.2,
-          "hota": 0.7061,
+          "hota": 0.7058,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -246,7 +246,7 @@
           "config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
           "fps": 256.2,
-          "hota": 0.7002,
+          "hota": 0.6999,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -254,7 +254,7 @@
           "config": "ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython",
           "fps": 318.1,
-          "hota": 0.6304,
+          "hota": 0.6293,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -262,7 +262,7 @@
           "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
           "fps": 322.7,
-          "hota": 0.6062,
+          "hota": 0.6052,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -270,7 +270,7 @@
           "config": "ShuffleNet05_60_1_040_r050_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r050_square_s100_sortcython",
           "fps": 230.2,
-          "hota": 0.7077,
+          "hota": 0.7074,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -278,7 +278,7 @@
           "config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
           "fps": 273.3,
-          "hota": 0.6998,
+          "hota": 0.6996,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -286,7 +286,7 @@
           "config": "ShuffleNet05_60_1_040_r075_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r075_bl_s100_sortcython",
           "fps": 289.9,
-          "hota": 0.6578,
+          "hota": 0.6574,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -294,7 +294,7 @@
           "config": "ShuffleNet05_60_1_040_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_040_r075_none_s100_bytetrackcython",
           "fps": 329.8,
-          "hota": 0.6024,
+          "hota": 0.6008,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -302,7 +302,7 @@
           "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
           "fps": 331.9,
-          "hota": 0.5904,
+          "hota": 0.5894,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -310,7 +310,7 @@
           "config": "ShuffleNet05_60_1_040_r075_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r075_square_s100_sortcython",
           "fps": 249.0,
-          "hota": 0.7026,
+          "hota": 0.7024,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -318,7 +318,7 @@
           "config": "ShuffleNet05_60_1_040_r075_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r075_tr_s100_sortcython",
           "fps": 286.9,
-          "hota": 0.6796,
+          "hota": 0.6793,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -326,7 +326,7 @@
           "config": "ShuffleNet05_60_1_060_r025_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_060_r025_none_s100_bytetrackcython",
           "fps": 298.0,
-          "hota": 0.64,
+          "hota": 0.6392,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -334,7 +334,7 @@
           "config": "ShuffleNet05_60_1_060_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_060_r025_square_s100_sortcython",
           "fps": 198.8,
-          "hota": 0.7033,
+          "hota": 0.703,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -342,7 +342,7 @@
           "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
           "fps": 311.0,
-          "hota": 0.636,
+          "hota": 0.6348,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -350,7 +350,7 @@
           "config": "ShuffleNet05_60_1_060_r050_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_060_r050_square_s100_sortcython",
           "fps": 223.1,
-          "hota": 0.7119,
+          "hota": 0.7117,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -358,7 +358,7 @@
           "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
           "fps": 323.1,
-          "hota": 0.6103,
+          "hota": 0.6092,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -366,7 +366,7 @@
           "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
           "fps": 290.2,
-          "hota": 0.6337,
+          "hota": 0.6331,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -374,7 +374,7 @@
           "config": "ShuffleNet05_60_1_080_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_080_r025_square_s100_sortcython",
           "fps": 184.6,
-          "hota": 0.7132,
+          "hota": 0.7131,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -382,7 +382,7 @@
           "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_none_s100",
           "fps": 189.5,
-          "hota": 0.6767,
+          "hota": 0.6764,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -390,7 +390,7 @@
           "config": "ShuffleNet05_60_1_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_r025_none_s100",
           "fps": 190.1,
-          "hota": 0.6788,
+          "hota": 0.6787,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -398,7 +398,7 @@
           "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_square_s100",
           "fps": 75.0,
-          "hota": 0.7163,
+          "hota": 0.7161,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -406,7 +406,7 @@
           "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_tr_s100",
           "fps": 109.2,
-          "hota": 0.717,
+          "hota": 0.7168,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -414,7 +414,7 @@
           "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r050_none_s100",
           "fps": 208.0,
-          "hota": 0.6625,
+          "hota": 0.6622,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -422,7 +422,7 @@
           "config": "ShuffleNet05_60_1_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_r050_none_s100",
           "fps": 208.2,
-          "hota": 0.6576,
+          "hota": 0.6575,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -430,7 +430,7 @@
           "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r050_square_s100",
           "fps": 84.4,
-          "hota": 0.7194,
+          "hota": 0.7192,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -438,7 +438,7 @@
           "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r050_tr_s100",
           "fps": 125.1,
-          "hota": 0.7147,
+          "hota": 0.7146,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -446,7 +446,7 @@
           "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_bl_s100",
           "fps": 142.4,
-          "hota": 0.6924,
+          "hota": 0.6921,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -454,7 +454,7 @@
           "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_none_s100",
           "fps": 221.6,
-          "hota": 0.637,
+          "hota": 0.6362,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -462,7 +462,7 @@
           "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_r075_none_s100",
           "fps": 222.4,
-          "hota": 0.6318,
+          "hota": 0.6315,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -470,7 +470,7 @@
           "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_square_s100",
           "fps": 95.1,
-          "hota": 0.7181,
+          "hota": 0.7179,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -478,7 +478,7 @@
           "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_tr_s100",
           "fps": 132.7,
-          "hota": 0.7048,
+          "hota": 0.7047,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -486,7 +486,7 @@
           "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_2_r050_square_s100",
           "fps": 169.7,
-          "hota": 0.7009,
+          "hota": 0.7007,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -494,7 +494,7 @@
           "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r025_square_s100",
           "fps": 297.5,
-          "hota": 0.7165,
+          "hota": 0.7164,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -502,7 +502,7 @@
           "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r050_square_s100",
           "fps": 335.5,
-          "hota": 0.7169,
+          "hota": 0.7168,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -510,7 +510,7 @@
           "config": "ShuffleNet05_60_8_040_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_040_r025_square_s100_sortcython",
           "fps": 734.1,
-          "hota": 0.6974,
+          "hota": 0.6971,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -518,7 +518,7 @@
           "config": "ShuffleNet05_60_8_040_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_040_r025_tr_s100_sortcython",
           "fps": 1002.1,
-          "hota": 0.6939,
+          "hota": 0.6936,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -526,7 +526,7 @@
           "config": "ShuffleNet05_60_8_060_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_060_r025_tr_s100_sortcython",
           "fps": 940.9,
-          "hota": 0.7008,
+          "hota": 0.7006,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -534,7 +534,7 @@
           "config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_060_r050_tr_s100_sortcython",
           "fps": 1055.5,
-          "hota": 0.6887,
+          "hota": 0.6884,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -542,7 +542,7 @@
           "config": "ShuffleNet05_60_8_060_r075_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_060_r075_square_s100_sortcython",
           "fps": 888.7,
-          "hota": 0.6899,
+          "hota": 0.6897,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -550,7 +550,7 @@
           "config": "ShuffleNet05_60_8_080_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_080_r025_square_s100_sortcython",
           "fps": 647.4,
-          "hota": 0.71,
+          "hota": 0.7096,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -558,7 +558,7 @@
           "config": "ShuffleNet05_60_8_080_r050_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_080_r050_square_s100_sortcython",
           "fps": 749.2,
-          "hota": 0.7071,
+          "hota": 0.7068,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -566,7 +566,7 @@
           "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
           "fps": 1049.5,
-          "hota": 0.6966,
+          "hota": 0.6962,
           "operating_point": true,
           "tracker": "sortcython"
         },
@@ -574,7 +574,7 @@
           "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r025_square_s100",
           "fps": 580.9,
-          "hota": 0.712,
+          "hota": 0.7118,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -582,7 +582,7 @@
           "config": "ShuffleNet05_60_8_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r025_tr_s100",
           "fps": 824.3,
-          "hota": 0.7112,
+          "hota": 0.711,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -590,7 +590,7 @@
           "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r050_square_s100",
           "fps": 649.3,
-          "hota": 0.713,
+          "hota": 0.7128,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -598,7 +598,7 @@
           "config": "ShuffleNet05_60_8_r050_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r050_tr_s100",
           "fps": 893.2,
-          "hota": 0.7073,
+          "hota": 0.7071,
           "operating_point": false,
           "tracker": "sortcython"
         }
@@ -16280,7 +16280,7 @@
       "operating_point": {
         "config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
         "detection_config": "ShuffleNet05_60_8_080_r050_tr_s100_sortcython",
-        "hota_bound": 0.6949,
+        "hota_bound": 0.6948,
         "loss": 0.05
       },
       "provisional": false,
@@ -16297,7 +16297,7 @@
           "tp": 116176
         },
         "fps": 15.3,
-        "hota": 0.7315
+        "hota": 0.7314
       },
       "sweep": [
         {
@@ -51434,7 +51434,7 @@
           "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_16_r075_none_s100",
           "fps": 1214.5,
-          "hota": 0.1128,
+          "hota": 0.1126,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84346,7 +84346,7 @@
           "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r025_none_s100",
           "fps": 4409.9,
-          "hota": 0.6816,
+          "hota": 0.6772,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84354,7 +84354,7 @@
           "config": "ShuffleNet05_60_16_r050_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r050_bl_s100",
           "fps": 2811.9,
-          "hota": 0.6907,
+          "hota": 0.6867,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84362,7 +84362,7 @@
           "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r050_none_s100",
           "fps": 4830.3,
-          "hota": 0.6753,
+          "hota": 0.6696,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84370,7 +84370,7 @@
           "config": "ShuffleNet05_60_16_r075_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r075_bl_s100",
           "fps": 2964.9,
-          "hota": 0.6881,
+          "hota": 0.6825,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84378,7 +84378,7 @@
           "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r075_none_s100",
           "fps": 4968.4,
-          "hota": 0.6701,
+          "hota": 0.6627,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84386,7 +84386,7 @@
           "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
           "fps": 700.5,
-          "hota": 0.74,
+          "hota": 0.739,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84394,7 +84394,7 @@
           "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
           "fps": 760.8,
-          "hota": 0.731,
+          "hota": 0.7298,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84402,7 +84402,7 @@
           "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
           "fps": 781.7,
-          "hota": 0.7188,
+          "hota": 0.7176,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84410,7 +84410,7 @@
           "config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_060_r025_none_s100_sortcython",
           "fps": 698.8,
-          "hota": 0.7403,
+          "hota": 0.7394,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84418,7 +84418,7 @@
           "config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_080_r025_bl_s100_sortcython",
           "fps": 408.6,
-          "hota": 0.7789,
+          "hota": 0.7785,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84426,7 +84426,7 @@
           "config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_080_r025_none_s100_sortcython",
           "fps": 587.8,
-          "hota": 0.7648,
+          "hota": 0.7642,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84434,7 +84434,7 @@
           "config": "ShuffleNet05_60_1_080_r050_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_080_r050_bl_s100_sortcython",
           "fps": 458.3,
-          "hota": 0.7765,
+          "hota": 0.7762,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84442,7 +84442,7 @@
           "config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_080_r050_none_s100_sortcython",
           "fps": 632.4,
-          "hota": 0.7566,
+          "hota": 0.756,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84450,7 +84450,7 @@
           "config": "ShuffleNet05_60_1_080_r075_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_080_r075_bl_s100_sortcython",
           "fps": 481.9,
-          "hota": 0.7713,
+          "hota": 0.7709,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84458,7 +84458,7 @@
           "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
           "fps": 667.0,
-          "hota": 0.7472,
+          "hota": 0.7466,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84466,7 +84466,7 @@
           "config": "ShuffleNet05_60_1_r025_bl_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_bl_s100",
           "fps": 193.0,
-          "hota": 0.8082,
+          "hota": 0.808,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84474,7 +84474,7 @@
           "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_none_s100",
           "fps": 357.7,
-          "hota": 0.7883,
+          "hota": 0.7879,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84482,7 +84482,7 @@
           "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_square_s100",
           "fps": 120.7,
-          "hota": 0.8174,
+          "hota": 0.8173,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84490,7 +84490,7 @@
           "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_tr_s100",
           "fps": 187.5,
-          "hota": 0.8073,
+          "hota": 0.8071,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84498,7 +84498,7 @@
           "config": "ShuffleNet05_60_1_r050_bl_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r050_bl_s100",
           "fps": 208.2,
-          "hota": 0.8045,
+          "hota": 0.8043,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84506,7 +84506,7 @@
           "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r050_none_s100",
           "fps": 378.1,
-          "hota": 0.7799,
+          "hota": 0.7794,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84514,7 +84514,7 @@
           "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r050_square_s100",
           "fps": 130.7,
-          "hota": 0.8161,
+          "hota": 0.8159,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84522,7 +84522,7 @@
           "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_bl_s100",
           "fps": 222.7,
-          "hota": 0.7988,
+          "hota": 0.7973,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84530,7 +84530,7 @@
           "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_none_s100",
           "fps": 402.3,
-          "hota": 0.7686,
+          "hota": 0.768,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84538,7 +84538,7 @@
           "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_r075_none_s100",
           "fps": 405.5,
-          "hota": 0.7664,
+          "hota": 0.7659,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84546,7 +84546,7 @@
           "config": "ShuffleNet05_60_1_r075_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_square_s100",
           "fps": 142.3,
-          "hota": 0.8149,
+          "hota": 0.8145,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84554,7 +84554,7 @@
           "config": "ShuffleNet05_60_2_r025_bl_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_2_r025_bl_s100",
           "fps": 367.0,
-          "hota": 0.7704,
+          "hota": 0.7701,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84562,7 +84562,7 @@
           "config": "ShuffleNet05_60_2_r025_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_2_r025_square_s100",
           "fps": 233.8,
-          "hota": 0.7782,
+          "hota": 0.7779,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84570,7 +84570,7 @@
           "config": "ShuffleNet05_60_2_r050_bl_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_2_r050_bl_s100",
           "fps": 388.1,
-          "hota": 0.7685,
+          "hota": 0.7681,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84578,7 +84578,7 @@
           "config": "ShuffleNet05_60_2_r050_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_2_r050_square_s100",
           "fps": 256.7,
-          "hota": 0.7778,
+          "hota": 0.7776,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84586,7 +84586,7 @@
           "config": "ShuffleNet05_60_2_r075_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_2_r075_square_s100",
           "fps": 273.7,
-          "hota": 0.7737,
+          "hota": 0.7732,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -84594,7 +84594,7 @@
           "config": "ShuffleNet05_60_4_080_r050_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_080_r050_bl_s100_sortcython",
           "fps": 840.5,
-          "hota": 0.767,
+          "hota": 0.7666,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84602,7 +84602,7 @@
           "config": "ShuffleNet05_60_4_080_r075_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_080_r075_bl_s100_sortcython",
           "fps": 873.0,
-          "hota": 0.76,
+          "hota": 0.7594,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84610,7 +84610,7 @@
           "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r025_bl_s100",
           "fps": 729.3,
-          "hota": 0.7787,
+          "hota": 0.7785,
           "operating_point": true,
           "tracker": "sortcython"
         },
@@ -84618,7 +84618,7 @@
           "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r025_none_s100",
           "fps": 1254.8,
-          "hota": 0.7619,
+          "hota": 0.7613,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84626,7 +84626,7 @@
           "config": "ShuffleNet05_60_4_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r025_square_s100",
           "fps": 464.6,
-          "hota": 0.7852,
+          "hota": 0.785,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84634,7 +84634,7 @@
           "config": "ShuffleNet05_60_4_r050_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r050_bl_s100",
           "fps": 765.6,
-          "hota": 0.7752,
+          "hota": 0.7749,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84642,7 +84642,7 @@
           "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r050_none_s100",
           "fps": 1349.0,
-          "hota": 0.7503,
+          "hota": 0.7497,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84650,7 +84650,7 @@
           "config": "ShuffleNet05_60_4_r050_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r050_square_s100",
           "fps": 507.5,
-          "hota": 0.7844,
+          "hota": 0.7841,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84658,7 +84658,7 @@
           "config": "ShuffleNet05_60_4_r075_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r075_bl_s100",
           "fps": 820.5,
-          "hota": 0.7689,
+          "hota": 0.7683,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84666,7 +84666,7 @@
           "config": "ShuffleNet05_60_4_r075_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r075_square_s100",
           "fps": 546.6,
-          "hota": 0.7822,
+          "hota": 0.7817,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84674,7 +84674,7 @@
           "config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_040_r050_none_s100_sortcython",
           "fps": 2647.5,
-          "hota": 0.7019,
+          "hota": 0.6981,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84682,7 +84682,7 @@
           "config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_040_r075_none_s100_sortcython",
           "fps": 2761.3,
-          "hota": 0.6955,
+          "hota": 0.6924,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84690,7 +84690,7 @@
           "config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_060_r050_none_s100_sortcython",
           "fps": 2547.2,
-          "hota": 0.7019,
+          "hota": 0.6981,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84698,7 +84698,7 @@
           "config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_080_r025_none_s100_sortcython",
           "fps": 2224.1,
-          "hota": 0.734,
+          "hota": 0.733,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84706,7 +84706,7 @@
           "config": "ShuffleNet05_60_8_080_r050_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_080_r050_bl_s100_sortcython",
           "fps": 1412.4,
-          "hota": 0.747,
+          "hota": 0.746,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84714,7 +84714,7 @@
           "config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
           "fps": 2263.7,
-          "hota": 0.7242,
+          "hota": 0.7225,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84722,7 +84722,7 @@
           "config": "ShuffleNet05_60_8_r025_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r025_bl_s100",
           "fps": 1395.8,
-          "hota": 0.7503,
+          "hota": 0.7498,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84730,7 +84730,7 @@
           "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r025_none_s100",
           "fps": 2355.5,
-          "hota": 0.7324,
+          "hota": 0.7314,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84738,7 +84738,7 @@
           "config": "ShuffleNet05_60_8_r025_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r025_square_s100",
           "fps": 912.6,
-          "hota": 0.7583,
+          "hota": 0.758,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84746,7 +84746,7 @@
           "config": "ShuffleNet05_60_8_r050_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r050_bl_s100",
           "fps": 1479.2,
-          "hota": 0.7466,
+          "hota": 0.7457,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84754,7 +84754,7 @@
           "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r050_none_s100",
           "fps": 2486.9,
-          "hota": 0.7249,
+          "hota": 0.7231,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84762,7 +84762,7 @@
           "config": "ShuffleNet05_60_8_r050_square_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r050_square_s100",
           "fps": 986.5,
-          "hota": 0.7567,
+          "hota": 0.7561,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84770,7 +84770,7 @@
           "config": "ShuffleNet05_60_8_r075_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r075_bl_s100",
           "fps": 1560.1,
-          "hota": 0.7414,
+          "hota": 0.7404,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -84778,7 +84778,7 @@
           "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r075_none_s100",
           "fps": 2614.5,
-          "hota": 0.7155,
+          "hota": 0.7136,
           "operating_point": false,
           "tracker": "sortcython"
         }
@@ -96802,7 +96802,7 @@
       "operating_point": {
         "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
         "detection_config": "ShuffleNet05_60_4_r025_bl_s100",
-        "hota_bound": 0.7772,
+        "hota_bound": 0.7771,
         "loss": 0.05
       },
       "provisional": false,
@@ -96819,7 +96819,7 @@
           "tp": 193195
         },
         "fps": 30.9,
-        "hota": 0.8181
+        "hota": 0.818
       },
       "sweep": [
         {
@@ -98033,7 +98033,7 @@
           "config": "ShuffleNet05_60_16_040_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_040_r025_none_s100_sortcython",
           "fps": 4544.9,
-          "hota": 0.2005,
+          "hota": 0.1985,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98041,7 +98041,7 @@
           "config": "ShuffleNet05_60_16_060_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_060_r025_none_s100_sortcython",
           "fps": 4577.9,
-          "hota": 0.2005,
+          "hota": 0.1985,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98049,7 +98049,7 @@
           "config": "ShuffleNet05_60_16_080_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_080_r025_none_s100_sortcython",
           "fps": 4586.5,
-          "hota": 0.2005,
+          "hota": 0.1985,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98057,7 +98057,7 @@
           "config": "ShuffleNet05_60_16_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r025_none_s100",
           "fps": 5169.9,
-          "hota": 0.2031,
+          "hota": 0.201,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98065,7 +98065,7 @@
           "config": "ShuffleNet05_60_16_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r050_none_s100",
           "fps": 5629.8,
-          "hota": 0.1971,
+          "hota": 0.1936,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98073,7 +98073,7 @@
           "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_16_r075_none_s100",
           "fps": 6054.4,
-          "hota": 0.182,
+          "hota": 0.179,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98081,7 +98081,7 @@
           "config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r025_none_s100_sortcython",
           "fps": 563.5,
-          "hota": 0.5631,
+          "hota": 0.5622,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98089,7 +98089,7 @@
           "config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r050_none_s100_sortcython",
           "fps": 603.1,
-          "hota": 0.5505,
+          "hota": 0.5497,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98097,7 +98097,7 @@
           "config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_040_r075_none_s100_sortcython",
           "fps": 640.2,
-          "hota": 0.5321,
+          "hota": 0.5314,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98105,7 +98105,7 @@
           "config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_060_r025_tr_s100_bytetrackcython",
           "fps": 258.2,
-          "hota": 0.6599,
+          "hota": 0.6594,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98113,7 +98113,7 @@
           "config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_060_r050_none_s100_bytetrackcython",
           "fps": 492.8,
-          "hota": 0.5967,
+          "hota": 0.5956,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98121,7 +98121,7 @@
           "config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_060_r050_none_s100_sortcython",
           "fps": 566.5,
-          "hota": 0.5707,
+          "hota": 0.57,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98129,7 +98129,7 @@
           "config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_060_r050_tr_s100_bytetrackcython",
           "fps": 292.2,
-          "hota": 0.6558,
+          "hota": 0.6552,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98137,7 +98137,7 @@
           "config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_060_r075_none_s100_bytetrackcython",
           "fps": 525.8,
-          "hota": 0.5733,
+          "hota": 0.5725,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98145,7 +98145,7 @@
           "config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_060_r075_none_s100_sortcython",
           "fps": 607.1,
-          "hota": 0.556,
+          "hota": 0.5554,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98153,7 +98153,7 @@
           "config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_060_r075_tr_s100_bytetrackcython",
           "fps": 321.5,
-          "hota": 0.6454,
+          "hota": 0.645,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98161,7 +98161,7 @@
           "config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
           "fps": 245.6,
-          "hota": 0.6665,
+          "hota": 0.6659,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98169,7 +98169,7 @@
           "config": "ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
           "fps": 475.3,
-          "hota": 0.6034,
+          "hota": 0.6026,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98177,7 +98177,7 @@
           "config": "ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
           "fps": 272.5,
-          "hota": 0.6604,
+          "hota": 0.6597,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98185,7 +98185,7 @@
           "config": "ShuffleNet05_60_1_080_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_080_r075_none_s100_bytetrackcython",
           "fps": 513.0,
-          "hota": 0.5825,
+          "hota": 0.5817,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98193,7 +98193,7 @@
           "config": "ShuffleNet05_60_1_080_r075_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_080_r075_tr_s100_bytetrackcython",
           "fps": 299.2,
-          "hota": 0.6522,
+          "hota": 0.6518,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98201,7 +98201,7 @@
           "config": "ShuffleNet05_60_1_r025_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_none_s100",
           "fps": 398.4,
-          "hota": 0.6265,
+          "hota": 0.6258,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98209,7 +98209,7 @@
           "config": "ShuffleNet05_60_1_r025_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_square_s100",
           "fps": 123.1,
-          "hota": 0.6963,
+          "hota": 0.6957,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98217,15 +98217,15 @@
           "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r025_tr_s100",
           "fps": 204.0,
-          "hota": 0.6798,
-          "operating_point": false,
+          "hota": 0.6792,
+          "operating_point": true,
           "tracker": "bytetrackcython"
         },
         {
           "config": "ShuffleNet05_60_1_r050_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r050_none_s100",
           "fps": 455.4,
-          "hota": 0.6215,
+          "hota": 0.6207,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98233,15 +98233,15 @@
           "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r050_square_s100",
           "fps": 144.7,
-          "hota": 0.6921,
-          "operating_point": true,
+          "hota": 0.6915,
+          "operating_point": false,
           "tracker": "bytetrackcython"
         },
         {
           "config": "ShuffleNet05_60_1_r050_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r050_tr_s100",
           "fps": 238.8,
-          "hota": 0.6772,
+          "hota": 0.6765,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98249,7 +98249,7 @@
           "config": "ShuffleNet05_60_1_r075_bl_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_bl_s100",
           "fps": 278.8,
-          "hota": 0.6441,
+          "hota": 0.6435,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98257,7 +98257,7 @@
           "config": "ShuffleNet05_60_1_r075_none_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_none_s100",
           "fps": 501.3,
-          "hota": 0.6092,
+          "hota": 0.6087,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98265,7 +98265,7 @@
           "config": "ShuffleNet05_60_1_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_1_r075_none_s100",
           "fps": 503.2,
-          "hota": 0.5815,
+          "hota": 0.581,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98273,7 +98273,7 @@
           "config": "ShuffleNet05_60_1_r075_tr_s100_bytetrackcython",
           "detection_config": "ShuffleNet05_60_1_r075_tr_s100",
           "fps": 264.2,
-          "hota": 0.6691,
+          "hota": 0.6689,
           "operating_point": false,
           "tracker": "bytetrackcython"
         },
@@ -98281,7 +98281,7 @@
           "config": "ShuffleNet05_60_2_040_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_2_040_r025_none_s100_sortcython",
           "fps": 907.9,
-          "hota": 0.5493,
+          "hota": 0.5485,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98289,7 +98289,7 @@
           "config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_2_080_r025_none_s100_sortcython",
           "fps": 799.5,
-          "hota": 0.5741,
+          "hota": 0.5732,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98297,7 +98297,7 @@
           "config": "ShuffleNet05_60_4_040_r050_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_040_r050_tr_s100_sortcython",
           "fps": 1011.7,
-          "hota": 0.5452,
+          "hota": 0.5446,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98305,7 +98305,7 @@
           "config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_060_r025_none_s100_sortcython",
           "fps": 1522.0,
-          "hota": 0.5242,
+          "hota": 0.5234,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98313,7 +98313,7 @@
           "config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_060_r050_none_s100_sortcython",
           "fps": 1702.2,
-          "hota": 0.5169,
+          "hota": 0.5163,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98321,7 +98321,7 @@
           "config": "ShuffleNet05_60_4_060_r075_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_060_r075_tr_s100_sortcython",
           "fps": 1039.3,
-          "hota": 0.5518,
+          "hota": 0.5515,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98329,7 +98329,7 @@
           "config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
           "fps": 793.1,
-          "hota": 0.5622,
+          "hota": 0.5617,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98337,7 +98337,7 @@
           "config": "ShuffleNet05_60_4_080_r075_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_080_r075_tr_s100_sortcython",
           "fps": 1022.8,
-          "hota": 0.551,
+          "hota": 0.5507,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98345,7 +98345,7 @@
           "config": "ShuffleNet05_60_4_r025_bl_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r025_bl_s100",
           "fps": 840.9,
-          "hota": 0.5443,
+          "hota": 0.5437,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98353,7 +98353,7 @@
           "config": "ShuffleNet05_60_4_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r025_none_s100",
           "fps": 1571.9,
-          "hota": 0.5223,
+          "hota": 0.5217,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98361,7 +98361,7 @@
           "config": "ShuffleNet05_60_4_r025_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r025_tr_s100",
           "fps": 824.3,
-          "hota": 0.5624,
+          "hota": 0.5618,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98369,7 +98369,7 @@
           "config": "ShuffleNet05_60_4_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r050_none_s100",
           "fps": 1801.4,
-          "hota": 0.5171,
+          "hota": 0.5165,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98377,7 +98377,7 @@
           "config": "ShuffleNet05_60_4_r050_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r050_tr_s100",
           "fps": 936.7,
-          "hota": 0.5582,
+          "hota": 0.5578,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98385,7 +98385,7 @@
           "config": "ShuffleNet05_60_4_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r075_none_s100",
           "fps": 2009.3,
-          "hota": 0.501,
+          "hota": 0.5002,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98393,7 +98393,7 @@
           "config": "ShuffleNet05_60_4_r075_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_4_r075_tr_s100",
           "fps": 1058.3,
-          "hota": 0.5509,
+          "hota": 0.5506,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98401,7 +98401,7 @@
           "config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_040_r025_none_s100_sortcython",
           "fps": 2749.9,
-          "hota": 0.3681,
+          "hota": 0.3673,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98409,7 +98409,7 @@
           "config": "ShuffleNet05_60_8_r025_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r025_none_s100",
           "fps": 2877.7,
-          "hota": 0.3693,
+          "hota": 0.3685,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98417,7 +98417,7 @@
           "config": "ShuffleNet05_60_8_r050_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r050_none_s100",
           "fps": 3183.6,
-          "hota": 0.3558,
+          "hota": 0.3544,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98425,7 +98425,7 @@
           "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r075_none_s100",
           "fps": 3432.0,
-          "hota": 0.3355,
+          "hota": 0.3338,
           "operating_point": false,
           "tracker": "sortcython"
         },
@@ -98433,7 +98433,7 @@
           "config": "ShuffleNet05_60_8_r075_tr_s100_sortcython",
           "detection_config": "ShuffleNet05_60_8_r075_tr_s100",
           "fps": 1971.6,
-          "hota": 0.4038,
+          "hota": 0.403,
           "operating_point": false,
           "tracker": "sortcython"
         }
@@ -109198,48 +109198,48 @@
       "gt_boxes_outside_clip_frames": 0,
       "gt_boxes_zero_area": 0,
       "jpeg_control": {
-        "detection_config": "ShuffleNet05_60_1_r050_square_s100",
+        "detection_config": "ShuffleNet05_60_1_r025_tr_s100",
         "environment": {
-          "container_image": "polyis-polyis@efe83173d8fd",
+          "container_image": "polyis (unrecorded tag)",
           "cuda": "12.4",
           "cudnn": 90100,
           "gpu": "Quadro RTX 6000",
-          "host": "240baeefc8c6",
+          "host": "bombe",
           "opencv": "4.13.0",
           "python": "3.13.12",
           "torch": "2.6.0+cu124",
           "ultralytics": "8.4.22"
         },
-        "frames": 48620,
-        "jpeg_detections": 148041,
-        "rerun_detections": 148584,
+        "frames": 51946,
+        "jpeg_detections": 149393,
+        "rerun_detections": 149976,
         "scores": {
           "center": {
             "delta": {
               "jpeg": {
-                "ap50": 0.0004,
-                "precision": 0.0012,
+                "ap50": 0.0005,
+                "precision": 0.0019,
                 "recall": 0.0001
               },
               "jpeg_vs_rerun": {
-                "ap50": 0.0004,
-                "precision": 0.0012,
+                "ap50": 0.0005,
+                "precision": 0.0019,
                 "recall": 0.0001
               },
               "packed": {
-                "ap50": -0.0079,
-                "precision": -0.0511,
-                "recall": -0.0017
+                "ap50": -0.019,
+                "precision": -0.0695,
+                "recall": -0.0034
               },
               "packed_ignore_outside": {
-                "ap50": -0.0016,
-                "precision": -0.0126,
-                "recall": -0.0017
+                "ap50": -0.0035,
+                "precision": -0.0121,
+                "recall": -0.0034
               },
               "packed_vs_jpeg": {
-                "ap50": -0.0083,
-                "precision": -0.0524,
-                "recall": -0.0018
+                "ap50": -0.0195,
+                "precision": -0.0713,
+                "recall": -0.0035
               },
               "rerun": {
                 "ap50": 0.0,
@@ -109248,92 +109248,92 @@
               }
             },
             "jpeg": {
-              "ap50": 0.9522,
-              "fp": 8937,
+              "ap50": 0.9506,
+              "fp": 11293,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 2105,
-              "ignored_unmatched_outside": 4439,
+              "ignored_matched_nonretained": 1307,
+              "ignored_unmatched_outside": 2643,
               "matched_nonretained_with_retained_candidate": 2,
-              "n_gt": 138174,
-              "precision": 0.9368,
-              "recall": 0.9594,
-              "tp": 132560
+              "n_gt": 139861,
+              "precision": 0.9224,
+              "recall": 0.9592,
+              "tp": 134150
             },
             "packed": {
-              "ap50": 0.9438,
-              "fp": 17282,
-              "fp_outside_filter": 6238,
-              "ignored_matched_nonretained": 6,
+              "ap50": 0.9311,
+              "fp": 23397,
+              "fp_outside_filter": 9914,
+              "ignored_matched_nonretained": 13,
               "ignored_unmatched_outside": 0,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 138174,
-              "precision": 0.8845,
-              "recall": 0.9576,
-              "tp": 132309
+              "n_gt": 139861,
+              "precision": 0.851,
+              "recall": 0.9557,
+              "tp": 133663
             },
             "packed_ignore_outside": {
-              "ap50": 0.9501,
-              "fp": 11044,
+              "ap50": 0.9466,
+              "fp": 13483,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 6,
-              "ignored_unmatched_outside": 6238,
+              "ignored_matched_nonretained": 13,
+              "ignored_unmatched_outside": 9914,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 138174,
-              "precision": 0.923,
-              "recall": 0.9576,
-              "tp": 132309
+              "n_gt": 139861,
+              "precision": 0.9084,
+              "recall": 0.9557,
+              "tp": 133663
             },
             "reference": {
-              "ap50": 0.9517,
-              "fp": 9125,
+              "ap50": 0.9501,
+              "fp": 11585,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 2107,
-              "ignored_unmatched_outside": 4806,
+              "ignored_matched_nonretained": 1315,
+              "ignored_unmatched_outside": 2942,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 138174,
-              "precision": 0.9356,
-              "recall": 0.9593,
-              "tp": 132546
+              "n_gt": 139861,
+              "precision": 0.9205,
+              "recall": 0.9591,
+              "tp": 134134
             },
             "rerun": {
-              "ap50": 0.9517,
-              "fp": 9125,
+              "ap50": 0.9501,
+              "fp": 11585,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 2107,
-              "ignored_unmatched_outside": 4806,
+              "ignored_matched_nonretained": 1315,
+              "ignored_unmatched_outside": 2942,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 138174,
-              "precision": 0.9356,
-              "recall": 0.9593,
-              "tp": 132546
+              "n_gt": 139861,
+              "precision": 0.9205,
+              "recall": 0.9591,
+              "tp": 134134
             }
           },
           "center_cover50": {
             "delta": {
               "jpeg": {
-                "ap50": 0.0004,
-                "precision": 0.0012,
+                "ap50": 0.0005,
+                "precision": 0.0019,
                 "recall": 0.0001
               },
               "jpeg_vs_rerun": {
-                "ap50": 0.0004,
-                "precision": 0.0012,
+                "ap50": 0.0005,
+                "precision": 0.0019,
                 "recall": 0.0001
               },
               "packed": {
-                "ap50": -0.0079,
-                "precision": -0.0511,
-                "recall": -0.0017
+                "ap50": -0.019,
+                "precision": -0.0695,
+                "recall": -0.0034
               },
               "packed_ignore_outside": {
-                "ap50": -0.0016,
-                "precision": -0.0126,
-                "recall": -0.0017
+                "ap50": -0.0035,
+                "precision": -0.0121,
+                "recall": -0.0034
               },
               "packed_vs_jpeg": {
-                "ap50": -0.0083,
-                "precision": -0.0524,
-                "recall": -0.0018
+                "ap50": -0.0195,
+                "precision": -0.0713,
+                "recall": -0.0035
               },
               "rerun": {
                 "ap50": 0.0,
@@ -109342,92 +109342,92 @@
               }
             },
             "jpeg": {
-              "ap50": 0.9522,
-              "fp": 8937,
+              "ap50": 0.9506,
+              "fp": 11293,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 2106,
-              "ignored_unmatched_outside": 4439,
+              "ignored_matched_nonretained": 1309,
+              "ignored_unmatched_outside": 2643,
               "matched_nonretained_with_retained_candidate": 2,
-              "n_gt": 138173,
-              "precision": 0.9368,
-              "recall": 0.9594,
-              "tp": 132559
+              "n_gt": 139859,
+              "precision": 0.9224,
+              "recall": 0.9592,
+              "tp": 134148
             },
             "packed": {
-              "ap50": 0.9438,
-              "fp": 17282,
-              "fp_outside_filter": 6238,
-              "ignored_matched_nonretained": 6,
-              "ignored_unmatched_outside": 0,
+              "ap50": 0.9311,
+              "fp": 23396,
+              "fp_outside_filter": 9914,
+              "ignored_matched_nonretained": 13,
+              "ignored_unmatched_outside": 1,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 138173,
-              "precision": 0.8845,
-              "recall": 0.9576,
-              "tp": 132309
+              "n_gt": 139859,
+              "precision": 0.851,
+              "recall": 0.9557,
+              "tp": 133663
             },
             "packed_ignore_outside": {
-              "ap50": 0.9501,
-              "fp": 11044,
+              "ap50": 0.9466,
+              "fp": 13482,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 6,
-              "ignored_unmatched_outside": 6238,
+              "ignored_matched_nonretained": 13,
+              "ignored_unmatched_outside": 9915,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 138173,
-              "precision": 0.923,
-              "recall": 0.9576,
-              "tp": 132309
+              "n_gt": 139859,
+              "precision": 0.9084,
+              "recall": 0.9557,
+              "tp": 133663
             },
             "reference": {
-              "ap50": 0.9517,
-              "fp": 9125,
+              "ap50": 0.9501,
+              "fp": 11585,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 2108,
-              "ignored_unmatched_outside": 4806,
+              "ignored_matched_nonretained": 1317,
+              "ignored_unmatched_outside": 2942,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 138173,
-              "precision": 0.9356,
-              "recall": 0.9593,
-              "tp": 132545
+              "n_gt": 139859,
+              "precision": 0.9205,
+              "recall": 0.9591,
+              "tp": 134132
             },
             "rerun": {
-              "ap50": 0.9517,
-              "fp": 9125,
+              "ap50": 0.9501,
+              "fp": 11585,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 2108,
-              "ignored_unmatched_outside": 4806,
+              "ignored_matched_nonretained": 1317,
+              "ignored_unmatched_outside": 2942,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 138173,
-              "precision": 0.9356,
-              "recall": 0.9593,
-              "tp": 132545
+              "n_gt": 139859,
+              "precision": 0.9205,
+              "recall": 0.9591,
+              "tp": 134132
             }
           },
           "frame": {
             "delta": {
               "jpeg": {
                 "ap50": 0.0005,
-                "precision": 0.0034,
+                "precision": 0.0036,
                 "recall": 0.0001
               },
               "jpeg_vs_rerun": {
                 "ap50": 0.0005,
-                "precision": 0.0034,
+                "precision": 0.0036,
                 "recall": 0.0001
               },
               "packed": {
-                "ap50": -0.0201,
-                "precision": -0.0218,
-                "recall": -0.0166
+                "ap50": -0.0265,
+                "precision": -0.0521,
+                "recall": -0.0125
               },
               "packed_ignore_outside": {
-                "ap50": -0.0201,
-                "precision": -0.0218,
-                "recall": -0.0166
+                "ap50": -0.0265,
+                "precision": -0.0521,
+                "recall": -0.0125
               },
               "packed_vs_jpeg": {
-                "ap50": -0.0206,
-                "precision": -0.0252,
-                "recall": -0.0167
+                "ap50": -0.027,
+                "precision": -0.0557,
+                "recall": -0.0126
               },
               "rerun": {
                 "ap50": 0.0,
@@ -109436,92 +109436,92 @@
               }
             },
             "jpeg": {
-              "ap50": 0.9468,
-              "fp": 13376,
+              "ap50": 0.9462,
+              "fp": 13936,
               "fp_outside_filter": 0,
               "ignored_matched_nonretained": 0,
               "ignored_unmatched_outside": 0,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 140805,
-              "precision": 0.9096,
-              "recall": 0.9564,
-              "tp": 134665
+              "n_gt": 141688,
+              "precision": 0.9067,
+              "recall": 0.956,
+              "tp": 135457
             },
             "packed": {
-              "ap50": 0.9262,
-              "fp": 17282,
+              "ap50": 0.9192,
+              "fp": 23397,
               "fp_outside_filter": 0,
               "ignored_matched_nonretained": 0,
               "ignored_unmatched_outside": 0,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 140805,
-              "precision": 0.8845,
-              "recall": 0.9397,
-              "tp": 132315
+              "n_gt": 141688,
+              "precision": 0.851,
+              "recall": 0.9435,
+              "tp": 133676
             },
             "packed_ignore_outside": {
-              "ap50": 0.9262,
-              "fp": 17282,
+              "ap50": 0.9192,
+              "fp": 23397,
               "fp_outside_filter": 0,
               "ignored_matched_nonretained": 0,
               "ignored_unmatched_outside": 0,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 140805,
-              "precision": 0.8845,
-              "recall": 0.9397,
-              "tp": 132315
+              "n_gt": 141688,
+              "precision": 0.851,
+              "recall": 0.9435,
+              "tp": 133676
             },
             "reference": {
-              "ap50": 0.9463,
-              "fp": 13931,
+              "ap50": 0.9457,
+              "fp": 14527,
               "fp_outside_filter": 0,
               "ignored_matched_nonretained": 0,
               "ignored_unmatched_outside": 0,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 140805,
-              "precision": 0.9062,
-              "recall": 0.9563,
-              "tp": 134653
+              "n_gt": 141688,
+              "precision": 0.9031,
+              "recall": 0.956,
+              "tp": 135449
             },
             "rerun": {
-              "ap50": 0.9463,
-              "fp": 13931,
+              "ap50": 0.9457,
+              "fp": 14527,
               "fp_outside_filter": 0,
               "ignored_matched_nonretained": 0,
               "ignored_unmatched_outside": 0,
               "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 140805,
-              "precision": 0.9062,
-              "recall": 0.9563,
-              "tp": 134653
+              "n_gt": 141688,
+              "precision": 0.9031,
+              "recall": 0.956,
+              "tp": 135449
             }
           },
           "inside": {
             "delta": {
               "jpeg": {
-                "ap50": 0.0004,
-                "precision": 0.0013,
+                "ap50": 0.0005,
+                "precision": 0.0014,
                 "recall": 0.0001
               },
               "jpeg_vs_rerun": {
-                "ap50": 0.0004,
-                "precision": 0.0013,
+                "ap50": 0.0005,
+                "precision": 0.0014,
                 "recall": 0.0001
               },
               "packed": {
-                "ap50": -0.0071,
-                "precision": -0.0501,
-                "recall": -0.001
+                "ap50": -0.0175,
+                "precision": -0.0726,
+                "recall": -0.0013
               },
               "packed_ignore_outside": {
-                "ap50": -0.0007,
-                "precision": -0.0115,
-                "recall": -0.001
+                "ap50": -0.0015,
+                "precision": -0.0137,
+                "recall": -0.0013
               },
               "packed_vs_jpeg": {
-                "ap50": -0.0075,
-                "precision": -0.0513,
-                "recall": -0.0011
+                "ap50": -0.018,
+                "precision": -0.0741,
+                "recall": -0.0014
               },
               "rerun": {
                 "ap50": 0.0,
@@ -109530,74 +109530,74 @@
               }
             },
             "jpeg": {
-              "ap50": 0.9524,
-              "fp": 8921,
+              "ap50": 0.9509,
+              "fp": 10342,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 2315,
-              "ignored_unmatched_outside": 4455,
-              "matched_nonretained_with_retained_candidate": 2,
-              "n_gt": 137925,
-              "precision": 0.9369,
-              "recall": 0.9596,
-              "tp": 132350
+              "ignored_matched_nonretained": 4524,
+              "ignored_unmatched_outside": 3594,
+              "matched_nonretained_with_retained_candidate": 12,
+              "n_gt": 136521,
+              "precision": 0.9268,
+              "recall": 0.9591,
+              "tp": 130933
             },
             "packed": {
-              "ap50": 0.9449,
-              "fp": 17092,
-              "fp_outside_filter": 6238,
-              "ignored_matched_nonretained": 111,
-              "ignored_unmatched_outside": 190,
-              "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 137925,
-              "precision": 0.8855,
-              "recall": 0.9585,
-              "tp": 132204
+              "ap50": 0.9329,
+              "fp": 22582,
+              "fp_outside_filter": 9914,
+              "ignored_matched_nonretained": 2935,
+              "ignored_unmatched_outside": 815,
+              "matched_nonretained_with_retained_candidate": 8,
+              "n_gt": 136521,
+              "precision": 0.8527,
+              "recall": 0.9577,
+              "tp": 130741
             },
             "packed_ignore_outside": {
-              "ap50": 0.9513,
-              "fp": 10854,
+              "ap50": 0.9489,
+              "fp": 12668,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 111,
-              "ignored_unmatched_outside": 6428,
-              "matched_nonretained_with_retained_candidate": 0,
-              "n_gt": 137925,
-              "precision": 0.9241,
-              "recall": 0.9585,
-              "tp": 132204
+              "ignored_matched_nonretained": 2935,
+              "ignored_unmatched_outside": 10729,
+              "matched_nonretained_with_retained_candidate": 8,
+              "n_gt": 136521,
+              "precision": 0.9117,
+              "recall": 0.9577,
+              "tp": 130741
             },
             "reference": {
-              "ap50": 0.952,
-              "fp": 9110,
+              "ap50": 0.9504,
+              "fp": 10559,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 2317,
-              "ignored_unmatched_outside": 4821,
-              "matched_nonretained_with_retained_candidate": 2,
-              "n_gt": 137925,
-              "precision": 0.9356,
-              "recall": 0.9595,
-              "tp": 132336
+              "ignored_matched_nonretained": 4536,
+              "ignored_unmatched_outside": 3968,
+              "matched_nonretained_with_retained_candidate": 13,
+              "n_gt": 136521,
+              "precision": 0.9254,
+              "recall": 0.9589,
+              "tp": 130913
             },
             "rerun": {
-              "ap50": 0.952,
-              "fp": 9110,
+              "ap50": 0.9504,
+              "fp": 10559,
               "fp_outside_filter": 0,
-              "ignored_matched_nonretained": 2317,
-              "ignored_unmatched_outside": 4821,
-              "matched_nonretained_with_retained_candidate": 2,
-              "n_gt": 137925,
-              "precision": 0.9356,
-              "recall": 0.9595,
-              "tp": 132336
+              "ignored_matched_nonretained": 4536,
+              "ignored_unmatched_outside": 3968,
+              "matched_nonretained_with_retained_candidate": 13,
+              "n_gt": 136521,
+              "precision": 0.9254,
+              "recall": 0.9589,
+              "tp": 130913
             }
           }
         },
-        "seconds": 3156.5
+        "seconds": 3414.5
       },
       "matching_rounds": 3,
       "operating_point": {
-        "config": "ShuffleNet05_60_1_r050_square_s100_bytetrackcython",
-        "detection_config": "ShuffleNet05_60_1_r050_square_s100",
-        "hota_bound": 0.6798,
+        "config": "ShuffleNet05_60_1_r025_tr_s100_bytetrackcython",
+        "detection_config": "ShuffleNet05_60_1_r025_tr_s100",
+        "hota_bound": 0.6792,
         "loss": 0.05
       },
       "provisional": false,
@@ -109614,7 +109614,7 @@
           "tp": 135601
         },
         "fps": 30.9,
-        "hota": 0.7156
+        "hota": 0.7149
       },
       "sweep": [
         {
