@@ -1,0 +1,49 @@
+{
+  "dataset": "ams-y05",
+  "label": "Amsterdam",
+  "stride": 1,
+  "tile_size": 60,
+  "sampled_frames": 54011,
+  "grid_tiles": 13610772,
+  "objects": {
+    "boxes": 123686,
+    "median_width_tiles": 0.7,
+    "median_height_tiles": 0.4565218607584635,
+    "median_longest_side_tiles": 0.7166666666666667,
+    "fraction_within_one_tile": 0.27660365764920847,
+    "mean_tiles_overlapped": 3.7483385346765195,
+    "median_tiles_overlapped": 4.0,
+    "median_context_ratio": 4.599998398618952,
+    "boxes_per_frame": 2.2900149969450667
+  },
+  "padding": {
+    "none": {
+      "canvases": 1798,
+      "canvases_per_frame": 0.03328951509877617,
+      "canvas_tiles": 453096,
+      "occupied_tiles": 427962,
+      "packing_efficacy": 0.9445283118809259,
+      "occupied_tiles_per_frame": 7.923608153894577,
+      "occupied_fraction_of_grid": 0.031442889499581655,
+      "polyominoes": 84505,
+      "polyominoes_per_frame": 1.5645886948954844,
+      "tiles_per_polyomino": 5.064339388201882,
+      "objects_per_polyomino": 1.4636530382817585
+    },
+    "square": {
+      "canvases": 6051,
+      "canvases_per_frame": 0.11203273407268889,
+      "canvas_tiles": 1524852,
+      "occupied_tiles": 1373772,
+      "packing_efficacy": 0.9009215320568816,
+      "occupied_tiles_per_frame": 25.435041010164596,
+      "occupied_fraction_of_grid": 0.10093270242128807,
+      "polyominoes": 76747,
+      "polyominoes_per_frame": 1.4209512877006536,
+      "tiles_per_polyomino": 17.90000912087769,
+      "objects_per_polyomino": 1.6116069683505545,
+      "padding_tiles": 945810,
+      "polyomino_merge_factor": 1.1010853844449946
+    }
+  }
+}

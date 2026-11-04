@@ -1,0 +1,49 @@
+{
+  "dataset": "jnc7",
+  "label": "B3D4",
+  "stride": 1,
+  "tile_size": 60,
+  "sampled_frames": 5225,
+  "grid_tiles": 1128600,
+  "objects": {
+    "boxes": 56673,
+    "median_width_tiles": 0.390826416015625,
+    "median_height_tiles": 0.8084950764973958,
+    "median_longest_side_tiles": 0.8431859334309896,
+    "fraction_within_one_tile": 0.14982443138708026,
+    "mean_tiles_overlapped": 2.4632893970673866,
+    "median_tiles_overlapped": 2.0,
+    "median_context_ratio": 6.502623467402851,
+    "boxes_per_frame": 10.846507177033493
+  },
+  "padding": {
+    "none": {
+      "canvases": 583,
+      "canvases_per_frame": 0.11157894736842106,
+      "canvas_tiles": 125928,
+      "occupied_tiles": 123217,
+      "packing_efficacy": 0.9784718251699384,
+      "occupied_tiles_per_frame": 23.5822009569378,
+      "occupied_fraction_of_grid": 0.10917685628211944,
+      "polyominoes": 25946,
+      "polyominoes_per_frame": 4.965741626794259,
+      "tiles_per_polyomino": 4.74897864796115,
+      "objects_per_polyomino": 2.184267324443074
+    },
+    "square": {
+      "canvases": 2258,
+      "canvases_per_frame": 0.4321531100478469,
+      "canvas_tiles": 487728,
+      "occupied_tiles": 398703,
+      "packing_efficacy": 0.8174699832693633,
+      "occupied_tiles_per_frame": 76.3067942583732,
+      "occupied_fraction_of_grid": 0.3532721956406167,
+      "polyominoes": 13616,
+      "polyominoes_per_frame": 2.605933014354067,
+      "tiles_per_polyomino": 29.281947708578144,
+      "objects_per_polyomino": 4.1622356051703875,
+      "padding_tiles": 275486,
+      "polyomino_merge_factor": 1.9055522914218566
+    }
+  }
+}

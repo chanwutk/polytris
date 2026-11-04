@@ -1,0 +1,49 @@
+{
+  "dataset": "caldot1-y05",
+  "label": "CalDoT1",
+  "stride": 1,
+  "tile_size": 60,
+  "sampled_frames": 54000,
+  "grid_tiles": 5184000,
+  "objects": {
+    "boxes": 199445,
+    "median_width_tiles": 0.3333333333333333,
+    "median_height_tiles": 0.3,
+    "median_longest_side_tiles": 0.35,
+    "fraction_within_one_tile": 0.4684298929529444,
+    "mean_tiles_overlapped": 1.867918473764697,
+    "median_tiles_overlapped": 2.0,
+    "median_context_ratio": 12.456747404844291,
+    "boxes_per_frame": 3.693425925925926
+  },
+  "padding": {
+    "none": {
+      "canvases": 3588,
+      "canvases_per_frame": 0.06644444444444444,
+      "canvas_tiles": 344448,
+      "occupied_tiles": 227779,
+      "packing_efficacy": 0.6612870447788926,
+      "occupied_tiles_per_frame": 4.21812962962963,
+      "occupied_fraction_of_grid": 0.043938850308641975,
+      "polyominoes": 45291,
+      "polyominoes_per_frame": 0.8387222222222223,
+      "tiles_per_polyomino": 5.029233180985185,
+      "objects_per_polyomino": 4.4036342761255
+    },
+    "square": {
+      "canvases": 12967,
+      "canvases_per_frame": 0.24012962962962964,
+      "canvas_tiles": 1244832,
+      "occupied_tiles": 776361,
+      "packing_efficacy": 0.6236672900439577,
+      "occupied_tiles_per_frame": 14.377055555555556,
+      "occupied_fraction_of_grid": 0.14976099537037038,
+      "polyominoes": 38666,
+      "polyominoes_per_frame": 0.716037037037037,
+      "tiles_per_polyomino": 20.078647907722548,
+      "objects_per_polyomino": 5.158149278435835,
+      "padding_tiles": 548582,
+      "polyomino_merge_factor": 1.1713391610200177
+    }
+  }
+}
