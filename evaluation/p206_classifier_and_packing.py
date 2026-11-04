@@ -1,26 +1,20 @@
 #!/usr/local/bin/python
 
-"""Combined classifier-vs-baseline + packing-efficacy figure for the paper.
+"""Combined relevance-classifier and packing-accuracy figure for the paper.
 
-This script does **no** recomputation. It reads the JSONL artifacts already
-produced by ``evaluation/p205_compare_classifiers.py`` and
-``evaluation/p038_packing_efficacy.py``, rebuilds two trimmed-down panels,
-and ``hconcat``s them into a single figure.
+This script does **no** recomputation. It reads the p205 classifier comparison
+(``evaluation/p205_compare_classifiers.py``) from the cache, and the
+ground-truth-tile packing experiment (measurements-gpu/r1o4_oracle_packing.py)
+from the paper's evidence snapshot (``packing.json``, with each dataset's 5%
+HOTA-loss configuration from ``matched_points.json``), and ``hconcat``s:
 
-Panels (left -> right):
-  * Left  : Classifier comparison from ``p205`` -- F1, Recall, Precision only
-            (drops accuracy; runtime is intentionally omitted because the
-            packing panel does not have a comparable axis).
-  * Right : Packing efficacy from ``p038`` -- only the ``none`` tile-padding
-            misrate / pruning slice; horizontal x-axis labels (no rotation).
+  * Left  : Classifier comparison -- F1, Recall, Precision against runtime,
+            Modified vs. Baseline by shape (legend inside the F1 panel).
+  * Right : Detector precision and recall on original frames (hollow) and
+            packed canvases (filled) against packing efficacy, at the tile
+            padding of each dataset's 5% HOTA-loss configuration.
 
-Both panels share a single dataset color encoding derived from the union of
-datasets present in the two source frames, so the legend is consistent and
-identical colors map to identical datasets across the figure.
-
-Run order: ``p205`` and ``p038`` must have been run first for the chosen
-``--valid`` / ``--test`` split (default ``valid``). The script fails fast
-with a clear error message when an upstream JSONL is missing.
+Both groups share one dataset color legend.
 """
 
 from __future__ import annotations
@@ -39,6 +33,7 @@ PAPER_FIGURES_GENERATED_DIR = os.path.join(REPO_ROOT, 'paper', 'figures', 'gener
 SCRIPT_ARTIFACT_BASENAME = 'p206_classifier_and_packing'
 
 import altair as alt
+import duckdb
 import numpy as np
 import pandas as pd
 
@@ -50,37 +45,34 @@ from evaluation.p201_compare_pareto import (
 from evaluation.colors import categorical_color_scale
 
 # Subplot geometry: matches p205's per-metric subplot footprint so the
-# stitched figure reads at a familiar density. Packing panel reuses the
-# same height and is sized wider to accommodate the categorical x-axis.
+# stitched figure reads at a familiar density.
 SUBPLOT_WIDTH: int = 150
 SUBPLOT_HEIGHT: int = 200
-PACKING_PANEL_WIDTH: int = 100
+PACKING_PANEL_WIDTH: int = 130
 
-# Upstream summary directories (must match p205 / p038 ``cache.summary`` keys).
+# Upstream summary directory (must match p205's ``cache.summary`` key).
 P205_SUMMARY_STAGE = '205_compare_classifiers'
-P038_SUMMARY_STAGE = '038_packing_efficacy'
 
-# Restrict the packing panel to the ``none`` tile-padding misrate slice as
-# requested. We still expect multiple datasets at this padding mode.
-PACKING_TILEPADDING: str = 'none'
+# The paper's evidence snapshot holding the packing experiment and the 5% operating points.
+EVIDENCE_DIR = Path(REPO_ROOT) / 'paper' / 'scripts' / 'data' / 'revision_evidence'
+# Packing metrics shown, as (summary field, axis title).
+PACKING_METRICS: list[tuple[str, str]] = [('precision', 'Precision (%)'), ('recall', 'Recall (%)')]
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Combine p205 classifier metrics and p038 packing efficacy into one figure'
+        description='Combine p205 classifier metrics and packing accuracy into one figure'
     )
     split_group = parser.add_mutually_exclusive_group()
     split_group.add_argument('--valid', action='store_true')
     split_group.add_argument('--test', action='store_true')
-    parser.add_argument('--classifier-only', action='store_true')
     return parser.parse_args()
 
 
 def _resolve_videoset(args: argparse.Namespace) -> str:
     """Pick the split the run aggregates over -- defaults to ``valid``.
 
-    Mirrors p038's behaviour so the paper figure (which lives under the
-    canonical name) defaults to the validation split.
+    The split only names the output; the paper figure uses ``--test``.
     """
     if args.test:
         return 'test'
@@ -91,17 +83,6 @@ def _p205_jsonl_path(videoset: str) -> Path:
     """Return the cached p205 JSONL path for the given split."""
     # p205 always suffixes its artifacts with the videoset name.
     return cache.summary(P205_SUMMARY_STAGE, f'p205_compare_classifiers_{videoset}.jsonl')
-
-
-def _p038_jsonl_path(videoset: str) -> Path:
-    """Return the cached p038 JSONL path for the given split.
-
-    p038 leaves the validation split unsuffixed (canonical paper artifact)
-    and suffixes the test split, so we mirror that naming here.
-    """
-    if videoset == 'valid':
-        return cache.summary(P038_SUMMARY_STAGE, 'p038_packing_efficacy.jsonl')
-    return cache.summary(P038_SUMMARY_STAGE, f'p038_packing_efficacy_{videoset}.jsonl')
 
 
 def _load_jsonl(path: Path, source_label: str) -> pd.DataFrame:
@@ -130,7 +111,7 @@ def _load_jsonl(path: Path, source_label: str) -> pd.DataFrame:
 def _build_color_scale(domain: list[str]) -> alt.Scale:
     """Build a categorical color scale shared across both panels.
 
-    Uses the shared Tetris palette from p201/p205/p038 so this
+    Uses the shared Tetris palette from p201/p205 so this
     figure visually composes with the rest of the paper.
     """
     return categorical_color_scale(domain or None)
@@ -161,6 +142,22 @@ def _y_domain_for_metric(df: pd.DataFrame, field: str) -> tuple[float, float]:
     if d_hi <= d_lo:
         d_hi = min(1.0, d_lo + 0.05)
     return d_lo, d_hi
+
+
+def _inside_legend(items: list[tuple[str, dict]]) -> alt.LayerChart:
+    """A small legend drawn inside a panel's bottom-left corner: one marker and label per (label, mark style).
+
+    Vega-Lite places legends of concatenated views outside the plots, so in-panel legends are drawn as marks at
+    fixed pixel positions, independent of the panel's scales.
+    """
+    layers = []
+    for row, (label, style) in enumerate(reversed(items)):
+        y = SUBPLOT_HEIGHT - 12 - 16 * row
+        layers.append(alt.Chart(alt.Data(values=[{}])).mark_point(size=60, color='#555', **style)
+                      .encode(x=alt.value(12), y=alt.value(y)))
+        layers.append(alt.Chart(alt.Data(values=[{}])).mark_text(align='left', baseline='middle', fontSize=11)
+                      .encode(x=alt.value(22), y=alt.value(y), text=alt.value(label)))
+    return alt.layer(*layers)
 
 
 def _build_classifier_panels(
@@ -202,7 +199,7 @@ def _build_classifier_panels(
     x_scale = alt.Scale(domain=[0.0, x_max], nice=False)
 
     subcharts: list[alt.Chart] = []
-    for field, title in metrics:
+    for index, (field, title) in enumerate(metrics):
         # Per-metric y-domain so subtle gaps between metrics stay readable.
         y0, y1 = _y_domain_for_metric(df, field)
         y_scale = alt.Scale(domain=[y0, y1], nice=False, zero=False)
@@ -237,10 +234,11 @@ def _build_classifier_panels(
                     legend=alt.Legend(title=None),
                     scale=color_scale,
                 ),
+                # Shape distinguishes Modified/Baseline; its legend is drawn inside the F1 panel.
                 shape=alt.Shape(
                     'classifier_kind:N',
-                    legend=alt.Legend(title=None),
-                    scale=alt.Scale(domain=['Modified', 'Baseline']),
+                    legend=None,
+                    scale=alt.Scale(domain=['Modified', 'Baseline'], range=['circle', 'square']),
                 ),
                 tooltip=[
                     'dataset_display',
@@ -251,73 +249,66 @@ def _build_classifier_panels(
                 ],
             )
         )
-        sub = (lines + points).properties(width=SUBPLOT_WIDTH, height=SUBPLOT_HEIGHT)
+        layers = [lines, points]
+        # The Modified/Baseline legend, inside the first (F1) panel only.
+        if index == 0:
+            layers.append(_inside_legend([('Modified', dict(shape='circle', filled=True)),
+                                          ('Baseline', dict(shape='square', filled=True))]))
+        sub = alt.layer(*layers).properties(width=SUBPLOT_WIDTH, height=SUBPLOT_HEIGHT)
         subcharts.append(sub)
 
     return subcharts
 
 
-def _build_packing_panel(
-    p038_df: pd.DataFrame,
-    color_scale: alt.Scale,
-    dataset_domain: list[str],
-) -> alt.Chart:
-    """Build the packing-efficacy panel restricted to ``tilepadding='none'``.
+def _load_packing_rows(evidence_dir: Path) -> pd.DataFrame:
+    """Original and packed precision/recall per dataset at its 5% configuration's tile padding.
 
-    Drops the row facet over pruning thresholds and keeps a single
-    grouped-bar chart with a horizontal x-axis (label angle 0).
+    Rows: dataset, input ('Original' or 'Packed'), metric field, efficacy_pct, accuracy_pct.
     """
-    # Restrict to the requested misrate threshold (tilepadding=='none').
-    panel_df = p038_df[p038_df['tilepadding'] == PACKING_TILEPADDING].copy()
-    if panel_df.empty:
-        raise ValueError(
-            f"No p038 rows with tilepadding='{PACKING_TILEPADDING}'. "
-            'Re-run p038 with a config that includes this padding mode.'
-        )
+    # The tile padding of each dataset's 5% HOTA-loss Tetris configuration (the token after r<T_r>).
+    points = json.loads((evidence_dir / 'matched_points.json').read_text())['operating_points']['0.05']
+    picks = {label: entry['systems']['tetris']['config'] for label, entry in points.items()}
+    con = duckdb.connect()
+    con.execute("CREATE TABLE s AS SELECT unnest(rows, recursive := true) FROM read_json(?)",
+                [str(evidence_dir / 'packing.json')])
+    con.execute('CREATE TABLE picks(label VARCHAR, config VARCHAR)')
+    con.executemany('INSERT INTO picks VALUES (?, ?)', list(picks.items()))
+    con.execute("CREATE TABLE pick AS SELECT label, regexp_extract(config, '_r[0-9]{3}_([a-z]+)_s[0-9]+', 1) AS padding FROM picks")
+    # Every operating point names a padding that the packing experiment ran.
+    missing = con.execute("SELECT label FROM pick LEFT JOIN s USING (label, padding) WHERE s.dataset IS NULL").fetchall()
+    assert not missing, f'no packing result for the 5% padding of {missing}'
+    # Unpivot the metrics and the two inputs.
+    query = ' UNION ALL '.join(
+        f"""SELECT s.dataset, '{side}' AS input, '{field}' AS metric, 100 * s.packing_efficacy AS efficacy_pct,
+                   s.retained_{kind}_{field}_pct AS accuracy_pct
+            FROM s JOIN pick USING (label, padding)"""
+        for field, _ in PACKING_METRICS for kind, side in (('original', 'Original'), ('packed', 'Packed')))
+    df = con.execute(query).df()
+    assert len(df) == len(picks) * len(PACKING_METRICS) * 2, len(df)
+    return df
 
-    # Attach display names so the bars share the legend with the classifier
-    # panels via the shared color scale.
-    panel_df = _add_dataset_display_names(panel_df)
 
-    # Single bar per dataset within this padding slice -- aggregating with
-    # ``mean`` is a no-op when each (dataset, tilepadding) bucket has one row,
-    # but acts as a guardrail if multiple pruning thresholds slip through.
-    chart = (
-        alt.Chart(panel_df)
-        .mark_bar(opacity=0.9)
-        .encode(
-            x=alt.X(
-                'dataset_display:N',
-                title='Dataset',
-                sort=dataset_domain or None,
-                # Datasets are already encoded by color (shared legend), so
-                # the categorical x-axis would just duplicate that channel;
-                # strip ticks and labels to keep the thin panel uncluttered.
-                axis=alt.Axis(labels=False, ticks=False, domain=False),
-            ),
-            y=alt.Y(
-                'mean(packing_efficacy_pct):Q',
-                title='Packing Efficacy (%)',
-                scale=alt.Scale(domain=[0, 100]),
-            ),
-            color=alt.Color(
-                'dataset_display:N',
-                legend=alt.Legend(title=None),
-                scale=color_scale,
-            ),
-            tooltip=[
-                alt.Tooltip('dataset_display:N', title='Dataset'),
-                alt.Tooltip('tilepadding:N', title='Tile Padding'),
-                alt.Tooltip(
-                    'mean(packing_efficacy_pct):Q',
-                    title='Efficacy (%)',
-                    format='.2f',
-                ),
-            ],
+def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale) -> list[alt.LayerChart]:
+    """One panel per packing metric: hollow original and filled packed points of a dataset, joined by a line."""
+    df = _add_dataset_display_names(packing_df.copy())
+    panels: list[alt.LayerChart] = []
+    for index, (field, title) in enumerate(PACKING_METRICS):
+        base = alt.Chart(df[df['metric'] == field]).encode(
+            x=alt.X('efficacy_pct:Q', title='Packing efficacy (%)', scale=alt.Scale(zero=False)),
+            y=alt.Y('accuracy_pct:Q', title=title, scale=alt.Scale(zero=False)),
+            color=alt.Color('dataset_display:N', legend=alt.Legend(title=None), scale=color_scale),
         )
-        .properties(width=PACKING_PANEL_WIDTH, height=SUBPLOT_HEIGHT)
-    )
-    return chart
+        line = base.mark_line(opacity=0.55, strokeWidth=2.5).encode(detail='dataset_display:N')
+        # Hollow original and filled packed points.
+        original = base.transform_filter(alt.datum.input == 'Original').mark_point(filled=False, size=90, strokeWidth=2)
+        packed = base.transform_filter(alt.datum.input == 'Packed').mark_point(filled=True, size=90, opacity=0.9)
+        layers = [line, original, packed]
+        # The Original/Packed legend, inside the first (precision) panel only.
+        if index == 0:
+            layers.append(_inside_legend([('Original', dict(filled=False, strokeWidth=2)),
+                                          ('Packed', dict(filled=True))]))
+        panels.append(alt.layer(*layers).properties(width=PACKING_PANEL_WIDTH, height=SUBPLOT_HEIGHT))
+    return panels
 
 
 def _shared_dataset_domain(frames: list[pd.DataFrame]) -> list[str]:
@@ -366,56 +357,34 @@ def main() -> None:
     args = parse_args()
     videoset = _resolve_videoset(args)
 
-    # Locate the upstream caches up front so we can fail before doing chart work.
+    # Locate the upstream inputs up front so we can fail before doing chart work.
     p205_path = _p205_jsonl_path('test')
-
     print(f"  Loading p205 cache from {p205_path}")
     p205_df = _load_jsonl(p205_path, 'p205_compare_classifiers')
-    # With --classifier-only the packing panel (and its p038 cache) is left out entirely.
-    frames = [p205_df]
-    if not args.classifier_only:
-        p038_path = _p038_jsonl_path(videoset)
-        print(f"  Loading p038 cache from {p038_path}")
-        p038_df = _load_jsonl(p038_path, 'p038_packing_efficacy')
-        frames.append(p038_df)
+    print(f"  Loading packing evidence from {EVIDENCE_DIR}")
+    packing_df = _load_packing_rows(EVIDENCE_DIR)
 
-    # Shared color encoding: union of datasets across the loaded frames, mapped to
+    # Shared color encoding: union of datasets across both sources, mapped to
     # display names and ordered by the configured DATASETS list.
-    dataset_domain = _shared_dataset_domain(frames)
+    dataset_domain = _shared_dataset_domain([p205_df, packing_df])
     color_scale = _build_color_scale(dataset_domain)
 
-    # Build the classifier metric panels.
-    classifier_panels = _build_classifier_panels(p205_df, color_scale)
-
-    # Group the three classifier subcharts under one shared title so it spans
-    # F1/Recall/Precision rather than sitting above just the leftmost panel.
-    classifier_group = alt.hconcat(*classifier_panels, spacing=0).properties(
-        title=alt.TitleParams(
-            text='Classification Accuracy',
-            anchor='start',
-            fontSize=12,
-        )
+    # Group the three classifier subcharts under one shared title.
+    classifier_group = alt.hconcat(*_build_classifier_panels(p205_df, color_scale), spacing=0).properties(
+        title=alt.TitleParams(text='Classification Accuracy', anchor='start', fontSize=12)
     )
-    if args.classifier_only:
-        # The classifier panels alone, with their shared legend.
-        combined = classifier_group.properties(padding=0).configure_view(stroke=None)
-    else:
-        # Packing panel is a single chart so its title attaches directly.
-        packing_panel = _build_packing_panel(p038_df, color_scale, dataset_domain).properties(
-            title=alt.TitleParams(
-                text='Packing Efficacy',
-                anchor='start',
-                fontSize=12,
-            )
-        )
-        # Stitch into a single horizontal layout. ``resolve_scale`` keeps color
-        # and shape shared so one legend covers both halves.
-        combined = (
-            alt.hconcat(classifier_group, packing_panel, spacing=12)
-            .resolve_scale(color='shared', shape='shared')
-            .properties(padding=0)
-            .configure_view(stroke=None)
-        )
+    # Group the two packing panels (independent y-axes) under their own title.
+    packing_group = alt.hconcat(*_build_packing_panels(packing_df, color_scale), spacing=8).resolve_scale(
+        y='independent'
+    ).properties(title=alt.TitleParams(text='Detection after Packing', anchor='start', fontSize=12))
+
+    # One dataset color legend for the figure; the classifier shape legend stays inside its panel.
+    combined = (
+        alt.hconcat(classifier_group, packing_group, spacing=16)
+        .resolve_scale(color='shared', shape='independent')
+        .properties(padding=0)
+        .configure_view(stroke=None)
+    )
 
     # Write into the dedicated p206 summary cache so the artifact does not
     # collide with the upstream caches we just consumed.
@@ -429,13 +398,10 @@ def main() -> None:
         if videoset == 'valid'
         else f'{SCRIPT_ARTIFACT_BASENAME}_{videoset}'
     )
-    # The classifier-only figure gets its own name so it never replaces the combined one.
-    if args.classifier_only:
-        base_name = base_name.replace('classifier_and_packing', 'classifier_only')
 
     chart_pdf = os.path.join(summary_dir, f'{base_name}.pdf')
     chart_png = os.path.join(summary_dir, f'{base_name}.png')
-    # ``scale_factor`` mirrors p205 (PDF) and p038 (PNG) defaults so the
+    # ``scale_factor`` mirrors p205's PDF and PNG defaults so the
     # rendered density matches the surrounding paper figures.
     combined.save(chart_pdf, scale_factor=2)
     combined.save(chart_png, scale_factor=4)
