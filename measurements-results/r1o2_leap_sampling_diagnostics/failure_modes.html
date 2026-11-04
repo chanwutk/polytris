@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.1.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "hconcat": [{"layer": [{"mark": {"type": "bar", "color": "#167d8d"}, "encoding": {"x": {"axis": {"format": ".0%"}, "field": "continuity", "scale": {"domain": [0, 1]}, "title": null, "type": "quantitative"}, "y": {"field": "label", "sort": ["CalDoT1", "CalDoT2", "Amsterdam", "B3D1", "B3D2", "B3D3", "B3D4"], "title": null, "type": "nominal"}}}, {"mark": {"type": "text", "align": "left", "dx": 3}, "encoding": {"text": {"field": "continuity", "format": ".1%", "type": "quantitative"}, "x": {"axis": {"format": ".0%"}, "field": "continuity", "scale": {"domain": [0, 1]}, "title": null, "type": "quantitative"}, "y": {"field": "label", "sort": ["CalDoT1", "CalDoT2", "Amsterdam", "B3D1", "B3D2", "B3D3", "B3D4"], "title": null, "type": "nominal"}}}], "data": {"values": [{"label": "Amsterdam", "continuity": 0.776410998552822, "interpolation": 0.9460750460405156, "single": 0.7598097502972652}, {"label": "B3D1", "continuity": 0.2587601078167116, "interpolation": 0.7495686022713592, "single": 0.43462897526501765}, {"label": "B3D2", "continuity": 0.1797752808988764, "interpolation": 0.8585205902208506, "single": 0.4005305039787798}, {"label": "B3D3", "continuity": 0.017716535433070866, "interpolation": 0.7476635514018691, "single": 0.9849624060150376}, {"label": "B3D4", "continuity": 0.24773413897280966, "interpolation": 0.8297742687579482, "single": 0.48427672955974843}, {"label": "CalDoT1", "continuity": 0.7569499602859412, "interpolation": 0.8433499897323568, "single": 0.7319098457888493}, {"label": "CalDoT2", "continuity": 0.37662337662337664, "interpolation": 0.3324465398215188, "single": 0.8317757009345794}]}, "height": 210, "title": "ID continuity", "width": 200}, {"layer": [{"mark": {"type": "bar", "color": "#167d8d"}, "encoding": {"x": {"axis": {"format": ".0%"}, "field": "interpolation", "scale": {"domain": [0, 1]}, "title": null, "type": "quantitative"}, "y": {"field": "label", "sort": ["CalDoT1", "CalDoT2", "Amsterdam", "B3D1", "B3D2", "B3D3", "B3D4"], "title": null, "type": "nominal"}}}, {"mark": {"type": "text", "align": "left", "dx": 3}, "encoding": {"text": {"field": "interpolation", "format": ".1%", "type": "quantitative"}, "x": {"axis": {"format": ".0%"}, "field": "interpolation", "scale": {"domain": [0, 1]}, "title": null, "type": "quantitative"}, "y": {"field": "label", "sort": ["CalDoT1", "CalDoT2", "Amsterdam", "B3D1", "B3D2", "B3D3", "B3D4"], "title": null, "type": "nominal"}}}], "data": {"values": [{"label": "Amsterdam", "continuity": 0.776410998552822, "interpolation": 0.9460750460405156, "single": 0.7598097502972652}, {"label": "B3D1", "continuity": 0.2587601078167116, "interpolation": 0.7495686022713592, "single": 0.43462897526501765}, {"label": "B3D2", "continuity": 0.1797752808988764, "interpolation": 0.8585205902208506, "single": 0.4005305039787798}, {"label": "B3D3", "continuity": 0.017716535433070866, "interpolation": 0.7476635514018691, "single": 0.9849624060150376}, {"label": "B3D4", "continuity": 0.24773413897280966, "interpolation": 0.8297742687579482, "single": 0.48427672955974843}, {"label": "CalDoT1", "continuity": 0.7569499602859412, "interpolation": 0.8433499897323568, "single": 0.7319098457888493}, {"label": "CalDoT2", "continuity": 0.37662337662337664, "interpolation": 0.3324465398215188, "single": 0.8317757009345794}]}, "height": 210, "title": "Ideal linear reconstruction", "width": 200}, {"layer": [{"mark": {"type": "bar", "color": "#167d8d"}, "encoding": {"x": {"axis": {"format": ".0%"}, "field": "single", "scale": {"domain": [0, 1]}, "title": null, "type": "quantitative"}, "y": {"field": "label", "sort": ["CalDoT1", "CalDoT2", "Amsterdam", "B3D1", "B3D2", "B3D3", "B3D4"], "title": null, "type": "nominal"}}}, {"mark": {"type": "text", "align": "left", "dx": 3}, "encoding": {"text": {"field": "single", "format": ".1%", "type": "quantitative"}, "x": {"axis": {"format": ".0%"}, "field": "single", "scale": {"domain": [0, 1]}, "title": null, "type": "quantitative"}, "y": {"field": "label", "sort": ["CalDoT1", "CalDoT2", "Amsterdam", "B3D1", "B3D2", "B3D3", "B3D4"], "title": null, "type": "nominal"}}}], "data": {"values": [{"label": "Amsterdam", "continuity": 0.776410998552822, "interpolation": 0.9460750460405156, "single": 0.7598097502972652}, {"label": "B3D1", "continuity": 0.2587601078167116, "interpolation": 0.7495686022713592, "single": 0.43462897526501765}, {"label": "B3D2", "continuity": 0.1797752808988764, "interpolation": 0.8585205902208506, "single": 0.4005305039787798}, {"label": "B3D3", "continuity": 0.017716535433070866, "interpolation": 0.7476635514018691, "single": 0.9849624060150376}, {"label": "B3D4", "continuity": 0.24773413897280966, "interpolation": 0.8297742687579482, "single": 0.48427672955974843}, {"label": "CalDoT1", "continuity": 0.7569499602859412, "interpolation": 0.8433499897323568, "single": 0.7319098457888493}, {"label": "CalDoT2", "continuity": 0.37662337662337664, "interpolation": 0.3324465398215188, "single": 0.8317757009345794}]}, "height": 210, "title": "One-observation IDs", "width": 200}], "spacing": 35, "title": {"text": "Different failure modes in the saved runs", "subtitle": ["ID continuity: matched consecutive-frame pairs retaining one LEAP ID.", "Ideal reconstruction: bracketed GT boxes with interpolated GT-box IoU >= 0.5.", "One-observation IDs: predicted LEAP IDs with one recorded detection."]}, "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json"};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>
