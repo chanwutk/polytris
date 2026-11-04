@@ -207,7 +207,7 @@ def _build_classifier_panels(
         # Connecting line links the Modified/Baseline pair per dataset.
         lines = (
             alt.Chart(df_line)
-            .mark_line(opacity=0.55, strokeWidth=2.5, interpolate='linear')
+            .mark_line(opacity=0.55, strokeWidth=2.5, interpolate='linear', clip=True)
             .encode(
                 x=x_enc,
                 y=y_enc,
@@ -223,7 +223,7 @@ def _build_classifier_panels(
         # the legend stays small when the figure is rendered narrow.
         points = (
             alt.Chart(df_line)
-            .mark_point(filled=True, size=90, opacity=0.9, stroke='white', strokeWidth=0.6)
+            .mark_point(filled=True, size=90, opacity=0.9, stroke='white', strokeWidth=0.6, clip=True)
             .encode(
                 x=x_enc,
                 y=y_enc,
@@ -296,10 +296,10 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale) -> l
             y=alt.Y('accuracy_pct:Q', title=title, scale=alt.Scale(zero=False)),
             color=alt.Color('dataset_display:N', legend=alt.Legend(title=None), scale=color_scale),
         )
-        line = base.mark_line(opacity=0.55, strokeWidth=2.5).encode(detail='dataset_display:N')
-        # Hollow original and filled packed points.
-        original = base.transform_filter(alt.datum.input == 'Original').mark_point(filled=False, size=90, strokeWidth=2)
-        packed = base.transform_filter(alt.datum.input == 'Packed').mark_point(filled=True, size=90, opacity=0.9)
+        line = base.mark_line(opacity=0.55, strokeWidth=2.5, clip=True).encode(detail='dataset_display:N')
+        # Hollow original and filled packed points; every data mark is clipped to the plot area.
+        original = base.transform_filter(alt.datum.input == 'Original').mark_point(filled=False, size=90, strokeWidth=2, clip=True)
+        packed = base.transform_filter(alt.datum.input == 'Packed').mark_point(filled=True, size=90, opacity=0.9, clip=True)
         layers = [line, original, packed]
         # The Original/Packed legend, inside the first (precision) panel only.
         if index == 0:
