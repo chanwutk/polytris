@@ -1,20 +1,21 @@
 #!/usr/local/bin/python
 
-"""Combined relevance-classifier and packing-accuracy figure for the paper.
+"""Combined relevance-classifier, packing-accuracy, and packing-efficacy figure for the paper.
 
 This script does **no** recomputation. It reads the p205 classifier comparison
-(``evaluation/p205_compare_classifiers.py``) from the cache, and the
+(``evaluation/p205_compare_classifiers.py``) and the p038 packing efficacy
+(``evaluation/p038_packing_efficacy.py``) from the cache, and the
 ground-truth-tile packing experiment (measurements-gpu/r1o4_oracle_packing.py)
 from the paper's evidence snapshot (``packing.json``, with each dataset's 5%
 HOTA-loss configuration from ``matched_points.json``), and ``hconcat``s:
 
-  * Left  : Classifier comparison -- F1 against runtime,
-            Modified vs. Baseline by shape (legend inside the F1 panel).
-  * Right : Detector precision and recall on original frames (hollow) and
-            packed canvases (filled) against packing efficacy, at the tile
-            padding of each dataset's 5% HOTA-loss configuration.
-
-Both groups share one dataset color legend.
+  * Left   : Classifier comparison -- F1 against runtime, Modified vs.
+             Baseline by shape (legend inside the panel).
+  * Middle : Detector precision and recall on original frames (hollow) and
+             packed canvases (filled) per dataset, at the tile padding of each
+             dataset's 5% HOTA-loss configuration.
+  * Right  : Packing efficacy per dataset (p038, ``none`` tile padding) as
+             horizontal bars whose dataset labels double as the color legend.
 """
 
 from __future__ import annotations
@@ -52,8 +53,13 @@ PACKING_PANEL_WIDTH: int = 100
 # Pixels added inside both ends of every axis so points on the data extremes draw whole.
 SCALE_PADDING: int = 4
 
-# Upstream summary directory (must match p205's ``cache.summary`` key).
+# Upstream summary directories (must match p205 / p038 ``cache.summary`` keys).
 P205_SUMMARY_STAGE = '205_compare_classifiers'
+P038_SUMMARY_STAGE = '038_packing_efficacy'
+# The packing-efficacy bars use p038's unpadded slice.
+PACKING_TILEPADDING: str = 'none'
+# Width of the packing-efficacy bar chart.
+EFFICACY_PANEL_WIDTH: int = 80
 
 # The paper's evidence snapshot holding the packing experiment and the 5% operating points.
 EVIDENCE_DIR = Path(REPO_ROOT) / 'paper' / 'scripts' / 'data' / 'revision_evidence'
@@ -74,7 +80,7 @@ def parse_args():
 def _resolve_videoset(args: argparse.Namespace) -> str:
     """Pick the split the run aggregates over -- defaults to ``valid``.
 
-    The split only names the output; the paper figure uses ``--test``.
+    The split selects p038's packing-efficacy file and names the output; the paper figure uses ``--test``.
     """
     if args.test:
         return 'test'
@@ -85,6 +91,17 @@ def _p205_jsonl_path(videoset: str) -> Path:
     """Return the cached p205 JSONL path for the given split."""
     # p205 always suffixes its artifacts with the videoset name.
     return cache.summary(P205_SUMMARY_STAGE, f'p205_compare_classifiers_{videoset}.jsonl')
+
+
+def _p038_jsonl_path(videoset: str) -> Path:
+    """Return the cached p038 JSONL path for the given split.
+
+    p038 leaves the validation split unsuffixed (canonical paper artifact)
+    and suffixes the test split, so we mirror that naming here.
+    """
+    if videoset == 'valid':
+        return cache.summary(P038_SUMMARY_STAGE, 'p038_packing_efficacy.jsonl')
+    return cache.summary(P038_SUMMARY_STAGE, f'p038_packing_efficacy_{videoset}.jsonl')
 
 
 def _load_jsonl(path: Path, source_label: str) -> pd.DataFrame:
@@ -113,7 +130,7 @@ def _load_jsonl(path: Path, source_label: str) -> pd.DataFrame:
 def _build_color_scale(domain: list[str]) -> alt.Scale:
     """Build a categorical color scale shared across both panels.
 
-    Uses the shared Tetris palette from p201/p205 so this
+    Uses the shared Tetris palette from p201/p205/p038 so this
     figure visually composes with the rest of the paper.
     """
     return categorical_color_scale(domain or None)
@@ -217,7 +234,7 @@ def _build_classifier_panels(
                 y=y_enc,
                 color=alt.Color(
                     'dataset_display:N',
-                    legend=alt.Legend(title=None),
+                    legend=None,
                     scale=color_scale,
                 ),
                 detail=['dataset', 'tile_size'],
@@ -233,7 +250,7 @@ def _build_classifier_panels(
                 y=y_enc,
                 color=alt.Color(
                     'dataset_display:N',
-                    legend=alt.Legend(title=None),
+                    legend=None,
                     scale=color_scale,
                 ),
                 # Shape distinguishes Modified/Baseline; its legend is drawn inside the F1 panel.
@@ -290,17 +307,20 @@ def _load_packing_rows(evidence_dir: Path) -> pd.DataFrame:
     return df
 
 
-def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale) -> list[alt.LayerChart]:
-    """One panel per packing metric: hollow original and filled packed points of a dataset, joined by a line."""
+def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale,
+                          dataset_domain: list[str]) -> list[alt.LayerChart]:
+    """One panel per packing metric: per dataset, hollow original and filled packed points joined by a line."""
     df = _add_dataset_display_names(packing_df.copy())
     panels: list[alt.LayerChart] = []
     for index, (field, title) in enumerate(PACKING_METRICS):
         base = alt.Chart(df[df['metric'] == field]).encode(
-            x=alt.X('efficacy_pct:Q', title='Packing efficacy (%)', scale=alt.Scale(zero=False, padding=SCALE_PADDING)),
+            # Datasets in the shared order; colors (labeled by the efficacy bars) identify them.
+            x=alt.X('dataset_display:N', title='Dataset', sort=dataset_domain or None,
+                    axis=alt.Axis(labels=False, ticks=False)),
             # labelFlush keeps an edge tick label (e.g., 100) from overhanging the plot and lifting the group title.
             y=alt.Y('accuracy_pct:Q', title=title, scale=alt.Scale(zero=False, padding=SCALE_PADDING),
                     axis=alt.Axis(labelFlush=True)),
-            color=alt.Color('dataset_display:N', legend=alt.Legend(title=None), scale=color_scale),
+            color=alt.Color('dataset_display:N', legend=None, scale=color_scale),
         )
         line = base.mark_line(opacity=0.55, strokeWidth=2.5).encode(detail='dataset_display:N')
         # Hollow original and filled packed points.
@@ -313,6 +333,23 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale) -> l
                                           ('Packed', dict(filled=True))]))
         panels.append(alt.layer(*layers).properties(width=PACKING_PANEL_WIDTH, height=SUBPLOT_HEIGHT))
     return panels
+
+
+def _build_efficacy_chart(p038_df: pd.DataFrame, color_scale: alt.Scale, dataset_domain: list[str]) -> alt.Chart:
+    """Horizontal packing-efficacy bars per dataset; the dataset labels on y double as the figure's color legend."""
+    # The unpadded slice, as in the paper's packing-efficacy text.
+    df = p038_df[p038_df['tilepadding'] == PACKING_TILEPADDING].copy()
+    if df.empty:
+        raise ValueError(f"No p038 rows with tilepadding='{PACKING_TILEPADDING}'. Re-run p038 with this padding mode.")
+    df = _add_dataset_display_names(df)
+    # One bar per dataset: the mean over p038's pruning slices.
+    return alt.Chart(df).mark_bar(opacity=0.9).encode(
+        y=alt.Y('dataset_display:N', title=None, sort=dataset_domain or None, axis=alt.Axis(ticks=False, domain=False)),
+        x=alt.X('mean(packing_efficacy_pct):Q', title='Packing efficacy (%)', scale=alt.Scale(domain=[0, 100])),
+        color=alt.Color('dataset_display:N', legend=None, scale=color_scale),
+        tooltip=[alt.Tooltip('dataset_display:N', title='Dataset'),
+                 alt.Tooltip('mean(packing_efficacy_pct):Q', title='Efficacy (%)', format='.2f')],
+    ).properties(width=EFFICACY_PANEL_WIDTH, height=SUBPLOT_HEIGHT)
 
 
 def _shared_dataset_domain(frames: list[pd.DataFrame]) -> list[str]:
@@ -365,26 +402,33 @@ def main() -> None:
     p205_path = _p205_jsonl_path('test')
     print(f"  Loading p205 cache from {p205_path}")
     p205_df = _load_jsonl(p205_path, 'p205_compare_classifiers')
+    p038_path = _p038_jsonl_path(videoset)
+    print(f"  Loading p038 cache from {p038_path}")
+    p038_df = _load_jsonl(p038_path, 'p038_packing_efficacy')
     print(f"  Loading packing evidence from {EVIDENCE_DIR}")
     packing_df = _load_packing_rows(EVIDENCE_DIR)
 
-    # Shared color encoding: union of datasets across both sources, mapped to
+    # Shared color encoding: union of datasets across all sources, mapped to
     # display names and ordered by the configured DATASETS list.
-    dataset_domain = _shared_dataset_domain([p205_df, packing_df])
+    dataset_domain = _shared_dataset_domain([p205_df, p038_df, packing_df])
     color_scale = _build_color_scale(dataset_domain)
 
     # The classifier subchart under its title.
     classifier_group = alt.hconcat(*_build_classifier_panels(p205_df, color_scale), spacing=0).properties(
         title=alt.TitleParams(text='Classification Accuracy', anchor='start', fontSize=12)
     )
-    # Group the two packing panels (independent y-axes) under their own title.
-    packing_group = alt.hconcat(*_build_packing_panels(packing_df, color_scale), spacing=8).resolve_scale(
+    # The two detection panels (independent y-axes) under their own title.
+    packing_group = alt.hconcat(*_build_packing_panels(packing_df, color_scale, dataset_domain), spacing=8).resolve_scale(
         y='independent'
     ).properties(title=alt.TitleParams(text='Detection after Packing', anchor='start', fontSize=12))
+    # The packing-efficacy bars, which also label the dataset colors.
+    efficacy_chart = _build_efficacy_chart(p038_df, color_scale, dataset_domain).properties(
+        title=alt.TitleParams(text='Packing Efficacy', anchor='start', fontSize=12)
+    )
 
-    # One dataset color legend for the figure; the classifier shape legend stays inside its panel.
+    # One color scale across the figure; the classifier shape legend stays inside its panel.
     combined = (
-        alt.hconcat(classifier_group, packing_group, spacing=16)
+        alt.hconcat(classifier_group, packing_group, efficacy_chart, spacing=16)
         .resolve_scale(color='shared', shape='independent')
         .properties(padding=0)
         .configure_view(stroke=None)
