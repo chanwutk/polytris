@@ -1,9 +1,10 @@
 {
-  "measurements-gpu/r1o4_oracle_packing.py": "92470f220b655cae0fd8e30e3b608c2e853395c36775a2f807ea60ec52c39031",
+  "measurements-gpu/r1o4_oracle_packing.py": "1a99cd5d0b4f38a45d5208fa9b9176f1e0573ad7a26f587a5393204241c11846",
   "measurements/r1o4_packing_detection_accuracy.py": "e9aaed7f98bbbed8003b73ef08dbc7ddd25c8b8e902ca7d6a425a20a1b3e5e22",
+  "measurements/r1o4_oracle_packing_stats.py": "a08931b63b4c1f0e8987199f7f139d70a0f59f9aa16415ff6a1435729a4830d8",
   "tests/test_measurements_oracle_packing.py": "41f47083ca52874af1109579e1e110975cfef824786467c7bff85cb8477b3611",
   "scripts/p030_exec_compress.py": "4512a81a0eb9f709a801eaa12f54baea33714c5f6e350b993fbbef1b22fc0af8",
   "scripts/p040_exec_detect.py": "503842ae8fcbacf51e05bb12824d6bae09d47ce82e36099bbeaf556e3d717672",
   "scripts/p050_exec_uncompress.py": "c2b0262b4f565714154cea2b591a74fcac3fb976f787151eee5c947976284c9b",
-  "measurements-results/r1o4_oracle_packing/summarize.py": "e82cdd92bdcd41a801245062cc7ccb845cd7857060dda8abaa325438c03ff21c"
+  "measurements-results/r1o4_oracle_packing/summarize.py": "0b1d4964516212f879231c74552af48635f778ba2944f77439fa5aa135a91a8a"
 }

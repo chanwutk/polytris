@@ -2,6 +2,7 @@
 import hashlib
 import json
 import shutil
+import sys
 from pathlib import Path
 
 import duckdb
@@ -11,7 +12,8 @@ from measurements.common import DATASET_LABELS
 from polyis.io import cache
 
 
-STRIDE = 16
+# The sampling stride to summarize (sr<stride>/), given as the only argument.
+STRIDE = int(sys.argv[1])
 PADDINGS = ('none', 'square')
 root = Path(__file__).resolve().parent
 out = root / f'sr{STRIDE}'
@@ -50,8 +52,22 @@ con.execute("""CREATE TABLE canvas_counts AS
     SELECT f.json->>'dataset' AS dataset, f.json->'method'->>'tile_padding' AS padding,
            sum(CAST(v.value->>'canvases' AS BIGINT)) AS canvases
     FROM read_json_objects(?) f, json_each(f.json->'videos') v GROUP BY ALL""", [files])
+# Object and polyomino statistics (measurements/r1o4_oracle_packing_stats.py), one file per dataset.
+stats_files = [str(out / 'stats' / f'{dataset}.json') for dataset in DATASET_LABELS]
+con.execute("""CREATE TABLE stats AS
+    SELECT f.json->>'dataset' AS dataset, p.key AS padding, f.json->'objects' AS objects, p.value AS packing
+    FROM read_json_objects(?) f, json_each(f.json->'padding') p""", [stats_files])
 con.execute("""CREATE TABLE summary AS SELECT r.dataset,label,method.tile_padding AS padding,sampled_frames,clips,
  c.canvases, round(c.canvases/sampled_frames,3) AS canvases_per_sampled_frame,
+ CAST(s.packing->>'packing_efficacy' AS DOUBLE) AS packing_efficacy,
+ CAST(s.packing->>'polyominoes_per_frame' AS DOUBLE) AS polyominoes_per_frame,
+ CAST(s.packing->>'tiles_per_polyomino' AS DOUBLE) AS tiles_per_polyomino,
+ CAST(s.packing->>'objects_per_polyomino' AS DOUBLE) AS objects_per_polyomino,
+ CAST(s.packing->>'occupied_fraction_of_grid' AS DOUBLE) AS occupied_fraction_of_grid,
+ CAST(s.objects->>'boxes_per_frame' AS DOUBLE) AS objects_per_frame,
+ CAST(s.objects->>'median_longest_side_tiles' AS DOUBLE) AS median_object_longest_side_tiles,
+ CAST(s.objects->>'fraction_within_one_tile' AS DOUBLE) AS objects_within_one_tile,
+ CAST(s.objects->>'mean_tiles_overlapped' AS DOUBLE) AS mean_tiles_per_object,
  all_sampled_frames.reference.n_gt AS gt_boxes,
  retained_content.center.reference.n_gt AS retained_gt_boxes,
  round(100*all_sampled_frames.reference.precision,2) AS original_precision_pct,
@@ -67,7 +83,8 @@ con.execute("""CREATE TABLE summary AS SELECT r.dataset,label,method.tile_paddin
  round(100*retained_content.center.reference.ap50,2) AS retained_original_map50_pct,
  round(100*retained_content.center.packed.ap50,2) AS retained_packed_map50_pct
  FROM read_json(?,union_by_name=true) r JOIN clip_counts USING(dataset)
- JOIN canvas_counts c ON c.dataset = r.dataset AND c.padding = r.method.tile_padding ORDER BY label, padding""", [files])
+ JOIN canvas_counts c ON c.dataset = r.dataset AND c.padding = r.method.tile_padding
+ JOIN stats s ON s.dataset = r.dataset AND s.padding = r.method.tile_padding ORDER BY label, padding""", [files])
 cursor = con.execute('SELECT * FROM summary')
 columns = [item[0] for item in cursor.description]
 rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -84,6 +101,7 @@ report = dict(
 # Freeze the relevant sources alongside the input and checkpoint hashes in each result.
 provenance = {}
 for relative in ['measurements-gpu/r1o4_oracle_packing.py', 'measurements/r1o4_packing_detection_accuracy.py',
+                 'measurements/r1o4_oracle_packing_stats.py',
                  'tests/test_measurements_oracle_packing.py', 'scripts/p030_exec_compress.py',
                  'scripts/p040_exec_detect.py', 'scripts/p050_exec_uncompress.py',
                  'measurements-results/r1o4_oracle_packing/summarize.py']:

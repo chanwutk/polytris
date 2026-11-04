@@ -72,6 +72,7 @@ def parse_args():
     split_group = parser.add_mutually_exclusive_group()
     split_group.add_argument('--valid', action='store_true')
     split_group.add_argument('--test', action='store_true')
+    parser.add_argument('--classifier-only', action='store_true')
     return parser.parse_args()
 
 
@@ -367,21 +368,24 @@ def main() -> None:
 
     # Locate the upstream caches up front so we can fail before doing chart work.
     p205_path = _p205_jsonl_path('test')
-    p038_path = _p038_jsonl_path(videoset)
 
     print(f"  Loading p205 cache from {p205_path}")
     p205_df = _load_jsonl(p205_path, 'p205_compare_classifiers')
-    print(f"  Loading p038 cache from {p038_path}")
-    p038_df = _load_jsonl(p038_path, 'p038_packing_efficacy')
+    # With --classifier-only the packing panel (and its p038 cache) is left out entirely.
+    frames = [p205_df]
+    if not args.classifier_only:
+        p038_path = _p038_jsonl_path(videoset)
+        print(f"  Loading p038 cache from {p038_path}")
+        p038_df = _load_jsonl(p038_path, 'p038_packing_efficacy')
+        frames.append(p038_df)
 
-    # Shared color encoding: union of datasets across both frames, mapped to
+    # Shared color encoding: union of datasets across the loaded frames, mapped to
     # display names and ordered by the configured DATASETS list.
-    dataset_domain = _shared_dataset_domain([p205_df, p038_df])
+    dataset_domain = _shared_dataset_domain(frames)
     color_scale = _build_color_scale(dataset_domain)
 
-    # Build the panels: classifier metrics on the left, packing on the right.
+    # Build the classifier metric panels.
     classifier_panels = _build_classifier_panels(p205_df, color_scale)
-    packing_panel = _build_packing_panel(p038_df, color_scale, dataset_domain)
 
     # Group the three classifier subcharts under one shared title so it spans
     # F1/Recall/Precision rather than sitting above just the leftmost panel.
@@ -392,23 +396,26 @@ def main() -> None:
             fontSize=12,
         )
     )
-    # Packing panel is a single chart so its title attaches directly.
-    packing_panel = packing_panel.properties(
-        title=alt.TitleParams(
-            text='Packing Efficacy',
-            anchor='start',
-            fontSize=12,
+    if args.classifier_only:
+        # The classifier panels alone, with their shared legend.
+        combined = classifier_group.properties(padding=0).configure_view(stroke=None)
+    else:
+        # Packing panel is a single chart so its title attaches directly.
+        packing_panel = _build_packing_panel(p038_df, color_scale, dataset_domain).properties(
+            title=alt.TitleParams(
+                text='Packing Efficacy',
+                anchor='start',
+                fontSize=12,
+            )
         )
-    )
-
-    # Stitch into a single horizontal layout. ``resolve_scale`` keeps color
-    # and shape shared so one legend covers both halves.
-    combined = (
-        alt.hconcat(classifier_group, packing_panel, spacing=12)
-        .resolve_scale(color='shared', shape='shared')
-        .properties(padding=0)
-        .configure_view(stroke=None)
-    )
+        # Stitch into a single horizontal layout. ``resolve_scale`` keeps color
+        # and shape shared so one legend covers both halves.
+        combined = (
+            alt.hconcat(classifier_group, packing_panel, spacing=12)
+            .resolve_scale(color='shared', shape='shared')
+            .properties(padding=0)
+            .configure_view(stroke=None)
+        )
 
     # Write into the dedicated p206 summary cache so the artifact does not
     # collide with the upstream caches we just consumed.
@@ -422,6 +429,9 @@ def main() -> None:
         if videoset == 'valid'
         else f'{SCRIPT_ARTIFACT_BASENAME}_{videoset}'
     )
+    # The classifier-only figure gets its own name so it never replaces the combined one.
+    if args.classifier_only:
+        base_name = base_name.replace('classifier_and_packing', 'classifier_only')
 
     chart_pdf = os.path.join(summary_dir, f'{base_name}.pdf')
     chart_png = os.path.join(summary_dir, f'{base_name}.png')

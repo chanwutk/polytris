@@ -1,0 +1,49 @@
+{
+  "dataset": "caldot2-y05",
+  "label": "CalDoT2",
+  "stride": 16,
+  "tile_size": 60,
+  "sampled_frames": 3420,
+  "grid_tiles": 328320,
+  "objects": {
+    "boxes": 9018,
+    "median_width_tiles": 0.2833333333333333,
+    "median_height_tiles": 0.21666666666666667,
+    "median_longest_side_tiles": 0.2833333333333333,
+    "fraction_within_one_tile": 0.5996895098691506,
+    "mean_tiles_overlapped": 1.6625637613661566,
+    "median_tiles_overlapped": 1.0,
+    "median_context_ratio": 22.857142857142858,
+    "boxes_per_frame": 2.636842105263158
+  },
+  "padding": {
+    "square": {
+      "canvases": 684,
+      "canvases_per_frame": 0.2,
+      "canvas_tiles": 65664,
+      "occupied_tiles": 51134,
+      "packing_efficacy": 0.7787219785575049,
+      "occupied_tiles_per_frame": 14.951461988304093,
+      "occupied_fraction_of_grid": 0.15574439571150098,
+      "polyominoes": 3246,
+      "polyominoes_per_frame": 0.9491228070175438,
+      "tiles_per_polyomino": 15.752926678989526,
+      "objects_per_polyomino": 2.77818853974122,
+      "padding_tiles": 39410,
+      "polyomino_merge_factor": 1.2590881084411583
+    },
+    "none": {
+      "canvases": 153,
+      "canvases_per_frame": 0.04473684210526316,
+      "canvas_tiles": 14688,
+      "occupied_tiles": 11724,
+      "packing_efficacy": 0.798202614379085,
+      "occupied_tiles_per_frame": 3.4280701754385965,
+      "occupied_fraction_of_grid": 0.03570906432748538,
+      "polyominoes": 4087,
+      "polyominoes_per_frame": 1.1950292397660818,
+      "tiles_per_polyomino": 2.8686077807682895,
+      "objects_per_polyomino": 2.2065084413995595
+    }
+  }
+}
