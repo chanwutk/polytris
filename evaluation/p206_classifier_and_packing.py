@@ -8,7 +8,7 @@ ground-truth-tile packing experiment (measurements-gpu/r1o4_oracle_packing.py)
 from the paper's evidence snapshot (``packing.json``, with each dataset's 5%
 HOTA-loss configuration from ``matched_points.json``), and ``hconcat``s:
 
-  * Left  : Classifier comparison -- F1, Recall, Precision against runtime,
+  * Left  : Classifier comparison -- F1 against runtime,
             Modified vs. Baseline by shape (legend inside the F1 panel).
   * Right : Detector precision and recall on original frames (hollow) and
             packed canvases (filled) against packing efficacy, at the tile
@@ -164,9 +164,9 @@ def _build_classifier_panels(
     p205_df: pd.DataFrame,
     color_scale: alt.Scale,
 ) -> list[alt.Chart]:
-    """Build the F1 / Recall / Precision subcharts from the p205 frame.
+    """Build the classifier subcharts (F1) from the p205 frame.
 
-    Returns a list of three subcharts (left-to-right order) ready to be
+    Returns a list of subcharts (left-to-right order) ready to be
     horizontally concatenated. We deliberately drop accuracy and runtime to
     keep the combined figure focused on the metrics the paper cites.
     """
@@ -184,14 +184,12 @@ def _build_classifier_panels(
         kind='stable',
     ).reset_index(drop=True)
 
-    # Requested subset and order: F1, Recall, Precision (no accuracy).
+    # F1 only: the paper's classifier comparison reports F1.
     metrics: list[tuple[str, str]] = [
         ('f1_score', 'F1'),
-        ('recall', 'Recall'),
-        ('precision', 'Precision'),
     ]
 
-    # Shared x-axis (runtime ms/frame) so the three subcharts line up.
+    # Shared x-axis (runtime ms/frame) so the subcharts line up.
     x_vals = df_line['ms_per_frame'].astype(float)
     x_max = float(x_vals.max()) if len(x_vals) else 1.0
     if not (np.isfinite(x_max) and x_max > 0):
@@ -369,7 +367,7 @@ def main() -> None:
     dataset_domain = _shared_dataset_domain([p205_df, packing_df])
     color_scale = _build_color_scale(dataset_domain)
 
-    # Group the three classifier subcharts under one shared title.
+    # The classifier subchart under its title.
     classifier_group = alt.hconcat(*_build_classifier_panels(p205_df, color_scale), spacing=0).properties(
         title=alt.TitleParams(text='Classification Accuracy', anchor='start', fontSize=12)
     )
