@@ -59,7 +59,7 @@ P038_SUMMARY_STAGE = '038_packing_efficacy'
 # The packing-efficacy bars use p038's unpadded slice.
 PACKING_TILEPADDING: str = 'none'
 # Width of the packing-efficacy bar chart.
-EFFICACY_PANEL_WIDTH: int = 65
+EFFICACY_PANEL_WIDTH: int = 100
 
 # The paper's evidence snapshot holding the packing experiment and the 5% operating points.
 EVIDENCE_DIR = Path(REPO_ROOT) / 'paper' / 'scripts' / 'data' / 'revision_evidence'
