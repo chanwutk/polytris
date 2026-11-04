@@ -1,0 +1,164 @@
+[
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "background",
+    "fp": 126,
+    "median_score": 0.507,
+    "also_original": 98,
+    "detections": 12154
+  },
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "duplicate",
+    "fp": 41,
+    "median_score": 0.332,
+    "also_original": 41,
+    "detections": 12154
+  },
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "localization",
+    "fp": 134,
+    "median_score": 0.472,
+    "also_original": 117,
+    "detections": 12154
+  },
+  {
+    "padding": "none",
+    "side": "reference",
+    "kind": "background",
+    "fp": 155,
+    "median_score": 0.483,
+    "also_original": 0,
+    "detections": 12651
+  },
+  {
+    "padding": "none",
+    "side": "reference",
+    "kind": "duplicate",
+    "fp": 53,
+    "median_score": 0.366,
+    "also_original": 0,
+    "detections": 12651
+  },
+  {
+    "padding": "none",
+    "side": "reference",
+    "kind": "localization",
+    "fp": 186,
+    "median_score": 0.432,
+    "also_original": 0,
+    "detections": 12651
+  },
+  {
+    "padding": "bl",
+    "side": "packed",
+    "kind": "background",
+    "fp": 169,
+    "median_score": 0.492,
+    "also_original": 147,
+    "detections": 12541
+  },
+  {
+    "padding": "bl",
+    "side": "packed",
+    "kind": "duplicate",
+    "fp": 50,
+    "median_score": 0.334,
+    "also_original": 50,
+    "detections": 12541
+  },
+  {
+    "padding": "bl",
+    "side": "packed",
+    "kind": "localization",
+    "fp": 157,
+    "median_score": 0.444,
+    "also_original": 147,
+    "detections": 12541
+  },
+  {
+    "padding": "bl",
+    "side": "reference",
+    "kind": "background",
+    "fp": 175,
+    "median_score": 0.481,
+    "also_original": 0,
+    "detections": 12671
+  },
+  {
+    "padding": "bl",
+    "side": "reference",
+    "kind": "duplicate",
+    "fp": 53,
+    "median_score": 0.366,
+    "also_original": 0,
+    "detections": 12671
+  },
+  {
+    "padding": "bl",
+    "side": "reference",
+    "kind": "localization",
+    "fp": 186,
+    "median_score": 0.432,
+    "also_original": 0,
+    "detections": 12671
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "background",
+    "fp": 197,
+    "median_score": 0.468,
+    "also_original": 170,
+    "detections": 12687
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "duplicate",
+    "fp": 51,
+    "median_score": 0.37,
+    "also_original": 51,
+    "detections": 12687
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "localization",
+    "fp": 182,
+    "median_score": 0.435,
+    "also_original": 176,
+    "detections": 12687
+  },
+  {
+    "padding": "square",
+    "side": "reference",
+    "kind": "background",
+    "fp": 185,
+    "median_score": 0.481,
+    "also_original": 0,
+    "detections": 12681
+  },
+  {
+    "padding": "square",
+    "side": "reference",
+    "kind": "duplicate",
+    "fp": 53,
+    "median_score": 0.366,
+    "also_original": 0,
+    "detections": 12681
+  },
+  {
+    "padding": "square",
+    "side": "reference",
+    "kind": "localization",
+    "fp": 186,
+    "median_score": 0.432,
+    "also_original": 0,
+    "detections": 12681
+  }
+]

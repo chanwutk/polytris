@@ -1,0 +1,164 @@
+[
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "background",
+    "fp": 322,
+    "median_score": 0.749,
+    "also_original": 276,
+    "detections": 7079
+  },
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "duplicate",
+    "fp": 6,
+    "median_score": 0.779,
+    "also_original": 6,
+    "detections": 7079
+  },
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "localization",
+    "fp": 66,
+    "median_score": 0.705,
+    "also_original": 20,
+    "detections": 7079
+  },
+  {
+    "padding": "none",
+    "side": "reference",
+    "kind": "background",
+    "fp": 344,
+    "median_score": 0.753,
+    "also_original": 0,
+    "detections": 7651
+  },
+  {
+    "padding": "none",
+    "side": "reference",
+    "kind": "duplicate",
+    "fp": 3,
+    "median_score": 0.267,
+    "also_original": 0,
+    "detections": 7651
+  },
+  {
+    "padding": "none",
+    "side": "reference",
+    "kind": "localization",
+    "fp": 24,
+    "median_score": 0.721,
+    "also_original": 0,
+    "detections": 7651
+  },
+  {
+    "padding": "tr",
+    "side": "packed",
+    "kind": "background",
+    "fp": 445,
+    "median_score": 0.776,
+    "also_original": 330,
+    "detections": 7734
+  },
+  {
+    "padding": "tr",
+    "side": "packed",
+    "kind": "duplicate",
+    "fp": 5,
+    "median_score": 0.403,
+    "also_original": 4,
+    "detections": 7734
+  },
+  {
+    "padding": "tr",
+    "side": "packed",
+    "kind": "localization",
+    "fp": 70,
+    "median_score": 0.663,
+    "also_original": 29,
+    "detections": 7734
+  },
+  {
+    "padding": "tr",
+    "side": "reference",
+    "kind": "background",
+    "fp": 360,
+    "median_score": 0.764,
+    "also_original": 0,
+    "detections": 7667
+  },
+  {
+    "padding": "tr",
+    "side": "reference",
+    "kind": "duplicate",
+    "fp": 3,
+    "median_score": 0.267,
+    "also_original": 0,
+    "detections": 7667
+  },
+  {
+    "padding": "tr",
+    "side": "reference",
+    "kind": "localization",
+    "fp": 24,
+    "median_score": 0.721,
+    "also_original": 0,
+    "detections": 7667
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "background",
+    "fp": 540,
+    "median_score": 0.753,
+    "also_original": 423,
+    "detections": 7850
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "duplicate",
+    "fp": 2,
+    "median_score": 0.521,
+    "also_original": 2,
+    "detections": 7850
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "localization",
+    "fp": 66,
+    "median_score": 0.718,
+    "also_original": 30,
+    "detections": 7850
+  },
+  {
+    "padding": "square",
+    "side": "reference",
+    "kind": "background",
+    "fp": 463,
+    "median_score": 0.779,
+    "also_original": 0,
+    "detections": 7770
+  },
+  {
+    "padding": "square",
+    "side": "reference",
+    "kind": "duplicate",
+    "fp": 3,
+    "median_score": 0.267,
+    "also_original": 0,
+    "detections": 7770
+  },
+  {
+    "padding": "square",
+    "side": "reference",
+    "kind": "localization",
+    "fp": 24,
+    "median_score": 0.721,
+    "also_original": 0,
+    "detections": 7770
+  }
+]

@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--valid', action='store_true')
     parser.add_argument('--videos', nargs='+')
+    parser.add_argument('--drop-center-outside', action='store_true')
     return parser.parse_args()
 
 
@@ -70,7 +71,7 @@ UnpackedDets = tuple[FrameIdToDets, Dets, Dets]
 
 def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
                       offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]],
-                      tilesize: int) -> UnpackedDets:
+                      tilesize: int, drop_center_outside: bool = False) -> UnpackedDets:
     """
     Unpack detections from compressed coordinates back to original frame coordinates.
 
@@ -79,6 +80,9 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
         index_map (np.ndarray): Index map from the mapping file (2D array with group_ids)
         offset_lookup (list[tuple[tuple[int, int], tuple[int, int], int]]): Offset lookup from the mapping file
         tilesize (int): Size of tiles used for compression
+        drop_center_outside (bool): Drop detections whose center falls on an empty canvas cell instead of
+            assigning them to the polyomino under one of their corners (off by default; the tracker can
+            discard such boxes, while detection-only evaluations may drop them)
 
     Returns:
         tuple[
@@ -128,6 +132,9 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
         if not center_in_any_tile:
             center_not_in_any_tile_detections.append([x1, y1, x2, y2, *_])
+            # Optionally drop a box centered on empty canvas space rather than map it through a corner.
+            if drop_center_outside:
+                continue
 
         if group_id is None:
             not_in_any_tile_detections.append([x1, y1, x2, y2, *_])
@@ -164,7 +171,8 @@ def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
 
 def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,
            sample_rate: int, tilepadding: str, canvas_scale: float, tracker: str | None,
-           tracking_accuracy_threshold: float | None, relevance_threshold: float):
+           tracking_accuracy_threshold: float | None, relevance_threshold: float,
+           drop_center_outside: bool = False):
     """
     Process unpacking for a single video/classifier/tilesize combination.
     This function is designed to be called in parallel.
@@ -179,6 +187,7 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
         canvas_scale (float): Canvas scale used for compression outputs
         tracker (str): Tracker name for upstream pruning
         tracking_accuracy_threshold (float | None): Accuracy threshold for pruning (None = no pruning)
+        drop_center_outside (bool): Drop detections centered on empty canvas space (see unpack_detections)
     """
     # Build the shared key used by all 03x/04x/05x stage folders.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
@@ -248,7 +257,7 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
             with timer('unpack_detections'):
                 # Unpack detections
                 frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections \
-                    = unpack_detections(detections, index_map, offset_lookup, tilesize)
+                    = unpack_detections(detections, index_map, offset_lookup, tilesize, drop_center_outside)
 
             # save not_in_any_tile_detections and center_not_in_any_tile_detections
             if len(not_in_any_tile_detections) > 0:
@@ -309,7 +318,7 @@ def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: i
 def uncompress_all(dataset: str, videoset: str, videos: list[str], classifier: str, tilesize: int,
                    sample_rate: int, tilepadding: str, canvas_scale: float, tracker: str | None,
                    tracking_accuracy_threshold: float | None, relevance_threshold: float,
-                   gpu_id: int, command_queue: mp.Queue):
+                   gpu_id: int, command_queue: mp.Queue, drop_center_outside: bool = False):
     device = f'cuda:{gpu_id}'
     # Build a human-readable description for the progress bar.
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
@@ -322,7 +331,8 @@ def uncompress_all(dataset: str, videoset: str, videos: list[str], classifier: s
     # Iterate over all videos in the split for this parameter combination.
     for i, video in enumerate(videos):
         unpack(dataset, videoset, video, classifier, tilesize, sample_rate,
-               tilepadding, canvas_scale, tracker, tracking_accuracy_threshold, relevance_threshold)
+               tilepadding, canvas_scale, tracker, tracking_accuracy_threshold, relevance_threshold,
+               drop_center_outside)
         # Advance the progress bar by one unit after each video completes.
         command_queue.put((device, {'completed': i + 1, 'total': len(videos), 'description': description}))
 
@@ -396,7 +406,8 @@ def main():
                 if allowed_combos is not None and combo not in allowed_combos[dataset]:
                     continue
                 funcs.append(partial(uncompress_all, dataset, videoset, sorted(videos), classifier,
-                                     tilesize, sample_rate, tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold))
+                                     tilesize, sample_rate, tilepadding, canvas_scale, tracker, acc_threshold, relevance_threshold,
+                                     drop_center_outside=args.drop_center_outside))
 
     print(f"Created {len(funcs)} tasks to process")
     ProgressBar(num_workers=int(mp.cpu_count() // 2), num_tasks=len(funcs)).run_all(funcs)

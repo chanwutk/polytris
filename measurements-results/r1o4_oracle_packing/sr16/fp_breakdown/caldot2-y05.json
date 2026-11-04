@@ -1,0 +1,209 @@
+[
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "background",
+    "fp": 72,
+    "median_score": 0.415,
+    "also_original": 28,
+    "detections": 7899
+  },
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "duplicate",
+    "fp": 17,
+    "median_score": 0.372,
+    "also_original": 17,
+    "detections": 7899
+  },
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "localization",
+    "fp": 70,
+    "median_score": 0.485,
+    "also_original": 52,
+    "detections": 7899
+  },
+  {
+    "padding": "none",
+    "side": "reference",
+    "kind": "background",
+    "fp": 123,
+    "median_score": 0.428,
+    "also_original": 0,
+    "detections": 8851
+  },
+  {
+    "padding": "none",
+    "side": "reference",
+    "kind": "duplicate",
+    "fp": 22,
+    "median_score": 0.324,
+    "also_original": 0,
+    "detections": 8851
+  },
+  {
+    "padding": "none",
+    "side": "reference",
+    "kind": "localization",
+    "fp": 70,
+    "median_score": 0.564,
+    "also_original": 0,
+    "detections": 8851
+  },
+  {
+    "padding": "none",
+    "side": "packed",
+    "kind": "center_outside",
+    "n": 40,
+    "median_score": 0.686,
+    "median_w": 53.5,
+    "median_h": 64.5,
+    "tp_median_w": 18.8,
+    "tp_median_h": 14.6,
+    "touches_retained": 1.0,
+    "overlaps_gt": 0.0,
+    "negative_coords": 0.0,
+    "videos": 8
+  },
+  {
+    "padding": "tr",
+    "side": "packed",
+    "kind": "background",
+    "fp": 253,
+    "median_score": 0.459,
+    "also_original": 145,
+    "detections": 8997
+  },
+  {
+    "padding": "tr",
+    "side": "packed",
+    "kind": "duplicate",
+    "fp": 20,
+    "median_score": 0.37,
+    "also_original": 20,
+    "detections": 8997
+  },
+  {
+    "padding": "tr",
+    "side": "packed",
+    "kind": "localization",
+    "fp": 104,
+    "median_score": 0.503,
+    "also_original": 80,
+    "detections": 8997
+  },
+  {
+    "padding": "tr",
+    "side": "reference",
+    "kind": "background",
+    "fp": 160,
+    "median_score": 0.426,
+    "also_original": 0,
+    "detections": 8888
+  },
+  {
+    "padding": "tr",
+    "side": "reference",
+    "kind": "duplicate",
+    "fp": 22,
+    "median_score": 0.324,
+    "also_original": 0,
+    "detections": 8888
+  },
+  {
+    "padding": "tr",
+    "side": "reference",
+    "kind": "localization",
+    "fp": 70,
+    "median_score": 0.564,
+    "also_original": 0,
+    "detections": 8888
+  },
+  {
+    "padding": "tr",
+    "side": "packed",
+    "kind": "center_outside",
+    "n": 494,
+    "median_score": 0.706,
+    "median_w": 55.7,
+    "median_h": 64.2,
+    "tp_median_w": 16.2,
+    "tp_median_h": 12.5,
+    "touches_retained": 1.0,
+    "overlaps_gt": 0.0,
+    "negative_coords": 0.0,
+    "videos": 59
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "background",
+    "fp": 281,
+    "median_score": 0.489,
+    "also_original": 158,
+    "detections": 9048
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "duplicate",
+    "fp": 20,
+    "median_score": 0.383,
+    "also_original": 20,
+    "detections": 9048
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "localization",
+    "fp": 103,
+    "median_score": 0.517,
+    "also_original": 82,
+    "detections": 9048
+  },
+  {
+    "padding": "square",
+    "side": "reference",
+    "kind": "background",
+    "fp": 175,
+    "median_score": 0.442,
+    "also_original": 0,
+    "detections": 8904
+  },
+  {
+    "padding": "square",
+    "side": "reference",
+    "kind": "duplicate",
+    "fp": 22,
+    "median_score": 0.324,
+    "also_original": 0,
+    "detections": 8904
+  },
+  {
+    "padding": "square",
+    "side": "reference",
+    "kind": "localization",
+    "fp": 71,
+    "median_score": 0.566,
+    "also_original": 0,
+    "detections": 8904
+  },
+  {
+    "padding": "square",
+    "side": "packed",
+    "kind": "center_outside",
+    "n": 318,
+    "median_score": 0.67,
+    "median_w": 55.3,
+    "median_h": 65.0,
+    "tp_median_w": 16.4,
+    "tp_median_h": 12.6,
+    "touches_retained": 1.0,
+    "overlaps_gt": 0.0,
+    "negative_coords": 0.0,
+    "videos": 56
+  }
+]

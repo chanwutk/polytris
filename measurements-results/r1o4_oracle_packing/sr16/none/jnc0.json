@@ -11,6 +11,7 @@
     "ilp_pruning": false,
     "tracking": false,
     "track_interpolation": false,
+    "drop_center_outside": true,
     "original_batch_size": 1,
     "packed_batch_size": 4,
     "packed_jpeg_quality": 95,
@@ -19,7 +20,7 @@
     "pipeline_sha256": {
       "p030_exec_compress": "4512a81a0eb9f709a801eaa12f54baea33714c5f6e350b993fbbef1b22fc0af8",
       "p040_exec_detect": "503842ae8fcbacf51e05bb12824d6bae09d47ce82e36099bbeaf556e3d717672",
-      "p050_exec_uncompress": "c2b0262b4f565714154cea2b591a74fcac3fb976f787151eee5c947976284c9b"
+      "p050_exec_uncompress": "e583abee238c996b74d390d089ba72237d3df319969a48a7243fd081a5a9eaf4"
     }
   },
   "videos": {
@@ -35,6 +36,7 @@
           "ilp_pruning": false,
           "tracking": false,
           "track_interpolation": false,
+          "drop_center_outside": true,
           "original_batch_size": 1,
           "packed_batch_size": 4,
           "packed_jpeg_quality": 95,
@@ -43,7 +45,7 @@
           "pipeline_sha256": {
             "p030_exec_compress": "4512a81a0eb9f709a801eaa12f54baea33714c5f6e350b993fbbef1b22fc0af8",
             "p040_exec_detect": "503842ae8fcbacf51e05bb12824d6bae09d47ce82e36099bbeaf556e3d717672",
-            "p050_exec_uncompress": "c2b0262b4f565714154cea2b591a74fcac3fb976f787151eee5c947976284c9b"
+            "p050_exec_uncompress": "e583abee238c996b74d390d089ba72237d3df319969a48a7243fd081a5a9eaf4"
           }
         },
         "video": "te01.mp4",
@@ -70,6 +72,7 @@
           "ilp_pruning": false,
           "tracking": false,
           "track_interpolation": false,
+          "drop_center_outside": true,
           "original_batch_size": 1,
           "packed_batch_size": 4,
           "packed_jpeg_quality": 95,
@@ -78,7 +81,7 @@
           "pipeline_sha256": {
             "p030_exec_compress": "4512a81a0eb9f709a801eaa12f54baea33714c5f6e350b993fbbef1b22fc0af8",
             "p040_exec_detect": "503842ae8fcbacf51e05bb12824d6bae09d47ce82e36099bbeaf556e3d717672",
-            "p050_exec_uncompress": "c2b0262b4f565714154cea2b591a74fcac3fb976f787151eee5c947976284c9b"
+            "p050_exec_uncompress": "e583abee238c996b74d390d089ba72237d3df319969a48a7243fd081a5a9eaf4"
           }
         },
         "video": "te04.mp4",
@@ -105,6 +108,7 @@
           "ilp_pruning": false,
           "tracking": false,
           "track_interpolation": false,
+          "drop_center_outside": true,
           "original_batch_size": 1,
           "packed_batch_size": 4,
           "packed_jpeg_quality": 95,
@@ -113,7 +117,7 @@
           "pipeline_sha256": {
             "p030_exec_compress": "4512a81a0eb9f709a801eaa12f54baea33714c5f6e350b993fbbef1b22fc0af8",
             "p040_exec_detect": "503842ae8fcbacf51e05bb12824d6bae09d47ce82e36099bbeaf556e3d717672",
-            "p050_exec_uncompress": "c2b0262b4f565714154cea2b591a74fcac3fb976f787151eee5c947976284c9b"
+            "p050_exec_uncompress": "e583abee238c996b74d390d089ba72237d3df319969a48a7243fd081a5a9eaf4"
           }
         },
         "video": "te08.mp4",
@@ -140,6 +144,7 @@
           "ilp_pruning": false,
           "tracking": false,
           "track_interpolation": false,
+          "drop_center_outside": true,
           "original_batch_size": 1,
           "packed_batch_size": 4,
           "packed_jpeg_quality": 95,
@@ -148,7 +153,7 @@
           "pipeline_sha256": {
             "p030_exec_compress": "4512a81a0eb9f709a801eaa12f54baea33714c5f6e350b993fbbef1b22fc0af8",
             "p040_exec_detect": "503842ae8fcbacf51e05bb12824d6bae09d47ce82e36099bbeaf556e3d717672",
-            "p050_exec_uncompress": "c2b0262b4f565714154cea2b591a74fcac3fb976f787151eee5c947976284c9b"
+            "p050_exec_uncompress": "e583abee238c996b74d390d089ba72237d3df319969a48a7243fd081a5a9eaf4"
           }
         },
         "video": "te12.mp4",
@@ -175,6 +180,7 @@
           "ilp_pruning": false,
           "tracking": false,
           "track_interpolation": false,
+          "drop_center_outside": true,
           "original_batch_size": 1,
           "packed_batch_size": 4,
           "packed_jpeg_quality": 95,
@@ -183,7 +189,7 @@
           "pipeline_sha256": {
             "p030_exec_compress": "4512a81a0eb9f709a801eaa12f54baea33714c5f6e350b993fbbef1b22fc0af8",
             "p040_exec_detect": "503842ae8fcbacf51e05bb12824d6bae09d47ce82e36099bbeaf556e3d717672",
-            "p050_exec_uncompress": "c2b0262b4f565714154cea2b591a74fcac3fb976f787151eee5c947976284c9b"
+            "p050_exec_uncompress": "e583abee238c996b74d390d089ba72237d3df319969a48a7243fd081a5a9eaf4"
           }
         },
         "video": "te13.mp4",
@@ -428,9 +434,9 @@
   },
   "environment": {
     "gpu": "3",
-    "run": "g3-20261103T212316",
+    "run": "g3-20261103T233528",
     "torch": "2.6.0+cu124",
     "opencv": "4.13.0"
   },
-  "source_sha256": "92470f220b655cae0fd8e30e3b608c2e853395c36775a2f807ea60ec52c39031"
+  "source_sha256": "633224b1533e5034d83a64024cc06330320262c00ee67d3fcbd3706dfd6d134b"
 }

@@ -3,6 +3,8 @@
 Run inside an isolated bombe_container.sh scratch cache. Reuses p030/p040/p050,
 without learned classification, ILP pruning, tracking, or track interpolation.
 One run packs every requested tile padding against one shared set of original-frame detections.
+Unpacking drops detections centered on empty canvas space (p050's opt-in drop_center_outside): this experiment scores
+the detector alone, while the deployed pipeline keeps such boxes for the tracker to discard.
 """
 import argparse
 import hashlib
@@ -155,7 +157,7 @@ def run_video(dataset, video, stride, paddings, model, methods):
         detection.detect_objects(dataset, video, CLASSIFIER, TILE_SIZE, stride, padding, 1.0,
                                  None, None, 0.5, 4, model)
         unpacking.unpack(dataset, 'test', video, CLASSIFIER, TILE_SIZE, stride, padding, 1.0,
-                         None, None, 0.5)
+                         None, None, 0.5, drop_center_outside=True)
         records[padding] = dict(inputs=inputs, frames=frame_count, sampled_frames=len(samples),
                                 width=width, height=height,
                                 grid_width=width // TILE_SIZE * TILE_SIZE,
@@ -213,7 +215,7 @@ def main():
     weights = Path(detectors.get_detector_info(args.dataset).get('model_path') or model.cfg.MODEL.WEIGHTS)
     methods = {padding: dict(split='test', stride=args.stride, first_frame=0, tile_size=TILE_SIZE,
                              classifier='test annotation box overlap', tile_padding=padding,
-                             ilp_pruning=False, tracking=False, track_interpolation=False,
+                             ilp_pruning=False, tracking=False, track_interpolation=False, drop_center_outside=True,
                              original_batch_size=1, packed_batch_size=4, packed_jpeg_quality=95,
                              weights=str(weights), weights_sha256=sha256(weights),
                              pipeline_sha256={stage: sha256(f'/polyis/scripts/{stage}.py') for stage in
