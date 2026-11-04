@@ -45,7 +45,13 @@ con = duckdb.connect(config={'threads': 4})
 con.execute("""CREATE TABLE clip_counts AS
     SELECT key AS dataset, json_array_length(value, '$.videos') AS clips
     FROM json_each(?)""", [json.dumps(inputs)])
-con.execute("""CREATE TABLE summary AS SELECT dataset,label,method.tile_padding AS padding,sampled_frames,clips,
+# Packed canvases per result file, summed over its videos (canvases are frame-sized, canvas_scale=1.0).
+con.execute("""CREATE TABLE canvas_counts AS
+    SELECT f.json->>'dataset' AS dataset, f.json->'method'->>'tile_padding' AS padding,
+           sum(CAST(v.value->>'canvases' AS BIGINT)) AS canvases
+    FROM read_json_objects(?) f, json_each(f.json->'videos') v GROUP BY ALL""", [files])
+con.execute("""CREATE TABLE summary AS SELECT r.dataset,label,method.tile_padding AS padding,sampled_frames,clips,
+ c.canvases, round(c.canvases/sampled_frames,3) AS canvases_per_sampled_frame,
  all_sampled_frames.reference.n_gt AS gt_boxes,
  retained_content.center.reference.n_gt AS retained_gt_boxes,
  round(100*all_sampled_frames.reference.precision,2) AS original_precision_pct,
@@ -60,7 +66,8 @@ con.execute("""CREATE TABLE summary AS SELECT dataset,label,method.tile_padding 
  round(100*retained_content.center.packed.recall,2) AS retained_packed_recall_pct,
  round(100*retained_content.center.reference.ap50,2) AS retained_original_map50_pct,
  round(100*retained_content.center.packed.ap50,2) AS retained_packed_map50_pct
- FROM read_json(?,union_by_name=true) JOIN clip_counts USING(dataset) ORDER BY label, padding""", [files])
+ FROM read_json(?,union_by_name=true) r JOIN clip_counts USING(dataset)
+ JOIN canvas_counts c ON c.dataset = r.dataset AND c.padding = r.method.tile_padding ORDER BY label, padding""", [files])
 cursor = con.execute('SELECT * FROM summary')
 columns = [item[0] for item in cursor.description]
 rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
