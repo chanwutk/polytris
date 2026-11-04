@@ -15,13 +15,16 @@ from polyis.io import cache
 # The sampling stride to summarize (sr<stride>/), given as the only argument.
 STRIDE = int(sys.argv[1])
 PADDINGS = ('none', 'square')
+# Corner paddings some deployed operating points use; summarized when a dataset has them.
+EXTRA_PADDINGS = ('tr', 'bl')
 root = Path(__file__).resolve().parent
 out = root / f'sr{STRIDE}'
 inputs = json.loads((root / 'inputs.json').read_text())
 files = []
 for dataset in DATASET_LABELS:
     gt_dataset = resolve_groundtruth_tracking_dataset(dataset)
-    results = {padding: json.loads((out / padding / f'{dataset}.json').read_text()) for padding in PADDINGS}
+    paddings = list(PADDINGS) + [p for p in EXTRA_PADDINGS if (out / p / f'{dataset}.json').exists()]
+    results = {padding: json.loads((out / padding / f'{dataset}.json').read_text()) for padding in paddings}
     for padding, result in results.items():
         assert result['dataset'] == dataset and result['method']['split'] == 'test'
         assert result['method']['stride'] == STRIDE and result['method']['tile_size'] == 60
@@ -88,9 +91,9 @@ con.execute("""CREATE TABLE summary AS SELECT r.dataset,label,method.tile_paddin
 cursor = con.execute('SELECT * FROM summary')
 columns = [item[0] for item in cursor.description]
 rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-# Every dataset appears once per padding, over the manifest's 200 test clips.
-assert con.execute('SELECT count(*), count(DISTINCT dataset), sum(clips) FROM summary').fetchone() == (
-    7 * len(PADDINGS), 7, 200 * len(PADDINGS))
+# Every dataset appears once for each required padding, over the manifest's 200 test clips.
+assert con.execute(f"SELECT count(*), count(DISTINCT dataset), sum(clips) FROM summary WHERE padding IN {PADDINGS}"
+                   ).fetchone() == (7 * len(PADDINGS), 7, 200 * len(PADDINGS))
 report = dict(
     method=f'Test-annotation tiles; frames 0,{STRIDE},{2 * STRIDE},...; 60px tiles; padding none (P=0) and square (P=1); '
            'no ILP; detection only.',

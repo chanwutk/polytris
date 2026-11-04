@@ -24,6 +24,8 @@ from polyis.utilities import build_param_str
 
 TILE_SIZE = 60
 PADDINGS = ('none', 'square')
+# Corner paddings some deployed operating points use; included when their results exist.
+EXTRA_PADDINGS = ('tr', 'bl')
 RESULTS = Path('/polyis/measurements-results/r1o4_oracle_packing')
 
 
@@ -99,9 +101,10 @@ def main():
     gt_dataset = resolve_groundtruth_tracking_dataset(args.dataset)
     out = RESULTS / f'sr{args.stride}'
     # Video sizes and sampled-frame counts come from the experiment's own records, identical across paddings.
-    results = {p: json.loads((out / p / f'{args.dataset}.json').read_text()) for p in PADDINGS}
+    paddings = list(PADDINGS) + [p for p in EXTRA_PADDINGS if (out / p / f'{args.dataset}.json').exists()]
+    results = {p: json.loads((out / p / f'{args.dataset}.json').read_text()) for p in paddings}
     videos = results['none']['videos']
-    assert all(results[p]['videos'].keys() == videos.keys() for p in PADDINGS)
+    assert all(results[p]['videos'].keys() == videos.keys() for p in paddings)
     frames = sum(v['sampled_frames'] for v in videos.values())
     grid_tiles = sum(v['sampled_frames'] * (v['grid_width'] // TILE_SIZE) * (v['grid_height'] // TILE_SIZE)
                      for v in videos.values())
@@ -116,7 +119,7 @@ def main():
     con = duckdb.connect()
     con.execute('CREATE TABLE canvas(padding VARCHAR, video VARCHAR, canvases BIGINT, canvas_tiles BIGINT, '
                 'occupied_tiles BIGINT, polyominoes BIGINT)')
-    for padding in PADDINGS:
+    for padding in paddings:
         for video in videos:
             s = canvas_stats(Path(cache.exec(args.dataset, 'comp-frames', video, config_name(args.stride, padding))))
             con.execute('INSERT INTO canvas VALUES (?, ?, ?, ?, ?, ?)',

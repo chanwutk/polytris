@@ -29,8 +29,10 @@ from scripts import p050_exec_uncompress as unpacking
 
 TILE_SIZE = 60
 CLASSIFIER = 'OracleGT'
-# Padding choices: none (P=0) and square (P=1); both reuse one set of original-frame detections.
+# Default paddings: none (P=0) and square (P=1). The one-sided corner paddings (tr, bl) that some deployed
+# operating points use can be requested too; every padding reuses one set of original-frame detections.
 PADDINGS = ('none', 'square')
+PADDING_CHOICES = PADDINGS + ('tr', 'bl')
 RESULTS = Path('/polyis/measurements-results/r1o4_oracle_packing')
 
 
@@ -38,8 +40,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dataset', choices=list(DATASET_LABELS), required=True)
     parser.add_argument('--stride', type=int, default=16)
-    parser.add_argument('--padding', nargs='+', choices=PADDINGS, default=list(PADDINGS))
+    parser.add_argument('--padding', nargs='+', choices=PADDING_CHOICES, default=list(PADDINGS))
     parser.add_argument('--gpu', type=int, default=0)
+    parser.add_argument('--shard', default='0/1')
     return parser.parse_args()
 
 
@@ -201,7 +204,10 @@ def main():
     torch.set_num_threads(4)
     cv2.setNumThreads(1)
     paddings = list(dict.fromkeys(args.padding))
-    videos = list_split_videos(args.dataset, 'test')
+    # A shard k/n runs every n-th video from the k-th; shards share one scratch cache and only n=1 scores.
+    shard, shards = map(int, args.shard.split('/'))
+    assert 0 <= shard < shards, f'bad --shard {args.shard}'
+    videos = sorted(list_split_videos(args.dataset, 'test'))[shard::shards]
     assert videos
     model = detectors.get_detector(args.dataset, args.gpu, batch_size=4)
     weights = Path(detectors.get_detector_info(args.dataset).get('model_path') or model.cfg.MODEL.WEIGHTS)
@@ -220,6 +226,9 @@ def main():
               + ', '.join(f'{p} {r["sampled_frames"]} frames {r["canvases"]} canvases' for p, r in records[video].items()),
               flush=True)
     detectors.delete(model)
+    if shards > 1:
+        print(f'shard {args.shard} done; rerun without --shard to score', flush=True)
+        return
     for padding in paddings:
         scores = score_dataset(args.dataset, videos, config_name(args.stride, padding), args.stride, padding)
         result = dict(dataset=args.dataset, label=DATASET_LABELS[args.dataset], method=methods[padding],

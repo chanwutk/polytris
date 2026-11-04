@@ -17,6 +17,32 @@
     "boxes_per_frame": 2.280701754385965
   },
   "padding": {
+    "tr": {
+      "canvases": 263,
+      "canvases_per_frame": 0.07690058479532164,
+      "canvas_tiles": 66276,
+      "occupied_tiles": 54067,
+      "packing_efficacy": 0.8157855030478605,
+      "occupied_tiles_per_frame": 15.80906432748538,
+      "occupied_fraction_of_grid": 0.06273438225192611,
+      "polyominoes": 4906,
+      "polyominoes_per_frame": 1.4345029239766083,
+      "tiles_per_polyomino": 11.020587036282103,
+      "objects_per_polyomino": 1.5898899306971055
+    },
+    "none": {
+      "canvases": 145,
+      "canvases_per_frame": 0.04239766081871345,
+      "canvas_tiles": 36540,
+      "occupied_tiles": 26946,
+      "packing_efficacy": 0.7374384236453202,
+      "occupied_tiles_per_frame": 7.878947368421053,
+      "occupied_fraction_of_grid": 0.031265664160401004,
+      "polyominoes": 5320,
+      "polyominoes_per_frame": 1.5555555555555556,
+      "tiles_per_polyomino": 5.065037593984963,
+      "objects_per_polyomino": 1.4661654135338347
+    },
     "square": {
       "canvases": 420,
       "canvases_per_frame": 0.12280701754385964,
@@ -31,19 +57,6 @@
       "objects_per_polyomino": 1.6142384105960266,
       "padding_tiles": 59654,
       "polyomino_merge_factor": 1.1009933774834437
-    },
-    "none": {
-      "canvases": 145,
-      "canvases_per_frame": 0.04239766081871345,
-      "canvas_tiles": 36540,
-      "occupied_tiles": 26946,
-      "packing_efficacy": 0.7374384236453202,
-      "occupied_tiles_per_frame": 7.878947368421053,
-      "occupied_fraction_of_grid": 0.031265664160401004,
-      "polyominoes": 5320,
-      "polyominoes_per_frame": 1.5555555555555556,
-      "tiles_per_polyomino": 5.065037593984963,
-      "objects_per_polyomino": 1.4661654135338347
     }
   }
 }

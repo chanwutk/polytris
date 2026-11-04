@@ -29,8 +29,10 @@ from scripts import p050_exec_uncompress as unpacking
 
 TILE_SIZE = 60
 CLASSIFIER = 'OracleGT'
-# Padding choices: none (P=0) and square (P=1); both reuse one set of original-frame detections.
+# Default paddings: none (P=0) and square (P=1). The one-sided corner paddings (tr, bl) that some deployed
+# operating points use can be requested too; every padding reuses one set of original-frame detections.
 PADDINGS = ('none', 'square')
+PADDING_CHOICES = PADDINGS + ('tr', 'bl')
 RESULTS = Path('/polyis/measurements-results/r1o4_oracle_packing')
 
 
@@ -38,7 +40,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dataset', choices=list(DATASET_LABELS), required=True)
     parser.add_argument('--stride', type=int, default=16)
-    parser.add_argument('--padding', nargs='+', choices=PADDINGS, default=list(PADDINGS))
+    parser.add_argument('--padding', nargs='+', choices=PADDING_CHOICES, default=list(PADDINGS))
     parser.add_argument('--gpu', type=int, default=0)
     parser.add_argument('--shard', default='0/1')
     return parser.parse_args()

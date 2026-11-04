@@ -17,19 +17,6 @@
     "boxes_per_frame": 3.6941520467836257
   },
   "padding": {
-    "none": {
-      "canvases": 256,
-      "canvases_per_frame": 0.07485380116959064,
-      "canvas_tiles": 24576,
-      "occupied_tiles": 14446,
-      "packing_efficacy": 0.5878092447916666,
-      "occupied_tiles_per_frame": 4.223976608187135,
-      "occupied_fraction_of_grid": 0.04399975633528265,
-      "polyominoes": 2878,
-      "polyominoes_per_frame": 0.8415204678362573,
-      "tiles_per_polyomino": 5.019457956914524,
-      "objects_per_polyomino": 4.389854065323141
-    },
     "square": {
       "canvases": 854,
       "canvases_per_frame": 0.2497076023391813,
@@ -44,6 +31,32 @@
       "objects_per_polyomino": 5.179991799917999,
       "padding_tiles": 34777,
       "polyomino_merge_factor": 1.1799917999179992
+    },
+    "none": {
+      "canvases": 256,
+      "canvases_per_frame": 0.07485380116959064,
+      "canvas_tiles": 24576,
+      "occupied_tiles": 14446,
+      "packing_efficacy": 0.5878092447916666,
+      "occupied_tiles_per_frame": 4.223976608187135,
+      "occupied_fraction_of_grid": 0.04399975633528265,
+      "polyominoes": 2878,
+      "polyominoes_per_frame": 0.8415204678362573,
+      "tiles_per_polyomino": 5.019457956914524,
+      "objects_per_polyomino": 4.389854065323141
+    },
+    "bl": {
+      "canvases": 520,
+      "canvases_per_frame": 0.15204678362573099,
+      "canvas_tiles": 49920,
+      "occupied_tiles": 27965,
+      "packing_efficacy": 0.5601963141025641,
+      "occupied_tiles_per_frame": 8.176900584795321,
+      "occupied_fraction_of_grid": 0.0851760477582846,
+      "polyominoes": 2490,
+      "polyominoes_per_frame": 0.7280701754385965,
+      "tiles_per_polyomino": 11.230923694779117,
+      "objects_per_polyomino": 5.0738955823293175
     }
   }
 }
