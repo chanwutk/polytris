@@ -201,7 +201,9 @@ def _build_classifier_panels(
         # Per-metric y-domain so subtle gaps between metrics stay readable.
         y0, y1 = _y_domain_for_metric(df, field)
         y_scale = alt.Scale(domain=[y0, y1], nice=False, zero=False)
-        x_enc = alt.X('ms_per_frame:Q', title='runtime (ms/frame)', scale=x_scale)
+        # Runtime ticks every 2 ms/frame.
+        x_enc = alt.X('ms_per_frame:Q', title='runtime (ms/frame)', scale=x_scale,
+                      axis=alt.Axis(values=list(range(0, int(np.ceil(x_max)) + 1, 2))))
         y_enc = alt.Y(f'{field}:Q', title=title, scale=y_scale)
 
         # Connecting line links the Modified/Baseline pair per dataset.
