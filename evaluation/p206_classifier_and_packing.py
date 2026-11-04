@@ -49,6 +49,8 @@ from evaluation.colors import categorical_color_scale
 SUBPLOT_WIDTH: int = 110
 SUBPLOT_HEIGHT: int = 130
 PACKING_PANEL_WIDTH: int = 100
+# Pixels added inside both ends of every axis so points on the data extremes draw whole.
+SCALE_PADDING: int = 8
 
 # Upstream summary directory (must match p205's ``cache.summary`` key).
 P205_SUMMARY_STAGE = '205_compare_classifiers'
@@ -194,13 +196,13 @@ def _build_classifier_panels(
     x_max = float(x_vals.max()) if len(x_vals) else 1.0
     if not (np.isfinite(x_max) and x_max > 0):
         x_max = 1.0
-    x_scale = alt.Scale(domain=[0.0, x_max], nice=False)
+    x_scale = alt.Scale(domain=[0.0, x_max], nice=False, padding=SCALE_PADDING)
 
     subcharts: list[alt.Chart] = []
     for index, (field, title) in enumerate(metrics):
         # Per-metric y-domain so subtle gaps between metrics stay readable.
         y0, y1 = _y_domain_for_metric(df, field)
-        y_scale = alt.Scale(domain=[y0, y1], nice=False, zero=False)
+        y_scale = alt.Scale(domain=[y0, y1], nice=False, zero=False, padding=SCALE_PADDING)
         # Runtime ticks every 2 ms/frame.
         x_enc = alt.X('ms_per_frame:Q', title='runtime (ms/frame)', scale=x_scale,
                       axis=alt.Axis(values=list(range(0, int(np.ceil(x_max)) + 1, 2))))
@@ -209,7 +211,7 @@ def _build_classifier_panels(
         # Connecting line links the Modified/Baseline pair per dataset.
         lines = (
             alt.Chart(df_line)
-            .mark_line(opacity=0.55, strokeWidth=2.5, interpolate='linear', clip=True)
+            .mark_line(opacity=0.55, strokeWidth=2.5, interpolate='linear')
             .encode(
                 x=x_enc,
                 y=y_enc,
@@ -225,7 +227,7 @@ def _build_classifier_panels(
         # the legend stays small when the figure is rendered narrow.
         points = (
             alt.Chart(df_line)
-            .mark_point(filled=True, size=90, opacity=0.9, stroke='white', strokeWidth=0.6, clip=True)
+            .mark_point(filled=True, size=90, opacity=0.9, stroke='white', strokeWidth=0.6)
             .encode(
                 x=x_enc,
                 y=y_enc,
@@ -294,14 +296,14 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale) -> l
     panels: list[alt.LayerChart] = []
     for index, (field, title) in enumerate(PACKING_METRICS):
         base = alt.Chart(df[df['metric'] == field]).encode(
-            x=alt.X('efficacy_pct:Q', title='Packing efficacy (%)', scale=alt.Scale(zero=False)),
-            y=alt.Y('accuracy_pct:Q', title=title, scale=alt.Scale(zero=False)),
+            x=alt.X('efficacy_pct:Q', title='Packing efficacy (%)', scale=alt.Scale(zero=False, padding=SCALE_PADDING)),
+            y=alt.Y('accuracy_pct:Q', title=title, scale=alt.Scale(zero=False, padding=SCALE_PADDING)),
             color=alt.Color('dataset_display:N', legend=alt.Legend(title=None), scale=color_scale),
         )
-        line = base.mark_line(opacity=0.55, strokeWidth=2.5, clip=True).encode(detail='dataset_display:N')
-        # Hollow original and filled packed points; every data mark is clipped to the plot area.
-        original = base.transform_filter(alt.datum.input == 'Original').mark_point(filled=False, size=90, strokeWidth=2, clip=True)
-        packed = base.transform_filter(alt.datum.input == 'Packed').mark_point(filled=True, size=90, opacity=0.9, clip=True)
+        line = base.mark_line(opacity=0.55, strokeWidth=2.5).encode(detail='dataset_display:N')
+        # Hollow original and filled packed points.
+        original = base.transform_filter(alt.datum.input == 'Original').mark_point(filled=False, size=90, strokeWidth=2)
+        packed = base.transform_filter(alt.datum.input == 'Packed').mark_point(filled=True, size=90, opacity=0.9)
         layers = [line, original, packed]
         # The Original/Packed legend, inside the first (precision) panel only.
         if index == 0:
