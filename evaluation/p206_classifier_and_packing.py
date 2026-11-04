@@ -49,7 +49,7 @@ from evaluation.colors import categorical_color_scale
 # stitched figure reads at a familiar density.
 SUBPLOT_WIDTH: int = 110
 SUBPLOT_HEIGHT: int = 130
-PACKING_PANEL_WIDTH: int = 100
+PACKING_PANEL_WIDTH: int = 70
 # Pixels added inside both ends of every axis so points on the data extremes draw whole.
 SCALE_PADDING: int = 4
 
@@ -59,7 +59,7 @@ P038_SUMMARY_STAGE = '038_packing_efficacy'
 # The packing-efficacy bars use p038's unpadded slice.
 PACKING_TILEPADDING: str = 'none'
 # Width of the packing-efficacy bar chart.
-EFFICACY_PANEL_WIDTH: int = 80
+EFFICACY_PANEL_WIDTH: int = 65
 
 # The paper's evidence snapshot holding the packing experiment and the 5% operating points.
 EVIDENCE_DIR = Path(REPO_ROOT) / 'paper' / 'scripts' / 'data' / 'revision_evidence'
@@ -163,20 +163,23 @@ def _y_domain_for_metric(df: pd.DataFrame, field: str) -> tuple[float, float]:
     return d_lo, d_hi
 
 
-def _inside_legend(items: list[tuple[str, dict]]) -> alt.LayerChart:
-    """A small legend drawn inside a panel's bottom-left corner: one marker and label per (label, mark style).
+def _legend_item(label: str, style: dict, x: int, y: int) -> list[alt.Chart]:
+    """One legend entry (a marker with mark style `style` and its label) at pixel position (x, y) of a panel.
 
-    Vega-Lite places legends of concatenated views outside the plots, so in-panel legends are drawn as marks at
+    Vega-Lite places legends of concatenated views outside the plots, so these legends are drawn as marks at
     fixed pixel positions, independent of the panel's scales.
     """
-    layers = []
-    for row, (label, style) in enumerate(reversed(items)):
-        y = SUBPLOT_HEIGHT - 12 - 16 * row
-        layers.append(alt.Chart(alt.Data(values=[{}])).mark_point(size=60, color='#555', **style)
-                      .encode(x=alt.value(12), y=alt.value(y)))
-        layers.append(alt.Chart(alt.Data(values=[{}])).mark_text(align='left', baseline='middle', fontSize=11)
-                      .encode(x=alt.value(22), y=alt.value(y), text=alt.value(label)))
-    return alt.layer(*layers)
+    return [alt.Chart(alt.Data(values=[{}])).mark_point(size=60, color='#555', **style)
+            .encode(x=alt.value(x), y=alt.value(y)),
+            alt.Chart(alt.Data(values=[{}])).mark_text(align='left', baseline='middle', fontSize=11)
+            .encode(x=alt.value(x + 10), y=alt.value(y), text=alt.value(label))]
+
+
+def _inside_legend(items: list[tuple[str, dict]]) -> alt.LayerChart:
+    """A small legend stacked inside a panel's bottom-left corner, one (label, mark style) entry per row."""
+    return alt.layer(*(layer for row, (label, style) in enumerate(reversed(items))
+                       for layer in _legend_item(label, style, 12, SUBPLOT_HEIGHT - 12 - 16 * row)))
+
 
 
 def _build_classifier_panels(
@@ -315,7 +318,8 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale,
     for index, (field, title) in enumerate(PACKING_METRICS):
         base = alt.Chart(df[df['metric'] == field]).encode(
             # Datasets in the shared order; colors (labeled by the efficacy bars) identify them.
-            x=alt.X('dataset_display:N', title='Dataset', sort=dataset_domain or None,
+            # No axis title: the Original/Packed legend row sits in its place.
+            x=alt.X('dataset_display:N', title=None, sort=dataset_domain or None,
                     axis=alt.Axis(labels=False, ticks=False)),
             # labelFlush keeps an edge tick label (e.g., 100) from overhanging the plot and lifting the group title.
             y=alt.Y('accuracy_pct:Q', title=title, scale=alt.Scale(zero=False, padding=SCALE_PADDING),
@@ -327,10 +331,10 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale,
         original = base.transform_filter(alt.datum.input == 'Original').mark_point(filled=False, size=90, strokeWidth=2)
         packed = base.transform_filter(alt.datum.input == 'Packed').mark_point(filled=True, size=90, opacity=0.9)
         layers = [line, original, packed]
-        # The Original/Packed legend, inside the first (precision) panel only.
-        if index == 0:
-            layers.append(_inside_legend([('Original', dict(filled=False, strokeWidth=2)),
-                                          ('Packed', dict(filled=True))]))
+        # The Original/Packed legend, one entry under each panel where its axis title would be, so it stays
+        # within the panel's width and does not widen the layout.
+        entry = [('Original', dict(filled=False, strokeWidth=2)), ('Packed', dict(filled=True))][index]
+        layers.extend(_legend_item(*entry, 12, SUBPLOT_HEIGHT + 14))
         panels.append(alt.layer(*layers).properties(width=PACKING_PANEL_WIDTH, height=SUBPLOT_HEIGHT))
     return panels
 
@@ -342,21 +346,23 @@ def _build_efficacy_chart(p038_df: pd.DataFrame, color_scale: alt.Scale, dataset
     if df.empty:
         raise ValueError(f"No p038 rows with tilepadding='{PACKING_TILEPADDING}'. Re-run p038 with this padding mode.")
     df = _add_dataset_display_names(df)
-    # One bar per dataset (the mean over p038's pruning slices): white fill, outlined in the dataset's color.
+    # One bar per dataset (the mean over p038's pruning slices), filled with the dataset's color.
     y = alt.Y('dataset_display:N', title=None, sort=dataset_domain or None,
               axis=alt.Axis(labels=False, ticks=False, domain=False))
     x = alt.X('mean(packing_efficacy_pct):Q', title='Packing efficacy (%)', scale=alt.Scale(domain=[0, 100]))
-    bars = alt.Chart(df).mark_bar(fill='white', strokeWidth=1.5).encode(
+    bars = alt.Chart(df).mark_bar(opacity=0.9).encode(
         y=y, x=x,
-        stroke=alt.Color('dataset_display:N', legend=None, scale=color_scale),
+        color=alt.Color('dataset_display:N', legend=None, scale=color_scale),
         tooltip=[alt.Tooltip('dataset_display:N', title='Dataset'),
                  alt.Tooltip('mean(packing_efficacy_pct):Q', title='Efficacy (%)', format='.2f')],
     )
-    # The dataset name inside its bar, which makes the chart the figure's color legend.
-    names = alt.Chart(df).mark_text(align='left', baseline='middle', dx=3, fontSize=10).encode(
-        y=y, x=alt.value(0), text='dataset_display:N', detail='dataset_display:N',
-    )
-    return alt.layer(bars, names).properties(width=EFFICACY_PANEL_WIDTH, height=SUBPLOT_HEIGHT)
+    # The dataset name inside its bar, which makes the chart the figure's color legend: a white-stroked copy
+    # underneath gives the black text a halo against the bar color.
+    name = dict(align='left', baseline='middle', dx=3, fontSize=10)
+    text = dict(y=y, x=alt.value(0), text='dataset_display:N', detail='dataset_display:N')
+    halo = alt.Chart(df).mark_text(**name, color='white', stroke='white', strokeWidth=3, strokeJoin='round').encode(**text)
+    names = alt.Chart(df).mark_text(**name, color='black').encode(**text)
+    return alt.layer(bars, halo, names).properties(width=EFFICACY_PANEL_WIDTH, height=SUBPLOT_HEIGHT)
 
 
 def _shared_dataset_domain(frames: list[pd.DataFrame]) -> list[str]:
