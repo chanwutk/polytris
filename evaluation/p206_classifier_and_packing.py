@@ -50,7 +50,7 @@ SUBPLOT_WIDTH: int = 110
 SUBPLOT_HEIGHT: int = 130
 PACKING_PANEL_WIDTH: int = 100
 # Pixels added inside both ends of every axis so points on the data extremes draw whole.
-SCALE_PADDING: int = 8
+SCALE_PADDING: int = 4
 
 # Upstream summary directory (must match p205's ``cache.summary`` key).
 P205_SUMMARY_STAGE = '205_compare_classifiers'
