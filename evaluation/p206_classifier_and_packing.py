@@ -327,7 +327,7 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale,
         )
         line = base.mark_line(opacity=0.55, strokeWidth=2.5).encode(detail='dataset_display:N')
         # Hollow original and filled packed points.
-        original = base.transform_filter(alt.datum.input == 'Original').mark_point(filled=False, size=90, strokeWidth=2)
+        original = base.transform_filter(alt.datum.input == 'Original').mark_point(filled=False, size=55, strokeWidth=2)
         packed = base.transform_filter(alt.datum.input == 'Packed').mark_point(filled=True, size=90, opacity=0.9)
         layers = [line, original, packed]
         # The Original/Packed legend inside the precision panel's bottom-left corner, set close to the axis
