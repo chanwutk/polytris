@@ -5344,7 +5344,7 @@
     "dataset": "caldot2-y05",
     "video": "te49.mp4",
     "frames": 900,
-    "canvases": 0,
+    "canvases": 121,
     "variables": 1545,
     "relevant_tiles": 3361,
     "max_polyominoes_per_frame": 4,
@@ -5360,32 +5360,32 @@
       "runtime": [
         {
           "op": "prepare_bitmaps",
-          "time": 0.574462890625
+          "time": 1.6953125
         },
         {
           "op": "group_tiles",
-          "time": 1.644775390625
+          "time": 4.34716796875
         },
         {
           "op": "build_ilp",
-          "time": 6.735164642333984
+          "time": 221.40948963165283
         },
         {
           "op": "solve_ilp",
-          "time": 190.6351900100708
+          "time": 68.01088333129883
         },
         {
           "op": "extract_grids",
-          "time": 17.767333984375
+          "time": 78.927734375
         }
       ],
       "time_limit": null
     },
     "solution_check": {
-      "kept": 0,
+      "kept": 781,
       "tiles_outside_input": 0,
       "split_polyominoes": 0,
-      "forced_dropped": 293,
+      "forced_dropped": 0,
       "window_violations": 0
     }
   },
@@ -8676,7 +8676,7 @@
     "dataset": "ams-y05",
     "video": "te57.mp4",
     "frames": 900,
-    "canvases": 0,
+    "canvases": 34,
     "variables": 2473,
     "relevant_tiles": 6600,
     "max_polyominoes_per_frame": 6,
@@ -8692,32 +8692,32 @@
       "runtime": [
         {
           "op": "prepare_bitmaps",
-          "time": 0.799560546875
+          "time": 1.123046875
         },
         {
           "op": "group_tiles",
-          "time": 3.10205078125
+          "time": 3.376953125
         },
         {
           "op": "build_ilp",
-          "time": 16.112401008605957
+          "time": 227.25804710388184
         },
         {
           "op": "solve_ilp",
-          "time": 257.2537088394165
+          "time": 104.10350513458252
         },
         {
           "op": "extract_grids",
-          "time": 22.105712890625
+          "time": 65.762451171875
         }
       ],
       "time_limit": null
     },
     "solution_check": {
-      "kept": 0,
+      "kept": 632,
       "tiles_outside_input": 0,
       "split_polyominoes": 0,
-      "forced_dropped": 316,
+      "forced_dropped": 0,
       "window_violations": 0
     }
   },
