@@ -631,7 +631,7 @@ def _make_altair_chart(
     )
     text = dict(align='left', baseline='bottom', dx=3, dy=-3, fontSize=11)
     labels = [label.mark_text(**text, stroke='white', strokeWidth=3), label.mark_text(**text)]
-    return (
+    chart = (
         alt.layer(*layers, *labels)
         .properties(width=width, height=height)
         .facet(
@@ -647,14 +647,15 @@ def _make_altair_chart(
             x='independent',
             y='independent' if pair.resolve_y_independent else 'shared',
         )
-        .properties(
-            title=f'{_tracker_display_label(tracker_name)}: '
-            f'{pair.x_label} vs {pair.y_label}',
-        )
         # Collapse inter-facet spacing so subplots sit flush against each
         # other rather than being separated by Altair's default gap.
         .configure_facet(spacing=0)
     )
+    if pair.slug != 'pruning_vs_hota' or not include_background:
+        chart = chart.properties(
+            title=f'{_tracker_display_label(tracker_name)}: {pair.x_label} vs {pair.y_label}',
+        )
+    return chart
 
 
 def combine_visualize(
