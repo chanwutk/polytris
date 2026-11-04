@@ -47,7 +47,7 @@ from evaluation.colors import categorical_color_scale
 # Subplot geometry: matches p205's per-metric subplot footprint so the
 # stitched figure reads at a familiar density.
 SUBPLOT_WIDTH: int = 150
-SUBPLOT_HEIGHT: int = 200
+SUBPLOT_HEIGHT: int = 130
 PACKING_PANEL_WIDTH: int = 130
 
 # Upstream summary directory (must match p205's ``cache.summary`` key).
