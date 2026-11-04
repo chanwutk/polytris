@@ -335,21 +335,28 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale,
     return panels
 
 
-def _build_efficacy_chart(p038_df: pd.DataFrame, color_scale: alt.Scale, dataset_domain: list[str]) -> alt.Chart:
-    """Horizontal packing-efficacy bars per dataset; the dataset labels on y double as the figure's color legend."""
+def _build_efficacy_chart(p038_df: pd.DataFrame, color_scale: alt.Scale, dataset_domain: list[str]) -> alt.LayerChart:
+    """Horizontal packing-efficacy bars per dataset; the names inside the bars double as the figure's color legend."""
     # The unpadded slice, as in the paper's packing-efficacy text.
     df = p038_df[p038_df['tilepadding'] == PACKING_TILEPADDING].copy()
     if df.empty:
         raise ValueError(f"No p038 rows with tilepadding='{PACKING_TILEPADDING}'. Re-run p038 with this padding mode.")
     df = _add_dataset_display_names(df)
-    # One bar per dataset: the mean over p038's pruning slices.
-    return alt.Chart(df).mark_bar(opacity=0.9).encode(
-        y=alt.Y('dataset_display:N', title=None, sort=dataset_domain or None, axis=alt.Axis(ticks=False, domain=False)),
-        x=alt.X('mean(packing_efficacy_pct):Q', title='Packing efficacy (%)', scale=alt.Scale(domain=[0, 100])),
-        color=alt.Color('dataset_display:N', legend=None, scale=color_scale),
+    # One bar per dataset (the mean over p038's pruning slices): white fill, outlined in the dataset's color.
+    y = alt.Y('dataset_display:N', title=None, sort=dataset_domain or None,
+              axis=alt.Axis(labels=False, ticks=False, domain=False))
+    x = alt.X('mean(packing_efficacy_pct):Q', title='Packing efficacy (%)', scale=alt.Scale(domain=[0, 100]))
+    bars = alt.Chart(df).mark_bar(fill='white', strokeWidth=1.5).encode(
+        y=y, x=x,
+        stroke=alt.Color('dataset_display:N', legend=None, scale=color_scale),
         tooltip=[alt.Tooltip('dataset_display:N', title='Dataset'),
                  alt.Tooltip('mean(packing_efficacy_pct):Q', title='Efficacy (%)', format='.2f')],
-    ).properties(width=EFFICACY_PANEL_WIDTH, height=SUBPLOT_HEIGHT)
+    )
+    # The dataset name inside its bar, which makes the chart the figure's color legend.
+    names = alt.Chart(df).mark_text(align='left', baseline='middle', dx=3, fontSize=10).encode(
+        y=y, x=alt.value(0), text='dataset_display:N', detail='dataset_display:N',
+    )
+    return alt.layer(bars, names).properties(width=EFFICACY_PANEL_WIDTH, height=SUBPLOT_HEIGHT)
 
 
 def _shared_dataset_domain(frames: list[pd.DataFrame]) -> list[str]:
