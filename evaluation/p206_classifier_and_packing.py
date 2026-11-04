@@ -297,7 +297,9 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale) -> l
     for index, (field, title) in enumerate(PACKING_METRICS):
         base = alt.Chart(df[df['metric'] == field]).encode(
             x=alt.X('efficacy_pct:Q', title='Packing efficacy (%)', scale=alt.Scale(zero=False, padding=SCALE_PADDING)),
-            y=alt.Y('accuracy_pct:Q', title=title, scale=alt.Scale(zero=False, padding=SCALE_PADDING)),
+            # labelFlush keeps an edge tick label (e.g., 100) from overhanging the plot and lifting the group title.
+            y=alt.Y('accuracy_pct:Q', title=title, scale=alt.Scale(zero=False, padding=SCALE_PADDING),
+                    axis=alt.Axis(labelFlush=True)),
             color=alt.Color('dataset_display:N', legend=alt.Legend(title=None), scale=color_scale),
         )
         line = base.mark_line(opacity=0.55, strokeWidth=2.5).encode(detail='dataset_display:N')
