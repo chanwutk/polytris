@@ -44,3 +44,13 @@ def test_all_sampled_frames_counts_background_fp_and_does_not_fill_missing_boxes
         assert scores['reference']['recall'] == 1
         assert scores['packed']['recall'] == pytest.approx(2 / 3, abs=5e-5)
         assert scores['packed']['ap50'] == pytest.approx(2 / 3, abs=5e-5)
+
+
+def test_each_padding_has_its_own_configuration_and_result_file():
+    # P=0 and P=1 must never share stage outputs or a result file; the stride is part of both.
+    none, square = oracle.config_name(16, 'none'), oracle.config_name(16, 'square')
+    assert none != square and 'none' in none and 'square' in square
+    assert oracle.config_name(32, 'none') != none
+    assert oracle.output_path(16, 'square', 'jnc0') == oracle.RESULTS / 'sr16' / 'square' / 'jnc0.json'
+    assert oracle.output_path(16, 'none', 'jnc0') != oracle.output_path(16, 'square', 'jnc0')
+    assert oracle.PADDINGS == ('none', 'square')

@@ -11,32 +11,41 @@ from measurements.common import DATASET_LABELS
 from polyis.io import cache
 
 
+STRIDE = 16
+PADDINGS = ('none', 'square')
 root = Path(__file__).resolve().parent
-out = root / 'sr32'
+out = root / f'sr{STRIDE}'
 inputs = json.loads((root / 'inputs.json').read_text())
 files = []
 for dataset in DATASET_LABELS:
-    path = out / f'{dataset}.json'
-    result = json.loads(path.read_text())
-    assert result['dataset'] == dataset and result['method']['split'] == 'test'
-    assert result['method']['stride'] == 32 and result['method']['tile_size'] == 60
-    assert result['method']['tracking'] is False and result['method']['track_interpolation'] is False
-    assert sorted(result['videos']) == inputs[dataset]['videos']
-    assert result['all_sampled_frames']['reference']['n_gt'] == result['all_sampled_frames']['packed']['n_gt']
     gt_dataset = resolve_groundtruth_tracking_dataset(dataset)
-    # Verify input files individually; all numerical aggregation below uses DuckDB.
-    for video, meta in result['videos'].items():
-        assert meta['sampled_frames'] == (meta['frames'] + 31) // 32
-        with cache.exec(gt_dataset, 'groundtruth', video, 'tracking.jsonl').open('rb') as stream:
-            assert hashlib.file_digest(stream, 'sha256').hexdigest() == meta['inputs']['ground_truth_sha256']
-    files.append(str(path))
+    results = {padding: json.loads((out / padding / f'{dataset}.json').read_text()) for padding in PADDINGS}
+    for padding, result in results.items():
+        assert result['dataset'] == dataset and result['method']['split'] == 'test'
+        assert result['method']['stride'] == STRIDE and result['method']['tile_size'] == 60
+        assert result['method']['tile_padding'] == padding and result['method']['ilp_pruning'] is False
+        assert result['method']['tracking'] is False and result['method']['track_interpolation'] is False
+        assert sorted(result['videos']) == inputs[dataset]['videos']
+        # Verify input files individually; all numerical aggregation below uses DuckDB.
+        for video, meta in result['videos'].items():
+            assert meta['sampled_frames'] == (meta['frames'] + STRIDE - 1) // STRIDE
+            with cache.exec(gt_dataset, 'groundtruth', video, 'tracking.jsonl').open('rb') as stream:
+                assert hashlib.file_digest(stream, 'sha256').hexdigest() == meta['inputs']['ground_truth_sha256']
+        files.append(str(out / padding / f'{dataset}.json'))
+    # Every padding scores the same original-frame detections on the same frames.
+    first, *rest = results.values()
+    for other in rest:
+        assert other['sampled_frames'] == first['sampled_frames']
+        assert other['all_sampled_frames']['reference'] == first['all_sampled_frames']['reference']
+        assert all(other['videos'][v]['inputs']['reference_sha256'] == first['videos'][v]['inputs']['reference_sha256']
+                   for v in first['videos'])
 
 con = duckdb.connect(config={'threads': 4})
 # Read clip counts from the manifest; unioned nested video structs also contain absent keys.
 con.execute("""CREATE TABLE clip_counts AS
     SELECT key AS dataset, json_array_length(value, '$.videos') AS clips
     FROM json_each(?)""", [json.dumps(inputs)])
-con.execute("""CREATE TABLE summary AS SELECT dataset,label,provisional,sampled_frames,clips,
+con.execute("""CREATE TABLE summary AS SELECT dataset,label,method.tile_padding AS padding,sampled_frames,clips,
  all_sampled_frames.reference.n_gt AS gt_boxes,
  retained_content.center.reference.n_gt AS retained_gt_boxes,
  round(100*all_sampled_frames.reference.precision,2) AS original_precision_pct,
@@ -45,20 +54,22 @@ con.execute("""CREATE TABLE summary AS SELECT dataset,label,provisional,sampled_
  round(100*all_sampled_frames.packed.recall,2) AS packed_recall_pct,
  round(100*all_sampled_frames.reference.ap50,2) AS original_map50_pct,
  round(100*all_sampled_frames.packed.ap50,2) AS packed_map50_pct,
- round(100*(all_sampled_frames.packed.ap50-all_sampled_frames.reference.ap50),2) AS map50_change_pp,
  round(100*retained_content.center.reference.precision,2) AS retained_original_precision_pct,
  round(100*retained_content.center.packed.precision,2) AS retained_packed_precision_pct,
  round(100*retained_content.center.reference.recall,2) AS retained_original_recall_pct,
  round(100*retained_content.center.packed.recall,2) AS retained_packed_recall_pct,
  round(100*retained_content.center.reference.ap50,2) AS retained_original_map50_pct,
  round(100*retained_content.center.packed.ap50,2) AS retained_packed_map50_pct
- FROM read_json(?,union_by_name=true) JOIN clip_counts USING(dataset) ORDER BY label""", [files])
+ FROM read_json(?,union_by_name=true) JOIN clip_counts USING(dataset) ORDER BY label, padding""", [files])
 cursor = con.execute('SELECT * FROM summary')
 columns = [item[0] for item in cursor.description]
 rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-assert con.execute('SELECT count(*),sum(clips),sum(sampled_frames) FROM summary').fetchone() == (7,200,5870)
+# Every dataset appears once per padding, over the manifest's 200 test clips.
+assert con.execute('SELECT count(*), count(DISTINCT dataset), sum(clips) FROM summary').fetchone() == (
+    7 * len(PADDINGS), 7, 200 * len(PADDINGS))
 report = dict(
-    method='Test-annotation tiles; frames 0,32,64,...; 60px tiles; no extra tile padding; no ILP; detection only.',
+    method=f'Test-annotation tiles; frames 0,{STRIDE},{2 * STRIDE},...; 60px tiles; padding none (P=0) and square (P=1); '
+           'no ILP; detection only.',
     scope='all_sampled_frames counts all annotations and outputs on selected frames; retained fields use Table 3 center filtering.',
     rows=rows, source_files=files)
 (out / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
@@ -70,10 +81,10 @@ for relative in ['measurements-gpu/r1o4_oracle_packing.py', 'measurements/r1o4_p
                  'scripts/p040_exec_detect.py', 'scripts/p050_exec_uncompress.py',
                  'measurements-results/r1o4_oracle_packing/summarize.py']:
     source = Path('/polyis') / relative
-    target = root / 'source' / relative
+    target = out / 'source' / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, target)
     provenance[relative] = hashlib.sha256(source.read_bytes()).hexdigest()
-(root / 'source_sha256.json').write_text(json.dumps(provenance, indent=2) + '\n')
+(out / 'source_sha256.json').write_text(json.dumps(provenance, indent=2) + '\n')
 print(json.dumps(rows, indent=2))
-print('Verified 7 datasets, 200 clips, 5870 frames; copied annotation hashes match canonical inputs.')
+print(f'Verified 7 datasets x {len(PADDINGS)} paddings, 200 clips; annotation and reference hashes match.')
