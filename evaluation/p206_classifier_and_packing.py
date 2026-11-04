@@ -163,7 +163,7 @@ def _y_domain_for_metric(df: pd.DataFrame, field: str) -> tuple[float, float]:
     return d_lo, d_hi
 
 
-def _legend_item(label: str, style: dict, x: int, y: int) -> list[alt.Chart]:
+def _legend_item(label: str, style: dict, x: int, y: int, font_size: int = 11) -> list[alt.Chart]:
     """One legend entry (a marker with mark style `style` and its label) at pixel position (x, y) of a panel.
 
     Vega-Lite places legends of concatenated views outside the plots, so these legends are drawn as marks at
@@ -171,14 +171,14 @@ def _legend_item(label: str, style: dict, x: int, y: int) -> list[alt.Chart]:
     """
     return [alt.Chart(alt.Data(values=[{}])).mark_point(size=60, color='#555', **style)
             .encode(x=alt.value(x), y=alt.value(y)),
-            alt.Chart(alt.Data(values=[{}])).mark_text(align='left', baseline='middle', fontSize=11)
+            alt.Chart(alt.Data(values=[{}])).mark_text(align='left', baseline='middle', fontSize=font_size)
             .encode(x=alt.value(x + 10), y=alt.value(y), text=alt.value(label))]
 
 
-def _inside_legend(items: list[tuple[str, dict]]) -> alt.LayerChart:
+def _inside_legend(items: list[tuple[str, dict]], x: int = 12, font_size: int = 11) -> alt.LayerChart:
     """A small legend stacked inside a panel's bottom-left corner, one (label, mark style) entry per row."""
     return alt.layer(*(layer for row, (label, style) in enumerate(reversed(items))
-                       for layer in _legend_item(label, style, 12, SUBPLOT_HEIGHT - 12 - 16 * row)))
+                       for layer in _legend_item(label, style, x, SUBPLOT_HEIGHT - 12 - 16 * row, font_size)))
 
 
 
@@ -318,8 +318,7 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale,
     for index, (field, title) in enumerate(PACKING_METRICS):
         base = alt.Chart(df[df['metric'] == field]).encode(
             # Datasets in the shared order; colors (labeled by the efficacy bars) identify them.
-            # No axis title: the Original/Packed legend row sits in its place.
-            x=alt.X('dataset_display:N', title=None, sort=dataset_domain or None,
+            x=alt.X('dataset_display:N', title='Dataset', sort=dataset_domain or None,
                     axis=alt.Axis(labels=False, ticks=False)),
             # labelFlush keeps an edge tick label (e.g., 100) from overhanging the plot and lifting the group title.
             y=alt.Y('accuracy_pct:Q', title=title, scale=alt.Scale(zero=False, padding=SCALE_PADDING),
@@ -331,10 +330,11 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale,
         original = base.transform_filter(alt.datum.input == 'Original').mark_point(filled=False, size=90, strokeWidth=2)
         packed = base.transform_filter(alt.datum.input == 'Packed').mark_point(filled=True, size=90, opacity=0.9)
         layers = [line, original, packed]
-        # The Original/Packed legend, one entry under each panel where its axis title would be, so it stays
-        # within the panel's width and does not widen the layout.
-        entry = [('Original', dict(filled=False, strokeWidth=2)), ('Packed', dict(filled=True))][index]
-        layers.extend(_legend_item(*entry, 12, SUBPLOT_HEIGHT + 14))
+        # The Original/Packed legend inside the precision panel's bottom-left corner, set close to the axis
+        # and slightly smaller so it clears the rightmost dataset (Amsterdam) in this narrow panel.
+        if field == 'precision':
+            layers.append(_inside_legend([('Original', dict(filled=False, strokeWidth=2)), ('Packed', dict(filled=True))],
+                                         x=7, font_size=10))
         panels.append(alt.layer(*layers).properties(width=PACKING_PANEL_WIDTH, height=SUBPLOT_HEIGHT))
     return panels
 
