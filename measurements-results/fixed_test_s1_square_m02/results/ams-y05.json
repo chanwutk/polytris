@@ -6,7 +6,7 @@
   "seconds": 252.1902637337278,
   "fps": 214.1676653188598,
   "hota": 0.712454422038454,
-  "speedup": 14.032910407856026,
+  "speedup": 13.771396042739143,
   "relative_hota_loss": 0.026069684799685633,
   "reference": {
     "label": "Amsterdam",
@@ -74,7 +74,7 @@
     ],
     "ground_truth_dataset": "ams",
     "reuse": {},
-    "reference_fps": 15.261813771643736,
+    "reference_fps": 15.551630688290166,
     "reference_hota": 0.7315250495020468,
     "reuse_pruning": []
   },

@@ -639,16 +639,19 @@ def test_load_p121_runtime_ops_flags_and_shared_paths(con, tmp_path):
     det = write_runtime(tmp_path / 'det.jsonl', '001_preprocess_groundtruth_detection',
                         [[{'op': 'read', 'time': 2.0}, {'op': 'detect', 'time': 40.0}]])
     cls = write_runtime(tmp_path / 'cls.jsonl', '020_exec_classify', [[{'op': 'read', 'time': 50.0}]])
+    canvas = write_runtime(tmp_path / 'canvas.jsonl', '040_exec_detect', [[{'op': 'read', 'time': 3.0}]])
     # A file named twice (two configurations sharing it) is read once; flags mark only their own stage's ops.
     common.load_p121_runtime_ops(con, 'ops', [('001_preprocess_groundtruth_detection', det)] * 2 +
-                                 [('020_exec_classify', cls)],
+                                 [('020_exec_classify', cls), ('040_exec_detect', canvas)],
                                  {'decode': {'001_preprocess_groundtruth_detection': ('read',)}, 'canvas_read': {}})
     rows = query(con, 'SELECT stage, op, seconds, records, counted, decode, canvas_read FROM ops ORDER BY stage, op')
     assert rows == [dict(stage='001_preprocess_groundtruth_detection', op='detect', seconds=0.04, records=1, counted=True,
                          decode=False, canvas_read=False),
-                    dict(stage='001_preprocess_groundtruth_detection', op='read', seconds=0.002, records=1, counted=True,
+                    dict(stage='001_preprocess_groundtruth_detection', op='read', seconds=0.002, records=1, counted=False,
                          decode=True, canvas_read=False),
                     dict(stage='020_exec_classify', op='read', seconds=0.05, records=1, counted=False, decode=False,
+                         canvas_read=False),
+                    dict(stage='040_exec_detect', op='read', seconds=0.003, records=1, counted=True, decode=False,
                          canvas_read=False)]
     # No files give an empty table.
     common.load_p121_runtime_ops(con, 'empty', [])

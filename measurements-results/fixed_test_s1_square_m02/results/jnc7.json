@@ -6,7 +6,7 @@
   "seconds": 67.37914797591674,
   "fps": 77.54624623433301,
   "hota": 0.8386136027334192,
-  "speedup": 5.342163645985992,
+  "speedup": 5.264078214631698,
   "relative_hota_loss": 0.00789883282772108,
   "reference": {
     "label": "B3D4",
@@ -19,7 +19,7 @@
     ],
     "ground_truth_dataset": "jnc7",
     "reuse": {},
-    "reference_fps": 14.515887451819244,
+    "reference_fps": 14.731210873499254,
     "reference_hota": 0.8452904103758538,
     "reuse_pruning": []
   },

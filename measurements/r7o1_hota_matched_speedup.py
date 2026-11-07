@@ -759,7 +759,8 @@ def main():
         throughput=dict(
             tetris_and_reference='throughput_fps from p130\'s tradeoff table: test frames over the stage runtimes '
                                  'p121 sums, without the ops total_frame_time, read_frame, save_canvas, and '
-                                 'save_mapping_files, and without read and retrieve in p020 classification.',
+                                 'save_mapping_files, without read and retrieve in p020 classification, '
+                                 'without reference video read/decode, and without save_collage/pack_all_total in p030.',
             otif='runtime_total from OTIF\'s stat CSV (p140 normalize_otif_stat_csv). OTIF\'s per-stage columns '
                  '(seg, detect, track, decode) sum to more than runtime_total, so stages overlap and its decoding '
                  'time cannot be separated out.',

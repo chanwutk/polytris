@@ -1,44 +1,44 @@
 [
   {
+    "dataset": "ams-y05",
+    "naive_seconds": 3473.0119999999997,
+    "detector_seconds": 3468.942115478517,
+    "frames": 54011
+  },
+  {
     "dataset": "caldot1-y05",
-    "naive_seconds": 1745.8238808593749,
+    "naive_seconds": 1707.596230712891,
     "detector_seconds": 1702.0759975585938,
-    "frames": 54000.0
+    "frames": 54000
   },
   {
     "dataset": "caldot2-y05",
-    "naive_seconds": 1749.7104934082006,
+    "naive_seconds": 1712.5812841796856,
     "detector_seconds": 1707.8738520507811,
-    "frames": 54000.0
-  },
-  {
-    "dataset": "ams-y05",
-    "naive_seconds": 3538.963376708985,
-    "detector_seconds": 3468.942115478517,
-    "frames": 54011.0
+    "frames": 54000
   },
   {
     "dataset": "jnc0",
-    "naive_seconds": 364.3241779785156,
+    "naive_seconds": 359.04273193359376,
     "detector_seconds": 357.46200537109377,
-    "frames": 5375.0
+    "frames": 5375
   },
   {
     "dataset": "jnc2",
-    "naive_seconds": 325.52738793945326,
+    "naive_seconds": 320.7960307617189,
     "detector_seconds": 319.10322070312503,
-    "frames": 4691.0
+    "frames": 4691
   },
   {
     "dataset": "jnc6",
-    "naive_seconds": 357.11075024414055,
+    "naive_seconds": 351.72108569335927,
     "detector_seconds": 349.8420571289062,
-    "frames": 5192.0
+    "frames": 5192
   },
   {
     "dataset": "jnc7",
-    "naive_seconds": 359.9504348144531,
+    "naive_seconds": 354.68910498046876,
     "detector_seconds": 353.37844140625,
-    "frames": 5225.0
+    "frames": 5225
   }
 ]

@@ -1366,7 +1366,7 @@
     "gpu_synchronization": "p020 times ops on the host (time.time_ns) without torch.cuda.synchronize. Its frames are pageable numpy arrays, and a host-to-device copy from pageable memory first synchronizes the stream, so send also waits for the previous batch's queued GPU work; the only other synchronization per batch is nonzero() in mask. inference and collect mostly launch kernels. host_interval_ms_per_frame_by_op is therefore host-side attribution under asynchronous execution and does not show where GPU time goes (for example, send against inference). Batch totals are unaffected except for the last batch of a video, whose GPU tail lands in retrieve (retrieve_ms_per_frame bounds it).",
     "hardware": {
       "host_that_read_the_cache": {
-        "cpus": 80,
+        "cpus": 4,
         "gpus": {
           "Quadro RTX 6000": 8
         },
@@ -1394,7 +1394,7 @@
     "operating_point": "Fastest Tetris test configuration with HOTA >= reference HOTA x (1 - 0.05) (common.fastest_within).",
     "ratio": "Headline ratio_of_means = detector mean / classifier mean = classifier fps / detector fps, consistent with throughput (frames over total time). ratio_of_medians is a robustness check.",
     "ratio_vs_share": "The per-frame ratio compares the mean cost of classifying one frame with the mean cost of detecting one full frame, both run on every frame (the sample-rate-1 classifier run). The share is measured at the operating point, where three things differ. Whole-frame sampling (sample_rate s) runs the classifier on 1/sampling_factor of the frames. The operating point's own p020 run costs per_classified_frame_cost_vs_every_frame times the every-frame run per classified frame (run-to-run variation, see classifier_vs_detector.json classifier_runs). Sampling and packing shrink detection per original frame by detection_reduction. Classification per original frame shrinks by classification_reduction = sampling_factor / per_classified_frame_cost_vs_every_frame. The share also counts packing, unpacking, pruning, and tracking, which the ratio leaves out. 1/(1 + ratio) is the share classification would have if both ran on every frame and nothing else ran.",
-    "share_boundary": "p121 accounting (query_execution_per_op.csv). It excludes classify read/retrieve and pack save_canvas/save_mapping_files/save_collage, but counts detect read (cv2.imread of the JPEG canvases, detect_canvas_read_share_pct), although Section 7 says disk I/O is excluded. Video decoding is counted asymmetrically: the reference pipeline's runtime includes it (detect read, reference.detect_frame_read_share_pct), while Tetris's does not (p121 drops classify read, and p030 decodes the video again without timing it), so reported speedups over the reference include the reference's decoding time.",
+    "share_boundary": "p121 accounting (query_execution_per_op.csv). It excludes classify read/retrieve and pack save_canvas/save_mapping_files/save_collage, but counts detect read (cv2.imread of the JPEG canvases, detect_canvas_read_share_pct). Reference video read/decode is also excluded. These are counted operator times, not complete staged-prototype elapsed times; p030 decodes video outside its recorded operator timers.",
     "timing_source": "Existing pipeline logs only, nothing rerun. Every test video and frame of each dataset; no sampling. Each value comes from a single run: one p002 run for the detector, one p020 run per sample rate."
   },
   "summary": {

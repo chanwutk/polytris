@@ -79,11 +79,11 @@
             "sha256": "d9dcdd68a53fcbde09fea559188b9e444ae85f03b38c09bc0f2024d768ac169a"
           },
           "tradeoff": {
-            "bytes": 19787,
+            "bytes": 19777,
             "exists": true,
-            "mtime": "2026-11-03T11:35:04+00:00",
+            "mtime": "2026-11-06T02:11:38+00:00",
             "path": "/polyis-cache/ams-y05/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "2c7cf504cc80cfcf5f7f641ed8e43574d950758a84080e171477b3f2379d2320"
+            "sha256": "cb69d7940336c9bf14dfb463c728981985d4d2f8dafec2aad862dc8a8c2264fa"
           }
         },
         "B3D1": {
@@ -111,9 +111,9 @@
           "tradeoff": {
             "bytes": 18366,
             "exists": true,
-            "mtime": "2026-11-03T11:35:02+00:00",
+            "mtime": "2026-11-06T02:11:36+00:00",
             "path": "/polyis-cache/jnc0/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "f2b2d9efdd539f048a40dad391e55b79e34c2f69d83c84902b8c6083c67ffff8"
+            "sha256": "40454c5e4febf4dd540ddca2423f88e067fdf24438e664387f081ccd249bda72"
           }
         },
         "B3D2": {
@@ -139,11 +139,11 @@
             "sha256": "88d4d68fecc8879f701c3b7ef8b2549f8452102d667adda13b9d74d2a3a0175c"
           },
           "tradeoff": {
-            "bytes": 18119,
+            "bytes": 18118,
             "exists": true,
-            "mtime": "2026-11-03T11:35:02+00:00",
+            "mtime": "2026-11-06T02:11:36+00:00",
             "path": "/polyis-cache/jnc2/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "d6a1fbaafa563cac409555a102aea308897617f0ec795911249a65dfb48559d5"
+            "sha256": "eab8145e5be5a4bf90abe9a11672d0192a6e913cfe9fde485191158cb3247456"
           }
         },
         "B3D3": {
@@ -169,11 +169,11 @@
             "sha256": "f475149dbf1993fb81463a60fcf87cf237d3d6a65109a393dad427b01997aa9a"
           },
           "tradeoff": {
-            "bytes": 19114,
+            "bytes": 19113,
             "exists": true,
-            "mtime": "2026-11-03T11:35:02+00:00",
+            "mtime": "2026-11-06T02:11:36+00:00",
             "path": "/polyis-cache/jnc6/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "3cd83c59601263d8aa5e90fd87c22e0a02bbc5186d703b11489e05253255784e"
+            "sha256": "adfa735b6eb988300d1b88ac4ce9157ae85453eae64fbdd0184daeb7a84c3044"
           }
         },
         "B3D4": {
@@ -199,11 +199,11 @@
             "sha256": "080f40b60f983836e95a44d9b6c88ff2cec34ad96da17065b0afd513a7a9a209"
           },
           "tradeoff": {
-            "bytes": 16524,
+            "bytes": 16525,
             "exists": true,
-            "mtime": "2026-11-03T11:35:02+00:00",
+            "mtime": "2026-11-06T02:11:36+00:00",
             "path": "/polyis-cache/jnc7/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "372de249b1a67ff6840be50132f4b51008d685a0e7f66c2d70e0283280a12993"
+            "sha256": "518a80f66233350ef9182ace24de4688053d7e9bf6c4bf70fd57cac1dd9ec296"
           }
         },
         "CalDoT1": {
@@ -231,9 +231,9 @@
           "tradeoff": {
             "bytes": 14576,
             "exists": true,
-            "mtime": "2026-11-03T11:35:03+00:00",
+            "mtime": "2026-11-06T02:11:35+00:00",
             "path": "/polyis-cache/caldot1-y05/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "a7c8f10a72f60971fc53ddc5e68e1fabc9d26c9bf0833d52439ee3383f1965b9"
+            "sha256": "dad6582d38cebe9676eae2dd4f64d1904652ecd3ff2ae1456a75b9dac1d21ce6"
           }
         },
         "CalDoT2": {
@@ -259,15 +259,15 @@
             "sha256": "4ade0f280bd6de2cc2150701fa0224041d6ce519e9f4856c6322d7d0dd2ab882"
           },
           "tradeoff": {
-            "bytes": 13678,
+            "bytes": 13680,
             "exists": true,
-            "mtime": "2026-11-03T11:35:03+00:00",
+            "mtime": "2026-11-06T02:11:36+00:00",
             "path": "/polyis-cache/caldot2-y05/evaluation/090_tradeoff/tradeoff.csv",
-            "sha256": "4aae7a9b3419b23423c19dc9df3a505452d690beec01e273c47a6a00e994ad7b"
+            "sha256": "af986b34fb4e401141d7204a2028908ecda35079603d50dad7233caa3ac3eecf"
           }
         }
       },
-      "run_at": "2026-11-03T19:13:45+00:00",
+      "run_at": "2026-11-06T02:17:27+00:00",
       "test_rows": {
         "Amsterdam": {
           "leap": 1,
@@ -328,7 +328,7 @@
       "leap": "runtime from p140 (p142's table): inference_total - decode per test video from LEAP's raw stat CSV, so decoding is excluded, with repeated runs of a video averaged; checked against the raw CSV (leap_checks.runtime).",
       "otif": "runtime_total from OTIF's stat CSV (p140 normalize_otif_stat_csv). OTIF's per-stage columns (seg, detect, track, decode) sum to more than runtime_total, so stages overlap and its decoding time cannot be separated out.",
       "prior_fps": "Prior systems' throughput is the test split's frame count (our clips) over their runtime, as in evaluation/p200_compare_compute.py and p203, not the frames the system decoded.",
-      "tetris_and_reference": "throughput_fps from p130's tradeoff table: test frames over the stage runtimes p121 sums, without the ops total_frame_time, read_frame, save_canvas, and save_mapping_files, and without read and retrieve in p020 classification."
+      "tetris_and_reference": "throughput_fps from p130's tradeoff table: test frames over the stage runtimes p121 sums, without the ops total_frame_time, read_frame, save_canvas, and save_mapping_files, without read and retrieve in p020 classification, without reference video read/decode, and without save_collage/pack_all_total in p030."
     },
     "ties": "Bounds are inclusive (HOTA >= bound; p203/p204 test round(loss, 12) <= loss bound, which differs only within 1e-12 of the bound and is checked by port_check). Throughput ties go to the more accurate configuration, then the smaller config name. Maxima over datasets break ties by p204's dataset order (CONFIG EXEC.DATASETS), as pandas idxmax does."
   },
@@ -740,7 +740,7 @@
             "fps": 59.1,
             "hota": 0.7914,
             "speedup_vs_prior": 1.2,
-            "speedup_vs_reference": 4.0
+            "speedup_vs_reference": 3.9
           }
         }
       },
@@ -750,14 +750,14 @@
             "config": "param 2",
             "fps": 108.8,
             "hota": 0.7546,
-            "speedup_vs_reference": 7.5
+            "speedup_vs_reference": 7.4
           },
           "tetris": {
             "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
             "fps": 112.0,
             "hota": 0.7546,
             "speedup_vs_prior": 1.0,
-            "speedup_vs_reference": 7.8
+            "speedup_vs_reference": 7.7
           }
         }
       },
@@ -767,14 +767,14 @@
             "config": "param 2",
             "fps": 98.7,
             "hota": 0.7775,
-            "speedup_vs_reference": 6.8
+            "speedup_vs_reference": 6.7
           },
           "tetris": {
             "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
             "fps": 285.6,
             "hota": 0.789,
             "speedup_vs_prior": 2.9,
-            "speedup_vs_reference": 19.6
+            "speedup_vs_reference": 19.3
           }
         }
       },
@@ -784,14 +784,14 @@
             "config": "param 0",
             "fps": 25.7,
             "hota": 0.8443,
-            "speedup_vs_reference": 1.8
+            "speedup_vs_reference": 1.7
           },
           "tetris": {
             "config": "ShuffleNet05_60_2_r025_square_s100_sortcython",
             "fps": 54.5,
             "hota": 0.8509,
             "speedup_vs_prior": 2.1,
-            "speedup_vs_reference": 3.8
+            "speedup_vs_reference": 3.7
           }
         }
       }
@@ -803,14 +803,14 @@
             "config": "param 4",
             "fps": 241.1,
             "hota": 0.6648,
-            "speedup_vs_reference": 15.8
+            "speedup_vs_reference": 15.5
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r025_square_s100_sortcython",
             "fps": 1105.5,
             "hota": 0.6659,
             "speedup_vs_prior": 4.6,
-            "speedup_vs_reference": 72.4
+            "speedup_vs_reference": 71.1
           }
         }
       },
@@ -827,7 +827,7 @@
             "fps": 59.1,
             "hota": 0.7914,
             "speedup_vs_prior": 1.2,
-            "speedup_vs_reference": 4.0
+            "speedup_vs_reference": 3.9
           }
         }
       },
@@ -837,14 +837,14 @@
             "config": "param 2",
             "fps": 108.8,
             "hota": 0.7546,
-            "speedup_vs_reference": 7.5
+            "speedup_vs_reference": 7.4
           },
           "tetris": {
             "config": "ShuffleNet05_60_1_080_r075_none_s100_sortcython",
             "fps": 112.0,
             "hota": 0.7546,
             "speedup_vs_prior": 1.0,
-            "speedup_vs_reference": 7.8
+            "speedup_vs_reference": 7.7
           }
         }
       },
@@ -854,14 +854,14 @@
             "config": "param 2",
             "fps": 98.7,
             "hota": 0.7775,
-            "speedup_vs_reference": 6.8
+            "speedup_vs_reference": 6.7
           },
           "tetris": {
             "config": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
             "fps": 285.6,
             "hota": 0.789,
             "speedup_vs_prior": 2.9,
-            "speedup_vs_reference": 19.6
+            "speedup_vs_reference": 19.3
           }
         }
       },
@@ -871,14 +871,14 @@
             "config": "param 0",
             "fps": 25.7,
             "hota": 0.8443,
-            "speedup_vs_reference": 1.8
+            "speedup_vs_reference": 1.7
           },
           "tetris": {
             "config": "ShuffleNet05_60_2_r025_square_s100_sortcython",
             "fps": 54.5,
             "hota": 0.8509,
             "speedup_vs_prior": 2.1,
-            "speedup_vs_reference": 3.8
+            "speedup_vs_reference": 3.7
           }
         }
       },
@@ -888,14 +888,14 @@
             "config": "param 3",
             "fps": 115.1,
             "hota": 0.7678,
-            "speedup_vs_reference": 3.7
+            "speedup_vs_reference": 3.6
           },
           "tetris": {
             "config": "ShuffleNet05_60_4_r075_bl_s100_sortcython",
             "fps": 820.5,
             "hota": 0.7683,
             "speedup_vs_prior": 7.1,
-            "speedup_vs_reference": 26.5
+            "speedup_vs_reference": 25.9
           }
         }
       },
@@ -912,7 +912,7 @@
             "fps": 292.2,
             "hota": 0.6552,
             "speedup_vs_prior": 5.1,
-            "speedup_vs_reference": 9.5
+            "speedup_vs_reference": 9.3
           }
         }
       }
@@ -924,14 +924,14 @@
             "config": "param 0",
             "fps": 389.2,
             "hota": 0.5258,
-            "speedup_vs_reference": 25.5
+            "speedup_vs_reference": 25.0
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 2840.3,
             "hota": 0.5613,
             "speedup_vs_prior": 7.3,
-            "speedup_vs_reference": 186.1
+            "speedup_vs_reference": 182.6
           }
         },
         "otif": {
@@ -939,14 +939,14 @@
             "config": "param 5",
             "fps": 491.6,
             "hota": 0.6277,
-            "speedup_vs_reference": 32.2
+            "speedup_vs_reference": 31.6
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_tr_s100_sortcython",
             "fps": 1861.3,
             "hota": 0.6342,
             "speedup_vs_prior": 3.8,
-            "speedup_vs_reference": 122.0
+            "speedup_vs_reference": 119.7
           }
         }
       },
@@ -956,14 +956,14 @@
             "config": "param 0",
             "fps": 265.3,
             "hota": 0.0408,
-            "speedup_vs_reference": 18.0
+            "speedup_vs_reference": 17.7
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 1135.4,
             "hota": 0.2927,
             "speedup_vs_prior": 4.3,
-            "speedup_vs_reference": 77.0
+            "speedup_vs_reference": 75.8
           }
         },
         "otif": {
@@ -971,14 +971,14 @@
             "config": "param 5",
             "fps": 1115.1,
             "hota": 0.1693,
-            "speedup_vs_reference": 75.6
+            "speedup_vs_reference": 74.5
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 1135.4,
             "hota": 0.2927,
             "speedup_vs_prior": 1.0,
-            "speedup_vs_reference": 77.0
+            "speedup_vs_reference": 75.8
           }
         }
       },
@@ -988,14 +988,14 @@
             "config": "param 0",
             "fps": 181.7,
             "hota": 0.0253,
-            "speedup_vs_reference": 12.6
+            "speedup_vs_reference": 12.4
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 818.4,
             "hota": 0.5186,
             "speedup_vs_prior": 4.5,
-            "speedup_vs_reference": 56.8
+            "speedup_vs_reference": 56.0
           }
         },
         "otif": {
@@ -1003,14 +1003,14 @@
             "config": "param 5",
             "fps": 1084.6,
             "hota": 0.315,
-            "speedup_vs_reference": 75.3
+            "speedup_vs_reference": 74.2
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 818.4,
             "hota": 0.5186,
             "speedup_vs_prior": 0.8,
-            "speedup_vs_reference": 56.8
+            "speedup_vs_reference": 56.0
           }
         }
       },
@@ -1020,14 +1020,14 @@
             "config": "param 0",
             "fps": 30.0,
             "hota": 0.0148,
-            "speedup_vs_reference": 2.1
+            "speedup_vs_reference": 2.0
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 1214.5,
             "hota": 0.1126,
             "speedup_vs_prior": 40.4,
-            "speedup_vs_reference": 83.5
+            "speedup_vs_reference": 82.3
           }
         },
         "otif": {
@@ -1035,14 +1035,14 @@
             "config": "param 5",
             "fps": 1065.0,
             "hota": 0.0541,
-            "speedup_vs_reference": 73.3
+            "speedup_vs_reference": 72.1
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_bytetrackcython",
             "fps": 1214.5,
             "hota": 0.1126,
             "speedup_vs_prior": 1.1,
-            "speedup_vs_reference": 83.5
+            "speedup_vs_reference": 82.3
           }
         }
       },
@@ -1052,14 +1052,14 @@
             "config": "param 0",
             "fps": 268.2,
             "hota": 0.0422,
-            "speedup_vs_reference": 18.5
+            "speedup_vs_reference": 18.2
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
             "fps": 1411.0,
             "hota": 0.5095,
             "speedup_vs_prior": 5.3,
-            "speedup_vs_reference": 97.2
+            "speedup_vs_reference": 95.8
           }
         },
         "otif": {
@@ -1067,14 +1067,14 @@
             "config": "param 6",
             "fps": 1023.5,
             "hota": 0.1216,
-            "speedup_vs_reference": 70.5
+            "speedup_vs_reference": 69.5
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_080_r075_none_s100_sortcython",
             "fps": 1411.0,
             "hota": 0.5095,
             "speedup_vs_prior": 1.4,
-            "speedup_vs_reference": 97.2
+            "speedup_vs_reference": 95.8
           }
         }
       },
@@ -1084,14 +1084,14 @@
             "config": "param 0",
             "fps": 353.5,
             "hota": 0.5095,
-            "speedup_vs_reference": 11.4
+            "speedup_vs_reference": 11.2
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 4968.4,
             "hota": 0.6627,
             "speedup_vs_prior": 14.1,
-            "speedup_vs_reference": 160.6
+            "speedup_vs_reference": 157.1
           }
         },
         "otif": {
@@ -1099,14 +1099,14 @@
             "config": "param 7",
             "fps": 1204.8,
             "hota": 0.5675,
-            "speedup_vs_reference": 39.0
+            "speedup_vs_reference": 38.1
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 4968.4,
             "hota": 0.6627,
             "speedup_vs_prior": 4.1,
-            "speedup_vs_reference": 160.6
+            "speedup_vs_reference": 157.1
           }
         }
       },
@@ -1116,14 +1116,14 @@
             "config": "param 0",
             "fps": 487.3,
             "hota": 0.1338,
-            "speedup_vs_reference": 15.8
+            "speedup_vs_reference": 15.5
           },
           "tetris": {
             "config": "ShuffleNet05_60_16_r075_none_s100_sortcython",
             "fps": 6054.4,
             "hota": 0.179,
             "speedup_vs_prior": 12.4,
-            "speedup_vs_reference": 196.2
+            "speedup_vs_reference": 192.0
           }
         },
         "otif": {
@@ -1131,14 +1131,14 @@
             "config": "param 9",
             "fps": 1449.3,
             "hota": 0.3217,
-            "speedup_vs_reference": 47.0
+            "speedup_vs_reference": 46.0
           },
           "tetris": {
             "config": "ShuffleNet05_60_8_r075_none_s100_sortcython",
             "fps": 3432.0,
             "hota": 0.3338,
             "speedup_vs_prior": 2.4,
-            "speedup_vs_reference": 111.2
+            "speedup_vs_reference": 108.8
           }
         }
       }
@@ -2330,13 +2330,13 @@
       },
       "compareNaiveSpeedupMaxFivePct": {
         "manuscript": 68.8,
-        "match": true,
-        "measured": 68.8
+        "match": false,
+        "measured": 67.5
       },
       "compareNaiveSpeedupMinFivePct": {
         "manuscript": 4.7,
         "match": false,
-        "measured": 6.6
+        "measured": 6.5
       },
       "comparePolytrisMeetFivePct": {
         "manuscript": 7,
@@ -2383,12 +2383,12 @@
       "compareNaiveSpeedupMaxTenPct": {
         "manuscript": 91.2,
         "match": false,
-        "measured": 73.1
+        "measured": 71.8
       },
       "compareNaiveSpeedupMinTenPct": {
         "manuscript": 10.4,
-        "match": true,
-        "measured": 10.4
+        "match": false,
+        "measured": 10.2
       },
       "comparePolytrisMeetTenPct": {
         "manuscript": 7,
@@ -2424,7 +2424,7 @@
         "loss": 0.05,
         "reference": {
           "accuracy": 0.7314011786317656,
-          "fps": 15.3
+          "fps": 15.6
         },
         "systems": {
           "leap": {
@@ -2441,7 +2441,7 @@
             "fps": 1049.5,
             "hota": 0.6962118739287152,
             "meets_bound": true,
-            "speedup_vs_reference": 68.8
+            "speedup_vs_reference": 67.5
           }
         }
       },
@@ -2450,7 +2450,7 @@
         "loss": 0.05,
         "reference": {
           "accuracy": 0.7862202264503519,
-          "fps": 14.8
+          "fps": 15.0
         },
         "systems": {
           "leap": {
@@ -2471,7 +2471,7 @@
             "fps": 263.8,
             "hota": 0.7541645710206155,
             "meets_bound": true,
-            "speedup_vs_reference": 17.9
+            "speedup_vs_reference": 17.6
           }
         },
         "tetris_speedup_vs_otif": 5.5
@@ -2481,7 +2481,7 @@
         "loss": 0.05,
         "reference": {
           "accuracy": 0.7637062274352553,
-          "fps": 14.4
+          "fps": 14.6
         },
         "systems": {
           "leap": {
@@ -2494,7 +2494,7 @@
             "fps": 108.8,
             "hota": 0.7545910357335472,
             "meets_bound": true,
-            "speedup_vs_reference": 7.5
+            "speedup_vs_reference": 7.4
           },
           "tetris": {
             "accuracy": 0.7314013683847359,
@@ -2502,7 +2502,7 @@
             "fps": 346.5,
             "hota": 0.7314013683847359,
             "meets_bound": true,
-            "speedup_vs_reference": 24.0
+            "speedup_vs_reference": 23.7
           }
         },
         "tetris_speedup_vs_otif": 3.2
@@ -2512,7 +2512,7 @@
         "loss": 0.05,
         "reference": {
           "accuracy": 0.8108938541593949,
-          "fps": 14.5
+          "fps": 14.8
         },
         "systems": {
           "leap": {
@@ -2525,7 +2525,7 @@
             "fps": 98.7,
             "hota": 0.7775022910349932,
             "meets_bound": true,
-            "speedup_vs_reference": 6.8
+            "speedup_vs_reference": 6.7
           },
           "tetris": {
             "accuracy": 0.7890057810982147,
@@ -2533,7 +2533,7 @@
             "fps": 285.6,
             "hota": 0.7890057810982147,
             "meets_bound": true,
-            "speedup_vs_reference": 19.6
+            "speedup_vs_reference": 19.3
           }
         },
         "tetris_speedup_vs_otif": 2.9
@@ -2543,7 +2543,7 @@
         "loss": 0.05,
         "reference": {
           "accuracy": 0.8323975587168102,
-          "fps": 14.5
+          "fps": 14.7
         },
         "systems": {
           "leap": {
@@ -2556,7 +2556,7 @@
             "fps": 25.7,
             "hota": 0.8443342595723925,
             "meets_bound": true,
-            "speedup_vs_reference": 1.8
+            "speedup_vs_reference": 1.7
           },
           "tetris": {
             "accuracy": 0.7995871382161804,
@@ -2564,7 +2564,7 @@
             "fps": 427.9,
             "hota": 0.7995871382161804,
             "meets_bound": true,
-            "speedup_vs_reference": 29.5
+            "speedup_vs_reference": 29.0
           }
         },
         "tetris_speedup_vs_otif": 16.7
@@ -2574,7 +2574,7 @@
         "loss": 0.05,
         "reference": {
           "accuracy": 0.8179698723466023,
-          "fps": 30.9
+          "fps": 31.6
         },
         "systems": {
           "leap": {
@@ -2591,7 +2591,7 @@
             "fps": 729.3,
             "hota": 0.7784689891145117,
             "meets_bound": true,
-            "speedup_vs_reference": 23.6
+            "speedup_vs_reference": 23.1
           }
         }
       },
@@ -2600,7 +2600,7 @@
         "loss": 0.05,
         "reference": {
           "accuracy": 0.7149463201917848,
-          "fps": 30.9
+          "fps": 31.5
         },
         "systems": {
           "leap": {
@@ -2617,7 +2617,7 @@
             "fps": 204.0,
             "hota": 0.6792203135957958,
             "meets_bound": true,
-            "speedup_vs_reference": 6.6
+            "speedup_vs_reference": 6.5
           }
         }
       }
@@ -2628,7 +2628,7 @@
         "loss": 0.1,
         "reference": {
           "accuracy": 0.7314011786317656,
-          "fps": 15.3
+          "fps": 15.6
         },
         "systems": {
           "leap": {
@@ -2641,7 +2641,7 @@
             "fps": 241.1,
             "hota": 0.6648268611230516,
             "meets_bound": true,
-            "speedup_vs_reference": 15.8
+            "speedup_vs_reference": 15.5
           },
           "tetris": {
             "accuracy": 0.6644847503111291,
@@ -2649,7 +2649,7 @@
             "fps": 1116.1,
             "hota": 0.6644847503111291,
             "meets_bound": true,
-            "speedup_vs_reference": 73.1
+            "speedup_vs_reference": 71.8
           }
         },
         "tetris_speedup_vs_otif": 4.6
@@ -2659,7 +2659,7 @@
         "loss": 0.1,
         "reference": {
           "accuracy": 0.7862202264503519,
-          "fps": 14.8
+          "fps": 15.0
         },
         "systems": {
           "leap": {
@@ -2680,7 +2680,7 @@
             "fps": 307.7,
             "hota": 0.7290765805346825,
             "meets_bound": true,
-            "speedup_vs_reference": 20.9
+            "speedup_vs_reference": 20.6
           }
         },
         "tetris_speedup_vs_otif": 6.4
@@ -2690,7 +2690,7 @@
         "loss": 0.1,
         "reference": {
           "accuracy": 0.7637062274352553,
-          "fps": 14.4
+          "fps": 14.6
         },
         "systems": {
           "leap": {
@@ -2703,7 +2703,7 @@
             "fps": 108.8,
             "hota": 0.7545910357335472,
             "meets_bound": true,
-            "speedup_vs_reference": 7.5
+            "speedup_vs_reference": 7.4
           },
           "tetris": {
             "accuracy": 0.7168684291985244,
@@ -2711,7 +2711,7 @@
             "fps": 390.6,
             "hota": 0.7168684291985244,
             "meets_bound": true,
-            "speedup_vs_reference": 27.1
+            "speedup_vs_reference": 26.7
           }
         },
         "tetris_speedup_vs_otif": 3.6
@@ -2721,7 +2721,7 @@
         "loss": 0.1,
         "reference": {
           "accuracy": 0.8108938541593949,
-          "fps": 14.5
+          "fps": 14.8
         },
         "systems": {
           "leap": {
@@ -2734,7 +2734,7 @@
             "fps": 98.7,
             "hota": 0.7775022910349932,
             "meets_bound": true,
-            "speedup_vs_reference": 6.8
+            "speedup_vs_reference": 6.7
           },
           "tetris": {
             "accuracy": 0.7355754674023312,
@@ -2742,7 +2742,7 @@
             "fps": 330.8,
             "hota": 0.7355754674023312,
             "meets_bound": true,
-            "speedup_vs_reference": 22.8
+            "speedup_vs_reference": 22.4
           }
         },
         "tetris_speedup_vs_otif": 3.4
@@ -2752,7 +2752,7 @@
         "loss": 0.1,
         "reference": {
           "accuracy": 0.8323975587168102,
-          "fps": 14.5
+          "fps": 14.7
         },
         "systems": {
           "leap": {
@@ -2765,7 +2765,7 @@
             "fps": 25.7,
             "hota": 0.8443342595723925,
             "meets_bound": true,
-            "speedup_vs_reference": 1.8
+            "speedup_vs_reference": 1.7
           },
           "tetris": {
             "accuracy": 0.7558085542318347,
@@ -2773,7 +2773,7 @@
             "fps": 663.9,
             "hota": 0.7558085542318347,
             "meets_bound": true,
-            "speedup_vs_reference": 45.7
+            "speedup_vs_reference": 45.1
           }
         },
         "tetris_speedup_vs_otif": 25.9
@@ -2783,7 +2783,7 @@
         "loss": 0.1,
         "reference": {
           "accuracy": 0.8179698723466023,
-          "fps": 30.9
+          "fps": 31.6
         },
         "systems": {
           "leap": {
@@ -2796,7 +2796,7 @@
             "fps": 115.1,
             "hota": 0.767843019334281,
             "meets_bound": true,
-            "speedup_vs_reference": 3.7
+            "speedup_vs_reference": 3.6
           },
           "tetris": {
             "accuracy": 0.7404031271690937,
@@ -2804,7 +2804,7 @@
             "fps": 1560.1,
             "hota": 0.7404031271690937,
             "meets_bound": true,
-            "speedup_vs_reference": 50.4
+            "speedup_vs_reference": 49.3
           }
         },
         "tetris_speedup_vs_otif": 13.6
@@ -2814,7 +2814,7 @@
         "loss": 0.1,
         "reference": {
           "accuracy": 0.7149463201917848,
-          "fps": 30.9
+          "fps": 31.5
         },
         "systems": {
           "leap": {
@@ -2835,7 +2835,7 @@
             "fps": 321.5,
             "hota": 0.6450230685886954,
             "meets_bound": true,
-            "speedup_vs_reference": 10.4
+            "speedup_vs_reference": 10.2
           }
         },
         "tetris_speedup_vs_otif": 5.6
@@ -2847,7 +2847,7 @@
         "loss": 0.281,
         "reference": {
           "accuracy": 0.7314011786317656,
-          "fps": 15.3
+          "fps": 15.6
         },
         "systems": {
           "leap": {
@@ -2856,7 +2856,7 @@
             "fps": 389.2,
             "hota": 0.52584602676162,
             "meets_bound": true,
-            "speedup_vs_reference": 25.5
+            "speedup_vs_reference": 25.0
           },
           "otif": {
             "accuracy": 0.6277289966994517,
@@ -2864,7 +2864,7 @@
             "fps": 491.6,
             "hota": 0.6277289966994517,
             "meets_bound": true,
-            "speedup_vs_reference": 32.2
+            "speedup_vs_reference": 31.6
           },
           "tetris": {
             "accuracy": 0.5612635208713379,
@@ -2872,7 +2872,7 @@
             "fps": 2840.3,
             "hota": 0.5612635208713379,
             "meets_bound": true,
-            "speedup_vs_reference": 186.1
+            "speedup_vs_reference": 182.6
           }
         },
         "tetris_speedup_vs_leap": 7.3,
@@ -2883,7 +2883,7 @@
         "loss": 0.9481,
         "reference": {
           "accuracy": 0.7862202264503519,
-          "fps": 14.8
+          "fps": 15.0
         },
         "systems": {
           "leap": {
@@ -2892,7 +2892,7 @@
             "fps": 265.3,
             "hota": 0.0408439690944963,
             "meets_bound": true,
-            "speedup_vs_reference": 18.0
+            "speedup_vs_reference": 17.7
           },
           "otif": {
             "accuracy": 0.1693253050557907,
@@ -2900,7 +2900,7 @@
             "fps": 1115.1,
             "hota": 0.1693253050557907,
             "meets_bound": true,
-            "speedup_vs_reference": 75.6
+            "speedup_vs_reference": 74.5
           },
           "tetris": {
             "accuracy": 0.2927204588206659,
@@ -2908,7 +2908,7 @@
             "fps": 1135.4,
             "hota": 0.2927204588206659,
             "meets_bound": true,
-            "speedup_vs_reference": 77.0
+            "speedup_vs_reference": 75.8
           }
         },
         "tetris_speedup_vs_leap": 4.3,
@@ -2919,7 +2919,7 @@
         "loss": 0.9669,
         "reference": {
           "accuracy": 0.7637062274352553,
-          "fps": 14.4
+          "fps": 14.6
         },
         "systems": {
           "leap": {
@@ -2928,7 +2928,7 @@
             "fps": 181.7,
             "hota": 0.0252603501190705,
             "meets_bound": true,
-            "speedup_vs_reference": 12.6
+            "speedup_vs_reference": 12.4
           },
           "otif": {
             "accuracy": 0.3150059684264534,
@@ -2936,7 +2936,7 @@
             "fps": 1084.6,
             "hota": 0.3150059684264534,
             "meets_bound": true,
-            "speedup_vs_reference": 75.3
+            "speedup_vs_reference": 74.2
           },
           "tetris": {
             "accuracy": 0.5186131617906428,
@@ -2944,7 +2944,7 @@
             "fps": 818.4,
             "hota": 0.5186131617906428,
             "meets_bound": true,
-            "speedup_vs_reference": 56.8
+            "speedup_vs_reference": 56.0
           }
         },
         "tetris_speedup_vs_leap": 4.5,
@@ -2955,7 +2955,7 @@
         "loss": 0.9817,
         "reference": {
           "accuracy": 0.8108938541593949,
-          "fps": 14.5
+          "fps": 14.8
         },
         "systems": {
           "leap": {
@@ -2964,7 +2964,7 @@
             "fps": 30.0,
             "hota": 0.014798982345897,
             "meets_bound": true,
-            "speedup_vs_reference": 2.1
+            "speedup_vs_reference": 2.0
           },
           "otif": {
             "accuracy": 0.0541008082356734,
@@ -2972,7 +2972,7 @@
             "fps": 1065.0,
             "hota": 0.0541008082356734,
             "meets_bound": true,
-            "speedup_vs_reference": 73.3
+            "speedup_vs_reference": 72.1
           },
           "tetris": {
             "accuracy": 0.1126392887283785,
@@ -2980,7 +2980,7 @@
             "fps": 1214.5,
             "hota": 0.1126392887283785,
             "meets_bound": true,
-            "speedup_vs_reference": 83.5
+            "speedup_vs_reference": 82.3
           }
         },
         "tetris_speedup_vs_leap": 40.4,
@@ -2991,7 +2991,7 @@
         "loss": 0.9492,
         "reference": {
           "accuracy": 0.8323975587168102,
-          "fps": 14.5
+          "fps": 14.7
         },
         "systems": {
           "leap": {
@@ -3000,7 +3000,7 @@
             "fps": 268.2,
             "hota": 0.0422465378467207,
             "meets_bound": true,
-            "speedup_vs_reference": 18.5
+            "speedup_vs_reference": 18.2
           },
           "otif": {
             "accuracy": 0.1215771563395051,
@@ -3008,7 +3008,7 @@
             "fps": 1023.5,
             "hota": 0.1215771563395051,
             "meets_bound": true,
-            "speedup_vs_reference": 70.5
+            "speedup_vs_reference": 69.5
           },
           "tetris": {
             "accuracy": 0.5094727857230971,
@@ -3016,7 +3016,7 @@
             "fps": 1411.0,
             "hota": 0.5094727857230971,
             "meets_bound": true,
-            "speedup_vs_reference": 97.2
+            "speedup_vs_reference": 95.8
           }
         },
         "tetris_speedup_vs_leap": 5.3,
@@ -3027,7 +3027,7 @@
         "loss": 0.3771,
         "reference": {
           "accuracy": 0.8179698723466023,
-          "fps": 30.9
+          "fps": 31.6
         },
         "systems": {
           "leap": {
@@ -3036,7 +3036,7 @@
             "fps": 353.5,
             "hota": 0.5095169726663112,
             "meets_bound": true,
-            "speedup_vs_reference": 11.4
+            "speedup_vs_reference": 11.2
           },
           "otif": {
             "accuracy": 0.567452624027974,
@@ -3044,7 +3044,7 @@
             "fps": 1204.8,
             "hota": 0.567452624027974,
             "meets_bound": true,
-            "speedup_vs_reference": 39.0
+            "speedup_vs_reference": 38.1
           },
           "tetris": {
             "accuracy": 0.6627235796610154,
@@ -3052,7 +3052,7 @@
             "fps": 4968.4,
             "hota": 0.6627235796610154,
             "meets_bound": true,
-            "speedup_vs_reference": 160.6
+            "speedup_vs_reference": 157.1
           }
         },
         "tetris_speedup_vs_leap": 14.1,
@@ -3063,7 +3063,7 @@
         "loss": 0.8129,
         "reference": {
           "accuracy": 0.7149463201917848,
-          "fps": 30.9
+          "fps": 31.5
         },
         "systems": {
           "leap": {
@@ -3072,7 +3072,7 @@
             "fps": 487.3,
             "hota": 0.13376839573539373,
             "meets_bound": true,
-            "speedup_vs_reference": 15.8
+            "speedup_vs_reference": 15.5
           },
           "otif": {
             "accuracy": 0.3216657596786511,
@@ -3080,7 +3080,7 @@
             "fps": 1449.3,
             "hota": 0.3216657596786511,
             "meets_bound": true,
-            "speedup_vs_reference": 47.0
+            "speedup_vs_reference": 46.0
           },
           "tetris": {
             "accuracy": 0.1789689849817478,
@@ -3088,7 +3088,7 @@
             "fps": 6054.4,
             "hota": 0.1789689849817478,
             "meets_bound": true,
-            "speedup_vs_reference": 196.2
+            "speedup_vs_reference": 192.0
           }
         },
         "tetris_speedup_vs_leap": 12.4,
@@ -3115,13 +3115,13 @@
       },
       "compareNaiveSpeedupMaxFivePct": {
         "match": true,
-        "measured": 68.76820721664441,
-        "p203": 68.76820721664441
+        "measured": 67.48665737931209,
+        "p203": 67.48665737931209
       },
       "compareNaiveSpeedupMinFivePct": {
         "match": true,
-        "measured": 6.609668256787925,
-        "p203": 6.609668256787925
+        "measured": 6.469409764561976,
+        "p203": 6.469409764561976
       },
       "comparePolytrisMeetFivePct": {
         "match": true,
@@ -3167,13 +3167,13 @@
       },
       "compareNaiveSpeedupMaxTenPct": {
         "match": true,
-        "measured": 73.1284544906143,
-        "p203": 73.1284544906143
+        "measured": 71.7656480027039,
+        "p203": 71.7656480027039
       },
       "compareNaiveSpeedupMinTenPct": {
         "match": true,
-        "measured": 10.418558088790292,
-        "p203": 10.418558088790292
+        "measured": 10.197474186855956,
+        "p203": 10.197474186855956
       },
       "comparePolytrisMeetTenPct": {
         "match": true,
@@ -3225,14 +3225,14 @@
         "otif": {
           "datasets": 7,
           "meets_bound": 4,
-          "speedup_vs_reference_max": 7.5,
-          "speedup_vs_reference_min": 1.8
+          "speedup_vs_reference_max": 7.4,
+          "speedup_vs_reference_min": 1.7
         },
         "tetris": {
           "datasets": 7,
           "meets_bound": 7,
-          "speedup_vs_reference_max": 68.8,
-          "speedup_vs_reference_min": 6.6
+          "speedup_vs_reference_max": 67.5,
+          "speedup_vs_reference_min": 6.5
         }
       },
       "tetris_vs": {
@@ -3261,14 +3261,14 @@
         "otif": {
           "datasets": 7,
           "meets_bound": 7,
-          "speedup_vs_reference_max": 15.8,
-          "speedup_vs_reference_min": 1.8
+          "speedup_vs_reference_max": 15.5,
+          "speedup_vs_reference_min": 1.7
         },
         "tetris": {
           "datasets": 7,
           "meets_bound": 7,
-          "speedup_vs_reference_max": 73.1,
-          "speedup_vs_reference_min": 10.4
+          "speedup_vs_reference_max": 71.8,
+          "speedup_vs_reference_min": 10.2
         }
       },
       "tetris_vs": {
@@ -3291,20 +3291,20 @@
         "leap": {
           "datasets": 7,
           "meets_bound": 7,
-          "speedup_vs_reference_max": 25.5,
-          "speedup_vs_reference_min": 2.1
+          "speedup_vs_reference_max": 25.0,
+          "speedup_vs_reference_min": 2.0
         },
         "otif": {
           "datasets": 7,
           "meets_bound": 7,
-          "speedup_vs_reference_max": 75.6,
-          "speedup_vs_reference_min": 32.2
+          "speedup_vs_reference_max": 74.5,
+          "speedup_vs_reference_min": 31.6
         },
         "tetris": {
           "datasets": 7,
           "meets_bound": 7,
-          "speedup_vs_reference_max": 196.2,
-          "speedup_vs_reference_min": 56.8
+          "speedup_vs_reference_max": 192.0,
+          "speedup_vs_reference_min": 56.0
         }
       },
       "tetris_vs": {

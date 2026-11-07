@@ -6,7 +6,7 @@
   "seconds": 246.883883995942,
   "fps": 218.7263061726929,
   "hota": 0.6101499451397567,
-  "speedup": 7.087179872125485,
+  "speedup": 6.936788487205731,
   "relative_hota_loss": 0.1473018239656806,
   "reference": {
     "label": "CalDoT2",
@@ -74,7 +74,7 @@
     ],
     "ground_truth_dataset": "caldot2",
     "reuse": {},
-    "reference_fps": 30.8622484710686,
+    "reference_fps": 31.53135007303646,
     "reference_hota": 0.7155520702265457,
     "reuse_pruning": []
   },

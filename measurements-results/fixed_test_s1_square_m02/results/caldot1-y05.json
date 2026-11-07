@@ -6,7 +6,7 @@
   "seconds": 158.92146426386677,
   "fps": 339.79047607024677,
   "hota": 0.7793746928203681,
-  "speedup": 10.98545051133357,
+  "speedup": 10.74490622536467,
   "relative_hota_loss": 0.04732547072798943,
   "reference": {
     "label": "CalDoT1",
@@ -74,7 +74,7 @@
     ],
     "ground_truth_dataset": "caldot1",
     "reuse": {},
-    "reference_fps": 30.93095505912012,
+    "reference_fps": 31.623400795079036,
     "reference_hota": 0.8180912461425098,
     "reuse_pruning": [
       "te00.mp4",

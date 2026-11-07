@@ -6,7 +6,7 @@
   "seconds": 95.23751504706635,
   "fps": 49.255800066619855,
   "hota": 0.8194943895872382,
-  "speedup": 3.4180583961958444,
+  "speedup": 3.368378843181509,
   "relative_hota_loss": -0.00538223324406939,
   "reference": {
     "label": "B3D2",
@@ -19,7 +19,7 @@
     ],
     "ground_truth_dataset": "jnc2",
     "reuse": {},
-    "reference_fps": 14.410461834543112,
+    "reference_fps": 14.62299888456034,
     "reference_hota": 0.8151072920226305,
     "reuse_pruning": [
       "te01.mp4",

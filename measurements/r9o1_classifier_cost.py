@@ -17,8 +17,8 @@ reference detector on the same frame. Both cover every frame of every test video
               detector on the full frame, batch size 1) and read (video decoding).
 
 Op boundaries follow evaluation/p121_throughput_compute.py, which produces the reported extraction
-time: read and retrieve are excluded from the classifier. The reference's read is excluded here so
-that both sides are pure computation, although p121 counts it in the reference pipeline's runtime.
+time: read and retrieve are excluded from the classifier, and video read/decode is excluded from
+the reference detector in both this comparison and p121.
 The headline ratio is the ratio of means, which equals the ratio of throughputs (frames over time).
 
 operator_share.json gives, per dataset, each operator's share of Tetris's extraction time at the
@@ -795,11 +795,9 @@ def method_notes(loss: float, hardware: dict) -> dict:
                           'cover; that cause is not verified.'),
         share_boundary=('p121 accounting (query_execution_per_op.csv). It excludes classify read/retrieve and pack '
                         'save_canvas/save_mapping_files/save_collage, but counts detect read (cv2.imread of the JPEG '
-                        'canvases, detect_canvas_read_share_pct), although Section 7 says disk I/O is excluded. Video '
-                        'decoding is counted asymmetrically: the reference pipeline\'s runtime includes it (detect read, '
-                        'reference.detect_frame_read_share_pct), while Tetris\'s does not (p121 drops classify read, and '
-                        'p030 decodes the video again without timing it), so reported speedups over the reference '
-                        'include the reference\'s decoding time.'),
+                        'canvases, detect_canvas_read_share_pct). Reference video read/decode is also excluded. '
+                        'These are counted operator times, not complete staged-prototype elapsed times; '
+                        'p030 decodes video outside its recorded operator timers.'),
         ratio_vs_share=RATIO_VS_SHARE,
         hardware=hardware,
     )

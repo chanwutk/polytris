@@ -735,7 +735,8 @@ def test_results_written_with_method_notes(world, tmp_path, monkeypatch):
     # Both files are keyed by the dataset label and carry the hardware and boundary notes.
     assert list(per_frame['datasets']) == ['A', 'B', 'C'] and list(shares['datasets']) == ['A', 'B', 'C']
     assert per_frame['method']['hardware']['host_that_read_the_cache']['hostname'] == 'h'
-    assert 'asymmetrically' in shares['method']['share_boundary'] and 'synchronize' in shares['method']['gpu_synchronization']
+    assert 'Reference video read/decode is also excluded' in shares['method']['share_boundary']
+    assert 'synchronize' in shares['method']['gpu_synchronization']
     # The summaries span all three datasets.
     assert per_frame['summary']['ratio_of_means']['every_frame_run']['datasets'] == 3
     assert shares['summary']['classify']['datasets'] == 3 and shares['summary']['prune']['datasets'] == 1
