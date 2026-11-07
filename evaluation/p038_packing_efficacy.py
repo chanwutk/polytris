@@ -27,6 +27,7 @@ summarizing the best/average/worst values so the paper prose can cite them.
 from __future__ import annotations
 
 import argparse
+import json
 from collections import Counter
 from typing import Any, cast
 import multiprocessing
@@ -39,6 +40,7 @@ PAPER_FIGURES_GENERATED_DIR = os.path.join(REPO_ROOT, 'paper', 'figures', 'gener
 SCRIPT_ARTIFACT_BASENAME = 'p038_packing_efficacy'
 
 import altair as alt
+import duckdb
 import numpy as np
 import pandas as pd
 from rich.progress import BarColumn, Progress, TextColumn
@@ -51,6 +53,7 @@ from evaluation.p201_compare_pareto import (
     _get_dataset_display_sort,
 )
 from evaluation.colors import categorical_color_scale
+from evaluation.manifests import list_split_videos
 
 # Fixed experimental knobs -- this chart only makes sense at every-frame
 # compression with the canonical canvas size.
@@ -70,9 +73,7 @@ COMPRESSION_STAGE: str = '033_compressed_frames'
 # Canonical slice used when emitting per-dataset polyomino-size statistics
 # (paper prose in ``Packing Efficacy``). Polyomino shapes are a property of
 # the dataset, but the on-disk polyominoes we can inspect depend on the
-# pruning config that wrote them; we pin to zero-padding + the lowest pruning
-# threshold so the distribution reflects the full foreground as closely as
-# possible.
+# pruning config that wrote them; use no padding and no temporal pruning.
 POLY_STATS_TILEPADDING: str = 'none'
 
 # Map from ``--valid`` / ``--test`` flags to (videoset, video filename prefix)
@@ -100,9 +101,7 @@ def parse_args():
         description='Summarize packing efficacy at sample_rate=1 across datasets and tile-padding modes'
     )
     parser.add_argument('--verbose', action='store_true', help='Print verbose progress output')
-    # Mutually exclusive split selector matching the rest of the pipeline
-    # (``--valid`` / ``--test``). Default is the validation split: paper
-    # figures and ``\\packingEfficacy*`` macros are generated from ``va*``.
+    # Preserve validation inspection exports; --test produces the paper's fixed control.
     split_group = parser.add_mutually_exclusive_group()
     split_group.add_argument('--valid', action='store_true', help='Aggregate over the valid split (va*) [default]')
     split_group.add_argument('--test', action='store_true', help='Aggregate over the test split (te*)')
@@ -339,6 +338,27 @@ def _count_one_config(
     return record
 
 
+def _test_control_coverage(raw_df: pd.DataFrame) -> list[dict[str, object]]:
+    expected = [(dataset, video) for dataset in DATASETS for video in list_split_videos(dataset, 'test')]
+    columns = ['dataset', 'video', 'classifier', 'tilesize', '_poly_n_canvases', 'occupied_tiles', 'empty_tiles']
+    with duckdb.connect() as con:
+        con.execute('CREATE TABLE expected(dataset VARCHAR, video VARCHAR)')
+        con.executemany('INSERT INTO expected VALUES (?, ?)', expected)
+        con.register('raw', raw_df[columns])
+        missing = con.execute('SELECT * FROM expected EXCEPT SELECT dataset,video FROM raw').fetchall()
+        extra = con.execute('SELECT dataset,video FROM raw EXCEPT SELECT * FROM expected').fetchall()
+        duplicates = con.execute('SELECT dataset,video FROM raw GROUP BY ALL HAVING count(*)<>1').fetchall()
+        assert not (missing or extra or duplicates), (missing, extra, duplicates)
+        invalid = con.execute("""SELECT dataset,video FROM raw WHERE classifier IS DISTINCT FROM 'ShuffleNet05'
+            OR tilesize IS DISTINCT FROM 60 OR coalesce(_poly_n_canvases,0)<=0
+            OR coalesce(occupied_tiles,0)<=0""").fetchall()
+        assert not invalid, f'Invalid packing-control inputs: {invalid}'
+        rows = con.execute('''SELECT dataset,video,classifier,tilesize,_poly_n_canvases AS canvases,
+            occupied_tiles,empty_tiles FROM raw ORDER BY dataset,video''')
+        names = [column[0] for column in rows.description]
+        return [dict(zip(names, row)) for row in rows.fetchall()]
+
+
 def collect_rows(verbose: bool, videoset: str) -> pd.DataFrame:
     """Walk every dataset, count tiles per config, and return aggregated rows."""
     # Build a single flat task list so the pool can load-balance across datasets.
@@ -364,6 +384,11 @@ def collect_rows(verbose: bool, videoset: str) -> pd.DataFrame:
                     print(f"  [{dataset}/{video_name}] Unparsable config {config_dir.name}: {exc}")
                 continue
             if not _filter_config(parsed):
+                continue
+            # The paper's test comparison fixes padding and pruning instead of averaging sweep slices.
+            if videoset == 'test' and not _is_canonical_poly_slice(
+                str(parsed['tilepadding']), parsed.get('tracking_accuracy_threshold')
+            ):
                 continue
 
             th_raw = parsed.get('tracking_accuracy_threshold')
@@ -410,6 +435,7 @@ def collect_rows(verbose: bool, videoset: str) -> pd.DataFrame:
         return pd.DataFrame()
 
     raw_df = pd.DataFrame(records)
+    coverage = _test_control_coverage(raw_df) if videoset == 'test' else None
 
     # Aggregate per-dataset polyomino-size statistics from the canonical
     # slice before groupby drops the list/dict-valued helper columns.
@@ -450,6 +476,8 @@ def collect_rows(verbose: bool, videoset: str) -> pd.DataFrame:
     # Carry poly stats through ``df.attrs`` so downstream writers (macros)
     # can consume them without leaking list/dict cells into JSONL/markdown.
     grouped.attrs['poly_stats'] = poly_stats
+    if coverage is not None:
+        grouped.attrs['coverage'] = coverage
     return grouped
 
 
@@ -838,8 +866,7 @@ def main() -> None:
     args = parse_args()
     videoset = _resolve_videoset(args)
 
-    # Unsuffixed outputs and ``\\packingEfficacy*`` macros: validation (paper).
-    # Test runs are suffixed so they do not clobber the canonical artifacts.
+    # Retain split-specific cache exports; the paper's stable macro names use test data below.
     base_name = (
         SCRIPT_ARTIFACT_BASENAME
         if videoset == 'valid'
@@ -857,6 +884,12 @@ def main() -> None:
 
     # Single aggregated frame drives every downstream writer.
     df = collect_rows(verbose=args.verbose, videoset=videoset)
+    if videoset == 'test':
+        assert not df.empty and 'coverage' in df.attrs, 'No complete test packing control'
+        coverage_path = Path(summary_dir) / f'{base_name}_coverage.json'
+        coverage_path.write_text(json.dumps(dict(
+            method='Test split; ShuffleNet05; 60px tiles; s=1; Tr=0.5; canvas scale 1; no padding; no ILP.',
+            clips=df.attrs['coverage'], poly_stats=df.attrs['poly_stats']), indent=2) + '\n')
 
     # Persist the raw rows so downstream re-analysis never has to recompute.
     jsonl_path = os.path.join(summary_dir, f'{base_name}.jsonl')
@@ -882,10 +915,12 @@ def main() -> None:
     )
     print(f"  Wrote TeX macros: {tex_macros_path}")
 
-    # Canonical validation split updates ``paper/figures/generated``; test runs
-    # stay a side-by-side cache-only artifact.
-    if videoset == 'valid':
+    # Only the complete test control updates paper outputs; validation remains an archived comparison.
+    if videoset == 'test':
         _copy_paper_figure_artifacts(summary_dir, base_name, PAPER_FIGURES_GENERATED_DIR)
+        shutil.copy2(coverage_path, Path(PAPER_FIGURES_GENERATED_DIR) / coverage_path.name)
+        write_tex_stat_macros(df, str(Path(PAPER_FIGURES_GENERATED_DIR) / f'{SCRIPT_ARTIFACT_BASENAME}_macros.tex'),
+                              videoset='test')
     else:
         print(f"  Skipping paper-figures copy for videoset={videoset}")
 

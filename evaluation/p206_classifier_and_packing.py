@@ -341,20 +341,26 @@ def _build_packing_panels(packing_df: pd.DataFrame, color_scale: alt.Scale,
 
 def _build_efficacy_chart(p038_df: pd.DataFrame, color_scale: alt.Scale, dataset_domain: list[str]) -> alt.LayerChart:
     """Horizontal packing-efficacy bars per dataset; the names inside the bars double as the figure's color legend."""
-    # The unpadded slice, as in the paper's packing-efficacy text.
-    df = p038_df[p038_df['tilepadding'] == PACKING_TILEPADDING].copy()
+    # Match the prose's single no-padding/no-pruning control instead of averaging available sweep slices.
+    with duckdb.connect() as con:
+        con.register('packing_rows', p038_df)
+        df = con.execute('''SELECT * FROM packing_rows WHERE tilepadding=?
+            AND tracking_accuracy_threshold IS NULL''', [PACKING_TILEPADDING]).df()
     if df.empty:
-        raise ValueError(f"No p038 rows with tilepadding='{PACKING_TILEPADDING}'. Re-run p038 with this padding mode.")
+        raise ValueError('No no-padding/no-pruning p038 rows. Re-run p038 --test.')
+    assert not df['dataset'].duplicated().any(), 'Packing control must have one row per dataset'
+    assert set(df['dataset']) == set(p038_df['dataset']), 'Packing control is missing a dataset'
     df = _add_dataset_display_names(df)
-    # One bar per dataset (the mean over p038's pruning slices), filled with the dataset's color.
+    assert set(df['dataset_display']) == set(dataset_domain), 'Packing control does not cover every figure dataset'
+    # Each bar is the same dataset-level ratio exported by p038's prose macros.
     y = alt.Y('dataset_display:N', title=None, sort=dataset_domain or None,
               axis=alt.Axis(labels=False, ticks=False, domain=False))
-    x = alt.X('mean(packing_efficacy_pct):Q', title='Packing efficacy (%)', scale=alt.Scale(domain=[0, 100]))
+    x = alt.X('packing_efficacy_pct:Q', title='Packing efficacy (%)', scale=alt.Scale(domain=[0, 100]))
     bars = alt.Chart(df).mark_bar(opacity=0.9).encode(
         y=y, x=x,
         color=alt.Color('dataset_display:N', legend=None, scale=color_scale),
         tooltip=[alt.Tooltip('dataset_display:N', title='Dataset'),
-                 alt.Tooltip('mean(packing_efficacy_pct):Q', title='Efficacy (%)', format='.2f')],
+                 alt.Tooltip('packing_efficacy_pct:Q', title='Efficacy (%)', format='.2f')],
     )
     # The dataset name inside its bar, which makes the chart the figure's color legend: a white-stroked copy
     # underneath gives the black text a halo against the bar color.
@@ -466,6 +472,7 @@ def main() -> None:
     # rendered density matches the surrounding paper figures.
     combined.save(chart_pdf, scale_factor=2)
     combined.save(chart_png, scale_factor=4)
+    combined.save(os.path.join(summary_dir, f'{base_name}.vl.json'))
     print(f"  Wrote {chart_pdf}")
     print(f"  Wrote {chart_png}")
 
