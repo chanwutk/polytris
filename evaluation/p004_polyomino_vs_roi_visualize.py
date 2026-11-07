@@ -10,6 +10,7 @@ from scipy import ndimage
 from polyis.io import cache, store
 from polyis.utilities import get_config, load_detection_results, mark_detections
 from evaluation.manifests import list_split_videos
+from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
 
 
 CONFIG = get_config()
@@ -167,9 +168,10 @@ def compute_polyomino_vs_roi_stats(
     num_frames = 0
 
     for video in videos:
-        # Load groundtruth tracking results for this video.
+        # Load groundtruth tracking results for this video from the canonical annotation set evaluation uses
+        # (detector variants such as caldot1-y05 share caldot1's labels).
         tracking_results = load_detection_results(
-            dataset, video, tracking=True, groundtruth=True)
+            resolve_groundtruth_tracking_dataset(dataset), video, tracking=True, groundtruth=True)
 
         for frame_data in tracking_results:
             tracks = frame_data.get('tracks', [])
@@ -403,9 +405,9 @@ def main(args: argparse.Namespace) -> None:
             target_w = (width // tile_size) * tile_size
             frame = cv2.resize(frame, (target_w, target_h))
 
-            # Load the groundtruth tracking data for the example frame.
+            # Load the groundtruth tracking data for the example frame, from the canonical annotation set.
             tracking_results = load_detection_results(
-                dataset, videos[0], tracking=True, groundtruth=True)
+                resolve_groundtruth_tracking_dataset(dataset), videos[0], tracking=True, groundtruth=True)
 
             # Find the frame matching args.frame_idx.
             example_tracks = []

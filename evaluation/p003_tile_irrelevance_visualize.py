@@ -9,6 +9,7 @@ import numpy as np
 from polyis.io import cache, store
 from polyis.utilities import get_config, load_detection_results, mark_detections
 from evaluation.manifests import list_split_videos
+from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
 
 
 CONFIG = get_config()
@@ -120,9 +121,10 @@ def compute_relevance_frequency(
     per_frame_irrelevance: list[float] = []
 
     for video in videos:
-        # Load groundtruth tracking results for this video.
+        # Load groundtruth tracking results for this video from the canonical annotation set evaluation uses
+        # (detector variants such as caldot1-y05 share caldot1's labels).
         tracking_results = load_detection_results(
-            dataset, video, tracking=True, groundtruth=True)
+            resolve_groundtruth_tracking_dataset(dataset), video, tracking=True, groundtruth=True)
 
         for frame_data in tracking_results:
             tracks = frame_data.get('tracks', [])
