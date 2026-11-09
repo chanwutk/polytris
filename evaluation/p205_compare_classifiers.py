@@ -27,6 +27,7 @@ from evaluation.p201_compare_pareto import (
     _get_dataset_display_sort,
 )
 from evaluation.colors import categorical_color_scale
+from evaluation.p121_throughput_compute import excluded_runtime_ops
 from polyis.utilities import (
     dataset_root_name,
     get_accuracy,
@@ -116,9 +117,11 @@ def load_runtime(dataset: str, video: str, classifier: str, tile_size: int,
 
     Every ``time`` field from each ``runtime.jsonl`` line is summed (see
     ``format_time`` in classify scripts: per-batch ops plus one line for
-    ``read``/``retrieve``). ``num_classified_frames`` is the line count of
-    ``score.jsonl`` so ``total / frames`` is amortized ms/frame over the full
-    scoring pipeline for that video.
+    ``read``/``retrieve``), except the ops p121's throughput accounting excludes
+    for classification (video decoding with the color conversion, and result
+    retrieval), so ms/frame follows the paper's runtime boundary.
+    ``num_classified_frames`` is the line count of ``score.jsonl`` so
+    ``total / frames`` is amortized ms/frame over the scored frames of that video.
     """
     runtime_path = Path(
         cache.exec(
@@ -131,6 +134,8 @@ def load_runtime(dataset: str, video: str, classifier: str, tile_size: int,
 
     score_path = runtime_path.parent / 'score.jsonl'
 
+    # The operations the throughput accounting drops for classification.
+    excluded = excluded_runtime_ops('020_exec_classify')
     total_runtime_ms = 0.0
     with runtime_path.open() as f:
         for line in f:
@@ -141,7 +146,7 @@ def load_runtime(dataset: str, video: str, classifier: str, tile_size: int,
             if not isinstance(ops, list):
                 continue
             for op in ops:
-                if isinstance(op, dict) and 'time' in op:
+                if isinstance(op, dict) and 'time' in op and op.get('op') not in excluded:
                     total_runtime_ms += float(op['time'])
 
     frame_count = 0
