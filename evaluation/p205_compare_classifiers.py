@@ -641,7 +641,7 @@ def write_tex_stat_macros(
         lines.append(r'\newcommand{\%s}{%s}' % (name, _autogen(replacement)))
 
     emit('PtwozerofiveCompareClassifiersVideoset', _tex_escape(videoset))
-    emit('PtwozerofiveCompareClassifiersThreshold', f'{float(threshold):.2f}')
+    emit('PtwozerofiveCompareClassifiersThreshold', f'{float(threshold):.1f}'.removeprefix('0'))
     emit('PtwozerofiveCompareClassifiersSampleRate', str(int(sample_rate)))
 
     if best is None:
