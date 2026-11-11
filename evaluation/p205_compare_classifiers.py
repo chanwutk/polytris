@@ -651,8 +651,8 @@ def write_tex_stat_macros(
         emit('PtwozerofiveCompareClassifiersBestDatasetDisplay', _tex_escape(best['dataset_display']))
         emit('PtwozerofiveCompareClassifiersBestTileSize', str(best['tile_size']))
         emit('PtwozerofiveCompareClassifiersBestFOneDeltaPp', f'{best["f1_delta"] * 100:.2f}')
-        emit('PtwozerofiveCompareClassifiersBestFOneModified', f'{best["f1_mod"]:.4f}')
-        emit('PtwozerofiveCompareClassifiersBestFOneBaseline', f'{best["f1_base"]:.4f}')
+        emit('PtwozerofiveCompareClassifiersBestFOneModified', f'{best["f1_mod"]:.2f}'.removeprefix('0'))
+        emit('PtwozerofiveCompareClassifiersBestFOneBaseline', f'{best["f1_base"]:.2f}'.removeprefix('0'))
         emit(
             'PtwozerofiveCompareClassifiersModifiedRuntimeSlowdown',
             _fmt(ratio, '.3f'),
