@@ -1,13 +1,6 @@
 [submodule "modules/TrackEval"]
 	path = modules/TrackEval
 	url = https://github.com/chanwutk/TrackEval.git
-[submodule "modules/darknet"]
-	path = modules/darknet
-	url = https://github.com/chanwutk/darknet.git
-	branch = otif/titan-xp
-[submodule "modules/vision_references"]
-	path = modules/vision_references
-	url = https://github.com/chanwutk/vision_references.git
 [submodule "modules/lap"]
 	path = modules/lap
 	url = https://github.com/chanwutk/lap.git

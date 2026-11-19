@@ -170,21 +170,6 @@ def get_frame_count(video_path: str) -> int:
     return frame_count
 
 
-def resolve_source_video_path(dataset: str, videoset: str, video_name: str) -> str:
-    otif_dataset = resolve_otif_dataset_name(dataset)
-    source_video_dir = store.otif(otif_dataset, videoset, 'video')
-    assert os.path.exists(source_video_dir), f'Source video directory not found: {source_video_dir}'
-
-    video_stem, _ = os.path.splitext(video_name)
-    match = re.match(r'^(te|tr|va)(\d{2})$', video_stem)
-    assert match is not None, f'Invalid split video filename: {video_name}'
-
-    video_idx = int(match.group(2))
-    source_video_path = store.otif(otif_dataset, videoset, 'video', f'{video_idx}.mp4')
-    assert os.path.exists(source_video_path), f'Source video file not found: {source_video_path}'
-    return source_video_path
-
-
 def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_queue: queue.Queue):
     videoset, video_name = parse_video_parts(video_file)
     video_number = parse_segment_index(video_name)
@@ -259,72 +244,6 @@ def copy_detection_caldot(dataset: str, video_file: str, gpu_id: int, command_qu
             }
             f.write(json.dumps(frame_entry) + '\n')
             command_queue.put(('cuda:' + str(gpu_id), {'completed': frame_idx + 1}))
-
-
-def run_detection_ams(dataset: str, video_file: str, gpu_id: int, command_queue: queue.Queue):
-    videoset, video_name = parse_video_parts(video_file)
-
-    include_rect = load_include_rect(dataset)
-    exclude_polygon_xml = load_exclude_polygon_xml(dataset)
-
-    source_video_path = resolve_source_video_path(dataset, videoset, video_name)
-    output_path = build_output_path(dataset, video_name)
-    output_dir = os.path.dirname(output_path)
-    os.makedirs(output_dir, exist_ok=True)
-
-    detector = polyis.models.detector.get_detector('ams', gpu_id, batch_size=1)
-
-    cap = cv2.VideoCapture(source_video_path)
-    assert cap.isOpened(), f'Could not open video {source_video_path}'
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    command_queue.put((
-        'cuda:' + str(gpu_id),
-        {
-            'description': f'{dataset} {video_name}',
-            'completed': 0,
-            'total': frame_count,
-        },
-    ))
-
-    with open(output_path, 'w') as f:
-        frame_idx = 0
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            raw_detections = polyis.models.detector.detect(frame, detector)
-            if raw_detections is None:
-                raw_detections = np.empty((0, 5), dtype=np.float32)
-
-            detections: list[list[float]] = []
-            for det in raw_detections:
-                processed = apply_include_exclude_masks(
-                    left=float(det[0]),
-                    top=float(det[1]),
-                    right=float(det[2]),
-                    bottom=float(det[3]),
-                    score=float(det[4]),
-                    include_rect=include_rect,
-                    exclude_polygon_xml=exclude_polygon_xml,
-                )
-                if processed is None:
-                    continue
-
-                detections.append(processed)
-
-            frame_entry = {
-                'frame_idx': frame_idx,
-                'detections': detections,
-            }
-            f.write(json.dumps(frame_entry) + '\n')
-
-            frame_idx += 1
-            command_queue.put(('cuda:' + str(gpu_id), {'completed': frame_idx}))
-
-    cap.release()
-    polyis.models.detector.delete(detector)
 
 
 def get_single_source_video(dataset: str) -> str:
@@ -544,6 +463,8 @@ def main():
     # Fail before any work when human-verified ground truth (B3D) would be regenerated.
     assert_no_human_groundtruth(EXEC_DATASETS)
     datasets_to_process = dedupe_datasets_by_root(EXEC_DATASETS)
+    if 'ams' in datasets_to_process:
+        raise RuntimeError('Load the canonical Amsterdam labels with reproduce/download.sh instead.')
     print(f'Resolved datasets for groundtruth preprocessing: {datasets_to_process}')
 
     funcs = []
@@ -568,8 +489,6 @@ def main():
             print(f'Processing {dataset}/{video}')
             if dataset.startswith('caldot'):
                 funcs.append(partial(copy_detection_caldot, dataset, video))
-            elif dataset.startswith('ams'):
-                funcs.append(partial(run_detection_ams, dataset, video))
             elif dataset.startswith('jnc'):
                 funcs.append(partial(run_detection_jnc, dataset, video))
             else:

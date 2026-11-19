@@ -5,9 +5,9 @@ Upload (once) or download the detector weights for caldot1/2-y05, ams-y05, and j
 at the container paths that configs/detectors.yaml and configs/retinanet.json load.
 Run inside the polyis container.
 
-    ./run scripts/weights.py download
-    ./run scripts/weights.py download --b3d-only
-    ./run scripts/weights.py upload      # once; needs `pip install huggingface_hub` and `hf auth login`
+    python scripts/weights.py download
+    python scripts/weights.py download --b3d-only
+    python scripts/weights.py upload      # once; needs `pip install huggingface_hub` and `hf auth login`
 
 The YOLOv5x6 fine-tunes download from public tetris-db repos on the Hugging Face Hub.
 B3D's RetinaNet downloads from B3D's official Google Drive release (b3d-project/b3d, download.py),
