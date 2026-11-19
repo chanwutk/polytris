@@ -2,51 +2,56 @@
 
 Tetris prepares and extracts reusable object tracks from stored stationary-camera
 video on one server. Start with the [Docker and Gurobi setup](README.md#setup).
-Run the commands below from `/polyis` inside the container.
+Run the Python commands from `/polyis` inside the container.
 
 ## Inputs and splits
 
 | Datasets | Source layout in the container | Training / validation / test |
 | --- | --- | --- |
 | CalDoT1, CalDoT2, Amsterdam (`caldot1-y05`, `caldot2-y05`, `ams-y05`) | Unpack the [OTIF dataset archive](https://favyen.com/files/otif-dataset.zip) so its `dataset/` directory appears at `/otif-dataset/dataset`. Each source dataset has `train/video`, `valid/video`, and `test/video`. | 60 / 60 / 60 per dataset. Preserve the source split membership. |
-| B3D1–4 (`jnc0`, `jnc2`, `jnc6`, `jnc7`) | Get the [upstream B3D videos](https://github.com/b3d-project/b3d). Put each junction's raw MP4 files in `/polyis-data/sources/<junction>` and the domain polygons in `/polyis-data/sources/b3d/annotations.xml`. | 8 / 5 / 5 per junction. After segmentation, the split script sorts clip names and shuffles them with seed 0. |
+| B3D1–4 (`jnc0`, `jnc2`, `jnc6`, `jnc7`) | The [processed B3D bundle](https://huggingface.co/datasets/tetris-db/b3d-processed) provides the processed clips and human-verified test labels used by Tetris. The original footage is available from the [upstream B3D project](https://github.com/b3d-project/b3d). | 8 / 5 / 5 per junction, with filenames and split membership preserved in the bundle. |
 
-In a fresh data volume, `python preprocess/p000_preprocess_dataset.py` converts
-videos to 15 FPS, segments B3D into 18 clips per junction, and applies the B3D
-domain masks. Follow it with `python preprocess/p001_preprocess_split.py --split 8:5:5`.
-Preprocessing replaces the CalDoT and Amsterdam dataset output directories.
-Use fresh volumes when reproducing the workflow. Training learns the classifier
-and per-tile sampling limits, validation selects configurations, and test
-evaluates the selected configurations on held-out clips.
+For CalDoT1, CalDoT2, or Amsterdam, set `POLYIS_DATASETS` to the dataset being
+prepared. Run `python preprocess/p000_preprocess_dataset.py` and
+`python preprocess/p001_preprocess_split.py` to convert its OTIF clips to 15 FPS
+and normalize their filenames. The first command replaces the dataset output
+directory. Use fresh volumes. Prepare the test annotations with the
+`p003_preprocess_groundtruth_detection.py --test` and
+`p003_preprocess_groundtruth_tracking.py --test` scripts in `preprocess/`.
 
 `python scripts/weights.py download` fetches the three YOLOv5 fine-tunes and the
-B3D RetinaNet checkpoint and checks their SHA-256 hashes.
-For the B3D test evaluation, use the
+B3D RetinaNet checkpoint and checks their SHA-256 hashes. For details about how
+the B3D test labels were created, see the
 [human-reviewed labels and annotation workflow](https://anonymous.4open.science/r/tetris-b3d-human-annotation)
 and [Faster R-CNN pre-labeling code and weights](https://anonymous.4open.science/r/tetris-b3d-fasterrcnn).
-`preprocess/p004_install_human_groundtruth.py` installs the labels into the
-evaluation cache. Use its `--source` and `--source-commit` options to identify the
-released label snapshot.
 
 ## Run one dataset end to end
 
-This example uses CalDoT1 and the paper's configuration grid. Use fresh data
-and cache volumes and initialize the submodules before building the container.
+This example uses B3D1 (`jnc0`) and the paper's configuration grid. On the
+Docker host, set `DATA` to the same absolute path as in `.env`. Authenticate
+with Hugging Face using an account with access to the private dataset. Download
+the bundle and copy its clips and scoring inputs into fresh data and cache volumes.
 
 ```sh
 set -e
-export PYTHONPATH=/polyis
-export POLYIS_DATASETS=caldot1-y05
+: "${DATA:?Set DATA to the data parent from .env}"
+bundle=$(mktemp -d)
+hf download tetris-db/b3d-processed --repo-type dataset \
+    --revision 8b169c08266c8c78515112735051067f2a4abd4c --local-dir "$bundle"
+mkdir -p "$DATA/polyis-data/datasets" "$DATA/polyis-cache"
+cp -a "$bundle/datasets/." "$DATA/polyis-data/datasets/"
+cp -a "$bundle/groundtruth/." "$DATA/polyis-cache/"
+```
 
-python scripts/weights.py download
-python preprocess/p000_preprocess_dataset.py
-python preprocess/p001_preprocess_split.py
-python preprocess/p003_preprocess_groundtruth_detection.py --test
-python preprocess/p003_preprocess_groundtruth_tracking.py --test
+After [setting up Docker and building the native extensions](README.md#setup),
+run these commands inside the container from `/polyis`:
 
-bash reproduce/train.sh caldot1-y05
-bash reproduce/validate.sh caldot1-y05 validation.json
-bash reproduce/test.sh caldot1-y05 validation.json
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc0
+bash reproduce/validate.sh jnc0 validation.json
+bash reproduce/test.sh jnc0 validation.json
 ```
 
 - `train.sh` generates training detections, trains the relevance classifier,
@@ -62,9 +67,8 @@ bash reproduce/test.sh caldot1-y05 validation.json
 
 Paths passed to the wrappers are relative to the checkout or absolute. Reuse
 the trained artifacts and the same sweep config across validation and test.
-Each dataset's cache should have one active writer. Run a new dataset by preparing its splits and test
-annotations, then invoking the same three scripts with its configured name.
-Install the released human labels before testing B3D.
+Each dataset's cache should have one active writer. For another dataset, stage
+its splits and test annotations and use its name in the same three scripts.
 
 ## Figures, tables, and reported numbers
 
@@ -103,8 +107,5 @@ Figures 1 and 3–5 use the static PDFs shipped with the paper. Figure 6 and
 appendix Figures 13–15 are LaTeX diagrams. Table 1 is a LaTeX table of sweep
 settings defined in `configs/global.yaml`.
 
-The release still needs a clean-checkout run, a pinned paper and evidence
-bundle, and a verified delivery path for the external inputs. A B3D release
-bundle would contain all 72 processed clips in their existing split directories,
-the human-verified test labels, and a manifest with clip names, frame counts,
-and checksums. Preserve the clip filenames used by the labels.
+The release still needs a clean-checkout GPU run and a pinned paper and
+figure evidence bundle.

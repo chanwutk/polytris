@@ -6,6 +6,7 @@ at the container paths that configs/detectors.yaml and configs/retinanet.json lo
 Run inside the polyis container.
 
     ./run scripts/weights.py download
+    ./run scripts/weights.py download --b3d-only
     ./run scripts/weights.py upload      # once; needs `pip install huggingface_hub` and `hf auth login`
 
 The YOLOv5x6 fine-tunes download from public tetris-db repos on the Hugging Face Hub.
@@ -18,6 +19,8 @@ import hashlib
 import os
 import shutil
 import urllib.request
+
+B3D_WEIGHT_PATH = '/polyis/weights/retinanet_b3d.pth'
 
 # Container path -> Hub repo, its visibility, download URL, and sha256 of the checkpoint the experiments used.
 WEIGHTS = {
@@ -34,7 +37,7 @@ WEIGHTS = {
         url='https://huggingface.co/tetris-db/amsterdam-yolov5/resolve/main/best.pt',
         sha256='be2b26074f713f27b3ebe36c7a3a6e2c38076874ed64c296fae069ead1337ab6'),
     # B3D's RetinaNet (jnc0/2/6/7); configs/retinanet.json loads it relative to /polyis.
-    '/polyis/weights/retinanet_b3d.pth': dict(
+    B3D_WEIGHT_PATH: dict(
         repo='tetris-db/b3d', private=True,
         url='https://drive.usercontent.google.com/download?id=17ZiwW_11q5oLldTCXuXjCpd8FQ7MjKaD&export=download&confirm=t',
         sha256='cd48354aed70787596c4783fe2d1df1d90bfd790e41ae82627580dacd8a1a0c3'),
@@ -44,7 +47,11 @@ WEIGHTS = {
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('action', choices=['upload', 'download'])
-    return parser.parse_args()
+    parser.add_argument('--b3d-only', action='store_true', help='Download only the B3D RetinaNet checkpoint')
+    args = parser.parse_args()
+    if args.b3d_only and args.action != 'download':
+        parser.error('--b3d-only requires download')
+    return args
 
 
 def sha256(path: str) -> str:
@@ -81,9 +88,11 @@ def upload():
         print('uploaded', f"https://huggingface.co/{w['repo']}", '(private)' if w['private'] else '(public)')
 
 
-def download():
-    """Fetch every checkpoint in WEIGHTS to its container path, skipping ones already in place."""
-    for path, w in WEIGHTS.items():
+def download(*, b3d_only=False):
+    """Fetch the selected checkpoints, skipping ones already in place."""
+    paths = (B3D_WEIGHT_PATH,) if b3d_only else WEIGHTS
+    for path in paths:
+        w = WEIGHTS[path]
         # Skip files that are already the right checkpoint.
         if os.path.exists(path) and sha256(path) == w['sha256']:
             print('ok', path)
@@ -108,5 +117,8 @@ def download():
 
 
 if __name__ == '__main__':
-    # Dispatch to the requested action.
-    {'upload': upload, 'download': download}[parse_args().action]()
+    args = parse_args()
+    if args.action == 'download':
+        download(b3d_only=args.b3d_only)
+    else:
+        upload()
