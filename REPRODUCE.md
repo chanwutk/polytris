@@ -8,16 +8,8 @@ Run the Python commands from `/polyis` inside the container.
 
 | Datasets | Source layout in the container | Training / validation / test |
 | --- | --- | --- |
-| CalDoT1, CalDoT2, Amsterdam (`caldot1-y05`, `caldot2-y05`, `ams-y05`) | Unpack the [OTIF dataset archive](https://favyen.com/files/otif-dataset.zip) so its `dataset/` directory appears at `/otif-dataset/dataset`. Each source dataset has `train/video`, `valid/video`, and `test/video`. | 60 / 60 / 60 per dataset. Preserve the source split membership. |
+| CalDoT1, CalDoT2, Amsterdam (`caldot1-y05`, `caldot2-y05`, `ams-y05`) | The [processed OTIF bundle](https://huggingface.co/datasets/tetris-db/otif-processed) provides the processed clips and canonical test annotations used by Tetris. The original inputs are available from the [OTIF project](https://favyen.com/otif/). | 60 / 60 / 60 per dataset, with filenames and split membership preserved in the bundle. |
 | B3D1–4 (`jnc0`, `jnc2`, `jnc6`, `jnc7`) | The [processed B3D bundle](https://huggingface.co/datasets/tetris-db/b3d-processed) provides the processed clips and human-verified test labels used by Tetris. The original footage is available from the [upstream B3D project](https://github.com/b3d-project/b3d). | 8 / 5 / 5 per junction, with filenames and split membership preserved in the bundle. |
-
-For CalDoT1, CalDoT2, or Amsterdam, set `POLYIS_DATASETS` to the dataset being
-prepared. Run `python preprocess/p000_preprocess_dataset.py` and
-`python preprocess/p001_preprocess_split.py` to convert its OTIF clips to 15 FPS
-and normalize their filenames. The first command replaces the dataset output
-directory. Use fresh volumes. Prepare the test annotations with the
-`p003_preprocess_groundtruth_detection.py --test` and
-`p003_preprocess_groundtruth_tracking.py --test` scripts in `preprocess/`.
 
 `python scripts/weights.py download` fetches the three YOLOv5 fine-tunes and the
 B3D RetinaNet checkpoint and checks their SHA-256 hashes. For details about how
@@ -69,6 +61,27 @@ Paths passed to the wrappers are relative to the checkout or absolute. Reuse
 the trained artifacts and the same sweep config across validation and test.
 Each dataset's cache should have one active writer. For another dataset, stage
 its splits and test annotations and use its name in the same three scripts.
+
+For CalDoT1, CalDoT2, or Amsterdam, substitute this command for the B3D
+download above and use the same `datasets/` and `groundtruth/` copy steps.
+
+```sh
+hf download tetris-db/otif-processed --repo-type dataset \
+    --revision 98d1809eb4d367032e878f53bdd584103776e34a --local-dir "$bundle"
+```
+
+On the Docker host, create the configuration names as relative symlinks in
+the data volume:
+
+```sh
+cd "$DATA/polyis-data/datasets"
+ln -s caldot1 caldot1-y05
+ln -s caldot2 caldot2-y05
+ln -s ams ams-y05
+```
+
+Inside Docker, run `python scripts/weights.py download` for the YOLOv5
+checkpoints and pass the corresponding configuration name to the runners.
 
 ## Figures, tables, and reported numbers
 
