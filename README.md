@@ -93,10 +93,159 @@ bash reproduce/test.sh jnc0 validation.json
 
 Paths passed to the wrappers are relative to the checkout or absolute. Reuse
 the trained artifacts and the same sweep config across validation and test.
-Each dataset's cache should have one active writer. For CalDoT1, CalDoT2, or
-Amsterdam, stage the OTIF bundle and run `python scripts/weights.py download`
-inside Docker. Pass `caldot1-y05`, `caldot2-y05`, or `ams-y05` to the same
-three runners.
+Each dataset's cache should have one active writer.
+
+### Commands by dataset
+
+Start with the [Docker setup](#docker-setup). Skip the host download if you
+already staged that bundle.
+
+<details>
+<summary>B3D1 (jnc0)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" b3d
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc0
+bash reproduce/validate.sh jnc0 validation-jnc0.json
+bash reproduce/test.sh jnc0 validation-jnc0.json
+```
+
+</details>
+
+<details>
+<summary>B3D2 (jnc2)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" b3d
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc2
+bash reproduce/validate.sh jnc2 validation-jnc2.json
+bash reproduce/test.sh jnc2 validation-jnc2.json
+```
+
+</details>
+
+<details>
+<summary>B3D3 (jnc6)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" b3d
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc6
+bash reproduce/validate.sh jnc6 validation-jnc6.json
+bash reproduce/test.sh jnc6 validation-jnc6.json
+```
+
+</details>
+
+<details>
+<summary>B3D4 (jnc7)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" b3d
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc7
+bash reproduce/validate.sh jnc7 validation-jnc7.json
+bash reproduce/test.sh jnc7 validation-jnc7.json
+```
+
+</details>
+
+<details>
+<summary>CalDoT1 (caldot1-y05)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" otif
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download
+bash reproduce/train.sh caldot1-y05
+bash reproduce/validate.sh caldot1-y05 validation-caldot1-y05.json
+bash reproduce/test.sh caldot1-y05 validation-caldot1-y05.json
+```
+
+</details>
+
+<details>
+<summary>CalDoT2 (caldot2-y05)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" otif
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download
+bash reproduce/train.sh caldot2-y05
+bash reproduce/validate.sh caldot2-y05 validation-caldot2-y05.json
+bash reproduce/test.sh caldot2-y05 validation-caldot2-y05.json
+```
+
+</details>
+
+<details>
+<summary>Amsterdam (ams-y05)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" otif
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download
+bash reproduce/train.sh ams-y05
+bash reproduce/validate.sh ams-y05 validation-ams-y05.json
+bash reproduce/test.sh ams-y05 validation-ams-y05.json
+```
+
+</details>
 
 ## Generate figures and tables
 
