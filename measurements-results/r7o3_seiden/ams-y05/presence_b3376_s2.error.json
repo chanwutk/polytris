@@ -1,0 +1,8 @@
+{
+  "dataset": "ams-y05",
+  "query": "presence",
+  "budget": 3376,
+  "seed": 2,
+  "fraction": 0.0625,
+  "error": "RecursionError: maximum recursion depth exceeded while calling a Python object"
+}

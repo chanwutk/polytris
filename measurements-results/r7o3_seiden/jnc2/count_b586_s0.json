@@ -1,0 +1,20 @@
+{
+  "dataset": "jnc2",
+  "query": "count",
+  "budget": 586,
+  "seed": 0,
+  "frames": 4691,
+  "iframes": 395,
+  "detector_ms_per_frame": 68.02456207698252,
+  "answers": [
+    {
+      "mode": "propagate",
+      "oracle_frames": 586,
+      "seiden_s": 1.3886539917439222,
+      "oracle_s": 39.86239337711175,
+      "total_s": 41.25104736885567,
+      "fps": 113.71832472650576
+    }
+  ],
+  "fraction": 0.125
+}

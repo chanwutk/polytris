@@ -1,0 +1,20 @@
+{
+  "dataset": "ams-y05",
+  "query": "count",
+  "budget": 5401,
+  "seed": 1,
+  "frames": 54011,
+  "iframes": 240,
+  "detector_ms_per_frame": 64.22658561179233,
+  "answers": [
+    {
+      "mode": "propagate",
+      "oracle_frames": 5401,
+      "seiden_s": 73.8879233179614,
+      "oracle_s": 346.88778888929033,
+      "total_s": 420.77571220725173,
+      "fps": 128.36054561389955
+    }
+  ],
+  "fraction": 0.1
+}

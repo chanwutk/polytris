@@ -1,0 +1,58 @@
+{
+  "batch": 16,
+  "batched": false,
+  "bombe_gpu": "3",
+  "bombe_run": "g3-20261118T171753",
+  "datasets": [
+    "jnc0",
+    "ams-y05",
+    "caldot1-y05",
+    "caldot2-y05"
+  ],
+  "finished": "2026-11-19T01:41:08+00:00",
+  "frames": 320,
+  "gpu": "Quadro RTX 6000",
+  "host": {
+    "cpus": 80,
+    "gpus": {
+      "Quadro RTX 6000": 1
+    },
+    "hostname": "bombe"
+  },
+  "max_batch": true,
+  "max_batch_calls": 8,
+  "max_batch_cap": 1024,
+  "scales": [
+    1,
+    2,
+    4
+  ],
+  "sizes": [
+    [
+      640,
+      360
+    ],
+    [
+      960,
+      540
+    ],
+    [
+      1280,
+      720
+    ],
+    [
+      1920,
+      1080
+    ],
+    [
+      2560,
+      1440
+    ],
+    [
+      3840,
+      2160
+    ]
+  ],
+  "started": "2026-11-19T01:18:01+00:00",
+  "warmup_frames": 32
+}

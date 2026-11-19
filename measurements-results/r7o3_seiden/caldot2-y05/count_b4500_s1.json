@@ -1,0 +1,20 @@
+{
+  "dataset": "caldot2-y05",
+  "query": "count",
+  "budget": 4500,
+  "seed": 1,
+  "frames": 54000,
+  "iframes": 240,
+  "detector_ms_per_frame": 31.62729355649595,
+  "answers": [
+    {
+      "mode": "propagate",
+      "oracle_frames": 4500,
+      "seiden_s": 73.13414683379233,
+      "oracle_s": 142.32282100423177,
+      "total_s": 215.4569678380241,
+      "fps": 250.6300935256642
+    }
+  ],
+  "fraction": 0.0833333
+}

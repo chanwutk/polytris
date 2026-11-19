@@ -1,0 +1,40 @@
+{
+  "dataset": "jnc2",
+  "query": "presence",
+  "budget": 469,
+  "seed": 0,
+  "frames": 4691,
+  "iframes": 395,
+  "detector_ms_per_frame": 68.02456207698252,
+  "answers": [
+    {
+      "mode": "propagate",
+      "oracle_frames": 469,
+      "seiden_s": 1.2258959859609604,
+      "oracle_s": 31.9035196141048,
+      "total_s": 33.129415600065755,
+      "fps": 141.59621940299755
+    },
+    {
+      "mode": "supg",
+      "supg_budget": 469,
+      "supg_sampled": 442,
+      "oracle_frames": 876,
+      "seiden_s": 1.2287687314674258,
+      "oracle_s": 59.58951637943668,
+      "total_s": 60.81828511090411,
+      "fps": 77.131408612489
+    },
+    {
+      "mode": "supg",
+      "supg_budget": 234,
+      "supg_sampled": 230,
+      "oracle_frames": 680,
+      "seiden_s": 1.2279708180576563,
+      "oracle_s": 46.25670221234811,
+      "total_s": 47.484673030405766,
+      "fps": 98.78977153314757
+    }
+  ],
+  "fraction": 0.1
+}

@@ -1,0 +1,2649 @@
+{
+  "dataset": "jnc7",
+  "evaluator": "/polyis/measurements-results/r1o2_leap_original_evaluator/evaluate.py",
+  "failures": [],
+  "frames": 5225,
+  "ground_truth_count_sha256": "fcc1fc700dd9826a1e941aa85f1209a608a4a41b6b19723d2c38abb54d441ed4",
+  "records": [
+    {
+      "aggregation": {
+        "acc": 0.8942594245965456,
+        "acc_raw": 0.8917365535204992,
+        "mae": 1.0872727272727272,
+        "mae_raw": 1.1096637771497146,
+        "mape": 0.10574057540345438,
+        "mape_raw": 0.10826344647950081
+      },
+      "budget": 109,
+      "fps": 613.1039452187123,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 109,
+      "oracle_s": 7.3719138972787075,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.1502951681613922,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 8.5222090654401
+    },
+    {
+      "aggregation": {
+        "acc": 0.8768925914218086,
+        "acc_raw": 0.8747940116841187,
+        "mae": 1.2214354066985647,
+        "mae_raw": 1.2369461124785568,
+        "mape": 0.12310740857819136,
+        "mape_raw": 0.12520598831588126
+      },
+      "budget": 109,
+      "fps": 621.5121829019,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 109,
+      "oracle_s": 7.3719138972787075,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.0350009528920054,
+      "topk": 0.8,
+      "topk_rounded": 0.9,
+      "total_s": 8.406914850170713
+    },
+    {
+      "aggregation": {
+        "acc": 0.8710125780376351,
+        "acc_raw": 0.8696681753927858,
+        "mae": 1.2715789473684211,
+        "mae_raw": 1.2883052577928344,
+        "mape": 0.1289874219623649,
+        "mape_raw": 0.13033182460721415
+      },
+      "budget": 109,
+      "fps": 621.8125513262738,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 109,
+      "oracle_s": 7.3719138972787075,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.0309399673715234,
+      "topk": 0.8,
+      "topk_rounded": 0.8,
+      "total_s": 8.40285386465023
+    },
+    {
+      "aggregation": {
+        "acc": 0.8944429833363606,
+        "acc_raw": 0.8934506106435575,
+        "mae": 1.0445933014354067,
+        "mae_raw": 1.0514614083417908,
+        "mape": 0.10555701666363937,
+        "mape_raw": 0.10654938935644254
+      },
+      "budget": 1306,
+      "fps": 58.147131448327514,
+      "fraction": 0.25,
+      "mode": "propagate",
+      "oracle_frames": 1306,
+      "oracle_s": 88.32770229216507,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.530556745827198,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 89.85825903799227
+    },
+    {
+      "aggregation": {
+        "acc": 0.8944979967921807,
+        "acc_raw": 0.8936835594649902,
+        "mae": 1.0377033492822967,
+        "mae_raw": 1.0435736586645676,
+        "mape": 0.10550200320781933,
+        "mape_raw": 0.10631644053500977
+      },
+      "budget": 1306,
+      "fps": 58.18958206227972,
+      "fraction": 0.25,
+      "mode": "propagate",
+      "oracle_frames": 1306,
+      "oracle_s": 88.32770229216507,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.4650031169876456,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 89.79270540915272
+    },
+    {
+      "aggregation": {
+        "acc": 0.893668460714367,
+        "acc_raw": 0.8928234319505818,
+        "mae": 1.0476555023923444,
+        "mae_raw": 1.0524518458681134,
+        "mape": 0.10633153928563299,
+        "mape_raw": 0.10717656804941822
+      },
+      "budget": 1306,
+      "fps": 58.07886218803462,
+      "fraction": 0.25,
+      "mode": "propagate",
+      "oracle_frames": 1306,
+      "oracle_s": 88.32770229216507,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.6361813507974148,
+      "topk": 0.9,
+      "topk_rounded": 0.7,
+      "total_s": 89.96388364296249
+    },
+    {
+      "aggregation": {
+        "acc": 0.8836195008752051,
+        "acc_raw": 0.8806828272493956,
+        "mae": 1.168803827751196,
+        "mae_raw": 1.1965469701728688,
+        "mape": 0.11638049912479487,
+        "mape_raw": 0.11931717275060438
+      },
+      "budget": 163,
+      "fps": 428.8510036100288,
+      "fraction": 0.03125,
+      "mode": "propagate",
+      "oracle_frames": 163,
+      "oracle_s": 11.024054727123206,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.1596639910712838,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 12.18371871819449
+    },
+    {
+      "aggregation": {
+        "acc": 0.8766363954433847,
+        "acc_raw": 0.8747054947496037,
+        "mae": 1.2162679425837322,
+        "mae_raw": 1.2313341211076854,
+        "mape": 0.12336360455661532,
+        "mape_raw": 0.12529450525039632
+      },
+      "budget": 163,
+      "fps": 434.0433137374303,
+      "fraction": 0.03125,
+      "mode": "propagate",
+      "oracle_frames": 163,
+      "oracle_s": 11.024054727123206,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.013914375565946,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 12.037969102689152
+    },
+    {
+      "aggregation": {
+        "acc": 0.8821697818337467,
+        "acc_raw": 0.880565770430655,
+        "mae": 1.142200956937799,
+        "mae_raw": 1.1563913604048457,
+        "mape": 0.11783021816625328,
+        "mape_raw": 0.11943422956934502
+      },
+      "budget": 163,
+      "fps": 433.37043542861784,
+      "fraction": 0.03125,
+      "mode": "propagate",
+      "oracle_frames": 163,
+      "oracle_s": 11.024054727123206,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.0326052866876125,
+      "topk": 1.0,
+      "topk_rounded": 0.9,
+      "total_s": 12.056660013810818
+    },
+    {
+      "aggregation": {
+        "acc": 0.8863326610072061,
+        "acc_raw": 0.8836355256250361,
+        "mae": 1.1316746411483254,
+        "mae_raw": 1.1537560724572309,
+        "mape": 0.11366733899279391,
+        "mape_raw": 0.11636447437496389
+      },
+      "budget": 218,
+      "fps": 331.00979793371084,
+      "fraction": 0.0416667,
+      "mode": "propagate",
+      "oracle_frames": 218,
+      "oracle_s": 14.743827794557415,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.041203442029655,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 15.78503123658707
+    },
+    {
+      "aggregation": {
+        "acc": 0.8824403283203535,
+        "acc_raw": 0.8806183972862813,
+        "mae": 1.1517703349282296,
+        "mae_raw": 1.1674330763508627,
+        "mape": 0.11755967167964654,
+        "mape_raw": 0.11938160271371867
+      },
+      "budget": 218,
+      "fps": 331.31243650823575,
+      "fraction": 0.0416667,
+      "mode": "propagate",
+      "oracle_frames": 218,
+      "oracle_s": 14.743827794557415,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.0267845466732979,
+      "topk": 0.8,
+      "topk_rounded": 0.9,
+      "total_s": 15.770612341230713
+    },
+    {
+      "aggregation": {
+        "acc": 0.8879960848903703,
+        "acc_raw": 0.8868221203896935,
+        "mae": 1.085358851674641,
+        "mae_raw": 1.0994317702207956,
+        "mape": 0.1120039151096297,
+        "mape_raw": 0.11317787961030645
+      },
+      "budget": 218,
+      "fps": 331.19323154506446,
+      "fraction": 0.0416667,
+      "mode": "propagate",
+      "oracle_frames": 218,
+      "oracle_s": 14.743827794557415,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.0324607957154512,
+      "topk": 0.8,
+      "topk_rounded": 0.8,
+      "total_s": 15.776288590272866
+    },
+    {
+      "aggregation": {
+        "acc": 0.8882486977731198,
+        "acc_raw": 0.8866325812838982,
+        "mae": 1.1133014354066986,
+        "mae_raw": 1.1247500022887174,
+        "mape": 0.11175130222688023,
+        "mape_raw": 0.11336741871610179
+      },
+      "budget": 327,
+      "fps": 225.4284706218908,
+      "fraction": 0.0625,
+      "mode": "propagate",
+      "oracle_frames": 327,
+      "oracle_s": 22.115741691836124,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.062342183664441,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 23.178083875500565
+    },
+    {
+      "aggregation": {
+        "acc": 0.8869038166335398,
+        "acc_raw": 0.8856519767901002,
+        "mae": 1.1035406698564594,
+        "mae_raw": 1.112858113832942,
+        "mape": 0.11309618336646021,
+        "mape_raw": 0.11434802320989979
+      },
+      "budget": 327,
+      "fps": 225.57361343405339,
+      "fraction": 0.0625,
+      "mode": "propagate",
+      "oracle_frames": 327,
+      "oracle_s": 22.115741691836124,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.0474285054951906,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 23.163170197331315
+    },
+    {
+      "aggregation": {
+        "acc": 0.8923837720997558,
+        "acc_raw": 0.8905443556949694,
+        "mae": 1.0491866028708134,
+        "mae_raw": 1.0666216779928082,
+        "mape": 0.10761622790024417,
+        "mape_raw": 0.10945564430503063
+      },
+      "budget": 327,
+      "fps": 224.65748783104195,
+      "fraction": 0.0625,
+      "mode": "propagate",
+      "oracle_frames": 327,
+      "oracle_s": 22.115741691836124,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.1418850645422935,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 23.257626756378418
+    },
+    {
+      "aggregation": {
+        "acc": 0.7626927437386992,
+        "acc_raw": 0.7633159078910651,
+        "mae": 1.947751196172249,
+        "mae_raw": 1.9466597339760334,
+        "mape": 0.23730725626130078,
+        "mape_raw": 0.23668409210893493
+      },
+      "budget": 41,
+      "fps": 1322.9637545338915,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 41,
+      "oracle_s": 2.7729217411782296,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.1765439808368683,
+      "topk": 0.6,
+      "topk_rounded": 0.7,
+      "total_s": 3.949465722015098
+    },
+    {
+      "aggregation": {
+        "acc": 0.7972692009580612,
+        "acc_raw": 0.7949563341479289,
+        "mae": 1.8566507177033493,
+        "mae_raw": 1.872105561012151,
+        "mape": 0.2027307990419388,
+        "mape_raw": 0.20504366585207112
+      },
+      "budget": 41,
+      "fps": 1354.9596097377378,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 41,
+      "oracle_s": 2.7729217411782296,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.0832817666232586,
+      "topk": 0.6,
+      "topk_rounded": 0.7,
+      "total_s": 3.8562035078014882
+    },
+    {
+      "aggregation": {
+        "acc": 0.8123644706379973,
+        "acc_raw": 0.80992988394204,
+        "mae": 1.834066985645933,
+        "mae_raw": 1.8557433377108365,
+        "mape": 0.18763552936200267,
+        "mape_raw": 0.19007011605795998
+      },
+      "budget": 41,
+      "fps": 1357.7106654451902,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 41,
+      "oracle_s": 2.7729217411782296,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.0754681499674916,
+      "topk": 0.8,
+      "topk_rounded": 0.6,
+      "total_s": 3.8483898911457213
+    },
+    {
+      "aggregation": {
+        "acc": 0.8899737080355399,
+        "acc_raw": 0.888834471156446,
+        "mae": 1.0798086124401913,
+        "mae_raw": 1.0871091035492946,
+        "mape": 0.11002629196446012,
+        "mape_raw": 0.11116552884355402
+      },
+      "budget": 435,
+      "fps": 171.45345657466032,
+      "fraction": 0.0833333,
+      "mode": "propagate",
+      "oracle_frames": 435,
+      "oracle_s": 29.420023351525117,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.0547194993123412,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 30.47474285083746
+    },
+    {
+      "aggregation": {
+        "acc": 0.8926768990813048,
+        "acc_raw": 0.8914841576633428,
+        "mae": 1.0422966507177034,
+        "mae_raw": 1.0521900115708165,
+        "mape": 0.10732310091869524,
+        "mape_raw": 0.10851584233665723
+      },
+      "budget": 435,
+      "fps": 171.5768446068899,
+      "fraction": 0.0833333,
+      "mode": "propagate",
+      "oracle_frames": 435,
+      "oracle_s": 29.420023351525117,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.0328038465231657,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 30.452827198048283
+    },
+    {
+      "aggregation": {
+        "acc": 0.8947341696412741,
+        "acc_raw": 0.8929019963901803,
+        "mae": 1.0478468899521531,
+        "mae_raw": 1.0625897134176558,
+        "mape": 0.10526583035872594,
+        "mape_raw": 0.10709800360981969
+      },
+      "budget": 435,
+      "fps": 170.6252010877211,
+      "fraction": 0.0833333,
+      "mode": "propagate",
+      "oracle_frames": 435,
+      "oracle_s": 29.420023351525117,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.2026511812582612,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 30.62267453278338
+    },
+    {
+      "aggregation": {
+        "acc": 0.8931182643138637,
+        "acc_raw": 0.8917358929549234,
+        "mae": 1.0511004784688995,
+        "mae_raw": 1.0602775119617223,
+        "mape": 0.10688173568613635,
+        "mape_raw": 0.10826410704507661
+      },
+      "budget": 522,
+      "fps": 143.68542158248712,
+      "fraction": 0.1,
+      "mode": "propagate",
+      "oracle_frames": 522,
+      "oracle_s": 35.30402802183014,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.060134343802929,
+      "topk": 0.7,
+      "topk_rounded": 0.8,
+      "total_s": 36.36416236563307
+    },
+    {
+      "aggregation": {
+        "acc": 0.8945101158828602,
+        "acc_raw": 0.8933053933241142,
+        "mae": 1.037129186602871,
+        "mae_raw": 1.046555023923445,
+        "mape": 0.10548988411713978,
+        "mape_raw": 0.10669460667588582
+      },
+      "budget": 522,
+      "fps": 143.65265776361548,
+      "fraction": 0.1,
+      "mode": "propagate",
+      "oracle_frames": 522,
+      "oracle_s": 35.30402802183014,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.068428160622716,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 36.37245618245286
+    },
+    {
+      "aggregation": {
+        "acc": 0.8932031207478437,
+        "acc_raw": 0.8919034213212198,
+        "mae": 1.0478468899521531,
+        "mae_raw": 1.0570990285631432,
+        "mape": 0.10679687925215631,
+        "mape_raw": 0.1080965786787802
+      },
+      "budget": 522,
+      "fps": 143.39952083819745,
+      "fraction": 0.1,
+      "mode": "propagate",
+      "oracle_frames": 522,
+      "oracle_s": 35.30402802183014,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.1326348725706339,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 36.436662894400776
+    },
+    {
+      "aggregation": {
+        "acc": 0.8225018129495986,
+        "acc_raw": 0.8221177683848905,
+        "mae": 1.7157894736842105,
+        "mae_raw": 1.7241849294870335,
+        "mape": 0.17749818705040143,
+        "mape_raw": 0.17788223161510952
+      },
+      "budget": 54,
+      "fps": 1090.0668874453672,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 54,
+      "oracle_s": 3.6521408298444973,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.1411430137231946,
+      "topk": 0.7,
+      "topk_rounded": 0.7,
+      "total_s": 4.793283843567692
+    },
+    {
+      "aggregation": {
+        "acc": 0.851439672223318,
+        "acc_raw": 0.8493281400352038,
+        "mae": 1.57933014354067,
+        "mae_raw": 1.5947671805636454,
+        "mape": 0.14856032777668204,
+        "mape_raw": 0.15067185996479615
+      },
+      "budget": 54,
+      "fps": 1112.9717501891105,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 54,
+      "oracle_s": 3.6521408298444973,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.0424976451322436,
+      "topk": 0.8,
+      "topk_rounded": 0.7,
+      "total_s": 4.694638474976741
+    },
+    {
+      "aggregation": {
+        "acc": 0.8500496218929013,
+        "acc_raw": 0.8480300282875302,
+        "mae": 1.5427751196172248,
+        "mae_raw": 1.5620697711220408,
+        "mape": 0.14995037810709866,
+        "mape_raw": 0.15196997171246984
+      },
+      "budget": 54,
+      "fps": 1116.4832811770502,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 54,
+      "oracle_s": 3.6521408298444973,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.0277322037145495,
+      "topk": 0.6,
+      "topk_rounded": 0.5,
+      "total_s": 4.679873033559047
+    },
+    {
+      "aggregation": {
+        "acc": 0.8950765889463143,
+        "acc_raw": 0.8936110208960921,
+        "mae": 1.0357894736842106,
+        "mae_raw": 1.045933014354067,
+        "mape": 0.10492341105368574,
+        "mape_raw": 0.10638897910390788
+      },
+      "budget": 653,
+      "fps": 115.31167942362568,
+      "fraction": 0.125,
+      "mode": "propagate",
+      "oracle_frames": 653,
+      "oracle_s": 44.163851146082536,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.1481244154274464,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 45.31197556150998
+    },
+    {
+      "aggregation": {
+        "acc": 0.8945486219721872,
+        "acc_raw": 0.8931253502337404,
+        "mae": 1.0422966507177034,
+        "mae_raw": 1.0520893141945773,
+        "mape": 0.10545137802781279,
+        "mape_raw": 0.1068746497662596
+      },
+      "budget": 653,
+      "fps": 115.2165942510132,
+      "fraction": 0.125,
+      "mode": "propagate",
+      "oracle_frames": 653,
+      "oracle_s": 44.163851146082536,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.1855191765353084,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 45.349370322617844
+    },
+    {
+      "aggregation": {
+        "acc": 0.8947877759878543,
+        "acc_raw": 0.8932783628500327,
+        "mae": 1.0378947368421052,
+        "mae_raw": 1.048591782486519,
+        "mape": 0.1052122240121457,
+        "mape_raw": 0.1067216371499673
+      },
+      "budget": 653,
+      "fps": 114.88281797315764,
+      "fraction": 0.125,
+      "mode": "propagate",
+      "oracle_frames": 653,
+      "oracle_s": 44.163851146082536,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.3172755548730493,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 45.481126700955585
+    },
+    {
+      "aggregation": {
+        "acc": 0.8665840783854445,
+        "acc_raw": 0.8642715395362892,
+        "mae": 1.3155980861244019,
+        "mae_raw": 1.336135688942501,
+        "mape": 0.1334159216145555,
+        "mape_raw": 0.1357284604637108
+      },
+      "budget": 82,
+      "fps": 782.9265343835501,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 82,
+      "oracle_s": 5.545843482356459,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 1.1278350437059999,
+      "topk": 0.8,
+      "topk_rounded": 0.8,
+      "total_s": 6.673678526062459
+    },
+    {
+      "aggregation": {
+        "acc": 0.8678133223559016,
+        "acc_raw": 0.8655604425225548,
+        "mae": 1.3902392344497607,
+        "mae_raw": 1.4088300982380109,
+        "mape": 0.13218667764409842,
+        "mape_raw": 0.13443955747744518
+      },
+      "budget": 82,
+      "fps": 797.5452122277783,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 82,
+      "oracle_s": 5.545843482356459,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 1.0055092433467507,
+      "topk": 0.7,
+      "topk_rounded": 0.7,
+      "total_s": 6.55135272570321
+    },
+    {
+      "aggregation": {
+        "acc": 0.867235072957764,
+        "acc_raw": 0.8652591828906122,
+        "mae": 1.353492822966507,
+        "mae_raw": 1.374704351830314,
+        "mape": 0.13276492704223597,
+        "mape_raw": 0.1347408171093878
+      },
+      "budget": 82,
+      "fps": 794.5798062826831,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 82,
+      "oracle_s": 5.545843482356459,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 1.0299591729417443,
+      "topk": 0.7,
+      "topk_rounded": 0.8,
+      "total_s": 6.575802655298204
+    },
+    {
+      "budget": 109,
+      "fps": 620.5971310152271,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 109,
+      "oracle_s": 7.3719138972787075,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0473966971039772,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 8.419310594382685
+    },
+    {
+      "budget": 109,
+      "fps": 336.5989351698017,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 214,
+      "oracle_s": 14.473298844198563,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0496260793879628,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 109,
+      "supg_sampled": 108,
+      "total_s": 15.522924923586526
+    },
+    {
+      "budget": 109,
+      "fps": 440.1663041641764,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 160,
+      "oracle_s": 10.821158014354067,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0493553588166833,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 54,
+      "supg_sampled": 54,
+      "total_s": 11.87051337317075
+    },
+    {
+      "budget": 109,
+      "fps": 622.1112225696507,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 109,
+      "oracle_s": 7.3719138972787075,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0269058160483837,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 8.398819713327091
+    },
+    {
+      "budget": 109,
+      "fps": 337.04342486423724,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 214,
+      "oracle_s": 14.473298844198563,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0291545921936631,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 109,
+      "supg_sampled": 108,
+      "total_s": 15.502453436392226
+    },
+    {
+      "budget": 109,
+      "fps": 438.42137691077636,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 161,
+      "oracle_s": 10.88879025194378,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0289680399000645,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 54,
+      "supg_sampled": 54,
+      "total_s": 11.917758291843844
+    },
+    {
+      "budget": 109,
+      "fps": 615.2208743554028,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 109,
+      "oracle_s": 7.3719138972787075,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1209708824753761,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 8.492884779754084
+    },
+    {
+      "budget": 109,
+      "fps": 339.4254072484362,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 211,
+      "oracle_s": 14.270402131429424,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1232598880305886,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 109,
+      "supg_sampled": 108,
+      "total_s": 15.393662019460013
+    },
+    {
+      "budget": 109,
+      "fps": 439.9448785210204,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 159,
+      "oracle_s": 10.753525776764354,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.12296206317842,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 54,
+      "supg_sampled": 54,
+      "total_s": 11.876487839942774
+    },
+    {
+      "budget": 1306,
+      "fps": 58.10500045702125,
+      "fraction": 0.25,
+      "mode": "propagate",
+      "oracle_frames": 1306,
+      "oracle_s": 88.32770229216507,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.5957115087658167,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 89.92341380093089
+    },
+    {
+      "budget": 1306,
+      "fps": 35.298223167340076,
+      "fraction": 0.25,
+      "mode": "supg",
+      "oracle_frames": 2165,
+      "oracle_s": 146.42379438172847,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.600653626024723,
+      "selection": {
+        "accuracy": 0.9768,
+        "f1": 0.9883,
+        "precision": 1.0,
+        "recall": 0.9768
+      },
+      "supg_budget": 1306,
+      "supg_sampled": 1154,
+      "total_s": 148.0244480077532
+    },
+    {
+      "budget": 1306,
+      "fps": 43.24095685101934,
+      "fraction": 0.25,
+      "mode": "supg",
+      "oracle_frames": 1763,
+      "oracle_s": 119.23563487066387,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.5988789908587933,
+      "selection": {
+        "accuracy": 0.9795,
+        "f1": 0.9896,
+        "precision": 1.0,
+        "recall": 0.9795
+      },
+      "supg_budget": 653,
+      "supg_sampled": 617,
+      "total_s": 120.83451386152267
+    },
+    {
+      "budget": 1306,
+      "fps": 58.13995529305657,
+      "fraction": 0.25,
+      "mode": "propagate",
+      "oracle_frames": 1306,
+      "oracle_s": 88.32770229216507,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.5416478589177132,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 89.86935015108278
+    },
+    {
+      "budget": 1306,
+      "fps": 35.2949783051893,
+      "fraction": 0.25,
+      "mode": "supg",
+      "oracle_frames": 2166,
+      "oracle_s": 146.49142661931816,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.546630092896521,
+      "selection": {
+        "accuracy": 0.9768,
+        "f1": 0.9883,
+        "precision": 1.0,
+        "recall": 0.9768
+      },
+      "supg_budget": 1306,
+      "supg_sampled": 1154,
+      "total_s": 148.03805671221468
+    },
+    {
+      "budget": 1306,
+      "fps": 43.23611679620701,
+      "fraction": 0.25,
+      "mode": "supg",
+      "oracle_frames": 1764,
+      "oracle_s": 119.30326710825358,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.5447735385969281,
+      "selection": {
+        "accuracy": 0.9795,
+        "f1": 0.9896,
+        "precision": 1.0,
+        "recall": 0.9795
+      },
+      "supg_budget": 653,
+      "supg_sampled": 617,
+      "total_s": 120.8480406468505
+    },
+    {
+      "budget": 1306,
+      "fps": 58.17962400501517,
+      "fraction": 0.25,
+      "mode": "propagate",
+      "oracle_frames": 1306,
+      "oracle_s": 88.32770229216507,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.480372087098658,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 89.80807437926373
+    },
+    {
+      "budget": 1306,
+      "fps": 35.61889553577079,
+      "fraction": 0.25,
+      "mode": "supg",
+      "oracle_frames": 2147,
+      "oracle_s": 145.20641410511362,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.4853886980563402,
+      "selection": {
+        "accuracy": 0.9768,
+        "f1": 0.9883,
+        "precision": 1.0,
+        "recall": 0.9768
+      },
+      "supg_budget": 1306,
+      "supg_sampled": 1154,
+      "total_s": 146.69180280316996
+    },
+    {
+      "budget": 1306,
+      "fps": 43.403851667607526,
+      "fraction": 0.25,
+      "mode": "supg",
+      "oracle_frames": 1758,
+      "oracle_s": 118.8974736827153,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.4835477992892265,
+      "selection": {
+        "accuracy": 0.9795,
+        "f1": 0.9896,
+        "precision": 1.0,
+        "recall": 0.9795
+      },
+      "supg_budget": 653,
+      "supg_sampled": 617,
+      "total_s": 120.38102148200453
+    },
+    {
+      "budget": 163,
+      "fps": 434.2093706333191,
+      "fraction": 0.03125,
+      "mode": "propagate",
+      "oracle_frames": 163,
+      "oracle_s": 11.024054727123206,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0093106338754296,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 12.033365360998635
+    },
+    {
+      "budget": 163,
+      "fps": 234.13925714982926,
+      "fraction": 0.03125,
+      "mode": "supg",
+      "oracle_frames": 315,
+      "oracle_s": 21.30415484075957,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0116245103999972,
+      "selection": {
+        "accuracy": 0.9887,
+        "f1": 0.9943,
+        "precision": 1.0,
+        "recall": 0.9887
+      },
+      "supg_budget": 163,
+      "supg_sampled": 160,
+      "total_s": 22.315779351159566
+    },
+    {
+      "budget": 163,
+      "fps": 304.2150519374693,
+      "fraction": 0.03125,
+      "mode": "supg",
+      "oracle_frames": 239,
+      "oracle_s": 16.164104783941387,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0112452413886786,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 82,
+      "supg_sampled": 82,
+      "total_s": 17.175350025330065
+    },
+    {
+      "budget": 163,
+      "fps": 433.6876096447935,
+      "fraction": 0.03125,
+      "mode": "propagate",
+      "oracle_frames": 163,
+      "oracle_s": 11.024054727123206,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0237877378240228,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 12.047842464947228
+    },
+    {
+      "budget": 163,
+      "fps": 230.49632919568685,
+      "fraction": 0.03125,
+      "mode": "supg",
+      "oracle_frames": 320,
+      "oracle_s": 21.642316028708134,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0261577740311623,
+      "selection": {
+        "accuracy": 0.9887,
+        "f1": 0.9943,
+        "precision": 1.0,
+        "recall": 0.9887
+      },
+      "supg_budget": 163,
+      "supg_sampled": 160,
+      "total_s": 22.668473802739296
+    },
+    {
+      "budget": 163,
+      "fps": 299.2488446219022,
+      "fraction": 0.03125,
+      "mode": "supg",
+      "oracle_frames": 243,
+      "oracle_s": 16.434633734300238,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.025751139037311,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 82,
+      "supg_sampled": 82,
+      "total_s": 17.46038487333755
+    },
+    {
+      "budget": 163,
+      "fps": 429.8713317179994,
+      "fraction": 0.03125,
+      "mode": "propagate",
+      "oracle_frames": 163,
+      "oracle_s": 11.024054727123206,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1307451268658042,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 12.15479985398901
+    },
+    {
+      "budget": 163,
+      "fps": 237.16103856402148,
+      "fraction": 0.03125,
+      "mode": "supg",
+      "oracle_frames": 309,
+      "oracle_s": 20.89836141522129,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1330819940194488,
+      "selection": {
+        "accuracy": 0.9887,
+        "f1": 0.9943,
+        "precision": 1.0,
+        "recall": 0.9887
+      },
+      "supg_budget": 163,
+      "supg_sampled": 160,
+      "total_s": 22.03144340924074
+    },
+    {
+      "budget": 163,
+      "fps": 304.4590775412218,
+      "fraction": 0.03125,
+      "mode": "supg",
+      "oracle_frames": 237,
+      "oracle_s": 16.02884030876196,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1327435802668333,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 82,
+      "supg_sampled": 82,
+      "total_s": 17.161583889028794
+    },
+    {
+      "budget": 218,
+      "fps": 331.4822087848527,
+      "fraction": 0.0416667,
+      "mode": "propagate",
+      "oracle_frames": 218,
+      "oracle_s": 14.743827794557415,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0187074532732368,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 15.762535247830652
+    },
+    {
+      "budget": 218,
+      "fps": 177.5601068110996,
+      "fraction": 0.0416667,
+      "mode": "supg",
+      "oracle_frames": 420,
+      "oracle_s": 28.405539787679423,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0211151847615838,
+      "selection": {
+        "accuracy": 0.9889,
+        "f1": 0.9944,
+        "precision": 1.0,
+        "recall": 0.9889
+      },
+      "supg_budget": 218,
+      "supg_sampled": 212,
+      "total_s": 29.426654972441007
+    },
+    {
+      "budget": 218,
+      "fps": 231.93618141016958,
+      "fraction": 0.0416667,
+      "mode": "supg",
+      "oracle_frames": 318,
+      "oracle_s": 21.507051553528708,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0206971066072583,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 109,
+      "supg_sampled": 108,
+      "total_s": 22.527748660135966
+    },
+    {
+      "budget": 218,
+      "fps": 329.14960349415924,
+      "fraction": 0.0416667,
+      "mode": "propagate",
+      "oracle_frames": 218,
+      "oracle_s": 14.743827794557415,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.130412807688117,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 15.874240602245532
+    },
+    {
+      "budget": 218,
+      "fps": 175.28317482246365,
+      "fraction": 0.0416667,
+      "mode": "supg",
+      "oracle_frames": 424,
+      "oracle_s": 28.676068738038275,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.1328390780836344,
+      "selection": {
+        "accuracy": 0.9889,
+        "f1": 0.9944,
+        "precision": 1.0,
+        "recall": 0.9889
+      },
+      "supg_budget": 218,
+      "supg_sampled": 212,
+      "total_s": 29.80890781612191
+    },
+    {
+      "budget": 218,
+      "fps": 228.0667410111118,
+      "fraction": 0.0416667,
+      "mode": "supg",
+      "oracle_frames": 322,
+      "oracle_s": 21.77758050388756,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.1323798736557364,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 109,
+      "supg_sampled": 108,
+      "total_s": 22.909960377543296
+    },
+    {
+      "budget": 218,
+      "fps": 328.90942245441806,
+      "fraction": 0.0416667,
+      "mode": "propagate",
+      "oracle_frames": 218,
+      "oracle_s": 14.743827794557415,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1420047273859382,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 15.885832521943353
+    },
+    {
+      "budget": 218,
+      "fps": 178.86591598776198,
+      "fraction": 0.0416667,
+      "mode": "supg",
+      "oracle_frames": 415,
+      "oracle_s": 28.06737859973086,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1444473154842854,
+      "selection": {
+        "accuracy": 0.9889,
+        "f1": 0.9944,
+        "precision": 1.0,
+        "recall": 0.9889
+      },
+      "supg_budget": 218,
+      "supg_sampled": 212,
+      "total_s": 29.211825915215144
+    },
+    {
+      "budget": 218,
+      "fps": 231.36471123735973,
+      "fraction": 0.0416667,
+      "mode": "supg",
+      "oracle_frames": 317,
+      "oracle_s": 21.439419315938995,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1439728187397122,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 109,
+      "supg_sampled": 108,
+      "total_s": 22.583392134678707
+    },
+    {
+      "budget": 327,
+      "fps": 225.98621471312975,
+      "fraction": 0.0625,
+      "mode": "propagate",
+      "oracle_frames": 327,
+      "oracle_s": 22.115741691836124,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0051376353949308,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 23.120879327231055
+    },
+    {
+      "budget": 327,
+      "fps": 121.109715867894,
+      "fraction": 0.0625,
+      "mode": "supg",
+      "oracle_frames": 623,
+      "oracle_s": 42.13488401839115,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0078148357570171,
+      "selection": {
+        "accuracy": 0.978,
+        "f1": 0.9889,
+        "precision": 1.0,
+        "recall": 0.978
+      },
+      "supg_budget": 327,
+      "supg_sampled": 315,
+      "total_s": 43.142698854148165
+    },
+    {
+      "budget": 327,
+      "fps": 157.37912875052288,
+      "fraction": 0.0625,
+      "mode": "supg",
+      "oracle_frames": 476,
+      "oracle_s": 32.19294509270335,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.007137036882341,
+      "selection": {
+        "accuracy": 0.9887,
+        "f1": 0.9943,
+        "precision": 1.0,
+        "recall": 0.9887
+      },
+      "supg_budget": 164,
+      "supg_sampled": 161,
+      "total_s": 33.20008212958569
+    },
+    {
+      "budget": 327,
+      "fps": 225.27855600320757,
+      "fraction": 0.0625,
+      "mode": "propagate",
+      "oracle_frames": 327,
+      "oracle_s": 22.115741691836124,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0777663486078382,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 23.193508040443962
+    },
+    {
+      "budget": 327,
+      "fps": 120.15389902777648,
+      "fraction": 0.0625,
+      "mode": "supg",
+      "oracle_frames": 627,
+      "oracle_s": 42.40541296875,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0804833881556988,
+      "selection": {
+        "accuracy": 0.978,
+        "f1": 0.9889,
+        "precision": 1.0,
+        "recall": 0.978
+      },
+      "supg_budget": 327,
+      "supg_sampled": 315,
+      "total_s": 43.4858963569057
+    },
+    {
+      "budget": 327,
+      "fps": 156.71674240956708,
+      "fraction": 0.0625,
+      "mode": "supg",
+      "oracle_frames": 477,
+      "oracle_s": 32.26057733029306,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0798298250883818,
+      "selection": {
+        "accuracy": 0.9887,
+        "f1": 0.9943,
+        "precision": 1.0,
+        "recall": 0.9887
+      },
+      "supg_budget": 164,
+      "supg_sampled": 161,
+      "total_s": 33.34040715538144
+    },
+    {
+      "budget": 327,
+      "fps": 225.61382417325908,
+      "fraction": 0.0625,
+      "mode": "propagate",
+      "oracle_frames": 327,
+      "oracle_s": 22.115741691836124,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.0433001760393381,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 23.159041867875462
+    },
+    {
+      "budget": 327,
+      "fps": 121.76548996894995,
+      "fraction": 0.0625,
+      "mode": "supg",
+      "oracle_frames": 619,
+      "oracle_s": 41.864355068032296,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.0459966361522675,
+      "selection": {
+        "accuracy": 0.978,
+        "f1": 0.9889,
+        "precision": 1.0,
+        "recall": 0.978
+      },
+      "supg_budget": 327,
+      "supg_sampled": 315,
+      "total_s": 42.91035170418456
+    },
+    {
+      "budget": 327,
+      "fps": 159.14110680413188,
+      "fraction": 0.0625,
+      "mode": "supg",
+      "oracle_frames": 470,
+      "oracle_s": 31.78715166716507,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.045345887541771,
+      "selection": {
+        "accuracy": 0.9887,
+        "f1": 0.9943,
+        "precision": 1.0,
+        "recall": 0.9887
+      },
+      "supg_budget": 164,
+      "supg_sampled": 161,
+      "total_s": 32.83249755470684
+    },
+    {
+      "budget": 41,
+      "fps": 1363.835359691563,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 41,
+      "oracle_s": 2.7729217411782296,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0581858502700925,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 3.831107591448322
+    },
+    {
+      "budget": 41,
+      "fps": 799.1033723994483,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 81,
+      "oracle_s": 5.478211244766746,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0603670924901962,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 41,
+      "supg_sampled": 41,
+      "total_s": 6.538578337256943
+    },
+    {
+      "budget": 41,
+      "fps": 1020.8941057997403,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 60,
+      "oracle_s": 4.057934255382775,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0601284019649029,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 20,
+      "supg_sampled": 20,
+      "total_s": 5.118062657347678
+    },
+    {
+      "budget": 41,
+      "fps": 1355.7020955117262,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 41,
+      "oracle_s": 2.7729217411782296,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0811698157340288,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 3.8540915569122585
+    },
+    {
+      "budget": 41,
+      "fps": 796.3108943842001,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 81,
+      "oracle_s": 5.478211244766746,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0832963734865189,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 41,
+      "supg_sampled": 41,
+      "total_s": 6.561507618253265
+    },
+    {
+      "budget": 41,
+      "fps": 1016.3495236091517,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 60,
+      "oracle_s": 4.057934255382775,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0830136947333813,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 20,
+      "supg_sampled": 20,
+      "total_s": 5.140947950116156
+    },
+    {
+      "budget": 41,
+      "fps": 1331.9305084795596,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 41,
+      "oracle_s": 2.7729217411782296,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.149955591186881,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 3.9228773323651107
+    },
+    {
+      "budget": 41,
+      "fps": 796.1709876829968,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 80,
+      "oracle_s": 5.410579007177033,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.152081628330052,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 41,
+      "supg_sampled": 41,
+      "total_s": 6.562660635507085
+    },
+    {
+      "budget": 41,
+      "fps": 1016.1247200778538,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 59,
+      "oracle_s": 3.990302017793062,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1517832959070802,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 20,
+      "supg_sampled": 20,
+      "total_s": 5.142085313700142
+    },
+    {
+      "budget": 435,
+      "fps": 171.4890896604494,
+      "fraction": 0.0833333,
+      "mode": "propagate",
+      "oracle_frames": 435,
+      "oracle_s": 29.420023351525117,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0483872648328543,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 30.46841061635797
+    },
+    {
+      "budget": 435,
+      "fps": 94.15228180651259,
+      "fraction": 0.0833333,
+      "mode": "supg",
+      "oracle_frames": 805,
+      "oracle_s": 54.443951259718894,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0512518277391791,
+      "selection": {
+        "accuracy": 0.9774,
+        "f1": 0.9886,
+        "precision": 1.0,
+        "recall": 0.9774
+      },
+      "supg_budget": 435,
+      "supg_sampled": 415,
+      "total_s": 55.49520308745807
+    },
+    {
+      "budget": 435,
+      "fps": 121.17961014197193,
+      "fraction": 0.0833333,
+      "mode": "supg",
+      "oracle_frames": 622,
+      "oracle_s": 42.067251780801435,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.050563121214509,
+      "selection": {
+        "accuracy": 0.9889,
+        "f1": 0.9944,
+        "precision": 1.0,
+        "recall": 0.9889
+      },
+      "supg_budget": 218,
+      "supg_sampled": 212,
+      "total_s": 43.117814902015944
+    },
+    {
+      "budget": 435,
+      "fps": 171.02601997420328,
+      "fraction": 0.0833333,
+      "mode": "propagate",
+      "oracle_frames": 435,
+      "oracle_s": 29.420023351525117,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.1308834683150053,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 30.550906819840122
+    },
+    {
+      "budget": 435,
+      "fps": 92.88087539703346,
+      "fraction": 0.0833333,
+      "mode": "supg",
+      "oracle_frames": 815,
+      "oracle_s": 55.12027363561602,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.1345794508233666,
+      "selection": {
+        "accuracy": 0.9774,
+        "f1": 0.9886,
+        "precision": 1.0,
+        "recall": 0.9774
+      },
+      "supg_budget": 435,
+      "supg_sampled": 415,
+      "total_s": 56.25485308643939
+    },
+    {
+      "budget": 435,
+      "fps": 120.57066295270398,
+      "fraction": 0.0833333,
+      "mode": "supg",
+      "oracle_frames": 624,
+      "oracle_s": 42.20251625598086,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.1330669783055782,
+      "selection": {
+        "accuracy": 0.9889,
+        "f1": 0.9944,
+        "precision": 1.0,
+        "recall": 0.9889
+      },
+      "supg_budget": 218,
+      "supg_sampled": 212,
+      "total_s": 43.33558323428644
+    },
+    {
+      "budget": 435,
+      "fps": 171.49768777622222,
+      "fraction": 0.0833333,
+      "mode": "propagate",
+      "oracle_frames": 435,
+      "oracle_s": 29.420023351525117,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.0468597169965506,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 30.466883068521668
+    },
+    {
+      "budget": 435,
+      "fps": 93.47118848384137,
+      "fraction": 0.0833333,
+      "mode": "supg",
+      "oracle_frames": 811,
+      "oracle_s": 54.84974468525717,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.0498334066942334,
+      "selection": {
+        "accuracy": 0.9774,
+        "f1": 0.9886,
+        "precision": 1.0,
+        "recall": 0.9774
+      },
+      "supg_budget": 435,
+      "supg_sampled": 415,
+      "total_s": 55.899578091951405
+    },
+    {
+      "budget": 435,
+      "fps": 120.61641599430247,
+      "fraction": 0.0833333,
+      "mode": "supg",
+      "oracle_frames": 625,
+      "oracle_s": 42.270148493570574,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.0489963917061687,
+      "selection": {
+        "accuracy": 0.9889,
+        "f1": 0.9944,
+        "precision": 1.0,
+        "recall": 0.9889
+      },
+      "supg_budget": 218,
+      "supg_sampled": 212,
+      "total_s": 43.31914488527674
+    },
+    {
+      "budget": 522,
+      "fps": 143.7746845279617,
+      "fraction": 0.1,
+      "mode": "propagate",
+      "oracle_frames": 522,
+      "oracle_s": 35.30402802183014,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0375575441867113,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 36.34158556601685
+    },
+    {
+      "budget": 522,
+      "fps": 78.56119880957507,
+      "fraction": 0.1,
+      "mode": "supg",
+      "oracle_frames": 968,
+      "oracle_s": 65.4680059868421,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.040653239004314,
+      "selection": {
+        "accuracy": 0.978,
+        "f1": 0.9889,
+        "precision": 1.0,
+        "recall": 0.978
+      },
+      "supg_budget": 522,
+      "supg_sampled": 495,
+      "total_s": 66.50865922584642
+    },
+    {
+      "budget": 522,
+      "fps": 100.54483338479065,
+      "fraction": 0.1,
+      "mode": "supg",
+      "oracle_frames": 753,
+      "oracle_s": 50.92707490505383,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0397922536358237,
+      "selection": {
+        "accuracy": 0.9776,
+        "f1": 0.9887,
+        "precision": 1.0,
+        "recall": 0.9776
+      },
+      "supg_budget": 261,
+      "supg_sampled": 253,
+      "total_s": 51.96686715868965
+    },
+    {
+      "budget": 522,
+      "fps": 143.33796569215048,
+      "fraction": 0.1,
+      "mode": "propagate",
+      "oracle_frames": 522,
+      "oracle_s": 35.30402802183014,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.1482822559773922,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 36.452310277807534
+    },
+    {
+      "budget": 522,
+      "fps": 78.75041357776695,
+      "fraction": 0.1,
+      "mode": "supg",
+      "oracle_frames": 964,
+      "oracle_s": 65.19747703648325,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.1513808630406857,
+      "selection": {
+        "accuracy": 0.978,
+        "f1": 0.9889,
+        "precision": 1.0,
+        "recall": 0.978
+      },
+      "supg_budget": 522,
+      "supg_sampled": 495,
+      "total_s": 66.34885789952394
+    },
+    {
+      "budget": 522,
+      "fps": 101.25137693559037,
+      "fraction": 0.1,
+      "mode": "supg",
+      "oracle_frames": 746,
+      "oracle_s": 50.45364924192584,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.1505872448906302,
+      "selection": {
+        "accuracy": 0.9776,
+        "f1": 0.9887,
+        "precision": 1.0,
+        "recall": 0.9776
+      },
+      "supg_budget": 261,
+      "supg_sampled": 253,
+      "total_s": 51.60423648681647
+    },
+    {
+      "budget": 522,
+      "fps": 143.6649908668712,
+      "fraction": 0.1,
+      "mode": "propagate",
+      "oracle_frames": 522,
+      "oracle_s": 35.30402802183014,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.065305721014738,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 36.36933374284488
+    },
+    {
+      "budget": 522,
+      "fps": 78.9296378821127,
+      "fraction": 0.1,
+      "mode": "supg",
+      "oracle_frames": 963,
+      "oracle_s": 65.12984479889354,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.0683557782322168,
+      "selection": {
+        "accuracy": 0.978,
+        "f1": 0.9889,
+        "precision": 1.0,
+        "recall": 0.978
+      },
+      "supg_budget": 522,
+      "supg_sampled": 495,
+      "total_s": 66.19820057712576
+    },
+    {
+      "budget": 522,
+      "fps": 101.28164374992333,
+      "fraction": 0.1,
+      "mode": "supg",
+      "oracle_frames": 747,
+      "oracle_s": 50.52128147951555,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.0675336951389909,
+      "selection": {
+        "accuracy": 0.9776,
+        "f1": 0.9887,
+        "precision": 1.0,
+        "recall": 0.9776
+      },
+      "supg_budget": 261,
+      "supg_sampled": 253,
+      "total_s": 51.58881517465454
+    },
+    {
+      "budget": 54,
+      "fps": 1112.5214683392526,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 54,
+      "oracle_s": 3.6521408298444973,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0443977527320385,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 4.696538582576536
+    },
+    {
+      "budget": 54,
+      "fps": 635.9887179078578,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 106,
+      "oracle_s": 7.169017184509569,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0465373573824763,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 54,
+      "supg_sampled": 54,
+      "total_s": 8.215554541892045
+    },
+    {
+      "budget": 54,
+      "fps": 809.2190317221597,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 80,
+      "oracle_s": 5.410579007177033,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0462636956945062,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 27,
+      "supg_sampled": 27,
+      "total_s": 6.45684270287154
+    },
+    {
+      "budget": 54,
+      "fps": 1113.9890906257458,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 54,
+      "oracle_s": 3.6521408298444973,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0382103091105819,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 4.690351138955079
+    },
+    {
+      "budget": 54,
+      "fps": 636.4682514077529,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 106,
+      "oracle_s": 7.169017184509569,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.040347522124648,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 54,
+      "supg_sampled": 54,
+      "total_s": 8.209364706634217
+    },
+    {
+      "budget": 54,
+      "fps": 818.5797603980443,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 79,
+      "oracle_s": 5.3429467695873205,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0400598142296076,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 27,
+      "supg_sampled": 27,
+      "total_s": 6.383006583816928
+    },
+    {
+      "budget": 54,
+      "fps": 1102.6625200681613,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 54,
+      "oracle_s": 3.6521408298444973,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.0863896859809756,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 4.738530515825473
+    },
+    {
+      "budget": 54,
+      "fps": 632.7524562013062,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 106,
+      "oracle_s": 7.169017184509569,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.088556450791657,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 54,
+      "supg_sampled": 54,
+      "total_s": 8.257573635301226
+    },
+    {
+      "budget": 54,
+      "fps": 812.4493549049436,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 79,
+      "oracle_s": 5.3429467695873205,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.0882233316078782,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 27,
+      "supg_sampled": 27,
+      "total_s": 6.431170101195199
+    },
+    {
+      "budget": 653,
+      "fps": 115.5686902642158,
+      "fraction": 0.125,
+      "mode": "propagate",
+      "oracle_frames": 653,
+      "oracle_s": 44.163851146082536,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0473560420796275,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 45.21120718816216
+    },
+    {
+      "budget": 653,
+      "fps": 64.35126310512814,
+      "fraction": 0.125,
+      "mode": "supg",
+      "oracle_frames": 1185,
+      "oracle_s": 80.1442015438098,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0507859028875828,
+      "selection": {
+        "accuracy": 0.9795,
+        "f1": 0.9896,
+        "precision": 1.0,
+        "recall": 0.9795
+      },
+      "supg_budget": 653,
+      "supg_sampled": 617,
+      "total_s": 81.19498744669738
+    },
+    {
+      "budget": 653,
+      "fps": 81.967479348196,
+      "fraction": 0.125,
+      "mode": "supg",
+      "oracle_frames": 927,
+      "oracle_s": 62.69508424566387,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0497087081894279,
+      "selection": {
+        "accuracy": 0.978,
+        "f1": 0.9889,
+        "precision": 1.0,
+        "recall": 0.978
+      },
+      "supg_budget": 326,
+      "supg_sampled": 314,
+      "total_s": 63.7447929538533
+    },
+    {
+      "budget": 653,
+      "fps": 115.15952202989293,
+      "fraction": 0.125,
+      "mode": "propagate",
+      "oracle_frames": 653,
+      "oracle_s": 44.163851146082536,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.2079939944669604,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 45.371845140549496
+    },
+    {
+      "budget": 653,
+      "fps": 63.95833267176455,
+      "fraction": 0.125,
+      "mode": "supg",
+      "oracle_frames": 1190,
+      "oracle_s": 80.48236273175837,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.2114491881802678,
+      "selection": {
+        "accuracy": 0.9795,
+        "f1": 0.9896,
+        "precision": 1.0,
+        "recall": 0.9795
+      },
+      "supg_budget": 653,
+      "supg_sampled": 617,
+      "total_s": 81.69381191993864
+    },
+    {
+      "budget": 653,
+      "fps": 81.76131969386711,
+      "fraction": 0.125,
+      "mode": "supg",
+      "oracle_frames": 927,
+      "oracle_s": 62.69508424566387,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.2104400238022208,
+      "selection": {
+        "accuracy": 0.978,
+        "f1": 0.9889,
+        "precision": 1.0,
+        "recall": 0.978
+      },
+      "supg_budget": 326,
+      "supg_sampled": 314,
+      "total_s": 63.90552426946609
+    },
+    {
+      "budget": 653,
+      "fps": 115.22789816253133,
+      "fraction": 0.125,
+      "mode": "propagate",
+      "oracle_frames": 653,
+      "oracle_s": 44.163851146082536,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1810703817754984,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 45.344921527858034
+    },
+    {
+      "budget": 653,
+      "fps": 64.19204785694735,
+      "fraction": 0.125,
+      "mode": "supg",
+      "oracle_frames": 1186,
+      "oracle_s": 80.21183378139952,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1845412282273173,
+      "selection": {
+        "accuracy": 0.9795,
+        "f1": 0.9896,
+        "precision": 1.0,
+        "recall": 0.9795
+      },
+      "supg_budget": 653,
+      "supg_sampled": 617,
+      "total_s": 81.39637500962684
+    },
+    {
+      "budget": 653,
+      "fps": 81.62290799162831,
+      "fraction": 0.125,
+      "mode": "supg",
+      "oracle_frames": 929,
+      "oracle_s": 62.8303487208433,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1835430720821023,
+      "selection": {
+        "accuracy": 0.978,
+        "f1": 0.9889,
+        "precision": 1.0,
+        "recall": 0.978
+      },
+      "supg_budget": 326,
+      "supg_sampled": 314,
+      "total_s": 64.01389179292539
+    },
+    {
+      "budget": 82,
+      "fps": 795.7333867690272,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 82,
+      "oracle_s": 5.545843482356459,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.02042618393898,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 6.566269666295439
+    },
+    {
+      "budget": 82,
+      "fps": 436.17718061666955,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 162,
+      "oracle_s": 10.956422489533493,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0226544365286827,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 82,
+      "supg_sampled": 82,
+      "total_s": 11.979076926062175
+    },
+    {
+      "budget": 82,
+      "fps": 567.5763934405593,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 121,
+      "oracle_s": 8.183500748355263,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 1.0223084790632129,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 41,
+      "supg_sampled": 41,
+      "total_s": 9.205809227418476
+    },
+    {
+      "budget": 82,
+      "fps": 795.5565036793661,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 82,
+      "oracle_s": 5.545843482356459,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0218861205503345,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 6.567729602906794
+    },
+    {
+      "budget": 82,
+      "fps": 436.1240942593373,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 162,
+      "oracle_s": 10.956422489533493,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0241125663742423,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 82,
+      "supg_sampled": 82,
+      "total_s": 11.980535055907735
+    },
+    {
+      "budget": 82,
+      "fps": 567.4887819492368,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 121,
+      "oracle_s": 8.183500748355263,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 1.0237297136336565,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 41,
+      "supg_sampled": 41,
+      "total_s": 9.20723046198892
+    },
+    {
+      "budget": 82,
+      "fps": 777.9179778993463,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 82,
+      "oracle_s": 5.545843482356459,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1708029359579086,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 6.716646418314368
+    },
+    {
+      "budget": 82,
+      "fps": 430.76858397896456,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 162,
+      "oracle_s": 10.956422489533493,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1730600083246827,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 82,
+      "supg_sampled": 82,
+      "total_s": 12.129482497858175
+    },
+    {
+      "budget": 82,
+      "fps": 558.4520476814245,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 121,
+      "oracle_s": 8.183500748355263,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 1.1727188620716333,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "supg_budget": 41,
+      "supg_sampled": 41,
+      "total_s": 9.356219610426896
+    }
+  ]
+}

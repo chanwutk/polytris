@@ -1,0 +1,40 @@
+{
+  "dataset": "caldot2-y05",
+  "query": "presence",
+  "budget": 563,
+  "seed": 0,
+  "frames": 54000,
+  "iframes": 240,
+  "detector_ms_per_frame": 31.62729355649595,
+  "answers": [
+    {
+      "mode": "propagate",
+      "oracle_frames": 563,
+      "seiden_s": 4.780843022279441,
+      "oracle_s": 17.80616627230722,
+      "total_s": 22.58700929458666,
+      "fps": 2390.7547606553635
+    },
+    {
+      "mode": "supg",
+      "supg_budget": 563,
+      "supg_sampled": 562,
+      "oracle_frames": 1122,
+      "seiden_s": 4.794723709113896,
+      "oracle_s": 35.48582337038845,
+      "total_s": 40.28054707950235,
+      "fps": 1340.5974822888913
+    },
+    {
+      "mode": "supg",
+      "supg_budget": 282,
+      "supg_sampled": 282,
+      "oracle_frames": 844,
+      "seiden_s": 4.794026053510606,
+      "oracle_s": 26.69343576168258,
+      "total_s": 31.487461815193186,
+      "fps": 1714.9683361884752
+    }
+  ],
+  "fraction": 0.0104167
+}

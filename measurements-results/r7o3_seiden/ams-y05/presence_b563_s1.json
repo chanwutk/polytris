@@ -1,0 +1,40 @@
+{
+  "dataset": "ams-y05",
+  "query": "presence",
+  "budget": 563,
+  "seed": 1,
+  "frames": 54011,
+  "iframes": 240,
+  "detector_ms_per_frame": 64.22658561179233,
+  "answers": [
+    {
+      "mode": "propagate",
+      "oracle_frames": 563,
+      "seiden_s": 4.809658881276846,
+      "oracle_s": 36.15956769943908,
+      "total_s": 40.969226580715926,
+      "fps": 1318.3309646714881
+    },
+    {
+      "mode": "supg",
+      "supg_budget": 563,
+      "supg_sampled": 560,
+      "oracle_frames": 1118,
+      "seiden_s": 4.8247728096321225,
+      "oracle_s": 71.80532271398383,
+      "total_s": 76.63009552361595,
+      "fps": 704.827517582238
+    },
+    {
+      "mode": "supg",
+      "supg_budget": 282,
+      "supg_sampled": 282,
+      "oracle_frames": 842,
+      "seiden_s": 4.822223769500852,
+      "oracle_s": 54.07878508512914,
+      "total_s": 58.90100885462999,
+      "fps": 916.979200361428
+    }
+  ],
+  "fraction": 0.0104167
+}

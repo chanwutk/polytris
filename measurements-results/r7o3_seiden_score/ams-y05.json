@@ -1,0 +1,1558 @@
+{
+  "dataset": "ams-y05",
+  "evaluator": "/polyis/measurements-results/r1o2_leap_original_evaluator/evaluate.py",
+  "failures": [
+    {
+      "budget": 13503,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.25,
+      "query": "count",
+      "seed": 0
+    },
+    {
+      "budget": 13503,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.25,
+      "query": "count",
+      "seed": 1
+    },
+    {
+      "budget": 13503,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.25,
+      "query": "count",
+      "seed": 2
+    },
+    {
+      "budget": 13503,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.25,
+      "query": "presence",
+      "seed": 0
+    },
+    {
+      "budget": 13503,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.25,
+      "query": "presence",
+      "seed": 1
+    },
+    {
+      "budget": 13503,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.25,
+      "query": "presence",
+      "seed": 2
+    },
+    {
+      "budget": 1688,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.03125,
+      "query": "presence",
+      "seed": 0
+    },
+    {
+      "budget": 1688,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.03125,
+      "query": "presence",
+      "seed": 1
+    },
+    {
+      "budget": 1688,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.03125,
+      "query": "presence",
+      "seed": 2
+    },
+    {
+      "budget": 2250,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.0416667,
+      "query": "presence",
+      "seed": 0
+    },
+    {
+      "budget": 2250,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.0416667,
+      "query": "presence",
+      "seed": 1
+    },
+    {
+      "budget": 2250,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.0416667,
+      "query": "presence",
+      "seed": 2
+    },
+    {
+      "budget": 3376,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.0625,
+      "query": "presence",
+      "seed": 0
+    },
+    {
+      "budget": 3376,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.0625,
+      "query": "presence",
+      "seed": 1
+    },
+    {
+      "budget": 3376,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.0625,
+      "query": "presence",
+      "seed": 2
+    },
+    {
+      "budget": 4501,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.0833333,
+      "query": "presence",
+      "seed": 0
+    },
+    {
+      "budget": 4501,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.0833333,
+      "query": "presence",
+      "seed": 1
+    },
+    {
+      "budget": 4501,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.0833333,
+      "query": "presence",
+      "seed": 2
+    },
+    {
+      "budget": 5401,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.1,
+      "query": "presence",
+      "seed": 0
+    },
+    {
+      "budget": 5401,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.1,
+      "query": "presence",
+      "seed": 1
+    },
+    {
+      "budget": 5401,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.1,
+      "query": "presence",
+      "seed": 2
+    },
+    {
+      "budget": 6751,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.125,
+      "query": "presence",
+      "seed": 0
+    },
+    {
+      "budget": 6751,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.125,
+      "query": "presence",
+      "seed": 1
+    },
+    {
+      "budget": 6751,
+      "dataset": "ams-y05",
+      "error": "RecursionError: maximum recursion depth exceeded while calling a Python object",
+      "fraction": 0.125,
+      "query": "presence",
+      "seed": 2
+    }
+  ],
+  "frames": 54011,
+  "ground_truth_count_sha256": "e32813682a6f5cf05726d375f4b241967948bfe99d7462e6f7427efbbd179514",
+  "records": [
+    {
+      "aggregation": {
+        "acc": 0.6725440481994932,
+        "acc_raw": 0.6463650088726164,
+        "mae": 0.6442021069782081,
+        "mae_raw": 0.6567792114010463,
+        "mape": 0.3274559518005068,
+        "mape_raw": 0.3536349911273836
+      },
+      "budget": 1125,
+      "fps": 619.0754437319849,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 1125,
+      "oracle_s": 72.25490881326637,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 14.989708214998245,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 87.24461702826461
+    },
+    {
+      "aggregation": {
+        "acc": 0.6697265959638675,
+        "acc_raw": 0.6405853829512421,
+        "mae": 0.6480902038473644,
+        "mae_raw": 0.6644032044316283,
+        "mape": 0.3302734040361325,
+        "mape_raw": 0.3594146170487579
+      },
+      "budget": 1125,
+      "fps": 612.5921613919492,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 1125,
+      "oracle_s": 72.25490881326637,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 15.913049257360399,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 88.16795807062677
+    },
+    {
+      "aggregation": {
+        "acc": 0.6689338268248339,
+        "acc_raw": 0.6459025760653841,
+        "mae": 0.6482012923293403,
+        "mae_raw": 0.6613178094177874,
+        "mape": 0.33106617317516607,
+        "mape_raw": 0.35409742393461585
+      },
+      "budget": 1125,
+      "fps": 614.9104354071007,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 1125,
+      "oracle_s": 72.25490881326637,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 15.580647212453187,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 87.83555602571955
+    },
+    {
+      "aggregation": {
+        "acc": 0.6812894889430401,
+        "acc_raw": 0.6580090563098049,
+        "mae": 0.6303530762252134,
+        "mae_raw": 0.6412414444728717,
+        "mape": 0.3187105110569599,
+        "mape_raw": 0.3419909436901951
+      },
+      "budget": 1688,
+      "fps": 406.89825529368335,
+      "fraction": 0.03125,
+      "mode": "propagate",
+      "oracle_frames": 1688,
+      "oracle_s": 108.41447651270545,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 24.323866051621735,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 132.73834256432718
+    },
+    {
+      "aggregation": {
+        "acc": 0.6905930684901878,
+        "acc_raw": 0.6652088496196432,
+        "mae": 0.6118938734702191,
+        "mae_raw": 0.6283255777513745,
+        "mape": 0.30940693150981224,
+        "mape_raw": 0.3347911503803568
+      },
+      "budget": 1688,
+      "fps": 407.8449939819006,
+      "fraction": 0.03125,
+      "mode": "propagate",
+      "oracle_frames": 1688,
+      "oracle_s": 108.41447651270545,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 24.015737899579108,
+      "topk": 1.0,
+      "topk_rounded": 0.8,
+      "total_s": 132.43021441228456
+    },
+    {
+      "aggregation": {
+        "acc": 0.693924209442359,
+        "acc_raw": 0.6723640447003107,
+        "mae": 0.6002295828627502,
+        "mae_raw": 0.6149181750762417,
+        "mape": 0.306075790557641,
+        "mape_raw": 0.32763595529968925
+      },
+      "budget": 1688,
+      "fps": 407.0481290278199,
+      "fraction": 0.03125,
+      "mode": "propagate",
+      "oracle_frames": 1688,
+      "oracle_s": 108.41447651270545,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 24.274992246180773,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 132.68946875888622
+    },
+    {
+      "aggregation": {
+        "acc": 0.7063340125012921,
+        "acc_raw": 0.6793928525262877,
+        "mae": 0.5813445409268483,
+        "mae_raw": 0.5955032381231264,
+        "mape": 0.29366598749870787,
+        "mape_raw": 0.32060714747371233
+      },
+      "budget": 2250,
+      "fps": 311.887444989786,
+      "fraction": 0.0416667,
+      "mode": "propagate",
+      "oracle_frames": 2250,
+      "oracle_s": 144.50981762653274,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 28.664835177361965,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 173.1746528038947
+    },
+    {
+      "aggregation": {
+        "acc": 0.7131862175047986,
+        "acc_raw": 0.6873724453626876,
+        "mae": 0.5766973394308567,
+        "mae_raw": 0.5947249344430797,
+        "mape": 0.2868137824952014,
+        "mape_raw": 0.3126275546373124
+      },
+      "budget": 2250,
+      "fps": 313.9789549265903,
+      "fraction": 0.0416667,
+      "mode": "propagate",
+      "oracle_frames": 2250,
+      "oracle_s": 144.50981762653274,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 27.511265801265836,
+      "topk": 1.0,
+      "topk_rounded": 0.9,
+      "total_s": 172.02108342779857
+    },
+    {
+      "aggregation": {
+        "acc": 0.7161133843106146,
+        "acc_raw": 0.6976058074586933,
+        "mae": 0.5684767917646405,
+        "mae_raw": 0.5834879030591655,
+        "mape": 0.28388661568938545,
+        "mape_raw": 0.30239419254130673
+      },
+      "budget": 2250,
+      "fps": 316.19149117644247,
+      "fraction": 0.0416667,
+      "mode": "propagate",
+      "oracle_frames": 2250,
+      "oracle_s": 144.50981762653274,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 26.30755572859198,
+      "topk": 0.8,
+      "topk_rounded": 0.9,
+      "total_s": 170.81737335512472
+    },
+    {
+      "aggregation": {
+        "acc": 0.7216051374602566,
+        "acc_raw": 0.6998965252652701,
+        "mae": 0.5428153524282091,
+        "mae_raw": 0.5568144836413795,
+        "mape": 0.27839486253974344,
+        "mape_raw": 0.30010347473472987
+      },
+      "budget": 3376,
+      "fps": 210.01336637375027,
+      "fraction": 0.0625,
+      "mode": "propagate",
+      "oracle_frames": 3376,
+      "oracle_s": 216.8289530254109,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 40.349915789440274,
+      "topk": 1.0,
+      "topk_rounded": 1.0,
+      "total_s": 257.17886881485117
+    },
+    {
+      "aggregation": {
+        "acc": 0.7341572983516369,
+        "acc_raw": 0.7118830963788183,
+        "mae": 0.5367054859195349,
+        "mae_raw": 0.5536929788438392,
+        "mape": 0.2658427016483631,
+        "mape_raw": 0.2881169036211817
+      },
+      "budget": 3376,
+      "fps": 207.72822765483082,
+      "fraction": 0.0625,
+      "mode": "propagate",
+      "oracle_frames": 3376,
+      "oracle_s": 216.8289530254109,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 43.17904208321124,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 260.00799510862214
+    },
+    {
+      "aggregation": {
+        "acc": 0.7246233571468299,
+        "acc_raw": 0.7070784071538259,
+        "mae": 0.5467404787913573,
+        "mae_raw": 0.5598130430459398,
+        "mape": 0.2753766428531701,
+        "mape_raw": 0.29292159284617414
+      },
+      "budget": 3376,
+      "fps": 209.40039054383098,
+      "fraction": 0.0625,
+      "mode": "propagate",
+      "oracle_frames": 3376,
+      "oracle_s": 216.8289530254109,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 41.10275311768055,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 257.93170614309145
+    },
+    {
+      "aggregation": {
+        "acc": 0.6488681905773015,
+        "acc_raw": 0.6195717129230125,
+        "mae": 0.6900261057932643,
+        "mae_raw": 0.7058124194569446,
+        "mape": 0.3511318094226985,
+        "mape_raw": 0.3804282870769875
+      },
+      "budget": 422,
+      "fps": 1659.2552565493875,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 422,
+      "oracle_s": 27.103619128176362,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 5.447731718420982,
+      "topk": 0.8,
+      "topk_rounded": 0.9,
+      "total_s": 32.551350846597344
+    },
+    {
+      "aggregation": {
+        "acc": 0.6574684668878658,
+        "acc_raw": 0.6296747608218567,
+        "mae": 0.6797133917165022,
+        "mae_raw": 0.6958546044342638,
+        "mape": 0.34253153311213425,
+        "mape_raw": 0.3703252391781433
+      },
+      "budget": 422,
+      "fps": 1679.3191033324406,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 422,
+      "oracle_s": 27.103619128176362,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 5.058820930309594,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 32.162440058485956
+    },
+    {
+      "aggregation": {
+        "acc": 0.6444934203585343,
+        "acc_raw": 0.6165839194783499,
+        "mae": 0.6933772749995372,
+        "mae_raw": 0.7086542305506481,
+        "mape": 0.3555065796414657,
+        "mape_raw": 0.3834160805216501
+      },
+      "budget": 422,
+      "fps": 1654.67129605204,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 422,
+      "oracle_s": 27.103619128176362,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 5.537909209728241,
+      "topk": 0.9,
+      "topk_rounded": 0.7,
+      "total_s": 32.6415283379046
+    },
+    {
+      "aggregation": {
+        "acc": 0.7280734626955894,
+        "acc_raw": 0.7071486042191584,
+        "mae": 0.5315028420136639,
+        "mae_raw": 0.5465396523778636,
+        "mape": 0.27192653730441063,
+        "mape_raw": 0.29285139578084163
+      },
+      "budget": 4501,
+      "fps": 155.28764329363818,
+      "fraction": 0.0833333,
+      "mode": "propagate",
+      "oracle_frames": 4501,
+      "oracle_s": 289.08386183867725,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 58.72874484676868,
+      "topk": 0.9,
+      "topk_rounded": 1.0,
+      "total_s": 347.8126066854459
+    },
+    {
+      "aggregation": {
+        "acc": 0.745703638265349,
+        "acc_raw": 0.7249407413968664,
+        "mae": 0.520893891984966,
+        "mae_raw": 0.536861151094841,
+        "mape": 0.254296361734651,
+        "mape_raw": 0.2750592586031336
+      },
+      "budget": 4501,
+      "fps": 154.63451753214412,
+      "fraction": 0.0833333,
+      "mode": "propagate",
+      "oracle_frames": 4501,
+      "oracle_s": 289.08386183867725,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 60.19779184367508,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 349.2816536823523
+    },
+    {
+      "aggregation": {
+        "acc": 0.7312869835744831,
+        "acc_raw": 0.7153394638648751,
+        "mae": 0.5305030456758808,
+        "mae_raw": 0.5415631480761487,
+        "mape": 0.2687130164255169,
+        "mape_raw": 0.2846605361351249
+      },
+      "budget": 4501,
+      "fps": 154.03749505244252,
+      "fraction": 0.0833333,
+      "mode": "propagate",
+      "oracle_frames": 4501,
+      "oracle_s": 289.08386183867725,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 61.55154664814472,
+      "topk": 1.0,
+      "topk_rounded": 0.9,
+      "total_s": 350.635408486822
+    },
+    {
+      "aggregation": {
+        "acc": 0.7372914629677124,
+        "acc_raw": 0.7147790625446918,
+        "mae": 0.5170798541037936,
+        "mae_raw": 0.5317289666283753,
+        "mape": 0.2627085370322876,
+        "mape_raw": 0.2852209374553082
+      },
+      "budget": 5401,
+      "fps": 127.65218537748419,
+      "fraction": 0.1,
+      "mode": "propagate",
+      "oracle_frames": 5401,
+      "oracle_s": 346.88778888929033,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 76.22286793403327,
+      "topk": 1.0,
+      "topk_rounded": 1.0,
+      "total_s": 423.1106568233236
+    },
+    {
+      "aggregation": {
+        "acc": 0.7480962578757463,
+        "acc_raw": 0.7290380541782622,
+        "mae": 0.5040639869656182,
+        "mae_raw": 0.517894420023743,
+        "mape": 0.2519037421242537,
+        "mape_raw": 0.2709619458217378
+      },
+      "budget": 5401,
+      "fps": 128.36054561389955,
+      "fraction": 0.1,
+      "mode": "propagate",
+      "oracle_frames": 5401,
+      "oracle_s": 346.88778888929033,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 73.8879233179614,
+      "topk": 1.0,
+      "topk_rounded": 1.0,
+      "total_s": 420.77571220725173
+    },
+    {
+      "aggregation": {
+        "acc": 0.7357770889116344,
+        "acc_raw": 0.7204424001689653,
+        "mae": 0.5160059987780267,
+        "mae_raw": 0.5278254935202459,
+        "mape": 0.2642229110883656,
+        "mape_raw": 0.2795575998310347
+      },
+      "budget": 5401,
+      "fps": 128.2889990154513,
+      "fraction": 0.1,
+      "mode": "propagate",
+      "oracle_frames": 5401,
+      "oracle_s": 346.88778888929033,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 74.12258935440332,
+      "topk": 1.0,
+      "topk_rounded": 1.0,
+      "total_s": 421.01037824369365
+    },
+    {
+      "aggregation": {
+        "acc": 0.6500571459135605,
+        "acc_raw": 0.6210050455088693,
+        "mae": 0.6886189850215697,
+        "mae_raw": 0.7040146985819744,
+        "mape": 0.34994285408643955,
+        "mape_raw": 0.37899495449113074
+      },
+      "budget": 563,
+      "fps": 1234.9583294361707,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 563,
+      "oracle_s": 36.15956769943908,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 7.575511219911277,
+      "topk": 0.8,
+      "topk_rounded": 0.7,
+      "total_s": 43.73507891935036
+    },
+    {
+      "aggregation": {
+        "acc": 0.6575579548316794,
+        "acc_raw": 0.6298210773280809,
+        "mae": 0.6794356705115625,
+        "mae_raw": 0.6954149085815962,
+        "mape": 0.34244204516832055,
+        "mape_raw": 0.3701789226719191
+      },
+      "budget": 563,
+      "fps": 1253.7724530089488,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 563,
+      "oracle_s": 36.15956769943908,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 6.919222132302821,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 43.0787898317419
+    },
+    {
+      "aggregation": {
+        "acc": 0.6444462077536947,
+        "acc_raw": 0.6165781336199136,
+        "mae": 0.693562422469497,
+        "mae_raw": 0.708663487924146,
+        "mape": 0.35555379224630534,
+        "mape_raw": 0.38342186638008635
+      },
+      "budget": 563,
+      "fps": 1223.6465004678614,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 563,
+      "oracle_s": 36.15956769943908,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 7.979814041405916,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 44.139381740844996
+    },
+    {
+      "aggregation": {
+        "acc": 0.7555026342370494,
+        "acc_raw": 0.7379867012028853,
+        "mae": 0.4869563607413305,
+        "mae_raw": 0.4993397712310085,
+        "mape": 0.24449736576295056,
+        "mape_raw": 0.26201329879711466
+      },
+      "budget": 6751,
+      "fps": 102.26662510902923,
+      "fraction": 0.125,
+      "mode": "propagate",
+      "oracle_frames": 6751,
+      "oracle_s": 433.59367946521,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 94.5453878249973,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 528.1390672902073
+    },
+    {
+      "aggregation": {
+        "acc": 0.7534149716121865,
+        "acc_raw": 0.7361078206913888,
+        "mae": 0.4915295032493381,
+        "mae_raw": 0.503730928633536,
+        "mape": 0.2465850283878135,
+        "mape_raw": 0.2638921793086112
+      },
+      "budget": 6751,
+      "fps": 102.75636284762909,
+      "fraction": 0.125,
+      "mode": "propagate",
+      "oracle_frames": 6751,
+      "oracle_s": 433.59367946521,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 92.02827233634889,
+      "topk": 0.9,
+      "topk_rounded": 1.0,
+      "total_s": 525.6219518015589
+    },
+    {
+      "aggregation": {
+        "acc": 0.7528575160909213,
+        "acc_raw": 0.738722949590264,
+        "mae": 0.48593804965655146,
+        "mae_raw": 0.4988449908657403,
+        "mape": 0.24714248390907867,
+        "mape_raw": 0.26127705040973603
+      },
+      "budget": 6751,
+      "fps": 102.33021835809055,
+      "fraction": 0.125,
+      "mode": "propagate",
+      "oracle_frames": 6751,
+      "oracle_s": 433.59367946521,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 94.21717510558665,
+      "topk": 1.0,
+      "topk_rounded": 0.9,
+      "total_s": 527.8108545707967
+    },
+    {
+      "aggregation": {
+        "acc": 0.6543150528126012,
+        "acc_raw": 0.6254119738282912,
+        "mae": 0.6794727000055544,
+        "mae_raw": 0.695324668183238,
+        "mape": 0.34568494718739884,
+        "mape_raw": 0.37458802617170883
+      },
+      "budget": 844,
+      "fps": 793.7508779054908,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 844,
+      "oracle_s": 54.207238256352724,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 13.838040814734995,
+      "topk": 0.9,
+      "topk_rounded": 0.7,
+      "total_s": 68.04527907108772
+    },
+    {
+      "aggregation": {
+        "acc": 0.6593668456131876,
+        "acc_raw": 0.6291628492290645,
+        "mae": 0.6747514395215789,
+        "mae_raw": 0.6914343407728437,
+        "mape": 0.3406331543868124,
+        "mape_raw": 0.3708371507709355
+      },
+      "budget": 844,
+      "fps": 801.4390104477291,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 844,
+      "oracle_s": 54.207238256352724,
+      "query": "count",
+      "seed": 1,
+      "seiden_s": 13.185288555920124,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 67.39252681227285
+    },
+    {
+      "aggregation": {
+        "acc": 0.6524180112634484,
+        "acc_raw": 0.6252409715167077,
+        "mae": 0.67995408342745,
+        "mae_raw": 0.6956349205444062,
+        "mape": 0.34758198873655155,
+        "mape_raw": 0.37475902848329234
+      },
+      "budget": 844,
+      "fps": 789.9168919467569,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 844,
+      "oracle_s": 54.207238256352724,
+      "query": "count",
+      "seed": 2,
+      "seiden_s": 14.168309286236763,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 68.37554754258949
+    },
+    {
+      "budget": 1125,
+      "fps": 691.2641877515478,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 1125,
+      "oracle_s": 72.25490881326637,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 5.878749717026949,
+      "selection": {
+        "accuracy": 0.9644,
+        "f1": 0.9801,
+        "precision": 0.986,
+        "recall": 0.9743
+      },
+      "total_s": 78.13365853029332
+    },
+    {
+      "budget": 1125,
+      "fps": 363.7672732363182,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 2220,
+      "oracle_s": 142.58302005817896,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 5.893778086639941,
+      "selection": {
+        "accuracy": 0.9658,
+        "f1": 0.981,
+        "precision": 0.9842,
+        "recall": 0.9778
+      },
+      "supg_budget": 1125,
+      "supg_sampled": 1112,
+      "total_s": 148.4767981448189
+    },
+    {
+      "budget": 1125,
+      "fps": 475.71935368736735,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 1676,
+      "oracle_s": 107.64375748536393,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 5.891669613309205,
+      "selection": {
+        "accuracy": 0.9606,
+        "f1": 0.9778,
+        "precision": 0.9907,
+        "recall": 0.9653
+      },
+      "supg_budget": 562,
+      "supg_sampled": 559,
+      "total_s": 113.53542709867314
+    },
+    {
+      "budget": 1125,
+      "fps": 692.8053736686163,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 1125,
+      "oracle_s": 72.25490881326637,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 5.704936841502786,
+      "selection": {
+        "accuracy": 0.9632,
+        "f1": 0.9793,
+        "precision": 0.9907,
+        "recall": 0.9682
+      },
+      "total_s": 77.95984565476915
+    },
+    {
+      "budget": 1125,
+      "fps": 365.1426166619752,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 2214,
+      "oracle_s": 142.1976605445082,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 5.719886012375355,
+      "selection": {
+        "accuracy": 0.9653,
+        "f1": 0.9806,
+        "precision": 0.9886,
+        "recall": 0.9727
+      },
+      "supg_budget": 1125,
+      "supg_sampled": 1117,
+      "total_s": 147.91754655688356
+    },
+    {
+      "budget": 1125,
+      "fps": 477.8029731866338,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 1671,
+      "oracle_s": 107.32262455730498,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 5.717693379148841,
+      "selection": {
+        "accuracy": 0.9587,
+        "f1": 0.9767,
+        "precision": 0.9927,
+        "recall": 0.9612
+      },
+      "supg_budget": 562,
+      "supg_sampled": 560,
+      "total_s": 113.04031793645382
+    },
+    {
+      "budget": 1125,
+      "fps": 688.9668870385169,
+      "fraction": 0.0208333,
+      "mode": "propagate",
+      "oracle_frames": 1125,
+      "oracle_s": 72.25490881326637,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 6.1392796682193875,
+      "selection": {
+        "accuracy": 0.9675,
+        "f1": 0.9819,
+        "precision": 0.9883,
+        "recall": 0.9755
+      },
+      "total_s": 78.39418848148576
+    },
+    {
+      "budget": 1125,
+      "fps": 364.2311636289759,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 2213,
+      "oracle_s": 142.13343395889643,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 6.154261860065162,
+      "selection": {
+        "accuracy": 0.9629,
+        "f1": 0.9791,
+        "precision": 0.9919,
+        "recall": 0.9667
+      },
+      "supg_budget": 1125,
+      "supg_sampled": 1116,
+      "total_s": 148.2876958189616
+    },
+    {
+      "budget": 1125,
+      "fps": 475.4355803873165,
+      "fraction": 0.0208333,
+      "mode": "supg",
+      "oracle_frames": 1673,
+      "oracle_s": 107.45107772852856,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 6.15211527608335,
+      "selection": {
+        "accuracy": 0.9692,
+        "f1": 0.9828,
+        "precision": 0.9855,
+        "recall": 0.9802
+      },
+      "supg_budget": 562,
+      "supg_sampled": 562,
+      "total_s": 113.60319300461191
+    },
+    {
+      "budget": 422,
+      "fps": 1686.7526536768503,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 422,
+      "oracle_s": 27.103619128176362,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 4.917080458253622,
+      "selection": {
+        "accuracy": 0.9513,
+        "f1": 0.9727,
+        "precision": 0.9803,
+        "recall": 0.9653
+      },
+      "total_s": 32.020699586429984
+    },
+    {
+      "budget": 422,
+      "fps": 918.2986832810963,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 839,
+      "oracle_s": 53.886105328293766,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 4.930269978940487,
+      "selection": {
+        "accuracy": 0.9517,
+        "f1": 0.9731,
+        "precision": 0.9785,
+        "recall": 0.9677
+      },
+      "supg_budget": 422,
+      "supg_sampled": 421,
+      "total_s": 58.81637530723425
+    },
+    {
+      "budget": 422,
+      "fps": 1191.5571882281733,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 629,
+      "oracle_s": 40.39852234981738,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 4.929558025673032,
+      "selection": {
+        "accuracy": 0.9521,
+        "f1": 0.9736,
+        "precision": 0.9662,
+        "recall": 0.9812
+      },
+      "supg_budget": 211,
+      "supg_sampled": 211,
+      "total_s": 45.32808037549041
+    },
+    {
+      "budget": 422,
+      "fps": 1697.6163201153956,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 422,
+      "oracle_s": 27.103619128176362,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 4.712168314494193,
+      "selection": {
+        "accuracy": 0.9524,
+        "f1": 0.9733,
+        "precision": 0.9849,
+        "recall": 0.9619
+      },
+      "total_s": 31.815787442670555
+    },
+    {
+      "budget": 422,
+      "fps": 922.5215241930922,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 838,
+      "oracle_s": 53.82187874268197,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 4.72526469361037,
+      "selection": {
+        "accuracy": 0.9552,
+        "f1": 0.9751,
+        "precision": 0.9805,
+        "recall": 0.9697
+      },
+      "supg_budget": 422,
+      "supg_sampled": 419,
+      "total_s": 58.54714343629234
+    },
+    {
+      "budget": 422,
+      "fps": 1193.5253740135136,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 631,
+      "oracle_s": 40.52697552104096,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 4.726356478407979,
+      "selection": {
+        "accuracy": 0.9011,
+        "f1": 0.948,
+        "precision": 0.9011,
+        "recall": 1.0
+      },
+      "supg_budget": 211,
+      "supg_sampled": 211,
+      "total_s": 45.25333199944894
+    },
+    {
+      "budget": 422,
+      "fps": 1692.0386590367398,
+      "fraction": 0.0078125,
+      "mode": "propagate",
+      "oracle_frames": 422,
+      "oracle_s": 27.103619128176362,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 4.81704634334892,
+      "selection": {
+        "accuracy": 0.9459,
+        "f1": 0.9695,
+        "precision": 0.9846,
+        "recall": 0.9549
+      },
+      "total_s": 31.920665471525282
+    },
+    {
+      "budget": 422,
+      "fps": 919.8607237743574,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 839,
+      "oracle_s": 53.886105328293766,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 4.8303922936320305,
+      "selection": {
+        "accuracy": 0.9514,
+        "f1": 0.9728,
+        "precision": 0.9804,
+        "recall": 0.9654
+      },
+      "supg_budget": 422,
+      "supg_sampled": 421,
+      "total_s": 58.7164976219258
+    },
+    {
+      "budget": 422,
+      "fps": 1190.762841396404,
+      "fraction": 0.0078125,
+      "mode": "supg",
+      "oracle_frames": 631,
+      "oracle_s": 40.52697552104096,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 4.831342795863748,
+      "selection": {
+        "accuracy": 0.9011,
+        "f1": 0.948,
+        "precision": 0.9011,
+        "recall": 1.0
+      },
+      "supg_budget": 211,
+      "supg_sampled": 211,
+      "total_s": 45.35831831690471
+    },
+    {
+      "budget": 563,
+      "fps": 1313.9066398210518,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 563,
+      "oracle_s": 36.15956769943908,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 4.947614776901901,
+      "selection": {
+        "accuracy": 0.9543,
+        "f1": 0.9745,
+        "precision": 0.9814,
+        "recall": 0.9676
+      },
+      "total_s": 41.10718247634098
+    },
+    {
+      "budget": 563,
+      "fps": 704.7567534825878,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 1116,
+      "oracle_s": 71.67686954276024,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 4.960920351557434,
+      "selection": {
+        "accuracy": 0.9484,
+        "f1": 0.9708,
+        "precision": 0.9893,
+        "recall": 0.953
+      },
+      "supg_budget": 563,
+      "supg_sampled": 561,
+      "total_s": 76.63778989431768
+    },
+    {
+      "budget": 563,
+      "fps": 917.8368858149813,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 839,
+      "oracle_s": 53.886105328293766,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 4.959862658753991,
+      "selection": {
+        "accuracy": 0.9466,
+        "f1": 0.9697,
+        "precision": 0.9903,
+        "recall": 0.95
+      },
+      "supg_budget": 282,
+      "supg_sampled": 282,
+      "total_s": 58.84596798704776
+    },
+    {
+      "budget": 563,
+      "fps": 1318.3309646714881,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 563,
+      "oracle_s": 36.15956769943908,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 4.809658881276846,
+      "selection": {
+        "accuracy": 0.9549,
+        "f1": 0.9746,
+        "precision": 0.9864,
+        "recall": 0.9631
+      },
+      "total_s": 40.969226580715926
+    },
+    {
+      "budget": 563,
+      "fps": 704.827517582238,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 1118,
+      "oracle_s": 71.80532271398383,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 4.8247728096321225,
+      "selection": {
+        "accuracy": 0.9011,
+        "f1": 0.948,
+        "precision": 0.9011,
+        "recall": 1.0
+      },
+      "supg_budget": 563,
+      "supg_sampled": 560,
+      "total_s": 76.63009552361595
+    },
+    {
+      "budget": 563,
+      "fps": 916.979200361428,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 842,
+      "oracle_s": 54.07878508512914,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 4.822223769500852,
+      "selection": {
+        "accuracy": 0.9568,
+        "f1": 0.9758,
+        "precision": 0.9832,
+        "recall": 0.9685
+      },
+      "supg_budget": 282,
+      "supg_sampled": 282,
+      "total_s": 58.90100885462999
+    },
+    {
+      "budget": 563,
+      "fps": 1316.9198468469815,
+      "fraction": 0.0104167,
+      "mode": "propagate",
+      "oracle_frames": 563,
+      "oracle_s": 36.15956769943908,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 4.853558596223593,
+      "selection": {
+        "accuracy": 0.9531,
+        "f1": 0.9737,
+        "precision": 0.9843,
+        "recall": 0.9633
+      },
+      "total_s": 41.01312629566267
+    },
+    {
+      "budget": 563,
+      "fps": 703.8501891738606,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 1119,
+      "oracle_s": 71.86954929959562,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 4.866950641386211,
+      "selection": {
+        "accuracy": 0.9504,
+        "f1": 0.972,
+        "precision": 0.9864,
+        "recall": 0.9581
+      },
+      "supg_budget": 563,
+      "supg_sampled": 563,
+      "total_s": 76.73649994098183
+    },
+    {
+      "budget": 563,
+      "fps": 915.3008622710115,
+      "fraction": 0.0104167,
+      "mode": "supg",
+      "oracle_frames": 843,
+      "oracle_s": 54.14301167074093,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 4.866000804118812,
+      "selection": {
+        "accuracy": 0.947,
+        "f1": 0.97,
+        "precision": 0.9903,
+        "recall": 0.9505
+      },
+      "supg_budget": 282,
+      "supg_sampled": 282,
+      "total_s": 59.009012474859745
+    },
+    {
+      "budget": 844,
+      "fps": 908.4852728355244,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 844,
+      "oracle_s": 54.207238256352724,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 5.244468463584781,
+      "selection": {
+        "accuracy": 0.9607,
+        "f1": 0.9781,
+        "precision": 0.9844,
+        "recall": 0.9718
+      },
+      "total_s": 59.451706719937505
+    },
+    {
+      "budget": 844,
+      "fps": 480.849659194306,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 1667,
+      "oracle_s": 107.06571821485781,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 5.258370961993933,
+      "selection": {
+        "accuracy": 0.958,
+        "f1": 0.9764,
+        "precision": 0.989,
+        "recall": 0.9641
+      },
+      "supg_budget": 844,
+      "supg_sampled": 839,
+      "total_s": 112.32408917685174
+    },
+    {
+      "budget": 844,
+      "fps": 628.1033458886872,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 1257,
+      "oracle_s": 80.73281811402296,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 5.2578080361709,
+      "selection": {
+        "accuracy": 0.961,
+        "f1": 0.9782,
+        "precision": 0.984,
+        "recall": 0.9725
+      },
+      "supg_budget": 422,
+      "supg_sampled": 420,
+      "total_s": 85.99062615019386
+    },
+    {
+      "budget": 844,
+      "fps": 909.7906098047177,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 844,
+      "oracle_s": 54.207238256352724,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 5.159169154241681,
+      "selection": {
+        "accuracy": 0.9621,
+        "f1": 0.9788,
+        "precision": 0.9907,
+        "recall": 0.9671
+      },
+      "total_s": 59.366407410594405
+    },
+    {
+      "budget": 844,
+      "fps": 481.48921686945977,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 1666,
+      "oracle_s": 107.00149162924602,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 5.173398498445749,
+      "selection": {
+        "accuracy": 0.9632,
+        "f1": 0.9794,
+        "precision": 0.9903,
+        "recall": 0.9687
+      },
+      "supg_budget": 844,
+      "supg_sampled": 840,
+      "total_s": 112.17489012769177
+    },
+    {
+      "budget": 844,
+      "fps": 627.7923822721353,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 1259,
+      "oracle_s": 80.86127128524654,
+      "query": "presence",
+      "seed": 1,
+      "seiden_s": 5.171948494389653,
+      "selection": {
+        "accuracy": 0.9647,
+        "f1": 0.9804,
+        "precision": 0.9803,
+        "recall": 0.9805
+      },
+      "supg_budget": 422,
+      "supg_sampled": 421,
+      "total_s": 86.0332197796362
+    },
+    {
+      "budget": 844,
+      "fps": 905.6413971982763,
+      "fraction": 0.015625,
+      "mode": "propagate",
+      "oracle_frames": 844,
+      "oracle_s": 54.207238256352724,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 5.431157434359193,
+      "selection": {
+        "accuracy": 0.9629,
+        "f1": 0.9793,
+        "precision": 0.9879,
+        "recall": 0.9708
+      },
+      "total_s": 59.63839569071192
+    },
+    {
+      "budget": 844,
+      "fps": 478.4126841867486,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 1673,
+      "oracle_s": 107.45107772852856,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 5.445176457986236,
+      "selection": {
+        "accuracy": 0.9616,
+        "f1": 0.9784,
+        "precision": 0.99,
+        "recall": 0.9671
+      },
+      "supg_budget": 844,
+      "supg_sampled": 838,
+      "total_s": 112.8962541865148
+    },
+    {
+      "budget": 844,
+      "fps": 624.8805317529353,
+      "fraction": 0.015625,
+      "mode": "supg",
+      "oracle_frames": 1261,
+      "oracle_s": 80.98972445647013,
+      "query": "presence",
+      "seed": 2,
+      "seiden_s": 5.444397356361151,
+      "selection": {
+        "accuracy": 0.9635,
+        "f1": 0.9795,
+        "precision": 0.9868,
+        "recall": 0.9724
+      },
+      "supg_budget": 422,
+      "supg_sampled": 421,
+      "total_s": 86.43412181283128
+    }
+  ]
+}
