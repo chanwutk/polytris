@@ -1,0 +1,13 @@
+{
+  "source": "ace polyis /tmp/leap-anchored-hota-ug9z5jgd/results.json",
+  "method": "TrackEval with the canonical padded scoring window and root test annotations. Preserve sampled boxes and use the assigned pattern between observations; use the same frame support as the linear control.",
+  "datasets": {
+    "Amsterdam": {"linear": 0.52584602676162, "pattern": 0.11065689032705839, "anchored": 0.5280073594858529},
+    "CalDoT1": {"linear": 0.5095169726663112, "pattern": 0.14837369579033596, "anchored": 0.5237209622408222},
+    "CalDoT2": {"linear": 0.13376839573539373, "pattern": 0.1327974389641494, "anchored": 0.22046073071199407},
+    "B3D1": {"linear": 0.1639927185685002, "pattern": 0.0408, "anchored": 0.15653868535816232},
+    "B3D2": {"linear": 0.10526595580453141, "pattern": 0.0253, "anchored": 0.10462708512175915},
+    "B3D3": {"linear": 0.09391354953375491, "pattern": 0.0148, "anchored": 0.0939132166983322},
+    "B3D4": {"linear": 0.14648336856569644, "pattern": 0.0422, "anchored": 0.14354579183956387}
+  }
+}

@@ -6,7 +6,30 @@ if [[ $# == 0 ]]; then
 fi
 
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
-unset POLYIS_DATASETS
+unset POLYIS_DATASETS POLYIS_TEST_PARETO_PARAMS
+render_cache=$(mktemp -d)
+trap 'rm -rf "$render_cache"' EXIT
+tar -xzf reproduce/chart-inputs.tar.gz -C "$render_cache"
+python - "$render_cache" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+import yaml
+
+cache_dir = Path(sys.argv[1])
+config_path = Path('configs') / os.environ.get('CONFIG', 'global.yaml')
+config = yaml.safe_load(config_path.read_text())
+experiment_cache = Path(config['DATA']['CACHE_DIR']).resolve()
+for dataset in ('caldot1', 'caldot2', 'ams', 'jnc0', 'jnc2', 'jnc6', 'jnc7'):
+    labels = cache_dir / dataset / 'execution'
+    labels.parent.mkdir(exist_ok=True)
+    labels.symlink_to(experiment_cache / dataset / 'execution', target_is_directory=True)
+config['DATA']['CACHE_DIR'] = str(cache_dir)
+(cache_dir / 'config.yaml').write_text(yaml.safe_dump(config))
+PY
+export CONFIG="$render_cache/config.yaml"
+mkdir -p paper/figures/generated
 revision_rendered=0
 
 for item in "$@"; do

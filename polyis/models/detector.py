@@ -11,7 +11,6 @@ from typing import Any
 import ultralytics
 
 import polyis.models.retinanet_b3d
-import polyis.models.yolov3
 import polyis.models.ultralytics
 import polyis.models.torch_vision
 import polyis.dtypes
@@ -52,7 +51,9 @@ def get_detector(dataset_name: str, gpu_id, batch_size: int = 16, num_images: in
         return polyis.models.retinanet_b3d.get_detector(device=device)
     
     elif detector_type == 'yolov3':
-        return polyis.models.yolov3.get_detector(
+        from polyis.models import yolov3
+
+        return yolov3.get_detector(
             gpu_id=gpu_id,
             config_path=dataset_config['config_path'],
             model_path=dataset_config['model_path'],
@@ -95,9 +96,11 @@ def detect(
     """
     # Use the appropriate detect function based on detector type
     if hasattr(detector, 'net'):  # YOLOv3 detector
+        from polyis.models import yolov3
+
         if mode == DetectorMode.BGR:
             image = image[:, :, ::-1]
-        return polyis.models.yolov3.detect(image, detector, threshold)
+        return yolov3.detect(image, detector, threshold)
     elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         if mode == DetectorMode.RGB:
             image = image[:, :, ::-1]
@@ -122,9 +125,11 @@ def detect_batch(
     Detect vehicles in a batch of images using the appropriate detector.
     """
     if hasattr(detector, 'net'):  # YOLOv3 detector
+        from polyis.models import yolov3
+
         if mode == DetectorMode.BGR:
             images = [image[:, :, ::-1] for image in images]
-        return polyis.models.yolov3.detect_batch(images, detector, threshold)
+        return yolov3.detect_batch(images, detector, threshold)
     elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         if mode == DetectorMode.RGB:
             images = [image[:, :, ::-1] for image in images]

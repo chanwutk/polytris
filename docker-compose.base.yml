@@ -13,8 +13,7 @@ services:
       - ${HOME}/.gurobi/gurobi.lic:/opt/gurobi/gurobi.lic:ro
       - ${DATA}/polyis-data:/polyis-data
       - ${DATA}/polyis-cache:/polyis-cache
-      - ${WORK}/../data/otif-dataset:/otif-dataset
-      - ${PAPER_DIR:-${WORK}/polytris-paper}:/polytris-paper
+      - ${OTIF_DATASET:-./otif-dataset}:/otif-dataset
       - ${SOTA_RESULTS:-./sota-results}:/sota-results
     tmpfs:
       - /tmp

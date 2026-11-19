@@ -23,8 +23,6 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from mistrack_rate.analysis import combine_visualize, plot_results
-from mistrack_rate.evaluate import run_evaluation_stage
-from mistrack_rate.heuristic import run_heuristic_stage
 from polyis.utilities import get_config
 
 
@@ -37,7 +35,7 @@ DEFAULT_TRACKER: str = CONFIGURED_TRACKERS[0]
 _NON_JNC_VIDEO_FRACTION_DIVISOR = 1
 
 # Target directory for paper-facing figures. Resolved relative to the project
-# root (container path /polyis); see CLAUDE.md for the in-container layout.
+# root (container path /polyis).
 _PAPER_FIGURES_DIR = Path('/polyis/paper/figures/generated')
 
 
@@ -141,6 +139,9 @@ def main() -> None:
                 for p in copied:
                     print(f'  copied to paper: {p}')
         return
+
+    from mistrack_rate.evaluate import run_evaluation_stage
+    from mistrack_rate.heuristic import run_heuristic_stage
 
     # Resolve the dataset list for this invocation.
     datasets = args.datasets.split(',') if args.datasets is not None else CONFIGURED_DATASETS

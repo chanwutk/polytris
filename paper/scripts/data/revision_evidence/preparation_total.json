@@ -1,0 +1,1792 @@
+{
+  "components": [
+    {
+      "component": "p011 reference detection",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 1249.1,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p012 training data",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 5271.2,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "p013 training-data pruning",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 77.3,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p014 classifier training",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 3741.8,
+      "source": "cache, wall clock",
+      "system": "tetris"
+    },
+    {
+      "component": "p015 classifier benchmark",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 39.03122382611036,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p016 mistrack profiling",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 301.3,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "002 reference outputs",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 1852.4,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 020_",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 920.4,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 022_",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 277.1,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 040_",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 16104.2,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 050_",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 1045.7,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 060_",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 2769.6,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "p110 scoring",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 6159.8,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p130/p135 tables",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 1.2866670079529285,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep p030",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 21152.64769946289,
+      "source": "serial re-run, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 140.41354907800752,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 1123.3083926240602,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detect_train",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 1392.8,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tracks_train",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 32.35,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "extract_frames",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 206.73,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_proxy",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 4665.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_tracker",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 4275.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "detect_valid",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 1336.91,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tune_valid",
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 15092.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "labels_train",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 1786.77,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_data",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 110.02,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_train",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 41157.0,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "motion_patterns",
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 16.71,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "p011 reference detection",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 1248.1,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p012 training data",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 4629.9,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "p013 training-data pruning",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 77.2,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p014 classifier training",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 3081.2,
+      "source": "cache, wall clock",
+      "system": "tetris"
+    },
+    {
+      "component": "p015 classifier benchmark",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 38.97630089242011,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p016 mistrack profiling",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 293.5,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "002 reference outputs",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 1861.6,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 020_",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 847.3017971515656,
+      "source": "cache, per unit (+ bombe re-sweep)",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 022_",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 416.4070779504776,
+      "source": "cache, per unit (+ bombe re-sweep)",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 040_",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 22321.827269649504,
+      "source": "cache, per unit (+ bombe re-sweep)",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 050_",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 5886.3147808074955,
+      "source": "cache, per unit (+ bombe re-sweep)",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 060_",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 3284.944180059433,
+      "source": "cache, per unit (+ bombe re-sweep)",
+      "system": "tetris"
+    },
+    {
+      "component": "p110 scoring",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 8280.2,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p130/p135 tables",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 1.1069766068831086,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep p030",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 17290.19015258789,
+      "source": "serial re-run, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 135.3277694657445,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 1082.622155725956,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detect_train",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 1346.81,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tracks_train",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 29.27,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "extract_frames",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 180.59,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_proxy",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 4077.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_tracker",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 5007.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "detect_valid",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 1341.42,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tune_valid",
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 11935.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "labels_train",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 1777.86,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_data",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 70.66,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_train",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 23634.0,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "motion_patterns",
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 12.18,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "p011 reference detection",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 3156.9,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p012 training data",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 8644.6,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "p013 training-data pruning",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 263.5,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p014 classifier training",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 13670.0,
+      "source": "cache, wall clock",
+      "system": "tetris"
+    },
+    {
+      "component": "p015 classifier benchmark",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 40.33843516744673,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p016 mistrack profiling",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 317.0,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "002 reference outputs",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 3710.6,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 020_",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 2193.1,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 022_",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 533.0,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 040_",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 20314.3,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 050_",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 1200.4,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 060_",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 2682.1,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "p110 scoring",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 9242.5,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p130/p135 tables",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 1.5948781920596957,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep p030",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 47555.446576904294,
+      "source": "serial re-run, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 164.42120589336585,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 1315.3696471469268,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detect_train",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 4204.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tracks_train",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 44.37,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "extract_frames",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 475.52,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_proxy",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 6594.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_tracker",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 5232.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "detect_valid",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 3393.19,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tune_valid",
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 45108.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "labels_train",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 3672.0,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_data",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 184.51,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_train",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 20872.0,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "motion_patterns",
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 15.69,
+      "source": "matched-detector rerun",
+      "system": "leap"
+    },
+    {
+      "component": "p011 reference detection",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 506.6,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p012 training data",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 612.7,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "p013 training-data pruning",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 10.9,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p014 classifier training",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 2715.5,
+      "source": "cache, wall clock",
+      "system": "tetris"
+    },
+    {
+      "component": "p015 classifier benchmark",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 39.48211451154202,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p016 mistrack profiling",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 54.5,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "002 reference outputs",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 382.8,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 020_",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 204.3,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 022_",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 90.3,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 040_",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 17841.8,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 050_",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 280.5,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 060_",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 832.9,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "p110 scoring",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 1551.1,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p130/p135 tables",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 0.11766811646521091,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep p030",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 4743.630010986328,
+      "source": "serial re-run, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 19.211662324295997,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 1020.6195609782249,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detect_train",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 483.89,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tracks_train",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 11.41,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "extract_frames",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 66.01,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_proxy",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 4871.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_tracker",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 2420.65,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "detect_valid",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 310.44,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tune_valid",
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 914.28,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "labels_train",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 963.35,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_data",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 15.74,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_train",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 22203.0,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "motion_patterns",
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 20.5,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "p011 reference detection",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 434.1,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p012 training data",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 506.2,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "p013 training-data pruning",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 10.8,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p014 classifier training",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 2018.8,
+      "source": "cache, wall clock",
+      "system": "tetris"
+    },
+    {
+      "component": "p015 classifier benchmark",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 38.90029054041952,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p016 mistrack profiling",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 56.1,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "002 reference outputs",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 342.6,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 020_",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 179.1,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 022_",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 74.0,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 040_",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 21700.9,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 050_",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 312.8,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 060_",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 1045.3,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "p110 scoring",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 1517.6,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p130/p135 tables",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 0.10548421740531921,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep p030",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 4290.621312011719,
+      "source": "serial re-run, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 19.388610020813296,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 1030.0199073557064,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detect_train",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 420.72,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tracks_train",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 10.91,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "extract_frames",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 59.64,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_proxy",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 5140.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_tracker",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 5130.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "detect_valid",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 268.04,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tune_valid",
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 801.65,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "labels_train",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 850.32,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_data",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 13.5,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_train",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 22278.0,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "motion_patterns",
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 15.82,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "p011 reference detection",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 471.6,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p012 training data",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 647.9,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "p013 training-data pruning",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 10.6,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p014 classifier training",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 2652.2,
+      "source": "cache, wall clock",
+      "system": "tetris"
+    },
+    {
+      "component": "p015 classifier benchmark",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 39.61175418458879,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p016 mistrack profiling",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 54.5,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "002 reference outputs",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 378.3,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 020_",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 197.3,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 022_",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 83.2,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 040_",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 17231.1,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 050_",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 270.6,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 060_",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 864.4,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "p110 scoring",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 1467.9,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p130/p135 tables",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 0.10996988415718079,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep p030",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 4535.345205566407,
+      "source": "serial re-run, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 18.23055435782492,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 968.4982002594489,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detect_train",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 461.64,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tracks_train",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 11.89,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "extract_frames",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 67.65,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_proxy",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 4801.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_tracker",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 3879.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "detect_valid",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 294.94,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tune_valid",
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 884.74,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "labels_train",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 905.15,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_data",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 14.88,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_train",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 24003.0,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "motion_patterns",
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 6.27,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "p011 reference detection",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 480.6,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p012 training data",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 568.1,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "p013 training-data pruning",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 16.3,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p014 classifier training",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 2219.6,
+      "source": "cache, wall clock",
+      "system": "tetris"
+    },
+    {
+      "component": "p015 classifier benchmark",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 39.81953450106084,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p016 mistrack profiling",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 53.6,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "002 reference outputs",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 376.8,
+      "source": "cache, per video",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 020_",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 199.2,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 022_",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 64.5,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 040_",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 10823.2,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 050_",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 179.8,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep 060_",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 745.2,
+      "source": "cache, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "p110 scoring",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 1427.3,
+      "source": "serial re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "p130/p135 tables",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 0.10588012728840113,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "sweep p030",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 3711.4486826171874,
+      "source": "serial re-run, per unit",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 22.220386827876467,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detector loading",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 1180.4580502309375,
+      "source": "overheads re-run",
+      "system": "tetris"
+    },
+    {
+      "component": "detect_train",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 461.7,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tracks_train",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 11.24,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "extract_frames",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 65.21,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_proxy",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 4614.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "train_tracker",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 4875.0,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "detect_valid",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 294.57,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "tune_valid",
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 836.18,
+      "source": "rerun",
+      "system": "otif"
+    },
+    {
+      "component": "labels_train",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 906.02,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_data",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 14.05,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "reid_train",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 19430.0,
+      "source": "rerun",
+      "system": "leap"
+    },
+    {
+      "component": "motion_patterns",
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 10.14,
+      "source": "rerun",
+      "system": "leap"
+    }
+  ],
+  "inputs": {
+    "cost": "/polyis/measurements-results/r9o2_preparation_cost/preparation_cost.json",
+    "leap_matched": "/polyis/measurements-results/r1o2_leap_matched/summary",
+    "overheads": "/polyis/measurements-results/r9o2_preparation_overheads/preparation_overheads.json",
+    "packing": "/polyis/measurements-results/r9o2_packing_serial",
+    "rerun": "/polyis/measurements-results/r1o2_leap_otif_rerun/raw/prep",
+    "resweep": "/polyis/measurements-results/r9o2_caldot2_resweep_units/units.json"
+  },
+  "totals": [
+    {
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 24744.2,
+      "system": "leap"
+    },
+    {
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 16549.89,
+      "system": "otif"
+    },
+    {
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 48501.19,
+      "system": "otif"
+    },
+    {
+      "dataset": "ams-y05",
+      "phase": "training",
+      "seconds": 26256.759641060813,
+      "system": "tetris"
+    },
+    {
+      "dataset": "ams-y05",
+      "phase": "validation",
+      "seconds": 88748.41110224329,
+      "system": "tetris"
+    },
+    {
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 43070.5,
+      "system": "leap"
+    },
+    {
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 10571.880000000001,
+      "system": "otif"
+    },
+    {
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 16428.91,
+      "system": "otif"
+    },
+    {
+      "dataset": "caldot1-y05",
+      "phase": "training",
+      "seconds": 10820.144772904117,
+      "system": "tetris"
+    },
+    {
+      "dataset": "caldot1-y05",
+      "phase": "validation",
+      "seconds": 51406.4427590949,
+      "system": "tetris"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 25494.7,
+      "system": "leap"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 10640.67,
+      "system": "otif"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 13276.42,
+      "system": "otif"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "training",
+      "seconds": 9504.204070358164,
+      "system": "tetris"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "phase": "validation",
+      "seconds": 61272.51439053922,
+      "system": "tetris"
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 23202.59,
+      "system": "leap"
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 7852.960000000001,
+      "system": "otif"
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 1224.72,
+      "system": "otif"
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "training",
+      "seconds": 3958.8937768358383,
+      "system": "tetris"
+    },
+    {
+      "dataset": "jnc0",
+      "phase": "validation",
+      "seconds": 26948.067240081018,
+      "system": "tetris"
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 23157.64,
+      "system": "leap"
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 10761.27,
+      "system": "otif"
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 1069.69,
+      "system": "otif"
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "training",
+      "seconds": 3084.2889005612324,
+      "system": "tetris"
+    },
+    {
+      "dataset": "jnc2",
+      "phase": "validation",
+      "seconds": 30493.04670358483,
+      "system": "tetris"
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 24929.3,
+      "system": "leap"
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 9221.18,
+      "system": "otif"
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 1179.68,
+      "system": "otif"
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "training",
+      "seconds": 3894.6423085424135,
+      "system": "tetris"
+    },
+    {
+      "dataset": "jnc6",
+      "phase": "validation",
+      "seconds": 25996.75337571001,
+      "system": "tetris"
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 20360.21,
+      "system": "leap"
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 10027.15,
+      "system": "otif"
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 1130.75,
+      "system": "otif"
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "training",
+      "seconds": 3400.2399213289373,
+      "system": "tetris"
+    },
+    {
+      "dataset": "jnc7",
+      "phase": "validation",
+      "seconds": 18708.012612975414,
+      "system": "tetris"
+    }
+  ]
+}

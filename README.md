@@ -1,206 +1,150 @@
-<p align="center">
-  <img src="assets/tetris-logo.svg" alt="Tetris" width="360">
-</p>
+# Reproduce the Tetris evaluation
 
-<h1 align="center">Tile-level Sampling for Efficient and High-Fidelity Video Object Tracking</h1>
+Tetris materializes object tracks from stored stationary-camera video on a single
+GPU server. The artifact includes the preparation, validation, and extraction
+pipeline, the datasets and reference detectors needed to run it, and the inputs
+and exporters for the paper's charts and tables.
 
-> The codebase still uses the legacy identifier `polyis` for directory names,
-> container names, and environment variables (`POLYIS_DATA`, `POLYIS_CACHE`).
-> Treat `polyis` and `Tetris` as the same project; only the public-facing
-> name has changed.
+## Docker setup
 
-## Overview
+Use a Linux host with an NVIDIA GPU, Docker Compose, and the NVIDIA Container
+Toolkit. Install the Hugging Face CLI on the host to download the datasets.
+Get a [Gurobi license](https://www.gurobi.com/academia/) for pruning and place
+it at `~/.gurobi/gurobi.lic`. The image supplies Gurobi 13.0.1 and the native
+library environment.
 
-Tetris materializes tracks from stored video captured by stationary cameras on
-a single GPU server.
-It targets *track materialization*: extracting reusable object tracks from
-raw video so that downstream queries do not have to rerun tracking. Detector
-calls dominate the cost of this workload, and stationary video gives Tetris a
-structural lever — large regions of every frame contain no objects of
-interest, and the regions that do tolerate different sampling rates.
+From the repository root on the Docker host:
 
-Tetris decomposes each video into a tile-level **polyomino** data model.
-Three operators run upstream of the user-provided detector:
-
-- **Classify** — a learned relevance classifier identifies tiles with
-  potential objects and groups them into polyominoes.
-- **Prune** — an integer linear program (ILP) drops polyominoes that are
-  redundant under a user-specified accuracy constraint.
-- **Pack** — the survivors are assembled into dense canvases that minimize
-  detector calls.
-
-Across 7 stationary-video datasets, Tetris stays within a 5% tracking-accuracy
-loss of a full-frame reference pipeline while delivering substantial
-throughput improvements over prior systems.
-
-## Paper
-
-Paper is currently under review. A link will be added on publication.
-
-## Citation
-
-Citation will be added on publication.
-
-## Prerequisites
-
-- **Docker** with the **NVIDIA Container Toolkit** (the pipeline depends on
-  CUDA inside the container).
-- **Git submodules** for the pinned third-party code. From the checkout, run
-  `git submodule update --init --recursive`.
-- **Gurobi license** mounted at `~/.gurobi/gurobi.lic`. The ILP-based pruning
-  stage and several Cython extensions link against Gurobi at build time.
-  Academic licenses are available at <https://www.gurobi.com/academia/>.
-- **OTIF dataset** (see [Datasets](#datasets)).
-
-## Setup
-
-The development environment is Docker-first. The repo ships a
-`docker-compose.yml` that extends `docker-compose.base.yml` and adds GPU
-reservations. You should not need to edit either file for a default install —
-just set the host paths via a `.env` file.
-
-### 1. Create a `.env` file at the repo root
-
-`docker-compose.base.yml` reads `${DATA}` and `${WORK}` from the environment
-to locate your dataset and work-area parents. Create `.env` next to
-`docker-compose.yml`:
-
-```bash
-# .env
-DATA=/absolute/path/to/your/data-parent
-WORK=/absolute/path/to/your/work-parent
+```sh
+git submodule update --init --recursive modules/TrackEval modules/lap
 ```
 
-The resulting mounts will be:
+Set `DATA` to an absolute directory on the host and put that same assignment
+in `.env` in the repository root. Docker mounts
+`$DATA/polyis-data` at `/polyis-data` and `$DATA/polyis-cache` at
+`/polyis-cache`. The data download commands below create these directories.
 
-| Host path                                | Container path     | Purpose                                  |
-| ---------------------------------------- | ------------------ | ---------------------------------------- |
-| `${DATA}/polyis-data`                    | `/polyis-data`     | Datasets, intermediate results, models   |
-| `${DATA}/polyis-cache`                   | `/polyis-cache`    | Per-stage caches and partial outputs     |
-| `${WORK}/../data/otif-dataset`           | `/otif-dataset`    | Raw OTIF videos                          |
-| `${HOME}/.gurobi/gurobi.lic`             | Gurobi license     | ILP solver license                       |
-
-`PAPER_DIR` and `SOTA_RESULTS` can be set in `.env` to mount a writable copy of
-the paper and the baseline result directory for figure rendering and
-comparisons. They map to `/polytris-paper` and `/sota-results`, respectively.
-
-### 2. Build and start the container
-
-```bash
+```sh
 docker compose up --detach --build
+docker compose exec polyis bash
 ```
 
-### 3. Enter the container
+From `/polyis` in that shell, build the native extensions before running the
+experiments:
 
-```bash
-./dock
-```
-
-This runs `docker exec -it polyis bash`. From inside the container the repo
-is mounted at `/polyis`.
-
-### 4. Build native extensions
-
-The pack/group/ILP modules are written in Cython and link against the Gurobi
-C library. Build them once after entering the container:
-
-```bash
-cd /polyis
+```sh
 python setup.py build_ext
 ```
 
-To rebuild from scratch:
+## Inputs and splits
 
-```bash
-python setup.py clean
-python setup.py build_ext
+| Datasets | Source layout in the container | Training / validation / test |
+| --- | --- | --- |
+| CalDoT1, CalDoT2, Amsterdam (`caldot1-y05`, `caldot2-y05`, `ams-y05`) | The [processed OTIF bundle](https://huggingface.co/datasets/tetris-db/otif-processed) provides the processed clips and canonical test annotations used by Tetris. The original inputs are available from the [OTIF project](https://favyen.com/otif/). | 60 / 60 / 60 per dataset, with filenames and split membership preserved in the bundle. |
+| B3D1–4 (`jnc0`, `jnc2`, `jnc6`, `jnc7`) | The [processed B3D bundle](https://huggingface.co/datasets/tetris-db/b3d-processed) provides the processed clips and human-verified test labels used by Tetris. The original footage is available from the [upstream B3D project](https://github.com/b3d-project/b3d). | 8 / 5 / 5 per junction, with filenames and split membership preserved in the bundle. |
+
+`python scripts/weights.py download` fetches the three YOLOv5 fine-tunes and the
+B3D RetinaNet checkpoint and checks their SHA-256 hashes. For details about how
+the B3D test labels were created, see the
+[human-reviewed labels and annotation workflow](https://anonymous.4open.science/r/tetris-b3d-human-annotation)
+and [Faster R-CNN pre-labeling code and weights](https://anonymous.4open.science/r/tetris-b3d-fasterrcnn).
+
+## Run one dataset end to end
+
+This example uses B3D1 (`jnc0`) and the paper's configuration grid. On the
+Docker host, set `DATA` to the same absolute path as in `.env`. The dataset is
+public and can be downloaded without signing in to Hugging Face. Copy the
+clips and scoring inputs into fresh data and cache volumes.
+
+```sh
+set -e
+: "${DATA:?Set DATA to the data parent from .env}"
+bundle=$(mktemp -d)
+hf download tetris-db/b3d-processed --repo-type dataset \
+    --revision 8b169c08266c8c78515112735051067f2a4abd4c --local-dir "$bundle"
+mkdir -p "$DATA/polyis-data/datasets" "$DATA/polyis-cache"
+cp -a "$bundle/datasets/." "$DATA/polyis-data/datasets/"
+cp -a "$bundle/groundtruth/." "$DATA/polyis-cache/"
 ```
 
-The Docker image installs the Gurobi 13.0.1 native library and sets
-`GUROBI_HOME=/opt/gurobi1301/linux64`. Mount your own Gurobi license before running
-pruning.
+After [setting up Docker and building the native extensions](#docker-setup),
+run these commands inside the container from `/polyis`:
 
-### 5. Run the test suite
-
-```bash
-pytest tests/ -v
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc0
+bash reproduce/validate.sh jnc0 validation.json
+bash reproduce/test.sh jnc0 validation.json
 ```
 
-A focused subset for the packing extension:
+- `train.sh` generates training detections, trains the relevance classifier,
+  and profiles the per-tile sampling limits.
+- `validate.sh` runs the configured sweep on validation clips and writes JSON
+  with the config, throughput in FPS, HOTA, and Pareto membership for each
+  variant. The Pareto set includes the configurations needed for the paper's
+  ablations.
+- `test.sh` takes that JSON and runs the marked Pareto configurations on test
+  clips. Pass a third argument, a `variant_id` from the JSON, to test just that
+  configuration. The script writes per-clip tracking JSONL and the dataset's
+  evaluation `090_tradeoff/tradeoff.csv` under `/polyis-cache`.
 
-```bash
-pytest tests/pack -v
+Paths passed to the wrappers are relative to the checkout or absolute. Reuse
+the trained artifacts and the same sweep config across validation and test.
+Each dataset's cache should have one active writer. For another dataset, stage
+its splits and test annotations and use its name in the same three scripts.
+
+For CalDoT1, CalDoT2, or Amsterdam, substitute this command for the B3D
+download above and use the same `datasets/` and `groundtruth/` copy steps.
+
+```sh
+hf download tetris-db/otif-processed --repo-type dataset \
+    --revision 98d1809eb4d367032e878f53bdd584103776e34a --local-dir "$bundle"
 ```
 
-## Datasets
+On the Docker host, create the configuration names as relative symlinks in
+the data volume:
 
-The evaluation covers seven stationary-camera datasets:
-
-```
-caldot1-y05  caldot2-y05  jnc0  jnc2  jnc6  jnc7  ams-y05
-```
-
-See [Reproduction](REPRODUCE.md) for source layouts, split rules, model
-weights, an end-to-end example, and the figure and table commands.
-
-## Pipeline Overview
-
-The extraction pipeline has five stages, mirroring the architecture in
-the paper:
-
-```
-Decode -> Classify -> [Prune] -> Compress -> Detect+Uncompress -> Track
+```sh
+cd "$DATA/polyis-data/datasets"
+ln -s caldot1 caldot1-y05
+ln -s caldot2 caldot2-y05
+ln -s ams ams-y05
 ```
 
-Each stage has a standalone script under `scripts/` and a streaming
-implementation under `execution/`. Pick the entrypoint that matches your use
-case:
+Inside Docker, run `python scripts/weights.py download` for the YOLOv5
+checkpoints and pass the corresponding configuration name to the runners.
 
-| Mode               | Command                                  | Notes                                                                          |
-| ------------------ | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| Pipeline-parallel  | `./run execution/main.py --test`         | One pipeline per GPU. |
-| Per-stage scripts  | `./run scripts/p020_exec_classify.py`    | Useful for debugging a single stage. See each script's `--help`.               |
-| Paper reproduction | [Train, validate, and test](REPRODUCE.md#run-one-dataset-end-to-end) | One dataset at a time, with a validation JSON for test selection. |
+## Generate figures and tables
 
-The full reproduction recipe also involves three other phases that are
-orthogonal to the online pipeline:
+From `/polyis` inside the Docker container, run the chart and table exporters:
 
-- **Tuning** (`scripts/p011`–`p017_tune_*.py`): trains the relevance
-  classifier, learns per-tile sampling thresholds, and selects baselines.
-- **Preprocessing** (`preprocess/p000`–`p008_preprocess_*.py`): builds
-  ground-truth detections, naive baselines, and torchvision/ultralytics
-  training sets.
-- **Evaluation** (`evaluation/p1**`–`evaluation/p2**`): computes accuracy
-  and throughput, runs comparisons against OTIF and other SOTA trackers,
-  and produces the figures in the paper.
-
-Every entrypoint takes `--help`. Use it.
-
-## Repository Layout
-
-```
-polyis/         Core library: Cython modules, models, trackers, IO helpers
-scripts/        Per-stage offline tuning + online execution scripts
-reproduce/      Per-dataset experiment and figure/table entry points
-preprocess/     Dataset prep, ground truth, baseline tracking
-execution/      Pipeline-parallel runtime (execution/main.py is the entrypoint)
-evaluation/     Metric computation, comparisons, paper-figure generators
-configs/        Global config, detector/tracker registry, sync config
-tests/          Pytest suite (Cython, ILP, trackers, evaluation)
-modules/        Pinned third-party submodules, including TrackEval
-measurements/   Run aggregation and analysis
-measurements-gpu/ GPU launchers for revision experiments
-measurements-results/ Saved evidence used by aggregators and paper exporters
-paper           Symlink to the paper checkout mounted at /polytris-paper
+```sh
+bash reproduce/render.sh fig2 fig7 fig8 fig9 fig10 fig11 fig12 table2 response-tables
 ```
 
-In-container conventions:
+Pass individual targets to export only the outputs you need. Figure 2 uses
+the clips and test annotations from both public dataset bundles above. The
+other targets use the saved benchmark results shipped with the artifact.
+The render command uses a temporary cache for the saved results and writes
+the exported figures and table rows to `paper/figures/generated/`.
 
-- Project root: `/polyis`
-- Data: `/polyis-data` (env var `POLYIS_DATA`)
-- Cache: `/polyis-cache` (env var `POLYIS_CACHE`)
+| Target | Paper output |
+| --- | --- |
+| `fig2` | Stationary-camera observations |
+| `fig7` | Mistrack rate and sampling gap |
+| `fig8` | End-to-end HOTA and throughput |
+| `fig9` | Preparation cost and amortization |
+| `fig10` | Classifier and packing results |
+| `fig11` | Sampling ablation |
+| `fig12` | Extraction runtime breakdown |
+| `table2` | Native query comparison |
+| `response-tables` | LEAP reconstruction, resolution scaling, padding, and preparation |
 
-## Development
+Figures 1 and 3–5 are static PDFs in `paper/figures/`. Figure 6 and appendix
+Figures 13–15 use the TikZ sources in the same directory. Table 1 is the
+experiment configuration table. Its sweep settings are in `configs/global.yaml`.
 
-See [`AGENTS.md`](./AGENTS.md) for coding conventions, the dev workflow,
-commit guidelines, and tips for working with Docker on a shared host.
+The chart scripts and paper-side evidence are from manuscript revision
+`0532af685e3f6f46c97120673be1804d7401269d`. The artifact carries the saved
+Tetris, OTIF, and LEAP results used for the chart and table exports.

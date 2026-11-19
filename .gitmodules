@@ -1,16 +1,13 @@
 [submodule "modules/TrackEval"]
 	path = modules/TrackEval
-	url = git@github.com:chanwutk/TrackEval.git
+	url = https://github.com/chanwutk/TrackEval.git
 [submodule "modules/darknet"]
 	path = modules/darknet
-	url = git@github.com:chanwutk/darknet.git
+	url = https://github.com/chanwutk/darknet.git
 	branch = otif/titan-xp
 [submodule "modules/vision_references"]
 	path = modules/vision_references
-	url = git@github.com:chanwutk/vision_references.git
+	url = https://github.com/chanwutk/vision_references.git
 [submodule "modules/lap"]
 	path = modules/lap
-	url = git@github.com:chanwutk/lap.git
-[submodule "baselines/tetris-leap"]
-	path = baselines/tetris-leap
-	url = git@github.com:chanwutk/tetris-leap.git
+	url = https://github.com/chanwutk/lap.git

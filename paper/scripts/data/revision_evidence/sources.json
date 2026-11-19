@@ -1,0 +1,132 @@
+[
+  {
+    "file": "classifier_matched.json",
+    "source": "../tetris/measurements-results/r9o1_matched_timing/matched_timing.json",
+    "sha256": "b83d333e8af39b90ecb5f3b113f4048858e38328fe14f21adb32eeca55daf3ac"
+  },
+  {
+    "file": "operator_share.json",
+    "source": "../tetris/measurements-results/r9o1_classifier_cost/operator_share.json",
+    "sha256": "75ec2c65099678d8d20c791fb378079cd2a8947c1b651675b271795343a8688c"
+  },
+  {
+    "file": "ilp_sizes.json",
+    "source": "../tetris/measurements-results/r9o3_ilp_instance_sizes/summary.json",
+    "sha256": "9596a0b2d54789a39e0c092547418eb785607dc47ced1e2f6f944161f8fe02d0"
+  },
+  {
+    "file": "ilp_timing.json",
+    "source": "../tetris/measurements-results/r9o3_ilp_timings/ilp_timings.json",
+    "sha256": "acca90f09d1459a6d1914dc4e80064ab7ae9fee52504f4e0ad71bb2e71cd2cda"
+  },
+  {
+    "file": "preparation.json",
+    "source": "../tetris/measurements-results/r9o2_preparation_cost/preparation_cost.json",
+    "sha256": "a350b2f7499343a595ec206c8c56b5c73dcfc4b22b04f35a8adbb76af74baccf"
+  },
+  {
+    "file": "preparation_overheads.json",
+    "source": "../tetris/measurements-results/r9o2_preparation_overheads/preparation_overheads.json",
+    "sha256": "22c3431060aa2c4b76faec6b2be86d98fe8742983f2ee0c79f41be97afeeb429"
+  },
+  {
+    "file": "packing.json",
+    "source": "../tetris/measurements-results/r1o4_oracle_packing/sr16/summary.json",
+    "sha256": "3bc474c0deb1f5e284401155c5d55716b786b8a8c865174e675c109fa97e1499"
+  },
+  {
+    "file": "packing_map.json",
+    "source": "../tetris/measurements-results/r1o4_packing_detection_accuracy/map.json",
+    "sha256": "f0d3c4692c2f0eeb46d07f553b307854f7709c73e7998c30f5a23f89a4421360"
+  },
+  {
+    "file": "gaps.json",
+    "source": "../tetris/measurements-results/r1o5_gap_tolerance/gap_tolerance.json",
+    "sha256": "0c8af8d78508cd2469b2166ca17c302f16652d28d0788f1a70b15ae202cd6376"
+  },
+  {
+    "file": "native_queries.json",
+    "source": "../tetris/measurements-results/r1o2_leap_native_queries/operating_points.json",
+    "sha256": "25a2189201d1ed628f105525bfbf33d5e61e4d682cd8d208d0b42818891ce5b8"
+  },
+  {
+    "file": "count_query.json",
+    "source": "../tetris/measurements-results/r1o2_count_query/operating_points.json",
+    "sha256": "a78c615e15d69f22b4b6e10d94990fa0f42cc786b1b0391803e4525aec872f6b"
+  },
+  {
+    "file": "matched_points.json",
+    "source": "../tetris/measurements-results/r7o1_hota_matched_speedup/matched_speedup.json",
+    "sha256": "1b081c4116e1610adf7e0be6ee4f8ed305768cf9ec86e110c91ec30235bd6e3b"
+  },
+  {
+    "file": "leap_rerun.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "d3c2b9f71b06990f3c2a0dd3814e1964018d1946a8ff9e85864a8367caea5ee6"
+  },
+  {
+    "file": "leap_anchored_hota.json",
+    "source": "ace polyis /tmp/leap-anchored-hota-ug9z5jgd/results.json; canonical padded HOTA",
+    "sha256": "d822b18c019027f7b1d79212f29e8e373c33fc43d0a15edc180a50ce63c84548"
+  },
+  {
+    "file": "baseline_preparation.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "84cb1dbf38155aef7578d28accc02ca1abd5bf1560f83c43d3ea6012c4a6e415"
+  },
+  {
+    "file": "extraction_configs.json",
+    "source": "scripts/refresh_leap_matched.py; scripts/refresh_extraction_hota.py; matched_detector_sources.json",
+    "sha256": "9a4f4edf6a9ff886304f420a4846a0652a0f43420c62f09a8f99e4c596ed3cd4"
+  },
+  {
+    "file": "native_intervals.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "f9d4fd5d5793c5e5e7e676890e6f1d470659606e69b61a4df85154d173573a4c"
+  },
+  {
+    "file": "matched_detector_sources.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "1892d65080b287f2cee5780b9963b20ffd419e9089828807866d59737a1baff9"
+  },
+  {
+    "file": "native_query_configs.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "96152f2d245c7344a19b2e034d2fce926c7bbd4232e71de8e4d61ac6f34498c5"
+  },
+  {
+    "file": "leap_canonical.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "af4076b76196e55058b23a0e7e66e8ed119b7292b4b791bdc6a57c3b45bbff6c"
+  },
+  {
+    "file": "leap_sampling_diagnostics.json",
+    "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/all_datasets.json",
+    "sha256": "916985fe31d680d3e08a109daf0e5d3a9217e543604ca185cbfd359d0f5e1bed"
+  },
+  {
+    "file": "leap_second_observation.json",
+    "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/second_observation.json",
+    "sha256": "33c293dd794418e43af9a2a79a3dc7fdda20708b1c56bdcab2a660e839ea4d97"
+  },
+  {
+    "file": "leap_duration_variability.json",
+    "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/duration_variability.json",
+    "sha256": "9a981a24160995dba39376540ca9b9701b85863e202336270ff3d336eb889ad3"
+  },
+  {
+    "file": "leap_sampling_explanation.json",
+    "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/explanation.json",
+    "sha256": "31d700e015f2fd3fac16a01e2d2442cb73fabd063048c948e1d7c27701998ec6"
+  },
+  {
+    "file": "packing_untimed.json",
+    "source": "../tetris/measurements-results/r9o2_packing_untimed/packing_untimed.json",
+    "sha256": "e99e7c9ad2b55c562949479a223beeb5e3405de7b45c8b88e778f3492a3e9ada"
+  },
+  {
+    "file": "preparation_total.json",
+    "source": "../tetris/measurements-results/r9o2_preparation_total/preparation_total.json",
+    "sha256": "2ed1cbfc5ad7d7fd136ae82f43fdec10558878b44af67c60fecf158171c833cf"
+  }
+]

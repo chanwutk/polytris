@@ -1,0 +1,137 @@
+{
+  "generator": "scripts/refresh_leap_matched.py",
+  "files": [
+    {
+      "path": "/polyis-cache/caldot1-y05/evaluation/090_tradeoff/tradeoff.csv",
+      "sha256": "dad6582d38cebe9676eae2dd4f64d1904652ecd3ff2ae1456a75b9dac1d21ce6"
+    },
+    {
+      "path": "/polyis-cache/caldot2-y05/evaluation/090_tradeoff/tradeoff.csv",
+      "sha256": "af986b34fb4e401141d7204a2028908ecda35079603d50dad7233caa3ac3eecf"
+    },
+    {
+      "path": "/polyis-cache/ams-y05/evaluation/090_tradeoff/tradeoff.csv",
+      "sha256": "cb69d7940336c9bf14dfb463c728981985d4d2f8dafec2aad862dc8a8c2264fa"
+    },
+    {
+      "path": "/polyis-cache/jnc0/evaluation/090_tradeoff/tradeoff.csv",
+      "sha256": "40454c5e4febf4dd540ddca2423f88e067fdf24438e664387f081ccd249bda72"
+    },
+    {
+      "path": "/polyis-cache/jnc2/evaluation/090_tradeoff/tradeoff.csv",
+      "sha256": "eab8145e5be5a4bf90abe9a11672d0192a6e913cfe9fde485191158cb3247456"
+    },
+    {
+      "path": "/polyis-cache/jnc6/evaluation/090_tradeoff/tradeoff.csv",
+      "sha256": "adfa735b6eb988300d1b88ac4ce9157ae85453eae64fbdd0184daeb7a84c3044"
+    },
+    {
+      "path": "/polyis-cache/jnc7/evaluation/090_tradeoff/tradeoff.csv",
+      "sha256": "518a80f66233350ef9182ace24de4688053d7e9bf6c4bf70fd57cac1dd9ec296"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/results-ams-y05.json",
+      "sha256": "35a843c3d21ceaa3d0c253b8410e8575928f492aebf04beafb230c526202c978"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/speed-ams-y05.tsv",
+      "sha256": "baf3e56eb3bd7025115244a6e1b720166681b9dc14cd12941de119b9ddccd629"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/manifest-ams-y05.json",
+      "sha256": "0d6453da8dd2c0c4158d3b16c1a445ba89bbe454e551f99ddafb80cc61d7c50a"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/results-caldot1-y05.json",
+      "sha256": "71c936acfa7a35cf51ff22b71154beb270601ac3003cfb7ed5a3f2659a6bdd5d"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/speed-caldot1-y05.tsv",
+      "sha256": "ce7bcb3446b3f83ba4133e7b233e1777c52fc83c8728eeb307d9dbec40ea5a8b"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/manifest-caldot1-y05.json",
+      "sha256": "46634b8fa020c2ff9e6ea1da044290412222745e6e1e94a493345725600fb993"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/results-caldot2-y05.json",
+      "sha256": "bf0a710308ea9ff18b706136e957624ceb3dee8f65db6eb061156f331cf9e578"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/speed-caldot2-y05.tsv",
+      "sha256": "ab5e6999026235a6db295affbf6e374e3bd29e33cc11cd6342e95b619b0d3bf2"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/manifest-caldot2-y05.json",
+      "sha256": "7e3844fbdfabc86a755037623d2129adc88d41f995ce7d5bd11a13e018cef912"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/comparison/results.json",
+      "sha256": "8d73ed0d8c6a69ed3d306283256f5688113df3a78b12d6c826402abde3e45cd8"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/summary/native_intervals.json",
+      "sha256": "1d41eca5248205574dc9d2f3dc9fffc65a683c1f09ecdfad5cb9c685b0e5fa85"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_regions_v2/inputs.json",
+      "sha256": "2b9682be98c1ac0510859fb1465927cff9704ef5e5538a9d357e98561323762e"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_unmasked/comparison/results.json",
+      "sha256": "c9e014f92cd64d80a88b60c65794825ac83f8fe0a4ff3a2b2407ca960f793f56"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_unmasked/summary/native_intervals.json",
+      "sha256": "161ad2b763de7e85ae29bfa8f76c803e216badcf00065d9c174b3d69f3aee7cc"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_unmasked/inputs.json",
+      "sha256": "0f1e294ac91638b99e74c4d304038f0d35c5669d2d4c3c970d3563f7333c44d1"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_unmasked/comparison/results.json",
+      "sha256": "c9e014f92cd64d80a88b60c65794825ac83f8fe0a4ff3a2b2407ca960f793f56"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_unmasked/summary/native_intervals.json",
+      "sha256": "161ad2b763de7e85ae29bfa8f76c803e216badcf00065d9c174b3d69f3aee7cc"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_unmasked/inputs.json",
+      "sha256": "0f1e294ac91638b99e74c4d304038f0d35c5669d2d4c3c970d3563f7333c44d1"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/caldot1-y05.json",
+      "sha256": "668a1776350e9b0049ac69d2b0e468f46f24ef07952e9f7f3c9c5dc555e1a72f"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/caldot2-y05.json",
+      "sha256": "695fcfcea69507734c473cbc3d9e9213f6a4007b985880deb4ee4431cd0f474f"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/ams-y05.json",
+      "sha256": "660fac2eb0a3943c7b53985e8c495a98c2e6d1d9f39231de1f658a27d271c894"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/jnc0.json",
+      "sha256": "80e7570697c753e54d23b43d227ab275e1fcad9c7ce710e12da5300b82484bd3"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/jnc2.json",
+      "sha256": "7022c8162ac6f20a34bfdfadb2a39e4f4f16584ec6e9c56e1de5ea0e2ad9c248"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/jnc6.json",
+      "sha256": "52715b82eaec105f9db960e6879b0e88fa2baa3e633692f54a528036f0534fbe"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_original_evaluator/jnc7.json",
+      "sha256": "ff62751ebbd77e16990f8c937ad2742c2b3d35bad0e275fc0f63c8bfcf1ec58d"
+    },
+    {
+      "path": "tetris/measurements-results/r1o2_leap_matched/summary/native_intervals.json",
+      "sha256": "c55806306bec99fdc51b70c58bacb17dab5727b9ca49357324352e6ac1580f94"
+    }
+  ]
+}
