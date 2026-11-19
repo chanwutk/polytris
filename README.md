@@ -22,7 +22,7 @@ git submodule update --init --recursive modules/TrackEval modules/lap
 Set `DATA` to an absolute directory on the host and put that same assignment
 in `.env` in the repository root. Docker mounts
 `$DATA/polyis-data` at `/polyis-data` and `$DATA/polyis-cache` at
-`/polyis-cache`. The data download commands below create these directories.
+`/polyis-cache`. The download script creates these directories.
 
 ```sh
 docker compose up --detach --build
@@ -43,28 +43,30 @@ python setup.py build_ext
 | CalDoT1, CalDoT2, Amsterdam (`caldot1-y05`, `caldot2-y05`, `ams-y05`) | The [processed OTIF bundle](https://huggingface.co/datasets/tetris-db/otif-processed) provides the processed clips and canonical test annotations used by Tetris. The original inputs are available from the [OTIF project](https://favyen.com/otif/). | 60 / 60 / 60 per dataset, with filenames and split membership preserved in the bundle. |
 | B3D1–4 (`jnc0`, `jnc2`, `jnc6`, `jnc7`) | The [processed B3D bundle](https://huggingface.co/datasets/tetris-db/b3d-processed) provides the processed clips and human-verified test labels used by Tetris. The original footage is available from the [upstream B3D project](https://github.com/b3d-project/b3d). | 8 / 5 / 5 per junction, with filenames and split membership preserved in the bundle. |
 
-`python scripts/weights.py download` fetches the three YOLOv5 fine-tunes and the
-B3D RetinaNet checkpoint and checks their SHA-256 hashes. For details about how
-the B3D test labels were created, see the
+On the Docker host, download and stage all seven datasets and their test labels
+with one command. The script uses the pinned public bundles and creates the
+`caldot1-y05`, `caldot2-y05`, and `ams-y05` symlinks automatically.
+
+```sh
+bash reproduce/download.sh "$DATA"
+```
+
+Pass `b3d` or `otif` after `"$DATA"` to download just that bundle.
+The script skips identical files and stops if an existing file differs.
+
+Inside Docker, `python scripts/weights.py download` fetches and verifies all
+four detector checkpoints. For details about how the B3D test labels were
+created, see the
 [human-reviewed labels and annotation workflow](https://anonymous.4open.science/r/tetris-b3d-human-annotation)
 and [Faster R-CNN pre-labeling code and weights](https://anonymous.4open.science/r/tetris-b3d-fasterrcnn).
 
 ## Run one dataset end to end
 
-This example uses B3D1 (`jnc0`) and the paper's configuration grid. On the
-Docker host, set `DATA` to the same absolute path as in `.env`. The dataset is
-public and can be downloaded without signing in to Hugging Face. Copy the
-clips and scoring inputs into fresh data and cache volumes.
+This example uses B3D1 (`jnc0`) and the paper's configuration grid. Download
+the B3D bundle on the Docker host if you have yet to stage it.
 
 ```sh
-set -e
-: "${DATA:?Set DATA to the data parent from .env}"
-bundle=$(mktemp -d)
-hf download tetris-db/b3d-processed --repo-type dataset \
-    --revision 8b169c08266c8c78515112735051067f2a4abd4c --local-dir "$bundle"
-mkdir -p "$DATA/polyis-data/datasets" "$DATA/polyis-cache"
-cp -a "$bundle/datasets/." "$DATA/polyis-data/datasets/"
-cp -a "$bundle/groundtruth/." "$DATA/polyis-cache/"
+bash reproduce/download.sh "$DATA" b3d
 ```
 
 After [setting up Docker and building the native extensions](#docker-setup),
@@ -91,29 +93,10 @@ bash reproduce/test.sh jnc0 validation.json
 
 Paths passed to the wrappers are relative to the checkout or absolute. Reuse
 the trained artifacts and the same sweep config across validation and test.
-Each dataset's cache should have one active writer. For another dataset, stage
-its splits and test annotations and use its name in the same three scripts.
-
-For CalDoT1, CalDoT2, or Amsterdam, substitute this command for the B3D
-download above and use the same `datasets/` and `groundtruth/` copy steps.
-
-```sh
-hf download tetris-db/otif-processed --repo-type dataset \
-    --revision 98d1809eb4d367032e878f53bdd584103776e34a --local-dir "$bundle"
-```
-
-On the Docker host, create the configuration names as relative symlinks in
-the data volume:
-
-```sh
-cd "$DATA/polyis-data/datasets"
-ln -s caldot1 caldot1-y05
-ln -s caldot2 caldot2-y05
-ln -s ams ams-y05
-```
-
-Inside Docker, run `python scripts/weights.py download` for the YOLOv5
-checkpoints and pass the corresponding configuration name to the runners.
+Each dataset's cache should have one active writer. For CalDoT1, CalDoT2, or
+Amsterdam, stage the OTIF bundle and run `python scripts/weights.py download`
+inside Docker. Pass `caldot1-y05`, `caldot2-y05`, or `ams-y05` to the same
+three runners.
 
 ## Generate figures and tables
 
