@@ -62,7 +62,7 @@
   {
     "file": "leap_rerun.json",
     "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
-    "sha256": "d3c2b9f71b06990f3c2a0dd3814e1964018d1946a8ff9e85864a8367caea5ee6"
+    "sha256": "56bff78b93e08a86944b2cd5d09d812b44da6aeb8f8c4a5af7d31e27cfe3b6e9"
   },
   {
     "file": "leap_anchored_hota.json",
@@ -72,7 +72,7 @@
   {
     "file": "baseline_preparation.json",
     "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
-    "sha256": "84cb1dbf38155aef7578d28accc02ca1abd5bf1560f83c43d3ea6012c4a6e415"
+    "sha256": "5c5cc13773339a949eb561a37c9d12af1beaebf2b4bc7e317f559e84e1d61318"
   },
   {
     "file": "extraction_configs.json",
@@ -102,7 +102,7 @@
   {
     "file": "leap_sampling_diagnostics.json",
     "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/all_datasets.json",
-    "sha256": "916985fe31d680d3e08a109daf0e5d3a9217e543604ca185cbfd359d0f5e1bed"
+    "sha256": "961438bb75ca5671aafd144b586c9ab610330fe7cb560355c521a6a864889e48"
   },
   {
     "file": "leap_second_observation.json",
@@ -117,7 +117,7 @@
   {
     "file": "leap_sampling_explanation.json",
     "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/explanation.json",
-    "sha256": "31d700e015f2fd3fac16a01e2d2442cb73fabd063048c948e1d7c27701998ec6"
+    "sha256": "ab0b775f2fb2a933d0ed1906ba96e31a73c42955148f058c8660713c7e05bab1"
   },
   {
     "file": "packing_untimed.json",

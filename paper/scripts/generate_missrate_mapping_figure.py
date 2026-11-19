@@ -256,7 +256,7 @@ def main():
     parser.add_argument(
         "--artifact-dir",
         type=Path,
-        default=Path("/data/cwkt/data/polyis-cache/jnc7/indexing/track_rate/bytetrackcython_60"),
+        default=Path(__file__).resolve().parent / "data" / "missrate_figure_cache",
     )
     parser.add_argument(
         "--output", "-o",

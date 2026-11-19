@@ -1590,7 +1590,7 @@
         "files": 3,
         "bytes": 2391688
       },
-      "compare_error": "CalledProcessError(1, ['docker', 'run', '--rm', '--cpus', '2', '-v', '/data/cwkt/data/bombe-revision/scratch/r1o2_leap_otif_rerun/inputs/leap-dataset:/data/alenachao/data/leap-dataset:ro', '-v', '/data/cwkt/data/bombe-revision/scratch/r1o2_leap_otif_rerun/inputs/LEAP:/leap:ro', '-v', '/usr/bin/time:/opt/gnu-time:ro', '-e', 'PYTHONPATH=', '-v', '/data/cwkt/data/bombe-revision/scratch/r1o2_leap_otif_rerun:/scratch', '-v', '/work/cwkt/projects/tetris:/polyis', 'bombe-revision-leap:scored-env', 'python', '-c', 'import glob, json, numpy as np, sys; load = lambda d: {f.split(\"/\")[-1]: np.load(f, allow_pickle=True).tolist() for f in sorted(glob.glob(d + \"/*_clustered.npy\"))}; json.dump(dict(rerun=load(sys.argv[1]), scored=load(sys.argv[2]), scored_dir=sys.argv[2]), open(sys.argv[3], \"w\"), default=lambda v: v.tolist())', '/scratch/prep/leap/jnc0/motion_patterns/jnc0', '/data/alenachao/data/leap-dataset/motion_patterns/jnc0', '/polyis/measurements-results/r1o2_leap_otif_rerun/raw/prep/leap/jnc0/motion_patterns_compare.json'])",
+      "compare_error": "CalledProcessError(1, ['docker', 'run', '--rm', '--cpus', '2', '-v', '/data/benchmark/data/bombe-revision/scratch/r1o2_leap_otif_rerun/inputs/leap-dataset:/data/baseline/data/leap-dataset:ro', '-v', '/data/benchmark/data/bombe-revision/scratch/r1o2_leap_otif_rerun/inputs/LEAP:/leap:ro', '-v', '/usr/bin/time:/opt/gnu-time:ro', '-e', 'PYTHONPATH=', '-v', '/data/benchmark/data/bombe-revision/scratch/r1o2_leap_otif_rerun:/scratch', '-v', '/work/benchmark/projects/tetris:/polyis', 'bombe-revision-leap:scored-env', 'python', '-c', 'import glob, json, numpy as np, sys; load = lambda d: {f.split(\"/\")[-1]: np.load(f, allow_pickle=True).tolist() for f in sorted(glob.glob(d + \"/*_clustered.npy\"))}; json.dump(dict(rerun=load(sys.argv[1]), scored=load(sys.argv[2]), scored_dir=sys.argv[2]), open(sys.argv[3], \"w\"), default=lambda v: v.tolist())', '/scratch/prep/leap/jnc0/motion_patterns/jnc0', '/data/baseline/data/leap-dataset/motion_patterns/jnc0', '/polyis/measurements-results/r1o2_leap_otif_rerun/raw/prep/leap/jnc0/motion_patterns_compare.json'])",
       "wall_s": 20.5,
       "user_s": 259.1,
       "system_s": 2.47,
@@ -4550,19 +4550,19 @@
   "leap_motion_patterns": [
     {
       "dataset": "jnc2",
-      "scored_dir": "/data/alenachao/data/leap-dataset/motion_patterns/jnc2",
+      "scored_dir": "/data/baseline/data/leap-dataset/motion_patterns/jnc2",
       "rerun_clusters": 8,
       "scored_clusters": 16
     },
     {
       "dataset": "jnc7",
-      "scored_dir": "/data/alenachao/data/leap-dataset/motion_patterns/jnc7",
+      "scored_dir": "/data/baseline/data/leap-dataset/motion_patterns/jnc7",
       "rerun_clusters": 6,
       "scored_clusters": 11
     },
     {
       "dataset": "jnc6",
-      "scored_dir": "/data/alenachao/data/leap-dataset/motion_patterns/jnc6",
+      "scored_dir": "/data/baseline/data/leap-dataset/motion_patterns/jnc6",
       "rerun_clusters": 9,
       "scored_clusters": 4
     }

@@ -35,12 +35,6 @@ DATA_DIR = '/polyis-data/video-datasets'
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [60]
 
-GS_DATASETS_DIR = 'gs://polytris/polyis-data/datasets'
-GS_CACHE = 'gs://polytris/polyis-cache'
-
-GC_DATASETS_DIR = '/data/chanwutk/data/polyis-data/datasets'
-GC_CACHE = '/data/chanwutk/data/polyis-cache'
-
 # Define 10 distinct colors for track visualization (BGR format for OpenCV)
 TRACK_COLORS = [
     (255, 0, 0),    # Blue

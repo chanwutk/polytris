@@ -13,11 +13,10 @@ Get a [Gurobi license](https://www.gurobi.com/academia/) for pruning and place
 it at `~/.gurobi/gurobi.lic`. The image supplies Gurobi 13.0.1 and the native
 library environment.
 
-From the repository root on the Docker host:
-
-```sh
-git submodule update --init --recursive modules/TrackEval modules/lap
-```
+Download and extract the ZIP from the anonymous artifact page. The ZIP
+includes the pinned public dependencies TrackEval and LAP. Before building,
+check that it contains `modules/TrackEval/trackeval/__init__.py` and
+`modules/lap/_lapjv_cpp/lapjv.cpp`.
 
 Set `DATA` to an absolute directory on the host and put that same assignment
 in `.env` in the repository root. Docker mounts
@@ -40,8 +39,8 @@ python setup.py build_ext
 
 | Datasets | Source layout in the container | Training / validation / test |
 | --- | --- | --- |
-| CalDoT1, CalDoT2, Amsterdam (`caldot1-y05`, `caldot2-y05`, `ams-y05`) | The [processed OTIF bundle](https://huggingface.co/datasets/tetris-db/otif-processed) provides the processed clips and canonical test annotations used by Tetris. The original inputs are available from the [OTIF project](https://favyen.com/otif/). | 60 / 60 / 60 per dataset, with filenames and split membership preserved in the bundle. |
-| B3D1–4 (`jnc0`, `jnc2`, `jnc6`, `jnc7`) | The [processed B3D bundle](https://huggingface.co/datasets/tetris-db/b3d-processed) provides the processed clips and human-verified test labels used by Tetris. The original footage is available from the [upstream B3D project](https://github.com/b3d-project/b3d). | 8 / 5 / 5 per junction, with filenames and split membership preserved in the bundle. |
+| CalDoT1, CalDoT2, Amsterdam (`caldot1-y05`, `caldot2-y05`, `ams-y05`) | Processed OTIF clips and canonical test annotations. | 60 / 60 / 60 per dataset. |
+| B3D1–4 (`jnc0`, `jnc2`, `jnc6`, `jnc7`) | Processed B3D clips and the final human-verified test labels. | 8 / 5 / 5 per junction. |
 
 On the Docker host, download and stage all seven datasets and their test labels
 with one command. The script uses the pinned public bundles and creates the
@@ -55,10 +54,7 @@ Pass `b3d` or `otif` after `"$DATA"` to download just that bundle.
 The script skips identical files and stops if an existing file differs.
 
 Inside Docker, `python scripts/weights.py download` fetches and verifies all
-four detector checkpoints. For details about how the B3D test labels were
-created, see the
-[human-reviewed labels and annotation workflow](https://anonymous.4open.science/r/tetris-b3d-human-annotation)
-and [Faster R-CNN pre-labeling code and weights](https://anonymous.4open.science/r/tetris-b3d-fasterrcnn).
+four detector checkpoints.
 
 ## Run one dataset end to end
 
@@ -276,7 +272,3 @@ the exported figures and table rows to `paper/figures/generated/`.
 Figures 1 and 3–5 are static PDFs in `paper/figures/`. Figure 6 and appendix
 Figures 13–15 use the TikZ sources in the same directory. Table 1 is the
 experiment configuration table. Its sweep settings are in `configs/global.yaml`.
-
-The chart scripts and paper-side evidence are from manuscript revision
-`0532af685e3f6f46c97120673be1804d7401269d`. The artifact carries the saved
-Tetris, OTIF, and LEAP results used for the chart and table exports.

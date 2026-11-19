@@ -507,11 +507,11 @@
       "provenance": {
         "arguments": [
           "--config",
-          "/data/alenachao/data/leap-dataset/configs/amsterdam.yaml",
+          "/data/baseline/data/leap-dataset/configs/amsterdam.yaml",
           "--weight",
-          "/data/alenachao/data/leap-dataset/models/yolov5/ams-y05.pt",
+          "/data/baseline/data/leap-dataset/models/yolov5/ams-y05.pt",
           "--reid_weight",
-          "/data/alenachao/data/leap-dataset/logs",
+          "/data/baseline/data/leap-dataset/logs",
           "--video_dir",
           "/scratch/videos/ams-y05/test",
           "--log_dir",
@@ -524,7 +524,7 @@
           "--device",
           "0",
           "--motion_dir",
-          "/data/alenachao/data/leap-dataset/motion_patterns"
+          "/data/baseline/data/leap-dataset/motion_patterns"
         ],
         "clips": 60,
         "config": {
@@ -851,11 +851,11 @@
       "provenance": {
         "arguments": [
           "--config",
-          "/data/alenachao/data/leap-dataset/configs/caldot1.yaml",
+          "/data/baseline/data/leap-dataset/configs/caldot1.yaml",
           "--weight",
-          "/data/alenachao/data/leap-dataset/models/yolov5/caldot1-y05.pt",
+          "/data/baseline/data/leap-dataset/models/yolov5/caldot1-y05.pt",
           "--reid_weight",
-          "/data/alenachao/data/leap-dataset/logs",
+          "/data/baseline/data/leap-dataset/logs",
           "--video_dir",
           "/scratch/videos/caldot1-y05/test",
           "--log_dir",
@@ -868,7 +868,7 @@
           "--device",
           "0",
           "--motion_dir",
-          "/data/alenachao/data/leap-dataset/motion_patterns",
+          "/data/baseline/data/leap-dataset/motion_patterns",
           "--use_mask"
         ],
         "clips": 60,
@@ -1138,11 +1138,11 @@
       "provenance": {
         "arguments": [
           "--config",
-          "/data/alenachao/data/leap-dataset/configs/caldot2.yaml",
+          "/data/baseline/data/leap-dataset/configs/caldot2.yaml",
           "--weight",
-          "/data/alenachao/data/leap-dataset/models/yolov5/caldot2-y05.pt",
+          "/data/baseline/data/leap-dataset/models/yolov5/caldot2-y05.pt",
           "--reid_weight",
-          "/data/alenachao/data/leap-dataset/logs",
+          "/data/baseline/data/leap-dataset/logs",
           "--video_dir",
           "/scratch/videos/caldot2-y05/test",
           "--log_dir",
@@ -1155,7 +1155,7 @@
           "--device",
           "0",
           "--motion_dir",
-          "/data/alenachao/data/leap-dataset/motion_patterns",
+          "/data/baseline/data/leap-dataset/motion_patterns",
           "--use_mask"
         ],
         "clips": 60,
@@ -1597,11 +1597,11 @@
       "provenance": {
         "arguments": [
           "--config",
-          "/data/alenachao/data/leap-dataset/configs/jnc0.yaml",
+          "/data/baseline/data/leap-dataset/configs/jnc0.yaml",
           "--weight",
-          "/data/alenachao/data/leap-dataset/models/retinanet/retinanet_b3d.pth",
+          "/data/baseline/data/leap-dataset/models/retinanet/retinanet_b3d.pth",
           "--reid_weight",
-          "/data/alenachao/data/leap-dataset/logs",
+          "/data/baseline/data/leap-dataset/logs",
           "--video_dir",
           "/scratch/videos/jnc0/test",
           "--log_dir",
@@ -1614,7 +1614,7 @@
           "--device",
           "0",
           "--motion_dir",
-          "/data/alenachao/data/leap-dataset/motion_patterns",
+          "/data/baseline/data/leap-dataset/motion_patterns",
           "--use_retinanet"
         ],
         "clips": 5,
@@ -2020,11 +2020,11 @@
       "provenance": {
         "arguments": [
           "--config",
-          "/data/alenachao/data/leap-dataset/configs/jnc2.yaml",
+          "/data/baseline/data/leap-dataset/configs/jnc2.yaml",
           "--weight",
-          "/data/alenachao/data/leap-dataset/models/retinanet/retinanet_b3d.pth",
+          "/data/baseline/data/leap-dataset/models/retinanet/retinanet_b3d.pth",
           "--reid_weight",
-          "/data/alenachao/data/leap-dataset/logs",
+          "/data/baseline/data/leap-dataset/logs",
           "--video_dir",
           "/scratch/videos/jnc2/test",
           "--log_dir",
@@ -2037,7 +2037,7 @@
           "--device",
           "0",
           "--motion_dir",
-          "/data/alenachao/data/leap-dataset/motion_patterns",
+          "/data/baseline/data/leap-dataset/motion_patterns",
           "--use_retinanet"
         ],
         "clips": 5,
@@ -2329,11 +2329,11 @@
       "provenance": {
         "arguments": [
           "--config",
-          "/data/alenachao/data/leap-dataset/configs/jnc6.yaml",
+          "/data/baseline/data/leap-dataset/configs/jnc6.yaml",
           "--weight",
-          "/data/alenachao/data/leap-dataset/models/retinanet/retinanet_b3d.pth",
+          "/data/baseline/data/leap-dataset/models/retinanet/retinanet_b3d.pth",
           "--reid_weight",
-          "/data/alenachao/data/leap-dataset/logs",
+          "/data/baseline/data/leap-dataset/logs",
           "--video_dir",
           "/scratch/videos/jnc6/test",
           "--log_dir",
@@ -2346,7 +2346,7 @@
           "--device",
           "0",
           "--motion_dir",
-          "/data/alenachao/data/leap-dataset/motion_patterns",
+          "/data/baseline/data/leap-dataset/motion_patterns",
           "--use_retinanet"
         ],
         "clips": 5,
@@ -2708,11 +2708,11 @@
       "provenance": {
         "arguments": [
           "--config",
-          "/data/alenachao/data/leap-dataset/configs/jnc7.yaml",
+          "/data/baseline/data/leap-dataset/configs/jnc7.yaml",
           "--weight",
-          "/data/alenachao/data/leap-dataset/models/retinanet/retinanet_b3d.pth",
+          "/data/baseline/data/leap-dataset/models/retinanet/retinanet_b3d.pth",
           "--reid_weight",
-          "/data/alenachao/data/leap-dataset/logs",
+          "/data/baseline/data/leap-dataset/logs",
           "--video_dir",
           "/scratch/videos/jnc7/test",
           "--log_dir",
@@ -2725,7 +2725,7 @@
           "--device",
           "0",
           "--motion_dir",
-          "/data/alenachao/data/leap-dataset/motion_patterns",
+          "/data/baseline/data/leap-dataset/motion_patterns",
           "--use_retinanet"
         ],
         "clips": 5,
