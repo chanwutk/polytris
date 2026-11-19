@@ -158,9 +158,9 @@ case:
 
 | Mode               | Command                                  | Notes                                                                          |
 | ------------------ | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| Pipeline-parallel  | `./run execution/main.py --test`         | One pipeline per GPU. Modern entrypoint, replaces Phase 4 of `scripts/run.sh`. |
+| Pipeline-parallel  | `./run execution/main.py --test`         | One pipeline per GPU. |
 | Per-stage scripts  | `./run scripts/p020_exec_classify.py`    | Useful for debugging a single stage. See each script's `--help`.               |
-| Phase orchestrator | `bash scripts/run.sh`                    | Legacy two-pass (`--valid` then `--test`) driver. Most phases are commented out; uncomment what you need. |
+| Paper reproduction | [Train, validate, and test](REPRODUCE.md#run-one-dataset-end-to-end) | One dataset at a time, with a validation JSON for test selection. |
 
 The full reproduction recipe also involves three other phases that are
 orthogonal to the online pipeline:
@@ -181,6 +181,7 @@ Every entrypoint takes `--help`. Use it.
 ```
 polyis/         Core library: Cython modules, models, trackers, IO helpers
 scripts/        Per-stage offline tuning + online execution scripts
+reproduce/      Per-dataset experiment and figure/table entry points
 preprocess/     Dataset prep, ground truth, baseline tracking
 execution/      Pipeline-parallel runtime (execution/main.py is the entrypoint)
 evaluation/     Metric computation, comparisons, paper-figure generators

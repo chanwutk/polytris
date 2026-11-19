@@ -2057,7 +2057,7 @@ def get_config(config_name: str | None = None):
         config = yaml.load(f, Loader=yaml.FullLoader)
     # Optionally restrict every script to a subset of the configured datasets (comma-separated).
     subset = os.environ.get('POLYIS_DATASETS')
-    if subset is not None:
+    if subset is not None and 'DATASETS' in config.get('EXEC', {}):
         # Keep the requested datasets in the order given, dropping blanks.
         requested = [name.strip() for name in subset.split(',') if name.strip()]
         # Refuse an empty or unknown selection rather than silently processing nothing or the wrong data.

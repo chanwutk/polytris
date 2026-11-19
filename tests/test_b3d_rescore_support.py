@@ -17,6 +17,11 @@ def test_without_polyis_datasets_the_config_is_unchanged(monkeypatch):
     assert 'caldot1-y05' in get_config()['EXEC']['DATASETS']
 
 
+def test_dataset_selection_preserves_detector_registry(monkeypatch):
+    monkeypatch.setenv('POLYIS_DATASETS', 'caldot1-y05')
+    assert get_config('detectors.yaml')['dataset_name_mapping']['jnc0'] == 'b3d'
+
+
 @pytest.mark.parametrize('value', ['', ' , ', 'jnc0,jnc9', 'JNC0'])
 def test_polyis_datasets_rejects_empty_or_unknown_names(monkeypatch, value):
     monkeypatch.setenv('POLYIS_DATASETS', value)

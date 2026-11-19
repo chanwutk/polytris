@@ -2,8 +2,7 @@
 
 ## Overview
 
-This directory replaces **Phase 4** (test pass) of `scripts/run.sh` with a
-pipeline-parallel implementation.  Instead of running each stage
+This directory implements pipeline-parallel track extraction. Instead of running each stage
 (p020 -> p022 -> p030 -> p040 -> p050 -> p060) sequentially and writing
 intermediate results to disk, all stages run as concurrent processes
 connected by `torch.multiprocessing` queues.  Video frames stay on GPU

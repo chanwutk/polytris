@@ -2,9 +2,8 @@
 """
 Pipeline-parallel execution entrypoint.
 
-Replaces Phase 4 (test pass) of scripts/run.sh.  Iterates over
-Pareto-filtered parameter combinations, distributing one pipeline
-per GPU via ProgressBar.
+Iterates over Pareto-filtered parameter combinations, distributing one
+pipeline per GPU via ProgressBar.
 
 Usage:
     python execution/main.py --test
