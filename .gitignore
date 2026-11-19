@@ -39,8 +39,9 @@ det_otif
 
 **/.pytest_cache/
 
-.cursor/mcp.json
-.claude/.nfs*
+.DS_Store
+.env
+/sota-results/
 
 *.mp4
 

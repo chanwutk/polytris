@@ -32,23 +32,17 @@ includes:
 
   # Directories to sync (cross-product with extensions below)
   directories:
-    - ".claude"
-    - ".cursor"
-    - ".github"
-    - ".vscode"
     - "assets"
     - "configs"
     - "copy"
     - "evaluation"
     - "execution"
     - "ablation"
-    - "gcp"
     - "lib"
     - "polyis"
     - "preprocess"
     - "scripts"
     - "tests"
-    - "demo"
     - "measurements"
     - "measurements-gpu"
     - "baselines"

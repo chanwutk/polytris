@@ -11,7 +11,8 @@
 
 ## Overview
 
-Tetris is a video object-tracking system designed for **stationary cameras**.
+Tetris materializes tracks from stored video captured by stationary cameras on
+a single GPU server.
 It targets *track materialization*: extracting reusable object tracks from
 raw video so that downstream queries do not have to rerun tracking. Detector
 calls dominate the cost of this workload, and stationary video gives Tetris a
@@ -44,6 +45,8 @@ Citation will be added on publication.
 
 - **Docker** with the **NVIDIA Container Toolkit** (the pipeline depends on
   CUDA inside the container).
+- **Git submodules** for the pinned third-party code. From the checkout, run
+  `git submodule update --init --recursive`.
 - **Gurobi license** mounted at `~/.gurobi/gurobi.lic`. The ILP-based pruning
   stage and several Cython extensions link against Gurobi at build time.
   Academic licenses are available at <https://www.gurobi.com/academia/>.
@@ -77,10 +80,9 @@ The resulting mounts will be:
 | `${WORK}/../data/otif-dataset`           | `/otif-dataset`    | Raw OTIF videos                          |
 | `${HOME}/.gurobi/gurobi.lic`             | Gurobi license     | ILP solver license                       |
 
-`docker-compose.base.yml` also includes a few mounts that are specific to the
-author's environment (`/sota-results`, `/polytris-paper`). If you do not have
-those paths, comment out the corresponding lines. They are only required for
-SOTA comparisons and paper-figure rendering.
+`PAPER_DIR` and `SOTA_RESULTS` can be set in `.env` to mount a writable copy of
+the paper and the baseline result directory for figure rendering and
+comparisons. They map to `/polytris-paper` and `/sota-results`, respectively.
 
 ### 2. Build and start the container
 
@@ -114,9 +116,9 @@ python setup.py clean
 python setup.py build_ext
 ```
 
-Set `GUROBI_HOME` to your Gurobi install directory if `setup.py` cannot find
-it automatically (for example,
-`export GUROBI_HOME=/opt/gurobi1100/linux64`).
+The Docker image installs the Gurobi 13.0.1 native library and sets
+`GUROBI_HOME=/opt/gurobi1301/linux64`. Mount your own Gurobi license before running
+pruning.
 
 ### 5. Run the test suite
 
@@ -132,27 +134,18 @@ pytest tests/pack -v
 
 ## Datasets
 
-Tetris is evaluated on 7 stationary-camera splits drawn from the public
-[OTIF dataset](https://github.com/favyen2/otif):
+The evaluation covers seven stationary-camera datasets:
 
 ```
 caldot1-y05  caldot2-y05  jnc0  jnc2  jnc6  jnc7  ams-y05
 ```
 
-Place the OTIF tarballs under `${DATA}/../data/otif-dataset` so that they
-appear at `/otif-dataset` inside the container. Then materialize the
-tile-aligned splits and segmentations Tetris consumes:
-
-```bash
-./run preprocess/p000_preprocess_dataset.py --help
-./run preprocess/p001_preprocess_split.py --help
-```
-
-The active dataset list lives in `configs/global.yaml` under `EXEC.DATASETS`.
+See [Reproduction](REPRODUCE.md) for source layouts, split rules, model
+weights, an end-to-end example, and the figure and table commands.
 
 ## Pipeline Overview
 
-The online tracking pipeline has five stages, mirroring the architecture in
+The extraction pipeline has five stages, mirroring the architecture in
 the paper:
 
 ```
@@ -193,9 +186,11 @@ execution/      Pipeline-parallel runtime (execution/main.py is the entrypoint)
 evaluation/     Metric computation, comparisons, paper-figure generators
 configs/        Global config, detector/tracker registry, sync config
 tests/          Pytest suite (Cython, ILP, trackers, evaluation)
-modules/        Vendored third-party code (Detectron2, TrackEval, Darknet)
-demo/           Interactive visualization assets
-paper/          Manuscript source (LaTeX, anonymized for review)
+modules/        Pinned third-party submodules, including TrackEval
+measurements/   Run aggregation and analysis
+measurements-gpu/ GPU launchers for revision experiments
+measurements-results/ Saved evidence used by aggregators and paper exporters
+paper           Symlink to the paper checkout mounted at /polytris-paper
 ```
 
 In-container conventions:

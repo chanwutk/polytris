@@ -11,17 +11,11 @@ services:
     volumes:
       - .:/polyis
       - ${HOME}/.gurobi/gurobi.lic:/opt/gurobi/gurobi.lic:ro
-      # Change /data/chawutk/polyis-dataset to your local path
       - ${DATA}/polyis-data:/polyis-data
       - ${DATA}/polyis-cache:/polyis-cache
-      # - ${DATA}/otif-dataset:/otif-dataset
       - ${WORK}/../data/otif-dataset:/otif-dataset
-      - ${WORK}/polytris-paper:/polytris-paper
-      # - ${WORK}/../data/polytris-data:/polytris-data
-      - ${HOME}/.ssh:/root/.ssh
-      - ${HOME}/.config:/root/.config
-      - ${HOME}/.claude:/root/.claude
-      - /work/alenachao/tunnel/hota_outputs:/sota-results
+      - ${PAPER_DIR:-${WORK}/polytris-paper}:/polytris-paper
+      - ${SOTA_RESULTS:-./sota-results}:/sota-results
     tmpfs:
       - /tmp
     network_mode: "host"
