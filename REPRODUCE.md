@@ -28,9 +28,9 @@ and [Faster R-CNN pre-labeling code and weights](https://anonymous.4open.science
 ## Run one dataset end to end
 
 This example uses B3D1 (`jnc0`) and the paper's configuration grid. On the
-Docker host, set `DATA` to the same absolute path as in `.env`. Authenticate
-with Hugging Face using an account with access to the private dataset. Download
-the bundle and copy its clips and scoring inputs into fresh data and cache volumes.
+Docker host, set `DATA` to the same absolute path as in `.env`. The dataset is
+public and can be downloaded without signing in to Hugging Face. Copy the
+clips and scoring inputs into fresh data and cache volumes.
 
 ```sh
 set -e
