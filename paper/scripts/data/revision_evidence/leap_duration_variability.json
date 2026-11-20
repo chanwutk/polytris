@@ -1,5 +1,5 @@
 {
-  "method": "Population variance of (last-first+1)/15 seconds; tracks exclude both clip boundaries and last at least one second. B3D pooled combines B3D1-4; B3D labels are provisional.",
+  "method": "Population variance of (last-first+1)/15 seconds; tracks exclude both clip boundaries and last at least one second. B3D pooled combines B3D1-4; B3D labels are provisional. \"B3D pooled, all tracks\" keeps every B3D1-4 track, including those cut by a clip boundary (duration within the clip) and those shorter than one second.",
   "sources": [
     {
       "dataset": "caldot1-y05",
@@ -132,6 +132,17 @@
       "p10_s": 2.4266666666666667,
       "p50_s": 6.733333333333333,
       "p90_s": 10.386666666666665
+    },
+    {
+      "label": "B3D pooled, all tracks",
+      "tracks": 1320,
+      "mean_s": 15.413030303030306,
+      "stddev_s": 11.544068626220707,
+      "variance_s2": 133.26552044689325,
+      "coefficient_of_variation": 0.7489811152808196,
+      "p10_s": 3.786666666666667,
+      "p50_s": 13.4,
+      "p90_s": 26.813333333333354
     }
   ]
 }

@@ -25,6 +25,9 @@ DATASETS = {'ams-y05': 'Amsterdam', 'caldot1-y05': 'CalDoT1', 'caldot2-y05': 'Ca
             'jnc0': 'B3D1', 'jnc2': 'B3D2', 'jnc6': 'B3D3', 'jnc7': 'B3D4'}
 COLORS = {'tetris': '#008080', 'otif': '#d18400', 'leap': '#7556a6', 'reference': '#505050'}
 NAMES = {'tetris': 'Tetris', 'otif': 'OTIF', 'leap': 'LEAP', 'reference': 'Reference'}
+QUERIES = ('presence', 'count', 'topk')
+# §7.3 query baselines, in table order; NoScope answers frame selection only.
+BASELINES = ['otif', 'leap', 'seiden', 'noscope']
 # Pixel height of one dataset's three preparation bars and their margins.
 PREP_BAND = 16
 
@@ -186,6 +189,8 @@ def main():
     durations = read('leap_duration_variability')['rows']
     pooled = next(r for r in durations if r['label'] == 'B3D pooled')
     assert pooled['tracks'] == sum(r['tracks'] for r in durations if r['label'] in ('B3D1', 'B3D2', 'B3D3', 'B3D4'))
+    # The paper reports every B3D track, with clipped tracks measured within their clip.
+    pooled = next(r for r in durations if r['label'] == 'B3D pooled, all tracks')
     numbers.update(revisionLeapBThreeDVisibilityTenSeconds=f'{pooled["p10_s"]:.1f}',
                    revisionLeapBThreeDVisibilityNinetySeconds=f'{pooled["p90_s"]:.1f}')
     diagnostics = read('leap_sampling_diagnostics')['datasets']
@@ -243,102 +248,158 @@ def main():
     assert read('native_query_configs')['count_metric'] == 'MAPE'
     assert read('native_query_configs')['selection_metric'] == 'selection_query_1'
     assert read('native_query_configs')['topk_metric'] == 'top_k_query_1'
-    con.execute("""
-        CREATE TABLE query_points AS WITH metrics AS (
-            UNPIVOT (SELECT r.* FROM (SELECT unnest(records) AS r FROM read_json(?)))
-            ON presence, count, topk INTO NAME query VALUE score
-        ) SELECT *, CASE WHEN query='count' THEN -score ELSE score END AS quality FROM metrics
-    """, [str(DATA / 'native_query_configs.json')])
-    selected = con.execute("""
-        WITH anchors AS (
-            SELECT o.dataset,o.query,o.config AS otif_config,o.fps AS otif_fps,l.fps AS leap_fps
-            FROM query_points o JOIN query_points l USING(dataset,query)
-            WHERE o.system='otif' AND l.system='leap'
-            QUALIFY row_number() OVER (
-                PARTITION BY o.dataset,o.query ORDER BY abs(o.fps-l.fps),o.quality DESC,o.config
-            )=1
-        )
-        SELECT p.dataset,p.label,p.query,p.system,p.config,p.score,p.fps,a.otif_fps,a.leap_fps
-        FROM query_points p JOIN anchors a USING(dataset,query)
-        WHERE p.system='leap' OR (p.system='otif' AND p.config=a.otif_config)
-           OR (p.system='tetris' AND p.fps>greatest(a.otif_fps,a.leap_fps))
-        QUALIFY row_number() OVER (
-            PARTITION BY p.dataset,p.query,p.system ORDER BY abs(p.fps-a.leap_fps),p.quality DESC,p.config
-        )=1
-        ORDER BY p.label,p.query,p.system
-    """)
-    faster = [dict(zip([d[0] for d in selected.description], r)) for r in selected.fetchall()]
-    assert len(faster) == len(DATASETS) * 3 * 3
-    assert all(r['fps'] > max(r['otif_fps'], r['leap_fps']) for r in faster if r['system'] == 'tetris')
+    # Every system's operating points per (dataset, query): (fps, score, config).
+    points = {}
+    for r in read('native_query_configs')['records']:
+        if r['system'] in ('tetris', 'otif', 'leap'):
+            for query in QUERIES:
+                points.setdefault((r['dataset'], query, r['system']), []).append((r['fps'], r[query], r['config']))
+    for ds in DATASETS:
+        # Seiden: one index per clip, query, and budget fraction 1/k, a single run (seed 0) as in Seiden's experiments.
+        runs = {}
+        for r in json.loads((DATA / 'seiden' / f'{ds}.json').read_text())['records']:
+            if r['seed'] == 0:
+                runs.setdefault((r['query'], r['denominator']), []).append(r)
+        for (query, k), rs in runs.items():
+            assert len(rs) == 1, f'{ds} Seiden {query} 1/{k}: expected one seed-0 run'
+            fps = float(np.mean([r['fps'] for r in rs]))
+            scores = ({'presence': [r['selection']['f1'] for r in rs]} if query == 'presence' else
+                      {'count': [r['aggregation']['mape'] for r in rs], 'topk': [r['topk'] for r in rs]})
+            for metric, values in scores.items():
+                points.setdefault((ds, metric, 'seiden'), []).append((fps, float(np.mean(values)), f'1/{k}'))
+        # NoScope answers frame selection only, on the datasets it was trained for.
+        noscope = DATA / 'noscope' / f'{ds}.json'
+        if noscope.exists():
+            points[ds, 'presence', 'noscope'] = [(r['fps'], r['selection']['f1'], f"target {r['target']}")
+                                                 for r in json.loads(noscope.read_text())['records']]
+
+    def quality(query, score):
+        return -score if query == 'count' else score
+
+    def pareto(query, candidates):
+        """Operating points no other point matches or beats in both FPS and the query's own score."""
+        return [p for p in candidates if not any(
+            q[0] >= p[0] and quality(query, q[1]) >= quality(query, p[1])
+            and (q[0] > p[0] or quality(query, q[1]) > quality(query, p[1])) for q in candidates)]
+
+    # LEAP has one configuration. OTIF, Seiden, and NoScope take the Pareto point closest to LEAP in FPS; Tetris takes
+    # its slowest Pareto point faster than all of them. Each (dataset, query) is selected independently.
+    faster = []
+    for ds in DATASETS:
+        for query in QUERIES:
+            (leap_point,) = points[ds, query, 'leap']
+            chosen = {'leap': leap_point}
+            for system in (s for s in BASELINES if s != 'leap'):
+                if (ds, query, system) in points:
+                    chosen[system] = min(pareto(query, points[ds, query, system]),
+                                         key=lambda p: (abs(p[0] - leap_point[0]), -quality(query, p[1]), p[2]))
+            floor = max(p[0] for p in chosen.values())
+            chosen['tetris'] = min((p for p in pareto(query, points[ds, query, 'tetris']) if p[0] > floor),
+                                   key=lambda p: (p[0], -quality(query, p[1]), p[2]))
+            faster += [dict(dataset=ds, label=DATASETS[ds], query=query, system=system, config=p[2], score=p[1],
+                            fps=p[0]) for system, p in chosen.items()]
     lookup = {(r['dataset'], r['query'], r['system']): r for r in faster}
     order = ['caldot1-y05', 'caldot2-y05', 'jnc0', 'jnc2', 'jnc6', 'jnc7', 'ams-y05']
     rows = []
     for ds in order:
-        for system in ('tetris', 'otif', 'leap'):
-            assert len({(lookup[ds, query, system]['config'], lookup[ds, query, system]['fps'])
-                        for query in ('presence', 'count', 'topk')}) == 1
         cells = []
-        for query in ('presence', 'count', 'topk'):
-            for system in ('tetris', 'otif', 'leap'):
-                value = 100 * lookup[ds, query, system]['score']
-                cells.append(format(value, '.0f' if round(value, 1) >= 100 else '.1f'))
-        cells.extend(f"{lookup[ds, 'presence', system]['fps']:.0f}" for system in ('tetris', 'otif', 'leap'))
-        for start in range(0, len(cells), 3):
-            best = (min if start == 3 else max)(float(value) for value in cells[start:start + 3])
-            for index in range(start, start + 3):
-                if float(cells[index]) == best:
-                    cells[index] = r'\textbf{' + cells[index] + '}'
-        cells = [value + (' /' if index % 3 < 2 else '') for index, value in enumerate(cells)]
+        for query in QUERIES:
+            values = []
+            # NoScope answers selection only; its count and top-10 slots stay '--'.
+            for system in ['tetris', *BASELINES]:
+                if (ds, query, system) in lookup:
+                    value = 100 * lookup[ds, query, system]['score']
+                    values.append(format(value, '.0f' if round(value, 1) >= 100 else '.1f'))
+                else:
+                    values.append('--')
+            best = (min if query == 'count' else max)(float(v) for v in values if v != '--')
+            values = [r'\textbf{' + v + '}' if v != '--' and float(v) == best else v for v in values]
+            cells += [v + (' /' if i < len(values) - 1 else '') for i, v in enumerate(values)]
         rows.append([DATASETS[ds], *cells])
     table_rows('native_queries_faster_by_metric', rows)
-    groups = {key: [] for key in ('best', 'comparable', 'within5pp', 'lower')}
-    for ds in order:
-        for query in ('presence', 'count', 'topk'):
-            baseline = (min if query == 'count' else max)(
-                (lookup[ds, query, system] for system in ('otif', 'leap')), key=lambda r: r['score'])
-            # Decimal scores avoid inflating an exact ten-point gap through binary subtraction.
-            gain = 100 * (Decimal(str(lookup[ds, query, 'tetris']['score'])) - Decimal(str(baseline['score'])))
-            gain = -gain if query == 'count' else gain
-            groups[query_comparison(gain)].append(dict(
-                dataset=DATASETS[ds], query=query, baseline=baseline['system'], gain_pp=float(gain)))
-    total = len(order) * 3
-    largest_loss = max((Decimal(str(-r['gain_pp'])) for r in groups['lower']), default=Decimal(0))
-    groups['largest_gap'] = [r for r in groups['lower'] if Decimal(str(-r['gain_pp'])) == largest_loss]
-    groups['lower'] = [r for r in groups['lower'] if Decimal(str(-r['gain_pp'])) < largest_loss]
-    assert sum(map(len, groups.values())) == total
-    assert len(groups['largest_gap']) == 1, 'The query paragraph describes one largest-gap case'
-    max_loss = max((Decimal(str(-r['gain_pp'])) for r in groups['lower']), default=Decimal(0))
-    summary = dict(best_pct=100 * len(groups['best']) / total,
-                   comparable_pct=100 * len(groups['comparable']) / total,
-                   within5_pct=100 * len(groups['within5pp']) / total,
-                   largest_gap_count=len(groups['largest_gap']),
-                   largest_gap_pp=float(largest_loss.quantize(Decimal('0.1'), rounding=ROUND_CEILING)),
-                   remaining_pct=100 * len(groups['lower']) / total,
-                   remaining_max_gap_pp=float(max_loss.quantize(Decimal('0.1'), rounding=ROUND_CEILING)))
+    def compare(baselines):
+        """Group every (dataset, query) by Tetris's gain over the best of `baselines` there."""
+        groups = {key: [] for key in ('best', 'comparable', 'within5pp', 'lower')}
+        for ds in order:
+            for query in QUERIES:
+                baseline = (min if query == 'count' else max)(
+                    (lookup[ds, query, system] for system in baselines if (ds, query, system) in lookup),
+                    key=lambda r: r['score'])
+                # Decimal scores avoid inflating an exact ten-point gap through binary subtraction.
+                gain = 100 * (Decimal(str(lookup[ds, query, 'tetris']['score'])) - Decimal(str(baseline['score'])))
+                gain = -gain if query == 'count' else gain
+                groups[query_comparison(gain)].append(dict(
+                    dataset=DATASETS[ds], query=query, baseline=baseline['system'], gain_pp=float(gain)))
+        total = len(order) * len(QUERIES)
+        assert sum(map(len, groups.values())) == total
+
+        def max_loss(key):
+            return float(max((Decimal(str(-r['gain_pp'])) for r in groups[key]), default=Decimal(0)).quantize(
+                Decimal('0.1'), rounding=ROUND_CEILING))
+        summary = dict(best_pct=100 * len(groups['best']) / total,
+                       comparable_pct=100 * len(groups['comparable']) / total,
+                       within5_pct=100 * len(groups['within5pp']) / total,
+                       within5_max_gap_pp=max_loss('within5pp'),
+                       lower_pct=100 * len(groups['lower']) / total,
+                       lower_max_gap_pp=max_loss('lower'))
+        # The cases more than 5 points behind, largest first: the prose can name each one.
+        lower = sorted((Decimal(str(-r['gain_pp'])) for r in groups['lower']), reverse=True)
+        ceil = lambda v: float(v.quantize(Decimal('0.1'), rounding=ROUND_CEILING))
+        summary.update(comparable_count=len(groups['comparable']), lower_gaps_pp=[ceil(v) for v in lower])
+        return groups, summary
+
+    # Against the other track-materialization systems, then against every system.
+    comparisons = {'Query': compare(['otif', 'leap']), 'QueryAll': compare(BASELINES)}
+    # §7.3's all-systems sentence has no within-1-point clause and names the two cases more than 5 points behind.
+    all_summary = comparisons['QueryAll'][1]
+    assert all_summary['comparable_count'] == 0, 'all-systems prose omits the within-1-point clause'
+    assert len(all_summary['lower_gaps_pp']) == 2, 'all-systems prose names exactly two cases more than 5 points behind'
+    numbers.update(revisionQueryAllLowerSecondGapPp=f"{all_summary['lower_gaps_pp'][1]:g}")
+    # Tetris against LEAP alone (R1-O2): the response says Tetris is never less accurate than LEAP.
+    # Positive gain means Tetris is more accurate than LEAP (lower MAPE for counting, higher score otherwise).
+    leap_gains = [(lookup[ds, q, 'leap']['score'] - lookup[ds, q, 'tetris']['score']) * (1 if q == 'count' else -1)
+                  for ds in order for q in QUERIES]
+    assert all(g >= 0 for g in leap_gains), 'Tetris is less accurate than LEAP in some case'
+    numbers.update(revisionQueryLeapCases=str(len(leap_gains)),
+                   revisionQueryLeapBetterCount=str(sum(g > 0 for g in leap_gains)))
+    # Where NoScope's selected B3D point is below near-perfect F1, its throughput cost of the strictest (0%) target.
+    strict_costs = []
+    for ds in ('jnc0', 'jnc2', 'jnc6', 'jnc7'):
+        chosen = lookup[ds, 'presence', 'noscope']
+        if chosen['score'] < .99:
+            (strict,) = (p for p in points[ds, 'presence', 'noscope'] if p[2] == 'target 0.0')
+            assert strict[1] >= .99, f'{ds}: NoScope\'s strictest target is not near-perfect'
+            strict_costs.append(100 * (1 - strict[0] / chosen['fps']))
+    assert strict_costs
+    numbers.update(revisionNoScopeBThreeDStrictCostMin=f'{min(strict_costs):.0f}',
+                   revisionNoScopeBThreeDStrictCostMax=f'{max(strict_costs):.0f}')
     (OUT / 'revision_query_faster_throughput_data.json').write_text(json.dumps(dict(
-        source='scripts/data/revision_evidence/native_query_configs.json',
+        source='scripts/data/revision_evidence/native_query_configs.json, seiden/, noscope/',
         source_sha256=hashlib.sha256((DATA / 'native_query_configs.json').read_bytes()).hexdigest(),
-        selection='OTIF minimizes absolute FPS difference from LEAP. Tetris minimizes that difference '
-                  'among tested configurations strictly faster than both selected baselines. '
-                  'Ties prefer lower counting MAPE or higher other query scores, then configuration name. No query-score bound.',
+        selection='Per dataset and query, among each system\'s Pareto points for that query\'s own score: '
+                  'LEAP\'s single configuration; OTIF, Seiden, and NoScope closest to LEAP in FPS; Tetris the slowest '
+                  'faster than all of them. Ties prefer the better score, then configuration name.',
         count_metric='MAPE', selection_metric='selection_query_1', topk_metric='top_k_query_1', matches=faster,
-        comparison_basis='Saved scores before display rounding; compare Tetris against the better of OTIF and LEAP '
+        comparison_basis='Saved scores before display rounding; compare Tetris against the best of OTIF and LEAP '
+                         '(track) and against the best other system (all) '
                          'for each dataset and query. Positive gain favors Tetris. Best means gain >= 0, including exact ties. '
-                         'Nonzero losses of at most 1 pp are comparable; remaining losses are at most 5 pp or greater than 5 pp. '
-                         'The single largest loss is reported separately from the remaining greater-than-5-pp cases.',
-        comparison_groups=groups, percentage_summary=summary), indent=2) + '\n')
-    numbers.update(revisionQueryBestPct=f'{summary["best_pct"]:.1f}',
-                   revisionQueryComparablePct=f'{summary["comparable_pct"]:.1f}',
-                   revisionQueryWithinFivePct=f'{summary["within5_pct"]:.1f}',
-                   revisionQueryLargestGapCount=str(summary['largest_gap_count']),
-                   revisionQueryLargestGapPp=f'{summary["largest_gap_pp"]:g}',
-                   revisionQueryRemainingPct=f'{summary["remaining_pct"]:.1f}',
-                   revisionQueryRemainingMaxGapPp=f'{summary["remaining_max_gap_pp"]:g}')
+                         'Nonzero losses of at most 1 pp are comparable; remaining losses are at most 5 pp or greater than 5 pp.',
+        comparisons={'track' if prefix == 'Query' else 'all': dict(groups=groups, percentage_summary=summary)
+                     for prefix, (groups, summary) in comparisons.items()}), indent=2) + '\n')
+    for prefix, (_, summary) in comparisons.items():
+        # One decimal, without a trailing ".0" (81.0 -> 81).
+        pct = lambda v: f'{v:.1f}'.removesuffix('.0')
+        numbers.update({f'revision{prefix}BestPct': pct(summary['best_pct']),
+                        f'revision{prefix}ComparablePct': pct(summary['comparable_pct']),
+                        f'revision{prefix}WithinFivePct': pct(summary['within5_pct']),
+                        f'revision{prefix}WithinFiveMaxGapPp': f'{summary["within5_max_gap_pp"]:g}',
+                        f'revision{prefix}LowerPct': pct(summary['lower_pct']),
+                        f'revision{prefix}LowerMaxGapPp': f'{summary["lower_max_gap_pp"]:g}'})
     panels = []
     systems = ['tetris', 'otif', 'leap']
     query_titles = {'presence': 'Selection F1', 'count': 'Count MAPE', 'topk': 'Top-10 precision'}
     for query in ('presence', 'count', 'topk'):
-        values = [r for r in faster if r['query'] == query]
+        values = [r for r in faster if r['query'] == query and r['system'] in systems]
         domain = {'presence': [.8, 1], 'count': [0, 1.5], 'topk': [0, 1]}[query]
         ticks = {'presence': [.8, .9, 1], 'count': [0, .5, 1, 1.5], 'topk': [0, .5, 1]}[query]
         chart = alt.Chart(alt.Data(values=values)).mark_point(filled=True, size=45, opacity=.8).encode(

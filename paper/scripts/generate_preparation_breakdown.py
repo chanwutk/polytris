@@ -41,6 +41,6 @@ def fmt(h):
 
 lines = [' & '.join([row] + [fmt(hours[row, ds]) for ds in LABELS]) + r' \\' for row in ROWS]
 lines.append(r'\midrule')
-lines.append(' & '.join(['Total'] + [f'{totals[ds]:.1f}' for ds in LABELS]) + r' \\')
+lines.append(' & '.join(['Total (hours)'] + [f'{totals[ds]:.1f}' for ds in LABELS]) + r' \\')
 (out / 'revision_preparation_breakdown_rows.tex').write_text('\n'.join(lines) + '\n')
 print('\n'.join(lines))

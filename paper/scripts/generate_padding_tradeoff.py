@@ -2,8 +2,9 @@
 
 Source: scripts/data/revision_evidence/packing.json (the snapshot the revisionPacking* macros use; hashed in
 sources.json). Per dataset, at P=0 and P=1: the recall change from packing on retained content (packed minus original,
-percentage points) and the detection-call reduction from packing (sampled frames over canvases; each canvas has the
-frame's resolution, so the detector runs once per canvas instead of once per frame).
+percentage points) and the detector calls that remain after packing, as a percentage of the original pipeline's calls
+(canvases / sampled frames; each canvas has the frame's resolution, so the detector runs once per canvas instead of
+once per frame).
 Run on the host: python scripts/generate_padding_tradeoff.py
 """
 import json
@@ -23,6 +24,12 @@ rows = {(r['label'], r['padding']): r for r in json.loads(source.read_text())['r
 assert all((label, p) in rows for label in LABELS for p in PADDINGS)
 
 
+def calls(label, padding):
+    # Detector calls after packing as a percentage of the original: one call per canvas instead of one per frame.
+    r = rows[(label, padding)]
+    return 100 * r['canvases'] / r['sampled_frames']
+
+
 def recall_change(label, padding):
     # Packed minus original recall on the retained content, in percentage points.
     r = rows[(label, padding)]
@@ -37,20 +44,15 @@ def signed(x):
 # One row per measure and padding, one column per dataset.
 lines = [' & '.join([f'Recall change ($P$={k})'] + [signed(recall_change(l, p)) for l in LABELS]) + r' \\'
          for k, p in zip((0, 1), PADDINGS)]
-lines += [' & '.join([f'Fewer detector calls ($P$={k})']
-                     + [f"{rows[(l, p)]['sampled_frames'] / rows[(l, p)]['canvases']:.1f}$\\times$" for l in LABELS]) + r' \\'
+lines += [' & '.join([f'Detector calls, \\% of original ($P$={k})'] + [f'{calls(l, p):.1f}' for l in LABELS]) + r' \\'
           for k, p in zip((0, 1), PADDINGS)]
 (out / 'revision_padding_tradeoff_rows.tex').write_text('\n'.join(lines) + '\n')
 print('\n'.join(lines))
 
 
-def calls(label, padding):
-    # Detector calls saved by packing: sampled frames over canvases.
-    r = rows[(label, padding)]
-    return r['sampled_frames'] / r['canvases']
 
 
-# Ranges of the call reduction per dataset group and padding, for the response text.
+# Ranges of the remaining detector calls per dataset group and padding, for the response text.
 GROUPS = {'Sparse': ('Amsterdam', 'CalDoT1', 'CalDoT2'), 'Dense': ('B3D1', 'B3D2', 'B3D3', 'B3D4')}
 numbers = {}
 for group, labels in GROUPS.items():

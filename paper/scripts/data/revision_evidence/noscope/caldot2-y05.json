@@ -1,0 +1,697 @@
+{
+  "frames": 54000,
+  "clips": [
+    [
+      "te00.mp4",
+      900
+    ],
+    [
+      "te01.mp4",
+      900
+    ],
+    [
+      "te02.mp4",
+      900
+    ],
+    [
+      "te03.mp4",
+      900
+    ],
+    [
+      "te04.mp4",
+      900
+    ],
+    [
+      "te05.mp4",
+      900
+    ],
+    [
+      "te06.mp4",
+      900
+    ],
+    [
+      "te07.mp4",
+      900
+    ],
+    [
+      "te08.mp4",
+      900
+    ],
+    [
+      "te09.mp4",
+      900
+    ],
+    [
+      "te10.mp4",
+      900
+    ],
+    [
+      "te11.mp4",
+      900
+    ],
+    [
+      "te12.mp4",
+      900
+    ],
+    [
+      "te13.mp4",
+      900
+    ],
+    [
+      "te14.mp4",
+      900
+    ],
+    [
+      "te15.mp4",
+      900
+    ],
+    [
+      "te16.mp4",
+      900
+    ],
+    [
+      "te17.mp4",
+      900
+    ],
+    [
+      "te18.mp4",
+      900
+    ],
+    [
+      "te19.mp4",
+      900
+    ],
+    [
+      "te20.mp4",
+      900
+    ],
+    [
+      "te21.mp4",
+      900
+    ],
+    [
+      "te22.mp4",
+      900
+    ],
+    [
+      "te23.mp4",
+      900
+    ],
+    [
+      "te24.mp4",
+      900
+    ],
+    [
+      "te25.mp4",
+      900
+    ],
+    [
+      "te26.mp4",
+      900
+    ],
+    [
+      "te27.mp4",
+      900
+    ],
+    [
+      "te28.mp4",
+      900
+    ],
+    [
+      "te29.mp4",
+      900
+    ],
+    [
+      "te30.mp4",
+      900
+    ],
+    [
+      "te31.mp4",
+      900
+    ],
+    [
+      "te32.mp4",
+      900
+    ],
+    [
+      "te33.mp4",
+      900
+    ],
+    [
+      "te34.mp4",
+      900
+    ],
+    [
+      "te35.mp4",
+      900
+    ],
+    [
+      "te36.mp4",
+      900
+    ],
+    [
+      "te37.mp4",
+      900
+    ],
+    [
+      "te38.mp4",
+      900
+    ],
+    [
+      "te39.mp4",
+      900
+    ],
+    [
+      "te40.mp4",
+      900
+    ],
+    [
+      "te41.mp4",
+      900
+    ],
+    [
+      "te42.mp4",
+      900
+    ],
+    [
+      "te43.mp4",
+      900
+    ],
+    [
+      "te44.mp4",
+      900
+    ],
+    [
+      "te45.mp4",
+      900
+    ],
+    [
+      "te46.mp4",
+      900
+    ],
+    [
+      "te47.mp4",
+      900
+    ],
+    [
+      "te48.mp4",
+      900
+    ],
+    [
+      "te49.mp4",
+      900
+    ],
+    [
+      "te50.mp4",
+      900
+    ],
+    [
+      "te51.mp4",
+      900
+    ],
+    [
+      "te52.mp4",
+      900
+    ],
+    [
+      "te53.mp4",
+      900
+    ],
+    [
+      "te54.mp4",
+      900
+    ],
+    [
+      "te55.mp4",
+      900
+    ],
+    [
+      "te56.mp4",
+      900
+    ],
+    [
+      "te57.mp4",
+      900
+    ],
+    [
+      "te58.mp4",
+      900
+    ],
+    [
+      "te59.mp4",
+      900
+    ]
+  ],
+  "detector_ms_per_frame": 24.079846997560548,
+  "records": [
+    {
+      "window_size": 30,
+      "target": 0.0,
+      "window_thres": 28,
+      "num_true_negatives": 297,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 1503,
+      "num_windows": 1800,
+      "num_diff_evals": 3600,
+      "optimizer_cost": 97945800,
+      "threshold_lower_cnn": 0.4264264264264264,
+      "false_positive": 0.03367003367003367,
+      "false_negative": 0.0,
+      "skip_cnn": false,
+      "num_cnn_evals": 3570,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9944444444444445,
+      "num_yolo_evals": 1590,
+      "optimizer_predicted_speedup": 33.07951948935023,
+      "threshold_diff": 0.0,
+      "graph": "compat-gpu-shards/gpu-2/caldot2-y05_convnet_32_32_2.pb",
+      "stride": 15,
+      "detector_frames": 3600,
+      "tail_held_frames": 0,
+      "difference_seconds": 0.00421942,
+      "cnn_seconds": 2.47918,
+      "detector_seconds": 86.68744919121796,
+      "fps": 605.5790747875269,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00433142,
+          "cnn_seconds": 2.60634,
+          "fps": 463.6429717669327
+        },
+        {
+          "difference_seconds": 0.00421942,
+          "cnn_seconds": 2.47918,
+          "fps": 464.1501741759256
+        },
+        {
+          "difference_seconds": 0.00418985,
+          "cnn_seconds": 2.47779,
+          "fps": 464.1558376822215
+        }
+      ],
+      "detector_seconds_unbatched": 113.85825680338542,
+      "fps_unbatched": 464.1501741759256,
+      "selection": {
+        "f1": 0.9712,
+        "recall": 0.9858,
+        "precision": 0.957,
+        "accuracy": 0.9509
+      }
+    },
+    {
+      "window_size": 30,
+      "target": 0.01,
+      "window_thres": 28,
+      "num_true_negatives": 297,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 1503,
+      "num_windows": 1800,
+      "num_diff_evals": 3600,
+      "optimizer_cost": 91945800,
+      "threshold_lower_cnn": 0.44144144144144143,
+      "false_positive": 0.03367003367003367,
+      "false_negative": 0.004657351962741184,
+      "skip_cnn": false,
+      "num_cnn_evals": 3570,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9905555555555555,
+      "num_yolo_evals": 1490,
+      "optimizer_predicted_speedup": 35.23815117166853,
+      "threshold_diff": 0.0,
+      "graph": "compat-gpu-shards/gpu-2/caldot2-y05_convnet_32_32_2.pb",
+      "stride": 15,
+      "detector_frames": 3326,
+      "tail_held_frames": 0,
+      "difference_seconds": 0.00413423,
+      "cnn_seconds": 2.5146,
+      "detector_seconds": 80.08957111388638,
+      "fps": 653.6872990579559,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00434803,
+          "cnn_seconds": 2.44295,
+          "fps": 501.67374899827433
+        },
+        {
+          "difference_seconds": 0.00413423,
+          "cnn_seconds": 2.5146,
+          "fps": 501.34102876724626
+        },
+        {
+          "difference_seconds": 0.00394891,
+          "cnn_seconds": 2.65001,
+          "fps": 500.7124151128892
+        }
+      ],
+      "detector_seconds_unbatched": 105.19237836890552,
+      "fps_unbatched": 501.34102876724626,
+      "selection": {
+        "f1": 0.955,
+        "recall": 0.9485,
+        "precision": 0.9616,
+        "accuracy": 0.925
+      }
+    },
+    {
+      "window_size": 30,
+      "target": 0.02,
+      "window_thres": 28,
+      "num_true_negatives": 297,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 1503,
+      "num_windows": 1800,
+      "num_diff_evals": 3600,
+      "optimizer_cost": 89649800,
+      "threshold_lower_cnn": 0.44244244244244246,
+      "false_positive": 0.03367003367003367,
+      "false_negative": 0.009314703925482368,
+      "skip_cnn": false,
+      "num_cnn_evals": 3530,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9866666666666667,
+      "num_yolo_evals": 1452,
+      "optimizer_predicted_speedup": 36.14062719604505,
+      "threshold_diff": 5.431475345345345,
+      "graph": "compat-gpu-shards/gpu-2/caldot2-y05_convnet_32_32_2.pb",
+      "stride": 15,
+      "detector_frames": 2948,
+      "tail_held_frames": 0,
+      "difference_seconds": 0.00410297,
+      "cnn_seconds": 2.60935,
+      "detector_seconds": 70.9873889488085,
+      "fps": 733.6872594415315,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.0040307,
+          "cnn_seconds": 2.567,
+          "fps": 563.6255360973653
+        },
+        {
+          "difference_seconds": 0.00413482,
+          "cnn_seconds": 2.61542,
+          "fps": 563.3402206213683
+        },
+        {
+          "difference_seconds": 0.00410297,
+          "cnn_seconds": 2.60935,
+          "fps": 563.3760828217456
+        }
+      ],
+      "detector_seconds_unbatched": 93.23726140455007,
+      "fps_unbatched": 563.3760828217456,
+      "selection": {
+        "f1": 0.9289,
+        "recall": 0.8911,
+        "precision": 0.9701,
+        "accuracy": 0.8856
+      }
+    },
+    {
+      "window_size": 30,
+      "target": 0.03,
+      "window_thres": 28,
+      "num_true_negatives": 297,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 1503,
+      "num_windows": 1800,
+      "num_diff_evals": 3600,
+      "optimizer_cost": 87832200,
+      "threshold_lower_cnn": 0.44144144144144143,
+      "false_positive": 0.03367003367003367,
+      "false_negative": 0.014637391882900865,
+      "skip_cnn": false,
+      "num_cnn_evals": 3486,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9822222222222222,
+      "num_yolo_evals": 1422,
+      "optimizer_predicted_speedup": 36.888521521719824,
+      "threshold_diff": 5.895502302302302,
+      "graph": "compat-gpu-shards/gpu-2/caldot2-y05_convnet_32_32_2.pb",
+      "stride": 15,
+      "detector_frames": 2895,
+      "tail_held_frames": 0,
+      "difference_seconds": 0.00399803,
+      "cnn_seconds": 2.67852,
+      "detector_seconds": 69.71115705793778,
+      "fps": 745.921517790129,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00399803,
+          "cnn_seconds": 2.67852,
+          "fps": 572.9836133267416
+        },
+        {
+          "difference_seconds": 0.00410896,
+          "cnn_seconds": 2.75709,
+          "fps": 572.5056465599309
+        },
+        {
+          "difference_seconds": 0.00397065,
+          "cnn_seconds": 2.49784,
+          "fps": 574.0843921626011
+        }
+      ],
+      "detector_seconds_unbatched": 91.56101484605577,
+      "fps_unbatched": 572.9836133267416,
+      "selection": {
+        "f1": 0.9241,
+        "recall": 0.88,
+        "precision": 0.9729,
+        "accuracy": 0.8787
+      }
+    },
+    {
+      "window_size": 30,
+      "target": 0.04,
+      "window_thres": 28,
+      "num_true_negatives": 297,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 1503,
+      "num_windows": 1800,
+      "num_diff_evals": 3600,
+      "optimizer_cost": 85225800,
+      "threshold_lower_cnn": 0.4674674674674675,
+      "false_positive": 0.03367003367003367,
+      "false_negative": 0.01996007984031936,
+      "skip_cnn": false,
+      "num_cnn_evals": 3570,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9777777777777777,
+      "num_yolo_evals": 1378,
+      "optimizer_predicted_speedup": 38.01665692783171,
+      "threshold_diff": 0.0,
+      "graph": "compat-gpu-shards/gpu-2/caldot2-y05_convnet_32_32_2.pb",
+      "stride": 15,
+      "detector_frames": 3132,
+      "tail_held_frames": 0,
+      "difference_seconds": 0.00378654,
+      "cnn_seconds": 2.57018,
+      "detector_seconds": 75.41808079635963,
+      "fps": 692.3782852771116,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00411735,
+          "cnn_seconds": 2.48099,
+          "fps": 531.8007452013039
+        },
+        {
+          "difference_seconds": 0.00378654,
+          "cnn_seconds": 2.57018,
+          "fps": 531.3357734287227
+        },
+        {
+          "difference_seconds": 0.00401929,
+          "cnn_seconds": 2.57577,
+          "fps": 531.3053332206728
+        }
+      ],
+      "detector_seconds_unbatched": 99.05668341894531,
+      "fps_unbatched": 531.3357734287227,
+      "selection": {
+        "f1": 0.9405,
+        "recall": 0.9187,
+        "precision": 0.9634,
+        "accuracy": 0.9024
+      }
+    },
+    {
+      "window_size": 30,
+      "target": 0.05,
+      "window_thres": 28,
+      "num_true_negatives": 297,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 1503,
+      "num_windows": 1800,
+      "num_diff_evals": 3600,
+      "optimizer_cost": 80665800,
+      "threshold_lower_cnn": 0.4904904904904905,
+      "false_positive": 0.03367003367003367,
+      "false_negative": 0.023952095808383235,
+      "skip_cnn": false,
+      "num_cnn_evals": 3570,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9744444444444444,
+      "num_yolo_evals": 1302,
+      "optimizer_predicted_speedup": 40.16572078873575,
+      "threshold_diff": 0.0,
+      "graph": "compat-gpu-shards/gpu-2/caldot2-y05_convnet_32_32_2.pb",
+      "stride": 15,
+      "detector_frames": 3033,
+      "tail_held_frames": 0,
+      "difference_seconds": 0.00410674,
+      "cnn_seconds": 2.57433,
+      "detector_seconds": 73.03417594360113,
+      "fps": 714.1665667070849,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00410674,
+          "cnn_seconds": 2.57433,
+          "fps": 548.2009875668779
+        },
+        {
+          "difference_seconds": 0.0041774,
+          "cnn_seconds": 2.47735,
+          "fps": 548.7408448654367
+        },
+        {
+          "difference_seconds": 0.00397925,
+          "cnn_seconds": 2.59851,
+          "fps": 548.067161646465
+        }
+      ],
+      "detector_seconds_unbatched": 95.92558135685222,
+      "fps_unbatched": 548.2009875668779,
+      "selection": {
+        "f1": 0.9326,
+        "recall": 0.9032,
+        "precision": 0.9639,
+        "accuracy": 0.8903
+      }
+    },
+    {
+      "window_size": 30,
+      "target": 0.1,
+      "window_thres": 28,
+      "num_true_negatives": 297,
+      "threshold_upper_cnn": 0.997997997997998,
+      "skip_dd": false,
+      "num_true_positives": 1503,
+      "num_windows": 1800,
+      "num_diff_evals": 3600,
+      "optimizer_cost": 42714600,
+      "threshold_lower_cnn": 0.6666666666666666,
+      "false_positive": 0.04713804713804714,
+      "false_negative": 0.0499001996007984,
+      "skip_cnn": false,
+      "num_cnn_evals": 3492,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9505555555555556,
+      "num_yolo_evals": 670,
+      "optimizer_predicted_speedup": 75.85228469890858,
+      "threshold_diff": 5.860363423423424,
+      "graph": "compat-gpu-shards/gpu-4/caldot2-y05_convnet_256_32_2.pb",
+      "stride": 15,
+      "detector_frames": 630,
+      "tail_held_frames": 0,
+      "difference_seconds": 0.00450281,
+      "cnn_seconds": 2.58571,
+      "detector_seconds": 15.170303608463145,
+      "fps": 3040.452131440485,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00450281,
+          "cnn_seconds": 2.58571,
+          "fps": 2398.3576312793666
+        },
+        {
+          "difference_seconds": 0.00425534,
+          "cnn_seconds": 2.64453,
+          "fps": 2392.134631499854
+        },
+        {
+          "difference_seconds": 0.00413035,
+          "cnn_seconds": 2.56851,
+          "fps": 2400.2309245538963
+        }
+      ],
+      "detector_seconds_unbatched": 19.92519494059245,
+      "fps_unbatched": 2398.3576312793666,
+      "selection": {
+        "f1": 0.888,
+        "recall": 0.8061,
+        "precision": 0.9884,
+        "accuracy": 0.8293
+      }
+    },
+    {
+      "window_size": 30,
+      "target": 0.25,
+      "window_thres": 28,
+      "num_true_negatives": 297,
+      "threshold_upper_cnn": 0.9229229229229229,
+      "skip_dd": false,
+      "num_true_positives": 1503,
+      "num_windows": 1800,
+      "num_diff_evals": 3600,
+      "optimizer_cost": 2484200,
+      "threshold_lower_cnn": 0.9229229229229229,
+      "false_positive": 0.12121212121212122,
+      "false_negative": 0.12441783100465735,
+      "skip_cnn": false,
+      "num_cnn_evals": 3416,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.8761111111111111,
+      "num_yolo_evals": 0,
+      "optimizer_predicted_speedup": 1304.2428145881975,
+      "threshold_diff": 6.473495095095094,
+      "graph": "compat-gpu-shards/gpu-4/caldot2-y05_convnet_256_32_2.pb",
+      "stride": 15,
+      "detector_frames": 0,
+      "tail_held_frames": 0,
+      "difference_seconds": 0.00407375,
+      "cnn_seconds": 2.69588,
+      "detector_seconds": 0.0,
+      "fps": 20000.34259846118,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00407375,
+          "cnn_seconds": 2.69588,
+          "fps": 20000.34259846118
+        },
+        {
+          "difference_seconds": 0.00427146,
+          "cnn_seconds": 2.70987,
+          "fps": 19895.794230268308
+        },
+        {
+          "difference_seconds": 0.00399008,
+          "cnn_seconds": 2.59109,
+          "fps": 20808.606414951173
+        }
+      ],
+      "detector_seconds_unbatched": 0.0,
+      "fps_unbatched": 20000.34259846118,
+      "selection": {
+        "f1": 0.8349,
+        "recall": 0.7205,
+        "precision": 0.9926,
+        "accuracy": 0.7609
+      }
+    }
+  ],
+  "retiming": {
+    "device": "GPU-0997b8f5-904d-8e15-0da8-1c28bb1e348c, Quadro RTX 6000",
+    "executions": "serial",
+    "statistic": "median-of-three"
+  },
+  "detector_ms_per_frame_unbatched": 31.62729355649595,
+  "ground_truth_count_sha256": "5d86fdf2955659269f4117429619df3f5b7f53168cbdd7c75a37f174c60dd50d",
+  "dataset": "caldot2-y05",
+  "evaluator": "LEAP selection_query_1"
+}

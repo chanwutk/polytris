@@ -266,7 +266,7 @@ the exported figures and table rows to `paper/figures/generated/`.
 | `fig10` | Classifier and packing results |
 | `fig11` | Sampling ablation |
 | `fig12` | Extraction runtime breakdown |
-| `table2` | Native query comparison |
+| `table2` | Native query comparison with OTIF, LEAP, Seiden, and NoScope |
 | `response-tables` | LEAP reconstruction, resolution scaling, padding, and preparation |
 
 Figures 1 and 3–5 are static PDFs in `paper/figures/`. Figure 6 and appendix

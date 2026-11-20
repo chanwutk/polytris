@@ -45,7 +45,7 @@ rows = json.loads(con.execute('SELECT to_json(list(t)) FROM (SELECT * FROM break
 assert len(rows) == 42
 bars = alt.Chart(alt.Data(values=rows)).mark_bar().encode(
     y=alt.Y('label:N', title=None, sort=labels),
-    x=alt.X('runtime_fraction:Q', stack='zero', title='Runtime relative to reference pipeline', axis=alt.Axis(format='.0%')),
+    x=alt.X('runtime_fraction:Q', stack='zero', title='Runtime relative to reference pipeline on the same clips (Averaged)', axis=alt.Axis(format='.0%')),
     color=alt.Color('operator:N', title=None,
                     scale=categorical_color_scale(['Classification', 'ILP', 'Packing', 'Detection', 'Unpacking', 'Tracking']), legend=alt.Legend(
                                         orient='none', legendX=200, legendY=4, columns=3,
