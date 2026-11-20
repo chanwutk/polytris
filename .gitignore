@@ -39,13 +39,15 @@ det_otif
 
 **/.pytest_cache/
 
-.cursor/mcp.json
-.claude/.nfs*
+.DS_Store
+.env
+/sota-results/
+/otif-dataset/
 
 *.mp4
 
-./paper/*
-./paper
+/paper/figures/generated/*
+!/paper/figures/generated/naive_runtime_breakdown_det_track_table.tex
 
 # Revision measurements: commit JSON results, keep raw GPU outputs and run logs on ace only.
 measurements-results/**/*.jsonl.gz

@@ -4,7 +4,6 @@ extraPaths = [
     "./modules/b3d",
     "./modules/boxmot",
     "./modules/transformers/src",
-    "./modules/TrackEval",
-    "./modules/darknet"
+    "./modules/TrackEval"
 ]
 typeCheckingMode = "basic"

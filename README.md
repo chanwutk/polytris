@@ -1,210 +1,274 @@
-<p align="center">
-  <img src="assets/tetris-logo.svg" alt="Tetris" width="360">
-</p>
+# Reproduce the Tetris evaluation
 
-<h1 align="center">Tile-level Sampling for Efficient and High-Fidelity Video Object Tracking</h1>
+Tetris materializes object tracks from stored stationary-camera video on a single
+GPU server. The artifact includes the preparation, validation, and extraction
+pipeline, the datasets and reference detectors needed to run it, and the inputs
+and exporters for the paper's charts and tables.
 
-> The codebase still uses the legacy identifier `polyis` for directory names,
-> container names, and environment variables (`POLYIS_DATA`, `POLYIS_CACHE`).
-> Treat `polyis` and `Tetris` as the same project; only the public-facing
-> name has changed.
+## Docker setup
 
-## Overview
+Use a Linux host with an NVIDIA GPU, Docker Compose, and the NVIDIA Container
+Toolkit. Install the Hugging Face CLI on the host to download the datasets.
+Get a [Gurobi license](https://www.gurobi.com/academia/) for pruning and place
+it at `~/.gurobi/gurobi.lic`. The image supplies Gurobi 13.0.1 and the native
+library environment.
 
-Tetris is a video object-tracking system designed for **stationary cameras**.
-It targets *track materialization*: extracting reusable object tracks from
-raw video so that downstream queries do not have to rerun tracking. Detector
-calls dominate the cost of this workload, and stationary video gives Tetris a
-structural lever — large regions of every frame contain no objects of
-interest, and the regions that do tolerate different sampling rates.
+Download and extract the ZIP from the anonymous artifact page. The ZIP
+includes the pinned public dependencies TrackEval and LAP. Before building,
+check that it contains `modules/TrackEval/trackeval/__init__.py` and
+`modules/lap/_lapjv_cpp/lapjv.cpp`.
 
-Tetris decomposes each video into a tile-level **polyomino** data model.
-Three operators run upstream of the user-provided detector:
+Set `DATA` to an absolute directory on the host and put that same assignment
+in `.env` in the repository root. Docker mounts
+`$DATA/polyis-data` at `/polyis-data` and `$DATA/polyis-cache` at
+`/polyis-cache`. The download script creates these directories.
 
-- **Classify** — a learned relevance classifier identifies tiles with
-  potential objects and groups them into polyominoes.
-- **Prune** — an integer linear program (ILP) drops polyominoes that are
-  redundant under a user-specified accuracy constraint.
-- **Pack** — the survivors are assembled into dense canvases that minimize
-  detector calls.
-
-Across 7 stationary-video datasets, Tetris stays within a 5% tracking-accuracy
-loss of a full-frame reference pipeline while delivering substantial
-throughput improvements over prior systems.
-
-## Paper
-
-Paper is currently under review. A link will be added on publication.
-
-## Citation
-
-Citation will be added on publication.
-
-## Prerequisites
-
-- **Docker** with the **NVIDIA Container Toolkit** (the pipeline depends on
-  CUDA inside the container).
-- **Gurobi license** mounted at `~/.gurobi/gurobi.lic`. The ILP-based pruning
-  stage and several Cython extensions link against Gurobi at build time.
-  Academic licenses are available at <https://www.gurobi.com/academia/>.
-- **OTIF dataset** (see [Datasets](#datasets)).
-
-## Setup
-
-The development environment is Docker-first. The repo ships a
-`docker-compose.yml` that extends `docker-compose.base.yml` and adds GPU
-reservations. You should not need to edit either file for a default install —
-just set the host paths via a `.env` file.
-
-### 1. Create a `.env` file at the repo root
-
-`docker-compose.base.yml` reads `${DATA}` and `${WORK}` from the environment
-to locate your dataset and work-area parents. Create `.env` next to
-`docker-compose.yml`:
-
-```bash
-# .env
-DATA=/absolute/path/to/your/data-parent
-WORK=/absolute/path/to/your/work-parent
-```
-
-The resulting mounts will be:
-
-| Host path                                | Container path     | Purpose                                  |
-| ---------------------------------------- | ------------------ | ---------------------------------------- |
-| `${DATA}/polyis-data`                    | `/polyis-data`     | Datasets, intermediate results, models   |
-| `${DATA}/polyis-cache`                   | `/polyis-cache`    | Per-stage caches and partial outputs     |
-| `${WORK}/../data/otif-dataset`           | `/otif-dataset`    | Raw OTIF videos                          |
-| `${HOME}/.gurobi/gurobi.lic`             | Gurobi license     | ILP solver license                       |
-
-`docker-compose.base.yml` also includes a few mounts that are specific to the
-author's environment (`/sota-results`, `/polytris-paper`). If you do not have
-those paths, comment out the corresponding lines. They are only required for
-SOTA comparisons and paper-figure rendering.
-
-### 2. Build and start the container
-
-```bash
+```sh
 docker compose up --detach --build
+docker compose exec polyis bash
 ```
 
-### 3. Enter the container
+From `/polyis` in that shell, build the native extensions before running the
+experiments:
 
-```bash
-./dock
-```
-
-This runs `docker exec -it polyis bash`. From inside the container the repo
-is mounted at `/polyis`.
-
-### 4. Build native extensions
-
-The pack/group/ILP modules are written in Cython and link against the Gurobi
-C library. Build them once after entering the container:
-
-```bash
-cd /polyis
+```sh
 python setup.py build_ext
 ```
 
-To rebuild from scratch:
+## Inputs and splits
 
-```bash
-python setup.py clean
-python setup.py build_ext
+| Datasets | Source layout in the container | Training / validation / test |
+| --- | --- | --- |
+| CalDoT1, CalDoT2, Amsterdam (`caldot1-y05`, `caldot2-y05`, `ams-y05`) | Processed OTIF clips and canonical test annotations. | 60 / 60 / 60 per dataset. |
+| B3D1–4 (`jnc0`, `jnc2`, `jnc6`, `jnc7`) | Processed B3D clips and the final human-verified test labels. | 8 / 5 / 5 per junction. |
+
+On the Docker host, download and stage all seven datasets and their test labels
+with one command. The script uses the pinned public bundles and creates the
+`caldot1-y05`, `caldot2-y05`, and `ams-y05` symlinks automatically.
+
+```sh
+bash reproduce/download.sh "$DATA"
 ```
 
-Set `GUROBI_HOME` to your Gurobi install directory if `setup.py` cannot find
-it automatically (for example,
-`export GUROBI_HOME=/opt/gurobi1100/linux64`).
+Pass `b3d` or `otif` after `"$DATA"` to download just that bundle.
+The script skips identical files and stops if an existing file differs.
 
-### 5. Run the test suite
+Inside Docker, `python scripts/weights.py download` fetches and verifies all
+four detector checkpoints.
 
-```bash
-pytest tests/ -v
+## Run one dataset end to end
+
+This example uses B3D1 (`jnc0`) and the paper's configuration grid. Download
+the B3D bundle on the Docker host if you have yet to stage it.
+
+```sh
+bash reproduce/download.sh "$DATA" b3d
 ```
 
-A focused subset for the packing extension:
+After [setting up Docker and building the native extensions](#docker-setup),
+run these commands inside the container from `/polyis`:
 
-```bash
-pytest tests/pack -v
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc0
+bash reproduce/validate.sh jnc0 validation.json
+bash reproduce/test.sh jnc0 validation.json
 ```
 
-## Datasets
+- `train.sh` generates training detections, trains the relevance classifier,
+  and profiles the per-tile sampling limits.
+- `validate.sh` runs the configured sweep on validation clips and writes JSON
+  with the config, throughput in FPS, HOTA, and Pareto membership for each
+  variant. The Pareto set includes the configurations needed for the paper's
+  ablations.
+- `test.sh` takes that JSON and runs the marked Pareto configurations on test
+  clips. Pass a third argument, a `variant_id` from the JSON, to test just that
+  configuration. The script writes per-clip tracking JSONL and the dataset's
+  evaluation `090_tradeoff/tradeoff.csv` under `/polyis-cache`.
 
-Tetris is evaluated on 7 stationary-camera splits drawn from the public
-[OTIF dataset](https://github.com/favyen2/otif):
+Paths passed to the wrappers are relative to the checkout or absolute. Reuse
+the trained artifacts and the same sweep config across validation and test.
+Each dataset's cache should have one active writer.
 
-```
-caldot1-y05  caldot2-y05  jnc0  jnc2  jnc6  jnc7  ams-y05
-```
+### Commands by dataset
 
-Place the OTIF tarballs under `${DATA}/../data/otif-dataset` so that they
-appear at `/otif-dataset` inside the container. Then materialize the
-tile-aligned splits and segmentations Tetris consumes:
+Start with the [Docker setup](#docker-setup). Skip the host download if you
+already staged that bundle.
 
-```bash
-./run preprocess/p000_preprocess_dataset.py --help
-./run preprocess/p001_preprocess_split.py --help
-```
+<details>
+<summary>B3D1 (jnc0)</summary>
 
-The active dataset list lives in `configs/global.yaml` under `EXEC.DATASETS`.
+On the Docker host:
 
-## Pipeline Overview
-
-The online tracking pipeline has five stages, mirroring the architecture in
-the paper:
-
-```
-Decode -> Classify -> [Prune] -> Compress -> Detect+Uncompress -> Track
-```
-
-Each stage has a standalone script under `scripts/` and a streaming
-implementation under `execution/`. Pick the entrypoint that matches your use
-case:
-
-| Mode               | Command                                  | Notes                                                                          |
-| ------------------ | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| Pipeline-parallel  | `./run execution/main.py --test`         | One pipeline per GPU. Modern entrypoint, replaces Phase 4 of `scripts/run.sh`. |
-| Per-stage scripts  | `./run scripts/p020_exec_classify.py`    | Useful for debugging a single stage. See each script's `--help`.               |
-| Phase orchestrator | `bash scripts/run.sh`                    | Legacy two-pass (`--valid` then `--test`) driver. Most phases are commented out; uncomment what you need. |
-
-The full reproduction recipe also involves three other phases that are
-orthogonal to the online pipeline:
-
-- **Tuning** (`scripts/p011`–`p017_tune_*.py`): trains the relevance
-  classifier, learns per-tile sampling thresholds, and selects baselines.
-- **Preprocessing** (`preprocess/p000`–`p008_preprocess_*.py`): builds
-  ground-truth detections, naive baselines, and torchvision/ultralytics
-  training sets.
-- **Evaluation** (`evaluation/p1**`–`evaluation/p2**`): computes accuracy
-  and throughput, runs comparisons against OTIF and other SOTA trackers,
-  and produces the figures in the paper.
-
-Every entrypoint takes `--help`. Use it.
-
-## Repository Layout
-
-```
-polyis/         Core library: Cython modules, models, trackers, IO helpers
-scripts/        Per-stage offline tuning + online execution scripts
-preprocess/     Dataset prep, ground truth, baseline tracking
-execution/      Pipeline-parallel runtime (execution/main.py is the entrypoint)
-evaluation/     Metric computation, comparisons, paper-figure generators
-configs/        Global config, detector/tracker registry, sync config
-tests/          Pytest suite (Cython, ILP, trackers, evaluation)
-modules/        Vendored third-party code (Detectron2, TrackEval, Darknet)
-demo/           Interactive visualization assets
-paper/          Manuscript source (LaTeX, anonymized for review)
+```sh
+bash reproduce/download.sh "$DATA" b3d
 ```
 
-In-container conventions:
+Inside Docker from `/polyis`:
 
-- Project root: `/polyis`
-- Data: `/polyis-data` (env var `POLYIS_DATA`)
-- Cache: `/polyis-cache` (env var `POLYIS_CACHE`)
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc0
+bash reproduce/validate.sh jnc0 validation-jnc0.json
+bash reproduce/test.sh jnc0 validation-jnc0.json
+```
 
-## Development
+</details>
 
-See [`AGENTS.md`](./AGENTS.md) for coding conventions, the dev workflow,
-commit guidelines, and tips for working with Docker on a shared host.
+<details>
+<summary>B3D2 (jnc2)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" b3d
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc2
+bash reproduce/validate.sh jnc2 validation-jnc2.json
+bash reproduce/test.sh jnc2 validation-jnc2.json
+```
+
+</details>
+
+<details>
+<summary>B3D3 (jnc6)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" b3d
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc6
+bash reproduce/validate.sh jnc6 validation-jnc6.json
+bash reproduce/test.sh jnc6 validation-jnc6.json
+```
+
+</details>
+
+<details>
+<summary>B3D4 (jnc7)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" b3d
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download --b3d-only
+bash reproduce/train.sh jnc7
+bash reproduce/validate.sh jnc7 validation-jnc7.json
+bash reproduce/test.sh jnc7 validation-jnc7.json
+```
+
+</details>
+
+<details>
+<summary>CalDoT1 (caldot1-y05)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" otif
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download
+bash reproduce/train.sh caldot1-y05
+bash reproduce/validate.sh caldot1-y05 validation-caldot1-y05.json
+bash reproduce/test.sh caldot1-y05 validation-caldot1-y05.json
+```
+
+</details>
+
+<details>
+<summary>CalDoT2 (caldot2-y05)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" otif
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download
+bash reproduce/train.sh caldot2-y05
+bash reproduce/validate.sh caldot2-y05 validation-caldot2-y05.json
+bash reproduce/test.sh caldot2-y05 validation-caldot2-y05.json
+```
+
+</details>
+
+<details>
+<summary>Amsterdam (ams-y05)</summary>
+
+On the Docker host:
+
+```sh
+bash reproduce/download.sh "$DATA" otif
+```
+
+Inside Docker from `/polyis`:
+
+```sh
+set -e
+python scripts/weights.py download
+bash reproduce/train.sh ams-y05
+bash reproduce/validate.sh ams-y05 validation-ams-y05.json
+bash reproduce/test.sh ams-y05 validation-ams-y05.json
+```
+
+</details>
+
+## Generate figures and tables
+
+From `/polyis` inside the Docker container, run the chart and table exporters:
+
+```sh
+bash reproduce/render.sh fig2 fig7 fig8 fig9 fig10 fig11 fig12 table2 response-tables
+```
+
+Pass individual targets to export only the outputs you need. Figure 2 uses
+the clips and test annotations from both public dataset bundles above. The
+other targets use the saved benchmark results shipped with the artifact.
+The render command uses a temporary cache for the saved results and writes
+the exported figures and table rows to `paper/figures/generated/`.
+
+| Target | Paper output |
+| --- | --- |
+| `fig2` | Stationary-camera observations |
+| `fig7` | Mistrack rate and sampling gap |
+| `fig8` | End-to-end HOTA and throughput |
+| `fig9` | Preparation cost and amortization |
+| `fig10` | Classifier and packing results |
+| `fig11` | Sampling ablation |
+| `fig12` | Extraction runtime breakdown |
+| `table2` | Native query comparison with OTIF, LEAP, Seiden, and NoScope |
+| `response-tables` | LEAP reconstruction, resolution scaling, padding, and preparation |
+
+Figures 1 and 3–5 are static PDFs in `paper/figures/`. Figure 6 and appendix
+Figures 13–15 use the TikZ sources in the same directory. Table 1 is the
+experiment configuration table. Its sweep settings are in `configs/global.yaml`.

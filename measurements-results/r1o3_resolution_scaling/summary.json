@@ -1,0 +1,1316 @@
+{
+  "batched": [
+    {
+      "batch": 16,
+      "classifier_ms": 4.5884,
+      "detector_ms": 47.578120125,
+      "detector_over_classifier": 10.369218055313398,
+      "height": 720,
+      "input_shape": [
+        768,
+        1280
+      ],
+      "label": "Amsterdam",
+      "oom": false,
+      "peak_allocated_mib": 3983.333984375,
+      "peak_reserved_mib": 4858.0,
+      "scale": 1,
+      "schedule": "equal",
+      "tiles": 252,
+      "width": 1280
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 8.739809523809525,
+      "detector_ms": 89.832561390625,
+      "detector_over_classifier": 10.278549108638767,
+      "height": 1018,
+      "input_shape": [
+        1024,
+        1856
+      ],
+      "label": "Amsterdam",
+      "oom": false,
+      "peak_allocated_mib": 7126.05224609375,
+      "peak_reserved_mib": 8682.0,
+      "scale": 2,
+      "schedule": "equal",
+      "tiles": 480,
+      "width": 1810
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 18.3536,
+      "detector_ms": 176.81571944375,
+      "detector_over_classifier": 9.63384401118854,
+      "height": 1440,
+      "input_shape": [
+        1472,
+        2560
+      ],
+      "label": "Amsterdam",
+      "oom": false,
+      "peak_allocated_mib": 13525.1826171875,
+      "peak_reserved_mib": 16598.0,
+      "scale": 4,
+      "schedule": "equal",
+      "tiles": 1008,
+      "width": 2560
+    },
+    {
+      "batch": 159,
+      "classifier_ms": 4.5884,
+      "detector_ms": 47.31826012264151,
+      "detector_over_classifier": 10.312583933972956,
+      "height": 720,
+      "input_shape": [
+        768,
+        1280
+      ],
+      "label": "Amsterdam",
+      "oom": false,
+      "peak_allocated_mib": 20660.68701171875,
+      "peak_reserved_mib": 23338.0,
+      "scale": 1,
+      "schedule": "max",
+      "tiles": 252,
+      "width": 1280
+    },
+    {
+      "batch": 79,
+      "classifier_ms": 8.739809523809525,
+      "detector_ms": 94.10882977056963,
+      "detector_over_classifier": 10.767835330300116,
+      "height": 1018,
+      "input_shape": [
+        1024,
+        1856
+      ],
+      "label": "Amsterdam",
+      "oom": false,
+      "peak_allocated_mib": 20705.63818359375,
+      "peak_reserved_mib": 22590.0,
+      "scale": 2,
+      "schedule": "max",
+      "tiles": 480,
+      "width": 1810
+    },
+    {
+      "batch": 42,
+      "classifier_ms": 18.3536,
+      "detector_ms": 182.30180599702382,
+      "detector_over_classifier": 9.932754663772982,
+      "height": 1440,
+      "input_shape": [
+        1472,
+        2560
+      ],
+      "label": "Amsterdam",
+      "oom": false,
+      "peak_allocated_mib": 21480.16015625,
+      "peak_reserved_mib": 23766.0,
+      "scale": 4,
+      "schedule": "max",
+      "tiles": 1008,
+      "width": 2560
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 4.5884,
+      "detector_ms": 47.5365557875,
+      "detector_over_classifier": 10.360159486422281,
+      "height": 720,
+      "input_shape": [
+        768,
+        1280
+      ],
+      "label": "Amsterdam",
+      "oom": false,
+      "peak_allocated_mib": 3983.333984375,
+      "peak_reserved_mib": 4858.0,
+      "scale": 1,
+      "schedule": "scaled",
+      "tiles": 252,
+      "width": 1280
+    },
+    {
+      "batch": 8,
+      "classifier_ms": 8.739809523809525,
+      "detector_ms": 104.2797717,
+      "detector_over_classifier": 11.931584025477289,
+      "height": 1018,
+      "input_shape": [
+        1024,
+        1856
+      ],
+      "label": "Amsterdam",
+      "oom": false,
+      "peak_allocated_mib": 2560.5029296875,
+      "peak_reserved_mib": 2832.0,
+      "scale": 2,
+      "schedule": "scaled",
+      "tiles": 480,
+      "width": 1810
+    },
+    {
+      "batch": 4,
+      "classifier_ms": 18.3536,
+      "detector_ms": 195.07775030312501,
+      "detector_over_classifier": 10.628854846086055,
+      "height": 1440,
+      "input_shape": [
+        1472,
+        2560
+      ],
+      "label": "Amsterdam",
+      "oom": false,
+      "peak_allocated_mib": 2544.28759765625,
+      "peak_reserved_mib": 2952.0,
+      "scale": 4,
+      "schedule": "scaled",
+      "tiles": 1008,
+      "width": 2560
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 2.9831538461538463,
+      "detector_ms": 41.8069838875,
+      "detector_over_classifier": 14.014357302222738,
+      "height": 720,
+      "input_shape": [
+        720,
+        1080
+      ],
+      "label": "B3D1",
+      "oom": false,
+      "peak_allocated_mib": 5037.0283203125,
+      "peak_reserved_mib": 8794.0,
+      "scale": 1,
+      "schedule": "equal",
+      "tiles": 216,
+      "width": 1080
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 5.524358974358975,
+      "detector_ms": 77.738711875,
+      "detector_over_classifier": 14.071987761081457,
+      "height": 1018,
+      "input_shape": [
+        1018,
+        1528
+      ],
+      "label": "B3D1",
+      "oom": false,
+      "peak_allocated_mib": 9630.544921875,
+      "peak_reserved_mib": 16984.0,
+      "scale": 2,
+      "schedule": "equal",
+      "tiles": 400,
+      "width": 1528
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 11.932615384615385,
+      "detector_ms": 160.01094976250002,
+      "detector_over_classifier": 13.409545569431552,
+      "height": 1440,
+      "input_shape": [
+        1440,
+        2160
+      ],
+      "label": "B3D1",
+      "oom": false,
+      "peak_allocated_mib": 14521.0498046875,
+      "peak_reserved_mib": 22088.0,
+      "scale": 4,
+      "schedule": "equal",
+      "tiles": 864,
+      "width": 2160
+    },
+    {
+      "batch": 85,
+      "classifier_ms": 2.9831538461538463,
+      "detector_ms": 45.15177269264706,
+      "detector_over_classifier": 15.135583017570761,
+      "height": 720,
+      "input_shape": [
+        720,
+        1080
+      ],
+      "label": "B3D1",
+      "oom": false,
+      "peak_allocated_mib": 19525.6953125,
+      "peak_reserved_mib": 23234.0,
+      "scale": 1,
+      "schedule": "max",
+      "tiles": 216,
+      "width": 1080
+    },
+    {
+      "batch": 40,
+      "classifier_ms": 5.524358974358975,
+      "detector_ms": 84.642531896875,
+      "detector_over_classifier": 15.321692940255858,
+      "height": 1018,
+      "input_shape": [
+        1018,
+        1528
+      ],
+      "label": "B3D1",
+      "oom": false,
+      "peak_allocated_mib": 18090.83203125,
+      "peak_reserved_mib": 23116.0,
+      "scale": 2,
+      "schedule": "max",
+      "tiles": 400,
+      "width": 1528
+    },
+    {
+      "batch": 19,
+      "classifier_ms": 11.932615384615385,
+      "detector_ms": 183.96387571710522,
+      "detector_over_classifier": 15.416894770134652,
+      "height": 1440,
+      "input_shape": [
+        1440,
+        2160
+      ],
+      "label": "B3D1",
+      "oom": false,
+      "peak_allocated_mib": 17184.5537109375,
+      "peak_reserved_mib": 23498.0,
+      "scale": 4,
+      "schedule": "max",
+      "tiles": 864,
+      "width": 2160
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 2.9831538461538463,
+      "detector_ms": 41.911470718749996,
+      "detector_over_classifier": 14.049382928334749,
+      "height": 720,
+      "input_shape": [
+        720,
+        1080
+      ],
+      "label": "B3D1",
+      "oom": false,
+      "peak_allocated_mib": 5037.0283203125,
+      "peak_reserved_mib": 8794.0,
+      "scale": 1,
+      "schedule": "scaled",
+      "tiles": 216,
+      "width": 1080
+    },
+    {
+      "batch": 8,
+      "classifier_ms": 5.524358974358975,
+      "detector_ms": 92.33629048437498,
+      "detector_over_classifier": 16.714390015737404,
+      "height": 1018,
+      "input_shape": [
+        1018,
+        1528
+      ],
+      "label": "B3D1",
+      "oom": false,
+      "peak_allocated_mib": 7815.88427734375,
+      "peak_reserved_mib": 10634.0,
+      "scale": 2,
+      "schedule": "scaled",
+      "tiles": 400,
+      "width": 1528
+    },
+    {
+      "batch": 4,
+      "classifier_ms": 11.932615384615385,
+      "detector_ms": 185.79349657187498,
+      "detector_over_classifier": 15.570224178298488,
+      "height": 1440,
+      "input_shape": [
+        1440,
+        2160
+      ],
+      "label": "B3D1",
+      "oom": false,
+      "peak_allocated_mib": 3867.3173828125,
+      "peak_reserved_mib": 5922.0,
+      "scale": 4,
+      "schedule": "scaled",
+      "tiles": 864,
+      "width": 2160
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 2.3796,
+      "detector_ms": 19.359857134374998,
+      "detector_over_classifier": 8.135761108747268,
+      "height": 480,
+      "input_shape": [
+        512,
+        768
+      ],
+      "label": "CalDoT1",
+      "oom": false,
+      "peak_allocated_mib": 1961.31884765625,
+      "peak_reserved_mib": 2352.0,
+      "scale": 1,
+      "schedule": "equal",
+      "tiles": 96,
+      "width": 720
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 4.3626000000000005,
+      "detector_ms": 34.368651609375,
+      "detector_over_classifier": 7.87802035698322,
+      "height": 678,
+      "input_shape": [
+        704,
+        1024
+      ],
+      "label": "CalDoT1",
+      "oom": false,
+      "peak_allocated_mib": 3084.896484375,
+      "peak_reserved_mib": 3746.0,
+      "scale": 2,
+      "schedule": "equal",
+      "tiles": 176,
+      "width": 1018
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 9.5184,
+      "detector_ms": 66.823949453125,
+      "detector_over_classifier": 7.020502337906056,
+      "height": 960,
+      "input_shape": [
+        960,
+        1472
+      ],
+      "label": "CalDoT1",
+      "oom": false,
+      "peak_allocated_mib": 5456.0849609375,
+      "peak_reserved_mib": 7522.0,
+      "scale": 4,
+      "schedule": "equal",
+      "tiles": 384,
+      "width": 1440
+    },
+    {
+      "batch": 383,
+      "classifier_ms": 2.3796,
+      "detector_ms": 20.075996565926893,
+      "detector_over_classifier": 8.436710609315387,
+      "height": 480,
+      "input_shape": [
+        512,
+        768
+      ],
+      "label": "CalDoT1",
+      "oom": false,
+      "peak_allocated_mib": 19929.078125,
+      "peak_reserved_mib": 22472.0,
+      "scale": 1,
+      "schedule": "max",
+      "tiles": 96,
+      "width": 720
+    },
+    {
+      "batch": 207,
+      "classifier_ms": 4.3626000000000005,
+      "detector_ms": 36.101050201690825,
+      "detector_over_classifier": 8.275122679523866,
+      "height": 678,
+      "input_shape": [
+        704,
+        1024
+      ],
+      "label": "CalDoT1",
+      "oom": false,
+      "peak_allocated_mib": 20354.103515625,
+      "peak_reserved_mib": 22276.0,
+      "scale": 2,
+      "schedule": "max",
+      "tiles": 176,
+      "width": 1018
+    },
+    {
+      "batch": 113,
+      "classifier_ms": 9.5184,
+      "detector_ms": 69.82888817035398,
+      "detector_over_classifier": 7.336200219611907,
+      "height": 960,
+      "input_shape": [
+        960,
+        1472
+      ],
+      "label": "CalDoT1",
+      "oom": false,
+      "peak_allocated_mib": 22109.62646484375,
+      "peak_reserved_mib": 23788.0,
+      "scale": 4,
+      "schedule": "max",
+      "tiles": 384,
+      "width": 1440
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 2.3796,
+      "detector_ms": 19.346704196875,
+      "detector_over_classifier": 8.130233735449234,
+      "height": 480,
+      "input_shape": [
+        512,
+        768
+      ],
+      "label": "CalDoT1",
+      "oom": false,
+      "peak_allocated_mib": 1961.31884765625,
+      "peak_reserved_mib": 2352.0,
+      "scale": 1,
+      "schedule": "scaled",
+      "tiles": 96,
+      "width": 720
+    },
+    {
+      "batch": 8,
+      "classifier_ms": 4.3626000000000005,
+      "detector_ms": 41.152571137500004,
+      "detector_over_classifier": 9.433037898844725,
+      "height": 678,
+      "input_shape": [
+        704,
+        1024
+      ],
+      "label": "CalDoT1",
+      "oom": false,
+      "peak_allocated_mib": 1349.84716796875,
+      "peak_reserved_mib": 1516.0,
+      "scale": 2,
+      "schedule": "scaled",
+      "tiles": 176,
+      "width": 1018
+    },
+    {
+      "batch": 4,
+      "classifier_ms": 9.5184,
+      "detector_ms": 77.91457339062501,
+      "detector_over_classifier": 8.185679672069362,
+      "height": 960,
+      "input_shape": [
+        960,
+        1472
+      ],
+      "label": "CalDoT1",
+      "oom": false,
+      "peak_allocated_mib": 1335.76806640625,
+      "peak_reserved_mib": 1498.0,
+      "scale": 4,
+      "schedule": "scaled",
+      "tiles": 384,
+      "width": 1440
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 2.7068689655172413,
+      "detector_ms": 19.338961446874997,
+      "detector_over_classifier": 7.144402515686465,
+      "height": 480,
+      "input_shape": [
+        512,
+        768
+      ],
+      "label": "CalDoT2",
+      "oom": false,
+      "peak_allocated_mib": 1961.31884765625,
+      "peak_reserved_mib": 2352.0,
+      "scale": 1,
+      "schedule": "equal",
+      "tiles": 96,
+      "width": 720
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 4.962593103448276,
+      "detector_ms": 35.10129764375,
+      "detector_over_classifier": 7.073176646169064,
+      "height": 678,
+      "input_shape": [
+        704,
+        1024
+      ],
+      "label": "CalDoT2",
+      "oom": false,
+      "peak_allocated_mib": 3084.896484375,
+      "peak_reserved_mib": 3746.0,
+      "scale": 2,
+      "schedule": "equal",
+      "tiles": 176,
+      "width": 1018
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 10.827475862068965,
+      "detector_ms": 67.172818825,
+      "detector_over_classifier": 6.203922288141152,
+      "height": 960,
+      "input_shape": [
+        960,
+        1472
+      ],
+      "label": "CalDoT2",
+      "oom": false,
+      "peak_allocated_mib": 5456.0849609375,
+      "peak_reserved_mib": 7522.0,
+      "scale": 4,
+      "schedule": "equal",
+      "tiles": 384,
+      "width": 1440
+    },
+    {
+      "batch": 383,
+      "classifier_ms": 2.7068689655172413,
+      "detector_ms": 20.458830830939945,
+      "detector_over_classifier": 7.558116440642178,
+      "height": 480,
+      "input_shape": [
+        512,
+        768
+      ],
+      "label": "CalDoT2",
+      "oom": false,
+      "peak_allocated_mib": 19929.078125,
+      "peak_reserved_mib": 22472.0,
+      "scale": 1,
+      "schedule": "max",
+      "tiles": 96,
+      "width": 720
+    },
+    {
+      "batch": 207,
+      "classifier_ms": 4.962593103448276,
+      "detector_ms": 36.18286314673913,
+      "detector_over_classifier": 7.2911202656525145,
+      "height": 678,
+      "input_shape": [
+        704,
+        1024
+      ],
+      "label": "CalDoT2",
+      "oom": false,
+      "peak_allocated_mib": 20354.103515625,
+      "peak_reserved_mib": 22276.0,
+      "scale": 2,
+      "schedule": "max",
+      "tiles": 176,
+      "width": 1018
+    },
+    {
+      "batch": 113,
+      "classifier_ms": 10.827475862068965,
+      "detector_ms": 70.02104386615045,
+      "detector_over_classifier": 6.466977600148674,
+      "height": 960,
+      "input_shape": [
+        960,
+        1472
+      ],
+      "label": "CalDoT2",
+      "oom": false,
+      "peak_allocated_mib": 21613.8515625,
+      "peak_reserved_mib": 23788.0,
+      "scale": 4,
+      "schedule": "max",
+      "tiles": 384,
+      "width": 1440
+    },
+    {
+      "batch": 16,
+      "classifier_ms": 2.7068689655172413,
+      "detector_ms": 19.536710215625,
+      "detector_over_classifier": 7.217456945460909,
+      "height": 480,
+      "input_shape": [
+        512,
+        768
+      ],
+      "label": "CalDoT2",
+      "oom": false,
+      "peak_allocated_mib": 1961.31884765625,
+      "peak_reserved_mib": 2352.0,
+      "scale": 1,
+      "schedule": "scaled",
+      "tiles": 96,
+      "width": 720
+    },
+    {
+      "batch": 8,
+      "classifier_ms": 4.962593103448276,
+      "detector_ms": 41.00602925,
+      "detector_over_classifier": 8.263024671820627,
+      "height": 678,
+      "input_shape": [
+        704,
+        1024
+      ],
+      "label": "CalDoT2",
+      "oom": false,
+      "peak_allocated_mib": 1349.84716796875,
+      "peak_reserved_mib": 1516.0,
+      "scale": 2,
+      "schedule": "scaled",
+      "tiles": 176,
+      "width": 1018
+    },
+    {
+      "batch": 4,
+      "classifier_ms": 10.827475862068965,
+      "detector_ms": 78.0209793625,
+      "detector_over_classifier": 7.205832675723128,
+      "height": 960,
+      "input_shape": [
+        960,
+        1472
+      ],
+      "label": "CalDoT2",
+      "oom": false,
+      "peak_allocated_mib": 1335.76806640625,
+      "peak_reserved_mib": 1498.0,
+      "scale": 4,
+      "schedule": "scaled",
+      "tiles": 384,
+      "width": 1440
+    }
+  ],
+  "loader_defaults": [
+    {
+      "height": 720,
+      "input_shape": [
+        1280,
+        1280
+      ],
+      "label": "Amsterdam",
+      "mean_ms": 61.26019340666666,
+      "width": 1280
+    },
+    {
+      "height": 720,
+      "input_shape": [
+        800,
+        1200
+      ],
+      "label": "B3D1",
+      "mean_ms": 67.31569063333333,
+      "width": 1080
+    },
+    {
+      "height": 480,
+      "input_shape": [
+        768,
+        768
+      ],
+      "label": "CalDoT1",
+      "mean_ms": 30.111464253333338,
+      "width": 720
+    },
+    {
+      "height": 480,
+      "input_shape": [
+        768,
+        768
+      ],
+      "label": "CalDoT2",
+      "mean_ms": 30.640131223333338,
+      "width": 720
+    }
+  ],
+  "measured_max_batch": [
+    {
+      "classifier_batch": 238,
+      "classifier_growth": 1.0,
+      "classifier_ms": 3.0265100141806722,
+      "classifier_peak_mib": 23519.6923828125,
+      "detector_batch": 159,
+      "detector_growth": 1.0,
+      "detector_ms": 47.31826012264151,
+      "detector_over_classifier": 15.634595590608468,
+      "detector_peak_mib": 20660.68701171875,
+      "height": 720,
+      "label": "Amsterdam",
+      "scale": 1,
+      "tiles": 252,
+      "tiles_growth": 1.0,
+      "width": 1280
+    },
+    {
+      "classifier_batch": 123,
+      "classifier_growth": 1.8997758645838574,
+      "classifier_ms": 5.749690678861789,
+      "classifier_peak_mib": 23212.990234375,
+      "detector_batch": 79,
+      "detector_growth": 1.9888480583743844,
+      "detector_ms": 94.10882977056963,
+      "detector_over_classifier": 16.367633500103253,
+      "detector_peak_mib": 20705.63818359375,
+      "height": 1018,
+      "label": "Amsterdam",
+      "scale": 2,
+      "tiles": 480,
+      "tiles_growth": 1.9047619047619047,
+      "width": 1810
+    },
+    {
+      "classifier_batch": 59,
+      "classifier_growth": 3.7909050019704558,
+      "classifier_ms": 11.473211951271185,
+      "classifier_peak_mib": 23322.64501953125,
+      "detector_batch": 42,
+      "detector_growth": 3.8526734821721282,
+      "detector_ms": 182.30180599702382,
+      "detector_over_classifier": 15.88934352222313,
+      "detector_peak_mib": 21480.16015625,
+      "height": 1440,
+      "label": "Amsterdam",
+      "scale": 4,
+      "tiles": 1008,
+      "tiles_growth": 4.0,
+      "width": 2560
+    },
+    {
+      "classifier_batch": 357,
+      "classifier_growth": 1.0,
+      "classifier_ms": 2.326959356792717,
+      "classifier_peak_mib": 23315.0546875,
+      "detector_batch": 85,
+      "detector_growth": 1.0,
+      "detector_ms": 45.15177269264706,
+      "detector_over_classifier": 19.403765072579702,
+      "detector_peak_mib": 19525.6953125,
+      "height": 720,
+      "label": "B3D1",
+      "scale": 1,
+      "tiles": 216,
+      "tiles_growth": 1.0,
+      "width": 1080
+    },
+    {
+      "classifier_batch": 196,
+      "classifier_growth": 1.794506375437278,
+      "classifier_ms": 4.175743401147959,
+      "classifier_peak_mib": 22959.65234375,
+      "detector_batch": 40,
+      "detector_growth": 1.8746225640584648,
+      "detector_ms": 84.642531896875,
+      "detector_over_classifier": 20.270051046145653,
+      "detector_peak_mib": 18090.83203125,
+      "height": 1018,
+      "label": "B3D1",
+      "scale": 2,
+      "tiles": 400,
+      "tiles_growth": 1.8518518518518519,
+      "width": 1528
+    },
+    {
+      "classifier_batch": 94,
+      "classifier_growth": 3.7705626624748665,
+      "classifier_ms": 8.77394606781915,
+      "classifier_peak_mib": 23212.8291015625,
+      "detector_batch": 19,
+      "detector_growth": 4.074344477444263,
+      "detector_ms": 183.96387571710522,
+      "detector_over_classifier": 20.967062516128646,
+      "detector_peak_mib": 17184.5537109375,
+      "height": 1440,
+      "label": "B3D1",
+      "scale": 4,
+      "tiles": 864,
+      "tiles_growth": 4.0,
+      "width": 2160
+    },
+    {
+      "classifier_batch": 631,
+      "classifier_growth": 1.0,
+      "classifier_ms": 1.0738551947305863,
+      "classifier_peak_mib": 23744.2568359375,
+      "detector_batch": 383,
+      "detector_growth": 1.0,
+      "detector_ms": 20.075996565926893,
+      "detector_over_classifier": 18.69525487648607,
+      "detector_peak_mib": 19929.078125,
+      "height": 480,
+      "label": "CalDoT1",
+      "scale": 1,
+      "tiles": 96,
+      "tiles_growth": 1.0,
+      "width": 720
+    },
+    {
+      "classifier_batch": 339,
+      "classifier_growth": 1.9780133712813617,
+      "classifier_ms": 2.12409993399705,
+      "classifier_peak_mib": 23512.86181640625,
+      "detector_batch": 207,
+      "detector_growth": 1.7982195844246036,
+      "detector_ms": 36.101050201690825,
+      "detector_over_classifier": 16.995928310094737,
+      "detector_peak_mib": 20354.103515625,
+      "height": 678,
+      "label": "CalDoT1",
+      "scale": 2,
+      "tiles": 176,
+      "tiles_growth": 1.8333333333333333,
+      "width": 1018
+    },
+    {
+      "classifier_batch": 157,
+      "classifier_growth": 3.8821480337937477,
+      "classifier_ms": 4.168864832802548,
+      "classifier_peak_mib": 23644.14111328125,
+      "detector_batch": 113,
+      "detector_growth": 3.478227740328866,
+      "detector_ms": 69.82888817035398,
+      "detector_over_classifier": 16.750096482118618,
+      "detector_peak_mib": 22109.62646484375,
+      "height": 960,
+      "label": "CalDoT1",
+      "scale": 4,
+      "tiles": 384,
+      "tiles_growth": 4.0,
+      "width": 1440
+    },
+    {
+      "classifier_batch": 631,
+      "classifier_growth": 1.0,
+      "classifier_ms": 1.0673149449286847,
+      "classifier_peak_mib": 23751.9326171875,
+      "detector_batch": 383,
+      "detector_growth": 1.0,
+      "detector_ms": 20.458830830939945,
+      "detector_over_classifier": 19.168504037303585,
+      "detector_peak_mib": 19929.078125,
+      "height": 480,
+      "label": "CalDoT2",
+      "scale": 1,
+      "tiles": 96,
+      "tiles_growth": 1.0,
+      "width": 720
+    },
+    {
+      "classifier_batch": 339,
+      "classifier_growth": 1.986522614667797,
+      "classifier_ms": 2.1202452750737466,
+      "classifier_peak_mib": 23520.53759765625,
+      "detector_batch": 207,
+      "detector_growth": 1.7685694478698992,
+      "detector_ms": 36.18286314673913,
+      "detector_over_classifier": 17.06541388023167,
+      "detector_peak_mib": 20354.103515625,
+      "height": 678,
+      "label": "CalDoT2",
+      "scale": 2,
+      "tiles": 176,
+      "tiles_growth": 1.8333333333333333,
+      "width": 1018
+    },
+    {
+      "classifier_batch": 157,
+      "classifier_growth": 3.8950321984959153,
+      "classifier_ms": 4.157226076433122,
+      "classifier_peak_mib": 23651.81689453125,
+      "detector_batch": 113,
+      "detector_growth": 3.422533987634202,
+      "detector_ms": 70.02104386615045,
+      "detector_over_classifier": 16.84321289695848,
+      "detector_peak_mib": 21613.8515625,
+      "height": 960,
+      "label": "CalDoT2",
+      "scale": 4,
+      "tiles": 384,
+      "tiles_growth": 4.0,
+      "width": 1440
+    }
+  ],
+  "rows": [
+    {
+      "classifier_ms": 1.0924761904761906,
+      "detector_median_ms": 23.5585755,
+      "detector_ms": 23.54753776,
+      "detector_over_classifier": 21.554280052305813,
+      "height": 360,
+      "input_shape": [
+        384,
+        640
+      ],
+      "label": "Amsterdam",
+      "tiles": 60,
+      "width": 640
+    },
+    {
+      "classifier_ms": 2.6219428571428574,
+      "detector_median_ms": 38.208436500000005,
+      "detector_ms": 38.14752405333333,
+      "detector_over_classifier": 14.549334646790454,
+      "height": 540,
+      "input_shape": [
+        576,
+        960
+      ],
+      "label": "Amsterdam",
+      "tiles": 144,
+      "width": 960
+    },
+    {
+      "classifier_ms": 4.5884,
+      "detector_median_ms": 62.047169,
+      "detector_ms": 62.11709638333334,
+      "detector_over_classifier": 13.537855545142826,
+      "height": 720,
+      "input_shape": [
+        768,
+        1280
+      ],
+      "label": "Amsterdam",
+      "tiles": 252,
+      "width": 1280
+    },
+    {
+      "classifier_ms": 10.48777142857143,
+      "detector_median_ms": 115.7682045,
+      "detector_ms": 115.69110163666667,
+      "detector_over_classifier": 11.031047198596823,
+      "height": 1080,
+      "input_shape": [
+        1088,
+        1920
+      ],
+      "label": "Amsterdam",
+      "tiles": 576,
+      "width": 1920
+    },
+    {
+      "classifier_ms": 18.3536,
+      "detector_median_ms": 199.5870225,
+      "detector_ms": 199.60974814666667,
+      "detector_over_classifier": 10.875781761979486,
+      "height": 1440,
+      "input_shape": [
+        1472,
+        2560
+      ],
+      "label": "Amsterdam",
+      "tiles": 1008,
+      "width": 2560
+    },
+    {
+      "classifier_ms": 41.95108571428572,
+      "detector_median_ms": 426.369423,
+      "detector_ms": 427.95174454,
+      "detector_over_classifier": 10.201207841309062,
+      "height": 2160,
+      "input_shape": [
+        2176,
+        3840
+      ],
+      "label": "Amsterdam",
+      "tiles": 2304,
+      "width": 3840
+    },
+    {
+      "classifier_ms": 0.8286538461538462,
+      "detector_median_ms": 30.607651,
+      "detector_ms": 31.442293669999998,
+      "detector_over_classifier": 37.94382155581341,
+      "height": 360,
+      "input_shape": [
+        360,
+        640
+      ],
+      "label": "B3D1",
+      "tiles": 60,
+      "width": 640
+    },
+    {
+      "classifier_ms": 1.9887692307692308,
+      "detector_median_ms": 41.63011,
+      "detector_ms": 42.644371666666665,
+      "detector_over_classifier": 21.442594247182896,
+      "height": 540,
+      "input_shape": [
+        540,
+        960
+      ],
+      "label": "B3D1",
+      "tiles": 144,
+      "width": 960
+    },
+    {
+      "classifier_ms": 2.9831538461538463,
+      "detector_median_ms": 59.449954500000004,
+      "detector_ms": 63.07918727666666,
+      "detector_over_classifier": 21.14513381802085,
+      "height": 720,
+      "input_shape": [
+        720,
+        1080
+      ],
+      "label": "B3D1",
+      "tiles": 216,
+      "width": 1080
+    },
+    {
+      "classifier_ms": 3.480346153846154,
+      "detector_median_ms": 66.49560650000001,
+      "detector_ms": 69.40248442333333,
+      "detector_over_classifier": 19.9412591033901,
+      "height": 720,
+      "input_shape": [
+        720,
+        1280
+      ],
+      "label": "B3D1",
+      "tiles": 252,
+      "width": 1280
+    },
+    {
+      "classifier_ms": 7.955076923076923,
+      "detector_median_ms": 130.1869805,
+      "detector_ms": 130.14119636,
+      "detector_over_classifier": 16.359514511100798,
+      "height": 1080,
+      "input_shape": [
+        1080,
+        1920
+      ],
+      "label": "B3D1",
+      "tiles": 576,
+      "width": 1920
+    },
+    {
+      "classifier_ms": 13.921384615384616,
+      "detector_median_ms": 218.01791,
+      "detector_ms": 218.90296953000004,
+      "detector_over_classifier": 15.724223960315621,
+      "height": 1440,
+      "input_shape": [
+        1440,
+        2560
+      ],
+      "label": "B3D1",
+      "tiles": 1008,
+      "width": 2560
+    },
+    {
+      "classifier_ms": 31.820307692307694,
+      "detector_median_ms": 479.64885549999997,
+      "detector_ms": 479.4175015166667,
+      "detector_over_classifier": 15.066400556288839,
+      "height": 2160,
+      "input_shape": [
+        2160,
+        3840
+      ],
+      "label": "B3D1",
+      "tiles": 2304,
+      "width": 3840
+    },
+    {
+      "classifier_ms": 1.48725,
+      "detector_median_ms": 23.61196,
+      "detector_ms": 23.61148517,
+      "detector_over_classifier": 15.875935565641285,
+      "height": 360,
+      "input_shape": [
+        384,
+        640
+      ],
+      "label": "CalDoT1",
+      "tiles": 60,
+      "width": 640
+    },
+    {
+      "classifier_ms": 2.3796,
+      "detector_median_ms": 30.383549000000002,
+      "detector_ms": 30.368769293333333,
+      "detector_over_classifier": 12.762131994172691,
+      "height": 480,
+      "input_shape": [
+        512,
+        768
+      ],
+      "label": "CalDoT1",
+      "tiles": 96,
+      "width": 720
+    },
+    {
+      "classifier_ms": 3.5694,
+      "detector_median_ms": 38.190205500000005,
+      "detector_ms": 38.230306043333336,
+      "detector_over_classifier": 10.710569295493174,
+      "height": 540,
+      "input_shape": [
+        576,
+        960
+      ],
+      "label": "CalDoT1",
+      "tiles": 144,
+      "width": 960
+    },
+    {
+      "classifier_ms": 6.246449999999999,
+      "detector_median_ms": 61.81599799999999,
+      "detector_ms": 61.84707546666667,
+      "detector_over_classifier": 9.90115593123561,
+      "height": 720,
+      "input_shape": [
+        768,
+        1280
+      ],
+      "label": "CalDoT1",
+      "tiles": 252,
+      "width": 1280
+    },
+    {
+      "classifier_ms": 14.2776,
+      "detector_median_ms": 114.7301415,
+      "detector_ms": 114.90636202666668,
+      "detector_over_classifier": 8.04801661530416,
+      "height": 1080,
+      "input_shape": [
+        1088,
+        1920
+      ],
+      "label": "CalDoT1",
+      "tiles": 576,
+      "width": 1920
+    },
+    {
+      "classifier_ms": 24.985799999999998,
+      "detector_median_ms": 199.2321455,
+      "detector_ms": 199.11531620999997,
+      "detector_over_classifier": 7.969139119419831,
+      "height": 1440,
+      "input_shape": [
+        1472,
+        2560
+      ],
+      "label": "CalDoT1",
+      "tiles": 1008,
+      "width": 2560
+    },
+    {
+      "classifier_ms": 57.1104,
+      "detector_median_ms": 433.50267499999995,
+      "detector_ms": 433.35435107999996,
+      "detector_over_classifier": 7.588011134224239,
+      "height": 2160,
+      "input_shape": [
+        2176,
+        3840
+      ],
+      "label": "CalDoT1",
+      "tiles": 2304,
+      "width": 3840
+    },
+    {
+      "classifier_ms": 1.6917931034482758,
+      "detector_median_ms": 23.792556,
+      "detector_ms": 23.88979141333333,
+      "detector_over_classifier": 14.120988769040533,
+      "height": 360,
+      "input_shape": [
+        384,
+        640
+      ],
+      "label": "CalDoT2",
+      "tiles": 60,
+      "width": 640
+    },
+    {
+      "classifier_ms": 2.7068689655172413,
+      "detector_median_ms": 30.465857,
+      "detector_ms": 30.537840679999995,
+      "detector_over_classifier": 11.281610254881576,
+      "height": 480,
+      "input_shape": [
+        512,
+        768
+      ],
+      "label": "CalDoT2",
+      "tiles": 96,
+      "width": 720
+    },
+    {
+      "classifier_ms": 4.060303448275862,
+      "detector_median_ms": 38.1783695,
+      "detector_ms": 38.27477517333333,
+      "detector_over_classifier": 9.426579973865268,
+      "height": 540,
+      "input_shape": [
+        576,
+        960
+      ],
+      "label": "CalDoT2",
+      "tiles": 144,
+      "width": 960
+    },
+    {
+      "classifier_ms": 7.105531034482759,
+      "detector_median_ms": 61.6674175,
+      "detector_ms": 61.78948997333333,
+      "detector_over_classifier": 8.69597074074721,
+      "height": 720,
+      "input_shape": [
+        768,
+        1280
+      ],
+      "label": "CalDoT2",
+      "tiles": 252,
+      "width": 1280
+    },
+    {
+      "classifier_ms": 16.241213793103448,
+      "detector_median_ms": 114.538702,
+      "detector_ms": 114.99001144999997,
+      "detector_over_classifier": 7.080136553514769,
+      "height": 1080,
+      "input_shape": [
+        1088,
+        1920
+      ],
+      "label": "CalDoT2",
+      "tiles": 576,
+      "width": 1920
+    },
+    {
+      "classifier_ms": 28.422124137931036,
+      "detector_median_ms": 198.321227,
+      "detector_ms": 198.49962464333333,
+      "detector_over_classifier": 6.983982748088263,
+      "height": 1440,
+      "input_shape": [
+        1472,
+        2560
+      ],
+      "label": "CalDoT2",
+      "tiles": 1008,
+      "width": 2560
+    },
+    {
+      "classifier_ms": 64.96485517241379,
+      "detector_median_ms": 425.0523935,
+      "detector_ms": 425.1978201333333,
+      "detector_over_classifier": 6.545043762583284,
+      "height": 2160,
+      "input_shape": [
+        2176,
+        3840
+      ],
+      "label": "CalDoT2",
+      "tiles": 2304,
+      "width": 3840
+    }
+  ]
+}

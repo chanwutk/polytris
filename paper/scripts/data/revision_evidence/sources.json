@@ -1,0 +1,202 @@
+[
+  {
+    "file": "classifier_matched.json",
+    "source": "../tetris/measurements-results/r9o1_matched_timing/matched_timing.json",
+    "sha256": "b83d333e8af39b90ecb5f3b113f4048858e38328fe14f21adb32eeca55daf3ac"
+  },
+  {
+    "file": "operator_share.json",
+    "source": "../tetris/measurements-results/r9o1_classifier_cost/operator_share.json",
+    "sha256": "75ec2c65099678d8d20c791fb378079cd2a8947c1b651675b271795343a8688c"
+  },
+  {
+    "file": "ilp_sizes.json",
+    "source": "../tetris/measurements-results/r9o3_ilp_instance_sizes/summary.json",
+    "sha256": "9596a0b2d54789a39e0c092547418eb785607dc47ced1e2f6f944161f8fe02d0"
+  },
+  {
+    "file": "ilp_timing.json",
+    "source": "../tetris/measurements-results/r9o3_ilp_timings/ilp_timings.json",
+    "sha256": "acca90f09d1459a6d1914dc4e80064ab7ae9fee52504f4e0ad71bb2e71cd2cda"
+  },
+  {
+    "file": "preparation.json",
+    "source": "../tetris/measurements-results/r9o2_preparation_cost/preparation_cost.json",
+    "sha256": "a350b2f7499343a595ec206c8c56b5c73dcfc4b22b04f35a8adbb76af74baccf"
+  },
+  {
+    "file": "preparation_overheads.json",
+    "source": "../tetris/measurements-results/r9o2_preparation_overheads/preparation_overheads.json",
+    "sha256": "22c3431060aa2c4b76faec6b2be86d98fe8742983f2ee0c79f41be97afeeb429"
+  },
+  {
+    "file": "packing.json",
+    "source": "../tetris/measurements-results/r1o4_oracle_packing/sr16/summary.json",
+    "sha256": "3bc474c0deb1f5e284401155c5d55716b786b8a8c865174e675c109fa97e1499"
+  },
+  {
+    "file": "packing_map.json",
+    "source": "../tetris/measurements-results/r1o4_packing_detection_accuracy/map.json",
+    "sha256": "f0d3c4692c2f0eeb46d07f553b307854f7709c73e7998c30f5a23f89a4421360"
+  },
+  {
+    "file": "gaps.json",
+    "source": "../tetris/measurements-results/r1o5_gap_tolerance/gap_tolerance.json",
+    "sha256": "0c8af8d78508cd2469b2166ca17c302f16652d28d0788f1a70b15ae202cd6376"
+  },
+  {
+    "file": "native_queries.json",
+    "source": "../tetris/measurements-results/r1o2_leap_native_queries/operating_points.json",
+    "sha256": "25a2189201d1ed628f105525bfbf33d5e61e4d682cd8d208d0b42818891ce5b8"
+  },
+  {
+    "file": "count_query.json",
+    "source": "../tetris/measurements-results/r1o2_count_query/operating_points.json",
+    "sha256": "a78c615e15d69f22b4b6e10d94990fa0f42cc786b1b0391803e4525aec872f6b"
+  },
+  {
+    "file": "matched_points.json",
+    "source": "../tetris/measurements-results/r7o1_hota_matched_speedup/matched_speedup.json",
+    "sha256": "1b081c4116e1610adf7e0be6ee4f8ed305768cf9ec86e110c91ec30235bd6e3b"
+  },
+  {
+    "file": "leap_rerun.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "56bff78b93e08a86944b2cd5d09d812b44da6aeb8f8c4a5af7d31e27cfe3b6e9"
+  },
+  {
+    "file": "leap_anchored_hota.json",
+    "source": "ace polyis /tmp/leap-anchored-hota-ug9z5jgd/results.json; canonical padded HOTA",
+    "sha256": "d822b18c019027f7b1d79212f29e8e373c33fc43d0a15edc180a50ce63c84548"
+  },
+  {
+    "file": "baseline_preparation.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "5c5cc13773339a949eb561a37c9d12af1beaebf2b4bc7e317f559e84e1d61318"
+  },
+  {
+    "file": "extraction_configs.json",
+    "source": "scripts/refresh_leap_matched.py; scripts/refresh_extraction_hota.py; matched_detector_sources.json",
+    "sha256": "9a4f4edf6a9ff886304f420a4846a0652a0f43420c62f09a8f99e4c596ed3cd4"
+  },
+  {
+    "file": "native_intervals.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "f9d4fd5d5793c5e5e7e676890e6f1d470659606e69b61a4df85154d173573a4c"
+  },
+  {
+    "file": "matched_detector_sources.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "1892d65080b287f2cee5780b9963b20ffd419e9089828807866d59737a1baff9"
+  },
+  {
+    "file": "native_query_configs.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "96152f2d245c7344a19b2e034d2fce926c7bbd4232e71de8e4d61ac6f34498c5"
+  },
+  {
+    "file": "leap_canonical.json",
+    "source": "scripts/refresh_leap_matched.py; matched_detector_sources.json",
+    "sha256": "af4076b76196e55058b23a0e7e66e8ed119b7292b4b791bdc6a57c3b45bbff6c"
+  },
+  {
+    "file": "leap_sampling_diagnostics.json",
+    "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/all_datasets.json",
+    "sha256": "961438bb75ca5671aafd144b586c9ab610330fe7cb560355c521a6a864889e48"
+  },
+  {
+    "file": "leap_second_observation.json",
+    "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/second_observation.json",
+    "sha256": "33c293dd794418e43af9a2a79a3dc7fdda20708b1c56bdcab2a660e839ea4d97"
+  },
+  {
+    "file": "leap_duration_variability.json",
+    "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/duration_variability.json",
+    "sha256": "b871d59572bf52fcb44a1a3bd204c1748a69030ed9210dcd82285baaeb66c999"
+  },
+  {
+    "file": "leap_sampling_explanation.json",
+    "source": "../tetris/measurements-results/r1o2_leap_sampling_unmasked/explanation.json",
+    "sha256": "ab0b775f2fb2a933d0ed1906ba96e31a73c42955148f058c8660713c7e05bab1"
+  },
+  {
+    "file": "packing_untimed.json",
+    "source": "../tetris/measurements-results/r9o2_packing_untimed/packing_untimed.json",
+    "sha256": "e99e7c9ad2b55c562949479a223beeb5e3405de7b45c8b88e778f3492a3e9ada"
+  },
+  {
+    "file": "preparation_total.json",
+    "source": "../tetris/measurements-results/r9o2_preparation_total/preparation_total.json",
+    "sha256": "2ed1cbfc5ad7d7fd136ae82f43fdec10558878b44af67c60fecf158171c833cf"
+  },
+  {
+    "file": "noscope/ams-y05.json",
+    "source": "noscope query score snapshot used in Table 2",
+    "sha256": "23fe9815a71d2a815c0eb3dd92f9e6c7e7117497c4e1a231fdf411b88e6512b4"
+  },
+  {
+    "file": "noscope/caldot1-y05.json",
+    "source": "noscope query score snapshot used in Table 2",
+    "sha256": "97e2fda21ef470f4f81ebbfbd3a93ec732ce25311a09fc7f2dc30761ece54855"
+  },
+  {
+    "file": "noscope/caldot2-y05.json",
+    "source": "noscope query score snapshot used in Table 2",
+    "sha256": "43e7014e44ca04c9cb8bedc88e886c7e7dda4d0eb9d8c9ef0a58276aecf52f33"
+  },
+  {
+    "file": "noscope/jnc0.json",
+    "source": "noscope query score snapshot used in Table 2",
+    "sha256": "7e292d91204ff2593e0ec44239a64c1baefc550336f5fd84567912e7c214925b"
+  },
+  {
+    "file": "noscope/jnc2.json",
+    "source": "noscope query score snapshot used in Table 2",
+    "sha256": "5724ae313d625f8b5071470a83b5d7e27a8ce29b2df788ebaaaf15264feaa688"
+  },
+  {
+    "file": "noscope/jnc6.json",
+    "source": "noscope query score snapshot used in Table 2",
+    "sha256": "6e0000edaa3a4751c0b55846f75ca16b2be28408cdc0a0a02528793d8c5e3d4e"
+  },
+  {
+    "file": "noscope/jnc7.json",
+    "source": "noscope query score snapshot used in Table 2",
+    "sha256": "9f77cb09b1bec3ce7ea8782e1c9d974428f3ca32aa3d2221e3dfe439b5042139"
+  },
+  {
+    "file": "seiden/ams-y05.json",
+    "source": "seiden query score snapshot used in Table 2",
+    "sha256": "da5a5da6f30dacf0d3238822dcdeb338b52079895e03bc463729f2499aa8a03f"
+  },
+  {
+    "file": "seiden/caldot1-y05.json",
+    "source": "seiden query score snapshot used in Table 2",
+    "sha256": "76c14987e6f850a9de9968b50ae28246c8070cd118723c52fd6882b7b41f43c5"
+  },
+  {
+    "file": "seiden/caldot2-y05.json",
+    "source": "seiden query score snapshot used in Table 2",
+    "sha256": "8caf227ed5714bcd96f5c8e0a4e27dab154125c65c2e6edb52d067c675462ac7"
+  },
+  {
+    "file": "seiden/jnc0.json",
+    "source": "seiden query score snapshot used in Table 2",
+    "sha256": "d07b452625c6d9ace3f082ab646cb8f39f2916b720f1bbc6f30e90ccac8cde26"
+  },
+  {
+    "file": "seiden/jnc2.json",
+    "source": "seiden query score snapshot used in Table 2",
+    "sha256": "fff81b78bf60c78544957803420d71d92c086698d4d0f93cc5df1d84c48df9a8"
+  },
+  {
+    "file": "seiden/jnc6.json",
+    "source": "seiden query score snapshot used in Table 2",
+    "sha256": "445f7bb951f6e4d4333160f1e8153c0ea39e7c5bee5a5bc302770665a1584a7c"
+  },
+  {
+    "file": "seiden/jnc7.json",
+    "source": "seiden query score snapshot used in Table 2",
+    "sha256": "a652e0cd451d4892fcb0d809739c09e55f499192e9ab085d16c48fef78ce0910"
+  }
+]

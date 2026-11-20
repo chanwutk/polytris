@@ -1,6 +1,4 @@
 dataset_name_mapping:
-  caldot1: caldot
-  caldot2: caldot
   caldot1-y05: caldot-yolo5-1
   caldot2-y05: caldot-yolo5-2
   caldot1-y11: caldot-yolo11-1
@@ -11,7 +9,6 @@ dataset_name_mapping:
   caldot2-r: caldot-retinanet-2
   ams-y05: ams-y05
   ams-y11: ams-y11
-  ams: ams
   jnc0: b3d
   jnc2: b3d
   jnc6: b3d
@@ -20,13 +17,6 @@ dataset_name_mapping:
 dataset_detector_mapping:
   b3d:
     detector: retina
-  ams:
-    detector: yolov3
-    detector_label: generic
-    width: 1280
-    height: 736
-    model_path: /otif-dataset/yolov3/generic/yolov3.best
-    config_path: /otif-dataset/yolov3/generic/yolov3-1280x736-test.cfg
   ams-y05:
     detector: ultralytics
     width: 1280
@@ -37,13 +27,6 @@ dataset_detector_mapping:
     width: 1280
     height: 720
     model_path: /polyis-data/training/ultralytics/amsterdam/weights/yolo11x/weights/best.pt
-  caldot:
-    detector: yolov3
-    detector_label: caldot
-    width: 704
-    height: 480
-    model_path: /otif-dataset/yolov3/caldot/yolov3-704x480.best
-    config_path: /otif-dataset/yolov3/caldot/yolov3-704x480-test.cfg
   caldot-yolo5:
     detector: yolo5
     width: 704

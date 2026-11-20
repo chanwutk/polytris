@@ -3,7 +3,7 @@ Dataset-based detector selection utilities.
 
 This module provides automatic detector selection based on dataset names,
 allowing the system to automatically choose the appropriate detector
-(RetinaNet or YOLOv3) for each dataset.
+(RetinaNet or YOLOv5) for each dataset.
 """
 
 from enum import Enum
@@ -11,7 +11,6 @@ from typing import Any
 import ultralytics
 
 import polyis.models.retinanet_b3d
-import polyis.models.yolov3
 import polyis.models.ultralytics
 import polyis.models.torch_vision
 import polyis.dtypes
@@ -33,11 +32,11 @@ def get_detector(dataset_name: str, gpu_id, batch_size: int = 16, num_images: in
     Get the appropriate detector for a given dataset name.
     
     Args:
-        dataset_name: Name of the dataset (e.g., 'b3d', 'caldot', 'shibuya')
+        dataset_name: Name of the dataset (e.g., 'jnc0', 'caldot1-y05', 'ams-y05')
         gpu_id: GPU device ID to use (optional)
         
     Returns:
-        Loaded detector instance (RetinaNet or YOLOv3)
+        Loaded detector instance
         
     Raises:
         ValueError: If dataset is not found in configuration
@@ -50,20 +49,6 @@ def get_detector(dataset_name: str, gpu_id, batch_size: int = 16, num_images: in
     
     if detector_type == 'retina':
         return polyis.models.retinanet_b3d.get_detector(device=device)
-    
-    elif detector_type == 'yolov3':
-        return polyis.models.yolov3.get_detector(
-            gpu_id=gpu_id,
-            config_path=dataset_config['config_path'],
-            model_path=dataset_config['model_path'],
-            detector_label=dataset_config['detector_label'],
-            width=dataset_config['width'],
-            height=dataset_config['height'],
-            threshold=0.25,
-            nms_threshold=0.45,
-            batch_size=batch_size,
-            num_images=num_images,
-        )
     
     elif detector_type == 'ultralytics':
         return polyis.models.ultralytics.get_detector(device=device, model_path=dataset_config['model_path'])
@@ -86,7 +71,7 @@ def detect(
     
     Args:
         image: Input image as numpy array (RGB)
-        detector: Pre-loaded detector instance (RetinaNet, YOLOv3, or YOLOv5)
+        detector: Pre-loaded detector instance
         threshold: Detection confidence threshold
         
     Returns:
@@ -94,11 +79,7 @@ def detect(
                    Only returns detections for car, truck, and van classes
     """
     # Use the appropriate detect function based on detector type
-    if hasattr(detector, 'net'):  # YOLOv3 detector
-        if mode == DetectorMode.BGR:
-            image = image[:, :, ::-1]
-        return polyis.models.yolov3.detect(image, detector, threshold)
-    elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
+    if isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         if mode == DetectorMode.RGB:
             image = image[:, :, ::-1]
         return polyis.models.retinanet_b3d.detect(image, detector, threshold)
@@ -121,11 +102,7 @@ def detect_batch(
     """
     Detect vehicles in a batch of images using the appropriate detector.
     """
-    if hasattr(detector, 'net'):  # YOLOv3 detector
-        if mode == DetectorMode.BGR:
-            images = [image[:, :, ::-1] for image in images]
-        return polyis.models.yolov3.detect_batch(images, detector, threshold)
-    elif isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
+    if isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
         if mode == DetectorMode.RGB:
             images = [image[:, :, ::-1] for image in images]
         return polyis.models.retinanet_b3d.detect_batch(images, detector, threshold)
@@ -162,11 +139,7 @@ def delete(detector: Any):
     """
     Delete detector.
     """
-    if hasattr(detector, 'net'):
+    try:
+        detector.to('cpu')
+    except Exception:
         pass
-    else:
-        try:
-            detector.to('cpu')
-        except:
-            pass
-        del detector

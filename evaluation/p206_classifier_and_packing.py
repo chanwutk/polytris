@@ -175,10 +175,12 @@ def _legend_item(label: str, style: dict, x: int, y: int, font_size: int = 11) -
             .encode(x=alt.value(x + 10), y=alt.value(y), text=alt.value(label))]
 
 
-def _inside_legend(items: list[tuple[str, dict]], x: int = 12, font_size: int = 11) -> alt.LayerChart:
-    """A small legend stacked inside a panel's bottom-left corner, one (label, mark style) entry per row."""
+def _inside_legend(items: list[tuple[str, dict]], x: int = 12, font_size: int = 11,
+                   bottom: int = 12) -> alt.LayerChart:
+    """A small legend stacked inside a panel's lower-left corner, `bottom` pixels above the panel's bottom edge,
+    one (label, mark style) entry per row."""
     return alt.layer(*(layer for row, (label, style) in enumerate(reversed(items))
-                       for layer in _legend_item(label, style, x, SUBPLOT_HEIGHT - 12 - 16 * row, font_size)))
+                       for layer in _legend_item(label, style, x, SUBPLOT_HEIGHT - bottom - 16 * row, font_size)))
 
 
 
@@ -222,10 +224,13 @@ def _build_classifier_panels(
     for index, (field, title) in enumerate(metrics):
         # Per-metric y-domain so subtle gaps between metrics stay readable.
         y0, y1 = _y_domain_for_metric(df, field)
+        if index == 0:
+            # Extra room below the lowest point for the Modified/Baseline legend in the bottom-left corner.
+            y0 = max(0.0, y0 - 0.07)
         y_scale = alt.Scale(domain=[y0, y1], nice=False, zero=False, padding=SCALE_PADDING)
-        # Runtime ticks every 2 ms/frame.
-        x_enc = alt.X('ms_per_frame:Q', title='runtime (ms/frame)', scale=x_scale,
-                      axis=alt.Axis(values=list(range(0, int(np.ceil(x_max)) + 1, 2))))
+        # Runtime ticks every 1 ms/frame.
+        x_enc = alt.X('ms_per_frame:Q', title='Runtime (ms/frame)', scale=x_scale,
+                      axis=alt.Axis(values=list(range(0, int(np.ceil(x_max)) + 1)), format='d'))
         y_enc = alt.Y(f'{field}:Q', title=title, scale=y_scale)
 
         # Connecting line links the Modified/Baseline pair per dataset.

@@ -1,0 +1,148 @@
+{
+  "method": "Population variance of (last-first+1)/15 seconds; tracks exclude both clip boundaries and last at least one second. B3D pooled combines B3D1-4; B3D labels are provisional. \"B3D pooled, all tracks\" keeps every B3D1-4 track, including those cut by a clip boundary (duration within the clip) and those shorter than one second.",
+  "sources": [
+    {
+      "dataset": "caldot1-y05",
+      "label": "CalDoT1",
+      "filename": "/polyis/measurements-results/r1o2_leap_sampling_unmasked/caldot1-y05-tracks.parquet",
+      "sha256": "dee52306f29343cde4104d01467ed02c64440fe32154ee2bc8b0f540c9d47c2b"
+    },
+    {
+      "dataset": "caldot2-y05",
+      "label": "CalDoT2",
+      "filename": "/polyis/measurements-results/r1o2_leap_sampling_unmasked/caldot2-y05-tracks.parquet",
+      "sha256": "c82444c7045804174a111c3c3118adc5deacea389b4d5a0685edddd77ae62781"
+    },
+    {
+      "dataset": "ams-y05",
+      "label": "Amsterdam",
+      "filename": "/polyis/measurements-results/r1o2_leap_sampling_unmasked/ams-y05-tracks.parquet",
+      "sha256": "a9f62f38d3d46b4dcdfff516165b03828ff436043228c1b830b013998d797dd4"
+    },
+    {
+      "dataset": "jnc0",
+      "label": "B3D1",
+      "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc0-tracks.parquet",
+      "sha256": "8c42cc077b1343e9e10df058701f3c7d940a8149db25f87112584cf974e6d516"
+    },
+    {
+      "dataset": "jnc2",
+      "label": "B3D2",
+      "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc2-tracks.parquet",
+      "sha256": "6b40b325efe7b7e15e43a3c52d5446598f72c322b605918d6a0308c335ceb0eb"
+    },
+    {
+      "dataset": "jnc6",
+      "label": "B3D3",
+      "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc6-tracks.parquet",
+      "sha256": "23b954bfa8adbe219a15b4b001a174b728e91b88ca59bdba5c4a3bb134663add"
+    },
+    {
+      "dataset": "jnc7",
+      "label": "B3D4",
+      "filename": "/polyis/measurements-results/r1o2_leap_sampling_diagnostics/jnc7-tracks.parquet",
+      "sha256": "7b65bcbd8251bfb3cddf49ee3639c0816bf28793ea2ae0442b35ea8a752397ef"
+    }
+  ],
+  "rows": [
+    {
+      "label": "Amsterdam",
+      "tracks": 530,
+      "mean_s": 5.974339622641513,
+      "stddev_s": 6.191979311368313,
+      "variance_s2": 38.340607792413216,
+      "coefficient_of_variation": 1.0364290787724875,
+      "p10_s": 1.4,
+      "p50_s": 4.066666666666666,
+      "p90_s": 13.420000000000005
+    },
+    {
+      "label": "B3D pooled",
+      "tracks": 721,
+      "mean_s": 16.250208044382813,
+      "stddev_s": 7.164219950469957,
+      "variance_s2": 51.32604749871175,
+      "coefficient_of_variation": 0.4408694295422515,
+      "p10_s": 8.4,
+      "p50_s": 14.933333333333334,
+      "p90_s": 25.866666666666667
+    },
+    {
+      "label": "B3D1",
+      "tracks": 217,
+      "mean_s": 15.71305683563749,
+      "stddev_s": 5.432329925850697,
+      "variance_s2": 29.510208423293037,
+      "coefficient_of_variation": 0.3457207583905683,
+      "p10_s": 10.253333333333334,
+      "p50_s": 14.733333333333333,
+      "p90_s": 23.49333333333334
+    },
+    {
+      "label": "B3D2",
+      "tracks": 168,
+      "mean_s": 17.057539682539677,
+      "stddev_s": 8.246201388098727,
+      "variance_s2": 67.99983733308137,
+      "coefficient_of_variation": 0.4834343956731139,
+      "p10_s": 7.713333333333333,
+      "p50_s": 15.866666666666667,
+      "p90_s": 28.433333333333337
+    },
+    {
+      "label": "B3D3",
+      "tracks": 187,
+      "mean_s": 17.806773618538323,
+      "stddev_s": 7.1428361736868045,
+      "variance_s2": 51.02010860412875,
+      "coefficient_of_variation": 0.4011302848400634,
+      "p10_s": 8.706666666666665,
+      "p50_s": 17.066666666666666,
+      "p90_s": 27.333333333333336
+    },
+    {
+      "label": "B3D4",
+      "tracks": 149,
+      "mean_s": 14.168680089485465,
+      "stddev_s": 7.4935579872180185,
+      "variance_s2": 56.153411307798955,
+      "coefficient_of_variation": 0.5288818676045177,
+      "p10_s": 7.666666666666667,
+      "p50_s": 12.6,
+      "p90_s": 22.76000000000001
+    },
+    {
+      "label": "CalDoT1",
+      "tracks": 700,
+      "mean_s": 7.789714285714275,
+      "stddev_s": 5.2483015164199776,
+      "variance_s2": 27.54466880725624,
+      "coefficient_of_variation": 0.6737476271812627,
+      "p10_s": 2.1333333333333333,
+      "p50_s": 6.733333333333333,
+      "p90_s": 16.006666666666668
+    },
+    {
+      "label": "CalDoT2",
+      "tracks": 1153,
+      "mean_s": 6.749522983521241,
+      "stddev_s": 3.2113379676883027,
+      "variance_s2": 10.312691542716438,
+      "coefficient_of_variation": 0.4757873964617483,
+      "p10_s": 2.4266666666666667,
+      "p50_s": 6.733333333333333,
+      "p90_s": 10.386666666666665
+    },
+    {
+      "label": "B3D pooled, all tracks",
+      "tracks": 1320,
+      "mean_s": 15.413030303030306,
+      "stddev_s": 11.544068626220707,
+      "variance_s2": 133.26552044689325,
+      "coefficient_of_variation": 0.7489811152808196,
+      "p10_s": 3.786666666666667,
+      "p50_s": 13.4,
+      "p90_s": 26.813333333333354
+    }
+  ]
+}

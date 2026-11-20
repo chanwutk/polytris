@@ -35,12 +35,6 @@ DATA_DIR = '/polyis-data/video-datasets'
 CACHE_DIR = '/polyis-cache'
 TILE_SIZES = [60]
 
-GS_DATASETS_DIR = 'gs://polytris/polyis-data/datasets'
-GS_CACHE = 'gs://polytris/polyis-cache'
-
-GC_DATASETS_DIR = '/data/chanwutk/data/polyis-data/datasets'
-GC_CACHE = '/data/chanwutk/data/polyis-cache'
-
 # Define 10 distinct colors for track visualization (BGR format for OpenCV)
 TRACK_COLORS = [
     (255, 0, 0),    # Blue
@@ -2057,7 +2051,7 @@ def get_config(config_name: str | None = None):
         config = yaml.load(f, Loader=yaml.FullLoader)
     # Optionally restrict every script to a subset of the configured datasets (comma-separated).
     subset = os.environ.get('POLYIS_DATASETS')
-    if subset is not None:
+    if subset is not None and 'DATASETS' in config.get('EXEC', {}):
         # Keep the requested datasets in the order given, dropping blanks.
         requested = [name.strip() for name in subset.split(',') if name.strip()]
         # Refuse an empty or unknown selection rather than silently processing nothing or the wrong data.

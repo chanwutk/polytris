@@ -359,19 +359,23 @@ def save_pareto_params(dataset: str, pareto_df: pd.DataFrame) -> None:
     print(f"Saved Pareto params for {dataset}: {len(pareto_df)} rows to {output_path}")
 
 
+def _pareto_input_path(dataset: str):
+    # A reproduction test can select a subset without overwriting the validation frontier.
+    override = os.environ.get('POLYIS_TEST_PARETO_PARAMS')
+    if override:
+        return override
+    return cache.eval(dataset, 'pareto-params', 'pareto_params.csv')
+
+
 def load_pareto_params(dataset: str) -> pd.DataFrame:
     """Load Pareto-optimal parameter sets for a dataset from the evaluation cache."""
-    # Construct the expected path using the evaluation cache helper.
-    path = cache.eval(dataset, 'pareto-params') / 'pareto_params.csv'
-    # Load and return the Pareto parameter sets CSV.
-    return pd.read_csv(path)
+    return pd.read_csv(_pareto_input_path(dataset))
 
 
 def pareto_params_exist(dataset: str) -> bool:
     """Check whether Pareto parameter sets have been saved for a dataset."""
     # Check whether the Pareto params CSV exists for the given dataset.
-    path = cache.eval(dataset, 'pareto-params') / 'pareto_params.csv'
-    return path.exists()
+    return os.path.exists(_pareto_input_path(dataset))
 
 
 def build_pareto_combo_filter(
