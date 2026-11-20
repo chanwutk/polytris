@@ -1,19 +1,19 @@
 #!/usr/local/bin/python
 """R7.O3: score Seiden's per-frame outputs with LEAP's original evaluator, on the §7.3 ground truth.
 
-Inputs are the runs of seiden/tetris_comparison/run.py (copied to measurements-results/r7o3_seiden/<dataset>/), each
-holding Seiden's propagated per-frame y_pred over the dataset's concatenated test clips (manifest.json order).
+Inputs are the runs of seiden/tetris_comparison/run.py (copied to measurements-results/r7o3_seiden/<dataset>/), one
+json per query, budget fraction, and seed, holding Seiden's propagated per-frame y_pred: one Seiden run per test clip,
+stitched in manifest.json's clip order.
 The ground truth is rebuilt exactly as scripts/score_leap_queries.py builds it (LEAP preprocess, pseudo_label, over
 the 003_groundtruth boxes) and checked against that run's saved hash, so Seiden is scored on the same counts as
 Tetris, OTIF, and LEAP in §7.3.
 
 Seiden propagates labels from its anchors, so y_pred is continuous. LEAP's selection_query_1 needs integer counts
 (a prediction in (0, 1) is neither >= 1 nor 0), so each answer is scored as:
-  presence, propagate  selection on y_pred >= 0.5 (Seiden's propagated probability that a car is present)
-  presence, supg       selection on the frames SUPG returns (recall target 0.95), one answer per SUPG budget
-  count, propagate     aggregation on y_pred rounded to the nearest integer (`acc`) and unrounded (`acc_raw`);
-                       top-k on y_pred unrounded (Seiden's own ranking, `topk`) and rounded (`topk_rounded`)
-Each record carries its answer's cost (detector frames, Seiden's time, FPS) from the run's json.
+  presence  selection on y_pred >= 0.5 (Seiden's propagated probability that a car is present)
+  count     aggregation on y_pred rounded to the nearest integer (`acc`) and unrounded (`acc_raw`);
+            top-k on y_pred unrounded (Seiden's own ranking, `topk`) and rounded (`topk_rounded`)
+Each record carries the run's cost (detector frames, Seiden's time, FPS) from the run's json.
 
 Run inside ace's polyis container:
   python measurements/r7o3_seiden_score.py --datasets caldot1-y05
@@ -130,28 +130,19 @@ def main():
         assert [(c['video'], c['frames']) for c in manifest['clips']] == clips, f'{dataset}: clip order differs'
         run = make_run(evaluator, gt)
         records = []
-        # One record per answer of every run (query, index budget, seed).
-        runs = sorted((SEIDEN_RUNS / dataset).glob('*_b*_s*.json'))
-        # Budgets at which Seiden's code raised, recorded by the driver.
-        failures = [json.loads(f.read_text()) for f in runs if f.name.endswith('.error.json')]
-        for meta_path in (f for f in runs if not f.name.endswith('.error.json')):
-            meta = json.loads(meta_path.read_text())
-            arrays = np.load(meta_path.with_suffix('.npz'))
-            assert len(arrays['y_pred']) == len(gt), f'{meta_path.name}: frame count differs'
-            for answer in meta['answers']:
-                if meta['query'] == 'count':
-                    metrics = count_queries(run, arrays['y_pred'])
-                elif answer['mode'] == 'propagate':
-                    metrics = dict(selection=selection(run, arrays['y_pred'] >= 0.5))
-                else:
-                    selected = np.zeros(len(gt), dtype=bool)
-                    selected[arrays[f"supg_{answer['supg_budget']}"]] = True
-                    metrics = dict(selection=selection(run, selected))
-                records.append(dict(query=meta['query'], budget=meta['budget'], fraction=meta['fraction'],
-                                    seed=meta['seed'], **answer, **metrics))
-                print(f"{label} {meta_path.stem} {answer['mode']}: {json.dumps(records[-1])}", flush=True)
+        # One record per run (query, index budget, seed).
+        for path in sorted((SEIDEN_RUNS / dataset).glob('*_f*_s*.json')):
+            result = json.loads(path.read_text())
+            y_pred = np.asarray(result.pop('y_pred'))
+            assert len(y_pred) == len(gt), f'{path.name}: frame count differs'
+            if result['query'] == 'count':
+                metrics = count_queries(run, y_pred)
+            else:
+                metrics = dict(selection=selection(run, y_pred >= 0.5))
+            records.append(dict(result, **metrics))
+            print(f"{label} {path.stem}: {json.dumps(records[-1])}", flush=True)
         write_json(out, f'{dataset}.json', dict(dataset=dataset, frames=len(gt), evaluator=str(EVALUATOR),
-                                                ground_truth_count_sha256=digest, records=records, failures=failures))
+                                                ground_truth_count_sha256=digest, records=records))
 
 
 if __name__ == '__main__':
