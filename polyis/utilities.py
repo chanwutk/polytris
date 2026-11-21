@@ -1881,6 +1881,11 @@ TILEPADDING_MODES: "dict[TilePadding, int]" = {
 }
 TILEPADDING_MAPS: "dict[TilePadding, int]" = TILEPADDING_MODES
 
+
+def is_tile_padding(value: str) -> typing.TypeGuard[TilePadding]:
+    """True if value is a padding mode TILEPADDING_MODES maps to an id; narrows str to TilePadding."""
+    return value in TILEPADDING_MODES
+
 ParamTypes = tuple[str, int, str]
 
 

@@ -44,7 +44,7 @@ from polyis.pack.group_tiles import group_tiles
 from polyis.pack.pack import pack
 from polyis.sample.ilp.c.gurobi import solve_ilp
 from polyis.train.select_model_optimization import select_model_optimization
-from polyis.utilities import TILEPADDING_MAPS, create_tracker, register_tracked_detections
+from polyis.utilities import TILEPADDING_MAPS, create_tracker, is_tile_padding, register_tracked_detections
 
 # p020's BATCH_SIZE, p040's default --batch_size, p022's TILEPADDING_MODE and solve time limit,
 # and p030's PackMode.Best_Fit.  tests/execution2/test_stages.py checks each against its script.
@@ -287,7 +287,11 @@ def prune(state: dict, c: Classified) -> Classified:
 
 def pack_setup(cfg: Config, prefix: str, worker: Worker) -> dict:
     p = cfg.params
-    return {'tile_size': p.tile_size, 'padding': TILEPADDING_MAPS[p.tile_padding], 'canvas_scale': p.canvas_scale,
+    padding = p.tile_padding
+    # The config already rejects unknown modes; the guard narrows str to TilePadding for the lookup.
+    if not is_tile_padding(padding):
+        raise ValueError(f'unknown tile padding {padding!r}')
+    return {'tile_size': p.tile_size, 'padding': TILEPADDING_MAPS[padding], 'canvas_scale': p.canvas_scale,
             'relevance_threshold': p.relevance_threshold, 'prefix': prefix, 'jpeg': p.canvas_format == 'jpeg'}
 
 
