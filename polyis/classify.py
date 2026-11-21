@@ -10,6 +10,16 @@ from polyis.images import ImgNHWC, splitNHWC
 from polyis.utilities import format_time
 
 
+def load_classifier(model_path) -> torch.nn.Module:
+    """Load a trained classifier checkpoint in eval mode and fp16, on CPU."""
+    # Load to CPU first to avoid CUDA init errors in spawned subprocesses;
+    # caller moves the model to the target GPU device afterward.
+    model = torch.load(model_path, map_location='cpu', weights_only=False)
+    model.eval()
+    model.half()
+    return model
+
+
 def classify_batch(
     grid_width: int,
     grid_height: int,

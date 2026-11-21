@@ -107,6 +107,10 @@ Move these pure functions from the scripts into `polyis/` with no logic change. 
    - an exception and a SIGKILL in each stage, with no leftover `/dev/shm` blocks
    - backpressure
    - empty dir, non-video file, unreadable video, 1-frame video, zero collages, duplicate stems
-4. Stages: decode, classify, prune, pack, detect, track.
+4. ~~Stages: decode, classify, prune, pack, detect, track~~: done (`execution2/stages.py`, `tests/execution2/test_stages.py`).
+   - Decisions: [20B] the detector sees raw canvases, not p030's JPEG (quality 95) round trip; [21A] `polyis.models.detector.build_detector` is shared with `get_detector`; p020's model loading moved to `polyis.classify.load_classifier`.
+   - Checked against the scripts themselves (loaders redirected to temp files): prune equals p022's `process_video` exactly; pack's index maps and offset lookups equal p030's `compress` exactly, and every drawn tile equals its source tile; track equals p060's `track` file for file; classify equals p020's batching with a fake model.
+   - Known differences from the scripts: canvases are not JPEG-compressed; within a frame, boxes are merged in collage order (p050 follows p040's `os.listdir` order); classify picks its model optimization from the first video it receives.
+   - A padded polyomino larger than the canvas (e.g. `canvas_scale` < 1) aborts inside the C `pack()`, as it would in p030; the engine reports it as a worker death.
 5. `main.py`: dummy-video timing and writing outputs.
 6. Stage-by-stage diff against p020→p060 on 2–3 test videos of one dataset [13A].

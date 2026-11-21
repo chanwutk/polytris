@@ -43,34 +43,43 @@ def get_detector(dataset_name: str, gpu_id, batch_size: int = 16, num_images: in
         ValueError: If dataset is not found in configuration
         FileNotFoundError: If required model files are not found
     """
-    # Get dataset configuration
+    # Look up the dataset's detector fields, then build from them.
     dataset_config = DATASET_DETECTOR_CONFIG[DATASET_NAME_MAPPING[dataset_name]]
-    detector_type = dataset_config['detector']
+    return build_detector(dataset_config['detector'], dataset_config, gpu_id, batch_size, num_images)
+
+
+def build_detector(detector_type: str, options: dict, gpu_id, batch_size: int = 16, num_images: int = 0):
+    """
+    Build a detector of detector_type from its fields (the per-type keys of configs/detectors.yaml).
+
+    Shared by get_detector (fields looked up by dataset) and execution2 (fields from its --config).
+    retina takes an optional config_path (defaults to RetinaNet's bundled config).
+    """
     device = f'cuda:{gpu_id}'
-    
+
     if detector_type == 'retina':
-        return polyis.models.retinanet_b3d.get_detector(device=device)
-    
+        return polyis.models.retinanet_b3d.get_detector(device=device, configfile=options.get('config_path'))
+
     elif detector_type == 'yolov3':
         return polyis.models.yolov3.get_detector(
             gpu_id=gpu_id,
-            config_path=dataset_config['config_path'],
-            model_path=dataset_config['model_path'],
-            detector_label=dataset_config['detector_label'],
-            width=dataset_config['width'],
-            height=dataset_config['height'],
+            config_path=options['config_path'],
+            model_path=options['model_path'],
+            detector_label=options['detector_label'],
+            width=options['width'],
+            height=options['height'],
             threshold=0.25,
             nms_threshold=0.45,
             batch_size=batch_size,
             num_images=num_images,
         )
-    
+
     elif detector_type == 'ultralytics':
-        return polyis.models.ultralytics.get_detector(device=device, model_path=dataset_config['model_path'])
-    
+        return polyis.models.ultralytics.get_detector(device=device, model_path=options['model_path'])
+
     elif detector_type == 'torchvision':
-        return polyis.models.torch_vision.get_detector(device=device, model_path=dataset_config['model_path'], model_type=dataset_config['model_type'])
-    
+        return polyis.models.torch_vision.get_detector(device=device, model_path=options['model_path'], model_type=options['model_type'])
+
     else:
         raise ValueError(f"Unknown detector type: {detector_type}")
 

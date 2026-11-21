@@ -13,7 +13,7 @@ import shutil
 import multiprocessing as mp
 from functools import partial
 
-from polyis.classify import classify_batch
+from polyis.classify import classify_batch, load_classifier
 
 from polyis.train.select_model_optimization import select_model_optimization
 from polyis.io import cache, store
@@ -63,12 +63,7 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
 
     if os.path.exists(model_path):
         # print(f"Loading {classifier_name} model for tile size {tile_size} from {model_path}")
-        # Load to CPU first to avoid CUDA init errors in spawned subprocesses;
-        # caller moves the model to the target GPU device afterward.
-        model = torch.load(model_path, map_location='cpu', weights_only=False)
-        model.eval()
-        model.half()
-        return model
+        return load_classifier(model_path)
 
     raise FileNotFoundError(f"No trained model found for {classifier_name} tile size {tile_size} in {results_path}")
 
