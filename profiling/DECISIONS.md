@@ -173,3 +173,8 @@ duplicates), 2,251 s wall vs 2,405 s unreduced (6.4% less).  Against the unreduc
 configurations have identical HOTA; 328 of 360 pruned do, and the other 32 differ by up to 0.048 because the
 0.1 s ILP limit makes pruned results load-dependent (as in the Figure 8 rerun), not because of the merge.
 Pareto: 58 configurations (vs 56).  Results under `measurements-results/profiling-sweep/caldot1-y05-reduced/`.
+
+### D28. Scope of the reduction settled with the author: same-gap merge only (1A)
+Intent (author): drop (sample rate, T_r, tolerance) prefixes provably giving the same polyominoes.  Kept
+the static same-gap merge.  Not pursued: merging across trackers (measured 180 -> 171 ILP branches on all 7
+datasets) and per-video ILP hashing (unmeasured; constraint building lives in gurobi.pyx).
