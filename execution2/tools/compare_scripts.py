@@ -191,7 +191,7 @@ def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str,
         ours = stages.classify(states['classify'], decoded)
         idx, theirs = grids(load_classification_results(dataset, video, p.tile_size, cfg.artifacts.classifier.name,
                                                        p.sample_rate))
-        report['classify'] = {'frames_match': idx == decoded.sampled,
+        report['classify'] = {'frames_match': idx == decoded.sampled.tolist(),
                               **compare_grids(ours.scores, theirs, p.relevance_threshold)}
         pack_input = theirs
         # prune
@@ -200,7 +200,7 @@ def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str,
             pidx, ptheirs = grids(load_pruned_classification_results(
                 dataset, video, p.tile_size, cfg.artifacts.classifier.name, p.tracker, p.mistrack_tolerance,
                 p.relevance_threshold, p.sample_rate))
-            report['prune'] = {'frames_match': pidx == decoded.sampled, **compare_grids(pruned.scores, ptheirs, None)}
+            report['prune'] = {'frames_match': pidx == decoded.sampled.tolist(), **compare_grids(pruned.scores, ptheirs, None)}
             pack_input = ptheirs
         # pack (frees the frames block)
         packed = stages.pack_video(stages.pack_setup(cfg, prefix, None), Classified(decoded, pack_input))

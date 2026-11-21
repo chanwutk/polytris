@@ -62,8 +62,9 @@ class Decoded(NamedTuple):
     width: int
     height: int
     frame_count: int
-    sampled: list[int]          # absolute indices of sampled frames, ascending
-    needed: list[int]           # absolute indices stored in `frames`, ascending (sampled + partners)
+    sampled: np.ndarray         # absolute indices of sampled frames, ascending
+    partner: np.ndarray         # each sampled frame's diff partner (parallel to sampled)
+    needed: np.ndarray          # absolute indices stored in `frames`, ascending and unique (sampled + partners)
     frames: frames.Block        # BGR uint8 [len(needed), height, width, 3]
 
 
@@ -95,19 +96,26 @@ class Tracked(NamedTuple):
     frame_tracks: dict[int, list[list[float]]]
 
 
-def frame_selection(frame_count: int, sample_rate: int) -> tuple[list[int], list[int], dict[int, int]]:
-    """p020's sampled frames, the frames to store (sampled + diff partners), and each sampled frame's partner."""
+def frame_selection(frame_count: int, sample_rate: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """p020's sampled frames, each one's diff partner (parallel array), and the frames to store, ascending and unique."""
     # p020 reads frames[idx + 1] for frame 0, which needs a second frame.
     if frame_count < 2:
         raise ValueError(f'video has {frame_count} frame(s); the classifier diff needs at least 2')
     # Every s-th frame, plus the last frame when it is not already sampled.
-    sampled = list(range(0, frame_count, sample_rate))
+    sampled = np.arange(0, frame_count, sample_rate)
     if sampled[-1] != frame_count - 1:
-        sampled.append(frame_count - 1)
+        sampled = np.append(sampled, frame_count - 1)
     # Diff partner: the previous frame, or the next one for frame 0.
-    partner = {idx: idx - 1 if idx > 0 else idx + 1 for idx in sampled}
-    needed = sorted({*sampled, *partner.values()})
-    return sampled, needed, partner
+    partner = sampled - 1
+    partner[0] = 1
+    # Frames 0 and 1 (frame 0 and its partner) always come first.  The remaining pairs interleave to
+    # [s1-1, s1, s2-1, s2, ...], non-decreasing because sampled is strictly increasing, so no sort is needed;
+    # their values below 2 (only when s1 <= 2) are 0 or 1, already at the front.
+    pairs = np.stack([partner[1:], sampled[1:]], axis=1).ravel()
+    needed = np.concatenate([[0, 1], pairs[pairs >= 2]])
+    # Drop adjacent repeats: a partner that is itself sampled (s <= 2, or a last frame right after a sampled one).
+    needed = needed[np.r_[True, needed[1:] != needed[:-1]]]
+    return sampled, partner, needed
 
 
 # ---------------------------------------------------------------- decode
@@ -125,25 +133,26 @@ def decode(state: dict, video: str) -> Decoded:
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        sampled, needed, _ = frame_selection(frame_count, state['sample_rate'])
-        buffer_pos = {idx: k for k, idx in enumerate(needed)}
+        sampled, partner, needed = frame_selection(frame_count, state['sample_rate'])
         with frames.create(state['prefix'], (len(needed), height, width, 3), 'uint8') as m:
-            read = 0
+            # needed is ascending: walk it alongside the frames being read.
+            read = k = 0
             while True:
                 ok, frame = cap.read()
                 if not ok:
                     break
                 if frame.shape != (height, width, 3):
                     raise ValueError(f'{video}: frame {read} has shape {frame.shape}, expected {(height, width, 3)}')
-                if read in buffer_pos:
-                    m.array[buffer_pos[read]] = frame
+                if k < len(needed) and read == needed[k]:
+                    m.array[k] = frame
+                    k += 1
                 read += 1
             # p020 asserts every reported frame decodes; a short read would leave zero frames in the block.
             if read != frame_count:
                 raise ValueError(f'{video}: read {read} frames but the container reports {frame_count}')
     finally:
         cap.release()
-    return Decoded(video, width, height, frame_count, sampled, needed, m.block)
+    return Decoded(video, width, height, frame_count, sampled, partner, needed, m.block)
 
 
 # ---------------------------------------------------------------- classify
@@ -180,20 +189,23 @@ def classify(state: dict, d: Decoded) -> Classified:
     y = torch.arange(grid_h, device=DEVICE, dtype=torch.uint8).repeat_interleave(grid_w)
     x = torch.arange(grid_w, device=DEVICE, dtype=torch.uint8).repeat(grid_h)
     positions = torch.stack([y, x], dim=1).float()
-    buffer_pos = {idx: k for k, idx in enumerate(d.needed)}
+    # Positions in the frames block of each sampled frame and of its partner (needed is ascending and unique).
+    sampled_pos = np.searchsorted(d.needed, d.sampled)
+    partner_pos = np.searchsorted(d.needed, d.partner)
     scores = []
     with torch.no_grad(), frames.attach(d.frames) as m:
         for start in range(0, len(d.sampled), CLASSIFY_BATCH):
-            batch = d.sampled[start:start + CLASSIFY_BATCH]
-            scores.append(_classify_one_batch(state, m.array, buffer_pos, batch, grid_w, grid_h, positions, mask))
+            batch = slice(start, start + CLASSIFY_BATCH)
+            scores.append(_classify_one_batch(state, m.array, sampled_pos[batch], partner_pos[batch],
+                                              grid_w, grid_h, positions, mask))
     return Classified(d, np.concatenate(scores, axis=0))
 
 
-def _classify_one_batch(state: dict, block: np.ndarray, buffer_pos: dict[int, int], batch: list[int],
+def _classify_one_batch(state: dict, block: np.ndarray, sampled_pos: np.ndarray, partner_pos: np.ndarray,
                         grid_w: int, grid_h: int, positions: torch.Tensor, mask: torch.Tensor) -> np.ndarray:
     """One classify_batch call; BGR->RGB copies as p020 makes them (views die with this frame)."""
-    rgb = [np.ascontiguousarray(block[buffer_pos[idx]][:, :, ::-1]) for idx in batch]
-    prev = [np.ascontiguousarray(block[buffer_pos[idx - 1 if idx > 0 else idx + 1]][:, :, ::-1]) for idx in batch]
+    rgb = [np.ascontiguousarray(block[k][:, :, ::-1]) for k in sampled_pos]
+    prev = [np.ascontiguousarray(block[k][:, :, ::-1]) for k in partner_pos]
     probs, _runtime = classify_batch(grid_w, grid_h, positions, rgb, prev, state['model'], state['tile_size'],
                                      DEVICE, state['normalize_mean'], state['normalize_std'], mask)
     return probs.cpu().numpy()
@@ -265,7 +277,8 @@ def pack_video(state: dict, c: Classified) -> Packed:
     # Tile pixel bounds on the source frame and the canvas, as p030 precomputes them.
     src_bounds = _grid_bounds(src_gh, ts) + _grid_bounds(src_gw, ts)
     dst_bounds = _grid_bounds(dst_gh, ts) + _grid_bounds(dst_gw, ts)
-    buffer_pos = {idx: k for k, idx in enumerate(d.needed)}
+    # Position in the frames block of each sampled frame (needed is ascending and unique).
+    sampled_pos = np.searchsorted(d.needed, d.sampled)
     index_maps = np.zeros((len(collages), dst_gh, dst_gw), dtype=np.uint16)
     offset_lookups: list = []
     with frames.attach(d.frames) as fm, \
@@ -273,7 +286,7 @@ def pack_video(state: dict, c: Classified) -> Packed:
         cm.array[...] = 0
         for k, collage in enumerate(collages):
             assert len(collage) > 0, f'collage {k} is empty'
-            offset_lookups.append(_draw_collage(cm.array[k], index_maps[k], collage, fm.array, buffer_pos,
+            offset_lookups.append(_draw_collage(cm.array[k], index_maps[k], collage, fm.array, sampled_pos,
                                                 d.sampled, src_bounds, dst_bounds))
             if state['jpeg']:
                 _jpeg_round_trip(cm.array[k])
@@ -298,16 +311,17 @@ def _grid_bounds(n: int, ts: int) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _draw_collage(canvas: np.ndarray, index_map: np.ndarray, collage: list, block: np.ndarray,
-                  buffer_pos: dict[int, int], sampled: list[int], src_bounds: tuple, dst_bounds: tuple) -> list:
+                  sampled_pos: np.ndarray, sampled: np.ndarray, src_bounds: tuple, dst_bounds: tuple) -> list:
     """Draw one collage exactly as p030's render loop does; returns its offset lookup."""
     offset_lookup: list = []
     for gid, pos in enumerate(collage, start=1):
-        # pack() returns frame as an index into the sampled list; map it to the absolute frame.
-        frame_idx = sampled[pos.frame]
+        # pack() returns frame as an index into the sampled list; map it to the absolute frame (a plain int,
+        # since it goes into the offset lookup).
+        frame_idx = int(sampled[pos.frame])
         i_coords, j_coords = pos.shape[:, 0], pos.shape[:, 1]
         bounds = _compute_polyomino_tile_boundaries(pos.oy, pos.ox, pos.py, pos.px, i_coords, j_coords,
                                                     *src_bounds, *dst_bounds)
-        _copy_polyomino_tiles_to_canvas(canvas, block[buffer_pos[frame_idx]], *bounds)
+        _copy_polyomino_tiles_to_canvas(canvas, block[sampled_pos[pos.frame]], *bounds)
         _update_polyomino_metadata(index_map, offset_lookup, gid, pos.py, pos.px, pos.oy, pos.ox, frame_idx,
                                    i_coords, j_coords)
     return offset_lookup

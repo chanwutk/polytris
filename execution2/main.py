@@ -103,7 +103,7 @@ def videos_holding_canvases(cfg: Config) -> int:
 
 def frames_block_bytes(info: VideoInfo, sample_rate: int) -> int:
     """Exact size of one video's frames block: its needed frames, BGR uint8."""
-    _, needed, _ = frame_selection(info.frame_count, sample_rate)
+    _, _, needed = frame_selection(info.frame_count, sample_rate)
     return len(needed) * info.height * info.width * 3
 
 

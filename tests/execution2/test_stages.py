@@ -97,9 +97,9 @@ def synthetic_scores(n: int, seed: int = 3) -> np.ndarray:
     return scores
 
 
-def score_rows(scores: np.ndarray, sampled: list[int]) -> list[dict]:
+def score_rows(scores: np.ndarray, sampled) -> list[dict]:
     """scores in the score.jsonl row format the scripts load."""
-    return [{'classification_size': list(s.shape), 'classification_hex': s.flatten().tobytes().hex(), 'idx': idx}
+    return [{'classification_size': list(s.shape), 'classification_hex': s.flatten().tobytes().hex(), 'idx': int(idx)}
             for s, idx in zip(scores, sampled)]
 
 
@@ -140,9 +140,19 @@ def test_constants_match_the_scripts(monkeypatch):
     (9, 4, [0, 4, 8], [0, 1, 3, 4, 7, 8]),
 ])
 def test_frame_selection_matches_p020(n, s, sampled, needed):
-    got_sampled, got_needed, partner = stages.frame_selection(n, s)
-    assert (got_sampled, got_needed) == (sampled, needed)
-    assert partner[0] == 1 and all(partner[i] == i - 1 for i in sampled if i > 0)
+    got_sampled, partner, got_needed = stages.frame_selection(n, s)
+    assert (got_sampled.tolist(), got_needed.tolist()) == (sampled, needed)
+    # Partner is parallel to sampled: the next frame for frame 0, the previous frame otherwise.
+    assert partner.tolist() == [1] + [i - 1 for i in sampled[1:]]
+
+
+@pytest.mark.parametrize('s', [1, 2, 3, 4, 8, 16, 100])
+def test_needed_is_the_sorted_unique_union_without_sorting(s):
+    # Against a set-based reference over many lengths, including 2-frame videos, s=1, and appended last frames.
+    for n in range(2, 60):
+        sampled, partner, needed = stages.frame_selection(n, s)
+        assert needed.tolist() == sorted(set(sampled.tolist()) | set(partner.tolist())), (n, s)
+        assert len(partner) == len(sampled) and partner.max() < n
 
 
 def test_one_frame_video_is_rejected():
@@ -157,7 +167,7 @@ def test_decode_stores_exactly_the_needed_frames(tmp_path, video, prefix):
     d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
     reference = read_all(video)
     assert (d.width, d.height, d.frame_count) == (W, H, N_FRAMES)
-    assert d.sampled == stages.frame_selection(N_FRAMES, 4)[0] and d.sampled[-1] == N_FRAMES - 1
+    assert np.array_equal(d.sampled, stages.frame_selection(N_FRAMES, 4)[0]) and d.sampled[-1] == N_FRAMES - 1
     with frames.attach(d.frames) as m:
         assert m.array.shape == (len(d.needed), H, W, 3)
         for k, idx in enumerate(d.needed):
@@ -240,7 +250,7 @@ def run_p022(monkeypatch, tmp_path, cfg, scores, sampled) -> np.ndarray:
                        cfg.params.mistrack_tolerance, cfg.params.relevance_threshold, None)
     (score_file,) = (tmp_path / 'p022' / 'ds' / 'pruned-polyominoes').rglob('score.jsonl')
     rows = [json.loads(line) for line in score_file.read_text().splitlines()]
-    assert [r['idx'] for r in rows] == sampled
+    assert [r['idx'] for r in rows] == list(sampled)
     return np.stack([np.frombuffer(bytes.fromhex(r['classification_hex']), np.uint8).reshape(r['classification_size'])
                      for r in rows])
 
@@ -248,9 +258,9 @@ def run_p022(monkeypatch, tmp_path, cfg, scores, sampled) -> np.ndarray:
 @pytest.mark.parametrize('sample_rate, tolerance, threshold', [(2, 0.4, 0.5), (1, 0.9, 0.25), (4, 0.6, 0.75)])
 def test_prune_matches_p022(monkeypatch, tmp_path, sample_rate, tolerance, threshold):
     cfg = make_cfg(tmp_path, sample_rate=sample_rate, mistrack_tolerance=tolerance, relevance_threshold=threshold)
-    sampled = stages.frame_selection(N_FRAMES, sample_rate)[0]
+    sampled, partner, _ = stages.frame_selection(N_FRAMES, sample_rate)
     scores = synthetic_scores(len(sampled))
-    decoded = Decoded('v.avi', W, H, N_FRAMES, sampled, [], frames.Block('unused', (0,), '|u1'))
+    decoded = Decoded('v.avi', W, H, N_FRAMES, sampled, partner, np.array([]), frames.Block('unused', (0,), '|u1'))
     ours = stages.prune(stages.prune_setup(cfg, None), Classified(decoded, scores)).scores
     expected = run_p022(monkeypatch, tmp_path, cfg, scores, sampled)
     assert ours.dtype == np.uint8 and np.array_equal(ours, expected)
@@ -261,7 +271,8 @@ def test_prune_matches_p022(monkeypatch, tmp_path, sample_rate, tolerance, thres
 def test_prune_rejects_a_mismatched_rate_table(tmp_path):
     cfg = make_cfg(tmp_path, mistrack_tolerance=0.4)
     np.save(cfg.artifacts.max_rate_table, np.ones((2, 2, 9), dtype=np.int64))
-    decoded = Decoded('v.avi', W, H, N_FRAMES, [0, 1], [], frames.Block('unused', (0,), '|u1'))
+    decoded = Decoded('v.avi', W, H, N_FRAMES, np.array([0, 1]), np.array([1, 0]), np.array([]),
+                      frames.Block('unused', (0,), '|u1'))
     with pytest.raises(ValueError, match='max_rate_table grid'):
         stages.prune(stages.prune_setup(cfg, None), Classified(decoded, synthetic_scores(2)))
 
