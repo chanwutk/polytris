@@ -105,3 +105,31 @@ extra `ilp.json` (status, solve_ms, kept tiles), which is not a script output.
 The Figure 8 serial benchmark (tmux `execution2-figure8` on ace) measures throughput; a concurrent profiling run
 would compete for CPU and memory bandwidth.  Only light unit tests run alongside it; the equivalence check and
 the first full sweep start after it finishes.
+
+## The author's search-space reduction (proposed 2026-11-21, analysis only so far)
+
+Idea (author): for tolerance X at sample rate s, if every possibly-relevant tile's allowed gap is 1, the ILP
+keeps every polyomino, so every stricter tolerance gives the same pruned result and need not run.
+
+### A1. Generalized: tolerances with identical gap arrays give identical ILPs
+The ILP's inputs are the scores (same), p022's binarization (same T_r), and the per-tile gap
+`max(table[:, :, tol] // s, 1)`.  Tiles the never-relevant mask excludes always score 0 and are never in a
+polyomino, so only gaps on mask tiles matter.  So two tolerances whose gaps agree on mask tiles give the same
+ILP, hence the same result; this includes the author's all-1s case and needs no monotonicity assumption.
+
+### A2. Measured on the real tables (7 datasets x 2 trackers x 5 sample rates x tolerances 0.4/0.6/0.8)
+- Merges happen only at sparse sampling: at s=16 all three tolerances are all-1s (identical) on every
+  dataset and tracker; at s=8 ByteTrack's 0.6 and 0.8 are all-1s on caldot2-y05 and jnc6.  Nowhere else.
+- ILP branches: 210 -> 180 unique (14% fewer); 50 branches are all-1s and need no solve at all (the result is
+  the binarized scores), which also saves Gurobi sessions.
+- Per video (paper grid) that removes about 12-15 of 105 pack inputs, with their pack/detect/track/evaluate.
+
+### A3. A pruned branch that keeps everything is not the no-pruning branch
+p022 binarizes with `>= floor(T_r*255)`, p030 with `> T_r*255`, so they differ on tiles scoring exactly
+63 / 127 / 191 (for T_r 0.25 / 0.5 / 0.75).  Not merged.
+
+### Questions for the author (to decide before implementing)
+- Q1. Which tolerance labels a merged branch?  Guess: run it once and record the result under every
+  equivalent tolerance (the aggregator expands it), so each configuration still has a row; the Pareto front
+  then has identical duplicates, and p135's dedupe keeps one.
+- Q2. Charged time for the duplicates: the representative's measured time for all of them?  Guess: yes.
