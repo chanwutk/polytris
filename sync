@@ -14,12 +14,33 @@ Options:
 """
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
 
 import yaml
+
+
+def load_env_file(env_path: Path) -> dict[str, str]:
+    """Parse KEY=VALUE lines from a .env file; return {} if the file is absent."""
+    if not env_path.exists():
+        return {}
+    values: dict[str, str] = {}
+    for line in env_path.read_text().splitlines():
+        # Skip blank lines and comments.
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        # Reject lines that are not KEY=VALUE so typos fail loudly.
+        if '=' not in line:
+            print(f"Error: Malformed line in {env_path}: {line!r}", file=sys.stderr)
+            sys.exit(1)
+        key, value = line.split('=', 1)
+        # Strip optional surrounding quotes from the value.
+        values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
 
 
 def load_config(config_path: Path) -> dict:
@@ -46,6 +67,12 @@ def load_config(config_path: Path) -> dict:
         print("Error: Missing 'remote.path' in config", file=sys.stderr)
         sys.exit(1)
     
+    # Host precedence: REMOTE_HOST in the shell, then REMOTE_HOST in .env (next to this script), then the config.
+    env_host = (os.environ.get('REMOTE_HOST')
+                or load_env_file(Path(__file__).resolve().parent / '.env').get('REMOTE_HOST'))
+    if env_host:
+        config['remote']['host'] = env_host
+
     # Set defaults
     config.setdefault('local_path', '.')
     config.setdefault('includes', [])
@@ -102,7 +129,13 @@ def build_rsync_command(
         List of command arguments for subprocess
     """
     # Use Homebrew GNU rsync for ** glob support (macOS openrsync lacks it).
-    cmd = ['/usr/local/bin/rsync']
+    # Apple Silicon Homebrew lives in /opt/homebrew, Intel Homebrew in /usr/local.
+    candidates = ['/opt/homebrew/bin/rsync', '/usr/local/bin/rsync']
+    rsync = next((c for c in candidates if Path(c).exists()), None)
+    if rsync is None:
+        print(f"Error: GNU rsync not found at {candidates}; run `brew install rsync`", file=sys.stderr)
+        sys.exit(1)
+    cmd = [rsync]
 
     # Add rsync options from config
     rsync_opts = config.get('rsync_options', [])

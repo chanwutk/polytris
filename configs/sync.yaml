@@ -3,7 +3,7 @@
 
 # Remote host configuration
 remote:
-  host: ace                               # SSH alias (defined in ~/.ssh/config)
+  host: ace                               # SSH alias; REMOTE_HOST in .env overrides it
   path: /work/cwkt/projects/tetris        # Destination path on remote machine
 
 # Local source directory (defaults to current directory if not specified)
@@ -41,6 +41,7 @@ includes:
     - "copy"
     - "evaluation"
     - "execution"
+    - "execution2"
     - "ablation"
     - "gcp"
     - "lib"
