@@ -311,8 +311,13 @@ def test_classify_setup_rejects_a_flat_never_relevant_bitmap(tmp_path, fake_clas
 
 # ---------------------------------------------------------------- prune
 
+# Solve time limit for the prune-vs-p022 comparison: two independent 0.1 s solves can differ under machine
+# load (one hits the limit before finding any solution and keeps nothing), so both get time to reach optimal.
+PRUNE_TEST_TIME_LIMIT_S = 5.0
+
+
 def run_p022(monkeypatch, tmp_path, cfg, scores, sampled) -> np.ndarray:
-    """p022.process_video on these scores; returns its pruned 0/255 grids."""
+    """p022.process_video on these scores, with PRUNE_TEST_TIME_LIMIT_S; returns its pruned 0/255 grids."""
     import scripts.p022_exec_prune_polyominoes as p022
     table = np.load(cfg.artifacts.max_rate_table)
     idx = p022._ACCURACY_THRESHOLD_TO_IDX[cfg.params.mistrack_tolerance]
@@ -323,8 +328,9 @@ def run_p022(monkeypatch, tmp_path, cfg, scores, sampled) -> np.ndarray:
     # p022 first checks that its input score file exists on disk.
     cache.exec('ds', 'relevancy', 'v.avi', f'Fake_{TS}_{cfg.params.sample_rate}', 'score', 'score.jsonl').touch()
     p022.process_video('ds', 'test', 'v.avi', 'Fake', TS, cfg.params.sample_rate, cfg.params.tracker,
-                       cfg.params.mistrack_tolerance, cfg.params.relevance_threshold, None)
-    (score_file,) = (tmp_path / 'p022' / 'ds' / 'pruned-polyominoes').rglob('score.jsonl')
+                       cfg.params.mistrack_tolerance, cfg.params.relevance_threshold, PRUNE_TEST_TIME_LIMIT_S)
+    # With a time limit p022 writes to its separate time-limit stage directory.
+    (score_file,) = (tmp_path / 'p022' / 'ds' / 'pruned-polyominoes-tl').rglob('score.jsonl')
     rows = [json.loads(line) for line in score_file.read_text().splitlines()]
     assert [r['idx'] for r in rows] == list(sampled)
     return np.stack([np.frombuffer(bytes.fromhex(r['classification_hex']), np.uint8).reshape(r['classification_size'])
@@ -337,6 +343,7 @@ def test_prune_matches_p022(monkeypatch, tmp_path, sample_rate, tolerance, thres
     sampled, partner, _ = stages.frame_selection(N_FRAMES, sample_rate)
     scores = synthetic_scores(len(sampled))
     decoded = Decoded('v.avi', W, H, N_FRAMES, sampled, partner, np.array([]), frames.Block('unused', (0,), '|u1'))
+    monkeypatch.setattr(stages, 'PRUNE_TIME_LIMIT_S', PRUNE_TEST_TIME_LIMIT_S)
     ours = stages.prune(stages.prune_setup(cfg, None), Classified(decoded, scores)).scores
     expected = run_p022(monkeypatch, tmp_path, cfg, scores, sampled)
     assert ours.dtype == np.uint8 and np.array_equal(ours, expected)
