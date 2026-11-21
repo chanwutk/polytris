@@ -93,7 +93,7 @@ def test_prune_fans_out_and_passes_unpruned_scores_through(tmp_path, prefix, mon
     cfg = make_cfg(tmp_path)
     v = all_frames(prefix)
     scores = np.full((N, H // TS, W // TS), 200, np.uint8)
-    monkeypatch.setattr(ops, 'prune_scores', lambda s, distance, t_r: (np.where(s > 0, 255, 0).astype(np.uint8),
+    monkeypatch.setattr(ops, 'prune_scores', lambda s, distance, t_r, limit=None: (np.where(s > 0, 255, 0).astype(np.uint8),
                                                                         FakeILP()))
     sc = Scored('/v/a.mp4', base_branch().with_(sample_rate=4), (), v, scores)
     out = st.prune(st.prune_setup(cfg, None), sc)

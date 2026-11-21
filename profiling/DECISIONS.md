@@ -91,3 +91,17 @@ It needs internet in the browser that opens it; everything else (data, YAML) is 
 ### D20. Dataset HOTA is TrackEval's combination, checked against TrackEval itself
 The aggregator combines each configuration's per-video HOTA results with HOTA.combine_sequences; a test scores
 two videos both ways (per video then combined, vs. TrackEval on both at once) and requires equal HOTA arrays.
+
+### D21. No cached validation HOTA exists, so the equivalence check computes it
+`/polyis-cache/<ds>/evaluation/070_accuracy` holds only the test split.  The tool runs p110's `run_trackeval`
+on the scripts' cached validation tracks (060) for the same video and configuration and compares HOTA arrays.
+
+### D22. `params.prune_time_limit_s` (default 0.1) exists only so the equivalence check can raise it
+The tool runs the small grid with 10 s; (config, video) pairs are compared only when our solve is optimal
+(status 2) and p022's logged solve time is below 95 ms (its limit is 100 ms).  Each pruned result saves an
+extra `ilp.json` (status, solve_ms, kept tiles), which is not a script output.
+
+### D23. Heavy profiling runs wait for the Figure 8 job
+The Figure 8 serial benchmark (tmux `execution2-figure8` on ace) measures throughput; a concurrent profiling run
+would compete for CPU and memory bandwidth.  Only light unit tests run alongside it; the equivalence check and
+the first full sweep start after it finishes.

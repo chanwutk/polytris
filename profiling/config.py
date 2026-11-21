@@ -38,6 +38,7 @@ class Params:
     tile_paddings: tuple[str, ...]
     canvas_scales: tuple[float, ...]
     trackers: tuple[str, ...]
+    prune_time_limit_s: float = 0.1       # p022's solve limit; raise only for equivalence tests
 
 
 @dataclass(frozen=True)
@@ -100,7 +101,8 @@ def _values(data: dict, key: str, kind: Any, where: str, allow_none: bool = Fals
 
 def _params(data: Any) -> Params:
     data = _keys(data, {'classifier', 'tile_size', 'canvas_format', 'sample_rates', 'relevance_thresholds',
-                        'mistrack_tolerances', 'tile_paddings', 'canvas_scales', 'trackers'}, 'params')
+                        'mistrack_tolerances', 'tile_paddings', 'canvas_scales', 'trackers'}, 'params',
+                 {'prune_time_limit_s'})
     p = Params(
         classifier=_check_type(data['classifier'], str, 'params.classifier'),
         tile_size=_check_type(data['tile_size'], int, 'params.tile_size'),
@@ -111,9 +113,12 @@ def _params(data: Any) -> Params:
         tile_paddings=_values(data, 'tile_paddings', str, 'params'),
         canvas_scales=_values(data, 'canvas_scales', float, 'params'),
         trackers=_values(data, 'trackers', str, 'params'),
+        prune_time_limit_s=_check_type(data.get('prune_time_limit_s', 0.1), float, 'params.prune_time_limit_s'),
     )
     if p.tile_size < 1:
         raise ConfigError(f'params.tile_size: must be >= 1, got {p.tile_size}')
+    if p.prune_time_limit_s <= 0:
+        raise ConfigError(f'params.prune_time_limit_s: must be > 0, got {p.prune_time_limit_s}')
     if p.canvas_format not in CANVAS_FORMATS:
         raise ConfigError(f'params.canvas_format: must be one of {CANVAS_FORMATS}, got {p.canvas_format!r}')
     for s in p.sample_rates:

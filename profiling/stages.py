@@ -107,7 +107,7 @@ def prune_setup(cfg: SweepConfig, worker: Worker) -> dict:
     p = cfg.params
     return {'tables': {t: np.load(path) for t, path in cfg.artifacts.max_rate_tables.items()},
             'relevance_thresholds': p.relevance_thresholds, 'tolerances': p.mistrack_tolerances,
-            'trackers': p.trackers, 'distances': {}}
+            'trackers': p.trackers, 'distances': {}, 'time_limit_s': p.prune_time_limit_s}
 
 
 def _distance(state: dict, tracker: str, tolerance: float, sample_rate: int) -> np.ndarray:
@@ -134,7 +134,8 @@ def prune(state: dict, sc: Scored) -> list[Scored]:
             for tracker in state['trackers']:
                 start = time.time()
                 try:
-                    pruned, result = ops.prune_scores(sc.scores, _distance(state, tracker, tolerance, s), t_r)
+                    pruned, result = ops.prune_scores(sc.scores, _distance(state, tracker, tolerance, s), t_r,
+                                                      state['time_limit_s'])
                 except ValueError as e:
                     raise ValueError(f'{sc.video}: {e}') from e
                 timing = _timing('prune', start, time.time())

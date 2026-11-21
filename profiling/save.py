@@ -58,6 +58,9 @@ def save_pruned(root: str, dataset: str, msg) -> None:
         return
     path = stage_dir(root, dataset, msg.video, 'pruned-polyominoes', msg.branch.param_str(*PRUNE_PARAMS))
     _write_score_rows(os.path.join(path, 'score'), msg.scores, msg.frames.sampled)
+    # Not a script output: the solve's status, time, and kept tiles, for checking against p022.
+    with open(os.path.join(path, 'ilp.json'), 'w') as f:
+        json.dump(msg.ilp, f)
 
 
 def save_packed(root: str, dataset: str, msg) -> None:
