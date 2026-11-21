@@ -159,7 +159,8 @@ def execute(cfg: SweepConfig, config_path: str = '',
                            f'pack inputs still pending {pending}')
     summary = {'config': config_path, 'dataset': cfg.dataset, 'videoset': cfg.videoset, 'videos': len(videos),
                'configurations': expected, 'records': sum(received.values()), 'wall_s': wall,
-               'frames': sum(i.frame_count for i in infos)}
+               'frames': sum(i.frame_count for i in infos),
+               'video_frames': {os.path.basename(i.path): i.frame_count for i in infos}}
     with open(os.path.join(out_dir, 'run.json'), 'w') as f:
         json.dump(summary, f, indent=2)
     return summary

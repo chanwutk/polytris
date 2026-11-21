@@ -1,0 +1,132 @@
+"""Aggregator: dataset HOTA as TrackEval combines it, times, Pareto union, YAML, page (profiling/PLAN.md 15A)."""
+
+import json
+import re
+from pathlib import Path
+
+import numpy as np
+import pytest
+import yaml
+
+from execution2.config import parse_config
+from profiling import aggregate as ag, stages as st
+from profiling.config import Artifacts, Evaluation, Params, StageSystem, SweepConfig, System
+from execution2.config import Detector
+from polyis.utilities import save_tracking_results
+
+
+def real_cfg(tmp_path: Path) -> SweepConfig:
+    """A sweep config whose artifact paths exist, so the generated execution2 YAML validates."""
+    paths = {}
+    for n in ['w.pth', 'b.jsonl', 'n.npy', 'sort.npy', 'm.pt']:
+        (tmp_path / n).write_text('x')
+        paths[n] = str(tmp_path / n)
+    (tmp_path / 'ref').mkdir(exist_ok=True)
+    sys_ = {n: StageSystem(1, (0,) if n in ('classify', 'detect') else (), 1)
+            for n in ('decode', 'classify', 'prune', 'pack', 'detect', 'track', 'evaluate')}
+    return SweepConfig('ds', 'valid', str(tmp_path / 'out'),
+                       Params('Fake', 60, 'jpeg', (1, 4), (0.5,), (None, 0.4), ('none',), (1.0,), ('sortcython',)),
+                       Artifacts(paths['w.pth'], paths['b.jsonl'], paths['n.npy'], {'sortcython': paths['sort.npy']},
+                                 Detector('ultralytics', {'model_path': paths['m.pt']})),
+                       Evaluation(str(tmp_path / 'ref'), '002_naive/tracking.jsonl'), System(2, 8, 2, sys_))
+
+
+def tracks(shift: float, n: int = 20) -> dict:
+    return {f: [[1, 10 + f + shift, 10, 40 + f + shift, 30], [2, 100, 50 + shift, 130, 80 + shift]] for f in range(n)}
+
+
+def per_video_hota(cfg: SweepConfig, tmp_path: Path, shifts: dict[str, float]) -> dict[str, dict]:
+    """Each video's raw HOTA result from the evaluate stage (reference = unshifted tracks)."""
+    from profiling.messages import Branch, Tracked
+    state = st.evaluate_setup(cfg, type('W', (), {'index': 0})())
+    out = {}
+    for video, shift in shifts.items():
+        ref = Path(cfg.evaluation.reference_dir) / video / '002_naive'
+        ref.mkdir(parents=True, exist_ok=True)
+        save_tracking_results(tracks(0.0), ref / 'tracking.jsonl')
+        result = st.evaluate(state, Tracked(f'/v/{video}', Branch(), (), tracks(shift)))
+        out[video] = ag_to_lists(result.metrics['HOTA'])
+    return out
+
+
+def ag_to_lists(d: dict) -> dict:
+    return {k: np.asarray(v).tolist() for k, v in d.items()}
+
+
+def test_combined_hota_equals_trackevals_own_combination(tmp_path):
+    from evaluation.p110_accuracy_compute import build_metric_objects, run_trackeval
+    cfg = real_cfg(tmp_path)
+    shifts = {'a.mp4': 3.0, 'b.mp4': 9.0}
+    per_video = per_video_hota(cfg, tmp_path, shifts)
+    combined = ag.combine_hota(list(per_video.values()))
+    # TrackEval scoring both videos at once (p110's way) gives its COMBINED_SEQ row.
+    track_dir = tmp_path / 'both'
+    for video, shift in shifts.items():
+        (track_dir / video).mkdir(parents=True)
+        save_tracking_results(tracks(shift), track_dir / video / 'tracking.jsonl')
+    results = run_trackeval({'output_fol': str(tmp_path / 'te'), 'output_sub_fol': 'x', 'input_gt': '002_naive/tracking.jsonl',
+                             'input_track': 'tracking.jsonl', 'skip': 1, 'tracker': 'x', 'seq_list': sorted(shifts),
+                             'input_dir': str(track_dir), 'input_gt_dir': cfg.evaluation.reference_dir,
+                             'input_track_dir': str(track_dir)}, build_metric_objects(['HOTA']), str(tmp_path / 'te'), 2)
+    expected = results['COMBINED_SEQ']['vehicle']['HOTA']
+    assert np.allclose(combined['HOTA'], expected['HOTA'], rtol=0, atol=1e-12)
+    assert 0 < ag.hota_score(combined) < 1
+
+
+def write_sweep(cfg: SweepConfig, tmp_path: Path, configs: list[tuple[dict, dict[str, float], float]]) -> None:
+    """records.jsonl and run.json for configs given as (branch, per-video shifts, charged seconds per video)."""
+    out = Path(cfg.output_root) / cfg.dataset / 'profiling'
+    out.mkdir(parents=True)
+    shifts_all = {v for _, s, _ in configs for v in s}
+    with open(out / 'records.jsonl', 'w') as f:
+        for branch, shifts, charged in configs:
+            hota = per_video_hota(cfg, tmp_path, shifts)
+            for video in shifts:
+                timings = [{'stage': 'decode', 'start': 0.0, 'end': 2.0, 'charged': 0.0},
+                           {'stage': 'detect', 'start': 2.0, 'end': 2.0 + charged, 'charged': charged}]
+                f.write(json.dumps({'video': video, 'branch': branch, 'timings': timings,
+                                    'metrics': {'HOTA': hota[video]}}) + '\n')
+    (out / 'run.json').write_text(json.dumps({'videos': len(shifts_all), 'video_frames': {v: 20 for v in shifts_all}}))
+
+
+def branch(s, tol, tracker='sortcython'):
+    return {'classifier': 'Fake', 'tile_size': 60, 'sample_rate': s, 'relevance_threshold': 0.5,
+            'mistrack_tolerance': tol, 'tracker': tracker, 'tile_padding': 'none', 'canvas_scale': 1.0}
+
+
+def test_aggregate_times_throughput_pareto_and_yaml(tmp_path):
+    cfg = real_cfg(tmp_path)
+    videos = ('a.mp4', 'b.mp4')
+    # accurate-but-slow, fast-but-less-accurate, and one dominated by the accurate one.
+    write_sweep(cfg, tmp_path, [
+        (branch(1, None), {v: 1.0 for v in videos}, 4.0),
+        (branch(4, 0.4), {v: 6.0 for v in videos}, 1.0),
+        (branch(4, None), {v: 6.0 for v in videos}, 5.0),
+    ])
+    configs, pareto = ag.aggregate(cfg)
+    by = {(c['sample_rate'], c['tracking_accuracy_threshold']): c for c in configs}
+    assert by[(1, None)]['time'] == pytest.approx(8.0) and by[(1, None)]['decode_s'] == pytest.approx(4.0)
+    assert by[(1, None)]['throughput_fps'] == pytest.approx(40 / 8.0)
+    assert by[(1, None)]['throughput_fps_with_decode'] == pytest.approx(40 / 12.0)
+    assert by[(1, None)]['HOTA_HOTA'] > by[(4, 0.4)]['HOTA_HOTA']
+    on_full = {(p['sample_rate'], p['tracking_accuracy_threshold']) for p in pareto if 'full' in p['pareto_conditions']}
+    assert on_full == {(1, None), (4, 0.4)}
+    for c in configs:
+        e2 = yaml.safe_load(c['execution2_yaml'])
+        parsed = parse_config(e2)
+        assert parsed.params.sample_rate == c['sample_rate'] and parsed.use_prune == (c['tracking_accuracy_threshold'] is not None)
+    out = Path(cfg.output_root) / cfg.dataset / 'profiling'
+    assert json.loads((out / 'pareto.json').read_text()) == pareto
+    html = (out / 'pareto.html').read_text()
+    spec = json.loads(re.search(r'const SPEC = (.*);\n', html).group(1))
+    embedded_yaml = json.loads(re.search(r'const YAML = (.*);\n', html).group(1))
+    assert len(spec['data']['values']) == 3 and set(embedded_yaml) == {str(c['id']) for c in configs}
+    assert embedded_yaml[str(by[(4, 0.4)]['id'])] == by[(4, 0.4)]['execution2_yaml']
+
+
+def test_aggregate_refuses_incomplete_configurations(tmp_path):
+    cfg = real_cfg(tmp_path)
+    write_sweep(cfg, tmp_path, [(branch(1, None), {'a.mp4': 1.0, 'b.mp4': 1.0}, 1.0),
+                                (branch(4, None), {'a.mp4': 1.0}, 1.0)])
+    with pytest.raises(RuntimeError, match='1 videos recorded, expected 2'):
+        ag.aggregate(cfg)

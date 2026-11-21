@@ -74,3 +74,20 @@ Slots return at the last result, slightly later than the frames are freed, so th
 
 ### D16. Records are written by main as they arrive (records.jsonl), not by a saver
 They are the pipeline's output, small, and written outside every stage's timing.
+
+### D17. The Pareto front follows p135: the union of every ablation condition's front, time minimized
+`time` = summed charged seconds over the split's videos (decode excluded, PLAN 1); each configuration also
+reports `throughput_fps_with_decode`.  Points carry the conditions whose front they are on ('full',
+'no_sampling', 'no_both').  Question: should the test pass use only the full front?  Guess: keep p135's union
+so the ablation curves in Figure 8 can still be drawn from it.
+
+### D18. The generated execution2 YAML uses a one-GPU default system
+decode 2, classify 1 on GPU 0, prune 1, pack 2, detect 1 on GPU 0, track 2, queue_maxsize 2; artifacts come
+from the sweep config (the tracker's max-rate table only for pruned configurations).
+
+### D19. The page loads Vega from jsdelivr (pinned: vega 5.30.0, vega-lite 5.21.0, vega-embed 6.26.0)
+It needs internet in the browser that opens it; everything else (data, YAML) is embedded.
+
+### D20. Dataset HOTA is TrackEval's combination, checked against TrackEval itself
+The aggregator combines each configuration's per-video HOTA results with HOTA.combine_sequences; a test scores
+two videos both ways (per video then combined, vs. TrackEval on both at once) and requires equal HOTA arrays.
