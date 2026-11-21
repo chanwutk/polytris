@@ -23,3 +23,24 @@ queue, memory risk)?  Guess: backpressure is the safer default.
 
 ### D3. The per-video counter lives in `profiling/completion.py`, not in the engine
 It is profiling-specific (pack freeing frames).  A Manager dict + Manager lock, created by main.
+
+### D4. One classifier and one tile size per sweep
+`params.classifier` and `params.tile_size` are single values; the artifacts (weights, never-relevant bitmap,
+max-rate tables) belong to one classifier and tile size.  The current grid has one of each.
+Question: should one sweep cover several classifiers?  Guess: no; run one sweep per classifier.
+
+### D5. A max-rate table per tracker whenever any tolerance is swept
+Every tracker can pair with every tolerance, so the config requires `max_rate_tables.<tracker>` for all trackers.
+
+### D6. output_root and the reference tracks may not contain one another
+Saved results go to `<output_root>/<dataset>/execution/<video>/<stage dir>/<param str>/...` (the cache's
+layout), so output_root must not be (or contain, or sit inside) the directory the reference tracks are read
+from.  The run additionally mounts the real cache read-only.
+
+### D7. TrackEval metrics fixed to p110's default (HOTA)
+p110's default `--metrics` is HOTA; the evaluate stage uses the same, plus Count, as p110 stores.
+Question: add CLEAR / Identity?  Guess: not needed for the Pareto selection.
+
+### D8. Message modules avoid importing the detector stack
+`profiling/messages.py` imports execution2.operators' types only under TYPE_CHECKING, so tests and tools that
+only need messages do not load ultralytics/darknet (which need a GPU driver to import).

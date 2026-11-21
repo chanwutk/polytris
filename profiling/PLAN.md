@@ -103,7 +103,7 @@ throwaway containers, so the Figure 8 job running from `/work/cwkt/projects/tetr
    The ace checkout needs, besides `./sync --config <copy with path /work/cwkt/projects/tetris-profiling>`: the compiled `.so` files (copied from the main checkout by exact list), `modules/` (darknet, TrackEval, lap), and `baselines/` (a submodule a fresh worktree does not check out).
 2. ~~Engine: list outputs, per-worker GPUs, saver processes, shared per-video counter; tests [13A]~~: done.
    `Stage(fan_out=True, gpu=(...), save=fn, savers=n)` in `execution2/pipeline.py`; `profiling/completion.py` (`VideoCompletion`); 155 tests pass (`tests/execution2`, `tests/profiling`, golden).
-3. Sweep config, `Branch`, messages.
+3. ~~Sweep config, `Branch`, messages~~: done (`profiling/config.py`, `profiling/messages.py`; tests in `tests/profiling`).
 4. Profiling stages (decode, classify-once with charging, prune, pack with freeing, detect, track, evaluate).
 5. `profiling/main.py`: admission control, memory check, savers writing the scripts' formats.
 6. Aggregator: dataset HOTA, runtime sums, Pareto JSON, interactive page; tests [15A].
