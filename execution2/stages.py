@@ -173,18 +173,21 @@ def _read_needed(cap: cv2.VideoCapture, block: np.ndarray, needed: np.ndarray, v
 # ---------------------------------------------------------------- classify
 
 def classify_setup(cfg: Config, worker: Worker) -> dict:
-    """Load the classifier, never-relevant mask, and normalization tensors once per worker."""
+    """Load and optimize the classifier, and load the never-relevant mask and normalization tensors, once per worker."""
     with open(cfg.artifacts.classifier.compilation_benchmark) as f:
         benchmark_results = [json.loads(line) for line in f]
+    never_relevant = np.load(cfg.artifacts.never_relevant_bitmap)
+    model = load_classifier(cfg.artifacts.classifier.weights).to(DEVICE)
+    # The bitmap has one entry per tile of the dataset's grid, and classify rejects any video whose grid
+    # differs, so this is the tile count p020 takes from its first video.
+    model, _method = select_model_optimization(model, benchmark_results, DEVICE, cfg.params.tile_size,
+                                               never_relevant.size)
     return {
         'tile_size': cfg.params.tile_size,
-        'model': load_classifier(cfg.artifacts.classifier.weights).to(DEVICE),
-        'benchmark_results': benchmark_results,
-        # The optimization is picked from the first video's grid, as p020 picks it from its first video.
-        'optimized': False,
+        'model': model,
         'normalize_mean': torch.tensor([0.485, 0.456, 0.406] * 2, device=DEVICE, dtype=torch.float16).view(1, 6, 1, 1),
         'normalize_std': torch.tensor([0.229, 0.224, 0.225] * 2, device=DEVICE, dtype=torch.float16).view(1, 6, 1, 1),
-        'never_relevant': np.load(cfg.artifacts.never_relevant_bitmap),
+        'never_relevant': never_relevant,
     }
 
 
@@ -195,10 +198,6 @@ def classify(state: dict, d: Decoded) -> Classified:
     mask_np = state['never_relevant']
     if mask_np.size != grid_h * grid_w:
         raise ValueError(f'{d.video}: never-relevant bitmap has {mask_np.size} tiles, video grid has {grid_h}x{grid_w}')
-    if not state['optimized']:
-        state['model'], _ = select_model_optimization(state['model'], state['benchmark_results'], DEVICE, ts,
-                                                      grid_w * grid_h)
-        state['optimized'] = True
     mask = torch.from_numpy(mask_np.flatten()).to(DEVICE).to(torch.uint8)
     # Tile positions exactly as p020 builds them.
     y = torch.arange(grid_h, device=DEVICE, dtype=torch.uint8).repeat_interleave(grid_w)

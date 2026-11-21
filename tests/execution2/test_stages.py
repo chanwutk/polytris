@@ -267,6 +267,27 @@ def test_classify_matches_p020_batching(tmp_path, video, prefix, fake_classifier
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
+def test_classify_setup_optimizes_once_for_the_bitmaps_tile_count(tmp_path, video, prefix, monkeypatch):
+    calls = []
+    monkeypatch.setattr(stages, 'load_classifier', lambda path: FakeClassifier())
+
+    def fake_optimize(model, benchmark_results, device, tile_size, batch_size):
+        calls.append((tile_size, batch_size))
+        return model, 'none'
+
+    monkeypatch.setattr(stages, 'select_model_optimization', fake_optimize)
+    cfg = make_cfg(tmp_path)
+    state = stages.classify_setup(cfg, None)
+    # One call, in setup, with the grid's tile count (6x8 here), as p020 passes its first video's grid.
+    assert calls == [(TS, (H // TS) * (W // TS))]
+    for _ in range(2):
+        d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
+        stages.classify(state, d)
+        frames.unlink(d.frames)
+    assert len(calls) == 1
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
 def test_classify_rejects_a_mismatched_never_relevant_bitmap(tmp_path, video, prefix, fake_classifier):
     cfg = make_cfg(tmp_path)
     np.save(cfg.artifacts.never_relevant_bitmap, np.ones((3, 3), dtype=np.uint8))
