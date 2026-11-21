@@ -124,3 +124,19 @@ Move these pure functions from the scripts into `polyis/` with no logic change. 
    - The first `/dev/shm` estimate refused `queue_maxsize: 2` on ace's then 8 GiB (it charged every in-flight video for both blocks and assumed one canvas per stored frame).
      It now counts the two block lifetimes separately (frames: decode through pack; canvases: pack through detect), with exact block sizes and one canvas per sampled frame: 5.0 GiB instead of 10.5 GiB for the s=4 config over all 60 caldot1-y05 test videos.
    - ace's `polyis` container was recreated with `shm_size: 64gb` on 2026-11-20, from `/work/cwkt/projects/tetris` (the old compose directory `/work/cwkt/projects/polyis` is empty); `duckdb` was pip-installed again because the image predates it.
+
+## Benchmark (2026-11-20)
+
+`execution2/tools/benchmark.py`, results in `measurements-results/execution2-benchmark/`. All 60 caldot1-y05 test videos (54,000 frames) on ace GPUs 2-3, in throwaway containers whose `/polyis-cache` is a scratch directory and whose real cache is mounted read-only, so no old result can be overwritten. Videos were read once beforehand. ace's load average was 12-17 (other users) during the runs.
+
+| config | p020-p060 (sum of stage wall clocks) | execution2, 2 GPUs: process / first-to-last result | execution2, 1 GPU: process / first-to-last result |
+|---|---|---|---|
+| s=4, no pruning | 547.7 s | 96.7 s / 66.2 s | 93.3 s / 59.8 s |
+| s=8, tolerance 0.8 | 430.5 s | 74.1 s / 35.9 s | 72.3 s / 30.9 s |
+
+- The scripts' stage times include each stage's process start and model load; execution2's "process" includes them too (about 30-40 s), and its first-to-last time excludes them (dummy-video timing).
+- p030 alone took 274 s and 168 s: drawing and writing JPEGs serially, video by video.
+- One GPU was slightly faster than two here, so this workload is not limited by the classifier and detector sharing a GPU.
+- Outputs vs the scripts' fresh outputs from the same run: 119 of 120 equal up to track-id renaming. The exception (te06, s=4) is the canvas-order effect: its detector boxes differ by up to 0.057 px in collage order, and in p040's order te06 is bit-identical (raw detections, per-frame detections, tracks).
+- Single runs; repeatability and the best process counts per stage are not measured yet.
+
