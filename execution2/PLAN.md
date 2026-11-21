@@ -140,3 +140,13 @@ Move these pure functions from the scripts into `polyis/` with no logic change. 
 - Outputs vs the scripts' fresh outputs from the same run: 119 of 120 equal up to track-id renaming. The exception (te06, s=4) is the canvas-order effect: its detector boxes differ by up to 0.057 px in collage order, and in p040's order te06 is bit-identical (raw detections, per-frame detections, tracks).
 - Single runs; repeatability and the best process counts per stage are not measured yet.
 
+## Paper operating points (2026-11-20)
+
+The 14 operating points the paper reports (per dataset, the fastest configuration within 5% and within 10% HOTA loss; R1.O3's selection) as execution2 configs in `execution2/configs/paper/` (`execution2/tools/make_paper_configs.py`), run with `benchmark.py --skip-scripts` on all test videos on one ace GPU (classify and detect sharing it, JPEG canvases), outputs checked against the cached script tracks. Table: `measurements/execution2_paper_throughput.py` -> `measurements-results/execution2-paper/summary.json`.
+
+- execution2's first-to-last throughput beats the matched-boundary paper number (`one_decode`, logged ops plus one decode) on 13 of 14 points (1.31x-2.54x) and the clean staged-scripts wall clock without startup on all 14 (1.47x-10.8x). The exception is CalDoT2 at 10% (s=1, pruning, ByteTrack): 222 fps vs 263 fps.
+- Against the published p121 number, which does not count Tetris's decode, it is faster on 10 of 14 (1.05x-1.52x) and slower on Amsterdam (0.57x, 0.84x), CalDoT1 10% (0.95x), and CalDoT2 10% (0.69x).
+- Outputs equal the cached script tracks up to track-id renaming on 309 of 310 videos (CalDoT2 10%: 59 of 60, not yet examined; the ILP now runs live, while the cache holds April's solutions).
+- B3D test sets are 5 videos (about 5,000 frames), so their first-to-last times are 5-16 s and the process times are dominated by about 35-40 s of startup.
+- Single runs on a shared host (load average about 15), untuned process counts.
+

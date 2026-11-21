@@ -1,0 +1,84 @@
+"""
+execution2's throughput at the paper's operating points vs the throughput the paper reports.
+
+Inputs:
+  measurements-results/execution2-paper/<dataset>-<loss>/result.json   execution2.tools.benchmark --skip-scripts
+  measurements-results/r1o3_clean_extraction_timing/throughput.json     the paper side and the clean script reruns
+  measurements-results/r1o3_clean_extraction_timing/raw/plan.json       dataset ids <-> paper labels
+
+Throughput boundaries compared (frames / seconds over the same test videos):
+  execution2      first-to-last result of execution2.main (wall clock, pipelined, one decode, startup excluded)
+  execution2_proc the execution2.main process's wall clock (startup and model loading included)
+  paper_p121      the paper's published Tetris throughput (sum of logged op times, Tetris decode not counted)
+  paper_one_dec   paper_p121's ops plus one decode of every video (R1.O3's matched boundary)
+  clean_steady    the staged scripts' wall clock on idle bombe GPUs, per-stage process startup removed
+
+Writes measurements-results/execution2-paper/summary.json and prints the table.  Run in the polyis container:
+  python measurements/execution2_paper_throughput.py
+"""
+
+import json
+from pathlib import Path
+
+import duckdb
+
+ROOT = Path(__file__).resolve().parents[1]
+RUNS = ROOT / 'measurements-results' / 'execution2-paper'
+R1O3 = ROOT / 'measurements-results' / 'r1o3_clean_extraction_timing'
+
+
+def main() -> None:
+    con = duckdb.connect()
+    # Paper and clean throughput per (label, loss), flattened from throughput.json's nesting.
+    throughput = json.loads((R1O3 / 'throughput.json').read_text())
+    labels = {k: v['label'] for k, v in json.loads((R1O3 / 'raw' / 'plan.json').read_text())['datasets'].items()}
+    paper_rows = [
+        {'label': label, 'loss': loss, 'config': rec['config'], 'frames': rec['frames'], 'videos': rec['videos'],
+         'paper_p121': rec['paper']['p121']['tetris_fps'], 'paper_one_dec': rec['paper']['one_decode']['tetris_fps'],
+         'clean_steady': (rec['clean'].get('wall_clock_steady') or {}).get('tetris_fps')}
+        for label, levels in throughput['datasets'].items() for loss, rec in levels.items()
+        if isinstance(rec, dict) and 'config' in rec]
+    con.execute('CREATE TABLE paper (label VARCHAR, loss VARCHAR, config VARCHAR, frames BIGINT, videos BIGINT, '
+                'paper_p121 DOUBLE, paper_one_dec DOUBLE, clean_steady DOUBLE)')
+    con.executemany('INSERT INTO paper VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [list(r.values()) for r in paper_rows])
+    # execution2 runs: one result.json per operating point.
+    files = sorted(str(p) for p in RUNS.glob('*-0.*/result.json'))
+    assert files, f'no execution2 results under {RUNS}'
+    con.execute(f"""
+        CREATE TABLE runs AS
+        SELECT dataset, regexp_extract(config, '-(0\\.\\d+)\\.yaml$', 1) AS loss,
+               len(videos) AS videos, execution2.configured.frames AS frames,
+               execution2.configured.fps AS execution2, execution2.configured.process_fps AS execution2_proc,
+               execution2.configured.outputs_same_up_to_id_renaming AS same_up_to_renaming,
+               execution2.configured.outputs_identical AS identical
+        FROM read_json_auto({files})
+    """)
+    con.execute('CREATE TABLE labels (dataset VARCHAR, label VARCHAR)')
+    con.executemany('INSERT INTO labels VALUES (?, ?)', list(labels.items()))
+    table = con.execute("""
+        SELECT p.label, r.dataset, p.loss, p.config, r.videos, r.frames, p.frames AS paper_frames,
+               round(r.execution2, 1) AS execution2, round(r.execution2_proc, 1) AS execution2_proc,
+               round(p.paper_p121, 1) AS paper_p121, round(p.paper_one_dec, 1) AS paper_one_dec,
+               round(p.clean_steady, 1) AS clean_steady,
+               round(r.execution2 / p.paper_p121, 2) AS x_paper_p121,
+               round(r.execution2 / p.paper_one_dec, 2) AS x_paper_one_dec,
+               round(r.execution2 / p.clean_steady, 2) AS x_clean_steady,
+               r.same_up_to_renaming, r.identical
+        FROM runs r JOIN labels l USING (dataset) JOIN paper p ON p.label = l.label AND p.loss = r.loss
+        ORDER BY p.label, p.loss
+    """)
+    columns = [d[0] for d in table.description]
+    rows = [dict(zip(columns, row)) for row in table.fetchall()]
+    # Every run must cover the same videos and frames as the paper's number it is compared with.
+    mismatched = [r for r in rows if r['frames'] != r['paper_frames']]
+    assert not mismatched, f'frame counts differ from the paper side: {mismatched}'
+    (RUNS / 'summary.json').write_text(json.dumps(rows, indent=2) + '\n')
+    for r in rows:
+        print(f"{r['label']:9s} {r['loss']} {r['config']:50s} exe2 {r['execution2']:7.1f} fps "
+              f"(proc {r['execution2_proc']:6.1f}) | paper p121 {r['paper_p121']:7.1f} one_dec {r['paper_one_dec']:6.1f} "
+              f"clean {r['clean_steady']:6.1f} | x{r['x_paper_p121']:.2f} x{r['x_paper_one_dec']:.2f} "
+              f"x{r['x_clean_steady']:.2f} | tracks {r['same_up_to_renaming']}/{r['videos']}")
+
+
+if __name__ == '__main__':
+    main()

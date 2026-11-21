@@ -40,6 +40,7 @@ import yaml
 
 from execution2.config import load_config
 from execution2.tools.compare_scripts import compare_track_lines
+from polyis.utilities import build_param_str
 
 REAL_CACHE = Path('/polyis-cache-ro')
 SCRATCH_CACHE = Path('/polyis-cache')
@@ -54,6 +55,7 @@ def parse_args():
     parser.add_argument('--bench', required=True)
     parser.add_argument('--videoset', default='test')
     parser.add_argument('--limit', type=int, default=None)
+    parser.add_argument('--skip-scripts', action='store_true')
     return parser.parse_args()
 
 
@@ -162,26 +164,36 @@ def main() -> None:
     scripts = ['scripts/p020_exec_classify.py', *(['scripts/p022_exec_prune_polyominoes.py'] if cfg.use_prune else []),
                'scripts/p030_exec_compress.py', 'scripts/p040_exec_detect.py', 'scripts/p050_exec_uncompress.py',
                'scripts/p060_exec_track.py']
-    for script in scripts:
+    for script in [] if args.skip_scripts else scripts:
         rec = timed([sys.executable, script, '--test'], env, bench / f'{Path(script).stem}.log')
         result['scripts'].append({'script': script, 'seconds': rec['seconds']})
         print(f'{script}: {rec["seconds"]:.1f} s', flush=True)
-    result['scripts_total_s'] = sum(r['seconds'] for r in result['scripts'])
+    result['scripts_total_s'] = sum(r['seconds'] for r in result['scripts']) if result['scripts'] else None
 
-    # execution2, as configured and on one GPU.
-    for name, cfg_path in [('configured', Path(args.config)), ('single_gpu', single_gpu_config(args.config, bench))]:
+    # Reference tracks: the scripts' fresh outputs from this run, or with --skip-scripts their cached outputs
+    # (read-only mount), at the configuration's p060 directory.
+    reference_cache = REAL_CACHE if args.skip_scripts else SCRATCH_CACHE
+    tracks_dir = build_param_str(classifier=cfg.artifacts.classifier.name, tilesize=p.tile_size, sample_rate=p.sample_rate,
+                                 tilepadding=p.tile_padding, canvas_scale=p.canvas_scale, tracker=p.tracker,
+                                 tracking_accuracy_threshold=p.mistrack_tolerance,
+                                 relevance_threshold=p.relevance_threshold)
+    # execution2 as configured, and on one GPU unless classify and detect already share one.
+    variants = [('configured', Path(args.config))]
+    if cfg.system.stages['detect'].gpu != cfg.system.stages['classify'].gpu:
+        variants.append(('single_gpu', single_gpu_config(args.config, bench)))
+    for name, cfg_path in variants:
         out = bench / f'execution2-out-{name}'
         rec = timed([sys.executable, '-m', 'execution2.main', '--config', str(cfg_path), '--videos', str(videos_dir),
                      '--out', str(out)], env, bench / f'execution2-{name}.log')
         summary = json.loads(rec['last_line'])
-        # Every output vs the scripts' fresh tracks from this run.
-        param_dir = next((SCRATCH_CACHE / args.dataset / 'execution' / videos[0] / '060_uncompressed_tracks').iterdir()).name
         checks = {v: compare_track_lines(
             (out / f'{Path(v).stem}.jsonl').read_text().splitlines(),
-            (SCRATCH_CACHE / args.dataset / 'execution' / v / '060_uncompressed_tracks' / param_dir / 'tracking.jsonl')
+            (reference_cache / args.dataset / 'execution' / v / '060_uncompressed_tracks' / tracks_dir / 'tracking.jsonl')
             .read_text().splitlines()) for v in videos}
         result['execution2'][name] = {
             'process_s': rec['seconds'], 'runtime_s': summary['runtime_s'], 'frames': summary['frames'],
+            'fps': summary['frames'] / summary['runtime_s'], 'process_fps': summary['frames'] / rec['seconds'],
+            'reference': 'cached script outputs' if args.skip_scripts else 'fresh script outputs',
             'outputs_identical': sum(c['equal'] for c in checks.values()),
             'outputs_same_up_to_id_renaming': sum(c['same_up_to_id_renaming'] for c in checks.values()),
             'max_abs_box_diff': max(c['max_abs_box_diff_same_ids'] for c in checks.values()),
