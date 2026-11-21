@@ -173,36 +173,39 @@ def _read_needed(cap: cv2.VideoCapture, block: np.ndarray, needed: np.ndarray, v
 # ---------------------------------------------------------------- classify
 
 def classify_setup(cfg: Config, worker: Worker) -> dict:
-    """Load and optimize the classifier, and load the never-relevant mask and normalization tensors, once per worker."""
+    """Once per worker: the optimized classifier and the GPU tensors that depend only on the dataset's grid."""
     with open(cfg.artifacts.classifier.compilation_benchmark) as f:
         benchmark_results = [json.loads(line) for line in f]
+    # The never-relevant bitmap is the dataset's tile grid, (grid_h, grid_w); classify accepts only videos
+    # with exactly this grid, so everything below is built once here.
     never_relevant = np.load(cfg.artifacts.never_relevant_bitmap)
+    if never_relevant.ndim != 2:
+        raise ValueError(f'never-relevant bitmap must be 2-D (grid_h, grid_w), got shape {never_relevant.shape}')
+    grid_h, grid_w = never_relevant.shape
     model = load_classifier(cfg.artifacts.classifier.weights).to(DEVICE)
-    # The bitmap has one entry per tile of the dataset's grid, and classify rejects any video whose grid
-    # differs, so this is the tile count p020 takes from its first video.
+    # The grid's tile count, as p020 takes it from its first video.
     model, _method = select_model_optimization(model, benchmark_results, DEVICE, cfg.params.tile_size,
-                                               never_relevant.size)
+                                               grid_h * grid_w)
+    # Tile positions exactly as p020 builds them.
+    y = torch.arange(grid_h, device=DEVICE, dtype=torch.uint8).repeat_interleave(grid_w)
+    x = torch.arange(grid_w, device=DEVICE, dtype=torch.uint8).repeat(grid_h)
     return {
         'tile_size': cfg.params.tile_size,
+        'grid': (grid_h, grid_w),
         'model': model,
+        'mask': torch.from_numpy(never_relevant.flatten()).to(DEVICE).to(torch.uint8),
+        'positions': torch.stack([y, x], dim=1).float(),
         'normalize_mean': torch.tensor([0.485, 0.456, 0.406] * 2, device=DEVICE, dtype=torch.float16).view(1, 6, 1, 1),
         'normalize_std': torch.tensor([0.229, 0.224, 0.225] * 2, device=DEVICE, dtype=torch.float16).view(1, 6, 1, 1),
-        'never_relevant': never_relevant,
     }
 
 
 def classify(state: dict, d: Decoded) -> Classified:
     """p020's classification of every sampled frame, in batches of CLASSIFY_BATCH."""
     ts = state['tile_size']
-    grid_w, grid_h = d.width // ts, d.height // ts
-    mask_np = state['never_relevant']
-    if mask_np.size != grid_h * grid_w:
-        raise ValueError(f'{d.video}: never-relevant bitmap has {mask_np.size} tiles, video grid has {grid_h}x{grid_w}')
-    mask = torch.from_numpy(mask_np.flatten()).to(DEVICE).to(torch.uint8)
-    # Tile positions exactly as p020 builds them.
-    y = torch.arange(grid_h, device=DEVICE, dtype=torch.uint8).repeat_interleave(grid_w)
-    x = torch.arange(grid_w, device=DEVICE, dtype=torch.uint8).repeat(grid_h)
-    positions = torch.stack([y, x], dim=1).float()
+    grid = (d.height // ts, d.width // ts)
+    if grid != state['grid']:
+        raise ValueError(f'{d.video}: video grid {grid} does not match the never-relevant bitmap grid {state["grid"]}')
     # Positions in the frames block of each sampled frame and of its partner (needed is ascending and unique).
     sampled_pos = np.searchsorted(d.needed, d.sampled)
     partner_pos = np.searchsorted(d.needed, d.partner)
@@ -210,18 +213,17 @@ def classify(state: dict, d: Decoded) -> Classified:
     with torch.no_grad(), frames.attach(d.frames) as m:
         for start in range(0, len(d.sampled), CLASSIFY_BATCH):
             batch = slice(start, start + CLASSIFY_BATCH)
-            scores.append(_classify_one_batch(state, m.array, sampled_pos[batch], partner_pos[batch],
-                                              grid_w, grid_h, positions, mask))
+            scores.append(_classify_one_batch(state, m.array, sampled_pos[batch], partner_pos[batch]))
     return Classified(d, np.concatenate(scores, axis=0))
 
 
-def _classify_one_batch(state: dict, block: np.ndarray, sampled_pos: np.ndarray, partner_pos: np.ndarray,
-                        grid_w: int, grid_h: int, positions: torch.Tensor, mask: torch.Tensor) -> np.ndarray:
+def _classify_one_batch(state: dict, block: np.ndarray, sampled_pos: np.ndarray, partner_pos: np.ndarray) -> np.ndarray:
     """One classify_batch call; BGR->RGB copies as p020 makes them (views die with this frame)."""
     rgb = [np.ascontiguousarray(block[k][:, :, ::-1]) for k in sampled_pos]
     prev = [np.ascontiguousarray(block[k][:, :, ::-1]) for k in partner_pos]
-    probs, _runtime = classify_batch(grid_w, grid_h, positions, rgb, prev, state['model'], state['tile_size'],
-                                     DEVICE, state['normalize_mean'], state['normalize_std'], mask)
+    grid_h, grid_w = state['grid']
+    probs, _runtime = classify_batch(grid_w, grid_h, state['positions'], rgb, prev, state['model'], state['tile_size'],
+                                     DEVICE, state['normalize_mean'], state['normalize_std'], state['mask'])
     return probs.cpu().numpy()
 
 

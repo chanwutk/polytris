@@ -288,15 +288,25 @@ def test_classify_setup_optimizes_once_for_the_bitmaps_tile_count(tmp_path, vide
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
-def test_classify_rejects_a_mismatched_never_relevant_bitmap(tmp_path, video, prefix, fake_classifier):
+@pytest.mark.parametrize('bitmap_shape', [(3, 3), (W // TS, H // TS)])
+def test_classify_rejects_a_mismatched_never_relevant_bitmap(tmp_path, video, prefix, fake_classifier, bitmap_shape):
+    # A different grid, and the transposed grid (same tile count, different shape), are both rejected.
     cfg = make_cfg(tmp_path)
-    np.save(cfg.artifacts.never_relevant_bitmap, np.ones((3, 3), dtype=np.uint8))
+    np.save(cfg.artifacts.never_relevant_bitmap, np.ones(bitmap_shape, dtype=np.uint8))
     d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
     try:
-        with pytest.raises(ValueError, match='never-relevant bitmap has 9 tiles'):
+        with pytest.raises(ValueError, match=r'video grid \(6, 8\) does not match the never-relevant bitmap grid'):
             stages.classify(stages.classify_setup(cfg, None), d)
     finally:
         frames.unlink(d.frames)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
+def test_classify_setup_rejects_a_flat_never_relevant_bitmap(tmp_path, fake_classifier):
+    cfg = make_cfg(tmp_path)
+    np.save(cfg.artifacts.never_relevant_bitmap, np.ones((H // TS) * (W // TS), dtype=np.uint8))
+    with pytest.raises(ValueError, match='must be 2-D'):
+        stages.classify_setup(cfg, None)
 
 
 # ---------------------------------------------------------------- prune
