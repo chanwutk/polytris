@@ -115,18 +115,29 @@ keeps every polyomino, so every stricter tolerance gives the same pruned result 
 The ILP's inputs are the scores (same), p022's binarization (same T_r), and the per-tile gap
 `max(table[:, :, tol] // s, 1)`.  Tiles the never-relevant mask excludes always score 0 and are never in a
 polyomino, so only gaps on mask tiles matter.  So two tolerances whose gaps agree on mask tiles give the same
-ILP, hence the same result; this includes the author's all-1s case and needs no monotonicity assumption.
+ILP, hence the same result; this needs no monotonicity assumption.  (It does not make the all-1s case a
+keep-everything case; see A4.)
 
 ### A2. Measured on the real tables (7 datasets x 2 trackers x 5 sample rates x tolerances 0.4/0.6/0.8)
 - Merges happen only at sparse sampling: at s=16 all three tolerances are all-1s (identical) on every
   dataset and tracker; at s=8 ByteTrack's 0.6 and 0.8 are all-1s on caldot2-y05 and jnc6.  Nowhere else.
-- ILP branches: 210 -> 180 unique (14% fewer); 50 branches are all-1s and need no solve at all (the result is
-  the binarized scores), which also saves Gurobi sessions.
+- ILP branches: 210 -> 180 unique (14% fewer).  (An earlier note said 50 all-1s branches need no solve; A4
+  shows that is wrong: they still solve, once per group.)
 - Per video (paper grid) that removes about 12-15 of 105 pack inputs, with their pack/detect/track/evaluate.
 
 ### A3. A pruned branch that keeps everything is not the no-pruning branch
 p022 binarizes with `>= floor(T_r*255)`, p030 with `> T_r*255`, so they differ on tiles scoring exactly
 63 / 127 / 191 (for T_r 0.25 / 0.5 / 0.75).  Not merged.
+
+### A4. The author's premise does not hold: all-1s gaps do not keep every polyomino
+Found by a test (Gurobi status 2, yet tiles dropped).  In `polyis/sample/ilp/gurobi.py` a tile covered in at
+most one sampled frame (`len(pos) <= 1`) gets no temporal constraint; only consecutive appearances are linked
+(and first/last appearances forced).  With every gap 1, the optimum keeps exactly the polyominoes containing
+a tile that appears in >= 2 sampled frames and drops the rest, since the objective minimizes kept cells.
+So the solve-skip was removed: every group, all-1s included, runs its ILP once.  The identical-gap merge (A1)
+is unaffected.  Test: `test_all_ones_gaps_drop_polyominoes_whose_tiles_appear_only_once` checks this rule
+against Gurobi.  Question for the author: is dropping single-appearance polyominoes intended in p022?  (It
+is what the scripts do, so the sweep matches them either way.)
 
 ### Questions for the author (to decide before implementing)
 - Q1. Which tolerance labels a merged branch?  Guess: run it once and record the result under every
@@ -136,10 +147,11 @@ p022 binarizes with `>= floor(T_r*255)`, p030 with `> T_r*255`, so they differ o
 
 ### D24. Search-space reduction implemented (pending the author's answers to Q1/Q2), on by default
 `params.reduce_search_space` (default true): prune runs one representative tolerance per group of identical
-gaps (per tracker and sample rate, on mask tiles) and skips the solve for all-1s groups; the aggregator copies
+gaps (per tracker and sample rate, on mask tiles); every group solves once (A4); the aggregator copies
 each representative's row to every tolerance of its group (`ran_as` names the one that ran; same HOTA and
 time).  Main's expected results and pack's expected inputs count groups.  Set false to run every tolerance
-(the equivalence check uses the grid as-is either way; all-1s results count as optimal there).
+(the equivalence check uses the grid as-is either way).  Commit e9c4161 still skipped all-1s solves; fixed
+after A4.
 
 ### D25. The scripts' validation-pass wall clock cannot be recovered from the cache
 p120/p121 ran only for the test split (080_throughput has no validation rows), and output-directory

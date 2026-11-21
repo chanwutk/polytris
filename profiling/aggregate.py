@@ -55,7 +55,8 @@ def branch_key(branch: dict) -> str:
 
 def combine_hota(per_video: list[dict]) -> dict:
     """TrackEval's combined HOTA over videos, from each video's raw HOTA result (lists from JSON)."""
-    from trackeval.metrics import HOTA
+    # Through p110, which puts modules/TrackEval on sys.path before importing trackeval.
+    from evaluation.p110_accuracy_compute import HOTA
     metric = HOTA()
     arrays = {f'v{i}': {k: np.asarray(v, dtype=float) for k, v in r.items()} for i, r in enumerate(per_video)}
     return metric.combine_sequences(arrays)

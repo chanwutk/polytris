@@ -110,7 +110,8 @@ def test_prune_fans_out_and_passes_unpruned_scores_through(tmp_path, prefix, mon
     pruned = [o for o in out if o.branch['mistrack_tolerance'] is not None]
     assert {(o.branch['relevance_threshold'], o.branch['mistrack_tolerance'], o.branch['tracker']) for o in pruned} == \
         {(t, m, k) for t in (0.25, 0.5) for m in (0.4, 0.8) for k in ('sortcython', 'bytetrackcython')}
-    assert all(o.ilp == {'status': 2, 'solve_ms': 1.5, 'kept_tiles': scores.size} for o in pruned)
+    assert all(o.ilp == {'status': 2, 'solve_ms': 1.5, 'kept_tiles': scores.size, 'group': [o.branch['mistrack_tolerance']]}
+               for o in pruned)
     frames.unlink(v.block)
 
 
@@ -235,7 +236,7 @@ def test_reduction_ignores_tiles_the_mask_excludes(tmp_path):
     assert [g.tolerances for g in group_tolerances(table, mask, [0.4, 0.6, 0.8], 16)] == [(0.4, 0.6, 0.8)]
 
 
-def test_prune_runs_one_representative_per_group_and_skips_all_ones_solves(tmp_path, prefix, monkeypatch):
+def test_prune_runs_one_representative_per_group(tmp_path, prefix, monkeypatch):
     cfg = make_cfg(tmp_path, tolerances=(None, 0.4, 0.6, 0.8), sample_rates=(1, 16), thresholds=(0.5,),
                    trackers=('sortcython',), reduce=True, table_values=AXIS_VALUES)
     v = all_frames(prefix)
@@ -247,18 +248,28 @@ def test_prune_runs_one_representative_per_group_and_skips_all_ones_solves(tmp_p
     assert [o.branch['mistrack_tolerance'] for o in out1] == [None, 0.4, 0.6] and len(solves) == 2
     assert out1[2].ilp['group'] == [0.6, 0.8]
     out16 = st.prune(state, Scored('/v/a.mp4', base_branch().with_(sample_rate=16), (), v, scores))
-    assert [o.branch['mistrack_tolerance'] for o in out16] == [None, 0.4] and len(solves) == 2
-    assert out16[1].ilp['status'] == 'all_ones' and out16[1].ilp['group'] == [0.4, 0.6, 0.8]
-    assert np.array_equal(out16[1].scores, np.full_like(scores, 255))
+    # An all-1s group still solves once (all-1s gaps do not mean everything is kept).
+    assert [o.branch['mistrack_tolerance'] for o in out16] == [None, 0.4] and len(solves) == 3
+    assert out16[1].ilp['group'] == [0.4, 0.6, 0.8]
     frames.unlink(v.block)
 
 
-def test_keep_everything_equals_the_ilp_with_all_gaps_one():
-    # With every gap 1 no polyomino can be dropped, so Gurobi's answer must be the binarized scores.
-    from profiling.reduction import keep_everything
+def test_all_ones_gaps_drop_polyominoes_whose_tiles_appear_only_once():
+    # The ILP constrains only tiles covered in >= 2 sampled frames; with every gap 1 it keeps exactly the
+    # polyominoes that contain such a tile and drops the rest (DECISIONS.md A4).  So all-1s groups still solve.
+    from polyis.pack.adapters import group_tiles_all
     rng = np.random.default_rng(0)
     scores = rng.integers(0, 256, (12, 6, 8)).astype(np.uint8)
-    scores[:, 0, 0] = 127        # exactly on p022's boundary for T_r 0.5 (floor(127.5))
     for t_r in (0.25, 0.5, 0.75):
         pruned, result = ops.prune_scores(scores, np.ones((6, 8), dtype=np.int64), t_r, 5.0)
-        assert result.status == 2 and np.array_equal(pruned, keep_everything(scores, t_r)), t_r
+        bitmaps = (scores >= np.floor(t_r * 255)).astype(np.uint8)
+        ids, _ = group_tiles_all(bitmaps, ops.PRUNE_TILEPADDING_MODE)
+        ids = np.asarray(ids)
+        appearances = (ids >= 0).sum(axis=0)              # frames covering each tile
+        expected = np.zeros_like(scores)
+        for b in range(len(scores)):
+            keep = {int(k) for k in np.unique(ids[b][(ids[b] >= 0) & (appearances >= 2)])}
+            expected[b] = (np.isin(ids[b], list(keep)) & (ids[b] >= 0)).astype(np.uint8) * 255
+        assert result.status == 2 and np.array_equal(pruned, expected), t_r
+        # Some single-appearance polyomino exists, so this is not "keep everything".
+        assert not np.array_equal(pruned, bitmaps * 255) or not ((appearances == 1) & (bitmaps.sum(0) > 0)).any()

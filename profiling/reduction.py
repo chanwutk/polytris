@@ -4,11 +4,12 @@ Search-space reduction for pruning (the author's proposal, profiling/DECISIONS.m
 Two tolerances give the same pruning ILP, hence the same result, when their per-tile gaps
 max(table[:, :, tol] // s, 1) agree on every tile the never-relevant mask allows (other tiles always score
 0 and are in no polyomino).  So, per (tracker, sample rate), tolerances are grouped by those gaps and only one
-representative per group runs.  A group whose gaps are all 1 keeps every polyomino: its result is the
-binarized scores and needs no solve.
+representative per group runs its ILP.
 
-Not merged: a keep-everything pruned branch and the no-pruning branch (p022 binarizes with >= floor(T_r*255),
-p030 with > T_r*255; they differ on tiles scoring exactly on the boundary).
+All-1s gaps do NOT mean every polyomino is kept: the ILP constrains only tiles that appear in at least two
+sampled frames, so polyominoes made only of single-appearance tiles are still dropped (DECISIONS.md A4).
+Hence every group, all-1s or not, still solves once.  Never merged with the no-pruning branch either (p022
+binarizes with >= floor(T_r*255), p030 with > T_r*255).
 """
 
 from typing import NamedTuple
@@ -20,7 +21,7 @@ from execution2.config import MISTRACK_TOLERANCES
 
 class ToleranceGroup(NamedTuple):
     tolerances: tuple[float, ...]   # in sweep order; the first is the representative that runs
-    all_ones: bool                  # every relevant tile's gap is 1: the ILP would keep everything
+    all_ones: bool                  # every relevant tile's gap is 1 (informational; the ILP still runs)
 
     @property
     def representative(self) -> float:
@@ -66,7 +67,3 @@ def sweep_groups(cfg) -> dict[tuple[str, int], list[ToleranceGroup]]:
             out[(tracker, s)] = group_tolerances(table, mask, tolerances, s, cfg.params.reduce_search_space)
     return out
 
-
-def keep_everything(scores: np.ndarray, relevance_threshold: float) -> np.ndarray:
-    """The pruned grids when every polyomino is kept: p022's binarization, as 0/255."""
-    return (scores >= np.floor(relevance_threshold * 255)).astype(np.uint8) * 255

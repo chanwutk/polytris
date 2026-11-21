@@ -26,7 +26,7 @@ from execution2 import frames, operators as ops
 from execution2.config import MISTRACK_TOLERANCES
 from execution2.pipeline import Stage, Worker
 from profiling import save
-from profiling.reduction import keep_everything, sweep_groups
+from profiling.reduction import sweep_groups
 from profiling.completion import VideoCompletion
 from profiling.config import SweepConfig
 from profiling.messages import Branch, Decoded, Detected, Evaluated, Packed, Scored, StageTiming, Tracked
@@ -126,8 +126,7 @@ def _distance(state: dict, tracker: str, tolerance: float, sample_rate: int) -> 
 def prune(state: dict, sc: Scored) -> list[Scored]:
     """One output per relevance threshold x (tolerance group x tracker, or no pruning).
 
-    A group's representative runs (its branch carries that tolerance); a group whose gaps are all 1 keeps every
-    polyomino, so its result is the binarized scores without a solve.  The aggregator expands each group's
+    A group's representative runs (its branch carries that tolerance); the aggregator expands each group's
     result to all of its tolerances.
     """
     outputs = []
@@ -142,15 +141,12 @@ def prune(state: dict, sc: Scored) -> list[Scored]:
             for group in state['groups'].get((tracker, s), []):
                 tolerance = group.representative
                 start = time.time()
-                if group.all_ones:
-                    pruned, ilp = keep_everything(sc.scores, t_r), {'status': 'all_ones', 'solve_ms': 0.0}
-                else:
-                    try:
-                        pruned, result = ops.prune_scores(sc.scores, _distance(state, tracker, tolerance, s), t_r,
-                                                          state['time_limit_s'])
-                    except ValueError as e:
-                        raise ValueError(f'{sc.video}: {e}') from e
-                    ilp = {'status': result.status, 'solve_ms': result.solve_ms}
+                try:
+                    pruned, result = ops.prune_scores(sc.scores, _distance(state, tracker, tolerance, s), t_r,
+                                                      state['time_limit_s'])
+                except ValueError as e:
+                    raise ValueError(f'{sc.video}: {e}') from e
+                ilp = {'status': result.status, 'solve_ms': result.solve_ms}
                 timing = _timing('prune', start, time.time())
                 branch = sc.branch.with_(relevance_threshold=t_r, mistrack_tolerance=tolerance, tracker=tracker)
                 outputs.append(Scored(sc.video, branch, sc.timings + (timing,), sc.frames, pruned,

@@ -146,3 +146,16 @@ def test_aggregate_expands_a_tolerance_group_to_all_its_tolerances(tmp_path):
     assert rows[0.8]['HOTA_HOTA'] == rows[0.6]['HOTA_HOTA'] and rows[0.8]['time'] == rows[0.6]['time']
     assert yaml.safe_load(rows[0.8]['execution2_yaml'])['params']['mistrack_tolerance'] == 0.8
     assert sorted(c['id'] for c in configs) == [0, 1, 2]
+
+
+def test_combine_hota_works_in_a_fresh_process():
+    # Regression: combine_hota must not rely on another module having put TrackEval on sys.path first.
+    import subprocess
+    import sys
+    code = ("from profiling.aggregate import combine_hota\n"
+            "r = {'HOTA_TP': [5] * 19, 'HOTA_FN': [1] * 19, 'HOTA_FP': [1] * 19, 'AssRe': [0.9] * 19,"
+            " 'AssPr': [0.9] * 19, 'AssA': [0.8] * 19, 'LocA': [0.9] * 19}\n"
+            "print(round(float(combine_hota([r, r])['DetA'][0]), 4))\n")
+    out = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, cwd='/polyis')
+    assert out.returncode == 0, out.stderr[-2000:]
+    assert out.stdout.strip() == str(round(10 / 14, 4))

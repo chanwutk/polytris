@@ -125,8 +125,7 @@ def main_cli() -> None:
                 ilp = json.load(open(os.path.join(os.path.dirname(os.path.dirname(ours)), 'ilp.json')))
                 cached_ms = cached_solve_ms(os.path.dirname(os.path.dirname(theirs)))
                 entry.update(ours_status=ilp['status'], ours_kept=ilp['kept_tiles'], cached_solve_ms=cached_ms)
-                # 'all_ones' (reduction: every gap is 1, so everything is kept without a solve) is optimal too.
-                both_optimal = ilp['status'] in (2, 'all_ones') and cached_ms is not None and cached_ms < CACHED_OPTIMAL_BELOW_MS
+                both_optimal = ilp['status'] == 2 and cached_ms is not None and cached_ms < CACHED_OPTIMAL_BELOW_MS
                 entry['compared'] = both_optimal
                 if not both_optimal:
                     rows.append(entry)
