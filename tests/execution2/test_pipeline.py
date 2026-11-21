@@ -181,3 +181,74 @@ def test_worker_usage_counts_add_up():
     results = list(run([stage('a', procs=3), stage('b', procs=3)], inputs(60), queue_maxsize=3))
     per_stage = Counter(s for r in results for s, _ in r['path'])
     assert per_stage == {'a': 60, 'b': 60}
+
+
+# ---------------------------------------------------------------- fan-out, GPU tuples, savers (profiling/PLAN.md 13A)
+
+def fan_inputs(ns):
+    return [{'id': i, 'path': [], 'n': n} for i, n in enumerate(ns)]
+
+
+@pytest.mark.parametrize('procs', [(1, 1), (3, 2), (2, 3)])
+def test_fan_out_delivers_every_child_once(procs):
+    ns = [0, 1, 3, 5, 2, 0, 4]
+    stages = [Stage('fan', fs.worker_setup, fs.fan_out, procs[0], fan_out=True), stage('after', procs=procs[1])]
+    results = list(run(stages, fan_inputs(ns), queue_maxsize=2))
+    assert sorted((r['id'], r['child']) for r in results) == sorted((i, c) for i, n in enumerate(ns) for c in range(n))
+    assert all([s for s, _ in r['path']] == ['fan', 'after'] for r in results)
+
+
+def test_fan_out_of_nothing_still_shuts_down():
+    stages = [Stage('fan', fs.worker_setup, fs.fan_out, 2, fan_out=True), stage('after')]
+    assert list(run(stages, fan_inputs([0, 0, 0]), queue_maxsize=1)) == []
+
+
+def test_fan_out_none_output_is_an_error():
+    with pytest.raises(PipelineError, match='None output'):
+        list(run([Stage('fan', fs.worker_setup, fs.none_in_fan_out, fan_out=True)], inputs(2), queue_maxsize=1))
+
+
+def test_gpu_tuple_is_taken_by_workers_in_turn():
+    # One message per worker would not guarantee every worker got one, so check the assignment rule itself
+    # and that results only ever report GPUs from the tuple.
+    from execution2.pipeline import worker_gpu
+    s = Stage('a', fs.worker_setup, fs.report_gpu, procs=5, gpu=(4, 6))
+    assert [worker_gpu(s, k) for k in range(5)] == [4, 6, 4, 6, 4]
+    results = list(run([s], inputs(20), queue_maxsize=2))
+    assert {r['gpu'] for r in results} <= {4, 6}
+    assert all(r['cuda_visible_devices'] == str(r['gpu']) for r in results)
+
+
+def test_empty_gpu_tuple_is_rejected():
+    with pytest.raises(ValueError, match='gpu tuple must not be empty'):
+        list(run([Stage('a', fs.worker_setup, fs.tag, gpu=())], inputs(1), queue_maxsize=1))
+
+
+@pytest.mark.parametrize('savers', [1, 3])
+def test_savers_save_every_output_including_fan_out(tmp_path, savers):
+    ns = [2, 0, 3, 1]
+    stages = [Stage('fan', fs.worker_setup, fs.fan_out, 2, fan_out=True,
+                    save=partial(fs.save_json, str(tmp_path)), savers=savers)]
+    results = list(run(stages, fan_inputs(ns), queue_maxsize=2))
+    assert sorted(p.name for p in tmp_path.iterdir()) == sorted(f'{r["id"]}-{r["child"]}.json' for r in results)
+    assert len(results) == sum(ns)
+
+
+def test_slow_saving_is_not_counted_in_process_time_and_finishes_before_run_returns(tmp_path):
+    # process records its own duration; a saver taking 0.3 s per message must not show up in it,
+    # and run must not return until every save has been written.
+    stages = [Stage('a', fs.worker_setup, fs.timed_tag, save=partial(fs.slow_save_json, str(tmp_path), 0.3))]
+    results = list(run(stages, inputs(6), queue_maxsize=2))
+    assert max(r['process_s'] for r in results) < 0.1
+    assert len(list(tmp_path.iterdir())) == 6
+
+
+def test_saver_failure_fails_the_run():
+    stages = [Stage('a', fs.worker_setup, fs.tag, save=partial(fs.failing_save, 3))]
+    with pytest.raises(PipelineError, match=r'(?s)a\.saver\[0\] failed.*disk full on 3'):
+        list(run(stages, inputs(8), queue_maxsize=1))
+
+
+def test_savers_must_be_positive_when_saving():
+    with pytest.raises(ValueError, match='savers must be >= 1'):
+        list(run([Stage('a', fs.worker_setup, fs.tag, save=fs.tag, savers=0)], inputs(1), queue_maxsize=1))
