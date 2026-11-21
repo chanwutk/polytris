@@ -98,7 +98,11 @@ Move these pure functions from the scripts into `polyis/` with no logic change. 
 
 1. ~~Decoder comparison [14A, 18A]~~: done as a smoke test; OpenCV kept (see Decode).
 2. Before/after tests [11A], then the move to `polyis/` [5A].
-3. `config.py`, `frames.py`, `pipeline.py` with fake-stage tests [12A]:
+3. ~~`config.py`, `frames.py`, `pipeline.py` with fake-stage tests [12A]~~: done (`tests/execution2/`).
+   - numpy views over shared memory hold no buffer export, so `SharedMemory.close()` would unmap memory under a surviving view. `frames.py` detects escaped views by the mmap's reference count and refuses to close.
+   - The video edge cases below (empty dir, non-video file, unreadable or 1-frame video, zero collages, duplicate stems) belong to steps 4–5, where main and the stages exist.
+
+   Originally planned:
    - process counts 1×1, 1×N, N×1, N×M
    - an exception and a SIGKILL in each stage, with no leftover `/dev/shm` blocks
    - backpressure
