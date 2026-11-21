@@ -97,3 +97,19 @@ def sleep_then_tag(delay_s, state, msg):
 def np_payload(state, msg):
     """Return a numpy array, to check ordinary pickled payloads pass through."""
     return {**msg, 'array': np.full(3, msg['id'])}
+
+
+def fake_tracked(state, video):
+    """Stand-in for the whole pipeline: one track per video, tagged with the video's frame count."""
+    from execution2.stages import Tracked
+    import cv2
+    cap = cv2.VideoCapture(video)
+    n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+    return Tracked(video, {0: [[1.0, 0.0, 0.0, 10.0, float(n)]]})
+
+
+def fake_build(cfg, prefix):
+    """build_stages replacement for main tests: one two-process stage, no models."""
+    from execution2.pipeline import Stage
+    return [Stage('fake', worker_setup, fake_tracked, 2)]
