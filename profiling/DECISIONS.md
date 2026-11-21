@@ -178,3 +178,14 @@ Pareto: 58 configurations (vs 56).  Results under `measurements-results/profilin
 Intent (author): drop (sample rate, T_r, tolerance) prefixes provably giving the same polyominoes.  Kept
 the static same-gap merge.  Not pursued: merging across trackers (measured 180 -> 171 ILP branches on all 7
 datasets) and per-video ILP hashing (unmeasured; constraint building lives in gurobi.pyx).
+
+### D29. B3D validation sweeps (reduction on, 480-configuration grid, one run each, ace, 2026-11-21)
+| dataset | videos | frames | configurations run | wall clock | Pareto configurations |
+| --- | --- | --- | --- | --- | --- |
+| jnc0 | 5 | 5,375 | 432 | 2,365 s | 78 |
+| jnc2 | 5 | 4,691 | 432 | 2,890 s | 74 |
+| jnc6 | 5 | 5,194 | 420 | 2,256 s | 77 |
+| jnc7 | 5 | 5,226 | 432 | 1,426 s | 72 |
+Wall clock is profiling.main's (`run.json` `wall_s`), excluding the aggregator.  The detector weights are
+mounted from the main checkout (`weights/` is not synced to the profiling checkout).  Results under
+`measurements-results/profiling-sweep/<dataset>-reduced/`.
