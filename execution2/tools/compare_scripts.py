@@ -80,6 +80,7 @@ def script_paths(cfg: Config, dataset: str, video: str) -> dict:
                               tracking_accuracy_threshold=p.mistrack_tolerance, relevance_threshold=p.relevance_threshold)
     return {
         'comp_frames': cache.exec(dataset, 'comp-frames', video, packed),
+        'comp_dets': cache.exec(dataset, 'comp-dets', video, packed, 'detections.jsonl'),
         'ucomp_dets': cache.exec(dataset, 'ucomp-dets', video, packed, 'detections.jsonl'),
         'tracks': cache.exec(dataset, 'ucomp-tracks', video, tracked, 'tracking.jsonl'),
     }
@@ -150,6 +151,34 @@ def compare_track_files(ours: dict[int, list], theirs_path: Path, tmp: Path) -> 
     return compare_track_lines(path.read_text().splitlines(), theirs_path.read_text().splitlines())
 
 
+def script_order(cfg: Config, states: dict, packed, canvases: np.ndarray, paths: dict, info, tmp: Path) -> dict:
+    """Our detector on our canvases batched exactly as p040 batched its files (its detections.jsonl order), our
+    unpacking merged in that order as p050 merges, then track: every output compared exactly, order included."""
+    p040_rows = [json.loads(l) for l in paths['comp_dets'].read_text().splitlines() if l.strip()]
+    order = [int(r['image_file'].split('_')[0]) for r in p040_rows]
+    if sorted(order) != list(range(len(packed.offset_lookups))):
+        return {'error': f'p040 order {order} does not cover our {len(packed.offset_lookups)} collages'}
+    raw = []
+    for start in range(0, len(order), stages.DETECT_BATCH):
+        batch = order[start:start + stages.DETECT_BATCH]
+        raw += [o.tolist() for o in stages.detect_batch([canvases[k].copy() for k in batch], states['detect']['detector'])]
+    # p050: a list for every frame, extended in detections.jsonl order.
+    per_frame: dict[int, list] = {i: [] for i in range(packed.frame_count)}
+    for k, boxes in zip(order, raw):
+        unpacked, _, _ = stages.unpack_detections(boxes, packed.index_maps[k], packed.offset_lookups[k], cfg.params.tile_size, False)
+        for f, b in unpacked.items():
+            per_frame[f].extend(b)
+    p050_rows = [json.loads(l) for l in paths['ucomp_dets'].read_text().splitlines() if l.strip()]
+    tracked = stages.track(stages.track_setup(cfg, None), Detected(packed.video, info.width, info.height,
+                                                                  packed.frame_count, per_frame))
+    return {
+        'p040_raw_equal': raw == [r['bboxes'] for r in p040_rows],
+        'p050_equal_in_order': [per_frame[r['frame_idx']] for r in p050_rows] == [r['bboxes'] for r in p050_rows]
+                               and len(p050_rows) == packed.frame_count,
+        'p060': compare_track_files(tracked.frame_tracks, paths['tracks'], tmp),
+    }
+
+
 def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str, prefix: str, tmp: Path) -> dict:
     """Every stage fed the script's previous output; returns per-stage comparisons."""
     p, paths = cfg.params, script_paths(cfg, dataset, video)
@@ -189,6 +218,8 @@ def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str,
         'offset_lookups_equal': json.loads(json.dumps(packed.offset_lookups)) == lookups,
         'canvases_equal': same_count and all(np.array_equal(a, b) for a, b in zip(ours_canvases, canvases)),
     }
+    # Detection in p040's exact batches and p050's merge order, on our canvases (before detect frees them).
+    report['detect_in_script_order'] = script_order(cfg, states, packed, ours_canvases, paths, info, tmp)
     # detect (frees the canvases block)
     detected = stages.detect(states['detect'], packed)
     rows = [json.loads(l) for l in paths['ucomp_dets'].read_text().splitlines() if l.strip()]

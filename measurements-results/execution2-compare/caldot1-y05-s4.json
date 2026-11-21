@@ -30,6 +30,22 @@
         "offset_lookups_equal": true,
         "canvases_equal": true
       },
+      "detect_in_script_order": {
+        "p040_raw_equal": true,
+        "p050_equal_in_order": true,
+        "p060": {
+          "equal": true,
+          "lines": [
+            828,
+            828
+          ],
+          "differing_lines": 0,
+          "frames_with_different_track_ids": 0,
+          "max_abs_box_diff_same_ids": 0.0,
+          "same_up_to_id_renaming": true,
+          "unmatched_track_boxes": 0
+        }
+      },
       "detect": {
         "frames": 900,
         "frames_identical": 900,
@@ -80,6 +96,22 @@
         "index_maps_equal": true,
         "offset_lookups_equal": true,
         "canvases_equal": true
+      },
+      "detect_in_script_order": {
+        "p040_raw_equal": true,
+        "p050_equal_in_order": true,
+        "p060": {
+          "equal": true,
+          "lines": [
+            900,
+            900
+          ],
+          "differing_lines": 0,
+          "frames_with_different_track_ids": 0,
+          "max_abs_box_diff_same_ids": 0.0,
+          "same_up_to_id_renaming": true,
+          "unmatched_track_boxes": 0
+        }
       },
       "detect": {
         "frames": 900,
@@ -132,6 +164,22 @@
         "offset_lookups_equal": true,
         "canvases_equal": true
       },
+      "detect_in_script_order": {
+        "p040_raw_equal": true,
+        "p050_equal_in_order": true,
+        "p060": {
+          "equal": true,
+          "lines": [
+            900,
+            900
+          ],
+          "differing_lines": 0,
+          "frames_with_different_track_ids": 0,
+          "max_abs_box_diff_same_ids": 0.0,
+          "same_up_to_id_renaming": true,
+          "unmatched_track_boxes": 0
+        }
+      },
       "detect": {
         "frames": 900,
         "frames_identical": 900,
@@ -169,7 +217,7 @@
   "chained": {
     "summary": {
       "videos": 3,
-      "runtime_s": 4.649189531803131,
+      "runtime_s": 3.3204999659210443,
       "frames": 2700
     },
     "videos": {
