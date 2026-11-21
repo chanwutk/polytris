@@ -166,3 +166,10 @@ unreduced.  Result of that sweep (480 configurations, 2,405 s wall): 56 Pareto c
 front, 20 no-sampling, 10 no-both), HOTA 0.633-0.971, 142-4,599 fps; committed under
 `measurements-results/profiling-sweep/caldot1-y05/`.  At s=16 the three tolerances give identical HOTA, as A1
 predicts (identical gaps), with different measured times (noise).
+
+### D27. Measured: the reduction saves 6% of wall clock on caldot1-y05
+Same config with `reduce_search_space: true`: 432 of 480 configurations run (the 48 merged are s=16 tolerance
+duplicates), 2,251 s wall vs 2,405 s unreduced (6.4% less).  Against the unreduced run, all 120 unpruned
+configurations have identical HOTA; 328 of 360 pruned do, and the other 32 differ by up to 0.048 because the
+0.1 s ILP limit makes pruned results load-dependent (as in the Figure 8 rerun), not because of the merge.
+Pareto: 58 configurations (vs 56).  Results under `measurements-results/profiling-sweep/caldot1-y05-reduced/`.
