@@ -151,3 +151,12 @@ The 14 operating points the paper reports (per dataset, the fastest configuratio
 - Single runs on a shared host (load average about 15), untuned process counts.
 - These 14 runs used the classify code at 5b40884. At s=1 that classify took 3.7 s per CalDoT2 video, which made CalDoT2 10% the slow point (243 s for 60 videos). The later classify commits (9b291e8, 2345899: one GPU transfer per batch, scores copied once per video) take 0.75 s per video with identical scores. With them, CalDoT2 10% runs at 529 fps on one GPU and 596 fps with detect on a second GPU (`measurements-results/execution2-paper/caldot2-y05-0.10-1gpu-current`, `-2gpu`), against the paper's 263 fps matched and 321.5 fps published. The other 13 points have not been rerun with the current classify.
 
+### Rerun with the current code (2026-11-21)
+
+All 14 points again on one ace GPU with the code at f1c7581 plus the classify commits (`measurements-results/execution2-paper-current`; `python measurements/execution2_paper_throughput.py --runs measurements-results/execution2-paper-current --baseline measurements-results/execution2-paper`).
+
+- execution2 is now faster than the published p121 throughput at all 14 points (1.07x-1.72x), than the matched-boundary number (`one_decode`) at all 14 (1.41x-3.25x), and than the clean staged-scripts wall clock at all 14 (2.0x-13.9x).
+- Against the first run it is 1.00x-2.48x faster; the largest gains are where classify handles the most frames (Amsterdam 5%: 603 -> 1495 fps; CalDoT2 10%: 222 -> 527 fps).
+- CalDoT2 5% (s=1, no pruning) stays at 186 fps: it is detector-bound (about 200 canvases per video).
+- Tracks equal the cached script tracks up to track-id renaming on 309 of 310 videos (te32 in CalDoT2 10%, the ILP time limit).
+
