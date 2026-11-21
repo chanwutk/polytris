@@ -24,7 +24,8 @@ def valid(paths):
     """A pruning config with every field set."""
     return {
         'params': {'sample_rate': 4, 'relevance_threshold': 0.5, 'mistrack_tolerance': 0.4, 'tile_padding': 'none',
-                   'tracker': 'sortcython', 'tile_size': 60, 'canvas_scale': 1.0},
+                   'tracker': 'sortcython', 'tile_size': 60, 'canvas_scale': 1.0,
+                   'canvas_format': 'jpeg'},
         'artifacts': {
             'classifier': {'name': 'ShuffleNet05', 'weights': paths['weights.pth'],
                            'compilation_benchmark': paths['bench.jsonl']},
@@ -102,6 +103,7 @@ def test_unknown_keys_are_errors(valid, where):
     ('tile_size', -60, 'must be >= 1'),
     ('canvas_scale', 0, 'must be > 0'),
     ('tracker', None, 'expected str, got NoneType'),
+    ('canvas_format', 'png', 'must be one of'),
 ])
 def test_bad_params_are_errors(valid, key, value, message):
     valid['params'][key] = value

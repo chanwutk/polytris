@@ -63,7 +63,7 @@ def read_all(path: str) -> list[np.ndarray]:
 
 
 def make_cfg(tmp_path: Path, *, sample_rate=2, relevance_threshold=0.5, mistrack_tolerance=None,
-             tile_padding='none', tracker='sortcython', canvas_scale=1.0) -> Config:
+             tile_padding='none', tracker='sortcython', canvas_scale=1.0, canvas_format='raw') -> Config:
     """A Config built directly (artifact files are synthetic)."""
     bench = tmp_path / 'bench.jsonl'
     bench.write_text('')
@@ -74,7 +74,8 @@ def make_cfg(tmp_path: Path, *, sample_rate=2, relevance_threshold=0.5, mistrack
     rates[:, :4] = 8
     np.save(table, rates)
     return Config(
-        params=Params(sample_rate, relevance_threshold, mistrack_tolerance, tile_padding, tracker, TS, canvas_scale),
+        params=Params(sample_rate, relevance_threshold, mistrack_tolerance, tile_padding, tracker, TS, canvas_scale,
+                      canvas_format),
         artifacts=Artifacts(Classifier('Fake', str(tmp_path / 'w.pth'), str(bench)), str(never),
                             str(table) if mistrack_tolerance is not None else None,
                             Detector('ultralytics', {'model_path': 'unused'})),
@@ -285,9 +286,11 @@ def run_p030(monkeypatch, tmp_path, cfg, video, scores, sampled) -> tuple[list, 
     return canvases, maps, lookups
 
 
+@pytest.mark.parametrize('canvas_format', ['jpeg', 'raw'])
 @pytest.mark.parametrize('tile_padding, canvas_scale, sample_rate', [('none', 1.0, 2), ('tr', 1.0, 1), ('plus', 1.25, 4)])
-def test_pack_matches_p030(monkeypatch, tmp_path, video, prefix, tile_padding, canvas_scale, sample_rate):
-    cfg = make_cfg(tmp_path, tile_padding=tile_padding, canvas_scale=canvas_scale, sample_rate=sample_rate)
+def test_pack_matches_p030(monkeypatch, tmp_path, video, prefix, tile_padding, canvas_scale, sample_rate, canvas_format):
+    cfg = make_cfg(tmp_path, tile_padding=tile_padding, canvas_scale=canvas_scale, sample_rate=sample_rate,
+                   canvas_format=canvas_format)
     d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
     scores = synthetic_scores(len(d.sampled))
     p = stages.pack_video(stages.pack_setup(cfg, prefix, None), Classified(d, scores))
@@ -301,11 +304,15 @@ def test_pack_matches_p030(monkeypatch, tmp_path, video, prefix, tile_padding, c
     with frames.attach(p.canvases) as m:
         ours = m.array.copy()
     frames.unlink(p.canvases)
-    # p030's canvases went through JPEG (quality 95); ours are raw (PLAN.md issue 20), so this is only a
-    # sanity bound; test_packed_tiles_are_exact_copies_of_their_source_tiles checks pixels exactly.
-    for k, jpeg in enumerate(canvases):
-        assert jpeg.shape == ours[k].shape
-        assert np.abs(jpeg.astype(int) - ours[k].astype(int)).mean() < 10.0, k
+    assert ours.shape == (len(canvases), *canvases[0].shape)
+    if canvas_format == 'jpeg':
+        # Exactly the pixels p040 reads back from p030's JPEG files.
+        assert np.array_equal(ours, np.stack(canvases))
+    else:
+        # Raw canvases differ from p030's JPEGs only by compression error; exact pixels are checked by
+        # test_packed_tiles_are_exact_copies_of_their_source_tiles.
+        assert not np.array_equal(ours, np.stack(canvases))
+        assert np.abs(np.stack(canvases).astype(int) - ours.astype(int)).mean() < 10.0
 
 
 def test_packed_tiles_are_exact_copies_of_their_source_tiles(tmp_path, video, prefix):

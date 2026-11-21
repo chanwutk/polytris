@@ -8,8 +8,10 @@ The six execution2 stages (PLAN.md step 4).  Each matches its p0xx script's comp
             group tiles with padding mode 0, solve the ILP (0.1 s), keep selected polyominoes.
   pack      p030: binarize with score > T_r*255, group tiles with padding P, best-fit pack,
             draw collages on the CPU into one shared block per video, then free the frames.
-  detect    p040 + p050: detector on raw canvases in batches of 4 (PLAN.md issue 20: no JPEG
-            round trip), unpack boxes to per-frame lists for every frame, then free the canvases.
+            canvas_format 'jpeg' passes each canvas through JPEG as p030 writes and p040 reads it;
+            'raw' leaves it as drawn.
+  detect    p040 + p050: detector on the canvases in batches of 4, unpack boxes to per-frame
+            lists for every frame, then free the canvases.
   track     p060: tracker over every frame in order, with trajectory interpolation.
 
 Messages are NamedTuples keyed by the video's path; only small handles to shared blocks
@@ -242,7 +244,7 @@ def prune(state: dict, c: Classified) -> Classified:
 def pack_setup(cfg: Config, prefix: str, worker: Worker) -> dict:
     p = cfg.params
     return {'tile_size': p.tile_size, 'padding': TILEPADDING_MAPS[p.tile_padding], 'canvas_scale': p.canvas_scale,
-            'relevance_threshold': p.relevance_threshold, 'prefix': prefix}
+            'relevance_threshold': p.relevance_threshold, 'prefix': prefix, 'jpeg': p.canvas_format == 'jpeg'}
 
 
 def pack_video(state: dict, c: Classified) -> Packed:
@@ -273,9 +275,20 @@ def pack_video(state: dict, c: Classified) -> Packed:
             assert len(collage) > 0, f'collage {k} is empty'
             offset_lookups.append(_draw_collage(cm.array[k], index_maps[k], collage, fm.array, buffer_pos,
                                                 d.sampled, src_bounds, dst_bounds))
+            if state['jpeg']:
+                _jpeg_round_trip(cm.array[k])
     # Pack is the frames' last user.
     frames.unlink(d.frames)
     return Packed(d.video, d.width, d.height, d.frame_count, cm.block, index_maps, offset_lookups)
+
+
+def _jpeg_round_trip(canvas: np.ndarray) -> None:
+    """Replace canvas, in place, with what p040 reads back from p030's cv2.imwrite(..., '.jpg')."""
+    # Same encoder and default quality as imwrite, same decoder and flags as imread.
+    ok, encoded = cv2.imencode('.jpg', canvas)
+    if not ok:
+        raise RuntimeError('JPEG encoding of a canvas failed')
+    canvas[...] = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
 
 
 def _grid_bounds(n: int, ts: int) -> tuple[np.ndarray, np.ndarray]:

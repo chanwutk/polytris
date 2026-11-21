@@ -27,6 +27,10 @@ MISTRACK_TOLERANCES = (0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.00)
 STAGES = ('decode', 'classify', 'prune', 'pack', 'detect', 'track')
 GPU_STAGES = ('classify', 'detect')
 
+# How pack hands canvases to detect: 'jpeg' reproduces p030's JPEG write + p040's read (same pixels the
+# paper's runs detected on); 'raw' passes the drawn canvas unchanged.
+CANVAS_FORMATS = ('jpeg', 'raw')
+
 # Required fields per detector type, mirroring polyis.models.detector.get_detector.
 DETECTOR_FIELDS: dict[str, dict[str, type]] = {
     'retina': {'config_path': str},
@@ -49,6 +53,7 @@ class Params:
     tracker: str
     tile_size: int
     canvas_scale: float
+    canvas_format: str
 
 
 @dataclass(frozen=True)
@@ -159,6 +164,8 @@ def _params(data: Any) -> Params:
         raise ConfigError(f'params.tile_size: must be >= 1, got {p.tile_size}')
     if p.canvas_scale <= 0:
         raise ConfigError(f'params.canvas_scale: must be > 0, got {p.canvas_scale}')
+    if p.canvas_format not in CANVAS_FORMATS:
+        raise ConfigError(f'params.canvas_format: must be one of {CANVAS_FORMATS}, got {p.canvas_format!r}')
     return p
 
 
