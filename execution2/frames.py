@@ -50,11 +50,11 @@ class Mapped:
         # next use).  Survivors are detected instead by the mmap's reference count, against this
         # baseline taken before any view exists.
         self._baseline_refs = sys.getrefcount(shm._mmap)
-        self.array: np.ndarray | None = np.ndarray(block.shape, dtype=np.dtype(block.dtype), buffer=shm.buf)
+        self.array: np.ndarray = np.ndarray(block.shape, dtype=np.dtype(block.dtype), buffer=shm.buf)
 
     def _close(self) -> None:
         # Drop our view first; any remaining reference to the mmap is a view that escaped.
-        self.array = None
+        del self.array
         if sys.getrefcount(self._shm._mmap) > self._baseline_refs:
             raise BufferError(f'a view of shared block {self.block.name} outlived its context; '
                               f'copy the data instead of keeping a reference')
@@ -77,7 +77,7 @@ def create(prefix: str, shape: tuple[int, ...], dtype: str | np.dtype) -> Iterat
         yield mapped
     except BaseException:
         # A failed writer leaves nothing behind.
-        mapped.array = None
+        del mapped.array
         mapped._shm.close()
         unlink(block)
         raise
