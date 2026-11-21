@@ -20,7 +20,7 @@ artifacts:
     type: ultralytics
     model_path: /polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt
 system:
-  queue_maxsize: 1  # 8 videos in flight fits the 8 GiB /dev/shm on ace
+  queue_maxsize: 2
   stages:
     decode: {procs: 2}
     classify: {procs: 1, gpu: 0}

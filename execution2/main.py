@@ -85,33 +85,57 @@ def probe(path: str) -> VideoInfo:
     return info
 
 
-def max_videos_in_flight(cfg: Config) -> int:
-    """Upper bound on videos holding shared blocks: every queue from decode to detect full, every worker busy."""
-    holders = [n for n in ('decode', 'classify', 'prune', 'pack', 'detect') if n in cfg.system.stages]
-    # Queues between consecutive holders (decode->...->detect), plus one in-flight video per worker.
-    return cfg.system.queue_maxsize * (len(holders) - 1) + sum(cfg.system.stages[n].procs for n in holders)
+def _holders(cfg: Config, names: tuple[str, ...]) -> int:
+    """Most videos inside a run of consecutive stages: one per worker plus every queue between them full."""
+    present = [n for n in names if n in cfg.system.stages]
+    return sum(cfg.system.stages[n].procs for n in present) + cfg.system.queue_maxsize * (len(present) - 1)
 
 
-def shm_bytes_per_video(info: VideoInfo, sample_rate: int, canvas_scale: float) -> int:
-    """Estimated peak shared memory for one video: its frames block plus its canvases block."""
+def videos_holding_frames(cfg: Config) -> int:
+    """A frames block lives from decode until pack frees it."""
+    return _holders(cfg, ('decode', 'classify', 'prune', 'pack'))
+
+
+def videos_holding_canvases(cfg: Config) -> int:
+    """A canvases block lives from pack until detect frees it (pack workers briefly hold both blocks)."""
+    return _holders(cfg, ('pack', 'detect'))
+
+
+def frames_block_bytes(info: VideoInfo, sample_rate: int) -> int:
+    """Exact size of one video's frames block: its needed frames, BGR uint8."""
     _, needed, _ = frame_selection(info.frame_count, sample_rate)
-    frames_bytes = len(needed) * info.height * info.width * 3
-    # shortcut: assumes at most one collage per needed frame (packing usually yields far fewer), each
-    # canvas_scale^2 times a frame; count collages if a run trips the /dev/shm check unexpectedly.
-    canvas_bytes = int(frames_bytes * max(1.0, canvas_scale) ** 2)
-    return frames_bytes + canvas_bytes
+    return len(needed) * info.height * info.width * 3
+
+
+def canvases_block_bytes(info: VideoInfo, sample_rate: int, tile_size: int, canvas_scale: float) -> int:
+    """Estimated size of one video's canvases block: exact canvas size times an assumed collage count."""
+    sampled, _, _ = frame_selection(info.frame_count, sample_rate)
+    # Canvas pixel size exactly as pack computes it.
+    canvas_h = max(1, int(round(info.height // tile_size * canvas_scale))) * tile_size
+    canvas_w = max(1, int(round(info.width // tile_size * canvas_scale))) * tile_size
+    # shortcut: assumes at most one collage per sampled frame (caldot1-y05 te01 at s=4: 59 collages for
+    # 226 sampled frames); count collages if a run trips the /dev/shm check unexpectedly.
+    return len(sampled) * canvas_h * canvas_w * 3
+
+
+def worst_case_shm_bytes(cfg: Config, infos: list[VideoInfo]) -> int:
+    """Every frames holder and every canvases holder occupied by the largest video."""
+    p = cfg.params
+    frames_max = max(frames_block_bytes(i, p.sample_rate) for i in infos)
+    canvases_max = max(canvases_block_bytes(i, p.sample_rate, p.tile_size, p.canvas_scale) for i in infos)
+    return videos_holding_frames(cfg) * frames_max + videos_holding_canvases(cfg) * canvases_max
 
 
 def check_shm_budget(cfg: Config, infos: list[VideoInfo], shm_dir: str = SHM_DIR) -> None:
     """Refuse to start when the worst case cannot fit in free shared memory (PLAN.md 15A)."""
-    worst = max_videos_in_flight(cfg) * max(
-        shm_bytes_per_video(i, cfg.params.sample_rate, cfg.params.canvas_scale) for i in infos)
+    worst = worst_case_shm_bytes(cfg, infos)
     stat = os.statvfs(shm_dir)
     free = stat.f_bavail * stat.f_frsize
     if worst > free:
         raise StartupError(
-            f'worst-case shared memory {worst / 2**30:.1f} GiB ({max_videos_in_flight(cfg)} videos in flight) exceeds '
-            f'{free / 2**30:.1f} GiB free in {shm_dir}; lower system.queue_maxsize or stage procs, or raise shm_size')
+            f'worst-case shared memory {worst / 2**30:.1f} GiB (up to {videos_holding_frames(cfg)} videos holding frames, '
+            f'{videos_holding_canvases(cfg)} holding canvases) exceeds {free / 2**30:.1f} GiB free in {shm_dir}; '
+            f'lower system.queue_maxsize or stage procs, or raise shm_size')
 
 
 def execute(cfg: Config, videos_dir: str, out_dir: str,

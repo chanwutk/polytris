@@ -25,4 +25,4 @@ services:
     tmpfs:
       - /tmp
     network_mode: "host"
-    shm_size: "8gb"
+    shm_size: "64gb"

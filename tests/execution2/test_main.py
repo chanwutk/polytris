@@ -103,18 +103,31 @@ def test_execute_fails_before_running_on_a_bad_video(tmp_path, videos):
     assert not (tmp_path / 'out').exists()
 
 
-def test_videos_in_flight_bound(tmp_path):
-    # decode, classify, pack, detect hold blocks: 3 queues between them, procs 2+1+2+1.
-    assert m.max_videos_in_flight(cfg_with(tmp_path, queue_maxsize=2)) == 2 * 3 + 6
-    # With prune: 4 queues, one more worker.
-    assert m.max_videos_in_flight(cfg_with(tmp_path, queue_maxsize=2, mistrack_tolerance=0.4)) == 2 * 4 + 7
+def test_videos_holding_blocks(tmp_path):
+    # Frames: decode 2 + classify 1 + pack 2 workers, 2 queues between them.  Canvases: pack 2 + detect 1, 1 queue.
+    cfg = cfg_with(tmp_path, queue_maxsize=2)
+    assert (m.videos_holding_frames(cfg), m.videos_holding_canvases(cfg)) == (5 + 2 * 2, 3 + 2)
+    # Prune adds a worker and a queue to the frames region only.
+    cfg = cfg_with(tmp_path, queue_maxsize=2, mistrack_tolerance=0.4)
+    assert (m.videos_holding_frames(cfg), m.videos_holding_canvases(cfg)) == (6 + 2 * 3, 3 + 2)
 
 
-def test_shm_estimate_counts_needed_frames_and_canvases():
-    info = m.VideoInfo('v', 100, 50, 10)
-    # s=4 over 10 frames: needed = [0,1,3,4,7,8,9] -> 7 frames of 100x50x3, canvases the same again.
-    assert m.shm_bytes_per_video(info, 4, 1.0) == 2 * 7 * 100 * 50 * 3
-    assert m.shm_bytes_per_video(info, 4, 2.0) == 7 * 100 * 50 * 3 * 5
+def test_block_size_estimates():
+    info = m.VideoInfo('v', 130, 70, 10)
+    # s=4 over 10 frames: sampled [0,4,8,9], needed [0,1,3,4,7,8,9].
+    assert m.frames_block_bytes(info, 4) == 7 * 70 * 130 * 3
+    # Canvases: one per sampled frame, sized as pack sizes them (7x13 grid of 10 px tiles at scale 1).
+    assert m.canvases_block_bytes(info, 4, 10, 1.0) == 4 * 70 * 130 * 3
+    # Scale 1.5: grid round(7*1.5)=10 by round(13*1.5)=20 tiles.
+    assert m.canvases_block_bytes(info, 4, 10, 1.5) == 4 * 100 * 200 * 3
+
+
+def test_worst_case_uses_the_largest_video_in_each_region(tmp_path):
+    cfg = cfg_with(tmp_path, queue_maxsize=2)
+    small, large = m.VideoInfo('s', 80, 60, 10), m.VideoInfo('l', 160, 120, 40)
+    expected = (m.videos_holding_frames(cfg) * m.frames_block_bytes(large, 2)
+                + m.videos_holding_canvases(cfg) * m.canvases_block_bytes(large, 2, 10, 1.0))
+    assert m.worst_case_shm_bytes(cfg, [small, large]) == expected
 
 
 def test_shm_budget_refuses_an_oversized_run(tmp_path, videos):
