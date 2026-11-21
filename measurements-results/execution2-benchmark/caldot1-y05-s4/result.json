@@ -1,0 +1,146 @@
+{
+  "dataset": "caldot1-y05",
+  "config": "execution2/configs/caldot1-y05-s4.yaml",
+  "videos": [
+    "te00.mp4",
+    "te01.mp4",
+    "te02.mp4",
+    "te03.mp4",
+    "te04.mp4",
+    "te05.mp4",
+    "te06.mp4",
+    "te07.mp4",
+    "te08.mp4",
+    "te09.mp4",
+    "te10.mp4",
+    "te11.mp4",
+    "te12.mp4",
+    "te13.mp4",
+    "te14.mp4",
+    "te15.mp4",
+    "te16.mp4",
+    "te17.mp4",
+    "te18.mp4",
+    "te19.mp4",
+    "te20.mp4",
+    "te21.mp4",
+    "te22.mp4",
+    "te23.mp4",
+    "te24.mp4",
+    "te25.mp4",
+    "te26.mp4",
+    "te27.mp4",
+    "te28.mp4",
+    "te29.mp4",
+    "te30.mp4",
+    "te31.mp4",
+    "te32.mp4",
+    "te33.mp4",
+    "te34.mp4",
+    "te35.mp4",
+    "te36.mp4",
+    "te37.mp4",
+    "te38.mp4",
+    "te39.mp4",
+    "te40.mp4",
+    "te41.mp4",
+    "te42.mp4",
+    "te43.mp4",
+    "te44.mp4",
+    "te45.mp4",
+    "te46.mp4",
+    "te47.mp4",
+    "te48.mp4",
+    "te49.mp4",
+    "te50.mp4",
+    "te51.mp4",
+    "te52.mp4",
+    "te53.mp4",
+    "te54.mp4",
+    "te55.mp4",
+    "te56.mp4",
+    "te57.mp4",
+    "te58.mp4",
+    "te59.mp4"
+  ],
+  "inputs": [
+    "caldot1-y05/indexing/training/results/ShuffleNet05_60/model_best.pth",
+    "caldot1-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+    "caldot1-y05/indexing/always_relevant/60_all.npy"
+  ],
+  "pareto_row": {
+    "dataset": "caldot1-y05",
+    "videoset": "valid",
+    "variant": "polytris",
+    "variant_id": "ShuffleNet05_60_4_r050_none_s100_sortcython",
+    "classifier": "ShuffleNet05",
+    "tilesize": "60.0",
+    "sample_rate": "4.0",
+    "tracking_accuracy_threshold": "",
+    "relevance_threshold": "0.5",
+    "tilepadding": "none",
+    "canvas_scale": "1.0",
+    "tracker": "sortcython",
+    "frame_count": "54000",
+    "time": "36.801005371093744",
+    "throughput_fps": "1467.3512165082216",
+    "HOTA_HOTA": "0.8179084840737196",
+    "HOTA_AssA": "0.8624515706755783",
+    "HOTA_DetA": "0.7828796069912803",
+    "Count_DetsMAPE": "6.409038041474001",
+    "Count_TracksMAPE": "24.655172413793103"
+  },
+  "loadavg_start": [
+    13.60986328125,
+    12.6943359375,
+    12.24365234375
+  ],
+  "scripts": [
+    {
+      "script": "scripts/p020_exec_classify.py",
+      "seconds": 185.763098500669
+    },
+    {
+      "script": "scripts/p030_exec_compress.py",
+      "seconds": 273.8298046635464
+    },
+    {
+      "script": "scripts/p040_exec_detect.py",
+      "seconds": 53.98774202913046
+    },
+    {
+      "script": "scripts/p050_exec_uncompress.py",
+      "seconds": 15.034130041487515
+    },
+    {
+      "script": "scripts/p060_exec_track.py",
+      "seconds": 19.103264334611595
+    }
+  ],
+  "execution2": {
+    "configured": {
+      "process_s": 96.74087166693062,
+      "runtime_s": 66.15004913695157,
+      "frames": 54000,
+      "outputs_identical": 28,
+      "outputs_same_up_to_id_renaming": 59,
+      "max_abs_box_diff": 324.13365173339844,
+      "videos": 60
+    },
+    "single_gpu": {
+      "process_s": 93.32818326167762,
+      "runtime_s": 59.813047929666936,
+      "frames": 54000,
+      "outputs_identical": 28,
+      "outputs_same_up_to_id_renaming": 59,
+      "max_abs_box_diff": 324.13365173339844,
+      "videos": 60
+    }
+  },
+  "scripts_total_s": 547.718039569445,
+  "loadavg_end": [
+    17.2255859375,
+    14.990234375,
+    13.64306640625
+  ]
+}

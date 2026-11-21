@@ -1,0 +1,65 @@
+{
+  "dataset": "jnc6",
+  "config": "execution2/configs/paper/jnc6-0.05.yaml",
+  "videos": [
+    "te01.mp4",
+    "te04.mp4",
+    "te08.mp4",
+    "te12.mp4",
+    "te13.mp4"
+  ],
+  "inputs": [
+    "jnc6/indexing/training/results/ShuffleNet05_60/model_best.pth",
+    "jnc6/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+    "jnc6/indexing/always_relevant/60_all.npy",
+    "jnc6/indexing/track_rate/sortcython_60/max_rate_table.npy"
+  ],
+  "pareto_row": {
+    "dataset": "jnc6",
+    "videoset": "valid",
+    "variant": "polytris",
+    "variant_id": "ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+    "classifier": "ShuffleNet05",
+    "tilesize": "60.0",
+    "sample_rate": "4.0",
+    "tracking_accuracy_threshold": "0.4",
+    "relevance_threshold": "0.25",
+    "tilepadding": "none",
+    "canvas_scale": "1.0",
+    "tracker": "sortcython",
+    "frame_count": "5194",
+    "time": "21.36863788032532",
+    "throughput_fps": "243.0664990950245",
+    "HOTA_HOTA": "0.8240057297674109",
+    "HOTA_AssA": "0.8292121572364192",
+    "HOTA_DetA": "0.819338108606754",
+    "Count_DetsMAPE": "5.907723668183061",
+    "Count_TracksMAPE": "33.66093366093366"
+  },
+  "loadavg_start": [
+    14.99365234375,
+    14.65625,
+    14.43115234375
+  ],
+  "scripts": [],
+  "execution2": {
+    "configured": {
+      "process_s": 53.00823817681521,
+      "runtime_s": 12.961301755160093,
+      "frames": 5192,
+      "fps": 400.57704836113277,
+      "process_fps": 97.94703952773291,
+      "reference": "cached script outputs",
+      "outputs_identical": 0,
+      "outputs_same_up_to_id_renaming": 5,
+      "max_abs_box_diff": 1009.7402191162109,
+      "videos": 5
+    }
+  },
+  "scripts_total_s": null,
+  "loadavg_end": [
+    14.22265625,
+    14.51171875,
+    14.39501953125
+  ]
+}

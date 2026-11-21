@@ -1881,6 +1881,11 @@ TILEPADDING_MODES: "dict[TilePadding, int]" = {
 }
 TILEPADDING_MAPS: "dict[TilePadding, int]" = TILEPADDING_MODES
 
+
+def is_tile_padding(value: str) -> typing.TypeGuard[TilePadding]:
+    """True if value is a padding mode TILEPADDING_MODES maps to an id; narrows str to TilePadding."""
+    return value in TILEPADDING_MODES
+
 ParamTypes = tuple[str, int, str]
 
 
@@ -2056,8 +2061,9 @@ def get_config(config_name: str | None = None):
     with open(config_path, 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     # Optionally restrict every script to a subset of the configured datasets (comma-separated).
+    # Only configs with an EXEC section list datasets (detectors.yaml, for one, does not).
     subset = os.environ.get('POLYIS_DATASETS')
-    if subset is not None:
+    if subset is not None and 'EXEC' in config:
         # Keep the requested datasets in the order given, dropping blanks.
         requested = [name.strip() for name in subset.split(',') if name.strip()]
         # Refuse an empty or unknown selection rather than silently processing nothing or the wrong data.

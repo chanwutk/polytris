@@ -52,3 +52,4 @@ measurements-results/**/*.jsonl.gz
 measurements-results/*.log
 measurements-results/**/*.log
 .env
+.claude/worktrees/

@@ -1,0 +1,151 @@
+{
+  "dataset": "caldot1-y05",
+  "config": "execution2/configs/caldot1-y05-s8-m080.yaml",
+  "videos": [
+    "te00.mp4",
+    "te01.mp4",
+    "te02.mp4",
+    "te03.mp4",
+    "te04.mp4",
+    "te05.mp4",
+    "te06.mp4",
+    "te07.mp4",
+    "te08.mp4",
+    "te09.mp4",
+    "te10.mp4",
+    "te11.mp4",
+    "te12.mp4",
+    "te13.mp4",
+    "te14.mp4",
+    "te15.mp4",
+    "te16.mp4",
+    "te17.mp4",
+    "te18.mp4",
+    "te19.mp4",
+    "te20.mp4",
+    "te21.mp4",
+    "te22.mp4",
+    "te23.mp4",
+    "te24.mp4",
+    "te25.mp4",
+    "te26.mp4",
+    "te27.mp4",
+    "te28.mp4",
+    "te29.mp4",
+    "te30.mp4",
+    "te31.mp4",
+    "te32.mp4",
+    "te33.mp4",
+    "te34.mp4",
+    "te35.mp4",
+    "te36.mp4",
+    "te37.mp4",
+    "te38.mp4",
+    "te39.mp4",
+    "te40.mp4",
+    "te41.mp4",
+    "te42.mp4",
+    "te43.mp4",
+    "te44.mp4",
+    "te45.mp4",
+    "te46.mp4",
+    "te47.mp4",
+    "te48.mp4",
+    "te49.mp4",
+    "te50.mp4",
+    "te51.mp4",
+    "te52.mp4",
+    "te53.mp4",
+    "te54.mp4",
+    "te55.mp4",
+    "te56.mp4",
+    "te57.mp4",
+    "te58.mp4",
+    "te59.mp4"
+  ],
+  "inputs": [
+    "caldot1-y05/indexing/training/results/ShuffleNet05_60/model_best.pth",
+    "caldot1-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl",
+    "caldot1-y05/indexing/always_relevant/60_all.npy",
+    "caldot1-y05/indexing/track_rate/sortcython_60/max_rate_table.npy"
+  ],
+  "pareto_row": {
+    "dataset": "caldot1-y05",
+    "videoset": "valid",
+    "variant": "polytris",
+    "variant_id": "ShuffleNet05_60_8_080_r050_none_s100_sortcython",
+    "classifier": "ShuffleNet05",
+    "tilesize": "60.0",
+    "sample_rate": "8.0",
+    "tracking_accuracy_threshold": "0.8",
+    "relevance_threshold": "0.5",
+    "tilepadding": "none",
+    "canvas_scale": "1.0",
+    "tracker": "sortcython",
+    "frame_count": "54000",
+    "time": "20.10882005119323",
+    "throughput_fps": "2685.3887927052047",
+    "HOTA_HOTA": "0.7863061071093325",
+    "HOTA_AssA": "0.8575860043750261",
+    "HOTA_DetA": "0.7257557149561236",
+    "Count_DetsMAPE": "17.40659839437179",
+    "Count_TracksMAPE": "65.94827586206897"
+  },
+  "loadavg_start": [
+    16.541015625,
+    14.91015625,
+    13.630859375
+  ],
+  "scripts": [
+    {
+      "script": "scripts/p020_exec_classify.py",
+      "seconds": 175.66783610358834
+    },
+    {
+      "script": "scripts/p022_exec_prune_polyominoes.py",
+      "seconds": 21.482284898869693
+    },
+    {
+      "script": "scripts/p030_exec_compress.py",
+      "seconds": 168.34482493810356
+    },
+    {
+      "script": "scripts/p040_exec_detect.py",
+      "seconds": 30.797234253026545
+    },
+    {
+      "script": "scripts/p050_exec_uncompress.py",
+      "seconds": 13.275450034067035
+    },
+    {
+      "script": "scripts/p060_exec_track.py",
+      "seconds": 20.92628311458975
+    }
+  ],
+  "execution2": {
+    "configured": {
+      "process_s": 74.07512613665313,
+      "runtime_s": 35.90322537813336,
+      "frames": 54000,
+      "outputs_identical": 31,
+      "outputs_same_up_to_id_renaming": 60,
+      "max_abs_box_diff": 316.4093017578125,
+      "videos": 60
+    },
+    "single_gpu": {
+      "process_s": 72.28092478681356,
+      "runtime_s": 30.895808938890696,
+      "frames": 54000,
+      "outputs_identical": 31,
+      "outputs_same_up_to_id_renaming": 60,
+      "max_abs_box_diff": 316.4093017578125,
+      "videos": 60
+    }
+  },
+  "scripts_total_s": 430.4939133422449,
+  "loadavg_end": [
+    15.890625,
+    15.4287109375,
+    14.3818359375
+  ]
+}

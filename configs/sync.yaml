@@ -94,6 +94,8 @@ excludes:
   - "venv"
   - ".git/**"
   - ".git"
+  - ".claude/worktrees/"
+  - ".claude/worktrees/**"
 
 # Rsync options
 # Common options:
