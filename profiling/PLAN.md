@@ -104,7 +104,7 @@ throwaway containers, so the Figure 8 job running from `/work/cwkt/projects/tetr
 2. ~~Engine: list outputs, per-worker GPUs, saver processes, shared per-video counter; tests [13A]~~: done.
    `Stage(fan_out=True, gpu=(...), save=fn, savers=n)` in `execution2/pipeline.py`; `profiling/completion.py` (`VideoCompletion`); 155 tests pass (`tests/execution2`, `tests/profiling`, golden).
 3. ~~Sweep config, `Branch`, messages~~: done (`profiling/config.py`, `profiling/messages.py`; tests in `tests/profiling`).
-4. Profiling stages (decode, classify-once with charging, prune, pack with freeing, detect, track, evaluate).
+4. ~~Profiling stages (decode, classify-once with charging, prune, pack with freeing, detect, track, evaluate)~~: done (`profiling/stages.py`, `profiling/save.py`; p110's `run_trackeval`).
 5. `profiling/main.py`: admission control, memory check, savers writing the scripts' formats.
 6. Aggregator: dataset HOTA, runtime sums, Pareto JSON, interactive page; tests [15A].
 7. Equivalence tool [14A] on validation videos; then a first full-dataset run timed against the scripts.

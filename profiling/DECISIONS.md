@@ -44,3 +44,21 @@ Question: add CLEAR / Identity?  Guess: not needed for the Pareto selection.
 ### D8. Message modules avoid importing the detector stack
 `profiling/messages.py` imports execution2.operators' types only under TYPE_CHECKING, so tests and tools that
 only need messages do not load ultralytics/darknet (which need a GPU driver to import).
+
+### D9. p040's per-canvas detections are not saved
+Detect returns per-frame detections (p050's output) only, so the saver writes `050_uncompressed_detections`
+but not `040_compressed_detections`.  Question: needed for any analysis?  Guess: no; p110 reads only 060.
+
+### D10. The unpruned branch's prune record is empty, and no pruned file is written for it
+Its prune StageTiming has start == end and charged 0; its scores are classify's, already saved under 020.
+
+### D11. Decode and evaluate are recorded but charged 0
+Decode: the author decides later whether it counts (PLAN 1).  Evaluate: measurement, not system work.
+
+### D12. p110's TrackEval call is now `run_trackeval()`, shared with the evaluate stage
+`evaluation/p110_accuracy_compute.py` behaves as before (full suite: 1484 passed; the 1 failure is a
+`measurements-results/` export missing on the profiling checkout, unrelated).
+
+### D13. classify charges with a GPU synchronize after each batch
+`classify_frames(time_batches=True)` synchronizes after each batch so the batch's GPU time is attributed to
+it.  This adds a sync per 16 frames to classify; execution2 does not use it (time_batches defaults to False).

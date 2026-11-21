@@ -91,6 +91,7 @@ class Scored:
     timings: tuple[StageTiming, ...]
     frames: DecodedVideo            # this sample rate's sampled/partner over the all-frames block
     scores: np.ndarray              # uint8 [len(frames.sampled), grid_h, grid_w]
+    ilp: dict | None = None         # prune only: the solve's status, solve_ms, and kept tiles
 
 
 @dataclass(frozen=True)
