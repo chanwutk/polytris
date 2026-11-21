@@ -131,7 +131,11 @@ def aggregate(cfg: SweepConfig) -> tuple[list[dict], list[dict]]:
                   'throughput_fps': frames_total / t['charged_s'] if t['charged_s'] > 0 else None,
                   'throughput_fps_with_decode': frames_total / (t['charged_s'] + t['decode_s'])}
         configs.append(config)
-    configs = expand_tolerance_groups(cfg, configs)
+    # Runs from before the flag existed ran every tolerance.
+    if run.get('reduce_search_space', False):
+        configs = expand_tolerance_groups(cfg, configs)
+    else:
+        configs = [{**c, 'ran_as': c['tracking_accuracy_threshold']} for c in configs]
     for i, config in enumerate(configs):
         branch = {k: config[c] for k, c in COLUMNS.items()}
         config['id'] = i

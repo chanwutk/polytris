@@ -77,7 +77,8 @@ def test_combined_hota_equals_trackevals_own_combination(tmp_path):
     assert 0 < ag.hota_score(combined) < 1
 
 
-def write_sweep(cfg: SweepConfig, tmp_path: Path, configs: list[tuple[dict, dict[str, float], float]]) -> None:
+def write_sweep(cfg: SweepConfig, tmp_path: Path, configs: list[tuple[dict, dict[str, float], float]],
+                reduced: bool = True) -> None:
     """records.jsonl and run.json for configs given as (branch, per-video shifts, charged seconds per video)."""
     out = Path(cfg.output_root) / cfg.dataset / 'profiling'
     out.mkdir(parents=True)
@@ -90,7 +91,8 @@ def write_sweep(cfg: SweepConfig, tmp_path: Path, configs: list[tuple[dict, dict
                            {'stage': 'detect', 'start': 2.0, 'end': 2.0 + charged, 'charged': charged}]
                 f.write(json.dumps({'video': video, 'branch': branch, 'timings': timings,
                                     'metrics': {'HOTA': hota[video]}}) + '\n')
-    (out / 'run.json').write_text(json.dumps({'videos': len(shifts_all), 'video_frames': {v: 20 for v in shifts_all}}))
+    (out / 'run.json').write_text(json.dumps({'videos': len(shifts_all), 'video_frames': {v: 20 for v in shifts_all},
+                                             'reduce_search_space': reduced}))
 
 
 def branch(s, tol, tracker='sortcython'):
@@ -159,3 +161,15 @@ def test_combine_hota_works_in_a_fresh_process():
     out = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, cwd='/polyis')
     assert out.returncode == 0, out.stderr[-2000:]
     assert out.stdout.strip() == str(round(10 / 14, 4))
+
+
+def test_aggregate_does_not_expand_an_unreduced_run(tmp_path):
+    # A run that ran every tolerance (or predates the flag) keeps its rows as they are, even when the
+    # config now says reduce: 0.8 has its own measured row and nothing is duplicated.
+    cfg = real_cfg(tmp_path, tolerances=(0.4, 0.6, 0.8))
+    write_sweep(cfg, tmp_path, [(branch(1, 0.4), {'a.mp4': 2.0}, 1.0), (branch(1, 0.6), {'a.mp4': 5.0}, 1.0),
+                                (branch(1, 0.8), {'a.mp4': 9.0}, 3.0)], reduced=False)
+    configs, _ = ag.aggregate(cfg)
+    rows = {c['tracking_accuracy_threshold']: c for c in configs}
+    assert len(configs) == 3 and all(rows[t]['ran_as'] == t for t in (0.4, 0.6, 0.8))
+    assert rows[0.8]['time'] == pytest.approx(3.0) and rows[0.8]['HOTA_HOTA'] != rows[0.6]['HOTA_HOTA']

@@ -44,7 +44,8 @@ def test_execute_writes_one_record_per_configuration_and_video(setup):
     assert summary['records'] == len(records) == expected * 3 and summary['configurations'] == expected
     assert sorted({r['video'] for r in records}) == ['va00.mp4', 'va01.mp4', 'va02.mp4']
     assert records[0]['metrics'] == {'HOTA': {'HOTA': [0.5, 0.7]}} and records[0]['timings'][0]['stage'] == 'detect'
-    assert json.loads((out / 'run.json').read_text())['videos'] == 3
+    run = json.loads((out / 'run.json').read_text())
+    assert run['videos'] == 3 and run['reduce_search_space'] is cfg.params.reduce_search_space
 
 
 def test_an_existing_output_is_never_overwritten(setup):

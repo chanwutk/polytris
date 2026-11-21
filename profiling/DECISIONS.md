@@ -158,3 +158,11 @@ p120/p121 ran only for the test split (080_throughput has no validation rows), a
 modification times are unusable (020 spans 88 h across reruns; 022 was written at once).  So the first sweep's
 wall clock is reported on its own, with its per-stage busy times.  Question: is there a log of how long the
 scripts' validation pass took?  If so, it is the comparison to make.
+
+### D26. run.json records `reduce_search_space`; the aggregator expands groups only for reduced runs
+The first caldot1-y05 sweep ran every tolerance before the flag existed; expanding it by the config's
+current flag would look up non-representative tolerances and fail.  A run.json without the flag counts as
+unreduced.  Result of that sweep (480 configurations, 2,405 s wall): 56 Pareto configurations (44 on the full
+front, 20 no-sampling, 10 no-both), HOTA 0.633-0.971, 142-4,599 fps; committed under
+`measurements-results/profiling-sweep/caldot1-y05/`.  At s=16 the three tolerances give identical HOTA, as A1
+predicts (identical gaps), with different measured times (noise).
