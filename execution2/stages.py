@@ -187,6 +187,11 @@ def classify_setup(cfg: Config, worker: Worker) -> dict:
     # The grid's tile count, as p020 takes it from its first video.
     model, _method = select_model_optimization(model, benchmark_results, DEVICE, cfg.params.tile_size,
                                                grid_h * grid_w)
+    # load_classifier and select_model_optimization both put the model in eval mode; every method keeps it.
+    # Modules that expose .training are checked here; a frozen TorchScript module (the torchscript_optimize
+    # method, chosen for caldot1-y05) has none, but torch.jit.freeze only accepts modules in eval mode.
+    if getattr(model, 'training', False):
+        raise RuntimeError(f'classifier is in training mode after optimization ({_method})')
     # Tile positions exactly as p020 builds them.
     y = torch.arange(grid_h, device=DEVICE, dtype=torch.uint8).repeat_interleave(grid_w)
     x = torch.arange(grid_w, device=DEVICE, dtype=torch.uint8).repeat(grid_h)
@@ -211,28 +216,31 @@ def classify(state: dict, d: Decoded) -> Classified:
     sampled_pos = np.searchsorted(d.needed, d.sampled)
     partner_pos = np.searchsorted(d.needed, d.partner)
     scores = []
-    with torch.no_grad(), frames.attach(d.frames) as m:
+    # inference_mode: no autograd at all (stricter than no_grad); the numbers are the same.
+    with torch.inference_mode(), frames.attach(d.frames) as m:
         for start in range(0, len(d.sampled), CLASSIFY_BATCH):
             batch = slice(start, start + CLASSIFY_BATCH)
             scores.append(_classify_one_batch(state, m.array, sampled_pos[batch], partner_pos[batch]))
-    return Classified(d, np.concatenate(scores, axis=0))
+        # Scores stay on the GPU per batch and come back to the CPU once per video.
+        return Classified(d, torch.cat(scores, dim=0).cpu().numpy())
 
 
-def _classify_one_batch(state: dict, block: np.ndarray, sampled_pos: np.ndarray, partner_pos: np.ndarray) -> np.ndarray:
+def _classify_one_batch(state: dict, block: np.ndarray, sampled_pos: np.ndarray, partner_pos: np.ndarray) -> torch.Tensor:
     """One batch through p020's classification, with its frames sent to the GPU in one transfer.
 
     The batch's rows (sampled and partner frames, each row once) are gathered from the block by one
     numpy indexing step (a copy, so no view outlives this call), sent together, and flipped BGR->RGB
     on the GPU: the same uint8 tensors p020 builds frame by frame, without 2x16 CPU flips and transfers.
+    Returns the batch's uint8 scores [batch, grid_h, grid_w], still on the GPU.
     """
     rows, where = np.unique(np.concatenate([sampled_pos, partner_pos]), return_inverse=True)
     batch = torch.from_numpy(block[rows]).to(DEVICE).flip(-1)
     where = torch.from_numpy(where).to(DEVICE)
     grid_h, grid_w = state['grid']
-    probs, _runtime = classify_batch_tensors(grid_w, grid_h, state['positions'], batch[where[:len(sampled_pos)]],
-                                             batch[where[len(sampled_pos):]], state['model'], state['tile_size'],
-                                             DEVICE, state['normalize_mean'], state['normalize_std'], state['mask'])
-    return probs.cpu().numpy()
+    probs, _ = classify_batch_tensors(grid_w, grid_h, state['positions'], batch[where[:len(sampled_pos)]],
+                                      batch[where[len(sampled_pos):]], state['model'], state['tile_size'],
+                                      DEVICE, state['normalize_mean'], state['normalize_std'], state['mask'])
+    return probs
 
 
 # ---------------------------------------------------------------- prune

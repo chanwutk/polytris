@@ -234,7 +234,7 @@ def test_decode_rejects_unreadable_files(tmp_path, prefix):
 @pytest.fixture
 def fake_classifier(monkeypatch):
     """Replace the trained model and its optimization pass with the deterministic fake."""
-    monkeypatch.setattr(stages, 'load_classifier', lambda path: FakeClassifier())
+    monkeypatch.setattr(stages, 'load_classifier', lambda path: FakeClassifier().eval())
     monkeypatch.setattr(stages, 'select_model_optimization', lambda model, *a: (model, 'none'))
 
 
@@ -269,7 +269,7 @@ def test_classify_matches_p020_batching(tmp_path, video, prefix, fake_classifier
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
 def test_classify_setup_optimizes_once_for_the_bitmaps_tile_count(tmp_path, video, prefix, monkeypatch):
     calls = []
-    monkeypatch.setattr(stages, 'load_classifier', lambda path: FakeClassifier())
+    monkeypatch.setattr(stages, 'load_classifier', lambda path: FakeClassifier().eval())
 
     def fake_optimize(model, benchmark_results, device, tile_size, batch_size):
         calls.append((tile_size, batch_size))
@@ -299,6 +299,14 @@ def test_classify_rejects_a_mismatched_never_relevant_bitmap(tmp_path, video, pr
             stages.classify(stages.classify_setup(cfg, None), d)
     finally:
         frames.unlink(d.frames)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
+def test_classify_setup_rejects_a_model_in_training_mode(tmp_path, monkeypatch):
+    monkeypatch.setattr(stages, 'load_classifier', lambda path: FakeClassifier())   # nn.Module: training by default
+    monkeypatch.setattr(stages, 'select_model_optimization', lambda model, *a: (model, 'none'))
+    with pytest.raises(RuntimeError, match='training mode'):
+        stages.classify_setup(make_cfg(tmp_path), None)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
