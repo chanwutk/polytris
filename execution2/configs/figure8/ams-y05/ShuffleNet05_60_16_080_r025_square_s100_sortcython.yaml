@@ -1,0 +1,37 @@
+# Figure 8 full-Tetris point, Amsterdam (ams-y05): reported 1116.1 fps, HOTA 0.6645.
+params:
+  sample_rate: 16
+  relevance_threshold: 0.25
+  mistrack_tolerance: 0.8
+  tile_padding: square
+  tracker: sortcython
+  tile_size: 60
+  canvas_scale: 1.0
+  canvas_format: jpeg
+artifacts:
+  classifier:
+    name: ShuffleNet05
+    weights: /polyis-cache/ams-y05/indexing/training/results/ShuffleNet05_60/model_best.pth
+    compilation_benchmark: /polyis-cache/ams-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl
+  never_relevant_bitmap: /polyis-cache/ams-y05/indexing/always_relevant/60_all.npy
+  detector:
+    type: ultralytics
+    model_path: /polyis-data/training/ultralytics/amsterdam/weights/yolov5x6/weights/best.pt
+  max_rate_table: /polyis-cache/ams-y05/indexing/track_rate/sortcython_60/max_rate_table.npy
+system:
+  queue_maxsize: 2
+  stages:
+    decode:
+      procs: 2
+    classify:
+      procs: 1
+      gpu: 0
+    pack:
+      procs: 2
+    detect:
+      procs: 1
+      gpu: 0
+    track:
+      procs: 2
+    prune:
+      procs: 1

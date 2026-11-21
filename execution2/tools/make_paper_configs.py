@@ -48,8 +48,12 @@ def detector_spec(dataset: str, detectors: dict) -> dict:
 
 
 def build(dataset: str, name: str, detectors: dict) -> dict:
-    """An execution2 config for one operating point: JPEG canvases (as the paper's runs), one GPU."""
-    p = parse_name(name)
+    """An execution2 config for the operating point a cache configuration name encodes."""
+    return build_params(dataset, parse_name(name), detectors)
+
+
+def build_params(dataset: str, p: dict, detectors: dict) -> dict:
+    """An execution2 config for one operating point (parse_name's keys): JPEG canvases (as the paper's runs), one GPU."""
     index = f'{CACHE}/{dataset}/indexing'
     artifacts = {
         'classifier': {'name': p['classifier'],
