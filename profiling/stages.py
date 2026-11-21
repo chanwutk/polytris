@@ -26,28 +26,31 @@ from execution2 import frames, operators as ops
 from execution2.config import MISTRACK_TOLERANCES
 from execution2.pipeline import Stage, Worker
 from profiling import save
+from profiling.reduction import keep_everything, sweep_groups
 from profiling.completion import VideoCompletion
 from profiling.config import SweepConfig
 from profiling.messages import Branch, Decoded, Detected, Evaluated, Packed, Scored, StageTiming, Tracked
 from polyis.utilities import TILEPADDING_MAPS, is_tile_padding, save_tracking_results
 
 
-def expected_pack_inputs(cfg: SweepConfig) -> int:
-    """Pack inputs per video: sample rates x relevance thresholds x (tolerances x trackers, plus unpruned)."""
+def expected_pack_inputs(cfg: SweepConfig, groups: dict | None = None) -> int:
+    """Pack inputs per video: per sample rate, relevance thresholds x (one per tolerance group per tracker,
+    plus unpruned).  Without reduction every tolerance is its own group."""
     p = cfg.params
-    tolerances = [t for t in p.mistrack_tolerances if t is not None]
+    groups = sweep_groups(cfg) if groups is None else groups
     unpruned = 1 if None in p.mistrack_tolerances else 0
-    return len(p.sample_rates) * len(p.relevance_thresholds) * (len(tolerances) * len(p.trackers) + unpruned)
+    return sum(len(p.relevance_thresholds) * (unpruned + sum(len(groups.get((tr, s), [])) for tr in p.trackers))
+               for s in p.sample_rates)
 
 
-def expected_results(cfg: SweepConfig) -> int:
-    """Final (configuration) results per video: unpruned branches fan out over trackers at track."""
+def expected_results(cfg: SweepConfig, groups: dict | None = None) -> int:
+    """Results per video that run: pruned groups x paddings x scales, plus unpruned branches x trackers."""
     p = cfg.params
-    tolerances = [t for t in p.mistrack_tolerances if t is not None]
+    groups = sweep_groups(cfg) if groups is None else groups
     per_pack = len(p.tile_paddings) * len(p.canvas_scales)
-    pruned = len(tolerances) * len(p.trackers) * per_pack
     unpruned = (len(p.trackers) * per_pack) if None in p.mistrack_tolerances else 0
-    return len(p.sample_rates) * len(p.relevance_thresholds) * (pruned + unpruned)
+    return sum(len(p.relevance_thresholds) * (unpruned + per_pack * sum(len(groups.get((tr, s), [])) for tr in p.trackers))
+               for s in p.sample_rates)
 
 
 def _timing(stage: str, start: float, end: float, charged: float | None = None) -> StageTiming:
@@ -107,7 +110,8 @@ def prune_setup(cfg: SweepConfig, worker: Worker) -> dict:
     p = cfg.params
     return {'tables': {t: np.load(path) for t, path in cfg.artifacts.max_rate_tables.items()},
             'relevance_thresholds': p.relevance_thresholds, 'tolerances': p.mistrack_tolerances,
-            'trackers': p.trackers, 'distances': {}, 'time_limit_s': p.prune_time_limit_s}
+            'trackers': p.trackers, 'distances': {}, 'time_limit_s': p.prune_time_limit_s,
+            'groups': sweep_groups(cfg)}
 
 
 def _distance(state: dict, tracker: str, tolerance: float, sample_rate: int) -> np.ndarray:
@@ -120,29 +124,38 @@ def _distance(state: dict, tracker: str, tolerance: float, sample_rate: int) -> 
 
 
 def prune(state: dict, sc: Scored) -> list[Scored]:
-    """One output per relevance threshold x (tolerance x tracker, or no pruning)."""
+    """One output per relevance threshold x (tolerance group x tracker, or no pruning).
+
+    A group's representative runs (its branch carries that tolerance); a group whose gaps are all 1 keeps every
+    polyomino, so its result is the binarized scores without a solve.  The aggregator expands each group's
+    result to all of its tolerances.
+    """
     outputs = []
     s = sc.branch['sample_rate']
     for t_r in state['relevance_thresholds']:
-        for tolerance in state['tolerances']:
-            if tolerance is None:
-                # No pruning: scores pass through; pack binarizes them with this T_r (p030's rule).
-                now = time.time()
-                outputs.append(Scored(sc.video, sc.branch.with_(relevance_threshold=t_r, mistrack_tolerance=None),
-                                      sc.timings + (_timing('prune', now, now),), sc.frames, sc.scores))
-                continue
-            for tracker in state['trackers']:
+        if None in state['tolerances']:
+            # No pruning: scores pass through; pack binarizes them with this T_r (p030's rule).
+            now = time.time()
+            outputs.append(Scored(sc.video, sc.branch.with_(relevance_threshold=t_r, mistrack_tolerance=None),
+                                  sc.timings + (_timing('prune', now, now),), sc.frames, sc.scores))
+        for tracker in state['trackers']:
+            for group in state['groups'].get((tracker, s), []):
+                tolerance = group.representative
                 start = time.time()
-                try:
-                    pruned, result = ops.prune_scores(sc.scores, _distance(state, tracker, tolerance, s), t_r,
-                                                      state['time_limit_s'])
-                except ValueError as e:
-                    raise ValueError(f'{sc.video}: {e}') from e
+                if group.all_ones:
+                    pruned, ilp = keep_everything(sc.scores, t_r), {'status': 'all_ones', 'solve_ms': 0.0}
+                else:
+                    try:
+                        pruned, result = ops.prune_scores(sc.scores, _distance(state, tracker, tolerance, s), t_r,
+                                                          state['time_limit_s'])
+                    except ValueError as e:
+                        raise ValueError(f'{sc.video}: {e}') from e
+                    ilp = {'status': result.status, 'solve_ms': result.solve_ms}
                 timing = _timing('prune', start, time.time())
                 branch = sc.branch.with_(relevance_threshold=t_r, mistrack_tolerance=tolerance, tracker=tracker)
                 outputs.append(Scored(sc.video, branch, sc.timings + (timing,), sc.frames, pruned,
-                                      ilp={'status': result.status, 'solve_ms': result.solve_ms,
-                                           'kept_tiles': int(np.count_nonzero(pruned))}))
+                                      ilp={**ilp, 'kept_tiles': int(np.count_nonzero(pruned)),
+                                           'group': list(group.tolerances)}))
     return outputs
 
 

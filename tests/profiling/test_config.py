@@ -77,6 +77,8 @@ def test_without_tolerances_prune_and_tables_are_omitted(valid):
     (lambda v: v['system'].update(max_videos_in_flight=0), 'must be >= 1'),
     (lambda v: v['system']['stages'].pop('evaluate'), 'missing keys'),
     (lambda v: v['params'].update(extra=1), 'unknown keys'),
+    (lambda v: v['params'].update(reduce_search_space='yes'), 'expected bool'),
+    (lambda v: v['params'].update(prune_time_limit_s=0), 'must be > 0'),
 ])
 def test_bad_configs_are_errors(valid, mutate, message):
     mutate(valid)

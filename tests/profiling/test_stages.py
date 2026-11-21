@@ -18,17 +18,23 @@ N, H, W, TS = 20, 60, 80, 10
 
 
 def make_cfg(tmp_path: Path, tolerances=(None, 0.4, 0.8), trackers=('sortcython', 'bytetrackcython'),
-             sample_rates=(1, 4), thresholds=(0.25, 0.5), paddings=('none', 'tr'), scales=(1.0,)) -> SweepConfig:
+             sample_rates=(1, 4), thresholds=(0.25, 0.5), paddings=('none', 'tr'), scales=(1.0,),
+             reduce=False, table_values=None) -> SweepConfig:
     ref = tmp_path / 'ref'
     ref.mkdir(exist_ok=True)
     table = tmp_path / 'rates.npy'
-    np.save(table, np.full((H // TS, W // TS, 9), 8, dtype=np.int64))
+    # Default: every tolerance's gap is 8 frames; table_values gives one value per tolerance-axis entry.
+    values = np.full(9, 8) if table_values is None else np.asarray(table_values)
+    np.save(table, np.broadcast_to(values, (H // TS, W // TS, 9)).astype(np.int64))
+    never = tmp_path / 'never.npy'
+    np.save(never, np.ones((H // TS, W // TS), dtype=np.uint8))
     tables = {t: str(table) for t in trackers} if any(x is not None for x in tolerances) else {}
     sys_ = {n: StageSystem(1, (0,) if n in ('classify', 'detect') else (), 1)
             for n in ('decode', 'classify', 'prune', 'pack', 'detect', 'track', 'evaluate')}
     return SweepConfig('ds', 'valid', str(tmp_path / 'out'),
-                       Params('Fake', TS, 'raw', sample_rates, thresholds, tolerances, paddings, scales, trackers),
-                       Artifacts('w', 'b', 'n', tables, Detector('ultralytics', {'model_path': 'm'})),
+                       Params('Fake', TS, 'raw', sample_rates, thresholds, tolerances, paddings, scales, trackers,
+                              reduce_search_space=reduce),
+                       Artifacts('w', 'b', str(never), tables, Detector('ultralytics', {'model_path': 'm'})),
                        Evaluation(str(ref), '002_naive/tracking.jsonl'), System(2, 8, 2, sys_))
 
 
@@ -195,3 +201,64 @@ def test_evaluate_scores_identical_tracks_as_perfect(tmp_path):
     out = st.evaluate(state, Tracked('/v/a.mp4', full_branch(), (), tracks))
     assert set(out.metrics) == {'HOTA', 'Count'} and float(np.mean(out.metrics['HOTA']['HOTA'])) == pytest.approx(1.0)
     assert out.timings[-1].stage == 'evaluate' and out.timings[-1].charged == 0.0
+
+
+# ---------------------------------------------------------------- search-space reduction (DECISIONS.md A1-A3)
+
+# Tolerance axis: 0.30 0.40 0.50 0.60 0.70 0.80 0.90 0.95 1.00; gaps for 0.4 / 0.6 / 0.8 = 12 / 8 / 8 frames.
+AXIS_VALUES = [16, 12, 10, 8, 8, 8, 4, 2, 1]
+
+
+def test_reduction_groups_identical_gaps_and_counts_follow(tmp_path):
+    from profiling.reduction import sweep_groups
+    cfg = make_cfg(tmp_path, tolerances=(None, 0.4, 0.6, 0.8), sample_rates=(1, 8, 16), reduce=True,
+                   table_values=AXIS_VALUES)
+    g = sweep_groups(cfg)
+    # s=1: 12 vs 8 vs 8 -> {0.4}, {0.6, 0.8}; s=8: 1 vs 1 vs 1 -> one all-ones group; s=16 likewise.
+    assert [grp.tolerances for grp in g[('sortcython', 1)]] == [(0.4,), (0.6, 0.8)]
+    assert [(grp.tolerances, grp.all_ones) for grp in g[('sortcython', 8)]] == [((0.4, 0.6, 0.8), True)]
+    assert st.expected_pack_inputs(cfg, g) == 2 * ((1 + 2 + 2) + (1 + 1 + 1) + (1 + 1 + 1))
+    assert st.expected_results(cfg, g) == 2 * 2 * ((2 + 2 + 2) + (2 + 1 + 1) + (2 + 1 + 1))
+    off = make_cfg(tmp_path, tolerances=(None, 0.4, 0.6, 0.8), sample_rates=(1, 8, 16), reduce=False,
+                   table_values=AXIS_VALUES)
+    assert st.expected_pack_inputs(off) == 3 * 2 * (1 + 3 * 2)
+
+
+def test_reduction_ignores_tiles_the_mask_excludes(tmp_path):
+    from profiling.reduction import group_tolerances
+    table = np.broadcast_to(np.array(AXIS_VALUES), (2, 2, 9)).copy()
+    table[0, 0, 1] = 99          # 0.4 differs from 0.6/0.8 only on tile (0, 0)
+    table[0, 0, 3] = 1
+    mask = np.ones((2, 2), bool)
+    assert len(group_tolerances(table, mask, [0.4, 0.6, 0.8], 16)) == 2
+    mask[0, 0] = False
+    assert [g.tolerances for g in group_tolerances(table, mask, [0.4, 0.6, 0.8], 16)] == [(0.4, 0.6, 0.8)]
+
+
+def test_prune_runs_one_representative_per_group_and_skips_all_ones_solves(tmp_path, prefix, monkeypatch):
+    cfg = make_cfg(tmp_path, tolerances=(None, 0.4, 0.6, 0.8), sample_rates=(1, 16), thresholds=(0.5,),
+                   trackers=('sortcython',), reduce=True, table_values=AXIS_VALUES)
+    v = all_frames(prefix)
+    solves = []
+    monkeypatch.setattr(ops, 'prune_scores', lambda s, distance, t_r, limit=None: (solves.append(1) or s, FakeILP()))
+    state = st.prune_setup(cfg, None)
+    scores = np.full((N, H // TS, W // TS), 200, np.uint8)
+    out1 = st.prune(state, Scored('/v/a.mp4', base_branch().with_(sample_rate=1), (), v, scores))
+    assert [o.branch['mistrack_tolerance'] for o in out1] == [None, 0.4, 0.6] and len(solves) == 2
+    assert out1[2].ilp['group'] == [0.6, 0.8]
+    out16 = st.prune(state, Scored('/v/a.mp4', base_branch().with_(sample_rate=16), (), v, scores))
+    assert [o.branch['mistrack_tolerance'] for o in out16] == [None, 0.4] and len(solves) == 2
+    assert out16[1].ilp['status'] == 'all_ones' and out16[1].ilp['group'] == [0.4, 0.6, 0.8]
+    assert np.array_equal(out16[1].scores, np.full_like(scores, 255))
+    frames.unlink(v.block)
+
+
+def test_keep_everything_equals_the_ilp_with_all_gaps_one():
+    # With every gap 1 no polyomino can be dropped, so Gurobi's answer must be the binarized scores.
+    from profiling.reduction import keep_everything
+    rng = np.random.default_rng(0)
+    scores = rng.integers(0, 256, (12, 6, 8)).astype(np.uint8)
+    scores[:, 0, 0] = 127        # exactly on p022's boundary for T_r 0.5 (floor(127.5))
+    for t_r in (0.25, 0.5, 0.75):
+        pruned, result = ops.prune_scores(scores, np.ones((6, 8), dtype=np.int64), t_r, 5.0)
+        assert result.status == 2 and np.array_equal(pruned, keep_everything(scores, t_r)), t_r

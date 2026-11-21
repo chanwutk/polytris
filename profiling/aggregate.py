@@ -29,6 +29,7 @@ import yaml
 from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
 from polyis.pareto import compute_pareto_front
 from profiling.config import SweepConfig, load_sweep_config
+from profiling.reduction import sweep_groups
 
 # Branch keys -> the column names p135 / polyis.pareto use.
 COLUMNS = {'classifier': 'classifier', 'tile_size': 'tilesize', 'sample_rate': 'sample_rate',
@@ -123,13 +124,17 @@ def aggregate(cfg: SweepConfig) -> tuple[list[dict], list[dict]]:
         if len(per_config[key]) != run['videos']:
             raise RuntimeError(f'{key}: {len(per_config[key])} videos recorded, expected {run["videos"]}')
         t = times[key]
-        config = {'id': len(configs), **{COLUMNS[k]: v for k, v in branch.items()},
+        config = {**{COLUMNS[k]: v for k, v in branch.items()},
                   'HOTA_HOTA': hota_score(combine_hota(per_config[key])), 'time': t['charged_s'],
                   'decode_s': t['decode_s'], 'frames': frames_total,
                   'throughput_fps': frames_total / t['charged_s'] if t['charged_s'] > 0 else None,
                   'throughput_fps_with_decode': frames_total / (t['charged_s'] + t['decode_s'])}
-        config['execution2_yaml'] = yaml.safe_dump(execution2_config(cfg, branch), sort_keys=False)
         configs.append(config)
+    configs = expand_tolerance_groups(cfg, configs)
+    for i, config in enumerate(configs):
+        branch = {k: config[c] for k, c in COLUMNS.items()}
+        config['id'] = i
+        config['execution2_yaml'] = yaml.safe_dump(execution2_config(cfg, branch), sort_keys=False)
     pareto = pareto_union(configs)
     with open(os.path.join(out_dir, 'configurations.json'), 'w') as f:
         json.dump(configs, f, indent=1)
@@ -138,6 +143,22 @@ def aggregate(cfg: SweepConfig) -> tuple[list[dict], list[dict]]:
     with open(os.path.join(out_dir, 'pareto.html'), 'w') as f:
         f.write(page(cfg, configs, pareto))
     return configs, pareto
+
+
+def expand_tolerance_groups(cfg: SweepConfig, configs: list[dict]) -> list[dict]:
+    """One row per configuration of the grid: each pruned representative's result is copied to every other
+    tolerance of its group (identical ILP, so identical results; profiling/reduction.py).  `ran_as` names the
+    tolerance that ran; duplicates carry its measured time (DECISIONS.md Q2)."""
+    groups = sweep_groups(cfg)
+    out = []
+    for c in configs:
+        tol = c['tracking_accuracy_threshold']
+        out.append({**c, 'ran_as': tol})
+        if tol is None:
+            continue
+        group = next(g for g in groups[(c['tracker'], c['sample_rate'])] if g.representative == tol)
+        out += [{**c, 'tracking_accuracy_threshold': other, 'ran_as': tol} for other in group.tolerances[1:]]
+    return out
 
 
 def pareto_union(configs: list[dict]) -> list[dict]:

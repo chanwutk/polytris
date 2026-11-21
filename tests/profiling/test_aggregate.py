@@ -15,17 +15,21 @@ from execution2.config import Detector
 from polyis.utilities import save_tracking_results
 
 
-def real_cfg(tmp_path: Path) -> SweepConfig:
+def real_cfg(tmp_path: Path, tolerances=(None, 0.4)) -> SweepConfig:
     """A sweep config whose artifact paths exist, so the generated execution2 YAML validates."""
     paths = {}
-    for n in ['w.pth', 'b.jsonl', 'n.npy', 'sort.npy', 'm.pt']:
+    for n in ['w.pth', 'b.jsonl', 'm.pt']:
         (tmp_path / n).write_text('x')
         paths[n] = str(tmp_path / n)
+    # Real arrays: the aggregator reads them to expand tolerance groups.  Gaps: 0.4 -> 12, 0.6/0.8 -> 8 frames.
+    np.save(tmp_path / 'n.npy', np.ones((2, 2), np.uint8))
+    np.save(tmp_path / 'sort.npy', np.broadcast_to(np.array([16, 12, 10, 8, 8, 8, 4, 2, 1]), (2, 2, 9)).astype(np.int64))
+    paths['n.npy'], paths['sort.npy'] = str(tmp_path / 'n.npy'), str(tmp_path / 'sort.npy')
     (tmp_path / 'ref').mkdir(exist_ok=True)
     sys_ = {n: StageSystem(1, (0,) if n in ('classify', 'detect') else (), 1)
             for n in ('decode', 'classify', 'prune', 'pack', 'detect', 'track', 'evaluate')}
     return SweepConfig('ds', 'valid', str(tmp_path / 'out'),
-                       Params('Fake', 60, 'jpeg', (1, 4), (0.5,), (None, 0.4), ('none',), (1.0,), ('sortcython',)),
+                       Params('Fake', 60, 'jpeg', (1, 4), (0.5,), tolerances, ('none',), (1.0,), ('sortcython',)),
                        Artifacts(paths['w.pth'], paths['b.jsonl'], paths['n.npy'], {'sortcython': paths['sort.npy']},
                                  Detector('ultralytics', {'model_path': paths['m.pt']})),
                        Evaluation(str(tmp_path / 'ref'), '002_naive/tracking.jsonl'), System(2, 8, 2, sys_))
@@ -130,3 +134,15 @@ def test_aggregate_refuses_incomplete_configurations(tmp_path):
                                 (branch(4, None), {'a.mp4': 1.0}, 1.0)])
     with pytest.raises(RuntimeError, match='1 videos recorded, expected 2'):
         ag.aggregate(cfg)
+
+
+def test_aggregate_expands_a_tolerance_group_to_all_its_tolerances(tmp_path):
+    # 0.6 and 0.8 have identical gaps, so only 0.6 ran; the aggregator gives 0.8 the same row.
+    cfg = real_cfg(tmp_path, tolerances=(0.4, 0.6, 0.8))
+    write_sweep(cfg, tmp_path, [(branch(1, 0.4), {'a.mp4': 2.0}, 1.0), (branch(1, 0.6), {'a.mp4': 5.0}, 1.0)])
+    configs, _ = ag.aggregate(cfg)
+    rows = {c['tracking_accuracy_threshold']: c for c in configs}
+    assert set(rows) == {0.4, 0.6, 0.8} and rows[0.8]['ran_as'] == 0.6 and rows[0.4]['ran_as'] == 0.4
+    assert rows[0.8]['HOTA_HOTA'] == rows[0.6]['HOTA_HOTA'] and rows[0.8]['time'] == rows[0.6]['time']
+    assert yaml.safe_load(rows[0.8]['execution2_yaml'])['params']['mistrack_tolerance'] == 0.8
+    assert sorted(c['id'] for c in configs) == [0, 1, 2]

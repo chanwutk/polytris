@@ -133,3 +133,10 @@ p022 binarizes with `>= floor(T_r*255)`, p030 with `> T_r*255`, so they differ o
   equivalent tolerance (the aggregator expands it), so each configuration still has a row; the Pareto front
   then has identical duplicates, and p135's dedupe keeps one.
 - Q2. Charged time for the duplicates: the representative's measured time for all of them?  Guess: yes.
+
+### D24. Search-space reduction implemented (pending the author's answers to Q1/Q2), on by default
+`params.reduce_search_space` (default true): prune runs one representative tolerance per group of identical
+gaps (per tracker and sample rate, on mask tiles) and skips the solve for all-1s groups; the aggregator copies
+each representative's row to every tolerance of its group (`ran_as` names the one that ran; same HOTA and
+time).  Main's expected results and pack's expected inputs count groups.  Set false to run every tolerance
+(the equivalence check uses the grid as-is either way; all-1s results count as optimal there).
