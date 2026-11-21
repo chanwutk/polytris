@@ -62,3 +62,15 @@ Decode: the author decides later whether it counts (PLAN 1).  Evaluate: measurem
 ### D13. classify charges with a GPU synchronize after each batch
 `classify_frames(time_batches=True)` synchronizes after each batch so the batch's GPU time is attributed to
 it.  This adds a sync per 16 frames to classify; execution2 does not use it (time_batches defaults to False).
+
+### D14. A sweep refuses to start if `<output_root>/<dataset>` exists
+"Do not override old results": rather than merging into or overwriting an earlier sweep, main stops with an
+error.  Question: should a crashed sweep be resumable (skip finished videos)?  Guess: not yet; rerun into a
+fresh output_root.
+
+### D15. A video's admission slot is freed when all its expected results arrive
+`max_videos_in_flight` bounds frames blocks (each video's all-frames block lives until its last pack input).
+Slots return at the last result, slightly later than the frames are freed, so the bound is conservative.
+
+### D16. Records are written by main as they arrive (records.jsonl), not by a saver
+They are the pipeline's output, small, and written outside every stage's timing.
