@@ -12,10 +12,15 @@ Any problem raises ConfigError naming the offending key, before any process star
 import os
 import types
 import typing
+from collections.abc import Set as AbstractSet
 from dataclasses import dataclass, fields
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
+
+if TYPE_CHECKING:
+    # Typeshed-only protocol for "any dataclass"; _flat's bound is evaluated lazily, so no runtime import.
+    from _typeshed import DataclassInstance
 
 from polyis.utilities import TILEPADDING_MODES
 
@@ -119,7 +124,7 @@ def _check_type(value: Any, expected: Any, where: str) -> Any:
     return value
 
 
-def _keys(data: Any, required: set[str], where: str, optional: set[str] = frozenset()) -> dict:
+def _keys(data: Any, required: AbstractSet[str], where: str, optional: AbstractSet[str] = frozenset()) -> dict:
     """Check data is a mapping with exactly the required keys plus any of the optional ones."""
     if not isinstance(data, dict):
         raise ConfigError(f'{where}: expected a mapping, got {type(data).__name__}')
@@ -132,7 +137,7 @@ def _keys(data: Any, required: set[str], where: str, optional: set[str] = frozen
     return data
 
 
-def _flat(cls: type, data: Any, where: str, optional: set[str] = frozenset()) -> Any:
+def _flat[T: DataclassInstance](cls: type[T], data: Any, where: str, optional: AbstractSet[str] = frozenset()) -> T:
     """Build a dataclass whose fields are all simple types; optional fields default to None."""
     hints = typing.get_type_hints(cls)
     names = {f.name for f in fields(cls)}
