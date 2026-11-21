@@ -135,24 +135,39 @@ def decode(state: dict, video: str) -> Decoded:
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         sampled, partner, needed = frame_selection(frame_count, state['sample_rate'])
         with frames.create(state['prefix'], (len(needed), height, width, 3), 'uint8') as m:
-            # needed is ascending: walk it alongside the frames being read.
-            read = k = 0
-            while True:
-                ok, frame = cap.read()
-                if not ok:
-                    break
-                if frame.shape != (height, width, 3):
-                    raise ValueError(f'{video}: frame {read} has shape {frame.shape}, expected {(height, width, 3)}')
-                if k < len(needed) and read == needed[k]:
-                    m.array[k] = frame
-                    k += 1
-                read += 1
-            # p020 asserts every reported frame decodes; a short read would leave zero frames in the block.
-            if read != frame_count:
-                raise ValueError(f'{video}: read {read} frames but the container reports {frame_count}')
+            read = _read_needed(cap, m.array, needed, video)
+        # p020 asserts every reported frame decodes; a short read would leave zero frames in the block.
+        if read != frame_count:
+            frames.unlink(m.block)
+            raise ValueError(f'{video}: read {read} frames but the container reports {frame_count}')
     finally:
         cap.release()
     return Decoded(video, width, height, frame_count, sampled, partner, needed, m.block)
+
+
+def _read_needed(cap: cv2.VideoCapture, block: np.ndarray, needed: np.ndarray, video: str) -> int:
+    """Decode needed frames straight into their block rows, skip the rest; returns frames read.
+
+    read() is grab() + retrieve(): retrieve() converts to BGR directly into the row we pass, and
+    grab() alone advances without converting, so stored pixels equal cap.read()'s.  A separate
+    function so its views of the block die before the block is closed.
+    """
+    read = k = 0
+    while True:
+        # needed is ascending: walk it alongside the frames being read.
+        if k < len(needed) and read == needed[k]:
+            row = block[k]
+            ok, frame = cap.read(row)
+            if not ok:
+                return read
+            # OpenCV writes in place only when the row matches the frame's size; otherwise it silently
+            # returns a new array, which means the frame has an unexpected shape.
+            if frame.ctypes.data != row.ctypes.data:
+                raise ValueError(f'{video}: frame {read} has shape {frame.shape}, expected {row.shape}')
+            k += 1
+        elif not cap.grab():
+            return read
+        read += 1
 
 
 # ---------------------------------------------------------------- classify

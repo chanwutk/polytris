@@ -175,6 +175,51 @@ def test_decode_stores_exactly_the_needed_frames(tmp_path, video, prefix):
     frames.unlink(d.frames)
 
 
+class FakeCapture:
+    """Frames t = 0..n-1 filled with value t; read(dst) writes into dst only when in_place is set."""
+
+    def __init__(self, n: int, in_place: bool = True):
+        self.n, self.t, self.in_place = n, 0, in_place
+        self.grabs = 0
+
+    def grab(self) -> bool:
+        self.grabs += 1
+        self.t += 1
+        return self.t <= self.n
+
+    def read(self, dst):
+        if self.t >= self.n:
+            return False, None
+        self.t += 1
+        if self.in_place:
+            dst[...] = self.t - 1
+            return True, dst
+        return True, np.full(dst.shape, self.t - 1, dtype=np.uint8)
+
+
+def test_read_needed_decodes_needed_frames_in_place_and_skips_the_rest():
+    needed = np.array([0, 1, 3, 4, 7, 8, 9])
+    block = np.zeros((len(needed), 2, 2, 3), dtype=np.uint8)
+    cap = FakeCapture(10)
+    assert stages._read_needed(cap, block, needed, 'v') == 10
+    assert [int(block[k].max()) for k in range(len(needed))] == needed.tolist()
+    # Unneeded frames are only grabbed (frames 2, 5, 6), then one final grab fails at the end.
+    assert cap.grabs == 3 + 1
+
+
+def test_read_needed_reports_short_reads():
+    needed = np.array([0, 1, 3, 4])
+    block = np.zeros((len(needed), 2, 2, 3), dtype=np.uint8)
+    assert stages._read_needed(FakeCapture(3), block, needed, 'v') == 3
+
+
+def test_read_needed_rejects_frames_opencv_did_not_write_in_place():
+    # OpenCV returns a new array when the frame does not fit the row: a frame-size mismatch.
+    block = np.zeros((2, 2, 2, 3), dtype=np.uint8)
+    with pytest.raises(ValueError, match='frame 0 has shape'):
+        stages._read_needed(FakeCapture(2, in_place=False), block, np.array([0, 1]), 'v')
+
+
 def test_decode_rejects_unreadable_files(tmp_path, prefix):
     bad = tmp_path / 'notes.mp4'
     bad.write_text('not a video')
