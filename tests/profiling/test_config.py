@@ -49,6 +49,8 @@ def test_valid_config_loads(valid, tmp_path):
     assert cfg.system.stages['detect'].gpus == (1, 2, 3, 4, 5, 6, 7) and cfg.system.stages['decode'].gpus == ()
     assert cfg.system.stages['evaluate'].savers == 2 and cfg.system.stages['pack'].savers == 1
     assert set(cfg.artifacts.max_rate_tables) == {'sortcython', 'bytetrackcython'}
+    # Every tolerance runs unless the reduction is asked for (the scripts ran every tolerance).
+    assert cfg.params.reduce_search_space is False
 
 
 def test_without_tolerances_prune_and_tables_are_omitted(valid):

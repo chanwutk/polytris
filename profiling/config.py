@@ -39,7 +39,8 @@ class Params:
     canvas_scales: tuple[float, ...]
     trackers: tuple[str, ...]
     prune_time_limit_s: float = 0.1       # p022's solve limit; raise only for equivalence tests
-    reduce_search_space: bool = True      # run one tolerance per identical-ILP group (profiling/reduction.py)
+    reduce_search_space: bool = False     # run one tolerance per identical-ILP group (profiling/reduction.py);
+                                          # off by default so a sweep runs every tolerance, as the scripts do
 
 
 @dataclass(frozen=True)
@@ -115,7 +116,7 @@ def _params(data: Any) -> Params:
         canvas_scales=_values(data, 'canvas_scales', float, 'params'),
         trackers=_values(data, 'trackers', str, 'params'),
         prune_time_limit_s=_check_type(data.get('prune_time_limit_s', 0.1), float, 'params.prune_time_limit_s'),
-        reduce_search_space=data.get('reduce_search_space', True),
+        reduce_search_space=data.get('reduce_search_space', False),
     )
     # _check_type rejects bools (they are ints), so this flag is checked on its own.
     if not isinstance(p.reduce_search_space, bool):

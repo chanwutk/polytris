@@ -210,3 +210,10 @@ mounted from the main checkout (`weights/` is not synced to the profiling checko
   - Canvases, detections, tracks and HOTA differ only on those excluded s=1 pruned branches (48 of 144
     branches; HOTA within 0.030).  Unpruned and s=4 detections agree within 1.2e-4 px.
 Reports: `measurements-results/profiling-check/{caldot1-y05-rerun,jnc0}.json`.
+
+### D31. The reduction is off by default (author, 2026-11-21)
+To remove a potential confound against the scripts, `params.reduce_search_space` now defaults to false, so a
+sweep runs every tolerance as the scripts' validation did.  The all-1s solve-skip was already removed
+(9691538); only the identical-gap merge remains, behind the flag.  The aggregator expands groups whenever
+run.json says the run merged them, whatever the config says now.  The B3D sweeps in D29 and the
+caldot1-y05-reduced sweep ran with the merge on.

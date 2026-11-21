@@ -20,6 +20,7 @@ import argparse
 import json
 import os
 from collections import defaultdict
+from dataclasses import replace
 
 import duckdb
 import numpy as np
@@ -154,7 +155,8 @@ def expand_tolerance_groups(cfg: SweepConfig, configs: list[dict]) -> list[dict]
     """One row per configuration of the grid: each pruned representative's result is copied to every other
     tolerance of its group (identical ILP, so identical results; profiling/reduction.py).  `ran_as` names the
     tolerance that ran; duplicates carry its measured time (DECISIONS.md Q2)."""
-    groups = sweep_groups(cfg)
+    # The run merged groups (run.json says so), whatever the config's flag says now.
+    groups = sweep_groups(replace(cfg, params=replace(cfg.params, reduce_search_space=True)))
     out = []
     for c in configs:
         tol = c['tracking_accuracy_threshold']
