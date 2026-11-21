@@ -189,3 +189,11 @@ datasets) and per-video ILP hashing (unmeasured; constraint building lives in gu
 Wall clock is profiling.main's (`run.json` `wall_s`), excluding the aggregator.  The detector weights are
 mounted from the main checkout (`weights/` is not synced to the profiling checkout).  Results under
 `measurements-results/profiling-sweep/<dataset>-reduced/`.
+
+## TODO (author, 2026-11-21)
+- Keep polyominoes whose tiles appear in only one sampled frame.  The ILP's early exit `len(pos) <= 1` skips
+  its own "always choose the first and last appearance" rule for such tiles.  Change it to skip only
+  `len(pos) == 0` in all three backends (`polyis/sample/ilp/gurobi.py:80`, `polyis/sample/ilp/c/gurobi.pyx:231`,
+  and likely `pulp.py`), with a test that a single-appearance polyomino is kept.  Not yet: it changes every
+  cached p022 result and everything downstream.  Afterwards all-1s gaps really do keep everything, so the
+  solve-skip (removed in 9691538) could return, binarizing as p022 does.
