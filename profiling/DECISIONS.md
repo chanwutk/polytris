@@ -140,3 +140,9 @@ gaps (per tracker and sample rate, on mask tiles) and skips the solve for all-1s
 each representative's row to every tolerance of its group (`ran_as` names the one that ran; same HOTA and
 time).  Main's expected results and pack's expected inputs count groups.  Set false to run every tolerance
 (the equivalence check uses the grid as-is either way; all-1s results count as optimal there).
+
+### D25. The scripts' validation-pass wall clock cannot be recovered from the cache
+p120/p121 ran only for the test split (080_throughput has no validation rows), and output-directory
+modification times are unusable (020 spans 88 h across reruns; 022 was written at once).  So the first sweep's
+wall clock is reported on its own, with its per-stage busy times.  Question: is there a log of how long the
+scripts' validation pass took?  If so, it is the comparison to make.
