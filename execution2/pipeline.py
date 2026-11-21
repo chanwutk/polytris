@@ -20,6 +20,7 @@ caller stops every worker, frees the run's shared-memory blocks, and raises Pipe
 The engine records no timing; the caller times the results it receives.
 """
 
+import itertools
 import os
 import queue
 import sys
@@ -104,7 +105,8 @@ def _drain(err_q: mp.Queue, wait_s: float) -> list[str]:
 def _feed(inputs: Iterable, q: mp.Queue, n_stops: int, stopped: threading.Event, errors: list) -> None:
     """Put every input then the STOPs; give up quietly once the run is stopped."""
     try:
-        for item in [*inputs, *([STOP] * n_stops)]:
+        # chain pulls one input at a time, so a lazy or endless input stream feeds as it goes.
+        for item in itertools.chain(inputs, itertools.repeat(STOP, n_stops)):
             # Bounded queue: retry until there is room or the run is being torn down.
             while not stopped.is_set():
                 try:

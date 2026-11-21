@@ -1,6 +1,7 @@
 """Engine tests with fake stages: shapes, failures, backpressure, shared-memory cleanup (PLAN.md 12A)."""
 
 import multiprocessing as mp
+import threading
 import time
 from collections import Counter
 from functools import partial
@@ -45,9 +46,21 @@ def test_empty_input_finishes_with_no_results():
 
 
 def test_results_stream_before_inputs_are_exhausted():
-    # Inputs come from a generator that only advances as the pipeline drains: a feeder that tried to
-    # put everything before collecting would deadlock on the bounded queues.
-    results = list(run([stage('a'), stage('b')], (x for x in inputs(50)), queue_maxsize=1))
+    # The input generator yields one item, then waits until that item's result has come out. A feeder
+    # that read every input before putting any would never let the first result through, so the
+    # generator times out and the run fails.
+    first_result = threading.Event()
+
+    def lazy_inputs():
+        yield {'id': 0, 'path': []}
+        if not first_result.wait(timeout=20):
+            raise RuntimeError('the feeder read ahead: no result before the input stream was exhausted')
+        yield from ({'id': i, 'path': []} for i in range(1, 50))
+
+    results = []
+    for r in run([stage('a'), stage('b')], lazy_inputs(), queue_maxsize=1):
+        results.append(r)
+        first_result.set()
     assert_each_once(results, 50, ['a', 'b'])
 
 
