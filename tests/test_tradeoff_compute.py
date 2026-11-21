@@ -15,6 +15,7 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
             'tilesize': 60,
             'sample_rate': 2,
             'tracking_accuracy_threshold': pd.NA,
+            'relevance_threshold': 0.5,
             'tilepadding': 'none',
             'canvas_scale': 1.0,
             'tracker': 'bytetrackcython',
@@ -29,6 +30,7 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
             'tilesize': pd.NA,
             'sample_rate': pd.NA,
             'tracking_accuracy_threshold': pd.NA,
+            'relevance_threshold': pd.NA,
             'tilepadding': pd.NA,
             'canvas_scale': pd.NA,
             'tracker': pd.NA,
@@ -64,6 +66,7 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
     assert polytris_row['frame_count'] == 150
     assert polytris_row['throughput_fps'] == 150 / 7.0
     assert polytris_row['classifier'] == 'ShuffleNet05'
+    assert polytris_row['relevance_threshold'] == 0.5
 
     # Validate the naive split-level aggregation and null parameter contract.
     naive_row = tradeoff_df[tradeoff_df['variant_id'] == 'naive'].iloc[0]
@@ -72,3 +75,4 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
     assert naive_row['throughput_fps'] == 150 / 4.5
     assert pd.isna(naive_row['classifier'])
     assert pd.isna(naive_row['sample_rate'])
+    assert pd.isna(naive_row['relevance_threshold'])

@@ -373,13 +373,16 @@ def boundary_totals(con: duckdb.DuckDBPyConnection, plan: dict):
     con.execute('CREATE OR REPLACE TABLE calibration (dataset VARCHAR, video VARCHAR)')
     con.executemany('INSERT INTO calibration VALUES (?, ?)',
                     [(d, v) for d, info in plan['datasets'].items() for v in info['calibration_videos']])
-    # Counted seconds, counted decode ops, and canvas reads per unit and video, in both scopes.
+    # Counted seconds, counted decode ops, every logged decode op (counted or not: p121 drops the reference's
+    # 'read' to match Tetris's boundary, yet the logged decode still measures one decode), and canvas reads per unit
+    # and video, in both scopes.
     con.execute("""
         CREATE OR REPLACE TABLE scoped AS
         WITH per_video AS (
             SELECT side, unit, phase, dataset, system, variant_id, video,
                    fsum(seconds) FILTER (WHERE counted) AS p121_s,
                    coalesce(fsum(seconds) FILTER (WHERE counted AND decode), 0) AS decode_ops_s,
+                   coalesce(fsum(seconds) FILTER (WHERE decode), 0) AS logged_decode_ops_s,
                    coalesce(fsum(seconds) FILTER (WHERE counted AND canvas_read), 0) AS canvas_read_s
             FROM ops GROUP BY ALL
         )
@@ -408,7 +411,8 @@ def boundary_totals(con: duckdb.DuckDBPyConnection, plan: dict):
         WITH t AS (
             SELECT side, phase, scope, dataset, system, variant_id, any_value(unit) AS unit, count(*) AS videos,
                    list(video ORDER BY video) AS video_list, sum(f.frames) AS frames, fsum(p121_s) AS p121_s,
-                   fsum(decode_ops_s) AS decode_ops_s, fsum(canvas_read_s) AS canvas_read_s
+                   fsum(decode_ops_s) AS decode_ops_s, fsum(logged_decode_ops_s) AS logged_decode_ops_s,
+                   fsum(canvas_read_s) AS canvas_read_s
             FROM scoped s JOIN frames f USING (dataset, video)
             GROUP BY side, phase, scope, dataset, system, variant_id
         ),
@@ -428,10 +432,10 @@ def boundary_totals(con: duckdb.DuckDBPyConnection, plan: dict):
         with_decode AS (
             -- One decode per video: the clean side's measured decode of the same phase, the paper's logged read; and
             -- the reference's logged read of the same side and phase on both sides.
-            SELECT t.*, r.video_list AS reference_videos, r.decode_ops_s AS logged_decode_s,
-                   CASE WHEN t.side = 'clean' THEN d.decode_s ELSE r.decode_ops_s END AS decode_s,
-                   CASE WHEN t.side = 'clean' THEN d.decode_min_s ELSE r.decode_ops_s END AS decode_min_s,
-                   CASE WHEN t.side = 'clean' THEN d.decode_max_s ELSE r.decode_ops_s END AS decode_max_s,
+            SELECT t.*, r.video_list AS reference_videos, r.logged_decode_ops_s AS logged_decode_s,
+                   CASE WHEN t.side = 'clean' THEN d.decode_s ELSE r.logged_decode_ops_s END AS decode_s,
+                   CASE WHEN t.side = 'clean' THEN d.decode_min_s ELSE r.logged_decode_ops_s END AS decode_min_s,
+                   CASE WHEN t.side = 'clean' THEN d.decode_max_s ELSE r.logged_decode_ops_s END AS decode_max_s,
                    CASE WHEN t.side = 'clean' THEN d.passes ELSE 1 END AS decode_passes,
                    d.min_videos AS decode_min_videos, d.max_videos AS decode_max_videos,
                    CASE WHEN t.side = 'clean' AND t.scope = 'unit' THEN w.wall_s END AS wall_clock_s,

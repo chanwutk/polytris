@@ -12,6 +12,9 @@ class ILPResult(NamedTuple):
     selected: set[tuple[int, int]]
     build_ms: float  # Time spent building the model (variables + objective + constraints)
     solve_ms: float  # Time spent in model.optimize()
+    status: int | None = None  # Gurobi optimization status (2 optimal, 9 time limit)
+    sol_count: int | None = None  # Number of feasible solutions found
+    obj_bound: float | None = None  # Best proven lower bound on the objective (tiles); None if unavailable
 
 
 def solve_ilp(
@@ -127,9 +130,19 @@ def solve_ilp(
             if var.X > 0.5:
                 selected.add((b, k))
 
+    # Termination status, solution count, and proven lower bound, read before the model is disposed.
+    status = model.Status
+    sol_count = model.SolCount
+    try:
+        obj_bound = model.ObjBound
+    except gurobipy.GurobiError:
+        # Gurobi has no bound when optimization produced none (e.g. interrupted before the root relaxation).
+        obj_bound = None
+
     # Dispose model then environment to release WLS license resources promptly.
     model.dispose()
     env.dispose()
     solve_ms = (time.monotonic() - solve_start) * 1000
 
-    return ILPResult(selected=selected, build_ms=build_ms, solve_ms=solve_ms)
+    return ILPResult(selected=selected, build_ms=build_ms, solve_ms=solve_ms,
+                     status=status, sol_count=sol_count, obj_bound=obj_bound)

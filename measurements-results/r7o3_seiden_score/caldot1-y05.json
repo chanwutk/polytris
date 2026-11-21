@@ -1,0 +1,504 @@
+{
+  "dataset": "caldot1-y05",
+  "evaluator": "/polyis/measurements-results/r1o2_leap_original_evaluator/evaluate.py",
+  "frames": 54000,
+  "ground_truth_count_sha256": "45a4e37b1a480cdf4b26c150a74afbeedd354c4f8c1f663b01339bc4434e7286",
+  "records": [
+    {
+      "aggregation": {
+        "acc": 0.8994105626753279,
+        "acc_raw": 0.8658350175256915,
+        "mae": 0.2898703703703704,
+        "mae_raw": 0.3053385228790251,
+        "mape": 0.10058943732467207,
+        "mape_raw": 0.13416498247430853
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 12,
+      "detector_frames": 4500,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 108.51427212295195,
+      "excluded_s": {
+        "disk_write": 0.10551400110125542,
+        "ground_truth": 0.3667790209874511,
+        "iframe_scan": 0.9572245953604579,
+        "label_load": 1.8842621250078082,
+        "model_load": 17.800632408820093
+      },
+      "fps": 474.30800364433986,
+      "fraction": 0.08333333333333333,
+      "frames": 54000,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 5.335799107328057,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 113.85007123028001,
+      "wall_s": 26.450211258605123
+    },
+    {
+      "aggregation": {
+        "acc": 0.8430977844885346,
+        "acc_raw": 0.7992401006642926,
+        "mae": 0.4017777777777778,
+        "mae_raw": 0.4179514055671763,
+        "mape": 0.15690221551146544,
+        "mape_raw": 0.20075989933570737
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 16,
+      "detector_frames": 3360,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 81.02398985180413,
+      "excluded_s": {
+        "disk_write": 0.10466623213142157,
+        "ground_truth": 0.4457375705242157,
+        "iframe_scan": 0.9534738184884191,
+        "label_load": 1.7561270045116544,
+        "model_load": 17.43517484050244
+      },
+      "fps": 630.2059518396662,
+      "fraction": 0.0625,
+      "frames": 54000,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 4.6622843611985445,
+      "topk": 0.7,
+      "topk_rounded": 0.9,
+      "total_s": 85.68627421300268,
+      "wall_s": 25.357463827356696
+    },
+    {
+      "aggregation": {
+        "acc": 0.825281750019192,
+        "acc_raw": 0.7746139434085706,
+        "mae": 0.44087037037037036,
+        "mae_raw": 0.45812537234777295,
+        "mape": 0.17471824998080798,
+        "mape_raw": 0.2253860565914294
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 20,
+      "detector_frames": 2700,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 65.10856327377117,
+      "excluded_s": {
+        "disk_write": 0.10427491366863251,
+        "ground_truth": 0.37415704131126404,
+        "iframe_scan": 0.9645193889737129,
+        "label_load": 1.859479159116745,
+        "model_load": 17.424721718765795
+      },
+      "fps": 778.8463149982111,
+      "fraction": 0.05,
+      "frames": 54000,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 4.224755713716149,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 69.33331898748732,
+      "wall_s": 24.9519079355523
+    },
+    {
+      "aggregation": {
+        "acc": 0.800639749886668,
+        "acc_raw": 0.744671389487415,
+        "mae": 0.4970925925925926,
+        "mae_raw": 0.5164544597571857,
+        "mape": 0.19936025011333203,
+        "mape_raw": 0.25532861051258504
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 24,
+      "detector_frames": 2280,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 54.98056454229566,
+      "excluded_s": {
+        "disk_write": 0.10690210945904255,
+        "ground_truth": 0.3125544786453247,
+        "iframe_scan": 0.9763693539425731,
+        "label_load": 2.038223760202527,
+        "model_load": 17.185646705329418
+      },
+      "fps": 914.3509244074392,
+      "fraction": 0.041666666666666664,
+      "frames": 54000,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 4.077723209746182,
+      "topk": 0.8,
+      "topk_rounded": 0.7,
+      "total_s": 59.05828775204184,
+      "wall_s": 24.697419617325068
+    },
+    {
+      "aggregation": {
+        "acc": 0.7800903592415984,
+        "acc_raw": 0.7207437934219072,
+        "mae": 0.5488888888888889,
+        "mae_raw": 0.5707640915404333,
+        "mape": 0.21990964075840158,
+        "mape_raw": 0.2792562065780928
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 28,
+      "detector_frames": 1920,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 46.2994227724595,
+      "excluded_s": {
+        "disk_write": 0.10565150808542967,
+        "ground_truth": 0.30756728909909725,
+        "iframe_scan": 0.9663123255595565,
+        "label_load": 1.798908487893641,
+        "model_load": 17.756625530309975
+      },
+      "fps": 1078.060157830372,
+      "fraction": 0.03571428571428571,
+      "frames": 54000,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 3.7905463334172964,
+      "topk": 0.7,
+      "topk_rounded": 0.6,
+      "total_s": 50.0899691058768,
+      "wall_s": 24.725611474364996
+    },
+    {
+      "aggregation": {
+        "acc": 0.7773247755227903,
+        "acc_raw": 0.7165816724320341,
+        "mae": 0.5538703703703703,
+        "mae_raw": 0.576122853641736,
+        "mape": 0.22267522447720967,
+        "mape_raw": 0.2834183275679659
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 32,
+      "detector_frames": 1680,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 40.511994925902066,
+      "excluded_s": {
+        "disk_write": 0.10138757713139057,
+        "ground_truth": 0.47957089450210333,
+        "iframe_scan": 0.9580560307949781,
+        "label_load": 1.8371609635651112,
+        "model_load": 17.57644246518612
+      },
+      "fps": 1224.2313493831896,
+      "fraction": 0.03125,
+      "frames": 54000,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 3.597314991056919,
+      "topk": 0.8,
+      "topk_rounded": 0.8,
+      "total_s": 44.109309916958985,
+      "wall_s": 24.54993292223662
+    },
+    {
+      "aggregation": {
+        "acc": 0.931518318235166,
+        "acc_raw": 0.9254166050231175,
+        "mae": 0.21814814814814815,
+        "mae_raw": 0.22303849853849914,
+        "mape": 0.06848168176483405,
+        "mape_raw": 0.07458339497688249
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 4,
+      "detector_frames": 13500,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 325.5428163688559,
+      "excluded_s": {
+        "disk_write": 0.11138985492289066,
+        "ground_truth": 0.24982809647917747,
+        "iframe_scan": 1.0011233873665333,
+        "label_load": 1.866107476875186,
+        "model_load": 17.843949417583644
+      },
+      "fps": 160.6836154857857,
+      "fraction": 0.25,
+      "frames": 54000,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 10.521317094564438,
+      "topk": 1.0,
+      "topk_rounded": 1.0,
+      "total_s": 336.0641334634203,
+      "wall_s": 31.59371532779187
+    },
+    {
+      "aggregation": {
+        "acc": 0.926624990713909,
+        "acc_raw": 0.9152646378102097,
+        "mae": 0.22827777777777777,
+        "mae_raw": 0.236970551516387,
+        "mape": 0.07337500928609098,
+        "mape_raw": 0.08473536218979028
+      },
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 8,
+      "detector_frames": 6720,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 162.04797970360826,
+      "excluded_s": {
+        "disk_write": 0.10780987050384283,
+        "ground_truth": 0.28059236891567707,
+        "iframe_scan": 0.9680952364578843,
+        "label_load": 1.9204192869365215,
+        "model_load": 17.997218758799136
+      },
+      "fps": 320.20399293700103,
+      "fraction": 0.125,
+      "frames": 54000,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 6.594514428637922,
+      "topk": 1.0,
+      "topk_rounded": 1.0,
+      "total_s": 168.64249413224618,
+      "wall_s": 27.868649950250983
+    },
+    {
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 12,
+      "detector_frames": 4500,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 108.51427212295195,
+      "excluded_s": {
+        "disk_write": 0.10403626970946789,
+        "ground_truth": 0.2894049035385251,
+        "iframe_scan": 0.9572560405358672,
+        "label_load": 1.926914857700467,
+        "model_load": 18.13542376924306
+      },
+      "fps": 474.64308168855905,
+      "fraction": 0.08333333333333333,
+      "frames": 54000,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 5.255425747483969,
+      "selection": {
+        "accuracy": 0.9606,
+        "f1": 0.9712,
+        "precision": 0.9781,
+        "recall": 0.9643
+      },
+      "total_s": 113.76969787043592,
+      "wall_s": 26.668461588211358
+    },
+    {
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 16,
+      "detector_frames": 3360,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 81.02398985180413,
+      "excluded_s": {
+        "disk_write": 0.108242591843009,
+        "ground_truth": 0.31255998089909554,
+        "iframe_scan": 0.9708943227306008,
+        "label_load": 1.9217721903696656,
+        "model_load": 17.842351988889277
+      },
+      "fps": 629.7096092901736,
+      "fraction": 0.0625,
+      "frames": 54000,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 4.729823022149503,
+      "selection": {
+        "accuracy": 0.9304,
+        "f1": 0.9492,
+        "precision": 0.954,
+        "recall": 0.9445
+      },
+      "total_s": 85.75381287395363,
+      "wall_s": 25.88564409688115
+    },
+    {
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 20,
+      "detector_frames": 2700,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 65.10856327377117,
+      "excluded_s": {
+        "disk_write": 0.10498557146638632,
+        "ground_truth": 0.37956054601818323,
+        "iframe_scan": 0.966602211818099,
+        "label_load": 1.9274710128083825,
+        "model_load": 17.468987132422626
+      },
+      "fps": 777.8033624455863,
+      "fraction": 0.05,
+      "frames": 54000,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 4.317724406719208,
+      "selection": {
+        "accuracy": 0.9236,
+        "f1": 0.9442,
+        "precision": 0.9509,
+        "recall": 0.9375
+      },
+      "total_s": 69.42628768049038,
+      "wall_s": 25.165330881252885
+    },
+    {
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 24,
+      "detector_frames": 2280,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 54.98056454229566,
+      "excluded_s": {
+        "disk_write": 0.11118099372833967,
+        "ground_truth": 0.49120101798325777,
+        "iframe_scan": 1.0088174864649773,
+        "label_load": 1.9659744212403893,
+        "model_load": 17.898647685535252
+      },
+      "fps": 911.6797411817747,
+      "fraction": 0.041666666666666664,
+      "frames": 54000,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 4.2507615042850375,
+      "selection": {
+        "accuracy": 0.9072,
+        "f1": 0.9317,
+        "precision": 0.9444,
+        "recall": 0.9193
+      },
+      "total_s": 59.2313260465807,
+      "wall_s": 25.726583109237254
+    },
+    {
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 28,
+      "detector_frames": 1920,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 46.2994227724595,
+      "excluded_s": {
+        "disk_write": 0.10772220231592655,
+        "ground_truth": 0.39340075571089983,
+        "iframe_scan": 0.9893460487946868,
+        "label_load": 1.7986267488449812,
+        "model_load": 17.896596021018922
+      },
+      "fps": 1074.838005962975,
+      "fraction": 0.03571428571428571,
+      "frames": 54000,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 3.9407061589881778,
+      "selection": {
+        "accuracy": 0.901,
+        "f1": 0.9271,
+        "precision": 0.9396,
+        "recall": 0.915
+      },
+      "total_s": 50.24012893144768,
+      "wall_s": 25.126397935673594
+    },
+    {
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 32,
+      "detector_frames": 1680,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 40.511994925902066,
+      "excluded_s": {
+        "disk_write": 0.10148468520492315,
+        "ground_truth": 0.39008465968072414,
+        "iframe_scan": 0.952580139040947,
+        "label_load": 1.9664599290117621,
+        "model_load": 17.742320056073368
+      },
+      "fps": 1224.7607186328016,
+      "fraction": 0.03125,
+      "frames": 54000,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 3.5782499508932233,
+      "selection": {
+        "accuracy": 0.898,
+        "f1": 0.9248,
+        "precision": 0.9388,
+        "recall": 0.9113
+      },
+      "total_s": 44.09024487679529,
+      "wall_s": 24.731179419904947
+    },
+    {
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 4,
+      "detector_frames": 13500,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 325.5428163688559,
+      "excluded_s": {
+        "disk_write": 0.12630005553364754,
+        "ground_truth": 0.4375062519684434,
+        "iframe_scan": 1.035005428828299,
+        "label_load": 1.9088872196152806,
+        "model_load": 20.849438907578588
+      },
+      "fps": 160.4803970412987,
+      "fraction": 0.25,
+      "frames": 54000,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 10.946879541501403,
+      "selection": {
+        "accuracy": 0.975,
+        "f1": 0.9817,
+        "precision": 0.9933,
+        "recall": 0.9703
+      },
+      "total_s": 336.4896959103573,
+      "wall_s": 35.30401740502566
+    },
+    {
+      "clips": 60,
+      "dataset": "caldot1-y05",
+      "denominator": 8,
+      "detector_frames": 6720,
+      "detector_ms_per_frame": 24.114282693989324,
+      "detector_s": 162.04797970360826,
+      "excluded_s": {
+        "disk_write": 0.17385032679885626,
+        "ground_truth": 0.27641027607023716,
+        "iframe_scan": 0.9645263785496354,
+        "label_load": 1.8317070584744215,
+        "model_load": 17.401778388768435
+      },
+      "fps": 320.29523206116687,
+      "fraction": 0.125,
+      "frames": 54000,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 6.546475020237267,
+      "selection": {
+        "accuracy": 0.9727,
+        "f1": 0.98,
+        "precision": 0.9918,
+        "recall": 0.9684
+      },
+      "total_s": 168.59445472384553,
+      "wall_s": 27.194747448898852
+    }
+  ]
+}

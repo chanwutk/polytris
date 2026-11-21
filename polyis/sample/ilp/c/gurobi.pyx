@@ -75,6 +75,7 @@ cdef extern from "gurobi_c.h":
 
     # Attributes
     int GRBgetintattr(GRBmodel *model, const char *attrname, int *valueP)
+    int GRBgetdblattr(GRBmodel *model, const char *attrname, double *valueP)
     int GRBgetdblattrelement(GRBmodel *model, const char *attrname,
                              int element, double *valueP)
 
@@ -298,6 +299,13 @@ def solve_ilp(
     selected = set()
 
     GRBgetintattr(model, "SolCount", &sol_count)
+    # Termination status and proven lower bound; the bound is absent when optimization produced none.
+    cdef int status = 0
+    cdef double bound_value = 0.0
+    GRBgetintattr(model, "Status", &status)
+    obj_bound = None
+    if GRBgetdblattr(model, "ObjBound", &bound_value) == 0:
+        obj_bound = bound_value
     if sol_count > 0:
         for b in range(B):
             for k in range(len(polyomino_lengths[b])):
@@ -316,4 +324,5 @@ def solve_ilp(
 
     cdef double solve_ms = _now_ms() - solve_start
 
-    return ILPResult(selected=selected, build_ms=build_ms, solve_ms=solve_ms)
+    return ILPResult(selected=selected, build_ms=build_ms, solve_ms=solve_ms,
+                     status=status, sol_count=sol_count, obj_bound=obj_bound)

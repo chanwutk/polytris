@@ -51,3 +51,4 @@ det_otif
 measurements-results/**/*.jsonl.gz
 measurements-results/*.log
 measurements-results/**/*.log
+.env

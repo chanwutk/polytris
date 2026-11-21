@@ -1,0 +1,409 @@
+{
+  "frames": 54000,
+  "clips": [
+    [
+      "te00.mp4",
+      900
+    ],
+    [
+      "te01.mp4",
+      900
+    ],
+    [
+      "te02.mp4",
+      900
+    ],
+    [
+      "te03.mp4",
+      900
+    ],
+    [
+      "te04.mp4",
+      900
+    ],
+    [
+      "te05.mp4",
+      900
+    ],
+    [
+      "te06.mp4",
+      900
+    ],
+    [
+      "te07.mp4",
+      900
+    ],
+    [
+      "te08.mp4",
+      900
+    ],
+    [
+      "te09.mp4",
+      900
+    ],
+    [
+      "te10.mp4",
+      900
+    ],
+    [
+      "te11.mp4",
+      900
+    ],
+    [
+      "te12.mp4",
+      900
+    ],
+    [
+      "te13.mp4",
+      900
+    ],
+    [
+      "te14.mp4",
+      900
+    ],
+    [
+      "te15.mp4",
+      900
+    ],
+    [
+      "te16.mp4",
+      900
+    ],
+    [
+      "te17.mp4",
+      900
+    ],
+    [
+      "te18.mp4",
+      900
+    ],
+    [
+      "te19.mp4",
+      900
+    ],
+    [
+      "te20.mp4",
+      900
+    ],
+    [
+      "te21.mp4",
+      900
+    ],
+    [
+      "te22.mp4",
+      900
+    ],
+    [
+      "te23.mp4",
+      900
+    ],
+    [
+      "te24.mp4",
+      900
+    ],
+    [
+      "te25.mp4",
+      900
+    ],
+    [
+      "te26.mp4",
+      900
+    ],
+    [
+      "te27.mp4",
+      900
+    ],
+    [
+      "te28.mp4",
+      900
+    ],
+    [
+      "te29.mp4",
+      900
+    ],
+    [
+      "te30.mp4",
+      900
+    ],
+    [
+      "te31.mp4",
+      900
+    ],
+    [
+      "te32.mp4",
+      900
+    ],
+    [
+      "te33.mp4",
+      900
+    ],
+    [
+      "te34.mp4",
+      900
+    ],
+    [
+      "te35.mp4",
+      900
+    ],
+    [
+      "te36.mp4",
+      900
+    ],
+    [
+      "te37.mp4",
+      900
+    ],
+    [
+      "te38.mp4",
+      900
+    ],
+    [
+      "te39.mp4",
+      900
+    ],
+    [
+      "te40.mp4",
+      900
+    ],
+    [
+      "te41.mp4",
+      900
+    ],
+    [
+      "te42.mp4",
+      900
+    ],
+    [
+      "te43.mp4",
+      900
+    ],
+    [
+      "te44.mp4",
+      900
+    ],
+    [
+      "te45.mp4",
+      900
+    ],
+    [
+      "te46.mp4",
+      900
+    ],
+    [
+      "te47.mp4",
+      900
+    ],
+    [
+      "te48.mp4",
+      900
+    ],
+    [
+      "te49.mp4",
+      900
+    ],
+    [
+      "te50.mp4",
+      900
+    ],
+    [
+      "te51.mp4",
+      900
+    ],
+    [
+      "te52.mp4",
+      900
+    ],
+    [
+      "te53.mp4",
+      900
+    ],
+    [
+      "te54.mp4",
+      900
+    ],
+    [
+      "te55.mp4",
+      900
+    ],
+    [
+      "te56.mp4",
+      900
+    ],
+    [
+      "te57.mp4",
+      900
+    ],
+    [
+      "te58.mp4",
+      900
+    ],
+    [
+      "te59.mp4",
+      900
+    ]
+  ],
+  "detector_ms_per_frame": 31.5199258807147,
+  "gpu": "Quadro RTX 6000",
+  "torch": "2.6.0+cu124",
+  "opencv": "4.13.0",
+  "prep_decode_seconds": 114.23673569399398,
+  "prep_model_seconds": 18.53723787202034,
+  "train_seconds": 13.240915252943523,
+  "records": [
+    {
+      "target": 0.0,
+      "difference_threshold": -1.0,
+      "lower": 0.031110240146517754,
+      "upper": 0.9999954700469971,
+      "validation_estimated_seconds": 1255.088040776712,
+      "blocks": 1,
+      "cnn_frames": 54000,
+      "detector_frames": 36792,
+      "cascade_seconds": 2.226295920438133,
+      "detector_seconds": 1159.6811130032552,
+      "fps": 46.47530395732796,
+      "selection": {
+        "f1": 0.9824,
+        "recall": 0.9711,
+        "precision": 0.994,
+        "accuracy": 0.9761
+      }
+    },
+    {
+      "target": 0.01,
+      "difference_threshold": -1.0,
+      "lower": 0.2143554389476776,
+      "upper": 0.7718981504440308,
+      "validation_estimated_seconds": 868.1908221143099,
+      "blocks": 2,
+      "cnn_frames": 54000,
+      "detector_frames": 24272,
+      "cascade_seconds": 2.5141007393831387,
+      "detector_seconds": 765.0516409767072,
+      "fps": 70.35228002655398,
+      "selection": {
+        "f1": 0.9803,
+        "recall": 0.9706,
+        "precision": 0.9902,
+        "accuracy": 0.9731
+      }
+    },
+    {
+      "target": 0.02,
+      "difference_threshold": -1.0,
+      "lower": 0.24021068215370178,
+      "upper": 0.6872203350067139,
+      "validation_estimated_seconds": 735.4288943047395,
+      "blocks": 2,
+      "cnn_frames": 54000,
+      "detector_frames": 20029,
+      "cascade_seconds": 2.515441392431967,
+      "detector_seconds": 631.3125954648348,
+      "fps": 85.19660990029759,
+      "selection": {
+        "f1": 0.972,
+        "recall": 0.961,
+        "precision": 0.9833,
+        "accuracy": 0.9619
+      }
+    },
+    {
+      "target": 0.03,
+      "difference_threshold": -1.0,
+      "lower": 0.19703632593154907,
+      "upper": 0.9829763174057007,
+      "validation_estimated_seconds": 618.2279383568714,
+      "blocks": 1,
+      "cnn_frames": 54000,
+      "detector_frames": 16855,
+      "cascade_seconds": 2.118488516425714,
+      "detector_seconds": 531.2683507194463,
+      "fps": 101.23984325777553,
+      "selection": {
+        "f1": 0.9612,
+        "recall": 0.951,
+        "precision": 0.9716,
+        "accuracy": 0.9471
+      }
+    },
+    {
+      "target": 0.04,
+      "difference_threshold": -1.0,
+      "lower": 0.2443477064371109,
+      "upper": 0.9705567955970764,
+      "validation_estimated_seconds": 515.3153803563379,
+      "blocks": 1,
+      "cnn_frames": 54000,
+      "detector_frames": 13987,
+      "cascade_seconds": 2.1176200854824856,
+      "detector_seconds": 440.8692032935565,
+      "fps": 121.89978832348977,
+      "selection": {
+        "f1": 0.9545,
+        "recall": 0.9443,
+        "precision": 0.9649,
+        "accuracy": 0.9379
+      }
+    },
+    {
+      "target": 0.05,
+      "difference_threshold": -1.0,
+      "lower": 0.2828127145767212,
+      "upper": 0.9464365839958191,
+      "validation_estimated_seconds": 432.1027760312511,
+      "blocks": 1,
+      "cnn_frames": 54000,
+      "detector_frames": 11609,
+      "cascade_seconds": 2.1189249583985656,
+      "detector_seconds": 365.91481954921693,
+      "fps": 146.72567612582768,
+      "selection": {
+        "f1": 0.9477,
+        "recall": 0.9382,
+        "precision": 0.9573,
+        "accuracy": 0.9286
+      }
+    },
+    {
+      "target": 0.1,
+      "difference_threshold": -1.0,
+      "lower": 0.3900030851364136,
+      "upper": 0.46842464804649353,
+      "validation_estimated_seconds": 96.14175759208402,
+      "blocks": 2,
+      "cnn_frames": 54000,
+      "detector_frames": 3435,
+      "cascade_seconds": 2.5174715134780854,
+      "detector_seconds": 108.27094540025499,
+      "fps": 487.4155756016249,
+      "selection": {
+        "f1": 0.9054,
+        "recall": 0.8946,
+        "precision": 0.9164,
+        "accuracy": 0.8712
+      }
+    },
+    {
+      "target": 0.25,
+      "difference_threshold": 1.8406506666666667,
+      "lower": 0.23639646172523499,
+      "upper": 0.23639646172523499,
+      "validation_estimated_seconds": 1.756498878456014,
+      "blocks": 1,
+      "cnn_frames": 37919,
+      "detector_frames": 0,
+      "cascade_seconds": 1.864754571346566,
+      "detector_seconds": 0.0,
+      "fps": 28958.234413124846,
+      "selection": {
+        "f1": 0.815,
+        "recall": 0.7591,
+        "precision": 0.8798,
+        "accuracy": 0.7626
+      }
+    }
+  ],
+  "ground_truth_count_sha256": "45a4e37b1a480cdf4b26c150a74afbeedd354c4f8c1f663b01339bc4434e7286",
+  "dataset": "caldot1-y05",
+  "evaluator": "LEAP selection_query_1"
+}

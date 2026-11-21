@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Phase A of re-scoring B3D on human ground truth: snapshot, install, rescore, gate.
 #
-# Run on ace (host), inside tmux:  measurements-gpu/b3d_human_gt_phase_a.sh <human-annotation commit>
+# Run on ace (host), inside tmux:  measurements-gpu/b3d_human_gt_phase_a.sh <annotation commit>
 # Stops at the first failure. Each stage writes a done marker, so a rerun resumes after the last
 # finished stage. Logs and the report go to measurements-results/b3d_human_gt/.
 set -euo pipefail
 
-COMMIT=${1:?usage: $0 <human-annotation commit of the staged labels>}
+COMMIT=${1:?usage: $0 <annotation commit of the staged labels>}
 B3D=(jnc0 jnc2 jnc6 jnc7)
 OTHERS=(caldot1-y05 caldot2-y05 ams-y05)
 OUT=/work/cwkt/projects/tetris/measurements-results/b3d_human_gt

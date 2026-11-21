@@ -14,7 +14,6 @@ from evaluation.p201_compare_pareto import (
     create_speedup_chart,
     PRESENTATION_DROP_BAND_COLOR,
     PRESENTATION_MUTED_COLOR,
-    PRESENTATION_ROW_SPACING,
 )
 
 
@@ -375,7 +374,7 @@ def test_filter_pareto_per_dataset_minimize_time():
     assert set(result['time']) == {10.0, 20.0}
 
 
-def test_presentation_summary_uses_top_legend_and_single_line_titles():
+def test_presentation_summary_is_single_pareto_chart_with_focus_and_drop_band():
     df_throughput = pd.DataFrame([
         {'system': 'Tetris', 'dataset': 'demo', 'classifier': 'ShuffleNet05',
          'sample_rate': 1, 'tracking_accuracy_threshold': pd.NA,
@@ -403,56 +402,28 @@ def test_presentation_summary_uses_top_legend_and_single_line_titles():
          'canvas_scale': pd.NA, 'tracker': pd.NA,
          'throughput_fps': 40.0, 'time': 2.5, 'HOTA_HOTA': 0.68},
     ])
-    df_speedup = pd.DataFrame([
-        {'dataset': 'demo', 'accuracy_level': 0.70, 'system': 'OTIF',
-         'comparison_system': 'OTIF', 'speedup_ratio': 2.0,
-         'polytris_time': 1.0, 'other_time': 2.0},
-        {'dataset': 'demo', 'accuracy_level': 0.68, 'system': 'LEAP',
-         'comparison_system': 'LEAP', 'speedup_ratio': 1.5,
-         'polytris_time': 1.0, 'other_time': 1.5},
-    ])
-    df_accuracy_gain = pd.DataFrame([
-        {'dataset': 'demo', 'throughput_fps': 60.0, 'naive_time': 5.0,
-         'system': 'OTIF', 'comparison_system': 'OTIF',
-         'accuracy_gain': 0.10, 'polytris_accuracy': 0.80,
-         'other_accuracy': 0.70},
-        {'dataset': 'demo', 'throughput_fps': 40.0, 'naive_time': 5.0,
-         'system': 'LEAP', 'comparison_system': 'LEAP',
-         'accuracy_gain': 0.12, 'polytris_accuracy': 0.80,
-         'other_accuracy': 0.68},
-    ])
-
-    chart = create_hota_presentation_summary_chart(
-        df_throughput,
-        df_speedup,
-        df_accuracy_gain,
-        focus_systems={'Tetris'},
-    )
+    # The slide chart is a single faceted HOTA vs Throughput Pareto chart titled below the plots.
+    chart = create_hota_presentation_summary_chart(df_throughput, focus_systems={'Tetris'})
     spec = chart.to_dict()
+    assert spec['title']['text'] == 'HOTA vs Throughput'
+    assert spec['title']['orient'] == 'bottom'
+    assert 'vconcat' not in spec and 'facet' in spec
 
-    assert spec['config']['legend']['orient'] == 'top'
-    assert spec['spacing'] == PRESENTATION_ROW_SPACING
-    assert [row['title']['text'] for row in spec['vconcat']] == [
-        'HOTA vs Throughput',
-        'Speedup at Matched HOTA',
-        'HOTA Gain at Matched Throughput',
-    ]
-
-    color_scale = spec['vconcat'][0]['spec']['layer'][0]['encoding']['color']['scale']
+    # Ablation curves are dropped; the focus system keeps its color and the rest are muted.
+    layers = spec['spec']['layer']
+    assert [layer['mark']['type'] for layer in layers] == ['line', 'point']
+    color_scale = layers[-1]['encoding']['color']['scale']
     assert color_scale['domain'] == ['Tetris', 'Reference', 'OTIF', 'LEAP']
     assert color_scale['range'][0] != PRESENTATION_MUTED_COLOR
     assert color_scale['range'][1:] == [PRESENTATION_MUTED_COLOR] * 3
 
-    band_chart = create_hota_presentation_summary_chart(
-        df_throughput,
-        df_speedup,
-        df_accuracy_gain,
-        show_reference_drop_band=True,
-    )
-    band_layers = band_chart.to_dict()['vconcat'][0]['spec']['layer']
-    assert band_layers[0]['mark']['type'] == 'rect'
+    # The reference-drop variant adds a shaded band and a rule at the dropped HOTA, behind the curves.
+    band_chart = create_hota_presentation_summary_chart(df_throughput, show_reference_drop_band=True)
+    band_layers = band_chart.to_dict()['spec']['layer']
+    assert [layer['mark']['type'] for layer in band_layers] == ['rect', 'rule', 'line', 'point']
     assert band_layers[0]['mark']['color'] == PRESENTATION_DROP_BAND_COLOR
     assert band_layers[0]['mark']['opacity'] == 0.3
-    assert band_layers[1]['mark']['type'] == 'rule'
     assert band_layers[1]['mark']['color'] == PRESENTATION_DROP_BAND_COLOR
     assert band_layers[1]['encoding']['y']['field'] == 'drop_hota'
+    # Without a focus set every system keeps its own color.
+    assert PRESENTATION_MUTED_COLOR not in band_layers[-1]['encoding']['color']['scale']['range']

@@ -20,6 +20,44 @@ from polyis.sample.ilp.c.gurobi import solve_ilp
 EXPERIMENT = Path('/polyis/measurements-results/fixed_test_s1_square_m02')
 OUTPUT = Path('/polyis/measurements-results/fixed_ilp_unlimited')
 TIME_LIMIT_SECONDS = 1e100  # Gurobi's documented infinity value and TimeLimit maximum.
+# Cache holding each dataset's relevance scores; None keeps the container's default cache.
+CACHE_DIR = '/runs/{dataset}/polyis-cache'
+# (dataset, video) pairs to solve; None solves every fixed-test clip.
+CLIPS: set[tuple[str, str]] | None = None
+
+
+def gap(objective: int | None, obj_bound: float | None) -> float | None:
+    """Relative optimality gap (objective - bound) / objective; 0 when both are 0, None when either is unknown."""
+    if objective is None or obj_bound is None:
+        return None
+    if objective == 0:
+        return 0.0
+    return (objective - obj_bound) / objective
+
+
+def clip_row(dataset: str, video: str, frames: int, structure: dict, expected: dict, result, total_ms: float,
+             score_sha256: str) -> dict:
+    """One results row: the ILP's size, its solution (None without one), timings, and the solver's bound."""
+    # A run may stop at the time limit before finding any feasible selection.
+    objective = selected_stats(structure, result.selected) if result.sol_count != 0 else None
+    return {
+        'dataset': dataset,
+        'video': video,
+        'frames': frames,
+        'variables': expected['variables'],
+        'constraints': expected['constraints'],
+        'selected': len(result.selected),
+        'objective_tiles': objective,
+        'build_ms': result.build_ms,
+        'solve_ms': result.solve_ms,
+        'total_ms': total_ms,
+        'old_solve_ms': next(op['time'] for op in expected['runtime']['runtime'] if op['op'] == 'solve_ilp'),
+        'status': result.status,
+        'sol_count': result.sol_count,
+        'obj_bound': result.obj_bound,
+        'gap': gap(objective, result.obj_bound),
+        'score_sha256': score_sha256,
+    }
 
 
 def selected_stats(structure, selected):
@@ -78,18 +116,24 @@ def main():
         'cpu_affinity': sorted(os.sched_getaffinity(0)),
         'gurobi_version': gurobipy.gurobi.version(),
         'time_limit': TIME_LIMIT_SECONDS,
+        'cache_dir': CACHE_DIR,
+        'clips': None if CLIPS is None else sorted(map(list, CLIPS)),
         'execution': 'one process; clips solved sequentially',
         'source_inputs': str(EXPERIMENT / 'inputs.json'),
     }
     (OUTPUT / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
 
-    total = sum(len(info['videos']) for info in inputs.values())
+    # A CLIPS subset must name only fixed-test clips.
+    available = {(dataset, video) for dataset, info in inputs.items() for video in info['videos']}
+    assert CLIPS is None or CLIPS <= available, sorted(CLIPS - available)
+    total = len(available) if CLIPS is None else len(CLIPS)
     with results_path.open('a', buffering=1) as output:
         for dataset, info in inputs.items():
-            cache.CACHE_DIR = f'/runs/{dataset}/polyis-cache'
+            if CACHE_DIR is not None:
+                cache.CACHE_DIR = CACHE_DIR.format(dataset=dataset)
             distance = sizes.max_distance(dataset, 'sortcython', 60, .8, 1)
             for video in info['videos']:
-                if (dataset, video) in done:
+                if (dataset, video) in done or (CLIPS is not None and (dataset, video) not in CLIPS):
                     continue
                 score_path = cache.exec(dataset, 'relevancy', video, 'ShuffleNet05_60_1', 'score/score.jsonl')
                 score_bytes = score_path.read_bytes()
@@ -103,29 +147,16 @@ def main():
                 result = solve_ilp(tile_ids, lengths, distance, tile_ids.shape[1], tile_ids.shape[2],
                                    time_limit_seconds=TIME_LIMIT_SECONDS)
                 total_ms = (time.monotonic() - wall_start) * 1000
-                objective = selected_stats(structure, result.selected)
-                row = {
-                    'dataset': dataset,
-                    'video': video,
-                    'frames': len(indices),
-                    'variables': expected['variables'],
-                    'constraints': expected['constraints'],
-                    'selected': len(result.selected),
-                    'objective_tiles': objective,
-                    'build_ms': result.build_ms,
-                    'solve_ms': result.solve_ms,
-                    'total_ms': total_ms,
-                    'old_solve_ms': next(op['time'] for op in expected['runtime']['runtime']
-                                         if op['op'] == 'solve_ilp'),
-                    'score_sha256': hashlib.sha256(score_bytes).hexdigest(),
-                }
+                row = clip_row(dataset, video, len(indices), structure, expected, result, total_ms,
+                               hashlib.sha256(score_bytes).hexdigest())
                 output.write(json.dumps(row, separators=(',', ':')) + '\n')
                 output.flush()
                 os.fsync(output.fileno())
                 done.add((dataset, video))
                 print(f"{len(done)}/{total} {dataset}/{video}: solve={result.solve_ms:.1f} ms", flush=True)
 
-    assert len(done) == total == 200
+    # Every requested clip is solved: all 200 fixed-test clips, or exactly the CLIPS subset.
+    assert len(done) == total and (CLIPS is not None or total == 200)
     write_summary(results_path)
 
 

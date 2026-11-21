@@ -52,7 +52,9 @@ WALLS = {'001_preprocess_groundtruth_detection': 10.0, '002_preprocess_groundtru
          '030_exec_compress': 1.0, '040_exec_detect': 2.0, '050_exec_uncompress': 0.5, '060_exec_track': 0.5}
 # Ops p121 must drop, written down independently of the aggregator: everywhere, and per stage.
 P121_IGNORED = {'total_frame_time', 'read_frame', 'save_canvas', 'save_mapping_files'}
-P121_EXCLUDED = {'020_exec_classify': {'read', 'retrieve'}, '030_exec_compress': {'save_collage', 'pack_all_total'}}
+P121_EXCLUDED = {'020_exec_classify': {'read', 'retrieve'}, '030_exec_compress': {'save_collage', 'pack_all_total'},
+                 # The reference's decoding, excluded to match Tetris's extraction boundary.
+                 '001_preprocess_groundtruth_detection': {'read'}}
 # Counted ops that decode video and that read canvases.
 DECODE = {('001_preprocess_groundtruth_detection', 'read')}
 CANVAS_READ = {('040_exec_detect', 'read')}

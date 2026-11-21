@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 """R7.O1: Tetris, OTIF, and LEAP at matched HOTA, and the operator ablation the response quotes.
 
-Port of tetris-paper-feedback/measurements/matched_accuracy_speedup.py (--metric hota),
+Port of feedback/measurements/matched_accuracy_speedup.py (--metric hota),
 extended from OTIF to LEAP, over all seven datasets.
 
 Operating points (primary, symmetric rule)
@@ -76,7 +76,7 @@ from polyis.utilities import get_video_frame_count
 
 # Systems compared at every bound, Tetris first.
 SYSTEMS = ['tetris', *PRIOR_SYSTEMS]
-# Submitted-manuscript values in tetris-paper/figures/generated/p203_compare_stats.tex, per relative bound.
+# Submitted-manuscript values in paper/figures/generated/p203_compare_stats.tex, per relative bound.
 MANUSCRIPT_COMPARE = {
     '0.05': {'comparePolytrisMeetFivePct': 7, 'comparePriorMeetFivePct': 4, 'comparePriorFailDatasetsFivePct': 3,
              'compareAccuracyMatchedPriorCountFivePct': 7,
@@ -108,7 +108,7 @@ MANUSCRIPT_RULES = {
     'compareSpeedup{Min,Max}{FivePct,TenPct}': ('ranges.<bound>.tetris_vs["fastest prior"], the shared-bound rule; '
                                                 'no live sentence quotes it.'),
 }
-# Submitted-manuscript values in tetris-paper/figures/generated/p204_ablation_stats.tex (5% bound).
+# Submitted-manuscript values in paper/figures/generated/p204_ablation_stats.tex (5% bound).
 # p204 prints "CalDoT 1"; it is written here with this script's label.
 MANUSCRIPT_ABLATION = {
     'ablationOneSpeedupAvg': 6.7, 'ablationOneSpeedupMax': 12.2, 'ablationOneSpeedupMaxDataset': 'CalDoT1',

@@ -406,7 +406,8 @@ def test_stage_summary_counts_shared_work_once(con, tmp_path, monkeypatch):
 
 
 def test_stage_summary_excludes_dropped_and_decoding_ops_and_keeps_empty_files(con, tmp_path, monkeypatch):
-    # p020's decoding is outside p121's boundary; the reference's decoding is inside it but outside the instrumented one.
+    # p020's decoding and, since p121 excludes it to match Tetris's boundary, the reference's decoding are both
+    # outside p121's boundary, so neither is recorded.
     cls = write_lines(tmp_path / 'cls.jsonl', [[{'op': 'inference', 'time': 1000}, {'op': 'read', 'time': 9000}]])
     ref = write_lines(tmp_path / 'ref.jsonl', [[{'op': 'read', 'time': 500}, {'op': 'detect', 'time': 1500}]])
     # An empty detection file (no canvases) is a zero-second unit.
@@ -419,10 +420,11 @@ def test_stage_summary_excludes_dropped_and_decoding_ops_and_keeps_empty_files(c
     assert rows['020_exec_classify']['recorded_s'] == pytest.approx(1)
     assert rows['040_exec_detect']['work_units'] == 1 and rows['040_exec_detect']['recorded_s'] == 0
     reference = rows['001_preprocess_groundtruth_detection']
-    assert (reference['recorded_s'], reference['decode_s'], reference['instrumented_s']) == (pytest.approx(2), pytest.approx(0.5),
+    assert (reference['recorded_s'], reference['decode_s'], reference['instrumented_s']) == (pytest.approx(1.5), pytest.approx(0),
                                                                                               pytest.approx(1.5))
-    # The dropped op is still reported, per stage and op.
-    assert prep.dropped_ops(con, 'm') == {'020_exec_classify': {'read': 9.0}}
+    # The dropped ops are still reported, per stage and op.
+    assert prep.dropped_ops(con, 'm') == {'020_exec_classify': {'read': 9.0},
+                                          '001_preprocess_groundtruth_detection': {'read': 0.5}}
 
 
 def test_stage_summary_counts_a_file_without_units_as_zero(con, tmp_path, monkeypatch):
@@ -794,7 +796,7 @@ def world(tmp_path, monkeypatch, con):
     monkeypatch.setattr(prep, 'build_polytris_variant_manifest', lambda: pd.DataFrame({'variant_id': [POINT, OTHER]}))
     monkeypatch.setattr(prep.cache, 'index', lambda dataset, stage, *a: tmp_path.joinpath('cache', dataset, 'indexing',
                                                                                          cache.INDEX_STAGE_MAP[stage], *a))
-    monkeypatch.setattr(prep, 'load_test_tradeoff', fake_tradeoff(WORLD_TRADEOFF, reference_fps=30 / 3.45))
+    monkeypatch.setattr(prep, 'load_test_tradeoff', fake_tradeoff(WORLD_TRADEOFF, reference_fps=30 / 3.15))
     monkeypatch.setattr(prep, 'TRACKERS', ['sortcython', 'bytetrackcython'])
     monkeypatch.setattr(prep, 'gather_scoring', lambda dataset: [(POINT, 1, 0.0, 10.0)])
     splits = dict(train=dict(videos=2, frames=20, seconds=20 / 15), valid=dict(videos=2, frames=40, seconds=40 / 15),
@@ -833,8 +835,8 @@ def test_measure_dataset_end_to_end(con, world):
         'classifier_optimization': (0.0, 30.0, 30.0),
         # Two needed profiles of 5 s elapsed each, x min(40 workers, 2 videos).
         'mistrack_profiling': (0.0, 20.0, 20.0),
-        # The validation reference: 40 frames x (0.11 + 0.005) s; decoding 0.4 s.
-        'reference_outputs_valid': (4.6, 4.2, 4.6),
+        # The validation reference: 40 frames x 0.105 s of detection; its 0.4 s of decoding is outside p121's boundary.
+        'reference_outputs_valid': (4.2, 4.2, 4.2),
         # va0 only: one shared classification (2 s) and two tracking runs (1 s each), scaled by 2 videos / 1.
         'validation_sweep': (4.0, 8.0, 8.0),
         # 10 s per (configuration, video) x 2 configurations x 2 videos.
@@ -855,15 +857,17 @@ def test_measure_dataset_end_to_end(con, world):
     assert c['training_data_creation']['first_frame_split_s'] == pytest.approx(0.4)
     # Totals are sums of the components the report shows, and the shares of each boundary add up to one.
     totals = got['totals']
-    assert totals['recorded_lower_bound_s'] == pytest.approx(216.8)
-    assert totals['instrumented_s'] == pytest.approx(620.2) and totals['process_s'] == pytest.approx(634.8)
+    # 0.4 s below the cache's raw sum: the validation reference's decoding is outside p121's boundary.
+    assert totals['recorded_lower_bound_s'] == pytest.approx(216.4)
+    assert totals['instrumented_s'] == pytest.approx(620.2) and totals['process_s'] == pytest.approx(634.4)
     assert 'sweep on 1 incomplete videos' in totals['recorded_lower_bound_omits']
     for boundary in ('instrumented', 'process'):
         assert sum(totals['shares'][boundary].values()) == pytest.approx(1, abs=1e-3)
-    # Test-split extraction: the reference 3.45 s as the paper counts it, 3.15 s without decoding, 5.15 s by timestamps;
+    # Test-split extraction: the reference 3.15 s as the paper counts it (p121 excludes its decoding, so it equals the
+    # instrumented boundary), 5.15 s by timestamps;
     # Tetris 3 s, 3 s, and 5 s.
     extraction = got['extraction']
-    assert extraction['seconds'] == dict(reference=dict(paper=3.45, instrumented=3.15, process=5.15),
+    assert extraction['seconds'] == dict(reference=dict(paper=3.15, instrumented=3.15, process=5.15),
                                          tetris=dict(paper=3.0, instrumented=3.0, process=5.0))
     assert extraction['paper_time_ratio_to_tradeoff_table'] == dict(reference=1.0, tetris=pytest.approx(1.0, abs=1e-3))
     # Break-even at 900 frames per minute: the same 4.5 s saving per video minute on both boundaries here.
@@ -871,7 +875,7 @@ def test_measure_dataset_end_to_end(con, world):
     assert even['frames_per_video_minute'] == 900
     assert even['instrumented']['saving_s_per_video_minute'] == pytest.approx(4.5)
     assert even['instrumented']['break_even_video_minutes'] == pytest.approx(620.2 / 4.5, abs=0.1)
-    assert even['process']['break_even_video_minutes'] == pytest.approx(634.8 / 4.5, abs=0.1)
+    assert even['process']['break_even_video_minutes'] == pytest.approx(634.4 / 4.5, abs=0.1)
 
 
 def test_measure_dataset_requires_every_training_frame_timed(con, world, monkeypatch):
@@ -1342,7 +1346,7 @@ def test_measure_dataset_with_retiming(con, world, tmp_path):
     got = prep.measure_dataset(con, DS, 0.05, world['compilations'], retiming=True)
     retiming = got['retiming']
     # The cache's figures are unchanged.
-    assert got['totals']['instrumented_s'] == pytest.approx(620.2) and got['totals']['process_s'] == pytest.approx(634.8)
+    assert got['totals']['instrumented_s'] == pytest.approx(620.2) and got['totals']['process_s'] == pytest.approx(634.4)
     c = retiming['components']
     seconds = {k: (v['instrumented_s'], v['process_s']) for k, v in c.items()}
     assert seconds == {
@@ -1384,7 +1388,7 @@ def test_measure_dataset_with_retiming(con, world, tmp_path):
     # Totals: the cache's components with the measured figures in place, plus p013.
     totals = retiming['totals_with_retiming']
     assert totals['instrumented_s'] == pytest.approx(620.2 - 40 + 60 - 20 + 12 + 3)
-    assert totals['process_s'] == pytest.approx(634.8 - 40 + 60 - 20 + 12 + 3 - 2.2 + 9)
+    assert totals['process_s'] == pytest.approx(634.4 - 40 + 60 - 20 + 12 + 3 - 2.2 + 9)
     # Replaced, cross-checked, and cache-only components are named apart.
     assert totals['measured_components'] == ['mistrack_profiling', 'reference_detection_train', 'training_data_pruning',
                                              'validation_scoring']
