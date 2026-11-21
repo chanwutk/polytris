@@ -197,3 +197,16 @@ mounted from the main checkout (`weights/` is not synced to the profiling checko
   and likely `pulp.py`), with a test that a single-appearance polyomino is kept.  Not yet: it changes every
   cached p022 result and everything downstream.  Afterwards all-1s gaps really do keep everything, so the
   solve-skip (removed in 9691538) could return, binarizing as p022 does.
+
+### D30. Equivalence rechecked on the current code (caldot1-y05 and jnc0, 3 videos each, 2026-11-21)
+`profiling.tools.compare_scripts` with its small grid and a 10 s solve limit.
+- caldot1-y05 (va00-02): identical totals to the first check (7ae340d).
+- jnc0 (va05-07): every mismatch is explained.
+  - Classifier scores: s=1 equal on all 3 videos; s=4 differs by at most 1 (out of 255) on 3-7 values per
+    video, likely GPU float nondeterminism (classify runs once on every frame, p020 batched only the sampled
+    frames).  No downstream result changes: every s=4 output matches.
+  - Pruned grids: 23 of 23 compared are equal.  All 24 s=1 pruned pairs (plus 1 at s=4) are excluded because
+    the cached p022 solve ran 107-167 ms, past its 0.1 s limit, so it is not the optimum.
+  - Canvases, detections, tracks and HOTA differ only on those excluded s=1 pruned branches (48 of 144
+    branches; HOTA within 0.030).  Unpruned and s=4 detections agree within 1.2e-4 px.
+Reports: `measurements-results/profiling-check/{caldot1-y05-rerun,jnc0}.json`.

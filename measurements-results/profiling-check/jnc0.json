@@ -1,0 +1,4899 @@
+{
+ "grid": {
+  "sample_rates": [
+   1,
+   4
+  ],
+  "relevance_thresholds": [
+   0.25,
+   0.5
+  ],
+  "mistrack_tolerances": [
+   null,
+   0.4,
+   0.8
+  ],
+  "tile_paddings": [
+   "none",
+   "tr"
+  ],
+  "canvas_scales": [
+   1.0
+  ],
+  "trackers": [
+   "sortcython",
+   "bytetrackcython"
+  ]
+ },
+ "time_limit_s": 10.0,
+ "summary": {
+  "config": "profiling/configs/jnc0.yaml",
+  "dataset": "jnc0",
+  "videoset": "valid",
+  "videos": 3,
+  "configurations": 48,
+  "records": 144,
+  "wall_s": 180.4785418510437,
+  "reduce_search_space": true,
+  "frames": 3225,
+  "video_frames": {
+   "va05.mp4": 1075,
+   "va06.mp4": 1075,
+   "va07.mp4": 1075
+  }
+ },
+ "stages": {
+  "020_relevancy": [
+   {
+    "path": "va05.mp4/020_relevancy/ShuffleNet05_60_1/score/score.jsonl",
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va05.mp4/020_relevancy/ShuffleNet05_60_4/score/score.jsonl",
+    "equal": false,
+    "max_abs_diff": 1,
+    "differing_values": 7
+   },
+   {
+    "path": "va06.mp4/020_relevancy/ShuffleNet05_60_1/score/score.jsonl",
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va06.mp4/020_relevancy/ShuffleNet05_60_4/score/score.jsonl",
+    "equal": false,
+    "max_abs_diff": 1,
+    "differing_values": 4
+   },
+   {
+    "path": "va07.mp4/020_relevancy/ShuffleNet05_60_1/score/score.jsonl",
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va07.mp4/020_relevancy/ShuffleNet05_60_4/score/score.jsonl",
+    "equal": false,
+    "max_abs_diff": 1,
+    "differing_values": 3
+   }
+  ],
+  "022_pruned_polyominoes": [
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 23956,
+    "cached_solve_ms": 117.28903198242188,
+    "compared": false
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 19085,
+    "cached_solve_ms": 126.64255714416504,
+    "compared": false
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 18961,
+    "cached_solve_ms": 111.43429183959961,
+    "compared": false
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 14824,
+    "cached_solve_ms": 115.478759765625,
+    "compared": false
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 28813,
+    "cached_solve_ms": 109.64715766906738,
+    "compared": false
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 23896,
+    "cached_solve_ms": 117.24362754821777,
+    "compared": false
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 23306,
+    "cached_solve_ms": 111.20167922973633,
+    "compared": false
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 18709,
+    "cached_solve_ms": 113.39548683166504,
+    "compared": false
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 10161,
+    "cached_solve_ms": 36.33631134033203,
+    "compared": true,
+    "cached_kept": 10161,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 9436,
+    "cached_solve_ms": 25.556480407714844,
+    "compared": true,
+    "cached_kept": 9436,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 8438,
+    "cached_solve_ms": 31.902027130126953,
+    "compared": true,
+    "cached_kept": 8438,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 7629,
+    "cached_solve_ms": 31.994369506835938,
+    "compared": true,
+    "cached_kept": 7629,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 10436,
+    "cached_solve_ms": 15.527894973754883,
+    "compared": true,
+    "cached_kept": 10436,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 10028,
+    "cached_solve_ms": 21.332496643066406,
+    "compared": true,
+    "cached_kept": 10028,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 8753,
+    "cached_solve_ms": 16.088756561279297,
+    "compared": true,
+    "cached_kept": 8753,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va05.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 8270,
+    "cached_solve_ms": 41.395084381103516,
+    "compared": true,
+    "cached_kept": 8270,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 19840,
+    "cached_solve_ms": 109.60390281677246,
+    "compared": false
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 16253,
+    "cached_solve_ms": 123.15156745910645,
+    "compared": false
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 15755,
+    "cached_solve_ms": 166.9285011291504,
+    "compared": false
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 13121,
+    "cached_solve_ms": 122.61355400085449,
+    "compared": false
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 24096,
+    "cached_solve_ms": 113.25969123840332,
+    "compared": false
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 19966,
+    "cached_solve_ms": 108.83234024047852,
+    "compared": false
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 19777,
+    "cached_solve_ms": 107.12416458129883,
+    "compared": false
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 16110,
+    "cached_solve_ms": 109.2681713104248,
+    "compared": false
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 9178,
+    "cached_solve_ms": 48.34726524353027,
+    "compared": true,
+    "cached_kept": 9178,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 8445,
+    "cached_solve_ms": 26.861690521240234,
+    "compared": true,
+    "cached_kept": 8445,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 7727,
+    "cached_solve_ms": 40.445274353027344,
+    "compared": true,
+    "cached_kept": 7727,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 7116,
+    "cached_solve_ms": 22.41692352294922,
+    "compared": true,
+    "cached_kept": 7116,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 9470,
+    "cached_solve_ms": 15.749013900756836,
+    "compared": true,
+    "cached_kept": 9470,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 9078,
+    "cached_solve_ms": 21.40300178527832,
+    "compared": true,
+    "cached_kept": 9078,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 8020,
+    "cached_solve_ms": 24.00761604309082,
+    "compared": true,
+    "cached_kept": 8020,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va06.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 7674,
+    "cached_solve_ms": 26.331600189208984,
+    "compared": true,
+    "cached_kept": 7674,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 24406,
+    "cached_solve_ms": 109.9826774597168,
+    "compared": false
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 19974,
+    "cached_solve_ms": 123.41259574890137,
+    "compared": false
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 19120,
+    "cached_solve_ms": 113.84996604919434,
+    "compared": false
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_040_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 15890,
+    "cached_solve_ms": 117.5322494506836,
+    "compared": false
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 28896,
+    "cached_solve_ms": 113.79736328125,
+    "compared": false
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 24550,
+    "cached_solve_ms": 110.54105758666992,
+    "compared": false
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 23610,
+    "cached_solve_ms": 114.30666542053223,
+    "compared": false
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_1_080_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 19550,
+    "cached_solve_ms": 116.1692123413086,
+    "compared": false
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 10268,
+    "cached_solve_ms": 40.98128318786621,
+    "compared": true,
+    "cached_kept": 10268,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 9555,
+    "cached_solve_ms": 100.45872497558594,
+    "compared": false
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 8780,
+    "cached_solve_ms": 54.37850761413574,
+    "compared": true,
+    "cached_kept": 8780,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_040_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 8060,
+    "cached_solve_ms": 55.219749450683594,
+    "compared": true,
+    "cached_kept": 8060,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r025_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 10515,
+    "cached_solve_ms": 15.298381805419922,
+    "compared": true,
+    "cached_kept": 10515,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r025_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 10145,
+    "cached_solve_ms": 25.869386672973633,
+    "compared": true,
+    "cached_kept": 10145,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r050_bytetrackcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 9052,
+    "cached_solve_ms": 18.66341781616211,
+    "compared": true,
+    "cached_kept": 9052,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   },
+   {
+    "path": "va07.mp4/022_pruned_polyominoes/ShuffleNet05_60_4_080_r050_sortcython/score/score.jsonl",
+    "ours_status": 2,
+    "ours_kept": 8657,
+    "cached_solve_ms": 72.56014251708984,
+    "compared": true,
+    "cached_kept": 8657,
+    "equal": true,
+    "max_abs_diff": 0,
+    "differing_values": 0
+   }
+  ],
+  "033_compressed_frames": [
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython",
+    "collages": [
+     119,
+     120
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+    "collages": [
+     96,
+     96
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython",
+    "collages": [
+     245,
+     248
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+    "collages": [
+     195,
+     196
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython",
+    "collages": [
+     92,
+     93
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+    "collages": [
+     73,
+     74
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython",
+    "collages": [
+     203,
+     204
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+    "collages": [
+     158,
+     160
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython",
+    "collages": [
+     141,
+     141
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+    "collages": [
+     119,
+     120
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+    "collages": [
+     300,
+     301
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+    "collages": [
+     245,
+     247
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
+    "collages": [
+     113,
+     113
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+    "collages": [
+     91,
+     92
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
+    "collages": [
+     254,
+     255
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_tr_s100_sortcython",
+    "collages": [
+     200,
+     201
+    ],
+    "equal": false
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_r025_none_s100",
+    "collages": [
+     196,
+     196
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_r025_tr_s100",
+    "collages": [
+     457,
+     457
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_none_s100",
+    "collages": [
+     163,
+     163
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_tr_s100",
+    "collages": [
+     410,
+     410
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_none_s100_bytetrackcython",
+    "collages": [
+     49,
+     49
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+    "collages": [
+     46,
+     46
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_tr_s100_bytetrackcython",
+    "collages": [
+     114,
+     114
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_tr_s100_sortcython",
+    "collages": [
+     103,
+     103
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_none_s100_bytetrackcython",
+    "collages": [
+     40,
+     40
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+    "collages": [
+     37,
+     37
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_tr_s100_bytetrackcython",
+    "collages": [
+     99,
+     99
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_tr_s100_sortcython",
+    "collages": [
+     86,
+     86
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_none_s100_bytetrackcython",
+    "collages": [
+     50,
+     50
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+    "collages": [
+     48,
+     48
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_tr_s100_bytetrackcython",
+    "collages": [
+     118,
+     118
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+    "collages": [
+     112,
+     112
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_none_s100_bytetrackcython",
+    "collages": [
+     41,
+     41
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_none_s100_sortcython",
+    "collages": [
+     40,
+     40
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_tr_s100_bytetrackcython",
+    "collages": [
+     105,
+     105
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_tr_s100_sortcython",
+    "collages": [
+     97,
+     97
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_r025_none_s100",
+    "collages": [
+     50,
+     50
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_r025_tr_s100",
+    "collages": [
+     118,
+     118
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_r050_none_s100",
+    "collages": [
+     41,
+     41
+    ],
+    "equal": true
+   },
+   {
+    "path": "va05.mp4/033_compressed_frames/ShuffleNet05_60_4_r050_tr_s100",
+    "collages": [
+     104,
+     104
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython",
+    "collages": [
+     96,
+     97
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+    "collages": [
+     79,
+     80
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython",
+    "collages": [
+     213,
+     214
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+    "collages": [
+     173,
+     175
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython",
+    "collages": [
+     77,
+     77
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+    "collages": [
+     64,
+     65
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython",
+    "collages": [
+     173,
+     174
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+    "collages": [
+     145,
+     146
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython",
+    "collages": [
+     117,
+     117
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+    "collages": [
+     97,
+     98
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+    "collages": [
+     262,
+     261
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+    "collages": [
+     214,
+     214
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
+    "collages": [
+     96,
+     96
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+    "collages": [
+     79,
+     79
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
+    "collages": [
+     220,
+     220
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_tr_s100_sortcython",
+    "collages": [
+     177,
+     177
+    ],
+    "equal": false
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_r025_none_s100",
+    "collages": [
+     178,
+     178
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_r025_tr_s100",
+    "collages": [
+     429,
+     429
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_none_s100",
+    "collages": [
+     151,
+     151
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_tr_s100",
+    "collages": [
+     374,
+     374
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_none_s100_bytetrackcython",
+    "collages": [
+     44,
+     44
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+    "collages": [
+     41,
+     41
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_tr_s100_bytetrackcython",
+    "collages": [
+     105,
+     105
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_tr_s100_sortcython",
+    "collages": [
+     94,
+     94
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_none_s100_bytetrackcython",
+    "collages": [
+     37,
+     37
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+    "collages": [
+     35,
+     35
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_tr_s100_bytetrackcython",
+    "collages": [
+     90,
+     90
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_tr_s100_sortcython",
+    "collages": [
+     82,
+     82
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_none_s100_bytetrackcython",
+    "collages": [
+     46,
+     46
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+    "collages": [
+     44,
+     44
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_tr_s100_bytetrackcython",
+    "collages": [
+     109,
+     109
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+    "collages": [
+     104,
+     104
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_none_s100_bytetrackcython",
+    "collages": [
+     38,
+     38
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_none_s100_sortcython",
+    "collages": [
+     37,
+     37
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_tr_s100_bytetrackcython",
+    "collages": [
+     95,
+     95
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_tr_s100_sortcython",
+    "collages": [
+     90,
+     90
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_r025_none_s100",
+    "collages": [
+     45,
+     45
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_r025_tr_s100",
+    "collages": [
+     110,
+     110
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_r050_none_s100",
+    "collages": [
+     38,
+     38
+    ],
+    "equal": true
+   },
+   {
+    "path": "va06.mp4/033_compressed_frames/ShuffleNet05_60_4_r050_tr_s100",
+    "collages": [
+     95,
+     95
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython",
+    "collages": [
+     123,
+     123
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_none_s100_sortcython",
+    "collages": [
+     103,
+     103
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython",
+    "collages": [
+     250,
+     250
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r025_tr_s100_sortcython",
+    "collages": [
+     203,
+     203
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython",
+    "collages": [
+     94,
+     95
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_none_s100_sortcython",
+    "collages": [
+     79,
+     80
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython",
+    "collages": [
+     202,
+     203
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_040_r050_tr_s100_sortcython",
+    "collages": [
+     167,
+     167
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython",
+    "collages": [
+     141,
+     142
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_none_s100_sortcython",
+    "collages": [
+     124,
+     124
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython",
+    "collages": [
+     301,
+     300
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r025_tr_s100_sortcython",
+    "collages": [
+     250,
+     252
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython",
+    "collages": [
+     115,
+     115
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_none_s100_sortcython",
+    "collages": [
+     97,
+     98
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython",
+    "collages": [
+     253,
+     254
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_080_r050_tr_s100_sortcython",
+    "collages": [
+     206,
+     207
+    ],
+    "equal": false
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_r025_none_s100",
+    "collages": [
+     198,
+     198
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_r025_tr_s100",
+    "collages": [
+     550,
+     550
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_none_s100",
+    "collages": [
+     172,
+     172
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_1_r050_tr_s100",
+    "collages": [
+     430,
+     430
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_none_s100_bytetrackcython",
+    "collages": [
+     50,
+     50
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_none_s100_sortcython",
+    "collages": [
+     47,
+     47
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_tr_s100_bytetrackcython",
+    "collages": [
+     138,
+     138
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r025_tr_s100_sortcython",
+    "collages": [
+     113,
+     113
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_none_s100_bytetrackcython",
+    "collages": [
+     43,
+     43
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_none_s100_sortcython",
+    "collages": [
+     40,
+     40
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_tr_s100_bytetrackcython",
+    "collages": [
+     103,
+     103
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_040_r050_tr_s100_sortcython",
+    "collages": [
+     90,
+     90
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_none_s100_bytetrackcython",
+    "collages": [
+     51,
+     51
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_none_s100_sortcython",
+    "collages": [
+     49,
+     49
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_tr_s100_bytetrackcython",
+    "collages": [
+     146,
+     146
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r025_tr_s100_sortcython",
+    "collages": [
+     132,
+     132
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_none_s100_bytetrackcython",
+    "collages": [
+     44,
+     44
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_none_s100_sortcython",
+    "collages": [
+     42,
+     42
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_tr_s100_bytetrackcython",
+    "collages": [
+     112,
+     112
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_080_r050_tr_s100_sortcython",
+    "collages": [
+     98,
+     98
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_r025_none_s100",
+    "collages": [
+     51,
+     51
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_r025_tr_s100",
+    "collages": [
+     145,
+     145
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_r050_none_s100",
+    "collages": [
+     44,
+     44
+    ],
+    "equal": true
+   },
+   {
+    "path": "va07.mp4/033_compressed_frames/ShuffleNet05_60_4_r050_tr_s100",
+    "collages": [
+     111,
+     111
+    ],
+    "equal": true
+   }
+  ],
+  "050_uncompressed_detections": [
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 25,
+    "frames_with_different_box_counts": 563,
+    "max_abs_box_diff_same_count": 800.158821105957,
+    "boxes_ours": 7173,
+    "boxes_theirs": 7242
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 90,
+    "frames_with_different_box_counts": 425,
+    "max_abs_box_diff_same_count": 682.4943237304688,
+    "boxes_ours": 5638,
+    "boxes_theirs": 5660
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 23,
+    "frames_with_different_box_counts": 537,
+    "max_abs_box_diff_same_count": 780.8712348937988,
+    "boxes_ours": 7571,
+    "boxes_theirs": 7629
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 86,
+    "frames_with_different_box_counts": 370,
+    "max_abs_box_diff_same_count": 813.5043029785156,
+    "boxes_ours": 5960,
+    "boxes_theirs": 5989
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 37,
+    "frames_with_different_box_counts": 623,
+    "max_abs_box_diff_same_count": 820.0216369628906,
+    "boxes_ours": 6270,
+    "boxes_theirs": 6308
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 89,
+    "frames_with_different_box_counts": 455,
+    "max_abs_box_diff_same_count": 918.5523681640625,
+    "boxes_ours": 4830,
+    "boxes_theirs": 4897
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 25,
+    "frames_with_different_box_counts": 592,
+    "max_abs_box_diff_same_count": 952.2861022949219,
+    "boxes_ours": 6791,
+    "boxes_theirs": 6827
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 75,
+    "frames_with_different_box_counts": 400,
+    "max_abs_box_diff_same_count": 999.0035400390625,
+    "boxes_ours": 5203,
+    "boxes_theirs": 5311
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 7,
+    "frames_with_different_box_counts": 693,
+    "max_abs_box_diff_same_count": 979.0266304016113,
+    "boxes_ours": 8788,
+    "boxes_theirs": 8822
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 26,
+    "frames_with_different_box_counts": 577,
+    "max_abs_box_diff_same_count": 981.4500122070312,
+    "boxes_ours": 7236,
+    "boxes_theirs": 7285
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 8,
+    "frames_with_different_box_counts": 650,
+    "max_abs_box_diff_same_count": 985.1633911132812,
+    "boxes_ours": 9293,
+    "boxes_theirs": 9336
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 23,
+    "frames_with_different_box_counts": 545,
+    "max_abs_box_diff_same_count": 813.2335243225098,
+    "boxes_ours": 7639,
+    "boxes_theirs": 7723
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 3,
+    "frames_with_different_box_counts": 699,
+    "max_abs_box_diff_same_count": 869.1855220794678,
+    "boxes_ours": 7882,
+    "boxes_theirs": 7837
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 28,
+    "frames_with_different_box_counts": 592,
+    "max_abs_box_diff_same_count": 992.9122314453125,
+    "boxes_ours": 6274,
+    "boxes_theirs": 6311
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 2,
+    "frames_with_different_box_counts": 670,
+    "max_abs_box_diff_same_count": 866.32861328125,
+    "boxes_ours": 8542,
+    "boxes_theirs": 8532
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 19,
+    "frames_with_different_box_counts": 559,
+    "max_abs_box_diff_same_count": 951.7853012084961,
+    "boxes_ours": 6774,
+    "boxes_theirs": 6822
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r025_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 12989,
+    "boxes_theirs": 12989
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r025_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1067,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 13724,
+    "boxes_theirs": 13724
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 12222,
+    "boxes_theirs": 12222
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 13251,
+    "boxes_theirs": 13251
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1003,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0001220703125,
+    "boxes_ours": 3157,
+    "boxes_theirs": 3157
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2922,
+    "boxes_theirs": 2922
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3306,
+    "boxes_theirs": 3306
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3034,
+    "boxes_theirs": 3034
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2943,
+    "boxes_theirs": 2943
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1035,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0001220703125,
+    "boxes_ours": 2617,
+    "boxes_theirs": 2617
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1073,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 3.0517578125e-05,
+    "boxes_ours": 3164,
+    "boxes_theirs": 3164
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2796,
+    "boxes_theirs": 2796
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3268,
+    "boxes_theirs": 3268
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3100,
+    "boxes_theirs": 3100
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3466,
+    "boxes_theirs": 3466
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3293,
+    "boxes_theirs": 3293
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1022,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0001220703125,
+    "boxes_ours": 3091,
+    "boxes_theirs": 3091
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2889,
+    "boxes_theirs": 2889
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1061,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 3334,
+    "boxes_theirs": 3334
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1060,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 3121,
+    "boxes_theirs": 3121
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r025_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3262,
+    "boxes_theirs": 3262
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r025_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1074,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 2.384185791015625e-07,
+    "boxes_ours": 3456,
+    "boxes_theirs": 3456
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r050_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1030,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 3084,
+    "boxes_theirs": 3084
+   },
+   {
+    "path": "va05.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r050_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3332,
+    "boxes_theirs": 3332
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 28,
+    "frames_with_different_box_counts": 547,
+    "max_abs_box_diff_same_count": 920.4841079711914,
+    "boxes_ours": 5739,
+    "boxes_theirs": 5737
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 75,
+    "frames_with_different_box_counts": 393,
+    "max_abs_box_diff_same_count": 779.4854125976562,
+    "boxes_ours": 4644,
+    "boxes_theirs": 4702
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 22,
+    "frames_with_different_box_counts": 565,
+    "max_abs_box_diff_same_count": 967.3493041992188,
+    "boxes_ours": 6027,
+    "boxes_theirs": 6029
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 76,
+    "frames_with_different_box_counts": 407,
+    "max_abs_box_diff_same_count": 722.9331970214844,
+    "boxes_ours": 4890,
+    "boxes_theirs": 4902
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 25,
+    "frames_with_different_box_counts": 567,
+    "max_abs_box_diff_same_count": 924.2893676757812,
+    "boxes_ours": 5052,
+    "boxes_theirs": 5062
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 66,
+    "frames_with_different_box_counts": 416,
+    "max_abs_box_diff_same_count": 1013.0373382568359,
+    "boxes_ours": 4150,
+    "boxes_theirs": 4213
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 20,
+    "frames_with_different_box_counts": 566,
+    "max_abs_box_diff_same_count": 852.1133422851562,
+    "boxes_ours": 5357,
+    "boxes_theirs": 5383
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 56,
+    "frames_with_different_box_counts": 397,
+    "max_abs_box_diff_same_count": 694.43798828125,
+    "boxes_ours": 4409,
+    "boxes_theirs": 4448
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 3,
+    "frames_with_different_box_counts": 677,
+    "max_abs_box_diff_same_count": 847.53466796875,
+    "boxes_ours": 7192,
+    "boxes_theirs": 7147
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 22,
+    "frames_with_different_box_counts": 608,
+    "max_abs_box_diff_same_count": 916.5366516113281,
+    "boxes_ours": 5882,
+    "boxes_theirs": 5887
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 4,
+    "frames_with_different_box_counts": 658,
+    "max_abs_box_diff_same_count": 912.1129302978516,
+    "boxes_ours": 7543,
+    "boxes_theirs": 7542
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 17,
+    "frames_with_different_box_counts": 574,
+    "max_abs_box_diff_same_count": 872.243408203125,
+    "boxes_ours": 6169,
+    "boxes_theirs": 6165
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 4,
+    "frames_with_different_box_counts": 678,
+    "max_abs_box_diff_same_count": 821.4493350982666,
+    "boxes_ours": 6552,
+    "boxes_theirs": 6541
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 26,
+    "frames_with_different_box_counts": 559,
+    "max_abs_box_diff_same_count": 839.8366088867188,
+    "boxes_ours": 5257,
+    "boxes_theirs": 5278
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 0,
+    "frames_with_different_box_counts": 667,
+    "max_abs_box_diff_same_count": 795.6450805664062,
+    "boxes_ours": 6994,
+    "boxes_theirs": 6960
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 16,
+    "frames_with_different_box_counts": 546,
+    "max_abs_box_diff_same_count": 839.0910263061523,
+    "boxes_ours": 5596,
+    "boxes_theirs": 5617
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r025_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 11578,
+    "boxes_theirs": 11578
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r025_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1065,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 12250,
+    "boxes_theirs": 12250
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 11008,
+    "boxes_theirs": 11008
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 11796,
+    "boxes_theirs": 11796
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2785,
+    "boxes_theirs": 2785
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 990,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 2532,
+    "boxes_theirs": 2532
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1056,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 2924,
+    "boxes_theirs": 2924
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2656,
+    "boxes_theirs": 2656
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1013,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 2643,
+    "boxes_theirs": 2643
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2405,
+    "boxes_theirs": 2405
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2825,
+    "boxes_theirs": 2825
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2555,
+    "boxes_theirs": 2555
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2920,
+    "boxes_theirs": 2920
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2744,
+    "boxes_theirs": 2744
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1054,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0001220703125,
+    "boxes_ours": 3053,
+    "boxes_theirs": 3053
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2904,
+    "boxes_theirs": 2904
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2778,
+    "boxes_theirs": 2778
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1025,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 2627,
+    "boxes_theirs": 2627
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2978,
+    "boxes_theirs": 2978
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2812,
+    "boxes_theirs": 2812
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r025_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1015,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0001220703125,
+    "boxes_ours": 2912,
+    "boxes_theirs": 2912
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r025_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3080,
+    "boxes_theirs": 3080
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r050_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2767,
+    "boxes_theirs": 2767
+   },
+   {
+    "path": "va06.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r050_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 2970,
+    "boxes_theirs": 2970
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 42,
+    "frames_with_different_box_counts": 574,
+    "max_abs_box_diff_same_count": 975.4539184570312,
+    "boxes_ours": 8870,
+    "boxes_theirs": 8879
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 99,
+    "frames_with_different_box_counts": 393,
+    "max_abs_box_diff_same_count": 881.1777648925781,
+    "boxes_ours": 7231,
+    "boxes_theirs": 7235
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 37,
+    "frames_with_different_box_counts": 520,
+    "max_abs_box_diff_same_count": 953.4305992126465,
+    "boxes_ours": 9361,
+    "boxes_theirs": 9344
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 93,
+    "frames_with_different_box_counts": 384,
+    "max_abs_box_diff_same_count": 875.6768798828125,
+    "boxes_ours": 7577,
+    "boxes_theirs": 7606
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 47,
+    "frames_with_different_box_counts": 575,
+    "max_abs_box_diff_same_count": 889.5868225097656,
+    "boxes_ours": 7638,
+    "boxes_theirs": 7675
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 123,
+    "frames_with_different_box_counts": 418,
+    "max_abs_box_diff_same_count": 576.8758544921875,
+    "boxes_ours": 6293,
+    "boxes_theirs": 6378
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 49,
+    "frames_with_different_box_counts": 563,
+    "max_abs_box_diff_same_count": 903.6919097900391,
+    "boxes_ours": 8144,
+    "boxes_theirs": 8160
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_040_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 118,
+    "frames_with_different_box_counts": 403,
+    "max_abs_box_diff_same_count": 535.0296630859375,
+    "boxes_ours": 6724,
+    "boxes_theirs": 6776
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 9,
+    "frames_with_different_box_counts": 636,
+    "max_abs_box_diff_same_count": 795.3590087890625,
+    "boxes_ours": 10592,
+    "boxes_theirs": 10604
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 31,
+    "frames_with_different_box_counts": 568,
+    "max_abs_box_diff_same_count": 949.6913185119629,
+    "boxes_ours": 8999,
+    "boxes_theirs": 9013
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 10,
+    "frames_with_different_box_counts": 595,
+    "max_abs_box_diff_same_count": 794.9657592773438,
+    "boxes_ours": 11127,
+    "boxes_theirs": 11149
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 28,
+    "frames_with_different_box_counts": 509,
+    "max_abs_box_diff_same_count": 949.9376201629639,
+    "boxes_ours": 9466,
+    "boxes_theirs": 9477
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 16,
+    "frames_with_different_box_counts": 691,
+    "max_abs_box_diff_same_count": 960.2012329101562,
+    "boxes_ours": 9525,
+    "boxes_theirs": 9561
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 51,
+    "frames_with_different_box_counts": 593,
+    "max_abs_box_diff_same_count": 977.6061210632324,
+    "boxes_ours": 7861,
+    "boxes_theirs": 7926
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 18,
+    "frames_with_different_box_counts": 682,
+    "max_abs_box_diff_same_count": 958.0919799804688,
+    "boxes_ours": 10227,
+    "boxes_theirs": 10209
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_080_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 47,
+    "frames_with_different_box_counts": 570,
+    "max_abs_box_diff_same_count": 880.5660858154297,
+    "boxes_ours": 8407,
+    "boxes_theirs": 8457
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r025_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 15487,
+    "boxes_theirs": 15487
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r025_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 16246,
+    "boxes_theirs": 16246
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 14989,
+    "boxes_theirs": 14989
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_1_r050_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 15891,
+    "boxes_theirs": 15891
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1073,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 3.0517578125e-05,
+    "boxes_ours": 3777,
+    "boxes_theirs": 3777
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1074,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 1.1920928955078125e-07,
+    "boxes_ours": 3504,
+    "boxes_theirs": 3504
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3965,
+    "boxes_theirs": 3965
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1073,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 1.52587890625e-05,
+    "boxes_ours": 3679,
+    "boxes_theirs": 3679
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1072,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 2.384185791015625e-07,
+    "boxes_ours": 3609,
+    "boxes_theirs": 3609
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3280,
+    "boxes_theirs": 3280
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3843,
+    "boxes_theirs": 3843
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_040_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3498,
+    "boxes_theirs": 3498
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3895,
+    "boxes_theirs": 3895
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1024,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 6.103515625e-05,
+    "boxes_ours": 3759,
+    "boxes_theirs": 3759
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 4073,
+    "boxes_theirs": 4073
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r025_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3924,
+    "boxes_theirs": 3924
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_none_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3745,
+    "boxes_theirs": 3745
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_none_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3551,
+    "boxes_theirs": 3551
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_tr_s100_bytetrackcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3982,
+    "boxes_theirs": 3982
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_080_r050_tr_s100_sortcython/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3786,
+    "boxes_theirs": 3786
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r025_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1074,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 3.0517578125e-05,
+    "boxes_ours": 3893,
+    "boxes_theirs": 3893
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r025_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1072,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 1.52587890625e-05,
+    "boxes_ours": 4069,
+    "boxes_theirs": 4069
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r050_none_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3768,
+    "boxes_theirs": 3768
+   },
+   {
+    "path": "va07.mp4/050_uncompressed_detections/ShuffleNet05_60_4_r050_tr_s100/detections.jsonl",
+    "frames": 1075,
+    "frames_identical": 1075,
+    "frames_with_different_box_counts": 0,
+    "max_abs_box_diff_same_count": 0.0,
+    "boxes_ours": 3998,
+    "boxes_theirs": 3998
+   }
+  ],
+  "060_uncompressed_tracks": [
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1059,
+    "max_abs_box_diff_same_ids": 804.2225036621094,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12855,
+    "hota_equal": false,
+    "hota_ours": 0.82710301136558,
+    "hota_cached": 0.8365945781865323
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13468,
+    "hota_equal": false,
+    "hota_ours": 0.837250738294334,
+    "hota_cached": 0.8286639015906675
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13082,
+    "hota_equal": false,
+    "hota_ours": 0.8760439748623575,
+    "hota_cached": 0.8780195225468079
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1073,
+    "max_abs_box_diff_same_ids": 979.9592590332031,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13740,
+    "hota_equal": false,
+    "hota_ours": 0.8744622388321132,
+    "hota_cached": 0.8730129923783426
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12439,
+    "hota_equal": false,
+    "hota_ours": 0.7925900695709546,
+    "hota_cached": 0.8103034703114507
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12933,
+    "hota_equal": false,
+    "hota_ours": 0.7891509717180881,
+    "hota_cached": 0.8034936077095763
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 1043.3874344825745,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12876,
+    "hota_equal": false,
+    "hota_ours": 0.8529566894278215,
+    "hota_cached": 0.8554101800298495
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1068,
+    "max_abs_box_diff_same_ids": 1046.8662266731262,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13408,
+    "hota_equal": false,
+    "hota_ours": 0.8497062761972051,
+    "hota_cached": 0.8482932144433611
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13348,
+    "hota_equal": false,
+    "hota_ours": 0.8631645824763033,
+    "hota_cached": 0.859821358187081
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 1012.4540863037109,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13792,
+    "hota_equal": false,
+    "hota_ours": 0.8628878239027354,
+    "hota_cached": 0.857477272572613
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 862.9216918945312,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13370,
+    "hota_equal": false,
+    "hota_ours": 0.8951256208920576,
+    "hota_cached": 0.8914209525351471
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1041,
+    "max_abs_box_diff_same_ids": 804.1707763671875,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 14114,
+    "hota_equal": false,
+    "hota_ours": 0.875688596411714,
+    "hota_cached": 0.8754095050121679
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 949.559741973877,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12859,
+    "hota_equal": false,
+    "hota_ours": 0.8214511007377372,
+    "hota_cached": 0.801356066507222
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13306,
+    "hota_equal": false,
+    "hota_ours": 0.8046363001594515,
+    "hota_cached": 0.8248571245949059
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13205,
+    "hota_equal": false,
+    "hota_ours": 0.8716780307722052,
+    "hota_cached": 0.8710935061908204
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1071,
+    "max_abs_box_diff_same_ids": 865.0266723632812,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 13786,
+    "hota_equal": false,
+    "hota_ours": 0.8552683312239354,
+    "hota_cached": 0.8556762913551876
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1069,
+    "max_abs_box_diff_same_ids": 825.746337890625,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8579711675045874,
+    "hota_cached": 0.8579711675045874
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1069,
+    "max_abs_box_diff_same_ids": 825.746337890625,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8563710955865711,
+    "hota_cached": 0.8563710955865711
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 1033.6939125061035,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.9133769159309499,
+    "hota_cached": 0.9133769159309499
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 1037.844844341278,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8832660493037118,
+    "hota_cached": 0.8832660493037118
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 733,
+    "frames_with_different_track_ids": 558,
+    "max_abs_box_diff_same_ids": 731.1592712402344,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8152959749013127,
+    "hota_cached": 0.8152959749013127
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 605,
+    "frames_with_different_track_ids": 565,
+    "max_abs_box_diff_same_ids": 927.8082427978516,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8153571082617477,
+    "hota_cached": 0.8153571082617477
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 998.2151107788086,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8860591360819885,
+    "hota_cached": 0.8860591360819885
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 1006.125659942627,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.864843728195468,
+    "hota_cached": 0.864843728195468
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 1032.8337059020996,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7141685875933734,
+    "hota_cached": 0.7141685875933734
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 560,
+    "frames_with_different_track_ids": 555,
+    "max_abs_box_diff_same_ids": 669.1162719726562,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8188864346505024,
+    "hota_cached": 0.8188864346505024
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 1033.9036254882812,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7684604198869832,
+    "hota_cached": 0.7684604198869832
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 1006.9757194519043,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8682332302999354,
+    "hota_cached": 0.8682332302999354
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1052,
+    "frames_with_different_track_ids": 1051,
+    "max_abs_box_diff_same_ids": 663.5944213867188,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.6869007809159494,
+    "hota_cached": 0.6869007809159494
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 801,
+    "frames_with_different_track_ids": 788,
+    "max_abs_box_diff_same_ids": 995.1417083740234,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7749301707100577,
+    "hota_cached": 0.7749301707100577
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 999.6912231445312,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7423392027156824,
+    "hota_cached": 0.7423392027156824
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 867.1065673828125,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8388738237024714,
+    "hota_cached": 0.8388738237024714
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 803.5031700134277,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7292641914355596,
+    "hota_cached": 0.7292641914355596
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 980.184814453125,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8419605925952458,
+    "hota_cached": 0.8419605925952458
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 614,
+    "frames_with_different_track_ids": 614,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7593418131932221,
+    "hota_cached": 0.7593418131932221
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1018,
+    "max_abs_box_diff_same_ids": 923.8056354522705,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8747024683122416,
+    "hota_cached": 0.8747024683122416
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1014,
+    "frames_with_different_track_ids": 1004,
+    "max_abs_box_diff_same_ids": 805.961669921875,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.6833136665914817,
+    "hota_cached": 0.6833136665914818
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 865,
+    "frames_with_different_track_ids": 759,
+    "max_abs_box_diff_same_ids": 853.7598266601562,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7873650648507319,
+    "hota_cached": 0.7873650648507319
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 841,
+    "frames_with_different_track_ids": 825,
+    "max_abs_box_diff_same_ids": 6.103515625e-05,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7461564585862726,
+    "hota_cached": 0.7461564585862726
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 961.0667724609375,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8511666630533115,
+    "hota_cached": 0.8511666630533115
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 948.6482543945312,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7202034310643093,
+    "hota_cached": 0.7202034310643093
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 948.6482543945312,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8442711590032663,
+    "hota_cached": 0.8442711590032663
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 916,
+    "frames_with_different_track_ids": 915,
+    "max_abs_box_diff_same_ids": 530.3647537231445,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7518551266836073,
+    "hota_cached": 0.7518551266836073
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 512,
+    "frames_with_different_track_ids": 315,
+    "max_abs_box_diff_same_ids": 1004.2470893859863,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8808815544980697,
+    "hota_cached": 0.8808815544980697
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 528.8345336914062,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.6891355096740357,
+    "hota_cached": 0.6891355096740357
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 549,
+    "frames_with_different_track_ids": 499,
+    "max_abs_box_diff_same_ids": 843.4409790039062,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7810022260542695,
+    "hota_cached": 0.7810022260542695
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 664.3148498535156,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7391233733571395,
+    "hota_cached": 0.7391233733571395
+   },
+   {
+    "path": "va05.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 805.0851440429688,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8539549290805869,
+    "hota_cached": 0.8539549290805869
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11520,
+    "hota_equal": false,
+    "hota_ours": 0.8597960931663146,
+    "hota_cached": 0.8301646968674907
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 993.2905769348145,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11943,
+    "hota_equal": false,
+    "hota_ours": 0.8622981697487937,
+    "hota_cached": 0.8646698190415739
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1060,
+    "max_abs_box_diff_same_ids": 6.425319671630859,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11653,
+    "hota_equal": false,
+    "hota_ours": 0.8819812337563827,
+    "hota_cached": 0.8866622990374065
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1069,
+    "max_abs_box_diff_same_ids": 620.4827880859375,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12125,
+    "hota_equal": false,
+    "hota_ours": 0.8798125479785662,
+    "hota_cached": 0.8767931667382708
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 508.28289794921875,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 10960,
+    "hota_equal": false,
+    "hota_ours": 0.824154840966874,
+    "hota_cached": 0.8313923025296819
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11543,
+    "hota_equal": false,
+    "hota_ours": 0.8352780248402166,
+    "hota_cached": 0.820719298406501
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 364.5584411621094,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11295,
+    "hota_equal": false,
+    "hota_ours": 0.8587644360850327,
+    "hota_cached": 0.8604545929621047
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 624.3328247070312,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11997,
+    "hota_equal": false,
+    "hota_ours": 0.8674061890081047,
+    "hota_cached": 0.8686227137854289
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1072,
+    "max_abs_box_diff_same_ids": 992.6704025268555,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11770,
+    "hota_equal": false,
+    "hota_ours": 0.8708260010222555,
+    "hota_cached": 0.8712971410895748
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12165,
+    "hota_equal": false,
+    "hota_ours": 0.8674168071910484,
+    "hota_cached": 0.8653982440873648
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12058,
+    "hota_equal": false,
+    "hota_ours": 0.9050906274921652,
+    "hota_cached": 0.9036465633594171
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12373,
+    "hota_equal": false,
+    "hota_ours": 0.8887545584127711,
+    "hota_cached": 0.8894739661857528
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 771.8555908203125,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11482,
+    "hota_equal": false,
+    "hota_ours": 0.8426040638319003,
+    "hota_cached": 0.8403507352498915
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 496.8946533203125,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11830,
+    "hota_equal": false,
+    "hota_ours": 0.8459171503673346,
+    "hota_cached": 0.8397896616045358
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 11780,
+    "hota_equal": false,
+    "hota_ours": 0.8815120998401978,
+    "hota_cached": 0.8834609777709653
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 473.5800476074219,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 12174,
+    "hota_equal": false,
+    "hota_ours": 0.8682288569960269,
+    "hota_cached": 0.8703261546413409
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 395,
+    "frames_with_different_track_ids": 390,
+    "max_abs_box_diff_same_ids": 518.74609375,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8724882694056761,
+    "hota_cached": 0.8724882694056761
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1072,
+    "max_abs_box_diff_same_ids": 516.3082275390625,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8612861156521467,
+    "hota_cached": 0.8612861156521467
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 201,
+    "frames_with_different_track_ids": 178,
+    "max_abs_box_diff_same_ids": 6.103515625e-05,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.9211667260324665,
+    "hota_cached": 0.9211667260324665
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 200,
+    "frames_with_different_track_ids": 40,
+    "max_abs_box_diff_same_ids": 1042.6348686218262,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8886775179602453,
+    "hota_cached": 0.8886775179602453
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1073,
+    "max_abs_box_diff_same_ids": 989.2177467346191,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8398210280470838,
+    "hota_cached": 0.8398210280470838
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1073,
+    "max_abs_box_diff_same_ids": 994.0388488769531,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8415727141414758,
+    "hota_cached": 0.8415727141414758
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 54,
+    "frames_with_different_track_ids": 54,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.9037111454449743,
+    "hota_cached": 0.9037111454449743
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 224,
+    "frames_with_different_track_ids": 190,
+    "max_abs_box_diff_same_ids": 950.9303283691406,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8797315987638401,
+    "hota_cached": 0.8797315987638401
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 512.1256103515625,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.6948368092126362,
+    "hota_cached": 0.6948368092126362
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 649.365234375,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8415208993983188,
+    "hota_cached": 0.8415208993983188
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 878,
+    "frames_with_different_track_ids": 799,
+    "max_abs_box_diff_same_ids": 225.9974365234375,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7252517029510348,
+    "hota_cached": 0.7252517029510348
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 791.1910400390625,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8769020849877576,
+    "hota_cached": 0.8769020849877576
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 774.0361938476562,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.6616999806043482,
+    "hota_cached": 0.6616999806043482
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 645,
+    "frames_with_different_track_ids": 524,
+    "max_abs_box_diff_same_ids": 997.3607025146484,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.803498350371828,
+    "hota_cached": 0.803498350371828
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 791.3926086425781,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7168912239132209,
+    "hota_cached": 0.7168912239132209
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 911.08203125,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8604569563513682,
+    "hota_cached": 0.8604569563513682
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 615.94775390625,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7136686570813564,
+    "hota_cached": 0.7136686570813564
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 578,
+    "frames_with_different_track_ids": 428,
+    "max_abs_box_diff_same_ids": 659.1149291992188,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8436705059708252,
+    "hota_cached": 0.8436705059708252
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 791.0723266601562,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.750149024923624,
+    "hota_cached": 0.750149024923624
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 791.1838989257812,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8876112980652576,
+    "hota_cached": 0.8876112980652576
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 981.7403564453125,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.6593491842704543,
+    "hota_cached": 0.6593491842704543
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 981.7403564453125,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8204684614450625,
+    "hota_cached": 0.8204684614450625
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 791.3442077636719,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7203474323620477,
+    "hota_cached": 0.7203474323620477
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 841,
+    "frames_with_different_track_ids": 487,
+    "max_abs_box_diff_same_ids": 997.5962829589844,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8699037327012512,
+    "hota_cached": 0.8699037327012512
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 422.7236328125,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.6973387432477053,
+    "hota_cached": 0.6973387432477053
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 548.9708709716797,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8543531930358232,
+    "hota_cached": 0.8543531930358232
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 796,
+    "frames_with_different_track_ids": 796,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7455960200539893,
+    "hota_cached": 0.7455960200539893
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 643,
+    "frames_with_different_track_ids": 392,
+    "max_abs_box_diff_same_ids": 959.894914150238,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8911457111406624,
+    "hota_cached": 0.8911457111406624
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 508.88409423828125,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.6755921665518139,
+    "hota_cached": 0.6755921665518139
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 515.6405029296875,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8176748825676169,
+    "hota_cached": 0.8176748825676169
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1067,
+    "frames_with_different_track_ids": 1067,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7160418526474914,
+    "hota_cached": 0.7160418526474914
+   },
+   {
+    "path": "va06.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 490,
+    "frames_with_different_track_ids": 228,
+    "max_abs_box_diff_same_ids": 837.0192565917969,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8688416258290343,
+    "hota_cached": 0.8688416258290343
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1072,
+    "max_abs_box_diff_same_ids": 595.8739929199219,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15632,
+    "hota_equal": false,
+    "hota_ours": 0.8629440350775446,
+    "hota_cached": 0.8658061522031582
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1072,
+    "max_abs_box_diff_same_ids": 897.2557830810547,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15925,
+    "hota_equal": false,
+    "hota_ours": 0.8780504229766466,
+    "hota_cached": 0.8832474301035903
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15772,
+    "hota_equal": false,
+    "hota_ours": 0.8910293339189984,
+    "hota_cached": 0.8889481721339378
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 16227,
+    "hota_equal": false,
+    "hota_ours": 0.8793490368837427,
+    "hota_cached": 0.8813116973775692
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1072,
+    "max_abs_box_diff_same_ids": 950.3845825195312,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15237,
+    "hota_equal": false,
+    "hota_ours": 0.8444583219405223,
+    "hota_cached": 0.8277198327091324
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15330,
+    "hota_equal": false,
+    "hota_ours": 0.8342339385005019,
+    "hota_cached": 0.8441407730602735
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1071,
+    "max_abs_box_diff_same_ids": 948.2672729492188,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15535,
+    "hota_equal": false,
+    "hota_ours": 0.8763418274721138,
+    "hota_cached": 0.8758208496520542
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_040_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1072,
+    "max_abs_box_diff_same_ids": 948.2627563476562,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 16108,
+    "hota_equal": false,
+    "hota_ours": 0.875545662411213,
+    "hota_cached": 0.8726352645535352
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1068,
+    "max_abs_box_diff_same_ids": 644.6345825195312,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15721,
+    "hota_equal": false,
+    "hota_ours": 0.8588059559583084,
+    "hota_cached": 0.8706494350058073
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1065,
+    "max_abs_box_diff_same_ids": 987.8322448730469,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 16132,
+    "hota_equal": false,
+    "hota_ours": 0.8802448364140153,
+    "hota_cached": 0.8682015784058833
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15811,
+    "hota_equal": false,
+    "hota_ours": 0.8926533057262973,
+    "hota_cached": 0.8964945654891653
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1075,
+    "max_abs_box_diff_same_ids": 0.0,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 16541,
+    "hota_equal": false,
+    "hota_ours": 0.878955155627061,
+    "hota_cached": 0.8815017051371988
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 971.2896728515625,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15517,
+    "hota_equal": false,
+    "hota_ours": 0.8538960249195563,
+    "hota_cached": 0.8483746803269032
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1072,
+    "max_abs_box_diff_same_ids": 870.1745910644531,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15695,
+    "hota_equal": false,
+    "hota_ours": 0.8489893576005076,
+    "hota_cached": 0.8627985890782673
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 760.0185852050781,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 15864,
+    "hota_equal": false,
+    "hota_ours": 0.8847629466868242,
+    "hota_cached": 0.8843554160857295
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_080_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1072,
+    "max_abs_box_diff_same_ids": 599.1752319335938,
+    "same_up_to_id_renaming": false,
+    "unmatched_track_boxes": 16297,
+    "hota_equal": false,
+    "hota_ours": 0.8757395579546484,
+    "hota_cached": 0.8785565386811119
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1067,
+    "max_abs_box_diff_same_ids": 601.4530334472656,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8814924607235459,
+    "hota_cached": 0.8814924607235459
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1067,
+    "max_abs_box_diff_same_ids": 603.6155700683594,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8611771027215023,
+    "hota_cached": 0.8611771027215023
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1069,
+    "max_abs_box_diff_same_ids": 272.78619384765625,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.9189115555600731,
+    "hota_cached": 0.9189115555600731
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1069,
+    "max_abs_box_diff_same_ids": 859.8405952453613,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.882706156903874,
+    "hota_cached": 0.882706156903874
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1065,
+    "max_abs_box_diff_same_ids": 991.061014175415,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8474796672227242,
+    "hota_cached": 0.8474796672227242
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1065,
+    "max_abs_box_diff_same_ids": 993.1101112365723,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8505115805718945,
+    "hota_cached": 0.8505115805718945
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1065,
+    "max_abs_box_diff_same_ids": 877.5426712036133,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.9067268624248266,
+    "hota_cached": 0.9067268624248266
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_1_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1065,
+    "max_abs_box_diff_same_ids": 922.7013092041016,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8784513471577599,
+    "hota_cached": 0.8784513471577599
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1072,
+    "frames_with_different_track_ids": 1067,
+    "max_abs_box_diff_same_ids": 971.1192016601562,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7561653031647317,
+    "hota_cached": 0.7561653031647317
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 880,
+    "frames_with_different_track_ids": 790,
+    "max_abs_box_diff_same_ids": 970.7146224975586,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8297314329792197,
+    "hota_cached": 0.8297314329792197
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 847.9811248779297,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7956138613067173,
+    "hota_cached": 0.7956138613067173
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 582.9606628417969,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8757042789583115,
+    "hota_cached": 0.8757042789583115
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 972.2433471679688,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7421758893203602,
+    "hota_cached": 0.7421758893203602
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 925,
+    "frames_with_different_track_ids": 924,
+    "max_abs_box_diff_same_ids": 520.4857177734375,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.829888494113632,
+    "hota_cached": 0.829888494113632
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 646.92333984375,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7859194432433162,
+    "hota_cached": 0.7859194432433162
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_040_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 948.8508758544922,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8607339614089258,
+    "hota_cached": 0.8607339614089258
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1068,
+    "frames_with_different_track_ids": 1063,
+    "max_abs_box_diff_same_ids": 597.9314575195312,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7590779247356522,
+    "hota_cached": 0.7590779247356522
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 950.1814117431641,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8516002931682646,
+    "hota_cached": 0.8516002931682646
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 902.1368789672852,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8005668938492019,
+    "hota_cached": 0.8005668938492019
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 645.7894592285156,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8826293444967662,
+    "hota_cached": 0.8826293444967662
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 968.165771484375,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7353617039218093,
+    "hota_cached": 0.7353617039218093
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 848,
+    "frames_with_different_track_ids": 843,
+    "max_abs_box_diff_same_ids": 481.25307738780975,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8258754779093708,
+    "hota_cached": 0.8258754779093708
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 968.1965942382812,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7938936384249503,
+    "hota_cached": 0.7938936384249503
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_080_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 585.0970458984375,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.870425433680991,
+    "hota_cached": 0.870425433680991
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 563.9969024658203,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7583891780138923,
+    "hota_cached": 0.7583891780138923
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1074,
+    "max_abs_box_diff_same_ids": 709.0637817382812,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8532149725718092,
+    "hota_cached": 0.8532149725718092
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 948.9798927307129,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7968645191922983,
+    "hota_cached": 0.7968645191922983
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r025_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 948.9798927307129,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8997417325888278,
+    "hota_cached": 0.8997417325888278
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_none_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1040,
+    "frames_with_different_track_ids": 1039,
+    "max_abs_box_diff_same_ids": 971.4259643554688,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.7362569088623205,
+    "hota_cached": 0.7362569088623205
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_none_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 961,
+    "frames_with_different_track_ids": 716,
+    "max_abs_box_diff_same_ids": 1008.4168319702148,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8254460661032696,
+    "hota_cached": 0.8254460661032696
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_tr_s100_bytetrackcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 649.8496398925781,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.793407344927414,
+    "hota_cached": 0.793407344927414
+   },
+   {
+    "path": "va07.mp4/060_uncompressed_tracks/ShuffleNet05_60_4_r050_tr_s100_sortcython/tracking.jsonl",
+    "equal": false,
+    "lines": [
+     1075,
+     1075
+    ],
+    "differing_lines": 1075,
+    "frames_with_different_track_ids": 1070,
+    "max_abs_box_diff_same_ids": 646.06396484375,
+    "same_up_to_id_renaming": true,
+    "unmatched_track_boxes": 0,
+    "hota_equal": true,
+    "hota_ours": 0.8769416220722311,
+    "hota_cached": 0.8769416220722311
+   }
+  ]
+ },
+ "totals": {
+  "020_relevancy": {
+   "compared": 6,
+   "equal": 3,
+   "rows": 6
+  },
+  "022_pruned_polyominoes": {
+   "compared": 23,
+   "equal": 23,
+   "rows": 48
+  },
+  "033_compressed_frames": {
+   "compared": 120,
+   "equal": 72,
+   "rows": 120
+  },
+  "050_uncompressed_detections": {
+   "rows": 120,
+   "frames_identical": 78624,
+   "frames": 129000,
+   "count_mismatch_frames": 26449,
+   "max_abs_box_diff": 1013.0373382568359
+  },
+  "060_uncompressed_tracks": {
+   "compared": 144,
+   "equal": 96,
+   "rows": 144
+  },
+  "hota_per_video": {
+   "compared": 144,
+   "equal": 96,
+   "max_abs_diff": 0.02963139629882383
+  }
+ }
+}
