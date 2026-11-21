@@ -14,9 +14,10 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 
-from polyis.classify import classify_batch
+from polyis.classify import classify_batch, classify_batch_tensors
 from polyis.pack.collage import (
     _compute_polyomino_tile_boundaries,
     _copy_polyomino_tiles_to_canvas,
@@ -37,6 +38,11 @@ class FakeClassifier(torch.nn.Module):
 
 def run_classify(frame_hw: tuple[int, int]) -> np.ndarray:
     """classify_batch on 3 seeded frames on CPU; returns the uint8 relevance grids."""
+    return classify_both_ways(frame_hw, use_tensors=False)[0]
+
+
+def classify_both_ways(frame_hw: tuple[int, int], use_tensors: bool) -> tuple[np.ndarray, dict]:
+    """The golden classify inputs through classify_batch (numpy lists) or classify_batch_tensors (stacked tensors)."""
     tile = 10
     rng = np.random.default_rng(0)
     h, w = frame_hw
@@ -53,9 +59,14 @@ def run_classify(frame_hw: tuple[int, int]) -> np.ndarray:
     mean = torch.tensor([0.485, 0.456, 0.406] * 2, dtype=torch.float16).view(1, 6, 1, 1)
     std = torch.tensor([0.229, 0.224, 0.225] * 2, dtype=torch.float16).view(1, 6, 1, 1)
     mask = torch.from_numpy((np.arange(grid_h * grid_w) % 3 != 0).astype(np.uint8))
-    probs, _runtime = classify_batch(grid_w, grid_h, positions, frames, prevs, FakeClassifier(),
-                                     tile, 'cpu', mean, std, mask)
-    return probs.numpy()
+    if use_tensors:
+        probs, runtime = classify_batch_tensors(grid_w, grid_h, positions, torch.from_numpy(np.stack(frames)),
+                                                torch.from_numpy(np.stack(prevs)), FakeClassifier(), tile, 'cpu',
+                                                mean, std, mask)
+    else:
+        probs, runtime = classify_batch(grid_w, grid_h, positions, frames, prevs, FakeClassifier(),
+                                        tile, 'cpu', mean, std, mask)
+    return probs.numpy(), runtime
 
 
 def grid_bounds(n: int, tile: int, short_last: int = 0) -> tuple[np.ndarray, np.ndarray]:
@@ -157,6 +168,16 @@ def test_unpack_detections_matches_golden():
     actual = compute_all()
     for case in ('unpack_keep', 'unpack_drop'):
         assert_same(actual[case], golden[case], case)
+
+
+@pytest.mark.parametrize('frame_hw', [(30, 40), (34, 47)])
+def test_classify_batch_tensors_equals_classify_batch(frame_hw):
+    # The tensor core (execution2's entry point) and the list wrapper (p020's) give identical grids,
+    # and report the same runtime fields, so p020's runtime.jsonl keeps its shape.
+    by_list, list_runtime = classify_both_ways(frame_hw, use_tensors=False)
+    by_tensor, tensor_runtime = classify_both_ways(frame_hw, use_tensors=True)
+    assert np.array_equal(by_list, by_tensor)
+    assert [r['op'] for r in list_runtime] == [r['op'] for r in tensor_runtime]
 
 
 def test_golden_cases_are_not_trivial():

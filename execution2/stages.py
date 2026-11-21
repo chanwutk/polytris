@@ -3,7 +3,8 @@ The six execution2 stages (PLAN.md step 4).  Each matches its p0xx script's comp
 
   decode    p020/p030 frame reading: every s-th frame plus the last, and each one's diff partner
             (idx-1, or idx+1 for frame 0), into one shared BGR block per video.
-  classify  p020: classify_batch over the sampled frames in batches of 16 (RGB, diff vs partner).
+  classify  p020: classify_batch's computation over the sampled frames in batches of 16 (RGB, diff vs
+            partner), each batch sent to the GPU in one transfer.
   prune     p022 (only when mistrack_tolerance is set): binarize with score >= floor(T_r*255),
             group tiles with padding mode 0, solve the ILP (0.1 s), keep selected polyominoes.
   pack      p030: binarize with score > T_r*255, group tiles with padding P, best-fit pack,
@@ -30,7 +31,7 @@ from execution2 import frames
 from execution2.config import MISTRACK_TOLERANCES, Config
 from execution2.pipeline import Stage, Worker
 from polyis import dtypes
-from polyis.classify import classify_batch, load_classifier
+from polyis.classify import classify_batch_tensors, load_classifier
 from polyis.models.detector import build_detector, detect_batch
 from polyis.pack.adapters import group_tiles_all
 from polyis.pack.collage import (
@@ -218,12 +219,19 @@ def classify(state: dict, d: Decoded) -> Classified:
 
 
 def _classify_one_batch(state: dict, block: np.ndarray, sampled_pos: np.ndarray, partner_pos: np.ndarray) -> np.ndarray:
-    """One classify_batch call; BGR->RGB copies as p020 makes them (views die with this frame)."""
-    rgb = [np.ascontiguousarray(block[k][:, :, ::-1]) for k in sampled_pos]
-    prev = [np.ascontiguousarray(block[k][:, :, ::-1]) for k in partner_pos]
+    """One batch through p020's classification, with its frames sent to the GPU in one transfer.
+
+    The batch's rows (sampled and partner frames, each row once) are gathered from the block by one
+    numpy indexing step (a copy, so no view outlives this call), sent together, and flipped BGR->RGB
+    on the GPU: the same uint8 tensors p020 builds frame by frame, without 2x16 CPU flips and transfers.
+    """
+    rows, where = np.unique(np.concatenate([sampled_pos, partner_pos]), return_inverse=True)
+    batch = torch.from_numpy(block[rows]).to(DEVICE).flip(-1)
+    where = torch.from_numpy(where).to(DEVICE)
     grid_h, grid_w = state['grid']
-    probs, _runtime = classify_batch(grid_w, grid_h, state['positions'], rgb, prev, state['model'], state['tile_size'],
-                                     DEVICE, state['normalize_mean'], state['normalize_std'], state['mask'])
+    probs, _runtime = classify_batch_tensors(grid_w, grid_h, state['positions'], batch[where[:len(sampled_pos)]],
+                                             batch[where[len(sampled_pos):]], state['model'], state['tile_size'],
+                                             DEVICE, state['normalize_mean'], state['normalize_std'], state['mask'])
     return probs.cpu().numpy()
 
 

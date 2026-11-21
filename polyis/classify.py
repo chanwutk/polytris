@@ -37,10 +37,10 @@ def classify_batch(
     Process up to BATCH_SIZE frames in one batch: prepare tiles for each frame,
     run inference once on all valid tiles, scatter results per frame.
     Returns (list of relevance_grids, runtime dict).
-    """
-    batch_size = len(batch_frames)
-    num_tiles = grid_height * grid_width
 
+    Frames are RGB numpy arrays; they are sent to the GPU one by one (timed as 'send'),
+    then classify_batch_tensors does the rest.
+    """
     # 1. Send individual frames to GPU then stack on GPU
     # Stack on GPU
     send_start = time.time_ns() / 1e6
@@ -50,6 +50,32 @@ def classify_batch(
     prev_gpu = [torch.from_numpy(f).to(device, non_blocking=True) for f in batch_prev_frames]
     prev_frames = torch.stack(prev_gpu, dim=0)
     send_runtime = time.time_ns() / 1e6 - send_start
+
+    return classify_batch_tensors(grid_width, grid_height, positions, frames_tensor, prev_frames, model, tile_size,
+                                  device, normalize_mean, normalize_std, always_relevant_mask, send_runtime)
+
+
+def classify_batch_tensors(
+    grid_width: int,
+    grid_height: int,
+    positions: torch.Tensor,
+    frames_tensor: torch.Tensor,
+    prev_frames: torch.Tensor,
+    model: torch.nn.Module,
+    tile_size: int,
+    device: str,
+    normalize_mean: torch.Tensor,
+    normalize_std: torch.Tensor,
+    always_relevant_mask: torch.Tensor,
+    send_runtime: float = 0.0,
+) -> tuple[torch.Tensor, list[dict]]:
+    """
+    classify_batch on frames already on the GPU: frames_tensor and prev_frames are uint8 RGB
+    [batch, H, W, 3] tensors on `device`.  send_runtime is reported as the 'send' time (the
+    caller's transfer), so the runtime dict has the same keys as classify_batch's.
+    """
+    batch_size = frames_tensor.shape[0]
+    num_tiles = grid_height * grid_width
 
     # Resize images to (tile_size * grid_height, tile_size * grid_width) to ensure exact tile alignment
     resize_start = time.time_ns() / 1e6
