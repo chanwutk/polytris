@@ -108,3 +108,11 @@ throwaway containers, so the Figure 8 job running from `/work/cwkt/projects/tetr
 5. ~~`profiling/main.py`: admission control, memory check, savers writing the scripts' formats~~: done (`python -m profiling.main --config ...`; tests in `tests/profiling/test_main.py`).
 6. ~~Aggregator: dataset HOTA, runtime sums, Pareto JSON, interactive page; tests [15A]~~: done (`python -m profiling.aggregate --config ...`).
 7. Equivalence tool [14A] on validation videos; then a first full-dataset run timed against the scripts.
+   - Equivalence (2026-11-21, `measurements-results/profiling-check/caldot1-y05.json`): caldot1-y05 va00-va02, grid
+     s {1,4} x T_r {0.25,0.5} x (none, {0.4,0.8} x 2 trackers) x P {none,tr}, solve limit 10 s.
+     Classify scores equal p020's for every sample rate (classifying every frame once and slicing is exact).
+     Pruned grids: 41 of 41 compared pairs identical; 7 pairs dropped because p022's cached solve ran past its
+     0.1 s limit (103-114 ms).  Without pruning every stage matches (detections: same box counts on every frame,
+     coordinates within 6.1e-5 px; tracks and per-video HOTA equal).  All 6 downstream mismatches (canvases,
+     detections, tracks, HOTA) descend from those 7 dropped pairs; on them the optimal solve's HOTA is slightly
+     lower (0.949-0.963) than the time-limited cached one's (0.956-0.964).
