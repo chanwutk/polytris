@@ -160,3 +160,18 @@ All 14 points again on one ace GPU with the code at f1c7581 plus the classify co
 - CalDoT2 5% (s=1, no pruning) stays at 186 fps: it is detector-bound (about 200 canvases per video).
 - Tracks equal the cached script tracks up to track-id renaming on 309 of 310 videos (te32 in CalDoT2 10%, the ILP time limit).
 
+
+## Figure 8 rerun (2026-11-21)
+
+Every point of Figure 8's full-Tetris curve (183 configurations, 7 datasets), run one at a time on one ace GPU
+(GPU 2, 128 GB /dev/shm, JPEG canvases) by `execution2/tools/run_figure8.sh` in tmux; results in
+`measurements-results/execution2-figure8/` (`measurements/execution2_figure8_throughput.py`).
+
+- execution2's first-to-last throughput beats the throughput Figure 8 reports on 162 of 183 points; per-dataset
+  medians: Amsterdam 1.36x, CalDoT1 1.25x, CalDoT2 1.47x, B3D1 1.52x, B3D2 1.24x, B3D3 1.72x, B3D4 1.71x.
+  Figure 8's numbers use the published p121 boundary (Tetris decode not counted); execution2's include decode.
+- Outputs equal the cached script tracks up to track-id renaming on 165 of 183 points.  Of the 18 with a
+  mismatching video, 14 prune (mostly s=1, the largest ILPs: the 0.1 s time limit, as with CalDoT2 te32) and 4
+  do not (consistent with canvas-order detector noise, as with caldot1-y05 te06); not examined one by one.
+- Four pruning configurations first failed on Gurobi's 2-session web license ("Too many sessions") and passed on
+  the driver's retry pass.
