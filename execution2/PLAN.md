@@ -116,4 +116,8 @@ Move these pure functions from the scripts into `polyis/` with no logic change. 
 5. ~~`main.py`: dummy-video timing and writing outputs~~: done (`python -m execution2.main`, `tests/execution2/test_main.py`).
    - Startup checks before any worker starts: video files only (other files ignored), no empty dir, no two videos with the same stem, every video openable with >= 2 frames, worst-case `/dev/shm` use within free space.
    - Results are kept in memory and written after the last arrival, so writing cannot stall the timed run. Prints `{"videos", "runtime_s", "frames"}` as one JSON line.
-6. Stage-by-stage diff against p020→p060 on 2–3 test videos of one dataset [13A].
+6. ~~Stage-by-stage diff against p020→p060 on 2–3 test videos of one dataset [13A]~~: done (`execution2/tools/compare_scripts.py`, reports in `measurements-results/execution2-compare/`).
+   - caldot1-y05 te00–te02, real classifier and detector, two configs: s=4 without pruning, and s=8 with mistrack tolerance 0.8 (`execution2/configs/`), both `canvas_format: jpeg`, compared with the cached April 2026 script outputs (read only).
+   - Each stage fed the script's previous output: classify, prune, and pack (index maps, offset lookups, JPEG canvases) are identical to p020, p022, and p030; detect has the same box count in every frame, with coordinates within 1.2e-4 px of p050 (batching order); track fed p050's detections is identical to p060.
+   - End to end through `main` (multi-process): every output equals p060's tracks up to a consistent renaming of track ids, with every box matched within 9.2e-5 px. The renaming comes from box order within a frame (collage order here, p040's `os.listdir` order there), which sets SORT's id numbering.
+   - The `/dev/shm` estimate refused `queue_maxsize: 2` on ace's 8 GiB (it assumes one canvas per stored frame; te01 at s=4 had 59 canvases for ~450 frames), so the comparison configs use `queue_maxsize: 1`.

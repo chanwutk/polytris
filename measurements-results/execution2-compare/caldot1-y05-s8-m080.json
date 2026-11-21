@@ -1,0 +1,235 @@
+{
+  "config": "execution2/configs/caldot1-y05-s8-m080.yaml",
+  "dataset": "caldot1-y05",
+  "params": {
+    "sample_rate": 8,
+    "relevance_threshold": 0.5,
+    "mistrack_tolerance": 0.8,
+    "tile_padding": "none",
+    "tracker": "sortcython",
+    "tile_size": 60,
+    "canvas_scale": 1.0,
+    "canvas_format": "jpeg"
+  },
+  "isolated": {
+    "te00.mp4": {
+      "classify": {
+        "frames_match": true,
+        "equal": true,
+        "max_abs_diff": 0,
+        "differing_values": 0,
+        "values": 10944,
+        "decision_flips": 0
+      },
+      "prune": {
+        "frames_match": true,
+        "equal": true,
+        "max_abs_diff": 0,
+        "differing_values": 0,
+        "values": 10944
+      },
+      "pack": {
+        "collages": [
+          2,
+          2
+        ],
+        "index_maps_equal": true,
+        "offset_lookups_equal": true,
+        "canvases_equal": true
+      },
+      "detect": {
+        "frames": 900,
+        "frames_identical": 900,
+        "frames_with_different_box_counts": 0,
+        "max_abs_box_diff_same_count": 0.0,
+        "boxes_ours": 86,
+        "boxes_theirs": 86
+      },
+      "track": {
+        "equal": true,
+        "lines": [
+          804,
+          804
+        ],
+        "differing_lines": 0,
+        "frames_with_different_track_ids": 0,
+        "max_abs_box_diff_same_ids": 0.0,
+        "same_up_to_id_renaming": true,
+        "unmatched_track_boxes": 0
+      },
+      "track_on_our_detections": {
+        "equal": false,
+        "lines": [
+          804,
+          804
+        ],
+        "differing_lines": 42,
+        "frames_with_different_track_ids": 42,
+        "max_abs_box_diff_same_ids": 0.0,
+        "same_up_to_id_renaming": true,
+        "unmatched_track_boxes": 0
+      }
+    },
+    "te01.mp4": {
+      "classify": {
+        "frames_match": true,
+        "equal": true,
+        "max_abs_diff": 0,
+        "differing_values": 0,
+        "values": 10944,
+        "decision_flips": 0
+      },
+      "prune": {
+        "frames_match": true,
+        "equal": true,
+        "max_abs_diff": 0,
+        "differing_values": 0,
+        "values": 10944
+      },
+      "pack": {
+        "collages": [
+          29,
+          29
+        ],
+        "index_maps_equal": true,
+        "offset_lookups_equal": true,
+        "canvases_equal": true
+      },
+      "detect": {
+        "frames": 900,
+        "frames_identical": 893,
+        "frames_with_different_box_counts": 0,
+        "max_abs_box_diff_same_count": 0.0001220703125,
+        "boxes_ours": 1259,
+        "boxes_theirs": 1259
+      },
+      "track": {
+        "equal": true,
+        "lines": [
+          900,
+          900
+        ],
+        "differing_lines": 0,
+        "frames_with_different_track_ids": 0,
+        "max_abs_box_diff_same_ids": 0.0,
+        "same_up_to_id_renaming": true,
+        "unmatched_track_boxes": 0
+      },
+      "track_on_our_detections": {
+        "equal": false,
+        "lines": [
+          900,
+          900
+        ],
+        "differing_lines": 81,
+        "frames_with_different_track_ids": 0,
+        "max_abs_box_diff_same_ids": 9.1552734375e-05,
+        "same_up_to_id_renaming": true,
+        "unmatched_track_boxes": 0
+      }
+    },
+    "te02.mp4": {
+      "classify": {
+        "frames_match": true,
+        "equal": true,
+        "max_abs_diff": 0,
+        "differing_values": 0,
+        "values": 10944,
+        "decision_flips": 0
+      },
+      "prune": {
+        "frames_match": true,
+        "equal": true,
+        "max_abs_diff": 0,
+        "differing_values": 0,
+        "values": 10944
+      },
+      "pack": {
+        "collages": [
+          21,
+          21
+        ],
+        "index_maps_equal": true,
+        "offset_lookups_equal": true,
+        "canvases_equal": true
+      },
+      "detect": {
+        "frames": 900,
+        "frames_identical": 892,
+        "frames_with_different_box_counts": 0,
+        "max_abs_box_diff_same_count": 6.103515625e-05,
+        "boxes_ours": 1266,
+        "boxes_theirs": 1266
+      },
+      "track": {
+        "equal": true,
+        "lines": [
+          900,
+          900
+        ],
+        "differing_lines": 0,
+        "frames_with_different_track_ids": 0,
+        "max_abs_box_diff_same_ids": 0.0,
+        "same_up_to_id_renaming": true,
+        "unmatched_track_boxes": 0
+      },
+      "track_on_our_detections": {
+        "equal": false,
+        "lines": [
+          900,
+          900
+        ],
+        "differing_lines": 72,
+        "frames_with_different_track_ids": 0,
+        "max_abs_box_diff_same_ids": 6.103515625e-05,
+        "same_up_to_id_renaming": true,
+        "unmatched_track_boxes": 0
+      }
+    }
+  },
+  "chained": {
+    "summary": {
+      "videos": 3,
+      "runtime_s": 1.6020684354007244,
+      "frames": 2700
+    },
+    "videos": {
+      "te00.mp4": {
+        "equal": false,
+        "lines": [
+          804,
+          804
+        ],
+        "differing_lines": 42,
+        "frames_with_different_track_ids": 42,
+        "max_abs_box_diff_same_ids": 0.0,
+        "same_up_to_id_renaming": true,
+        "unmatched_track_boxes": 0
+      },
+      "te01.mp4": {
+        "equal": false,
+        "lines": [
+          900,
+          900
+        ],
+        "differing_lines": 81,
+        "frames_with_different_track_ids": 0,
+        "max_abs_box_diff_same_ids": 9.1552734375e-05,
+        "same_up_to_id_renaming": true,
+        "unmatched_track_boxes": 0
+      },
+      "te02.mp4": {
+        "equal": false,
+        "lines": [
+          900,
+          900
+        ],
+        "differing_lines": 72,
+        "frames_with_different_track_ids": 0,
+        "max_abs_box_diff_same_ids": 6.103515625e-05,
+        "same_up_to_id_renaming": true,
+        "unmatched_track_boxes": 0
+      }
+    }
+  }
+}
