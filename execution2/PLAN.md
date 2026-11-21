@@ -75,7 +75,7 @@ main ─q→ decode ─q→ classify ─q→ [prune] ─q→ pack ─q→ detect
 ## Config (`--config`) [7B]
 
 The YAML has three sections:
-- `params`: Table 1 parameters (s, T_r, M̄, P, A) plus tile_size and canvas_scale.
+- `params`: Table 1 parameters (s, T_r, M̄, P, A) plus tile_size, canvas_scale, and canvas_format (`jpeg` | `raw`).
 - `artifacts`: explicit paths, all checked before any process starts.
   - classifier name, weights and compilation benchmark
   - never-relevant bitmap
@@ -108,9 +108,10 @@ Move these pure functions from the scripts into `polyis/` with no logic change. 
    - backpressure
    - empty dir, non-video file, unreadable video, 1-frame video, zero collages, duplicate stems
 4. ~~Stages: decode, classify, prune, pack, detect, track~~: done (`execution2/stages.py`, `tests/execution2/test_stages.py`).
-   - Decisions: [20B] the detector sees raw canvases, not p030's JPEG (quality 95) round trip; [21A] `polyis.models.detector.build_detector` is shared with `get_detector`; p020's model loading moved to `polyis.classify.load_classifier`.
+   - Decisions: `params.canvas_format` chooses the detector's input: `jpeg` passes each canvas through `cv2.imencode('.jpg')`/`cv2.imdecode`, exactly the pixels p040 reads back from p030's files; `raw` passes the drawn canvas (first chosen as [20B], made a mode on 2026-11-20); [21A] `polyis.models.detector.build_detector` is shared with `get_detector`; p020's model loading moved to `polyis.classify.load_classifier`.
    - Checked against the scripts themselves (loaders redirected to temp files): prune equals p022's `process_video` exactly; pack's index maps and offset lookups equal p030's `compress` exactly, and every drawn tile equals its source tile; track equals p060's `track` file for file; classify equals p020's batching with a fake model.
-   - Known differences from the scripts: canvases are not JPEG-compressed; within a frame, boxes are merged in collage order (p050 follows p040's `os.listdir` order); classify picks its model optimization from the first video it receives.
+   - With `canvas_format: jpeg`, pack's canvases equal p030's decoded JPEGs pixel for pixel.
+   - Known differences from the scripts: with `canvas_format: raw`, canvases are not JPEG-compressed; within a frame, boxes are merged in collage order (p050 follows p040's `os.listdir` order); classify picks its model optimization from the first video it receives.
    - A padded polyomino larger than the canvas (e.g. `canvas_scale` < 1) aborts inside the C `pack()`, as it would in p030; the engine reports it as a worker death.
 5. ~~`main.py`: dummy-video timing and writing outputs~~: done (`python -m execution2.main`, `tests/execution2/test_main.py`).
    - Startup checks before any worker starts: video files only (other files ignored), no empty dir, no two videos with the same stem, every video openable with >= 2 frames, worst-case `/dev/shm` use within free space.
