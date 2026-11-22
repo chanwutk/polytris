@@ -32,6 +32,7 @@ params:
   trackers:
   - sortcython
   - bytetrackcython
+  reduce_search_space: true
 artifacts:
   classifier_weights: /polyis-cache/ams-y05/indexing/training/results/ShuffleNet05_60/model_best.pth
   compilation_benchmark: /polyis-cache/ams-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl

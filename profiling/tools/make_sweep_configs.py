@@ -31,7 +31,9 @@ def sweep_config(dataset: str, grid: dict, detectors: dict) -> dict:
                    'sample_rates': grid['SAMPLE_RATES'], 'relevance_thresholds': grid['RELEVANCE_THRESHOLDS'],
                    'mistrack_tolerances': grid['TRACKING_ACCURACY_THRESHOLDS'],
                    'tile_paddings': grid['TILEPADDING_MODES'], 'canvas_scales': [float(c) for c in grid['CANVAS_SCALE']],
-                   'trackers': grid['TRACKERS']},
+                   'trackers': grid['TRACKERS'],
+                   # Merge tolerances with identical ILPs (the aggregator restores every configuration).
+                   'reduce_search_space': True},
         'artifacts': {
             'classifier_weights': f'{index}/training/results/{classifier}_{tile}/model_best.pth',
             'compilation_benchmark': f'{index}/training/results/{classifier}_{tile}/model_compilation.jsonl',
