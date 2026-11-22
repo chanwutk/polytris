@@ -121,6 +121,8 @@ def execute(cfg: SweepConfig, config_path: str = '',
             build: Callable[[SweepConfig, str, VideoCompletion], list[Stage]] = st.build_stages,
             videos: list[str] | None = None) -> dict:
     """Validate, run the sweep, write records; returns the run summary."""
+    # Wall clock covers the whole sweep: startup checks, video probing, workers, and every result.
+    start = time.time()
     dataset_root = os.path.join(cfg.output_root, cfg.dataset)
     if os.path.exists(dataset_root):
         raise StartupError(f'{dataset_root} already exists; choose another output_root so an earlier sweep is kept')
@@ -136,7 +138,6 @@ def execute(cfg: SweepConfig, config_path: str = '',
     slots, stopped = threading.Semaphore(cfg.system.max_videos_in_flight), threading.Event()
     received: Counter = Counter()
     manager = mp.get_context('spawn').Manager()
-    start = time.time()
     try:
         completion = VideoCompletion(manager)
         with open(os.path.join(out_dir, 'records.jsonl'), 'w') as records:

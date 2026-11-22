@@ -48,6 +48,16 @@ def test_execute_writes_one_record_per_configuration_and_video(setup):
     assert run['videos'] == 3 and run['reduce_search_space'] is cfg.params.reduce_search_space
 
 
+def test_wall_clock_includes_the_startup_checks(setup, monkeypatch):
+    # The wall clock starts before probing and the reference/shm checks, not when the pipeline starts.
+    import time
+    cfg, videos = setup
+    real_probe = m.probe
+    monkeypatch.setattr(m, 'probe', lambda v: (time.sleep(0.2), real_probe(v))[1])
+    summary = m.execute(cfg, 'c.yaml', build=pfs.fake_sweep_build, videos=videos)
+    assert summary['wall_s'] >= 0.6
+
+
 def test_an_existing_output_is_never_overwritten(setup):
     cfg, videos = setup
     (Path(cfg.output_root) / cfg.dataset).mkdir(parents=True)

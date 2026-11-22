@@ -217,3 +217,10 @@ sweep runs every tolerance as the scripts' validation did.  The all-1s solve-ski
 (9691538); only the identical-gap merge remains, behind the flag.  The aggregator expands groups whenever
 run.json says the run merged them, whatever the config says now.  The B3D sweeps in D29 and the
 caldot1-y05-reduced sweep ran with the merge on.
+
+### D32. wall_s starts at the top of execute() (author, 2026-11-21)
+It now includes the startup checks, probing every video, and creating the Manager, not only the pipeline.
+Still excluded: Python startup and imports, config loading, and writing run.json.  Earlier runs (D27, D29,
+and batch2's jnc7) started the clock at the pipeline; their container start-to-end spans, which also include
+Docker startup and the aggregator, exceed wall_s by 14-26 s.  Batch2's caldot1-y05, caldot2-y05 and ams-y05
+use the new start.
