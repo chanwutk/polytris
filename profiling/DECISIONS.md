@@ -224,3 +224,15 @@ Still excluded: Python startup and imports, config loading, and writing run.json
 and batch2's jnc7) started the clock at the pipeline; their container start-to-end spans, which also include
 Docker startup and the aggregator, exceed wall_s by 14-26 s.  Batch2's caldot1-y05, caldot2-y05 and ams-y05
 use the new start.
+
+### D33. Batch 2: jnc7 rerun and the other three datasets (merge on, ace, 2026-11-21, serial)
+| dataset | videos | frames | configurations run | wall clock | Pareto configurations |
+| --- | --- | --- | --- | --- | --- |
+| jnc7 (rerun, old clock start) | 5 | 5,226 | 432 | 1,429 s | 69 |
+| caldot1-y05 | 60 | 54,000 | 432 | 2,268 s | 54 |
+| caldot2-y05 | 60 | 54,000 | 420 | 3,013 s | 53 |
+| ams-y05 | 60 | 54,010 | 432 | 2,814 s | 60 |
+jnc7's rerun agrees with its first run (1,426 s): its speed is real.  Wall clock follows the number of packed
+canvases, since detection dominates: jnc7 packs 148k canvases (all branches) against 235k-303k for jnc0/2/6.
+caldot1-y05 2,268 s compares with 2,251 s for the earlier reduced run (clock started later there).
+Results under `measurements-results/profiling-sweep/batch2/<dataset>/`.
