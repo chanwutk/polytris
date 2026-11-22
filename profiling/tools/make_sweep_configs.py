@@ -17,8 +17,10 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'profiling' / 'configs'
 CACHE = '/polyis-cache'
 SYSTEM = {'queue_maxsize': 4, 'save_queue_maxsize': 256, 'max_videos_in_flight': 4, 'stages': {
+    # One GPU, shared by the classifier and the detector (one detector process was faster than two in a
+    # 6-video smoke test: 905 s vs 947 s).
     'decode': {'procs': 2}, 'classify': {'procs': 1, 'gpus': [0]}, 'prune': {'procs': 1}, 'pack': {'procs': 4},
-    'detect': {'procs': 7, 'gpus': [1, 2, 3, 4, 5, 6, 7]}, 'track': {'procs': 4}, 'evaluate': {'procs': 4}}}
+    'detect': {'procs': 1, 'gpus': [0]}, 'track': {'procs': 4}, 'evaluate': {'procs': 4}}}
 
 
 def sweep_config(dataset: str, grid: dict, detectors: dict) -> dict:

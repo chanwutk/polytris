@@ -62,15 +62,9 @@ system:
     pack:
       procs: 4
     detect:
-      procs: 7
+      procs: 1
       gpus:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
+      - 0
     track:
       procs: 4
     evaluate:
