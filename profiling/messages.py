@@ -17,7 +17,7 @@ from polyis.utilities import build_param_str
 
 if TYPE_CHECKING:
     # Types only: importing operators loads the detector libraries, which need a GPU driver.
-    from execution2.operators import DecodedVideo, PackedCollages
+    from execution2 import operators as ops
 
 # Branch keys in the order stages add them, and the build_param_str argument each maps to.
 PARAM_KEYS = {
@@ -80,7 +80,7 @@ class Decoded:
     video: str                      # path; the name is os.path.basename
     branch: Branch
     timings: tuple[StageTiming, ...]
-    frames: DecodedVideo            # every frame (sample rate 1)
+    decoded: ops.Decoded            # every frame (sample rate 1)
 
 
 @dataclass(frozen=True)
@@ -89,8 +89,8 @@ class Scored:
     video: str
     branch: Branch
     timings: tuple[StageTiming, ...]
-    frames: DecodedVideo            # this sample rate's sampled/partner over the all-frames block
-    scores: np.ndarray              # uint8 [len(frames.sampled), grid_h, grid_w]
+    decoded: ops.Decoded            # this sample rate's sampled/partner over the all-frames block
+    scores: np.ndarray              # uint8 [len(decoded.sampled), grid_h, grid_w]
     ilp: dict | None = None         # prune only: the solve's status, solve_ms, and kept tiles
 
 
@@ -99,10 +99,7 @@ class Packed:
     video: str
     branch: Branch
     timings: tuple[StageTiming, ...]
-    width: int
-    height: int
-    frame_count: int
-    collages: PackedCollages
+    packed: ops.Packed
 
 
 @dataclass(frozen=True)

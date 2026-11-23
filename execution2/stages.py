@@ -16,8 +16,9 @@ The six execution2 stages (PLAN.md step 4).  Each matches its p0xx script's comp
   track     p060: tracker over every frame in order, with trajectory interpolation.
 
 Messages are NamedTuples keyed by the video's path; only small handles to shared blocks
-travel between stages, never pixels.  The computations live in execution2/operators.py; this module
-adds the messages and the policy of who frees which block.
+travel between stages, never pixels.  The computations, and the Decoded and Packed messages they take and
+return, live in execution2/operators.py (profiling shares them); this module adds the other messages and the
+policy of who frees which block.
 """
 
 from functools import partial
@@ -33,33 +34,14 @@ from execution2.operators import (  # noqa: F401
     CLASSIFY_BATCH, DETECT_BATCH, DEVICE, PACK_MODE_BEST_FIT, PRUNE_TILEPADDING_MODE, PRUNE_TIME_LIMIT_S,
     detect_batch, frame_selection, unpack_detections,
 )
+# The decoded-video and packed-canvas messages are the operators' own types.
+from execution2.operators import Decoded, Packed
 from polyis.utilities import TILEPADDING_MAPS, is_tile_padding
-
-
-class Decoded(NamedTuple):
-    video: str
-    width: int
-    height: int
-    frame_count: int
-    sampled: np.ndarray         # absolute indices of sampled frames, ascending
-    partner: np.ndarray         # each sampled frame's diff partner (parallel to sampled)
-    needed: np.ndarray          # absolute indices stored in `frames`, ascending and unique (sampled + partners)
-    frames: frames.Block        # BGR uint8 [len(needed), height, width, 3]
 
 
 class Classified(NamedTuple):
     decoded: Decoded
     scores: np.ndarray          # uint8 [len(sampled), grid_h, grid_w]: classifier scores, or 0/255 after prune
-
-
-class Packed(NamedTuple):
-    video: str
-    width: int
-    height: int
-    frame_count: int
-    canvases: frames.Block      # BGR uint8 [num_collages, canvas_h, canvas_w, 3]
-    index_maps: np.ndarray      # uint16 [num_collages, dst_grid_h, dst_grid_w]
-    offset_lookups: list        # per collage: list of ((py, px), (oy, ox), frame_idx)
 
 
 class Detected(NamedTuple):
@@ -75,16 +57,6 @@ class Tracked(NamedTuple):
     frame_tracks: dict[int, list[list[float]]]
 
 
-def _as_video(d: Decoded) -> ops.DecodedVideo:
-    """The operators' view of a Decoded message."""
-    return ops.DecodedVideo(d.width, d.height, d.frame_count, d.sampled, d.partner, d.needed, d.frames)
-
-
-def _as_collages(p: Packed) -> ops.PackedCollages:
-    """The operators' view of a Packed message."""
-    return ops.PackedCollages(p.canvases, p.index_maps, p.offset_lookups)
-
-
 # ---------------------------------------------------------------- decode
 
 def decode_setup(cfg: Config, prefix: str, worker: Worker) -> dict:
@@ -93,8 +65,7 @@ def decode_setup(cfg: Config, prefix: str, worker: Worker) -> dict:
 
 def decode(state: dict, video: str) -> Decoded:
     """Read the video once, keeping only the needed frames, into a new shared block."""
-    v = ops.decode_video(video, state['prefix'], state['sample_rate'])
-    return Decoded(video, v.width, v.height, v.frame_count, v.sampled, v.partner, v.needed, v.block)
+    return ops.decode_video(video, state['prefix'], state['sample_rate'])
 
 
 # ---------------------------------------------------------------- classify
@@ -109,7 +80,7 @@ def classify_setup(cfg: Config, worker: Worker) -> dict:
 def classify(state: dict, d: Decoded) -> Classified:
     """p020's classification of every sampled frame, in batches of CLASSIFY_BATCH."""
     try:
-        scores, _ = ops.classify_frames(state, _as_video(d))
+        scores, _ = ops.classify_frames(state, d)
     except ValueError as e:
         raise ValueError(f'{d.video}: {e}') from e
     return Classified(d, scores)
@@ -150,11 +121,11 @@ def pack_setup(cfg: Config, prefix: str, worker: Worker) -> dict:
 def pack_video(state: dict, c: Classified) -> Packed:
     """p030: group, best-fit pack, draw every collage into one shared block; then free the frames."""
     d = c.decoded
-    packed = ops.pack_collages(c.scores, _as_video(d), state['prefix'], state['tile_size'], state['padding'],
+    packed = ops.pack_collages(c.scores, d, state['prefix'], state['tile_size'], state['padding'],
                                state['canvas_scale'], state['relevance_threshold'], state['jpeg'])
     # Pack is the frames' last user.
     frames.unlink(d.frames)
-    return Packed(d.video, d.width, d.height, d.frame_count, *packed)
+    return packed
 
 
 # ---------------------------------------------------------------- detect
@@ -166,7 +137,7 @@ def detect_setup(cfg: Config, worker: Worker) -> dict:
 
 def detect(state: dict, p: Packed) -> Detected:
     """p040 + p050: detect on each canvas, map boxes back to frames; then free the canvases."""
-    detections = ops.detect_canvases(state['detector'], _as_collages(p), state['tile_size'], p.frame_count)
+    detections = ops.detect_canvases(state['detector'], p, state['tile_size'])
     # Detect is the canvases' last user.
     frames.unlink(p.canvases)
     return Detected(p.video, p.width, p.height, p.frame_count, detections)

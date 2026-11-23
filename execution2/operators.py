@@ -74,17 +74,18 @@ def frame_selection(frame_count: int, sample_rate: int) -> tuple[np.ndarray, np.
 
 # ---------------------------------------------------------------- decode
 
-class DecodedVideo(NamedTuple):
+class Decoded(NamedTuple):
+    video: str                  # path of the video file
     width: int
     height: int
     frame_count: int
     sampled: np.ndarray         # absolute indices of sampled frames, ascending
     partner: np.ndarray         # each sampled frame's diff partner (parallel to sampled)
-    needed: np.ndarray          # absolute indices stored in `block`, ascending and unique (sampled + partners)
-    block: frames.Block         # BGR uint8 [len(needed), height, width, 3]
+    needed: np.ndarray          # absolute indices stored in `frames`, ascending and unique (sampled + partners)
+    frames: frames.Block        # BGR uint8 [len(needed), height, width, 3]
 
 
-def decode_video(video: str, prefix: str, sample_rate: int) -> DecodedVideo:
+def decode_video(video: str, prefix: str, sample_rate: int) -> Decoded:
     """Read the video once, keeping only the frames sample_rate needs, into a new shared block (s=1: every frame)."""
     cap = cv2.VideoCapture(video)
     if not cap.isOpened():
@@ -102,7 +103,7 @@ def decode_video(video: str, prefix: str, sample_rate: int) -> DecodedVideo:
             raise ValueError(f'{video}: read {read} frames but the container reports {frame_count}')
     finally:
         cap.release()
-    return DecodedVideo(width, height, frame_count, sampled, partner, needed, m.block)
+    return Decoded(video, width, height, frame_count, sampled, partner, needed, m.block)
 
 
 def _read_needed(cap: cv2.VideoCapture, block: np.ndarray, needed: np.ndarray, video: str) -> int:
@@ -165,7 +166,7 @@ def load_classifier_state(weights: str, compilation_benchmark: str, never_releva
     }
 
 
-def classify_frames(state: dict, video: DecodedVideo, time_batches: bool = False) -> tuple[np.ndarray, np.ndarray | None]:
+def classify_frames(state: dict, video: Decoded, time_batches: bool = False) -> tuple[np.ndarray, np.ndarray | None]:
     """p020's classification of every sampled frame, in batches of CLASSIFY_BATCH.
 
     Returns the uint8 scores [len(sampled), grid_h, grid_w] and, when time_batches is set, each sampled
@@ -182,7 +183,7 @@ def classify_frames(state: dict, video: DecodedVideo, time_batches: bool = False
     scores = []
     shares = np.zeros(len(video.sampled)) if time_batches else None
     # inference_mode: no autograd at all (stricter than no_grad); the numbers are the same.
-    with torch.inference_mode(), frames.attach(video.block) as m:
+    with torch.inference_mode(), frames.attach(video.frames) as m:
         for start in range(0, len(video.sampled), CLASSIFY_BATCH):
             batch = slice(start, start + CLASSIFY_BATCH)
             t0 = time.perf_counter()
@@ -255,14 +256,18 @@ def prune_scores(scores: np.ndarray, distance: np.ndarray, relevance_threshold: 
 
 # ---------------------------------------------------------------- pack
 
-class PackedCollages(NamedTuple):
+class Packed(NamedTuple):
+    video: str                  # path of the video file
+    width: int
+    height: int
+    frame_count: int
     canvases: frames.Block      # BGR uint8 [num_collages, canvas_h, canvas_w, 3]
     index_maps: np.ndarray      # uint16 [num_collages, dst_grid_h, dst_grid_w]
     offset_lookups: list        # per collage: list of ((py, px), (oy, ox), frame_idx)
 
 
-def pack_collages(scores: np.ndarray, video: DecodedVideo, prefix: str, tile_size: int, padding_mode: int,
-                  canvas_scale: float, relevance_threshold: float, jpeg: bool) -> PackedCollages:
+def pack_collages(scores: np.ndarray, video: Decoded, prefix: str, tile_size: int, padding_mode: int,
+                  canvas_scale: float, relevance_threshold: float, jpeg: bool) -> Packed:
     """p030: group, best-fit pack, and draw every collage into one new shared block.
 
     scores is [len(video.sampled), grid_h, grid_w] for the sampled frames it lists (a subset of the video's
@@ -288,7 +293,7 @@ def pack_collages(scores: np.ndarray, video: DecodedVideo, prefix: str, tile_siz
     sampled_pos = np.searchsorted(video.needed, video.sampled)
     index_maps = np.zeros((len(collages), dst_gh, dst_gw), dtype=np.uint16)
     offset_lookups: list = []
-    with frames.attach(video.block) as fm, \
+    with frames.attach(video.frames) as fm, \
             frames.create(prefix, (len(collages), dst_gh * ts, dst_gw * ts, 3), 'uint8') as cm:
         cm.array[...] = 0
         for k, collage in enumerate(collages):
@@ -297,7 +302,7 @@ def pack_collages(scores: np.ndarray, video: DecodedVideo, prefix: str, tile_siz
                                                 video.sampled, src_bounds, dst_bounds))
             if jpeg:
                 _jpeg_round_trip(cm.array[k])
-    return PackedCollages(cm.block, index_maps, offset_lookups)
+    return Packed(video.video, video.width, video.height, video.frame_count, cm.block, index_maps, offset_lookups)
 
 
 def _jpeg_round_trip(canvas: np.ndarray) -> None:
@@ -339,11 +344,10 @@ def load_detector(detector_type: str, options: dict) -> Any:
     return build_detector(detector_type, options, 0, DETECT_BATCH, 0)
 
 
-def detect_canvases(detector: Any, collages: PackedCollages, tile_size: int,
-                    frame_count: int) -> dict[int, list[list[float]]]:
+def detect_canvases(detector: Any, collages: Packed, tile_size: int) -> dict[int, list[list[float]]]:
     """p040 + p050: detect on each canvas and map boxes back to frames; the canvases block is only read."""
     # p050 keeps a (possibly empty) list for every frame of the video.
-    detections: dict[int, list[list[float]]] = {i: [] for i in range(frame_count)}
+    detections: dict[int, list[list[float]]] = {i: [] for i in range(collages.frame_count)}
     with torch.no_grad(), frames.attach(collages.canvases) as cm:
         num_canvases = cm.array.shape[0]
         for start in range(0, num_canvases, DETECT_BATCH):

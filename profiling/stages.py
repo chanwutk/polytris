@@ -84,7 +84,7 @@ def classify_setup(cfg: SweepConfig, worker: Worker) -> dict:
 
 def classify(state: dict, d: Decoded) -> list[Scored]:
     """Classify every frame once; one output per sample rate with that rate's frames and charged share."""
-    v = d.frames
+    v = d.decoded
     if not np.array_equal(v.sampled, np.arange(v.frame_count)):
         raise ValueError(f'{d.video}: classify expects every frame decoded (sample rate 1)')
     start = time.time()
@@ -97,7 +97,7 @@ def classify(state: dict, d: Decoded) -> list[Scored]:
     for s in state['sample_rates']:
         sampled, partner, _ = ops.frame_selection(v.frame_count, s)
         # The all-frames block keeps every frame, so this rate's frames are found in it by index.
-        view = ops.DecodedVideo(v.width, v.height, v.frame_count, sampled, partner, v.needed, v.block)
+        view = v._replace(sampled=sampled, partner=partner)
         # Each rate is charged for the frames it samples (sampled index == frame index at rate 1).
         timing = _timing('classify', start, end, charged=float(shares[sampled].sum()))
         outputs.append(Scored(d.video, d.branch.with_(sample_rate=s), d.timings + (timing,), view, scores[sampled]))
@@ -136,7 +136,7 @@ def prune(state: dict, sc: Scored) -> list[Scored]:
             # No pruning: scores pass through; pack binarizes them with this T_r (p030's rule).
             now = time.time()
             outputs.append(Scored(sc.video, sc.branch.with_(relevance_threshold=t_r, mistrack_tolerance=None),
-                                  sc.timings + (_timing('prune', now, now),), sc.frames, sc.scores))
+                                  sc.timings + (_timing('prune', now, now),), sc.decoded, sc.scores))
         for tracker in state['trackers']:
             for group in state['groups'].get((tracker, s), []):
                 tolerance = group.representative
@@ -149,7 +149,7 @@ def prune(state: dict, sc: Scored) -> list[Scored]:
                 ilp = {'status': result.status, 'solve_ms': result.solve_ms}
                 timing = _timing('prune', start, time.time())
                 branch = sc.branch.with_(relevance_threshold=t_r, mistrack_tolerance=tolerance, tracker=tracker)
-                outputs.append(Scored(sc.video, branch, sc.timings + (timing,), sc.frames, pruned,
+                outputs.append(Scored(sc.video, branch, sc.timings + (timing,), sc.decoded, pruned,
                                       ilp={**ilp, 'kept_tiles': int(np.count_nonzero(pruned)),
                                            'group': list(group.tolerances)}))
     return outputs
@@ -168,7 +168,7 @@ def pack_setup(cfg: SweepConfig, prefix: str, completion: VideoCompletion, worke
 
 def pack(state: dict, sc: Scored) -> list[Packed]:
     """One output per tile padding x canvas scale; frees the video's frames after its last pack input."""
-    v = sc.frames
+    v = sc.decoded
     outputs = []
     t_r = sc.branch['relevance_threshold']
     for padding in state['paddings']:
@@ -178,10 +178,10 @@ def pack(state: dict, sc: Scored) -> list[Packed]:
                                          scale, t_r, state['jpeg'])
             timing = _timing('pack', start, time.time())
             outputs.append(Packed(sc.video, sc.branch.with_(tile_padding=padding, canvas_scale=scale),
-                                  sc.timings + (timing,), v.width, v.height, v.frame_count, collages))
+                                  sc.timings + (timing,), collages))
     # Pack is the frames' last user: free them once every pack input of this video is done.
     if state['completion'].finish(sc.video, state['expected']):
-        frames.unlink(v.block)
+        frames.unlink(v.frames)
     return outputs
 
 
@@ -195,11 +195,12 @@ def detect_setup(cfg: SweepConfig, worker: Worker) -> dict:
 def detect(state: dict, p: Packed) -> Detected:
     """Detect on the branch's canvases, map boxes back to frames, free the canvases."""
     start = time.time()
-    detections = ops.detect_canvases(state['detector'], p.collages, state['tile_size'], p.frame_count)
+    detections = ops.detect_canvases(state['detector'], p.packed, state['tile_size'])
     timing = _timing('detect', start, time.time())
     # Detect is the canvases' last user.
-    frames.unlink(p.collages.canvases)
-    return Detected(p.video, p.branch, p.timings + (timing,), p.width, p.height, p.frame_count, detections)
+    frames.unlink(p.packed.canvases)
+    q = p.packed
+    return Detected(p.video, p.branch, p.timings + (timing,), q.width, q.height, q.frame_count, detections)
 
 
 # ---------------------------------------------------------------- track

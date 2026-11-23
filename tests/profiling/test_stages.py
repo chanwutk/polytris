@@ -52,13 +52,13 @@ def manager():
     m.shutdown()
 
 
-def all_frames(prefix) -> ops.DecodedVideo:
+def all_frames(prefix) -> ops.Decoded:
     """A fake all-frames video: frame i is filled with i."""
     with frames.create(prefix, (N, H, W, 3), 'uint8') as m:
         for i in range(N):
             m.array[i] = i
     sampled, partner, needed = ops.frame_selection(N, 1)
-    return ops.DecodedVideo(W, H, N, sampled, partner, needed, m.block)
+    return ops.Decoded('/v/a.mp4', W, H, N, sampled, partner, needed, m.block)
 
 
 def base_branch():
@@ -85,10 +85,10 @@ def test_classify_slices_once_per_sample_rate_and_charges_only_its_frames(tmp_pa
     assert len(calls) == 1 and [o.branch['sample_rate'] for o in out] == [1, 4]
     s4 = out[1]
     expected = ops.frame_selection(N, 4)[0]
-    assert np.array_equal(s4.frames.sampled, expected) and np.array_equal(s4.scores[:, 0, 0], expected)
+    assert np.array_equal(s4.decoded.sampled, expected) and np.array_equal(s4.scores[:, 0, 0], expected)
     assert s4.timings[-1].stage == 'classify' and s4.timings[-1].charged == pytest.approx(0.01 * len(expected))
     assert out[0].timings[-1].charged == pytest.approx(0.01 * N) and s4.timings[0].charged == 0.0
-    frames.unlink(v.block)
+    frames.unlink(v.frames)
 
 
 class FakeILP:
@@ -112,7 +112,7 @@ def test_prune_fans_out_and_passes_unpruned_scores_through(tmp_path, prefix, mon
         {(t, m, k) for t in (0.25, 0.5) for m in (0.4, 0.8) for k in ('sortcython', 'bytetrackcython')}
     assert all(o.ilp == {'status': 2, 'solve_ms': 1.5, 'kept_tiles': scores.size, 'group': [o.branch['mistrack_tolerance']]}
                for o in pruned)
-    frames.unlink(v.block)
+    frames.unlink(v.frames)
 
 
 def test_pack_frees_frames_only_after_the_videos_last_input(tmp_path, prefix, manager, monkeypatch):
@@ -122,7 +122,7 @@ def test_pack_frees_frames_only_after_the_videos_last_input(tmp_path, prefix, ma
     def fake_pack(scores, video, pfx, ts, padding, scale, t_r, jpeg):
         with frames.create(pfx, (1,), 'uint8') as m:
             pass
-        return ops.PackedCollages(m.block, np.zeros((0, 1, 1), np.uint16), [])
+        return ops.Packed(video.video, W, H, N, m.block, np.zeros((0, 1, 1), np.uint16), [])
 
     monkeypatch.setattr(ops, 'pack_collages', fake_pack)
     state = st.pack_setup(cfg, prefix, VideoCompletion(manager), None)
@@ -131,9 +131,9 @@ def test_pack_frees_frames_only_after_the_videos_last_input(tmp_path, prefix, ma
                 (), v, np.zeros((5, 6, 8), np.uint8))
     first = st.pack(state, sc)
     assert len(first) == 2 and [o.branch['tile_padding'] for o in first] == ['none', 'tr']
-    assert v.block.name in frames.leftover(prefix)
+    assert v.frames.name in frames.leftover(prefix)
     st.pack(state, sc)
-    assert v.block.name not in frames.leftover(prefix)
+    assert v.frames.name not in frames.leftover(prefix)
 
 
 def test_track_fans_out_over_trackers_only_when_unpruned(monkeypatch):
@@ -149,10 +149,10 @@ def test_track_fans_out_over_trackers_only_when_unpruned(monkeypatch):
 
 
 def test_detect_frees_the_canvases(prefix, monkeypatch):
-    monkeypatch.setattr(ops, 'detect_canvases', lambda det, collages, ts, n: {i: [] for i in range(n)})
+    monkeypatch.setattr(ops, 'detect_canvases', lambda det, packed, ts: {i: [] for i in range(packed.frame_count)})
     with frames.create(prefix, (1,), 'uint8') as m:
         pass
-    p = Packed('/v/a.mp4', base_branch(), (), W, H, N, ops.PackedCollages(m.block, np.zeros((0, 1, 1)), []))
+    p = Packed('/v/a.mp4', base_branch(), (), ops.Packed('/v/a.mp4', W, H, N, m.block, np.zeros((0, 1, 1)), []))
     out = st.detect({'detector': None, 'tile_size': TS}, p)
     assert sorted(out.detections) == list(range(N)) and frames.leftover(prefix) == []
 
@@ -166,7 +166,7 @@ def full_branch(tolerance=0.8, tracker='sortcython'):
 def test_savers_write_the_scripts_paths_and_formats(tmp_path, prefix):
     root, v = str(tmp_path / 'out'), all_frames(prefix)
     sampled = ops.frame_selection(N, 4)[0]
-    view = ops.DecodedVideo(W, H, N, sampled, sampled, v.needed, v.block)
+    view = v._replace(sampled=sampled, partner=sampled)
     scores = np.full((len(sampled), 6, 8), 7, np.uint8)
     pruned_branch = base_branch().with_(sample_rate=4, relevance_threshold=0.5, mistrack_tolerance=0.8, tracker='sortcython')
     save.save_scores(root, 'ds', Scored('/v/a.mp4', base_branch().with_(sample_rate=4), (), view, scores))
@@ -176,8 +176,9 @@ def test_savers_write_the_scripts_paths_and_formats(tmp_path, prefix):
     assert [r['idx'] for r in rows] == sampled.tolist() and rows[0]['classification_size'] == [6, 8]
     assert (ex / '022_pruned_polyominoes' / 'Fake_10_4_080_r050_sortcython' / 'score' / 'score.jsonl').exists()
     lookup = [((0, 0), (1, 2), 8), ((0, 1), (0, 0), 12)]
-    save.save_packed(root, 'ds', Packed('/v/a.mp4', full_branch(), (), W, H, N,
-                                        ops.PackedCollages(v.block, np.ones((1, 6, 8), np.uint16), [lookup])))
+    save.save_packed(root, 'ds', Packed('/v/a.mp4', full_branch(), (),
+                                        ops.Packed('/v/a.mp4', W, H, N, v.frames, np.ones((1, 6, 8), np.uint16),
+                                                   [lookup])))
     packed_dir = ex / '033_compressed_frames' / 'Fake_10_4_080_r050_bl_s100_sortcython'
     assert np.array_equal(np.load(packed_dir / 'index_maps' / '0000_0008_0012.npy'), np.ones((6, 8)))
     assert [json.loads(l) for l in (packed_dir / 'offset_lookups' / '0000_0008_0012.jsonl').read_text().splitlines()] == \
@@ -188,7 +189,7 @@ def test_savers_write_the_scripts_paths_and_formats(tmp_path, prefix):
     unpruned_tracked = full_branch(None).with_(tracker='bytetrackcython')
     save.save_tracks(root, 'ds', Tracked('/v/a.mp4', unpruned_tracked, (), {0: [[1, 0, 0, 1, 1]]}))
     assert (ex / '060_uncompressed_tracks' / 'Fake_10_4_r050_bl_s100_bytetrackcython' / 'tracking.jsonl').exists()
-    frames.unlink(v.block)
+    frames.unlink(v.frames)
 
 
 def test_evaluate_scores_identical_tracks_as_perfect(tmp_path):
@@ -251,7 +252,7 @@ def test_prune_runs_one_representative_per_group(tmp_path, prefix, monkeypatch):
     # An all-1s group still solves once (all-1s gaps do not mean everything is kept).
     assert [o.branch['mistrack_tolerance'] for o in out16] == [None, 0.4] and len(solves) == 3
     assert out16[1].ilp['group'] == [0.4, 0.6, 0.8]
-    frames.unlink(v.block)
+    frames.unlink(v.frames)
 
 
 def test_all_ones_gaps_drop_polyominoes_whose_tiles_appear_only_once():

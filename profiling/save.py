@@ -49,7 +49,7 @@ def _write_score_rows(path: str, scores: np.ndarray, sampled: np.ndarray) -> Non
 
 def save_scores(root: str, dataset: str, msg) -> None:
     path = stage_dir(root, dataset, msg.video, 'relevancy', msg.branch.param_str(*SCORE_PARAMS))
-    _write_score_rows(os.path.join(path, 'score'), msg.scores, msg.frames.sampled)
+    _write_score_rows(os.path.join(path, 'score'), msg.scores, msg.decoded.sampled)
 
 
 def save_pruned(root: str, dataset: str, msg) -> None:
@@ -57,7 +57,7 @@ def save_pruned(root: str, dataset: str, msg) -> None:
     if msg.branch['mistrack_tolerance'] is None:
         return
     path = stage_dir(root, dataset, msg.video, 'pruned-polyominoes', msg.branch.param_str(*PRUNE_PARAMS))
-    _write_score_rows(os.path.join(path, 'score'), msg.scores, msg.frames.sampled)
+    _write_score_rows(os.path.join(path, 'score'), msg.scores, msg.decoded.sampled)
     # Not a script output: the solve's status, time, and kept tiles, for checking against p022.
     with open(os.path.join(path, 'ilp.json'), 'w') as f:
         json.dump(msg.ilp, f)
@@ -67,7 +67,7 @@ def save_packed(root: str, dataset: str, msg) -> None:
     path = stage_dir(root, dataset, msg.video, 'comp-frames', _pack_param_str(msg.branch))
     os.makedirs(os.path.join(path, 'index_maps'), exist_ok=True)
     os.makedirs(os.path.join(path, 'offset_lookups'), exist_ok=True)
-    for k, (index_map, lookup) in enumerate(zip(msg.collages.index_maps, msg.collages.offset_lookups)):
+    for k, (index_map, lookup) in enumerate(zip(msg.packed.index_maps, msg.packed.offset_lookups)):
         # p030 names each collage <collage>_<first frame>_<last frame>.
         frame_ids = [frame for _, _, frame in lookup]
         name = f'{k:04d}_{min(frame_ids):04d}_{max(frame_ids):04d}'
