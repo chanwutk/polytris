@@ -44,6 +44,7 @@ def parse_args():
     e.add_argument('--videos', nargs='+', required=True)
     e.add_argument('--out-dir', required=True)
     e.add_argument('--gpus', type=int, nargs='+', required=True)
+    e.add_argument('--skip-done', action='store_true')
     m = sub.add_parser('summary')
     m.add_argument('--out-dir', required=True)
     return parser.parse_args()
@@ -146,7 +147,7 @@ def config_name(b: dict) -> str:
             f"_c{int(b['canvas_scale'] * 100):03d}_{b['tracker']}")
 
 
-def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int]) -> None:
+def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int], skip_done: bool = False) -> None:
     """execution2's compare tool for every configuration, one configuration per free GPU at a time."""
     from profiling.aggregate import execution2_config
     from profiling.config import load_sweep_config
@@ -158,6 +159,9 @@ def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int
         cfg = execution2_config(sweep, b)
         path = out / 'configs' / f'{config_name(b)}.yaml'
         path.write_text(yaml.safe_dump(cfg, sort_keys=False))
+        # With skip_done, a configuration that already has its report (a finished run) is not redone.
+        if skip_done and (out / f'{path.stem}.json').exists():
+            continue
         jobs.append(path)
     # Pruned configurations solve ILPs, each holding a Gurobi session (the web license allows two, shared with
     # other machines): they run one at a time on the first GPU, while unpruned ones share the other GPUs.
@@ -237,7 +241,7 @@ def main() -> None:
     if args.command == 'scripts':
         run_scripts(args.dataset, args.videos)
     elif args.command == 'execution2':
-        run_execution2(args.dataset, args.videos, args.out_dir, args.gpus)
+        run_execution2(args.dataset, args.videos, args.out_dir, args.gpus, args.skip_done)
     else:
         print(json.dumps(summarize(args.out_dir), indent=1))
 

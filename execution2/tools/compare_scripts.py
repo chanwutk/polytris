@@ -236,8 +236,8 @@ def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str,
     return report
 
 
-def script_prune_setup(cfg: Config, dataset: str, worker: Worker) -> dict:
-    return {'cfg': cfg, 'dataset': dataset}
+def script_prune_setup(cfg: Config, dataset: str, aliases: dict[str, str], worker: Worker) -> dict:
+    return {'cfg': cfg, 'dataset': dataset, 'aliases': aliases}
 
 
 def script_prune(state: dict, c: Classified) -> Classified:
@@ -247,6 +247,8 @@ def script_prune(state: dict, c: Classified) -> Classified:
     downstream stage is compared exactly.  The ILP itself is compared once, in isolated().
     """
     cfg, video = state['cfg'], os.path.basename(c.decoded.video)
+    # main.execute's timing dummy is a copy of a real video under another name: read that video's grids.
+    video = state['aliases'].get(video, video)
     p = cfg.params
     idx, grid = grids(load_pruned_classification_results(state['dataset'], video, p.tile_size,
                                                          cfg.artifacts.classifier.name, p.tracker, p.mistrack_tolerance,
@@ -257,9 +259,10 @@ def script_prune(state: dict, c: Classified) -> Classified:
     return c._replace(scores=grid)
 
 
-def build_with_script_prune(dataset: str, cfg: Config, prefix: str) -> list[Stage]:
+def build_with_script_prune(dataset: str, aliases: dict[str, str], cfg: Config, prefix: str) -> list[Stage]:
     """execution2's stages with prune replaced by script_prune (same process count)."""
-    return [s._replace(setup=partial(script_prune_setup, cfg, dataset), process=script_prune) if s.name == 'prune'
+    return [s._replace(setup=partial(script_prune_setup, cfg, dataset, aliases), process=script_prune)
+            if s.name == 'prune'
             else s for s in stages.build_stages(cfg, prefix)]
 
 
@@ -269,7 +272,10 @@ def chained(cfg: Config, dataset: str, videoset: str, videos: list[str], tmp: Pa
     vdir.mkdir()
     for v in videos:
         os.symlink(store.dataset(dataset, videoset, v), vdir / v)
-    summary = main.execute(cfg, str(vdir), str(out), build=partial(build_with_script_prune, dataset))
+    # main.execute copies the last video (in its sorted listing) to timing-dummy<ext> and feeds it first.
+    last = main.list_videos(str(vdir))[-1]
+    aliases = {'timing-dummy' + Path(last).suffix: os.path.basename(last)}
+    summary = main.execute(cfg, str(vdir), str(out), build=partial(build_with_script_prune, dataset, aliases))
     per_video = {}
     for v in videos:
         per_video[v] = compare_track_lines((out / f'{Path(v).stem}.jsonl').read_text().splitlines(),
