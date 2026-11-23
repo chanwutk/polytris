@@ -18,4 +18,5 @@ services:
     tmpfs:
       - /tmp
     network_mode: "host"
-    shm_size: "128gb"
+    # Shared memory for execution2 (README: Run one configuration with execution2); set SHM_SIZE in .env.
+    shm_size: "${SHM_SIZE:-128gb}"

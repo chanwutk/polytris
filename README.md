@@ -21,7 +21,9 @@ check that it contains `modules/TrackEval/trackeval/__init__.py` and
 Set `DATA` to an absolute directory on the host and put that same assignment
 in `.env` in the repository root. Docker mounts
 `$DATA/polyis-data` at `/polyis-data` and `$DATA/polyis-cache` at
-`/polyis-cache`. The download script creates these directories.
+`/polyis-cache`. The download script creates these directories. Optionally set
+`SHM_SIZE` in `.env` too (default `48gb`); see
+[Run one configuration with execution2](#run-one-configuration-with-execution2).
 
 ```sh
 docker compose up --detach --build
@@ -98,12 +100,17 @@ configuration's throughput is the test clips' frame count divided by
 after a warm-up clip, so process start-up and model loading are excluded.
 The reference pipeline that HOTA and speedups are measured against is the
 full-frame detector and tracker (`preprocess/p002_*`).
-The figures shipped with the artifact come from the scripts instead
-([Generate figures and tables](#generate-figures-and-tables)).
+<br/>
+**Note:** The figures shipped with the artifact come from the older implementation (in `./scripts`) instead
+([Please see Generate figures and tables](#generate-figures-and-tables)).
 
-Paths passed to the wrappers are relative to the checkout or absolute. Reuse
-the trained artifacts and the same sweep config across validation and test.
-Each dataset's cache should have one active writer.
+The wrappers run from the repository root, so a relative path like
+`validation.json` means `/polyis/validation.json`; pass an absolute path to
+put it elsewhere. Run `validate.sh` and `test.sh` with the same trained
+artifacts and the same `configs/global.yaml`: `test.sh` refuses
+configurations that are not in the current sweep grid. Run one command at a
+time per dataset, since each one rewrites that dataset's folders under
+`/polyis-cache`; different datasets can run in parallel.
 
 ### Run one configuration with execution2
 
@@ -119,14 +126,19 @@ python -m execution2.main --config jnc0.yaml \
     --videos /polyis-data/datasets/jnc0/test --out tracks-jnc0
 ```
 
-The command prints the clips' frame count and `execution2`'s runtime in
-seconds. The config names the dataset's trained classifier, sampling limits,
-and detector, the configuration's parameters, and the process count and GPU of
-each stage.
+`execution2.main` prints one JSON line with the number of clips, their total
+frame count, and the runtime in seconds. The YAML that `run_variants config`
+writes lists the dataset's trained classifier, sampling limits, and detector,
+the configuration's parameters, and how many processes each pipeline stage
+runs on which GPU.
 
-`execution2` keeps decoded frames and canvases in shared memory. The compose
-file allows up to 128 GB of it (`shm_size`), and `execution2` stops before
-running if its estimate for the clips does not fit.
+`execution2` passes decoded frames and packed canvases between its processes
+through shared memory (`/dev/shm`). Before it runs, it estimates the most it
+can need and stops if that does not fit. The worst case for the test clips is
+about 15 GB for CalDoT1 and CalDoT2 and about 40 GB for Amsterdam and B3D
+(sample rate 1, pruning on). The container's shared memory is capped at
+`SHM_SIZE` from `.env` (default `128gb`). Please keep `SHM_SIZE` within your free RAM and
+at least the worst case of the datasets you run.
 
 ### Commands by dataset
 
@@ -294,10 +306,11 @@ other targets use the saved benchmark results shipped with the artifact.
 The render command uses a temporary cache for the saved results and writes
 the exported figures and table rows to `paper/figures/generated/`.
 
-Figures 8 and 9 and the operator ablation (§7.4.4) are drawn from saved
+**Note:** Figures 8 and 9 and the operator ablation (§7.4.4) are drawn from saved
 results of the implementation published in the paper, the extraction scripts
 (`scripts/p020`–`p060`). `reproduce/test.sh` runs the same configurations with
-`execution2`, which produces the same tracks as the scripts and runs faster.
+the new
+`execution2`, which produces the same tracks as the scripts but runs faster.
 The `tradeoff.csv` it writes therefore shows the same HOTA as these figures
 and higher throughput. The pruning solver stops at 0.1 s, so a configuration
 whose solve reaches that limit can select different polyominoes from run to
@@ -314,7 +327,3 @@ run, in either implementation.
 | `fig12` | Extraction runtime breakdown |
 | `table2` | Native query comparison with OTIF, LEAP, Seiden, and NoScope |
 | `response-tables` | LEAP reconstruction, resolution scaling, padding, and preparation |
-
-Figures 1 and 3–5 are static PDFs in `paper/figures/`. Figure 6 and appendix
-Figures 13–15 use the TikZ sources in the same directory. Table 1 is the
-experiment configuration table. Its sweep settings are in `configs/global.yaml`.
