@@ -20,7 +20,10 @@ if _GUROBI_HOME:
     # Official standalone install: header and library live under $GUROBI_HOME.
     _GUROBI_INCLUDE_DIR = os.path.join(_GUROBI_HOME, "include")
     _GUROBI_LIB_DIR     = os.path.join(_GUROBI_HOME, "lib")
-    _gurobi_libs = glob.glob(os.path.join(_GUROBI_LIB_DIR, "libgurobi[0-9]*.so"))
+    # The full library only: the pattern also matches libgurobi<ver>_light.so (a size-limited build that cannot
+    # start a WLS session), and glob order is arbitrary, so filter and sort rather than take whichever comes first.
+    _gurobi_libs = sorted(p for p in glob.glob(os.path.join(_GUROBI_LIB_DIR, "libgurobi[0-9]*.so"))
+                          if not p.endswith("_light.so"))
     if not _gurobi_libs:
         raise RuntimeError(
             f"No libgurobi[0-9]*.so found in {_GUROBI_LIB_DIR}. "
