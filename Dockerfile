@@ -6,6 +6,9 @@ RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/g' ~/.bashrc
 WORKDIR /polyis
 
 ARG DEBIAN_FRONTEND=noninteractive
+# Accept the Anaconda channels' Terms of Service non-interactively: `conda install python=...` drops the
+# acceptances recorded by `conda tos accept`, and the next conda command then fails the build.
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
 
 # RUN apt-get update -qq && \
 #     apt-get install -qq -y git ninja-build gettext cmake unzip curl && \
