@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 import torch
 
-from execution2 import frames, stages
+from execution2 import frames, operators, stages
 from execution2.config import (Artifacts, Classifier, Config, Detector, Params, StageSystem, System)
 from execution2.stages import Classified, Decoded, Detected, Packed
 from polyis.classify import classify_batch
@@ -201,7 +201,7 @@ def test_read_needed_decodes_needed_frames_in_place_and_skips_the_rest():
     needed = np.array([0, 1, 3, 4, 7, 8, 9])
     block = np.zeros((len(needed), 2, 2, 3), dtype=np.uint8)
     cap = FakeCapture(10)
-    assert stages._read_needed(cap, block, needed, 'v') == 10
+    assert operators._read_needed(cap, block, needed, 'v') == 10
     assert [int(block[k].max()) for k in range(len(needed))] == needed.tolist()
     # Unneeded frames are only grabbed (frames 2, 5, 6), then one final grab fails at the end.
     assert cap.grabs == 3 + 1
@@ -210,14 +210,14 @@ def test_read_needed_decodes_needed_frames_in_place_and_skips_the_rest():
 def test_read_needed_reports_short_reads():
     needed = np.array([0, 1, 3, 4])
     block = np.zeros((len(needed), 2, 2, 3), dtype=np.uint8)
-    assert stages._read_needed(FakeCapture(3), block, needed, 'v') == 3
+    assert operators._read_needed(FakeCapture(3), block, needed, 'v') == 3
 
 
 def test_read_needed_rejects_frames_opencv_did_not_write_in_place():
     # OpenCV returns a new array when the frame does not fit the row: a frame-size mismatch.
     block = np.zeros((2, 2, 2, 3), dtype=np.uint8)
     with pytest.raises(ValueError, match='frame 0 has shape'):
-        stages._read_needed(FakeCapture(2, in_place=False), block, np.array([0, 1]), 'v')
+        operators._read_needed(FakeCapture(2, in_place=False), block, np.array([0, 1]), 'v')
 
 
 def test_decode_rejects_unreadable_files(tmp_path, prefix):
@@ -234,8 +234,8 @@ def test_decode_rejects_unreadable_files(tmp_path, prefix):
 @pytest.fixture
 def fake_classifier(monkeypatch):
     """Replace the trained model and its optimization pass with the deterministic fake."""
-    monkeypatch.setattr(stages, 'load_classifier', lambda path: FakeClassifier().eval())
-    monkeypatch.setattr(stages, 'select_model_optimization', lambda model, *a: (model, 'none'))
+    monkeypatch.setattr(operators, 'load_classifier', lambda path: FakeClassifier().eval())
+    monkeypatch.setattr(operators, 'select_model_optimization', lambda model, *a: (model, 'none'))
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
@@ -269,13 +269,13 @@ def test_classify_matches_p020_batching(tmp_path, video, prefix, fake_classifier
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
 def test_classify_setup_optimizes_once_for_the_bitmaps_tile_count(tmp_path, video, prefix, monkeypatch):
     calls = []
-    monkeypatch.setattr(stages, 'load_classifier', lambda path: FakeClassifier().eval())
+    monkeypatch.setattr(operators, 'load_classifier', lambda path: FakeClassifier().eval())
 
     def fake_optimize(model, benchmark_results, device, tile_size, batch_size):
         calls.append((tile_size, batch_size))
         return model, 'none'
 
-    monkeypatch.setattr(stages, 'select_model_optimization', fake_optimize)
+    monkeypatch.setattr(operators, 'select_model_optimization', fake_optimize)
     cfg = make_cfg(tmp_path)
     state = stages.classify_setup(cfg, None)
     # One call, in setup, with the grid's tile count (6x8 here), as p020 passes its first video's grid.
@@ -303,8 +303,8 @@ def test_classify_rejects_a_mismatched_never_relevant_bitmap(tmp_path, video, pr
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
 def test_classify_setup_rejects_a_model_in_training_mode(tmp_path, monkeypatch):
-    monkeypatch.setattr(stages, 'load_classifier', lambda path: FakeClassifier())   # nn.Module: training by default
-    monkeypatch.setattr(stages, 'select_model_optimization', lambda model, *a: (model, 'none'))
+    monkeypatch.setattr(operators, 'load_classifier', lambda path: FakeClassifier())   # nn.Module: training by default
+    monkeypatch.setattr(operators, 'select_model_optimization', lambda model, *a: (model, 'none'))
     with pytest.raises(RuntimeError, match='training mode'):
         stages.classify_setup(make_cfg(tmp_path), None)
 
@@ -351,7 +351,7 @@ def test_prune_matches_p022(monkeypatch, tmp_path, sample_rate, tolerance, thres
     sampled, partner, _ = stages.frame_selection(N_FRAMES, sample_rate)
     scores = synthetic_scores(len(sampled))
     decoded = Decoded('v.avi', W, H, N_FRAMES, sampled, partner, np.array([]), frames.Block('unused', (0,), '|u1'))
-    monkeypatch.setattr(stages, 'PRUNE_TIME_LIMIT_S', PRUNE_TEST_TIME_LIMIT_S)
+    monkeypatch.setattr(operators, 'PRUNE_TIME_LIMIT_S', PRUNE_TEST_TIME_LIMIT_S)
     ours = stages.prune(stages.prune_setup(cfg, None), Classified(decoded, scores)).scores
     expected = run_p022(monkeypatch, tmp_path, cfg, scores, sampled)
     assert ours.dtype == np.uint8 and np.array_equal(ours, expected)
@@ -460,7 +460,7 @@ def test_detect_unpacks_into_every_frame_and_frees_canvases(tmp_path, video, pre
             out.append(np.array([[j * TS + 2, i * TS + 2, j * TS + 8, i * TS + 8, 0.9]]))
         return out
 
-    monkeypatch.setattr(stages, 'detect_batch', fake_detect_batch)
+    monkeypatch.setattr(operators, 'detect_batch', fake_detect_batch)
     det = stages.detect({'detector': None, 'tile_size': TS}, p)
     assert frames.leftover(prefix) == []
     assert sorted(det.detections) == list(range(N_FRAMES))

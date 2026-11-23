@@ -182,6 +182,51 @@ def build_metric_objects(metrics_list: list[str]) -> list[HOTA | CLEAR | Identit
     return metrics
 
 
+def run_trackeval(dataset_config: dict, metrics: list, output_dir: str, n_sequences: int) -> dict:
+    """Run TrackEval on one polyis Dataset with p110's evaluator settings; return the per-sequence results.
+
+    The result maps each sequence (and 'COMBINED_SEQ') to TrackEval's per-class metric dicts.  Shared by
+    p110 and profiling's evaluate stage so both score tracks identically.
+    """
+    # Build the TrackEval evaluator configuration with simple per-task execution.
+    eval_config = {
+        'USE_PARALLEL': False,
+        'NUM_PARALLEL_CORES': min(mp.cpu_count(), n_sequences),
+        'BREAK_ON_ERROR': True,
+        'LOG_ON_ERROR': os.path.join(output_dir, 'LOG.txt'),
+        'PRINT_RESULTS': False,
+        'PRINT_CONFIG': False,
+        'TIME_PROGRESS': False,
+        'OUTPUT_SUMMARY': False,
+        'OUTPUT_DETAILED': False,
+        'PLOT_CURVES': False,
+        'OUTPUT_EMPTY_CLASSES': False,
+    }
+
+    # Ensure the destination directory exists before TrackEval writes results.
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Construct the split-aware TrackEval dataset wrapper.
+    eval_dataset = Dataset(dataset_config)
+    # Construct the TrackEval evaluator instance.
+    evaluator = trackeval.Evaluator(eval_config)
+
+    # Suppress noisy TrackEval warnings so failures stay visible.
+    with warnings.catch_warnings():
+        # Silence TrackEval warning output for deterministic logs.
+        warnings.filterwarnings("ignore")
+        # Run TrackEval for the configured dataset and metrics.
+        results = evaluator.evaluate([eval_dataset], metrics)
+
+    # Validate the TrackEval response structure before extracting results.
+    assert results and len(results) == 2, results
+    # Validate the TrackEval execution status.
+    assert results[1]['Dataset']['sort'] == 'Success', f"Evaluation failed: {results[1]}"
+
+    # Extract the per-sequence tracker results from the nested TrackEval payload.
+    return results[0].get('Dataset', {}).get('sort', {})
+
+
 def evaluate_tracking_accuracy(task_row: dict,
                                videos: list[str],
                                metrics_list: list[str],
@@ -209,45 +254,11 @@ def evaluate_tracking_accuracy(task_row: dict,
         'input_track_dir': track_execution_dir,
     }
 
-    # Build the TrackEval evaluator configuration with simple per-task execution.
-    eval_config = {
-        'USE_PARALLEL': False,
-        'NUM_PARALLEL_CORES': min(mp.cpu_count(), len(videos)),
-        'BREAK_ON_ERROR': True,
-        'LOG_ON_ERROR': os.path.join(output_dir, 'LOG.txt'),
-        'PRINT_RESULTS': False,
-        'PRINT_CONFIG': False,
-        'TIME_PROGRESS': False,
-        'OUTPUT_SUMMARY': False,
-        'OUTPUT_DETAILED': False,
-        'PLOT_CURVES': False,
-        'OUTPUT_EMPTY_CLASSES': False,
-    }
-
-    # Ensure the destination directory exists before TrackEval writes results.
-    os.makedirs(output_dir, exist_ok=True)
-
     # Materialize the requested metric objects once per task.
     metrics = build_metric_objects(metrics_list)
-    # Construct the split-aware TrackEval dataset wrapper.
-    eval_dataset = Dataset(dataset_config)
-    # Construct the TrackEval evaluator instance.
-    evaluator = trackeval.Evaluator(eval_config)
+    # Run TrackEval with p110's settings (shared with profiling's evaluate stage).
+    tracker_results = run_trackeval(dataset_config, metrics, output_dir, len(videos))
 
-    # Suppress noisy TrackEval warnings so failures stay visible.
-    with warnings.catch_warnings():
-        # Silence TrackEval warning output for deterministic logs.
-        warnings.filterwarnings("ignore")
-        # Run TrackEval for the configured dataset and metrics.
-        results = evaluator.evaluate([eval_dataset], metrics)
-
-    # Validate the TrackEval response structure before extracting results.
-    assert results and len(results) == 2, results
-    # Validate the TrackEval execution status.
-    assert results[1]['Dataset']['sort'] == 'Success', f"Evaluation failed: {results[1]}"
-
-    # Extract the per-sequence tracker results from the nested TrackEval payload.
-    tracker_results = results[0].get('Dataset', {}).get('sort', {})
     # Validate that TrackEval produced one combined row plus one row per video.
     expected_sequences = tuple(sorted(set(videos) | {'COMBINED_SEQ'}))
     actual_sequences = tuple(sorted(tracker_results.keys()))

@@ -9,6 +9,10 @@ queue is bounded by `queue_maxsize`, so a slow stage stalls the ones above it.
 A stage is two plain functions:
     setup(worker) -> state         once per worker process (load models here)
     process(state, msg) -> msg     once per input message, returns exactly one output
+With fan_out=True, process returns a list of outputs instead (0..N), each sent on in order.
+A stage's gpu may be a tuple: its workers take those GPUs in turn, each seeing only its own.
+With save=fn, every output is also handed, after process returns, to the stage's `savers` saver
+processes, which call fn on it; saving therefore never counts toward time measured inside process.
 
 Shutdown: a finished producer sends one STOP per consumer process; a consumer stops after it
 has received one STOP per producer process, then sends its own STOPs downstream.  Queues are
@@ -17,7 +21,7 @@ FIFO, so every message a producer sent is read before the last of its STOPs.
 Failure: a worker that raises reports (stage, message, traceback) and exits 1; the caller
 also notices workers that die without reporting (OOM kill, segfault).  On any failure the
 caller stops every worker, frees the run's shared-memory blocks, and raises PipelineError.
-The engine records no timing; the caller times the results it receives.
+The engine records no timing; stages or the caller time what they need.
 """
 
 import itertools
@@ -48,8 +52,14 @@ class Stage(NamedTuple):
     setup: Callable[[Worker], Any]
     process: Callable[[Any, Any], Any]
     procs: int = 1
-    # Physical GPU index; the worker sees it as cuda:0 (CUDA_VISIBLE_DEVICES is set before setup).
-    gpu: int | None = None
+    # Physical GPU index, or a tuple of them taken by the workers in turn; each worker sees its GPU as
+    # cuda:0 (CUDA_VISIBLE_DEVICES is set before setup).
+    gpu: int | tuple[int, ...] | None = None
+    # process returns a list of outputs (possibly empty) instead of exactly one.
+    fan_out: bool = False
+    # Called on every output by the stage's saver processes, outside the worker.
+    save: Callable[[Any], None] | None = None
+    savers: int = 1
 
 
 class PipelineError(RuntimeError):
@@ -61,15 +71,24 @@ def _describe(msg: Any) -> str:
     return 'no message (setup or shutdown)' if msg is None else repr(msg)[:300]
 
 
+def worker_gpu(stage: Stage, index: int) -> int | None:
+    """The physical GPU worker `index` of `stage` uses: its gpu, or its gpus taken in turn."""
+    if isinstance(stage.gpu, tuple):
+        return stage.gpu[index % len(stage.gpu)]
+    return stage.gpu
+
+
 def _worker(stage: Stage, index: int, in_q: mp.Queue, out_q: mp.Queue,
-            n_in_stops: int, n_out_stops: int, err_q: mp.Queue) -> None:
+            n_in_stops: int, n_out_stops: int, err_q: mp.Queue,
+            save_q: "mp.Queue | None" = None, n_save_stops: int = 0) -> None:
     """The one loop every stage process runs."""
+    gpu = worker_gpu(stage, index)
     # Pin the GPU before setup imports CUDA, so the worker addresses it as cuda:0.
-    if stage.gpu is not None:
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(stage.gpu)
+    if gpu is not None:
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)
     msg = None
     try:
-        state = stage.setup(Worker(stage.name, index, stage.gpu))
+        state = stage.setup(Worker(stage.name, index, gpu))
         stops = 0
         while stops < n_in_stops:
             msg = in_q.get()
@@ -78,16 +97,41 @@ def _worker(stage: Stage, index: int, in_q: mp.Queue, out_q: mp.Queue,
                 stops += 1
                 continue
             out = stage.process(state, msg)
-            if out is STOP:
+            if not stage.fan_out and out is STOP:
                 raise RuntimeError(f'{stage.name}.process returned None; every message must produce an output')
-            out_q.put(out)
+            for o in (list(out) if stage.fan_out else [out]):
+                if o is STOP:
+                    raise RuntimeError(f'{stage.name}.process returned a None output; None is the shutdown marker')
+                out_q.put(o)
+                # Saving happens in the saver processes, after process has returned.
+                if save_q is not None:
+                    save_q.put(o)
             msg = None
-        # Tell every downstream process this one is done.
+        # Tell every downstream process, and every saver, that this one is done.
         for _ in range(n_out_stops):
             out_q.put(STOP)
+        for _ in range(n_save_stops):
+            save_q.put(STOP)
     except BaseException:
         err_q.put(f'{stage.name}[{index}] failed on {_describe(msg)}:\n{traceback.format_exc()}')
         # Exiting flushes err_q's feeder thread, so the report reaches the caller.
+        sys.exit(1)
+
+
+def _saver(stage: Stage, index: int, save_q: mp.Queue, n_in_stops: int, err_q: mp.Queue) -> None:
+    """A stage's saver: call stage.save on each output until every worker of the stage has finished."""
+    msg = None
+    try:
+        stops = 0
+        while stops < n_in_stops:
+            msg = save_q.get()
+            if msg is STOP:
+                stops += 1
+                continue
+            stage.save(msg)
+            msg = None
+    except BaseException:
+        err_q.put(f'{stage.name}.saver[{index}] failed on {_describe(msg)}:\n{traceback.format_exc()}')
         sys.exit(1)
 
 
@@ -121,13 +165,17 @@ def _feed(inputs: Iterable, q: mp.Queue, n_stops: int, stopped: threading.Event,
 
 
 def run(stages: list[Stage], inputs: Iterable, queue_maxsize: int,
-        shm_prefix: str | None = None, poll_s: float = 0.2) -> Iterator[Any]:
+        shm_prefix: str | None = None, poll_s: float = 0.2, save_queue_maxsize: int = 64) -> Iterator[Any]:
     """Run inputs through stages; yield each final output as soon as it arrives (in completion order)."""
     if not stages:
         raise ValueError('a pipeline needs at least one stage')
     for s in stages:
         if s.procs < 1:
             raise ValueError(f'stage {s.name}: procs must be >= 1, got {s.procs}')
+        if isinstance(s.gpu, tuple) and not s.gpu:
+            raise ValueError(f'stage {s.name}: gpu tuple must not be empty')
+        if s.save is not None and s.savers < 1:
+            raise ValueError(f'stage {s.name}: savers must be >= 1 when save is set, got {s.savers}')
 
     ctx = mp.get_context('spawn')
     # queues[i] feeds stage i; queues[-1] returns results to the caller.
@@ -135,6 +183,10 @@ def run(stages: list[Stage], inputs: Iterable, queue_maxsize: int,
     err_q = ctx.Queue()
     # (process, label) pairs; label matches the prefix of that worker's error report.
     workers: list[tuple[Any, str]] = []
+    # Saver processes, tracked like workers but joined only after their queues drain, and their queues
+    # (kept apart from `queues`, whose last entry must stay the results queue).
+    savers: list[tuple[Any, str]] = []
+    save_queues: list = []
     stopped = threading.Event()
     feeder_errors: list[str] = []
     failed = True
@@ -143,9 +195,19 @@ def run(stages: list[Stage], inputs: Iterable, queue_maxsize: int,
             # STOPs expected from upstream (the caller counts as one producer) and owed downstream.
             n_in = 1 if i == 0 else stages[i - 1].procs
             n_out = 1 if i == len(stages) - 1 else stages[i + 1].procs
+            # The stage's savers read one bounded queue, fed by every worker of the stage.
+            save_q, n_savers = None, 0
+            if stage.save is not None:
+                save_q, n_savers = ctx.Queue(maxsize=save_queue_maxsize), stage.savers
+                save_queues.append(save_q)
+                for j in range(n_savers):
+                    p = ctx.Process(target=_saver, name=f'{stage.name}-saver-{j}', daemon=True,
+                                    args=(stage, j, save_q, stage.procs, err_q))
+                    p.start()
+                    savers.append((p, f'{stage.name}.saver[{j}]'))
             for k in range(stage.procs):
                 p = ctx.Process(target=_worker, name=f'{stage.name}-{k}', daemon=True,
-                                args=(stage, k, queues[i], queues[i + 1], n_in, n_out, err_q))
+                                args=(stage, k, queues[i], queues[i + 1], n_in, n_out, err_q, save_q, n_savers))
                 p.start()
                 workers.append((p, f'{stage.name}[{k}]'))
 
@@ -154,9 +216,10 @@ def run(stages: list[Stage], inputs: Iterable, queue_maxsize: int,
                                   args=(inputs, queues[0], stages[0].procs, stopped, feeder_errors))
         feeder.start()
 
+        everyone = workers + savers
         stops = 0
         while stops < stages[-1].procs:
-            _raise_on_failure(err_q, workers, feeder_errors)
+            _raise_on_failure(err_q, everyone, feeder_errors)
             try:
                 msg = queues[-1].get(timeout=poll_s)
             except queue.Empty:
@@ -169,22 +232,28 @@ def run(stages: list[Stage], inputs: Iterable, queue_maxsize: int,
         # Every worker has sent its STOPs; wait for clean exits and re-check.
         for p, _ in workers:
             p.join(timeout=30)
-        _raise_on_failure(err_q, workers, feeder_errors)
+        _raise_on_failure(err_q, everyone, feeder_errors)
         if alive := [label for p, label in workers if p.is_alive()]:
             raise PipelineError(f'workers still alive 30 s after the last result: {alive}')
+        # Savers may still be writing a backlog: wait for them, but keep watching for failures.
+        while any(p.is_alive() for p, _ in savers):
+            _raise_on_failure(err_q, everyone, feeder_errors)
+            for p, _ in savers:
+                p.join(timeout=poll_s)
+        _raise_on_failure(err_q, everyone, feeder_errors)
         # A clean run frees every block it creates; anything left is a lifetime bug.
         if shm_prefix is not None and (leaked := frames.leftover(shm_prefix)):
             raise PipelineError(f'{len(leaked)} shared-memory blocks were never freed, e.g. {leaked[0]}')
         failed = False
     finally:
         stopped.set()
-        for p, _ in workers:
+        for p, _ in workers + savers:
             if p.is_alive():
                 p.terminate()
-        for p, _ in workers:
+        for p, _ in workers + savers:
             p.join(timeout=5)
         # Never block interpreter exit on unread queue contents.
-        for q in [*queues, err_q]:
+        for q in [*queues, *save_queues, err_q]:
             q.cancel_join_thread()
         if failed and shm_prefix is not None:
             frames.unlink_all(shm_prefix)

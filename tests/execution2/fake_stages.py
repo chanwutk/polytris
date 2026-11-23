@@ -113,3 +113,40 @@ def fake_build(cfg, prefix):
     """build_stages replacement for main tests: one two-process stage, no models."""
     from execution2.pipeline import Stage
     return [Stage('fake', worker_setup, fake_tracked, 2)]
+
+
+def fan_out(state, msg):
+    """One output per child, msg['n'] of them (possibly none), each tagged with its child index."""
+    return [{**tag(state, msg), 'child': i} for i in range(msg['n'])]
+
+
+def timed_tag(state, msg):
+    """Tag, recording how long process itself took (start and end inside process)."""
+    start = time.perf_counter()
+    out = tag(state, msg)
+    return {**out, 'process_s': time.perf_counter() - start}
+
+
+def save_json(directory, msg):
+    """Saver: one JSON file per message, named by id (and child when present)."""
+    import json
+    name = f"{msg['id']}" + (f"-{msg['child']}" if 'child' in msg else '')
+    with open(os.path.join(directory, f'{name}.json'), 'w') as f:
+        json.dump({k: v for k, v in msg.items() if k != 'path'}, f)
+
+
+def slow_save_json(directory, delay_s, msg):
+    """Saver that takes delay_s per message before writing."""
+    time.sleep(delay_s)
+    save_json(directory, msg)
+
+
+def failing_save(target, msg):
+    """Saver that raises on one message."""
+    if msg['id'] == target:
+        raise OSError(f'disk full on {target}')
+
+
+def none_in_fan_out(state, msg):
+    """A fan-out stage that wrongly emits None among its outputs."""
+    return [tag(state, msg), None]
