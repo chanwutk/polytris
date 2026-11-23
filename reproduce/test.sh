@@ -12,7 +12,14 @@ trap 'rm -f "$selection"' EXIT
 python reproduce/selection.py select "$1" "$2" "$selection" "${@:3}"
 export POLYIS_TEST_PARETO_PARAMS="$selection"
 
+# The reference pipeline (full-frame detection and tracking) that HOTA and speedups are measured against.
 python preprocess/p002_preprocess_naive_detection.py --test
 python preprocess/p002_preprocess_naive_tracking.py --test
-extract_tracks --test
-evaluate_split --test
+# Each selected configuration through execution2 on one GPU: tracks for p110 and execution2's runtime.
+python -m execution2.tools.run_variants run "$1" test "$selection"
+python evaluation/p110_accuracy_compute.py --test
+python evaluation/p111_accuracy_aggregate.py --test
+python evaluation/p120_throughput_gather.py --test
+python evaluation/p121_throughput_compute.py
+python -m execution2.tools.run_variants record "$1" test
+python evaluation/p130_tradeoff_compute.py --test

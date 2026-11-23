@@ -78,18 +78,55 @@ bash reproduce/test.sh jnc0 validation.json
 
 - `train.sh` generates training detections, trains the relevance classifier,
   and profiles the per-tile sampling limits.
-- `validate.sh` runs the configured sweep on validation clips and writes JSON
+- `validate.sh` runs the configured sweep on validation clips with the
+  extraction scripts (`scripts/p020`–`p060`) and writes JSON
   with the config, throughput in FPS, HOTA, and Pareto membership for each
   variant. The Pareto set includes the configurations needed for the paper's
   ablations.
 - `test.sh` takes that JSON and runs the marked Pareto configurations on test
-  clips. Pass a third argument, a `variant_id` from the JSON, to test just that
-  configuration. The script writes per-clip tracking JSONL and the dataset's
-  evaluation `090_tradeoff/tradeoff.csv` under `/polyis-cache`.
+  clips with `execution2`, the pipeline-parallel extraction engine, one
+  configuration at a time on one GPU. Pass a third argument, a `variant_id`
+  from the JSON, to test just that configuration. The script writes per-clip
+  tracking JSONL and the dataset's evaluation `090_tradeoff/tradeoff.csv`
+  under `/polyis-cache`.
+
+The test results are the paper's end-to-end numbers: HOTA and throughput
+(§7.1, Figure 8), the extraction throughput behind the amortization analysis
+(§7.2, Figure 9), and the speedups of the operator ablation (§7.4.4). Each
+configuration's throughput is the test clips' frame count divided by
+`execution2`'s runtime, measured from the first finished clip to the last
+after a warm-up clip, so process start-up and model loading are excluded.
+The reference pipeline that HOTA and speedups are measured against is the
+full-frame detector and tracker (`preprocess/p002_*`).
+The figures shipped with the artifact come from the scripts instead
+([Generate figures and tables](#generate-figures-and-tables)).
 
 Paths passed to the wrappers are relative to the checkout or absolute. Reuse
 the trained artifacts and the same sweep config across validation and test.
 Each dataset's cache should have one active writer.
+
+### Run one configuration with execution2
+
+`execution2` runs one configuration over a directory of clips and writes one
+tracking JSONL per clip. After `train.sh` has trained the dataset's artifacts,
+write the config for any `variant_id` of the sweep grid and run it from
+`/polyis` inside the container:
+
+```sh
+python -m execution2.tools.run_variants config jnc0 \
+    ShuffleNet05_60_4_r025_none_s100_sortcython > jnc0.yaml
+python -m execution2.main --config jnc0.yaml \
+    --videos /polyis-data/datasets/jnc0/test --out tracks-jnc0
+```
+
+The command prints the clips' frame count and `execution2`'s runtime in
+seconds. The config names the dataset's trained classifier, sampling limits,
+and detector, the configuration's parameters, and the process count and GPU of
+each stage.
+
+`execution2` keeps decoded frames and canvases in shared memory. The compose
+file allows up to 128 GB of it (`shm_size`), and `execution2` stops before
+running if its estimate for the clips does not fit.
 
 ### Commands by dataset
 
@@ -256,6 +293,15 @@ the clips and test annotations from both public dataset bundles above. The
 other targets use the saved benchmark results shipped with the artifact.
 The render command uses a temporary cache for the saved results and writes
 the exported figures and table rows to `paper/figures/generated/`.
+
+Figures 8 and 9 and the operator ablation (§7.4.4) are drawn from saved
+results of the implementation published in the paper, the extraction scripts
+(`scripts/p020`–`p060`). `reproduce/test.sh` runs the same configurations with
+`execution2`, which produces the same tracks as the scripts and runs faster.
+The `tradeoff.csv` it writes therefore shows the same HOTA as these figures
+and higher throughput. The pruning solver stops at 0.1 s, so a configuration
+whose solve reaches that limit can select different polyominoes from run to
+run, in either implementation.
 
 | Target | Paper output |
 | --- | --- |
