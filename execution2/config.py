@@ -59,8 +59,6 @@ class Params:
     tile_size: int
     canvas_scale: float
     canvas_format: str
-    # Test-only: the ILP's solve limit (None = p022's 0.1 s).  Equivalence tests raise it so solves reach the optimum.
-    prune_time_limit_s: float | None = None
 
 
 @dataclass(frozen=True)
@@ -156,7 +154,7 @@ def _existing(path: Any, where: str) -> str:
 
 
 def _params(data: Any) -> Params:
-    p = _flat(Params, data, 'params', optional={'prune_time_limit_s'})
+    p = _flat(Params, data, 'params')
     # Range checks for every Table 1 knob and fixed knob.
     if p.sample_rate < 1:
         raise ConfigError(f'params.sample_rate: must be >= 1, got {p.sample_rate}')
@@ -171,8 +169,6 @@ def _params(data: Any) -> Params:
         raise ConfigError(f'params.tile_size: must be >= 1, got {p.tile_size}')
     if p.canvas_scale <= 0:
         raise ConfigError(f'params.canvas_scale: must be > 0, got {p.canvas_scale}')
-    if p.prune_time_limit_s is not None and p.prune_time_limit_s <= 0:
-        raise ConfigError(f'params.prune_time_limit_s: must be > 0, got {p.prune_time_limit_s}')
     if p.canvas_format not in CANVAS_FORMATS:
         raise ConfigError(f'params.canvas_format: must be one of {CANVAS_FORMATS}, got {p.canvas_format!r}')
     return p

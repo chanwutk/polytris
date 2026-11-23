@@ -1,11 +1,11 @@
 """
 Scripts-vs-pipelines equivalence on a scratch cache (both execution2 and profiling against freshly run scripts).
 
-Two sources of nondeterminism are removed first: p040 reads canvases in name order (scripts/p040_exec_detect.py),
-and every ILP gets a raised solve limit on both sides, with pairs whose solve still ran into the limit discarded.
+Two sources of nondeterminism are removed: p040 reads canvases in name order (scripts/p040_exec_detect.py), and
+the pipelines' prune stages read the scripts' saved 022 grids instead of solving (an ILP stopped by its 0.1 s limit
+is not unique).  The ILP itself is compared once per (config, video) in execution2's isolated comparison.
 
-  scripts     p020 -> p060 on the test videos with configs/equivalence.yaml (the small grid), p022 at
-              --time-limit, its time-limit outputs linked where p030 reads pruned results
+  scripts     p020 -> p060 on the test videos with configs/equivalence.yaml (the small grid), default settings
   execution2  execution2.tools.compare_scripts for every configuration of the grid, spread over GPUs
   summary     per-stage totals of the execution2 reports (profiling.tools.compare_scripts writes its own)
 
@@ -39,41 +39,14 @@ def parse_args():
     s = sub.add_parser('scripts')
     s.add_argument('--dataset', required=True)
     s.add_argument('--videos', nargs='+', required=True)
-    s.add_argument('--time-limit-s', type=float, default=5.0)
     e = sub.add_parser('execution2')
     e.add_argument('--dataset', required=True)
     e.add_argument('--videos', nargs='+', required=True)
     e.add_argument('--out-dir', required=True)
     e.add_argument('--gpus', type=int, nargs='+', required=True)
-    e.add_argument('--time-limit-s', type=float, default=5.0)
     m = sub.add_parser('summary')
     m.add_argument('--out-dir', required=True)
     return parser.parse_args()
-
-
-def link_time_limited_prunes(dataset: str, videos: list[str], time_limit_s: float) -> int:
-    """Point each 022 pruned result p030 reads at p022's --time-limit output; returns the links made."""
-    made = 0
-    for video in videos:
-        tl_root = Path(cache.exec(dataset, 'pruned-polyominoes-tl', video))
-        if not tl_root.exists():
-            continue
-        dst_root = Path(cache.exec(dataset, 'pruned-polyominoes', video))
-        dst_root.mkdir(parents=True, exist_ok=True)
-        for param_dir in sorted(tl_root.iterdir()):
-            src = param_dir / f'tl{time_limit_s}'
-            # p022 names the subdirectory after the limit as given (tl5.0 for --time-limit 5).
-            if not src.is_dir():
-                raise FileNotFoundError(f'{src} missing: p022 did not write this time limit')
-            dst = dst_root / param_dir.name
-            # A previous untimed result would be read instead of the timed one: refuse rather than guess.
-            if dst.exists() and not dst.is_symlink():
-                raise FileExistsError(f'{dst} exists and is not a link to a time-limited result')
-            if dst.is_symlink():
-                dst.unlink()
-            dst.symlink_to(os.path.relpath(src, dst_root))
-            made += 1
-    return made
 
 
 def single_combo_configs(base: str = 'equivalence.yaml') -> list[str]:
@@ -97,7 +70,42 @@ def single_combo_configs(base: str = 'equivalence.yaml') -> list[str]:
     return names
 
 
-def run_scripts(dataset: str, videos: list[str], time_limit_s: float) -> None:
+def _hold(dataset: str, video: str) -> tuple[Path, Path]:
+    """(the video's 022 folder p030 reads, the holding folder beside it)."""
+    pruned = Path(cache.exec(dataset, 'pruned-polyominoes', video))
+    return pruned, pruned.parent / (pruned.name + '.hold')
+
+
+def set_aside_prunes(dataset: str, videos: list[str]) -> None:
+    """Move each video's 022 results into its holding folder (p022's next run would delete them)."""
+    for video in videos:
+        pruned, hold = _hold(dataset, video)
+        if not pruned.exists():
+            continue
+        hold.mkdir(parents=True, exist_ok=True)
+        for param_dir in sorted(pruned.iterdir()):
+            # Two runs never write the same combination: a clash means the grid split went wrong.
+            if (hold / param_dir.name).exists():
+                raise FileExistsError(f'{hold / param_dir.name} already held')
+            param_dir.rename(hold / param_dir.name)
+
+
+def restore_prunes(dataset: str, videos: list[str]) -> int:
+    """Move every held 022 result back where p030 reads it; returns how many."""
+    moved = 0
+    for video in videos:
+        pruned, hold = _hold(dataset, video)
+        if not hold.exists():
+            continue
+        pruned.mkdir(parents=True, exist_ok=True)
+        for param_dir in sorted(hold.iterdir()):
+            param_dir.rename(pruned / param_dir.name)
+            moved += 1
+        hold.rmdir()
+    return moved
+
+
+def run_scripts(dataset: str, videos: list[str]) -> None:
     """The scripts on the small grid, restricted to one dataset and these validation videos."""
     env = {**os.environ, 'CONFIG': 'equivalence.yaml', 'POLYIS_DATASETS': dataset}
     for script in SCRIPTS:
@@ -106,17 +114,18 @@ def run_scripts(dataset: str, videos: list[str], time_limit_s: float) -> None:
             print('>>>', ' '.join(cmd), flush=True)
             subprocess.run(cmd, env=env, check=True)
             continue
-        # p022: one grid combination per run (one Gurobi session at a time), at the raised limit.
+        # p022: one grid combination per run (one Gurobi session at a time).  Each run deletes the videos' 022
+        # folders before writing, so every run's results are set aside and restored after the last run.
         names = single_combo_configs()
         try:
             for name in names:
-                print('>>>', f'CONFIG={name}', ' '.join(cmd), '--time-limit', str(time_limit_s), flush=True)
-                subprocess.run(cmd + ['--time-limit', str(time_limit_s)], env={**env, 'CONFIG': name}, check=True)
+                print('>>>', f'CONFIG={name}', ' '.join(cmd), flush=True)
+                subprocess.run(cmd, env={**env, 'CONFIG': name}, check=True)
+                set_aside_prunes(dataset, videos)
         finally:
             for name in names:
                 Path('configs', name).unlink(missing_ok=True)
-        # p030 must read the time-limited pruned results (linked after the last p022 run: each run clears 022).
-        print(f'linked {link_time_limited_prunes(dataset, videos, time_limit_s)} time-limited prune results', flush=True)
+        print(f'restored {restore_prunes(dataset, videos)} pruned results', flush=True)
 
 
 def grid_branches() -> list[dict]:
@@ -137,7 +146,7 @@ def config_name(b: dict) -> str:
             f"_c{int(b['canvas_scale'] * 100):03d}_{b['tracker']}")
 
 
-def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int], time_limit_s: float) -> None:
+def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int]) -> None:
     """execution2's compare tool for every configuration, one configuration per free GPU at a time."""
     from profiling.aggregate import execution2_config
     from profiling.config import load_sweep_config
@@ -147,7 +156,6 @@ def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int
     jobs = []
     for b in grid_branches():
         cfg = execution2_config(sweep, b)
-        cfg['params']['prune_time_limit_s'] = time_limit_s
         path = out / 'configs' / f'{config_name(b)}.yaml'
         path.write_text(yaml.safe_dump(cfg, sort_keys=False))
         jobs.append(path)
@@ -167,8 +175,7 @@ def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int
             cfg['system']['stages'][stage]['gpu'] = gpu
         path.write_text(yaml.safe_dump(cfg, sort_keys=False))
         cmd = ['python', '-m', 'execution2.tools.compare_scripts', '--config', str(path), '--dataset', dataset,
-               '--videoset', 'valid', '--videos', *videos, '--time-limit-s', str(time_limit_s),
-               '--cache-time-limit-s', str(time_limit_s), '--out', str(out / f'{path.stem}.json')]
+               '--videoset', 'valid', '--videos', *videos, '--out', str(out / f'{path.stem}.json')]
         with open(out / f'{path.stem}.log', 'w') as f:
             code = subprocess.run(cmd, env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(gpu)},
                                   stdout=f, stderr=subprocess.STDOUT).returncode
@@ -195,7 +202,7 @@ def summarize(out_dir: str) -> dict:
     """Per dataset and stage: compared vs exactly equal, over every execution2 report."""
     summary = {}
     for ds_dir in sorted(p for p in Path(out_dir).iterdir() if p.is_dir()):
-        t = {k: {'compared': 0, 'equal': 0} for k in ('classify', 'prune', 'pack', 'detect_raw_in_order',
+        t = {k: {'compared': 0, 'equal': 0} for k in ('classify', 'prune_ilp', 'pack', 'detect_raw_in_order',
                                                        'detect_unpacked_in_order', 'track', 'chained_tracks')}
         failures = []
         for report_path in sorted(ds_dir.glob('*.json')):
@@ -207,19 +214,19 @@ def summarize(out_dir: str) -> dict:
                           'detect_raw_in_order': v['detect_in_script_order'].get('p040_raw_equal', False),
                           'detect_unpacked_in_order': v['detect_in_script_order'].get('p050_equal_in_order', False),
                           'track': v['track']['equal']}
-                if 'prune' in v and v['prune']['ilp']['compared']:
-                    checks['prune'] = v['prune']['equal']
+                # Informational: our ILP vs p022's, both at the 0.1 s limit (a stopped solve may differ).
+                if 'prune' in v:
+                    checks['prune_ilp'] = v['prune']['equal']
                 for k, ok in checks.items():
                     t[k]['compared'] += 1
                     t[k]['equal'] += bool(ok)
                     if not ok:
                         failures.append(f'{report_path.stem} {video} {k}')
-            if r['chained']['compared']:
-                for video, c in r['chained']['videos'].items():
-                    t['chained_tracks']['compared'] += 1
-                    t['chained_tracks']['equal'] += bool(c['equal'])
-                    if not c['equal']:
-                        failures.append(f'{report_path.stem} {video} chained_tracks')
+            for video, c in r['chained']['videos'].items():
+                t['chained_tracks']['compared'] += 1
+                t['chained_tracks']['equal'] += bool(c['equal'])
+                if not c['equal']:
+                    failures.append(f'{report_path.stem} {video} chained_tracks')
         summary[ds_dir.name] = {'totals': t, 'failures': failures}
     Path(out_dir, 'summary.json').write_text(json.dumps(summary, indent=1) + '\n')
     return summary
@@ -228,9 +235,9 @@ def summarize(out_dir: str) -> dict:
 def main() -> None:
     args = parse_args()
     if args.command == 'scripts':
-        run_scripts(args.dataset, args.videos, args.time_limit_s)
+        run_scripts(args.dataset, args.videos)
     elif args.command == 'execution2':
-        run_execution2(args.dataset, args.videos, args.out_dir, args.gpus, args.time_limit_s)
+        run_execution2(args.dataset, args.videos, args.out_dir, args.gpus)
     else:
         print(json.dumps(summarize(args.out_dir), indent=1))
 

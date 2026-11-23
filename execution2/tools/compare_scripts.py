@@ -24,13 +24,15 @@ import dataclasses
 import json
 import os
 import tempfile
+from functools import partial
 from pathlib import Path
 
 import cv2
 import numpy as np
 
-from execution2 import frames, main, operators, stages
+from execution2 import frames, main, stages
 from execution2.config import Config, load_config
+from execution2.pipeline import Stage, Worker
 from execution2.stages import Classified, Detected
 from polyis.io import cache, store
 from polyis.utilities import (build_param_str, load_classification_results, load_pruned_classification_results,
@@ -43,26 +45,8 @@ def parse_args():
     parser.add_argument('--dataset', required=True)
     parser.add_argument('--videoset', default='test')
     parser.add_argument('--videos', nargs='+', required=True)
-    parser.add_argument('--time-limit-s', type=float, default=None)
-    parser.add_argument('--cache-time-limit-s', type=float, default=0.1)
     parser.add_argument('--out', required=True)
     return parser.parse_args()
-
-
-# A solve that ran at least this share of its limit is treated as stopped by it: p022 logs only its solve time.
-LIMIT_SHARE = 0.95
-
-
-def cached_solve_ms(prune_dir: str) -> float | None:
-    """p022's logged solve time for one (config, video), from its runtime.jsonl."""
-    path = os.path.join(prune_dir, 'score', 'runtime.jsonl')
-    if not os.path.exists(path):
-        return None
-    line = json.loads(open(path).read().splitlines()[0])
-    for op in line['runtime']:
-        if op.get('op') == 'solve_ilp':
-            return float(op['time'])
-    return None
 
 
 def grids(rows: list[dict]) -> tuple[list[int], np.ndarray]:
@@ -197,8 +181,7 @@ def script_order(cfg: Config, states: dict, packed, canvases: np.ndarray, paths:
     }
 
 
-def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str, prefix: str, tmp: Path,
-             cache_time_limit_s: float = 0.1) -> dict:
+def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str, prefix: str, tmp: Path) -> dict:
     """Every stage fed the script's previous output; returns per-stage comparisons."""
     p, paths = cfg.params, script_paths(cfg, dataset, video)
     path = str(store.dataset(dataset, videoset, video))
@@ -215,25 +198,11 @@ def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str,
         pack_input = theirs
         # prune
         if cfg.use_prune:
-            # The operator directly (stages.prune is a thin wrapper), to see the solve's status and time.
-            ps = states['prune']
-            pruned_scores, result = operators.prune_scores(theirs, ps['distance'], ps['relevance_threshold'],
-                                                           ps['time_limit_s'])
+            pruned = stages.prune(states['prune'], Classified(decoded, theirs))
             pidx, ptheirs = grids(load_pruned_classification_results(
                 dataset, video, p.tile_size, cfg.artifacts.classifier.name, p.tracker, p.mistrack_tolerance,
                 p.relevance_threshold, p.sample_rate))
-            our_limit_s = ps['time_limit_s'] or operators.PRUNE_TIME_LIMIT_S
-            script_ms = cached_solve_ms(str(cache.exec(dataset, 'pruned-polyominoes', video, build_param_str(
-                classifier=cfg.artifacts.classifier.name, tilesize=p.tile_size, sample_rate=p.sample_rate,
-                tracker=p.tracker, tracking_accuracy_threshold=p.mistrack_tolerance,
-                relevance_threshold=p.relevance_threshold))))
-            # Compared only when both solves finished well inside their limits (a stopped solve is not unique).
-            compared = (result.status == 2 and result.solve_ms < LIMIT_SHARE * our_limit_s * 1000
-                        and script_ms is not None and script_ms < LIMIT_SHARE * cache_time_limit_s * 1000)
-            report['prune'] = {'frames_match': pidx == decoded.sampled.tolist(),
-                               'ilp': {'status': result.status, 'solve_ms': result.solve_ms, 'script_solve_ms': script_ms,
-                                       'compared': compared},
-                               **compare_grids(pruned_scores, ptheirs, None)}
+            report['prune'] = {'frames_match': pidx == decoded.sampled.tolist(), **compare_grids(pruned.scores, ptheirs, None)}
             pack_input = ptheirs
         # pack (frees the frames block)
         packed = stages.pack_video(stages.pack_setup(cfg, prefix, None), Classified(decoded, pack_input))
@@ -267,13 +236,40 @@ def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str,
     return report
 
 
+def script_prune_setup(cfg: Config, dataset: str, worker: Worker) -> dict:
+    return {'cfg': cfg, 'dataset': dataset}
+
+
+def script_prune(state: dict, c: Classified) -> Classified:
+    """Test-only prune stage: the scripts' saved 022 grids for this video instead of an ILP solve.
+
+    Takes the ILP out of the chained comparison (a solve stopped by its limit is not unique), so every
+    downstream stage is compared exactly.  The ILP itself is compared once, in isolated().
+    """
+    cfg, video = state['cfg'], os.path.basename(c.decoded.video)
+    p = cfg.params
+    idx, grid = grids(load_pruned_classification_results(state['dataset'], video, p.tile_size,
+                                                         cfg.artifacts.classifier.name, p.tracker, p.mistrack_tolerance,
+                                                         p.relevance_threshold, p.sample_rate))
+    # The saved grids must cover exactly this video's sampled frames, in order.
+    if idx != c.decoded.sampled.tolist():
+        raise ValueError(f'{video}: script 022 frames {idx[:5]}... differ from the sampled frames')
+    return c._replace(scores=grid)
+
+
+def build_with_script_prune(dataset: str, cfg: Config, prefix: str) -> list[Stage]:
+    """execution2's stages with prune replaced by script_prune (same process count)."""
+    return [s._replace(setup=partial(script_prune_setup, cfg, dataset), process=script_prune) if s.name == 'prune'
+            else s for s in stages.build_stages(cfg, prefix)]
+
+
 def chained(cfg: Config, dataset: str, videoset: str, videos: list[str], tmp: Path) -> dict:
-    """The real multi-process pipeline end to end; each output vs 060's tracking.jsonl."""
+    """The real multi-process pipeline end to end, prune reading the scripts' grids; each output vs 060's."""
     vdir, out = tmp / 'videos', tmp / 'out'
     vdir.mkdir()
     for v in videos:
         os.symlink(store.dataset(dataset, videoset, v), vdir / v)
-    summary = main.execute(cfg, str(vdir), str(out))
+    summary = main.execute(cfg, str(vdir), str(out), build=partial(build_with_script_prune, dataset))
     per_video = {}
     for v in videos:
         per_video[v] = compare_track_lines((out / f'{Path(v).stem}.jsonl').read_text().splitlines(),
@@ -284,9 +280,6 @@ def chained(cfg: Config, dataset: str, videoset: str, videos: list[str], tmp: Pa
 def main_cli() -> None:
     args = parse_args()
     cfg = load_config(args.config)
-    # A raised solve limit (equivalence runs) applies to the isolated solves and the chained pipeline alike.
-    if args.time_limit_s is not None:
-        cfg = dataclasses.replace(cfg, params=dataclasses.replace(cfg.params, prune_time_limit_s=args.time_limit_s))
     # Models are loaded once and reused across videos, as the pipeline's workers do.
     states = {'classify': stages.classify_setup(cfg, None), 'detect': stages.detect_setup(cfg, None),
               'prune': stages.prune_setup(cfg, None) if cfg.use_prune else None}
@@ -298,13 +291,9 @@ def main_cli() -> None:
             for v in args.videos:
                 vtmp = Path(tmp) / v
                 vtmp.mkdir()
-                report['isolated'][v] = isolated(cfg, states, args.dataset, args.videoset, v, prefix, vtmp,
-                                                 args.cache_time_limit_s)
+                report['isolated'][v] = isolated(cfg, states, args.dataset, args.videoset, v, prefix, vtmp)
                 print(v, json.dumps(report['isolated'][v]), flush=True)
             report['chained'] = chained(cfg, args.dataset, args.videoset, args.videos, Path(tmp))
-            # The chained run solves the same ILPs; it is comparable only if every video's solves were.
-            report['chained']['compared'] = all(r.get('prune', {}).get('ilp', {}).get('compared', True)
-                                                for r in report['isolated'].values())
             print('chained', json.dumps(report['chained']), flush=True)
     finally:
         frames.unlink_all(prefix)

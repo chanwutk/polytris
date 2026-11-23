@@ -62,13 +62,6 @@ def test_no_prune_config_loads(valid):
     assert not cfg.use_prune and cfg.artifacts.max_rate_table is None and 'prune' not in cfg.system.stages
 
 
-def test_prune_time_limit_is_optional(valid):
-    # Absent: p022's default applies (None); given: kept as a float (equivalence tests raise it).
-    assert parse_config(valid).params.prune_time_limit_s is None
-    valid['params']['prune_time_limit_s'] = 5
-    assert parse_config(valid).params.prune_time_limit_s == 5.0
-
-
 def test_ints_are_accepted_as_floats(valid):
     valid['params']['canvas_scale'] = 1
     cfg = parse_config(valid)
@@ -111,8 +104,6 @@ def test_unknown_keys_are_errors(valid, where):
     ('canvas_scale', 0, 'must be > 0'),
     ('tracker', None, 'expected str, got NoneType'),
     ('canvas_format', 'png', 'must be one of'),
-    ('prune_time_limit_s', 0, 'must be > 0'),
-    ('prune_time_limit_s', '5', 'expected float, got str'),
 ])
 def test_bad_params_are_errors(valid, key, value, message):
     valid['params'][key] = value

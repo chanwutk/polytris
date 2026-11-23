@@ -111,7 +111,7 @@ def prune_setup(cfg: SweepConfig, worker: Worker) -> dict:
     return {'tables': {t: np.load(path) for t, path in cfg.artifacts.max_rate_tables.items()},
             'relevance_thresholds': p.relevance_thresholds, 'tolerances': p.mistrack_tolerances,
             'trackers': p.trackers, 'distances': {}, 'time_limit_s': p.prune_time_limit_s,
-            'groups': sweep_groups(cfg)}
+            'groups': sweep_groups(cfg), 'solve': solve_ilp}
 
 
 def _distance(state: dict, tracker: str, tolerance: float, sample_rate: int) -> np.ndarray:
@@ -121,6 +121,20 @@ def _distance(state: dict, tracker: str, tolerance: float, sample_rate: int) -> 
         state['distances'][key] = ops.max_sampling_distance(state['tables'][tracker],
                                                             MISTRACK_TOLERANCES.index(tolerance), sample_rate)
     return state['distances'][key]
+
+
+def solve_ilp(state: dict, sc: Scored, tracker: str, tolerance: float, relevance_threshold: float) -> tuple:
+    """p022's ILP for one branch: the 0/255 pruned grids and the solve's status and time.
+
+    prune calls it through state['solve'], which equivalence tests replace with a reader of the scripts' grids.
+    """
+    s = sc.branch['sample_rate']
+    try:
+        pruned, result = ops.prune_scores(sc.scores, _distance(state, tracker, tolerance, s), relevance_threshold,
+                                          state['time_limit_s'])
+    except ValueError as e:
+        raise ValueError(f'{sc.video}: {e}') from e
+    return pruned, {'status': result.status, 'solve_ms': result.solve_ms}
 
 
 def prune(state: dict, sc: Scored) -> list[Scored]:
@@ -141,12 +155,7 @@ def prune(state: dict, sc: Scored) -> list[Scored]:
             for group in state['groups'].get((tracker, s), []):
                 tolerance = group.representative
                 start = time.time()
-                try:
-                    pruned, result = ops.prune_scores(sc.scores, _distance(state, tracker, tolerance, s), t_r,
-                                                      state['time_limit_s'])
-                except ValueError as e:
-                    raise ValueError(f'{sc.video}: {e}') from e
-                ilp = {'status': result.status, 'solve_ms': result.solve_ms}
+                pruned, ilp = state['solve'](state, sc, tracker, tolerance, t_r)
                 timing = _timing('prune', start, time.time())
                 branch = sc.branch.with_(relevance_threshold=t_r, mistrack_tolerance=tolerance, tracker=tracker)
                 outputs.append(Scored(sc.video, branch, sc.timings + (timing,), sc.decoded, pruned,

@@ -94,14 +94,13 @@ def prune_setup(cfg: Config, worker: Worker) -> dict:
     distance = ops.max_sampling_distance(np.load(cfg.artifacts.max_rate_table),
                                          MISTRACK_TOLERANCES.index(cfg.params.mistrack_tolerance),
                                          cfg.params.sample_rate)
-    return {'distance': distance, 'relevance_threshold': cfg.params.relevance_threshold,
-            'time_limit_s': cfg.params.prune_time_limit_s}
+    return {'distance': distance, 'relevance_threshold': cfg.params.relevance_threshold}
 
 
 def prune(state: dict, c: Classified) -> Classified:
     """p022: keep only the polyominoes the ILP selects; scores become 0/255 grids."""
     try:
-        pruned, _ = ops.prune_scores(c.scores, state['distance'], state['relevance_threshold'], state['time_limit_s'])
+        pruned, _ = ops.prune_scores(c.scores, state['distance'], state['relevance_threshold'])
     except ValueError as e:
         raise ValueError(f'{c.decoded.video}: {e}') from e
     return c._replace(scores=pruned)

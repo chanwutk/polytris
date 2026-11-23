@@ -1,4 +1,4 @@
-"""execution2.tools.scripts_equivalence: linking p022's time-limited outputs, and the configuration grid."""
+"""execution2.tools.scripts_equivalence: keeping every p022 run's results, and the configuration grid."""
 
 from pathlib import Path
 
@@ -14,34 +14,33 @@ def fake_cache(tmp_path, monkeypatch):
     return tmp_path
 
 
-def write_tl(root: Path, video: str, param: str, limit: str) -> Path:
-    d = root / video / 'pruned-polyominoes-tl' / param / f'tl{limit}' / 'score'
-    d.mkdir(parents=True)
-    (d / 'score.jsonl').write_text('timed\n')
-    return d
+def p022_run(root: Path, video: str, param: str) -> None:
+    """What one p022 run does to a video: delete its 022 folder, then write one combination."""
+    import shutil
+    pruned = root / video / 'pruned-polyominoes'
+    shutil.rmtree(pruned, ignore_errors=True)
+    (pruned / param / 'score').mkdir(parents=True)
+    (pruned / param / 'score' / 'score.jsonl').write_text(param + '\n')
 
 
-def test_links_point_p030s_path_at_the_time_limited_result(fake_cache):
-    write_tl(fake_cache, 'va00.mp4', 'P_1_040_r025_sortcython', '5.0')
-    write_tl(fake_cache, 'va00.mp4', 'P_4_080_r050_bytetrackcython', '5.0')
-    assert se.link_time_limited_prunes('ds', ['va00.mp4', 'va01.mp4'], 5.0) == 2
-    read = fake_cache / 'va00.mp4' / 'pruned-polyominoes' / 'P_1_040_r025_sortcython' / 'score' / 'score.jsonl'
-    assert read.read_text() == 'timed\n' and read.parent.parent.is_symlink()
-    # Relinking (a rerun) replaces the links instead of failing.
-    assert se.link_time_limited_prunes('ds', ['va00.mp4'], 5.0) == 2
+def test_every_p022_runs_results_survive_the_next_run(fake_cache):
+    params = ['P_1_040_r025_sortcython', 'P_1_080_r025_sortcython', 'P_4_040_r050_bytetrackcython']
+    for param in params:
+        p022_run(fake_cache, 'va00.mp4', param)
+        se.set_aside_prunes('ds', ['va00.mp4', 'va01.mp4'])
+    assert se.restore_prunes('ds', ['va00.mp4', 'va01.mp4']) == 3
+    pruned = fake_cache / 'va00.mp4' / 'pruned-polyominoes'
+    assert sorted(d.name for d in pruned.iterdir()) == sorted(params)
+    assert all((pruned / p / 'score' / 'score.jsonl').read_text() == p + '\n' for p in params)
+    assert not (pruned.parent / 'pruned-polyominoes.hold').exists()
 
 
-def test_an_untimed_result_in_the_way_is_an_error(fake_cache):
-    write_tl(fake_cache, 'va00.mp4', 'P_1_040_r025_sortcython', '5.0')
-    (fake_cache / 'va00.mp4' / 'pruned-polyominoes' / 'P_1_040_r025_sortcython').mkdir(parents=True)
-    with pytest.raises(FileExistsError, match='not a link'):
-        se.link_time_limited_prunes('ds', ['va00.mp4'], 5.0)
-
-
-def test_a_missing_time_limit_is_an_error(fake_cache):
-    write_tl(fake_cache, 'va00.mp4', 'P_1_040_r025_sortcython', '0.1')
-    with pytest.raises(FileNotFoundError, match='tl5.0'):
-        se.link_time_limited_prunes('ds', ['va00.mp4'], 5.0)
+def test_a_combination_written_twice_is_an_error(fake_cache):
+    p022_run(fake_cache, 'va00.mp4', 'P_1_040_r025_sortcython')
+    se.set_aside_prunes('ds', ['va00.mp4'])
+    p022_run(fake_cache, 'va00.mp4', 'P_1_040_r025_sortcython')
+    with pytest.raises(FileExistsError, match='already held'):
+        se.set_aside_prunes('ds', ['va00.mp4'])
 
 
 def test_grid_has_every_configuration_once():
