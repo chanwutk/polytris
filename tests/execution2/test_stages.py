@@ -4,6 +4,7 @@ the script itself: the script's file loaders and cache paths are redirected to t
 so both see the same inputs.  Needs the polyis container (Cython builds, Gurobi, one GPU).
 """
 
+import dataclasses
 import json
 from pathlib import Path
 
@@ -127,6 +128,10 @@ def test_constants_match_the_scripts(monkeypatch):
     assert stages.PACK_MODE_BEST_FIT == int(p030.PackMode.Best_Fit)
     monkeypatch.setattr('sys.argv', ['p040'])
     assert stages.DETECT_BATCH == p040.parse_args().batch_size
+    # p040 reads canvases in name (collage) order on both of its paths, not in os.listdir's arbitrary order.
+    p040_source = Path(p040.__file__).read_text()
+    assert p040_source.count("sorted(f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg'))") == 2
+    assert "[f for f in os.listdir(compressed_frames_dir)" not in p040_source
     # p022 passes `time_limit or 0.1` to solve_ilp.
     assert 'time_limit_seconds=time_limit or 0.1' in Path(p022.__file__).read_text()
     assert stages.PRUNE_TIME_LIMIT_S == 0.1
@@ -357,6 +362,19 @@ def test_prune_matches_p022(monkeypatch, tmp_path, sample_rate, tolerance, thres
     assert ours.dtype == np.uint8 and np.array_equal(ours, expected)
     # Pruning only removes tiles.
     assert not np.any((ours > 0) & (scores < np.floor(threshold * 255)))
+
+
+def test_prune_passes_the_configured_time_limit(monkeypatch, tmp_path):
+    # None (the default) leaves prune_scores on p022's limit; a configured limit reaches the solver.
+    seen = []
+    monkeypatch.setattr(operators, 'prune_scores', lambda s, d, t_r, limit=None: (seen.append(limit) or s, None))
+    decoded = Decoded('v.avi', W, H, N_FRAMES, np.array([0, 1]), np.array([1, 0]), np.array([]),
+                      frames.Block('unused', (0,), '|u1'))
+    for limit in (None, 5.0):
+        cfg = make_cfg(tmp_path, mistrack_tolerance=0.4)
+        cfg = dataclasses.replace(cfg, params=dataclasses.replace(cfg.params, prune_time_limit_s=limit))
+        stages.prune(stages.prune_setup(cfg, None), Classified(decoded, synthetic_scores(2)))
+    assert seen == [None, 5.0]
 
 
 def test_prune_rejects_a_mismatched_rate_table(tmp_path):
