@@ -195,7 +195,8 @@ def main_cli() -> None:
     totals = {}
     for stage, rows in report['stages'].items():
         key = {'060_uncompressed_tracks': 'same_up_to_id_renaming', '050_uncompressed_detections': None}.get(stage, 'equal')
-        compared = [r for r in rows if r.get('compared', True)]
+        # Every row is compared: prune reads the scripts' grids, so no branch depends on an ILP solve.
+        compared = rows
         if key:
             totals[stage] = {'compared': len(compared), 'equal': sum(bool(r.get(key)) for r in compared),
                              'rows': len(rows)}
