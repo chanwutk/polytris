@@ -50,3 +50,24 @@ def test_grid_has_every_configuration_once():
     assert len(branches) == 48
     names = {se.config_name(b) for b in branches}
     assert len(names) == 48 and 's1_r025_tnone_none_c100_sortcython' in names and 's4_r050_t080_tr_c100_bytetrackcython' in names
+
+
+def test_p022_runs_one_grid_combination_at_a_time(tmp_path, monkeypatch):
+    # Each generated config holds one (sample rate, tolerance, T_r, tracker), pruned branches only; DATA is kept.
+    import yaml
+    repo = Path(__file__).resolve().parents[2]
+    (tmp_path / 'configs').mkdir()
+    (tmp_path / 'configs' / 'equivalence.yaml').write_text((repo / 'configs' / 'equivalence.yaml').read_text())
+    monkeypatch.chdir(tmp_path)
+    names = se.single_combo_configs()
+    assert len(names) == 2 * 2 * 2 * 2
+    combos = set()
+    for name in names:
+        c = yaml.safe_load((tmp_path / 'configs' / name).read_text())
+        ex = c['EXEC']
+        assert all(len(ex[k]) == 1 for k in ('SAMPLE_RATES', 'TRACKING_ACCURACY_THRESHOLDS', 'RELEVANCE_THRESHOLDS',
+                                             'TRACKERS'))
+        assert ex['TRACKING_ACCURACY_THRESHOLDS'][0] is not None and c['DATA']['CACHE_DIR'] == '/polyis-cache/'
+        combos.add((ex['SAMPLE_RATES'][0], ex['TRACKING_ACCURACY_THRESHOLDS'][0], ex['RELEVANCE_THRESHOLDS'][0],
+                    ex['TRACKERS'][0]))
+    assert len(combos) == 16

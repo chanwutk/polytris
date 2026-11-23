@@ -20,6 +20,7 @@ import argparse
 import itertools
 import json
 import os
+import queue
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -75,19 +76,47 @@ def link_time_limited_prunes(dataset: str, videos: list[str], time_limit_s: floa
     return made
 
 
+def single_combo_configs(base: str = 'equivalence.yaml') -> list[str]:
+    """One config per (sample rate, tolerance, T_r, tracker) of the grid's pruned branches, written next to base.
+
+    p022 solves its tasks in parallel (cpu_count() // 4 workers), each holding a Gurobi session; the web license
+    allows only two, shared with any other machine using it.  One combination per run keeps p022 to one solve
+    at a time without changing the script.
+    """
+    config = yaml.safe_load(Path('configs', base).read_text())
+    ex = config['EXEC']
+    names = []
+    combos = itertools.product(ex['SAMPLE_RATES'], [t for t in ex['TRACKING_ACCURACY_THRESHOLDS'] if t is not None],
+                               ex['RELEVANCE_THRESHOLDS'], ex['TRACKERS'])
+    for i, (s, tol, t_r, tracker) in enumerate(combos):
+        one = {**config, 'EXEC': {**ex, 'SAMPLE_RATES': [s], 'TRACKING_ACCURACY_THRESHOLDS': [tol],
+                                  'RELEVANCE_THRESHOLDS': [t_r], 'TRACKERS': [tracker]}}
+        name = f'{Path(base).stem}_p022_{i:02d}.yaml'
+        Path('configs', name).write_text(yaml.safe_dump(one, sort_keys=False))
+        names.append(name)
+    return names
+
+
 def run_scripts(dataset: str, videos: list[str], time_limit_s: float) -> None:
     """The scripts on the small grid, restricted to one dataset and these validation videos."""
     env = {**os.environ, 'CONFIG': 'equivalence.yaml', 'POLYIS_DATASETS': dataset}
     for script in SCRIPTS:
         cmd = ['python', f'scripts/{script}.py', '--valid', '--videos', *videos]
-        if script == 'p022_exec_prune_polyominoes':
-            cmd += ['--time-limit', str(time_limit_s)]
-        print('>>>', ' '.join(cmd), flush=True)
-        subprocess.run(cmd, env=env, check=True)
-        # p030 must read the time-limited pruned results.
-        if script == 'p022_exec_prune_polyominoes':
-            print(f'linked {link_time_limited_prunes(dataset, videos, time_limit_s)} time-limited prune results',
-                  flush=True)
+        if script != 'p022_exec_prune_polyominoes':
+            print('>>>', ' '.join(cmd), flush=True)
+            subprocess.run(cmd, env=env, check=True)
+            continue
+        # p022: one grid combination per run (one Gurobi session at a time), at the raised limit.
+        names = single_combo_configs()
+        try:
+            for name in names:
+                print('>>>', f'CONFIG={name}', ' '.join(cmd), '--time-limit', str(time_limit_s), flush=True)
+                subprocess.run(cmd + ['--time-limit', str(time_limit_s)], env={**env, 'CONFIG': name}, check=True)
+        finally:
+            for name in names:
+                Path('configs', name).unlink(missing_ok=True)
+        # p030 must read the time-limited pruned results (linked after the last p022 run: each run clears 022).
+        print(f'linked {link_time_limited_prunes(dataset, videos, time_limit_s)} time-limited prune results', flush=True)
 
 
 def grid_branches() -> list[dict]:
@@ -122,31 +151,42 @@ def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int
         path = out / 'configs' / f'{config_name(b)}.yaml'
         path.write_text(yaml.safe_dump(cfg, sort_keys=False))
         jobs.append(path)
-    free = list(gpus)
+    # Pruned configurations solve ILPs, each holding a Gurobi session (the web license allows two, shared with
+    # other machines): they run one at a time on the first GPU, while unpruned ones share the other GPUs.
+    pruned = [j for j in jobs if '_tnone_' not in j.name]
+    unpruned = [j for j in jobs if '_tnone_' in j.name]
+    serial_gpu, shared_gpus = gpus[0], gpus[1:] or gpus[:1]
+    free: queue.Queue = queue.Queue()
+    for g in shared_gpus:
+        free.put(g)
 
-    def one(path: Path) -> int:
-        gpu = free.pop()
+    def run_config(path: Path, gpu: int) -> int:
+        # The config names the physical GPU, which each pipeline worker pins; the tool's own models see it as cuda:0.
+        cfg = yaml.safe_load(path.read_text())
+        for stage in ('classify', 'detect'):
+            cfg['system']['stages'][stage]['gpu'] = gpu
+        path.write_text(yaml.safe_dump(cfg, sort_keys=False))
+        cmd = ['python', '-m', 'execution2.tools.compare_scripts', '--config', str(path), '--dataset', dataset,
+               '--videoset', 'valid', '--videos', *videos, '--time-limit-s', str(time_limit_s),
+               '--cache-time-limit-s', str(time_limit_s), '--out', str(out / f'{path.stem}.json')]
+        with open(out / f'{path.stem}.log', 'w') as f:
+            code = subprocess.run(cmd, env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(gpu)},
+                                  stdout=f, stderr=subprocess.STDOUT).returncode
+        print(f'{path.stem}: exit {code}', flush=True)
+        return code
+
+    def run_shared(path: Path) -> int:
+        # Take any free shared GPU for the length of one configuration.
+        gpu = free.get()
         try:
-            # The config names the physical GPU, which each pipeline worker pins; the tool's own models see it as cuda:0.
-            cfg = yaml.safe_load(path.read_text())
-            for stage in ('classify', 'detect'):
-                cfg['system']['stages'][stage]['gpu'] = gpu
-            path.write_text(yaml.safe_dump(cfg, sort_keys=False))
-            report = out / f'{path.stem}.json'
-            log = out / f'{path.stem}.log'
-            cmd = ['python', '-m', 'execution2.tools.compare_scripts', '--config', str(path), '--dataset', dataset,
-                   '--videoset', 'valid', '--videos', *videos, '--time-limit-s', str(time_limit_s),
-                   '--cache-time-limit-s', str(time_limit_s), '--out', str(report)]
-            with open(log, 'w') as f:
-                code = subprocess.run(cmd, env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(gpu)},
-                                      stdout=f, stderr=subprocess.STDOUT).returncode
-            print(f'{path.stem}: exit {code}', flush=True)
-            return code
+            return run_config(path, gpu)
         finally:
-            free.append(gpu)
+            free.put(gpu)
 
-    with ThreadPoolExecutor(max_workers=len(gpus)) as pool:
-        codes = list(pool.map(one, jobs))
+    with ThreadPoolExecutor(max_workers=len(shared_gpus) + 1) as pool:
+        serial = pool.submit(lambda: [run_config(path, serial_gpu) for path in pruned])
+        shared = [pool.submit(run_shared, path) for path in unpruned]
+        codes = serial.result() + [f.result() for f in shared]
     if any(codes):
         raise SystemExit(f'{sum(c != 0 for c in codes)} of {len(codes)} configurations failed; see the .log files')
 
