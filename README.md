@@ -98,6 +98,8 @@ configuration's throughput is the test clips' frame count divided by
 after a warm-up clip, so process start-up and model loading are excluded.
 The reference pipeline that HOTA and speedups are measured against is the
 full-frame detector and tracker (`preprocess/p002_*`).
+The figures shipped with the artifact come from the scripts instead
+([Generate figures and tables](#generate-figures-and-tables)).
 
 Paths passed to the wrappers are relative to the checkout or absolute. Reuse
 the trained artifacts and the same sweep config across validation and test.
@@ -291,6 +293,15 @@ the clips and test annotations from both public dataset bundles above. The
 other targets use the saved benchmark results shipped with the artifact.
 The render command uses a temporary cache for the saved results and writes
 the exported figures and table rows to `paper/figures/generated/`.
+
+Figures 8 and 9 and the operator ablation (§7.4.4) are drawn from saved
+results of the implementation published in the paper, the extraction scripts
+(`scripts/p020`–`p060`). `reproduce/test.sh` runs the same configurations with
+`execution2`, which produces the same tracks as the scripts and runs faster.
+The `tradeoff.csv` it writes therefore shows the same HOTA as these figures
+and higher throughput. The pruning solver stops at 0.1 s, so a configuration
+whose solve reaches that limit can select different polyominoes from run to
+run, in either implementation.
 
 | Target | Paper output |
 | --- | --- |
