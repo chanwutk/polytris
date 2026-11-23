@@ -24,6 +24,7 @@ import dataclasses
 import json
 import os
 import tempfile
+from functools import partial
 from pathlib import Path
 
 import cv2
@@ -31,6 +32,7 @@ import numpy as np
 
 from execution2 import frames, main, stages
 from execution2.config import Config, load_config
+from execution2.pipeline import Stage, Worker
 from execution2.stages import Classified, Detected
 from polyis.io import cache, store
 from polyis.utilities import (build_param_str, load_classification_results, load_pruned_classification_results,
@@ -234,13 +236,46 @@ def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str,
     return report
 
 
+def script_prune_setup(cfg: Config, dataset: str, aliases: dict[str, str], worker: Worker) -> dict:
+    return {'cfg': cfg, 'dataset': dataset, 'aliases': aliases}
+
+
+def script_prune(state: dict, c: Classified) -> Classified:
+    """Test-only prune stage: the scripts' saved 022 grids for this video instead of an ILP solve.
+
+    Takes the ILP out of the chained comparison (a solve stopped by its limit is not unique), so every
+    downstream stage is compared exactly.  The ILP itself is compared once, in isolated().
+    """
+    cfg, video = state['cfg'], os.path.basename(c.decoded.video)
+    # main.execute's timing dummy is a copy of a real video under another name: read that video's grids.
+    video = state['aliases'].get(video, video)
+    p = cfg.params
+    idx, grid = grids(load_pruned_classification_results(state['dataset'], video, p.tile_size,
+                                                         cfg.artifacts.classifier.name, p.tracker, p.mistrack_tolerance,
+                                                         p.relevance_threshold, p.sample_rate))
+    # The saved grids must cover exactly this video's sampled frames, in order.
+    if idx != c.decoded.sampled.tolist():
+        raise ValueError(f'{video}: script 022 frames {idx[:5]}... differ from the sampled frames')
+    return c._replace(scores=grid)
+
+
+def build_with_script_prune(dataset: str, aliases: dict[str, str], cfg: Config, prefix: str) -> list[Stage]:
+    """execution2's stages with prune replaced by script_prune (same process count)."""
+    return [s._replace(setup=partial(script_prune_setup, cfg, dataset, aliases), process=script_prune)
+            if s.name == 'prune'
+            else s for s in stages.build_stages(cfg, prefix)]
+
+
 def chained(cfg: Config, dataset: str, videoset: str, videos: list[str], tmp: Path) -> dict:
-    """The real multi-process pipeline end to end; each output vs 060's tracking.jsonl."""
+    """The real multi-process pipeline end to end, prune reading the scripts' grids; each output vs 060's."""
     vdir, out = tmp / 'videos', tmp / 'out'
     vdir.mkdir()
     for v in videos:
         os.symlink(store.dataset(dataset, videoset, v), vdir / v)
-    summary = main.execute(cfg, str(vdir), str(out))
+    # main.execute copies the last video (in its sorted listing) to timing-dummy<ext> and feeds it first.
+    last = main.list_videos(str(vdir))[-1]
+    aliases = {'timing-dummy' + Path(last).suffix: os.path.basename(last)}
+    summary = main.execute(cfg, str(vdir), str(out), build=partial(build_with_script_prune, dataset, aliases))
     per_video = {}
     for v in videos:
         per_video[v] = compare_track_lines((out / f'{Path(v).stem}.jsonl').read_text().splitlines(),

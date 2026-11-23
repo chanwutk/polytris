@@ -127,6 +127,10 @@ def test_constants_match_the_scripts(monkeypatch):
     assert stages.PACK_MODE_BEST_FIT == int(p030.PackMode.Best_Fit)
     monkeypatch.setattr('sys.argv', ['p040'])
     assert stages.DETECT_BATCH == p040.parse_args().batch_size
+    # p040 reads canvases in name (collage) order on both of its paths, not in os.listdir's arbitrary order.
+    p040_source = Path(p040.__file__).read_text()
+    assert p040_source.count("sorted(f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg'))") == 2
+    assert "[f for f in os.listdir(compressed_frames_dir)" not in p040_source
     # p022 passes `time_limit or 0.1` to solve_ilp.
     assert 'time_limit_seconds=time_limit or 0.1' in Path(p022.__file__).read_text()
     assert stages.PRUNE_TIME_LIMIT_S == 0.1

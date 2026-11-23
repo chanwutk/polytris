@@ -1,17 +1,18 @@
 """
-Check a profiling sweep against the scripts' cached validation outputs (profiling/PLAN.md 14A, step 7).
+Check a profiling sweep against the scripts' validation outputs (profiling/PLAN.md 14A, step 7).
 
-Runs profiling.main on a small grid over a few validation videos into a scratch output_root, then compares
-every saved result with the scripts' cache (read only):
+Runs profiling.main on a small grid over a few validation videos into a scratch output_root, with prune's ILP
+replaced by the scripts' saved 022 grids (a solve stopped by its 0.1 s limit is not unique, so solving would
+make every pruned branch below it incomparable; the ILP is checked by execution2's compare_scripts).  Then it
+compares every saved result with the scripts' cache (read only):
 
   020 scores           exact (classify runs once on every frame; p020 ran once per sample rate)
-  022 pruned grids     exact, on (config, video) pairs where both solves were optimal: ours (status 2, run with
-                       a raised time limit) and p022's (logged solve time below its 0.1 s limit); kept tiles too
+  022 pruned grids     exact (the scripts' own, saved under each branch's name: checks the fan-out's labels)
   033 index maps,      exact
       offset lookups
-  050 detections       per frame, as box sets: identical frames, box counts, largest coordinate difference
-                       (bit-identity needs p040's canvas order, which compare_scripts in execution2 checks)
-  060 tracks           equal up to track-id renaming
+  050 detections       exact: same frames, per frame the same boxes in the same order (p040 reads canvases in
+                       name order, as profiling detects them); also box-set statistics
+  060 tracks           byte-identical, and equal up to track-id renaming
   HOTA per video       ours vs p110's run_trackeval on the cached 060 tracks, same reference
 
     python -m profiling.tools.compare_scripts --config profiling/configs/caldot1-y05.yaml \
@@ -36,9 +37,6 @@ from polyis.io import store
 # The small grid: sample rates x T_r x (no pruning + 2 tolerances x 2 trackers) x 2 paddings.
 SMALL_GRID = {'sample_rates': [1, 4], 'relevance_thresholds': [0.25, 0.5], 'mistrack_tolerances': [None, 0.4, 0.8],
               'tile_paddings': ['none', 'tr'], 'canvas_scales': [1.0], 'trackers': ['sortcython', 'bytetrackcython']}
-# p022's limit; a cached solve that took about this long was stopped by it.
-P022_LIMIT_MS = 100.0
-CACHED_OPTIMAL_BELOW_MS = 95.0
 
 
 def parse_args():
@@ -47,7 +45,6 @@ def parse_args():
     parser.add_argument('--videos', nargs='+', required=True)
     parser.add_argument('--output-root', required=True)
     parser.add_argument('--cache', default='/polyis-cache')
-    parser.add_argument('--time-limit-s', type=float, default=10.0)
     parser.add_argument('--out', required=True)
     return parser.parse_args()
 
@@ -69,16 +66,39 @@ def compare_score_files(ours: str, theirs: str) -> dict:
     return {'equal': not diff.any(), 'max_abs_diff': int(diff.max()), 'differing_values': int(np.count_nonzero(diff))}
 
 
-def cached_solve_ms(prune_dir: str) -> float | None:
-    """p022's logged solve time for one (config, video), from its runtime.jsonl."""
-    path = os.path.join(prune_dir, 'score', 'runtime.jsonl')
-    if not os.path.exists(path):
-        return None
-    line = json.loads(open(path).read().splitlines()[0])
-    for op in line['runtime']:
-        if op.get('op') == 'solve_ilp':
-            return float(op['time'])
-    return None
+def detection_rows(path: str) -> list[tuple[int, list]]:
+    """(frame_idx, bboxes) per line of a detections.jsonl, in file order."""
+    return [(r['frame_idx'], r['bboxes']) for r in score_rows(path)]
+
+
+def script_solve(dataset: str, state: dict, sc, tracker: str, tolerance: float, relevance_threshold: float) -> tuple:
+    """Test-only stand-in for profiling.stages.solve_ilp: the scripts' saved 022 grids for this branch."""
+    from polyis.utilities import load_pruned_classification_results
+    b = sc.branch
+    idx, grid = grids(load_pruned_classification_results(dataset, os.path.basename(sc.video), b['tile_size'],
+                                                         b['classifier'], tracker, tolerance, relevance_threshold,
+                                                         b['sample_rate']))
+    # The saved grids must cover exactly this branch's sampled frames, in order.
+    if idx != sc.decoded.sampled.tolist():
+        raise ValueError(f'{sc.video}: script 022 frames {idx[:5]}... differ from the sampled frames')
+    return grid, {'status': 'script', 'solve_ms': 0.0}
+
+
+def script_prune_setup(cfg, worker) -> dict:
+    """profiling's prune setup, with the ILP solve swapped for script_solve."""
+    from functools import partial
+    from profiling import stages as st
+    state = st.prune_setup(cfg, worker)
+    state['solve'] = partial(script_solve, cfg.dataset)
+    return state
+
+
+def build_with_script_prune(cfg, prefix, completion) -> list:
+    """profiling's stages with prune's solve reading the scripts' grids (fan-out and labels unchanged)."""
+    from functools import partial
+    from profiling import stages as st
+    return [s._replace(setup=partial(script_prune_setup, cfg)) if s.name == 'prune' else s
+            for s in st.build_stages(cfg, prefix, completion)]
 
 
 def hota_from_cache(cache_execution: str, video: str, tracks_param: str, reference_file: str, scratch: str) -> np.ndarray:
@@ -102,15 +122,16 @@ def main_cli() -> None:
     raw = yaml.safe_load(open(args.config))
     raw = copy.deepcopy(raw)
     raw['output_root'] = args.output_root
-    raw['params'].update(SMALL_GRID, prune_time_limit_s=args.time_limit_s)
+    # Every tolerance runs (no merging), so each script output has its own counterpart.
+    raw['params'].update(SMALL_GRID, reduce_search_space=False)
     cfg = parse_sweep_config(raw)
     ds = cfg.dataset
     videos = [str(store.dataset(ds, cfg.videoset, v)) for v in args.videos]
-    summary = pmain.execute(cfg, args.config, videos=videos)
+    summary = pmain.execute(cfg, args.config, build=build_with_script_prune, videos=videos)
 
     ours_ex = os.path.join(args.output_root, ds, 'execution')
     cache_ex = os.path.join(args.cache, ds, 'execution')
-    report: dict = {'grid': SMALL_GRID, 'time_limit_s': args.time_limit_s, 'summary': summary, 'stages': {}}
+    report: dict = {'grid': SMALL_GRID, 'prune': 'scripts 022 grids', 'summary': summary, 'stages': {}}
 
     def rel(path: str) -> str:
         return os.path.relpath(path, ours_ex)
@@ -121,17 +142,6 @@ def main_cli() -> None:
         for ours in sorted(glob.glob(os.path.join(ours_ex, '*', stage, '*', 'score', 'score.jsonl'))):
             theirs = os.path.join(cache_ex, rel(ours))
             entry = {'path': rel(ours)}
-            if stage == '022_pruned_polyominoes':
-                ilp = json.load(open(os.path.join(os.path.dirname(os.path.dirname(ours)), 'ilp.json')))
-                cached_ms = cached_solve_ms(os.path.dirname(os.path.dirname(theirs)))
-                entry.update(ours_status=ilp['status'], ours_kept=ilp['kept_tiles'], cached_solve_ms=cached_ms)
-                both_optimal = ilp['status'] == 2 and cached_ms is not None and cached_ms < CACHED_OPTIMAL_BELOW_MS
-                entry['compared'] = both_optimal
-                if not both_optimal:
-                    rows.append(entry)
-                    continue
-                cached_kept = int(np.count_nonzero(grids(score_rows(theirs))[1]))
-                entry['cached_kept'] = cached_kept
             entry.update(compare_score_files(ours, theirs))
             rows.append(entry)
         report['stages'][stage] = rows
@@ -154,7 +164,9 @@ def main_cli() -> None:
     for ours in sorted(glob.glob(os.path.join(ours_ex, '*', '050_uncompressed_detections', '*', 'detections.jsonl'))):
         theirs = os.path.join(cache_ex, rel(ours))
         mine = {r['frame_idx']: r['bboxes'] for r in score_rows(ours)}
-        rows.append({'path': rel(ours), **compare_detections(mine, score_rows(theirs))})
+        # Exact: same frames, and per frame the same boxes in the same order (p050's merge order).
+        rows.append({'path': rel(ours), 'equal_in_order': detection_rows(ours) == detection_rows(theirs),
+                     **compare_detections(mine, score_rows(theirs))})
     report['stages']['050_uncompressed_detections'] = rows
 
     # 060 tracks and per-video HOTA.
@@ -183,12 +195,17 @@ def main_cli() -> None:
     totals = {}
     for stage, rows in report['stages'].items():
         key = {'060_uncompressed_tracks': 'same_up_to_id_renaming', '050_uncompressed_detections': None}.get(stage, 'equal')
-        compared = [r for r in rows if r.get('compared', True)]
+        # Every row is compared: prune reads the scripts' grids, so no branch depends on an ILP solve.
+        compared = rows
         if key:
             totals[stage] = {'compared': len(compared), 'equal': sum(bool(r.get(key)) for r in compared),
                              'rows': len(rows)}
+            if stage == '060_uncompressed_tracks':
+                # Byte-identical tracking.jsonl, track ids included (stricter than equal up to renaming).
+                totals[stage]['text_identical'] = sum(bool(r.get('equal')) for r in compared)
         else:
-            totals[stage] = {'rows': len(rows), 'frames_identical': sum(r['frames_identical'] for r in rows),
+            totals[stage] = {'rows': len(rows), 'equal_in_order': sum(r['equal_in_order'] for r in rows),
+                             'frames_identical': sum(r['frames_identical'] for r in rows),
                              'frames': sum(r['frames'] for r in rows),
                              'count_mismatch_frames': sum(r['frames_with_different_box_counts'] for r in rows),
                              'max_abs_box_diff': max((r['max_abs_box_diff_same_count'] for r in rows), default=0.0)}

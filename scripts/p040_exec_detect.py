@@ -293,8 +293,9 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
         shutil.rmtree(detections_output_dir)
     os.makedirs(detections_output_dir, exist_ok=True)
 
-    # Get all compressed image files
-    image_files = [f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg')]
+    # Get all compressed image files, in name order (collage order): os.listdir's order is arbitrary, and the
+    # order decides how canvases are batched, which changes the detector's floating-point results.
+    image_files = sorted(f for f in os.listdir(compressed_frames_dir) if f.endswith('.jpg'))
 
     with (open(os.path.join(detections_output_dir, 'detections.jsonl'), 'w') as f,
           open(os.path.join(detections_output_dir, 'runtimes.jsonl'), 'w') as fr,

@@ -115,6 +115,23 @@ def test_prune_fans_out_and_passes_unpruned_scores_through(tmp_path, prefix, mon
     frames.unlink(v.frames)
 
 
+def test_prune_solves_through_state_solve(tmp_path, prefix):
+    # The equivalence test swaps state['solve'] for a reader of the scripts' grids; prune must use it for every
+    # pruned branch and keep its fan-out and labels.
+    cfg = make_cfg(tmp_path)
+    v = all_frames(prefix)
+    scores = np.full((N, H // TS, W // TS), 200, np.uint8)
+    state = st.prune_setup(cfg, None)
+    calls = []
+    state['solve'] = lambda state, sc, tracker, tol, t_r: (calls.append((tracker, tol, t_r)) or scores,
+                                                         {'status': 'script', 'solve_ms': 0.0})
+    out = st.prune(state, Scored('/v/a.mp4', base_branch().with_(sample_rate=4), (), v, scores))
+    assert sorted(calls) == sorted((k, m, t) for t in (0.25, 0.5) for m in (0.4, 0.8)
+                                   for k in ('sortcython', 'bytetrackcython'))
+    assert all(o.ilp['status'] == 'script' for o in out if o.branch['mistrack_tolerance'] is not None)
+    frames.unlink(v.frames)
+
+
 def test_pack_frees_frames_only_after_the_videos_last_input(tmp_path, prefix, manager, monkeypatch):
     cfg = make_cfg(tmp_path, tolerances=(None,), sample_rates=(4,), thresholds=(0.5,), paddings=('none', 'tr'))
     v = all_frames(prefix)
