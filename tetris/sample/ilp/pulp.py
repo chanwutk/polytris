@@ -43,11 +43,17 @@ def solve_ilp(
     # Create optimization problem
     prob = pulp.LpProblem("MinCells", pulp.LpMinimize)
 
+    # PuLP 4 creates variables through the problem; PuLP 3 (ace's container) only through LpVariable.
+    if hasattr(prob, 'add_variable'):
+        new_binary = lambda name: prob.add_variable(name, cat='Binary')
+    else:
+        new_binary = lambda name: pulp.LpVariable(name, cat='Binary')
+
     # Create variables: x[b, k] = 1 if polyomino k in frame b is selected
     x = {}
     for b in range(B):
         for k in range(len(polyomino_lengths[b])):
-            x[(b, k)] = pulp.LpVariable(f"x_{b}_{k}", cat='Binary')
+            x[(b, k)] = new_binary(f"x_{b}_{k}")
 
     # Objective: minimize total number of cells in selected polyominoes
     prob += pulp.lpSum([x[(b, k)] * polyomino_lengths[b][k] for (b, k) in x])
