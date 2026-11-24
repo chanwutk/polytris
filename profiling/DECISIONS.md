@@ -102,7 +102,7 @@ The tool runs the small grid with 10 s; (config, video) pairs are compared only 
 extra `ilp.json` (status, solve_ms, kept tiles), which is not a script output.
 
 ### D23. Heavy profiling runs wait for the Figure 8 job
-The Figure 8 serial benchmark (tmux `execution-figure8` on ace) measures throughput; a concurrent profiling run
+The Figure 8 serial benchmark (tmux `execution2-figure8` on ace, named before the rename) measures throughput; a concurrent profiling run
 would compete for CPU and memory bandwidth.  Only light unit tests run alongside it; the equivalence check and
 the first full sweep start after it finishes.
 

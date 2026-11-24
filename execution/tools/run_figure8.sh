@@ -13,7 +13,7 @@ GPU=${1:?usage: run_figure8.sh <gpu index> [passes] [minutes between passes]}
 PASSES=${2:-8}
 WAIT_MIN=${3:-10}
 REPO=/work/cwkt/projects/tetris
-IMAGE=polyis-execution-bench
+IMAGE=polyis-execution2-bench  # the image built on ace before the execution2 -> execution rename
 OUT=$REPO/measurements-results/execution-figure8/runs
 mkdir -p "$OUT"
 
