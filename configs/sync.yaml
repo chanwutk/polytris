@@ -51,6 +51,7 @@ includes:
     - "*.py"
     - "*.pyx"
     - "*.pyi"
+    - "*.pxd"
     - "*.c"
     - "*.h"
     - "*.hpp"
