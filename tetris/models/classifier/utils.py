@@ -1,11 +1,13 @@
+import re
+
 import torch
 
 
 # Kept for imports / docs; ImageNet names use phrases like "school bus", not the literal word "car".
 RELEVANT_CATEGORIES = ['car', 'bus', 'truck']
 
-# Substrings in torchvision ``meta["categories"]`` strings (lowercased) for road-vehicle classes.
-# Leading spaces / phrases avoid false positives (e.g. "car" inside "carpet").
+# Whole words or phrases in torchvision ``meta["categories"]`` strings (lowercased) for road-vehicle
+# classes; collapse_classifier matches them on word boundaries (e.g. not "car" inside "carpet").
 _VEHICLE_FRAGMENTS = (
     ' bus', ' truck', ' jeep', ' minivan', ' limousine', ' racer',
     ' sports car', ' convertible', ' ambulance', ' fire engine',
@@ -27,9 +29,11 @@ def collapse_classifier(full_weights, last_layer: torch.nn.Linear) -> torch.nn.L
     if last_layer.out_features != n:
         raise ValueError(f'Linear out_features {last_layer.out_features} != len(categories) {n}')
 
+    # Match whole words: torchvision names are bare ("minivan"), and a plain substring test would
+    # also hit "china cabinet" / "head cabbage" through "cab".
     relevant = [
         i for i, c in enumerate(categories)
-        if any(t in c.lower() for t in _VEHICLE_FRAGMENTS)
+        if any(re.search(rf'\b{re.escape(t.strip())}\b', c.lower()) for t in _VEHICLE_FRAGMENTS)
     ]
     if not relevant:
         raise ValueError('No vehicle-like ImageNet classes matched; extend _VEHICLE_FRAGMENTS if needed.')
