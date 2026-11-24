@@ -75,8 +75,8 @@ import pandas as pd
 from evaluation.manifests import list_split_videos
 from measurements.common import (DATASET_LABELS, RELEVANCE_RULES, assert_files_exist, decode_grids, file_record,
                                  iso_utc, load_test_tradeoff, query_dicts, results_dir, rounded, write_json)
-from polyis.io import cache
-from polyis.utilities import build_param_str, load_classification_results, load_pruned_classification_results
+from tetris.io import cache
+from tetris.utilities import build_param_str, load_classification_results, load_pruned_classification_results
 
 
 # The paper's trackers, tile size (§4.1), and whole-frame sampling rates, pinned rather than read from
@@ -302,7 +302,7 @@ def pipeline_ids(validated: pd.DataFrame) -> pd.DataFrame:
     tile size or sampling rate is not an integer, so the consistency check reports the row."""
     # Ids per row, in row order.
     expected, prune = [], []
-    # Config rows, not data: a few hundred ids, built with the pipeline's own codec (polyis.utilities).
+    # Config rows, not data: a few hundred ids, built with the pipeline's own codec (tetris.utilities).
     for row in validated.itertuples(index=False):
         params = dict(classifier=row.classifier, tilesize=row.tilesize, sample_rate=row.sample_rate,
                       tracker=row.tracker, relevance_threshold=row.relevance_threshold)

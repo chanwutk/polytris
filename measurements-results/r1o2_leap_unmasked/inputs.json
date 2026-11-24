@@ -11,7 +11,7 @@
         "checkpoint": "/polyis-data/training/ultralytics/caldot1/weights/yolov5x6/weights/best.pt",
         "config_sha256": "89c23ca2f0a2cc8e9d816a782213f873b368d8b22267900c8748acd0ffae00ac",
         "dataset": "caldot1-y05",
-        "inference": "polyis/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2",
+        "inference": "tetris/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2",
         "preparation": "fresh labels, crops, re-identification training, and motion patterns; no distillation",
         "sha256": "451b44c7102e3cb255b8e3193eca40673a85754d4f7c793d481b0af51aac6135"
       },
@@ -210,7 +210,7 @@
         "checkpoint": "/polyis-data/training/ultralytics/caldot2/weights/yolov5x6/weights/best.pt",
         "config_sha256": "55ead92bdcb6972256e1c02e9bacb6c51cb41ac9236caeedcae08eaedf203a21",
         "dataset": "caldot2-y05",
-        "inference": "polyis/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2",
+        "inference": "tetris/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2",
         "preparation": "fresh labels, crops, re-identification training, and motion patterns; no distillation",
         "sha256": "ef2b32e315aca947405be755ac32ef497ed4216de56dbc0fea9ac14ca3987c7c"
       },

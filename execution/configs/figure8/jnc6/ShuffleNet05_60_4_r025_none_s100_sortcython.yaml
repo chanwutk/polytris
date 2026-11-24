@@ -1,0 +1,34 @@
+# Figure 8 full-Tetris point, B3D 3 (jnc6): reported 261.2 fps, HOTA 0.8000.
+params:
+  sample_rate: 4
+  relevance_threshold: 0.25
+  mistrack_tolerance: null
+  tile_padding: none
+  tracker: sortcython
+  tile_size: 60
+  canvas_scale: 1.0
+  canvas_format: jpeg
+artifacts:
+  classifier:
+    name: ShuffleNet05
+    weights: /polyis-cache/jnc6/indexing/training/results/ShuffleNet05_60/model_best.pth
+    compilation_benchmark: /polyis-cache/jnc6/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl
+  never_relevant_bitmap: /polyis-cache/jnc6/indexing/always_relevant/60_all.npy
+  detector:
+    type: retina
+    config_path: /polyis/configs/retinanet.json
+system:
+  queue_maxsize: 2
+  stages:
+    decode:
+      procs: 2
+    classify:
+      procs: 1
+      gpu: 0
+    pack:
+      procs: 2
+    detect:
+      procs: 1
+      gpu: 0
+    track:
+      procs: 2

@@ -5,8 +5,8 @@ import os
 
 import altair as alt
 
-from polyis.io import cache
-from polyis.utilities import (
+from tetris.io import cache
+from tetris.utilities import (
     METRICS,
     get_config,
     load_all_datasets_tradeoff_data,
@@ -44,22 +44,22 @@ def build_metric_columns(metric: str) -> tuple[str, str] | None:
 def prepare_plot_df(datasets: list[str]):
     # Load the canonical split-level tradeoff rows for all configured datasets.
     tradeoff_df = load_all_datasets_tradeoff_data(datasets, system_name=None)
-    # Split the canonical table into Polytris and naive subsets.
-    polytris_df, naive_df = split_tradeoff_variants(tradeoff_df)
+    # Split the canonical table into Tetris and naive subsets.
+    tetris_df, naive_df = split_tradeoff_variants(tradeoff_df)
     # Fail fast when any expected subset is missing.
-    assert not polytris_df.empty, "No Polytris tradeoff rows found"
+    assert not tetris_df.empty, "No Tetris tradeoff rows found"
     assert not naive_df.empty, "No naive baseline rows found"
 
-    return polytris_df, naive_df
+    return tetris_df, naive_df
 
 
-def visualize_all_datasets_tradeoff(polytris_df, naive_df, x_column: str, x_title: str, plot_suffix: str, output_dir: str):
+def visualize_all_datasets_tradeoff(tetris_df, naive_df, x_column: str, x_title: str, plot_suffix: str, output_dir: str):
     # Keep only the split-aware naive columns required for the baseline merge.
     naive_cols = ['dataset', 'videoset', x_column]
     naive_merge_df = naive_df[naive_cols].rename(columns={x_column: f'{x_column}_naive'})
 
-    # Attach the split-specific naive baseline to every Polytris row.
-    plot_df = polytris_df.merge(naive_merge_df, on=['dataset', 'videoset'], how='left')
+    # Attach the split-specific naive baseline to every Tetris row.
+    plot_df = tetris_df.merge(naive_merge_df, on=['dataset', 'videoset'], how='left')
     # Reuse the shared scatter helper by exposing the split label through the legacy video field.
     plot_df['video'] = plot_df['videoset']
     # Create a combined facet label so valid and test stay separate across datasets.
@@ -82,7 +82,7 @@ def visualize_all_datasets_tradeoff(polytris_df, naive_df, x_column: str, x_titl
         if accuracy_col not in plot_df.columns or plot_df[accuracy_col].isna().all():
             continue
 
-        # Reuse the shared tradeoff scatter helper for Polytris rows and naive baselines.
+        # Reuse the shared tradeoff scatter helper for Tetris rows and naive baselines.
         scatter, baseline = tradeoff_scatter_and_naive_baseline(
             base_chart,
             x_column,
@@ -111,12 +111,12 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     # Recreate the output directory before writing fresh charts.
     os.makedirs(output_dir, exist_ok=True)
 
-    # Load the canonical tradeoff rows and split them into Polytris/naive subsets.
-    polytris_df, naive_df = prepare_plot_df(datasets)
+    # Load the canonical tradeoff rows and split them into Tetris/naive subsets.
+    tetris_df, naive_df = prepare_plot_df(datasets)
 
     # Render both runtime and throughput tradeoff charts from the same canonical table.
-    visualize_all_datasets_tradeoff(polytris_df, naive_df, 'time', 'Query Execution Runtime (seconds)', 'runtime', str(output_dir))
-    visualize_all_datasets_tradeoff(polytris_df, naive_df, 'throughput_fps', 'Throughput (frames/second)', 'throughput', str(output_dir))
+    visualize_all_datasets_tradeoff(tetris_df, naive_df, 'time', 'Query Execution Runtime (seconds)', 'runtime', str(output_dir))
+    visualize_all_datasets_tradeoff(tetris_df, naive_df, 'throughput_fps', 'Throughput (frames/second)', 'throughput', str(output_dir))
 
 
 def main(args):

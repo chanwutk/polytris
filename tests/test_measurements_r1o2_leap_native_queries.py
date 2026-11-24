@@ -7,7 +7,7 @@ import pytest
 
 from evaluation.p140_otif_transform import unwrap_leap_frames
 from measurements import r1o2_leap_native_queries as lq
-from polyis.io import store
+from tetris.io import store
 
 
 @pytest.fixture

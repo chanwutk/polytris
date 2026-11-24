@@ -7,7 +7,7 @@ import duckdb
 
 from measurements.common import decode_grids
 from measurements import r9o3_ilp_instance_sizes as sizes
-from polyis.io import cache
+from tetris.io import cache
 
 
 def main():

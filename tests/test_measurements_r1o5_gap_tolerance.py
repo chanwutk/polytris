@@ -8,7 +8,7 @@ import pytest
 
 import measurements.common as common
 from measurements import r1o5_gap_tolerance as gt
-from polyis.io import cache, store
+from tetris.io import cache, store
 
 
 # p016's candidate gaps and stored thresholds (percent).

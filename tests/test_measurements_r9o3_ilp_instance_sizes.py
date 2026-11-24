@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from measurements import r9o3_ilp_instance_sizes as ilp
-from polyis.io import store
+from tetris.io import store
 
 
 # p022 parameter strings used as configurations in the synthetic tables (they must parse like real ones).
@@ -33,7 +33,7 @@ def entries(grids, idx=None):
 
 
 def reference_constraints(tile_ids, lengths, max_dist):
-    # Line-by-line transcription of the constraint loop in polyis/sample/ilp/c/gurobi.pyx.
+    # Line-by-line transcription of the constraint loop in tetris/sample/ilp/c/gurobi.pyx.
     frames, rows, cols = tile_ids.shape
     offsets = [0]
     for frame_lengths in lengths:

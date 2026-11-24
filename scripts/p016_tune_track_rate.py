@@ -9,9 +9,9 @@ import cv2
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from polyis.b3d.sort import iou_batch
-from polyis.utilities import create_tracker, register_tracked_detections, ProgressBar, get_config, get_video_resolution, get_overlapping_tiles
-from polyis.io import cache, store
+from tetris.b3d.sort import iou_batch
+from tetris.utilities import create_tracker, register_tracked_detections, ProgressBar, get_config, get_video_resolution, get_overlapping_tiles
+from tetris.io import cache, store
 
 
 CONFIG = get_config()

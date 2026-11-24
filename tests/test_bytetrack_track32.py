@@ -7,10 +7,10 @@ import json
 import os
 import numpy as np
 
-from polyis.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
-from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython
-# from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count
-from polyis.utilities import get_config
+from tetris.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
+from tetris.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython
+# from tetris.tracker.bytetrack.cython.bytetrack import reset_tracker_count
+from tetris.utilities import get_config
 
 
 def test_track_32():
@@ -46,7 +46,7 @@ def test_track_32():
     args = Args()
 
     # Initialize Python tracker and run to frame 650
-    from polyis.tracker.bytetrack.basetrack import BaseTrack
+    from tetris.tracker.bytetrack.basetrack import BaseTrack
     BaseTrack._count = 0
     tracker_python = BYTETrackerPython(args)
 

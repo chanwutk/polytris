@@ -1532,7 +1532,7 @@
     }
   ],
   "method": {
-    "constraints": "constraint rows as added by polyis/sample/ilp/c/gurobi.pyx, before presolve and including duplicates: per tile covered in >= 2 frames, 2 equalities (first, last), and per consecutive covering pair 2 equalities if the gap exceeds the tile max distance (max_rate_table // sample_rate, >= 1) else 1 window constraint",
+    "constraints": "constraint rows as added by tetris/sample/ilp/c/gurobi.pyx, before presolve and including duplicates: per tile covered in >= 2 frames, 2 equalities (first, last), and per consecutive covering pair 2 equalities if the gap exceeds the tile max distance (max_rate_table // sample_rate, >= 1) else 1 window constraint",
     "correlations": "Spearman with average ranks. Pooled correlations mix datasets and sample rates; correlation_within_strata gives the within dataset x sample rate values (strata with >= 30 instances). s = 1 solve times are censored by the budget and s >= 4 ones sit at the fixed overhead floor",
     "deciles": "equal-count bins of variables per split, pooled over datasets and sample rates (confounded; see each bin's instances_by_sample_rate and instances_by_dataset)",
     "distinct_constraints": "distinct rows: distinct forced variables plus distinct (current variable, window variables) window constraints",

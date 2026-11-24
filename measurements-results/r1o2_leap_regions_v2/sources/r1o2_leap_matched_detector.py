@@ -1,7 +1,7 @@
 """Use Tetris's fine-tuned detector in LEAP's labeling and extraction interfaces.
 
 Runs in the original LEAP environment, from its read-only checkout. Inference uses
-the same Ultralytics calls and defaults as polyis/models/ultralytics.py. Only the
+the same Ultralytics calls and defaults as tetris/models/ultralytics.py. Only the
 class identifier changes: our single car class 0 becomes LEAP's COCO car class 2.
 """
 import os

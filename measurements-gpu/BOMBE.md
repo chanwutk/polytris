@@ -47,7 +47,7 @@ cp -a --reflink=always /data/cwkt/data/bombe-revision/mirror/polyis-cache/jnc0 \
 # On bombe, in a detached tmux session for anything long.
 cd /work/cwkt/projects/tetris
 measurements-gpu/bombe_container.sh <GPU 0-6> /data/cwkt/data/bombe-revision/scratch/<track> '<command>' >> <log> 2>&1
-# Smoke test: GPU, polyis, all 17 Cython modules, duckdb, mounts, Gurobi.
+# Smoke test: GPU, tetris, all 17 Cython modules, duckdb, mounts, Gurobi.
 measurements-gpu/bombe_container.sh 4 /data/cwkt/data/bombe-revision/scratch/<track> 'python measurements-gpu/bombe_check.py'
 ```
 
@@ -90,7 +90,7 @@ with an apt-installed `numactl`; add that only if a measurement must match it ex
 `~/.gurobi/gurobi.lic` (one file, since the home directory is shared NFS) is a Web License Service license, ID 2792523,
 and Gurobi rejects it on both hosts: `GurobiError: License 2792523 has expired` (also from ace's running `polyis`
 container). Without the file, gurobipy falls back to its size-limited license (2,000 variables), too small for p022
-(up to 9,455 variables per clip), and p022's C solver (`polyis.sample.ilp.c.gurobi`) fails at `GRBstartenv`. Nothing
+(up to 9,455 variables per clip), and p022's C solver (`tetris.sample.ilp.c.gurobi`) fails at `GRBstartenv`. Nothing
 that runs p022 or `solve_ilp` can run on either host until the author renews the academic WLS license at
 portal.gurobi.com and replaces `~/.gurobi/gurobi.lic`. Everything else in `bombe_check.py` passes.
 

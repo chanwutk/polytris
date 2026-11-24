@@ -1,11 +1,11 @@
-"""Scoring-window padding in polyis.trackeval.dataset: frames after the shorter file's last row."""
+"""Scoring-window padding in tetris.trackeval.dataset: frames after the shorter file's last row."""
 import json
 import os
 
 import numpy as np
 import pytest
 
-from polyis.trackeval.dataset import Dataset, pad_scoring_window_from_env
+from tetris.trackeval.dataset import Dataset, pad_scoring_window_from_env
 
 SEQ = 'te01.mp4'
 BOX = [10.0, 10.0, 50.0, 50.0]

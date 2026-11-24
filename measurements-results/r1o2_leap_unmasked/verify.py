@@ -10,7 +10,7 @@ VERSION=Path(__file__).resolve().parent
 ROOT=VERSION.parents[1]
 sys.path.insert(0,str(ROOT))
 from measurements import common
-from polyis.leap_results import canonical_leap_result
+from tetris.leap_results import canonical_leap_result
 
 before=VERSION/'paper-before-unmasking/revision_evidence'
 after=VERSION/'paper-workspace/scripts/data/revision_evidence'

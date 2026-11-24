@@ -21,7 +21,7 @@ USAGE="usage: $0 stage <GPU> <dataset...> | run <GPU> <dataset...> | collect"
 TRACK=${R9O2_TRACK:-/data/cwkt/data/bombe-revision/scratch/r9o2-retiming}
 TETRIS=${R9O2_TETRIS:-/work/cwkt/projects/tetris}
 BOMBE=bombe.millennium.berkeley.edu
-# Every polyis step of the plan by default; p011 runs before p012 and p016, so they read its fresh detections.
+# Every Tetris step of the plan by default; p011 runs before p012 and p016, so they read its fresh detections.
 STEPS=${R9O2_STEPS:-p110 p011 p012 p013 detector_load p016}
 CMD=${1:?$USAGE}
 shift

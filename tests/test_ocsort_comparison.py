@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Test suite for comparing tracking results from two OC-SORT implementations:
-- polyis/tracker/ocsort/ocsort.py (Python implementation)
-- polyis/tracker/ocsort/cython/ocsort.pyx (Cython implementation)
+- tetris/tracker/ocsort/ocsort.py (Python implementation)
+- tetris/tracker/ocsort/cython/ocsort.pyx (Cython implementation)
 
 This test loads detection results from a JSONL file and runs both trackers
 on the same detections to compare their outputs.
@@ -16,8 +16,8 @@ import pytest
 import numpy as np
 import numpy.typing as npt
 
-from polyis.tracker.ocsort.ocsort import OCSort as OCSortPython
-from polyis.tracker.ocsort.cython.ocsort import OCSort as OCSortCython  # type: ignore
+from tetris.tracker.ocsort.ocsort import OCSort as OCSortPython
+from tetris.tracker.ocsort.cython.ocsort import OCSort as OCSortCython  # type: ignore
 
 
 def load_detection_results(detection_path: str) -> list[dict]:
@@ -296,7 +296,7 @@ def test_ocsort_comparison():
     )
     
     # Reset tracker counters to ensure consistent IDs
-    from polyis.tracker.ocsort.ocsort import KalmanBoxTracker as KalmanBoxTrackerPython
+    from tetris.tracker.ocsort.ocsort import KalmanBoxTracker as KalmanBoxTrackerPython
     KalmanBoxTrackerPython.count = 0
     # reset_tracker_count()
     

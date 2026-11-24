@@ -142,15 +142,15 @@ import cv2
 import duckdb
 import pandas as pd
 
-from evaluation.manifests import build_polytris_variant_manifest, build_split_video_manifest, list_split_videos
+from evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest, list_split_videos
 from evaluation.p120_throughput_gather import (build_index_construction_manifest, build_naive_query_manifest,
                                                build_stage020_manifest, build_stage022_manifest, build_stage030_manifest,
                                                build_stage040_manifest, build_stage050_manifest, build_stage060_manifest)
 from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, P121_IGNORED_OPS, RESULTS_ROOT, fastest_tetris,
                                  file_times, host_info, iso_utc, load_p121_runtime_ops, load_test_tradeoff,
                                  load_tradeoff_points, query_dicts, results_dir, rounded, write_json)
-from polyis.io import cache, store
-from polyis.utilities import get_config, parse_execution_param_str
+from tetris.io import cache, store
+from tetris.utilities import get_config, parse_execution_param_str
 
 
 CONFIG = get_config()
@@ -687,7 +687,7 @@ def split_manifest(dataset: str, grid: pd.DataFrame | None = None, videoset: str
     # The split's videos, as p120 lists them.
     videos = build_split_video_manifest(datasets=[dataset], videosets=[videoset])
     # Every configuration of the grid on every video of the split.
-    configs = videos.merge(build_polytris_variant_manifest() if grid is None else grid, how='cross')
+    configs = videos.merge(build_tetris_variant_manifest() if grid is None else grid, how='cross')
     # The reference pipeline's files (asserted to exist by p120) and each sweep stage's files.
     df = pd.concat([build_naive_query_manifest(videos), *(build(configs) for build in STAGE_BUILDERS)], ignore_index=True)
     # Record which runtime files exist instead of asserting it.
@@ -758,7 +758,7 @@ def manifests(con: duckdb.DuckDBPyConnection, dataset: str, point: dict) -> dict
     load_manifest(con, 'index_manifest', build_index_construction_manifest([dataset]))
     load_manifest(con, 'valid_manifest', split_manifest(dataset))
     # The configured grid, to select the operating point's configuration on test.
-    grid = build_polytris_variant_manifest()
+    grid = build_tetris_variant_manifest()
     load_manifest(con, 'test_manifest', split_manifest(dataset, grid[grid['variant_id'] == point['config']], 'test'))
     # The operating point's test files were run (p120 keeps the Pareto set on test).
     missing = query_dicts(con, 'SELECT stage, runtime_file FROM test_manifest WHERE NOT "exists" LIMIT 5')
@@ -1198,7 +1198,7 @@ def retiming_section(con: duckdb.DuckDBPyConnection, dataset: str, components: d
         loading = rounded(dict(
             basis='measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), '
                   "without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first "
-                  "video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and "
+                  "video's image count, which only tetris's yolov3 detector reads (these datasets use ultralytics and "
                   'RetinaNet)',
             device=load['device'], cuda_init_s=load['cuda_init_s'], load_s=load['load_s'],
             first_load_s=load['first_load_s'], warm_load_s=load['warm_load_s'], cold_process_s=cold,

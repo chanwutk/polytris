@@ -8,8 +8,8 @@ import shutil
 import altair as alt
 import pandas as pd
 
-from polyis.io import cache
-from polyis.utilities import get_config
+from tetris.io import cache
+from tetris.utilities import get_config
 
 
 CONFIG = get_config()
@@ -52,11 +52,11 @@ def build_config_labels(results: pd.DataFrame) -> pd.DataFrame:
     # Normalize missing trackers for the naive baseline.
     df['tracker_label'] = df['tracker'].fillna('naive')
 
-    # Use a dedicated label for naive rows instead of fake Polytris params.
+    # Use a dedicated label for naive rows instead of fake Tetris params.
     naive_mask = df['variant'] == 'naive'
     df['config_label'] = 'Naive'
 
-    # Build the Polytris configuration label from the real parameter columns.
+    # Build the Tetris configuration label from the real parameter columns.
     df.loc[~naive_mask, 'config_label'] = (
         df.loc[~naive_mask, 'classifier'].fillna('NA').astype(str).str.slice(0, 6)
         + ' '

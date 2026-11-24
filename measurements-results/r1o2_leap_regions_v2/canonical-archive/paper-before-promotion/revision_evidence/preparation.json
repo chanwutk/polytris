@@ -896,7 +896,7 @@
             "argv": [
               "python",
               "-c",
-              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "\nimport json, sys, time\nimport torch\nimport tetris.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
               "ams-y05",
               "/scratch/retime/detector_load.jsonl",
               "5"
@@ -1870,7 +1870,7 @@
             "argv": [
               "python",
               "-c",
-              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "\nimport json, sys, time\nimport torch\nimport tetris.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
               "caldot1-y05",
               "/scratch/retime/detector_load.jsonl",
               "5"
@@ -2825,7 +2825,7 @@
             "argv": [
               "python",
               "-c",
-              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "\nimport json, sys, time\nimport torch\nimport tetris.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
               "caldot2-y05",
               "/scratch/retime/detector_load.jsonl",
               "5"
@@ -3800,7 +3800,7 @@
             "argv": [
               "python",
               "-c",
-              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "\nimport json, sys, time\nimport torch\nimport tetris.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
               "jnc0",
               "/scratch/retime/detector_load.jsonl",
               "5"
@@ -4733,7 +4733,7 @@
             "argv": [
               "python",
               "-c",
-              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "\nimport json, sys, time\nimport torch\nimport tetris.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
               "jnc2",
               "/scratch/retime/detector_load.jsonl",
               "5"
@@ -5679,7 +5679,7 @@
             "argv": [
               "python",
               "-c",
-              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "\nimport json, sys, time\nimport torch\nimport tetris.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
               "jnc6",
               "/scratch/retime/detector_load.jsonl",
               "5"
@@ -6625,7 +6625,7 @@
             "argv": [
               "python",
               "-c",
-              "\nimport json, sys, time\nimport torch\nimport polyis.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
+              "\nimport json, sys, time\nimport torch\nimport tetris.models.detector\ndataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])\nstart = time.time()\ntorch.zeros(1, device='cuda')\ntorch.cuda.synchronize()\ncuda_init_s = time.time() - start\ntimes = []\nfor _ in range(loads):\n    begin = time.time()\n    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)\n    torch.cuda.synchronize()\n    times.append(time.time() - begin)\n    del detector\n    torch.cuda.empty_cache()\nwith open(out, 'a') as f:\n    f.write(json.dumps(dict(dataset=dataset, start=start, end=time.time(), device=torch.cuda.get_device_name(0),\n                            cuda_init_s=cuda_init_s, load_s=times)) + '\\n')\n",
               "jnc7",
               "/scratch/retime/detector_load.jsonl",
               "5"

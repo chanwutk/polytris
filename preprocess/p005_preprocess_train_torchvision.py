@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import sys
 
-from polyis.io import store
+from tetris.io import store
 
 
 def parse_args():

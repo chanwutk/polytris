@@ -4,10 +4,9 @@
 
 <h1 align="center">Tile-level Sampling for Efficient and High-Fidelity Video Object Tracking</h1>
 
-> The codebase still uses the legacy identifier `polyis` for directory names,
-> container names, and environment variables (`POLYIS_DATA`, `POLYIS_CACHE`).
-> Treat `polyis` and `Tetris` as the same project; only the public-facing
-> name has changed.
+> The Python package is `tetris`. The Docker setup still uses the legacy name
+> `polyis` for the container, the in-container paths (`/polyis`, `/polyis-data`,
+> `/polyis-cache`), and the environment variables (`POLYIS_DATA`, `POLYIS_CACHE`).
 
 ## Overview
 
@@ -165,7 +164,7 @@ case:
 
 | Mode               | Command                                  | Notes                                                                          |
 | ------------------ | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| Pipeline-parallel  | `./run execution/main.py --test`         | One pipeline per GPU. Modern entrypoint, replaces Phase 4 of `scripts/run.sh`. |
+| Pipeline-parallel  | `python -m execution.main --config <yaml> --videos <dir> --out <dir>` | One configuration over a directory of clips; write the YAML with `profiling` or `execution/tools/make_*_configs.py`. |
 | Per-stage scripts  | `./run scripts/p020_exec_classify.py`    | Useful for debugging a single stage. See each script's `--help`.               |
 | Phase orchestrator | `bash scripts/run.sh`                    | Legacy two-pass (`--valid` then `--test`) driver. Most phases are commented out; uncomment what you need. |
 
@@ -186,10 +185,10 @@ Every entrypoint takes `--help`. Use it.
 ## Repository Layout
 
 ```
-polyis/         Core library: Cython modules, models, trackers, IO helpers
+tetris/         Core library: Cython modules, models, trackers, IO helpers
 scripts/        Per-stage offline tuning + online execution scripts
 preprocess/     Dataset prep, ground truth, baseline tracking
-execution/      Pipeline-parallel runtime (execution/main.py is the entrypoint)
+execution/      Pipeline-parallel runtime (`python -m execution.main`)
 evaluation/     Metric computation, comparisons, paper-figure generators
 configs/        Global config, detector/tracker registry, sync config
 tests/          Pytest suite (Cython, ILP, trackers, evaluation)

@@ -13,7 +13,7 @@ Per dataset:
                    optimization its model_compilation.jsonl selects, ImageNet normalization, the always-relevant
                    mask, tile positions) and run through p020's own classify_batch on every frame, each paired
                    with its previous frame as p020 pairs them at sample rate 1.
-  detector         polyis.models.detector.get_detector(dataset, batch_size=1), as
+  detector         tetris.models.detector.get_detector(dataset, batch_size=1), as
                    preprocess/p002_preprocess_naive_detection.py loads the reference pipeline's detector.
   runs             per video, in this order, on the same decoded frames (RUNS; a call's time is split evenly
                    over its frames):
@@ -80,13 +80,13 @@ import numpy as np
 import torch
 import ultralytics
 
-import polyis.models.detector
-import polyis.models.retinanet_b3d
+import tetris.models.detector
+import tetris.models.retinanet_b3d
 from measurements.common import (DATASET_LABELS, fastest_tetris, file_record, host_info, iso_utc, load_test_tradeoff,
                                  load_tradeoff_points, results_dir, write_json)
 from measurements.r9o1_matched_timing import MANIFEST, RAW_DIR
-from polyis.io import cache, store
-from polyis.train.select_model_optimization import select_model_optimization
+from tetris.io import cache, store
+from tetris.train.select_model_optimization import select_model_optimization
 from scripts.p020_exec_classify import BATCH_SIZE, classify_batch, load_model
 
 
@@ -114,8 +114,8 @@ RUN_DESCRIPTIONS = {
     'classifier_1': 'classify_batch, one frame per call',
     'classifier_stream': (f"classify_batch over the video in {BATCH_SIZE}-frame calls, synchronized only before the first "
                           'and after the last call (one interval), as p020 runs'),
-    'detector': 'polyis.models.detector.detect, one BGR frame per call (p002, batch size 1)',
-    'detector_16': f'polyis.models.detector.detect_batch, {BATCH_SIZE} consecutive BGR frames per call',
+    'detector': 'tetris.models.detector.detect, one BGR frame per call (p002, batch size 1)',
+    'detector_16': f'tetris.models.detector.detect_batch, {BATCH_SIZE} consecutive BGR frames per call',
 }
 # Runs whose calls return p020's op intervals, which the raw lines keep.
 OPS_RUNS = ('classifier', 'classifier_1')
@@ -326,12 +326,12 @@ def load_classifier(dataset: str, classifier: str, tilesize: int, width: int, he
 
 
 def detector_weights(dataset: str) -> Path:
-    """The reference detector's weights file, as polyis.models.detector.get_detector resolves it."""
+    """The reference detector's weights file, as tetris.models.detector.get_detector resolves it."""
     # The dataset's entry in configs/detectors.yaml.
-    info = polyis.models.detector.get_detector_info(dataset)
+    info = tetris.models.detector.get_detector_info(dataset)
     # RetinaNet (B3D) takes its weights from configs/retinanet.json instead.
     if info['detector'] == 'retina':
-        with open(polyis.models.retinanet_b3d.CONFIG) as f:
+        with open(tetris.models.retinanet_b3d.CONFIG) as f:
             return Path(json.load(f)['weights'])
     return Path(info['model_path'])
 
@@ -409,8 +409,8 @@ def run_video(dataset: str, video: str, path: Path, size: tuple[int, int], class
         _, ms, start_ns = timed(stream)
         records.append(record('classifier_stream', 0, len(rgb), ms, start_ns))
     # The reference detector on the BGR frames, one per call (p002) and in the classifier's batches.
-    detect = {'detector': lambda batch: polyis.models.detector.detect(batch[0], detector),
-              'detector_16': lambda batch: polyis.models.detector.detect_batch(batch, detector)}
+    detect = {'detector': lambda batch: tetris.models.detector.detect(batch[0], detector),
+              'detector_16': lambda batch: tetris.models.detector.detect_batch(batch, detector)}
     detector_frames = frames[:DETECTOR_WARMUP_FRAMES] if warmup else frames
     for run in DETECTOR_RUNS:
         phase(run)
@@ -514,7 +514,7 @@ def time_dataset(dataset: str, args, out_dir: Path, idle: dict, env: dict) -> di
     size = video_size(store.dataset(dataset, 'test', videos[0]))
     classifier = load_classifier(dataset, point['classifier'], point['tilesize'], *size)
     # The reference pipeline's detector, as p002 loads it.
-    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=1)
+    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=1)
     records, video_records = [], {}
     for i, video in enumerate(videos):
         path = store.dataset(dataset, 'test', video)
@@ -533,13 +533,13 @@ def time_dataset(dataset: str, args, out_dir: Path, idle: dict, env: dict) -> di
     write_jsonl_gz(out_dir / f'{dataset}.jsonl.gz', records)
     write_jsonl_gz(out_dir / f'{dataset}.gpu.jsonl.gz', samples)
     # Free both models before the next dataset's.
-    polyis.models.detector.delete(detector)
+    tetris.models.detector.delete(detector)
     info = classifier.pop('info')
     del classifier
     torch.cuda.empty_cache()
     return dict(
         label=DATASET_LABELS[dataset], operating_point=point, classifier=info,
-        detector=dict(polyis.models.detector.get_detector_info(dataset), batch_size=1, weights=file_record(detector_weights(dataset))),
+        detector=dict(tetris.models.detector.get_detector_info(dataset), batch_size=1, weights=file_record(detector_weights(dataset))),
         runs=RUNS, videos=video_records, frames=sum(v['frames'] for v in video_records.values()),
         warmup=dict(video=videos[0], runs='every run over every frame', detector_frames=DETECTOR_WARMUP_FRAMES),
         started=iso_utc(started), finished=iso_utc(finished), started_ns=int(started * 1e9), finished_ns=int(finished * 1e9),

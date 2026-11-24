@@ -19,8 +19,8 @@ import numpy as np
 
 from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
 from measurements.common import DATASET_LABELS
-from polyis.io import cache
-from polyis.utilities import build_param_str
+from tetris.io import cache
+from tetris.utilities import build_param_str
 
 TILE_SIZE = 60
 PADDINGS = ('none', 'square')

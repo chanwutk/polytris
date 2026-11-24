@@ -43,6 +43,8 @@ det_otif
 .claude/.nfs*
 
 *.mp4
+# Short clips the scripts-vs-pipelines integration tests run on (tests/integration).
+!tests/data/equivalence/**/*.mp4
 
 ./paper/*
 ./paper
@@ -52,3 +54,4 @@ measurements-results/**/*.jsonl.gz
 measurements-results/*.log
 measurements-results/**/*.log
 .env
+.claude/worktrees/

@@ -80,7 +80,7 @@ FOR EACH STAGE OF REVIEW: output the explanation and pros and cons of each stage
 - `scripts/`: End-to-end pipeline steps, ordered by numeric prefixes.
 - `modules/`: Submodule dependencies vendored for reproducibility (e.g., Detectron2, TrackEval, Darknet).
 - `lib/`: Cython implementations of performance‑critical algorithms (`pack_append.pyx`, `group_tiles.pyx`) plus tests under `lib/tests/`.
-- `polyis/`: Core system components and utilities used by scripts (`images.py`, `utils.py`).
+- `tetris/`: Core system components and utilities used by scripts (`images.py`, `utils.py`).
 - `assets/`, `output/`, `pipeline-stages/`, `detection_experiments/`: Data, results, and experiment artifacts.
 
 ## Build, Test, and Development Commands
@@ -99,7 +99,7 @@ FOR EACH STAGE OF REVIEW: output the explanation and pros and cons of each stage
 - Do not add any comment or any doc-string to the parse_args function and its contents.
 - Data analytics code (evaluation, `measurements/`, and other scripts that read, join, group, or aggregate result files and tables) uses DuckDB; pandas is too slow for this.
   Do not analyze data with Python for-loops there unless absolutely necessary; express the analysis as DuckDB queries (or vectorized NumPy) instead.
-  This rule does not apply to the Tetris system's execution pipeline (`scripts/`, `polyis/`, `lib/`); do not change how the system runs to follow it.
+  This rule does not apply to the Tetris system's execution pipeline (`scripts/`, `tetris/`, `lib/`); do not change how the system runs to follow it.
 
 ## Testing Guidelines
 - Framework: `pytest`. Place new tests alongside targets or under `lib/tests/` as `test_*.py`.

@@ -41,11 +41,10 @@ includes:
     - "copy"
     - "evaluation"
     - "execution"
-    - "execution2"
     - "ablation"
     - "gcp"
     - "lib"
-    - "polyis"
+    - "tetris"
     - "preprocess"
     - "scripts"
     - "tests"
@@ -94,6 +93,8 @@ excludes:
   - "venv"
   - ".git/**"
   - ".git"
+  - ".claude/worktrees/"
+  - ".claude/worktrees/**"
 
 # Rsync options
 # Common options:

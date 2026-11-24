@@ -9,9 +9,9 @@ import cv2
 import torch
 
 from measurements.common import DATASET_LABELS
-from polyis.io import cache
-from polyis.models import detector as detectors
-from polyis.utilities import build_param_str
+from tetris.io import cache
+from tetris.models import detector as detectors
+from tetris.utilities import build_param_str
 
 
 spec = importlib.util.spec_from_file_location('oracle_packing', Path(__file__).with_name('r1o4_oracle_packing.py'))

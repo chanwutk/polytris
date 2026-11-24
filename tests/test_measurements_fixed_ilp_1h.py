@@ -6,7 +6,7 @@ import pytest
 
 from measurements import fixed_ilp_1h
 from measurements import fixed_ilp_unlimited as benchmark
-from polyis.sample.ilp.gurobi import ILPResult
+from tetris.sample.ilp.gurobi import ILPResult
 
 
 EXPECTED = {'variables': 3, 'constraints': 4, 'runtime': {'runtime': [{'op': 'solve_ilp', 'time': 100.0}]}}

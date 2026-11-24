@@ -27,10 +27,10 @@ from trackeval.metrics import CLEAR, HOTA, Identity  # noqa: E402
 
 from evaluation.p121_throughput_compute import excluded_runtime_ops  # noqa: E402
 from evaluation.p200_compare_compute import load_sota_tradeoff_data  # noqa: E402
-from polyis.io import cache  # noqa: E402
-from polyis.leap_results import canonical_leap_result  # noqa: E402
-from polyis.trackeval.dataset import Dataset  # noqa: E402
-from polyis.utilities import dataset_root_name, load_tradeoff_data, split_tradeoff_variants  # noqa: E402
+from tetris.io import cache  # noqa: E402
+from tetris.leap_results import canonical_leap_result  # noqa: E402
+from tetris.trackeval.dataset import Dataset  # noqa: E402
+from tetris.utilities import dataset_root_name, load_tradeoff_data, split_tradeoff_variants  # noqa: E402
 
 
 # Prior systems compared with Tetris, as named in the SOTA cache.
@@ -860,7 +860,7 @@ def trackeval_rerun(gt_dir: str, gt_file: str, track_dir: str, track_file: str, 
 
     Each clip's files are <gt_dir>/<video>/<gt_file> and <track_dir>/<video>/<track_file>. Returns the vehicle class
     combined over the clips (raw arrays and scalars); TrackEval writes nothing but an error log into output_dir.
-    pad_scoring_window None uses the canonical scoring (padded, see polyis.trackeval.dataset); False reproduces
+    pad_scoring_window None uses the canonical scoring (padded, see tetris.trackeval.dataset); False reproduces
     TrackEval's truncated window, which audits of that window and of older cached results need.
     """
     # Unknown families would fail inside TrackEval with a less clear message.

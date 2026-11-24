@@ -15,12 +15,12 @@ from functools import partial
 
 import torch
 
-from polyis import dtypes
-from polyis.utilities import format_time, load_classification_results, load_pruned_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding, build_param_str, scale_to_percent
-from polyis.pack.group_tiles import group_tiles
-from polyis.pack.pack import pack
-from polyis.io import cache, store
-from polyis.pareto import build_pareto_combo_filter
+from tetris import dtypes
+from tetris.utilities import format_time, load_classification_results, load_pruned_classification_results, ProgressBar, get_config, TILEPADDING_MAPS, TilePadding, build_param_str, scale_to_percent
+from tetris.pack.group_tiles import group_tiles
+from tetris.pack.pack import pack
+from tetris.io import cache, store
+from tetris.pareto import build_pareto_combo_filter
 
 
 config = get_config()

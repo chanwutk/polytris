@@ -7,8 +7,8 @@ import os
 import cv2
 import numpy as np
 
-from polyis.io import cache, store
-from polyis.utilities import get_config
+from tetris.io import cache, store
+from tetris.utilities import get_config
 from evaluation.manifests import list_split_videos
 
 

@@ -10,8 +10,8 @@ import multiprocessing as mp
 from functools import partial
 import pandas as pd
 
-from polyis.io import cache, store
-from polyis.utilities import load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
+from tetris.io import cache, store
+from tetris.utilities import load_classification_results, load_detection_results, mark_detections, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():

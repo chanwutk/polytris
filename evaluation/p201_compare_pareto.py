@@ -22,9 +22,9 @@ import pandas as pd
 import altair as alt
 
 from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
-from polyis.io import cache
-from polyis.pareto import compute_pareto_front
-from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
+from tetris.io import cache
+from tetris.pareto import compute_pareto_front
+from tetris.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 from evaluation.utilities import SYSTEM_COLOR_DOMAIN
 from evaluation.colors import TETRIS_COLORS, categorical_color_scale
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
@@ -365,9 +365,9 @@ def _facet_chart(chart: alt.Chart, df: pd.DataFrame, title: str, *,
 
 
 
-def load_polytris_tradeoff_split_data(datasets: list[str]) -> pd.DataFrame:
+def load_tetris_tradeoff_split_data(datasets: list[str]) -> pd.DataFrame:
     """
-    Load the canonical split-level Polytris tradeoff table for all datasets.
+    Load the canonical split-level Tetris tradeoff table for all datasets.
 
     Args:
         datasets: Datasets to load
@@ -392,7 +392,7 @@ def load_polytris_tradeoff_split_data(datasets: list[str]) -> pd.DataFrame:
 
 
 
-def compute_speedup_at_accuracy_levels(df_polytris: pd.DataFrame,
+def compute_speedup_at_accuracy_levels(df_tetris: pd.DataFrame,
                                        df_sota_dict: dict[str, pd.DataFrame],
                                        accuracy_col: str,
                                        time_col: str = 'time') -> pd.DataFrame:
@@ -400,12 +400,12 @@ def compute_speedup_at_accuracy_levels(df_polytris: pd.DataFrame,
     One row per comparison-system Pareto point (anchor).
 
     For each anchor (other_time, other accuracy on the x-axis as
-    ``accuracy_level``), pick the Polytris point with strictly higher accuracy
-    that minimizes Polytris runtime (maximizes speedup_ratio =
+    ``accuracy_level``), pick the Tetris point with strictly higher accuracy
+    that minimizes Tetris runtime (maximizes speedup_ratio =
     other_time / polytris_time). Tie-break: lowest time, then highest accuracy.
 
     Args:
-        df_polytris: DataFrame with Polytris Pareto front data
+        df_polytris: DataFrame with Tetris Pareto front data
         df_sota_dict: Dictionary mapping system names to their Pareto front DataFrames
         accuracy_col: Column name for accuracy metric (e.g., 'HOTA_HOTA')
         time_col: Column name for runtime
@@ -416,11 +416,11 @@ def compute_speedup_at_accuracy_levels(df_polytris: pd.DataFrame,
     """
     rows: list[dict] = []
 
-    datasets = df_polytris['dataset'].unique()
+    datasets = df_tetris['dataset'].unique()
 
     for dataset in datasets:
-        polytris_data = df_polytris[df_polytris['dataset'] == dataset]
-        poly = polytris_data.dropna(subset=[time_col, accuracy_col])
+        tetris_data = df_tetris[df_tetris['dataset'] == dataset]
+        poly = tetris_data.dropna(subset=[time_col, accuracy_col])
         if poly.empty:
             continue
 
@@ -534,7 +534,7 @@ def _anchor_throughput_fps(poly_df: pd.DataFrame, naive_row: pd.Series, sota_row
     return naive_time / t_other
 
 
-def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
+def compute_accuracy_gain_at_naive_speedup_levels(df_tetris: pd.DataFrame,
                                                   df_sota_dict: dict[str, pd.DataFrame],
                                                   df_naive: pd.DataFrame,
                                                   accuracy_col: str,
@@ -545,12 +545,12 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
     x-axis ``throughput_fps`` is the anchor system's throughput (frames per second)
     when ``frame_count`` (or explicit ``throughput_fps``) is available; otherwise it
     falls back to the naive-time ratio ``naive_time / time_other`` at that anchor.
-    Among Polytris points strictly faster than the anchor (lower runtime),
-    pick the one that maximizes HOTA gain (Polytris accuracy - anchor accuracy).
-    Tie-break: highest Polytris accuracy, then lowest Polytris time.
+    Among Tetris points strictly faster than the anchor (lower runtime),
+    pick the one that maximizes HOTA gain (Tetris accuracy - anchor accuracy).
+    Tie-break: highest Tetris accuracy, then lowest Tetris time.
 
     Args:
-        df_polytris: DataFrame with Polytris Pareto front data
+        df_polytris: DataFrame with Tetris Pareto front data
         df_sota_dict: Dictionary mapping system names to their Pareto front DataFrames
         df_naive: DataFrame with one naive baseline row per dataset
         accuracy_col: Column name for accuracy metric (e.g., 'HOTA_HOTA')
@@ -562,11 +562,11 @@ def compute_accuracy_gain_at_naive_speedup_levels(df_polytris: pd.DataFrame,
     """
     rows: list[dict] = []
 
-    datasets = df_polytris['dataset'].unique()
+    datasets = df_tetris['dataset'].unique()
 
     for dataset in datasets:
-        polytris_data = df_polytris[df_polytris['dataset'] == dataset]
-        poly = polytris_data.dropna(subset=[time_col, accuracy_col])
+        tetris_data = df_tetris[df_tetris['dataset'] == dataset]
+        poly = tetris_data.dropna(subset=[time_col, accuracy_col])
         if poly.empty:
             continue
 
@@ -1489,32 +1489,32 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     os.makedirs(output_dir, exist_ok=True)
     print(f"Output directory: {output_dir}")
 
-    # Load the canonical split-level Polytris tradeoff rows.
-    print("\nLoading Polytris tradeoff data...")
-    tradeoff_df = load_polytris_tradeoff_split_data(datasets)
+    # Load the canonical split-level Tetris tradeoff rows.
+    print("\nLoading Tetris tradeoff data...")
+    tradeoff_df = load_tetris_tradeoff_split_data(datasets)
 
     if tradeoff_df.empty:
-        print("  Warning: No Polytris tradeoff rows found")
+        print("  Warning: No Tetris tradeoff rows found")
         return
 
-    # Split the canonical table into Polytris and naive rows.
-    polytris_tradeoff_df, naive_tradeoff_df = split_tradeoff_variants(tradeoff_df)
+    # Split the canonical table into Tetris and naive rows.
+    tetris_tradeoff_df, naive_tradeoff_df = split_tradeoff_variants(tradeoff_df)
 
     # Filter out non-data points before valid/test selection.
-    polytris_tradeoff_df = polytris_tradeoff_df.query("classifier != 'Perfect'")
+    tetris_tradeoff_df = tetris_tradeoff_df.query("classifier != 'Perfect'")
 
     # Work directly on the canonical split-level table emitted by p130.
-    polytris_split_df = polytris_tradeoff_df.copy()
-    if polytris_split_df.empty:
-        print("  Warning: No split-level Polytris rows found")
+    tetris_split_df = tetris_tradeoff_df.copy()
+    if tetris_split_df.empty:
+        print("  Warning: No split-level Tetris rows found")
         return
 
     # Print a quick split distribution for sanity checking.
-    split_counts = polytris_split_df['videoset'].value_counts(dropna=False).to_dict()
-    print(f"  Aggregated Polytris rows: {len(polytris_split_df)} (videoset counts: {split_counts})")
+    split_counts = tetris_split_df['videoset'].value_counts(dropna=False).to_dict()
+    print(f"  Aggregated Tetris rows: {len(tetris_split_df)} (videoset counts: {split_counts})")
 
     # Extract test rows only; valid split is no longer needed.
-    test_all_df = polytris_split_df[polytris_split_df['videoset'] == 'test'].copy()
+    test_all_df = tetris_split_df[tetris_split_df['videoset'] == 'test'].copy()
     print(f"  Test rows: {len(test_all_df)}")
     if test_all_df.empty:
         print("  Warning: No test rows found after videoset separation")
@@ -1524,10 +1524,10 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     naive_df['system'] = 'Reference'
     print(f"\nExtracted {len(naive_df)} naive baseline rows from test split")
 
-    # Filter test Polytris rows by non-ablation parameter dimensions.
+    # Filter test Tetris rows by non-ablation parameter dimensions.
     # Sample_rate and tracking_accuracy_threshold are filtered per ablation
     # condition inside the metric loop below.
-    print("\nFiltering Polytris data by configuration settings...")
+    print("\nFiltering Tetris data by configuration settings...")
     print(f"  Test rows before filtering: {len(test_all_df)}")
     base_filtered_test_df = filter_by_config(
         test_all_df,
@@ -1550,7 +1550,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
     if not df_sota_dict:
         print("  Warning: No SOTA tradeoff data found")
 
-    # Derive throughput_fps for SOTA systems from Polytris frame counts.
+    # Derive throughput_fps for SOTA systems from Tetris frame counts.
     # Frame count is a property of the dataset/split, not the system.
     if 'frame_count' in tradeoff_df.columns:
         frame_count_lookup = (
@@ -1587,12 +1587,12 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         print('='*60)
 
         # Check if metric exists in data
-        if accuracy_col not in polytris_split_df.columns:
-            print(f"  Warning: {accuracy_col} not found in Polytris data, skipping")
+        if accuracy_col not in tetris_split_df.columns:
+            print(f"  Warning: {accuracy_col} not found in Tetris data, skipping")
             continue
 
         # Skip if all NaN
-        if polytris_split_df[accuracy_col].isna().all():
+        if tetris_split_df[accuracy_col].isna().all():
             print(f"  Warning: {accuracy_col} has no valid data, skipping")
             continue
 
@@ -1610,7 +1610,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
         pareto_data_list: list[pd.DataFrame] = []
 
         # Track the full-system Pareto front for speedup/gain charts below.
-        polytris_full_pareto_df = pd.DataFrame()
+        tetris_full_pareto_df = pd.DataFrame()
 
         for condition in ABLATION_CONDITIONS:
             # Apply condition-specific parameter restrictions.
@@ -1638,7 +1638,7 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
 
             # Keep the full-system front for speedup/accuracy-gain comparisons.
             if condition.name == 'full':
-                polytris_full_pareto_df = pareto_df.copy()
+                tetris_full_pareto_df = pareto_df.copy()
 
         # Filter reference (naive) baseline to Pareto-optimal points per dataset.
         if accuracy_col in naive_df.columns:
@@ -1769,10 +1769,10 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             print("  No throughput data available")
 
         # 4. Compute and visualize speedup at accuracy levels
-        # Uses only the full-system Polytris Pareto front for comparison.
+        # Uses only the full-system Tetris Pareto front for comparison.
         print(f"\n4. Computing speedup at accuracy levels for {accuracy_name}...")
         df_speedup = compute_speedup_at_accuracy_levels(
-            polytris_full_pareto_df, pareto_sota_dict, accuracy_col, 'time',
+            tetris_full_pareto_df, pareto_sota_dict, accuracy_col, 'time',
         )
 
         if not df_speedup.empty:
@@ -1788,10 +1788,10 @@ def visualize_all_datasets_tradeoffs_pareto(datasets: list[str], log_scale: bool
             print("  No speedup data available")
 
         # 5. Compute and visualize accuracy gain at throughput levels
-        # Uses only the full-system Polytris Pareto front for comparison.
+        # Uses only the full-system Tetris Pareto front for comparison.
         print(f"\n5. Computing accuracy gain at throughput for {accuracy_name}...")
         df_accuracy_gain = compute_accuracy_gain_at_naive_speedup_levels(
-            polytris_full_pareto_df, pareto_sota_dict, pareto_naive_df, accuracy_col, 'time',
+            tetris_full_pareto_df, pareto_sota_dict, pareto_naive_df, accuracy_col, 'time',
         )
 
         if not df_accuracy_gain.empty:

@@ -11,9 +11,10 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str, TilePadding
-from polyis.io import cache, store
-from polyis.pareto import build_pareto_combo_filter
+from tetris.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str, TilePadding
+from tetris.io import cache, store
+from tetris.pareto import build_pareto_combo_filter
+from tetris.pack.collage import Det, Dets, FrameIdToDets, UnpackedDets, unpack_detections
 
 
 CONFIG = get_config()
@@ -61,112 +62,6 @@ def load_mapping_file(index_map_path: str, offset_lookup_path: str):
         offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]] = [json.loads(line) for line in f]
 
     return index_map, offset_lookup
-
-
-Det = list[float]
-Dets = list[Det]
-FrameIdToDets = dict[int, Dets]
-UnpackedDets = tuple[FrameIdToDets, Dets, Dets]
-
-
-def unpack_detections(detections: list[list[float]], index_map: np.ndarray,
-                      offset_lookup: list[tuple[tuple[int, int], tuple[int, int], int]],
-                      tilesize: int, drop_center_outside: bool = False) -> UnpackedDets:
-    """
-    Unpack detections from compressed coordinates back to original frame coordinates.
-
-    Args:
-        detections (list[list[float]]): list of bounding boxes in compressed coordinates [x1, y1, x2, y2]
-        index_map (np.ndarray): Index map from the mapping file (2D array with group_ids)
-        offset_lookup (list[tuple[tuple[int, int], tuple[int, int], int]]): Offset lookup from the mapping file
-        tilesize (int): Size of tiles used for compression
-        drop_center_outside (bool): Drop detections whose center falls on an empty canvas cell instead of
-            assigning them to the polyomino under one of their corners (off by default; the tracker can
-            discard such boxes, while detection-only evaluations may drop them)
-
-    Returns:
-        tuple[
-            dict[int, list[list[float]]],
-            list[list[float]],
-            list[list[float]],
-        ]:
-            dictionary mapping frame indices to lists of bounding boxes in original frame coordinates,
-            list of detections that are not in any tile,
-            list of detections that are in the center of a tile but not in any tile
-    """
-    # Initialize dictionary to store detections per frame
-    frame_detections: dict[int, list[list[float]]] = {}
-    not_in_any_tile_detections: list[list[float]] = []
-    center_not_in_any_tile_detections: list[list[float]] = []
-
-    # Process each detection
-    for x1, y1, x2, y2, *_ in detections:
-        # Get the center point of the detection in compressed coordinates
-        center_x = (x1 + x2) / 2.0
-        center_y = (y1 + y2) / 2.0
-
-        # center, top-left, top-right, bottom-left, bottom-right
-        xs = [center_x, x1, x2, x1, x2]
-        ys = [center_y, y1, y1, y2, y2]
-
-        group_id: int | None = None
-        frame_idx: int | None = None
-        center_in_any_tile: bool = True
-        for x, y in zip(xs, ys):
-            # Convert to tile coordinates in the compressed image
-            tile_x = int(x // tilesize)
-            tile_y = int(y // tilesize)
-
-            # Ensure tile coordinates are within bounds
-            if (tile_y < 0 or tile_y >= index_map.shape[0] or
-                tile_x < 0 or tile_x >= index_map.shape[1]):
-                continue
-
-            # Get the group ID for this tile
-            group_id_ = int(index_map[tile_y, tile_x])
-
-            if group_id_ != 0:
-                group_id = group_id_
-                break
-            center_in_any_tile = False
-
-        if not center_in_any_tile:
-            center_not_in_any_tile_detections.append([x1, y1, x2, y2, *_])
-            # Optionally drop a box centered on empty canvas space rather than map it through a corner.
-            if drop_center_outside:
-                continue
-
-        if group_id is None:
-            not_in_any_tile_detections.append([x1, y1, x2, y2, *_])
-            continue
-
-        # Convert group_id to 0-based index
-        group_id -= 1
-
-        # Get the offset information for this group
-        assert 0 <= group_id < len(offset_lookup), f"Group {group_id} not found in offset lookup"
-        (packed_y, packed_x), (original_offset_y, original_offset_x), frame_idx = offset_lookup[group_id]
-
-        # Calculate the offset to convert from compressed to original coordinates
-        # The offset represents how much the tile was moved during compression
-        offset_x = (original_offset_x - packed_x) * tilesize
-        offset_y = (original_offset_y - packed_y) * tilesize
-
-        # Convert detection back to original frame coordinates
-        original_det = [
-            x1 + offset_x,
-            y1 + offset_y,
-            x2 + offset_x,
-            y2 + offset_y,
-            *_
-        ]
-
-        # Add to frame detections
-        if frame_idx not in frame_detections:
-            frame_detections[frame_idx] = []
-        frame_detections[frame_idx].append(original_det)
-
-    return frame_detections, not_in_any_tile_detections, center_not_in_any_tile_detections
 
 
 def unpack(dataset: str, videoset: str, video: str, classifier: str, tilesize: int,

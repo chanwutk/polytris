@@ -12,7 +12,7 @@ from evaluation.manifests import list_split_videos
 from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
 from measurements import r1o4_packing_detection_accuracy as packing
 from measurements.common import DATASET_LABELS, load_test_tradeoff, write_json
-from polyis.io import cache
+from tetris.io import cache
 
 
 def main():

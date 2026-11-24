@@ -6,8 +6,8 @@ import multiprocessing as mp
 from multiprocessing import Queue
 from functools import partial
 
-from polyis.io import cache, store
-from polyis.utilities import PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, dedupe_datasets_by_root, load_detection_results, get_config
+from tetris.io import cache, store
+from tetris.utilities import PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, dedupe_datasets_by_root, load_detection_results, get_config
 
 
 CONFIG = get_config()

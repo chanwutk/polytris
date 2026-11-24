@@ -85,7 +85,7 @@ import duckdb
 
 from measurements.common import (DATASET_LABELS, assert_files_exist, load_p121_per_op, load_p121_runtime_ops,
                                  query_dicts, results_dir, rounded, write_json)
-from polyis.io import cache
+from tetris.io import cache
 
 
 # The GPU job, loaded from its file (measurements-gpu is not a package; its top level needs only the standard

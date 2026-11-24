@@ -13,8 +13,8 @@ import shutil
 import cv2
 from tqdm import tqdm
 
-from polyis.io import store
-from polyis.train.data import (
+from tetris.io import store
+from tetris.train.data import (
     adjust_val_frames_for_prefix,
     collect_valid_frames,
     discover_videos_in_subsets,

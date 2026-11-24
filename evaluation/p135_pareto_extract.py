@@ -16,8 +16,8 @@ import argparse
 import pandas as pd
 
 from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
-from polyis.pareto import PARETO_PARAM_COLS, compute_pareto_fronts_by_group, save_pareto_params
-from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
+from tetris.pareto import PARETO_PARAM_COLS, compute_pareto_fronts_by_group, save_pareto_params
+from tetris.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 
 
 config = get_config()
@@ -54,17 +54,17 @@ def main(args):
         if 'dataset' not in tradeoff_df.columns:
             tradeoff_df['dataset'] = dataset
 
-        # Split tradeoff data into Polytris and naive subsets.
-        polytris_df, _ = split_tradeoff_variants(tradeoff_df)
+        # Split tradeoff data into Tetris and naive subsets.
+        tetris_df, _ = split_tradeoff_variants(tradeoff_df)
 
         # Restrict to the valid videoset to avoid test-data leakage.
-        polytris_df = polytris_df[polytris_df['videoset'] == 'valid'].copy()
+        tetris_df = tetris_df[tetris_df['videoset'] == 'valid'].copy()
 
         # Exclude the Perfect classifier since it is not a real deployable configuration.
-        polytris_df = polytris_df[polytris_df['classifier'] != 'Perfect'].copy()
+        tetris_df = tetris_df[tetris_df['classifier'] != 'Perfect'].copy()
 
-        if polytris_df.empty:
-            print(f"  Warning: No valid Polytris rows found for {dataset}; skipping")
+        if tetris_df.empty:
+            print(f"  Warning: No valid Tetris rows found for {dataset}; skipping")
             continue
 
         # Compute a Pareto front for each ablation condition and collect the union.
@@ -72,7 +72,7 @@ def main(args):
 
         for condition in ABLATION_CONDITIONS:
             # Filter to the parameter subset defined by this ablation condition.
-            condition_df = filter_by_ablation_condition(polytris_df, condition)
+            condition_df = filter_by_ablation_condition(tetris_df, condition)
 
             if condition_df.empty:
                 print(f"  [{condition.label}] No rows after filtering; skipping")

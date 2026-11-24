@@ -7,7 +7,7 @@ import duckdb
 import numpy as np
 
 from measurements.common import decode_grids
-from polyis.io import cache
+from tetris.io import cache
 
 
 ORIGINAL = Path('/polyis/measurements-results/fixed_test_s1_square_m02')

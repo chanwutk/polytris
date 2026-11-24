@@ -13,9 +13,9 @@ def benchmark_group_tiles():
     """Benchmark group_tiles implementations."""
     print("=== Group Tiles Benchmark ===")
 
-    from polyis.pack.cython.group_tiles import group_tiles as group_tiles_cython
-    from polyis.pack.group_tiles import group_tiles as group_tiles_c
-    from polyis.pack.python.group_tiles import group_tiles as python_group_tiles
+    from tetris.pack.cython.group_tiles import group_tiles as group_tiles_cython
+    from tetris.pack.group_tiles import group_tiles as group_tiles_c
+    from tetris.pack.python.group_tiles import group_tiles as python_group_tiles
 
     sizes = [(20, 20), (50, 50), (100, 100)]
     densities = [0.1, 0.3, 0.5]

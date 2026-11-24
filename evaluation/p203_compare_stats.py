@@ -7,8 +7,8 @@ from typing import Mapping
 import pandas as pd
 
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
-from polyis.pareto import compute_pareto_front
-from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
+from tetris.pareto import compute_pareto_front
+from tetris.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 
 
 CONFIG = get_config()
@@ -203,18 +203,18 @@ def select_best_prior_row(
 
 def select_most_accurate_not_more_accurate_prior_row(
     prior_dfs_by_system: Mapping[str, pd.DataFrame],
-    polytris_hota: float,
+    tetris_hota: float,
 ) -> pd.Series | None:
-    """Return the most accurate prior-system row whose HOTA is not above Polytris."""
+    """Return the most accurate prior-system row whose HOTA is not above Tetris."""
     # Track the current best prior row across all systems.
     best_row: pd.Series | None = None
 
     # Evaluate each prior system independently before comparing their candidates.
     for system_name, prior_df in prior_dfs_by_system.items():
-        # Keep only prior rows that are no more accurate than the selected Polytris row.
-        comparable_df = prior_df[prior_df[ACCURACY_COL] <= polytris_hota].copy()
+        # Keep only prior rows that are no more accurate than the selected Tetris row.
+        comparable_df = prior_df[prior_df[ACCURACY_COL] <= tetris_hota].copy()
 
-        # Skip systems that never drop to the selected Polytris accuracy.
+        # Skip systems that never drop to the selected Tetris accuracy.
         if comparable_df.empty:
             continue
 
@@ -252,19 +252,19 @@ def select_most_accurate_not_more_accurate_prior_row(
 def select_accuracy_matched_prior_row(
     prior_dfs_by_system: Mapping[str, pd.DataFrame],
     threshold: float,
-    polytris_row: pd.Series | None,
+    tetris_row: pd.Series | None,
 ) -> pd.Series | None:
     """Return a prior-system row for an accuracy-matched speedup comparison."""
-    # Without a feasible Polytris row, there is no accuracy anchor for matching.
-    if polytris_row is None:
+    # Without a feasible Tetris row, there is no accuracy anchor for matching.
+    if tetris_row is None:
         return None
 
     # Resolve the fastest prior row that satisfies the same threshold bound.
     threshold_row = select_best_prior_row(prior_dfs_by_system, threshold)
-    polytris_hota = float(polytris_row[ACCURACY_COL])
+    tetris_hota = float(tetris_row[ACCURACY_COL])
 
-    # Reuse the threshold-feasible prior row when it is already no more accurate than Polytris.
-    if threshold_row is not None and float(threshold_row[ACCURACY_COL]) <= polytris_hota:
+    # Reuse the threshold-feasible prior row when it is already no more accurate than Tetris.
+    if threshold_row is not None and float(threshold_row[ACCURACY_COL]) <= tetris_hota:
         threshold_row = threshold_row.copy()
         threshold_row['accuracy_match_rule'] = 'threshold_feasible_not_more_accurate'
         return threshold_row
@@ -272,10 +272,10 @@ def select_accuracy_matched_prior_row(
     # Otherwise, fall back to the closest lower-accuracy prior point even if it misses the threshold.
     matched_row = select_most_accurate_not_more_accurate_prior_row(
         prior_dfs_by_system,
-        polytris_hota,
+        tetris_hota,
     )
 
-    # Return no match when every prior-system row is more accurate than Polytris.
+    # Return no match when every prior-system row is more accurate than Tetris.
     if matched_row is None:
         return None
 
@@ -285,10 +285,10 @@ def select_accuracy_matched_prior_row(
     return matched_row
 
 
-def load_polytris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Load canonical test-split Polytris and naive tradeoff rows for all datasets."""
-    # Collect one Polytris tradeoff DataFrame per dataset.
-    polytris_frames: list[pd.DataFrame] = []
+def load_tetris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load canonical test-split Tetris and naive tradeoff rows for all datasets."""
+    # Collect one Tetris tradeoff DataFrame per dataset.
+    tetris_frames: list[pd.DataFrame] = []
     # Collect one naive tradeoff DataFrame per dataset.
     naive_frames: list[pd.DataFrame] = []
 
@@ -305,29 +305,29 @@ def load_polytris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame
         # Restrict the summary to the test split only.
         tradeoff_df = tradeoff_df[tradeoff_df['videoset'] == 'test'].copy()
 
-        # Split the canonical table into Polytris rows and the naive baseline row.
-        polytris_df, naive_df = split_tradeoff_variants(tradeoff_df)
+        # Split the canonical table into Tetris rows and the naive baseline row.
+        tetris_df, naive_df = split_tradeoff_variants(tradeoff_df)
 
-        # Exclude the Perfect classifier so only deployable Polytris rows remain.
-        if 'classifier' in polytris_df.columns:
-            polytris_df = polytris_df[polytris_df['classifier'] != 'Perfect'].copy()
+        # Exclude the Perfect classifier so only deployable Tetris rows remain.
+        if 'classifier' in tetris_df.columns:
+            tetris_df = tetris_df[tetris_df['classifier'] != 'Perfect'].copy()
 
         # Append the dataset-local rows to the shared collections.
-        polytris_frames.append(polytris_df)
+        tetris_frames.append(tetris_df)
         naive_frames.append(naive_df)
 
-    # Combine all Polytris rows into one shared DataFrame.
-    polytris_all_df = pd.concat(polytris_frames, ignore_index=True) if polytris_frames else pd.DataFrame()
+    # Combine all Tetris rows into one shared DataFrame.
+    tetris_all_df = pd.concat(tetris_frames, ignore_index=True) if tetris_frames else pd.DataFrame()
     # Combine all naive rows into one shared DataFrame.
     naive_all_df = pd.concat(naive_frames, ignore_index=True) if naive_frames else pd.DataFrame()
 
-    return polytris_all_df, naive_all_df
+    return tetris_all_df, naive_all_df
 
 
-def build_frame_count_lookup(polytris_df: pd.DataFrame, naive_df: pd.DataFrame) -> dict[str, float]:
+def build_frame_count_lookup(tetris_df: pd.DataFrame, naive_df: pd.DataFrame) -> dict[str, float]:
     """Resolve one frame-count value per dataset for throughput normalization."""
-    # Combine Polytris and naive rows so the lookup works even if one side is sparse.
-    combined_df = pd.concat([polytris_df, naive_df], ignore_index=True)
+    # Combine Tetris and naive rows so the lookup works even if one side is sparse.
+    combined_df = pd.concat([tetris_df, naive_df], ignore_index=True)
 
     # Keep the first non-null frame count for each dataset.
     frame_count_lookup = (
@@ -361,7 +361,7 @@ def load_prior_test_data(
         # Restrict the summary to the test split only.
         prior_df = prior_df[prior_df['videoset'] == 'test'].copy()
 
-        # Map each prior row to the dataset frame count used by Polytris.
+        # Map each prior row to the dataset frame count used by Tetris.
         prior_df['frame_count'] = prior_df['dataset'].map(frame_count_lookup)
 
         # Derive throughput from the shared frame count and the measured runtime.
@@ -375,7 +375,7 @@ def load_prior_test_data(
 
 def build_threshold_detail_table(
     datasets: list[str],
-    polytris_df: pd.DataFrame,
+    tetris_df: pd.DataFrame,
     naive_df: pd.DataFrame,
     prior_dfs_by_system: Mapping[str, pd.DataFrame],
     threshold: float,
@@ -392,12 +392,12 @@ def build_threshold_detail_table(
         oracle_row = oracle_df.iloc[0]
         oracle_hota = float(oracle_row[ACCURACY_COL])
 
-        # Keep only Pareto-filtered Polytris rows for the current dataset.
-        dataset_polytris_df = polytris_df[polytris_df['dataset'] == dataset].copy()
-        dataset_polytris_df = add_loss_pct(dataset_polytris_df, oracle_hota)
+        # Keep only Pareto-filtered Tetris rows for the current dataset.
+        dataset_tetris_df = tetris_df[tetris_df['dataset'] == dataset].copy()
+        dataset_tetris_df = add_loss_pct(dataset_tetris_df, oracle_hota)
 
-        # Select the fastest feasible Polytris point under the current threshold.
-        polytris_row = select_best_feasible_row(dataset_polytris_df, threshold)
+        # Select the fastest feasible Tetris point under the current threshold.
+        tetris_row = select_best_feasible_row(dataset_tetris_df, threshold)
 
         # Build one loss-annotated candidate table per prior system for this dataset.
         dataset_prior_dfs: dict[str, pd.DataFrame] = {}
@@ -415,39 +415,39 @@ def build_threshold_detail_table(
         # Select the fastest feasible prior-system point under the current threshold.
         prior_row = select_best_prior_row(dataset_prior_dfs, threshold)
 
-        # Select the accuracy-matched prior-system point for the same Polytris row.
+        # Select the accuracy-matched prior-system point for the same Tetris row.
         accuracy_matched_prior_row = select_accuracy_matched_prior_row(
             dataset_prior_dfs,
             threshold,
-            polytris_row,
+            tetris_row,
         )
 
-        # Compute the Polytris-over-prior speedup when both sides are available.
+        # Compute the Tetris-over-prior speedup when both sides are available.
         if (
-            polytris_row is not None
+            tetris_row is not None
             and prior_row is not None
             and float(prior_row[THROUGHPUT_COL]) > 0
         ):
-            speedup_x = float(polytris_row[THROUGHPUT_COL]) / float(prior_row[THROUGHPUT_COL])
+            speedup_x = float(tetris_row[THROUGHPUT_COL]) / float(prior_row[THROUGHPUT_COL])
         else:
             speedup_x = pd.NA
 
-        # Compute the accuracy-matched Polytris-over-prior speedup when both sides are available.
+        # Compute the accuracy-matched Tetris-over-prior speedup when both sides are available.
         if (
-            polytris_row is not None
+            tetris_row is not None
             and accuracy_matched_prior_row is not None
             and float(accuracy_matched_prior_row[THROUGHPUT_COL]) > 0
         ):
             accuracy_matched_speedup_x = (
-                float(polytris_row[THROUGHPUT_COL])
+                float(tetris_row[THROUGHPUT_COL])
                 / float(accuracy_matched_prior_row[THROUGHPUT_COL])
             )
         else:
             accuracy_matched_speedup_x = pd.NA
 
-        # Compute the Polytris-over-naive speedup when a feasible Polytris point exists.
-        if polytris_row is not None and float(oracle_row[THROUGHPUT_COL]) > 0:
-            naive_speedup_x = float(polytris_row[THROUGHPUT_COL]) / float(oracle_row[THROUGHPUT_COL])
+        # Compute the Tetris-over-naive speedup when a feasible Tetris point exists.
+        if tetris_row is not None and float(oracle_row[THROUGHPUT_COL]) > 0:
+            naive_speedup_x = float(tetris_row[THROUGHPUT_COL]) / float(oracle_row[THROUGHPUT_COL])
         else:
             naive_speedup_x = pd.NA
 
@@ -457,10 +457,10 @@ def build_threshold_detail_table(
             'dataset': dataset,
             'oracle_hota': oracle_hota,
             'naive_throughput_fps': oracle_row[THROUGHPUT_COL],
-            'polytris_variant_id': polytris_row['variant_id'] if polytris_row is not None else pd.NA,
-            'polytris_hota': polytris_row[ACCURACY_COL] if polytris_row is not None else pd.NA,
-            'polytris_loss_pct': polytris_row['loss_pct'] if polytris_row is not None else pd.NA,
-            'polytris_throughput_fps': polytris_row[THROUGHPUT_COL] if polytris_row is not None else pd.NA,
+            'polytris_variant_id': tetris_row['variant_id'] if tetris_row is not None else pd.NA,
+            'polytris_hota': tetris_row[ACCURACY_COL] if tetris_row is not None else pd.NA,
+            'polytris_loss_pct': tetris_row['loss_pct'] if tetris_row is not None else pd.NA,
+            'polytris_throughput_fps': tetris_row[THROUGHPUT_COL] if tetris_row is not None else pd.NA,
             'prior_system': prior_row['system'] if prior_row is not None else pd.NA,
             'prior_hota': prior_row[ACCURACY_COL] if prior_row is not None else pd.NA,
             'prior_loss_pct': prior_row['loss_pct'] if prior_row is not None else pd.NA,
@@ -508,14 +508,14 @@ def build_threshold_summary_table(
         # Keep only the rows for the current threshold.
         threshold_df = detail_df[detail_df['threshold'] == threshold].copy()
 
-        # Count datasets where Polytris has at least one feasible point.
-        polytris_meet_count = int(threshold_df['polytris_variant_id'].notna().sum())
+        # Count datasets where Tetris has at least one feasible point.
+        tetris_meet_count = int(threshold_df['polytris_variant_id'].notna().sum())
         # Count datasets where at least one prior system has a feasible point.
         prior_meet_count = int(threshold_df['prior_system'].notna().sum())
         # Count datasets where no prior system meets the requested threshold.
         prior_fail_count = dataset_count - prior_meet_count
 
-        # Keep only datasets where both Polytris and a prior system are comparable.
+        # Keep only datasets where both Tetris and a prior system are comparable.
         speedup_values = threshold_df['speedup_x'].dropna()
         # Count datasets where an accuracy-matched prior-system row is available.
         accuracy_matched_prior_count = int(
@@ -523,13 +523,13 @@ def build_threshold_summary_table(
         )
         # Keep only datasets where the accuracy-matched comparison is available.
         accuracy_matched_speedup_values = threshold_df['accuracy_matched_speedup_x'].dropna()
-        # Keep only datasets where Polytris can be compared to the naive pipeline.
+        # Keep only datasets where Tetris can be compared to the naive pipeline.
         naive_speedup_values = threshold_df['naive_speedup_x'].dropna()
 
         # Record the threshold-level summary metrics.
         rows.append({
             'threshold': threshold,
-            'polytris_meet_count': polytris_meet_count,
+            'polytris_meet_count': tetris_meet_count,
             'prior_meet_count': prior_meet_count,
             'prior_fail_count': prior_fail_count,
             'speedup_min_x': speedup_values.min() if not speedup_values.empty else pd.NA,
@@ -557,7 +557,7 @@ def build_threshold_summary_table(
 
 def build_threshold_reports(
     datasets: list[str],
-    polytris_df: pd.DataFrame,
+    tetris_df: pd.DataFrame,
     naive_df: pd.DataFrame,
     prior_dfs_by_system: Mapping[str, pd.DataFrame],
     thresholds: list[float] = DEFAULT_THRESHOLDS,
@@ -576,7 +576,7 @@ def build_threshold_reports(
     for threshold in thresholds:
         detail_tables[threshold] = build_threshold_detail_table(
             datasets,
-            polytris_df,
+            tetris_df,
             naive_df,
             prior_pareto_dfs_by_system,
             threshold,
@@ -642,21 +642,21 @@ def build_combined_prior_pareto(
     return pareto_df
 
 
-def select_best_polytris_for_prior_point(
-    polytris_pareto_df: pd.DataFrame,
+def select_best_tetris_for_prior_point(
+    tetris_pareto_df: pd.DataFrame,
     prior_row: pd.Series,
     throughput_col: str = THROUGHPUT_COL,
     accuracy_col: str = ACCURACY_COL,
 ) -> pd.Series | None:
-    """Return the highest-HOTA Polytris Pareto point that is at least as fast as a prior row."""
+    """Return the highest-HOTA Tetris Pareto point that is at least as fast as a prior row."""
     # Restrict the candidate pool to the prior row's dataset.
     dataset = prior_row['dataset']
-    dataset_df = polytris_pareto_df[polytris_pareto_df['dataset'] == dataset]
+    dataset_df = tetris_pareto_df[tetris_pareto_df['dataset'] == dataset]
 
-    # Keep only Polytris points that match or beat the prior row's throughput.
+    # Keep only Tetris points that match or beat the prior row's throughput.
     feasible_df = dataset_df[dataset_df[throughput_col] >= float(prior_row[throughput_col])]
 
-    # Return no selection when no Polytris point is at least as fast.
+    # Return no selection when no Tetris point is at least as fast.
     if feasible_df.empty:
         return None
 
@@ -669,10 +669,10 @@ def select_best_polytris_for_prior_point(
 
 def build_dominance_detail_table(
     datasets: list[str],
-    polytris_pareto_df: pd.DataFrame,
+    tetris_pareto_df: pd.DataFrame,
     combined_prior_pareto_df: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Build one per-(dataset, prior Pareto point) dominance table against Polytris."""
+    """Build one per-(dataset, prior Pareto point) dominance table against Tetris."""
     # Collect one row per (dataset, prior point).
     rows: list[dict[str, object]] = []
 
@@ -692,19 +692,19 @@ def build_dominance_detail_table(
 
         # Emit one detail row per prior Pareto point.
         for _, prior_row in dataset_prior_df.iterrows():
-            # Pick the fastest-feasible-and-most-accurate Polytris point for this prior row.
-            polytris_row = select_best_polytris_for_prior_point(polytris_pareto_df, prior_row)
+            # Pick the fastest-feasible-and-most-accurate Tetris point for this prior row.
+            tetris_row = select_best_tetris_for_prior_point(tetris_pareto_df, prior_row)
 
-            # Extract the Polytris-side fields, using NA when no point is at least as fast.
-            if polytris_row is not None:
-                polytris_variant_id = polytris_row['variant_id']
-                polytris_hota: object = float(polytris_row[ACCURACY_COL])
-                polytris_throughput: object = float(polytris_row[THROUGHPUT_COL])
-                hota_delta: object = float(polytris_row[ACCURACY_COL]) - float(prior_row[ACCURACY_COL])
+            # Extract the Tetris-side fields, using NA when no point is at least as fast.
+            if tetris_row is not None:
+                tetris_variant_id = tetris_row['variant_id']
+                tetris_hota: object = float(tetris_row[ACCURACY_COL])
+                tetris_throughput: object = float(tetris_row[THROUGHPUT_COL])
+                hota_delta: object = float(tetris_row[ACCURACY_COL]) - float(prior_row[ACCURACY_COL])
             else:
-                polytris_variant_id = pd.NA
-                polytris_hota = pd.NA
-                polytris_throughput = pd.NA
+                tetris_variant_id = pd.NA
+                tetris_hota = pd.NA
+                tetris_throughput = pd.NA
                 hota_delta = pd.NA
 
             # Materialize the per-prior-point detail row.
@@ -714,9 +714,9 @@ def build_dominance_detail_table(
                 'prior_system': prior_row['system'],
                 'prior_hota': float(prior_row[ACCURACY_COL]),
                 'prior_throughput_fps': float(prior_row[THROUGHPUT_COL]),
-                'polytris_variant_id': polytris_variant_id,
-                'polytris_hota': polytris_hota,
-                'polytris_throughput_fps': polytris_throughput,
+                'polytris_variant_id': tetris_variant_id,
+                'polytris_hota': tetris_hota,
+                'polytris_throughput_fps': tetris_throughput,
                 'hota_delta': hota_delta,
             })
 
@@ -983,26 +983,26 @@ def main() -> None:
     # Log the datasets covered by the summary run.
     print(f'Processing datasets: {DATASETS}')
 
-    # Load the canonical test-split Polytris and naive tradeoff data.
-    polytris_df, naive_df = load_polytris_and_naive_test_data(DATASETS)
+    # Load the canonical test-split Tetris and naive tradeoff data.
+    tetris_df, naive_df = load_tetris_and_naive_test_data(DATASETS)
 
-    # Fail fast when the expected Polytris or naive data is missing.
-    assert not polytris_df.empty, 'No Polytris tradeoff rows found for the test split.'
+    # Fail fast when the expected Tetris or naive data is missing.
+    assert not tetris_df.empty, 'No Tetris tradeoff rows found for the test split.'
     assert not naive_df.empty, 'No naive oracle rows found for the test split.'
 
     # Build the dataset-local frame-count lookup for prior-system throughput.
-    frame_count_lookup = build_frame_count_lookup(polytris_df, naive_df)
+    frame_count_lookup = build_frame_count_lookup(tetris_df, naive_df)
 
     # Load and normalize the prior-system tradeoff data.
     prior_raw_dfs = load_prior_test_data(DATASETS, frame_count_lookup)
 
-    # Pareto-filter the Polytris tradeoff rows by dataset.
-    polytris_pareto_df = filter_pareto_by_dataset(polytris_df)
+    # Pareto-filter the Tetris tradeoff rows by dataset.
+    tetris_pareto_df = filter_pareto_by_dataset(tetris_df)
 
     # Build the threshold summary plus the per-threshold detail tables.
     summary_df, detail_tables = build_threshold_reports(
         DATASETS,
-        polytris_pareto_df,
+        tetris_pareto_df,
         naive_df,
         prior_raw_dfs,
         DEFAULT_THRESHOLDS,
@@ -1011,10 +1011,10 @@ def main() -> None:
     # Build the combined OTIF ∪ LEAP Pareto front per dataset for the dominance analysis.
     combined_prior_pareto_df = build_combined_prior_pareto(prior_raw_dfs)
 
-    # Build the per-(dataset, prior Pareto point) dominance detail table against Polytris.
+    # Build the per-(dataset, prior Pareto point) dominance detail table against Tetris.
     dominance_detail_df = build_dominance_detail_table(
         DATASETS,
-        polytris_pareto_df,
+        tetris_pareto_df,
         combined_prior_pareto_df,
     )
 

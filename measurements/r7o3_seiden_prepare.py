@@ -29,7 +29,7 @@ import subprocess
 from pathlib import Path
 
 from evaluation.manifests import list_split_videos
-from polyis.io import cache, store
+from tetris.io import cache, store
 
 
 # Where Seiden's mounted video_data directory lives inside the polyis container.
