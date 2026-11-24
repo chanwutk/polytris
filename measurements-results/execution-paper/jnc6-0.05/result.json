@@ -1,6 +1,6 @@
 {
   "dataset": "jnc6",
-  "config": "execution2/configs/paper/jnc6-0.05.yaml",
+  "config": "execution/configs/paper/jnc6-0.05.yaml",
   "videos": [
     "te01.mp4",
     "te04.mp4",
@@ -42,7 +42,7 @@
     14.841796875
   ],
   "scripts": [],
-  "execution2": {
+  "execution": {
     "configured": {
       "process_s": 55.78781683091074,
       "runtime_s": 13.043544283136725,

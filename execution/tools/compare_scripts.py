@@ -1,5 +1,5 @@
 """
-Compare execution2 against the cached p020 -> p060 outputs, stage by stage (PLAN.md step 6, 13A).
+Compare execution against the cached p020 -> p060 outputs, stage by stage (PLAN.md step 6, 13A).
 
 Reads the scripts' cache read-only; never writes to it.  Each stage is compared in isolation,
 fed the script's own output from the stage before, so a difference cannot cascade:
@@ -16,7 +16,7 @@ output file vs 060's.  Run inside the polyis container with one visible GPU:
 
   CUDA_VISIBLE_DEVICES=0 python -m execution.tools.compare_scripts \
       --config execution/configs/caldot1-y05-s4.yaml --dataset caldot1-y05 \
-      --videos te00.mp4 te01.mp4 --out measurements-results/execution2-compare/s4.json
+      --videos te00.mp4 te01.mp4 --out measurements-results/execution-compare/s4.json
 """
 
 import argparse
@@ -260,7 +260,7 @@ def script_prune(state: dict, c: Classified) -> Classified:
 
 
 def build_with_script_prune(dataset: str, aliases: dict[str, str], cfg: Config, prefix: str) -> list[Stage]:
-    """execution2's stages with prune replaced by script_prune (same process count)."""
+    """execution's stages with prune replaced by script_prune (same process count)."""
     return [s._replace(setup=partial(script_prune_setup, cfg, dataset, aliases), process=script_prune)
             if s.name == 'prune'
             else s for s in stages.build_stages(cfg, prefix)]
@@ -293,7 +293,7 @@ def main_cli() -> None:
     report: dict = {'config': args.config, 'dataset': args.dataset, 'params': dataclasses.asdict(cfg.params),
                     'isolated': {}}
     try:
-        with tempfile.TemporaryDirectory(prefix='execution2-compare-') as tmp:
+        with tempfile.TemporaryDirectory(prefix='execution-compare-') as tmp:
             for v in args.videos:
                 vtmp = Path(tmp) / v
                 vtmp.mkdir()

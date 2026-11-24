@@ -1,12 +1,12 @@
 """
-Benchmark execution2 against the p020 -> p060 scripts on the same videos and GPUs, without touching any
+Benchmark execution against the p020 -> p060 scripts on the same videos and GPUs, without touching any
 existing results.
 
 Runs inside a throwaway polyis container whose /polyis-cache is a scratch directory and whose real
 cache is mounted read-only at /polyis-cache-ro, so neither the scripts (which clear their output
 directories) nor ProgressBar's logs can overwrite old results.  Launch from the ace host:
 
-  RUN=/work/cwkt/projects/tetris/measurements-results/execution2-benchmark/caldot1-y05-s4
+  RUN=/work/cwkt/projects/tetris/measurements-results/execution-benchmark/caldot1-y05-s4
   mkdir -p $RUN/cache
   docker run --rm --gpus '"device=2,3"' --shm-size 64g --network host -w /polyis \
     -v /work/cwkt/projects/tetris:/polyis -v /data/cwkt/data/polyis-data:/polyis-data:ro \
@@ -19,10 +19,10 @@ What it measures (wall clock with perf_counter, after reading every video once t
   scripts      each of p020, (p022), p030, p040, p050, p060 run as `python <script> --test`, one after another,
                narrowed to this dataset and configuration (a one-row pareto_params.csv); the sum of their
                wall clocks is the scripts' end-to-end time, including each stage's process start and model load.
-  execution2   `python -m execution.main` as configured (classify and detect on separate GPUs), and again with
+  execution   `python -m execution.main` as configured (classify and detect on separate GPUs), and again with
                detect moved onto classify's GPU (one GPU, like the scripts use): the process's wall clock, and
                main's own runtime_s (first to last result, so startup and model load are excluded).
-  outputs      every execution2 output compared with the scripts' fresh tracking.jsonl from this same run.
+  outputs      every execution output compared with the scripts' fresh tracking.jsonl from this same run.
 Writes <bench>/result.json and per-run logs; the scratch cache stays under <bench>/cache for inspection.
 """
 
@@ -121,10 +121,10 @@ def timed(cmd: list[str], env: dict, log: Path) -> dict:
 
 
 def single_gpu_config(cfg_path: str, bench: Path) -> Path:
-    """The same execution2 config with detect moved onto classify's GPU."""
+    """The same execution config with detect moved onto classify's GPU."""
     data = yaml.safe_load(Path(cfg_path).read_text())
     data['system']['stages']['detect']['gpu'] = data['system']['stages']['classify']['gpu']
-    path = bench / 'execution2-single-gpu.yaml'
+    path = bench / 'execution-single-gpu.yaml'
     path.write_text(yaml.safe_dump(data, sort_keys=False))
     return path
 
@@ -159,7 +159,7 @@ def main() -> None:
         (videos_dir / v).read_bytes()
 
     result: dict = {'dataset': args.dataset, 'config': args.config, 'videos': videos, 'inputs': inputs,
-                    'pareto_row': pareto_row, 'loadavg_start': os.getloadavg(), 'scripts': [], 'execution2': {}}
+                    'pareto_row': pareto_row, 'loadavg_start': os.getloadavg(), 'scripts': [], 'execution': {}}
     # Scripts, one stage after another, as the pipeline runs them.
     scripts = ['scripts/p020_exec_classify.py', *(['scripts/p022_exec_prune_polyominoes.py'] if cfg.use_prune else []),
                'scripts/p030_exec_compress.py', 'scripts/p040_exec_detect.py', 'scripts/p050_exec_uncompress.py',
@@ -177,20 +177,20 @@ def main() -> None:
                                  tilepadding=p.tile_padding, canvas_scale=p.canvas_scale, tracker=p.tracker,
                                  tracking_accuracy_threshold=p.mistrack_tolerance,
                                  relevance_threshold=p.relevance_threshold)
-    # execution2 as configured, and on one GPU unless classify and detect already share one.
+    # execution as configured, and on one GPU unless classify and detect already share one.
     variants = [('configured', Path(args.config))]
     if cfg.system.stages['detect'].gpu != cfg.system.stages['classify'].gpu:
         variants.append(('single_gpu', single_gpu_config(args.config, bench)))
     for name, cfg_path in variants:
-        out = bench / f'execution2-out-{name}'
+        out = bench / f'execution-out-{name}'
         rec = timed([sys.executable, '-m', 'execution.main', '--config', str(cfg_path), '--videos', str(videos_dir),
-                     '--out', str(out)], env, bench / f'execution2-{name}.log')
+                     '--out', str(out)], env, bench / f'execution-{name}.log')
         summary = json.loads(rec['last_line'])
         checks = {v: compare_track_lines(
             (out / f'{Path(v).stem}.jsonl').read_text().splitlines(),
             (reference_cache / args.dataset / 'execution' / v / '060_uncompressed_tracks' / tracks_dir / 'tracking.jsonl')
             .read_text().splitlines()) for v in videos}
-        result['execution2'][name] = {
+        result['execution'][name] = {
             'process_s': rec['seconds'], 'runtime_s': summary['runtime_s'], 'frames': summary['frames'],
             'fps': summary['frames'] / summary['runtime_s'], 'process_fps': summary['frames'] / rec['seconds'],
             'reference': 'cached script outputs' if args.skip_scripts else 'fresh script outputs',
@@ -198,7 +198,7 @@ def main() -> None:
             'outputs_same_up_to_id_renaming': sum(c['same_up_to_id_renaming'] for c in checks.values()),
             'max_abs_box_diff': max(c['max_abs_box_diff_same_ids'] for c in checks.values()),
             'videos': len(videos)}
-        print(name, json.dumps(result['execution2'][name]), flush=True)
+        print(name, json.dumps(result['execution'][name]), flush=True)
     result['loadavg_end'] = os.getloadavg()
     (bench / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
 

@@ -3,7 +3,7 @@ Check a profiling sweep against the scripts' validation outputs (profiling/PLAN.
 
 Runs profiling.main on a small grid over a few validation videos into a scratch output_root, with prune's ILP
 replaced by the scripts' saved 022 grids (a solve stopped by its 0.1 s limit is not unique, so solving would
-make every pruned branch below it incomparable; the ILP is checked by execution2's compare_scripts).  Then it
+make every pruned branch below it incomparable; the ILP is checked by execution's compare_scripts).  Then it
 compares every saved result with the scripts' cache (read only):
 
   020 scores           exact (classify runs once on every frame; p020 ran once per sample rate)

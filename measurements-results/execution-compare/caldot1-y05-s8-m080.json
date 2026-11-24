@@ -1,5 +1,5 @@
 {
-  "config": "execution2/configs/caldot1-y05-s8-m080.yaml",
+  "config": "execution/configs/caldot1-y05-s8-m080.yaml",
   "dataset": "caldot1-y05",
   "params": {
     "sample_rate": 8,

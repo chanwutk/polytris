@@ -13,7 +13,7 @@ Pareto page, operators refactor, config, messages, TrackEval reuse, tests, Gurob
 ### D1. Engine: fan-out is an explicit stage flag
 `Stage(fan_out=True)` makes `process()` return a list (0..N outputs); otherwise exactly one output, as
 before.  Why: a message could itself be a list, so guessing from the return type would be fragile.
-Check: nothing; execution2 is unchanged (all its stages keep `fan_out=False`).
+Check: nothing; execution is unchanged (all its stages keep `fan_out=False`).
 
 ### D2. Engine: savers are per stage, fed after `process()` returns, with a bounded queue (64)
 Each output goes downstream first, then to the stage's saver queue.  A full saver queue blocks the worker
@@ -42,7 +42,7 @@ p110's default `--metrics` is HOTA; the evaluate stage uses the same, plus Count
 Question: add CLEAR / Identity?  Guess: not needed for the Pareto selection.
 
 ### D8. Message modules avoid importing the detector stack
-`profiling/messages.py` imports execution2.operators' types only under TYPE_CHECKING, so tests and tools that
+`profiling/messages.py` imports execution.operators' types only under TYPE_CHECKING, so tests and tools that
 only need messages do not load ultralytics/darknet (which need a GPU driver to import).
 
 ### D9. p040's per-canvas detections are not saved
@@ -61,7 +61,7 @@ Decode: the author decides later whether it counts (PLAN 1).  Evaluate: measurem
 
 ### D13. classify charges with a GPU synchronize after each batch
 `classify_frames(time_batches=True)` synchronizes after each batch so the batch's GPU time is attributed to
-it.  This adds a sync per 16 frames to classify; execution2 does not use it (time_batches defaults to False).
+it.  This adds a sync per 16 frames to classify; execution does not use it (time_batches defaults to False).
 
 ### D14. A sweep refuses to start if `<output_root>/<dataset>` exists
 "Do not override old results": rather than merging into or overwriting an earlier sweep, main stops with an
@@ -81,7 +81,7 @@ reports `throughput_fps_with_decode`.  Points carry the conditions whose front t
 'no_sampling', 'no_both').  Question: should the test pass use only the full front?  Guess: keep p135's union
 so the ablation curves in Figure 8 can still be drawn from it.
 
-### D18. The generated execution2 YAML uses a one-GPU default system
+### D18. The generated execution YAML uses a one-GPU default system
 decode 2, classify 1 on GPU 0, prune 1, pack 2, detect 1 on GPU 0, track 2, queue_maxsize 2; artifacts come
 from the sweep config (the tracker's max-rate table only for pruned configurations).
 
@@ -102,7 +102,7 @@ The tool runs the small grid with 10 s; (config, video) pairs are compared only 
 extra `ilp.json` (status, solve_ms, kept tiles), which is not a script output.
 
 ### D23. Heavy profiling runs wait for the Figure 8 job
-The Figure 8 serial benchmark (tmux `execution2-figure8` on ace) measures throughput; a concurrent profiling run
+The Figure 8 serial benchmark (tmux `execution-figure8` on ace) measures throughput; a concurrent profiling run
 would compete for CPU and memory bandwidth.  Only light unit tests run alongside it; the equivalence check and
 the first full sweep start after it finishes.
 
@@ -262,5 +262,5 @@ Total 115,535 s (32.1 h).  Results under `measurements-results/profiling-sweep/g
   D17 (the test pass uses the union of the ablation fronts).
 - D9: p040's per-canvas detections stay unsaved (only p050's per-frame ones are written).
 - D14: a crashed validation sweep is rerun for the whole dataset into a new output folder (no resume).  For test
-  runs, execution2 already fails the whole run on any worker failure and writes no output, and nothing retries a
+  runs, execution already fails the whole run on any worker failure and writes no output, and nothing retries a
   video, so a crash cannot be silently rerun on some videos and inflate the runtime.

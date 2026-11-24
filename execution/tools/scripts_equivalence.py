@@ -1,18 +1,18 @@
 """
-Scripts-vs-pipelines equivalence on a scratch cache (both execution2 and profiling against freshly run scripts).
+Scripts-vs-pipelines equivalence on a scratch cache (both execution and profiling against freshly run scripts).
 
 Two sources of nondeterminism are removed: p040 reads canvases in name order (scripts/p040_exec_detect.py), and
 the pipelines' prune stages read the scripts' saved 022 grids instead of solving (an ILP stopped by its 0.1 s limit
-is not unique).  The ILP itself is compared once per (config, video) in execution2's isolated comparison.
+is not unique).  The ILP itself is compared once per (config, video) in execution's isolated comparison.
 
   scripts     p020 -> p060 on the test videos with configs/equivalence.yaml (the small grid), default settings
-  execution2  execution2.tools.compare_scripts for every configuration of the grid, spread over GPUs
-  summary     per-stage totals of the execution2 reports (profiling.tools.compare_scripts writes its own)
+  execution  execution.tools.compare_scripts for every configuration of the grid, spread over GPUs
+  summary     per-stage totals of the execution reports (profiling.tools.compare_scripts writes its own)
 
 Run inside the polyis container, with /polyis-cache a scratch cache (never the real one):
 
     python -m execution.tools.scripts_equivalence scripts --dataset caldot1-y05 --videos va00.mp4 va01.mp4 va02.mp4
-    python -m execution.tools.scripts_equivalence execution2 --dataset caldot1-y05 --videos ... --out-dir OUT --gpus 0 1
+    python -m execution.tools.scripts_equivalence execution --dataset caldot1-y05 --videos ... --out-dir OUT --gpus 0 1
     python -m execution.tools.scripts_equivalence summary --out-dir OUT
 """
 
@@ -39,7 +39,7 @@ def parse_args():
     s = sub.add_parser('scripts')
     s.add_argument('--dataset', required=True)
     s.add_argument('--videos', nargs='+', required=True)
-    e = sub.add_parser('execution2')
+    e = sub.add_parser('execution')
     e.add_argument('--dataset', required=True)
     e.add_argument('--videos', nargs='+', required=True)
     e.add_argument('--out-dir', required=True)
@@ -147,16 +147,16 @@ def config_name(b: dict) -> str:
             f"_c{int(b['canvas_scale'] * 100):03d}_{b['tracker']}")
 
 
-def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int], skip_done: bool = False) -> None:
-    """execution2's compare tool for every configuration, one configuration per free GPU at a time."""
-    from profiling.aggregate import execution2_config
+def run_execution(dataset: str, videos: list[str], out_dir: str, gpus: list[int], skip_done: bool = False) -> None:
+    """execution's compare tool for every configuration, one configuration per free GPU at a time."""
+    from profiling.aggregate import execution_config
     from profiling.config import load_sweep_config
     sweep = load_sweep_config(f'profiling/configs/{dataset}.yaml')
     out = Path(out_dir) / dataset
     (out / 'configs').mkdir(parents=True, exist_ok=True)
     jobs = []
     for b in grid_branches():
-        cfg = execution2_config(sweep, b)
+        cfg = execution_config(sweep, b)
         path = out / 'configs' / f'{config_name(b)}.yaml'
         path.write_text(yaml.safe_dump(cfg, sort_keys=False))
         # With skip_done, a configuration that already has its report (a finished run) is not redone.
@@ -203,7 +203,7 @@ def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int
 
 
 def summarize(out_dir: str) -> dict:
-    """Per dataset and stage: compared vs exactly equal, over every execution2 report."""
+    """Per dataset and stage: compared vs exactly equal, over every execution report."""
     summary = {}
     for ds_dir in sorted(p for p in Path(out_dir).iterdir() if p.is_dir()):
         t = {k: {'compared': 0, 'equal': 0} for k in ('classify', 'prune_ilp', 'pack', 'detect_raw_in_order',
@@ -240,8 +240,8 @@ def main() -> None:
     args = parse_args()
     if args.command == 'scripts':
         run_scripts(args.dataset, args.videos)
-    elif args.command == 'execution2':
-        run_execution2(args.dataset, args.videos, args.out_dir, args.gpus, args.skip_done)
+    elif args.command == 'execution':
+        run_execution(args.dataset, args.videos, args.out_dir, args.gpus, args.skip_done)
     else:
         print(json.dumps(summarize(args.out_dir), indent=1))
 

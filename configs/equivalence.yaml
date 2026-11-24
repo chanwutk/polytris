@@ -1,4 +1,4 @@
-# Scripts-vs-pipelines equivalence test (execution2/tools/scripts_equivalence.py): global.yaml with the
+# Scripts-vs-pipelines equivalence test (execution/tools/scripts_equivalence.py): global.yaml with the
 # small grid of profiling/tools/compare_scripts.py SMALL_GRID.  Select it with CONFIG=equivalence.yaml.
 EXEC:
   DATASETS:

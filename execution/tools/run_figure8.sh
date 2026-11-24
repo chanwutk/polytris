@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Run execution2 on every Figure 8 full-Tetris config, one at a time on one GPU, then summarize.
+# Run execution on every Figure 8 full-Tetris config, one at a time on one GPU, then summarize.
 # Meant for a tmux session on ace (survives the client disconnecting):
-#   tmux new-session -d -s execution2-figure8 \
-#     'bash /work/cwkt/projects/tetris/execution2/tools/run_figure8.sh 2 2>&1 | tee -a /work/cwkt/projects/tetris/measurements-results/execution2-figure8/run.log'
+#   tmux new-session -d -s execution-figure8 \
+#     'bash /work/cwkt/projects/tetris/execution/tools/run_figure8.sh 2 2>&1 | tee -a /work/cwkt/projects/tetris/measurements-results/execution-figure8/run.log'
 # Arguments: <gpu index> [passes, default 8] [minutes between passes, default 10].
 # Each pass runs every config that has no result.json yet, so configs that failed (e.g. pruning configs while
 # the Gurobi web license has no free session) are retried in later passes.  A finished run is never redone;
@@ -13,8 +13,8 @@ GPU=${1:?usage: run_figure8.sh <gpu index> [passes] [minutes between passes]}
 PASSES=${2:-8}
 WAIT_MIN=${3:-10}
 REPO=/work/cwkt/projects/tetris
-IMAGE=polyis-execution2-bench
-OUT=$REPO/measurements-results/execution2-figure8/runs
+IMAGE=polyis-execution-bench
+OUT=$REPO/measurements-results/execution-figure8/runs
 mkdir -p "$OUT"
 
 gurobi_status() {
@@ -53,5 +53,5 @@ for pass in $(seq 1 "$PASSES"); do
 done
 
 echo "$(date -Is) summarizing"
-docker run --rm --network host -w /polyis -v "$REPO":/polyis "$IMAGE" python measurements/execution2_figure8_throughput.py
+docker run --rm --network host -w /polyis -v "$REPO":/polyis "$IMAGE" python measurements/execution_figure8_throughput.py
 echo "$(date -Is) done"

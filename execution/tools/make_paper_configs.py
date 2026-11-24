@@ -1,5 +1,5 @@
 """
-Write one execution2 config per operating point the paper reports (the fastest Tetris test configuration
+Write one execution config per operating point the paper reports (the fastest Tetris test configuration
 within 5% and within 10% HOTA loss of the reference, per dataset), as chosen by R1.O3's clean timing job.
 
 Reads measurements-results/r1o3_clean_extraction_timing/{throughput.json, raw/plan.json} and
@@ -39,7 +39,7 @@ def parse_name(name: str) -> dict:
 
 
 def detector_spec(dataset: str, detectors: dict) -> dict:
-    """The dataset's detector from configs/detectors.yaml, with only the fields execution2 takes."""
+    """The dataset's detector from configs/detectors.yaml, with only the fields execution takes."""
     entry = detectors['dataset_detector_mapping'][detectors['dataset_name_mapping'][dataset]]
     kind = entry['detector']
     if kind == 'retina':
@@ -48,12 +48,12 @@ def detector_spec(dataset: str, detectors: dict) -> dict:
 
 
 def build(dataset: str, name: str, detectors: dict) -> dict:
-    """An execution2 config for the operating point a cache configuration name encodes."""
+    """An execution config for the operating point a cache configuration name encodes."""
     return build_params(dataset, parse_name(name), detectors)
 
 
 def build_params(dataset: str, p: dict, detectors: dict) -> dict:
-    """An execution2 config for one operating point (parse_name's keys): JPEG canvases (as the paper's runs), one GPU."""
+    """An execution config for one operating point (parse_name's keys): JPEG canvases (as the paper's runs), one GPU."""
     index = f'{CACHE}/{dataset}/indexing'
     artifacts = {
         'classifier': {'name': p['classifier'],

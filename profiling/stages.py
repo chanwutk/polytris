@@ -1,5 +1,5 @@
 """
-The profiling sweep's stages (profiling/PLAN.md "Stages").  Each runs its operator (execution2/operators.py)
+The profiling sweep's stages (profiling/PLAN.md "Stages").  Each runs its operator (execution/operators.py)
 for every value of its own parameters, given the branch it receives, and emits one message per new branch:
 
   decode    once per video, every frame                                             1 per video

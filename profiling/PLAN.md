@@ -12,7 +12,7 @@ main ─→ decode ─→ classify ─→ prune ─→ pack ─→ detect ─→
         (1/video) (1→5 by s) (→ T_r × (tol×tracker | none)) (→ P × scale) (1:1) (→ tracker if unpruned) (1:1)
 ```
 
-- Same stages as `execution2`, but each one runs its operator for **every value of its own parameters**,
+- Same stages as `execution`, but each one runs its operator for **every value of its own parameters**,
   given the parameters chosen upstream, and emits one message per resulting configuration branch.
   With the current grid, per video: classify 5, prune 105, pack 420, detect 420, track 480, evaluate 480.
 - Each message carries its data, a frozen `Branch` (the parameters chosen so far, ordered; builds the
@@ -45,7 +45,7 @@ main ─→ decode ─→ classify ─→ prune ─→ pack ─→ detect ─→
 - Saving happens in one saver process per stage, fed after the worker's timing stops, so it is not counted
   and does not compete for the worker's GIL [6A].
 
-## Engine changes (shared with execution2)
+## Engine changes (shared with execution)
 
 - `process()` may return a list of outputs (0..N).
 - Per-stage GPU lists, assigned to workers in turn; each worker still sees one GPU [4A].
@@ -57,7 +57,7 @@ main ─→ decode ─→ classify ─→ prune ─→ pack ─→ detect ─→
 One YAML per dataset: `params` with a list per parameter (s, T_r, tolerance incl. null, P, canvas scale,
 tracker), explicit `artifacts` (max-rate table per tracker), `system` (per-stage procs and gpus,
 queue_maxsize, max_videos_in_flight, savers), `evaluation` (where each video's reference tracks are),
-and an output root. Strict checks shared with `execution2.config`.
+and an output root. Strict checks shared with `execution.config`.
 
 Default system split on ace [19A]: classify 1 worker on GPU 0; detect 7 workers on GPUs 1-7; decode 2,
 prune 1, pack 4, track 4, evaluate 4; one saver per stage.
@@ -67,16 +67,16 @@ prune 1, pack 4, track 4, evaluate 4; one saver per stage.
 - Combines each configuration's per-video TrackEval results with the metrics' `combine_sequences`
   (dataset HOTA as p110 computes it) and sums stage times (decode reported separately).
 - Writes the Pareto configurations (HOTA vs throughput) as JSON, and a self-contained interactive HTML page
-  (Vega-Lite): clicking a point shows that configuration's `execution2` YAML, generated in Python and embedded.
+  (Vega-Lite): clicking a point shows that configuration's `execution` YAML, generated in Python and embedded.
 
 ## Code reuse [8A]
 
-`execution2/operators.py`: the stage computations as plain functions with explicit parameters;
-`execution2/stages.py` becomes thin wrappers over them, and `profiling` calls them directly.
+`execution/operators.py`: the stage computations as plain functions with explicit parameters;
+`execution/stages.py` becomes thin wrappers over them, and `profiling` calls them directly.
 
 ## Tests
 
-- [12A] The refactor leaves execution2 unchanged: `tests/execution2`, the golden tests, and
+- [12A] The refactor leaves execution unchanged: `tests/execution`, the golden tests, and
   `compare_scripts` on caldot1-y05 te00-te02 (both configs) still identical / bit-identical.
 - [13A] Engine: 0/1/N outputs, per-worker GPUs, saver timing and crashes, frames freed exactly at a video's
   last pack input with interleaved videos and 1 or N pack workers, admission cap, no leaks after crash/SIGKILL.
@@ -88,7 +88,7 @@ prune 1, pack 4, track 4, evaluate 4; one saver per stage.
   for bit; the tool reports it, and exactness vs the 5x saving is decided then.
 - [15A] Aggregator HOTA equals p110's `DATASET.json` for cached validation configurations; unit tests for
   classify charging, decode recorded uncharged, Pareto selection; every embedded YAML passes
-  `execution2.config.load_config`, and the page's data matches the Pareto JSON.
+  `execution.config.load_config`, and the page's data matches the Pareto JSON.
 
 ## Where it runs
 
@@ -98,11 +98,11 @@ throwaway containers, so the Figure 8 job running from `/work/cwkt/projects/tetr
 
 ## Build order
 
-1. ~~`execution2/operators.py` refactor; verify [12A] on the separate ace checkout~~: done (f588aed).
+1. ~~`execution/operators.py` refactor; verify [12A] on the separate ace checkout~~: done (f588aed).
    On the ace checkout, 1435 of 1437 tests pass (1 skipped; the 1 failure needs a `measurements-results/` export the checkout does not have), and `compare_scripts` on caldot1-y05 te00-te02 is unchanged for both configs: classify, prune, pack identical; bit-identical in p040's order; end-to-end tracks equal up to id renaming.
    The ace checkout needs, besides `./sync --config <copy with path /work/cwkt/projects/tetris-profiling>`: the compiled `.so` files (copied from the main checkout by exact list), `modules/` (darknet, TrackEval, lap), and `baselines/` (a submodule a fresh worktree does not check out).
 2. ~~Engine: list outputs, per-worker GPUs, saver processes, shared per-video counter; tests [13A]~~: done.
-   `Stage(fan_out=True, gpu=(...), save=fn, savers=n)` in `execution2/pipeline.py`; `profiling/completion.py` (`VideoCompletion`); 155 tests pass (`tests/execution2`, `tests/profiling`, golden).
+   `Stage(fan_out=True, gpu=(...), save=fn, savers=n)` in `execution/pipeline.py`; `profiling/completion.py` (`VideoCompletion`); 155 tests pass (`tests/execution`, `tests/profiling`, golden).
 3. ~~Sweep config, `Branch`, messages~~: done (`profiling/config.py`, `profiling/messages.py`; tests in `tests/profiling`).
 4. ~~Profiling stages (decode, classify-once with charging, prune, pack with freeing, detect, track, evaluate)~~: done (`profiling/stages.py`, `profiling/save.py`; p110's `run_trackeval`).
 5. ~~`profiling/main.py`: admission control, memory check, savers writing the scripts' formats~~: done (`python -m profiling.main --config ...`; tests in `tests/profiling/test_main.py`).

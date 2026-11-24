@@ -1,6 +1,6 @@
 {
   "dataset": "caldot1-y05",
-  "config": "execution2/configs/caldot1-y05-s8-m080.yaml",
+  "config": "execution/configs/caldot1-y05-s8-m080.yaml",
   "videos": [
     "te00.mp4",
     "te01.mp4",
@@ -122,7 +122,7 @@
       "seconds": 20.92628311458975
     }
   ],
-  "execution2": {
+  "execution": {
     "configured": {
       "process_s": 74.07512613665313,
       "runtime_s": 35.90322537813336,

@@ -52,7 +52,7 @@ def build_detector(detector_type: str, options: dict, gpu_id, batch_size: int = 
     """
     Build a detector of detector_type from its fields (the per-type keys of configs/detectors.yaml).
 
-    Shared by get_detector (fields looked up by dataset) and execution2 (fields from its --config).
+    Shared by get_detector (fields looked up by dataset) and execution (fields from its --config).
     retina takes an optional config_path (defaults to RetinaNet's bundled config).
     """
     device = f'cuda:{gpu_id}'

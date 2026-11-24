@@ -1,4 +1,4 @@
-"""Collage rendering and detection unpacking shared by scripts/p030, scripts/p050 and execution2."""
+"""Collage rendering and detection unpacking shared by scripts/p030, scripts/p050 and execution."""
 
 from typing import NamedTuple
 

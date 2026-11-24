@@ -1,4 +1,4 @@
-"""execution2.tools.scripts_equivalence: keeping every p022 run's results, and the configuration grid."""
+"""execution.tools.scripts_equivalence: keeping every p022 run's results, and the configuration grid."""
 
 from pathlib import Path
 

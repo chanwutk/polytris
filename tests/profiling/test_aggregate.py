@@ -16,7 +16,7 @@ from polyis.utilities import save_tracking_results
 
 
 def real_cfg(tmp_path: Path, tolerances=(None, 0.4)) -> SweepConfig:
-    """A sweep config whose artifact paths exist, so the generated execution2 YAML validates."""
+    """A sweep config whose artifact paths exist, so the generated execution YAML validates."""
     paths = {}
     for n in ['w.pth', 'b.jsonl', 'm.pt']:
         (tmp_path / n).write_text('x')
@@ -118,7 +118,7 @@ def test_aggregate_times_throughput_pareto_and_yaml(tmp_path):
     on_full = {(p['sample_rate'], p['tracking_accuracy_threshold']) for p in pareto if 'full' in p['pareto_conditions']}
     assert on_full == {(1, None), (4, 0.4)}
     for c in configs:
-        e2 = yaml.safe_load(c['execution2_yaml'])
+        e2 = yaml.safe_load(c['execution_yaml'])
         parsed = parse_config(e2)
         assert parsed.params.sample_rate == c['sample_rate'] and parsed.use_prune == (c['tracking_accuracy_threshold'] is not None)
     out = Path(cfg.output_root) / cfg.dataset / 'profiling'
@@ -127,7 +127,7 @@ def test_aggregate_times_throughput_pareto_and_yaml(tmp_path):
     spec = json.loads(re.search(r'const SPEC = (.*);\n', html).group(1))
     embedded_yaml = json.loads(re.search(r'const YAML = (.*);\n', html).group(1))
     assert len(spec['data']['values']) == 3 and set(embedded_yaml) == {str(c['id']) for c in configs}
-    assert embedded_yaml[str(by[(4, 0.4)]['id'])] == by[(4, 0.4)]['execution2_yaml']
+    assert embedded_yaml[str(by[(4, 0.4)]['id'])] == by[(4, 0.4)]['execution_yaml']
 
 
 def test_aggregate_refuses_incomplete_configurations(tmp_path):
@@ -146,7 +146,7 @@ def test_aggregate_expands_a_tolerance_group_to_all_its_tolerances(tmp_path):
     rows = {c['tracking_accuracy_threshold']: c for c in configs}
     assert set(rows) == {0.4, 0.6, 0.8} and rows[0.8]['ran_as'] == 0.6 and rows[0.4]['ran_as'] == 0.4
     assert rows[0.8]['HOTA_HOTA'] == rows[0.6]['HOTA_HOTA'] and rows[0.8]['time'] == rows[0.6]['time']
-    assert yaml.safe_load(rows[0.8]['execution2_yaml'])['params']['mistrack_tolerance'] == 0.8
+    assert yaml.safe_load(rows[0.8]['execution_yaml'])['params']['mistrack_tolerance'] == 0.8
     assert sorted(c['id'] for c in configs) == [0, 1, 2]
 
 

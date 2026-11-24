@@ -1,6 +1,6 @@
 {
   "dataset": "caldot1-y05",
-  "config": "execution2/configs/paper/caldot1-y05-0.05.yaml",
+  "config": "execution/configs/paper/caldot1-y05-0.05.yaml",
   "videos": [
     "te00.mp4",
     "te01.mp4",
@@ -96,7 +96,7 @@
     14.298828125
   ],
   "scripts": [],
-  "execution2": {
+  "execution": {
     "configured": {
       "process_s": 96.86558970902115,
       "runtime_s": 64.82293027639389,

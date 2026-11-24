@@ -29,7 +29,7 @@ class ToleranceGroup(NamedTuple):
 
 
 def gaps(table: np.ndarray, tolerance: float, sample_rate: int) -> np.ndarray:
-    """p022's per-tile max sampling distance (execution2.operators.max_sampling_distance, without its checks)."""
+    """p022's per-tile max sampling distance (execution.operators.max_sampling_distance, without its checks)."""
     distance = table[:, :, MISTRACK_TOLERANCES.index(tolerance)].copy()
     distance //= sample_rate
     return np.maximum(distance, 1)

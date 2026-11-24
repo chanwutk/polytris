@@ -6,11 +6,11 @@ Aggregate a profiling sweep into per-configuration results, the Pareto front, an
 
 Reads <output_root>/<dataset>/profiling/{records.jsonl, run.json}; writes next to them:
   configurations.json   every configuration: parameters, dataset HOTA, charged time, throughput (with and
-                        without decode), and its execution2 YAML
+                        without decode), and its execution YAML
   pareto.json           the configurations on any ablation condition's Pareto front (p135's union of fronts:
                         minimize time, maximize HOTA), with the conditions each is on
   pareto.html           a self-contained Vega-Lite page: HOTA vs throughput; clicking a point shows that
-                        configuration's execution2 YAML (copy / download)
+                        configuration's execution YAML (copy / download)
 
 Dataset HOTA is TrackEval's: each configuration's per-video results are combined with HOTA's own
 combine_sequences (summed counts, recomputed scores), then averaged over localization thresholds as p111 does.
@@ -84,8 +84,8 @@ def times_per_configuration(records_path: str) -> dict[str, dict]:
     return {branch_key(json.loads(k)): {'videos': v, 'charged_s': c, 'decode_s': d} for k, v, c, d in rows}
 
 
-def execution2_config(cfg: SweepConfig, branch: dict) -> dict:
-    """The execution2 config for one configuration: the sweep's artifacts, one GPU, JPEG/raw as swept."""
+def execution_config(cfg: SweepConfig, branch: dict) -> dict:
+    """The execution config for one configuration: the sweep's artifacts, one GPU, JPEG/raw as swept."""
     a, tol = cfg.artifacts, branch['mistrack_tolerance']
     artifacts = {
         'classifier': {'name': branch['classifier'], 'weights': a.classifier_weights,
@@ -140,7 +140,7 @@ def aggregate(cfg: SweepConfig) -> tuple[list[dict], list[dict]]:
     for i, config in enumerate(configs):
         branch = {k: config[c] for k, c in COLUMNS.items()}
         config['id'] = i
-        config['execution2_yaml'] = yaml.safe_dump(execution2_config(cfg, branch), sort_keys=False)
+        config['execution_yaml'] = yaml.safe_dump(execution_config(cfg, branch), sort_keys=False)
     pareto = pareto_union(configs)
     with open(os.path.join(out_dir, 'configurations.json'), 'w') as f:
         json.dump(configs, f, indent=1)
@@ -185,10 +185,10 @@ def pareto_union(configs: list[dict]) -> list[dict]:
 def page(cfg: SweepConfig, configs: list[dict], pareto: list[dict]) -> str:
     """The interactive HTML page (data and YAML embedded; Vega from a CDN)."""
     on = {p['id']: p['pareto_conditions'] for p in pareto}
-    rows = [{**{k: v for k, v in c.items() if k != 'execution2_yaml'},
+    rows = [{**{k: v for k, v in c.items() if k != 'execution_yaml'},
              'front': 'full Tetris front' if 'full' in on.get(c['id'], []) else
                       ('other ablation front' if c['id'] in on else 'not on a front')} for c in configs]
-    yamls = {c['id']: c['execution2_yaml'] for c in configs}
+    yamls = {c['id']: c['execution_yaml'] for c in configs}
     spec = {
         '$schema': 'https://vega.github.io/schema/vega-lite/v5.json',
         'title': f'{cfg.dataset} ({cfg.videoset}): HOTA vs throughput, {len(configs)} configurations',
@@ -214,7 +214,7 @@ def page(cfg: SweepConfig, configs: list[dict], pareto: list[dict]) -> str:
 <style>body{{font-family:sans-serif;margin:16px}}pre{{background:#f5f5f5;padding:8px;max-height:420px;overflow:auto}}
 button{{margin-right:8px}}</style></head>
 <body><div id="vis"></div>
-<h3 id="title">Click a point to get its execution2 config.</h3>
+<h3 id="title">Click a point to get its execution config.</h3>
 <div><button id="copy" disabled>Copy YAML</button><button id="download" disabled>Download YAML</button></div>
 <pre id="yaml"></pre>
 <script>

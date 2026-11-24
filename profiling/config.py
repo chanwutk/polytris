@@ -10,7 +10,7 @@ One YAML per dataset, with no unknown keys allowed:
   evaluation    where each video's reference tracks are: <reference_dir>/<video>/<reference_file>
   system        queue sizes, videos in flight, and per-stage procs / gpus / savers
 
-The strict field checks and the detector spec are execution2.config's, so both configs share one copy.
+The strict field checks and the detector spec are execution.config's, so both configs share one copy.
 """
 
 import os

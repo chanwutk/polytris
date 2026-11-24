@@ -2,7 +2,7 @@
 The pipeline's computations as plain functions with explicit parameters (profiling/PLAN.md 8A).
 
 Nothing here reads a Config or builds a pipeline message, and nothing frees a shared block it did not
-create: who frees what is the caller's policy.  execution2/stages.py wraps these for one configuration;
+create: who frees what is the caller's policy.  execution/stages.py wraps these for one configuration;
 profiling calls them for every configuration of a sweep.  Each function matches its p0xx script:
 
   decode_video        p020/p030 frame reading into one shared BGR block
@@ -39,7 +39,7 @@ from polyis.train.select_model_optimization import select_model_optimization
 from polyis.utilities import create_tracker, register_tracked_detections
 
 # p020's BATCH_SIZE, p040's default --batch_size, p022's TILEPADDING_MODE and solve time limit,
-# and p030's PackMode.Best_Fit.  tests/execution2/test_stages.py checks each against its script.
+# and p030's PackMode.Best_Fit.  tests/execution/test_stages.py checks each against its script.
 CLASSIFY_BATCH = 16
 DETECT_BATCH = 4
 PRUNE_TILEPADDING_MODE = 0

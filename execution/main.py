@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 """
-Run the execution2 pipeline over a directory of videos (PLAN.md "Interface", "Timing").
+Run the execution pipeline over a directory of videos (PLAN.md "Interface", "Timing").
 
     python -m execution.main --config <yaml> --videos <dir> --out <dir>
 
@@ -146,7 +146,7 @@ def execute(cfg: Config, videos_dir: str, out_dir: str,
     check_shm_budget(cfg, infos)
     os.makedirs(out_dir, exist_ok=True)
 
-    tmp = tempfile.mkdtemp(prefix='execution2-')
+    tmp = tempfile.mkdtemp(prefix='execution-')
     try:
         # The dummy is the last video under another path, so the pipeline treats it as any other video.
         dummy = os.path.join(tmp, 'timing-dummy' + Path(videos[-1]).suffix)

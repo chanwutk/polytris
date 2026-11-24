@@ -1,9 +1,9 @@
 """
-Test split: execution2 against the scripts (p020 -> p060, the real p022), on committed clips, byte-identical tracks.
+Test split: execution against the scripts (p020 -> p060, the real p022), on committed clips, byte-identical tracks.
 
 The configurations are few and the clips short, so every ILP finishes well inside p022's 0.1 s limit; the test checks
 that first (on the pipeline's own classifier scores, and from the scripts' solve statuses) and fails if a solve came
-close, rather than comparing outputs a stopped solve could make differ.  execution2 runs first, then the scripts.
+close, rather than comparing outputs a stopped solve could make differ.  execution runs first, then the scripts.
 """
 
 import json
@@ -64,8 +64,8 @@ def grid() -> dict:
             'trackers': sorted({c['tracker'] for c in CONFIGS})}
 
 
-def execution2_config(tree: harness.Tree, c: dict) -> dict:
-    """execution2's config for one configuration, on the scratch cache's artifacts."""
+def execution_config(tree: harness.Tree, c: dict) -> dict:
+    """execution's config for one configuration, on the scratch cache's artifacts."""
     from execution.tools.make_paper_configs import build_params
     detectors = yaml.safe_load((harness.REPO / 'configs' / 'detectors.yaml').read_text())
     text = yaml.safe_dump(build_params(tree.dataset, full(c), detectors), sort_keys=False)
@@ -73,7 +73,7 @@ def execution2_config(tree: harness.Tree, c: dict) -> dict:
 
 
 def solve_times(tree: harness.Tree, configs: list[dict]) -> list[dict]:
-    """Each pruned configuration's ILP per clip, solved as execution2 does on execution2's own classifier scores."""
+    """Each pruned configuration's ILP per clip, solved as execution does on execution's own classifier scores."""
     from execution import frames
     from execution import operators as ops
     from execution.config import MISTRACK_TOLERANCES
@@ -81,7 +81,7 @@ def solve_times(tree: harness.Tree, configs: list[dict]) -> list[dict]:
     prefix = frames.new_prefix()
     try:
         for c in configs:
-            cfg = execution2_config(tree, c)
+            cfg = execution_config(tree, c)
             a = cfg['artifacts']
             state = ops.load_classifier_state(a['classifier']['weights'], a['classifier']['compilation_benchmark'],
                                               a['never_relevant_bitmap'], 60)
@@ -117,14 +117,14 @@ def write_selection(tree: harness.Tree) -> None:
 
 @pytest.mark.integration
 @pytest.mark.parametrize('dataset', ['caldot1-y05', 'jnc0'])
-def test_execution2_matches_the_scripts(dataset, tmp_path):
+def test_execution_matches_the_scripts(dataset, tmp_path):
     harness.require_detector(dataset)
     tree = harness.make_tree(tmp_path, dataset, 'test', grid())
-    out = tmp_path / 'execution2-out'
-    # The pipeline first: every configuration through execution2 over the clips.
+    out = tmp_path / 'execution-out'
+    # The pipeline first: every configuration through execution over the clips.
     for c in CONFIGS:
         path = tmp_path / f'{param_str(c)}.yaml'
-        path.write_text(yaml.safe_dump(execution2_config(tree, c), sort_keys=False))
+        path.write_text(yaml.safe_dump(execution_config(tree, c), sort_keys=False))
         tree.run('-m', 'execution.main', '--config', str(path), '--videos', str(tree.clips),
                  '--out', str(out / param_str(c)))
     # Its ILPs must finish well inside the limit, or a stopped solve could make the outputs differ.

@@ -1,7 +1,7 @@
 """
-Write one execution2 config per full-Tetris point of the paper's Figure 8 (fig:e2e-results).
+Write one execution config per full-Tetris point of the paper's Figure 8 (fig:e2e-results).
 
-Reads measurements-results/execution2-figure8/figure8_points.json (the "Tetris" rows of Figure 8's
+Reads measurements-results/execution-figure8/figure8_points.json (the "Tetris" rows of Figure 8's
 Vega-Lite data, with the throughput and HOTA the figure plots) and configs/detectors.yaml; writes
 execution/configs/figure8/<dataset>/<configuration name>.yaml.  Run in the polyis container:
 
@@ -17,7 +17,7 @@ from execution.tools.make_paper_configs import build_params
 from polyis.utilities import build_param_str
 
 ROOT = Path(__file__).resolve().parents[2]
-POINTS = ROOT / 'measurements-results' / 'execution2-figure8' / 'figure8_points.json'
+POINTS = ROOT / 'measurements-results' / 'execution-figure8' / 'figure8_points.json'
 OUT = ROOT / 'execution' / 'configs' / 'figure8'
 
 

@@ -1,5 +1,5 @@
 """
-Compare decord against OpenCV before execution2 switches decoders (PLAN.md step 1).
+Compare decord against OpenCV before execution switches decoders (PLAN.md step 1).
 
 Two modes, one JSONL row per video:
 

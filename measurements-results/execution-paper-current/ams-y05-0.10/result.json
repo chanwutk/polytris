@@ -1,6 +1,6 @@
 {
   "dataset": "ams-y05",
-  "config": "execution2/configs/paper/ams-y05-0.10.yaml",
+  "config": "execution/configs/paper/ams-y05-0.10.yaml",
   "videos": [
     "te00.mp4",
     "te01.mp4",
@@ -96,7 +96,7 @@
     13.8232421875
   ],
   "scripts": [],
-  "execution2": {
+  "execution": {
     "configured": {
       "process_s": 68.84112768713385,
       "runtime_s": 36.376078189350665,
