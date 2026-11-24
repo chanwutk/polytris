@@ -26,7 +26,7 @@ Operator ablation (ablation_speedup.json)
   raises the average speedup over the reference pipeline from 6.7x to 11.1x (within the 5%
   HOTA-loss bound)" quotes the Section 7.2 macros ablationOneSpeedupAvg and
   ablationTwoSpeedupAvg, written by evaluation/p204_ablation_stats.py. That script restricts
-  Tetris's test configurations by evaluation.ablation.ABLATION_CONDITIONS (no_both: s = 1 and no
+  Tetris's test configurations by tetris.ablation.ABLATION_CONDITIONS (no_both: s = 1 and no
   polyomino pruning; no_sampling: s = 1 with pruning; full: every knob), takes each dataset's
   fastest configuration within the bound, and averages its speedup over datasets.
 
@@ -63,7 +63,7 @@ import pandas as pd
 
 from evaluation import p203_compare_stats as p203
 from evaluation import p204_ablation_stats as p204
-from evaluation.ablation import ABLATION_CONDITIONS
+from tetris.ablation import ABLATION_CONDITIONS
 from evaluation.p140_otif_transform import build_expected_test_video_manifest, dataset_name_in_sota
 from tetris.leap_results import canonical_leap_result
 from measurements.common import (DATASET_LABELS, PRIOR_SYSTEMS, accuracy_matched, arrange_matched,
@@ -610,7 +610,7 @@ def ablation_points(con: duckdb.DuckDBPyConnection):
     """Table ablation_points(dataset, system, config, fps, hota, accuracy), system being an ablation condition.
 
     A Tetris configuration appears once under every condition whose sample-rate and pruning-threshold
-    restriction it satisfies (evaluation.ablation.filter_by_ablation_condition, in SQL); each dataset
+    restriction it satisfies (tetris.ablation.filter_by_ablation_condition, in SQL); each dataset
     also has its reference row, taken from hota_points.
     """
     # The conditions as data: NULL lists mean unrestricted; include_null admits configurations without pruning.

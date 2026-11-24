@@ -235,7 +235,7 @@ def track(state: dict, d: Detected) -> list[Tracked]:
 
 def evaluate_setup(cfg: SweepConfig, worker: Worker) -> dict:
     # p110's metric objects and evaluator (imported here: p110 loads TrackEval and the repo config).
-    from evaluation.p110_accuracy_compute import build_metric_objects, run_trackeval
+    from tetris.trackeval.evaluate import build_metric_objects, run_trackeval
     from trackeval.metrics import Count
     scratch = tempfile.mkdtemp(prefix=f'profiling-evaluate-{worker.index}-')
     return {'scratch': scratch, 'reference_dir': cfg.evaluation.reference_dir,

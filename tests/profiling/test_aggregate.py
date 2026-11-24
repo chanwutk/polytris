@@ -58,7 +58,7 @@ def ag_to_lists(d: dict) -> dict:
 
 
 def test_combined_hota_equals_trackevals_own_combination(tmp_path):
-    from evaluation.p110_accuracy_compute import build_metric_objects, run_trackeval
+    from tetris.trackeval.evaluate import build_metric_objects, run_trackeval
     cfg = real_cfg(tmp_path)
     shifts = {'a.mp4': 3.0, 'b.mp4': 9.0}
     per_video = per_video_hota(cfg, tmp_path, shifts)

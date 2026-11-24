@@ -13,7 +13,7 @@ compares every saved result with the scripts' cache (read only):
   050 detections       exact: same frames, per frame the same boxes in the same order (p040 reads canvases in
                        name order, as profiling detects them); also box-set statistics
   060 tracks           byte-identical, and equal up to track-id renaming
-  HOTA per video       ours vs p110's run_trackeval on the cached 060 tracks, same reference
+  HOTA per video       ours vs tetris.trackeval.evaluate.run_trackeval on the cached 060 tracks, same reference
 
     python -m profiling.tools.compare_scripts --config profiling/configs/caldot1-y05.yaml \
         --videos va00.mp4 va01.mp4 --output-root /polyis-profiling-check --out /polyis-profiling-check/compare.json
@@ -102,8 +102,8 @@ def build_with_script_prune(cfg, prefix, completion) -> list:
 
 
 def hota_from_cache(cache_execution: str, video: str, tracks_param: str, reference_file: str, scratch: str) -> np.ndarray:
-    """p110's run_trackeval on the scripts' cached tracks for one video."""
-    from evaluation.p110_accuracy_compute import build_metric_objects, run_trackeval
+    """tetris.trackeval.evaluate.run_trackeval on the scripts' cached tracks for one video."""
+    from tetris.trackeval.evaluate import build_metric_objects, run_trackeval
     track_dir = os.path.join(scratch, 'cached', tracks_param)
     os.makedirs(os.path.join(track_dir, video), exist_ok=True)
     src = os.path.join(cache_execution, video, '060_uncompressed_tracks', tracks_param, 'tracking.jsonl')

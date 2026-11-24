@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
-from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
+from tetris.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
 from tetris.io import cache
 from tetris.pareto import compute_pareto_front
 from tetris.utilities import get_config, load_tradeoff_data, split_tradeoff_variants

@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
+from tetris.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
 from tetris.pareto import compute_pareto_front
 from profiling.config import SweepConfig, load_sweep_config
 from profiling.reduction import sweep_groups
@@ -57,7 +57,7 @@ def branch_key(branch: dict) -> str:
 def combine_hota(per_video: list[dict]) -> dict:
     """TrackEval's combined HOTA over videos, from each video's raw HOTA result (lists from JSON)."""
     # Through p110, which puts modules/TrackEval on sys.path before importing trackeval.
-    from evaluation.p110_accuracy_compute import HOTA
+    from tetris.trackeval.evaluate import HOTA
     metric = HOTA()
     arrays = {f'v{i}': {k: np.asarray(v, dtype=float) for k, v in r.items()} for i, r in enumerate(per_video)}
     return metric.combine_sequences(arrays)

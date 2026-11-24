@@ -2,7 +2,7 @@
 
 Defines parameter-space restrictions that produce separate Pareto curves per
 dataset, each representing the system with one or more optimizations disabled.
-Both p135 (Pareto extraction) and p201 (comparison visualization) import
+p135 (Pareto extraction), p201 (comparison visualization) and the profiling aggregator import
 these definitions so the ablation logic stays in one place.
 """
 
