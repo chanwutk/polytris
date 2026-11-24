@@ -281,12 +281,12 @@ def test_accuracy_gain_chart_uses_throughput_x_title():
 
 
 def test_compute_accuracy_gain_at_naive_speedup_levels_discrete_anchors():
-    # One result row per SOTA Pareto point; Polytris chosen by strict faster runtime
+    # One result row per SOTA Pareto point; Tetris chosen by strict faster runtime
     # then max accuracy gain (tie-break: higher acc, then lower time).
     naive_df = pd.DataFrame([
         {'dataset': 'demo', 'time': 100.0, 'HOTA_HOTA': 0.60, 'frame_count': 100.0},
     ])
-    polytris_df = pd.DataFrame([
+    tetris_df = pd.DataFrame([
         {'dataset': 'demo', 'time': 50.0, 'HOTA_HOTA': 0.80, 'frame_count': 100.0},
         {'dataset': 'demo', 'time': 25.0, 'HOTA_HOTA': 0.70, 'frame_count': 100.0},
     ])
@@ -296,7 +296,7 @@ def test_compute_accuracy_gain_at_naive_speedup_levels_discrete_anchors():
     ])
 
     result = compute_accuracy_gain_at_naive_speedup_levels(
-        polytris_df,
+        tetris_df,
         {'otif': sota_df},
         naive_df,
         'HOTA_HOTA',
@@ -307,17 +307,17 @@ def test_compute_accuracy_gain_at_naive_speedup_levels_discrete_anchors():
     ).reset_index(drop=True)
     assert len(non_null) == 2
     assert non_null['system'].tolist() == ['OTIF', 'OTIF']
-    # Anchor (100, 0.75): 100 frames / 100 s = 1 FPS; Polytris faster than 100 -> (50, 0.80); gain 0.05
+    # Anchor (100, 0.75): 100 frames / 100 s = 1 FPS; Tetris faster than 100 -> (50, 0.80); gain 0.05
     assert non_null.loc[0, 'throughput_fps'] == pytest.approx(1.0)
     assert non_null.loc[0, 'accuracy_gain'] == pytest.approx(0.05)
-    # Anchor (50, 0.65): 100 frames / 50 s = 2 FPS; Polytris faster than 50 -> (25, 0.70); gain 0.05
+    # Anchor (50, 0.65): 100 frames / 50 s = 2 FPS; Tetris faster than 50 -> (25, 0.70); gain 0.05
     assert non_null.loc[1, 'throughput_fps'] == pytest.approx(2.0)
     assert non_null.loc[1, 'accuracy_gain'] == pytest.approx(0.05)
     assert (non_null['naive_time'] == 100.0).all()
 
 
 def test_compute_speedup_at_accuracy_levels_discrete_anchors():
-    polytris_df = pd.DataFrame([
+    tetris_df = pd.DataFrame([
         {'dataset': 'demo', 'time': 5.0, 'HOTA_HOTA': 0.82},
         {'dataset': 'demo', 'time': 10.0, 'HOTA_HOTA': 0.90},
         {'dataset': 'demo', 'time': 20.0, 'HOTA_HOTA': 0.85},
@@ -329,20 +329,20 @@ def test_compute_speedup_at_accuracy_levels_discrete_anchors():
     ])
 
     result = compute_speedup_at_accuracy_levels(
-        polytris_df,
+        tetris_df,
         {'otif': sota_df},
         'HOTA_HOTA',
         'time',
     )
 
     by_acc = result.set_index('accuracy_level').sort_index()
-    # acc 0.80: feasible Polytris acc > 0.8 includes (5,0.82); min time 5 -> 15/5
+    # acc 0.80: feasible Tetris acc > 0.8 includes (5,0.82); min time 5 -> 15/5
     assert by_acc.loc[0.80, 'speedup_ratio'] == pytest.approx(3.0)
     assert by_acc.loc[0.80, 'polytris_time'] == pytest.approx(5.0)
-    # acc 0.70: all three Polytris rows qualify; min time 5 -> 30/5
+    # acc 0.70: all three Tetris rows qualify; min time 5 -> 30/5
     assert by_acc.loc[0.70, 'speedup_ratio'] == pytest.approx(6.0)
     assert by_acc.loc[0.70, 'polytris_time'] == pytest.approx(5.0)
-    # acc 0.95: no Polytris strictly above 0.95
+    # acc 0.95: no Tetris strictly above 0.95
     assert pd.isna(by_acc.loc[0.95, 'speedup_ratio'])
 
 

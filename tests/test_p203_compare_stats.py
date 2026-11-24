@@ -91,10 +91,10 @@ def test_select_best_prior_row_handles_presence_cases():
 
 
 def test_select_accuracy_matched_prior_row_handles_matching_rules():
-    # Build a selected Polytris row that anchors the accuracy-matched comparison.
-    polytris_row = pd.Series({'HOTA_HOTA': 0.80, 'throughput_fps': 300.0})
+    # Build a selected Tetris row that anchors the accuracy-matched comparison.
+    tetris_row = pd.Series({'HOTA_HOTA': 0.80, 'throughput_fps': 300.0})
 
-    # Reuse the threshold-feasible prior row when it is already no more accurate than Polytris.
+    # Reuse the threshold-feasible prior row when it is already no more accurate than Tetris.
     threshold_feasible_prior_dfs = {
         'OTIF': pd.DataFrame([
             {'HOTA_HOTA': 0.79, 'loss_pct': 0.04, 'throughput_fps': 50.0},
@@ -106,7 +106,7 @@ def test_select_accuracy_matched_prior_row_handles_matching_rules():
     threshold_feasible_row = select_accuracy_matched_prior_row(
         threshold_feasible_prior_dfs,
         0.05,
-        polytris_row,
+        tetris_row,
     )
     assert threshold_feasible_row is not None
     assert threshold_feasible_row['system'] == 'LEAP'
@@ -126,25 +126,25 @@ def test_select_accuracy_matched_prior_row_handles_matching_rules():
     fallback_row = select_accuracy_matched_prior_row(
         fallback_prior_dfs,
         0.05,
-        polytris_row,
+        tetris_row,
     )
     assert fallback_row is not None
     assert fallback_row['system'] == 'OTIF'
     assert fallback_row['HOTA_HOTA'] == 0.78
     assert fallback_row['accuracy_match_rule'] == 'nearest_not_more_accurate'
 
-    # Return no match when every prior row is more accurate than Polytris.
+    # Return no match when every prior row is more accurate than Tetris.
     no_match_prior_dfs = {
         'OTIF': pd.DataFrame([
             {'HOTA_HOTA': 0.90, 'loss_pct': 0.01, 'throughput_fps': 100.0},
         ]),
     }
-    assert select_accuracy_matched_prior_row(no_match_prior_dfs, 0.05, polytris_row) is None
+    assert select_accuracy_matched_prior_row(no_match_prior_dfs, 0.05, tetris_row) is None
 
 
 def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
-    # Build one Pareto-filtered Polytris table for a single synthetic dataset.
-    polytris_df = pd.DataFrame([
+    # Build one Pareto-filtered Tetris table for a single synthetic dataset.
+    tetris_df = pd.DataFrame([
         {
             'dataset': 'demo',
             'videoset': 'test',
@@ -186,7 +186,7 @@ def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
     # Build the default threshold reports from the synthetic tradeoff data.
     summary_df, detail_tables = build_threshold_reports(
         ['demo'],
-        polytris_df,
+        tetris_df,
         naive_df,
         prior_dfs,
     )
@@ -196,7 +196,7 @@ def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
     # Print detail tables for the same thresholds covered by the summary output.
     assert DETAIL_THRESHOLDS == DEFAULT_THRESHOLDS
 
-    # At 1%, Polytris should pick the strict row and LEAP should be the only feasible prior.
+    # At 1%, Tetris should pick the strict row and LEAP should be the only feasible prior.
     one_pct_detail = detail_tables[0.01]
     assert one_pct_detail.loc[0, 'polytris_variant_id'] == 'poly_strict'
     assert one_pct_detail.loc[0, 'prior_system'] == 'LEAP'
@@ -208,7 +208,7 @@ def test_build_threshold_reports_uses_fixed_thresholds_and_aggregates_counts():
     assert one_pct_detail.loc[0, 'accuracy_matched_prior_hota'] == 0.98
     assert one_pct_detail.loc[0, 'naive_speedup_x'] == 120.0 / 20.0
 
-    # At 5%, Polytris should pick the faster row and OTIF should be the best feasible prior.
+    # At 5%, Tetris should pick the faster row and OTIF should be the best feasible prior.
     five_pct_detail = detail_tables[0.05]
     assert five_pct_detail.loc[0, 'polytris_variant_id'] == 'poly_fast'
     assert five_pct_detail.loc[0, 'prior_system'] == 'OTIF'

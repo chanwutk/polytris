@@ -120,7 +120,7 @@ def resolve_prediction_relative_path(task_row: dict) -> str:
     if task_row['variant'] == 'naive':
         return os.path.join('002_naive', 'tracking.jsonl')
 
-    # Route Polytris configurations to their stage-060 tracking output.
+    # Route Tetris configurations to their stage-060 tracking output.
     return os.path.join('060_uncompressed_tracks', task_row['variant_id'], 'tracking.jsonl')
 
 
@@ -320,7 +320,7 @@ def build_accuracy_task_rows(dataset: str, videoset: str) -> list[tuple[dict, li
         # Build the canonical raw output directory for this split-level task.
         output_dir = os.path.join(cache.eval(dataset, 'acc'), 'raw', task_row['videoset'], task_row['variant_id'])
 
-        # For test: only evaluate Pareto-optimal Polytris variants.
+        # For test: only evaluate Pareto-optimal Tetris variants.
         if videoset == 'test' and task_row['variant'] == 'polytris':
             pareto_df = load_pareto_params(task_row['dataset'])
             pareto_variant_ids = set(pareto_df['variant_id'].dropna().unique())

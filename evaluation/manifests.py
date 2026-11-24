@@ -80,8 +80,8 @@ def build_index_video_manifest(datasets: list[str] | None = None) -> pd.DataFram
     return build_split_video_manifest(datasets=datasets, videosets=['train'])
 
 
-def build_polytris_variant_manifest() -> pd.DataFrame:
-    # Collect the fully expanded Polytris query parameter grid.
+def build_tetris_variant_manifest() -> pd.DataFrame:
+    # Collect the fully expanded Tetris query parameter grid.
     rows: list[dict] = []
 
     # Expand the exact stage-060 parameter grid used by the execution pipeline.
@@ -126,7 +126,7 @@ def build_polytris_variant_manifest() -> pd.DataFrame:
 
 
 def build_naive_variant_manifest() -> pd.DataFrame:
-    # Represent the naive baseline with a dedicated token instead of fake Polytris params.
+    # Represent the naive baseline with a dedicated token instead of fake Tetris params.
     return pd.DataFrame.from_records([{
         'variant': 'naive',
         'variant_id': 'naive',
@@ -142,8 +142,8 @@ def build_naive_variant_manifest() -> pd.DataFrame:
 
 
 def build_variant_manifest(include_naive: bool = True) -> pd.DataFrame:
-    # Start from the real Polytris parameter grid.
-    variant_frames = [build_polytris_variant_manifest()]
+    # Start from the real Tetris parameter grid.
+    variant_frames = [build_tetris_variant_manifest()]
 
     # Append the dedicated naive baseline when the caller requests it.
     if include_naive:

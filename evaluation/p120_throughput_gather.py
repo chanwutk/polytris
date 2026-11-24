@@ -7,7 +7,7 @@ import pandas as pd
 
 from evaluation.manifests import (
     build_index_video_manifest,
-    build_polytris_variant_manifest,
+    build_tetris_variant_manifest,
     build_split_video_manifest,
 )
 from tetris.io import cache
@@ -69,7 +69,7 @@ def assert_runtime_paths_exist(manifest_df: pd.DataFrame, label: str):
     assert missing_df.empty, f"Missing {label} runtime paths:\n{missing_df[['stage', 'dataset', 'videoset', 'video', 'variant_id', 'runtime_file']].head(20)}"
 
 
-def assert_and_filter_polytris_runtime_paths(manifest_df: pd.DataFrame, datasets: list[str], videoset: str) -> pd.DataFrame:
+def assert_and_filter_tetris_runtime_paths(manifest_df: pd.DataFrame, datasets: list[str], videoset: str) -> pd.DataFrame:
     """Assert runtime files exist; for test, keep only Pareto-optimal variants."""
     if videoset == 'valid':
         # Assert that all valid-split runtime files are present.
@@ -216,9 +216,9 @@ def build_naive_query_manifest(video_df: pd.DataFrame) -> pd.DataFrame:
     return manifest_df[QUERY_COLUMNS]
 
 
-def build_stage020_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
+def build_stage020_manifest(tetris_df: pd.DataFrame) -> pd.DataFrame:
     # Duplicate stage-020 rows across the downstream config space for simplicity.
-    stage_df = polytris_df.copy()
+    stage_df = tetris_df.copy()
     stage_df['stage'] = '020_exec_classify'
     stage_df['runtime_file'] = stage_df.apply(
         lambda row: cache.execution(
@@ -234,9 +234,9 @@ def build_stage020_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
     return stage_df[QUERY_COLUMNS]
 
 
-def build_stage022_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
+def build_stage022_manifest(tetris_df: pd.DataFrame) -> pd.DataFrame:
     # Keep only pruning-enabled rows because stage-022 is skipped without a threshold.
-    stage_df = polytris_df[polytris_df['tracking_accuracy_threshold'].notna()].copy()
+    stage_df = tetris_df[tetris_df['tracking_accuracy_threshold'].notna()].copy()
     # Return an empty manifest early when the config does not enable pruning.
     if stage_df.empty:
         stage_df['stage'] = pd.Series(dtype='object')
@@ -285,9 +285,9 @@ def build_shared_execution_param(row: pd.Series) -> str:
     )
 
 
-def build_stage030_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
-    # Build the stage-030 runtime rows from the full Polytris config space.
-    stage_df = polytris_df.copy()
+def build_stage030_manifest(tetris_df: pd.DataFrame) -> pd.DataFrame:
+    # Build the stage-030 runtime rows from the full Tetris config space.
+    stage_df = tetris_df.copy()
     stage_df['stage'] = '030_exec_compress'
     stage_df['runtime_file'] = stage_df.apply(
         lambda row: os.path.join(
@@ -301,9 +301,9 @@ def build_stage030_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
     return stage_df[QUERY_COLUMNS]
 
 
-def build_stage040_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
-    # Build the stage-040 runtime rows from the full Polytris config space.
-    stage_df = polytris_df.copy()
+def build_stage040_manifest(tetris_df: pd.DataFrame) -> pd.DataFrame:
+    # Build the stage-040 runtime rows from the full Tetris config space.
+    stage_df = tetris_df.copy()
     stage_df['stage'] = '040_exec_detect'
     stage_df['runtime_file'] = stage_df.apply(
         lambda row: os.path.join(
@@ -317,9 +317,9 @@ def build_stage040_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
     return stage_df[QUERY_COLUMNS]
 
 
-def build_stage050_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
-    # Build the stage-050 runtime rows from the full Polytris config space.
-    stage_df = polytris_df.copy()
+def build_stage050_manifest(tetris_df: pd.DataFrame) -> pd.DataFrame:
+    # Build the stage-050 runtime rows from the full Tetris config space.
+    stage_df = tetris_df.copy()
     stage_df['stage'] = '050_exec_uncompress'
     stage_df['runtime_file'] = stage_df.apply(
         lambda row: os.path.join(
@@ -333,9 +333,9 @@ def build_stage050_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
     return stage_df[QUERY_COLUMNS]
 
 
-def build_stage060_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
-    # Build the stage-060 runtime rows from the fully expanded Polytris config space.
-    stage_df = polytris_df.copy()
+def build_stage060_manifest(tetris_df: pd.DataFrame) -> pd.DataFrame:
+    # Build the stage-060 runtime rows from the fully expanded Tetris config space.
+    stage_df = tetris_df.copy()
     stage_df['stage'] = '060_exec_track'
     stage_df['runtime_file'] = stage_df.apply(
         lambda row: os.path.join(
@@ -352,28 +352,28 @@ def build_stage060_manifest(polytris_df: pd.DataFrame) -> pd.DataFrame:
 def build_query_execution_manifest(datasets: list[str], videoset: str) -> pd.DataFrame:
     # Materialize only the requested videoset videos to avoid unnecessary cross-join overhead.
     query_video_df = build_split_video_manifest(datasets=datasets, videosets=[videoset])
-    # Materialize the fully expanded Polytris parameter grid.
-    polytris_variant_df = build_polytris_variant_manifest()
-    # Cross join videos and Polytris params so each downstream config gets one row.
-    polytris_df = query_video_df.merge(polytris_variant_df, how='cross')
+    # Materialize the fully expanded Tetris parameter grid.
+    tetris_variant_df = build_tetris_variant_manifest()
+    # Cross join videos and Tetris params so each downstream config gets one row.
+    tetris_df = query_video_df.merge(tetris_variant_df, how='cross')
 
     # Build the naive manifest once from the concrete query-time videos.
     naive_df = build_naive_query_manifest(query_video_df)
-    # Build the per-stage Polytris manifests from the full downstream grid.
+    # Build the per-stage Tetris manifests from the full downstream grid.
     stage_frames = [
-        build_stage020_manifest(polytris_df),
-        build_stage022_manifest(polytris_df),
-        build_stage030_manifest(polytris_df),
-        build_stage040_manifest(polytris_df),
-        build_stage050_manifest(polytris_df),
-        build_stage060_manifest(polytris_df),
+        build_stage020_manifest(tetris_df),
+        build_stage022_manifest(tetris_df),
+        build_stage030_manifest(tetris_df),
+        build_stage040_manifest(tetris_df),
+        build_stage050_manifest(tetris_df),
+        build_stage060_manifest(tetris_df),
     ]
-    polytris_stage_df = pd.concat(stage_frames, ignore_index=True)
+    tetris_stage_df = pd.concat(stage_frames, ignore_index=True)
     # Assert valid-split files exist; for test-split assert and keep only Pareto-set files.
-    polytris_stage_df = assert_and_filter_polytris_runtime_paths(polytris_stage_df, DATASETS, videoset)
+    tetris_stage_df = assert_and_filter_tetris_runtime_paths(tetris_stage_df, DATASETS, videoset)
 
-    # Combine the Polytris and naive query manifests into one canonical table.
-    return pd.concat([naive_df, polytris_stage_df], ignore_index=True)
+    # Combine the Tetris and naive query manifests into one canonical table.
+    return pd.concat([naive_df, tetris_stage_df], ignore_index=True)
 
 
 def print_manifest_table(manifest_df: pd.DataFrame, title: str, group_columns: list[str], write_line=print):

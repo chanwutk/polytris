@@ -547,9 +547,9 @@ def p203_reference(datasets: list[str], specs: dict[str, dict]) -> dict:
     if not named:
         return {}
     # p203's pipeline from its main(): test rows, prior throughput from the shared frame count, Pareto fronts, summary.
-    polytris, naive = p203.load_polytris_and_naive_test_data(datasets)
-    priors = p203.load_prior_test_data(datasets, p203.build_frame_count_lookup(polytris, naive))
-    summary, _ = p203.build_threshold_reports(datasets, p203.filter_pareto_by_dataset(polytris), naive, priors,
+    tetris, naive = p203.load_tetris_and_naive_test_data(datasets)
+    priors = p203.load_prior_test_data(datasets, p203.build_frame_count_lookup(tetris, naive))
+    summary, _ = p203.build_threshold_reports(datasets, p203.filter_pareto_by_dataset(tetris), naive, priors,
                                               list(named.values()))
     # The report, filled below.
     out = {}
@@ -563,7 +563,7 @@ def p203_reference(datasets: list[str], specs: dict[str, dict]) -> dict:
 def p204_reference(datasets: list[str], specs: dict[str, dict]) -> dict:
     """{bound: {ablation macro: value}} from evaluation/p204_ablation_stats.py's own functions on the same inputs."""
     # p204's test rows (Perfect dropped).
-    polytris, naive = p204.load_polytris_and_naive_test_data(datasets)
+    tetris, naive = p204.load_tetris_and_naive_test_data(datasets)
     # The report, filled below.
     out = {}
     # p204 runs at one threshold; run it at every relative bound.
@@ -572,7 +572,7 @@ def p204_reference(datasets: list[str], specs: dict[str, dict]) -> dict:
         if spec['loss'] is None:
             continue
         # Per dataset and condition, the speedup at the bound (NA when nothing qualifies).
-        stats = p204.compute_ablation_stats(datasets, polytris, naive, threshold=spec['loss'])
+        stats = p204.compute_ablation_stats(datasets, tetris, naive, threshold=spec['loss'])
         out[name] = {}
         # Mean, max, and argmax per condition, as p204.save_tex_macros computes them (idxmax keeps the first dataset).
         for condition, prefix in ABLATION_MACROS.items():

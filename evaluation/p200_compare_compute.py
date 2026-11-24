@@ -105,8 +105,8 @@ def load_sota_tradeoff_data(datasets: list[str], system: str) -> pd.DataFrame:
             'tilesize': 0,  # SOTA doesn't have explicit tile size
             'tilepadding': STR_NA,  # SOTA doesn't have explicit tile padding
             'sample_rate': df['sample_rate'],
-            'tracking_accuracy_threshold': pd.NA,  # SOTA doesn't use Polytris pruning threshold
-            'relevance_threshold': pd.NA,  # SOTA doesn't use Polytris relevance threshold
+            'tracking_accuracy_threshold': pd.NA,  # SOTA doesn't use Tetris pruning threshold
+            'relevance_threshold': pd.NA,  # SOTA doesn't use Tetris relevance threshold
             'tracker': STR_NA,  # SOTA doesn't use our tracker system
             'time': df[runtime_column],  # Runtime in seconds
             'throughput_fps': float('nan'),  # Not available in tradeoff.csv
@@ -349,22 +349,22 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     
     # Load tradeoff data for all datasets
     tradeoff_df = load_all_datasets_tradeoff_data(datasets, system_name='Polytris')
-    polytris_df, naive_df = split_tradeoff_variants(tradeoff_df)
-    polytris_df = polytris_df[polytris_df['videoset'] == 'test'].copy()
+    tetris_df, naive_df = split_tradeoff_variants(tradeoff_df)
+    tetris_df = tetris_df[tetris_df['videoset'] == 'test'].copy()
     naive_df = naive_df[naive_df['videoset'] == 'test'].copy()
     naive_df['system'] = 'Naive'
 
     # Handle backward compatibility: add sample_rate, threshold, tracker, and canvas_scale if missing
-    if 'sample_rate' not in polytris_df.columns:
-        polytris_df['sample_rate'] = 1
-    if 'tracking_accuracy_threshold' not in polytris_df.columns:
-        polytris_df['tracking_accuracy_threshold'] = pd.NA
-    if 'relevance_threshold' not in polytris_df.columns:
-        polytris_df['relevance_threshold'] = pd.NA
-    if 'tracker' not in polytris_df.columns:
-        polytris_df['tracker'] = 'unknown'
-    if 'canvas_scale' not in polytris_df.columns:
-        polytris_df['canvas_scale'] = 1.0
+    if 'sample_rate' not in tetris_df.columns:
+        tetris_df['sample_rate'] = 1
+    if 'tracking_accuracy_threshold' not in tetris_df.columns:
+        tetris_df['tracking_accuracy_threshold'] = pd.NA
+    if 'relevance_threshold' not in tetris_df.columns:
+        tetris_df['relevance_threshold'] = pd.NA
+    if 'tracker' not in tetris_df.columns:
+        tetris_df['tracker'] = 'unknown'
+    if 'canvas_scale' not in tetris_df.columns:
+        tetris_df['canvas_scale'] = 1.0
     if 'sample_rate' not in naive_df.columns:
         naive_df['sample_rate'] = 1
     if 'tracking_accuracy_threshold' not in naive_df.columns:
@@ -376,15 +376,15 @@ def visualize_all_datasets_tradeoffs(datasets: list[str]):
     if 'canvas_scale' not in naive_df.columns:
         naive_df['canvas_scale'] = 1.0
 
-    polytris_df['time_mspf'] = polytris_df['time'] * 1000 / polytris_df['frame_count']
+    tetris_df['time_mspf'] = tetris_df['time'] * 1000 / tetris_df['frame_count']
     naive_df['time_mspf'] = naive_df['time'] * 1000 / naive_df['frame_count']
 
     # Keep the tooltip schema aligned with the legacy plotting helpers.
-    polytris_df['video'] = 'test'
+    tetris_df['video'] = 'test'
     naive_df['video'] = 'test'
 
-    # Merge the split-specific naive baseline onto each Polytris row.
-    combined_with_naive = polytris_df.merge(
+    # Merge the split-specific naive baseline onto each Tetris row.
+    combined_with_naive = tetris_df.merge(
         naive_df[['dataset', 'videoset', 'time', 'throughput_fps', 'time_mspf']].rename(
             columns={
                 'time': 'time_naive',

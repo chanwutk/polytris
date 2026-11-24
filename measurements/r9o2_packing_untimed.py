@@ -24,7 +24,7 @@ import time
 import cv2
 import pandas as pd
 
-from evaluation.manifests import build_polytris_variant_manifest, build_split_video_manifest
+from evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest
 from evaluation.p120_throughput_gather import build_stage030_manifest, resolve_upstream_tracker
 from measurements.common import DATASET_LABELS, host_info, results_dir, write_json
 from tetris.io import store
@@ -44,7 +44,7 @@ def packing_units(dataset: str):
     """The validation sweep's distinct p030 units on complete videos, and the split's video count."""
     # Every validation video crossed with every sweep configuration, as p120 lists them.
     videos = build_split_video_manifest(datasets=[dataset], videosets=['valid'])
-    configs = videos.merge(build_polytris_variant_manifest(), how='cross')
+    configs = videos.merge(build_tetris_variant_manifest(), how='cross')
     # p030's runtime file for each row; configurations differing only downstream share one unit.
     configs['runtime_file'] = build_stage030_manifest(configs)['runtime_file']
     units = configs.drop_duplicates('runtime_file').copy()

@@ -76,7 +76,7 @@ def load_dataset_accuracy_rows(dataset: str, videoset: str) -> pd.DataFrame:
 
     # Load each expected combined result file without scanning directories.
     for task_row in split_variant_df.to_dict('records'):
-        # For test: only aggregate Pareto-optimal Polytris variants.
+        # For test: only aggregate Pareto-optimal Tetris variants.
         if videoset == 'test' and task_row['variant'] == 'polytris':
             pareto_df = load_pareto_params(dataset)
             pareto_variant_ids = set(pareto_df['variant_id'].dropna().unique())

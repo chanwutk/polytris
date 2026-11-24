@@ -91,7 +91,7 @@ def build_render_tasks(datasets: list[str], variant_id_filter: str | None) -> li
 
                 tasks.append(partial(visualize_video, dataset, video, 'naive', None))
 
-        # --- Pareto-optimal Polytris tasks ---
+        # --- Pareto-optimal Tetris tasks ---
         # Skip datasets without Pareto params.
         if not pareto_params_exist(dataset):
             print(f"  No Pareto params found for dataset {dataset}, skipping Polytris variants")

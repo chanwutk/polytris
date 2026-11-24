@@ -1586,12 +1586,12 @@ def split_tradeoff_variants(tradeoff_df: "pd.DataFrame") -> tuple["pd.DataFrame"
     if 'variant' not in tradeoff_df.columns:
         tradeoff_df['variant'] = 'polytris'
 
-    # Select the real Polytris search-space rows.
-    polytris_df = tradeoff_df[tradeoff_df['variant'] == 'polytris'].copy()
+    # Select the real Tetris search-space rows.
+    tetris_df = tradeoff_df[tradeoff_df['variant'] == 'polytris'].copy()
     # Select the dedicated naive baseline rows.
     naive_df = tradeoff_df[tradeoff_df['variant'] == 'naive'].copy()
 
-    return polytris_df, naive_df
+    return tetris_df, naive_df
 
 
 def load_all_datasets_tradeoff_data(datasets: list[str], system_name: str | None = None):

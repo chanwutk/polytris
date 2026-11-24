@@ -142,7 +142,7 @@ import cv2
 import duckdb
 import pandas as pd
 
-from evaluation.manifests import build_polytris_variant_manifest, build_split_video_manifest, list_split_videos
+from evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest, list_split_videos
 from evaluation.p120_throughput_gather import (build_index_construction_manifest, build_naive_query_manifest,
                                                build_stage020_manifest, build_stage022_manifest, build_stage030_manifest,
                                                build_stage040_manifest, build_stage050_manifest, build_stage060_manifest)
@@ -687,7 +687,7 @@ def split_manifest(dataset: str, grid: pd.DataFrame | None = None, videoset: str
     # The split's videos, as p120 lists them.
     videos = build_split_video_manifest(datasets=[dataset], videosets=[videoset])
     # Every configuration of the grid on every video of the split.
-    configs = videos.merge(build_polytris_variant_manifest() if grid is None else grid, how='cross')
+    configs = videos.merge(build_tetris_variant_manifest() if grid is None else grid, how='cross')
     # The reference pipeline's files (asserted to exist by p120) and each sweep stage's files.
     df = pd.concat([build_naive_query_manifest(videos), *(build(configs) for build in STAGE_BUILDERS)], ignore_index=True)
     # Record which runtime files exist instead of asserting it.
@@ -758,7 +758,7 @@ def manifests(con: duckdb.DuckDBPyConnection, dataset: str, point: dict) -> dict
     load_manifest(con, 'index_manifest', build_index_construction_manifest([dataset]))
     load_manifest(con, 'valid_manifest', split_manifest(dataset))
     # The configured grid, to select the operating point's configuration on test.
-    grid = build_polytris_variant_manifest()
+    grid = build_tetris_variant_manifest()
     load_manifest(con, 'test_manifest', split_manifest(dataset, grid[grid['variant_id'] == point['config']], 'test'))
     # The operating point's test files were run (p120 keeps the Pareto set on test).
     missing = query_dicts(con, 'SELECT stage, runtime_file FROM test_manifest WHERE NOT "exists" LIMIT 5')
