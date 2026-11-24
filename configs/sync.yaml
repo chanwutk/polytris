@@ -43,7 +43,6 @@ includes:
     - "tetris"
     - "scripts"
     - "tests"
-    - "demo"
     - "experiments"
 
   # File extensions to include within each directory

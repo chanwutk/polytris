@@ -199,11 +199,11 @@ experiments/    Everything that produces the paper's numbers:
   measurements_gpu/ long-running GPU jobs behind those measurements
   measurements-results/  committed outputs of the measurements
   ablation/         the mistrack-rate ablation (Fig. 11)
+  leap/             LEAP's evaluator and our LEAP runners, copied from tetris-leap
   tools/            scripts-vs-pipeline comparisons, benchmarks, paper configs
   configs/          configs for those tools
   tests/            tests for the code above, incl. the equivalence tests
 modules/        Vendored third-party code (Detectron2, TrackEval, Darknet)
-demo/           Interactive visualization assets
 paper/          Manuscript source (LaTeX, anonymized for review)
 ```
 
