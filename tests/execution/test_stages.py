@@ -12,9 +12,9 @@ import numpy as np
 import pytest
 import torch
 
-from execution2 import frames, operators, stages
-from execution2.config import (Artifacts, Classifier, Config, Detector, Params, StageSystem, System)
-from execution2.stages import Classified, Decoded, Detected, Packed
+from execution import frames, operators, stages
+from execution.config import (Artifacts, Classifier, Config, Detector, Params, StageSystem, System)
+from execution.stages import Classified, Decoded, Detected, Packed
 from polyis.classify import classify_batch
 from polyis.utilities import save_tracking_results
 from tests.test_shared_helpers_golden import FakeClassifier

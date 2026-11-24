@@ -1,5 +1,5 @@
 """
-Golden tests for the helpers execution2 shares with the p0xx scripts (PLAN.md 5A/11A/19B).
+Golden tests for the helpers execution shares with the p0xx scripts (PLAN.md 5A/11A/19B).
 
 The goldens in tests/golden/shared_helpers.pkl were recorded from the helpers while they
 still lived in scripts/p020, p030 and p050.  After the move to polyis/, these tests
@@ -172,7 +172,7 @@ def test_unpack_detections_matches_golden():
 
 @pytest.mark.parametrize('frame_hw', [(30, 40), (34, 47)])
 def test_classify_batch_tensors_equals_classify_batch(frame_hw):
-    # The tensor core (execution2's entry point) and the list wrapper (p020's) give identical grids,
+    # The tensor core (execution's entry point) and the list wrapper (p020's) give identical grids,
     # and report the same runtime fields, so p020's runtime.jsonl keeps its shape.
     by_list, list_runtime = classify_both_ways(frame_hw, use_tensors=False)
     by_tensor, tensor_runtime = classify_both_ways(frame_hw, use_tensors=True)

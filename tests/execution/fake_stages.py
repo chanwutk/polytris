@@ -6,7 +6,7 @@ import time
 
 import numpy as np
 
-from execution2 import frames
+from execution import frames
 
 
 def worker_setup(worker):
@@ -101,7 +101,7 @@ def np_payload(state, msg):
 
 def fake_tracked(state, video):
     """Stand-in for the whole pipeline: one track per video, tagged with the video's frame count."""
-    from execution2.stages import Tracked
+    from execution.stages import Tracked
     import cv2
     cap = cv2.VideoCapture(video)
     n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -111,7 +111,7 @@ def fake_tracked(state, video):
 
 def fake_build(cfg, prefix):
     """build_stages replacement for main tests: one two-process stage, no models."""
-    from execution2.pipeline import Stage
+    from execution.pipeline import Stage
     return [Stage('fake', worker_setup, fake_tracked, 2)]
 
 

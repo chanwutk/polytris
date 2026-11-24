@@ -10,10 +10,10 @@ import cv2
 import numpy as np
 import pytest
 
-from execution2 import main as m
-from execution2.config import Config, StageSystem, System
-from tests.execution2 import fake_stages as fs
-from tests.execution2.test_stages import make_cfg
+from execution import main as m
+from execution.config import Config, StageSystem, System
+from tests.execution import fake_stages as fs
+from tests.execution.test_stages import make_cfg
 
 
 def write_video(path: Path, n_frames: int, size=(32, 24)) -> str:
@@ -46,7 +46,7 @@ def videos(tmp_path) -> Path:
 
 def test_execute_writes_one_file_per_video_and_drops_the_dummy(tmp_path, videos):
     out = tmp_path / 'out'
-    before = set(glob.glob(os.path.join(tempfile.gettempdir(), 'execution2-*')))
+    before = set(glob.glob(os.path.join(tempfile.gettempdir(), 'execution-*')))
     summary = m.execute(cfg_with(tmp_path), str(videos), str(out), build=fs.fake_build)
     assert sorted(os.listdir(out)) == ['a.jsonl', 'b.jsonl', 'c.jsonl']
     # Each file holds that video's own result (the fake tags it with the video's frame count).
@@ -55,7 +55,7 @@ def test_execute_writes_one_file_per_video_and_drops_the_dummy(tmp_path, videos)
         assert rows == [{'frame_idx': 0, 'tracks': [[1.0, 0.0, 0.0, 10.0, float(n)]]}]
     assert summary['videos'] == 3 and summary['frames'] == 16 and summary['runtime_s'] >= 0
     # The dummy copy's temp dir is gone.
-    assert set(glob.glob(os.path.join(tempfile.gettempdir(), 'execution2-*'))) == before
+    assert set(glob.glob(os.path.join(tempfile.gettempdir(), 'execution-*'))) == before
 
 
 def test_single_video_still_times_one_interval(tmp_path):

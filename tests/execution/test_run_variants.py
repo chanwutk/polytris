@@ -1,4 +1,4 @@
-"""execution2.tools.run_variants: configs from selection rows, and runtimes recorded where p130 reads them."""
+"""execution.tools.run_variants: configs from selection rows, and runtimes recorded where p130 reads them."""
 
 import csv
 import json
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from execution2.tools import run_variants as rv
+from execution.tools import run_variants as rv
 
 ROW = {'variant_id': 'ShuffleNet05_60_4_040_r025_tr_s100_sortcython', 'classifier': 'ShuffleNet05', 'tilesize': '60',
        'sample_rate': '4', 'tracking_accuracy_threshold': '0.4', 'relevance_threshold': '0.25', 'tilepadding': 'tr',
@@ -38,7 +38,7 @@ def test_runtime_is_split_by_frame_share_and_sums_to_the_runtime():
     rows = rv.runtime_rows(record)
     assert [r['video'] for r in rows] == ['te00.mp4', 'te01.mp4']
     assert [r['time'] for r in rows] == pytest.approx([7.5, 2.5]) and sum(r['time'] for r in rows) == pytest.approx(10.0)
-    assert all(r['variant'] == 'polytris' and r['stage'] == 'execution2' for r in rows)
+    assert all(r['variant'] == 'polytris' and r['stage'] == 'execution' for r in rows)
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def write_table(root: Path, rows: list[dict]) -> Path:
 
 
 def write_record(root: Path, runtime_s: float) -> None:
-    path = root / 'jnc0' / 'tp' / 'execution2' / 'test' / f"{ROW['variant_id']}.json"
+    path = root / 'jnc0' / 'tp' / 'execution' / 'test' / f"{ROW['variant_id']}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({'dataset': 'jnc0', 'videoset': 'test', 'variant_id': ROW['variant_id'],
                                 'params': rv.parse_row(ROW), 'runtime_s': runtime_s, 'frames': 200,
@@ -82,7 +82,7 @@ def test_record_replaces_stale_rows_of_the_recorded_configurations_only(fake_eva
     assert rv.record_runtimes('jnc0', 'test') == 2
     rows = list(csv.DictReader(open(table, newline='')))
     test_rows = [r for r in rows if r['videoset'] == 'test' and r['variant_id'] == ROW['variant_id']]
-    assert [r['stage'] for r in test_rows] == ['execution2', 'execution2']
+    assert [r['stage'] for r in test_rows] == ['execution', 'execution']
     assert sum(float(r['time']) for r in test_rows) == pytest.approx(6.0)
     # Other variants and splits are untouched.
     assert any(r['variant_id'] == 'naive' for r in rows) and any(r['videoset'] == 'valid' for r in rows)

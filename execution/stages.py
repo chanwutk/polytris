@@ -1,5 +1,5 @@
 """
-The six execution2 stages (PLAN.md step 4).  Each matches its p0xx script's computation:
+The six execution stages (PLAN.md step 4).  Each matches its p0xx script's computation:
 
   decode    p020/p030 frame reading: every s-th frame plus the last, and each one's diff partner
             (idx-1, or idx+1 for frame 0), into one shared BGR block per video.
@@ -17,7 +17,7 @@ The six execution2 stages (PLAN.md step 4).  Each matches its p0xx script's comp
 
 Messages are NamedTuples keyed by the video's path; only small handles to shared blocks
 travel between stages, never pixels.  The computations, and the Decoded and Packed messages they take and
-return, live in execution2/operators.py (profiling shares them); this module adds the other messages and the
+return, live in execution/operators.py (profiling shares them); this module adds the other messages and the
 policy of who frees which block.
 """
 
@@ -26,16 +26,16 @@ from typing import NamedTuple
 
 import numpy as np
 
-from execution2 import frames, operators as ops
-from execution2.config import MISTRACK_TOLERANCES, Config
-from execution2.pipeline import Stage, Worker
+from execution import frames, operators as ops
+from execution.config import MISTRACK_TOLERANCES, Config
+from execution.pipeline import Stage, Worker
 # Re-exported: tests, tools, and main import these names from stages.
-from execution2.operators import (  # noqa: F401
+from execution.operators import (  # noqa: F401
     CLASSIFY_BATCH, DETECT_BATCH, DEVICE, PACK_MODE_BEST_FIT, PRUNE_TILEPADDING_MODE, PRUNE_TIME_LIMIT_S,
     detect_batch, frame_selection, unpack_detections,
 )
 # The decoded-video and packed-canvas messages are the operators' own types.
-from execution2.operators import Decoded, Packed
+from execution.operators import Decoded, Packed
 from polyis.utilities import TILEPADDING_MAPS, is_tile_padding
 
 

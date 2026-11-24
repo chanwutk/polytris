@@ -1,8 +1,8 @@
 #!/usr/local/bin/python
 """
-Run the execution2 pipeline over a directory of videos (PLAN.md "Interface", "Timing").
+Run the execution pipeline over a directory of videos (PLAN.md "Interface", "Timing").
 
-    python -m execution2.main --config <yaml> --videos <dir> --out <dir>
+    python -m execution.main --config <yaml> --videos <dir> --out <dir>
 
 Writes one <out>/<video stem>.jsonl per video (p060's tracking format) and prints one JSON line
 with the run's runtime.  Timing lives here, not in the pipeline: a copy of the last video is fed
@@ -24,10 +24,10 @@ from typing import Callable, NamedTuple
 
 import cv2
 
-from execution2 import frames
-from execution2.config import Config, ConfigError, load_config
-from execution2.pipeline import Stage, run
-from execution2.stages import Tracked, build_stages, frame_selection
+from execution import frames
+from execution.config import Config, ConfigError, load_config
+from execution.pipeline import Stage, run
+from execution.stages import Tracked, build_stages, frame_selection
 from polyis.utilities import save_tracking_results
 
 VIDEO_EXTENSIONS = ('.mp4', '.avi', '.mov', '.mkv')
@@ -146,7 +146,7 @@ def execute(cfg: Config, videos_dir: str, out_dir: str,
     check_shm_budget(cfg, infos)
     os.makedirs(out_dir, exist_ok=True)
 
-    tmp = tempfile.mkdtemp(prefix='execution2-')
+    tmp = tempfile.mkdtemp(prefix='execution-')
     try:
         # The dummy is the last video under another path, so the pipeline treats it as any other video.
         dummy = os.path.join(tmp, 'timing-dummy' + Path(videos[-1]).suffix)

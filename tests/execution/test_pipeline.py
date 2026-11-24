@@ -8,9 +8,9 @@ from functools import partial
 
 import pytest
 
-from execution2 import frames
-from execution2.pipeline import PipelineError, Stage, run
-from tests.execution2 import fake_stages as fs
+from execution import frames
+from execution.pipeline import PipelineError, Stage, run
+from tests.execution import fake_stages as fs
 
 
 def inputs(n):
@@ -211,7 +211,7 @@ def test_fan_out_none_output_is_an_error():
 def test_gpu_tuple_is_taken_by_workers_in_turn():
     # One message per worker would not guarantee every worker got one, so check the assignment rule itself
     # and that results only ever report GPUs from the tuple.
-    from execution2.pipeline import worker_gpu
+    from execution.pipeline import worker_gpu
     s = Stage('a', fs.worker_setup, fs.report_gpu, procs=5, gpu=(4, 6))
     assert [worker_gpu(s, k) for k in range(5)] == [4, 6, 4, 6, 4]
     results = list(run([s], inputs(20), queue_maxsize=2))

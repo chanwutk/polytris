@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from execution2 import frames
+from execution import frames
 
 
 @pytest.fixture

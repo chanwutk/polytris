@@ -1,4 +1,4 @@
-"""Tile relevance classification shared by scripts/p020_exec_classify.py and execution2."""
+"""Tile relevance classification shared by scripts/p020_exec_classify.py and execution."""
 
 import time
 from typing import cast

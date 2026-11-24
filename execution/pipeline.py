@@ -34,7 +34,7 @@ from typing import Any, Callable, Iterable, Iterator, NamedTuple
 
 import multiprocessing as mp
 
-from execution2 import frames
+from execution import frames
 
 # Shutdown marker on every queue.
 STOP = None
