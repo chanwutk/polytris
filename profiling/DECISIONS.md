@@ -236,3 +236,17 @@ jnc7's rerun agrees with its first run (1,426 s): its speed is real.  Wall clock
 canvases, since detection dominates: jnc7 packs 148k canvases (all branches) against 235k-303k for jnc0/2/6.
 caldot1-y05 2,268 s compares with 2,251 s for the earlier reduced run (clock started later there).
 Results under `measurements-results/profiling-sweep/batch2/<dataset>/`.
+
+### D34. Validation wall clocks on one GPU (ace, 2026-11-21 to 23, serial, merge on)
+Classifier and detector share GPU 0 (one detector process); CPU stages unchanged (2 decode, 4 pack, 4 track,
+4 evaluate).  Wall clock starts at the top of execute() (D32).
+| dataset | videos | frames | configurations run | wall clock | Pareto configurations |
+| --- | --- | --- | --- | --- | --- |
+| caldot1-y05 | 60 | 54,000 | 432 | 14,106 s (3.9 h) | 54 |
+| caldot2-y05 | 60 | 54,000 | 420 | 20,286 s (5.6 h) | 51 |
+| ams-y05 | 60 | 54,010 | 432 | 18,638 s (5.2 h) | 52 |
+| jnc0 | 5 | 5,375 | 432 | 16,135 s (4.5 h) | 61 |
+| jnc2 | 5 | 4,691 | 432 | 20,258 s (5.6 h) | 54 |
+| jnc6 | 5 | 5,194 | 420 | 15,449 s (4.3 h) | 56 |
+| jnc7 | 5 | 5,226 | 432 | 10,663 s (3.0 h) | 53 |
+Total 115,535 s (32.1 h).  Results under `measurements-results/profiling-sweep/gpu1/<dataset>/`.
