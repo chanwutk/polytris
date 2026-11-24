@@ -25,13 +25,13 @@ BOMBE_IMAGE set to the LEAP image. Without --run it prints what it would do. Act
           - raw/manifest.json: images, env provenance, and the checksum comparison of LEAP's videos with our clips.
   scored  Package the scored parsed results (SCRATCH/inputs/leap-dataset/outputs/parsed_results/<full_name>) as
           raw/<dataset>/leap_scored.jsonl.gz (one line per clip) and leap_scored_run.jsonl.gz (patterns, speed.tsv).
-  leap    Per dataset, one container on --gpu runs tetris-leap's experiments/run/run_leap.py (LEAP's main.py
+  leap    Per dataset, one container on --gpu runs experiments/leap/run/run_leap.py (LEAP's main.py
           loop plus the state export) under GNU time; writes raw/<dataset>/leap_rerun.jsonl.gz,
           leap_rerun_run.jsonl.gz, leap_rerun_launch.json (launcher summary, CPU set, contamination, GNU time),
           leap_rerun_samples.jsonl.gz, and LEAP's log and GNU time output as .log files.
   export  Rebuild the track exports (/sota-results/<dataset>/leap/<clip>.json format) of the rerun's and the scored
           parsed results with the scored runs' exporter (export-leap-outputs.py's reconstruct_tracks_json, run
-          unchanged by tetris-leap's experiments/eval/export_tracks.py in the LEAP image, CPU only):
+          unchanged by experiments/leap/eval/export_tracks.py in the LEAP image, CPU only):
           raw/<dataset>/leap_rerun_export.jsonl.gz and leap_scored_export.jsonl.gz.
   prep    Per --system, dataset, and step, time the system's preparation in one launcher container per step on --gpu
           under GNU time, writing only into SCRATCH/prep/<system>/<dataset>/. A step whose record exists with exit 0 is
@@ -81,11 +81,9 @@ SCRATCH = ROOT / 'scratch' / 'r1o2_leap_otif_rerun'
 TETRIS = Path('/work/cwkt/projects/tetris')
 RAW = TETRIS / 'experiments' / 'measurements-results' / 'r1o2_leap_otif_rerun' / 'raw'
 LAUNCHER = TETRIS / 'experiments/measurements_gpu' / 'bombe_container.sh'
-# LEAP runner, adaptations, and exporter wrapper from the tetris-baselines checkout's leap/ (chanwutk/tetris-leap),
-# beside the shared checkout as experiments/measurements/common.py's LEAP_ROOT expects; mounted read-only at /leap-tools.
-# The experiments/measurements_gpu originals stay unchanged because completed runs record their hashes.
-LEAP_CHECKOUT = TETRIS.parent / 'baselines' / 'leap'
-LEAP_TOOLS = '/leap-tools/experiments'
+# LEAP runner, adaptations, and exporter wrapper, copied from chanwutk/tetris-leap into experiments/leap/. The
+# experiments/measurements_gpu originals stay unchanged because completed runs record their hashes.
+LEAP_TOOLS = '/polyis/experiments/leap'
 RUNNER = f'{LEAP_TOOLS}/run/run_leap.py'
 # The exporter that wrote the scored /sota-results/<dataset>/leap/<clip>.json files.
 EXPORTER_SOURCE = Path('/work/alenachao/tunnel/work/scripts/export-leap-outputs.py')
@@ -356,9 +354,9 @@ def launch(gpu: int, docker_args: list[str], command: str, run: bool, image: str
 
 
 def common_mounts() -> list[str]:
-    """The workspace copy at LEAP's label path, the checkout copy, our LEAP tools, and GNU time, all read-only."""
+    """The workspace copy at LEAP's label path, the checkout copy, and GNU time, all read-only."""
     return ['-v', f'{SCRATCH}/inputs/leap-dataset:{LEAP_DATASET_MOUNT}:ro', '-v', f'{SCRATCH}/inputs/LEAP:{LEAP_CODE_MOUNT}:ro',
-            '-v', f'{LEAP_CHECKOUT}:/leap-tools:ro', '-v', f'/usr/bin/time:{GNU_TIME}:ro', '-e', 'PYTHONPATH=']
+            '-v', f'/usr/bin/time:{GNU_TIME}:ro', '-e', 'PYTHONPATH=']
 
 
 def leap(args):
@@ -424,8 +422,7 @@ def export(args):
                        '--out', f'/polyis/{(RAW / dataset / f"leap_{name}_export.jsonl.gz").relative_to(TETRIS)}']
             # CPU only and short, so no GPU and no launcher; a CPU quota keeps it light next to timed runs.
             sh(['docker', 'run', '--rm', '--cpus', '4', '-v', f'{SCRATCH}:/scratch', '-v', f'{TETRIS}:/polyis',
-                '-v', f'{LEAP_CHECKOUT}:/leap-tools:ro', '-e', 'PYTHONPATH=', LEAP_IMAGE, *command], args.run,
-               capture_output=True)
+                '-e', 'PYTHONPATH=', LEAP_IMAGE, *command], args.run, capture_output=True)
 
 
 def leap_prep_command(dataset: str, step: str) -> tuple[str, str]:

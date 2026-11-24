@@ -32,10 +32,6 @@ from experiments.leap_results import canonical_leap_result  # noqa: E402
 from tetris.trackeval.dataset import Dataset  # noqa: E402
 from tetris.utilities import dataset_root_name, load_tradeoff_data, split_tradeoff_variants  # noqa: E402
 
-# The LEAP fork (chanwutk/tetris-leap) is the leap/ submodule of the tetris-baselines checkout beside this repo:
-# the workspace's baselines/ locally, /work/cwkt/projects/baselines on ace and bombe. LEAP_ROOT overrides it.
-LEAP_ROOT = Path(os.environ.get('LEAP_ROOT', Path(__file__).resolve().parents[2].parent / 'baselines' / 'leap'))
-
 
 # Prior systems compared with Tetris, as named in the SOTA cache.
 PRIOR_SYSTEMS = ('otif', 'leap')

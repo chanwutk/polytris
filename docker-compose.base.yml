@@ -17,8 +17,6 @@ services:
       # - ${DATA}/otif-dataset:/otif-dataset
       - ${WORK}/../data/otif-dataset:/otif-dataset
       - ${WORK}/polytris-paper:/polytris-paper
-      # tetris-baselines (chanwutk/tetris-baselines), for LEAP's evaluator and tools.
-      - ${WORK}/baselines:/baselines
       # - ${WORK}/../data/polytris-data:/polytris-data
       - ${HOME}/.ssh:/root/.ssh
       - ${HOME}/.config:/root/.config
