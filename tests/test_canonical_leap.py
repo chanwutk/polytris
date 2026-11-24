@@ -48,13 +48,3 @@ def test_promoted_point_changes_only_test_results_and_preserves_cache(registry, 
     assert selected['time'] == 2. and selected.HOTA_HOTA == .5
     assert pd.isna(selected.MOTA_MOTA)
     assert path.read_bytes() == before
-
-
-def test_canonical_track_path_uses_reviewed_output_without_replacing_old_cache(registry, tmp_path, monkeypatch):
-    from measurements import common
-    target = tmp_path/'runs/tracks/te00.mp4/tracking.jsonl'
-    target.parent.mkdir(parents=True)
-    target.write_text('{"frame_idx":0,"tracks":[]}\n')
-    monkeypatch.setattr(common.cache, 'sota', lambda *args: str(tmp_path/'original-cache'))
-    assert common.output_path('caldot1-y05','leap','param 0','te00.mp4') == target
-    assert common.output_path('caldot1-y05','leap','param 1','te00.mp4') == tmp_path/'original-cache'

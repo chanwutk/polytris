@@ -4,7 +4,7 @@ from evaluation.p130_tradeoff_compute import build_tradeoff_table
 
 
 def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
-    # Build a split-level accuracy table with one Polytris row and one naive row.
+    # Build a split-level accuracy table with one Tetris row and one naive row.
     accuracy_df = pd.DataFrame([
         {
             'dataset': 'demo',
@@ -15,6 +15,7 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
             'tilesize': 60,
             'sample_rate': 2,
             'tracking_accuracy_threshold': pd.NA,
+            'relevance_threshold': 0.5,
             'tilepadding': 'none',
             'canvas_scale': 1.0,
             'tracker': 'bytetrackcython',
@@ -29,6 +30,7 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
             'tilesize': pd.NA,
             'sample_rate': pd.NA,
             'tracking_accuracy_threshold': pd.NA,
+            'relevance_threshold': pd.NA,
             'tilepadding': pd.NA,
             'canvas_scale': pd.NA,
             'tracker': pd.NA,
@@ -36,7 +38,7 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
         },
     ])
 
-    # Build the processed query runtime table with one Polytris config and one naive baseline.
+    # Build the processed query runtime table with one Tetris config and one naive baseline.
     query_df = pd.DataFrame([
         {'dataset': 'demo', 'videoset': 'test', 'video': 'te01.mp4', 'variant': 'polytris', 'variant_id': 'cfg_a', 'time': 1.0},
         {'dataset': 'demo', 'videoset': 'test', 'video': 'te01.mp4', 'variant': 'polytris', 'variant_id': 'cfg_a', 'time': 2.0},
@@ -55,15 +57,16 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
     # Build the canonical split-level tradeoff table.
     tradeoff_df = build_tradeoff_table(accuracy_df, query_df)
 
-    # Keep one split-level row for the Polytris variant and one for the naive baseline.
+    # Keep one split-level row for the Tetris variant and one for the naive baseline.
     assert sorted(tradeoff_df['variant_id'].tolist()) == ['cfg_a', 'naive']
 
-    # Validate the Polytris split-level aggregation.
-    polytris_row = tradeoff_df[tradeoff_df['variant_id'] == 'cfg_a'].iloc[0]
-    assert polytris_row['time'] == 7.0
-    assert polytris_row['frame_count'] == 150
-    assert polytris_row['throughput_fps'] == 150 / 7.0
-    assert polytris_row['classifier'] == 'ShuffleNet05'
+    # Validate the Tetris split-level aggregation.
+    tetris_row = tradeoff_df[tradeoff_df['variant_id'] == 'cfg_a'].iloc[0]
+    assert tetris_row['time'] == 7.0
+    assert tetris_row['frame_count'] == 150
+    assert tetris_row['throughput_fps'] == 150 / 7.0
+    assert tetris_row['classifier'] == 'ShuffleNet05'
+    assert tetris_row['relevance_threshold'] == 0.5
 
     # Validate the naive split-level aggregation and null parameter contract.
     naive_row = tradeoff_df[tradeoff_df['variant_id'] == 'naive'].iloc[0]
@@ -72,3 +75,4 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
     assert naive_row['throughput_fps'] == 150 / 4.5
     assert pd.isna(naive_row['classifier'])
     assert pd.isna(naive_row['sample_rate'])
+    assert pd.isna(naive_row['relevance_threshold'])

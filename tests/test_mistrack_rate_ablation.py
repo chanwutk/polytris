@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import re
 import sys
 from pathlib import Path
 
@@ -273,14 +274,15 @@ def test_build_rate_tables_invariant_highest_rate_meets_threshold():
                     )
 
 
-def test_heuristic_thresholds_cover_expected_range_in_2p5_percent_steps():
-    assert HEURISTIC_THRESHOLDS[0] == 30.0
-    assert HEURISTIC_THRESHOLDS[-1] == 100.0
-    assert len(HEURISTIC_THRESHOLDS) == 29
-    assert all(
-        current - previous == 2.5
-        for previous, current in zip(HEURISTIC_THRESHOLDS, HEURISTIC_THRESHOLDS[1:])
-    )
+def test_heuristic_thresholds_use_2p5_percent_steps_plus_1_percent_steps_above_90():
+    # 2.5% steps over 30-100%, refined to 1% steps over 90-100% where accuracy targets cluster.
+    coarse = [30.0 + 2.5 * i for i in range(29)]
+    fine = [90.0 + i for i in range(11)]
+    assert HEURISTIC_THRESHOLDS == tuple(sorted(set(coarse) | set(fine)))
+    assert len(HEURISTIC_THRESHOLDS) == 37
+    assert HEURISTIC_THRESHOLDS[0] == 30.0 and HEURISTIC_THRESHOLDS[-1] == 100.0
+    # Strictly increasing, so every threshold is distinct.
+    assert all(b > a for a, b in zip(HEURISTIC_THRESHOLDS, HEURISTIC_THRESHOLDS[1:]))
 
 
 def test_format_threshold_slug_supports_fractional_thresholds():
@@ -440,8 +442,8 @@ def test_annotate_pareto_flags_marks_exhaustive_frontier_only():
     )
 
 
-def test_annotate_pareto_flags_mistrack_vs_retention():
-    # mistrack_vs_retention: minimize mistrack (x), minimize retention (y).
+def test_annotate_pareto_flags_mistrack_vs_pruning():
+    # mistrack_vs_pruning: minimize mistrack (x), maximize pruning = minimize retention (y).
     # Point 'a' has (0.10, 0.60) which dominates 'b' (0.20, 0.65) and 'c' (0.30, 0.70).
     results_df = _make_pareto_test_data()
     flagged_df = annotate_pareto_flags(results_df)
@@ -449,13 +451,13 @@ def test_annotate_pareto_flags_mistrack_vs_retention():
     assert bool(
         flagged_df.loc[
             (flagged_df['grid_key'] == 'a') & (flagged_df['method'] == 'exhaustive'),
-            'is_pareto_mistrack_vs_retention',
+            'is_pareto_mistrack_vs_pruning',
         ].iloc[0]
     )
 
 
-def test_annotate_pareto_flags_retention_vs_hota():
-    # retention_vs_hota: minimize retention (x), maximize HOTA (y).
+def test_annotate_pareto_flags_pruning_vs_hota():
+    # pruning_vs_hota: maximize pruning = minimize retention (x), maximize HOTA (y).
     # Point 'a' has (0.60, 0.80) — best retention AND best HOTA.
     results_df = _make_pareto_test_data()
     flagged_df = annotate_pareto_flags(results_df)
@@ -463,7 +465,7 @@ def test_annotate_pareto_flags_retention_vs_hota():
     assert bool(
         flagged_df.loc[
             (flagged_df['grid_key'] == 'a') & (flagged_df['method'] == 'exhaustive'),
-            'is_pareto_retention_vs_hota',
+            'is_pareto_pruning_vs_hota',
         ].iloc[0]
     )
 
@@ -543,8 +545,8 @@ def _make_fake_results_df(dataset: str) -> pd.DataFrame:
             'anchor_incorrect': 10,
             'anchor_total': 100,
             'is_pareto_mistrack_vs_hota': True,
-            'is_pareto_mistrack_vs_retention': True,
-            'is_pareto_retention_vs_hota': True,
+            'is_pareto_mistrack_vs_pruning': True,
+            'is_pareto_pruning_vs_hota': True,
         },
         {
             'dataset': dataset,
@@ -562,8 +564,8 @@ def _make_fake_results_df(dataset: str) -> pd.DataFrame:
             'anchor_incorrect': 12,
             'anchor_total': 100,
             'is_pareto_mistrack_vs_hota': False,
-            'is_pareto_mistrack_vs_retention': False,
-            'is_pareto_retention_vs_hota': False,
+            'is_pareto_mistrack_vs_pruning': False,
+            'is_pareto_pruning_vs_hota': False,
         },
         {
             'dataset': dataset,
@@ -581,8 +583,8 @@ def _make_fake_results_df(dataset: str) -> pd.DataFrame:
             'anchor_incorrect': 18,
             'anchor_total': 100,
             'is_pareto_mistrack_vs_hota': False,
-            'is_pareto_mistrack_vs_retention': False,
-            'is_pareto_retention_vs_hota': False,
+            'is_pareto_mistrack_vs_pruning': False,
+            'is_pareto_pruning_vs_hota': False,
         },
     ])
 
@@ -720,10 +722,10 @@ def test_combine_visualize_emits_pareto_only_variant(tmp_path):
         full_html = by_name[f'{pair.slug}.html'].read_text()
         pareto_only_html = by_name[f'{pair.slug}_pareto_only.html'].read_text()
         assert full_html != pareto_only_html
-        # Full chart references the lightgray background scatter color; the
-        # pareto-only variant omits that layer and should not.
-        assert 'lightgray' in full_html
-        assert 'lightgray' not in pareto_only_html
+        # Full chart has the gray exhaustive background scatter; the
+        # pareto-only variant omits that layer.
+        assert re.search(r'"color":\s*"gray"', full_html)
+        assert not re.search(r'"color":\s*"gray"', pareto_only_html)
 
 
 def test_combine_visualize_output_lands_in_summary_dir(tmp_path):

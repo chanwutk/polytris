@@ -14,7 +14,6 @@ from evaluation.p201_compare_pareto import (
     create_speedup_chart,
     PRESENTATION_DROP_BAND_COLOR,
     PRESENTATION_MUTED_COLOR,
-    PRESENTATION_ROW_SPACING,
 )
 
 
@@ -282,12 +281,12 @@ def test_accuracy_gain_chart_uses_throughput_x_title():
 
 
 def test_compute_accuracy_gain_at_naive_speedup_levels_discrete_anchors():
-    # One result row per SOTA Pareto point; Polytris chosen by strict faster runtime
+    # One result row per SOTA Pareto point; Tetris chosen by strict faster runtime
     # then max accuracy gain (tie-break: higher acc, then lower time).
     naive_df = pd.DataFrame([
         {'dataset': 'demo', 'time': 100.0, 'HOTA_HOTA': 0.60, 'frame_count': 100.0},
     ])
-    polytris_df = pd.DataFrame([
+    tetris_df = pd.DataFrame([
         {'dataset': 'demo', 'time': 50.0, 'HOTA_HOTA': 0.80, 'frame_count': 100.0},
         {'dataset': 'demo', 'time': 25.0, 'HOTA_HOTA': 0.70, 'frame_count': 100.0},
     ])
@@ -297,7 +296,7 @@ def test_compute_accuracy_gain_at_naive_speedup_levels_discrete_anchors():
     ])
 
     result = compute_accuracy_gain_at_naive_speedup_levels(
-        polytris_df,
+        tetris_df,
         {'otif': sota_df},
         naive_df,
         'HOTA_HOTA',
@@ -308,17 +307,17 @@ def test_compute_accuracy_gain_at_naive_speedup_levels_discrete_anchors():
     ).reset_index(drop=True)
     assert len(non_null) == 2
     assert non_null['system'].tolist() == ['OTIF', 'OTIF']
-    # Anchor (100, 0.75): 100 frames / 100 s = 1 FPS; Polytris faster than 100 -> (50, 0.80); gain 0.05
+    # Anchor (100, 0.75): 100 frames / 100 s = 1 FPS; Tetris faster than 100 -> (50, 0.80); gain 0.05
     assert non_null.loc[0, 'throughput_fps'] == pytest.approx(1.0)
     assert non_null.loc[0, 'accuracy_gain'] == pytest.approx(0.05)
-    # Anchor (50, 0.65): 100 frames / 50 s = 2 FPS; Polytris faster than 50 -> (25, 0.70); gain 0.05
+    # Anchor (50, 0.65): 100 frames / 50 s = 2 FPS; Tetris faster than 50 -> (25, 0.70); gain 0.05
     assert non_null.loc[1, 'throughput_fps'] == pytest.approx(2.0)
     assert non_null.loc[1, 'accuracy_gain'] == pytest.approx(0.05)
     assert (non_null['naive_time'] == 100.0).all()
 
 
 def test_compute_speedup_at_accuracy_levels_discrete_anchors():
-    polytris_df = pd.DataFrame([
+    tetris_df = pd.DataFrame([
         {'dataset': 'demo', 'time': 5.0, 'HOTA_HOTA': 0.82},
         {'dataset': 'demo', 'time': 10.0, 'HOTA_HOTA': 0.90},
         {'dataset': 'demo', 'time': 20.0, 'HOTA_HOTA': 0.85},
@@ -330,20 +329,20 @@ def test_compute_speedup_at_accuracy_levels_discrete_anchors():
     ])
 
     result = compute_speedup_at_accuracy_levels(
-        polytris_df,
+        tetris_df,
         {'otif': sota_df},
         'HOTA_HOTA',
         'time',
     )
 
     by_acc = result.set_index('accuracy_level').sort_index()
-    # acc 0.80: feasible Polytris acc > 0.8 includes (5,0.82); min time 5 -> 15/5
+    # acc 0.80: feasible Tetris acc > 0.8 includes (5,0.82); min time 5 -> 15/5
     assert by_acc.loc[0.80, 'speedup_ratio'] == pytest.approx(3.0)
     assert by_acc.loc[0.80, 'polytris_time'] == pytest.approx(5.0)
-    # acc 0.70: all three Polytris rows qualify; min time 5 -> 30/5
+    # acc 0.70: all three Tetris rows qualify; min time 5 -> 30/5
     assert by_acc.loc[0.70, 'speedup_ratio'] == pytest.approx(6.0)
     assert by_acc.loc[0.70, 'polytris_time'] == pytest.approx(5.0)
-    # acc 0.95: no Polytris strictly above 0.95
+    # acc 0.95: no Tetris strictly above 0.95
     assert pd.isna(by_acc.loc[0.95, 'speedup_ratio'])
 
 
@@ -375,7 +374,7 @@ def test_filter_pareto_per_dataset_minimize_time():
     assert set(result['time']) == {10.0, 20.0}
 
 
-def test_presentation_summary_uses_top_legend_and_single_line_titles():
+def test_presentation_summary_is_single_pareto_chart_with_focus_and_drop_band():
     df_throughput = pd.DataFrame([
         {'system': 'Tetris', 'dataset': 'demo', 'classifier': 'ShuffleNet05',
          'sample_rate': 1, 'tracking_accuracy_threshold': pd.NA,
@@ -403,56 +402,28 @@ def test_presentation_summary_uses_top_legend_and_single_line_titles():
          'canvas_scale': pd.NA, 'tracker': pd.NA,
          'throughput_fps': 40.0, 'time': 2.5, 'HOTA_HOTA': 0.68},
     ])
-    df_speedup = pd.DataFrame([
-        {'dataset': 'demo', 'accuracy_level': 0.70, 'system': 'OTIF',
-         'comparison_system': 'OTIF', 'speedup_ratio': 2.0,
-         'polytris_time': 1.0, 'other_time': 2.0},
-        {'dataset': 'demo', 'accuracy_level': 0.68, 'system': 'LEAP',
-         'comparison_system': 'LEAP', 'speedup_ratio': 1.5,
-         'polytris_time': 1.0, 'other_time': 1.5},
-    ])
-    df_accuracy_gain = pd.DataFrame([
-        {'dataset': 'demo', 'throughput_fps': 60.0, 'naive_time': 5.0,
-         'system': 'OTIF', 'comparison_system': 'OTIF',
-         'accuracy_gain': 0.10, 'polytris_accuracy': 0.80,
-         'other_accuracy': 0.70},
-        {'dataset': 'demo', 'throughput_fps': 40.0, 'naive_time': 5.0,
-         'system': 'LEAP', 'comparison_system': 'LEAP',
-         'accuracy_gain': 0.12, 'polytris_accuracy': 0.80,
-         'other_accuracy': 0.68},
-    ])
-
-    chart = create_hota_presentation_summary_chart(
-        df_throughput,
-        df_speedup,
-        df_accuracy_gain,
-        focus_systems={'Tetris'},
-    )
+    # The slide chart is a single faceted HOTA vs Throughput Pareto chart titled below the plots.
+    chart = create_hota_presentation_summary_chart(df_throughput, focus_systems={'Tetris'})
     spec = chart.to_dict()
+    assert spec['title']['text'] == 'HOTA vs Throughput'
+    assert spec['title']['orient'] == 'bottom'
+    assert 'vconcat' not in spec and 'facet' in spec
 
-    assert spec['config']['legend']['orient'] == 'top'
-    assert spec['spacing'] == PRESENTATION_ROW_SPACING
-    assert [row['title']['text'] for row in spec['vconcat']] == [
-        'HOTA vs Throughput',
-        'Speedup at Matched HOTA',
-        'HOTA Gain at Matched Throughput',
-    ]
-
-    color_scale = spec['vconcat'][0]['spec']['layer'][0]['encoding']['color']['scale']
+    # Ablation curves are dropped; the focus system keeps its color and the rest are muted.
+    layers = spec['spec']['layer']
+    assert [layer['mark']['type'] for layer in layers] == ['line', 'point']
+    color_scale = layers[-1]['encoding']['color']['scale']
     assert color_scale['domain'] == ['Tetris', 'Reference', 'OTIF', 'LEAP']
     assert color_scale['range'][0] != PRESENTATION_MUTED_COLOR
     assert color_scale['range'][1:] == [PRESENTATION_MUTED_COLOR] * 3
 
-    band_chart = create_hota_presentation_summary_chart(
-        df_throughput,
-        df_speedup,
-        df_accuracy_gain,
-        show_reference_drop_band=True,
-    )
-    band_layers = band_chart.to_dict()['vconcat'][0]['spec']['layer']
-    assert band_layers[0]['mark']['type'] == 'rect'
+    # The reference-drop variant adds a shaded band and a rule at the dropped HOTA, behind the curves.
+    band_chart = create_hota_presentation_summary_chart(df_throughput, show_reference_drop_band=True)
+    band_layers = band_chart.to_dict()['spec']['layer']
+    assert [layer['mark']['type'] for layer in band_layers] == ['rect', 'rule', 'line', 'point']
     assert band_layers[0]['mark']['color'] == PRESENTATION_DROP_BAND_COLOR
     assert band_layers[0]['mark']['opacity'] == 0.3
-    assert band_layers[1]['mark']['type'] == 'rule'
     assert band_layers[1]['mark']['color'] == PRESENTATION_DROP_BAND_COLOR
     assert band_layers[1]['encoding']['y']['field'] == 'drop_hota'
+    # Without a focus set every system keeps its own color.
+    assert PRESENTATION_MUTED_COLOR not in band_layers[-1]['encoding']['color']['scale']['range']
