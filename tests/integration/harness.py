@@ -9,7 +9,7 @@ small trained artifacts) and never touches /polyis-data or /polyis-cache:
   <tmp>/global.yaml                               configs/global.yaml with the test's grid and the scratch paths
 
 The scripts, the profiling sweep, execution and the p022 mirror each run as a subprocess with CONFIG pointing at that
-file: the scripts and several polyis modules read the config (dataset and cache paths, the grid) when imported.
+file: the scripts and several tetris modules read the config (dataset and cache paths, the grid) when imported.
 """
 
 import os

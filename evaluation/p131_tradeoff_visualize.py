@@ -45,7 +45,7 @@ def prepare_plot_df(tradeoff_df, x_column: str):
     # Split the canonical tradeoff table into Tetris and naive subsets.
     tetris_df, naive_df = split_tradeoff_variants(tradeoff_df)
     # Fail fast when the canonical tradeoff table does not contain Tetris rows.
-    assert not tetris_df.empty, "No Polytris tradeoff rows found"
+    assert not tetris_df.empty, "No Tetris tradeoff rows found"
     # Fail fast when the canonical tradeoff table does not contain naive rows.
     assert not naive_df.empty, "No naive baseline rows found"
 

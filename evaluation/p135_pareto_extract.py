@@ -64,7 +64,7 @@ def main(args):
         tetris_df = tetris_df[tetris_df['classifier'] != 'Perfect'].copy()
 
         if tetris_df.empty:
-            print(f"  Warning: No valid Polytris rows found for {dataset}; skipping")
+            print(f"  Warning: No valid Tetris rows found for {dataset}; skipping")
             continue
 
         # Compute a Pareto front for each ablation condition and collect the union.

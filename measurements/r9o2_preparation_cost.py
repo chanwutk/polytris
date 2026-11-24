@@ -1198,7 +1198,7 @@ def retiming_section(con: duckdb.DuckDBPyConnection, dataset: str, components: d
         loading = rounded(dict(
             basis='measured: get_detector as p040 calls it, in a fresh process (CUDA start-up, then constructions), '
                   "without p040's warm-up; it passes batch_size 16 and num_images 0 where p040 passes 4 and the first "
-                  "video's image count, which only polyis's yolov3 detector reads (these datasets use ultralytics and "
+                  "video's image count, which only tetris's yolov3 detector reads (these datasets use ultralytics and "
                   'RetinaNet)',
             device=load['device'], cuda_init_s=load['cuda_init_s'], load_s=load['load_s'],
             first_load_s=load['first_load_s'], warm_load_s=load['warm_load_s'], cold_process_s=cold,

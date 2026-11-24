@@ -1572,7 +1572,7 @@ def load_tradeoff_data(dataset: str):
 
 def split_tradeoff_variants(tradeoff_df: "pd.DataFrame") -> tuple["pd.DataFrame", "pd.DataFrame"]:
     """
-    Split the canonical tradeoff table into Polytris and naive subsets.
+    Split the canonical tradeoff table into Tetris and naive subsets.
 
     Args:
         tradeoff_df: Canonical split-level tradeoff table

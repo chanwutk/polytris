@@ -47,7 +47,7 @@ cp -a --reflink=always /data/cwkt/data/bombe-revision/mirror/polyis-cache/jnc0 \
 # On bombe, in a detached tmux session for anything long.
 cd /work/cwkt/projects/tetris
 measurements-gpu/bombe_container.sh <GPU 0-6> /data/cwkt/data/bombe-revision/scratch/<track> '<command>' >> <log> 2>&1
-# Smoke test: GPU, polyis, all 17 Cython modules, duckdb, mounts, Gurobi.
+# Smoke test: GPU, tetris, all 17 Cython modules, duckdb, mounts, Gurobi.
 measurements-gpu/bombe_container.sh 4 /data/cwkt/data/bombe-revision/scratch/<track> 'python measurements-gpu/bombe_check.py'
 ```
 

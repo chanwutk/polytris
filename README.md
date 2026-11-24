@@ -4,10 +4,9 @@
 
 <h1 align="center">Tile-level Sampling for Efficient and High-Fidelity Video Object Tracking</h1>
 
-> The codebase still uses the legacy identifier `polyis` for directory names,
-> container names, and environment variables (`POLYIS_DATA`, `POLYIS_CACHE`).
-> Treat `polyis` and `Tetris` as the same project; only the public-facing
-> name has changed.
+> The Python package is `tetris`. The Docker setup still uses the legacy name
+> `polyis` for the container, the in-container paths (`/polyis`, `/polyis-data`,
+> `/polyis-cache`), and the environment variables (`POLYIS_DATA`, `POLYIS_CACHE`).
 
 ## Overview
 

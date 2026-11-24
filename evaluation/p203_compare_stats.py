@@ -205,7 +205,7 @@ def select_most_accurate_not_more_accurate_prior_row(
     prior_dfs_by_system: Mapping[str, pd.DataFrame],
     tetris_hota: float,
 ) -> pd.Series | None:
-    """Return the most accurate prior-system row whose HOTA is not above Polytris."""
+    """Return the most accurate prior-system row whose HOTA is not above Tetris."""
     # Track the current best prior row across all systems.
     best_row: pd.Series | None = None
 
@@ -286,7 +286,7 @@ def select_accuracy_matched_prior_row(
 
 
 def load_tetris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Load canonical test-split Polytris and naive tradeoff rows for all datasets."""
+    """Load canonical test-split Tetris and naive tradeoff rows for all datasets."""
     # Collect one Tetris tradeoff DataFrame per dataset.
     tetris_frames: list[pd.DataFrame] = []
     # Collect one naive tradeoff DataFrame per dataset.
@@ -648,7 +648,7 @@ def select_best_tetris_for_prior_point(
     throughput_col: str = THROUGHPUT_COL,
     accuracy_col: str = ACCURACY_COL,
 ) -> pd.Series | None:
-    """Return the highest-HOTA Polytris Pareto point that is at least as fast as a prior row."""
+    """Return the highest-HOTA Tetris Pareto point that is at least as fast as a prior row."""
     # Restrict the candidate pool to the prior row's dataset.
     dataset = prior_row['dataset']
     dataset_df = tetris_pareto_df[tetris_pareto_df['dataset'] == dataset]
@@ -672,7 +672,7 @@ def build_dominance_detail_table(
     tetris_pareto_df: pd.DataFrame,
     combined_prior_pareto_df: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Build one per-(dataset, prior Pareto point) dominance table against Polytris."""
+    """Build one per-(dataset, prior Pareto point) dominance table against Tetris."""
     # Collect one row per (dataset, prior point).
     rows: list[dict[str, object]] = []
 
@@ -987,7 +987,7 @@ def main() -> None:
     tetris_df, naive_df = load_tetris_and_naive_test_data(DATASETS)
 
     # Fail fast when the expected Tetris or naive data is missing.
-    assert not tetris_df.empty, 'No Polytris tradeoff rows found for the test split.'
+    assert not tetris_df.empty, 'No Tetris tradeoff rows found for the test split.'
     assert not naive_df.empty, 'No naive oracle rows found for the test split.'
 
     # Build the dataset-local frame-count lookup for prior-system throughput.

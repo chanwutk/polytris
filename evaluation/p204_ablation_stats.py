@@ -36,7 +36,7 @@ def parse_args():
 
 
 def load_tetris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Load canonical test-split Polytris and naive tradeoff rows for all datasets."""
+    """Load canonical test-split Tetris and naive tradeoff rows for all datasets."""
     tetris_frames: list[pd.DataFrame] = []
     naive_frames: list[pd.DataFrame] = []
 
@@ -186,7 +186,7 @@ def main():
 
     tetris_df, naive_df = load_tetris_and_naive_test_data(DATASETS)
 
-    assert not tetris_df.empty, 'No Polytris tradeoff rows found for the test split.'
+    assert not tetris_df.empty, 'No Tetris tradeoff rows found for the test split.'
     assert not naive_df.empty, 'No naive oracle rows found for the test split.'
 
     stats_df = compute_ablation_stats(DATASETS, tetris_df, naive_df, threshold=0.05)

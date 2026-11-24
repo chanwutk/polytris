@@ -248,8 +248,8 @@ def select_test_points_from_valid_pareto(
     Select test points whose parameter sets appear on the valid Pareto front.
 
     Args:
-        valid_df: Videoset-level Polytris rows for valid split
-        test_df: Videoset-level Polytris rows for test split
+        valid_df: Videoset-level Tetris rows for valid split
+        test_df: Videoset-level Tetris rows for test split
         accuracy_col: Accuracy metric column used for Pareto computation
         time_col: Runtime metric column used for Pareto computation
 

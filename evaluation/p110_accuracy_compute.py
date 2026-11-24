@@ -183,7 +183,7 @@ def build_metric_objects(metrics_list: list[str]) -> list[HOTA | CLEAR | Identit
 
 
 def run_trackeval(dataset_config: dict, metrics: list, output_dir: str, n_sequences: int) -> dict:
-    """Run TrackEval on one polyis Dataset with p110's evaluator settings; return the per-sequence results.
+    """Run TrackEval on one tetris Dataset with p110's evaluator settings; return the per-sequence results.
 
     The result maps each sequence (and 'COMBINED_SEQ') to TrackEval's per-class metric dicts.  Shared by
     p110 and profiling's evaluate stage so both score tracks identically.

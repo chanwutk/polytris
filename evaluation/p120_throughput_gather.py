@@ -75,7 +75,7 @@ def assert_and_filter_tetris_runtime_paths(manifest_df: pd.DataFrame, datasets: 
         # Assert that all valid-split runtime files are present.
         missing = manifest_df[~manifest_df['runtime_file'].map(os.path.exists)]
         assert missing.empty, (
-            f"Missing Polytris valid runtime paths:\n"
+            f"Missing Tetris valid runtime paths:\n"
             f"{missing[['stage', 'dataset', 'videoset', 'video', 'variant_id', 'runtime_file']].head(20)}"
         )
         return manifest_df
