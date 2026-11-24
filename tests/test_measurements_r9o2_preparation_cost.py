@@ -793,7 +793,7 @@ def world(tmp_path, monkeypatch, con):
     monkeypatch.setitem(prep.DATASET_LABELS, DS, 'Fake')
     monkeypatch.setattr(prep, 'build_index_construction_manifest', lambda datasets: index)
     monkeypatch.setattr(prep, 'split_manifest', split_manifest)
-    monkeypatch.setattr(prep, 'build_polytris_variant_manifest', lambda: pd.DataFrame({'variant_id': [POINT, OTHER]}))
+    monkeypatch.setattr(prep, 'build_tetris_variant_manifest', lambda: pd.DataFrame({'variant_id': [POINT, OTHER]}))
     monkeypatch.setattr(prep.cache, 'index', lambda dataset, stage, *a: tmp_path.joinpath('cache', dataset, 'indexing',
                                                                                          cache.INDEX_STAGE_MAP[stage], *a))
     monkeypatch.setattr(prep, 'load_test_tradeoff', fake_tradeoff(WORLD_TRADEOFF, reference_fps=30 / 3.15))
