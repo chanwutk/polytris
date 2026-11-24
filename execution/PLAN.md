@@ -5,7 +5,7 @@ Replaces `execution/`. Decisions below were agreed in review on 2026-11-20 (issu
 ## Interface
 
 ```
-python execution/main.py --config <yaml> --videos <dir> --out <dir>
+python -m execution.main --config <yaml> --videos <dir> --out <dir>
 ```
 
 - Writes one `<out>/<video stem>.jsonl` per video, in p060's format (`save_tracking_results`).
