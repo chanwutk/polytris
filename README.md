@@ -51,13 +51,12 @@ Citation will be added on publication.
 ## Setup
 
 The development environment is Docker-first. The repo ships a
-`docker-compose.yml` that extends `docker-compose.base.yml` and adds GPU
-reservations. You should not need to edit either file for a default install —
-just set the host paths via a `.env` file.
+`docker-compose.yml` with GPU reservations. You should not need to edit it for
+a default install — just set the host paths via a `.env` file.
 
 ### 1. Create a `.env` file at the repo root
 
-`docker-compose.base.yml` reads `${DATA}` and `${WORK}` from the environment
+`docker-compose.yml` reads `${DATA}` and `${WORK}` from the environment
 to locate your dataset and work-area parents. Create `.env` next to
 `docker-compose.yml`:
 
@@ -76,7 +75,7 @@ The resulting mounts will be:
 | `${WORK}/../data/otif-dataset`           | `/otif-dataset`    | Raw OTIF videos                          |
 | `${HOME}/.gurobi/gurobi.lic`             | Gurobi license     | ILP solver license                       |
 
-`docker-compose.base.yml` also includes a few mounts that are specific to the
+`docker-compose.yml` also includes a few mounts that are specific to the
 author's environment (`/sota-results`, `/polytris-paper`). If you do not have
 those paths, comment out the corresponding lines. They are only required for
 SOTA comparisons and paper-figure rendering.

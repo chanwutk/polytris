@@ -20,7 +20,6 @@ includes:
     - "requirements.txt"
     - "Dockerfile"
     - "docker-compose.yml"
-    - "docker-compose.base.yml"
     - "environment.yml"
     - "run"
     - "dock"

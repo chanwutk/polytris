@@ -86,7 +86,7 @@ trap 'rm -f "$S/samples/$RUN.running"; kill "$SMI" 2> /dev/null; docker rm -f "$
     sleep 1
   done > "$SAMPLES" ) &
 SAMPLER=$!
-# Mounts and environment mirror ace's docker-compose.base.yml; the inputs are bombe's read-only mirror of ace's data.
+# Mounts and environment mirror ace's docker-compose.yml; the inputs are bombe's read-only mirror of ace's data.
 # duckdb (pip-installed in ace's container, absent from the image) comes from $ROOT/pylib on PYTHONPATH; the trailing
 # empty entry is the image's own (the working directory, /polyis), through which scripts import tetris and measurements.
 docker run --rm --name "$NAME" --cidfile "$CIDFILE" --gpus "device=$G" --network host --hostname "$(hostname)" \

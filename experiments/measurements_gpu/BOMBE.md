@@ -56,7 +56,7 @@ experiments/measurements_gpu/bombe_container.sh 4 /data/cwkt/data/bombe-revision
 - Mounts: the checkout at `/polyis` (read-write, so `measurements-results/` lands in the shared checkout),
   `<scratch>` at `/scratch`, `<scratch>/polyis-cache` at `/polyis-cache`, the mirror at `/polyis-data`,
   `/otif-dataset`, and `/sota-results` (read-only), `pylib/` on `PYTHONPATH`, and `~/.gurobi/gurobi.lic` at
-  `/opt/gurobi/gurobi.lic`. The environment matches ace's `docker-compose.base.yml` (`POLYIS_DATA`, `POLYIS_CACHE`,
+  `/opt/gurobi/gurobi.lic`. The environment matches ace's `docker-compose.yml` (`POLYIS_DATA`, `POLYIS_CACHE`,
   `PYTHONWARNINGS`, host network, 8 GB `/dev/shm`, tmpfs `/tmp`).
 - `CONFIG=/scratch/global.yaml`, copied from `configs/global.yaml` on first use and then kept, so a track can narrow
   `EXEC.DATASETS` without touching the checkout's config (which ace's runs read).
