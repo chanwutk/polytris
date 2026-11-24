@@ -22,7 +22,7 @@ Set `DATA` to an absolute directory on the host and put that same assignment
 in `.env` in the repository root. Docker mounts
 `$DATA/polyis-data` at `/polyis-data` and `$DATA/polyis-cache` at
 `/polyis-cache`. The download script creates these directories. Optionally set
-`SHM_SIZE` in `.env` too (default `48gb`); see
+`SHM_SIZE` in `.env` too (default `128gb`); see
 [Run one configuration with execution2](#run-one-configuration-with-execution2).
 
 ```sh
