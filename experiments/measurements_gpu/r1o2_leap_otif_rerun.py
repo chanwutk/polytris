@@ -81,9 +81,11 @@ SCRATCH = ROOT / 'scratch' / 'r1o2_leap_otif_rerun'
 TETRIS = Path('/work/cwkt/projects/tetris')
 RAW = TETRIS / 'experiments' / 'measurements-results' / 'r1o2_leap_otif_rerun' / 'raw'
 LAUNCHER = TETRIS / 'experiments/measurements_gpu' / 'bombe_container.sh'
-# LEAP runner, adaptations, and exporter wrapper from the tetris-leap submodule (baselines/tetris-leap). The
-# experiments/measurements_gpu originals stay unchanged because completed runs record their hashes.
-LEAP_TOOLS = '/polyis/baselines/tetris-leap/experiments'
+# LEAP runner, adaptations, and exporter wrapper from the tetris-baselines checkout's leap/ (chanwutk/tetris-leap),
+# beside the shared checkout as experiments/measurements/common.py's LEAP_ROOT expects; mounted read-only at /leap-tools.
+# The experiments/measurements_gpu originals stay unchanged because completed runs record their hashes.
+LEAP_CHECKOUT = TETRIS.parent / 'baselines' / 'leap'
+LEAP_TOOLS = '/leap-tools/experiments'
 RUNNER = f'{LEAP_TOOLS}/run/run_leap.py'
 # The exporter that wrote the scored /sota-results/<dataset>/leap/<clip>.json files.
 EXPORTER_SOURCE = Path('/work/alenachao/tunnel/work/scripts/export-leap-outputs.py')
@@ -354,9 +356,9 @@ def launch(gpu: int, docker_args: list[str], command: str, run: bool, image: str
 
 
 def common_mounts() -> list[str]:
-    """The workspace copy at LEAP's label path, the checkout copy, and GNU time, all read-only."""
+    """The workspace copy at LEAP's label path, the checkout copy, our LEAP tools, and GNU time, all read-only."""
     return ['-v', f'{SCRATCH}/inputs/leap-dataset:{LEAP_DATASET_MOUNT}:ro', '-v', f'{SCRATCH}/inputs/LEAP:{LEAP_CODE_MOUNT}:ro',
-            '-v', f'/usr/bin/time:{GNU_TIME}:ro', '-e', 'PYTHONPATH=']
+            '-v', f'{LEAP_CHECKOUT}:/leap-tools:ro', '-v', f'/usr/bin/time:{GNU_TIME}:ro', '-e', 'PYTHONPATH=']
 
 
 def leap(args):
@@ -422,7 +424,8 @@ def export(args):
                        '--out', f'/polyis/{(RAW / dataset / f"leap_{name}_export.jsonl.gz").relative_to(TETRIS)}']
             # CPU only and short, so no GPU and no launcher; a CPU quota keeps it light next to timed runs.
             sh(['docker', 'run', '--rm', '--cpus', '4', '-v', f'{SCRATCH}:/scratch', '-v', f'{TETRIS}:/polyis',
-                '-e', 'PYTHONPATH=', LEAP_IMAGE, *command], args.run, capture_output=True)
+                '-v', f'{LEAP_CHECKOUT}:/leap-tools:ro', '-e', 'PYTHONPATH=', LEAP_IMAGE, *command], args.run,
+               capture_output=True)
 
 
 def leap_prep_command(dataset: str, step: str) -> tuple[str, str]:

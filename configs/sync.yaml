@@ -46,7 +46,6 @@ includes:
     - "tests"
     - "demo"
     - "experiments"
-    - "baselines"
 
   # File extensions to include within each directory
   extensions:

@@ -46,7 +46,7 @@ done
 
 score_queries() {
   for d in "${B3D[@]}"; do
-    py "$PAPER/scripts/score_leap_queries.py" --evaluator /polyis/baselines/tetris-leap/evaluate.py \
+    py "$PAPER/scripts/score_leap_queries.py" --evaluator /baselines/leap/evaluate.py \
       --native-intervals "$EVIDENCE/native_intervals.json" --output "$RESULTS/r1o2_leap_original_evaluator/$d.json" --datasets "$d"
   done
 }

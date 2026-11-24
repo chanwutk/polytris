@@ -7,14 +7,19 @@ import numpy as np
 import pytest
 import torch
 
+from experiments.measurements.common import LEAP_ROOT
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def load(name, filename):
     # Load host-side scripts without requiring experiments/measurements_gpu to be a Python package; paths with a '/' are relative
-    # to the tetris-leap submodule's experiments/, whose scripts the harness runs.
-    base = ROOT / 'baselines' / 'tetris-leap' / 'experiments' if '/' in filename else ROOT / 'experiments/measurements_gpu'
+    # to the LEAP checkout's experiments/ (tetris-baselines, outside this repo), whose scripts the harness runs.
+    base = LEAP_ROOT / 'experiments' if '/' in filename else ROOT / 'experiments/measurements_gpu'
+    # Skip, not fail, when that checkout is absent: it is not part of this repo.
+    if not base.is_dir():
+        pytest.skip(f'no LEAP checkout at {LEAP_ROOT}; clone tetris-baselines beside this repo or set LEAP_ROOT')
     spec = importlib.util.spec_from_file_location(name, base / filename)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

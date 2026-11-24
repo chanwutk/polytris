@@ -8,13 +8,18 @@ import sys
 import pytest
 
 from experiments.evaluation.p140_otif_transform import unwrap_leap_frames
+from experiments.measurements.common import LEAP_ROOT
 
 
 import numpy as np
 
 
 # The exporter wrapper the LEAP runs call, and the exporter LEAP's scored outputs were written with.
-EVAL = Path(__file__).resolve().parents[2] / 'baselines/tetris-leap/experiments/eval'
+EVAL = LEAP_ROOT / 'experiments/eval'
+# The exporter lives in the tetris-baselines checkout, outside this repo; without it there is nothing to test.
+if not EVAL.is_dir():
+    pytest.skip(f'no LEAP checkout at {LEAP_ROOT}; clone tetris-baselines beside this repo or set LEAP_ROOT',
+                allow_module_level=True)
 SPEC = importlib.util.spec_from_file_location('leap_export', EVAL / 'export_tracks.py')
 EXPORT = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(EXPORT)
