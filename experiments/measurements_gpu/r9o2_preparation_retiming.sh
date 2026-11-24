@@ -49,7 +49,7 @@ case "$CMD" in
       "python experiments/measurements_gpu/r9o2_preparation_cost.py --run --gpu 0 --scratch /scratch/retime --steps $STEPS --datasets $*"
     ;;
   collect)
-    OUT=$TETRIS/measurements-results/r9o2_preparation_retiming
+    OUT=$TETRIS/experiments/measurements-results/r9o2_preparation_retiming
     mkdir -p "$OUT/logs"
     # One file per record kind across both GPUs (each GPU's plan appended to its own scratch copy).
     cat "$TRACK"/g*/retime/timings.jsonl > "$OUT/timings.jsonl"

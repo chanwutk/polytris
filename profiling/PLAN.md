@@ -99,7 +99,7 @@ throwaway containers, so the Figure 8 job running from `/work/cwkt/projects/tetr
 ## Build order
 
 1. ~~`execution/operators.py` refactor; verify [12A] on the separate ace checkout~~: done (f588aed).
-   On the ace checkout, 1435 of 1437 tests pass (1 skipped; the 1 failure needs a `measurements-results/` export the checkout does not have), and `compare_scripts` on caldot1-y05 te00-te02 is unchanged for both configs: classify, prune, pack identical; bit-identical in p040's order; end-to-end tracks equal up to id renaming.
+   On the ace checkout, 1435 of 1437 tests pass (1 skipped; the 1 failure needs a `experiments/measurements-results/` export the checkout does not have), and `compare_scripts` on caldot1-y05 te00-te02 is unchanged for both configs: classify, prune, pack identical; bit-identical in p040's order; end-to-end tracks equal up to id renaming.
    The ace checkout needs, besides `./sync --config <copy with path /work/cwkt/projects/tetris-profiling>`: the compiled `.so` files (copied from the main checkout by exact list), `modules/` (darknet, TrackEval, lap), and `baselines/` (a submodule a fresh worktree does not check out).
 2. ~~Engine: list outputs, per-worker GPUs, saver processes, shared per-video counter; tests [13A]~~: done.
    `Stage(fan_out=True, gpu=(...), save=fn, savers=n)` in `execution/pipeline.py`; `profiling/completion.py` (`VideoCompletion`); 155 tests pass (`tests/execution`, `tests/profiling`, golden).
@@ -108,7 +108,7 @@ throwaway containers, so the Figure 8 job running from `/work/cwkt/projects/tetr
 5. ~~`profiling/main.py`: admission control, memory check, savers writing the scripts' formats~~: done (`python -m profiling.main --config ...`; tests in `tests/profiling/test_main.py`).
 6. ~~Aggregator: dataset HOTA, runtime sums, Pareto JSON, interactive page; tests [15A]~~: done (`python -m profiling.aggregate --config ...`).
 7. Equivalence tool [14A] on validation videos; then a first full-dataset run timed against the scripts.
-   - Equivalence (2026-11-21, `measurements-results/profiling-check/caldot1-y05.json`): caldot1-y05 va00-va02, grid
+   - Equivalence (2026-11-21, `experiments/measurements-results/profiling-check/caldot1-y05.json`): caldot1-y05 va00-va02, grid
      s {1,4} x T_r {0.25,0.5} x (none, {0.4,0.8} x 2 trackers) x P {none,tr}, solve limit 10 s.
      Classify scores equal p020's for every sample rate (classifying every frame once and slicing is exact).
      Pruned grids: 41 of 41 compared pairs identical; 7 pairs dropped because p022's cached solve ran past its

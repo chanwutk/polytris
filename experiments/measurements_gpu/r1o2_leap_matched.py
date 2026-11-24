@@ -23,7 +23,7 @@ BASE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BASE)
 ORIGINAL_SCRATCH, ORIGINAL_RAW = BASE.SCRATCH, BASE.RAW
 SCRATCH = BASE.ROOT / 'scratch' / 'r1o2_leap_matched'
-RAW = BASE.TETRIS / 'measurements-results' / 'r1o2_leap_matched' / 'raw'
+RAW = BASE.TETRIS / 'experiments' / 'measurements-results' / 'r1o2_leap_matched' / 'raw'
 ADAPTER = f'{BASE.LEAP_TOOLS}/run/matched_detector.py'
 MOTION_RUNNER = f'{BASE.LEAP_TOOLS}/prep/motion_patterns.py'
 # The adapter as the host sees it, for its hash in the run manifest.
@@ -199,7 +199,7 @@ def run(args):
     # Accuracy is CPU-only and runs on ace, where the original ground truth and TrackEval cache live.
     score = ['docker', 'exec', '-w', '/polyis', 'polyis', 'python', 'experiments/measurements/r1o2_leap_otif_rerun.py',
              '--datasets', args.dataset, '--raw-dir', '/polyis/' + str(RAW.relative_to(BASE.TETRIS)),
-             '--output-dir', '/polyis/measurements-results/r1o2_leap_matched/summary', '--workers', '3']
+             '--output-dir', '/polyis/experiments/measurements-results/r1o2_leap_matched/summary', '--workers', '3']
     subprocess.run(['ssh', 'ace', shlex.join(score)], check=True)
     BASE.write_json(RAW / args.dataset / 'complete.json', dict(dataset=args.dataset, gpu=args.gpu, scored=True))
 

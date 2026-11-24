@@ -16,7 +16,7 @@ output file vs 060's.  Run inside the polyis container with one visible GPU:
 
   CUDA_VISIBLE_DEVICES=0 python -m experiments.tools.execution.compare_scripts \
       --config experiments/configs/execution/caldot1-y05-s4.yaml --dataset caldot1-y05 \
-      --videos te00.mp4 te01.mp4 --out measurements-results/execution-compare/s4.json
+      --videos te00.mp4 te01.mp4 --out experiments/measurements-results/execution-compare/s4.json
 """
 
 import argparse

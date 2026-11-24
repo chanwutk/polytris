@@ -7,8 +7,8 @@
 set -euo pipefail
 
 ALL=(caldot1-y05 caldot2-y05 ams-y05 jnc0 jnc2 jnc6 jnc7)
-OUT=/work/cwkt/projects/tetris/measurements-results/scoring_window
-COUT=/polyis/measurements-results/scoring_window
+OUT=/work/cwkt/projects/tetris/experiments/measurements-results/scoring_window
+COUT=/polyis/experiments/measurements-results/scoring_window
 CACHE=/polyis-cache
 PAPER=/polytris-paper
 mkdir -p "$OUT/done"

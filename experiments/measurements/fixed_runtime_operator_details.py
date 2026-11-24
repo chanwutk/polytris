@@ -11,7 +11,7 @@ from tetris.io import cache
 
 
 def main():
-    root = Path('/polyis/measurements-results/fixed_test_s1_square_m02')
+    root = Path('/polyis/experiments/measurements-results/fixed_test_s1_square_m02')
     inputs = json.loads((root / 'inputs.json').read_text())
     # Export counted operations in bulk; aggregate analysis stays in DuckDB.
     con = duckdb.connect(config={'threads': 4})

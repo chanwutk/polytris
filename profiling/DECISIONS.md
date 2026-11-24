@@ -57,7 +57,7 @@ Decode: the author decides later whether it counts (PLAN 1).  Evaluate: measurem
 
 ### D12. p110's TrackEval call is now `run_trackeval()`, shared with the evaluate stage
 `experiments/evaluation/p110_accuracy_compute.py` behaves as before (full suite: 1484 passed; the 1 failure is a
-`measurements-results/` export missing on the profiling checkout, unrelated).
+`experiments/measurements-results/` export missing on the profiling checkout, unrelated).
 
 ### D13. classify charges with a GPU synchronize after each batch
 `classify_frames(time_batches=True)` synchronizes after each batch so the batch's GPU time is attributed to
@@ -164,7 +164,7 @@ The first caldot1-y05 sweep ran every tolerance before the flag existed; expandi
 current flag would look up non-representative tolerances and fail.  A run.json without the flag counts as
 unreduced.  Result of that sweep (480 configurations, 2,405 s wall): 56 Pareto configurations (44 on the full
 front, 20 no-sampling, 10 no-both), HOTA 0.633-0.971, 142-4,599 fps; committed under
-`measurements-results/profiling-sweep/caldot1-y05/`.  At s=16 the three tolerances give identical HOTA, as A1
+`experiments/measurements-results/profiling-sweep/caldot1-y05/`.  At s=16 the three tolerances give identical HOTA, as A1
 predicts (identical gaps), with different measured times (noise).
 
 ### D27. Measured: the reduction saves 6% of wall clock on caldot1-y05
@@ -172,7 +172,7 @@ Same config with `reduce_search_space: true`: 432 of 480 configurations run (the
 duplicates), 2,251 s wall vs 2,405 s unreduced (6.4% less).  Against the unreduced run, all 120 unpruned
 configurations have identical HOTA; 328 of 360 pruned do, and the other 32 differ by up to 0.048 because the
 0.1 s ILP limit makes pruned results load-dependent (as in the Figure 8 rerun), not because of the merge.
-Pareto: 58 configurations (vs 56).  Results under `measurements-results/profiling-sweep/caldot1-y05-reduced/`.
+Pareto: 58 configurations (vs 56).  Results under `experiments/measurements-results/profiling-sweep/caldot1-y05-reduced/`.
 
 ### D28. Scope of the reduction settled with the author: same-gap merge only (1A)
 Intent (author): drop (sample rate, T_r, tolerance) prefixes provably giving the same polyominoes.  Kept
@@ -188,7 +188,7 @@ datasets) and per-video ILP hashing (unmeasured; constraint building lives in gu
 | jnc7 | 5 | 5,226 | 432 | 1,426 s | 72 |
 Wall clock is profiling.main's (`run.json` `wall_s`), excluding the aggregator.  The detector weights are
 mounted from the main checkout (`weights/` is not synced to the profiling checkout).  Results under
-`measurements-results/profiling-sweep/<dataset>-reduced/`.
+`experiments/measurements-results/profiling-sweep/<dataset>-reduced/`.
 
 ## TODO (author, 2026-11-21)
 - Keep polyominoes whose tiles appear in only one sampled frame.  The ILP's early exit `len(pos) <= 1` skips
@@ -209,7 +209,7 @@ mounted from the main checkout (`weights/` is not synced to the profiling checko
     the cached p022 solve ran 107-167 ms, past its 0.1 s limit, so it is not the optimum.
   - Canvases, detections, tracks and HOTA differ only on those excluded s=1 pruned branches (48 of 144
     branches; HOTA within 0.030).  Unpruned and s=4 detections agree within 1.2e-4 px.
-Reports: `measurements-results/profiling-check/{caldot1-y05-rerun,jnc0}.json`.
+Reports: `experiments/measurements-results/profiling-check/{caldot1-y05-rerun,jnc0}.json`.
 
 ### D31. The reduction is off by default (author, 2026-11-21)
 To remove a potential confound against the scripts, `params.reduce_search_space` now defaults to false, so a
@@ -235,7 +235,7 @@ use the new start.
 jnc7's rerun agrees with its first run (1,426 s): its speed is real.  Wall clock follows the number of packed
 canvases, since detection dominates: jnc7 packs 148k canvases (all branches) against 235k-303k for jnc0/2/6.
 caldot1-y05 2,268 s compares with 2,251 s for the earlier reduced run (clock started later there).
-Results under `measurements-results/profiling-sweep/batch2/<dataset>/`.
+Results under `experiments/measurements-results/profiling-sweep/batch2/<dataset>/`.
 
 ### D34. Validation wall clocks on one GPU (ace, 2026-11-21 to 23, serial, merge on)
 Classifier and detector share GPU 0 (one detector process); CPU stages unchanged (2 decode, 4 pack, 4 track,
@@ -249,7 +249,7 @@ Classifier and detector share GPU 0 (one detector process); CPU stages unchanged
 | jnc2 | 5 | 4,691 | 432 | 20,258 s (5.6 h) | 54 |
 | jnc6 | 5 | 5,194 | 420 | 15,449 s (4.3 h) | 56 |
 | jnc7 | 5 | 5,226 | 432 | 10,663 s (3.0 h) | 53 |
-Total 115,535 s (32.1 h).  Results under `measurements-results/profiling-sweep/gpu1/<dataset>/`.
+Total 115,535 s (32.1 h).  Results under `experiments/measurements-results/profiling-sweep/gpu1/<dataset>/`.
 
 ## Resolved with the author (2026-11-23)
 - Q1/Q2: a merged group runs once; every tolerance in it gets that result and its measured time (the aggregator's

@@ -17,8 +17,8 @@ from tetris.io import cache
 from tetris.sample.ilp.c.gurobi import solve_ilp
 
 
-EXPERIMENT = Path('/polyis/measurements-results/fixed_test_s1_square_m02')
-OUTPUT = Path('/polyis/measurements-results/fixed_ilp_unlimited')
+EXPERIMENT = Path('/polyis/experiments/measurements-results/fixed_test_s1_square_m02')
+OUTPUT = Path('/polyis/experiments/measurements-results/fixed_ilp_unlimited')
 TIME_LIMIT_SECONDS = 1e100  # Gurobi's documented infinity value and TimeLimit maximum.
 # Cache holding each dataset's relevance scores; None keeps the container's default cache.
 CACHE_DIR = '/runs/{dataset}/polyis-cache'

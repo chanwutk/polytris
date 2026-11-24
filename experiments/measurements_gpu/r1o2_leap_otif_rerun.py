@@ -79,7 +79,7 @@ from pathlib import Path
 ROOT = Path('/data/cwkt/data/bombe-revision')
 SCRATCH = ROOT / 'scratch' / 'r1o2_leap_otif_rerun'
 TETRIS = Path('/work/cwkt/projects/tetris')
-RAW = TETRIS / 'measurements-results' / 'r1o2_leap_otif_rerun' / 'raw'
+RAW = TETRIS / 'experiments' / 'measurements-results' / 'r1o2_leap_otif_rerun' / 'raw'
 LAUNCHER = TETRIS / 'experiments/measurements_gpu' / 'bombe_container.sh'
 # LEAP runner, adaptations, and exporter wrapper from the tetris-leap submodule (baselines/tetris-leap). The
 # experiments/measurements_gpu originals stay unchanged because completed runs record their hashes.

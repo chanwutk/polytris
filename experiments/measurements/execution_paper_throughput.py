@@ -15,7 +15,7 @@ Throughput boundaries compared (frames / seconds over the same test videos):
 
 Writes <runs>/summary.json and prints the table.  Run in the polyis container:
   python experiments/measurements/execution_paper_throughput.py \
-      --runs measurements-results/execution-paper-current --baseline measurements-results/execution-paper
+      --runs experiments/measurements-results/execution-paper-current --baseline experiments/measurements-results/execution-paper
 --baseline adds an earlier set of runs' execution throughput for comparison.
 """
 

@@ -23,7 +23,7 @@ def main():
     from experiments.measurements.common import DATASET_LABELS, query_dicts
 
     root = Path(__file__).resolve().parents[2]
-    raw = args.raw_dir or args.tetris_root / 'measurements-results/r1o2_leap_otif_rerun/raw'
+    raw = args.raw_dir or args.tetris_root / 'experiments/measurements-results/r1o2_leap_otif_rerun/raw'
     datasets = args.datasets or list(DATASET_LABELS)
     assert set(datasets) <= DATASET_LABELS.keys(), f'Unknown datasets: {datasets}'
     out = {}

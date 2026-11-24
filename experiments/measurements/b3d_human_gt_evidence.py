@@ -30,7 +30,7 @@ COPY_PREFIX = '../tetris/measurements-results/'
 def parse_args():
     parser = argparse.ArgumentParser(description='Rebuild B3D evidence after re-scoring on human ground truth')
     parser.add_argument('--evidence', default='/polytris-paper/scripts/data/revision_evidence')
-    parser.add_argument('--results', default='/polyis/measurements-results')
+    parser.add_argument('--results', default='/polyis/experiments/measurements-results')
     parser.add_argument('--leap-rerun', required=True)
     parser.add_argument('--sampling', required=True)
     return parser.parse_args()

@@ -26,7 +26,7 @@ TILE_SIZE = 60
 PADDINGS = ('none', 'square')
 # Corner paddings some deployed operating points use; included when their results exist.
 EXTRA_PADDINGS = ('tr', 'bl')
-RESULTS = Path('/polyis/measurements-results/r1o4_oracle_packing')
+RESULTS = Path('/polyis/experiments/measurements-results/r1o4_oracle_packing')
 
 
 def parse_args():

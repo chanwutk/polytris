@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, '/polyis')
 import duckdb
 from measurements import common
-from tetris.leap_results import canonical_leap_result
+from experiments.leap_results import canonical_leap_result
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
 
 root = Path('/polyis')

@@ -60,4 +60,4 @@ def refresh(root: Path):
 
 
 if __name__ == '__main__':
-    refresh(Path('/polyis/measurements-results/fixed_test_s1_square_m02'))
+    refresh(Path('/polyis/experiments/measurements-results/fixed_test_s1_square_m02'))

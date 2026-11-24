@@ -9,9 +9,9 @@ set -euo pipefail
 COMMIT=${1:?usage: $0 <annotation commit of the staged labels>}
 B3D=(jnc0 jnc2 jnc6 jnc7)
 OTHERS=(caldot1-y05 caldot2-y05 ams-y05)
-OUT=/work/cwkt/projects/tetris/measurements-results/b3d_human_gt
+OUT=/work/cwkt/projects/tetris/experiments/measurements-results/b3d_human_gt
 # Container-side paths of the same directory and of the cache.
-COUT=/polyis/measurements-results/b3d_human_gt
+COUT=/polyis/experiments/measurements-results/b3d_human_gt
 CACHE=/polyis-cache
 mkdir -p "$OUT/done"
 exec > >(tee -a "$OUT/phase_a.log") 2>&1

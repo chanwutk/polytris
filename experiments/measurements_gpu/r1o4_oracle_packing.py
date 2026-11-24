@@ -35,7 +35,7 @@ CLASSIFIER = 'OracleGT'
 # operating points use can be requested too; every padding reuses one set of original-frame detections.
 PADDINGS = ('none', 'square')
 PADDING_CHOICES = PADDINGS + ('tr', 'bl')
-RESULTS = Path('/polyis/measurements-results/r1o4_oracle_packing')
+RESULTS = Path('/polyis/experiments/measurements-results/r1o4_oracle_packing')
 
 
 def parse_args():

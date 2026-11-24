@@ -4,7 +4,7 @@ from pathlib import Path
 from experiments.measurements import fixed_ilp_unlimited as benchmark
 
 
-benchmark.OUTPUT = Path('/polyis/measurements-results/fixed_ilp_60s')
+benchmark.OUTPUT = Path('/polyis/experiments/measurements-results/fixed_ilp_60s')
 benchmark.TIME_LIMIT_SECONDS = 60
 
 

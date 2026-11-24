@@ -16,7 +16,7 @@ SPEC.loader.exec_module(MATCHED)
 BASE = MATCHED.BASE
 ORIGINAL_RAW = MATCHED.RAW
 ORIGINAL_PREP = MATCHED.SCRATCH / 'prep'
-VERSION = BASE.TETRIS / 'measurements-results/r1o2_leap_regions_v2'
+VERSION = BASE.TETRIS / 'experiments/measurements-results/r1o2_leap_regions_v2'
 SCRATCH = BASE.ROOT / 'scratch/r1o2_leap_regions_v2'
 RAW = VERSION / 'raw'
 

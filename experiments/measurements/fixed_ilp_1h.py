@@ -9,7 +9,7 @@ from pathlib import Path
 from experiments.measurements import fixed_ilp_unlimited as benchmark
 
 
-SIXTY_SECOND_RESULTS = Path('/polyis/measurements-results/fixed_ilp_60s/results.jsonl')
+SIXTY_SECOND_RESULTS = Path('/polyis/experiments/measurements-results/fixed_ilp_60s/results.jsonl')
 # Number of clips whose 60-second run reached the cap, as reported in the paper.
 CAPPED_CLIPS = 48
 
@@ -24,7 +24,7 @@ def configure():
     """Point the benchmark at the 1-hour rerun of the capped clips."""
     clips = capped_clips(SIXTY_SECOND_RESULTS)
     assert len(clips) == CAPPED_CLIPS, f'expected {CAPPED_CLIPS} capped clips, found {len(clips)}'
-    benchmark.OUTPUT = Path('/polyis/measurements-results/fixed_ilp_1h')
+    benchmark.OUTPUT = Path('/polyis/experiments/measurements-results/fixed_ilp_1h')
     benchmark.TIME_LIMIT_SECONDS = 3600
     benchmark.CACHE_DIR = None
     benchmark.CLIPS = clips

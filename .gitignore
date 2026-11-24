@@ -50,8 +50,8 @@ det_otif
 ./paper
 
 # Revision measurements: commit JSON results, keep raw GPU outputs and run logs on ace only.
-measurements-results/**/*.jsonl.gz
-measurements-results/*.log
-measurements-results/**/*.log
+experiments/measurements-results/**/*.jsonl.gz
+experiments/measurements-results/*.log
+experiments/measurements-results/**/*.log
 .env
 .claude/worktrees/

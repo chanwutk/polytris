@@ -7,7 +7,7 @@ import pandas as pd
 import altair as alt
 
 from tetris.io import cache
-from tetris.leap_results import canonical_leap_result
+from experiments.leap_results import canonical_leap_result
 from tetris.utilities import (
     STR_NA,
     get_config,

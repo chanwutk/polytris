@@ -6,7 +6,7 @@ Runs inside a throwaway polyis container whose /polyis-cache is a scratch direct
 cache is mounted read-only at /polyis-cache-ro, so neither the scripts (which clear their output
 directories) nor ProgressBar's logs can overwrite old results.  Launch from the ace host:
 
-  RUN=/work/cwkt/projects/tetris/measurements-results/execution-benchmark/caldot1-y05-s4
+  RUN=/work/cwkt/projects/tetris/experiments/measurements-results/execution-benchmark/caldot1-y05-s4
   mkdir -p $RUN/cache
   docker run --rm --gpus '"device=2,3"' --shm-size 64g --network host -w /polyis \
     -v /work/cwkt/projects/tetris:/polyis -v /data/cwkt/data/polyis-data:/polyis-data:ro \

@@ -28,7 +28,7 @@ from trackeval.metrics import CLEAR, HOTA, Identity  # noqa: E402
 from experiments.evaluation.p121_throughput_compute import excluded_runtime_ops  # noqa: E402
 from experiments.evaluation.p200_compare_compute import load_sota_tradeoff_data  # noqa: E402
 from tetris.io import cache  # noqa: E402
-from tetris.leap_results import canonical_leap_result  # noqa: E402
+from experiments.leap_results import canonical_leap_result  # noqa: E402
 from tetris.trackeval.dataset import Dataset  # noqa: E402
 from tetris.utilities import dataset_root_name, load_tradeoff_data, split_tradeoff_variants  # noqa: E402
 

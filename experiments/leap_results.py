@@ -4,7 +4,7 @@ import math
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent  # experiments/: the manifest's paths are relative to it
 MANIFEST = ROOT / 'measurements-results/leap_canonical.json'
 
 

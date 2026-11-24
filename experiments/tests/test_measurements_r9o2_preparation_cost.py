@@ -1555,7 +1555,7 @@ def test_driver_collect_merges_every_gpus_records(con, tmp_path):
     env = dict(os.environ, R9O2_TRACK=str(track), R9O2_TETRIS=str(tetris))
     result = subprocess.run(['bash', str(DRIVER_PATH), 'collect'], env=env, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
-    out = tetris / 'measurements-results' / 'r9o2_preparation_retiming'
+    out = tetris / 'experiments' / 'measurements-results' / 'r9o2_preparation_retiming'
     # Both GPUs' records, logs prefixed with their GPU, and the launcher summaries, in the files the measurement reads.
     assert sorted(p.name for p in (out / 'logs').iterdir()) == ['g3_ds_p011.log', 'g3_run.log', 'g4_ds_p011.log', 'g4_run.log']
     with gzip.open(out / 'files.jsonl.gz', 'rt') as f:

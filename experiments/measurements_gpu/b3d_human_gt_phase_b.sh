@@ -7,9 +7,9 @@
 set -euo pipefail
 
 B3D=(jnc0 jnc2 jnc6 jnc7)
-OUT=/work/cwkt/projects/tetris/measurements-results/b3d_human_gt
-COUT=/polyis/measurements-results/b3d_human_gt
-RESULTS=/polyis/measurements-results
+OUT=/work/cwkt/projects/tetris/experiments/measurements-results/b3d_human_gt
+COUT=/polyis/experiments/measurements-results/b3d_human_gt
+RESULTS=/polyis/experiments/measurements-results
 PAPER=/polytris-paper
 EVIDENCE=$PAPER/scripts/data/revision_evidence
 # A rerun under different scoring uses its own snapshot suffix, done markers and log.

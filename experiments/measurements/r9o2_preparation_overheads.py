@@ -13,7 +13,7 @@ import duckdb
 from experiments.measurements.common import query_dicts, results_dir, write_json
 
 
-BASE_REPORT = Path('measurements-results/r9o2_preparation_cost/preparation_cost.json')
+BASE_REPORT = Path('experiments/measurements-results/r9o2_preparation_cost/preparation_cost.json')
 
 
 def parse_args():

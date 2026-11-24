@@ -10,8 +10,8 @@ from experiments.measurements.common import decode_grids
 from tetris.io import cache
 
 
-ORIGINAL = Path('/polyis/measurements-results/fixed_test_s1_square_m02')
-RERUN = Path('/polyis/measurements-results/fixed_ilp_60s')
+ORIGINAL = Path('/polyis/experiments/measurements-results/fixed_test_s1_square_m02')
+RERUN = Path('/polyis/experiments/measurements-results/fixed_ilp_60s')
 OUTPUT = RERUN / 'comparison'
 CONFIG = 'ShuffleNet05_60_1_080_r050_sortcython'
 

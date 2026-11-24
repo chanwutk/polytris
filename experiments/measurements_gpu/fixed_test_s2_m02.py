@@ -41,7 +41,7 @@ def main():
     args = parse_args()
     sample_rate, padding = args.sample_rate, args.padding
     name = 'fixed_test_s2_m02' if (sample_rate, padding) == (2, 'none') else f'fixed_test_s{sample_rate}_{padding}_m02'
-    root = Path('/polyis/measurements-results') / name
+    root = Path('/polyis/experiments/measurements-results') / name
     cfg = f'ShuffleNet05_60_{sample_rate}_080_r050_{padding}_s100_sortcython'
     prune_param = f'ShuffleNet05_60_{sample_rate}_080_r050_sortcython'
     stages = [

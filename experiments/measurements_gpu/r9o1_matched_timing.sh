@@ -9,7 +9,7 @@ set -u
 S=$1
 G=$2
 shift 2
-RAW=$S/polyis/measurements-results/r9o1_matched_timing/raw
+RAW=$S/polyis/experiments/measurements-results/r9o1_matched_timing/raw
 mkdir -p "$RAW"
 rm -f "$S/finished"
 # The GPU's identity, and its NUMA node from sysfs (nvidia-smi writes 00000000:B2:00.0, sysfs names it 0000:b2:00.0).

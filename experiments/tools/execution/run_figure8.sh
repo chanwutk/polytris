@@ -2,7 +2,7 @@
 # Run execution on every Figure 8 full-Tetris config, one at a time on one GPU, then summarize.
 # Meant for a tmux session on ace (survives the client disconnecting):
 #   tmux new-session -d -s execution-figure8 \
-#     'bash /work/cwkt/projects/tetris/experiments/tools/execution/run_figure8.sh 2 2>&1 | tee -a /work/cwkt/projects/tetris/measurements-results/execution-figure8/run.log'
+#     'bash /work/cwkt/projects/tetris/experiments/tools/execution/run_figure8.sh 2 2>&1 | tee -a /work/cwkt/projects/tetris/experiments/measurements-results/execution-figure8/run.log'
 # Arguments: <gpu index> [passes, default 8] [minutes between passes, default 10].
 # Each pass runs every config that has no result.json yet, so configs that failed (e.g. pruning configs while
 # the Gurobi web license has no free session) are retried in later passes.  A finished run is never redone;
@@ -14,7 +14,7 @@ PASSES=${2:-8}
 WAIT_MIN=${3:-10}
 REPO=/work/cwkt/projects/tetris
 IMAGE=polyis-execution2-bench  # the image built on ace before the execution2 -> execution rename
-OUT=$REPO/measurements-results/execution-figure8/runs
+OUT=$REPO/experiments/measurements-results/execution-figure8/runs
 mkdir -p "$OUT"
 
 gurobi_status() {

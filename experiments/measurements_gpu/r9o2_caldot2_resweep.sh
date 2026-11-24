@@ -9,7 +9,7 @@
 # It then checks each clip has as many outputs per stage as a complete clip (va10) and resumes the serial packing
 # measurement, which adds the 4,200 new packing units.
 #
-# Usage on ace: nohup experiments/measurements_gpu/r9o2_caldot2_resweep.sh > measurements-results/r9o2_caldot2_resweep.log 2>&1 &
+# Usage on ace: nohup experiments/measurements_gpu/r9o2_caldot2_resweep.sh > experiments/measurements-results/r9o2_caldot2_resweep.log 2>&1 &
 set -euo pipefail
 
 DATASET=caldot2-y05

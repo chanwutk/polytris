@@ -24,8 +24,8 @@ Data collected for the revision lives in three top-level directories.
 # ace: run tests, then a measurement, inside the polyis container (/polyis is this checkout).
 ssh ace 'docker exec polyis bash -c "cd /polyis && pytest experiments/tests/test_measurements_r1o2_count_query.py -q"'
 ssh ace 'docker exec polyis bash -c "cd /polyis && python experiments/measurements/r1o2_count_query.py"'
-# Mac: pull results back. measurements-results/ is not in sync.yaml, so ./sync never overwrites newer results on ace.
-rsync -az ace:/work/cwkt/projects/tetris/measurements-results/ measurements-results/
+# Mac: pull results back. experiments/measurements-results/ is excluded in sync.yaml, so ./sync never overwrites newer results on ace.
+rsync -az ace:/work/cwkt/projects/tetris/experiments/measurements-results/ experiments/measurements-results/
 ```
 
 Run long `experiments/measurements_gpu/` jobs in tmux on ace, since a dropped SSH session kills a foreground job.
@@ -80,7 +80,7 @@ The table probes exposed a hardcoded cache path in `tetris.utilities.load_tradeo
 Results are in `measurements-results/r9o2_preparation_overheads/{timings.jsonl,launcher_runs.jsonl,preparation_overheads.json}`. Recompute the accounting with:
 
 ```sh
-python experiments/measurements/r9o2_preparation_overheads.py --timings measurements-results/r9o2_preparation_overheads/timings.jsonl
+python experiments/measurements/r9o2_preparation_overheads.py --timings experiments/measurements-results/r9o2_preparation_overheads/timings.jsonl
 ```
 
 ## Status
