@@ -128,10 +128,19 @@ def main_cli() -> None:
     ds = cfg.dataset
     videos = [str(store.dataset(ds, cfg.videoset, v)) for v in args.videos]
     summary = pmain.execute(cfg, args.config, build=build_with_script_prune, videos=videos)
+    report = {'grid': SMALL_GRID, 'prune': 'scripts 022 grids', 'summary': summary,
+              **compare_with_scripts(args.output_root, ds, args.cache, cfg.evaluation.reference_file)}
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
+    Path(args.out).write_text(json.dumps(report, indent=1) + '\n')
+    print(json.dumps(report['totals'], indent=1))
 
-    ours_ex = os.path.join(args.output_root, ds, 'execution')
-    cache_ex = os.path.join(args.cache, ds, 'execution')
-    report: dict = {'grid': SMALL_GRID, 'prune': 'scripts 022 grids', 'summary': summary, 'stages': {}}
+
+def compare_with_scripts(output_root: str, ds: str, cache_root: str, reference_file: str) -> dict:
+    """Every result a sweep saved under output_root vs the scripts' outputs under cache_root: per-stage rows and
+    totals ({'stages': ..., 'totals': ...}).  Shared by this CLI and tests/integration."""
+    ours_ex = os.path.join(output_root, ds, 'execution')
+    cache_ex = os.path.join(cache_root, ds, 'execution')
+    report: dict = {'stages': {}}
 
     def rel(path: str) -> str:
         return os.path.relpath(path, ours_ex)
@@ -170,7 +179,7 @@ def main_cli() -> None:
     report['stages']['050_uncompressed_detections'] = rows
 
     # 060 tracks and per-video HOTA.
-    records = [json.loads(l) for l in open(os.path.join(args.output_root, ds, 'profiling', 'records.jsonl'))]
+    records = [json.loads(l) for l in open(os.path.join(output_root, ds, 'profiling', 'records.jsonl'))]
     ours_hota = {}
     from profiling.messages import Branch
     for r in records:
@@ -179,12 +188,12 @@ def main_cli() -> None:
                             'tracker')
         ours_hota[(r['video'], param)] = np.asarray(r['metrics']['HOTA']['HOTA'], dtype=float)
     rows = []
-    scratch = os.path.join(args.output_root, 'hota-scratch')
+    scratch = os.path.join(output_root, 'hota-scratch')
     for ours in sorted(glob.glob(os.path.join(ours_ex, '*', '060_uncompressed_tracks', '*', 'tracking.jsonl'))):
         video, _, param = Path(rel(ours)).parts[:3]
         theirs = os.path.join(cache_ex, rel(ours))
         entry = {'path': rel(ours), **compare_track_lines(open(ours).read().splitlines(), open(theirs).read().splitlines())}
-        cached = hota_from_cache(cache_ex, video, param, cfg.evaluation.reference_file, scratch)
+        cached = hota_from_cache(cache_ex, video, param, reference_file, scratch)
         mine = ours_hota[(video, param)]
         entry.update(hota_equal=bool(np.allclose(mine, cached, rtol=0, atol=1e-12)),
                      hota_ours=float(mine.mean()), hota_cached=float(cached.mean()))
@@ -195,7 +204,7 @@ def main_cli() -> None:
     totals = {}
     for stage, rows in report['stages'].items():
         key = {'060_uncompressed_tracks': 'same_up_to_id_renaming', '050_uncompressed_detections': None}.get(stage, 'equal')
-        # Every row is compared: prune reads the scripts' grids, so no branch depends on an ILP solve.
+        # Every row is compared (callers make prune deterministic: the CLI reads the scripts' grids).
         compared = rows
         if key:
             totals[stage] = {'compared': len(compared), 'equal': sum(bool(r.get(key)) for r in compared),
@@ -213,9 +222,7 @@ def main_cli() -> None:
     totals['hota_per_video'] = {'compared': len(t), 'equal': sum(r['hota_equal'] for r in t),
                                 'max_abs_diff': max((abs(r['hota_ours'] - r['hota_cached']) for r in t), default=0.0)}
     report['totals'] = totals
-    os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
-    Path(args.out).write_text(json.dumps(report, indent=1) + '\n')
-    print(json.dumps(totals, indent=1))
+    return report
 
 
 if __name__ == '__main__':
