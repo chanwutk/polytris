@@ -77,3 +77,26 @@ def test_raises_on_out_features_mismatch():
         pass
     else:
         raise AssertionError('expected ValueError')
+
+
+def test_collapse_classifier_folds_exactly_the_imagenet_vehicle_classes():
+    # Real torchvision category names are bare words ("minivan"); none of the non-vehicles that
+    # share a substring ("china cabinet", "head cabbage" via "cab") may count as relevant.
+    import torchvision.models as models
+
+    weights = models.ShuffleNet_V2_X0_5_Weights.DEFAULT
+    categories = weights.meta['categories']
+    # Identity weights: the folded weight is +1 at every relevant class's index and -1 elsewhere.
+    lin = nn.Linear(len(categories), len(categories), bias=False)
+    with torch.no_grad():
+        lin.weight.copy_(torch.eye(len(categories)))
+    folded = collapse_classifier(weights, lin).weight.data[0]
+    relevant = {c for c, w in zip(categories, folded.tolist()) if w > 0}
+    expected = {
+        'ambulance', 'beach wagon', 'cab', 'convertible', 'fire engine', 'freight car', 'garbage truck',
+        'go-kart', 'golfcart', 'jeep', 'limousine', 'minibus', 'minivan', 'mobile home', 'moving van',
+        'passenger car', 'pickup', 'police van', 'racer', 'school bus', 'snowplow', 'sports car',
+        'tow truck', 'trailer truck', 'trolleybus',
+    }
+    assert relevant == expected
+    assert set(folded.tolist()) == {1.0, -1.0}
