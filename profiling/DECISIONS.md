@@ -250,3 +250,17 @@ Classifier and detector share GPU 0 (one detector process); CPU stages unchanged
 | jnc6 | 5 | 5,194 | 420 | 15,449 s (4.3 h) | 56 |
 | jnc7 | 5 | 5,226 | 432 | 10,663 s (3.0 h) | 53 |
 Total 115,535 s (32.1 h).  Results under `measurements-results/profiling-sweep/gpu1/<dataset>/`.
+
+## Resolved with the author (2026-11-23)
+- Q1/Q2: a merged group runs once; every tolerance in it gets that result and its measured time (the aggregator's
+  expansion; `ran_as` names the one that ran).  The merge stays on in the generated sweep configs.
+- D24's "on by default" is superseded by D31 (off by default; the generated configs turn it on).
+- A4: keeping single-appearance polyominoes is the author's TODO above; p022 is unchanged for now.
+- D25: the scripts' validation time in the paper is a sum of per-step runtimes, not a wall clock; no log of the
+  scripts' validation wall clock is needed.
+- Accepted as guessed: D2 (bounded saver queues), D4 (one classifier per sweep), D7 (HOTA and Count only),
+  D17 (the test pass uses the union of the ablation fronts).
+- D9: p040's per-canvas detections stay unsaved (only p050's per-frame ones are written).
+- D14: a crashed validation sweep is rerun for the whole dataset into a new output folder (no resume).  For test
+  runs, execution2 already fails the whole run on any worker failure and writes no output, and nothing retries a
+  video, so a crash cannot be silently rerun on some videos and inflate the runtime.
