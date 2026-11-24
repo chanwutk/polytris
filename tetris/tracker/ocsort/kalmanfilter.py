@@ -421,7 +421,7 @@ class KalmanFilterNew(object):
                 w = w1 + (i+1) * dw 
                 h = h1 + (i+1) * dh
                 s = w * h 
-                r = w / float(h)
+                r = w / h
                 new_box = np.array([x, y, s, r]).reshape((4, 1))
                 """
                     I still use predict-update loop here to refresh the parameters,
