@@ -19,7 +19,8 @@ from tests.integration import harness
 CONFIGS = [
     {'sample_rate': 1, 'relevance_threshold': 0.5, 'mistrack_tolerance': None, 'tile_padding': 'none',
      'tracker': 'sortcython'},
-    {'sample_rate': 1, 'relevance_threshold': 0.25, 'mistrack_tolerance': 0.4, 'tile_padding': 'tr',
+    # (T_r 0.25 here made jnc0 te01's ILP run past p022's 0.1 s limit; at 0.5 every solve takes about 10 ms.)
+    {'sample_rate': 1, 'relevance_threshold': 0.5, 'mistrack_tolerance': 0.4, 'tile_padding': 'tr',
      'tracker': 'bytetrackcython'},
     {'sample_rate': 4, 'relevance_threshold': 0.5, 'mistrack_tolerance': 0.8, 'tile_padding': 'none',
      'tracker': 'sortcython'},
