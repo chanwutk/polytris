@@ -30,10 +30,10 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from execution2 import frames, main, stages
-from execution2.config import Config, load_config
-from execution2.pipeline import Stage, Worker
-from execution2.stages import Classified, Detected
+from execution import frames, main, stages
+from execution.config import Config, load_config
+from execution.pipeline import Stage, Worker
+from execution.stages import Classified, Detected
 from polyis.io import cache, store
 from polyis.utilities import (build_param_str, load_classification_results, load_pruned_classification_results,
                               save_tracking_results)

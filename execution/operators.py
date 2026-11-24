@@ -21,7 +21,7 @@ import cv2
 import numpy as np
 import torch
 
-from execution2 import frames
+from execution import frames
 from polyis import dtypes
 from polyis.classify import classify_batch_tensors, load_classifier
 from polyis.models.detector import build_detector, detect_batch

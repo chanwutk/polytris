@@ -14,7 +14,7 @@ from pathlib import Path
 
 import yaml
 
-from execution2.config import DETECTOR_FIELDS
+from execution.config import DETECTOR_FIELDS
 
 ROOT = Path(__file__).resolve().parents[2]
 R1O3 = ROOT / 'measurements-results' / 'r1o3_clean_extraction_timing'

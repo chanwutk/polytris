@@ -13,7 +13,7 @@ from pathlib import Path
 
 import yaml
 
-from execution2.tools.make_paper_configs import build_params
+from execution.tools.make_paper_configs import build_params
 from polyis.utilities import build_param_str
 
 ROOT = Path(__file__).resolve().parents[2]

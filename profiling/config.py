@@ -19,7 +19,7 @@ from typing import Any
 
 import yaml
 
-from execution2.config import (CANVAS_FORMATS, MISTRACK_TOLERANCES, ConfigError, Detector, _check_type, _detector,
+from execution.config import (CANVAS_FORMATS, MISTRACK_TOLERANCES, ConfigError, Detector, _check_type, _detector,
                                _existing, _keys)
 from polyis.utilities import TILEPADDING_MODES
 

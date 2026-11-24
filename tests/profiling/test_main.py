@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import pytest
 
-from execution2.main import StartupError
+from execution.main import StartupError
 from profiling import main as m, stages as st
 from tests.profiling import fake_stages as pfs
 from tests.profiling.test_stages import make_cfg

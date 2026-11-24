@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from execution2 import frames
+from execution import frames
 
 
 def make_video_block(prefix, n_children, state, msg):
@@ -38,7 +38,7 @@ def emit_results(n, state, video):
 def fake_sweep_build(cfg, prefix, completion):
     """build_stages replacement: one fan-out stage emitting expected_results(cfg) per video."""
     from functools import partial
-    from execution2.pipeline import Stage
+    from execution.pipeline import Stage
     from profiling.stages import expected_results
     from tests.execution2.fake_stages import worker_setup
     return [Stage('emit', worker_setup, partial(emit_results, expected_results(cfg)), 2, fan_out=True)]

@@ -7,8 +7,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from execution2 import frames, operators as ops
-from execution2.config import Detector
+from execution import frames, operators as ops
+from execution.config import Detector
 from profiling import save, stages as st
 from profiling.completion import VideoCompletion
 from profiling.config import Artifacts, Evaluation, Params, StageSystem, SweepConfig, System

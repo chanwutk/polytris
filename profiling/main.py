@@ -26,11 +26,11 @@ from typing import Callable, Iterator
 
 import numpy as np
 
-from execution2 import frames
-from execution2.config import ConfigError
-from execution2.main import StartupError, VideoInfo, list_videos, probe
-from execution2.operators import frame_selection
-from execution2.pipeline import Stage, run
+from execution import frames
+from execution.config import ConfigError
+from execution.main import StartupError, VideoInfo, list_videos, probe
+from execution.operators import frame_selection
+from execution.pipeline import Stage, run
 from profiling import stages as st
 from profiling.completion import VideoCompletion
 from profiling.config import SweepConfig, load_sweep_config

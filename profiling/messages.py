@@ -17,7 +17,7 @@ from polyis.utilities import build_param_str
 
 if TYPE_CHECKING:
     # Types only: importing operators loads the detector libraries, which need a GPU driver.
-    from execution2 import operators as ops
+    from execution import operators as ops
 
 # Branch keys in the order stages add them, and the build_param_str argument each maps to.
 PARAM_KEYS = {

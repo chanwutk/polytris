@@ -66,7 +66,7 @@ def grid() -> dict:
 
 def execution2_config(tree: harness.Tree, c: dict) -> dict:
     """execution2's config for one configuration, on the scratch cache's artifacts."""
-    from execution2.tools.make_paper_configs import build_params
+    from execution.tools.make_paper_configs import build_params
     detectors = yaml.safe_load((harness.REPO / 'configs' / 'detectors.yaml').read_text())
     text = yaml.safe_dump(build_params(tree.dataset, full(c), detectors), sort_keys=False)
     return yaml.safe_load(text.replace('/polyis-cache/', f'{tree.cache}/'))
@@ -74,9 +74,9 @@ def execution2_config(tree: harness.Tree, c: dict) -> dict:
 
 def solve_times(tree: harness.Tree, configs: list[dict]) -> list[dict]:
     """Each pruned configuration's ILP per clip, solved as execution2 does on execution2's own classifier scores."""
-    from execution2 import frames
-    from execution2 import operators as ops
-    from execution2.config import MISTRACK_TOLERANCES
+    from execution import frames
+    from execution import operators as ops
+    from execution.config import MISTRACK_TOLERANCES
     out = []
     prefix = frames.new_prefix()
     try:

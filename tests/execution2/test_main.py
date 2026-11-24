@@ -10,8 +10,8 @@ import cv2
 import numpy as np
 import pytest
 
-from execution2 import main as m
-from execution2.config import Config, StageSystem, System
+from execution import main as m
+from execution.config import Config, StageSystem, System
 from tests.execution2 import fake_stages as fs
 from tests.execution2.test_stages import make_cfg
 

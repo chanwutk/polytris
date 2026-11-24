@@ -5,7 +5,7 @@ import copy
 import pytest
 import yaml
 
-from execution2.config import MISTRACK_TOLERANCES, ConfigError, load_config, parse_config
+from execution.config import MISTRACK_TOLERANCES, ConfigError, load_config, parse_config
 
 
 @pytest.fixture

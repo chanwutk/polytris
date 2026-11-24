@@ -20,7 +20,7 @@ from pathlib import Path
 
 import duckdb
 
-from execution2.tools.make_figure8_configs import config_name, params_of
+from execution.tools.make_figure8_configs import config_name, params_of
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / 'measurements-results' / 'execution2-figure8'

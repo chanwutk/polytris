@@ -22,9 +22,9 @@ from functools import partial
 
 import numpy as np
 
-from execution2 import frames, operators as ops
-from execution2.config import MISTRACK_TOLERANCES
-from execution2.pipeline import Stage, Worker
+from execution import frames, operators as ops
+from execution.config import MISTRACK_TOLERANCES
+from execution.pipeline import Stage, Worker
 from profiling import save
 from profiling.reduction import sweep_groups
 from profiling.completion import VideoCompletion

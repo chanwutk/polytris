@@ -16,7 +16,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-from execution2.config import MISTRACK_TOLERANCES
+from execution.config import MISTRACK_TOLERANCES
 
 
 class ToleranceGroup(NamedTuple):

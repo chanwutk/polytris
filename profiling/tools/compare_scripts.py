@@ -29,7 +29,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from execution2.tools.compare_scripts import compare_detections, compare_track_lines
+from execution.tools.compare_scripts import compare_detections, compare_track_lines
 from profiling import main as pmain
 from profiling.config import parse_sweep_config
 from polyis.io import store

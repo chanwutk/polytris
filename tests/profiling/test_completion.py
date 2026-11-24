@@ -6,8 +6,8 @@ from functools import partial
 
 import pytest
 
-from execution2 import frames
-from execution2.pipeline import PipelineError, Stage, run
+from execution import frames
+from execution.pipeline import PipelineError, Stage, run
 from profiling.completion import VideoCompletion
 from tests.execution2 import fake_stages as efs
 from tests.profiling import fake_stages as pfs

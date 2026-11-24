@@ -5,7 +5,7 @@ import copy
 import pytest
 import yaml
 
-from execution2.config import ConfigError
+from execution.config import ConfigError
 from profiling.config import load_sweep_config, parse_sweep_config
 
 

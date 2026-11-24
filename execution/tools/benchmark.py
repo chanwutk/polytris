@@ -38,8 +38,8 @@ from pathlib import Path
 
 import yaml
 
-from execution2.config import load_config
-from execution2.tools.compare_scripts import compare_track_lines
+from execution.config import load_config
+from execution.tools.compare_scripts import compare_track_lines
 from polyis.utilities import build_param_str
 
 REAL_CACHE = Path('/polyis-cache-ro')

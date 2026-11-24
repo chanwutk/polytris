@@ -8,10 +8,10 @@ import numpy as np
 import pytest
 import yaml
 
-from execution2.config import parse_config
+from execution.config import parse_config
 from profiling import aggregate as ag, stages as st
 from profiling.config import Artifacts, Evaluation, Params, StageSystem, SweepConfig, System
-from execution2.config import Detector
+from execution.config import Detector
 from polyis.utilities import save_tracking_results
 
 

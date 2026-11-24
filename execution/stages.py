@@ -26,16 +26,16 @@ from typing import NamedTuple
 
 import numpy as np
 
-from execution2 import frames, operators as ops
-from execution2.config import MISTRACK_TOLERANCES, Config
-from execution2.pipeline import Stage, Worker
+from execution import frames, operators as ops
+from execution.config import MISTRACK_TOLERANCES, Config
+from execution.pipeline import Stage, Worker
 # Re-exported: tests, tools, and main import these names from stages.
-from execution2.operators import (  # noqa: F401
+from execution.operators import (  # noqa: F401
     CLASSIFY_BATCH, DETECT_BATCH, DEVICE, PACK_MODE_BEST_FIT, PRUNE_TILEPADDING_MODE, PRUNE_TIME_LIMIT_S,
     detect_batch, frame_selection, unpack_detections,
 )
 # The decoded-video and packed-canvas messages are the operators' own types.
-from execution2.operators import Decoded, Packed
+from execution.operators import Decoded, Packed
 from polyis.utilities import TILEPADDING_MAPS, is_tile_padding
 
 

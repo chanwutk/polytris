@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from execution2.tools import scripts_equivalence as se
+from execution.tools import scripts_equivalence as se
 
 
 @pytest.fixture
