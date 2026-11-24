@@ -9,7 +9,7 @@ from experiments.measurements import r1o4_packing_detection_accuracy as pa
 
 
 spec = importlib.util.spec_from_file_location('oracle_packing', Path(__file__).parents[1] /
-                                             'experiments/measurements_gpu/r1o4_oracle_packing.py')
+                                             'measurements_gpu/r1o4_oracle_packing.py')
 oracle = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(oracle)
 
