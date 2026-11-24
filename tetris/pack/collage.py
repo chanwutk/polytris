@@ -4,7 +4,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-from polyis import dtypes
+from tetris import dtypes
 
 
 class PolyominoPosition(NamedTuple):

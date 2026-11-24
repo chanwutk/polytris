@@ -6,7 +6,7 @@
 
 from libc.string cimport memset, memcpy
 from libc.math cimport fabs, sqrt
-from polyis.tracker.ocsort.cython.kalman_filter cimport KalmanFilter
+from tetris.tracker.ocsort.cython.kalman_filter cimport KalmanFilter
 import cython
 
 # Global identity matrix

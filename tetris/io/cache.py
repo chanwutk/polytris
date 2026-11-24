@@ -1,5 +1,5 @@
 from pathlib import Path
-from polyis.utilities import get_config
+from tetris.utilities import get_config
 
 config = get_config()
 CACHE_DIR = config['DATA']['CACHE_DIR']

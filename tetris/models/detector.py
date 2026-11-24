@@ -10,11 +10,11 @@ from enum import Enum
 from typing import Any
 import ultralytics
 
-import polyis.models.retinanet_b3d
-import polyis.models.ultralytics
-import polyis.models.torch_vision
-import polyis.dtypes
-from polyis.utilities import get_config
+import tetris.models.retinanet_b3d
+import tetris.models.ultralytics
+import tetris.models.torch_vision
+import tetris.dtypes
+from tetris.utilities import get_config
 
 
 CONFIG = get_config('detectors.yaml')
@@ -57,13 +57,13 @@ def build_detector(detector_type: str, options: dict, gpu_id, batch_size: int = 
     device = f'cuda:{gpu_id}'
 
     if detector_type == 'retina':
-        return polyis.models.retinanet_b3d.get_detector(device=device, configfile=options.get('config_path'))
+        return tetris.models.retinanet_b3d.get_detector(device=device, configfile=options.get('config_path'))
 
     elif detector_type == 'ultralytics':
-        return polyis.models.ultralytics.get_detector(device=device, model_path=options['model_path'])
+        return tetris.models.ultralytics.get_detector(device=device, model_path=options['model_path'])
 
     elif detector_type == 'torchvision':
-        return polyis.models.torch_vision.get_detector(device=device, model_path=options['model_path'], model_type=options['model_type'])
+        return tetris.models.torch_vision.get_detector(device=device, model_path=options['model_path'], model_type=options['model_type'])
 
     else:
         raise ValueError(f"Unknown detector type: {detector_type}")
@@ -74,7 +74,7 @@ def detect(
     detector: Any,
     threshold: float = 0.25,
     mode: DetectorMode = DetectorMode.BGR
-) -> polyis.dtypes.DetArray:
+) -> tetris.dtypes.DetArray:
     """
     Generic object detection function that works with any pre-loaded detector.
     
@@ -88,41 +88,41 @@ def detect(
                    Only returns detections for car, truck, and van classes
     """
     # Use the appropriate detect function based on detector type
-    if isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
+    if isinstance(detector, tetris.models.retinanet_b3d.DefaultPredictor):
         if mode == DetectorMode.RGB:
             image = image[:, :, ::-1]
-        return polyis.models.retinanet_b3d.detect(image, detector, threshold)
+        return tetris.models.retinanet_b3d.detect(image, detector, threshold)
     elif isinstance(detector, ultralytics.YOLO):  # type: ignore
         if mode == DetectorMode.RGB:
             image = image[:, :, ::-1]
-        return polyis.models.ultralytics.detect(image, detector)
+        return tetris.models.ultralytics.detect(image, detector)
     else:
         if mode == DetectorMode.BGR:
             image = image[:, :, ::-1]
-        return polyis.models.torch_vision.detect(image, detector)
+        return tetris.models.torch_vision.detect(image, detector)
 
 
 def detect_batch(
-    images: list[polyis.dtypes.NPImage],
+    images: list[tetris.dtypes.NPImage],
     detector: Any,
     threshold: float = 0.25,
     mode: DetectorMode = DetectorMode.BGR
-) -> "list[polyis.dtypes.DetArray]":
+) -> "list[tetris.dtypes.DetArray]":
     """
     Detect vehicles in a batch of images using the appropriate detector.
     """
-    if isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
+    if isinstance(detector, tetris.models.retinanet_b3d.DefaultPredictor):
         if mode == DetectorMode.RGB:
             images = [image[:, :, ::-1] for image in images]
-        return polyis.models.retinanet_b3d.detect_batch(images, detector, threshold)
+        return tetris.models.retinanet_b3d.detect_batch(images, detector, threshold)
     elif isinstance(detector, ultralytics.YOLO):  # type: ignore
         if mode == DetectorMode.RGB:
             images = [image[:, :, ::-1] for image in images]
-        return polyis.models.ultralytics.detect_batch(images, detector)
+        return tetris.models.ultralytics.detect_batch(images, detector)
     else:
         if mode == DetectorMode.BGR:
             images = [image[:, :, ::-1] for image in images]
-        return polyis.models.torch_vision.detect_batch(images, detector)
+        return tetris.models.torch_vision.detect_batch(images, detector)
 
 
 def get_detector_info(dataset_name: str) -> dict:

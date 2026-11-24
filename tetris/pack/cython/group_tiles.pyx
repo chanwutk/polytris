@@ -9,7 +9,7 @@ import numpy as np
 from libc.stdlib cimport malloc, calloc, free, qsort
 import cython
 
-from polyis.pack.cython.utilities cimport Coordinate, CoordinateStack, Polyomino, PolyominoStack, \
+from tetris.pack.cython.utilities cimport Coordinate, CoordinateStack, Polyomino, PolyominoStack, \
                        CoordinateStack_init, CoordinateStack_push, CoordinateStack_cleanup, \
                        PolyominoStack_init, PolyominoStack_push, PolyominoStack_cleanup
 

@@ -28,7 +28,7 @@ from execution import frames
 from execution.config import Config, ConfigError, load_config
 from execution.pipeline import Stage, run
 from execution.stages import Tracked, build_stages, frame_selection
-from polyis.utilities import save_tracking_results
+from tetris.utilities import save_tracking_results
 
 VIDEO_EXTENSIONS = ('.mp4', '.avi', '.mov', '.mkv')
 SHM_DIR = '/dev/shm'

@@ -58,8 +58,8 @@ from xml.dom import minidom
 from functools import partial
 import multiprocessing as mp
 
-from polyis.io import cache, store
-from polyis.utilities import get_video_resolution, get_video_frame_count, ProgressBar, get_config
+from tetris.io import cache, store
+from tetris.utilities import get_video_resolution, get_video_frame_count, ProgressBar, get_config
 
 
 CONFIG = get_config()

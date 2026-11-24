@@ -22,7 +22,7 @@ import numpy as np
 from rich import progress
 import torch
 
-from polyis.io import VideoCapture, VideoWriter
+from tetris.io import VideoCapture, VideoWriter
 
 if typing.TYPE_CHECKING:
     import altair as alt
@@ -269,7 +269,7 @@ def load_detection_results(dataset: str, video_file: str, tracking: bool = False
     Raises:
         FileNotFoundError: If no detection results file is found
     """
-    from polyis.io import cache
+    from tetris.io import cache
     if filename is None:
         filename = 'tracking.jsonl' if tracking else 'detection.jsonl'
     # Build path using centralized cache path builder
@@ -307,7 +307,7 @@ def load_tracking_results(dataset: str, video_file: str, verbose: bool = False) 
     Raises:
         FileNotFoundError: If no tracking results file is found
     """
-    from polyis.io import cache
+    from tetris.io import cache
     # Build path using centralized cache path builder
     tracking_path = cache.exec(dataset, 'naive', video_file, 'tracking.jsonl')
 
@@ -579,7 +579,7 @@ def load_classification_results(dataset: str, video_file: str,
     Raises:
         FileNotFoundError: If no classification results file is found
     """
-    from polyis.io import cache
+    from tetris.io import cache
     # Build path using centralized cache path builder
     results_file = cache.exec(dataset, 'relevancy', video_file, f'{classifier}_{tilesize}_{sample_rate}', 'score', 'score.jsonl')
 
@@ -625,7 +625,7 @@ def load_pruned_classification_results(dataset: str, video_file: str,
     Raises:
         FileNotFoundError: If no pruned classification results file is found
     """
-    from polyis.io import cache
+    from tetris.io import cache
     # Build param string for the pruned output directory
     param_str = build_param_str(classifier=classifier, tilesize=tilesize, sample_rate=sample_rate,
                                 tracker=tracker, tracking_accuracy_threshold=tracking_accuracy_threshold,
@@ -797,15 +797,15 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int], **override_para
         configs = yaml.safe_load(f)
         if tracker_name == 'sort':
             # print(f"Creating SORT tracker with max_age={max_age}, min_hits={min_hits}, iou_threshold={iou_threshold}")
-            from polyis.b3d.sort import Sort
+            from tetris.b3d.sort import Sort
             config = configs['sort']
             return Sort(max_age=config['max_age'], min_hits=config['min_hits'], iou_threshold=config['iou_threshold'])
         if tracker_name == 'sortcython':
-            from polyis.tracker.sort.cython.sort import Sort as SortCython
+            from tetris.tracker.sort.cython.sort import Sort as SortCython
             config = configs['sort']
             return SortCython(max_age=config['max_age'], min_hits=config['min_hits'], iou_threshold=config['iou_threshold'])
         if tracker_name == 'ocsort':
-            from polyis.tracker.ocsort.ocsort_wrapper import OCSort
+            from tetris.tracker.ocsort.ocsort_wrapper import OCSort
             config = configs['ocsort']
             return OCSort(
                 img_size=img_size,
@@ -819,7 +819,7 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int], **override_para
                 use_byte=config['use_byte']
             )
         if tracker_name == 'ocsortcython':
-            from polyis.tracker.ocsort.cython.ocsort_wrapper import OCSort as OCSortCython
+            from tetris.tracker.ocsort.cython.ocsort_wrapper import OCSort as OCSortCython
             config = configs['ocsort']
             return OCSortCython(
                 img_size=img_size,
@@ -833,7 +833,7 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int], **override_para
                 use_byte=config['use_byte']
             )
         if tracker_name == 'bytetrack':
-            from polyis.tracker.bytetrack import ByteTrack
+            from tetris.tracker.bytetrack import ByteTrack
             config = configs['bytetrack']
             return ByteTrack(
                 img_size=img_size,
@@ -844,7 +844,7 @@ def create_tracker(tracker_name: str, img_size: tuple[int, int], **override_para
                 # mot20=config['mot20']
             )
         if tracker_name == 'bytetrackcython':
-            from polyis.tracker.bytetrack.cython.bytetrack_wrapper import ByteTrack as ByteTrackCython
+            from tetris.tracker.bytetrack.cython.bytetrack_wrapper import ByteTrack as ByteTrackCython
             config = configs['bytetrack']
             return ByteTrackCython(
                 img_size=img_size,
@@ -1548,7 +1548,7 @@ def load_tradeoff_data(dataset: str):
         pd.DataFrame: Split-level tradeoff rows for the dataset
     """
     # Honor the same configured cache as the writer, including isolated measurement runs.
-    from polyis.io import cache
+    from tetris.io import cache
     tradeoff_path = cache.eval(dataset, 'tradeoff', 'tradeoff.csv')
     # Fail fast when the canonical tradeoff CSV is missing.
     assert os.path.exists(tradeoff_path), \
@@ -1973,55 +1973,55 @@ def get_classifier_from_name(classifier_name: str):
         ValueError: If the classifier is not supported
     """
     if classifier_name == 'SimpleCNN':
-        from polyis.models.classifier.simple_cnn import SimpleCNN
+        from tetris.models.classifier.simple_cnn import SimpleCNN
         return SimpleCNN
     elif classifier_name == 'YoloN':
-        from polyis.models.classifier.yolo import YoloN
+        from tetris.models.classifier.yolo import YoloN
         return YoloN
     elif classifier_name == 'YoloS':
-        from polyis.models.classifier.yolo import YoloS
+        from tetris.models.classifier.yolo import YoloS
         return YoloS
     elif classifier_name == 'YoloM':
-        from polyis.models.classifier.yolo import YoloM
+        from tetris.models.classifier.yolo import YoloM
         return YoloM
     elif classifier_name == 'YoloL':
-        from polyis.models.classifier.yolo import YoloL
+        from tetris.models.classifier.yolo import YoloL
         return YoloL
     elif classifier_name == 'YoloX':
-        from polyis.models.classifier.yolo import YoloX
+        from tetris.models.classifier.yolo import YoloX
         return YoloX
     elif classifier_name == 'ShuffleNet05':
-        from polyis.models.classifier.shufflenet import ShuffleNet05
+        from tetris.models.classifier.shufflenet import ShuffleNet05
         return ShuffleNet05
     elif classifier_name == 'ShuffleNet20':
-        from polyis.models.classifier.shufflenet import ShuffleNet20
+        from tetris.models.classifier.shufflenet import ShuffleNet20
         return ShuffleNet20
     elif classifier_name == 'MobileNetL':
-        from polyis.models.classifier.mobilenet import MobileNetL
+        from tetris.models.classifier.mobilenet import MobileNetL
         return MobileNetL
     elif classifier_name == 'MobileNetS':
-        from polyis.models.classifier.mobilenet import MobileNetS
+        from tetris.models.classifier.mobilenet import MobileNetS
         return MobileNetS
     elif classifier_name == 'WideResNet50':
-        from polyis.models.classifier.wide_resnet import WideResNet50
+        from tetris.models.classifier.wide_resnet import WideResNet50
         return WideResNet50
     elif classifier_name == 'WideResNet101':
-        from polyis.models.classifier.wide_resnet import WideResNet101
+        from tetris.models.classifier.wide_resnet import WideResNet101
         return WideResNet101
     elif classifier_name == 'ResNet152':
-        from polyis.models.classifier.resnet import ResNet152
+        from tetris.models.classifier.resnet import ResNet152
         return ResNet152
     elif classifier_name == 'ResNet101':
-        from polyis.models.classifier.resnet import ResNet101
+        from tetris.models.classifier.resnet import ResNet101
         return ResNet101
     elif classifier_name == 'ResNet18':
-        from polyis.models.classifier.resnet import ResNet18
+        from tetris.models.classifier.resnet import ResNet18
         return ResNet18
     elif classifier_name == 'EfficientNetS':
-        from polyis.models.classifier.efficientnet import EfficientNetS
+        from tetris.models.classifier.efficientnet import EfficientNetS
         return EfficientNetS
     elif classifier_name == 'EfficientNetL':
-        from polyis.models.classifier.efficientnet import EfficientNetL
+        from tetris.models.classifier.efficientnet import EfficientNetL
         return EfficientNetL
     else:
         raise ValueError(f"Unsupported classifier: {classifier_name}")

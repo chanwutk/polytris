@@ -24,7 +24,7 @@ from libc.stdint cimport uint64_t
 from libcpp.vector cimport vector
 from libcpp.map cimport map as cppmap
 
-from polyis.tracker.sort.cython.kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update
+from tetris.tracker.sort.cython.kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update
 
 
 cdef extern from "lapjv.h" nogil:

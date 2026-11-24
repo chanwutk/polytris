@@ -1,7 +1,7 @@
 import torch
 import torchvision.models as models
 
-from polyis.models.classifier.utils import collapse_classifier
+from tetris.models.classifier.utils import collapse_classifier
 
 
 class ResNet152(torch.nn.Module):

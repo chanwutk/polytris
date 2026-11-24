@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 
-from polyis.train.training_loop import _forward
+from tetris.train.training_loop import _forward
 
 
 class TwoArgModel(nn.Module):

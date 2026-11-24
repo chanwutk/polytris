@@ -4,8 +4,8 @@ import random
 import numpy as np
 import pytest
 
-from polyis.sample.ilp.c.gurobi import solve_ilp as solve_ilp_c
-from polyis.sample.ilp.gurobi import ILPResult, solve_ilp as solve_ilp_gurobi
+from tetris.sample.ilp.c.gurobi import solve_ilp as solve_ilp_c
+from tetris.sample.ilp.gurobi import ILPResult, solve_ilp as solve_ilp_gurobi
 from tests.test_solve_ilp_compare import compute_objective, make_random_instance
 
 

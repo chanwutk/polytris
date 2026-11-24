@@ -30,13 +30,13 @@ from pathlib import Path
 import yaml
 
 from execution.config import DETECTOR_FIELDS, parse_config
-from polyis.io import cache, store
-from polyis.utilities import build_param_str
+from tetris.io import cache, store
+from tetris.utilities import build_param_str
 
 ROOT = Path(__file__).resolve().parents[2]
 CACHE = '/polyis-cache'
 RETINANET_CONFIG = '/polyis/configs/retinanet.json'
-# reproduce/selection.py's columns (polyis.pareto.PARETO_PARAM_COLS).
+# reproduce/selection.py's columns (tetris.pareto.PARETO_PARAM_COLS).
 PARAM_COLUMNS = ['classifier', 'tilesize', 'sample_rate', 'tracking_accuracy_threshold', 'relevance_threshold',
                  'tilepadding', 'canvas_scale', 'tracker']
 

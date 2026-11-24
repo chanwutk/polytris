@@ -9,8 +9,8 @@ import torch
 from functools import partial
 import queue
 
-from polyis.io import cache, store
-from polyis.utilities import create_tracker, format_time, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
+from tetris.io import cache, store
+from tetris.utilities import create_tracker, format_time, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
 
 CONFIG = get_config()

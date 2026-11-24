@@ -11,8 +11,8 @@ import shutil
 
 import ultralytics
 
-from polyis.io import store
-from polyis.train.data.ultralytics import parse_device_string, verify_dataset
+from tetris.io import store
+from tetris.train.data.ultralytics import parse_device_string, verify_dataset
 
 
 def parse_args():

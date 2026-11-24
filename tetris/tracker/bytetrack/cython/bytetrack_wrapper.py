@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker as _BYTETracker
+from tetris.tracker.bytetrack.cython.bytetrack import BYTETracker as _BYTETracker
 
 
 class ByteTrackArgs:

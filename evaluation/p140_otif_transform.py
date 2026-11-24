@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 
 from evaluation.manifests import build_split_video_manifest
-from polyis.io import cache
-from polyis.utilities import get_config, get_video_frame_count, register_tracked_detections, save_tracking_results
+from tetris.io import cache
+from tetris.utilities import get_config, get_video_frame_count, register_tracked_detections, save_tracking_results
 
 
 CONFIG = get_config()

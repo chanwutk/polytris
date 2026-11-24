@@ -320,10 +320,10 @@ def benchmark_pack():
     print("\n=== Pack Benchmark ===")
 
     # Import implementations
-    from polyis.pack.pack import pack as c_pack
-    from polyis.pack.adapters import convert_collages_to_bitmap
-    from polyis.pack.python.pack import pack as python_pack
-    from polyis.pack.group_tiles import group_tiles as group_tiles_cython
+    from tetris.pack.pack import pack as c_pack
+    from tetris.pack.adapters import convert_collages_to_bitmap
+    from tetris.pack.python.pack import pack as python_pack
+    from tetris.pack.group_tiles import group_tiles as group_tiles_cython
 
     # Test data files
     test_files = [

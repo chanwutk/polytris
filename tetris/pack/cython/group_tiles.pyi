@@ -6,7 +6,7 @@ import numpy as np
 
 
 if typing.TYPE_CHECKING:
-    from polyis.dtypes import Array, D2
+    from tetris.dtypes import Array, D2
 
 
 Polyomino = tuple[Array[*D2, np.uint8], tuple[int, int]]

@@ -6,8 +6,8 @@ import os
 import cv2
 import numpy as np
 
-from polyis.io import cache, store
-from polyis.utilities import get_config
+from tetris.io import cache, store
+from tetris.utilities import get_config
 
 config = get_config()
 DATASETS_TO_TEST = config["EXEC"]["DATASETS"]

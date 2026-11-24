@@ -21,8 +21,8 @@ from pathlib import Path
 import pandas as pd
 import altair as alt
 
-from polyis.io import cache, store
-from polyis.utilities import get_config, get_video_frame_count
+from tetris.io import cache, store
+from tetris.utilities import get_config, get_video_frame_count
 
 
 def get_total_original_frames(dataset: str) -> int:

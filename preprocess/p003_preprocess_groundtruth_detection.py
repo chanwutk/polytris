@@ -12,18 +12,18 @@ import cv2
 import numpy as np
 import torch
 
-import polyis.models.detector
-from polyis.b3d.nms import nms
-from polyis.groundtruth import assert_no_human_groundtruth, assert_not_installed
-from polyis.utilities import (
+import tetris.models.detector
+from tetris.b3d.nms import nms
+from tetris.groundtruth import assert_no_human_groundtruth, assert_not_installed
+from tetris.utilities import (
     ProgressBar,
     build_b3d_mask_and_crop,
     dedupe_datasets_by_root,
     get_config,
     get_segment_frame_range,
 )
-from polyis.io import cache, store
-from polyis.utils import intersects_polygon
+from tetris.io import cache, store
+from tetris.utils import intersects_polygon
 
 
 CONFIG = get_config()
@@ -296,7 +296,7 @@ def detect_frame_with_corner_crops(detector, frame: np.ndarray) -> list[list[flo
 
     for crop_x, crop_y, crop_w, crop_h in corner_crops:
         crop_frame = frame[crop_y:crop_y + crop_h, crop_x:crop_x + crop_w, :]
-        crop_detections = polyis.models.detector.detect(crop_frame, detector)
+        crop_detections = tetris.models.detector.detect(crop_frame, detector)
         if crop_detections is None:
             continue
 
@@ -394,7 +394,7 @@ def run_detection_jnc(dataset: str, video_file: str, gpu_id: int, command_queue:
     output_dir = os.path.dirname(output_path)
     os.makedirs(output_dir, exist_ok=True)
 
-    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size=1)
+    detector = tetris.models.detector.get_detector(dataset, gpu_id, batch_size=1)
 
     command_queue.put((
         'cuda:' + str(gpu_id),
@@ -443,7 +443,7 @@ def run_detection_jnc(dataset: str, video_file: str, gpu_id: int, command_queue:
             command_queue.put(('cuda:' + str(gpu_id), {'completed': processed_count}))
 
     cap.release()
-    polyis.models.detector.delete(detector)
+    tetris.models.detector.delete(detector)
 
 
 def main():

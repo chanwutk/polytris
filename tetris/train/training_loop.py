@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from polyis.utilities import format_time
+from tetris.utilities import format_time
 
 
 class History(typing.NamedTuple):

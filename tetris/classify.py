@@ -6,8 +6,8 @@ from typing import cast
 import numpy as np
 import torch
 
-from polyis.images import ImgNHWC, splitNHWC
-from polyis.utilities import format_time
+from tetris.images import ImgNHWC, splitNHWC
+from tetris.utilities import format_time
 
 
 def load_classifier(model_path) -> torch.nn.Module:

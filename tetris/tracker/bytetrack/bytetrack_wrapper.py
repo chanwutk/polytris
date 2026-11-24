@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from polyis.tracker.bytetrack.byte_tracker import BYTETracker as _BYTETracker
+from tetris.tracker.bytetrack.byte_tracker import BYTETracker as _BYTETracker
 
 
 class ByteTrackArgs:

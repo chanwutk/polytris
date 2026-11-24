@@ -23,8 +23,8 @@ from libc.string cimport memcpy
 from libcpp.vector cimport vector
 from libcpp.map cimport map as cppmap
 
-from polyis.tracker.bytetrack.cython.kalman_filter cimport KalmanFilter, kf_init, kf_initiate, kf_predict, kf_update
-from polyis.tracker.bytetrack.cython.matching cimport compute_iou_cost, fuse_score, linear_assignment
+from tetris.tracker.bytetrack.cython.kalman_filter cimport KalmanFilter, kf_init, kf_initiate, kf_predict, kf_update
+from tetris.tracker.bytetrack.cython.matching cimport compute_iou_cost, fuse_score, linear_assignment
 
 
 # Track state enum

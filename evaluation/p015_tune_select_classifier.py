@@ -9,8 +9,8 @@ import pandas as pd
 import altair as alt
 import numpy as np
 
-from polyis.io import cache
-from polyis.utilities import CLASSIFIERS_TO_TEST
+from tetris.io import cache
+from tetris.utilities import CLASSIFIERS_TO_TEST
 
 
 def load_training_results(dataset_dir: str, classifiers_filter: List[str] | None = None) -> List[Dict[str, Any]]:

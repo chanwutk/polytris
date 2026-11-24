@@ -14,20 +14,20 @@ import torch
 import torch.nn.functional as F
 import cv2
 
-from polyis.pack.cython.group_tiles import group_tiles as group_tiles_cython
-from polyis.pack.group_tiles import group_tiles as group_tiles_c
+from tetris.pack.cython.group_tiles import group_tiles as group_tiles_cython
+from tetris.pack.group_tiles import group_tiles as group_tiles_c
 try:
-    from polyis.pack.cython.group_tiles import free_polyimino_stack  # type: ignore
+    from tetris.pack.cython.group_tiles import free_polyimino_stack  # type: ignore
 except ImportError:
     try:
-        from polyis.pack.group_tiles import free_polyimino_stack  # type: ignore
+        from tetris.pack.group_tiles import free_polyimino_stack  # type: ignore
     except ImportError:
         # Fallback if cleanup function not available
         def free_polyimino_stack(polyominoes):
             pass
-from polyis.pack.python.group_tiles import group_tiles as python_group_tiles
-from polyis.pack.cython.pack_append import pack_append as cython_pack_append
-from polyis.pack.python.pack_append import pack_append as python_pack_append
+from tetris.pack.python.group_tiles import group_tiles as python_group_tiles
+from tetris.pack.cython.pack_append import pack_append as cython_pack_append
+from tetris.pack.python.pack_append import pack_append as python_pack_append
 
 
 ADD_MARGIN = torch.tensor(

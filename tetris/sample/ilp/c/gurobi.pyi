@@ -1,5 +1,5 @@
 import numpy as np
-from polyis.sample.ilp.gurobi import ILPResult
+from tetris.sample.ilp.gurobi import ILPResult
 
 def solve_ilp(
     tile_to_polyomino_id_arr: np.ndarray,
@@ -12,7 +12,7 @@ def solve_ilp(
     """
     Solve the polyomino-pruning ILP using the Gurobi C API.
 
-    Identical formulation to ``polyis.sample.ilp.gurobi.solve_ilp`` but
+    Identical formulation to ``tetris.sample.ilp.gurobi.solve_ilp`` but
     bypasses the gurobipy Python layer and calls libgurobi directly, removing
     Python-object overhead from model construction and solution extraction.
 

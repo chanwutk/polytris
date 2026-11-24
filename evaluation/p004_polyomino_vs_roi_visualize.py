@@ -7,8 +7,8 @@ import cv2
 import numpy as np
 from scipy import ndimage
 
-from polyis.io import cache, store
-from polyis.utilities import get_config, load_detection_results, mark_detections
+from tetris.io import cache, store
+from tetris.utilities import get_config, load_detection_results, mark_detections
 from evaluation.manifests import list_split_videos
 from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
 

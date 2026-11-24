@@ -1,4 +1,4 @@
-from polyis.utilities import (
+from tetris.utilities import (
     build_param_str,
     dataset_name_for_videoset,
     parse_execution_param_str,
