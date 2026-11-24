@@ -7,6 +7,7 @@ cache paths are redirected to temporary files, so both see the same inputs.  Nee
 import json
 from pathlib import Path
 import cv2
+import numpy as np
 import pytest
 from execution import frames, operators, stages
 from execution.stages import Classified, Decoded, Detected
