@@ -186,7 +186,7 @@ Every entrypoint takes `--help`. Use it.
 ## Repository Layout
 
 ```
-polyis/         Core library: Cython modules, models, trackers, IO helpers
+tetris/         Core library: Cython modules, models, trackers, IO helpers
 scripts/        Per-stage offline tuning + online execution scripts
 preprocess/     Dataset prep, ground truth, baseline tracking
 execution/      Pipeline-parallel runtime (`python -m execution.main`)

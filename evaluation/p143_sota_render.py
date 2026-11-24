@@ -9,8 +9,8 @@ from multiprocessing import Queue
 from pathlib import Path
 
 from evaluation.manifests import build_split_video_manifest, load_sota_stat_manifest
-from polyis.io import cache, store
-from polyis.utilities import PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, get_config
+from tetris.io import cache, store
+from tetris.utilities import PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, get_config
 
 
 CONFIG = get_config()

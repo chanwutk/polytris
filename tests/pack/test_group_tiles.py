@@ -5,9 +5,9 @@ Pytest tests for the group_tiles Cython implementation.
 import pytest
 import numpy as np
 import time
-from polyis.pack.cython.adapters import group_tiles as group_tiles_cython
-from polyis.pack.adapters import c_group_tiles as group_tiles_c
-from polyis.pack.python.group_tiles import group_tiles as python_group_tiles
+from tetris.pack.cython.adapters import group_tiles as group_tiles_cython
+from tetris.pack.adapters import c_group_tiles as group_tiles_c
+from tetris.pack.python.group_tiles import group_tiles as python_group_tiles
 
 
 def same_results(result1, result2, mode):

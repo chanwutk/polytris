@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from polyis.io import cache
-from polyis.utilities import DATASETS_TO_TEST, get_video_frame_count
+from tetris.io import cache
+from tetris.utilities import DATASETS_TO_TEST, get_video_frame_count
 
 
 INPUT_DIRS = ['030_compressed_frames', '031_compressed_frames', '032_compressed_frames', '033_compressed_frames', '034_compressed_frames', '035_compressed_frames']

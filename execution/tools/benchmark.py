@@ -40,7 +40,7 @@ import yaml
 
 from execution.config import load_config
 from execution.tools.compare_scripts import compare_track_lines
-from polyis.utilities import build_param_str
+from tetris.utilities import build_param_str
 
 REAL_CACHE = Path('/polyis-cache-ro')
 SCRATCH_CACHE = Path('/polyis-cache')

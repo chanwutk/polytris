@@ -34,11 +34,11 @@ import numpy as np
 import torch
 from detectron2.data import transforms as T
 
-import polyis.models.detector
-import polyis.models.retinanet_b3d
+import tetris.models.detector
+import tetris.models.retinanet_b3d
 from measurements.common import DATASET_LABELS, RESULTS_ROOT, host_info, iso_utc, results_dir, write_json
-from polyis.io import cache, store
-from polyis.train.select_model_optimization import select_model_optimization
+from tetris.io import cache, store
+from tetris.train.select_model_optimization import select_model_optimization
 from scripts.p020_exec_classify import classify_batch, load_model
 
 
@@ -102,7 +102,7 @@ def timed(fn, *args) -> tuple[object, float]:
 def native_detect(detector, width: int, height: int, native: bool):
     """detect(frame) running at the frame's own resolution (native=True) or the loader's defaults, and its input shape."""
     # RetinaNet (detectron2 DefaultPredictor): resizing comes from detector.aug.
-    if isinstance(detector, polyis.models.retinanet_b3d.DefaultPredictor):
+    if isinstance(detector, tetris.models.retinanet_b3d.DefaultPredictor):
         if native:
             # Short and long edges equal the frame's, so the resize is the identity.
             detector.aug = T.ResizeShortestEdge([min(width, height)] * 2, max(width, height))
@@ -114,12 +114,12 @@ def native_detect(detector, width: int, height: int, native: bool):
         shape = [int(tf.new_h), int(tf.new_w)]
         # Native mode must not resize.
         assert not native or shape == [height, width], f'RetinaNet resizes {height}x{width} to {shape}'
-        return (lambda frames: polyis.models.retinanet_b3d.detect_batch(frames, detector)), shape
+        return (lambda frames: tetris.models.retinanet_b3d.detect_batch(frames, detector)), shape
     # Ultralytics YOLO: the input size comes from imgsz (the checkpoint's training imgsz when not given).
     kwargs = dict(imgsz=(height, width)) if native else {}
 
     def detect(frames):
-        # The same call and box extraction as polyis.models.ultralytics.detect_batch, with imgsz set.
+        # The same call and box extraction as tetris.models.ultralytics.detect_batch, with imgsz set.
         results = detector(frames, verbose=False, **kwargs)
         return [np.empty((0, 5)) if r.boxes is None else
                 np.concatenate([r.boxes.xyxy.cpu().numpy(), r.boxes.conf.cpu().numpy()[:, None]], 1) for r in results]
@@ -332,7 +332,7 @@ def main():
             torch.cuda.empty_cache()
             continue
         # The reference detector, as p002 loads it.
-        detector = polyis.models.detector.get_detector(dataset, 0, batch_size=1)
+        detector = tetris.models.detector.get_detector(dataset, 0, batch_size=1)
         if args.max_batch:
             # Own size times each pixel scale, at the largest batch the GPU holds (stepping down if timing runs out).
             for scale in SCALES:
@@ -361,7 +361,7 @@ def main():
             for w, h in sorted(set(SIZES) | {own}, key=lambda s: s[0] * s[1]):
                 rows.append(dict(time_size(dataset, detector, frames, w, h, native=True), video=video))
         # Free the model before the next dataset's.
-        polyis.models.detector.delete(detector)
+        tetris.models.detector.delete(detector)
         torch.cuda.empty_cache()
     # One line per detector, mode, and size.
     suffix = ('_classifier' if args.classifier else '') + ('_maxbatch' if args.max_batch else '_batched' if args.batched else '')

@@ -3,7 +3,7 @@
 import argparse
 import subprocess
 
-from polyis.utilities import GC_CACHE, GC_DATASETS_DIR, GS_CACHE, GS_DATASETS_DIR, FakeQueue
+from tetris.utilities import GC_CACHE, GC_DATASETS_DIR, GS_CACHE, GS_DATASETS_DIR, FakeQueue
 
 
 def parse_args():

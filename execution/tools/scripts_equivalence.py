@@ -27,7 +27,7 @@ from pathlib import Path
 
 import yaml
 
-from polyis.io import cache
+from tetris.io import cache
 
 SCRIPTS = ['p020_exec_classify', 'p022_exec_prune_polyominoes', 'p030_exec_compress', 'p040_exec_detect',
            'p050_exec_uncompress', 'p060_exec_track']

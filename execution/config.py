@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     # Typeshed-only protocol for "any dataclass"; _flat's bound is evaluated lazily, so no runtime import.
     from _typeshed import DataclassInstance
 
-from polyis.utilities import TILEPADDING_MODES
+from tetris.utilities import TILEPADDING_MODES
 
 # p022's accuracy-threshold axis of max_rate_table.npy; mistrack_tolerance must be one of these.
 # tests/execution/test_config.py checks this stays equal to p022's _ALL_ACCURACY_THRESHOLDS.
@@ -36,7 +36,7 @@ GPU_STAGES = ('classify', 'detect')
 # paper's runs detected on); 'raw' passes the drawn canvas unchanged.
 CANVAS_FORMATS = ('jpeg', 'raw')
 
-# Required fields per detector type, mirroring polyis.models.detector.get_detector.
+# Required fields per detector type, mirroring tetris.models.detector.get_detector.
 DETECTOR_FIELDS: dict[str, dict[str, type]] = {
     'retina': {'config_path': str},
     'yolov3': {'config_path': str, 'model_path': str, 'detector_label': str, 'width': int, 'height': int},

@@ -20,8 +20,8 @@ from pathlib import Path
 import pandas as pd
 import altair as alt
 
-from polyis.io import cache
-from polyis.utilities import DATASETS_TO_TEST
+from tetris.io import cache
+from tetris.utilities import DATASETS_TO_TEST
 from evaluation.utilities import ColorScheme
 
 

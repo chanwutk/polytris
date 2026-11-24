@@ -44,7 +44,7 @@ includes:
     - "ablation"
     - "gcp"
     - "lib"
-    - "polyis"
+    - "tetris"
     - "preprocess"
     - "scripts"
     - "tests"

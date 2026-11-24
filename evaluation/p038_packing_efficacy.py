@@ -45,8 +45,8 @@ import numpy as np
 import pandas as pd
 from rich.progress import BarColumn, Progress, TextColumn
 
-from polyis.io import cache
-from polyis.utilities import get_config, parse_execution_param_str
+from tetris.io import cache
+from tetris.utilities import get_config, parse_execution_param_str
 from evaluation.p036_compress_effectiveness_compute import count_tiles_for_path
 from evaluation.p201_compare_pareto import (
     _add_dataset_display_names,
@@ -77,7 +77,7 @@ COMPRESSION_STAGE: str = '033_compressed_frames'
 POLY_STATS_TILEPADDING: str = 'none'
 
 # Map from ``--valid`` / ``--test`` flags to (videoset, video filename prefix)
-# matching ``polyis.utilities`` conventions: ``te*`` -> test, ``va*`` -> valid.
+# matching ``tetris.utilities`` conventions: ``te*`` -> test, ``va*`` -> valid.
 _VIDEOSET_TO_PREFIX: dict[str, str] = {'test': 'te', 'valid': 'va'}
 
 # Chart geometry -- kept small so the figure fits in a single paper column.

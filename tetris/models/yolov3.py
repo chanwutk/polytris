@@ -10,7 +10,7 @@ from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
 import subprocess
 
-import polyis.dtypes
+import tetris.dtypes
 
 sys.path.append('/polyis/modules/darknet')
 cwd = os.getcwd()
@@ -272,7 +272,7 @@ def detect(
     image: np.ndarray,
     detector: YOLOv3Detector,
     threshold: float | None = None
-) -> polyis.dtypes.DetArray:
+) -> tetris.dtypes.DetArray:
     """
     Detect vehicles in an image using YOLOv3.
     
@@ -337,15 +337,15 @@ def detect(
     detections[:, [0, 2]] = detections[:, [0, 2]] * owidth / detector.width
     detections[:, [1, 3]] = detections[:, [1, 3]] * oheight / detector.height
 
-    assert polyis.dtypes.is_det_array(detections)
+    assert tetris.dtypes.is_det_array(detections)
     return detections
 
 
 def detect_batch(
-    images: list[polyis.dtypes.NPImage],
+    images: list[tetris.dtypes.NPImage],
     detector: YOLOv3Detector,
     threshold: float | None = None
-) -> list[polyis.dtypes.DetArray]:
+) -> list[tetris.dtypes.DetArray]:
     """
     Detect vehicles in a batch of images using YOLOv3.
     
@@ -393,7 +393,7 @@ def detect_batch(
     # Read only the configured class index for this detector.
     target_class_index = detector.target_class_index
 
-    all_detections: list[polyis.dtypes.DetArray] = []
+    all_detections: list[tetris.dtypes.DetArray] = []
     for i in range(len(images)):
         # Process detections
         num = raw_detections[i].num
@@ -419,7 +419,7 @@ def detect_batch(
         detections[:, [0, 2]] = detections[:, [0, 2]] * owidth / detector.width
         detections[:, [1, 3]] = detections[:, [1, 3]] * oheight / detector.height
 
-        assert polyis.dtypes.is_det_array(detections)
+        assert tetris.dtypes.is_det_array(detections)
         all_detections.append(detections)
 
     darknet.free_batch_detections(raw_detections, len(images))

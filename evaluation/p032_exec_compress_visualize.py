@@ -11,8 +11,8 @@ import pandas as pd
 import altair as alt
 from tqdm import tqdm
 
-from polyis.io import cache
-from polyis.utilities import DATASETS_TO_TEST, scale_to_percent
+from tetris.io import cache
+from tetris.utilities import DATASETS_TO_TEST, scale_to_percent
 
 
 def parse_args() -> argparse.Namespace:

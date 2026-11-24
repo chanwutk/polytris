@@ -44,8 +44,8 @@ import numpy as np
 from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, PRUNE_STAGE, assert_files_exist, fastest_tetris,
                                  host_info, iso_utc, load_p121_per_op, load_test_tradeoff, load_tradeoff_points,
                                  query_dicts, results_dir, runtime_items_sql, write_json)
-from polyis.io import cache
-from polyis.utilities import CONFIG_DIR, get_config
+from tetris.io import cache
+from tetris.utilities import CONFIG_DIR, get_config
 
 
 # Tetris extraction operators, keyed by their stage names in the throughput manifest.
@@ -57,7 +57,7 @@ CLASSIFY_STAGE = '020_exec_classify'
 REFERENCE_STAGES = {'001_preprocess_groundtruth_detection': 'detect', '002_preprocess_groundtruth_tracking': 'track'}
 # The manifest stage whose runtime file is the reference detector's per-frame log.
 DETECTOR_STAGE = '001_preprocess_groundtruth_detection'
-# The RetinaNet configuration under configs/ that names the B3D detector's weights (polyis/models/retinanet_b3d.py).
+# The RetinaNet configuration under configs/ that names the B3D detector's weights (tetris/models/retinanet_b3d.py).
 RETINANET_CONFIG = 'retinanet.json'
 # Frames per classifier batch (BATCH_SIZE in scripts/p020_exec_classify.py), checked against every log's line count.
 CLASSIFIER_BATCH = 16
@@ -381,12 +381,12 @@ def detector_model(dataset: str, first_log_epoch: float) -> dict:
     """The reference detector configs/detectors.yaml maps the dataset to now; the logs do not record which model ran."""
     # The detector configuration the pipeline reads.
     config = get_config('detectors.yaml')
-    # Map the dataset to its detector entry, as polyis.models.detector.get_detector does.
+    # Map the dataset to its detector entry, as tetris.models.detector.get_detector does.
     entry = config['dataset_detector_mapping'][config['dataset_name_mapping'][dataset]]
     # The fields that identify the model, and where they come from.
     out = {k: entry[k] for k in ('detector', 'model_path') if k in entry}
     out['source'] = 'configs/detectors.yaml when this script ran; not recorded in the logs'
-    # RetinaNet (B3D) takes its weights from configs/retinanet.json instead, as polyis.models.retinanet_b3d does.
+    # RetinaNet (B3D) takes its weights from configs/retinanet.json instead, as tetris.models.retinanet_b3d does.
     if entry.get('detector') == 'retina':
         with open(os.path.join(CONFIG_DIR, RETINANET_CONFIG)) as f:
             out['model_path'] = json.load(f)['weights']

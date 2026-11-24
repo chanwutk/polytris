@@ -149,8 +149,8 @@ from evaluation.p120_throughput_gather import (build_index_construction_manifest
 from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, P121_IGNORED_OPS, RESULTS_ROOT, fastest_tetris,
                                  file_times, host_info, iso_utc, load_p121_runtime_ops, load_test_tradeoff,
                                  load_tradeoff_points, query_dicts, results_dir, rounded, write_json)
-from polyis.io import cache, store
-from polyis.utilities import get_config, parse_execution_param_str
+from tetris.io import cache, store
+from tetris.utilities import get_config, parse_execution_param_str
 
 
 CONFIG = get_config()

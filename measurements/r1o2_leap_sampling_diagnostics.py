@@ -15,7 +15,7 @@ from scipy.optimize import linear_sum_assignment
 
 from evaluation.manifests import list_split_videos
 from measurements.common import DATASET_LABELS, canonical_leap_result, output_path, query_dicts, write_json
-from polyis.utilities import get_video_frame_count
+from tetris.utilities import get_video_frame_count
 
 
 ROOT = Path(__file__).resolve().parent.parent

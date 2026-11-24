@@ -6,13 +6,13 @@ import numpy as np
 import torch
 from torch.nn.functional import interpolate
 
-import polyis.dtypes
+import tetris.dtypes
 
 if typing.TYPE_CHECKING:
     from detectron2.modeling.meta_arch.retinanet import RetinaNet
 
 
-from polyis.b3d import nms
+from tetris.b3d import nms
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 
@@ -46,7 +46,7 @@ def detect(
     image: np.ndarray,
     detector: "DefaultPredictor",
     nms_threshold: float = 0.5
-) -> polyis.dtypes.DetArray:
+) -> tetris.dtypes.DetArray:
     """
     Detect vehicles in an image using RetinaNet.
     
@@ -64,10 +64,10 @@ def detect(
 
 
 def detect_batch(
-    images: list[polyis.dtypes.NPImage],
+    images: list[tetris.dtypes.NPImage],
     detector: "DefaultPredictor",
     nms_threshold: float = 0.5
-) -> list[polyis.dtypes.DetArray]:
+) -> list[tetris.dtypes.DetArray]:
     """
     Detect vehicles in a batch of images using RetinaNet.
     """
@@ -111,7 +111,7 @@ def detect_batch(
 
             nms_bboxes, nms_scores = nms.nms(bboxes, scores, nms_threshold)
             detections = np.zeros((len(nms_bboxes), 5))
-            assert polyis.dtypes.is_det_array(detections)
+            assert tetris.dtypes.is_det_array(detections)
             if len(nms_bboxes) > 0:
                 detections[:, 0:4] = nms_bboxes
                 detections[:, 4] = nms_scores

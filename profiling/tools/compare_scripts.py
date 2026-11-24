@@ -32,7 +32,7 @@ import yaml
 from execution.tools.compare_scripts import compare_detections, compare_track_lines
 from profiling import main as pmain
 from profiling.config import parse_sweep_config
-from polyis.io import store
+from tetris.io import store
 
 # The small grid: sample rates x T_r x (no pruning + 2 tolerances x 2 trackers) x 2 paddings.
 SMALL_GRID = {'sample_rates': [1, 4], 'relevance_thresholds': [0.25, 0.5], 'mistrack_tolerances': [None, 0.4, 0.8],
@@ -73,7 +73,7 @@ def detection_rows(path: str) -> list[tuple[int, list]]:
 
 def script_solve(dataset: str, state: dict, sc, tracker: str, tolerance: float, relevance_threshold: float) -> tuple:
     """Test-only stand-in for profiling.stages.solve_ilp: the scripts' saved 022 grids for this branch."""
-    from polyis.utilities import load_pruned_classification_results
+    from tetris.utilities import load_pruned_classification_results
     b = sc.branch
     idx, grid = grids(load_pruned_classification_results(dataset, os.path.basename(sc.video), b['tile_size'],
                                                          b['classifier'], tracker, tolerance, relevance_threshold,

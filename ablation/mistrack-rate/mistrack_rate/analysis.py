@@ -9,7 +9,7 @@ from typing import Any
 import altair as alt
 import pandas as pd
 
-from polyis.pareto import compute_pareto_front
+from tetris.pareto import compute_pareto_front
 
 from .common import GRID_COLS, GRID_ROWS, ensure_dir, plots_dir, results_csv_path
 
@@ -563,7 +563,7 @@ def plot_results(dataset: str, tracker_name: str) -> list[Path]:
 
 def _collect_results(tracker_name: str, cache_dir: Path | None = None) -> pd.DataFrame:
     """Glob every results.csv for *tracker_name* across all datasets and concatenate."""
-    from polyis.io import cache as _polyis_cache
+    from tetris.io import cache as _polyis_cache
 
     # Resolve base cache directory (injectable for testing).
     base = Path(cache_dir) if cache_dir is not None else Path(_polyis_cache.CACHE_DIR)
@@ -674,7 +674,7 @@ def combine_visualize(
     Returns the list of written paths, or an empty list when no cached
     results exist for *tracker_name*.
     """
-    from polyis.io import cache as _polyis_cache
+    from tetris.io import cache as _polyis_cache
 
     # Load all available per-dataset results for this tracker; summary charts
     # only include ams-y05, caldot1-y05, caldot2-y05, and jnc0.

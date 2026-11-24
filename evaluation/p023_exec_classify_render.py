@@ -7,8 +7,8 @@ import numpy as np
 import multiprocessing as mp
 from functools import partial
 
-from polyis.io import cache, store
-from polyis.utilities import load_classification_results, ProgressBar, to_h264, DATASETS_TO_TEST, TILE_SIZES
+from tetris.io import cache, store
+from tetris.utilities import load_classification_results, ProgressBar, to_h264, DATASETS_TO_TEST, TILE_SIZES
 
 
 def parse_args():

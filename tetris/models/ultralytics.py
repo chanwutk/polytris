@@ -2,7 +2,7 @@ import os
 import numpy as np
 import ultralytics
 
-import polyis.dtypes
+import tetris.dtypes
 
 # Set environment variable to suppress verbose output
 os.environ['YOLO_VERBOSE'] = 'False'
@@ -39,7 +39,7 @@ def get_detector(device: str, model_path: str):
 def detect(
     image: np.ndarray,
     model: "ultralytics.YOLO"  # type: ignore
-) -> polyis.dtypes.DetArray:
+) -> tetris.dtypes.DetArray:
     """
     Detect vehicles in an image using YOLOv5.
 
@@ -57,7 +57,7 @@ def detect(
 
     if results.boxes is None or len(results.boxes) == 0:
         res = np.empty((0, 5))
-        assert polyis.dtypes.is_det_array(res)
+        assert tetris.dtypes.is_det_array(res)
         return res
 
     # Get bounding boxes and confidence scores
@@ -69,14 +69,14 @@ def detect(
     detections[:, :4] = bboxes
     detections[:, 4] = confidences
 
-    assert polyis.dtypes.is_det_array(detections)
+    assert tetris.dtypes.is_det_array(detections)
     return detections
 
 
 def detect_batch(
-    images: list[polyis.dtypes.NPImage],
+    images: list[tetris.dtypes.NPImage],
     model: "ultralytics.YOLO"  # type: ignore
-) -> list[polyis.dtypes.DetArray]:
+) -> list[tetris.dtypes.DetArray]:
     """
     Detect vehicles in a batch of images using YOLOv5.
 
@@ -92,11 +92,11 @@ def detect_batch(
     # Pass images as a list instead of stacking them
     # Ultralytics handles batching internally and expects a list of images
     all_results = model(images, verbose=False)
-    all_detections: list[polyis.dtypes.DetArray] = []
+    all_detections: list[tetris.dtypes.DetArray] = []
     for results in all_results:
         if results.boxes is None or len(results.boxes) == 0:
             res = np.empty((0, 5))
-            assert polyis.dtypes.is_det_array(res)
+            assert tetris.dtypes.is_det_array(res)
             all_detections.append(res)
             continue
 
@@ -109,7 +109,7 @@ def detect_batch(
         detections[:, :4] = bboxes
         detections[:, 4] = confidences
 
-        assert polyis.dtypes.is_det_array(detections)
+        assert tetris.dtypes.is_det_array(detections)
         all_detections.append(detections)
 
     return all_detections

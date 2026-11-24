@@ -70,8 +70,8 @@ from evaluation.manifests import build_query_task_manifest, list_split_videos
 from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset, resolve_prediction_relative_path
 # file_times: GNU stat with creation times, the one implementation the plan and the R9.O2 measurement share.
 from measurements.common import DATASET_LABELS, file_times
-from polyis.io import cache, store
-from polyis.utilities import get_config
+from tetris.io import cache, store
+from tetris.utilities import get_config
 
 
 # Roots of real data: read by the plan, never written.
@@ -134,7 +134,7 @@ SUMMARY_SUFFIXES = {'p013': '_optimization_stats.json'}
 DETECTOR_LOAD_PROGRAM = '''
 import json, sys, time
 import torch
-import polyis.models.detector
+import tetris.models.detector
 dataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])
 start = time.time()
 torch.zeros(1, device='cuda')
@@ -143,7 +143,7 @@ cuda_init_s = time.time() - start
 times = []
 for _ in range(loads):
     begin = time.time()
-    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)
+    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)
     torch.cuda.synchronize()
     times.append(time.time() - begin)
     del detector

@@ -22,21 +22,21 @@ import numpy as np
 import torch
 
 from execution import frames
-from polyis import dtypes
-from polyis.classify import classify_batch_tensors, load_classifier
-from polyis.models.detector import build_detector, detect_batch
-from polyis.pack.adapters import group_tiles_all
-from polyis.pack.collage import (
+from tetris import dtypes
+from tetris.classify import classify_batch_tensors, load_classifier
+from tetris.models.detector import build_detector, detect_batch
+from tetris.pack.adapters import group_tiles_all
+from tetris.pack.collage import (
     _compute_polyomino_tile_boundaries,
     _copy_polyomino_tiles_to_canvas,
     _update_polyomino_metadata,
     unpack_detections,
 )
-from polyis.pack.group_tiles import group_tiles
-from polyis.pack.pack import pack
-from polyis.sample.ilp.c.gurobi import solve_ilp
-from polyis.train.select_model_optimization import select_model_optimization
-from polyis.utilities import create_tracker, register_tracked_detections
+from tetris.pack.group_tiles import group_tiles
+from tetris.pack.pack import pack
+from tetris.sample.ilp.c.gurobi import solve_ilp
+from tetris.train.select_model_optimization import select_model_optimization
+from tetris.utilities import create_tracker, register_tracked_detections
 
 # p020's BATCH_SIZE, p040's default --batch_size, p022's TILEPADDING_MODE and solve time limit,
 # and p030's PackMode.Best_Fit.  tests/execution/test_stages.py checks each against its script.

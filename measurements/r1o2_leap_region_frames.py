@@ -9,7 +9,7 @@ import cv2
 
 from evaluation.manifests import list_split_videos
 from measurements.common import DATASET_LABELS
-from polyis.utilities import DATASETS_DIR
+from tetris.utilities import DATASETS_DIR
 
 
 ROOT = Path(__file__).resolve().parent.parent

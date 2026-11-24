@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 Test suite for comparing tracking results from three SORT implementations:
-- polyis/b3d/sort.py
-- polyis/tracker/sort.py
-- polyis/tracker/cython/_sort.pyx (Cython implementation)
+- tetris/b3d/sort.py
+- tetris/tracker/sort.py
+- tetris/tracker/cython/_sort.pyx (Cython implementation)
 
 This test loads detection results from a JSONL file and runs all trackers
 on the same detections to compare their outputs.
@@ -17,11 +17,11 @@ import pytest
 import numpy as np
 import numpy.typing as npt
 
-from polyis.b3d.sort import Sort as SortB3D
-# from polyis.tracker.sort import Sort as SortTracker
+from tetris.b3d.sort import Sort as SortB3D
+# from tetris.tracker.sort import Sort as SortTracker
 
-from polyis.tracker.sort.cython.sort import Sort as SortCython  # type: ignore
-from polyis.utilities import CACHE_DIR, get_config
+from tetris.tracker.sort.cython.sort import Sort as SortCython  # type: ignore
+from tetris.utilities import CACHE_DIR, get_config
 
 
 def load_detection_results(detection_path: str) -> list[dict]:
@@ -294,9 +294,9 @@ def test_sort_comparison():
     tracker_cython = SortCython(max_age=max_age, min_hits=min_hits, iou_threshold=iou_threshold)  # type: ignore[call-arg]
     
     # Reset tracker counters to ensure consistent IDs
-    from polyis.b3d.sort import KalmanBoxTracker as KalmanBoxTrackerB3D
-    # from polyis.tracker.sort import KalmanBoxTracker as KalmanBoxTrackerTracker
-    # from polyis.tracker.sort.cython.sort import reset_tracker_count
+    from tetris.b3d.sort import KalmanBoxTracker as KalmanBoxTrackerB3D
+    # from tetris.tracker.sort import KalmanBoxTracker as KalmanBoxTrackerTracker
+    # from tetris.tracker.sort.cython.sort import reset_tracker_count
     KalmanBoxTrackerB3D.count = 0
     # KalmanBoxTrackerTracker.count = 0
     # reset_tracker_count()

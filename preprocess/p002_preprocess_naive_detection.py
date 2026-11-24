@@ -11,9 +11,9 @@ import multiprocessing as mp
 import queue
 import shutil
 
-import polyis.models.detector
-from polyis.io import cache, store
-from polyis.utilities import format_time, ProgressBar, get_num_frames, get_config
+import tetris.models.detector
+from tetris.io import cache, store
+from tetris.utilities import format_time, ProgressBar, get_num_frames, get_config
 
 
 CONFIG = get_config()
@@ -60,7 +60,7 @@ def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: qu
     # print(f"Processing video: {video_path} on GPU {gpu_id}")
     
     # Load detector for this specific process and GPU (auto-selected based on dataset)
-    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size=1)
+    detector = tetris.models.detector.get_detector(dataset, gpu_id, batch_size=1)
     
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f"Could not open video {video_path}"
@@ -86,7 +86,7 @@ def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: qu
         # warm up the model
         for _ in range(32):
             ret, frame = cap.read()
-            _ = polyis.models.detector.detect(frame, detector)
+            _ = tetris.models.detector.detect(frame, detector)
             torch.cuda.synchronize()
 
         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -102,7 +102,7 @@ def detect_objects(dataset: str, video_file: str, gpu_id: int, command_queue: qu
             
             # Measure object detection time
             start_time = (time.time_ns() / 1e6)
-            detections = polyis.models.detector.detect(frame, detector)
+            detections = tetris.models.detector.detect(frame, detector)
             end_time = (time.time_ns() / 1e6)
             detect_time = end_time - start_time
             
@@ -171,8 +171,8 @@ def main():
     for dataset in EXEC_DATASETS:
         dataset_dir = store.dataset(dataset)
         assert os.path.exists(dataset_dir), f"Dataset directory {dataset_dir} does not exist"
-        detector = polyis.models.detector.get_detector(dataset, 0, batch_size=1)
-        polyis.models.detector.delete(detector)
+        detector = tetris.models.detector.get_detector(dataset, 0, batch_size=1)
+        tetris.models.detector.delete(detector)
 
         # Get all video files from the dataset directory
         video_files: list[str] = []

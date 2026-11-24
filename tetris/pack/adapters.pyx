@@ -10,7 +10,7 @@ from libc.stdlib cimport free
 from libc.stdint cimport int16_t
 import cython
 
-from polyis.pack.group_tiles import group_tiles  # type: ignore[import-untyped]
+from tetris.pack.group_tiles import group_tiles  # type: ignore[import-untyped]
 
 
 # Declare C structures from utilities_.h

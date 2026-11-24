@@ -14,14 +14,14 @@ from pathlib import Path
 import numpy as np
 import torch
 
-import polyis.models.detector
-import polyis.models.retinanet_b3d
-import polyis.models.yolov3
-import polyis.models.ultralytics
-import polyis.models.torch_vision
-import polyis.dtypes
-from polyis.utilities import TILEPADDING_MODES, TilePadding, format_time, ProgressBar, get_config
-from polyis.models.detector import get_detector_info
+import tetris.models.detector
+import tetris.models.retinanet_b3d
+import tetris.models.yolov3
+import tetris.models.ultralytics
+import tetris.models.torch_vision
+import tetris.dtypes
+from tetris.utilities import TILEPADDING_MODES, TilePadding, format_time, ProgressBar, get_config
+from tetris.models.detector import get_detector_info
 
 
 config = get_config()
@@ -144,7 +144,7 @@ def get_finetuned_detector(dataset: str, tilesize: int, tilepadding: TilePadding
                 f"Please run p042_exec_detect_finetune.py first to train the model."
             )
         
-        return polyis.models.yolov3.get_detector(
+        return tetris.models.yolov3.get_detector(
             gpu_id=gpu_id,
             config_path=str(config_path),
             model_path=str(model_path),
@@ -170,7 +170,7 @@ def get_finetuned_detector(dataset: str, tilesize: int, tilepadding: TilePadding
                 f"Please run p042_exec_detect_finetune.py first to train the model."
             )
         
-        return polyis.models.ultralytics.get_detector(device=device, model_path=str(model_path))
+        return tetris.models.ultralytics.get_detector(device=device, model_path=str(model_path))
     
     elif detector_type == 'torchvision':
         # Detectron2 Faster R-CNN or RetinaNet (via torchvision)
@@ -242,7 +242,7 @@ def detect_worker(dataset: str, tilesize: int, tilepadding: TilePadding, batch_q
             batch_end = min(batch_start + len(batch_images), len_images)
             
             # Run detection on the batch of images (already numpy arrays)
-            batch_output = polyis.models.detector.detect_batch(batch_images, detector)
+            batch_output = tetris.models.detector.detect_batch(batch_images, detector)
             
             # Send results back to main process
             result_queue.put((batch_start, batch_end, batch_output))
@@ -290,7 +290,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         image_path = os.path.join(compressed_frames_dir, image_file)
         frame = cv2.imread(image_path)
         assert frame is not None
-        assert polyis.dtypes.is_np_image(frame)
+        assert tetris.dtypes.is_np_image(frame)
         frames.append(frame)
     print(f"Read {len(frames)} frames")
 
@@ -331,7 +331,7 @@ def detect_parallel(dataset: str, video: str, classifier: str, tilesize: int,
         
         # Collect results from all processes
         # Results may arrive out of order, so we collect them all first
-        results_dict: dict[int, polyis.dtypes.DetArray] = {}
+        results_dict: dict[int, tetris.dtypes.DetArray] = {}
         completed_batches = 0
         while completed_batches < num_batches:
             result_data = result_queue.get(block=True)
@@ -408,14 +408,14 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
             batch_files = image_files[batch_start:batch_end]
             
             # Read all images in the batch
-            batch_images_: list[polyis.dtypes.NPImage] = []
+            batch_images_: list[tetris.dtypes.NPImage] = []
             for image_file in batch_files:
                 image_path = os.path.join(compressed_frames_dir, image_file)
                 frame = cv2.imread(image_path)
                 assert frame is not None
-                assert polyis.dtypes.is_np_image(frame)
+                assert tetris.dtypes.is_np_image(frame)
                 batch_images_.append(frame)
-            batch_outputs = polyis.models.detector.detect_batch(batch_images_, detector)
+            batch_outputs = tetris.models.detector.detect_batch(batch_images_, detector)
         torch.cuda.synchronize()
         
         # Process images in batches
@@ -424,14 +424,14 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
             batch_files = image_files[batch_start:batch_end]
             
             # Read all images in the batch
-            batch_images: list[polyis.dtypes.NPImage] = []
+            batch_images: list[tetris.dtypes.NPImage] = []
             batch_runtimes: list[dict] = []
             start_time = (time.time_ns() / 1e6)
             for image_file in batch_files:
                 image_path = os.path.join(compressed_frames_dir, image_file)
                 frame = cv2.imread(image_path)
                 assert frame is not None
-                assert polyis.dtypes.is_np_image(frame)
+                assert tetris.dtypes.is_np_image(frame)
                 batch_images.append(frame)
                 batch_runtimes.append({'image_file': image_file})
             end_time = (time.time_ns() / 1e6)
@@ -439,7 +439,7 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
 
             # Detect objects in the batch
             start_time = (time.time_ns() / 1e6)
-            batch_outputs = polyis.models.detector.detect_batch(batch_images, detector)
+            batch_outputs = tetris.models.detector.detect_batch(batch_images, detector)
             end_time = (time.time_ns() / 1e6)
             detect_time_per_image = (end_time - start_time) / len(batch_files)
 

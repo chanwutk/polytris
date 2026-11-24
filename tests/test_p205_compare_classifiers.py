@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from evaluation import p205_compare_classifiers as p205
-from polyis.io import cache
+from tetris.io import cache
 
 TILE = 60
 # A 2x3 tile grid (120x180 pixels) where one object moves one tile right per frame.
@@ -78,7 +78,7 @@ def test_missing_ground_truth_is_an_error(env):
 
 
 def test_tile_confusion_counts_relevant_tiles_as_positive():
-    from polyis.utilities import tile_confusion
+    from tetris.utilities import tile_confusion
     # Asymmetric case: 1 TP, 2 FP, 1 FN, 2 TN, so any swap of the cells is visible.
     scores = np.array([[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]])
     boxes = [[5, 5, 50, 50], [5, 65, 50, 110]]  # tiles (0, 0) and (1, 0)
@@ -86,7 +86,7 @@ def test_tile_confusion_counts_relevant_tiles_as_positive():
 
 
 def test_tile_confusion_skips_masked_tiles_and_checks_the_mask_shape():
-    from polyis.utilities import tile_confusion
+    from tetris.utilities import tile_confusion
     scores = np.array([[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]])
     mask = np.array([[1, 0, 0], [1, 1, 1]])
     assert tile_confusion(scores, [[5, 65, 50, 110]], TILE, 0.5, mask) == {'tp': 0, 'fp': 1, 'fn': 1, 'tn': 2}

@@ -38,7 +38,7 @@ def full(c: dict) -> dict:
 
 def param_str(c: dict) -> str:
     """The configuration's stage-060 directory name."""
-    from polyis.utilities import build_param_str
+    from tetris.utilities import build_param_str
     p = full(c)
     return build_param_str(classifier=p['classifier'], tilesize=p['tile_size'], sample_rate=p['sample_rate'],
                            tilepadding=p['tile_padding'], canvas_scale=p['canvas_scale'], tracker=p['tracker'],
@@ -48,7 +48,7 @@ def param_str(c: dict) -> str:
 
 def prune_param_str(c: dict) -> str:
     """The configuration's p022 directory name (no padding or canvas scale: pruning comes before packing)."""
-    from polyis.utilities import build_param_str
+    from tetris.utilities import build_param_str
     p = full(c)
     return build_param_str(classifier=p['classifier'], tilesize=p['tile_size'], sample_rate=p['sample_rate'],
                            tracker=p['tracker'], tracking_accuracy_threshold=p['mistrack_tolerance'],
@@ -102,7 +102,7 @@ def solve_times(tree: harness.Tree, configs: list[dict]) -> list[dict]:
 
 
 def write_selection(tree: harness.Tree) -> None:
-    """The test split's configuration selection, where the scripts read it (polyis.pareto.load_pareto_params:
+    """The test split's configuration selection, where the scripts read it (tetris.pareto.load_pareto_params:
     <cache>/<dataset>/evaluation/095_pareto_params/pareto_params.csv), in its columns."""
     rows = ['variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,'
             'tilepadding,canvas_scale,tracker']

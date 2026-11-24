@@ -9,8 +9,8 @@ import multiprocessing as mp
 
 from rich.progress import track
 
-from polyis.io import cache
-from polyis.utilities import get_config
+from tetris.io import cache
+from tetris.utilities import get_config
 
 
 config = get_config()

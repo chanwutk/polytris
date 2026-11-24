@@ -4,7 +4,7 @@ from pathlib import Path
 
 import duckdb
 
-from polyis.io import cache
+from tetris.io import cache
 
 
 def refresh(root: Path):

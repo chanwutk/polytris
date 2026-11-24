@@ -130,7 +130,7 @@ p022 binarizes with `>= floor(T_r*255)`, p030 with `> T_r*255`, so they differ o
 63 / 127 / 191 (for T_r 0.25 / 0.5 / 0.75).  Not merged.
 
 ### A4. The author's premise does not hold: all-1s gaps do not keep every polyomino
-Found by a test (Gurobi status 2, yet tiles dropped).  In `polyis/sample/ilp/gurobi.py` a tile covered in at
+Found by a test (Gurobi status 2, yet tiles dropped).  In `tetris/sample/ilp/gurobi.py` a tile covered in at
 most one sampled frame (`len(pos) <= 1`) gets no temporal constraint; only consecutive appearances are linked
 (and first/last appearances forced).  With every gap 1, the optimum keeps exactly the polyominoes containing
 a tile that appears in >= 2 sampled frames and drops the rest, since the objective minimizes kept cells.
@@ -193,7 +193,7 @@ mounted from the main checkout (`weights/` is not synced to the profiling checko
 ## TODO (author, 2026-11-21)
 - Keep polyominoes whose tiles appear in only one sampled frame.  The ILP's early exit `len(pos) <= 1` skips
   its own "always choose the first and last appearance" rule for such tiles.  Change it to skip only
-  `len(pos) == 0` in all three backends (`polyis/sample/ilp/gurobi.py:80`, `polyis/sample/ilp/c/gurobi.pyx:231`,
+  `len(pos) == 0` in all three backends (`tetris/sample/ilp/gurobi.py:80`, `tetris/sample/ilp/c/gurobi.pyx:231`,
   and likely `pulp.py`), with a test that a single-appearance polyomino is kept.  Not yet: it changes every
   cached p022 result and everything downstream.  Afterwards all-1s gaps really do keep everything, so the
   solve-skip (removed in 9691538) could return, binarizing as p022 does.

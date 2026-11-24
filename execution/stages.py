@@ -36,7 +36,7 @@ from execution.operators import (  # noqa: F401
 )
 # The decoded-video and packed-canvas messages are the operators' own types.
 from execution.operators import Decoded, Packed
-from polyis.utilities import TILEPADDING_MAPS, is_tile_padding
+from tetris.utilities import TILEPADDING_MAPS, is_tile_padding
 
 
 class Classified(NamedTuple):

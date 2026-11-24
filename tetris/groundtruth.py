@@ -5,7 +5,7 @@ p003. The automatic labels it replaced live in the sibling directory named by ba
 """
 from pathlib import Path
 
-from polyis.io import cache
+from tetris.io import cache
 
 
 # File p004 writes into an installed ground-truth directory; its presence marks the directory as installed.
@@ -34,7 +34,7 @@ def is_installed(dataset: str, video: str) -> bool:
 
 def assert_no_human_groundtruth(datasets: list[str]) -> None:
     """Refuse any p003 run whose configured datasets (or their roots) have human-verified ground truth."""
-    from polyis.utilities import dataset_root_name
+    from tetris.utilities import dataset_root_name
     # Match on the root, so detector variants of a protected dataset are refused too.
     protected = [dataset for dataset in datasets if dataset_root_name(dataset) in HUMAN_GROUNDTRUTH_DATASETS]
     if protected:
@@ -42,7 +42,7 @@ def assert_no_human_groundtruth(datasets: list[str]) -> None:
         others = ','.join(d for d in datasets if d not in protected) or '<datasets>'
         raise RuntimeError(
             f'p003 would regenerate ground truth for {", ".join(protected)}, which is human-verified '
-            f'(polyis.groundtruth.HUMAN_GROUNDTRUTH_DATASETS). Run without them, e.g. POLYIS_DATASETS={others}.')
+            f'(tetris.groundtruth.HUMAN_GROUNDTRUTH_DATASETS). Run without them, e.g. POLYIS_DATASETS={others}.')
 
 
 def assert_not_installed(dataset: str, videos: list[str]) -> None:

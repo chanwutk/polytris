@@ -1,5 +1,5 @@
 from pathlib import Path
-from polyis.utilities import get_config
+from tetris.utilities import get_config
 
 
 CONFIG = get_config()

@@ -4,7 +4,7 @@ import argparse
 import os
 import shutil
 
-from polyis.utilities import CACHE_DIR
+from tetris.utilities import CACHE_DIR
 
 
 def parse_args():

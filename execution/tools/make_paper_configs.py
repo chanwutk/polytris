@@ -28,7 +28,7 @@ NAME = re.compile(r'^(?P<classifier>[^_]+)_(?P<tile>\d+)_(?P<s>\d+)(?:_(?P<tol>\
 
 
 def parse_name(name: str) -> dict:
-    """The parameters encoded in a cache configuration name (polyis.utilities.build_param_str)."""
+    """The parameters encoded in a cache configuration name (tetris.utilities.build_param_str)."""
     m = NAME.match(name)
     if m is None:
         raise ValueError(f'cannot parse configuration name {name!r}')

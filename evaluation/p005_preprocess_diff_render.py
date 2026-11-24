@@ -9,8 +9,8 @@ from functools import partial
 import cv2
 import numpy as np
 
-from polyis.io import cache, store
-from polyis.utilities import (
+from tetris.io import cache, store
+from tetris.utilities import (
     PREFIX_TO_VIDEOSET, ProgressBar,
     load_detection_results, DATASETS_TO_TEST, to_h264,
     create_visualization_frame

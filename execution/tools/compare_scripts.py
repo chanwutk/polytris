@@ -34,8 +34,8 @@ from execution import frames, main, stages
 from execution.config import Config, load_config
 from execution.pipeline import Stage, Worker
 from execution.stages import Classified, Detected
-from polyis.io import cache, store
-from polyis.utilities import (build_param_str, load_classification_results, load_pruned_classification_results,
+from tetris.io import cache, store
+from tetris.utilities import (build_param_str, load_classification_results, load_pruned_classification_results,
                               save_tracking_results)
 
 

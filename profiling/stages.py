@@ -30,7 +30,7 @@ from profiling.reduction import sweep_groups
 from profiling.completion import VideoCompletion
 from profiling.config import SweepConfig
 from profiling.messages import Branch, Decoded, Detected, Evaluated, Packed, Scored, StageTiming, Tracked
-from polyis.utilities import TILEPADDING_MAPS, is_tile_padding, save_tracking_results
+from tetris.utilities import TILEPADDING_MAPS, is_tile_padding, save_tracking_results
 
 
 def expected_pack_inputs(cfg: SweepConfig, groups: dict | None = None) -> int:

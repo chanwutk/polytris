@@ -23,8 +23,8 @@ from libc.string cimport memcpy, memset
 from libcpp.vector cimport vector
 from libcpp.map cimport map as cppmap
 
-from polyis.tracker.ocsort.cython.kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update, kf_freeze, kf_unfreeze
-from polyis.tracker.ocsort.cython.association cimport iou_batch, asso_dispatch, linear_assignment, associate
+from tetris.tracker.ocsort.cython.kalman_filter cimport KalmanFilter, kf_init, kf_predict, kf_update, kf_freeze, kf_unfreeze
+from tetris.tracker.ocsort.cython.association cimport iou_batch, asso_dispatch, linear_assignment, associate
 
 
 # ============================================================

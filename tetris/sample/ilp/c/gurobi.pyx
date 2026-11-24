@@ -7,7 +7,7 @@
 """
 Cython wrapper around the Gurobi C API for the polyomino-pruning ILP solver.
 
-The solver formulation is identical to polyis/sample/ilp/gurobi.py; this
+The solver formulation is identical to tetris/sample/ilp/gurobi.py; this
 module bypasses the gurobipy Python layer and calls libgurobi directly,
 removing Python-object overhead from model construction and solution extraction.
 
@@ -92,7 +92,7 @@ cdef inline double _now_ms():
     return _monotonic() * 1000.0
 
 # ── Public solver ────────────────────────────────────────────────────────────
-from polyis.sample.ilp.gurobi import ILPResult
+from tetris.sample.ilp.gurobi import ILPResult
 
 
 def solve_ilp(

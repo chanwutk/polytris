@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 
 import numpy as np
 
-from polyis.utilities import build_param_str
+from tetris.utilities import build_param_str
 
 if TYPE_CHECKING:
     # Types only: importing operators loads the detector libraries, which need a GPU driver.

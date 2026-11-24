@@ -9,7 +9,7 @@ import cython
 
 import numpy as np
 
-from polyis.pack.cython.utilities cimport Coordinate, CoordinateStack, Polyomino, PolyominoStack, \
+from tetris.pack.cython.utilities cimport Coordinate, CoordinateStack, Polyomino, PolyominoStack, \
                        IntStack, IntStack_init, IntStack_push, IntStack_cleanup
 
 

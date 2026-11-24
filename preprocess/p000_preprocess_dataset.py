@@ -12,8 +12,8 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-from polyis.io import store
-from polyis.utilities import (
+from tetris.io import store
+from tetris.utilities import (
     ProgressBar,
     build_b3d_mask_and_crop,
     dedupe_datasets_by_root,

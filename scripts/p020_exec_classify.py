@@ -13,12 +13,12 @@ import shutil
 import multiprocessing as mp
 from functools import partial
 
-from polyis.classify import classify_batch, load_classifier
+from tetris.classify import classify_batch, load_classifier
 
-from polyis.train.select_model_optimization import select_model_optimization
-from polyis.io import cache, store
-from polyis.utilities import format_time, ProgressBar, get_config
-from polyis.pareto import build_pareto_combo_filter
+from tetris.train.select_model_optimization import select_model_optimization
+from tetris.io import cache, store
+from tetris.utilities import format_time, ProgressBar, get_config
+from tetris.pareto import build_pareto_combo_filter
 
 
 config = get_config()

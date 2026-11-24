@@ -3,8 +3,8 @@ import pytest
 
 from evaluation import p110_accuracy_compute as p110
 from measurements.snapshot_outputs import snapshot
-from polyis.io import cache
-from polyis.utilities import get_config
+from tetris.io import cache
+from tetris.utilities import get_config
 
 
 def test_polyis_datasets_restricts_the_configured_datasets(monkeypatch):

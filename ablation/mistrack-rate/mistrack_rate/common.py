@@ -8,8 +8,8 @@ from typing import Iterable, Iterator
 
 import numpy as np
 
-from polyis.io import cache, store
-from polyis.utilities import (
+from tetris.io import cache, store
+from tetris.utilities import (
     get_video_frame_count,
     get_video_resolution,
     load_tracking_results,

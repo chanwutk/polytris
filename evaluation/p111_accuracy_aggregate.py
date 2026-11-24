@@ -9,9 +9,9 @@ import shutil
 import pandas as pd
 
 from evaluation.manifests import build_split_variant_manifest
-from polyis.io import cache
-from polyis.pareto import load_pareto_params, pareto_params_exist
-from polyis.utilities import get_config
+from tetris.io import cache
+from tetris.pareto import load_pareto_params, pareto_params_exist
+from tetris.utilities import get_config
 
 
 CONFIG = get_config()

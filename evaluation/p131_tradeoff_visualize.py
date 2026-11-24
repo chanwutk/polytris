@@ -6,8 +6,8 @@ import os
 import altair as alt
 from rich.progress import track
 
-from polyis.io import cache
-from polyis.utilities import (
+from tetris.io import cache
+from tetris.utilities import (
     METRICS,
     get_config,
     load_tradeoff_data,

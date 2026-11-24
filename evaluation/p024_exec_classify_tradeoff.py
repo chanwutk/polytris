@@ -10,8 +10,8 @@ from rich.progress import track
 from typing import Any, Dict, List
 import multiprocessing as mp
 
-from polyis.io import cache, store
-from polyis.utilities import get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, tile_confusion, get_config
+from tetris.io import cache, store
+from tetris.utilities import get_accuracy, get_f1_score, get_precision, get_recall, load_classification_results, load_detection_results, tile_confusion, get_config
 
 
 config = get_config()

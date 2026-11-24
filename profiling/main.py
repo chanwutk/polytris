@@ -35,7 +35,7 @@ from profiling import stages as st
 from profiling.completion import VideoCompletion
 from profiling.config import SweepConfig, load_sweep_config
 from profiling.messages import Evaluated
-from polyis.io import store
+from tetris.io import store
 
 SHM_DIR = '/dev/shm'
 

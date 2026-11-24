@@ -15,8 +15,8 @@ import torch
 from execution import frames, operators, stages
 from execution.config import (Artifacts, Classifier, Config, Detector, Params, StageSystem, System)
 from execution.stages import Classified, Decoded, Detected, Packed
-from polyis.classify import classify_batch
-from polyis.utilities import save_tracking_results
+from tetris.classify import classify_batch
+from tetris.utilities import save_tracking_results
 from tests.test_shared_helpers_golden import FakeClassifier
 
 TS = 10                     # tile size: small synthetic videos, many tiles
@@ -104,7 +104,7 @@ def score_rows(scores: np.ndarray, sampled) -> list[dict]:
 
 
 class FakeCache:
-    """Stands in for polyis.io.cache: every exec() path lands under a temporary root."""
+    """Stands in for tetris.io.cache: every exec() path lands under a temporary root."""
 
     def __init__(self, root: Path):
         self.root = root

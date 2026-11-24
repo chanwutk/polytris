@@ -8,8 +8,8 @@ import shutil
 import altair as alt
 import pandas as pd
 
-from polyis.io import cache
-from polyis.utilities import get_config
+from tetris.io import cache
+from tetris.utilities import get_config
 
 
 CONFIG = get_config()

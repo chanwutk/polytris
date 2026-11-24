@@ -11,9 +11,9 @@ import multiprocessing as mp
 from functools import partial
 from typing import Callable
 
-from polyis.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str, TilePadding
-from polyis.io import cache, store
-from polyis.pareto import build_pareto_combo_filter
+from tetris.utilities import ProgressBar, create_timer, get_config, get_num_frames, build_param_str, TilePadding
+from tetris.io import cache, store
+from tetris.pareto import build_pareto_combo_filter
 
 
 CONFIG = get_config()

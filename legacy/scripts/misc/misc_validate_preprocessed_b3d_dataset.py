@@ -15,8 +15,8 @@ sys.path.append('/data/chanwutk/projects/polyis/modules/detectron2')
 
 from b3d.external.nms import nms
 from b3d.external.sort import iou_batch, linear_assignment
-from polyis.models.retinanet_b3d import get_detector
-from polyis.utilities import to_h264
+from tetris.models.retinanet_b3d import get_detector
+from tetris.utilities import to_h264
 
 
 VIDEOS = '/data/chanwutk/projects/polyis/videos_crop'

@@ -27,8 +27,8 @@ import pandas as pd
 from evaluation.manifests import build_polytris_variant_manifest, build_split_video_manifest
 from evaluation.p120_throughput_gather import build_stage030_manifest, resolve_upstream_tracker
 from measurements.common import DATASET_LABELS, host_info, results_dir, write_json
-from polyis.io import store
-from polyis.utilities import load_classification_results, load_pruned_classification_results
+from tetris.io import store
+from tetris.utilities import load_classification_results, load_pruned_classification_results
 
 
 def parse_args():

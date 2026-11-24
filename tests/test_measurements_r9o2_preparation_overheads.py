@@ -99,8 +99,8 @@ def test_startup_matches_stage_warmup_without_charging_training_twice(tmp_path, 
                                                                     single, batches, batch_size):
     import cv2
     import torch
-    from polyis.io import store
-    from polyis.models import detector
+    from tetris.io import store
+    from tetris.models import detector
 
     # Replace only hardware operations, checking the actual stage warm-up loops.
     (tmp_path / 'va00.mp4').touch()
@@ -127,7 +127,7 @@ def test_startup_matches_stage_warmup_without_charging_training_twice(tmp_path, 
 
 def test_classifier_reuses_checkpoint_and_cleans_up_private_compiler_workers(tmp_path, monkeypatch, gpu):
     import os
-    from polyis.io import cache
+    from tetris.io import cache
     from scripts import p015_tune_optimize_classifier as benchmark
     from torch._inductor import async_compile
 
@@ -161,7 +161,7 @@ def test_classifier_reuses_checkpoint_and_cleans_up_private_compiler_workers(tmp
 @pytest.mark.parametrize('recomputed', ['original', 'different'])
 def test_tables_keep_saved_frontier_even_when_cost_probe_differs(tmp_path, monkeypatch, gpu, recomputed):
     from evaluation import p130_tradeoff_compute as tradeoff, p135_pareto_extract as pareto
-    from polyis.io import cache
+    from tetris.io import cache
 
     # Isolate all output paths and keep the original selection CSV immutable.
     inputs = tmp_path / 'inputs'
@@ -217,8 +217,8 @@ def test_runner_sets_isolated_config_before_importing_pipeline(tmp_path, monkeyp
 
 
 def test_tradeoff_loader_reads_the_writers_configured_cache(tmp_path, monkeypatch):
-    from polyis.io import cache
-    from polyis import utilities
+    from tetris.io import cache
+    from tetris import utilities
 
     # Exercise the real reader: its former hardcoded /polyis-cache path broke scratch p130/p135 runs.
     monkeypatch.setattr(cache, 'CACHE_DIR', str(tmp_path))

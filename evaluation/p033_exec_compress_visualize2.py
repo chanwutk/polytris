@@ -16,8 +16,8 @@ from typing import Dict, List
 import matplotlib.pyplot as plt
 import numpy as np
 
-from polyis.io import cache
-from polyis.utilities import OPTIMAL_PARAMS, build_param_str
+from tetris.io import cache
+from tetris.utilities import OPTIMAL_PARAMS, build_param_str
 
 
 def parse_args():

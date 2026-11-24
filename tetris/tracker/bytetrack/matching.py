@@ -4,7 +4,7 @@ import scipy
 import lap
 from scipy.spatial.distance import cdist
 
-from polyis.tracker.bytetrack.cython_bbox import bbox_overlaps as bbox_ious
+from tetris.tracker.bytetrack.cython_bbox import bbox_overlaps as bbox_ious
 from . import kalman_filter
 import time
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 Test suite for comparing tracking results and performance from multiple tracker implementations:
-- polyis/tracker/sort/sort.py (SORT Python)
-- polyis/tracker/sort/cython/sort.pyx (SORT Cython)
-- polyis/tracker/ocsort/ocsort.py (OC-SORT Python)
-- polyis/tracker/ocsort/cython/ocsort.pyx (OC-SORT Cython)
-- polyis/tracker/bytetrack/byte_tracker.py (ByteTrack Python)
-- polyis/tracker/bytetrack/cython/bytetrack.pyx (ByteTrack Cython)
+- tetris/tracker/sort/sort.py (SORT Python)
+- tetris/tracker/sort/cython/sort.pyx (SORT Cython)
+- tetris/tracker/ocsort/ocsort.py (OC-SORT Python)
+- tetris/tracker/ocsort/cython/ocsort.pyx (OC-SORT Cython)
+- tetris/tracker/bytetrack/byte_tracker.py (ByteTrack Python)
+- tetris/tracker/bytetrack/cython/bytetrack.pyx (ByteTrack Cython)
 
 This test:
 1. Compares Python vs Cython correctness for SORT, OC-SORT, and ByteTrack
@@ -21,16 +21,16 @@ import pytest
 import numpy as np
 import numpy.typing as npt
 
-from polyis.b3d.sort import Sort as SortB3D
-from polyis.tracker.sort.cython.sort import Sort as SortCython  # type: ignore
-# from polyis.tracker.sort.cython.sort import reset_tracker_count as reset_sort_count
-from polyis.tracker.ocsort.ocsort import OCSort as OCSortPython
-from polyis.tracker.ocsort.cython.ocsort import OCSort as OCSortCython  # type: ignore
-# from polyis.tracker.ocsort.cython.ocsort import reset_tracker_count as reset_ocsort_count
-from polyis.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
-from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython  # type: ignore
-# from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count  # type: ignore
-from polyis.utilities import CACHE_DIR, get_config
+from tetris.b3d.sort import Sort as SortB3D
+from tetris.tracker.sort.cython.sort import Sort as SortCython  # type: ignore
+# from tetris.tracker.sort.cython.sort import reset_tracker_count as reset_sort_count
+from tetris.tracker.ocsort.ocsort import OCSort as OCSortPython
+from tetris.tracker.ocsort.cython.ocsort import OCSort as OCSortCython  # type: ignore
+# from tetris.tracker.ocsort.cython.ocsort import reset_tracker_count as reset_ocsort_count
+from tetris.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
+from tetris.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython  # type: ignore
+# from tetris.tracker.bytetrack.cython.bytetrack import reset_tracker_count  # type: ignore
+from tetris.utilities import CACHE_DIR, get_config
 
 
 def load_detection_results(detection_path: str) -> list[dict]:
@@ -460,7 +460,7 @@ def test_trackers_comparison():
     img_size = (1080, 1920)
     
     # Initialize SORT trackers
-    from polyis.b3d.sort import KalmanBoxTracker as KalmanBoxTrackerB3D
+    from tetris.b3d.sort import KalmanBoxTracker as KalmanBoxTrackerB3D
     KalmanBoxTrackerB3D.count = 0
     # reset_sort_count()
     
@@ -476,7 +476,7 @@ def test_trackers_comparison():
     )
     
     # Initialize OC-SORT trackers
-    from polyis.tracker.ocsort.ocsort import KalmanBoxTracker as KalmanBoxTrackerPython
+    from tetris.tracker.ocsort.ocsort import KalmanBoxTracker as KalmanBoxTrackerPython
     KalmanBoxTrackerPython.count = 0
     # reset_ocsort_count()
     
@@ -502,7 +502,7 @@ def test_trackers_comparison():
     )
     
     # Initialize ByteTrack trackers
-    from polyis.tracker.bytetrack.basetrack import BaseTrack
+    from tetris.tracker.bytetrack.basetrack import BaseTrack
     BaseTrack._count = 0
     # reset_tracker_count()
     

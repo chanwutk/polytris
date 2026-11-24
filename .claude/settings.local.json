@@ -24,7 +24,7 @@
       "Bash(find /work/cwkt/projects/tetris -name config* -type f)",
       "Bash(find . -name \"*.py\" -type f -exec grep -l \"throughput\\\\|fps\\\\|frames\" {})",
       "Bash(python3 -m pytest tests/test_p201_compare_pareto.py -v)",
-      "Bash(python3 -c \"from polyis.utilities import load_classification_results; import inspect; print\\(inspect.signature\\(load_classification_results\\)\\)\")",
+      "Bash(python3 -c \"from tetris.utilities import load_classification_results; import inspect; print\\(inspect.signature\\(load_classification_results\\)\\)\")",
       "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(list\\(d.keys\\(\\)\\)\\); print\\('tracks sample:', d['tracks'][:2] if d['tracks'] else 'empty'\\)\")",
       "Read(//work/cwkt/projects/tetris-paper/figures/**)",
       "Read(//work/cwkt/projects/tetris-paper/figures/generated/**)",

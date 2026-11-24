@@ -3,7 +3,7 @@ import torch
 import torchvision.models
 from torchvision.models import ResNet50_Weights
 
-import polyis.dtypes
+import tetris.dtypes
 
 
 # COCO class indices: car=2, motorcycle=3, bus=5, truck=7
@@ -51,7 +51,7 @@ def get_detector(device: str, model_path: str, model_type: str = "fasterrcnn"):
     return model
 
 
-def detect(image: np.ndarray, model: torch.nn.Module) -> polyis.dtypes.DetArray:
+def detect(image: np.ndarray, model: torch.nn.Module) -> tetris.dtypes.DetArray:
     """
     Detect vehicles in an image using torchvision detection model.
 
@@ -81,7 +81,7 @@ def detect(image: np.ndarray, model: torch.nn.Module) -> polyis.dtypes.DetArray:
 
     if len(boxes) == 0:
         res = np.empty((0, 5))
-        assert polyis.dtypes.is_det_array(res)
+        assert tetris.dtypes.is_det_array(res)
         return res
 
     # Create output array with shape (N, 5): [x1, y1, x2, y2, confidence]
@@ -89,14 +89,14 @@ def detect(image: np.ndarray, model: torch.nn.Module) -> polyis.dtypes.DetArray:
     detections[:, :4] = boxes
     detections[:, 4] = scores
 
-    assert polyis.dtypes.is_det_array(detections)
+    assert tetris.dtypes.is_det_array(detections)
     return detections
 
 
 def detect_batch(
-    images: list[polyis.dtypes.NPImage],
+    images: list[tetris.dtypes.NPImage],
     model: torch.nn.Module,
-) -> list[polyis.dtypes.DetArray]:
+) -> list[tetris.dtypes.DetArray]:
     """
     Detect vehicles in a batch of images using torchvision detection model.
 
@@ -124,7 +124,7 @@ def detect_batch(
     outputs = model(tensors)
 
     # Process each output
-    all_detections: list[polyis.dtypes.DetArray] = []
+    all_detections: list[tetris.dtypes.DetArray] = []
     for output in outputs:
         # Extract boxes and scores
         boxes = output["boxes"].detach().cpu().numpy()  # [x1, y1, x2, y2]
@@ -132,7 +132,7 @@ def detect_batch(
 
         if len(boxes) == 0:
             res = np.empty((0, 5))
-            assert polyis.dtypes.is_det_array(res)
+            assert tetris.dtypes.is_det_array(res)
             all_detections.append(res)
             continue
 
@@ -141,7 +141,7 @@ def detect_batch(
         detections[:, :4] = boxes
         detections[:, 4] = scores
 
-        assert polyis.dtypes.is_det_array(detections)
+        assert tetris.dtypes.is_det_array(detections)
         all_detections.append(detections)
 
     return all_detections

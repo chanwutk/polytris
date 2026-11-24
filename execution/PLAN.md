@@ -87,7 +87,7 @@ Loaded into frozen dataclasses. Unknown keys, missing keys and wrong types are e
 
 ## Code reuse [5A]
 
-Move these pure functions from the scripts into `polyis/` with no logic change. Both the scripts and `execution` import them.
+Move these pure functions from the scripts into `tetris/` with no logic change. Both the scripts and `execution` import them.
 - p020: `load_model`, `classify_batch`
 - p022: the ILP core of `process_video`, split from its file I/O
 - p030: CPU canvas drawing helpers (so canvases match p030 by construction)
@@ -97,7 +97,7 @@ Move these pure functions from the scripts into `polyis/` with no logic change. 
 ## Build order
 
 1. ~~Decoder comparison [14A, 18A]~~: done as a smoke test; OpenCV kept (see Decode).
-2. Before/after tests [11A], then the move to `polyis/` [5A].
+2. Before/after tests [11A], then the move to `tetris/` [5A].
 3. ~~`config.py`, `frames.py`, `pipeline.py` with fake-stage tests [12A]~~: done (`tests/execution/`).
    - numpy views over shared memory hold no buffer export, so `SharedMemory.close()` would unmap memory under a surviving view. `frames.py` detects escaped views by the mmap's reference count and refuses to close.
    - The video edge cases below (empty dir, non-video file, unreadable or 1-frame video, zero collages, duplicate stems) belong to steps 4–5, where main and the stages exist.
@@ -108,7 +108,7 @@ Move these pure functions from the scripts into `polyis/` with no logic change. 
    - backpressure
    - empty dir, non-video file, unreadable video, 1-frame video, zero collages, duplicate stems
 4. ~~Stages: decode, classify, prune, pack, detect, track~~: done (`execution/stages.py`, `tests/execution/test_stages.py`).
-   - Decisions: `params.canvas_format` chooses the detector's input: `jpeg` passes each canvas through `cv2.imencode('.jpg')`/`cv2.imdecode`, exactly the pixels p040 reads back from p030's files; `raw` passes the drawn canvas (first chosen as [20B], made a mode on 2026-11-20); [21A] `polyis.models.detector.build_detector` is shared with `get_detector`; p020's model loading moved to `polyis.classify.load_classifier`.
+   - Decisions: `params.canvas_format` chooses the detector's input: `jpeg` passes each canvas through `cv2.imencode('.jpg')`/`cv2.imdecode`, exactly the pixels p040 reads back from p030's files; `raw` passes the drawn canvas (first chosen as [20B], made a mode on 2026-11-20); [21A] `tetris.models.detector.build_detector` is shared with `get_detector`; p020's model loading moved to `tetris.classify.load_classifier`.
    - Checked against the scripts themselves (loaders redirected to temp files): prune equals p022's `process_video` exactly; pack's index maps and offset lookups equal p030's `compress` exactly, and every drawn tile equals its source tile; track equals p060's `track` file for file; classify equals p020's batching with a fake model.
    - With `canvas_format: jpeg`, pack's canvases equal p030's decoded JPEGs pixel for pixel.
    - Known differences from the scripts: with `canvas_format: raw`, canvases are not JPEG-compressed; within a frame, boxes are merged in collage order (p050 follows p040's `os.listdir` order); classify picks its model optimization from the first video it receives.

@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from polyis.io import cache
+from tetris.io import cache
 
 
 # Parameter columns used to transfer valid-Pareto parameter sets to test points.

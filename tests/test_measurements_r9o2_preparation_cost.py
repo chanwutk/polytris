@@ -16,7 +16,7 @@ import yaml
 from evaluation import p121_throughput_compute as p121
 from measurements import common
 from measurements import r9o2_preparation_cost as prep
-from polyis.io import cache
+from tetris.io import cache
 
 
 # The GPU plan lives in a directory whose name is not a package name, so load it from its path.

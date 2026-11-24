@@ -2,7 +2,7 @@
 
 from numpy.typing import NDArray
 import numpy as np
-from polyis.pack.pack import PyPolyominoPosition
+from tetris.pack.pack import PyPolyominoPosition
 
 def c_group_tiles(
     bitmap_input: NDArray[np.uint8],

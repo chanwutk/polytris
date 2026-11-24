@@ -72,7 +72,7 @@ Pipeline steps:
 2. **Compute relevance bitmap** per frame from groundtruth tracks via
    `mark_detections` (same logic as `scripts/p021_exec_classify_correct.py`).
 3. **Group tiles into polyominoes** via `group_tiles_all` from
-   `polyis.pack.adapters`. Yields `tile_to_polyomino_id[F,H,W]` plus per-frame
+   `tetris.pack.adapters`. Yields `tile_to_polyomino_id[F,H,W]` plus per-frame
    polyomino lengths.
 4. **Cut polyomino PNGs** with an alpha mask — each polyomino's bounding box
    is cropped from the source frame, tiles outside the polyomino get alpha=0.
@@ -85,10 +85,10 @@ Pipeline steps:
    table is saved to `data/max_rate_table_viz.npy` only (never overwrites
    the standard cache path).
 6. **For each M ∈ {0.0, 0.1, …, 1.0}**: run the Gurobi ILP solver
-   (`solve_ilp` from `polyis.sample.ilp.c.gurobi`) with a 10-second wall-clock
+   (`solve_ilp` from `tetris.sample.ilp.c.gurobi`) with a 10-second wall-clock
    budget. Record per-frame selected polyomino IDs → `discarded[M]`. Then
    build per-frame `PolyominoArray`s of only the selected polyominoes and
-   pass them to `pack()` from `polyis.pack.pack`. Record canvas layouts.
+   pass them to `pack()` from `tetris.pack.pack`. Record canvas layouts.
 7. **Pair detections with polyominoes**: for each naive detection bbox, find
    its containing polyomino via `tile_to_polyomino_id` lookups on the bbox's
    tile range. Discard detections that land on background tiles (the

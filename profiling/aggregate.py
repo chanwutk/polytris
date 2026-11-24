@@ -28,11 +28,11 @@ import pandas as pd
 import yaml
 
 from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
-from polyis.pareto import compute_pareto_front
+from tetris.pareto import compute_pareto_front
 from profiling.config import SweepConfig, load_sweep_config
 from profiling.reduction import sweep_groups
 
-# Branch keys -> the column names p135 / polyis.pareto use.
+# Branch keys -> the column names p135 / tetris.pareto use.
 COLUMNS = {'classifier': 'classifier', 'tile_size': 'tilesize', 'sample_rate': 'sample_rate',
            'mistrack_tolerance': 'tracking_accuracy_threshold', 'relevance_threshold': 'relevance_threshold',
            'tile_padding': 'tilepadding', 'canvas_scale': 'canvas_scale', 'tracker': 'tracker'}

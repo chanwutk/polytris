@@ -14,7 +14,7 @@ from pathlib import Path
 import yaml
 
 from execution.tools.make_paper_configs import build_params
-from polyis.utilities import build_param_str
+from tetris.utilities import build_param_str
 
 ROOT = Path(__file__).resolve().parents[2]
 POINTS = ROOT / 'measurements-results' / 'execution-figure8' / 'figure8_points.json'

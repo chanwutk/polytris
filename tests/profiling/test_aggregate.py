@@ -12,7 +12,7 @@ from execution.config import parse_config
 from profiling import aggregate as ag, stages as st
 from profiling.config import Artifacts, Evaluation, Params, StageSystem, SweepConfig, System
 from execution.config import Detector
-from polyis.utilities import save_tracking_results
+from tetris.utilities import save_tracking_results
 
 
 def real_cfg(tmp_path: Path, tolerances=(None, 0.4)) -> SweepConfig:

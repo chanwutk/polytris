@@ -65,13 +65,13 @@ from evaluation import p203_compare_stats as p203
 from evaluation import p204_ablation_stats as p204
 from evaluation.ablation import ABLATION_CONDITIONS
 from evaluation.p140_otif_transform import build_expected_test_video_manifest, dataset_name_in_sota
-from polyis.leap_results import canonical_leap_result
+from tetris.leap_results import canonical_leap_result
 from measurements.common import (DATASET_LABELS, PRIOR_SYSTEMS, accuracy_matched, arrange_matched,
                                  assert_files_exist, bound_specs, choose, file_record, load_test_tradeoff,
                                  matched_stats, operating_points, plain, print_operating_points, query_dicts,
                                  results_dir, rounded, system_configs, write_json)
-from polyis.io import cache
-from polyis.utilities import get_video_frame_count
+from tetris.io import cache
+from tetris.utilities import get_video_frame_count
 
 
 # Systems compared at every bound, Tetris first.

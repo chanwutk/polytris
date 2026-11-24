@@ -13,11 +13,11 @@ import shutil
 import multiprocessing as mp
 from functools import partial
 
-from polyis.images import ImgNHWC, splitNHWC
+from tetris.images import ImgNHWC, splitNHWC
 
-from polyis.io import cache, store
-from polyis.train.select_model_optimization import select_baseline_model_optimization
-from polyis.utilities import format_time, ProgressBar, get_config
+from tetris.io import cache, store
+from tetris.train.select_model_optimization import select_baseline_model_optimization
+from tetris.utilities import format_time, ProgressBar, get_config
 
 
 config = get_config()

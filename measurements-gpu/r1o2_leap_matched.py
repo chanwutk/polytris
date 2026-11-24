@@ -107,7 +107,7 @@ def setup(dataset, c, weight):
         checkpoint=weight, sha256=checkpoint_sha, dataset=dataset,
         config_sha256=hashlib.sha256(config.read_bytes()).hexdigest(),
         adapter_sha256=hashlib.sha256(ADAPTER_HOST.read_bytes()).hexdigest(),
-        inference='polyis/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2',
+        inference='tetris/models/ultralytics.py defaults; FP32; class 0 -> LEAP class 2',
         preparation='fresh labels, crops, re-identification training, and motion patterns; no distillation')
     manifest['motion_pattern_policy'] = 'clip-local training track IDs are namespaced before original clustering'
     manifest['export_policy'] = 'drop negative frame writes before original pattern export; clip video ends in p140'

@@ -5,7 +5,7 @@ import os
 import shutil
 import re
 
-from polyis.utilities import CACHE_DIR, DATASETS_CHOICES
+from tetris.utilities import CACHE_DIR, DATASETS_CHOICES
 
 
 def parse_args():

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-from polyis.sample.ilp.gurobi import solve_ilp
+from tetris.sample.ilp.gurobi import solve_ilp
 
 
 def test_solve_ilp_selects_first_and_last_frame():

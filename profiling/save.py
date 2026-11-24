@@ -16,8 +16,8 @@ import os
 
 import numpy as np
 
-from polyis.io.cache import EXEC_STAGE_MAP
-from polyis.utilities import save_tracking_results
+from tetris.io.cache import EXEC_STAGE_MAP
+from tetris.utilities import save_tracking_results
 
 # Branch parameters each stage's directory name uses, as the scripts name them.
 SCORE_PARAMS = ('sample_rate',)

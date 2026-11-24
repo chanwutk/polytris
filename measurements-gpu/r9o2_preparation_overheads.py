@@ -30,8 +30,8 @@ def parse_args():
 def startup(dataset, profile, inputs):
     import cv2
     import torch
-    from polyis.io import store
-    from polyis.models import detector
+    from tetris.io import store
+    from tetris.models import detector
 
     # Decode outside the timer, matching the chosen compute-only boundary.
     video = sorted(store.dataset(dataset, 'valid').glob('*.mp4'))[0]
@@ -80,7 +80,7 @@ def classifier(dataset, inputs, work, metadata):
     os.environ['TORCHINDUCTOR_CACHE_DIR'] = str(work / 'inductor')
     os.environ['TRITON_CACHE_DIR'] = str(work / 'triton')
     from scripts.p015_tune_optimize_classifier import benchmark_classifier, get_video_resolution
-    from polyis.io import cache
+    from tetris.io import cache
 
     # Reuse the saved trained model; the existing benchmark writes only to our scratch cache.
     point = metadata['operating_point']
@@ -102,7 +102,7 @@ def classifier(dataset, inputs, work, metadata):
 
 def tables(dataset, inputs):
     from evaluation import p130_tradeoff_compute as tradeoff, p135_pareto_extract as pareto
-    from polyis.io import cache
+    from tetris.io import cache
 
     # Only validation rows are staged, since test-set reporting is outside preparation.
     for source, target in [('accuracy.csv', cache.eval(dataset, 'acc', 'accuracy.csv')),

@@ -16,8 +16,8 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
-from polyis.io import store
-from polyis.train.data import (
+from tetris.io import store
+from tetris.train.data import (
     collect_valid_frames,
     discover_videos_in_subsets,
     get_dataset_subsets,
@@ -25,9 +25,9 @@ from polyis.train.data import (
     split_frames_train_val,
     get_adjusted_frame_stride,
 )
-from polyis.train.data.ultralytics import create_data_yaml
-from polyis.b3d.nms import nms
-from polyis.utils import parse_polygon_points, intersects_polygon
+from tetris.train.data.ultralytics import create_data_yaml
+from tetris.b3d.nms import nms
+from tetris.utils import parse_polygon_points, intersects_polygon
 
 
 def parse_args() -> argparse.Namespace:

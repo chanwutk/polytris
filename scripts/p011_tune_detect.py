@@ -9,9 +9,9 @@ from multiprocessing import Queue
 import cv2
 import torch
 
-import polyis.models.detector
-from polyis.io import cache, store
-from polyis.utilities import format_time, ProgressBar, get_config
+import tetris.models.detector
+from tetris.io import cache, store
+from tetris.utilities import format_time, ProgressBar, get_config
 
 
 config = get_config()
@@ -47,7 +47,7 @@ def detect_objects(video: str, split: str, dataset: str, batch_size: int, gpu_id
     }))
 
     # Get detector with appropriate batch size
-    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size=batch_size,
+    detector = tetris.models.detector.get_detector(dataset, gpu_id, batch_size=batch_size,
                                                    num_images=total_frames)
 
     with open(output_path, 'w') as fd:
@@ -71,7 +71,7 @@ def detect_objects(video: str, split: str, dataset: str, batch_size: int, gpu_id
 
             # Detect objects in the batch of frames
             start_time = time.time_ns() / 1e6
-            batch_outputs = polyis.models.detector.detect_batch(batch_frames, detector)
+            batch_outputs = tetris.models.detector.detect_batch(batch_frames, detector)
             end_time = time.time_ns() / 1e6
             detect_time = end_time - start_time
 

@@ -13,8 +13,8 @@ import numpy as np
 
 from measurements.common import decode_grids
 from measurements import r9o3_ilp_instance_sizes as sizes
-from polyis.io import cache
-from polyis.sample.ilp.c.gurobi import solve_ilp
+from tetris.io import cache
+from tetris.sample.ilp.c.gurobi import solve_ilp
 
 
 EXPERIMENT = Path('/polyis/measurements-results/fixed_test_s1_square_m02')

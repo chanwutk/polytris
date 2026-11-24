@@ -13,7 +13,7 @@ import queue
 import cv2
 import torch
 
-from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results
+from tetris.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 from scripts.p020_exec_classify import load_model, process_frame_tiles
 
 

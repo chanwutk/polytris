@@ -21,8 +21,8 @@ from typing import Callable
 
 import cv2
 
-from polyis.models.detector import get_detector_info
-from polyis.utilities import get_config
+from tetris.models.detector import get_detector_info
+from tetris.utilities import get_config
 
 
 CONFIG = get_config()
@@ -327,7 +327,7 @@ def train_ultralytics(
         device: Device string (e.g., "0")
     """
     import ultralytics
-    from polyis.train.data.ultralytics import verify_dataset, parse_device_string
+    from tetris.train.data.ultralytics import verify_dataset, parse_device_string
 
     # Create logger
     log = create_logger(dataset, tilesize, tilepadding)

@@ -12,15 +12,15 @@ import multiprocessing as mp
 from functools import partial
 import torch
 
-from polyis import dtypes
-from polyis.utilities import (
+from tetris import dtypes
+from tetris.utilities import (
     CACHE_DIR, CLASSIFIERS_CHOICES,
     DATASETS_DIR, TILEPADDING_MODES, format_time,
     load_classification_results,
     CLASSIFIERS_TO_TEST, ProgressBar, DATASETS_TO_TEST, TILE_SIZES
 )
-from polyis.pack.cython.group_tiles import group_tiles
-from polyis.pack.python.pack_bfd import pack_all
+from tetris.pack.cython.group_tiles import group_tiles
+from tetris.pack.python.pack_bfd import pack_all
 
 
 def parse_args():

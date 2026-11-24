@@ -22,7 +22,7 @@ from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_datase
 from evaluation.manifests import list_split_videos
 from measurements import r1o4_packing_detection_accuracy as pa
 from measurements.r1o4_oracle_packing_stats import TILE_SIZE, config_name
-from polyis.io import cache
+from tetris.io import cache
 
 
 def parse_args():

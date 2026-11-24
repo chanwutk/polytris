@@ -5,7 +5,7 @@ import os
 import shutil
 from pathlib import Path
 
-from polyis.utilities import CACHE_DIR
+from tetris.utilities import CACHE_DIR
 
 
 def parse_args():

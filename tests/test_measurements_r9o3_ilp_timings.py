@@ -9,7 +9,7 @@ import pytest
 
 from measurements import common
 from measurements import r9o3_ilp_timings as it
-from polyis.io import store
+from tetris.io import store
 
 
 # A valid p022 parameter string and the throughput variant id that shares its pruning run.

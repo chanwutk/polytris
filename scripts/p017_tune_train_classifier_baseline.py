@@ -16,10 +16,10 @@ from torchvision.transforms import ToTensor, Normalize, Compose
 from torchvision.datasets import ImageFolder
 from torch.optim import AdamW
 
-from polyis.models.classifier.baseline import ShuffleNet05Baseline
-from polyis.train.training_loop import train
-from polyis.utilities import ProgressBar, get_config
-from polyis.io import cache
+from tetris.models.classifier.baseline import ShuffleNet05Baseline
+from tetris.train.training_loop import train
+from tetris.utilities import ProgressBar, get_config
+from tetris.io import cache
 
 
 config = get_config()

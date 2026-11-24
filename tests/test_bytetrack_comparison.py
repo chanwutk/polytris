@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Test suite for comparing tracking results from two ByteTrack implementations:
-- polyis/tracker/bytetrack/byte_tracker.py (Python implementation)
-- polyis/tracker/bytetrack/cython/bytetrack.pyx (Cython implementation)
+- tetris/tracker/bytetrack/byte_tracker.py (Python implementation)
+- tetris/tracker/bytetrack/cython/bytetrack.pyx (Cython implementation)
 
 This test loads detection results from a JSONL file and runs both trackers
 on the same detections to compare their outputs.
@@ -16,10 +16,10 @@ import pytest
 import numpy as np
 import numpy.typing as npt
 
-from polyis.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
-from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython  # type: ignore
-# from polyis.tracker.bytetrack.cython.bytetrack import reset_tracker_count
-from polyis.utilities import CACHE_DIR, get_config
+from tetris.tracker.bytetrack.byte_tracker import BYTETracker as BYTETrackerPython
+from tetris.tracker.bytetrack.cython.bytetrack import BYTETracker as BYTETrackerCython  # type: ignore
+# from tetris.tracker.bytetrack.cython.bytetrack import reset_tracker_count
+from tetris.utilities import CACHE_DIR, get_config
 
 
 def load_detection_results(detection_path: str) -> list[dict]:
@@ -282,7 +282,7 @@ def test_bytetrack_comparison():
     tracker_cython = BYTETrackerCython(args)
 
     # Reset tracker counters to ensure consistent IDs
-    from polyis.tracker.bytetrack.basetrack import BaseTrack
+    from tetris.tracker.bytetrack.basetrack import BaseTrack
     BaseTrack._count = 0
     # reset_tracker_count()
 

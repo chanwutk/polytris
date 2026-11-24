@@ -19,8 +19,8 @@ from pathlib import Path
 
 import torch
 
-from polyis.utilities import get_config
-from polyis.models.detector import get_detector_info
+from tetris.utilities import get_config
+from tetris.models.detector import get_detector_info
 
 # Import discovery function from p042
 # Add scripts directory to path for import

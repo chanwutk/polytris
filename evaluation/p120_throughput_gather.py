@@ -10,9 +10,9 @@ from evaluation.manifests import (
     build_polytris_variant_manifest,
     build_split_video_manifest,
 )
-from polyis.io import cache
-from polyis.pareto import load_pareto_params, pareto_params_exist
-from polyis.utilities import build_param_str, get_config
+from tetris.io import cache
+from tetris.pareto import load_pareto_params, pareto_params_exist
+from tetris.utilities import build_param_str, get_config
 
 
 CONFIG = get_config()

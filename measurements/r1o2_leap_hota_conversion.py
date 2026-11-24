@@ -18,7 +18,7 @@ this into the tracks p141 scores:
      end are unknown), drops frames past the clip, and records what it removed in unwrap.json. The old cache is
      in SOTA/leap-wrapped-backup-20261026.
   4. evaluation/p141_otif_accuracy.py scores the tracks with TrackEval against the root dataset's 003_groundtruth
-     through polyis/trackeval/dataset.py.
+     through tetris/trackeval/dataset.py.
 
 What this script measures per dataset (all from the cache and the raw exports, read-only):
   accuracy     LEAP's HOTA family (means over TrackEval's 19 alphas, and at the loosest alpha 0.05) and Count from
@@ -36,7 +36,7 @@ What this script measures per dataset (all from the cache and the raw exports, r
                objects; the old cache's surplus over the whole file and inside the clip, split into the wrapped
                tails, the boxes past the clip, and the gap fill of the old interpolation (checked to equal the
                frames between each wrapped object's head and tail).
-  scored_window  boxes that p141's scoring leaves out. polyis/trackeval/dataset.py gives each file its own length
+  scored_window  boxes that p141's scoring leaves out. tetris/trackeval/dataset.py gives each file its own length
                (largest frame_idx + 1; save_tracking_results writes rows from the first to the last frame with a
                box), TrackEval keeps the ground truth's, and HOTA, CLEAR, and Identity iterate over
                zip(ground truth, tracker). When both sides have boxes, a clip is scored only on its first
@@ -88,8 +88,8 @@ from evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_i
 from measurements.common import (DATASET_LABELS, RESULTS_ROOT, assert_files_exist, file_record, leap_intervals,
                                  load_leap_exports, load_unwrap, metric_summary, output_path, query_dicts, results_dir,
                                  rounded, trackeval_rerun, unscored_boxes, unwrap_totals, write_json)
-from polyis.io import cache
-from polyis.utilities import dataset_root_name
+from tetris.io import cache
+from tetris.utilities import dataset_root_name
 
 
 # The LEAP cache p140 rewrote on 2026-10-26 and the copy of the cache it replaced, as directories under SOTA/.
@@ -182,7 +182,7 @@ FINDINGS = {
         "frame-base mismatch rather than LEAP's intervals, until someone with the scored run's inputs confirms "
         'the frame base (blockers.time_base).'),
     'scored_window': (
-        'polyis/trackeval/dataset.py with TrackEval scores a clip only on its first min(T_gt, T_tracker) frames '
+        'tetris/trackeval/dataset.py with TrackEval scores a clip only on its first min(T_gt, T_tracker) frames '
         'when both sides have boxes (see datasets[*].scored_window). For LEAP it hides misses after its last '
         'exported box. evaluation/p110_accuracy_compute.py uses the same dataset class, so the reference, Tetris, '
         'and OTIF are scored the same way; they are not quantified here. The *_full_length TrackEval variants '

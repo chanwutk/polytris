@@ -16,8 +16,8 @@ import argparse
 import pandas as pd
 
 from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
-from polyis.pareto import PARETO_PARAM_COLS, compute_pareto_fronts_by_group, save_pareto_params
-from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
+from tetris.pareto import PARETO_PARAM_COLS, compute_pareto_fronts_by_group, save_pareto_params
+from tetris.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 
 
 config = get_config()

@@ -21,8 +21,8 @@ from pathlib import Path
 import cv2
 from tqdm import tqdm
 
-from polyis.utilities import get_config, load_tracking_results
-from polyis.train.data.finetune import (
+from tetris.utilities import get_config, load_tracking_results
+from tetris.train.data.finetune import (
     CompressedImageAnnotation,
     load_offset_lookup,
     load_index_map,

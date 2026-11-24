@@ -25,7 +25,7 @@ if str(ROOT_DIR) not in sys.path:
 from mistrack_rate.analysis import combine_visualize, plot_results
 from mistrack_rate.evaluate import run_evaluation_stage
 from mistrack_rate.heuristic import run_heuristic_stage
-from polyis.utilities import get_config
+from tetris.utilities import get_config
 
 
 CONFIG = get_config()

@@ -210,7 +210,7 @@ def test_savers_write_the_scripts_paths_and_formats(tmp_path, prefix):
 
 
 def test_evaluate_scores_identical_tracks_as_perfect(tmp_path):
-    from polyis.utilities import save_tracking_results
+    from tetris.utilities import save_tracking_results
     cfg = make_cfg(tmp_path)
     tracks = {f: [[1, 10 + f, 10, 40 + f, 30], [2, 100, 50 - f, 130, 80 - f]] for f in range(15)}
     ref = Path(cfg.evaluation.reference_dir) / 'a.mp4' / '002_naive'
@@ -275,7 +275,7 @@ def test_prune_runs_one_representative_per_group(tmp_path, prefix, monkeypatch):
 def test_all_ones_gaps_drop_polyominoes_whose_tiles_appear_only_once():
     # The ILP constrains only tiles covered in >= 2 sampled frames; with every gap 1 it keeps exactly the
     # polyominoes that contain such a tile and drops the rest (DECISIONS.md A4).  So all-1s groups still solve.
-    from polyis.pack.adapters import group_tiles_all
+    from tetris.pack.adapters import group_tiles_all
     rng = np.random.default_rng(0)
     scores = rng.integers(0, 256, (12, 6, 8)).astype(np.uint8)
     for t_r in (0.25, 0.5, 0.75):

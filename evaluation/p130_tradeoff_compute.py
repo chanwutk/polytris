@@ -8,8 +8,8 @@ import shutil
 import pandas as pd
 from rich.progress import track
 
-from polyis.io import cache
-from polyis.utilities import get_config, get_video_frame_count
+from tetris.io import cache
+from tetris.utilities import get_config, get_video_frame_count
 
 
 CONFIG = get_config()

@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 """Smoke test of a bombe container (measurements-gpu/bombe_container.sh); exits non-zero on the first failure.
 
-Checks that the one GPU is visible to torch and ultralytics, polyis and every compiled Cython module under polyis/
+Checks that the one GPU is visible to torch and ultralytics, polyis and every compiled Cython module under tetris/
 import, the mounts are where the pipeline expects them, and Gurobi optimizes a tiny model through gurobipy and through
 p022's C solver (both read the WLS license at /opt/gurobi/gurobi.lic).
 """
@@ -27,12 +27,12 @@ def main():
     model.predict(np.zeros((64, 64, 3), dtype=np.uint8), device=0, verbose=False)
     print('ultralytics', ultralytics.__version__, 'predicted on', next(model.model.parameters()).device)
     # polyis and its config resolve (CONFIG is the scratch copy; CACHE_DIR must be the scratch cache mount).
-    from polyis.utilities import get_config
+    from tetris.utilities import get_config
     config = get_config()
     assert config['DATA']['CACHE_DIR'].rstrip('/') == '/polyis-cache', config['DATA']['CACHE_DIR']
     print('polyis config', os.environ.get('CONFIG'), 'datasets', config['EXEC']['DATASETS'])
-    # Import every compiled extension under polyis/ by its module path.
-    modules = sorted('.'.join(p.with_suffix('').with_suffix('').parts) for p in Path('polyis').rglob('*.so'))
+    # Import every compiled extension under tetris/ by its module path.
+    modules = sorted('.'.join(p.with_suffix('').with_suffix('').parts) for p in Path('tetris').rglob('*.so'))
     for name in modules:
         importlib.import_module(name)
     print('imported', len(modules), 'Cython modules')
@@ -56,7 +56,7 @@ def main():
         assert m.Status == gp.GRB.OPTIMAL and round(m.ObjVal) == 3, (m.Status, m.ObjVal)
     print('gurobipy', gp.gurobi.version(), 'optimal')
     # p022's C solver on one tile covered in three frames: the first and last frames are always kept.
-    from polyis.sample.ilp.c.gurobi import solve_ilp
+    from tetris.sample.ilp.c.gurobi import solve_ilp
     result = solve_ilp(np.zeros((3, 1, 1), dtype=np.int16), [[1], [1], [1]], np.ones((1, 1)), 1, 1, 0.1)
     assert {(0, 0), (2, 0)} <= set(map(tuple, result.selected)), result
     print('C solve_ilp selected', sorted(map(tuple, result.selected)), f'build {result.build_ms:.2f} ms')

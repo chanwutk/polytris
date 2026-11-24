@@ -90,7 +90,7 @@ with an apt-installed `numactl`; add that only if a measurement must match it ex
 `~/.gurobi/gurobi.lic` (one file, since the home directory is shared NFS) is a Web License Service license, ID 2792523,
 and Gurobi rejects it on both hosts: `GurobiError: License 2792523 has expired` (also from ace's running `polyis`
 container). Without the file, gurobipy falls back to its size-limited license (2,000 variables), too small for p022
-(up to 9,455 variables per clip), and p022's C solver (`polyis.sample.ilp.c.gurobi`) fails at `GRBstartenv`. Nothing
+(up to 9,455 variables per clip), and p022's C solver (`tetris.sample.ilp.c.gurobi`) fails at `GRBstartenv`. Nothing
 that runs p022 or `solve_ilp` can run on either host until the author renews the academic WLS license at
 portal.gurobi.com and replaces `~/.gurobi/gurobi.lic`. Everything else in `bombe_check.py` passes.
 

@@ -4,8 +4,8 @@
 scripts/p022_exec_prune_polyominoes.py solves one ILP per clip and configuration (an instance). Its
 input is built from the classifier scores in 020_relevancy/{classifier}_{tilesize}_{sample_rate}/score/
 score.jsonl: each frame's tile scores are binarized at the configuration's relevance threshold r and
-grouped into 4-connected polyominoes by polyis.pack.adapters.group_tiles_all with p022's
-TILEPADDING_MODE (0, no padding). The ILP (polyis/sample/ilp/c/gurobi.pyx) has one binary keep/prune
+grouped into 4-connected polyominoes by tetris.pack.adapters.group_tiles_all with p022's
+TILEPADDING_MODE (0, no padding). The ILP (tetris/sample/ilp/c/gurobi.pyx) has one binary keep/prune
 variable per polyomino per frame. For every tile covered in at least two frames it adds two equality
 constraints forcing the tile's first and last covering polyominoes, and for each consecutive pair of
 covering frames either two equality constraints (when the gap exceeds the tile's maximum sampling
@@ -74,9 +74,9 @@ from evaluation.manifests import list_split_videos
 from measurements.common import (DATASET_LABELS, RELEVANCE_RULES, VARIANT_PATTERN, decode_grids, default_time_limit,
                                  load_prune_runs, load_pruning_points, load_test_tradeoff, pruning_operating_points,
                                  query_dicts, results_dir, rounded, write_json)
-from polyis.io import cache
-from polyis.pack.adapters import group_tiles_all
-from polyis.utilities import (build_param_str, load_classification_results, load_pruned_classification_results,
+from tetris.io import cache
+from tetris.pack.adapters import group_tiles_all
+from tetris.utilities import (build_param_str, load_classification_results, load_pruned_classification_results,
                               parse_execution_param_str)
 from scripts.p022_exec_prune_polyominoes import _ACCURACY_THRESHOLD_TO_IDX, TILEPADDING_MODE, load_max_sampling_rate
 
@@ -151,7 +151,7 @@ def group(bitmaps: np.ndarray) -> tuple[np.ndarray, list[list[int]]]:
 
 
 def ilp_structure(tile_ids: np.ndarray, lengths: list[list[int]], max_dist: np.ndarray) -> dict[str, np.ndarray]:
-    """Variables and constraints of the ILP, laid out as solve_ilp in polyis/sample/ilp/c/gurobi.pyx adds them.
+    """Variables and constraints of the ILP, laid out as solve_ilp in tetris/sample/ilp/c/gurobi.pyx adds them.
 
     Entries are the (tile, frame) pairs a polyomino covers, ordered by tile then frame, the order the
     C code scans. Variable ids follow the C code (frame offset + polyomino id). Returns:
@@ -927,7 +927,7 @@ def main():
                   'score >= floor(r * 255); each instance uses the rule its saved selection is consistent with '
                   '(checks.json solutions, rule_* counts)',
             variables='one binary per polyomino per sampled frame, summed over the clip',
-            constraints='constraint rows as added by polyis/sample/ilp/c/gurobi.pyx, before presolve and including '
+            constraints='constraint rows as added by tetris/sample/ilp/c/gurobi.pyx, before presolve and including '
                         'duplicates: per tile covered in >= 2 frames, 2 equalities (first, last), and per consecutive '
                         'covering pair 2 equalities if the gap exceeds the tile max distance (max_rate_table // '
                         'sample_rate, >= 1) else 1 window constraint',

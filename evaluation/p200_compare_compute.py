@@ -6,9 +6,9 @@ import os
 import pandas as pd
 import altair as alt
 
-from polyis.io import cache
-from polyis.leap_results import canonical_leap_result
-from polyis.utilities import (
+from tetris.io import cache
+from tetris.leap_results import canonical_leap_result
+from tetris.utilities import (
     STR_NA,
     get_config,
     load_all_datasets_tradeoff_data,

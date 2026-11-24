@@ -25,8 +25,8 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from polyis.pack.adapters import group_tiles_all
-from polyis.sample.ilp.gurobi import solve_ilp
+from tetris.pack.adapters import group_tiles_all
+from tetris.sample.ilp.gurobi import solve_ilp
 from scripts.p016_tune_track_rate import (
     _build_track_presence,
     _match_detections_per_frame,
@@ -345,7 +345,7 @@ def _compute_hota(
     import trackeval
     from trackeval.metrics import HOTA
 
-    from polyis.trackeval.dataset import Dataset
+    from tetris.trackeval.dataset import Dataset
 
     gt_dataset = _resolve_groundtruth_dataset(dataset)
     gt_root = Path('/polyis-cache') / gt_dataset / 'execution'

@@ -59,7 +59,7 @@ docker exec polyis python -m pytest tests/test_bytetrack_comparison.py -v
 ## Usage
 
 ```python
-from polyis.tracker.bytetrack.cython.bytetrack import BYTETracker
+from tetris.tracker.bytetrack.cython.bytetrack import BYTETracker
 
 # Create tracker
 class Args:

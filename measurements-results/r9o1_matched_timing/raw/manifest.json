@@ -1912,8 +1912,8 @@
       "classifier_1": "classify_batch, one frame per call",
       "classifier_stream": "classify_batch over the video in 16-frame calls, synchronized only before the first and after the last call (one interval), as p020 runs",
       "decode": "cv2 decoding of the whole video to BGR frames (one interval)",
-      "detector": "polyis.models.detector.detect, one BGR frame per call (p002, batch size 1)",
-      "detector_16": "polyis.models.detector.detect_batch, 16 consecutive BGR frames per call",
+      "detector": "tetris.models.detector.detect, one BGR frame per call (p002, batch size 1)",
+      "detector_16": "tetris.models.detector.detect_batch, 16 consecutive BGR frames per call",
       "rgb_copy": "p020's BGR-to-RGB contiguous copy of every frame (one interval; Tetris only, untimed in p121)"
     },
     "sampling": "none",

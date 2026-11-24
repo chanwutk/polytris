@@ -34,10 +34,10 @@ def parse_args():
 
 def main() -> None:
     args = parse_args()
-    # Imported here: p022 and polyis.io.cache read CONFIG when imported.
+    # Imported here: p022 and tetris.io.cache read CONFIG when imported.
     import scripts.p022_exec_prune_polyominoes as p022
-    from polyis.io import cache
-    from polyis.utilities import build_param_str, get_config
+    from tetris.io import cache
+    from tetris.utilities import build_param_str, get_config
 
     ex = get_config()['EXEC']
     (dataset,) = ex['DATASETS']
