@@ -100,16 +100,18 @@ def solve_times(tree: harness.Tree, configs: list[dict]) -> list[dict]:
     return out
 
 
-def selection_csv(tree: harness.Tree, path) -> str:
-    """The test split's configuration selection (POLYIS_TEST_PARETO_PARAMS), in polyis.pareto's columns."""
+def write_selection(tree: harness.Tree) -> None:
+    """The test split's configuration selection, where the scripts read it (polyis.pareto.load_pareto_params:
+    <cache>/<dataset>/evaluation/095_pareto_params/pareto_params.csv), in its columns."""
     rows = ['variant_id,classifier,tilesize,sample_rate,tracking_accuracy_threshold,relevance_threshold,'
             'tilepadding,canvas_scale,tracker']
     for c in CONFIGS:
         tol = '' if c['mistrack_tolerance'] is None else c['mistrack_tolerance']
         rows.append(f"{param_str(c)},ShuffleNet05,60,{c['sample_rate']},{tol},{c['relevance_threshold']},"
                     f"{c['tile_padding']},1.0,{c['tracker']}")
+    path = tree.cache / tree.dataset / 'evaluation' / '095_pareto_params' / 'pareto_params.csv'
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text('\n'.join(rows) + '\n')
-    return str(path)
 
 
 @pytest.mark.integration
@@ -129,11 +131,10 @@ def test_execution2_matches_the_scripts(dataset, tmp_path):
     assert all(r['status'] == 2 and r['solve_ms'] < SAFE_SOLVE_MS for r in ours), ours
 
     # Then the scripts, on the same clips, restricted to these configurations; p022 one combination at a time.
-    selection = selection_csv(tree, tmp_path / 'selection.csv')
-    harness.scripts(tree, 'p020_exec_classify', POLYIS_TEST_PARETO_PARAMS=selection)
+    write_selection(tree)
+    harness.scripts(tree, 'p020_exec_classify')
     harness.mirror_p022(tree, None, tmp_path / 'mirror.json')
-    harness.scripts(tree, 'p030_exec_compress', 'p040_exec_detect', 'p050_exec_uncompress', 'p060_exec_track',
-                    POLYIS_TEST_PARETO_PARAMS=selection)
+    harness.scripts(tree, 'p030_exec_compress', 'p040_exec_detect', 'p050_exec_uncompress', 'p060_exec_track')
     theirs = {(r['video'], r['param']): r for r in json.loads((tmp_path / 'mirror.json').read_text())}
     # The scripts' solves for these configurations finished well inside the limit too.
     for r in ours:
